@@ -6,6 +6,14 @@ RestoPOS is a comprehensive restaurant management system tailored for Saudi Arab
 
 ## Recent Changes (November 2, 2025)
 
+### Excel Export/Import Functionality
+Added comprehensive data export and import capabilities:
+- **Export to Excel**: All major data tables (inventory, menu, recipes, orders, transactions, procurement, branches) can be exported to Excel format
+- **Import from Excel**: Bulk data import for inventory, menu, recipes, and branches via Excel file upload
+- **UI Integration**: Export/Import buttons added to Inventory and Menu pages with file upload handling
+- **Backend Routes**: Complete API endpoints for export (GET /api/export/*) and import (POST /api/import/*)
+- **File Processing**: Using xlsx library for Excel generation and multer for file uploads
+
 ### Subscription-Based Authentication & Password Recovery
 Added comprehensive authentication enhancements for Saudi Arabian market:
 - **Subscription Plans**: Two-tier pricing structure (Monthly: 119.75 SAR, Yearly: 1,197.50 SAR with 17% discount)
