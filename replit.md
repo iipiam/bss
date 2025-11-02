@@ -6,6 +6,13 @@ RestoPOS is a comprehensive restaurant management system tailored for Saudi Arab
 
 ## Recent Changes (November 2, 2025)
 
+### Subscription-Based Authentication & Password Recovery
+Added comprehensive authentication enhancements for Saudi Arabian market:
+- **Subscription Plans**: Two-tier pricing structure (Monthly: 119.75 SAR, Yearly: 1,197.50 SAR with 17% discount)
+- **Commercial Registration**: Mandatory field for all new signups (Saudi business requirement)
+- **Password Recovery**: Complete forgot password flow with token-based reset (1-hour expiry)
+- **Security**: Time-limited reset tokens, secure password hashing, email validation
+
 ### Strategic Decision-Making Tabs in Profitability Analysis
 Added four comprehensive tabs to help restaurant owners make data-driven strategic decisions:
 - **Strategic Overview**: Total revenue, profit, margins, costs with detailed breakdown by item and category
