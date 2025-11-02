@@ -141,10 +141,12 @@ export default function SettingsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="English">English</SelectItem>
-                    <SelectItem value="Arabic">Arabic</SelectItem>
-                    <SelectItem value="Hindi">Hindi</SelectItem>
-                    <SelectItem value="Bengali">Bengali</SelectItem>
-                    <SelectItem value="Urdu">Urdu</SelectItem>
+                    <SelectItem value="Arabic">العربية (Arabic)</SelectItem>
+                    <SelectItem value="Chinese">中文 (Chinese)</SelectItem>
+                    <SelectItem value="German">Deutsch (German)</SelectItem>
+                    <SelectItem value="Hindi">हिन्दी (Hindi)</SelectItem>
+                    <SelectItem value="Urdu">اردو (Urdu)</SelectItem>
+                    <SelectItem value="Bengali">বাংলা (Bengali)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

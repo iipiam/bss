@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { BranchSelector } from "@/components/branch-selector";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -161,12 +162,14 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <TooltipProvider>
-          <AuthProvider>
-            <AppContent />
-          </AuthProvider>
-          <Toaster />
-        </TooltipProvider>
+        <LanguageProvider>
+          <TooltipProvider>
+            <AuthProvider>
+              <AppContent />
+            </AuthProvider>
+            <Toaster />
+          </TooltipProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
