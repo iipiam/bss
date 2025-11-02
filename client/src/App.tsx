@@ -67,9 +67,9 @@ function Router() {
 function AppContent() {
   const { user, isLoading, logout } = useAuth();
   
-  // Check if any users exist in the system
-  const { data: users } = useQuery<User[]>({
-    queryKey: ["/api/users"],
+  // Check if this is the first run (no users exist)
+  const { data: firstRunCheck, isLoading: isCheckingFirstRun } = useQuery<{ firstRun: boolean }>({
+    queryKey: ["/api/auth/check-first-run"],
     retry: false,
   });
 
@@ -79,7 +79,7 @@ function AppContent() {
   };
 
   // Show loading state
-  if (isLoading) {
+  if (isLoading || isCheckingFirstRun) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -90,8 +90,8 @@ function AppContent() {
     );
   }
 
-  // Show setup page if no users exist
-  if (!isLoading && users !== undefined && users.length === 0) {
+  // Show setup page if no users exist (first run)
+  if (firstRunCheck?.firstRun) {
     return <Setup />;
   }
 

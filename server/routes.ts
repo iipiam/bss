@@ -398,6 +398,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public endpoint to check if any users exist (for first-run setup)
+  app.get("/api/auth/check-first-run", async (_req, res) => {
+    try {
+      const users = await storage.getUsers();
+      res.json({ firstRun: users.length === 0 });
+    } catch (error) {
+      console.error("First-run check error:", error);
+      res.status(500).json({ error: "Failed to check first-run status" });
+    }
+  });
+
   // Authentication
   app.post("/api/auth/login", async (req, res) => {
     try {
