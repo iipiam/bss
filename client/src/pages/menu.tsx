@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -35,6 +36,8 @@ export default function Menu() {
   const [open, setOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [deletingItem, setDeletingItem] = useState<MenuItem | null>(null);
   const [categories, setCategories] = useState<string[]>([
     "Pizza",
     "Burgers",
@@ -97,6 +100,63 @@ export default function Menu() {
     },
   });
 
+  const updateMenuItemMutation = useMutation({
+    mutationFn: async (data: MenuFormValues & { id: string }) => {
+      const basePriceNum = parseFloat(data.basePrice);
+      const vatAmount = basePriceNum * 0.15;
+      const price = basePriceNum + vatAmount;
+
+      const menuItemData = {
+        name: data.name,
+        description: data.description,
+        category: data.category,
+        basePrice: basePriceNum.toFixed(2),
+        vatAmount: vatAmount.toFixed(2),
+        price: price.toFixed(2),
+      };
+
+      return await apiRequest("PATCH", `/api/menu/${data.id}`, menuItemData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
+      setOpen(false);
+      setEditingItem(null);
+      form.reset();
+      toast({
+        title: "Menu item updated",
+        description: "The menu item has been updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to update menu item",
+        description: error.message || "Could not update menu item",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMenuItemMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/menu/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
+      setDeletingItem(null);
+      toast({
+        title: "Menu item deleted",
+        description: "The menu item has been removed successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to delete menu item",
+        description: error.message || "Could not delete menu item",
+        variant: "destructive",
+      });
+    },
+  });
+
   const toggleAvailabilityMutation = useMutation({
     mutationFn: async ({ id, available }: { id: string; available: boolean }) => {
       await apiRequest("PATCH", `/api/menu/${id}`, { available });
@@ -111,7 +171,28 @@ export default function Menu() {
   });
 
   const onSubmit = (data: MenuFormValues) => {
-    createMenuItemMutation.mutate(data);
+    if (editingItem) {
+      updateMenuItemMutation.mutate({ ...data, id: editingItem.id });
+    } else {
+      createMenuItemMutation.mutate(data);
+    }
+  };
+
+  const handleEdit = (item: MenuItem) => {
+    setEditingItem(item);
+    form.reset({
+      name: item.name,
+      description: item.description || "",
+      category: item.category,
+      basePrice: item.basePrice || "",
+    });
+    setOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpen(false);
+    setEditingItem(null);
+    form.reset();
   };
 
   const handleExport = async () => {
@@ -283,7 +364,7 @@ export default function Menu() {
               </div>
             </DialogContent>
           </Dialog>
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleCloseDialog()}>
             <DialogTrigger asChild>
               <Button data-testid="button-add-menu-item">
                 <Plus className="h-4 w-4 mr-2" />
@@ -292,8 +373,10 @@ export default function Menu() {
             </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Menu Item</DialogTitle>
-              <DialogDescription>Create a new item for your menu with VAT-inclusive pricing</DialogDescription>
+              <DialogTitle>{editingItem ? "Edit Menu Item" : "Add New Menu Item"}</DialogTitle>
+              <DialogDescription>
+                {editingItem ? "Update the menu item details" : "Create a new item for your menu with VAT-inclusive pricing"}
+              </DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -382,11 +465,18 @@ export default function Menu() {
                   )}
                 />
                 <div className="flex justify-end gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)} data-testid="button-cancel">
+                  <Button type="button" variant="outline" onClick={handleCloseDialog} data-testid="button-cancel">
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={createMenuItemMutation.isPending} data-testid="button-save-menu">
-                    {createMenuItemMutation.isPending ? "Creating..." : "Create Menu Item"}
+                  <Button 
+                    type="submit" 
+                    disabled={createMenuItemMutation.isPending || updateMenuItemMutation.isPending} 
+                    data-testid="button-save-menu"
+                  >
+                    {editingItem 
+                      ? (updateMenuItemMutation.isPending ? "Updating..." : "Update Menu Item")
+                      : (createMenuItemMutation.isPending ? "Creating..." : "Create Menu Item")
+                    }
                   </Button>
                 </div>
               </form>
@@ -448,13 +538,51 @@ export default function Menu() {
                 />
                 <span className="text-sm">{item.available ? "Available" : "Unavailable"}</span>
               </div>
-              <Button variant="ghost" size="icon" data-testid={`button-edit-menu-${item.id}`}>
-                <Edit className="h-4 w-4" />
-              </Button>
+              <div className="flex gap-1">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => handleEdit(item)}
+                  data-testid={`button-edit-menu-${item.id}`}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => setDeletingItem(item)}
+                  data-testid={`button-delete-menu-${item.id}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </CardFooter>
           </Card>
         ))}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingItem} onOpenChange={(open) => !open && setDeletingItem(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Menu Item</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deletingItem?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingItem && deleteMenuItemMutation.mutate(deletingItem.id)}
+              disabled={deleteMenuItemMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete"
+            >
+              {deleteMenuItemMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
