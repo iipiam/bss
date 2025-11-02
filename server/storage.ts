@@ -15,6 +15,10 @@ import {
   type InsertSettings,
   type Procurement,
   type InsertProcurement,
+  type User,
+  type InsertUser,
+  type Invoice,
+  type InsertInvoice,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -67,6 +71,19 @@ export interface IStorage {
   createProcurement(procurement: InsertProcurement): Promise<Procurement>;
   updateProcurement(id: string, procurement: Partial<InsertProcurement>): Promise<Procurement | undefined>;
   deleteProcurement(id: string): Promise<boolean>;
+
+  // Users
+  getUsers(): Promise<User[]>;
+  getUser(id: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
+
+  // Invoices
+  getInvoices(branchId?: string, startDate?: Date, endDate?: Date): Promise<Invoice[]>;
+  getInvoice(id: string): Promise<Invoice | undefined>;
+  createInvoice(invoice: InsertInvoice): Promise<Invoice>;
 }
 
 export class MemStorage implements IStorage {
@@ -78,8 +95,11 @@ export class MemStorage implements IStorage {
   private transactions: Map<string, Transaction>;
   private settings: Settings | undefined;
   private procurements: Map<string, Procurement>;
+  private users: Map<string, User>;
+  private invoices: Map<string, Invoice>;
   private orderCounter: number;
   private transactionCounter: number;
+  private invoiceCounter: number;
 
   constructor() {
     this.branches = new Map();
@@ -90,8 +110,11 @@ export class MemStorage implements IStorage {
     this.transactions = new Map();
     this.settings = undefined;
     this.procurements = new Map();
+    this.users = new Map();
+    this.invoices = new Map();
     this.orderCounter = 12840;
     this.transactionCounter = 12840;
+    this.invoiceCounter = 10000;
     this.seedData();
   }
 
@@ -138,13 +161,13 @@ export class MemStorage implements IStorage {
     ];
     inventoryData.forEach(item => this.inventoryItems.set(item.id, item));
 
-    // Seed menu items
+    // Seed menu items (prices include 15% Saudi VAT)
     const menuData: MenuItem[] = [
-      { id: "menu-1", name: "Margherita Pizza", category: "Pizza", price: "50", description: "Classic tomato and mozzarella", available: true, imageUrl: null },
-      { id: "menu-2", name: "Pepperoni Pizza", category: "Pizza", price: "65", description: "Tomato, mozzarella, and pepperoni", available: true, imageUrl: null },
-      { id: "menu-3", name: "Chicken Shawarma", category: "Sandwiches", price: "40", description: "Grilled chicken with tahini", available: true, imageUrl: null },
-      { id: "menu-4", name: "Beef Burger", category: "Burgers", price: "60", description: "Angus beef with cheese", available: true, imageUrl: null },
-      { id: "menu-5", name: "Caesar Salad", category: "Salads", price: "40", description: "Fresh romaine with Caesar dressing", available: true, imageUrl: null },
+      { id: "menu-1", name: "Margherita Pizza", category: "Pizza", price: "57.50", basePrice: "50.00", vatAmount: "7.50", description: "Classic tomato and mozzarella", available: true, imageUrl: null },
+      { id: "menu-2", name: "Pepperoni Pizza", category: "Pizza", price: "74.75", basePrice: "65.00", vatAmount: "9.75", description: "Tomato, mozzarella, and pepperoni", available: true, imageUrl: null },
+      { id: "menu-3", name: "Chicken Shawarma", category: "Sandwiches", price: "46.00", basePrice: "40.00", vatAmount: "6.00", description: "Grilled chicken with tahini", available: true, imageUrl: null },
+      { id: "menu-4", name: "Beef Burger", category: "Burgers", price: "69.00", basePrice: "60.00", vatAmount: "9.00", description: "Angus beef with cheese", available: true, imageUrl: null },
+      { id: "menu-5", name: "Caesar Salad", category: "Salads", price: "46.00", basePrice: "40.00", vatAmount: "6.00", description: "Fresh romaine with Caesar dressing", available: true, imageUrl: null },
     ];
     menuData.forEach(item => this.menuItems.set(item.id, item));
 
@@ -273,6 +296,8 @@ export class MemStorage implements IStorage {
       },
     ];
     procurementData.forEach(item => this.procurements.set(item.id, item));
+
+    // NOTE: Admin user will be seeded via API or first-run setup to ensure password is properly hashed
   }
 
   // Branches
@@ -568,6 +593,104 @@ export class MemStorage implements IStorage {
 
   async deleteProcurement(id: string): Promise<boolean> {
     return this.procurements.delete(id);
+  }
+
+  // Users
+  async getUsers(): Promise<User[]> {
+    return Array.from(this.users.values()).sort((a, b) => 
+      b.createdAt.getTime() - a.createdAt.getTime()
+    );
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(u => u.username === username);
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const id = randomUUID();
+    const newUser: User = {
+      id,
+      username: user.username,
+      password: user.password,
+      fullName: user.fullName,
+      email: user.email || null,
+      phone: user.phone || null,
+      role: user.role || "employee",
+      permissions: user.permissions,
+      branchId: user.branchId || null,
+      active: user.active ?? true,
+      createdAt: new Date(),
+    };
+    this.users.set(id, newUser);
+    return newUser;
+  }
+
+  async updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined> {
+    const existing = this.users.get(id);
+    if (!existing) return undefined;
+
+    const updated: User = {
+      ...existing,
+      ...user,
+    };
+    this.users.set(id, updated);
+    return updated;
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    return this.users.delete(id);
+  }
+
+  // Invoices
+  async getInvoices(branchId?: string, startDate?: Date, endDate?: Date): Promise<Invoice[]> {
+    let invoices = Array.from(this.invoices.values());
+    
+    if (branchId) {
+      invoices = invoices.filter(i => i.branchId === branchId);
+    }
+    
+    if (startDate || endDate) {
+      invoices = invoices.filter(i => {
+        const invoiceDate = i.createdAt;
+        if (startDate && invoiceDate < startDate) return false;
+        if (endDate && invoiceDate > endDate) return false;
+        return true;
+      });
+    }
+    
+    return invoices.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async getInvoice(id: string): Promise<Invoice | undefined> {
+    return this.invoices.get(id);
+  }
+
+  async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
+    const id = randomUUID();
+    this.invoiceCounter++;
+    const invoiceNumber = `INV-${String(this.invoiceCounter).padStart(6, '0')}`;
+    
+    const newInvoice: Invoice = {
+      id,
+      invoiceNumber,
+      transactionId: invoice.transactionId || null,
+      orderId: invoice.orderId || null,
+      branchId: invoice.branchId || null,
+      customerName: invoice.customerName || null,
+      items: invoice.items,
+      subtotal: invoice.subtotal,
+      vatAmount: invoice.vatAmount,
+      total: invoice.total,
+      qrCode: invoice.qrCode || null,
+      pdfPath: invoice.pdfPath || null,
+      createdAt: new Date(),
+    };
+    this.invoices.set(id, newInvoice);
+    return newInvoice;
   }
 }
 

@@ -16,6 +16,7 @@ import Sales from "@/pages/sales";
 import Reports from "@/pages/reports";
 import Forecasting from "@/pages/forecasting";
 import Analysis from "@/pages/analysis";
+import Financial from "@/pages/financial";
 import POS from "@/pages/pos";
 import Branches from "@/pages/branches";
 import Orders from "@/pages/orders";
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/reports" component={Reports} />
       <Route path="/forecasting" component={Forecasting} />
       <Route path="/analysis" component={Analysis} />
+      <Route path="/financial" component={Financial} />
       <Route path="/pos" component={POS} />
       <Route path="/branches" component={Branches} />
       <Route path="/orders" component={Orders} />

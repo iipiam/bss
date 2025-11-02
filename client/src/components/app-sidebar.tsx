@@ -7,6 +7,7 @@ import {
   FileText,
   TrendingUp,
   BarChart3,
+  Receipt,
   ShoppingCart,
   Building2,
   ClipboardList,
@@ -46,6 +47,7 @@ const analytics = [
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "Forecasting", url: "/forecasting", icon: TrendingUp },
   { title: "Analysis", url: "/analysis", icon: BarChart3 },
+  { title: "Financial", url: "/financial", icon: Receipt },
 ];
 
 const system = [

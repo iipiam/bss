@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateZATCAInvoice } from "./invoice";
+import bcrypt from "bcrypt";
 import {
   insertBranchSchema,
   insertInventoryItemSchema,
@@ -11,6 +12,8 @@ import {
   insertTransactionSchema,
   insertSettingsSchema,
   insertProcurementSchema,
+  insertUserSchema,
+  insertInvoiceSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -390,6 +393,262 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Invoice generation error:", error);
       res.status(500).json({ error: "Failed to generate invoice" });
+    }
+  });
+
+  // Authentication
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ error: "Username and password required" });
+      }
+
+      const user = await storage.getUserByUsername(username);
+      
+      if (!user || !user.active) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      
+      if (!passwordMatch) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      // Store user in session
+      if (req.session) {
+        req.session.userId = user.id;
+        req.session.role = user.role;
+      }
+
+      // Return user without password
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  app.post("/api/auth/logout", async (req, res) => {
+    req.session?.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ error: "Logout failed" });
+      }
+      res.json({ message: "Logged out successfully" });
+    });
+  });
+
+  app.get("/api/auth/me", async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const user = await storage.getUser(req.session.userId);
+    
+    if (!user || !user.active) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const { password: _, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
+  });
+
+  // Users Management (Admin only)
+  app.get("/api/users", async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const currentUser = await storage.getUser(req.session.userId);
+    if (currentUser?.role !== "admin") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    const users = await storage.getUsers();
+    const usersWithoutPasswords = users.map(({ password: _, ...user }) => user);
+    res.json(usersWithoutPasswords);
+  });
+
+  app.get("/api/users/:id", async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const currentUser = await storage.getUser(req.session.userId);
+    if (currentUser?.role !== "admin") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    const user = await storage.getUser(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const { password: _, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
+  });
+
+  app.post("/api/users", async (req, res) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const currentUser = await storage.getUser(req.session.userId);
+      if (currentUser?.role !== "admin") {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const data = insertUserSchema.parse(req.body);
+      
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(data.username);
+      if (existingUser) {
+        return res.status(400).json({ error: "Username already exists" });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(data.password, 10);
+      const userWithHashedPassword = { ...data, password: hashedPassword };
+
+      const user = await storage.createUser(userWithHashedPassword);
+      const { password: _, ...userWithoutPassword } = user;
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      console.error("Create user error:", error);
+      res.status(400).json({ error: "Invalid user data" });
+    }
+  });
+
+  app.patch("/api/users/:id", async (req, res) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const currentUser = await storage.getUser(req.session.userId);
+      if (currentUser?.role !== "admin") {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const { password, ...updateData } = req.body;
+      
+      // If password is being updated, hash it
+      if (password) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        updateData.password = hashedPassword;
+      }
+
+      const user = await storage.updateUser(req.params.id, updateData);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Update user error:", error);
+      res.status(400).json({ error: "Invalid user data" });
+    }
+  });
+
+  app.delete("/api/users/:id", async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const currentUser = await storage.getUser(req.session.userId);
+    if (currentUser?.role !== "admin") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    // Prevent deleting own account
+    if (req.params.id === req.session.userId) {
+      return res.status(400).json({ error: "Cannot delete your own account" });
+    }
+
+    const success = await storage.deleteUser(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(204).send();
+  });
+
+  // Financial Analytics
+  app.get("/api/analytics/financial", async (req, res) => {
+    const { period, year } = req.query;
+    
+    const transactions = await storage.getTransactions();
+    const invoices = await storage.getInvoices();
+    
+    // Calculate monthly data
+    const monthlyData = Array.from({ length: 12 }, (_, i) => {
+      const month = new Date(Number(year) || new Date().getFullYear(), i, 1);
+      const monthTransactions = transactions.filter(t => {
+        const txDate = t.createdAt;
+        return txDate.getMonth() === i && txDate.getFullYear() === month.getFullYear();
+      });
+      
+      const totalRevenue = monthTransactions.reduce((sum, t) => sum + parseFloat(t.total), 0);
+      const vatCollected = monthTransactions.reduce((sum, t) => sum + parseFloat(t.tax), 0);
+      
+      return {
+        month: month.toLocaleString('en-US', { month: 'short' }),
+        revenue: totalRevenue.toFixed(2),
+        vat: vatCollected.toFixed(2),
+        transactions: monthTransactions.length,
+      };
+    });
+    
+    // Calculate yearly totals
+    const yearlyRevenue = transactions.reduce((sum, t) => sum + parseFloat(t.total), 0);
+    const yearlyVAT = transactions.reduce((sum, t) => sum + parseFloat(t.tax), 0);
+    
+    res.json({
+      monthly: monthlyData,
+      yearly: {
+        revenue: yearlyRevenue.toFixed(2),
+        vat: yearlyVAT.toFixed(2),
+        transactions: transactions.length,
+        invoices: invoices.length,
+      },
+    });
+  });
+
+  // Invoices
+  app.get("/api/invoices", async (req, res) => {
+    const { branchId, startDate, endDate } = req.query;
+    
+    const start = startDate ? new Date(startDate as string) : undefined;
+    const end = endDate ? new Date(endDate as string) : undefined;
+    
+    const invoices = await storage.getInvoices(
+      branchId as string | undefined,
+      start,
+      end
+    );
+    res.json(invoices);
+  });
+
+  app.get("/api/invoices/:id", async (req, res) => {
+    const invoice = await storage.getInvoice(req.params.id);
+    if (!invoice) {
+      return res.status(404).json({ error: "Invoice not found" });
+    }
+    res.json(invoice);
+  });
+
+  app.post("/api/invoices", async (req, res) => {
+    try {
+      const data = insertInvoiceSchema.parse(req.body);
+      const invoice = await storage.createInvoice(data);
+      res.status(201).json(invoice);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid invoice data" });
     }
   });
 

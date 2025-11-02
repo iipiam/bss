@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Search, Edit } from "lucide-react";
+import { Plus, Search, Edit, UtensilsCrossed } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -73,7 +73,7 @@ export default function Menu() {
           <Card key={item.id} className="overflow-hidden" data-testid={`card-menu-${item.id}`}>
             <CardHeader className="p-0">
               <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                <div className="text-6xl">🍽️</div>
+                <UtensilsCrossed className="h-16 w-16 text-primary/40" />
               </div>
             </CardHeader>
             <CardContent className="p-4">
@@ -84,7 +84,19 @@ export default function Menu() {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mb-3">{item.description}</p>
-              <p className="text-2xl font-bold font-mono text-primary">{parseFloat(item.price).toFixed(2)} SAR</p>
+              <div className="space-y-1">
+                <p className="text-2xl font-bold font-mono text-primary">{parseFloat(item.price).toFixed(2)} SAR</p>
+                <div className="text-xs text-muted-foreground font-mono">
+                  <div className="flex justify-between">
+                    <span>Base Price:</span>
+                    <span>{parseFloat(item.basePrice).toFixed(2)} SAR</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>VAT (15%):</span>
+                    <span>+{parseFloat(item.vatAmount).toFixed(2)} SAR</span>
+                  </div>
+                </div>
+              </div>
             </CardContent>
             <CardFooter className="p-4 pt-0 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">

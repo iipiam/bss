@@ -39,7 +39,9 @@ export const menuItems = pgTable("menu_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   category: text("category").notNull(),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(), // VAT-inclusive price (15% Saudi VAT)
+  basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(), // Price before VAT
+  vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).notNull(), // VAT amount (15%)
   description: text("description"),
   available: boolean("available").notNull().default(true),
   imageUrl: text("image_url"),
@@ -147,3 +149,60 @@ export const procurement = pgTable("procurement", {
 export const insertProcurementSchema = createInsertSchema(procurement).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertProcurement = z.infer<typeof insertProcurementSchema>;
 export type Procurement = typeof procurement.$inferSelect;
+
+// Users
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(), // hashed password
+  fullName: text("full_name").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  role: text("role").notNull().default("employee"), // "admin" or "employee"
+  permissions: jsonb("permissions").notNull().$type<{
+    dashboard: boolean;
+    inventory: boolean;
+    menu: boolean;
+    recipes: boolean;
+    branches: boolean;
+    procurement: boolean;
+    pos: boolean;
+    orders: boolean;
+    kitchen: boolean;
+    sales: boolean;
+    reports: boolean;
+    forecasting: boolean;
+    analysis: boolean;
+    settings: boolean;
+    financial: boolean;
+    employees: boolean;
+  }>(),
+  branchId: varchar("branch_id").references(() => branches.id),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
+// Invoices (ZATCA-compliant)
+export const invoices = pgTable("invoices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  invoiceNumber: text("invoice_number").notNull().unique(),
+  transactionId: varchar("transaction_id").references(() => transactions.id),
+  orderId: varchar("order_id").references(() => orders.id),
+  branchId: varchar("branch_id").references(() => branches.id),
+  customerName: text("customer_name"),
+  items: jsonb("items").notNull().$type<Array<{ name: string; quantity: number; basePrice: number; vatAmount: number; total: number }>>(),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).notNull(),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  qrCode: text("qr_code"), // Base64 encoded QR code
+  pdfPath: text("pdf_path"), // Path to generated PDF
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertInvoiceSchema = createInsertSchema(invoices).omit({ id: true, createdAt: true });
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+export type Invoice = typeof invoices.$inferSelect;
