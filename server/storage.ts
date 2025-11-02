@@ -1,37 +1,316 @@
-import { type User, type InsertUser } from "@shared/schema";
+import {
+  type Branch,
+  type InsertBranch,
+  type InventoryItem,
+  type InsertInventoryItem,
+  type MenuItem,
+  type InsertMenuItem,
+  type Recipe,
+  type InsertRecipe,
+  type Order,
+  type InsertOrder,
+  type Transaction,
+  type InsertTransaction,
+} from "@shared/schema";
 import { randomUUID } from "crypto";
 
-// modify the interface with any CRUD methods
-// you might need
-
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // Branches
+  getBranches(): Promise<Branch[]>;
+  getBranch(id: string): Promise<Branch | undefined>;
+  createBranch(branch: InsertBranch): Promise<Branch>;
+  updateBranch(id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined>;
+
+  // Inventory
+  getInventoryItems(branchId?: string): Promise<InventoryItem[]>;
+  getInventoryItem(id: string): Promise<InventoryItem | undefined>;
+  createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem>;
+  updateInventoryItem(id: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined>;
+  deleteInventoryItem(id: string): Promise<boolean>;
+
+  // Menu
+  getMenuItems(): Promise<MenuItem[]>;
+  getMenuItem(id: string): Promise<MenuItem | undefined>;
+  createMenuItem(item: InsertMenuItem): Promise<MenuItem>;
+  updateMenuItem(id: string, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined>;
+  deleteMenuItem(id: string): Promise<boolean>;
+
+  // Recipes
+  getRecipes(): Promise<Recipe[]>;
+  getRecipe(id: string): Promise<Recipe | undefined>;
+  createRecipe(recipe: InsertRecipe): Promise<Recipe>;
+  updateRecipe(id: string, recipe: Partial<InsertRecipe>): Promise<Recipe | undefined>;
+  deleteRecipe(id: string): Promise<boolean>;
+
+  // Orders
+  getOrders(branchId?: string, status?: string): Promise<Order[]>;
+  getOrder(id: string): Promise<Order | undefined>;
+  createOrder(order: InsertOrder): Promise<Order>;
+  updateOrder(id: string, order: Partial<InsertOrder>): Promise<Order | undefined>;
+
+  // Transactions
+  getTransactions(branchId?: string, startDate?: Date, endDate?: Date): Promise<Transaction[]>;
+  getTransaction(id: string): Promise<Transaction | undefined>;
+  createTransaction(transaction: InsertTransaction): Promise<Transaction>;
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<string, User>;
+  private branches: Map<string, Branch>;
+  private inventoryItems: Map<string, InventoryItem>;
+  private menuItems: Map<string, MenuItem>;
+  private recipes: Map<string, Recipe>;
+  private orders: Map<string, Order>;
+  private transactions: Map<string, Transaction>;
+  private orderCounter: number;
+  private transactionCounter: number;
 
   constructor() {
-    this.users = new Map();
+    this.branches = new Map();
+    this.inventoryItems = new Map();
+    this.menuItems = new Map();
+    this.recipes = new Map();
+    this.orders = new Map();
+    this.transactions = new Map();
+    this.orderCounter = 12840;
+    this.transactionCounter = 12840;
+    this.seedData();
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  private seedData() {
+    // Seed branches
+    const branch1: Branch = {
+      id: "1",
+      name: "Main Branch - Riyadh",
+      location: "King Fahd Road, Riyadh",
+      phone: "+966 11 234 5678",
+      manager: "Ahmed Al-Rashid",
+      staff: 24,
+      status: "Active",
+    };
+    const branch2: Branch = {
+      id: "2",
+      name: "Al Khobar Branch",
+      location: "Corniche Road, Al Khobar",
+      phone: "+966 13 345 6789",
+      manager: "Mohammed Al-Qahtani",
+      staff: 18,
+      status: "Active",
+    };
+    const branch3: Branch = {
+      id: "3",
+      name: "Jeddah Branch",
+      location: "Tahlia Street, Jeddah",
+      phone: "+966 12 456 7890",
+      manager: "Khalid Al-Maliki",
+      staff: 20,
+      status: "Active",
+    };
+    this.branches.set("1", branch1);
+    this.branches.set("2", branch2);
+    this.branches.set("3", branch3);
+
+    // Seed inventory items
+    const inventoryData = [
+      { name: "Tomatoes", category: "Vegetables", quantity: "25", unit: "kg", supplier: "Fresh Farm Co.", status: "In Stock", branchId: "1" },
+      { name: "Mozzarella Cheese", category: "Dairy", quantity: "15", unit: "kg", supplier: "Dairy Delight", status: "In Stock", branchId: "1" },
+      { name: "Chicken Breast", category: "Meat", quantity: "30", unit: "kg", supplier: "Meat Masters", status: "In Stock", branchId: "1" },
+      { name: "Flour", category: "Grains", quantity: "50", unit: "kg", supplier: "Grain Supply", status: "In Stock", branchId: "1" },
+      { name: "Olive Oil", category: "Oils", quantity: "8", unit: "L", supplier: "Mediterranean Imports", status: "Low Stock", branchId: "1" },
+    ];
+    inventoryData.forEach((item, idx) => {
+      const invItem: InventoryItem = { id: `inv-${idx + 1}`, ...item };
+      this.inventoryItems.set(invItem.id, invItem);
+    });
+
+    // Seed menu items
+    const menuData = [
+      { name: "Margherita Pizza", category: "Pizza", price: "50", description: "Classic tomato and mozzarella", available: true, imageUrl: null },
+      { name: "Pepperoni Pizza", category: "Pizza", price: "65", description: "Tomato, mozzarella, and pepperoni", available: true, imageUrl: null },
+      { name: "Chicken Shawarma", category: "Sandwiches", price: "40", description: "Grilled chicken with tahini", available: true, imageUrl: null },
+      { name: "Beef Burger", category: "Burgers", price: "60", description: "Angus beef with cheese", available: true, imageUrl: null },
+      { name: "Caesar Salad", category: "Salads", price: "40", description: "Fresh romaine with Caesar dressing", available: true, imageUrl: null },
+    ];
+    menuData.forEach((item, idx) => {
+      const menuItem: MenuItem = { id: `menu-${idx + 1}`, ...item };
+      this.menuItems.set(menuItem.id, menuItem);
+    });
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  // Branches
+  async getBranches(): Promise<Branch[]> {
+    return Array.from(this.branches.values());
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async getBranch(id: string): Promise<Branch | undefined> {
+    return this.branches.get(id);
+  }
+
+  async createBranch(branch: InsertBranch): Promise<Branch> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+    const newBranch: Branch = { id, ...branch };
+    this.branches.set(id, newBranch);
+    return newBranch;
+  }
+
+  async updateBranch(id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined> {
+    const existing = this.branches.get(id);
+    if (!existing) return undefined;
+    const updated = { ...existing, ...branch };
+    this.branches.set(id, updated);
+    return updated;
+  }
+
+  // Inventory
+  async getInventoryItems(branchId?: string): Promise<InventoryItem[]> {
+    const items = Array.from(this.inventoryItems.values());
+    if (branchId) {
+      return items.filter(item => item.branchId === branchId);
+    }
+    return items;
+  }
+
+  async getInventoryItem(id: string): Promise<InventoryItem | undefined> {
+    return this.inventoryItems.get(id);
+  }
+
+  async createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem> {
+    const id = randomUUID();
+    const newItem: InventoryItem = { id, ...item };
+    this.inventoryItems.set(id, newItem);
+    return newItem;
+  }
+
+  async updateInventoryItem(id: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined> {
+    const existing = this.inventoryItems.get(id);
+    if (!existing) return undefined;
+    const updated = { ...existing, ...item };
+    this.inventoryItems.set(id, updated);
+    return updated;
+  }
+
+  async deleteInventoryItem(id: string): Promise<boolean> {
+    return this.inventoryItems.delete(id);
+  }
+
+  // Menu
+  async getMenuItems(): Promise<MenuItem[]> {
+    return Array.from(this.menuItems.values());
+  }
+
+  async getMenuItem(id: string): Promise<MenuItem | undefined> {
+    return this.menuItems.get(id);
+  }
+
+  async createMenuItem(item: InsertMenuItem): Promise<MenuItem> {
+    const id = randomUUID();
+    const newItem: MenuItem = { id, ...item };
+    this.menuItems.set(id, newItem);
+    return newItem;
+  }
+
+  async updateMenuItem(id: string, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined> {
+    const existing = this.menuItems.get(id);
+    if (!existing) return undefined;
+    const updated = { ...existing, ...item };
+    this.menuItems.set(id, updated);
+    return updated;
+  }
+
+  async deleteMenuItem(id: string): Promise<boolean> {
+    return this.menuItems.delete(id);
+  }
+
+  // Recipes
+  async getRecipes(): Promise<Recipe[]> {
+    return Array.from(this.recipes.values());
+  }
+
+  async getRecipe(id: string): Promise<Recipe | undefined> {
+    return this.recipes.get(id);
+  }
+
+  async createRecipe(recipe: InsertRecipe): Promise<Recipe> {
+    const id = randomUUID();
+    const newRecipe: Recipe = { id, ...recipe };
+    this.recipes.set(id, newRecipe);
+    return newRecipe;
+  }
+
+  async updateRecipe(id: string, recipe: Partial<InsertRecipe>): Promise<Recipe | undefined> {
+    const existing = this.recipes.get(id);
+    if (!existing) return undefined;
+    const updated = { ...existing, ...recipe };
+    this.recipes.set(id, updated);
+    return updated;
+  }
+
+  async deleteRecipe(id: string): Promise<boolean> {
+    return this.recipes.delete(id);
+  }
+
+  // Orders
+  async getOrders(branchId?: string, status?: string): Promise<Order[]> {
+    let orders = Array.from(this.orders.values());
+    if (branchId) {
+      orders = orders.filter(order => order.branchId === branchId);
+    }
+    if (status) {
+      orders = orders.filter(order => order.status === status);
+    }
+    return orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getOrder(id: string): Promise<Order | undefined> {
+    return this.orders.get(id);
+  }
+
+  async createOrder(order: InsertOrder): Promise<Order> {
+    const id = randomUUID();
+    const newOrder: Order = {
+      id,
+      ...order,
+      createdAt: new Date(),
+    };
+    this.orders.set(id, newOrder);
+    return newOrder;
+  }
+
+  async updateOrder(id: string, order: Partial<InsertOrder>): Promise<Order | undefined> {
+    const existing = this.orders.get(id);
+    if (!existing) return undefined;
+    const updated = { ...existing, ...order };
+    this.orders.set(id, updated);
+    return updated;
+  }
+
+  // Transactions
+  async getTransactions(branchId?: string, startDate?: Date, endDate?: Date): Promise<Transaction[]> {
+    let transactions = Array.from(this.transactions.values());
+    if (branchId) {
+      transactions = transactions.filter(t => t.branchId === branchId);
+    }
+    if (startDate) {
+      transactions = transactions.filter(t => new Date(t.createdAt) >= startDate);
+    }
+    if (endDate) {
+      transactions = transactions.filter(t => new Date(t.createdAt) <= endDate);
+    }
+    return transactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getTransaction(id: string): Promise<Transaction | undefined> {
+    return this.transactions.get(id);
+  }
+
+  async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
+    const id = randomUUID();
+    const newTransaction: Transaction = {
+      id,
+      ...transaction,
+      createdAt: new Date(),
+    };
+    this.transactions.set(id, newTransaction);
+    return newTransaction;
   }
 }
 
