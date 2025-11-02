@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, TrendingDown, DollarSign, Percent, Package, Calculator } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
@@ -11,29 +12,55 @@ const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"
 export default function Profitability() {
   const [period, setPeriod] = useState<string>("month");
 
-  const { data: menuItems = [] } = useQuery<MenuItem[]>({
+  const { data: menuItems = [], isLoading: isLoadingMenu } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu"],
   });
 
-  const { data: recipes = [] } = useQuery<Recipe[]>({
+  const { data: recipes = [], isLoading: isLoadingRecipes } = useQuery<Recipe[]>({
     queryKey: ["/api/recipes"],
   });
 
-  const { data: orders = [] } = useQuery<Order[]>({
+  const { data: orders = [], isLoading: isLoadingOrders } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
   });
 
-  // Calculate profit metrics
-  const calculateProfitability = () => {
+  const isLoading = isLoadingMenu || isLoadingRecipes || isLoadingOrders;
+
+  // Filter orders by period
+  const filteredOrders = useMemo(() => {
+    const now = new Date();
+    const cutoffDate = new Date();
+
+    switch (period) {
+      case "week":
+        cutoffDate.setDate(now.getDate() - 7);
+        break;
+      case "month":
+        cutoffDate.setMonth(now.getMonth() - 1);
+        break;
+      case "quarter":
+        cutoffDate.setMonth(now.getMonth() - 3);
+        break;
+      case "year":
+        cutoffDate.setFullYear(now.getFullYear() - 1);
+        break;
+    }
+
+    return orders.filter((order) => new Date(order.createdAt) >= cutoffDate);
+  }, [orders, period]);
+
+  // Calculate profit metrics using basePrice (pre-VAT)
+  const profitabilityData = useMemo(() => {
     const itemProfitability = menuItems.map((item) => {
       const recipe = recipes.find((r) => r.menuItemId === item.id);
       const cost = recipe ? parseFloat(recipe.cost) : 0;
-      const price = parseFloat(item.price);
-      const profit = price - cost;
-      const margin = price > 0 ? (profit / price) * 100 : 0;
+      // Use basePrice (pre-VAT) for accurate profit calculation
+      const basePrice = parseFloat(item.basePrice);
+      const profit = basePrice - cost;
+      const margin = basePrice > 0 ? (profit / basePrice) * 100 : 0;
 
-      // Calculate sales volume from orders
-      const itemSales = orders.filter((order) =>
+      // Calculate sales volume from filtered orders
+      const itemSales = filteredOrders.filter((order) =>
         order.items?.some((orderItem: any) => orderItem.id === item.id)
       );
       
@@ -42,14 +69,14 @@ export default function Profitability() {
         return sum + (orderItem?.quantity || 0);
       }, 0);
 
-      const totalRevenue = salesVolume * price;
+      const totalRevenue = salesVolume * basePrice;
       const totalProfit = salesVolume * profit;
 
       return {
         id: item.id,
         name: item.name,
         category: item.category,
-        price,
+        basePrice,
         cost,
         profit,
         margin,
@@ -60,9 +87,7 @@ export default function Profitability() {
     });
 
     return itemProfitability;
-  };
-
-  const profitabilityData = calculateProfitability();
+  }, [menuItems, recipes, filteredOrders]);
 
   // Overall metrics
   const totalRevenue = profitabilityData.reduce((sum, item) => sum + item.totalRevenue, 0);
@@ -108,7 +133,7 @@ export default function Profitability() {
         <div>
           <h1 className="text-3xl font-bold mb-2">Profitability Analysis</h1>
           <p className="text-muted-foreground">
-            Analyze profit margins, costs, and revenue by item and category
+            Analyze profit margins, costs, and revenue by item and category (pre-VAT)
           </p>
         </div>
         <Select value={period} onValueChange={setPeriod}>
@@ -124,8 +149,40 @@ export default function Profitability() {
         </Select>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      {isLoading ? (
+        <>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-4" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-8 w-32 mb-2" />
+                  <Skeleton className="h-3 w-40" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="grid gap-6 lg:grid-cols-2">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-4 w-64" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-[300px] w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Overview Cards */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card data-testid="card-total-revenue">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -343,7 +400,7 @@ export default function Profitability() {
                     <tr key={item.id} className="border-b" data-testid={`row-profit-${item.id}`}>
                       <td className="p-3 font-medium">{item.name}</td>
                       <td className="p-3 text-muted-foreground">{item.category}</td>
-                      <td className="p-3 text-right font-mono">{item.price.toFixed(2)}</td>
+                      <td className="p-3 text-right font-mono">{item.basePrice.toFixed(2)}</td>
                       <td className="p-3 text-right font-mono text-red-600 dark:text-red-500">
                         {item.cost.toFixed(2)}
                       </td>
@@ -374,6 +431,8 @@ export default function Profitability() {
           </div>
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
   );
 }
