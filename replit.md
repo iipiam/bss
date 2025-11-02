@@ -6,6 +6,15 @@ RestoPOS is a comprehensive restaurant management system tailored for Saudi Arab
 
 ## Recent Changes (November 2, 2025)
 
+### QR Code Invoice Viewer
+Enhanced ZATCA invoice QR codes to display full invoice when scanned:
+- **Smart QR Codes**: QR codes now contain URLs pointing to public invoice viewer
+- **Public Invoice Page**: Scannable QR codes open professional HTML invoice page (no login required)
+- **Complete Invoice Display**: Shows company details, invoice number, items, VAT breakdown, totals
+- **Mobile-Friendly**: Responsive design optimized for mobile devices and tablets
+- **Download Option**: Direct PDF download button on public invoice page
+- **ZATCA Compliant**: Meets Saudi Arabian e-invoicing requirements
+
 ### PDF Export for Financial Statements & ZATCA Invoices
 Added professional PDF export capabilities:
 - **Financial Statement PDF**: Well-designed PDF export with company header, annual summary, monthly breakdown table, page numbers, and footer
