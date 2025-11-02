@@ -5,20 +5,44 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Search, Edit } from "lucide-react";
-
-const menuItems = [
-  { id: 1, name: "Margherita Pizza", category: "Pizza", price: 50, available: true, description: "Classic tomato and mozzarella" },
-  { id: 2, name: "Chicken Shawarma", category: "Sandwiches", price: 40, available: true, description: "Grilled chicken with tahini" },
-  { id: 3, name: "Beef Burger", category: "Burgers", price: 60, available: true, description: "Angus beef with cheese" },
-  { id: 4, name: "Caesar Salad", category: "Salads", price: 40, available: true, description: "Fresh romaine with Caesar dressing" },
-  { id: 5, name: "Pepperoni Pizza", category: "Pizza", price: 65, available: false, description: "Tomato, mozzarella, and pepperoni" },
-  { id: 6, name: "Falafel Wrap", category: "Sandwiches", price: 35, available: true, description: "Crispy falafel with vegetables" },
-  { id: 7, name: "Grilled Salmon", category: "Main Course", price: 95, available: true, description: "Fresh salmon with lemon butter" },
-  { id: 8, name: "Greek Salad", category: "Salads", price: 45, available: true, description: "Feta cheese and olives" },
-];
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import type { MenuItem } from "@shared/schema";
 
 export default function Menu() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
+
+  const { data: menuItems = [], isLoading } = useQuery<MenuItem[]>({
+    queryKey: ["/api/menu"],
+  });
+
+  const toggleAvailabilityMutation = useMutation({
+    mutationFn: async ({ id, available }: { id: string; available: boolean }) => {
+      await apiRequest("PATCH", `/api/menu/${id}`, { available });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
+      toast({
+        title: "Menu item updated",
+        description: "Availability status has been changed",
+      });
+    },
+  });
+
+  const filteredItems = menuItems.filter(item =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (isLoading) {
+    return (
+      <div className="p-8">
+        <h1 className="text-3xl font-bold mb-2">Menu Management</h1>
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 space-y-6">
@@ -45,7 +69,7 @@ export default function Menu() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {menuItems.map((item) => (
+        {filteredItems.map((item) => (
           <Card key={item.id} className="overflow-hidden" data-testid={`card-menu-${item.id}`}>
             <CardHeader className="p-0">
               <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
@@ -60,12 +84,15 @@ export default function Menu() {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mb-3">{item.description}</p>
-              <p className="text-2xl font-bold font-mono text-primary">{item.price} SAR</p>
+              <p className="text-2xl font-bold font-mono text-primary">{parseFloat(item.price).toFixed(2)} SAR</p>
             </CardContent>
             <CardFooter className="p-4 pt-0 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Switch
                   checked={item.available}
+                  onCheckedChange={(checked) =>
+                    toggleAvailabilityMutation.mutate({ id: item.id, available: checked })
+                  }
                   data-testid={`switch-available-${item.id}`}
                 />
                 <span className="text-sm">{item.available ? "Available" : "Unavailable"}</span>

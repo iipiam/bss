@@ -1,49 +1,105 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Minus, X, Search, Receipt } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import type { MenuItem } from "@shared/schema";
+
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
 
 const categories = ["All", "Pizza", "Burgers", "Sandwiches", "Salads", "Drinks"];
 
-const menuItems = [
-  { id: 1, name: "Margherita Pizza", category: "Pizza", price: 50 },
-  { id: 2, name: "Pepperoni Pizza", category: "Pizza", price: 65 },
-  { id: 3, name: "Beef Burger", category: "Burgers", price: 60 },
-  { id: 4, name: "Chicken Burger", category: "Burgers", price: 55 },
-  { id: 5, name: "Chicken Shawarma", category: "Sandwiches", price: 40 },
-  { id: 6, name: "Falafel Wrap", category: "Sandwiches", price: 35 },
-  { id: 7, name: "Caesar Salad", category: "Salads", price: 40 },
-  { id: 8, name: "Greek Salad", category: "Salads", price: 45 },
-  { id: 9, name: "Coca Cola", category: "Drinks", price: 10 },
-  { id: 10, name: "Fresh Juice", category: "Drinks", price: 15 },
-];
-
 export default function POS() {
-  const [cartItems, setCartItems] = useState<Array<{ id: number; name: string; price: number; quantity: number }>>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [orderType, setOrderType] = useState("Dine-In");
+  const { toast } = useToast();
 
-  const addToCart = (item: typeof menuItems[0]) => {
+  const { data: menuItems = [], isLoading } = useQuery<MenuItem[]>({
+    queryKey: ["/api/menu"],
+  });
+
+  const createOrderMutation = useMutation({
+    mutationFn: async (orderData: any) => {
+      const order = await apiRequest("POST", "/api/orders", orderData);
+      return order;
+    },
+    onSuccess: async (order: any) => {
+      const transaction = {
+        transactionId: `TXN-${Date.now()}`,
+        orderId: order.id,
+        branchId: "1",
+        itemCount: cartItems.reduce((sum, item) => sum + item.quantity, 0),
+        subtotal: subtotal.toFixed(2),
+        tax: tax.toFixed(2),
+        total: total.toFixed(2),
+        paymentMethod: "Cash",
+      };
+      await apiRequest("POST", "/api/transactions", transaction);
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
+      
+      toast({
+        title: "Order created successfully",
+        description: `Order #${order.orderNumber} has been placed`,
+      });
+      
+      clearCart();
+      
+      try {
+        const response = await fetch("/api/pos/generate-invoice", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: order.id }),
+        });
+        
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `invoice-${order.orderNumber}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        }
+      } catch (error) {
+        console.error("Invoice generation failed:", error);
+      }
+    },
+  });
+
+  const addToCart = (item: MenuItem) => {
     const existing = cartItems.find(ci => ci.id === item.id);
     if (existing) {
       setCartItems(cartItems.map(ci =>
         ci.id === item.id ? { ...ci, quantity: ci.quantity + 1 } : ci
       ));
     } else {
-      setCartItems([...cartItems, { ...item, quantity: 1 }]);
+      setCartItems([...cartItems, { id: item.id, name: item.name, price: parseFloat(item.price), quantity: 1 }]);
     }
   };
 
-  const updateQuantity = (id: number, delta: number) => {
+  const updateQuantity = (id: string, delta: number) => {
     setCartItems(cartItems.map(item =>
       item.id === id ? { ...item, quantity: Math.max(0, item.quantity + delta) } : item
     ).filter(item => item.quantity > 0));
   };
 
-  const removeItem = (id: number) => {
+  const removeItem = (id: string) => {
     setCartItems(cartItems.filter(item => item.id !== id));
   };
 
@@ -55,15 +111,47 @@ export default function POS() {
   const tax = subtotal * 0.15;
   const total = subtotal + tax;
 
+  const availableMenuItems = menuItems.filter(item => item.available);
   const filteredItems = selectedCategory === "All"
-    ? menuItems
-    : menuItems.filter(item => item.category === selectedCategory);
+    ? availableMenuItems
+    : availableMenuItems.filter(item => item.category === selectedCategory);
 
   const handleCheckout = () => {
-    console.log("Processing checkout with ZATCA-compliant invoice...");
-    alert(`Checkout complete!\nTotal: ${total.toFixed(2)} SAR\nInvoice will be generated with QR code and VAT details.`);
-    clearCart();
+    if (cartItems.length === 0) {
+      toast({
+        title: "Cart is empty",
+        description: "Add items to the cart before checkout",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const orderData = {
+      orderNumber: `ORD-${Date.now()}`,
+      branchId: "1",
+      orderType,
+      items: cartItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      subtotal: subtotal.toFixed(2),
+      tax: tax.toFixed(2),
+      total: total.toFixed(2),
+      status: "Pending",
+    };
+
+    createOrderMutation.mutate(orderData);
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Loading menu...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex">
@@ -106,7 +194,7 @@ export default function POS() {
               </CardHeader>
               <CardContent className="p-4 pt-0">
                 <p className="font-semibold mb-1 line-clamp-2">{item.name}</p>
-                <p className="text-xl font-bold font-mono text-primary">{item.price} SAR</p>
+                <p className="text-xl font-bold font-mono text-primary">{parseFloat(item.price).toFixed(2)} SAR</p>
               </CardContent>
             </Card>
           ))}
@@ -115,7 +203,14 @@ export default function POS() {
 
       <div className="w-96 bg-card border-l flex flex-col">
         <div className="p-6 border-b">
-          <h2 className="text-2xl font-bold">Current Order</h2>
+          <h2 className="text-2xl font-bold mb-4">Current Order</h2>
+          <Tabs value={orderType} onValueChange={setOrderType}>
+            <TabsList className="w-full">
+              <TabsTrigger value="Dine-In" className="flex-1">Dine-In</TabsTrigger>
+              <TabsTrigger value="Takeout" className="flex-1">Takeout</TabsTrigger>
+              <TabsTrigger value="Delivery" className="flex-1">Delivery</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         <div className="flex-1 overflow-auto p-6">
@@ -132,7 +227,7 @@ export default function POS() {
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
                         <p className="font-semibold">{item.name}</p>
-                        <p className="text-sm text-muted-foreground font-mono">{item.price} SAR</p>
+                        <p className="text-sm text-muted-foreground font-mono">{item.price.toFixed(2)} SAR</p>
                       </div>
                       <Button
                         variant="ghost"
@@ -175,40 +270,39 @@ export default function POS() {
           )}
         </div>
 
-        <div className="p-6 border-t bg-background">
-          <div className="space-y-3 mb-4">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span className="font-mono font-semibold">{subtotal.toFixed(2)} SAR</span>
+        <div className="border-t p-6">
+          <div className="space-y-3 mb-6">
+            <div className="flex justify-between text-muted-foreground">
+              <span>Subtotal</span>
+              <span className="font-mono">{subtotal.toFixed(2)} SAR</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Tax (15%)</span>
-              <span className="font-mono font-semibold">{tax.toFixed(2)} SAR</span>
+            <div className="flex justify-between text-muted-foreground">
+              <span>Tax (15%)</span>
+              <span className="font-mono">{tax.toFixed(2)} SAR</span>
             </div>
             <Separator />
-            <div className="flex justify-between">
-              <span className="text-lg font-bold">Total</span>
-              <span className="text-2xl font-mono font-bold text-primary">{total.toFixed(2)} SAR</span>
+            <div className="flex justify-between text-xl font-bold">
+              <span>Total</span>
+              <span className="font-mono">{total.toFixed(2)} SAR</span>
             </div>
           </div>
-
-          <div className="space-y-2">
-            <Button
-              className="w-full h-12"
-              disabled={cartItems.length === 0}
-              onClick={handleCheckout}
-              data-testid="button-checkout"
-            >
-              Checkout & Print Invoice
-            </Button>
+          <div className="flex gap-2">
             <Button
               variant="outline"
-              className="w-full"
-              disabled={cartItems.length === 0}
+              className="flex-1"
               onClick={clearCart}
+              disabled={cartItems.length === 0}
               data-testid="button-clear-cart"
             >
-              Clear Cart
+              Clear
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={handleCheckout}
+              disabled={cartItems.length === 0 || createOrderMutation.isPending}
+              data-testid="button-checkout"
+            >
+              {createOrderMutation.isPending ? "Processing..." : "Checkout"}
             </Button>
           </div>
         </div>

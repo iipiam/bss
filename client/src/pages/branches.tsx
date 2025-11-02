@@ -2,44 +2,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Plus, Edit, MapPin, Phone, Users } from "lucide-react";
-
-const branches = [
-  {
-    id: 1,
-    name: "Main Branch",
-    location: "King Fahd Road, Riyadh",
-    phone: "+966 11 234 5678",
-    manager: "Ahmed Al-Rashid",
-    staff: 24,
-    status: "Active",
-    todaySales: 6850,
-    todayOrders: 47,
-  },
-  {
-    id: 2,
-    name: "Al Khobar Branch",
-    location: "Corniche Road, Al Khobar",
-    phone: "+966 13 345 6789",
-    manager: "Mohammed Al-Qahtani",
-    staff: 18,
-    status: "Active",
-    todaySales: 4920,
-    todayOrders: 35,
-  },
-  {
-    id: 3,
-    name: "Jeddah Branch",
-    location: "Tahlia Street, Jeddah",
-    phone: "+966 12 456 7890",
-    manager: "Khalid Al-Maliki",
-    staff: 20,
-    status: "Active",
-    todaySales: 5340,
-    todayOrders: 38,
-  },
-];
+import { useQuery } from "@tanstack/react-query";
+import type { Branch } from "@shared/schema";
 
 export default function Branches() {
+  const { data: branches = [], isLoading } = useQuery<Branch[]>({
+    queryKey: ["/api/branches"],
+  });
+
+  if (isLoading) {
+    return (
+      <div className="p-8">
+        <h1 className="text-3xl font-bold mb-2">Branch Management</h1>
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
@@ -106,19 +85,27 @@ export default function Branches() {
                     <Users className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
                       <p className="text-sm text-muted-foreground">Staff Count</p>
-                      <p className="font-medium font-mono">{branch.staff} employees</p>
+                      <p className="font-medium font-mono">{branch.staff}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-md bg-secondary/30">
-                  <p className="text-sm text-muted-foreground mb-1">Today's Sales</p>
-                  <p className="text-2xl font-bold font-mono text-primary">{branch.todaySales.toLocaleString()} SAR</p>
+                <div>
+                  <Card className="bg-muted/50">
+                    <CardContent className="p-4">
+                      <p className="text-sm text-muted-foreground mb-1">Today's Sales</p>
+                      <p className="text-2xl font-bold font-mono">-</p>
+                    </CardContent>
+                  </Card>
                 </div>
 
-                <div className="p-4 rounded-md bg-secondary/30">
-                  <p className="text-sm text-muted-foreground mb-1">Today's Orders</p>
-                  <p className="text-2xl font-bold font-mono">{branch.todayOrders}</p>
+                <div>
+                  <Card className="bg-muted/50">
+                    <CardContent className="p-4">
+                      <p className="text-sm text-muted-foreground mb-1">Today's Orders</p>
+                      <p className="text-2xl font-bold font-mono">-</p>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
             </CardContent>

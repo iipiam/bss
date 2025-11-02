@@ -19,20 +19,52 @@ import {
 } from "@/components/ui/select";
 import { Plus, Search, Edit, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-const inventoryItems = [
-  { id: 1, name: "Tomatoes", category: "Vegetables", quantity: 25, unit: "kg", supplier: "Fresh Farm Co.", status: "In Stock" },
-  { id: 2, name: "Mozzarella Cheese", category: "Dairy", quantity: 15, unit: "kg", supplier: "Dairy Delight", status: "In Stock" },
-  { id: 3, name: "Chicken Breast", category: "Meat", quantity: 30, unit: "kg", supplier: "Meat Masters", status: "In Stock" },
-  { id: 4, name: "Flour", category: "Grains", quantity: 50, unit: "kg", supplier: "Grain Supply", status: "In Stock" },
-  { id: 5, name: "Olive Oil", category: "Oils", quantity: 8, unit: "L", supplier: "Mediterranean Imports", status: "Low Stock" },
-  { id: 6, name: "Lettuce", category: "Vegetables", quantity: 12, unit: "kg", supplier: "Fresh Farm Co.", status: "In Stock" },
-  { id: 7, name: "Beef", category: "Meat", quantity: 20, unit: "kg", supplier: "Meat Masters", status: "In Stock" },
-  { id: 8, name: "Onions", category: "Vegetables", quantity: 18, unit: "kg", supplier: "Fresh Farm Co.", status: "In Stock" },
-];
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import type { InventoryItem } from "@shared/schema";
 
 export default function Inventory() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const { toast } = useToast();
+
+  const { data: inventoryItems = [], isLoading } = useQuery<InventoryItem[]>({
+    queryKey: ["/api/inventory"],
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/inventory/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      toast({
+        title: "Item deleted",
+        description: "Inventory item has been removed",
+      });
+    },
+  });
+
+  const filteredItems = inventoryItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === "all" || item.category.toLowerCase() === categoryFilter;
+    const matchesStatus = statusFilter === "all" || 
+      (statusFilter === "in-stock" && item.status === "In Stock") ||
+      (statusFilter === "low-stock" && item.status === "Low Stock") ||
+      (statusFilter === "out-of-stock" && item.status === "Out of Stock");
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
+  if (isLoading) {
+    return (
+      <div className="p-8">
+        <h1 className="text-3xl font-bold mb-2">Inventory Management</h1>
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 space-y-6">
@@ -59,7 +91,7 @@ export default function Inventory() {
               data-testid="input-search"
             />
           </div>
-          <Select defaultValue="all">
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-48" data-testid="select-category">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
@@ -72,7 +104,7 @@ export default function Inventory() {
               <SelectItem value="oils">Oils</SelectItem>
             </SelectContent>
           </Select>
-          <Select defaultValue="all">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-48" data-testid="select-status">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -98,11 +130,11 @@ export default function Inventory() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {inventoryItems.map((item) => (
+            {filteredItems.map((item) => (
               <TableRow key={item.id} data-testid={`row-item-${item.id}`}>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.category}</TableCell>
-                <TableCell className="font-mono">{item.quantity}</TableCell>
+                <TableCell className="font-mono">{parseFloat(item.quantity).toFixed(2)}</TableCell>
                 <TableCell>{item.unit}</TableCell>
                 <TableCell className="text-muted-foreground">{item.supplier}</TableCell>
                 <TableCell>
@@ -115,7 +147,12 @@ export default function Inventory() {
                     <Button variant="ghost" size="icon" data-testid={`button-edit-${item.id}`}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" data-testid={`button-delete-${item.id}`}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteMutation.mutate(item.id)}
+                      data-testid={`button-delete-${item.id}`}
+                    >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
