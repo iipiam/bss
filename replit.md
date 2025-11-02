@@ -178,6 +178,30 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 2025)
 
+### ZATCA Invoice System (COMPLETE - PRODUCTION READY)
+- **Invoice Generation**: ZATCA-compliant PDF invoices with TLV-encoded QR codes containing seller name, VAT number, timestamp, total amount, and VAT amount
+- **PDF Persistence**: Invoice PDFs saved to `/invoices` directory with static file serving for retrieval
+- **QR Code Storage**: Base64-encoded QR codes stored in invoice database records for compliance tracking
+- **POS Integration**: Automatic invoice creation and PDF generation on order checkout
+- **Invoice API**: Full CRUD operations for invoice management with `/api/invoices` endpoints
+- **Database Records**: Complete invoice metadata including line items, VAT breakdown, customer info, and PDF URLs
+- Technical Implementation:
+  - Modified `generateZATCAInvoice()` to return both `pdfBuffer` and `qrCode`
+  - Added filesystem operations to persist PDFs at `/invoices/{invoiceNumber}.pdf`
+  - Configured Express static file middleware for `/invoices` route
+  - Invoice records store QR codes for ZATCA verification and compliance auditing
+
+### User Management & Authentication (COMPLETE)
+- **Frontend**: Login page with username/password authentication
+- **Frontend**: First-run setup wizard for initial admin account creation
+- **Frontend**: Employee management UI with role assignment and permission controls
+- **Backend**: Session-based authentication with bcrypt password hashing (10 salt rounds)
+- **Backend**: User CRUD API with role-based access control (admin-only)
+- **Security**: Fixed double password hashing bug, secure cookie configuration, 24-hour sessions
+- **Testing**: End-to-end authentication flow verified via automated playwright tests
+- Granular permission system with boolean flags for each feature (dashboard, inventory, menu, POS, orders, kitchen, sales, reports, financial, employees)
+- **Pending**: Route protection based on user permissions
+
 ### Financial Statements Feature (COMPLETE)
 - Added `/api/analytics/financial` endpoint providing monthly and yearly revenue analytics with VAT breakdown
 - Created Financial Statements page with interactive charts showing revenue trends over time
@@ -191,19 +215,11 @@ Preferred communication style: Simple, everyday language.
 - All menu items automatically calculate VAT based on base price
 - Compliant with Saudi Arabian tax regulations requiring VAT visibility
 
-### User Management & Authentication (BACKEND COMPLETE)
-- Implemented comprehensive user schema with flexible role system (admin/employee)
-- Created granular permission system with boolean flags for each feature area
-- Built authentication API with login, logout, and session verification endpoints
-- Added user CRUD operations accessible only to admin users
-- Configured express-session middleware with secure cookies and 24-hour session expiration
-- Implemented bcrypt password hashing for secure credential storage
-- **Pending**: Frontend login page, employee management UI, route protection based on permissions
-
 ### Security Improvements
 - Removed plaintext admin password from seed data
 - Configured secure session cookies (httpOnly, secure in production)
 - Implemented proper password hashing for all user account creation
+- Fixed authentication bug: removed double password hashing (both route and storage were hashing)
 - Session-based authentication prevents CSRF attacks and simplifies client implementation
 
 ### Design Compliance
