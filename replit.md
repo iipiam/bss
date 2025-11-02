@@ -6,6 +6,15 @@ RestoPOS is a comprehensive restaurant management system tailored for Saudi Arab
 
 ## Recent Changes (November 2, 2025)
 
+### Inventory Management CRUD & Enhanced Exports
+Added complete inventory management and expanded export capabilities:
+- **Inventory CRUD**: Full create/edit/delete operations for inventory items with smart numeric validation
+- **Form Validation**: Quantity field uses numeric validation (z.coerce.number().positive()) with proper type conversion
+- **Error Handling**: All mutations include onError callbacks with descriptive toast messages
+- **Profitability Export**: Export profitability analysis data to Excel (filtered by time period)
+- **Financial Export**: Export financial statements to Excel (monthly or yearly, filtered by year)
+- **Smart Dialog Management**: Dialog state properly manages create/edit modes with form reset
+
 ### Menu Item Edit & Delete Functionality
 Added full CRUD operations for menu items:
 - **Edit Menu Items**: Click edit button to modify name, description, category, and base price
