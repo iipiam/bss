@@ -55,6 +55,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/branches/:id", async (req, res) => {
+    const success = await storage.deleteBranch(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Branch not found" });
+    }
+    res.status(204).send();
+  });
+
   // Inventory
   app.get("/api/inventory", async (req, res) => {
     const branchId = req.query.branchId as string | undefined;

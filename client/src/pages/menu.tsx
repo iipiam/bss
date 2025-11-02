@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Edit, UtensilsCrossed } from "lucide-react";
+import { Plus, Search, Edit, UtensilsCrossed, Settings2, Trash2, X } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -33,6 +33,16 @@ type MenuFormValues = z.infer<typeof menuFormSchema>;
 export default function Menu() {
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [categories, setCategories] = useState<string[]>([
+    "Pizza",
+    "Burgers",
+    "Sandwiches",
+    "Salads",
+    "Drinks",
+    "Desserts",
+  ]);
+  const [newCategory, setNewCategory] = useState("");
   const { toast } = useToast();
 
   const form = useForm<MenuFormValues>({
@@ -123,13 +133,79 @@ export default function Menu() {
           <h1 className="text-3xl font-bold mb-2">Menu Management</h1>
           <p className="text-muted-foreground">Manage your menu items and pricing</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="button-add-menu-item">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Menu Item
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-3">
+          <Dialog open={categoriesOpen} onOpenChange={setCategoriesOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" data-testid="button-manage-categories">
+                <Settings2 className="h-4 w-4 mr-2" />
+                Manage Categories
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Manage Menu Categories</DialogTitle>
+                <DialogDescription>Add, edit, or remove menu categories</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="New category name..."
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    data-testid="input-new-category"
+                  />
+                  <Button
+                    onClick={() => {
+                      if (newCategory.trim() && !categories.includes(newCategory.trim())) {
+                        setCategories([...categories, newCategory.trim()]);
+                        setNewCategory("");
+                        toast({
+                          title: "Category added",
+                          description: `${newCategory} has been added to menu categories`,
+                        });
+                      }
+                    }}
+                    data-testid="button-add-category"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {categories.map((category) => (
+                    <div
+                      key={category}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                      data-testid={`category-item-${category}`}
+                    >
+                      <span className="font-medium">{category}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setCategories(categories.filter((c) => c !== category));
+                          toast({
+                            title: "Category removed",
+                            description: `${category} has been removed from menu categories`,
+                          });
+                        }}
+                        data-testid={`button-delete-category-${category}`}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button data-testid="button-add-menu-item">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Menu Item
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add New Menu Item</DialogTitle>
@@ -185,12 +261,11 @@ export default function Menu() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Pizza">Pizza</SelectItem>
-                          <SelectItem value="Burgers">Burgers</SelectItem>
-                          <SelectItem value="Sandwiches">Sandwiches</SelectItem>
-                          <SelectItem value="Salads">Salads</SelectItem>
-                          <SelectItem value="Drinks">Drinks</SelectItem>
-                          <SelectItem value="Desserts">Desserts</SelectItem>
+                          {categories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />

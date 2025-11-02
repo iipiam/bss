@@ -40,6 +40,7 @@ export interface IStorage {
   getBranch(id: string): Promise<Branch | undefined>;
   createBranch(branch: InsertBranch): Promise<Branch>;
   updateBranch(id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined>;
+  deleteBranch(id: string): Promise<boolean>;
 
   // Inventory
   getInventoryItems(branchId?: string): Promise<InventoryItem[]>;
@@ -117,6 +118,11 @@ export class DatabaseStorage implements IStorage {
   async updateBranch(id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined> {
     const [updated] = await db.update(branches).set(branch).where(eq(branches.id, id)).returning();
     return updated;
+  }
+
+  async deleteBranch(id: string): Promise<boolean> {
+    const result = await db.delete(branches).where(eq(branches.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
   // Inventory
