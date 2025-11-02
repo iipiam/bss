@@ -48,7 +48,9 @@ Preferred communication style: Simple, everyday language.
 - Single server process handles both API routes and static file serving in production
 - TypeScript compilation with ESM module format
 
-**Session Management**: Express sessions with connect-pg-simple for PostgreSQL-backed session storage.
+**Session Management**: Express sessions configured with express-session middleware using in-memory storage (MemoryStore). Sessions store userId and role for authenticated users with secure cookie settings and 24-hour expiration.
+
+**Authentication**: Bcrypt password hashing with 10 salt rounds for secure password storage. Session-based authentication chosen for simplicity and built-in security features.
 
 **Design Rationale**: The monolithic Express server simplifies deployment while maintaining separation of concerns through modular route handlers. The shared schema approach between client and server ensures type safety across the entire stack and reduces duplication.
 
@@ -61,11 +63,13 @@ Preferred communication style: Simple, everyday language.
 **Schema Design**:
 - Branches: Multi-location support with branch-specific data
 - Inventory Items: Stock tracking with supplier information and branch relationships
-- Menu Items: Product catalog with pricing, categories, and availability status
+- Menu Items: Product catalog with VAT-inclusive pricing (basePrice, vatAmount, price fields for 15% Saudi VAT), categories, and availability status
 - Recipes: Preparation instructions linked to menu items with ingredient lists
 - Orders: Customer orders with status tracking, order types (dine-in, delivery, takeout)
-- Transactions: Financial records tied to orders for sales tracking
+- Transactions: Financial records tied to orders for sales tracking with VAT breakdown
 - Procurement: Unified tracking for inventory purchases, maintenance work orders, installations, and equipment procurement with status workflow, priority levels, and cost management
+- Users: Employee and admin accounts with role-based permissions (admin/employee roles, granular feature permissions), bcrypt-hashed passwords
+- Invoices: ZATCA-compliant invoice records with line items, VAT calculations, QR codes, and PDF generation support
 - Settings: System-wide configuration for company details and ZATCA compliance
 
 **Migration Strategy**: Drizzle Kit for schema migrations with PostgreSQL dialect.
@@ -87,22 +91,37 @@ Preferred communication style: Simple, everyday language.
 
 ### Authentication & Authorization
 
-**Current State**: The codebase includes session infrastructure but does not implement user authentication in the visible routes. The session setup suggests future authentication capabilities.
+**Implementation**: Full session-based authentication system with:
+- User schema supporting admin and employee roles with granular permission flags
+- Bcrypt password hashing (10 salt rounds) for secure credential storage
+- Express-session middleware with secure cookies (httpOnly, 24-hour expiration)
+- Authentication API routes: `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`
+- User management API for admin users to create and manage employees
+- Permission system with boolean flags for each feature (dashboard, inventory, menu, POS, orders, kitchen, sales, reports, financial, employees, etc.)
 
-**Design Consideration**: Multi-user access with role-based permissions would be a logical next step given the multi-branch architecture and different operational roles (cashier, kitchen staff, manager, administrator).
+**Security**: Sessions stored in-memory (production would use Redis or PostgreSQL), secure cookies enabled in production mode, passwords never stored in plaintext.
+
+**Current State**: Backend authentication is complete and functional. Frontend login page and employee management UI are pending implementation. Route protection based on permissions needs to be added to both frontend and backend routes.
 
 ### API Structure
 
 **Endpoint Organization**:
 - `/api/branches` - Branch CRUD operations
 - `/api/inventory` - Inventory management
-- `/api/menu` - Menu item management  
+- `/api/menu` - Menu item management with VAT-inclusive pricing
 - `/api/recipes` - Recipe CRUD operations
 - `/api/orders` - Order processing and tracking
-- `/api/transactions` - Sales transaction records
+- `/api/transactions` - Sales transaction records with VAT breakdown
 - `/api/procurement` - Procurement management with filtering by type (inventory, maintenance, installation, equipment) and status
 - `/api/settings` - System configuration
-- `/api/analytics/*` - Dashboard and reporting data
+- `/api/analytics/dashboard` - Dashboard metrics and KPIs
+- `/api/analytics/sales` - Sales charts and trends
+- `/api/analytics/financial` - Financial statements (monthly/yearly revenue, VAT collection, transaction counts)
+- `/api/invoices` - ZATCA-compliant invoice retrieval and management
+- `/api/auth/login` - User authentication (POST)
+- `/api/auth/logout` - Session termination (POST)
+- `/api/auth/me` - Current user session info (GET)
+- `/api/users` - User CRUD operations (admin only)
 
 **Response Format**: JSON with consistent error handling patterns.
 
@@ -147,8 +166,47 @@ Preferred communication style: Simple, everyday language.
 - Cartographer for code navigation
 - Development banner for Replit environment
 
+### Security & Authentication
+- **bcrypt**: Password hashing and verification
+- **express-session**: Session middleware for authentication
+- **memorystore**: In-memory session storage for development
+
 ### Potential Future Dependencies
-- Authentication library (e.g., Passport.js, Auth.js)
 - WebSocket library for real-time kitchen display updates
 - Payment gateway SDKs for Saudi market (Moyasar, HyperPay)
 - Reporting export libraries (Excel, CSV generation)
+
+## Recent Changes (November 2025)
+
+### Financial Statements Feature (COMPLETE)
+- Added `/api/analytics/financial` endpoint providing monthly and yearly revenue analytics with VAT breakdown
+- Created Financial Statements page with interactive charts showing revenue trends over time
+- Implemented invoice list view with ZATCA-compliant invoice records
+- Added monthly revenue cards displaying current month metrics with year-over-year comparisons
+- Financial data aggregates transactions by month and year for comprehensive reporting
+
+### VAT-Inclusive Pricing System (COMPLETE)
+- Updated menu schema to include `basePrice`, `vatAmount`, and `price` fields (15% Saudi VAT)
+- Menu management page now displays complete VAT breakdown for transparency
+- All menu items automatically calculate VAT based on base price
+- Compliant with Saudi Arabian tax regulations requiring VAT visibility
+
+### User Management & Authentication (BACKEND COMPLETE)
+- Implemented comprehensive user schema with flexible role system (admin/employee)
+- Created granular permission system with boolean flags for each feature area
+- Built authentication API with login, logout, and session verification endpoints
+- Added user CRUD operations accessible only to admin users
+- Configured express-session middleware with secure cookies and 24-hour session expiration
+- Implemented bcrypt password hashing for secure credential storage
+- **Pending**: Frontend login page, employee management UI, route protection based on permissions
+
+### Security Improvements
+- Removed plaintext admin password from seed data
+- Configured secure session cookies (httpOnly, secure in production)
+- Implemented proper password hashing for all user account creation
+- Session-based authentication prevents CSRF attacks and simplifies client implementation
+
+### Design Compliance
+- Removed emoji placeholders from UI components
+- Replaced visual placeholders with Lucide React icons per design guidelines
+- Maintained consistent design system across all new features
