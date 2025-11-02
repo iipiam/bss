@@ -10,6 +10,7 @@ import {
   insertOrderSchema,
   insertTransactionSchema,
   insertSettingsSchema,
+  insertProcurementSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -305,6 +306,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(400).json({ error: "Invalid settings data" });
     }
+  });
+
+  // Procurement
+  app.get("/api/procurement", async (req, res) => {
+    const { type, status, branchId } = req.query;
+    const procurements = await storage.getProcurements(
+      type as string | undefined,
+      status as string | undefined,
+      branchId as string | undefined
+    );
+    res.json(procurements);
+  });
+
+  app.get("/api/procurement/:id", async (req, res) => {
+    const procurement = await storage.getProcurement(req.params.id);
+    if (!procurement) {
+      return res.status(404).json({ error: "Procurement not found" });
+    }
+    res.json(procurement);
+  });
+
+  app.post("/api/procurement", async (req, res) => {
+    try {
+      const data = insertProcurementSchema.parse(req.body);
+      const procurement = await storage.createProcurement(data);
+      res.status(201).json(procurement);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid procurement data" });
+    }
+  });
+
+  app.patch("/api/procurement/:id", async (req, res) => {
+    try {
+      const data = insertProcurementSchema.partial().parse(req.body);
+      const procurement = await storage.updateProcurement(req.params.id, data);
+      if (!procurement) {
+        return res.status(404).json({ error: "Procurement not found" });
+      }
+      res.json(procurement);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid procurement data" });
+    }
+  });
+
+  app.delete("/api/procurement/:id", async (req, res) => {
+    const success = await storage.deleteProcurement(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Procurement not found" });
+    }
+    res.status(204).send();
   });
 
   // POS - Generate Invoice

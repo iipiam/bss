@@ -13,6 +13,8 @@ import {
   type InsertTransaction,
   type Settings,
   type InsertSettings,
+  type Procurement,
+  type InsertProcurement,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -58,6 +60,13 @@ export interface IStorage {
   // Settings
   getSettings(): Promise<Settings | undefined>;
   updateSettings(settings: Partial<InsertSettings>): Promise<Settings>;
+
+  // Procurement
+  getProcurements(type?: string, status?: string, branchId?: string): Promise<Procurement[]>;
+  getProcurement(id: string): Promise<Procurement | undefined>;
+  createProcurement(procurement: InsertProcurement): Promise<Procurement>;
+  updateProcurement(id: string, procurement: Partial<InsertProcurement>): Promise<Procurement | undefined>;
+  deleteProcurement(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -68,6 +77,7 @@ export class MemStorage implements IStorage {
   private orders: Map<string, Order>;
   private transactions: Map<string, Transaction>;
   private settings: Settings | undefined;
+  private procurements: Map<string, Procurement>;
   private orderCounter: number;
   private transactionCounter: number;
 
@@ -79,6 +89,7 @@ export class MemStorage implements IStorage {
     this.orders = new Map();
     this.transactions = new Map();
     this.settings = undefined;
+    this.procurements = new Map();
     this.orderCounter = 12840;
     this.transactionCounter = 12840;
     this.seedData();
@@ -147,6 +158,121 @@ export class MemStorage implements IStorage {
       phone: "+966 11 234 5678",
       language: "English",
     };
+
+    // Seed procurement
+    const procurementData: Procurement[] = [
+      {
+        id: "proc-1",
+        type: "inventory",
+        title: "Fresh Vegetables - Weekly Supply",
+        description: "Mixed vegetables for kitchen operations",
+        supplier: "Al Khair Vegetables",
+        category: "Food & Beverage",
+        quantity: 150,
+        unitPrice: "5",
+        totalCost: "750",
+        status: "ordered",
+        priority: "high",
+        requestedBy: "Kitchen Manager",
+        approvedBy: "GM",
+        branchId: "branch-1",
+        orderDate: new Date("2025-10-28"),
+        expectedDelivery: new Date("2025-11-02"),
+        actualDelivery: null,
+        notes: "Quality check required upon delivery",
+        createdAt: new Date("2025-10-25"),
+        updatedAt: new Date("2025-10-28"),
+      },
+      {
+        id: "proc-2",
+        type: "equipment",
+        title: "Commercial Refrigerator",
+        description: "Double-door commercial refrigerator for main kitchen",
+        supplier: "Saudi Kitchen Equipment Co.",
+        category: "Kitchen Equipment",
+        quantity: 1,
+        unitPrice: "8500",
+        totalCost: "8500",
+        status: "approved",
+        priority: "medium",
+        requestedBy: "Operations Manager",
+        approvedBy: "GM",
+        branchId: "branch-1",
+        orderDate: null,
+        expectedDelivery: new Date("2025-11-15"),
+        actualDelivery: null,
+        notes: "Installation included in price",
+        createdAt: new Date("2025-10-20"),
+        updatedAt: new Date("2025-10-26"),
+      },
+      {
+        id: "proc-3",
+        type: "maintenance",
+        title: "HVAC System Maintenance",
+        description: "Quarterly maintenance for all air conditioning units",
+        supplier: "Riyadh Climate Control",
+        category: "Facility Maintenance",
+        quantity: null,
+        unitPrice: null,
+        totalCost: "2500",
+        status: "completed",
+        priority: "medium",
+        requestedBy: "Facility Manager",
+        approvedBy: "GM",
+        branchId: "branch-1",
+        orderDate: new Date("2025-10-15"),
+        expectedDelivery: new Date("2025-10-20"),
+        actualDelivery: new Date("2025-10-19"),
+        notes: "All units serviced and filters replaced",
+        createdAt: new Date("2025-10-10"),
+        updatedAt: new Date("2025-10-20"),
+      },
+      {
+        id: "proc-4",
+        type: "installation",
+        title: "POS Terminal Installation - Branch 2",
+        description: "Install 3 new POS terminals in Jeddah branch",
+        supplier: "TechPos Solutions",
+        category: "Technology",
+        quantity: 3,
+        unitPrice: "1200",
+        totalCost: "3600",
+        status: "pending",
+        priority: "high",
+        requestedBy: "IT Manager",
+        approvedBy: null,
+        branchId: "branch-2",
+        orderDate: null,
+        expectedDelivery: null,
+        actualDelivery: null,
+        notes: "Includes training for staff",
+        createdAt: new Date("2025-10-29"),
+        updatedAt: new Date("2025-10-29"),
+      },
+      {
+        id: "proc-5",
+        type: "inventory",
+        title: "Cleaning Supplies - Monthly Stock",
+        description: "Complete cleaning supplies for all branches",
+        supplier: "Clean Pro Supplies",
+        category: "Cleaning & Sanitation",
+        quantity: 200,
+        unitPrice: "3",
+        totalCost: "600",
+        status: "received",
+        priority: "low",
+        requestedBy: "Operations Manager",
+        approvedBy: "Branch Manager",
+        branchId: null,
+        orderDate: new Date("2025-10-18"),
+        expectedDelivery: new Date("2025-10-25"),
+        actualDelivery: new Date("2025-10-24"),
+        notes: "Distributed across all branches",
+        createdAt: new Date("2025-10-15"),
+        updatedAt: new Date("2025-10-25"),
+      },
+    ];
+    procurementData.forEach(item => this.procurements.set(item.id, item));
   }
 
   // Branches
@@ -374,6 +500,74 @@ export class MemStorage implements IStorage {
       this.settings = { ...this.settings, ...settings };
     }
     return this.settings;
+  }
+
+  // Procurement
+  async getProcurements(type?: string, status?: string, branchId?: string): Promise<Procurement[]> {
+    let procurements = Array.from(this.procurements.values());
+    
+    if (type) {
+      procurements = procurements.filter(p => p.type === type);
+    }
+    
+    if (status) {
+      procurements = procurements.filter(p => p.status === status);
+    }
+    
+    if (branchId) {
+      procurements = procurements.filter(p => p.branchId === branchId);
+    }
+    
+    return procurements.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async getProcurement(id: string): Promise<Procurement | undefined> {
+    return this.procurements.get(id);
+  }
+
+  async createProcurement(procurement: InsertProcurement): Promise<Procurement> {
+    const id = randomUUID();
+    const newProcurement: Procurement = {
+      id,
+      type: procurement.type,
+      title: procurement.title,
+      description: procurement.description || null,
+      supplier: procurement.supplier || null,
+      category: procurement.category || null,
+      quantity: procurement.quantity || null,
+      unitPrice: procurement.unitPrice || null,
+      totalCost: procurement.totalCost,
+      status: procurement.status || "pending",
+      priority: procurement.priority || "medium",
+      requestedBy: procurement.requestedBy || null,
+      approvedBy: procurement.approvedBy || null,
+      branchId: procurement.branchId || null,
+      orderDate: procurement.orderDate || null,
+      expectedDelivery: procurement.expectedDelivery || null,
+      actualDelivery: procurement.actualDelivery || null,
+      notes: procurement.notes || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.procurements.set(id, newProcurement);
+    return newProcurement;
+  }
+
+  async updateProcurement(id: string, procurement: Partial<InsertProcurement>): Promise<Procurement | undefined> {
+    const existing = this.procurements.get(id);
+    if (!existing) return undefined;
+
+    const updated: Procurement = {
+      ...existing,
+      ...procurement,
+      updatedAt: new Date(),
+    };
+    this.procurements.set(id, updated);
+    return updated;
+  }
+
+  async deleteProcurement(id: string): Promise<boolean> {
+    return this.procurements.delete(id);
   }
 }
 

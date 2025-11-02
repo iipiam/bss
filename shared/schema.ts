@@ -119,3 +119,31 @@ export const settings = pgTable("settings", {
 export const insertSettingsSchema = createInsertSchema(settings).omit({ id: true });
 export type InsertSettings = z.infer<typeof insertSettingsSchema>;
 export type Settings = typeof settings.$inferSelect;
+
+// Procurement
+export const procurement = pgTable("procurement", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  type: text("type").notNull(), // "inventory", "maintenance", "installation", "equipment"
+  title: text("title").notNull(),
+  description: text("description"),
+  supplier: text("supplier"),
+  category: text("category"),
+  quantity: integer("quantity"),
+  unitPrice: text("unit_price"),
+  totalCost: text("total_cost").notNull(),
+  status: text("status").notNull().default("pending"), // "pending", "approved", "ordered", "received", "completed", "cancelled"
+  priority: text("priority").notNull().default("medium"), // "low", "medium", "high", "urgent"
+  requestedBy: text("requested_by"),
+  approvedBy: text("approved_by"),
+  branchId: varchar("branch_id"),
+  orderDate: timestamp("order_date"),
+  expectedDelivery: timestamp("expected_delivery"),
+  actualDelivery: timestamp("actual_delivery"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertProcurementSchema = createInsertSchema(procurement).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertProcurement = z.infer<typeof insertProcurementSchema>;
+export type Procurement = typeof procurement.$inferSelect;
