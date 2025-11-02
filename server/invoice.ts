@@ -13,7 +13,7 @@ interface InvoiceData {
   invoiceDate: Date;
 }
 
-export async function generateZATCAInvoice(data: InvoiceData): Promise<Buffer> {
+export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuffer: Buffer; qrCode: string }> {
   const doc = new jsPDF();
   const { order, companyName, companyVAT, branchAddress, companyEmail, companyPhone, invoiceNumber, invoiceDate } = data;
 
@@ -154,5 +154,5 @@ export async function generateZATCAInvoice(data: InvoiceData): Promise<Buffer> {
 
   // Convert to buffer
   const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
-  return pdfBuffer;
+  return { pdfBuffer, qrCode: qrDataBase64 };
 }

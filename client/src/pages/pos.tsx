@@ -35,10 +35,11 @@ export default function POS() {
       return order;
     },
     onSuccess: async (order: any) => {
+      // Create transaction record
       const transaction = {
         transactionId: `TXN-${Date.now()}`,
         orderId: order.id,
-        branchId: "1",
+        branchId: order.branchId || "1",
         itemCount: cartItems.reduce((sum, item) => sum + item.quantity, 0),
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
@@ -47,19 +48,9 @@ export default function POS() {
       };
       await apiRequest("POST", "/api/transactions", transaction);
       
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
-      
-      toast({
-        title: "Order created successfully",
-        description: `Order #${order.orderNumber} has been placed`,
-      });
-      
-      clearCart();
-      
+      // Create invoice record and generate PDF
       try {
-        const response = await fetch("/api/pos/generate-invoice", {
+        const response = await fetch("/api/invoices/create-and-generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ orderId: order.id }),
@@ -77,8 +68,21 @@ export default function POS() {
           document.body.removeChild(a);
         }
       } catch (error) {
-        console.error("Invoice generation failed:", error);
+        console.error("Invoice creation failed:", error);
       }
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/financial"] });
+      
+      toast({
+        title: "Order completed successfully",
+        description: `Order #${order.orderNumber} has been placed and invoice generated`,
+      });
+      
+      clearCart();
     },
   });
 

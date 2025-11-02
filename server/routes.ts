@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateZATCAInvoice } from "./invoice";
 import bcrypt from "bcrypt";
+import * as fs from "fs";
+import * as path from "path";
 import {
   insertBranchSchema,
   insertInventoryItemSchema,
@@ -385,7 +387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         invoiceDate: new Date(),
       };
 
-      const pdfBuffer = await generateZATCAInvoice(invoiceData);
+      const { pdfBuffer } = await generateZATCAInvoice(invoiceData);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.orderNumber}.pdf`);
@@ -669,6 +671,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(invoice);
     } catch (error) {
       res.status(400).json({ error: "Invalid invoice data" });
+    }
+  });
+
+  // Serve invoice PDFs as static files
+  app.use('/invoices', (req, res, next) => {
+    const filePath = path.join(process.cwd(), 'invoices', req.path);
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).json({ error: "Invoice not found" });
+    }
+  });
+
+  // Create invoice record and generate PDF
+  app.post("/api/invoices/create-and-generate", async (req, res) => {
+    try {
+      const { orderId } = req.body;
+      
+      if (!orderId) {
+        return res.status(400).json({ error: "Order ID required" });
+      }
+
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      const settings = await storage.getSettings();
+      const branch = order.branchId ? await storage.getBranch(order.branchId) : null;
+
+      const invoiceNumber = `INV-${order.orderNumber}`;
+
+      // Generate PDF and QR code
+      const pdfData = {
+        order,
+        companyName: settings?.restaurantName || "Restaurant Management System",
+        companyVAT: settings?.vatNumber || "300123456789003",
+        branchAddress: branch?.location || settings?.address || "Main Location, Riyadh",
+        companyEmail: settings?.email || "info@restaurant.sa",
+        companyPhone: settings?.phone || "+966 11 234 5678",
+        invoiceNumber,
+        invoiceDate: new Date(),
+      };
+
+      const { pdfBuffer, qrCode } = await generateZATCAInvoice(pdfData);
+
+      // Ensure invoices directory exists
+      const invoicesDir = path.join(process.cwd(), "invoices");
+      if (!fs.existsSync(invoicesDir)) {
+        fs.mkdirSync(invoicesDir, { recursive: true });
+      }
+
+      // Save PDF to filesystem
+      const pdfFilename = `${invoiceNumber}.pdf`;
+      const pdfPath = path.join(invoicesDir, pdfFilename);
+      fs.writeFileSync(pdfPath, pdfBuffer);
+
+      // Create invoice record in database with QR code
+      const invoiceData = {
+        invoiceNumber,
+        orderId: order.id,
+        branchId: order.branchId,
+        customerName: order.customerName || "Walk-in Customer",
+        items: order.items,
+        subtotal: order.subtotal,
+        tax: order.tax,
+        total: order.total,
+        qrCode, // ZATCA-compliant QR code
+        pdfUrl: `/invoices/${pdfFilename}`,
+      };
+
+      await storage.createInvoice(invoiceData);
+
+      // Return PDF as download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.orderNumber}.pdf`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Invoice creation error:", error);
+      res.status(500).json({ error: "Failed to create invoice" });
     }
   });
 
