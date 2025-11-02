@@ -955,8 +955,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Export Menu to Excel
   app.get("/api/export/menu", async (req, res) => {
     try {
-      const branchId = req.query.branchId as string | undefined;
-      const items = await storage.getMenuItems(branchId);
+      const items = await storage.getMenuItems();
       
       const worksheet = XLSX.utils.json_to_sheet(items);
       const workbook = XLSX.utils.book_new();
@@ -982,12 +981,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const flattenedRecipes = recipes.map(recipe => ({
         id: recipe.id,
         name: recipe.name,
-        category: recipe.category,
-        servingSize: recipe.servingSize,
-        preparationTime: recipe.preparationTime,
-        difficulty: recipe.difficulty,
+        menuItemId: recipe.menuItemId,
+        prepTime: recipe.prepTime,
+        cookTime: recipe.cookTime,
+        servings: recipe.servings,
+        cost: recipe.cost,
         ingredients: JSON.stringify(recipe.ingredients),
-        instructions: JSON.stringify(recipe.instructions),
+        steps: JSON.stringify(recipe.steps),
       }));
       
       const worksheet = XLSX.utils.json_to_sheet(flattenedRecipes);
@@ -1009,9 +1009,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/export/orders", async (req, res) => {
     try {
       const branchId = req.query.branchId as string | undefined;
-      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
-      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
-      const orders = await storage.getOrders(branchId, startDate, endDate);
+      const status = req.query.status as string | undefined;
+      const orders = await storage.getOrders(branchId, status);
       
       // Flatten orders for Excel
       const flattenedOrders = orders.map(order => ({
@@ -1021,10 +1020,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customerName: order.customerName,
         orderType: order.orderType,
         status: order.status,
+        table: order.table,
+        address: order.address,
         subtotal: order.subtotal,
         tax: order.tax,
         total: order.total,
-        paymentMethod: order.paymentMethod,
         items: JSON.stringify(order.items),
         createdAt: order.createdAt,
       }));
@@ -1070,22 +1070,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Export Procurement to Excel
   app.get("/api/export/procurement", async (req, res) => {
     try {
-      const procurement = await storage.getProcurement();
+      const type = req.query.type as string | undefined;
+      const status = req.query.status as string | undefined;
+      const branchId = req.query.branchId as string | undefined;
+      const procurements = await storage.getProcurements(type, status, branchId);
       
-      // Flatten procurement data for Excel
-      const flattenedProcurement = procurement.map(item => ({
-        id: item.id,
-        branchId: item.branchId,
-        supplier: item.supplier,
-        orderDate: item.orderDate,
-        expectedDelivery: item.expectedDelivery,
-        status: item.status,
-        totalAmount: item.totalAmount,
-        items: JSON.stringify(item.items),
-        notes: item.notes,
-      }));
-      
-      const worksheet = XLSX.utils.json_to_sheet(flattenedProcurement);
+      const worksheet = XLSX.utils.json_to_sheet(procurements);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Procurement");
       
@@ -1117,6 +1107,172 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Branches export error:", error);
       res.status(500).json({ error: "Failed to export branches" });
+    }
+  });
+
+  // Import routes with file upload
+  const multer = await import('multer');
+  const upload = multer.default({ storage: multer.default.memoryStorage() });
+
+  // Import Inventory from Excel
+  app.post("/api/import/inventory", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(worksheet);
+
+      let imported = 0;
+      let errors = 0;
+
+      for (const row of data as any[]) {
+        try {
+          await storage.createInventoryItem({
+            name: row.name,
+            sku: row.sku,
+            branchId: row.branchId,
+            category: row.category,
+            quantity: Number(row.quantity),
+            unit: row.unit,
+            reorderLevel: Number(row.reorderLevel),
+            costPerUnit: String(row.costPerUnit),
+            supplier: row.supplier,
+          });
+          imported++;
+        } catch (error) {
+          console.error("Error importing row:", row, error);
+          errors++;
+        }
+      }
+
+      res.json({ message: `Imported ${imported} items, ${errors} errors` });
+    } catch (error) {
+      console.error("Inventory import error:", error);
+      res.status(500).json({ error: "Failed to import inventory" });
+    }
+  });
+
+  // Import Menu from Excel
+  app.post("/api/import/menu", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(worksheet);
+
+      let imported = 0;
+      let errors = 0;
+
+      for (const row of data as any[]) {
+        try {
+          await storage.createMenuItem({
+            name: row.name,
+            category: row.category,
+            basePrice: String(row.basePrice),
+            vatRate: String(row.vatRate),
+            price: String(row.price),
+            description: row.description,
+            available: Boolean(row.available),
+            imageUrl: row.imageUrl,
+          });
+          imported++;
+        } catch (error) {
+          console.error("Error importing row:", row, error);
+          errors++;
+        }
+      }
+
+      res.json({ message: `Imported ${imported} items, ${errors} errors` });
+    } catch (error) {
+      console.error("Menu import error:", error);
+      res.status(500).json({ error: "Failed to import menu" });
+    }
+  });
+
+  // Import Recipes from Excel
+  app.post("/api/import/recipes", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(worksheet);
+
+      let imported = 0;
+      let errors = 0;
+
+      for (const row of data as any[]) {
+        try {
+          await storage.createRecipe({
+            name: row.name,
+            menuItemId: row.menuItemId,
+            prepTime: row.prepTime,
+            cookTime: row.cookTime,
+            servings: Number(row.servings),
+            cost: String(row.cost),
+            ingredients: typeof row.ingredients === 'string' ? JSON.parse(row.ingredients) : row.ingredients,
+            steps: typeof row.steps === 'string' ? JSON.parse(row.steps) : row.steps,
+          });
+          imported++;
+        } catch (error) {
+          console.error("Error importing row:", row, error);
+          errors++;
+        }
+      }
+
+      res.json({ message: `Imported ${imported} recipes, ${errors} errors` });
+    } catch (error) {
+      console.error("Recipes import error:", error);
+      res.status(500).json({ error: "Failed to import recipes" });
+    }
+  });
+
+  // Import Branches from Excel
+  app.post("/api/import/branches", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(worksheet);
+
+      let imported = 0;
+      let errors = 0;
+
+      for (const row of data as any[]) {
+        try {
+          await storage.createBranch({
+            name: row.name,
+            address: row.address,
+            phone: row.phone,
+            email: row.email,
+            manager: row.manager,
+          });
+          imported++;
+        } catch (error) {
+          console.error("Error importing row:", row, error);
+          errors++;
+        }
+      }
+
+      res.json({ message: `Imported ${imported} branches, ${errors} errors` });
+    } catch (error) {
+      console.error("Branches import error:", error);
+      res.status(500).json({ error: "Failed to import branches" });
     }
   });
 
