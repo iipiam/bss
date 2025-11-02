@@ -376,12 +376,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(204).send();
   });
 
-  // POS - Generate Invoice
+  // POS - Generate Invoice (redirects to main invoice creation endpoint)
   app.post("/api/pos/generate-invoice", async (req, res) => {
+    // This endpoint now redirects to the main invoice creation endpoint
+    // which properly saves the invoice and generates QR code with URL
     try {
       const { orderId } = req.body;
-      const order = await storage.getOrder(orderId);
+      
+      if (!orderId) {
+        return res.status(400).json({ error: "Order ID required" });
+      }
 
+      const order = await storage.getOrder(orderId);
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
@@ -389,18 +395,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const settings = await storage.getSettings();
       const branch = order.branchId ? await storage.getBranch(order.branchId) : null;
 
+      const invoiceNumber = `INV-${order.orderNumber}`;
+
+      // Transform order items to invoice items format with VAT breakdown
+      const invoiceItems = order.items.map(item => {
+        const totalPrice = item.quantity * item.price;
+        const basePrice = totalPrice / 1.15;
+        const vatAmount = totalPrice - basePrice;
+        return {
+          name: item.name,
+          quantity: item.quantity,
+          basePrice: parseFloat(basePrice.toFixed(2)),
+          vatAmount: parseFloat(vatAmount.toFixed(2)),
+          total: parseFloat(totalPrice.toFixed(2)),
+        };
+      });
+
+      // Create invoice record first to get the ID
       const invoiceData = {
+        invoiceNumber,
+        orderId: order.id,
+        branchId: order.branchId,
+        customerName: order.customerName || "Walk-in Customer",
+        items: invoiceItems,
+        subtotal: order.subtotal,
+        vatAmount: order.tax,
+        total: order.total,
+        qrCode: "",
+        pdfPath: "",
+      };
+
+      const createdInvoice = await storage.createInvoice(invoiceData);
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+      // Generate PDF with invoice ID for QR code
+      const pdfData = {
         order,
         companyName: settings?.restaurantName || "Restaurant Management System",
         companyVAT: settings?.vatNumber || "300123456789003",
         branchAddress: branch?.location || settings?.address || "Main Location, Riyadh",
         companyEmail: settings?.email || "info@restaurant.sa",
         companyPhone: settings?.phone || "+966 11 234 5678",
-        invoiceNumber: `INV-${order.orderNumber}`,
+        invoiceNumber,
         invoiceDate: new Date(),
+        invoiceId: createdInvoice.id,
+        baseUrl,
       };
 
-      const { pdfBuffer } = await generateZATCAInvoice(invoiceData);
+      const { pdfBuffer, qrCode } = await generateZATCAInvoice(pdfData);
+
+      // Ensure invoices directory exists
+      const invoicesDir = path.join(process.cwd(), "invoices");
+      if (!fs.existsSync(invoicesDir)) {
+        fs.mkdirSync(invoicesDir, { recursive: true });
+      }
+
+      // Save PDF to filesystem
+      const pdfFilename = `${invoiceNumber}.pdf`;
+      const pdfPath = path.join(invoicesDir, pdfFilename);
+      fs.writeFileSync(pdfPath, pdfBuffer);
+
+      // Update invoice record with QR code and PDF path
+      await storage.updateInvoice(createdInvoice.id, {
+        qrCode,
+        pdfPath: `/invoices/${pdfFilename}`,
+      });
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.orderNumber}.pdf`);
@@ -834,6 +893,288 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public invoice viewer (no auth required) - accessible via QR code
+  app.get("/public/invoice/:id", async (req, res) => {
+    try {
+      const invoice = await storage.getInvoice(req.params.id);
+      if (!invoice) {
+        return res.status(404).send(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Invoice Not Found</title>
+              <style>
+                body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; text-align: center; }
+                h1 { color: #e74c3c; }
+              </style>
+            </head>
+            <body>
+              <h1>Invoice Not Found</h1>
+              <p>The requested invoice does not exist.</p>
+            </body>
+          </html>
+        `);
+      }
+
+      const settings = await storage.getSettings();
+      const order = invoice.orderId ? await storage.getOrder(invoice.orderId) : null;
+      
+      // Generate HTML invoice view
+      const html = `
+        <!DOCTYPE html>
+        <html dir="ltr" lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Invoice ${invoice.invoiceNumber}</title>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                background: #f5f5f5; 
+                padding: 20px;
+                color: #333;
+              }
+              .container { 
+                max-width: 800px; 
+                margin: 0 auto; 
+                background: white; 
+                padding: 40px; 
+                box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                border-radius: 8px;
+              }
+              .header { 
+                text-align: center; 
+                border-bottom: 3px solid #2c3e50; 
+                padding-bottom: 20px; 
+                margin-bottom: 30px; 
+              }
+              .header h1 { 
+                font-size: 28px; 
+                color: #2c3e50; 
+                margin-bottom: 10px; 
+              }
+              .header .subtitle { 
+                font-size: 18px; 
+                color: #7f8c8d; 
+                font-weight: normal; 
+              }
+              .company-info { 
+                background: #ecf0f1; 
+                padding: 15px; 
+                border-radius: 6px; 
+                margin-bottom: 25px; 
+              }
+              .company-info p { 
+                margin: 5px 0; 
+                font-size: 14px; 
+              }
+              .invoice-details { 
+                display: grid; 
+                grid-template-columns: 1fr 1fr; 
+                gap: 15px; 
+                margin-bottom: 30px; 
+                padding: 20px; 
+                background: #f8f9fa; 
+                border-radius: 6px; 
+              }
+              .detail-group h3 { 
+                font-size: 14px; 
+                color: #7f8c8d; 
+                margin-bottom: 8px; 
+                text-transform: uppercase; 
+              }
+              .detail-group p { 
+                font-size: 16px; 
+                font-weight: 600; 
+                color: #2c3e50; 
+              }
+              table { 
+                width: 100%; 
+                border-collapse: collapse; 
+                margin-bottom: 30px; 
+              }
+              th { 
+                background: #34495e; 
+                color: white; 
+                padding: 12px; 
+                text-align: left; 
+                font-weight: 600; 
+              }
+              td { 
+                padding: 12px; 
+                border-bottom: 1px solid #ecf0f1; 
+              }
+              tr:nth-child(even) { 
+                background: #f8f9fa; 
+              }
+              .totals { 
+                margin-left: auto; 
+                width: 350px; 
+                margin-top: 20px; 
+              }
+              .totals .row { 
+                display: flex; 
+                justify-content: space-between; 
+                padding: 10px; 
+                border-bottom: 1px solid #ecf0f1; 
+              }
+              .totals .row.total { 
+                background: #2c3e50; 
+                color: white; 
+                font-weight: bold; 
+                font-size: 18px; 
+                border-radius: 6px; 
+                margin-top: 5px; 
+              }
+              .footer { 
+                text-align: center; 
+                margin-top: 40px; 
+                padding-top: 20px; 
+                border-top: 2px solid #ecf0f1; 
+                color: #7f8c8d; 
+                font-size: 14px; 
+              }
+              .download-btn { 
+                display: inline-block; 
+                background: #3498db; 
+                color: white; 
+                padding: 12px 30px; 
+                text-decoration: none; 
+                border-radius: 6px; 
+                margin-top: 20px; 
+                font-weight: 600; 
+                transition: background 0.3s; 
+              }
+              .download-btn:hover { 
+                background: #2980b9; 
+              }
+              @media print {
+                body { background: white; padding: 0; }
+                .container { box-shadow: none; padding: 20px; }
+                .download-btn { display: none; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>${settings?.restaurantName || 'Restaurant Management System'}</h1>
+                <p class="subtitle">Tax Invoice / فاتورة ضريبية</p>
+              </div>
+
+              <div class="company-info">
+                <p><strong>VAT Number:</strong> ${settings?.vatNumber || 'N/A'}</p>
+                <p><strong>Address:</strong> ${settings?.address || 'Riyadh, Saudi Arabia'}</p>
+                <p><strong>Email:</strong> ${settings?.email || 'info@restaurant.sa'}</p>
+                <p><strong>Phone:</strong> ${settings?.phone || '+966 11 234 5678'}</p>
+              </div>
+
+              <div class="invoice-details">
+                <div class="detail-group">
+                  <h3>Invoice Number</h3>
+                  <p>${invoice.invoiceNumber}</p>
+                </div>
+                <div class="detail-group">
+                  <h3>Date</h3>
+                  <p>${new Date(invoice.createdAt).toLocaleDateString('en-SA', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}</p>
+                </div>
+                ${invoice.customerName ? `
+                <div class="detail-group">
+                  <h3>Customer</h3>
+                  <p>${invoice.customerName}</p>
+                </div>
+                ` : ''}
+                ${order?.orderNumber ? `
+                <div class="detail-group">
+                  <h3>Order Number</h3>
+                  <p>${order.orderNumber}</p>
+                </div>
+                ` : ''}
+              </div>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th style="text-align: center;">Quantity</th>
+                    <th style="text-align: right;">Unit Price</th>
+                    <th style="text-align: right;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${invoice.items.map(item => `
+                    <tr>
+                      <td>${item.name}</td>
+                      <td style="text-align: center;">${item.quantity}</td>
+                      <td style="text-align: right;">${(item.total / item.quantity).toFixed(2)} SAR</td>
+                      <td style="text-align: right;">${item.total.toFixed(2)} SAR</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+
+              <div class="totals">
+                <div class="row">
+                  <span>Subtotal:</span>
+                  <span>${parseFloat(invoice.subtotal).toFixed(2)} SAR</span>
+                </div>
+                <div class="row">
+                  <span>VAT (15%):</span>
+                  <span>${parseFloat(invoice.vatAmount).toFixed(2)} SAR</span>
+                </div>
+                <div class="row total">
+                  <span>Total Amount:</span>
+                  <span>${parseFloat(invoice.total).toFixed(2)} SAR</span>
+                </div>
+              </div>
+
+              ${invoice.pdfPath ? `
+                <div style="text-align: center;">
+                  <a href="${invoice.pdfPath}" class="download-btn" download>Download PDF</a>
+                </div>
+              ` : ''}
+
+              <div class="footer">
+                <p><strong>ZATCA Compliant Invoice</strong></p>
+                <p>This is an official tax invoice issued in accordance with Saudi Arabia VAT regulations.</p>
+                <p style="margin-top: 10px;">Thank you for your business!</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
+
+      res.send(html);
+    } catch (error) {
+      console.error('[PUBLIC INVOICE] Error:', error);
+      res.status(500).send(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Error</title>
+            <style>
+              body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; text-align: center; }
+              h1 { color: #e74c3c; }
+            </style>
+          </head>
+          <body>
+            <h1>Error Loading Invoice</h1>
+            <p>An error occurred while loading the invoice. Please try again later.</p>
+          </body>
+        </html>
+      `);
+    }
+  });
+
   // Serve invoice PDFs as static files
   app.use('/invoices', (req, res, next) => {
     const filePath = path.join(process.cwd(), 'invoices', req.path);
@@ -863,7 +1204,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const invoiceNumber = `INV-${order.orderNumber}`;
 
-      // Generate PDF and QR code
+      // Transform order items to invoice items format with VAT breakdown
+      const invoiceItems = order.items.map(item => {
+        const totalPrice = item.quantity * item.price;
+        const basePrice = totalPrice / 1.15; // Remove 15% VAT to get base
+        const vatAmount = totalPrice - basePrice;
+        return {
+          name: item.name,
+          quantity: item.quantity,
+          basePrice: parseFloat(basePrice.toFixed(2)),
+          vatAmount: parseFloat(vatAmount.toFixed(2)),
+          total: parseFloat(totalPrice.toFixed(2)),
+        };
+      });
+
+      // Create invoice record first to get the ID (without QR code and PDF path yet)
+      const invoiceData = {
+        invoiceNumber,
+        orderId: order.id,
+        branchId: order.branchId,
+        customerName: order.customerName || "Walk-in Customer",
+        items: invoiceItems,
+        subtotal: order.subtotal,
+        vatAmount: order.tax,
+        total: order.total,
+        qrCode: "", // Will be updated after PDF generation
+        pdfPath: "", // Will be updated after PDF generation
+      };
+
+      const createdInvoice = await storage.createInvoice(invoiceData);
+
+      // Get base URL from request
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+      // Now generate PDF with invoice ID for QR code
       const pdfData = {
         order,
         companyName: settings?.restaurantName || "Restaurant Management System",
@@ -873,6 +1247,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         companyPhone: settings?.phone || "+966 11 234 5678",
         invoiceNumber,
         invoiceDate: new Date(),
+        invoiceId: createdInvoice.id,
+        baseUrl,
       };
 
       const { pdfBuffer, qrCode } = await generateZATCAInvoice(pdfData);
@@ -888,35 +1264,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pdfPath = path.join(invoicesDir, pdfFilename);
       fs.writeFileSync(pdfPath, pdfBuffer);
 
-      // Transform order items to invoice items format with VAT breakdown
-      const invoiceItems = order.items.map(item => {
-        const totalPrice = item.quantity * item.price;
-        const basePrice = totalPrice / 1.15; // Remove 15% VAT to get base
-        const vatAmount = totalPrice - basePrice;
-        return {
-          name: item.name,
-          quantity: item.quantity,
-          basePrice: parseFloat(basePrice.toFixed(2)),
-          vatAmount: parseFloat(vatAmount.toFixed(2)),
-          total: parseFloat(totalPrice.toFixed(2)),
-        };
-      });
-
-      // Create invoice record in database with QR code
-      const invoiceData = {
-        invoiceNumber,
-        orderId: order.id,
-        branchId: order.branchId,
-        customerName: order.customerName || "Walk-in Customer",
-        items: invoiceItems,
-        subtotal: order.subtotal,
-        vatAmount: order.tax, // VAT amount (same as tax)
-        total: order.total,
-        qrCode, // ZATCA-compliant QR code
+      // Update invoice record with QR code and PDF path
+      await storage.updateInvoice(createdInvoice.id, {
+        qrCode,
         pdfPath: `/invoices/${pdfFilename}`,
-      };
-
-      await storage.createInvoice(invoiceData);
+      });
 
       // Return PDF as download
       res.setHeader('Content-Type', 'application/pdf');

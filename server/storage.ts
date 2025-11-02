@@ -102,6 +102,7 @@ export interface IStorage {
   getInvoices(branchId?: string, startDate?: Date, endDate?: Date): Promise<Invoice[]>;
   getInvoice(id: string): Promise<Invoice | undefined>;
   createInvoice(invoice: InsertInvoice): Promise<Invoice>;
+  updateInvoice(id: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -418,6 +419,14 @@ export class DatabaseStorage implements IStorage {
   async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
     const [created] = await db.insert(invoices).values(invoice as any).returning();
     return created;
+  }
+
+  async updateInvoice(id: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined> {
+    const [updated] = await db.update(invoices)
+      .set(invoice as any)
+      .where(eq(invoices.id, id))
+      .returning();
+    return updated;
   }
 }
 

@@ -11,31 +11,18 @@ interface InvoiceData {
   companyPhone: string;
   invoiceNumber: string;
   invoiceDate: Date;
+  invoiceId: string; // Invoice ID for QR code URL
+  baseUrl: string; // Base URL of the application
 }
 
 export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuffer: Buffer; qrCode: string }> {
   const doc = new jsPDF();
-  const { order, companyName, companyVAT, branchAddress, companyEmail, companyPhone, invoiceNumber, invoiceDate } = data;
+  const { order, companyName, companyVAT, branchAddress, companyEmail, companyPhone, invoiceNumber, invoiceDate, invoiceId, baseUrl } = data;
 
-  // ZATCA QR Code Data
-  // TLV Format (Tag-Length-Value) for ZATCA compliance
-  const sellerName = Buffer.from(companyName, 'utf8');
-  const vatNumber = Buffer.from(companyVAT, 'utf8');
-  const timestamp = Buffer.from(invoiceDate.toISOString(), 'utf8');
-  const totalWithVAT = Buffer.from(order.total, 'utf8');
-  const vatAmount = Buffer.from(order.tax, 'utf8');
-
-  // Build TLV encoded data
-  const tlvData = Buffer.concat([
-    Buffer.from([0x01, sellerName.length]), sellerName,
-    Buffer.from([0x02, vatNumber.length]), vatNumber,
-    Buffer.from([0x03, timestamp.length]), timestamp,
-    Buffer.from([0x04, totalWithVAT.length]), totalWithVAT,
-    Buffer.from([0x05, vatAmount.length]), vatAmount,
-  ]);
-
-  const qrDataBase64 = tlvData.toString('base64');
-  const qrCodeDataURL = await QRCode.toDataURL(qrDataBase64);
+  // ZATCA QR Code - Contains URL to view invoice
+  // When scanned, the QR code will open the invoice in a browser
+  const invoiceUrl = `${baseUrl}/public/invoice/${invoiceId}`;
+  const qrCodeDataURL = await QRCode.toDataURL(invoiceUrl);
 
   // PDF Layout
   let y = 20;
@@ -154,7 +141,7 @@ export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuff
 
   // Convert to buffer
   const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
-  return { pdfBuffer, qrCode: qrDataBase64 };
+  return { pdfBuffer, qrCode: invoiceUrl };
 }
 
 interface FinancialStatementData {
