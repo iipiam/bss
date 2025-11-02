@@ -7,11 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 import type { Settings } from "@shared/schema";
 import { Save } from "lucide-react";
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState<Partial<Settings>>({});
 
   const { data: settings, isLoading } = useQuery<Settings>({
@@ -49,8 +51,8 @@ export default function SettingsPage() {
   if (isLoading) {
     return (
       <div className="p-8">
-        <h1 className="text-3xl font-bold mb-2">Settings</h1>
-        <p className="text-muted-foreground">Loading...</p>
+        <h1 className="text-3xl font-bold mb-2">{t.settings}</h1>
+        <p className="text-muted-foreground">{t.loading}</p>
       </div>
     );
   }
@@ -58,7 +60,7 @@ export default function SettingsPage() {
   return (
     <div className="p-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Settings</h1>
+        <h1 className="text-3xl font-bold mb-2">{t.settings}</h1>
         <p className="text-muted-foreground">Configure restaurant information and preferences</p>
       </div>
 
@@ -70,7 +72,7 @@ export default function SettingsPage() {
           <CardContent className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="restaurantName">Restaurant Name</Label>
+                <Label htmlFor="restaurantName">{t.restaurantName}</Label>
                 <Input
                   id="restaurantName"
                   value={formData.restaurantName || settings?.restaurantName || ""}
@@ -82,7 +84,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="vatNumber">VAT Registration Number</Label>
+                <Label htmlFor="vatNumber">{t.vatNumber}</Label>
                 <Input
                   id="vatNumber"
                   value={formData.vatNumber || settings?.vatNumber || ""}
@@ -94,7 +96,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">{t.email}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -107,7 +109,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="phone">{t.phone}</Label>
                 <Input
                   id="phone"
                   value={formData.phone || settings?.phone || ""}
@@ -119,7 +121,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address">{t.address}</Label>
                 <Input
                   id="address"
                   value={formData.address || settings?.address || ""}
@@ -131,7 +133,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="language">Default Language</Label>
+                <Label htmlFor="language">{t.language}</Label>
                 <Select
                   value={formData.language || settings?.language || "English"}
                   onValueChange={(value) => handleChange("language", value)}
@@ -159,7 +161,7 @@ export default function SettingsPage() {
                 data-testid="button-save-settings"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {updateMutation.isPending ? "Saving..." : "Save Settings"}
+                {updateMutation.isPending ? "Saving..." : t.updateSettings}
               </Button>
             </div>
           </CardContent>

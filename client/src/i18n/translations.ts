@@ -70,7 +70,6 @@ export interface Translations {
   customerName: string;
   orderType: string;
   table: string;
-  address: string;
   subtotal: string;
   tax: string;
   total: string;
@@ -95,6 +94,7 @@ export interface Translations {
   vatNumber: string;
   email: string;
   phone: string;
+  address: string;
   language: string;
   updateSettings: string;
   
@@ -184,7 +184,6 @@ export const translations: Record<Language, Translations> = {
     customerName: 'Customer Name',
     orderType: 'Order Type',
     table: 'Table',
-    address: 'Address',
     subtotal: 'Subtotal',
     tax: 'Tax (VAT 15%)',
     total: 'Total',
@@ -209,6 +208,7 @@ export const translations: Record<Language, Translations> = {
     vatNumber: 'VAT Number',
     email: 'Email',
     phone: 'Phone',
+    address: 'Address',
     language: 'Language',
     updateSettings: 'Update Settings',
     
@@ -297,7 +297,6 @@ export const translations: Record<Language, Translations> = {
     customerName: 'اسم العميل',
     orderType: 'نوع الطلب',
     table: 'الطاولة',
-    address: 'العنوان',
     subtotal: 'المجموع الفرعي',
     tax: 'الضريبة (15%)',
     total: 'الإجمالي',
@@ -322,6 +321,7 @@ export const translations: Record<Language, Translations> = {
     vatNumber: 'الرقم الضريبي',
     email: 'البريد الإلكتروني',
     phone: 'الهاتف',
+    address: 'العنوان',
     language: 'اللغة',
     updateSettings: 'تحديث الإعدادات',
     
@@ -410,7 +410,6 @@ export const translations: Record<Language, Translations> = {
     customerName: '客户名称',
     orderType: '订单类型',
     table: '桌号',
-    address: '地址',
     subtotal: '小计',
     tax: '税费 (增值税 15%)',
     total: '总计',
@@ -435,6 +434,7 @@ export const translations: Record<Language, Translations> = {
     vatNumber: '税号',
     email: '邮箱',
     phone: '电话',
+    address: '地址',
     language: '语言',
     updateSettings: '更新设置',
     
@@ -523,7 +523,6 @@ export const translations: Record<Language, Translations> = {
     customerName: 'Kundenname',
     orderType: 'Bestelltyp',
     table: 'Tisch',
-    address: 'Adresse',
     subtotal: 'Zwischensumme',
     tax: 'Steuer (MwSt. 15%)',
     total: 'Gesamt',
@@ -548,6 +547,7 @@ export const translations: Record<Language, Translations> = {
     vatNumber: 'Umsatzsteuer-ID',
     email: 'E-Mail',
     phone: 'Telefon',
+    address: 'Adresse',
     language: 'Sprache',
     updateSettings: 'Einstellungen aktualisieren',
     
@@ -636,7 +636,6 @@ export const translations: Record<Language, Translations> = {
     customerName: 'ग्राहक का नाम',
     orderType: 'ऑर्डर प्रकार',
     table: 'टेबल',
-    address: 'पता',
     subtotal: 'उप-योग',
     tax: 'कर (वैट 15%)',
     total: 'कुल',
@@ -661,6 +660,7 @@ export const translations: Record<Language, Translations> = {
     vatNumber: 'वैट नंबर',
     email: 'ईमेल',
     phone: 'फोन',
+    address: 'पता',
     language: 'भाषा',
     updateSettings: 'सेटिंग्स अपडेट करें',
     
@@ -749,7 +749,6 @@ export const translations: Record<Language, Translations> = {
     customerName: 'گاہک کا نام',
     orderType: 'آرڈر کی قسم',
     table: 'میز',
-    address: 'پتہ',
     subtotal: 'ذیلی کل',
     tax: 'ٹیکس (ویٹ 15%)',
     total: 'کل',
@@ -774,6 +773,7 @@ export const translations: Record<Language, Translations> = {
     vatNumber: 'ویٹ نمبر',
     email: 'ای میل',
     phone: 'فون',
+    address: 'پتہ',
     language: 'زبان',
     updateSettings: 'ترتیبات اپ ڈیٹ کریں',
     
@@ -862,7 +862,6 @@ export const translations: Record<Language, Translations> = {
     customerName: 'গ্রাহকের নাম',
     orderType: 'অর্ডারের ধরন',
     table: 'টেবিল',
-    address: 'ঠিকানা',
     subtotal: 'উপমোট',
     tax: 'কর (ভ্যাট ১৫%)',
     total: 'মোট',
@@ -887,6 +886,7 @@ export const translations: Record<Language, Translations> = {
     vatNumber: 'ভ্যাট নম্বর',
     email: 'ইমেইল',
     phone: 'ফোন',
+    address: 'ঠিকানা',
     language: 'ভাষা',
     updateSettings: 'সেটিংস আপডেট করুন',
     
