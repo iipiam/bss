@@ -117,6 +117,10 @@ export default function Menu() {
   const handleExport = async () => {
     try {
       const response = await fetch('/api/export/menu');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Export failed');
+      }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -133,7 +137,7 @@ export default function Menu() {
     } catch (error) {
       toast({
         title: "Export failed",
-        description: "Failed to export menu data",
+        description: error instanceof Error ? error.message : "Failed to export menu data",
         variant: "destructive",
       });
     }
@@ -154,6 +158,10 @@ export default function Menu() {
       });
       const result = await response.json();
       
+      if (!response.ok) {
+        throw new Error(result.error || 'Import failed');
+      }
+      
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
       toast({
         title: "Import successful",
@@ -162,7 +170,7 @@ export default function Menu() {
     } catch (error) {
       toast({
         title: "Import failed",
-        description: "Failed to import menu data",
+        description: error instanceof Error ? error.message : "Failed to import menu data",
         variant: "destructive",
       });
     } finally {

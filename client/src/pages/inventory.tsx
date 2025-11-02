@@ -51,6 +51,10 @@ export default function Inventory() {
   const handleExport = async () => {
     try {
       const response = await fetch('/api/export/inventory');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Export failed');
+      }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -67,7 +71,7 @@ export default function Inventory() {
     } catch (error) {
       toast({
         title: "Export failed",
-        description: "Failed to export inventory data",
+        description: error instanceof Error ? error.message : "Failed to export inventory data",
         variant: "destructive",
       });
     }
@@ -88,6 +92,10 @@ export default function Inventory() {
       });
       const result = await response.json();
       
+      if (!response.ok) {
+        throw new Error(result.error || 'Import failed');
+      }
+      
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       toast({
         title: "Import successful",
@@ -96,7 +104,7 @@ export default function Inventory() {
     } catch (error) {
       toast({
         title: "Import failed",
-        description: "Failed to import inventory data",
+        description: error instanceof Error ? error.message : "Failed to import inventory data",
         variant: "destructive",
       });
     } finally {
