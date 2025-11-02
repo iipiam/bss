@@ -54,12 +54,29 @@ const statusIcons = {
 export default function ProcurementPage() {
   const { toast } = useToast();
   const [selectedType, setSelectedType] = useState<string>("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all-statuses");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Procurement | null>(null);
 
   const { data: procurements = [], isLoading } = useQuery<Procurement[]>({
-    queryKey: ["/api/procurement", selectedType !== "all" ? selectedType : undefined, selectedStatus || undefined],
+    queryKey: [
+      "/api/procurement",
+      {
+        type: selectedType !== "all" ? selectedType : undefined,
+        status: selectedStatus !== "all-statuses" ? selectedStatus : undefined,
+      },
+    ],
+    queryFn: async () => {
+      const queryParams = new URLSearchParams();
+      if (selectedType !== "all") queryParams.set("type", selectedType);
+      if (selectedStatus !== "all-statuses") queryParams.set("status", selectedStatus);
+      const queryString = queryParams.toString();
+      const apiUrl = `/api/procurement${queryString ? `?${queryString}` : ""}`;
+      
+      const response = await fetch(apiUrl);
+      if (!response.ok) throw new Error("Failed to fetch procurement data");
+      return response.json();
+    },
   });
 
   const form = useForm<InsertProcurement>({
@@ -153,12 +170,6 @@ export default function ProcurementPage() {
   const handleStatusChange = (id: string, newStatus: string) => {
     updateMutation.mutate({ id, data: { status: newStatus } });
   };
-
-  const filteredProcurements = procurements.filter(item => {
-    if (selectedType !== "all" && item.type !== selectedType) return false;
-    if (selectedStatus && item.status !== selectedStatus) return false;
-    return true;
-  });
 
   const stats = {
     total: procurements.length,
@@ -470,7 +481,7 @@ export default function ProcurementPage() {
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Statuses</SelectItem>
+                  <SelectItem value="all-statuses">All Statuses</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
                   <SelectItem value="ordered">Ordered</SelectItem>
@@ -494,11 +505,11 @@ export default function ProcurementPage() {
 
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">Loading...</div>
-            ) : filteredProcurements.length === 0 ? (
+            ) : procurements.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">No procurement requests found</div>
             ) : (
               <div className="space-y-4">
-                {filteredProcurements.map((item) => {
+                {procurements.map((item) => {
                   const Icon = typeIcons[item.type as keyof typeof typeIcons];
                   const StatusIcon = statusIcons[item.status as keyof typeof statusIcons];
                   
