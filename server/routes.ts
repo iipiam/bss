@@ -1133,14 +1133,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           await storage.createInventoryItem({
             name: row.name,
-            sku: row.sku,
-            branchId: row.branchId,
             category: row.category,
-            quantity: Number(row.quantity),
+            quantity: String(row.quantity),
             unit: row.unit,
-            reorderLevel: Number(row.reorderLevel),
-            costPerUnit: String(row.costPerUnit),
             supplier: row.supplier,
+            status: row.status || "In Stock",
+            branchId: row.branchId || null,
           });
           imported++;
         } catch (error) {
@@ -1177,8 +1175,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             name: row.name,
             category: row.category,
             basePrice: String(row.basePrice),
-            vatRate: String(row.vatRate),
             price: String(row.price),
+            vatAmount: String(row.vatAmount || 0),
             description: row.description,
             available: Boolean(row.available),
             imageUrl: row.imageUrl,
@@ -1257,10 +1255,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           await storage.createBranch({
             name: row.name,
-            address: row.address,
+            location: row.location || row.address,
             phone: row.phone,
-            email: row.email,
             manager: row.manager,
+            staff: Number(row.staff) || undefined,
+            status: row.status || undefined,
           });
           imported++;
         } catch (error) {

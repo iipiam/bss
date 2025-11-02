@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Edit, UtensilsCrossed, Settings2, Trash2, X } from "lucide-react";
+import { Plus, Search, Edit, UtensilsCrossed, Settings2, Trash2, X, Download, Upload } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +34,7 @@ export default function Menu() {
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [categories, setCategories] = useState<string[]>([
     "Pizza",
     "Burgers",
@@ -113,6 +114,63 @@ export default function Menu() {
     createMenuItemMutation.mutate(data);
   };
 
+  const handleExport = async () => {
+    try {
+      const response = await fetch('/api/export/menu');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'menu.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: "Export successful",
+        description: "Menu data exported to Excel",
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "Failed to export menu data",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/import/menu', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
+      toast({
+        title: "Import successful",
+        description: result.message || "Menu data imported from Excel",
+      });
+    } catch (error) {
+      toast({
+        title: "Import failed",
+        description: "Failed to import menu data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+      event.target.value = '';
+    }
+  };
+
   const filteredItems = menuItems.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -134,6 +192,24 @@ export default function Menu() {
           <p className="text-muted-foreground">Manage your menu items and pricing</p>
         </div>
         <div className="flex gap-3">
+          <Button variant="outline" onClick={handleExport} data-testid="button-export">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+          <Button variant="outline" asChild disabled={isImporting}>
+            <label htmlFor="import-menu" className="cursor-pointer" data-testid="button-import">
+              <Upload className="h-4 w-4 mr-2" />
+              {isImporting ? "Importing..." : "Import"}
+              <input
+                id="import-menu"
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleImport}
+                className="hidden"
+                data-testid="input-import-file"
+              />
+            </label>
+          </Button>
           <Dialog open={categoriesOpen} onOpenChange={setCategoriesOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" data-testid="button-manage-categories">

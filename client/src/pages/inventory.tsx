@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Download, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -28,6 +28,7 @@ export default function Inventory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isImporting, setIsImporting] = useState(false);
   const { toast } = useToast();
 
   const { data: inventoryItems = [], isLoading } = useQuery<InventoryItem[]>({
@@ -46,6 +47,63 @@ export default function Inventory() {
       });
     },
   });
+
+  const handleExport = async () => {
+    try {
+      const response = await fetch('/api/export/inventory');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'inventory.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: "Export successful",
+        description: "Inventory data exported to Excel",
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "Failed to export inventory data",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/import/inventory', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      toast({
+        title: "Import successful",
+        description: result.message || "Inventory data imported from Excel",
+      });
+    } catch (error) {
+      toast({
+        title: "Import failed",
+        description: "Failed to import inventory data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+      event.target.value = '';
+    }
+  };
 
   const filteredItems = inventoryItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -73,10 +131,30 @@ export default function Inventory() {
           <h1 className="text-3xl font-bold mb-2">Inventory Management</h1>
           <p className="text-muted-foreground">Track and manage your stock levels</p>
         </div>
-        <Button data-testid="button-add-item">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Item
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExport} data-testid="button-export">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+          <Button variant="outline" asChild disabled={isImporting}>
+            <label htmlFor="import-inventory" className="cursor-pointer" data-testid="button-import">
+              <Upload className="h-4 w-4 mr-2" />
+              {isImporting ? "Importing..." : "Import"}
+              <input
+                id="import-inventory"
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleImport}
+                className="hidden"
+                data-testid="input-import-file"
+              />
+            </label>
+          </Button>
+          <Button data-testid="button-add-item">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Item
+          </Button>
+        </div>
       </div>
 
       <Card className="p-6">
