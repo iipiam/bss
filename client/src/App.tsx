@@ -34,6 +34,7 @@ import Orders from "@/pages/orders";
 import Kitchen from "@/pages/kitchen";
 import Procurement from "@/pages/procurement";
 import SettingsPage from "@/pages/settings";
+import Employees from "@/pages/employees";
 import Login from "@/pages/login";
 import Setup from "@/pages/setup";
 import NotFound from "@/pages/not-found";
@@ -57,6 +58,7 @@ function Router() {
       <Route path="/kitchen" component={Kitchen} />
       <Route path="/procurement" component={Procurement} />
       <Route path="/settings" component={SettingsPage} />
+      <Route path="/employees" component={Employees} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -14,6 +14,7 @@ import {
   Flame,
   ShoppingBag,
   Settings,
+  Users,
 } from "lucide-react";
 import {
   Sidebar,
@@ -52,6 +53,7 @@ const analytics = [
 
 const system = [
   { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Employees", url: "/employees", icon: Users },
 ];
 
 export function AppSidebar() {
