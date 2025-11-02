@@ -1264,6 +1264,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export Financial Statement as PDF
+  app.get("/api/export/financial-pdf", async (req, res) => {
+    try {
+      const year = req.query.year as string || new Date().getFullYear().toString();
+      const period = (req.query.period as "monthly" | "yearly") || 'monthly';
+      
+      const settings = await storage.getSettings();
+      
+      // Fetch financial data
+      const transactions = await storage.getTransactions();
+      const invoices = await storage.getInvoices();
+      
+      // Filter by year
+      const yearTransactions = transactions.filter(t => 
+        new Date(t.createdAt).getFullYear() === parseInt(year)
+      );
+      const yearInvoices = invoices.filter(inv => 
+        new Date(inv.createdAt).getFullYear() === parseInt(year)
+      );
+      
+      // Calculate yearly totals
+      const revenue = yearTransactions.reduce((sum, t) => sum + parseFloat(t.subtotal), 0);
+      const vat = revenue * 0.15; // 15% Saudi VAT
+      
+      const yearlyData = {
+        revenue: revenue.toFixed(2),
+        vat: vat.toFixed(2),
+        transactions: yearTransactions.length,
+        invoices: yearInvoices.length,
+      };
+      
+      // Calculate monthly data if needed
+      let monthlyData;
+      if (period === 'monthly') {
+        monthlyData = Array.from({ length: 12 }, (_, i) => {
+          const monthTransactions = yearTransactions.filter(t => 
+            new Date(t.createdAt).getMonth() === i
+          );
+          
+          const monthRevenue = monthTransactions.reduce((sum, t) => sum + parseFloat(t.subtotal), 0);
+          const monthVat = monthRevenue * 0.15;
+          
+          return {
+            month: new Date(parseInt(year), i).toLocaleString('default', { month: 'long' }),
+            revenue: monthRevenue.toFixed(2),
+            vat: monthVat.toFixed(2),
+            transactions: monthTransactions.length,
+          };
+        });
+      }
+      
+      const { generateFinancialStatementPDF } = await import('./invoice.js');
+      
+      const pdfBuffer = await generateFinancialStatementPDF({
+        companyName: settings?.restaurantName || "RestoPOS",
+        companyVAT: settings?.vatNumber || "",
+        year,
+        period,
+        yearlyData,
+        monthlyData,
+      });
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=financial-statement-${year}.pdf`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Financial PDF export error:", error);
+      res.status(500).json({ error: "Failed to export financial statement" });
+    }
+  });
+
+  // Download individual invoice PDF
+  app.get("/api/invoices/:id/download", async (req, res) => {
+    try {
+      const invoice = await storage.getInvoice(req.params.id);
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+      
+      // If pdfPath exists, serve the file
+      if (invoice.pdfPath) {
+        const filePath = path.join(process.cwd(), invoice.pdfPath);
+        if (fs.existsSync(filePath)) {
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`);
+          return res.sendFile(filePath);
+        }
+      }
+      
+      // If PDF doesn't exist, return error (PDF should be generated during invoice creation)
+      res.status(404).json({ error: "Invoice PDF not found" });
+    } catch (error) {
+      console.error("Invoice download error:", error);
+      res.status(500).json({ error: "Failed to download invoice" });
+    }
+  });
+
   // Import routes with file upload
   const multer = await import('multer');
   const upload = multer.default({ storage: multer.default.memoryStorage() });

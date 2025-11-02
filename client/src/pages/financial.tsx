@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, TrendingUp, TrendingDown, DollarSign, FileText, Receipt } from "lucide-react";
+import { Download, TrendingUp, TrendingDown, DollarSign, FileText, Receipt, FileDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
@@ -68,6 +68,88 @@ export default function Financial() {
     }
   };
 
+  const handleExportPDF = async () => {
+    try {
+      const response = await fetch(`/api/export/financial-pdf?year=${selectedYear}&period=${selectedPeriod}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Export failed');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `financial-statement-${selectedYear}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: "PDF export successful",
+        description: "Financial statement exported to PDF",
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: error instanceof Error ? error.message : "Failed to export PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadInvoice = async (invoiceId: string, invoiceNumber: string) => {
+    try {
+      const response = await fetch(`/api/invoices/${invoiceId}/download`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Download failed');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${invoiceNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: "Download successful",
+        description: `Invoice ${invoiceNumber} downloaded`,
+      });
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: error instanceof Error ? error.message : "Failed to download invoice",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportAllInvoices = async () => {
+    if (invoices.length === 0) {
+      toast({
+        title: "No invoices",
+        description: "No invoices available to export",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Exporting invoices",
+      description: `Downloading ${invoices.length} invoice(s)...`,
+    });
+
+    for (const invoice of invoices) {
+      try {
+        await handleDownloadInvoice(invoice.id, invoice.invoiceNumber);
+      } catch (error) {
+        console.error(`Failed to download invoice ${invoice.invoiceNumber}:`, error);
+      }
+    }
+  };
+
   return (
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
@@ -76,9 +158,13 @@ export default function Financial() {
           <p className="text-muted-foreground">Monthly and yearly financial reports with ZATCA VAT invoices</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport} data-testid="button-export-financial">
+          <Button variant="outline" onClick={handleExport} data-testid="button-export-excel">
             <Download className="h-4 w-4 mr-2" />
-            Export
+            Export Excel
+          </Button>
+          <Button variant="outline" onClick={handleExportPDF} data-testid="button-export-pdf">
+            <FileDown className="h-4 w-4 mr-2" />
+            Export PDF
           </Button>
           <Select value={selectedYear} onValueChange={setSelectedYear}>
             <SelectTrigger className="w-32" data-testid="select-year">
@@ -221,7 +307,7 @@ export default function Financial() {
                   <CardTitle>ZATCA Compliant Invoices</CardTitle>
                   <CardDescription>All generated invoices with QR codes for Saudi Arabia compliance</CardDescription>
                 </div>
-                <Button variant="outline">
+                <Button variant="outline" onClick={handleExportAllInvoices} data-testid="button-export-all-invoices">
                   <Download className="h-4 w-4 mr-2" />
                   Export All
                 </Button>
@@ -236,16 +322,17 @@ export default function Financial() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <div className="grid grid-cols-6 gap-4 font-medium text-sm border-b pb-2">
+                  <div className="grid grid-cols-7 gap-4 font-medium text-sm border-b pb-2">
                     <div>Invoice #</div>
                     <div>Customer</div>
                     <div className="text-right">Subtotal</div>
                     <div className="text-right">VAT</div>
                     <div className="text-right">Total</div>
                     <div className="text-right">Date</div>
+                    <div className="text-right">Actions</div>
                   </div>
                   {invoices.map((invoice) => (
-                    <div key={invoice.id} className="grid grid-cols-6 gap-4 text-sm items-center hover-elevate p-2 rounded-md" data-testid={`invoice-${invoice.id}`}>
+                    <div key={invoice.id} className="grid grid-cols-7 gap-4 text-sm items-center hover-elevate p-2 rounded-md" data-testid={`invoice-${invoice.id}`}>
                       <div className="font-mono font-medium">{invoice.invoiceNumber}</div>
                       <div className="text-muted-foreground">{invoice.customerName || "Walk-in"}</div>
                       <div className="text-right font-mono">{parseFloat(invoice.subtotal).toFixed(2)}</div>
@@ -253,6 +340,17 @@ export default function Financial() {
                       <div className="text-right font-mono font-medium">{parseFloat(invoice.total).toFixed(2)} SAR</div>
                       <div className="text-right text-muted-foreground text-xs">
                         {new Date(invoice.createdAt).toLocaleDateString()}
+                      </div>
+                      <div className="text-right">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleDownloadInvoice(invoice.id, invoice.invoiceNumber)}
+                          data-testid={`button-download-${invoice.id}`}
+                        >
+                          <FileDown className="h-3 w-3 mr-1" />
+                          PDF
+                        </Button>
                       </div>
                     </div>
                   ))}
