@@ -6,6 +6,14 @@ RestoPOS is a comprehensive restaurant management system tailored for Saudi Arab
 
 ## Recent Changes (November 2, 2025)
 
+### Menu Item Edit & Delete Functionality
+Added full CRUD operations for menu items:
+- **Edit Menu Items**: Click edit button to modify name, description, category, and base price
+- **Delete Menu Items**: Click delete button with confirmation dialog before removal
+- **Smart Dialog Management**: Dialog automatically switches between create/edit modes with proper state cleanup
+- **Visual Feedback**: Success toasts for create, update, and delete operations
+- **Cache Invalidation**: Automatic UI refresh after mutations to show latest data
+
 ### Excel Export/Import Functionality
 Added comprehensive data export and import capabilities:
 - **Export to Excel**: All major data tables (inventory, menu, recipes, orders, transactions, procurement, branches) can be exported to Excel format

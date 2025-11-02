@@ -189,6 +189,15 @@ export default function Menu() {
     setOpen(true);
   };
 
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      // Clear state when closing
+      setEditingItem(null);
+      form.reset();
+    }
+  };
+
   const handleCloseDialog = () => {
     setOpen(false);
     setEditingItem(null);
@@ -364,7 +373,7 @@ export default function Menu() {
               </div>
             </DialogContent>
           </Dialog>
-          <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleCloseDialog()}>
+          <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
               <Button data-testid="button-add-menu-item">
                 <Plus className="h-4 w-4 mr-2" />
