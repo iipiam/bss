@@ -7,13 +7,15 @@ interface InvoiceData {
   companyName: string;
   companyVAT: string;
   branchAddress: string;
+  companyEmail: string;
+  companyPhone: string;
   invoiceNumber: string;
   invoiceDate: Date;
 }
 
 export async function generateZATCAInvoice(data: InvoiceData): Promise<Buffer> {
   const doc = new jsPDF();
-  const { order, companyName, companyVAT, branchAddress, invoiceNumber, invoiceDate } = data;
+  const { order, companyName, companyVAT, branchAddress, companyEmail, companyPhone, invoiceNumber, invoiceDate } = data;
 
   // ZATCA QR Code Data
   // TLV Format (Tag-Length-Value) for ZATCA compliance
@@ -55,6 +57,10 @@ export async function generateZATCAInvoice(data: InvoiceData): Promise<Buffer> {
   doc.text(`VAT Number: ${companyVAT}`, 20, y);
   y += 6;
   doc.text(`Address: ${branchAddress}`, 20, y);
+  y += 6;
+  doc.text(`Email: ${companyEmail}`, 20, y);
+  y += 6;
+  doc.text(`Phone: ${companyPhone}`, 20, y);
   y += 10;
 
   // Invoice Details Box

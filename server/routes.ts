@@ -9,6 +9,7 @@ import {
   insertRecipeSchema,
   insertOrderSchema,
   insertTransactionSchema,
+  insertSettingsSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -290,6 +291,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(chartData);
   });
 
+  // Settings
+  app.get("/api/settings", async (_req, res) => {
+    const settings = await storage.getSettings();
+    res.json(settings);
+  });
+
+  app.patch("/api/settings", async (req, res) => {
+    try {
+      const data = insertSettingsSchema.partial().parse(req.body);
+      const settings = await storage.updateSettings(data);
+      res.json(settings);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid settings data" });
+    }
+  });
+
   // POS - Generate Invoice
   app.post("/api/pos/generate-invoice", async (req, res) => {
     try {
@@ -300,13 +317,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Order not found" });
       }
 
+      const settings = await storage.getSettings();
       const branch = order.branchId ? await storage.getBranch(order.branchId) : null;
 
       const invoiceData = {
         order,
-        companyName: "Restaurant Management System",
-        companyVAT: "300123456789003",
-        branchAddress: branch?.location || "Main Location, Riyadh",
+        companyName: settings?.restaurantName || "Restaurant Management System",
+        companyVAT: settings?.vatNumber || "300123456789003",
+        branchAddress: branch?.location || settings?.address || "Main Location, Riyadh",
+        companyEmail: settings?.email || "info@restaurant.sa",
+        companyPhone: settings?.phone || "+966 11 234 5678",
         invoiceNumber: `INV-${order.orderNumber}`,
         invoiceDate: new Date(),
       };

@@ -11,6 +11,7 @@ import {
   Building2,
   ClipboardList,
   Flame,
+  Settings,
 } from "lucide-react";
 import {
   Sidebar,
@@ -43,6 +44,10 @@ const analytics = [
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "Forecasting", url: "/forecasting", icon: TrendingUp },
   { title: "Analysis", url: "/analysis", icon: BarChart3 },
+];
+
+const system = [
+  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -92,6 +97,24 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {analytics.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild isActive={location === item.url}>
+                    <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>System</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {system.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location === item.url}>
                     <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>

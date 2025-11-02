@@ -11,6 +11,8 @@ import {
   type InsertOrder,
   type Transaction,
   type InsertTransaction,
+  type Settings,
+  type InsertSettings,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -52,6 +54,10 @@ export interface IStorage {
   getTransactions(branchId?: string, startDate?: Date, endDate?: Date): Promise<Transaction[]>;
   getTransaction(id: string): Promise<Transaction | undefined>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
+
+  // Settings
+  getSettings(): Promise<Settings | undefined>;
+  updateSettings(settings: Partial<InsertSettings>): Promise<Settings>;
 }
 
 export class MemStorage implements IStorage {
@@ -61,6 +67,7 @@ export class MemStorage implements IStorage {
   private recipes: Map<string, Recipe>;
   private orders: Map<string, Order>;
   private transactions: Map<string, Transaction>;
+  private settings: Settings | undefined;
   private orderCounter: number;
   private transactionCounter: number;
 
@@ -71,6 +78,7 @@ export class MemStorage implements IStorage {
     this.recipes = new Map();
     this.orders = new Map();
     this.transactions = new Map();
+    this.settings = undefined;
     this.orderCounter = 12840;
     this.transactionCounter = 12840;
     this.seedData();
@@ -128,6 +136,17 @@ export class MemStorage implements IStorage {
       { id: "menu-5", name: "Caesar Salad", category: "Salads", price: "40", description: "Fresh romaine with Caesar dressing", available: true, imageUrl: null },
     ];
     menuData.forEach(item => this.menuItems.set(item.id, item));
+
+    // Seed settings
+    this.settings = {
+      id: "1",
+      restaurantName: "Restaurant Management System",
+      vatNumber: "300123456789003",
+      address: "King Fahd Road, Riyadh, Saudi Arabia",
+      email: "info@restaurant.sa",
+      phone: "+966 11 234 5678",
+      language: "English",
+    };
   }
 
   // Branches
@@ -332,6 +351,29 @@ export class MemStorage implements IStorage {
     };
     this.transactions.set(id, newTransaction);
     return newTransaction;
+  }
+
+  // Settings
+  async getSettings(): Promise<Settings | undefined> {
+    return this.settings;
+  }
+
+  async updateSettings(settings: Partial<InsertSettings>): Promise<Settings> {
+    if (!this.settings) {
+      const id = randomUUID();
+      this.settings = {
+        id,
+        restaurantName: settings.restaurantName || "",
+        vatNumber: settings.vatNumber || "",
+        address: settings.address || "",
+        email: settings.email || "",
+        phone: settings.phone || "",
+        language: settings.language || "English",
+      };
+    } else {
+      this.settings = { ...this.settings, ...settings };
+    }
+    return this.settings;
   }
 }
 
