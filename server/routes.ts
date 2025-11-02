@@ -425,10 +425,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public endpoint for user signup
   app.post("/api/auth/signup", async (req, res) => {
     try {
-      const { username, password, name, email } = req.body;
+      const { username, password, name, email, commercialRegistration, subscriptionPlan } = req.body;
       
-      if (!username || !password || !name || !email) {
-        return res.status(400).json({ error: "All fields are required" });
+      if (!username || !password || !name || !email || !commercialRegistration || !subscriptionPlan) {
+        return res.status(400).json({ error: "All fields are required including Commercial Registration and subscription plan" });
+      }
+
+      // Validate subscription plan
+      if (!['monthly', 'yearly'].includes(subscriptionPlan)) {
+        return res.status(400).json({ error: "Invalid subscription plan" });
       }
 
       // Check if username already exists
@@ -443,6 +448,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password, // Will be hashed in storage
         fullName: name,
         email,
+        commercialRegistration,
+        subscriptionPlan,
+        subscriptionStatus: "inactive" as const, // Will be activated after payment
         role: "employee" as const,
         active: true,
         permissions: {
@@ -470,7 +478,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: user.id, 
         username: user.username, 
         fullName: user.fullName,
-        role: user.role 
+        role: user.role,
+        subscriptionPlan: user.subscriptionPlan,
+        subscriptionStatus: user.subscriptionStatus
       });
     } catch (error) {
       console.error("Signup error:", error);

@@ -178,6 +178,13 @@ export const users = pgTable("users", {
     employees: boolean;
   }>(),
   branchId: varchar("branch_id").references(() => branches.id),
+  commercialRegistration: text("commercial_registration"), // Saudi Arabia Commercial Registration number (mandatory for signup)
+  subscriptionPlan: text("subscription_plan"), // "monthly" or "yearly"
+  subscriptionStatus: text("subscription_status").default("inactive"), // "inactive", "active", "cancelled", "expired"
+  subscriptionStartDate: timestamp("subscription_start_date"),
+  subscriptionEndDate: timestamp("subscription_end_date"),
+  passwordResetToken: text("password_reset_token"),
+  passwordResetExpiry: timestamp("password_reset_expiry"),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

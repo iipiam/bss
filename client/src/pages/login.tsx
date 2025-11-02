@@ -5,10 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn, UserPlus, UtensilsCrossed } from "lucide-react";
+import { LogIn, UserPlus, UtensilsCrossed, Check } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 
 export default function Login() {
   const [loginUsername, setLoginUsername] = useState("");
@@ -17,6 +20,8 @@ export default function Login() {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
+  const [signupCommercialReg, setSignupCommercialReg] = useState("");
+  const [subscriptionPlan, setSubscriptionPlan] = useState("monthly");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
@@ -43,7 +48,14 @@ export default function Login() {
   };
 
   const signupMutation = useMutation({
-    mutationFn: async (data: { username: string; password: string; name: string; email: string }) => {
+    mutationFn: async (data: { 
+      username: string; 
+      password: string; 
+      name: string; 
+      email: string; 
+      commercialRegistration: string;
+      subscriptionPlan: string;
+    }) => {
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -89,6 +101,8 @@ export default function Login() {
       password: signupPassword,
       name: signupName,
       email: signupEmail,
+      commercialRegistration: signupCommercialReg,
+      subscriptionPlan: subscriptionPlan,
     });
   };
 
@@ -137,6 +151,15 @@ export default function Login() {
                     data-testid="input-login-password"
                   />
                 </div>
+                <div className="flex justify-end">
+                  <Link 
+                    href="/forgot-password" 
+                    className="text-sm text-primary hover:underline"
+                    data-testid="link-forgot-password"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
                 <Button type="submit" className="w-full" disabled={isLoggingIn} data-testid="button-login">
                   {isLoggingIn ? (
                     "Signing in..."
@@ -177,6 +200,19 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="signup-commercial-reg">Commercial Registration *</Label>
+                  <Input
+                    id="signup-commercial-reg"
+                    type="text"
+                    placeholder="Saudi Commercial Registration number"
+                    value={signupCommercialReg}
+                    onChange={(e) => setSignupCommercialReg(e.target.value)}
+                    required
+                    data-testid="input-signup-commercial-reg"
+                  />
+                  <p className="text-xs text-muted-foreground">Required for all restaurant businesses in Saudi Arabia</p>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="signup-username">Username</Label>
                   <Input
                     id="signup-username"
@@ -201,6 +237,56 @@ export default function Login() {
                     data-testid="input-signup-password"
                   />
                 </div>
+
+                <div className="space-y-3">
+                  <Label>Subscription Plan</Label>
+                  <RadioGroup value={subscriptionPlan} onValueChange={setSubscriptionPlan} data-testid="radiogroup-subscription">
+                    <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors cursor-pointer ${
+                      subscriptionPlan === 'monthly' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                    }`} onClick={() => setSubscriptionPlan('monthly')}>
+                      <RadioGroupItem value="monthly" id="monthly" data-testid="radio-monthly" />
+                      <Label htmlFor="monthly" className="flex-1 cursor-pointer">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold">Monthly</p>
+                            <p className="text-sm text-muted-foreground">Billed monthly</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xl font-bold">119.75 SAR</p>
+                            <p className="text-xs text-muted-foreground">per month</p>
+                          </div>
+                        </div>
+                      </Label>
+                    </div>
+                    
+                    <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors cursor-pointer ${
+                      subscriptionPlan === 'yearly' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                    }`} onClick={() => setSubscriptionPlan('yearly')}>
+                      <RadioGroupItem value="yearly" id="yearly" data-testid="radio-yearly" />
+                      <Label htmlFor="yearly" className="flex-1 cursor-pointer">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div>
+                              <p className="font-semibold">Yearly</p>
+                              <p className="text-sm text-muted-foreground">Billed annually</p>
+                            </div>
+                            <Badge variant="default" className="bg-green-600 hover:bg-green-700">
+                              Save 17%
+                            </Badge>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xl font-bold">1,197.50 SAR</p>
+                            <p className="text-xs text-muted-foreground">per year</p>
+                          </div>
+                        </div>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                  <p className="text-xs text-muted-foreground">
+                    All prices include 15% VAT as required by Saudi law
+                  </p>
+                </div>
+
                 <Button 
                   type="submit" 
                   className="w-full" 
@@ -212,7 +298,7 @@ export default function Login() {
                   ) : (
                     <>
                       <UserPlus className="mr-2 h-4 w-4" />
-                      Create Account
+                      Create Account & Continue to Payment
                     </>
                   )}
                 </Button>
