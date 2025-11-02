@@ -2,7 +2,18 @@
 
 ## Overview
 
-RestoPOS is a comprehensive restaurant management system tailored for Saudi Arabian restaurants, ensuring ZATCA-compliant invoicing. It offers a complete suite of features including Point of Sale (POS), inventory, menu and recipe management, multi-branch operations, order processing, kitchen display, sales analytics, business reporting, and demand forecasting. The system focuses on data clarity, operational efficiency, and adherence to Saudi regulatory requirements to streamline restaurant operations.
+RestoPOS is a comprehensive restaurant management system tailored for Saudi Arabian restaurants, ensuring ZATCA-compliant invoicing. It offers a complete suite of features including Point of Sale (POS), inventory, menu and recipe management, multi-branch operations, order processing, kitchen display, sales analytics, business reporting, demand forecasting, and strategic decision-making tools for profitability optimization. The system focuses on data clarity, operational efficiency, and adherence to Saudi regulatory requirements to streamline restaurant operations.
+
+## Recent Changes (November 2, 2025)
+
+### Strategic Decision-Making Tabs in Profitability Analysis
+Added four comprehensive tabs to help restaurant owners make data-driven strategic decisions:
+- **Strategic Overview**: Total revenue, profit, margins, costs with detailed breakdown by item and category
+- **Pricing Analysis**: Margin categorization (below cost, low, healthy, premium), price coverage analysis, and recommended pricing adjustments to achieve 30% margins
+- **Scaling Viability**: Unit economics (avg profit/unit, break-even analysis), maximum customer acquisition cost calculations, and investment capacity recommendations
+- **Cost Management**: Cost reduction impact analysis, priority targets for cost optimization, and three reduction strategies (supplier negotiation, ingredient substitution, portion control)
+
+All calculations use basePrice (pre-VAT) for accurate profit margin analysis.
 
 ## User Preferences
 
