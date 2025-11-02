@@ -1,14 +1,107 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ChefHat } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, ChefHat, Trash2 } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Recipe } from "@shared/schema";
 
 export default function Recipes() {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [prepTime, setPrepTime] = useState("");
+  const [cookTime, setCookTime] = useState("");
+  const [servings, setServings] = useState("");
+  const [cost, setCost] = useState("");
+  const [ingredients, setIngredients] = useState([{ name: "", quantity: "", unit: "" }]);
+  const [steps, setSteps] = useState([""]);
+  const { toast } = useToast();
+
   const { data: recipes = [], isLoading } = useQuery<Recipe[]>({
     queryKey: ["/api/recipes"],
   });
+
+  const createRecipeMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("/api/recipes", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+      setOpen(false);
+      resetForm();
+      toast({
+        title: "Recipe created",
+        description: "The recipe has been added successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to create recipe",
+        description: error.message || "Could not create recipe",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetForm = () => {
+    setName("");
+    setPrepTime("");
+    setCookTime("");
+    setServings("");
+    setCost("");
+    setIngredients([{ name: "", quantity: "", unit: "" }]);
+    setSteps([""]);
+  };
+
+  const addIngredient = () => {
+    setIngredients([...ingredients, { name: "", quantity: "", unit: "" }]);
+  };
+
+  const removeIngredient = (index: number) => {
+    setIngredients(ingredients.filter((_, i) => i !== index));
+  };
+
+  const updateIngredient = (index: number, field: string, value: string) => {
+    const updated = [...ingredients];
+    updated[index] = { ...updated[index], [field]: value };
+    setIngredients(updated);
+  };
+
+  const addStep = () => {
+    setSteps([...steps, ""]);
+  };
+
+  const removeStep = (index: number) => {
+    setSteps(steps.filter((_, i) => i !== index));
+  };
+
+  const updateStep = (index: number, value: string) => {
+    const updated = [...steps];
+    updated[index] = value;
+    setSteps(updated);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createRecipeMutation.mutate({
+      name,
+      prepTime,
+      cookTime,
+      servings: parseInt(servings),
+      cost,
+      ingredients: ingredients.filter(i => i.name && i.quantity),
+      steps: steps.filter(s => s.trim() !== ""),
+    });
+  };
 
   if (isLoading) {
     return (
@@ -26,10 +119,168 @@ export default function Recipes() {
           <h1 className="text-3xl font-bold mb-2">Recipes</h1>
           <p className="text-muted-foreground">Manage recipes and preparation instructions</p>
         </div>
-        <Button data-testid="button-add-recipe">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Recipe
-        </Button>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button data-testid="button-add-recipe">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Recipe
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Add New Recipe</DialogTitle>
+              <DialogDescription>Create a new recipe with ingredients and instructions</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <Label htmlFor="name">Recipe Name</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g., Chicken Biryani"
+                    required
+                    data-testid="input-recipe-name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="prepTime">Prep Time</Label>
+                  <Input
+                    id="prepTime"
+                    value={prepTime}
+                    onChange={(e) => setPrepTime(e.target.value)}
+                    placeholder="e.g., 30 minutes"
+                    required
+                    data-testid="input-prep-time"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="cookTime">Cook Time</Label>
+                  <Input
+                    id="cookTime"
+                    value={cookTime}
+                    onChange={(e) => setCookTime(e.target.value)}
+                    placeholder="e.g., 45 minutes"
+                    required
+                    data-testid="input-cook-time"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="servings">Servings</Label>
+                  <Input
+                    id="servings"
+                    type="number"
+                    value={servings}
+                    onChange={(e) => setServings(e.target.value)}
+                    placeholder="e.g., 4"
+                    required
+                    data-testid="input-servings"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="cost">Cost per Serving (SAR)</Label>
+                  <Input
+                    id="cost"
+                    type="number"
+                    step="0.01"
+                    value={cost}
+                    onChange={(e) => setCost(e.target.value)}
+                    placeholder="e.g., 15.50"
+                    required
+                    data-testid="input-cost"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Ingredients</Label>
+                  <Button type="button" size="sm" variant="outline" onClick={addIngredient} data-testid="button-add-ingredient">
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add Ingredient
+                  </Button>
+                </div>
+                {ingredients.map((ingredient, index) => (
+                  <div key={index} className="grid grid-cols-12 gap-2">
+                    <Input
+                      className="col-span-5"
+                      value={ingredient.name}
+                      onChange={(e) => updateIngredient(index, "name", e.target.value)}
+                      placeholder="Ingredient name"
+                      data-testid={`input-ingredient-name-${index}`}
+                    />
+                    <Input
+                      className="col-span-3"
+                      value={ingredient.quantity}
+                      onChange={(e) => updateIngredient(index, "quantity", e.target.value)}
+                      placeholder="Quantity"
+                      data-testid={`input-ingredient-quantity-${index}`}
+                    />
+                    <Input
+                      className="col-span-3"
+                      value={ingredient.unit}
+                      onChange={(e) => updateIngredient(index, "unit", e.target.value)}
+                      placeholder="Unit"
+                      data-testid={`input-ingredient-unit-${index}`}
+                    />
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => removeIngredient(index)}
+                      disabled={ingredients.length === 1}
+                      data-testid={`button-remove-ingredient-${index}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Preparation Steps</Label>
+                  <Button type="button" size="sm" variant="outline" onClick={addStep} data-testid="button-add-step">
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add Step
+                  </Button>
+                </div>
+                {steps.map((step, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Textarea
+                      className="flex-1"
+                      value={step}
+                      onChange={(e) => updateStep(index, e.target.value)}
+                      placeholder={`Step ${index + 1}`}
+                      rows={2}
+                      data-testid={`input-step-${index}`}
+                    />
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => removeStep(index)}
+                      disabled={steps.length === 1}
+                      data-testid={`button-remove-step-${index}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => setOpen(false)} data-testid="button-cancel">
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createRecipeMutation.isPending} data-testid="button-save-recipe">
+                  {createRecipeMutation.isPending ? "Creating..." : "Create Recipe"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-6">
