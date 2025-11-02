@@ -65,6 +65,7 @@ Preferred communication style: Simple, everyday language.
 - Recipes: Preparation instructions linked to menu items with ingredient lists
 - Orders: Customer orders with status tracking, order types (dine-in, delivery, takeout)
 - Transactions: Financial records tied to orders for sales tracking
+- Procurement: Unified tracking for inventory purchases, maintenance work orders, installations, and equipment procurement with status workflow, priority levels, and cost management
 - Settings: System-wide configuration for company details and ZATCA compliance
 
 **Migration Strategy**: Drizzle Kit for schema migrations with PostgreSQL dialect.
@@ -99,6 +100,7 @@ Preferred communication style: Simple, everyday language.
 - `/api/recipes` - Recipe CRUD operations
 - `/api/orders` - Order processing and tracking
 - `/api/transactions` - Sales transaction records
+- `/api/procurement` - Procurement management with filtering by type (inventory, maintenance, installation, equipment) and status
 - `/api/settings` - System configuration
 - `/api/analytics/*` - Dashboard and reporting data
 
