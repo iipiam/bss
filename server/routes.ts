@@ -549,6 +549,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Forgot password route
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      
+      // Don't reveal if user exists or not for security
+      if (!user) {
+        return res.json({ message: "If an account with that email exists, we've sent a password reset link" });
+      }
+
+      // Generate reset token (crypto random string)
+      const crypto = await import('crypto');
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+
+      // Save reset token to database
+      await storage.setPasswordResetToken(user.id, resetToken, resetExpiry);
+
+      // TODO: In production, send email with reset link
+      // For now, we'll just log the token (in production this would be sent via email)
+      console.log(`Password reset token for ${email}: ${resetToken}`);
+      console.log(`Reset link: ${req.headers.origin}/reset-password?token=${resetToken}`);
+
+      res.json({ message: "If an account with that email exists, we've sent a password reset link" });
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      res.status(500).json({ error: "Failed to process password reset request" });
+    }
+  });
+
+  // Reset password route
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      
+      if (!token || !password) {
+        return res.status(400).json({ error: "Token and password are required" });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters long" });
+      }
+
+      // Find user by reset token and check if not expired
+      const user = await storage.getUserByResetToken(token);
+      
+      if (!user) {
+        return res.status(400).json({ error: "Invalid or expired reset token" });
+      }
+
+      // Update password
+      await storage.updatePassword(user.id, password);
+
+      // Clear reset token
+      await storage.clearPasswordResetToken(user.id);
+
+      res.json({ message: "Password reset successful" });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ error: "Failed to reset password" });
+    }
+  });
+
   app.get("/api/auth/me", async (req, res) => {
     if (!req.session?.userId) {
       return res.status(401).json({ error: "Not authenticated" });

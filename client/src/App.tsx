@@ -38,6 +38,8 @@ import SettingsPage from "@/pages/settings";
 import Employees from "@/pages/employees";
 import Login from "@/pages/login";
 import Setup from "@/pages/setup";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
 import NotFound from "@/pages/not-found";
 import type { User } from "@shared/schema";
 
@@ -79,6 +81,15 @@ function AppContent() {
     "--sidebar-width": "16rem",
     "--sidebar-width-icon": "3rem",
   };
+
+  // Handle public routes (forgot-password, reset-password) before checking authentication
+  const currentPath = window.location.pathname;
+  if (currentPath === "/forgot-password") {
+    return <ForgotPassword />;
+  }
+  if (currentPath === "/reset-password") {
+    return <ResetPassword />;
+  }
 
   // Show loading state
   if (isLoading || isCheckingFirstRun) {

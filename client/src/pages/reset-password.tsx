@@ -1,0 +1,170 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { Lock, Check } from "lucide-react";
+import { Link, useLocation } from "wouter";
+
+export default function ResetPassword() {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [token, setToken] = useState("");
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    // Get token from URL query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetToken = urlParams.get("token");
+    if (resetToken) {
+      setToken(resetToken);
+    } else {
+      toast({
+        title: "Invalid reset link",
+        description: "The password reset link is invalid or expired.",
+        variant: "destructive",
+      });
+      setTimeout(() => setLocation("/login"), 3000);
+    }
+  }, [setLocation, toast]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (password !== confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure both passwords are the same.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to reset password");
+      }
+
+      setIsSuccess(true);
+      toast({
+        title: "Password reset successful",
+        description: "You can now log in with your new password.",
+      });
+
+      // Redirect to login after 3 seconds
+      setTimeout(() => setLocation("/login"), 3000);
+    } catch (error: any) {
+      toast({
+        title: "Failed to reset password",
+        description: error.message || "Please try again or request a new reset link.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!token) {
+    return null;
+  }
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/10 to-primary/5">
+      <Card className="w-full max-w-md mx-4">
+        <CardHeader className="space-y-2">
+          <CardTitle className="text-2xl">Reset Password</CardTitle>
+          <CardDescription>
+            {isSuccess
+              ? "Your password has been reset successfully"
+              : "Enter your new password below"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isSuccess ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-center p-8">
+                <div className="bg-green-100 dark:bg-green-950 p-4 rounded-full">
+                  <Check className="h-12 w-12 text-green-600 dark:text-green-500" />
+                </div>
+              </div>
+              <p className="text-center text-muted-foreground">
+                Redirecting to login page...
+              </p>
+              <Link href="/login" className="block">
+                <Button className="w-full" data-testid="button-go-to-login">
+                  Go to Login
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="password">New Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter new password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  data-testid="input-password"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  data-testid="input-confirm-password"
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isSubmitting}
+                data-testid="button-submit"
+              >
+                {isSubmitting ? (
+                  "Resetting..."
+                ) : (
+                  <>
+                    <Lock className="mr-2 h-4 w-4" />
+                    Reset Password
+                  </>
+                )}
+              </Button>
+            </form>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
