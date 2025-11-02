@@ -78,62 +78,56 @@ export class MemStorage implements IStorage {
 
   private seedData() {
     // Seed branches
-    const branch1: Branch = {
-      id: "1",
-      name: "Main Branch - Riyadh",
-      location: "King Fahd Road, Riyadh",
-      phone: "+966 11 234 5678",
-      manager: "Ahmed Al-Rashid",
-      staff: 24,
-      status: "Active",
-    };
-    const branch2: Branch = {
-      id: "2",
-      name: "Al Khobar Branch",
-      location: "Corniche Road, Al Khobar",
-      phone: "+966 13 345 6789",
-      manager: "Mohammed Al-Qahtani",
-      staff: 18,
-      status: "Active",
-    };
-    const branch3: Branch = {
-      id: "3",
-      name: "Jeddah Branch",
-      location: "Tahlia Street, Jeddah",
-      phone: "+966 12 456 7890",
-      manager: "Khalid Al-Maliki",
-      staff: 20,
-      status: "Active",
-    };
-    this.branches.set("1", branch1);
-    this.branches.set("2", branch2);
-    this.branches.set("3", branch3);
+    const branches: Branch[] = [
+      {
+        id: "1",
+        name: "Main Branch - Riyadh",
+        location: "King Fahd Road, Riyadh",
+        phone: "+966 11 234 5678",
+        manager: "Ahmed Al-Rashid",
+        staff: 24,
+        status: "Active",
+      },
+      {
+        id: "2",
+        name: "Al Khobar Branch",
+        location: "Corniche Road, Al Khobar",
+        phone: "+966 13 345 6789",
+        manager: "Mohammed Al-Qahtani",
+        staff: 18,
+        status: "Active",
+      },
+      {
+        id: "3",
+        name: "Jeddah Branch",
+        location: "Tahlia Street, Jeddah",
+        phone: "+966 12 456 7890",
+        manager: "Khalid Al-Maliki",
+        staff: 20,
+        status: "Active",
+      },
+    ];
+    branches.forEach(branch => this.branches.set(branch.id, branch));
 
     // Seed inventory items
-    const inventoryData = [
-      { name: "Tomatoes", category: "Vegetables", quantity: "25", unit: "kg", supplier: "Fresh Farm Co.", status: "In Stock", branchId: "1" },
-      { name: "Mozzarella Cheese", category: "Dairy", quantity: "15", unit: "kg", supplier: "Dairy Delight", status: "In Stock", branchId: "1" },
-      { name: "Chicken Breast", category: "Meat", quantity: "30", unit: "kg", supplier: "Meat Masters", status: "In Stock", branchId: "1" },
-      { name: "Flour", category: "Grains", quantity: "50", unit: "kg", supplier: "Grain Supply", status: "In Stock", branchId: "1" },
-      { name: "Olive Oil", category: "Oils", quantity: "8", unit: "L", supplier: "Mediterranean Imports", status: "Low Stock", branchId: "1" },
+    const inventoryData: InventoryItem[] = [
+      { id: "inv-1", name: "Tomatoes", category: "Vegetables", quantity: "25", unit: "kg", supplier: "Fresh Farm Co.", status: "In Stock", branchId: "1" },
+      { id: "inv-2", name: "Mozzarella Cheese", category: "Dairy", quantity: "15", unit: "kg", supplier: "Dairy Delight", status: "In Stock", branchId: "1" },
+      { id: "inv-3", name: "Chicken Breast", category: "Meat", quantity: "30", unit: "kg", supplier: "Meat Masters", status: "In Stock", branchId: "1" },
+      { id: "inv-4", name: "Flour", category: "Grains", quantity: "50", unit: "kg", supplier: "Grain Supply", status: "In Stock", branchId: "1" },
+      { id: "inv-5", name: "Olive Oil", category: "Oils", quantity: "8", unit: "L", supplier: "Mediterranean Imports", status: "Low Stock", branchId: "1" },
     ];
-    inventoryData.forEach((item, idx) => {
-      const invItem: InventoryItem = { id: `inv-${idx + 1}`, ...item };
-      this.inventoryItems.set(invItem.id, invItem);
-    });
+    inventoryData.forEach(item => this.inventoryItems.set(item.id, item));
 
     // Seed menu items
-    const menuData = [
-      { name: "Margherita Pizza", category: "Pizza", price: "50", description: "Classic tomato and mozzarella", available: true, imageUrl: null },
-      { name: "Pepperoni Pizza", category: "Pizza", price: "65", description: "Tomato, mozzarella, and pepperoni", available: true, imageUrl: null },
-      { name: "Chicken Shawarma", category: "Sandwiches", price: "40", description: "Grilled chicken with tahini", available: true, imageUrl: null },
-      { name: "Beef Burger", category: "Burgers", price: "60", description: "Angus beef with cheese", available: true, imageUrl: null },
-      { name: "Caesar Salad", category: "Salads", price: "40", description: "Fresh romaine with Caesar dressing", available: true, imageUrl: null },
+    const menuData: MenuItem[] = [
+      { id: "menu-1", name: "Margherita Pizza", category: "Pizza", price: "50", description: "Classic tomato and mozzarella", available: true, imageUrl: null },
+      { id: "menu-2", name: "Pepperoni Pizza", category: "Pizza", price: "65", description: "Tomato, mozzarella, and pepperoni", available: true, imageUrl: null },
+      { id: "menu-3", name: "Chicken Shawarma", category: "Sandwiches", price: "40", description: "Grilled chicken with tahini", available: true, imageUrl: null },
+      { id: "menu-4", name: "Beef Burger", category: "Burgers", price: "60", description: "Angus beef with cheese", available: true, imageUrl: null },
+      { id: "menu-5", name: "Caesar Salad", category: "Salads", price: "40", description: "Fresh romaine with Caesar dressing", available: true, imageUrl: null },
     ];
-    menuData.forEach((item, idx) => {
-      const menuItem: MenuItem = { id: `menu-${idx + 1}`, ...item };
-      this.menuItems.set(menuItem.id, menuItem);
-    });
+    menuData.forEach(item => this.menuItems.set(item.id, item));
   }
 
   // Branches
@@ -231,7 +225,17 @@ export class MemStorage implements IStorage {
 
   async createRecipe(recipe: InsertRecipe): Promise<Recipe> {
     const id = randomUUID();
-    const newRecipe: Recipe = { id, ...recipe };
+    const newRecipe: Recipe = {
+      id,
+      menuItemId: recipe.menuItemId ?? null,
+      name: recipe.name,
+      prepTime: recipe.prepTime,
+      cookTime: recipe.cookTime,
+      servings: recipe.servings,
+      cost: recipe.cost,
+      ingredients: recipe.ingredients as Array<{ name: string; quantity: number; unit: string }>,
+      steps: recipe.steps as string[],
+    };
     this.recipes.set(id, newRecipe);
     return newRecipe;
   }
@@ -268,7 +272,17 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const newOrder: Order = {
       id,
-      ...order,
+      orderNumber: order.orderNumber,
+      branchId: order.branchId ?? null,
+      customerName: order.customerName ?? null,
+      orderType: order.orderType,
+      table: order.table ?? null,
+      address: order.address ?? null,
+      items: order.items as Array<{ id: string; name: string; quantity: number; price: number }>,
+      subtotal: order.subtotal,
+      tax: order.tax,
+      total: order.total,
+      status: order.status ?? "Pending",
       createdAt: new Date(),
     };
     this.orders.set(id, newOrder);
@@ -306,7 +320,14 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const newTransaction: Transaction = {
       id,
-      ...transaction,
+      transactionId: transaction.transactionId,
+      orderId: transaction.orderId ?? null,
+      branchId: transaction.branchId ?? null,
+      itemCount: transaction.itemCount,
+      subtotal: transaction.subtotal,
+      tax: transaction.tax,
+      total: transaction.total,
+      paymentMethod: transaction.paymentMethod,
       createdAt: new Date(),
     };
     this.transactions.set(id, newTransaction);
