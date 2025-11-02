@@ -409,6 +409,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public endpoint for user signup
+  app.post("/api/auth/signup", async (req, res) => {
+    try {
+      const { username, password, name, email } = req.body;
+      
+      if (!username || !password || !name || !email) {
+        return res.status(400).json({ error: "All fields are required" });
+      }
+
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ error: "Username already exists" });
+      }
+
+      // Create employee user with default permissions
+      const userData = {
+        username,
+        password, // Will be hashed in storage
+        fullName: name,
+        email,
+        role: "employee" as const,
+        active: true,
+        permissions: {
+          dashboard: true,
+          inventory: false,
+          menu: false,
+          recipes: false,
+          branches: false,
+          procurement: false,
+          pos: true,
+          orders: true,
+          kitchen: true,
+          sales: false,
+          reports: false,
+          forecasting: false,
+          analysis: false,
+          settings: false,
+          financial: false,
+          employees: false,
+        },
+      };
+
+      const user = await storage.createUser(userData);
+      res.status(201).json({ 
+        id: user.id, 
+        username: user.username, 
+        fullName: user.fullName,
+        role: user.role 
+      });
+    } catch (error) {
+      console.error("Signup error:", error);
+      res.status(500).json({ error: "Failed to create account" });
+    }
+  });
+
   // Authentication
   app.post("/api/auth/login", async (req, res) => {
     try {
@@ -739,18 +795,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pdfPath = path.join(invoicesDir, pdfFilename);
       fs.writeFileSync(pdfPath, pdfBuffer);
 
+      // Transform order items to invoice items format with VAT breakdown
+      const invoiceItems = order.items.map(item => {
+        const totalPrice = item.quantity * item.price;
+        const basePrice = totalPrice / 1.15; // Remove 15% VAT to get base
+        const vatAmount = totalPrice - basePrice;
+        return {
+          name: item.name,
+          quantity: item.quantity,
+          basePrice: parseFloat(basePrice.toFixed(2)),
+          vatAmount: parseFloat(vatAmount.toFixed(2)),
+          total: parseFloat(totalPrice.toFixed(2)),
+        };
+      });
+
       // Create invoice record in database with QR code
       const invoiceData = {
         invoiceNumber,
         orderId: order.id,
         branchId: order.branchId,
         customerName: order.customerName || "Walk-in Customer",
-        items: order.items,
+        items: invoiceItems,
         subtotal: order.subtotal,
-        tax: order.tax,
+        vatAmount: order.tax, // VAT amount (same as tax)
         total: order.total,
         qrCode, // ZATCA-compliant QR code
-        pdfUrl: `/invoices/${pdfFilename}`,
+        pdfPath: `/invoices/${pdfFilename}`,
       };
 
       await storage.createInvoice(invoiceData);
