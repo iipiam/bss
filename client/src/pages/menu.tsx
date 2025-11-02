@@ -4,18 +4,86 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Edit, UtensilsCrossed } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { MenuItem } from "@shared/schema";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { insertMenuItemSchema, type MenuItem } from "@shared/schema";
+
+// Form schema for UI - only collect basePrice, calculate VAT on submit
+const menuFormSchema = insertMenuItemSchema.omit({ 
+  price: true,
+  vatAmount: true,
+  available: true,
+  imageUrl: true
+}).extend({
+  basePrice: z.string().min(1, "Base price is required"),
+  description: z.string().min(1, "Description is required"),
+});
+
+type MenuFormValues = z.infer<typeof menuFormSchema>;
 
 export default function Menu() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [open, setOpen] = useState(false);
   const { toast } = useToast();
+
+  const form = useForm<MenuFormValues>({
+    resolver: zodResolver(menuFormSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      category: "",
+      basePrice: "",
+    },
+  });
 
   const { data: menuItems = [], isLoading } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu"],
+  });
+
+  const createMenuItemMutation = useMutation({
+    mutationFn: async (data: MenuFormValues) => {
+      // Calculate VAT (15% Saudi VAT)
+      const basePriceNum = parseFloat(data.basePrice);
+      const vatAmount = basePriceNum * 0.15;
+      const price = basePriceNum + vatAmount;
+
+      const menuItemData = {
+        name: data.name,
+        description: data.description,
+        category: data.category,
+        basePrice: basePriceNum.toFixed(2),
+        vatAmount: vatAmount.toFixed(2),
+        price: price.toFixed(2),
+        available: true,
+      };
+
+      return await apiRequest("POST", "/api/menu", menuItemData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
+      setOpen(false);
+      form.reset();
+      toast({
+        title: "Menu item created",
+        description: "The menu item has been added successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to create menu item",
+        description: error.message || "Could not create menu item",
+        variant: "destructive",
+      });
+    },
   });
 
   const toggleAvailabilityMutation = useMutation({
@@ -30,6 +98,10 @@ export default function Menu() {
       });
     },
   });
+
+  const onSubmit = (data: MenuFormValues) => {
+    createMenuItemMutation.mutate(data);
+  };
 
   const filteredItems = menuItems.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -51,10 +123,117 @@ export default function Menu() {
           <h1 className="text-3xl font-bold mb-2">Menu Management</h1>
           <p className="text-muted-foreground">Manage your menu items and pricing</p>
         </div>
-        <Button data-testid="button-add-menu-item">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Menu Item
-        </Button>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button data-testid="button-add-menu-item">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Menu Item
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Menu Item</DialogTitle>
+              <DialogDescription>Create a new item for your menu with VAT-inclusive pricing</DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Item Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="e.g., Margherita Pizza"
+                          data-testid="input-menu-name"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          placeholder="Describe the menu item..."
+                          rows={3}
+                          data-testid="input-menu-description"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-menu-category">
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Pizza">Pizza</SelectItem>
+                          <SelectItem value="Burgers">Burgers</SelectItem>
+                          <SelectItem value="Sandwiches">Sandwiches</SelectItem>
+                          <SelectItem value="Salads">Salads</SelectItem>
+                          <SelectItem value="Drinks">Drinks</SelectItem>
+                          <SelectItem value="Desserts">Desserts</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="basePrice"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Base Price (SAR, before VAT)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          step="0.01"
+                          placeholder="e.g., 25.00"
+                          data-testid="input-menu-baseprice"
+                        />
+                      </FormControl>
+                      {field.value && (
+                        <p className="text-xs text-muted-foreground mt-1 font-mono">
+                          VAT (15%): +{(parseFloat(field.value) * 0.15).toFixed(2)} SAR | 
+                          Total: {(parseFloat(field.value) * 1.15).toFixed(2)} SAR
+                        </p>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)} data-testid="button-cancel">
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={createMenuItemMutation.isPending} data-testid="button-save-menu">
+                    {createMenuItemMutation.isPending ? "Creating..." : "Create Menu Item"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="relative">

@@ -210,7 +210,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const order = await storage.createOrder(data);
       res.status(201).json(order);
     } catch (error) {
-      res.status(400).json({ error: "Invalid order data" });
+      console.error("Order validation error:", error);
+      if (error instanceof Error) {
+        res.status(400).json({ error: "Invalid order data", details: error.message });
+      } else {
+        res.status(400).json({ error: "Invalid order data" });
+      }
     }
   });
 

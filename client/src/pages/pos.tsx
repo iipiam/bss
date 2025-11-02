@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Minus, X, Search, Receipt } from "lucide-react";
+import { Plus, Minus, X, Search, Receipt, UtensilsCrossed } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -19,6 +19,11 @@ interface CartItem {
 
 const categories = ["All", "Pizza", "Burgers", "Sandwiches", "Salads", "Drinks"];
 
+interface Branch {
+  id: string;
+  name: string;
+}
+
 export default function POS() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -29,17 +34,21 @@ export default function POS() {
     queryKey: ["/api/menu"],
   });
 
+  const { data: branches = [] } = useQuery<Branch[]>({
+    queryKey: ["/api/branches"],
+  });
+
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
-      const order = await apiRequest("POST", "/api/orders", orderData);
-      return order;
+      const response = await apiRequest("POST", "/api/orders", orderData);
+      return response.json();
     },
     onSuccess: async (order: any) => {
       // Create transaction record
       const transaction = {
         transactionId: `TXN-${Date.now()}`,
         orderId: order.id,
-        branchId: order.branchId || "1",
+        branchId: order.branchId,
         itemCount: cartItems.reduce((sum, item) => sum + item.quantity, 0),
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
@@ -130,9 +139,12 @@ export default function POS() {
       return;
     }
 
+    // Get the first available branch, or null if no branches exist
+    const branchId = branches.length > 0 ? branches[0].id : null;
+
     const orderData = {
       orderNumber: `ORD-${Date.now()}`,
-      branchId: "1",
+      branchId,
       orderType,
       items: cartItems.map(item => ({
         id: item.id,
@@ -193,7 +205,7 @@ export default function POS() {
             >
               <CardHeader className="p-4 pb-2">
                 <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-md flex items-center justify-center mb-2">
-                  <span className="text-4xl">🍽️</span>
+                  <UtensilsCrossed className="h-12 w-12 text-primary/40" />
                 </div>
               </CardHeader>
               <CardContent className="p-4 pt-0">
