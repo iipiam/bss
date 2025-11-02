@@ -15,6 +15,7 @@ import {
   ShoppingBag,
   Settings,
   Users,
+  Calculator,
 } from "lucide-react";
 import {
   Sidebar,
@@ -48,6 +49,7 @@ const analytics = [
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "Forecasting", url: "/forecasting", icon: TrendingUp },
   { title: "Analysis", url: "/analysis", icon: BarChart3 },
+  { title: "Profitability", url: "/profitability", icon: Calculator },
   { title: "Financial", url: "/financial", icon: Receipt },
 ];
 
