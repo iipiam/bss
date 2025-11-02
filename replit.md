@@ -6,6 +6,14 @@ RestoPOS is a comprehensive restaurant management system tailored for Saudi Arab
 
 ## Recent Changes (November 2, 2025)
 
+### PDF Export for Financial Statements & ZATCA Invoices
+Added professional PDF export capabilities:
+- **Financial Statement PDF**: Well-designed PDF export with company header, annual summary, monthly breakdown table, page numbers, and footer
+- **Invoice PDF Download**: Individual invoice download buttons for all ZATCA-compliant invoices
+- **Batch Export**: Export all invoices functionality with download progress feedback
+- **Professional Formatting**: Multi-page support with automatic pagination, alternating row colors, proper spacing
+- **Bilingual Support**: English text with Arabic headers (Note: Arabic rendering uses default font - custom fonts can be added for perfect rendering)
+
 ### Inventory Management CRUD & Enhanced Exports
 Added complete inventory management and expanded export capabilities:
 - **Inventory CRUD**: Full create/edit/delete operations for inventory items with smart numeric validation
