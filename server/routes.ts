@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { generateZATCAInvoice } from "./invoice";
 import {
   insertBranchSchema,
   insertInventoryItemSchema,
@@ -287,6 +288,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }));
 
     res.json(chartData);
+  });
+
+  // POS - Generate Invoice
+  app.post("/api/pos/generate-invoice", async (req, res) => {
+    try {
+      const { orderId } = req.body;
+      const order = await storage.getOrder(orderId);
+
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      const branch = order.branchId ? await storage.getBranch(order.branchId) : null;
+
+      const invoiceData = {
+        order,
+        companyName: "Restaurant Management System",
+        companyVAT: "300123456789003",
+        branchAddress: branch?.location || "Main Location, Riyadh",
+        invoiceNumber: `INV-${order.orderNumber}`,
+        invoiceDate: new Date(),
+      };
+
+      const pdfBuffer = await generateZATCAInvoice(invoiceData);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.orderNumber}.pdf`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Invoice generation error:", error);
+      res.status(500).json({ error: "Failed to generate invoice" });
+    }
   });
 
   const httpServer = createServer(app);
