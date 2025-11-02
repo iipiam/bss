@@ -2,11 +2,13 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { TrendingUp, TrendingDown, DollarSign, Percent, Package, Calculator, AlertTriangle, Target, Scale, Scissors } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Percent, Package, Calculator, AlertTriangle, Target, Scale, Scissors, Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import type { MenuItem, Recipe, Order } from "@shared/schema";
 
@@ -14,6 +16,7 @@ const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"
 
 export default function Profitability() {
   const [period, setPeriod] = useState<string>("month");
+  const { toast } = useToast();
 
   const { data: menuItems = [], isLoading: isLoadingMenu } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu"],
@@ -130,6 +133,35 @@ export default function Profitability() {
     return acc;
   }, [] as Array<{ category: string; revenue: number; profit: number }>);
 
+  const handleExport = async () => {
+    try {
+      const response = await fetch(`/api/export/profitability?period=${period}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Export failed');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `profitability-${period}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: "Export successful",
+        description: "Profitability data exported to Excel",
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: error instanceof Error ? error.message : "Failed to export profitability data",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
@@ -139,17 +171,23 @@ export default function Profitability() {
             Analyze profit margins, costs, and revenue by item and category (pre-VAT)
           </p>
         </div>
-        <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-40" data-testid="select-period">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="week">This Week</SelectItem>
-            <SelectItem value="month">This Month</SelectItem>
-            <SelectItem value="quarter">This Quarter</SelectItem>
-            <SelectItem value="year">This Year</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExport} data-testid="button-export-profitability">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-40" data-testid="select-period">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="week">This Week</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
+              <SelectItem value="quarter">This Quarter</SelectItem>
+              <SelectItem value="year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {isLoading ? (

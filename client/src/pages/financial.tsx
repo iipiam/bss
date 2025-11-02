@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, TrendingUp, TrendingDown, DollarSign, FileText, Receipt } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import type { Invoice } from "@shared/schema";
 
 export default function Financial() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedPeriod, setSelectedPeriod] = useState<"monthly" | "yearly">("monthly");
+  const { toast } = useToast();
 
   const { data: financialData, isLoading: financialLoading } = useQuery({
     queryKey: ["/api/analytics/financial", selectedYear, selectedPeriod],
@@ -37,6 +39,35 @@ export default function Financial() {
 
   const yearlyData = financialData?.yearly || { revenue: "0", vat: "0", transactions: 0, invoices: 0 };
 
+  const handleExport = async () => {
+    try {
+      const response = await fetch(`/api/export/financial?year=${selectedYear}&period=${selectedPeriod}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Export failed');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `financial-${selectedYear}-${selectedPeriod}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: "Export successful",
+        description: "Financial data exported to Excel",
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: error instanceof Error ? error.message : "Failed to export financial data",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
@@ -45,6 +76,10 @@ export default function Financial() {
           <p className="text-muted-foreground">Monthly and yearly financial reports with ZATCA VAT invoices</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExport} data-testid="button-export-financial">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
           <Select value={selectedYear} onValueChange={setSelectedYear}>
             <SelectTrigger className="w-32" data-testid="select-year">
               <SelectValue />

@@ -17,22 +17,121 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Plus, Search, Edit, Trash2, Download, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { insertInventoryItemSchema } from "@shared/schema";
 import type { InventoryItem } from "@shared/schema";
+import { z } from "zod";
+
+const formSchema = insertInventoryItemSchema.extend({
+  quantity: z.coerce.number().positive("Quantity must be a positive number"),
+});
 
 export default function Inventory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isImporting, setIsImporting] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
   const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      category: "",
+      quantity: 0,
+      unit: "",
+      supplier: "",
+      status: "In Stock",
+      branchId: null,
+    },
+  });
 
   const { data: inventoryItems = [], isLoading } = useQuery<InventoryItem[]>({
     queryKey: ["/api/inventory"],
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof formSchema>) => {
+      return await apiRequest("POST", "/api/inventory", {
+        ...data,
+        quantity: data.quantity.toFixed(2),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      toast({
+        title: "Item created",
+        description: "Inventory item has been added",
+      });
+      handleCloseDialog();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to create item",
+        description: error.message || "An error occurred while creating the inventory item",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: z.infer<typeof formSchema> }) => {
+      return await apiRequest("PATCH", `/api/inventory/${id}`, {
+        ...data,
+        quantity: data.quantity.toFixed(2),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      toast({
+        title: "Item updated",
+        description: "Inventory item has been updated",
+      });
+      handleCloseDialog();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update item",
+        description: error.message || "An error occurred while updating the inventory item",
+        variant: "destructive",
+      });
+    },
   });
 
   const deleteMutation = useMutation({
@@ -45,8 +144,67 @@ export default function Inventory() {
         title: "Item deleted",
         description: "Inventory item has been removed",
       });
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
     },
   });
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      setEditingItem(null);
+      form.reset();
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setOpen(false);
+    setEditingItem(null);
+    form.reset();
+  };
+
+  const handleEditItem = (item: InventoryItem) => {
+    const quantity = parseFloat(item.quantity);
+    if (isNaN(quantity)) {
+      toast({
+        title: "Invalid data",
+        description: "Unable to edit item - invalid quantity value",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setEditingItem(item);
+    form.reset({
+      name: item.name,
+      category: item.category,
+      quantity,
+      unit: item.unit,
+      supplier: item.supplier,
+      status: item.status,
+      branchId: item.branchId,
+    });
+    setOpen(true);
+  };
+
+  const handleDeleteClick = (item: InventoryItem) => {
+    setItemToDelete(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      deleteMutation.mutate(itemToDelete.id);
+    }
+  };
+
+  const onSubmit = (data: z.infer<typeof formSchema>) => {
+    if (editingItem) {
+      updateMutation.mutate({ id: editingItem.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
 
   const handleExport = async () => {
     try {
@@ -158,10 +316,146 @@ export default function Inventory() {
               />
             </label>
           </Button>
-          <Button data-testid="button-add-item">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Item
-          </Button>
+          <Dialog open={open} onOpenChange={handleOpenChange}>
+            <DialogTrigger asChild>
+              <Button data-testid="button-add-item">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Item
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>{editingItem ? "Edit Inventory Item" : "Add New Inventory Item"}</DialogTitle>
+                <DialogDescription>
+                  {editingItem ? "Update the inventory item details" : "Add a new item to your inventory"}
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Item Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="e.g., Tomatoes" data-testid="input-item-name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Category</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-item-category">
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Vegetables">Vegetables</SelectItem>
+                              <SelectItem value="Meat">Meat</SelectItem>
+                              <SelectItem value="Dairy">Dairy</SelectItem>
+                              <SelectItem value="Grains">Grains</SelectItem>
+                              <SelectItem value="Oils">Oils</SelectItem>
+                              <SelectItem value="Spices">Spices</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="unit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Unit</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-item-unit">
+                                <SelectValue placeholder="Select unit" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="kg">kg</SelectItem>
+                              <SelectItem value="g">g</SelectItem>
+                              <SelectItem value="l">l</SelectItem>
+                              <SelectItem value="ml">ml</SelectItem>
+                              <SelectItem value="pcs">pcs</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="quantity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantity</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="number" step="0.01" placeholder="0.00" data-testid="input-item-quantity" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="supplier"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Supplier</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="e.g., ABC Suppliers" data-testid="input-item-supplier" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-item-status">
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="In Stock">In Stock</SelectItem>
+                            <SelectItem value="Low Stock">Low Stock</SelectItem>
+                            <SelectItem value="Out of Stock">Out of Stock</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button type="button" variant="outline" onClick={handleCloseDialog} data-testid="button-cancel">
+                      Cancel
+                    </Button>
+                    <Button type="submit" data-testid="button-save-item" disabled={createMutation.isPending || updateMutation.isPending}>
+                      {editingItem ? "Update Item" : "Create Item"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -230,13 +524,13 @@ export default function Inventory() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" data-testid={`button-edit-${item.id}`}>
+                    <Button variant="ghost" size="icon" onClick={() => handleEditItem(item)} data-testid={`button-edit-${item.id}`}>
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => deleteMutation.mutate(item.id)}
+                      onClick={() => handleDeleteClick(item)}
                       data-testid={`button-delete-${item.id}`}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -248,6 +542,24 @@ export default function Inventory() {
           </TableBody>
         </Table>
       </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete <strong>{itemToDelete?.name}</strong> from your inventory.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} data-testid="button-confirm-delete">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

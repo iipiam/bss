@@ -1110,6 +1110,160 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export Profitability Data to Excel
+  app.get("/api/export/profitability", async (req, res) => {
+    try {
+      const period = req.query.period as string || 'month';
+      
+      // Get menu items, recipes, and orders
+      const menuItems = await storage.getMenuItems();
+      const recipes = await storage.getRecipes();
+      const orders = await storage.getOrders();
+      
+      // Filter orders by period
+      const now = new Date();
+      const cutoffDate = new Date();
+      switch (period) {
+        case "week":
+          cutoffDate.setDate(now.getDate() - 7);
+          break;
+        case "month":
+          cutoffDate.setMonth(now.getMonth() - 1);
+          break;
+        case "quarter":
+          cutoffDate.setMonth(now.getMonth() - 3);
+          break;
+        case "year":
+          cutoffDate.setFullYear(now.getFullYear() - 1);
+          break;
+      }
+      const filteredOrders = orders.filter((order) => new Date(order.createdAt) >= cutoffDate);
+      
+      // Calculate profitability data
+      const profitabilityData = menuItems.map((item) => {
+        const recipe = recipes.find((r) => r.menuItemId === item.id);
+        const cost = recipe ? parseFloat(recipe.cost) : 0;
+        const basePrice = parseFloat(item.basePrice);
+        const profit = basePrice - cost;
+        const margin = basePrice > 0 ? (profit / basePrice) * 100 : 0;
+        
+        // Calculate sales volume
+        const itemSales = filteredOrders.filter((order) =>
+          order.items?.some((orderItem: any) => orderItem.id === item.id)
+        );
+        const salesVolume = itemSales.reduce((sum, order) => {
+          const orderItem = order.items?.find((oi: any) => oi.id === item.id);
+          return sum + (orderItem?.quantity || 0);
+        }, 0);
+        
+        const totalRevenue = salesVolume * basePrice;
+        const totalProfit = salesVolume * profit;
+        
+        return {
+          "Item Name": item.name,
+          "Category": item.category,
+          "Base Price (SAR)": basePrice.toFixed(2),
+          "Cost (SAR)": cost.toFixed(2),
+          "Profit per Unit (SAR)": profit.toFixed(2),
+          "Margin (%)": margin.toFixed(2),
+          "Sales Volume": salesVolume,
+          "Total Revenue (SAR)": totalRevenue.toFixed(2),
+          "Total Profit (SAR)": totalProfit.toFixed(2),
+        };
+      });
+      
+      const worksheet = XLSX.utils.json_to_sheet(profitabilityData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Profitability");
+      
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename=profitability-${period}.xlsx`);
+      res.send(buffer);
+    } catch (error) {
+      console.error("Profitability export error:", error);
+      res.status(500).json({ error: "Failed to export profitability data" });
+    }
+  });
+
+  // Export Financial Data to Excel
+  app.get("/api/export/financial", async (req, res) => {
+    try {
+      const year = req.query.year as string || new Date().getFullYear().toString();
+      const period = req.query.period as string || 'monthly';
+      
+      // Fetch financial data using same logic as the analytics endpoint
+      const transactions = await storage.getTransactions();
+      const invoices = await storage.getInvoices();
+      
+      // Filter by year
+      const yearTransactions = transactions.filter(t => 
+        new Date(t.createdAt).getFullYear() === parseInt(year)
+      );
+      
+      if (period === 'monthly') {
+        // Monthly data
+        const monthlyData = Array.from({ length: 12 }, (_, i) => {
+          const month = i + 1;
+          const monthTransactions = yearTransactions.filter(t => 
+            new Date(t.createdAt).getMonth() === i
+          );
+          
+          const revenue = monthTransactions.reduce((sum, t) => sum + parseFloat(t.subtotal), 0);
+          const vat = revenue * 0.15; // 15% Saudi VAT
+          
+          return {
+            "Month": new Date(parseInt(year), i).toLocaleString('default', { month: 'long' }),
+            "Revenue (SAR)": revenue.toFixed(2),
+            "VAT (SAR)": vat.toFixed(2),
+            "Total (SAR)": (revenue + vat).toFixed(2),
+            "Transactions": monthTransactions.length,
+          };
+        });
+        
+        const worksheet = XLSX.utils.json_to_sheet(monthlyData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Monthly Financial");
+        
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=financial-${year}-monthly.xlsx`);
+        res.send(buffer);
+      } else {
+        // Yearly summary
+        const revenue = yearTransactions.reduce((sum, t) => sum + parseFloat(t.subtotal), 0);
+        const vat = revenue * 0.15;
+        const yearInvoices = invoices.filter(inv => 
+          new Date(inv.createdAt).getFullYear() === parseInt(year)
+        );
+        
+        const yearlyData = [{
+          "Year": year,
+          "Total Revenue (SAR)": revenue.toFixed(2),
+          "Total VAT (SAR)": vat.toFixed(2),
+          "Total (SAR)": (revenue + vat).toFixed(2),
+          "Total Transactions": yearTransactions.length,
+          "Total Invoices": yearInvoices.length,
+        }];
+        
+        const worksheet = XLSX.utils.json_to_sheet(yearlyData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Yearly Financial");
+        
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=financial-${year}-yearly.xlsx`);
+        res.send(buffer);
+      }
+    } catch (error) {
+      console.error("Financial export error:", error);
+      res.status(500).json({ error: "Failed to export financial data" });
+    }
+  });
+
   // Import routes with file upload
   const multer = await import('multer');
   const upload = multer.default({ storage: multer.default.memoryStorage() });
