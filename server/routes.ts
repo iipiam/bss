@@ -401,19 +401,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { username, password } = req.body;
       
+      console.log("[AUTH] Login attempt for username:", username);
+      
       if (!username || !password) {
+        console.log("[AUTH] Missing username or password");
         return res.status(400).json({ error: "Username and password required" });
       }
 
       const user = await storage.getUserByUsername(username);
       
-      if (!user || !user.active) {
+      console.log("[AUTH] User found:", user ? `Yes (id: ${user.id}, active: ${user.active})` : "No");
+      
+      if (!user) {
+        console.log("[AUTH] User not found in database");
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      if (!user.active) {
+        console.log("[AUTH] User is inactive");
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
+      console.log("[AUTH] Comparing password hash");
       const passwordMatch = await bcrypt.compare(password, user.password);
+      console.log("[AUTH] Password match:", passwordMatch);
       
       if (!passwordMatch) {
+        console.log("[AUTH] Password mismatch");
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
@@ -421,10 +435,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.session) {
         req.session.userId = user.id;
         req.session.role = user.role;
+        console.log("[AUTH] Session created for user:", user.id);
       }
 
       // Return user without password
       const { password: _, ...userWithoutPassword } = user;
+      console.log("[AUTH] Login successful");
       res.json(userWithoutPassword);
     } catch (error) {
       console.error("Login error:", error);
@@ -493,13 +509,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users", async (req, res) => {
     try {
-      if (!req.session?.userId) {
-        return res.status(401).json({ error: "Not authenticated" });
-      }
+      // Check if this is the first user (setup mode)
+      const allUsers = await storage.getUsers();
+      const isFirstUser = allUsers.length === 0;
 
-      const currentUser = await storage.getUser(req.session.userId);
-      if (currentUser?.role !== "admin") {
-        return res.status(403).json({ error: "Admin access required" });
+      // If not first user, require admin authentication
+      if (!isFirstUser) {
+        if (!req.session?.userId) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+
+        const currentUser = await storage.getUser(req.session.userId);
+        if (currentUser?.role !== "admin") {
+          return res.status(403).json({ error: "Admin access required" });
+        }
       }
 
       const data = insertUserSchema.parse(req.body);
@@ -510,11 +533,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Username already exists" });
       }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(data.password, 10);
-      const userWithHashedPassword = { ...data, password: hashedPassword };
-
-      const user = await storage.createUser(userWithHashedPassword);
+      // storage.createUser handles password hashing
+      const user = await storage.createUser(data);
       const { password: _, ...userWithoutPassword } = user;
       res.status(201).json(userWithoutPassword);
     } catch (error) {
