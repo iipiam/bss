@@ -20,6 +20,7 @@ import POS from "@/pages/pos";
 import Branches from "@/pages/branches";
 import Orders from "@/pages/orders";
 import Kitchen from "@/pages/kitchen";
+import Procurement from "@/pages/procurement";
 import SettingsPage from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/branches" component={Branches} />
       <Route path="/orders" component={Orders} />
       <Route path="/kitchen" component={Kitchen} />
+      <Route path="/procurement" component={Procurement} />
       <Route path="/settings" component={SettingsPage} />
       <Route component={NotFound} />
     </Switch>

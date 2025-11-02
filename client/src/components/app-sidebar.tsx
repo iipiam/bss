@@ -11,6 +11,7 @@ import {
   Building2,
   ClipboardList,
   Flame,
+  ShoppingBag,
   Settings,
 } from "lucide-react";
 import {
@@ -37,6 +38,7 @@ const management = [
   { title: "Menu", url: "/menu", icon: UtensilsCrossed },
   { title: "Recipes", url: "/recipes", icon: ChefHat },
   { title: "Branches", url: "/branches", icon: Building2 },
+  { title: "Procurement", url: "/procurement", icon: ShoppingBag },
 ];
 
 const analytics = [
