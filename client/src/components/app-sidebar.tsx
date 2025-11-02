@@ -64,7 +64,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Operations</SidebarGroupLabel>
+          <SidebarGroupLabel>{t.operations}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {operations.map((item) => (
@@ -82,7 +82,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupLabel>{t.management}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {management.map((item) => (
@@ -100,7 +100,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Analytics</SidebarGroupLabel>
+          <SidebarGroupLabel>{t.analytics}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {analytics.map((item) => (
@@ -118,7 +118,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>System</SidebarGroupLabel>
+          <SidebarGroupLabel>{t.system}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {system.map((item) => (

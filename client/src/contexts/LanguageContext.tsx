@@ -10,6 +10,17 @@ interface LanguageContextType {
   isRTL: boolean;
 }
 
+// Mapping from Language names to ISO 639-1 codes for accessibility
+const languageToLocaleCode: Record<Language, string> = {
+  English: 'en',
+  Arabic: 'ar',
+  Chinese: 'zh',
+  German: 'de',
+  Hindi: 'hi',
+  Urdu: 'ur',
+  Bengali: 'bn'
+};
+
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
@@ -31,7 +42,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const isRTL = language === 'Arabic' || language === 'Urdu';
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
-    document.documentElement.lang = language.toLowerCase();
+    document.documentElement.lang = languageToLocaleCode[language];
   }, [language]);
 
   const setLanguage = (lang: Language) => {
