@@ -928,6 +928,198 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Excel Export/Import Routes
+  const XLSX = await import('xlsx');
+
+  // Export Inventory to Excel
+  app.get("/api/export/inventory", async (req, res) => {
+    try {
+      const branchId = req.query.branchId as string | undefined;
+      const items = await storage.getInventoryItems(branchId);
+      
+      const worksheet = XLSX.utils.json_to_sheet(items);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory");
+      
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=inventory.xlsx');
+      res.send(buffer);
+    } catch (error) {
+      console.error("Inventory export error:", error);
+      res.status(500).json({ error: "Failed to export inventory" });
+    }
+  });
+
+  // Export Menu to Excel
+  app.get("/api/export/menu", async (req, res) => {
+    try {
+      const branchId = req.query.branchId as string | undefined;
+      const items = await storage.getMenuItems(branchId);
+      
+      const worksheet = XLSX.utils.json_to_sheet(items);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Menu");
+      
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=menu.xlsx');
+      res.send(buffer);
+    } catch (error) {
+      console.error("Menu export error:", error);
+      res.status(500).json({ error: "Failed to export menu" });
+    }
+  });
+
+  // Export Recipes to Excel
+  app.get("/api/export/recipes", async (req, res) => {
+    try {
+      const recipes = await storage.getRecipes();
+      
+      // Flatten recipe data for Excel
+      const flattenedRecipes = recipes.map(recipe => ({
+        id: recipe.id,
+        name: recipe.name,
+        category: recipe.category,
+        servingSize: recipe.servingSize,
+        preparationTime: recipe.preparationTime,
+        difficulty: recipe.difficulty,
+        ingredients: JSON.stringify(recipe.ingredients),
+        instructions: JSON.stringify(recipe.instructions),
+      }));
+      
+      const worksheet = XLSX.utils.json_to_sheet(flattenedRecipes);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Recipes");
+      
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=recipes.xlsx');
+      res.send(buffer);
+    } catch (error) {
+      console.error("Recipes export error:", error);
+      res.status(500).json({ error: "Failed to export recipes" });
+    }
+  });
+
+  // Export Orders to Excel
+  app.get("/api/export/orders", async (req, res) => {
+    try {
+      const branchId = req.query.branchId as string | undefined;
+      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+      const orders = await storage.getOrders(branchId, startDate, endDate);
+      
+      // Flatten orders for Excel
+      const flattenedOrders = orders.map(order => ({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        branchId: order.branchId,
+        customerName: order.customerName,
+        orderType: order.orderType,
+        status: order.status,
+        subtotal: order.subtotal,
+        tax: order.tax,
+        total: order.total,
+        paymentMethod: order.paymentMethod,
+        items: JSON.stringify(order.items),
+        createdAt: order.createdAt,
+      }));
+      
+      const worksheet = XLSX.utils.json_to_sheet(flattenedOrders);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
+      
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=orders.xlsx');
+      res.send(buffer);
+    } catch (error) {
+      console.error("Orders export error:", error);
+      res.status(500).json({ error: "Failed to export orders" });
+    }
+  });
+
+  // Export Transactions to Excel
+  app.get("/api/export/transactions", async (req, res) => {
+    try {
+      const branchId = req.query.branchId as string | undefined;
+      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+      const transactions = await storage.getTransactions(branchId, startDate, endDate);
+      
+      const worksheet = XLSX.utils.json_to_sheet(transactions);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+      
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=transactions.xlsx');
+      res.send(buffer);
+    } catch (error) {
+      console.error("Transactions export error:", error);
+      res.status(500).json({ error: "Failed to export transactions" });
+    }
+  });
+
+  // Export Procurement to Excel
+  app.get("/api/export/procurement", async (req, res) => {
+    try {
+      const procurement = await storage.getProcurement();
+      
+      // Flatten procurement data for Excel
+      const flattenedProcurement = procurement.map(item => ({
+        id: item.id,
+        branchId: item.branchId,
+        supplier: item.supplier,
+        orderDate: item.orderDate,
+        expectedDelivery: item.expectedDelivery,
+        status: item.status,
+        totalAmount: item.totalAmount,
+        items: JSON.stringify(item.items),
+        notes: item.notes,
+      }));
+      
+      const worksheet = XLSX.utils.json_to_sheet(flattenedProcurement);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Procurement");
+      
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=procurement.xlsx');
+      res.send(buffer);
+    } catch (error) {
+      console.error("Procurement export error:", error);
+      res.status(500).json({ error: "Failed to export procurement" });
+    }
+  });
+
+  // Export Branches to Excel
+  app.get("/api/export/branches", async (req, res) => {
+    try {
+      const branches = await storage.getBranches();
+      
+      const worksheet = XLSX.utils.json_to_sheet(branches);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Branches");
+      
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=branches.xlsx');
+      res.send(buffer);
+    } catch (error) {
+      console.error("Branches export error:", error);
+      res.status(500).json({ error: "Failed to export branches" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
