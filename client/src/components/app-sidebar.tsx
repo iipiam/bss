@@ -28,38 +28,37 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Link, useLocation } from "wouter";
-
-const operations = [
-  { title: "POS", url: "/pos", icon: ShoppingCart },
-  { title: "Orders", url: "/orders", icon: ClipboardList },
-  { title: "Kitchen", url: "/kitchen", icon: Flame },
-];
-
-const management = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Inventory", url: "/inventory", icon: Package },
-  { title: "Menu", url: "/menu", icon: UtensilsCrossed },
-  { title: "Recipes", url: "/recipes", icon: ChefHat },
-  { title: "Branches", url: "/branches", icon: Building2 },
-  { title: "Procurement", url: "/procurement", icon: ShoppingBag },
-];
-
-const analytics = [
-  { title: "Sales", url: "/sales", icon: DollarSign },
-  { title: "Reports", url: "/reports", icon: FileText },
-  { title: "Forecasting", url: "/forecasting", icon: TrendingUp },
-  { title: "Analysis", url: "/analysis", icon: BarChart3 },
-  { title: "Profitability", url: "/profitability", icon: Calculator },
-  { title: "Financial", url: "/financial", icon: Receipt },
-];
-
-const system = [
-  { title: "Settings", url: "/settings", icon: Settings },
-  { title: "Employees", url: "/employees", icon: Users },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export function AppSidebar() {
   const [location] = useLocation();
+  const { t } = useLanguage();
+
+  const operations = [
+    { title: t.pos, url: "/pos", icon: ShoppingCart, testId: "pos" },
+    { title: t.orders, url: "/orders", icon: ClipboardList, testId: "orders" },
+    { title: t.kitchen, url: "/kitchen", icon: Flame, testId: "kitchen" },
+  ];
+
+  const management = [
+    { title: t.dashboard, url: "/", icon: LayoutDashboard, testId: "dashboard" },
+    { title: t.inventory, url: "/inventory", icon: Package, testId: "inventory" },
+    { title: t.menu, url: "/menu", icon: UtensilsCrossed, testId: "menu" },
+    { title: t.recipes, url: "/recipes", icon: ChefHat, testId: "recipes" },
+    { title: t.branches, url: "/branches", icon: Building2, testId: "branches" },
+    { title: t.procurement, url: "/procurement", icon: ShoppingBag, testId: "procurement" },
+  ];
+
+  const analytics = [
+    { title: t.sales, url: "/sales", icon: DollarSign, testId: "sales" },
+    { title: t.financial, url: "/financial", icon: Receipt, testId: "financial" },
+    { title: t.profitability, url: "/profitability", icon: Calculator, testId: "profitability" },
+  ];
+
+  const system = [
+    { title: t.settings, url: "/settings", icon: Settings, testId: "settings" },
+    { title: t.employees, url: "/employees", icon: Users, testId: "employees" },
+  ];
 
   return (
     <Sidebar>
@@ -69,9 +68,9 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {operations.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild isActive={location === item.url}>
-                    <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
+                    <Link href={item.url} data-testid={`link-${item.testId}`}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>
@@ -87,9 +86,9 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {management.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild isActive={location === item.url}>
-                    <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
+                    <Link href={item.url} data-testid={`link-${item.testId}`}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>
@@ -105,9 +104,9 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {analytics.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild isActive={location === item.url}>
-                    <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
+                    <Link href={item.url} data-testid={`link-${item.testId}`}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>
@@ -123,9 +122,9 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {system.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild isActive={location === item.url}>
-                    <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
+                    <Link href={item.url} data-testid={`link-${item.testId}`}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>

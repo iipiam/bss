@@ -8,7 +8,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { BranchSelector } from "@/components/branch-selector";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { LanguageProvider } from "@/contexts/LanguageContext";
+import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,6 +71,7 @@ function Router() {
 
 function AppContent() {
   const { user, isLoading, logout } = useAuth();
+  const { t } = useLanguage();
   
   // Check if this is the first run (no users exist)
   const { data: firstRunCheck, isLoading: isCheckingFirstRun } = useQuery<{ firstRun: boolean }>({
@@ -143,7 +144,7 @@ function AppContent() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => logout()} data-testid="button-logout">
                     <LogOut className="mr-2 h-4 w-4" />
-                    Logout
+                    {t.logout}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
