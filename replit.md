@@ -28,7 +28,7 @@ Preferred communication style: Simple, everyday language.
 ### Data Storage
 - **Database**: PostgreSQL via Neon serverless driver.
 - **ORM**: Drizzle ORM for type-safe queries.
-- **Schema Design**: Supports multi-branch operations, inventory, menu (with VAT-inclusive pricing), recipes, orders, transactions, procurement, users (role-based permissions), ZATCA-compliant invoices, and system settings.
+- **Schema Design**: Supports multi-branch operations, inventory (with unit pricing for cost tracking), menu (with VAT-inclusive pricing), recipes, orders, transactions, procurement, users (role-based permissions), ZATCA-compliant invoices, customers, and system settings.
 - **Migration Strategy**: Drizzle Kit.
 - **Design Rationale**: PostgreSQL for ACID compliance; Drizzle ORM for TypeScript integration.
 
@@ -37,7 +37,7 @@ Preferred communication style: Simple, everyday language.
 - **Multi-Language Support**: Comprehensive support for 7 languages (English, Arabic, Chinese, German, Hindi, Urdu, Bengali) with RTL support for Arabic/Urdu, persistent language settings, and a dedicated language selector.
 - **Customer Management**: Full CRUD operations for customer data, customer order history display, and integration into POS with search and selection.
 - **Menu Item Management**: Full CRUD operations for menu items, including a discount system with correct pricing flow (discount applied before VAT) and real-time price previews.
-- **Inventory Management**: Complete CRUD operations for inventory items with smart numeric validation and error handling.
+- **Inventory Management**: Complete CRUD operations for inventory items with price tracking per unit (SAR), smart numeric validation, error handling, and Excel template download/import/export functionality for bulk data management.
 - **Financial Features**: PDF export for financial statements, Excel export/import functionality for various data tables (inventory, menu, recipes, orders, etc.).
 - **Strategic Decision-Making**: Profitability analysis with dedicated tabs for Strategic Overview, Pricing Analysis, Scaling Viability, and Cost Management.
 - **Authentication**: Subscription-based authentication with Commercial Registration field, password recovery (token-based), and secure password hashing.
