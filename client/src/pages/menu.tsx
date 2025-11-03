@@ -18,14 +18,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { insertMenuItemSchema, type MenuItem } from "@shared/schema";
 
-// Form schema for UI - only collect basePrice, calculate VAT on submit
-const menuFormSchema = insertMenuItemSchema.omit({ 
-  price: true,
-  vatAmount: true,
-  available: true,
-  imageUrl: true
-}).extend({
+// Form schema for UI - only collect basePrice and discount, calculate VAT on submit
+const menuFormSchema = z.object({
+  name: z.string().min(1, "Item name is required"),
+  category: z.string().min(1, "Category is required"),
   basePrice: z.string().min(1, "Base price is required"),
+  discount: z.string().default("0").refine(
+    (val) => {
+      const num = parseFloat(val || "0");
+      return num >= 0 && num <= 100;
+    },
+    { message: "Discount must be between 0 and 100" }
+  ),
   description: z.string().min(1, "Description is required"),
 });
 
@@ -56,6 +60,7 @@ export default function Menu() {
       description: "",
       category: "",
       basePrice: "",
+      discount: "0",
     },
   });
 
@@ -65,18 +70,21 @@ export default function Menu() {
 
   const createMenuItemMutation = useMutation({
     mutationFn: async (data: MenuFormValues) => {
-      // Calculate VAT (15% Saudi VAT)
+      // Apply discount to base price, then calculate VAT
       const basePriceNum = parseFloat(data.basePrice);
-      const vatAmount = basePriceNum * 0.15;
-      const price = basePriceNum + vatAmount;
+      const discountNum = parseFloat(data.discount || "0");
+      const discountedBase = basePriceNum * (1 - discountNum / 100);
+      const vatAmount = discountedBase * 0.15;
+      const price = discountedBase + vatAmount;
 
       const menuItemData = {
         name: data.name,
         description: data.description,
         category: data.category,
-        basePrice: basePriceNum.toFixed(2),
-        vatAmount: vatAmount.toFixed(2),
-        price: price.toFixed(2),
+        basePrice: basePriceNum.toFixed(2), // Store original base price
+        vatAmount: vatAmount.toFixed(2), // VAT on discounted base
+        price: price.toFixed(2), // Final price with discount and VAT
+        discount: discountNum.toFixed(2),
         available: true,
       };
 
@@ -102,17 +110,21 @@ export default function Menu() {
 
   const updateMenuItemMutation = useMutation({
     mutationFn: async (data: MenuFormValues & { id: string }) => {
+      // Apply discount to base price, then calculate VAT
       const basePriceNum = parseFloat(data.basePrice);
-      const vatAmount = basePriceNum * 0.15;
-      const price = basePriceNum + vatAmount;
+      const discountNum = parseFloat(data.discount || "0");
+      const discountedBase = basePriceNum * (1 - discountNum / 100);
+      const vatAmount = discountedBase * 0.15;
+      const price = discountedBase + vatAmount;
 
       const menuItemData = {
         name: data.name,
         description: data.description,
         category: data.category,
-        basePrice: basePriceNum.toFixed(2),
-        vatAmount: vatAmount.toFixed(2),
-        price: price.toFixed(2),
+        basePrice: basePriceNum.toFixed(2), // Store original base price
+        vatAmount: vatAmount.toFixed(2), // VAT on discounted base
+        price: price.toFixed(2), // Final price with discount and VAT
+        discount: discountNum.toFixed(2),
       };
 
       return await apiRequest("PATCH", `/api/menu/${data.id}`, menuItemData);
@@ -185,6 +197,7 @@ export default function Menu() {
       description: item.description || "",
       category: item.category,
       basePrice: item.basePrice || "",
+      discount: item.discount || "0",
     });
     setOpen(true);
   };
@@ -473,6 +486,33 @@ export default function Menu() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="discount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Discount %</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          placeholder="e.g., 10"
+                          data-testid="input-menu-discount"
+                        />
+                      </FormControl>
+                      {field.value && parseFloat(field.value) > 0 && form.watch("basePrice") && (
+                        <p className="text-xs text-muted-foreground mt-1 font-mono">
+                          Discounted Base: {(parseFloat(form.watch("basePrice")) * (1 - parseFloat(field.value) / 100)).toFixed(2)} SAR | 
+                          Final Price: {(parseFloat(form.watch("basePrice")) * (1 - parseFloat(field.value) / 100) * 1.15).toFixed(2)} SAR
+                        </p>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <div className="flex justify-end gap-3 pt-4">
                   <Button type="button" variant="outline" onClick={handleCloseDialog} data-testid="button-cancel">
                     Cancel
@@ -518,22 +558,58 @@ export default function Menu() {
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg mb-1">{item.name}</h3>
-                  <Badge variant="secondary" className="mb-2">{item.category}</Badge>
+                  <div className="flex gap-2 mb-2">
+                    <Badge variant="secondary">{item.category}</Badge>
+                    {item.discount && parseFloat(item.discount) > 0 && (
+                      <Badge className="bg-green-600 text-white" data-testid={`badge-discount-${item.id}`}>
+                        {parseFloat(item.discount).toFixed(0)}% OFF
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mb-3">{item.description}</p>
               <div className="space-y-1">
-                <p className="text-2xl font-bold font-mono text-primary">{parseFloat(item.price).toFixed(2)} SAR</p>
-                <div className="text-xs text-muted-foreground font-mono">
-                  <div className="flex justify-between">
-                    <span>Base Price:</span>
-                    <span>{parseFloat(item.basePrice).toFixed(2)} SAR</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>VAT (15%):</span>
-                    <span>+{parseFloat(item.vatAmount).toFixed(2)} SAR</span>
-                  </div>
-                </div>
+                {item.discount && parseFloat(item.discount) > 0 ? (
+                  <>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-2xl font-bold font-mono text-primary">
+                        {(parseFloat(item.basePrice) * (1 - parseFloat(item.discount) / 100) * 1.15).toFixed(2)} SAR
+                      </p>
+                      <p className="text-sm font-mono text-muted-foreground line-through">
+                        {parseFloat(item.price).toFixed(2)} SAR
+                      </p>
+                    </div>
+                    <div className="text-xs text-muted-foreground font-mono">
+                      <div className="flex justify-between">
+                        <span>Original Base:</span>
+                        <span>{parseFloat(item.basePrice).toFixed(2)} SAR</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Discounted Base:</span>
+                        <span>{(parseFloat(item.basePrice) * (1 - parseFloat(item.discount) / 100)).toFixed(2)} SAR</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>VAT (15%):</span>
+                        <span>+{(parseFloat(item.basePrice) * (1 - parseFloat(item.discount) / 100) * 0.15).toFixed(2)} SAR</span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-2xl font-bold font-mono text-primary">{parseFloat(item.price).toFixed(2)} SAR</p>
+                    <div className="text-xs text-muted-foreground font-mono">
+                      <div className="flex justify-between">
+                        <span>Base Price:</span>
+                        <span>{parseFloat(item.basePrice).toFixed(2)} SAR</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>VAT (15%):</span>
+                        <span>+{parseFloat(item.vatAmount).toFixed(2)} SAR</span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </CardContent>
             <CardFooter className="p-4 pt-0 flex items-center justify-between gap-2">

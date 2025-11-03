@@ -4,7 +4,32 @@
 
 RestoPOS is a comprehensive restaurant management system tailored for Saudi Arabian restaurants, ensuring ZATCA-compliant invoicing. It offers a complete suite of features including Point of Sale (POS), inventory, menu and recipe management, multi-branch operations, order processing, kitchen display, sales analytics, business reporting, demand forecasting, and strategic decision-making tools for profitability optimization. The system focuses on data clarity, operational efficiency, and adherence to Saudi regulatory requirements to streamline restaurant operations.
 
-## Recent Changes (November 2, 2025)
+## Recent Changes (November 3, 2025)
+
+### Menu Item Discount System
+Implemented comprehensive discount functionality for menu items:
+- **Discount Field**: Menu items support percentage-based discounts (0-100%)
+- **Correct Pricing Flow**: Discount applied to base price → VAT calculated on discounted base → final price computed
+- **Database Schema**: Added `discount` column (decimal, precision 5, scale 2) with default value 0
+- **Form Validation**: Zod validation ensures discount is between 0-100 at both schema and form levels
+- **Menu Management UI**:
+  - Input field for discount percentage with real-time price preview
+  - Shows discounted base price and final price (with VAT)
+  - Menu cards display: Discounted final price, original price (strikethrough), breakdown of original base, discounted base, and VAT
+  - Green discount badge shows percentage when discount > 0
+- **POS Integration**:
+  - Menu item cards show discounted final price with VAT
+  - Original price displayed as strikethrough when discount exists
+  - Discount badge on item cards
+  - Cart stores discounted base price (pre-VAT)
+  - VAT added once during checkout to prevent double-charging
+  - Cart items show discount information with "(base)" label for clarity
+- **Technical Implementation**:
+  - Menu mutations apply discount before calculating VAT and final price
+  - Formula: `discountedBase = basePrice * (1 - discount/100)` → `VAT = discountedBase * 0.15` → `finalPrice = discountedBase + VAT`
+  - POS cart stores pre-VAT discounted prices; checkout adds VAT once
+  - All pricing calculations consistent across menu display, POS, and order processing
+- **Multi-Language Support**: Discount labels and placeholders translated to all 7 supported languages
 
 ### Multi-Language Support System
 Implemented comprehensive multi-language support with 7 languages:

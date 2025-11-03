@@ -67,6 +67,8 @@ export interface Translations {
   price: string;
   basePrice: string;
   vatAmount: string;
+  discount: string;
+  discountPercentage: string;
   description: string;
   available: string;
   unavailable: string;
@@ -114,6 +116,7 @@ export interface Translations {
   enterEmail: string;
   enterPhone: string;
   enterAddress: string;
+  enterDiscount: string;
   
   // Authentication
   login: string;
@@ -200,6 +203,8 @@ export const translations: Record<Language, Translations> = {
     price: 'Price',
     basePrice: 'Base Price',
     vatAmount: 'VAT Amount',
+    discount: 'Discount',
+    discountPercentage: 'Discount %',
     description: 'Description',
     available: 'Available',
     unavailable: 'Unavailable',
@@ -247,6 +252,7 @@ export const translations: Record<Language, Translations> = {
     enterEmail: 'info@restaurant.com',
     enterPhone: '+966 XX XXX XXXX',
     enterAddress: 'Enter full address',
+    enterDiscount: 'Enter discount percentage (0-100)',
     
     // Authentication
     login: 'Login',
@@ -332,6 +338,8 @@ export const translations: Record<Language, Translations> = {
     price: 'السعر',
     basePrice: 'السعر الأساسي',
     vatAmount: 'قيمة الضريبة',
+    discount: 'الخصم',
+    discountPercentage: 'نسبة الخصم %',
     description: 'الوصف',
     available: 'متاح',
     unavailable: 'غير متاح',
@@ -379,6 +387,7 @@ export const translations: Record<Language, Translations> = {
     enterEmail: 'info@restaurant.com',
     enterPhone: '+966 XX XXX XXXX',
     enterAddress: 'أدخل العنوان الكامل',
+    enterDiscount: 'أدخل نسبة الخصم (0-100)',
     
     // Authentication
     login: 'تسجيل الدخول',
@@ -464,6 +473,8 @@ export const translations: Record<Language, Translations> = {
     price: '价格',
     basePrice: '基础价格',
     vatAmount: '税额',
+    discount: '折扣',
+    discountPercentage: '折扣 %',
     description: '描述',
     available: '可用',
     unavailable: '不可用',
@@ -511,6 +522,7 @@ export const translations: Record<Language, Translations> = {
     enterEmail: 'info@restaurant.com',
     enterPhone: '+966 XX XXX XXXX',
     enterAddress: '输入完整地址',
+    enterDiscount: '输入折扣百分比 (0-100)',
     
     // Authentication
     login: '登录',
@@ -596,6 +608,8 @@ export const translations: Record<Language, Translations> = {
     price: 'Preis',
     basePrice: 'Grundpreis',
     vatAmount: 'Mehrwertsteuerbetrag',
+    discount: 'Rabatt',
+    discountPercentage: 'Rabatt %',
     description: 'Beschreibung',
     available: 'Verfügbar',
     unavailable: 'Nicht verfügbar',
@@ -643,6 +657,7 @@ export const translations: Record<Language, Translations> = {
     enterEmail: 'info@restaurant.com',
     enterPhone: '+966 XX XXX XXXX',
     enterAddress: 'Vollständige Adresse eingeben',
+    enterDiscount: 'Rabattanteil eingeben (0-100)',
     
     // Authentication
     login: 'Anmelden',
@@ -728,6 +743,8 @@ export const translations: Record<Language, Translations> = {
     price: 'कीमत',
     basePrice: 'मूल कीमत',
     vatAmount: 'वैट राशि',
+    discount: 'छूट',
+    discountPercentage: 'छूट %',
     description: 'विवरण',
     available: 'उपलब्ध',
     unavailable: 'अनुपलब्ध',
@@ -775,6 +792,7 @@ export const translations: Record<Language, Translations> = {
     enterEmail: 'info@restaurant.com',
     enterPhone: '+966 XX XXX XXXX',
     enterAddress: 'पूरा पता दर्ज करें',
+    enterDiscount: 'छूट प्रतिशत दर्ज करें (0-100)',
     
     // Authentication
     login: 'लॉगिन',
@@ -860,6 +878,8 @@ export const translations: Record<Language, Translations> = {
     price: 'قیمت',
     basePrice: 'بنیادی قیمت',
     vatAmount: 'ویٹ رقم',
+    discount: 'رعایت',
+    discountPercentage: 'رعایت %',
     description: 'تفصیل',
     available: 'دستیاب',
     unavailable: 'ناقابل دستیاب',
@@ -907,6 +927,7 @@ export const translations: Record<Language, Translations> = {
     enterEmail: 'info@restaurant.com',
     enterPhone: '+966 XX XXX XXXX',
     enterAddress: 'مکمل پتہ درج کریں',
+    enterDiscount: 'رعایت کا فیصد درج کریں (0-100)',
     
     // Authentication
     login: 'لاگ ان',
@@ -992,6 +1013,8 @@ export const translations: Record<Language, Translations> = {
     price: 'মূল্য',
     basePrice: 'মূল মূল্য',
     vatAmount: 'ভ্যাট পরিমাণ',
+    discount: 'ছাড়',
+    discountPercentage: 'ছাড় %',
     description: 'বিবরণ',
     available: 'উপলব্ধ',
     unavailable: 'অনুপলব্ধ',
@@ -1039,6 +1062,7 @@ export const translations: Record<Language, Translations> = {
     enterEmail: 'info@restaurant.com',
     enterPhone: '+966 XX XXX XXXX',
     enterAddress: 'সম্পূর্ণ ঠিকানা লিখুন',
+    enterDiscount: 'ছাড় শতাংশ লিখুন (0-100)',
     
     // Authentication
     login: 'লগইন',

@@ -14,6 +14,8 @@ interface CartItem {
   id: string;
   name: string;
   price: number;
+  originalPrice: number;
+  discount: number;
   quantity: number;
 }
 
@@ -97,12 +99,25 @@ export default function POS() {
 
   const addToCart = (item: MenuItem) => {
     const existing = cartItems.find(ci => ci.id === item.id);
+    const basePrice = parseFloat(item.basePrice);
+    const discountPercent = parseFloat(item.discount || "0");
+    // Apply discount to base price (store as pre-VAT price since checkout adds VAT)
+    const discountedBase = basePrice * (1 - discountPercent / 100);
+    const originalBase = basePrice;
+    
     if (existing) {
       setCartItems(cartItems.map(ci =>
         ci.id === item.id ? { ...ci, quantity: ci.quantity + 1 } : ci
       ));
     } else {
-      setCartItems([...cartItems, { id: item.id, name: item.name, price: parseFloat(item.price), quantity: 1 }]);
+      setCartItems([...cartItems, { 
+        id: item.id, 
+        name: item.name, 
+        price: discountedBase, // Store discounted base price (VAT added at checkout)
+        originalPrice: originalBase, // Original base price
+        discount: discountPercent,
+        quantity: 1 
+      }]);
     }
   };
 
@@ -196,24 +211,49 @@ export default function POS() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filteredItems.map(item => (
-            <Card
-              key={item.id}
-              className="cursor-pointer hover-elevate active-elevate-2"
-              onClick={() => addToCart(item)}
-              data-testid={`card-pos-item-${item.id}`}
-            >
-              <CardHeader className="p-4 pb-2">
-                <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-md flex items-center justify-center mb-2">
-                  <UtensilsCrossed className="h-12 w-12 text-primary/40" />
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <p className="font-semibold mb-1 line-clamp-2">{item.name}</p>
-                <p className="text-xl font-bold font-mono text-primary">{parseFloat(item.price).toFixed(2)} SAR</p>
-              </CardContent>
-            </Card>
-          ))}
+          {filteredItems.map(item => {
+            const hasDiscount = item.discount && parseFloat(item.discount) > 0;
+            const basePrice = parseFloat(item.basePrice);
+            // Calculate original VAT-inclusive price from base price
+            const originalPrice = basePrice * 1.15;
+            // Apply discount to base price
+            const discountedBase = hasDiscount
+              ? basePrice * (1 - parseFloat(item.discount) / 100)
+              : basePrice;
+            // Show final price with VAT for display purposes
+            const finalPrice = discountedBase * 1.15;
+            
+            return (
+              <Card
+                key={item.id}
+                className="cursor-pointer hover-elevate active-elevate-2 relative"
+                onClick={() => addToCart(item)}
+                data-testid={`card-pos-item-${item.id}`}
+              >
+                {hasDiscount && (
+                  <div className="absolute top-2 right-2 z-10 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded">
+                    {parseFloat(item.discount).toFixed(0)}% OFF
+                  </div>
+                )}
+                <CardHeader className="p-4 pb-2">
+                  <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-md flex items-center justify-center mb-2">
+                    <UtensilsCrossed className="h-12 w-12 text-primary/40" />
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <p className="font-semibold mb-1 line-clamp-2">{item.name}</p>
+                  {hasDiscount ? (
+                    <div className="space-y-1">
+                      <p className="text-xl font-bold font-mono text-primary">{finalPrice.toFixed(2)} SAR</p>
+                      <p className="text-sm font-mono text-muted-foreground line-through">{originalPrice.toFixed(2)} SAR</p>
+                    </div>
+                  ) : (
+                    <p className="text-xl font-bold font-mono text-primary">{originalPrice.toFixed(2)} SAR</p>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
 
@@ -243,7 +283,15 @@ export default function POS() {
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
                         <p className="font-semibold">{item.name}</p>
-                        <p className="text-sm text-muted-foreground font-mono">{item.price.toFixed(2)} SAR</p>
+                        {item.discount > 0 ? (
+                          <div className="flex items-baseline gap-2">
+                            <p className="text-sm font-mono text-primary">{item.price.toFixed(2)} SAR (base)</p>
+                            <p className="text-xs font-mono text-muted-foreground line-through">{item.originalPrice.toFixed(2)}</p>
+                            <span className="text-xs bg-green-600 text-white px-1.5 py-0.5 rounded">{item.discount.toFixed(0)}% OFF</span>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground font-mono">{item.price.toFixed(2)} SAR (base)</p>
+                        )}
                       </div>
                       <Button
                         variant="ghost"

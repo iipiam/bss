@@ -42,12 +42,19 @@ export const menuItems = pgTable("menu_items", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(), // VAT-inclusive price (15% Saudi VAT)
   basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(), // Price before VAT
   vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).notNull(), // VAT amount (15%)
+  discount: decimal("discount", { precision: 5, scale: 2 }).notNull().default("0"), // Discount percentage (0-100)
   description: text("description"),
   available: boolean("available").notNull().default(true),
   imageUrl: text("image_url"),
 });
 
-export const insertMenuItemSchema = createInsertSchema(menuItems).omit({ id: true });
+export const insertMenuItemSchema = createInsertSchema(menuItems).omit({ id: true }).refine(
+  (data) => {
+    const discount = parseFloat(data.discount || "0");
+    return discount >= 0 && discount <= 100;
+  },
+  { message: "Discount must be between 0 and 100" }
+);
 export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
 export type MenuItem = typeof menuItems.$inferSelect;
 
