@@ -68,7 +68,7 @@ export const recipes = pgTable("recipes", {
   cookTime: text("cook_time").notNull(),
   servings: integer("servings").notNull(),
   cost: decimal("cost", { precision: 10, scale: 2 }).notNull(),
-  ingredients: jsonb("ingredients").notNull().$type<Array<{ name: string; quantity: number; unit: string }>>(),
+  ingredients: jsonb("ingredients").notNull().$type<Array<{ inventoryItemId: string; name: string; quantity: number; unit: string; unitPrice: number }>>(),
   steps: jsonb("steps").notNull().$type<string[]>(),
 });
 

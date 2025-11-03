@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,11 +6,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, ChefHat, Trash2, Download, Upload, FileDown } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Recipe } from "@shared/schema";
+import type { Recipe, InventoryItem } from "@shared/schema";
 
 export default function Recipes() {
   const [open, setOpen] = useState(false);
@@ -20,7 +21,7 @@ export default function Recipes() {
   const [cookTime, setCookTime] = useState("");
   const [servings, setServings] = useState("");
   const [cost, setCost] = useState("");
-  const [ingredients, setIngredients] = useState([{ name: "", quantity: "", unit: "" }]);
+  const [ingredients, setIngredients] = useState([{ inventoryItemId: "", name: "", quantity: "", unit: "", unitPrice: 0 }]);
   const [steps, setSteps] = useState([""]);
   const { toast } = useToast();
 
@@ -28,12 +29,13 @@ export default function Recipes() {
     queryKey: ["/api/recipes"],
   });
 
+  const { data: inventoryItems = [], isLoading: isLoadingInventory } = useQuery<InventoryItem[]>({
+    queryKey: ["/api/inventory"],
+  });
+
   const createRecipeMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("/api/recipes", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("POST", "/api/recipes", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
@@ -59,23 +61,51 @@ export default function Recipes() {
     setCookTime("");
     setServings("");
     setCost("");
-    setIngredients([{ name: "", quantity: "", unit: "" }]);
+    setIngredients([{ inventoryItemId: "", name: "", quantity: "", unit: "", unitPrice: 0 }]);
     setSteps([""]);
   };
 
   const addIngredient = () => {
-    setIngredients([...ingredients, { name: "", quantity: "", unit: "" }]);
+    setIngredients([...ingredients, { inventoryItemId: "", name: "", quantity: "", unit: "", unitPrice: 0 }]);
   };
 
   const removeIngredient = (index: number) => {
     setIngredients(ingredients.filter((_, i) => i !== index));
   };
 
-  const updateIngredient = (index: number, field: string, value: string) => {
+  const updateIngredient = (index: number, field: string, value: string | number) => {
     const updated = [...ingredients];
     updated[index] = { ...updated[index], [field]: value };
     setIngredients(updated);
   };
+
+  const selectInventoryItem = (index: number, itemId: string) => {
+    const item = inventoryItems.find(i => i.id === itemId);
+    if (item) {
+      const updated = [...ingredients];
+      updated[index] = {
+        inventoryItemId: item.id,
+        name: item.name,
+        quantity: "",
+        unit: item.unit,
+        unitPrice: parseFloat(item.price),
+      };
+      setIngredients(updated);
+    }
+  };
+
+  // Calculate total cost automatically when ingredients change
+  useEffect(() => {
+    const totalCost = ingredients.reduce((sum, ingredient) => {
+      const quantity = parseFloat(ingredient.quantity) || 0;
+      const price = ingredient.unitPrice || 0;
+      return sum + (quantity * price);
+    }, 0);
+    
+    if (totalCost > 0) {
+      setCost(totalCost.toFixed(2));
+    }
+  }, [ingredients]);
 
   const addStep = () => {
     setSteps([...steps, ""]);
@@ -93,13 +123,31 @@ export default function Recipes() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate that all ingredients have inventory items selected
+    const invalidIngredients = ingredients.filter(i => i.inventoryItemId && !i.quantity);
+    if (invalidIngredients.length > 0) {
+      toast({
+        title: "Invalid ingredients",
+        description: "Please enter quantities for all selected ingredients",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     createRecipeMutation.mutate({
       name,
       prepTime,
       cookTime,
       servings: parseInt(servings),
       cost,
-      ingredients: ingredients.filter(i => i.name && i.quantity),
+      ingredients: ingredients.filter(i => i.inventoryItemId && i.quantity).map(i => ({
+        inventoryItemId: i.inventoryItemId,
+        name: i.name,
+        quantity: parseFloat(i.quantity),
+        unit: i.unit,
+        unitPrice: i.unitPrice,
+      })),
       steps: steps.filter(s => s.trim() !== ""),
     });
   };
@@ -297,17 +345,19 @@ export default function Recipes() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="cost">Cost per Serving (SAR)</Label>
+                  <Label htmlFor="cost">Total Cost (SAR)</Label>
                   <Input
                     id="cost"
                     type="number"
                     step="0.01"
                     value={cost}
                     onChange={(e) => setCost(e.target.value)}
-                    placeholder="e.g., 15.50"
-                    required
+                    placeholder="Auto-calculated"
+                    disabled
                     data-testid="input-cost"
+                    className="bg-muted"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Calculated from ingredients</p>
                 </div>
               </div>
 
@@ -320,26 +370,39 @@ export default function Recipes() {
                   </Button>
                 </div>
                 {ingredients.map((ingredient, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-2">
-                    <Input
-                      className="col-span-5"
-                      value={ingredient.name}
-                      onChange={(e) => updateIngredient(index, "name", e.target.value)}
-                      placeholder="Ingredient name"
-                      data-testid={`input-ingredient-name-${index}`}
-                    />
+                  <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                    <div className="col-span-5">
+                      <Select
+                        value={ingredient.inventoryItemId}
+                        onValueChange={(value) => selectInventoryItem(index, value)}
+                      >
+                        <SelectTrigger data-testid={`select-ingredient-${index}`}>
+                          <SelectValue placeholder="Select ingredient" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {inventoryItems.map((item) => (
+                            <SelectItem key={item.id} value={item.id}>
+                              {item.name} ({item.unit}) - {parseFloat(item.price).toFixed(2)} SAR
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <Input
                       className="col-span-3"
+                      type="number"
+                      step="0.01"
                       value={ingredient.quantity}
                       onChange={(e) => updateIngredient(index, "quantity", e.target.value)}
                       placeholder="Quantity"
+                      disabled={!ingredient.inventoryItemId}
                       data-testid={`input-ingredient-quantity-${index}`}
                     />
                     <Input
                       className="col-span-3"
                       value={ingredient.unit}
-                      onChange={(e) => updateIngredient(index, "unit", e.target.value)}
                       placeholder="Unit"
+                      disabled
                       data-testid={`input-ingredient-unit-${index}`}
                     />
                     <Button
