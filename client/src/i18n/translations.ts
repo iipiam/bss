@@ -17,6 +17,7 @@ export interface Translations {
   sales: string;
   financial: string;
   profitability: string;
+  invoices: string;
   employees: string;
   settings: string;
   pos: string;
@@ -161,6 +162,7 @@ export const translations: Record<Language, Translations> = {
     sales: 'Sales',
     financial: 'Financial',
     profitability: 'Profitability',
+    invoices: 'Invoices',
     employees: 'Employees',
     settings: 'Settings',
     pos: 'POS',
@@ -304,6 +306,7 @@ export const translations: Record<Language, Translations> = {
     sales: 'المبيعات',
     financial: 'المالية',
     profitability: 'الربحية',
+    invoices: 'الفواتير',
     employees: 'الموظفين',
     settings: 'الإعدادات',
     pos: 'نقطة البيع',
@@ -447,6 +450,7 @@ export const translations: Record<Language, Translations> = {
     sales: '销售',
     financial: '财务',
     profitability: '盈利能力',
+    invoices: '发票',
     employees: '员工',
     settings: '设置',
     pos: '收银系统',
@@ -590,6 +594,7 @@ export const translations: Record<Language, Translations> = {
     sales: 'Verkäufe',
     financial: 'Finanzen',
     profitability: 'Rentabilität',
+    invoices: 'Rechnungen',
     employees: 'Mitarbeiter',
     settings: 'Einstellungen',
     pos: 'Kassensystem',
@@ -733,6 +738,7 @@ export const translations: Record<Language, Translations> = {
     sales: 'बिक्री',
     financial: 'वित्तीय',
     profitability: 'लाभप्रदता',
+    invoices: 'चालान',
     employees: 'कर्मचारी',
     settings: 'सेटिंग्स',
     pos: 'पीओएस',
@@ -876,6 +882,7 @@ export const translations: Record<Language, Translations> = {
     sales: 'فروخت',
     financial: 'مالیاتی',
     profitability: 'منافع',
+    invoices: 'رسیدیں',
     employees: 'ملازمین',
     settings: 'ترتیبات',
     pos: 'پی او ایس',
@@ -1019,6 +1026,7 @@ export const translations: Record<Language, Translations> = {
     sales: 'বিক্রয়',
     financial: 'আর্থিক',
     profitability: 'লাভজনকতা',
+    invoices: 'চালান',
     employees: 'কর্মচারী',
     settings: 'সেটিংস',
     pos: 'পিওএস',

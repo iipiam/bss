@@ -17,6 +17,7 @@ import {
   Users,
   Calculator,
   UserCircle,
+  FileCheck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -55,6 +56,7 @@ export function AppSidebar() {
     { title: t.sales, url: "/sales", icon: DollarSign, testId: "sales" },
     { title: t.financial, url: "/financial", icon: Receipt, testId: "financial" },
     { title: t.profitability, url: "/profitability", icon: Calculator, testId: "profitability" },
+    { title: t.invoices, url: "/invoices", icon: FileCheck, testId: "invoices" },
   ];
 
   const system = [
