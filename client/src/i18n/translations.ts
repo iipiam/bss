@@ -28,6 +28,12 @@ export interface Translations {
   management: string;
   analytics: string;
   system: string;
+  support: string;
+  
+  // Support
+  help: string;
+  technicalSupport: string;
+  contactSupport: string;
   
   // Common
   add: string;
@@ -173,6 +179,12 @@ export const translations: Record<Language, Translations> = {
     management: 'Management',
     analytics: 'Analytics',
     system: 'System',
+    support: 'Support',
+    
+    // Support
+    help: 'Help',
+    technicalSupport: 'Technical Support',
+    contactSupport: 'Contact Support',
     
     // Common
     add: 'Add',
@@ -317,6 +329,12 @@ export const translations: Record<Language, Translations> = {
     management: 'الإدارة',
     analytics: 'التحليلات',
     system: 'النظام',
+    support: 'الدعم',
+    
+    // Support
+    help: 'المساعدة',
+    technicalSupport: 'الدعم الفني',
+    contactSupport: 'اتصل بالدعم',
     
     // Common
     add: 'إضافة',
@@ -461,6 +479,12 @@ export const translations: Record<Language, Translations> = {
     management: '管理',
     analytics: '分析',
     system: '系统',
+    support: '支持',
+    
+    // Support
+    help: '帮助',
+    technicalSupport: '技术支持',
+    contactSupport: '联系支持',
     
     // Common
     add: '添加',
@@ -605,6 +629,12 @@ export const translations: Record<Language, Translations> = {
     management: 'Verwaltung',
     analytics: 'Analytik',
     system: 'System',
+    support: 'Support',
+    
+    // Support
+    help: 'Hilfe',
+    technicalSupport: 'Technischer Support',
+    contactSupport: 'Support kontaktieren',
     
     // Common
     add: 'Hinzufügen',
@@ -749,6 +779,12 @@ export const translations: Record<Language, Translations> = {
     management: 'प्रबंधन',
     analytics: 'विश्लेषण',
     system: 'प्रणाली',
+    support: 'सहायता',
+    
+    // Support
+    help: 'मदद',
+    technicalSupport: 'तकनीकी सहायता',
+    contactSupport: 'सहायता से संपर्क करें',
     
     // Common
     add: 'जोड़ें',
@@ -893,6 +929,12 @@ export const translations: Record<Language, Translations> = {
     management: 'انتظام',
     analytics: 'تجزیات',
     system: 'نظام',
+    support: 'سپورٹ',
+    
+    // Support
+    help: 'مدد',
+    technicalSupport: 'تکنیکی سپورٹ',
+    contactSupport: 'سپورٹ سے رابطہ کریں',
     
     // Common
     add: 'شامل کریں',
@@ -1037,6 +1079,12 @@ export const translations: Record<Language, Translations> = {
     management: 'ব্যবস্থাপনা',
     analytics: 'বিশ্লেষণ',
     system: 'সিস্টেম',
+    support: 'সহায়তা',
+    
+    // Support
+    help: 'সাহায্য',
+    technicalSupport: 'প্রযুক্তিগত সহায়তা',
+    contactSupport: 'সহায়তার সাথে যোগাযোগ করুন',
     
     // Common
     add: 'যোগ করুন',
