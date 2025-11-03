@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Edit, UtensilsCrossed, Settings2, Trash2, X, Download, Upload } from "lucide-react";
+import { Plus, Search, Edit, UtensilsCrossed, Settings2, Trash2, X, Download, Upload, FileDown } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -217,6 +217,35 @@ export default function Menu() {
     form.reset();
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await fetch('/api/templates/menu');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Template download failed');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'menu_template.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: "Template downloaded",
+        description: "Fill in the template and import it",
+      });
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: error instanceof Error ? error.message : "Failed to download template",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleExport = async () => {
     try {
       const response = await fetch('/api/export/menu');
@@ -303,6 +332,10 @@ export default function Menu() {
           <p className="text-muted-foreground">Manage your menu items and pricing</p>
         </div>
         <div className="flex gap-3">
+          <Button variant="outline" onClick={handleDownloadTemplate} data-testid="button-download-template">
+            <FileDown className="h-4 w-4 mr-2" />
+            Template
+          </Button>
           <Button variant="outline" onClick={handleExport} data-testid="button-export">
             <Download className="h-4 w-4 mr-2" />
             Export

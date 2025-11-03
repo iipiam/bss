@@ -43,7 +43,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Edit, Trash2, Download, Upload } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Download, Upload, FileDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -235,6 +235,35 @@ export default function Inventory() {
     }
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await fetch('/api/templates/inventory');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Template download failed');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'inventory_template.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: "Template downloaded",
+        description: "Fill in the template and import it",
+      });
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: error instanceof Error ? error.message : "Failed to download template",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -298,6 +327,10 @@ export default function Inventory() {
           <p className="text-muted-foreground">Track and manage your stock levels</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleDownloadTemplate} data-testid="button-download-template">
+            <FileDown className="h-4 w-4 mr-2" />
+            Template
+          </Button>
           <Button variant="outline" onClick={handleExport} data-testid="button-export">
             <Download className="h-4 w-4 mr-2" />
             Export

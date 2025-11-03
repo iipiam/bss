@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, ChefHat, Trash2 } from "lucide-react";
+import { Plus, ChefHat, Trash2, Download, Upload, FileDown } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -14,6 +14,7 @@ import type { Recipe } from "@shared/schema";
 
 export default function Recipes() {
   const [open, setOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [name, setName] = useState("");
   const [prepTime, setPrepTime] = useState("");
   const [cookTime, setCookTime] = useState("");
@@ -103,6 +104,100 @@ export default function Recipes() {
     });
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await fetch('/api/templates/recipes');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Template download failed');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'recipes_template.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: "Template downloaded",
+        description: "Fill in the template and import it",
+      });
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: error instanceof Error ? error.message : "Failed to download template",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const response = await fetch('/api/export/recipes');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Export failed');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'recipes.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: "Export successful",
+        description: "Recipes exported to Excel",
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: error instanceof Error ? error.message : "Failed to export recipes",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/import/recipes', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Import failed');
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+      toast({
+        title: "Import successful",
+        description: result.message || "Recipes imported from Excel",
+      });
+    } catch (error) {
+      toast({
+        title: "Import failed",
+        description: error instanceof Error ? error.message : "Failed to import recipes",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+      event.target.value = '';
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-8">
@@ -119,13 +214,36 @@ export default function Recipes() {
           <h1 className="text-3xl font-bold mb-2">Recipes</h1>
           <p className="text-muted-foreground">Manage recipes and preparation instructions</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="button-add-recipe">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Recipe
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleDownloadTemplate} data-testid="button-download-template">
+            <FileDown className="h-4 w-4 mr-2" />
+            Template
+          </Button>
+          <Button variant="outline" onClick={handleExport} data-testid="button-export">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+          <Button variant="outline" asChild disabled={isImporting}>
+            <label htmlFor="import-recipes" className="cursor-pointer" data-testid="button-import">
+              <Upload className="h-4 w-4 mr-2" />
+              {isImporting ? "Importing..." : "Import"}
+              <input
+                id="import-recipes"
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleImport}
+                className="hidden"
+                data-testid="input-import-file"
+              />
+            </label>
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button data-testid="button-add-recipe">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Recipe
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Recipe</DialogTitle>
@@ -281,6 +399,7 @@ export default function Recipes() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="grid gap-6">
