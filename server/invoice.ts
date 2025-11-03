@@ -1,4 +1,4 @@
-import { jsPDF } from "jspdf";
+import puppeteer from "puppeteer";
 import QRCode from "qrcode";
 import type { Order } from "@shared/schema";
 
@@ -15,353 +15,482 @@ interface InvoiceData {
   baseUrl: string;
 }
 
-export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuffer: Buffer; qrCode: string }> {
-  const doc = new jsPDF();
-  const { order, companyName, companyVAT, branchAddress, companyEmail, companyPhone, invoiceNumber, invoiceDate, invoiceId, baseUrl } = data;
+function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string): string {
+  const { order, companyName, companyVAT, branchAddress, companyEmail, companyPhone, invoiceNumber, invoiceDate } = data;
+  
+  const subtotal = parseFloat(order.subtotal);
+  const tax = parseFloat(order.tax);
+  const total = parseFloat(order.total);
 
-  // ZATCA QR Code
-  const invoiceUrl = `${baseUrl}/public/invoice/${invoiceId}`;
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', 'Noto Naskh Arabic', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background: white;
+    }
+    
+    .invoice-container {
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #2962ff 0%, #1e40af 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+      border-radius: 8px 8px 0 0;
+      margin-bottom: 20px;
+    }
+    
+    .company-name {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+    
+    .invoice-badge {
+      display: inline-block;
+      background: white;
+      color: #2962ff;
+      padding: 8px 24px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    
+    .bilingual-section {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .section-left, .section-right {
+      flex: 1;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+    
+    .section-left {
+      background: #f8f9fa;
+    }
+    
+    .section-right {
+      background: #e3f2fd;
+      direction: rtl;
+      text-align: right;
+    }
+    
+    .section-title {
+      font-weight: 700;
+      font-size: 12px;
+      color: #1e40af;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .info-row {
+      display: flex;
+      margin-bottom: 8px;
+      font-size: 11px;
+    }
+    
+    .section-right .info-row {
+      flex-direction: row-reverse;
+      text-align: right;
+    }
+    
+    .info-label {
+      font-weight: 600;
+      min-width: 100px;
+      color: #374151;
+    }
+    
+    .info-value {
+      color: #1a1a1a;
+    }
+    
+    .customer-section {
+      background: #f8f9fa;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #e5e7eb;
+    }
+    
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .items-table thead {
+      background: #2962ff;
+      color: white;
+    }
+    
+    .items-table th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .items-table th.rtl {
+      text-align: right;
+    }
+    
+    .items-table tbody tr:nth-child(even) {
+      background: #f8f9fa;
+    }
+    
+    .items-table tbody tr {
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .items-table td {
+      padding: 10px 12px;
+      font-size: 11px;
+    }
+    
+    .text-right {
+      text-align: right;
+    }
+    
+    .text-center {
+      text-align: center;
+    }
+    
+    .totals-section {
+      max-width: 400px;
+      margin-left: auto;
+      margin-bottom: 30px;
+    }
+    
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+    
+    .totals-row.total {
+      background: #2962ff;
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+      border-radius: 8px;
+      padding: 15px 20px;
+      margin-top: 10px;
+    }
+    
+    .totals-row.subtotal {
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .qr-section {
+      text-align: center;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .qr-code {
+      width: 150px;
+      height: 150px;
+      margin: 0 auto 10px;
+      border: 3px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 8px;
+    }
+    
+    .qr-instruction {
+      font-size: 10px;
+      color: #6b7280;
+      margin-top: 8px;
+    }
+    
+    .qr-instruction-ar {
+      font-size: 10px;
+      color: #6b7280;
+      direction: rtl;
+      margin-top: 4px;
+    }
+    
+    .footer {
+      background: #f8f9fa;
+      padding: 20px;
+      text-align: center;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+    
+    .zatca-badge {
+      color: #2962ff;
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    
+    .footer-text {
+      font-size: 10px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    
+    .arabic {
+      font-family: 'Noto Naskh Arabic', sans-serif;
+    }
+    
+    .english {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    @media print {
+      body {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="company-name english">${companyName}</div>
+      <div class="invoice-badge">TAX INVOICE | فاتورة ضريبية</div>
+    </div>
+    
+    <!-- Company Information - Bilingual -->
+    <div class="bilingual-section">
+      <!-- English Left -->
+      <div class="section-left english">
+        <div class="section-title">Company Information</div>
+        <div class="info-row">
+          <div class="info-label">VAT Number:</div>
+          <div class="info-value">${companyVAT}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Phone:</div>
+          <div class="info-value">${companyPhone}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Email:</div>
+          <div class="info-value">${companyEmail}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Address:</div>
+          <div class="info-value">${branchAddress}</div>
+        </div>
+      </div>
+      
+      <!-- Arabic Right -->
+      <div class="section-right arabic">
+        <div class="section-title">معلومات الشركة</div>
+        <div class="info-row">
+          <div class="info-value">${companyVAT}</div>
+          <div class="info-label">:الرقم الضريبي</div>
+        </div>
+        <div class="info-row">
+          <div class="info-value">${companyPhone}</div>
+          <div class="info-label">:الهاتف</div>
+        </div>
+        <div class="info-row">
+          <div class="info-value">${companyEmail}</div>
+          <div class="info-label">:البريد الإلكتروني</div>
+        </div>
+        <div class="info-row">
+          <div class="info-value">${branchAddress}</div>
+          <div class="info-label">:العنوان</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Invoice Details - Bilingual -->
+    <div class="bilingual-section">
+      <!-- English Left -->
+      <div class="section-left english">
+        <div class="section-title">Invoice Details</div>
+        <div class="info-row">
+          <div class="info-label">Invoice No:</div>
+          <div class="info-value">${invoiceNumber}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Date:</div>
+          <div class="info-value">${invoiceDate.toLocaleDateString('en-GB')}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Order No:</div>
+          <div class="info-value">${order.orderNumber}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Type:</div>
+          <div class="info-value">${order.orderType}</div>
+        </div>
+      </div>
+      
+      <!-- Arabic Right -->
+      <div class="section-right arabic">
+        <div class="section-title">تفاصيل الفاتورة</div>
+        <div class="info-row">
+          <div class="info-value">${invoiceNumber}</div>
+          <div class="info-label">:رقم الفاتورة</div>
+        </div>
+        <div class="info-row">
+          <div class="info-value">${invoiceDate.toLocaleDateString('ar-SA')}</div>
+          <div class="info-label">:التاريخ</div>
+        </div>
+        <div class="info-row">
+          <div class="info-value">${order.orderNumber}</div>
+          <div class="info-label">:رقم الطلب</div>
+        </div>
+        <div class="info-row">
+          <div class="info-value">${order.orderType}</div>
+          <div class="info-label">:النوع</div>
+        </div>
+      </div>
+    </div>
+    
+    ${order.customerName || order.table || order.address ? `
+    <!-- Customer Information -->
+    <div class="customer-section">
+      <div style="display: flex; gap: 40px;">
+        <div class="english" style="flex: 1;">
+          <div class="section-title">Customer Information</div>
+          ${order.customerName ? `<div class="info-row"><div class="info-label">Customer:</div><div class="info-value">${order.customerName}</div></div>` : ''}
+          ${order.table ? `<div class="info-row"><div class="info-label">Table:</div><div class="info-value">${order.table}</div></div>` : ''}
+          ${order.address ? `<div class="info-row"><div class="info-label">Delivery Address:</div><div class="info-value">${order.address}</div></div>` : ''}
+        </div>
+        <div class="arabic" style="flex: 1; direction: rtl; text-align: right;">
+          <div class="section-title">معلومات العميل</div>
+          ${order.customerName ? `<div class="info-row"><div class="info-value">${order.customerName}</div><div class="info-label">:العميل</div></div>` : ''}
+          ${order.table ? `<div class="info-row"><div class="info-value">${order.table}</div><div class="info-label">:الطاولة</div></div>` : ''}
+          ${order.address ? `<div class="info-row"><div class="info-value">${order.address}</div><div class="info-label">:عنوان التوصيل</div></div>` : ''}
+        </div>
+      </div>
+    </div>
+    ` : ''}
+    
+    <!-- Items Table -->
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th class="english">ITEM NAME</th>
+          <th class="rtl arabic">اسم الصنف</th>
+          <th class="text-center english">QTY</th>
+          <th class="text-center english">PRICE (SAR)</th>
+          <th class="text-center english">TOTAL (SAR)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${order.items.map(item => `
+          <tr>
+            <td class="english">${item.name}</td>
+            <td class="text-right arabic">${item.name}</td>
+            <td class="text-center">${item.quantity}</td>
+            <td class="text-center">${parseFloat(item.price.toString()).toFixed(2)}</td>
+            <td class="text-center">${(item.quantity * parseFloat(item.price.toString())).toFixed(2)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    
+    <!-- Totals -->
+    <div class="totals-section">
+      <div class="totals-row subtotal">
+        <span class="english">Subtotal | المجموع الفرعي</span>
+        <span>${subtotal.toFixed(2)} SAR</span>
+      </div>
+      <div class="totals-row">
+        <span class="english">VAT (15%) | ضريبة القيمة المضافة</span>
+        <span>${tax.toFixed(2)} SAR</span>
+      </div>
+      <div class="totals-row total">
+        <span class="english">TOTAL | الإجمالي</span>
+        <span>${total.toFixed(2)} SAR</span>
+      </div>
+    </div>
+    
+    <!-- QR Code -->
+    <div class="qr-section">
+      <img src="${qrCodeDataURL}" alt="QR Code" class="qr-code">
+      <div class="qr-instruction english">Scan QR code to view and verify this invoice online</div>
+      <div class="qr-instruction-ar arabic">امسح رمز الاستجابة السريعة لعرض الفاتورة والتحقق منها عبر الإنترنت</div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <div class="zatca-badge">ZATCA COMPLIANT E-INVOICE | فاتورة إلكترونية متوافقة مع هيئة الزكاة</div>
+      <div class="footer-text english">Saudi Tax Authority (ZATCA) Approved Electronic Invoice</div>
+      <div class="footer-text arabic">فاتورة إلكترونية معتمدة من هيئة الزكاة والضريبة والجمارك</div>
+      <div class="footer-text english" style="margin-top: 8px;">Thank you for your business | شكراً لتعاملكم معنا</div>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
+export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuffer: Buffer; qrCode: string }> {
+  const invoiceUrl = `${data.baseUrl}/public/invoice/${data.invoiceId}`;
   const qrCodeDataURL = await QRCode.toDataURL(invoiceUrl, { width: 150, margin: 1 });
 
-  // Color scheme - Professional blue
-  const primaryColor = [41, 98, 255];
-  const accentColor = [33, 150, 243];
-  const lightGray = [248, 249, 250];
-  const darkGray = [52, 58, 64];
-  const borderColor = [222, 226, 230];
+  const html = generateBilingualInvoiceHTML(data, qrCodeDataURL);
 
-  let y = 15;
-  const pageWidth = 210;
-  const margin = 15;
-  const contentWidth = pageWidth - (margin * 2);
-
-  // ============ HEADER SECTION ============
-  // Top blue banner
-  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.rect(0, 0, pageWidth, 40, 'F');
-
-  // Company Name
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(26);
-  doc.setFont("helvetica", "bold");
-  doc.text(companyName, pageWidth / 2, 18, { align: "center" });
-
-  // Tax Invoice Badge
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(255, 255, 255);
-  doc.roundedRect(pageWidth / 2 - 30, 24, 60, 10, 2, 2, 'FD');
-  
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("TAX INVOICE", pageWidth / 2, 30.5, { align: "center" });
-
-  doc.setTextColor(0, 0, 0);
-  y = 48;
-
-  // ============ COMPANY & INVOICE INFO - TWO COLUMNS ============
-  const leftColX = margin;
-  const rightColX = pageWidth / 2 + 3;
-  const colWidth = (contentWidth / 2) - 3;
-
-  // Left Column - Company Information
-  doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
-  doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
-  doc.roundedRect(leftColX, y, colWidth, 45, 2, 2, 'FD');
-  
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-  doc.text("COMPANY INFORMATION", leftColX + 3, y + 7);
-  
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(9);
-  
-  let leftY = y + 14;
-  
-  // VAT Number
-  doc.setFont("helvetica", "bold");
-  doc.text("VAT Number:", leftColX + 3, leftY);
-  doc.setFont("helvetica", "normal");
-  doc.text(companyVAT, leftColX + 28, leftY);
-  leftY += 6;
-  
-  // Phone
-  doc.setFont("helvetica", "bold");
-  doc.text("Phone:", leftColX + 3, leftY);
-  doc.setFont("helvetica", "normal");
-  doc.text(companyPhone, leftColX + 28, leftY);
-  leftY += 6;
-  
-  // Email
-  doc.setFont("helvetica", "bold");
-  doc.text("Email:", leftColX + 3, leftY);
-  doc.setFont("helvetica", "normal");
-  const emailLines = doc.splitTextToSize(companyEmail, colWidth - 30);
-  doc.text(emailLines, leftColX + 28, leftY);
-  leftY += (emailLines.length * 5);
-  
-  // Address
-  doc.setFont("helvetica", "bold");
-  doc.text("Address:", leftColX + 3, leftY);
-  doc.setFont("helvetica", "normal");
-  const addressLines = doc.splitTextToSize(branchAddress, colWidth - 6);
-  doc.text(addressLines, leftColX + 3, leftY + 5);
-
-  // Right Column - Invoice Details
-  doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
-  doc.roundedRect(rightColX, y, colWidth, 45, 2, 2, 'FD');
-  
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.text("INVOICE DETAILS", rightColX + 3, y + 7);
-  
-  doc.setFontSize(9);
-  let rightY = y + 15;
-  
-  // Invoice Number
-  doc.setFont("helvetica", "bold");
-  doc.text("Invoice No:", rightColX + 3, rightY);
-  doc.setFontSize(11);
-  doc.text(invoiceNumber, rightColX + 28, rightY);
-  rightY += 7;
-  
-  // Date
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
-  doc.text("Date:", rightColX + 3, rightY);
-  doc.setFont("helvetica", "normal");
-  doc.text(invoiceDate.toLocaleDateString('en-GB'), rightColX + 28, rightY);
-  rightY += 7;
-  
-  // Order Number
-  doc.setFont("helvetica", "bold");
-  doc.text("Order No:", rightColX + 3, rightY);
-  doc.setFont("helvetica", "normal");
-  doc.text(order.orderNumber, rightColX + 28, rightY);
-  rightY += 7;
-  
-  // Order Type
-  doc.setFont("helvetica", "bold");
-  doc.text("Type:", rightColX + 3, rightY);
-  doc.setFont("helvetica", "normal");
-  doc.text(order.orderType, rightColX + 28, rightY);
-
-  doc.setTextColor(0, 0, 0);
-  y += 53;
-
-  // ============ CUSTOMER INFORMATION ============
-  if (order.customerName || order.table || order.address) {
-    doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
-    doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
-    
-    const custInfoHeight = 12 + 
-      (order.customerName ? 6 : 0) + 
-      (order.table ? 6 : 0) + 
-      (order.address ? 6 : 0);
-    
-    doc.roundedRect(margin, y, contentWidth, custInfoHeight, 2, 2, 'FD');
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-    doc.text("CUSTOMER INFORMATION", margin + 3, y + 7);
-    
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(9);
-    let custY = y + 13;
-    
-    if (order.customerName) {
-      doc.setFont("helvetica", "bold");
-      doc.text("Customer:", margin + 3, custY);
-      doc.setFont("helvetica", "normal");
-      doc.text(order.customerName, margin + 25, custY);
-      custY += 6;
-    }
-    
-    if (order.table) {
-      doc.setFont("helvetica", "bold");
-      doc.text("Table:", margin + 3, custY);
-      doc.setFont("helvetica", "normal");
-      doc.text(order.table, margin + 25, custY);
-      custY += 6;
-    }
-    
-    if (order.address) {
-      doc.setFont("helvetica", "bold");
-      doc.text("Delivery Address:", margin + 3, custY);
-      doc.setFont("helvetica", "normal");
-      const addrLines = doc.splitTextToSize(order.address, contentWidth - 40);
-      doc.text(addrLines, margin + 35, custY);
-    }
-    
-    y += custInfoHeight + 8;
-  } else {
-    y += 4;
-  }
-
-  // ============ ITEMS TABLE ============
-  // Table Header
-  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.rect(margin, y, contentWidth, 10, 'FD');
-  
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  
-  // Column headers
-  doc.text("ITEM NAME", margin + 3, y + 6.5);
-  doc.text("QTY", margin + 120, y + 6.5, { align: "center" });
-  doc.text("PRICE (SAR)", margin + 145, y + 6.5, { align: "center" });
-  doc.text("TOTAL (SAR)", contentWidth + margin - 3, y + 6.5, { align: "right" });
-  
-  y += 10;
-  
-  // Table items
-  doc.setTextColor(0, 0, 0);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
-  doc.setLineWidth(0.3);
-  
-  order.items.forEach((item, index) => {
-    // Check for page overflow
-    if (y > 245) {
-      doc.addPage();
-      y = 20;
-      
-      // Repeat table header
-      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.rect(margin, y, contentWidth, 10, 'FD');
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.text("ITEM NAME", margin + 3, y + 6.5);
-      doc.text("QTY", margin + 120, y + 6.5, { align: "center" });
-      doc.text("PRICE (SAR)", margin + 145, y + 6.5, { align: "center" });
-      doc.text("TOTAL (SAR)", contentWidth + margin - 3, y + 6.5, { align: "right" });
-      y += 10;
-      doc.setTextColor(0, 0, 0);
-      doc.setFont("helvetica", "normal");
-    }
-    
-    const rowHeight = 8;
-    
-    // Alternating row colors
-    if (index % 2 === 0) {
-      doc.setFillColor(253, 253, 253);
-      doc.rect(margin, y, contentWidth, rowHeight, 'F');
-    }
-    
-    // Row border
-    doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
-    doc.line(margin, y, margin + contentWidth, y);
-    
-    // Item data
-    const itemName = doc.splitTextToSize(item.name, 110);
-    doc.text(itemName[0], margin + 3, y + 5.5);
-    
-    doc.text(item.quantity.toString(), margin + 120, y + 5.5, { align: "center" });
-    
-    doc.text(parseFloat(item.price.toString()).toFixed(2), margin + 145, y + 5.5, { align: "center" });
-    
-    const itemTotal = (item.quantity * parseFloat(item.price.toString())).toFixed(2);
-    doc.text(itemTotal, contentWidth + margin - 3, y + 5.5, { align: "right" });
-    
-    y += rowHeight;
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu'
+    ]
   });
 
-  // Bottom border of table
-  doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
-  doc.line(margin, y, margin + contentWidth, y);
-  
-  y += 10;
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '10mm',
+        right: '10mm',
+        bottom: '10mm',
+        left: '10mm'
+      }
+    });
 
-  // ============ TOTALS SECTION ============
-  const totalsX = margin + 100;
-  const totalsWidth = contentWidth - 100;
-  
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  
-  // Subtotal
-  doc.text("Subtotal:", totalsX + 5, y);
-  doc.text(`${parseFloat(order.subtotal).toFixed(2)}`, totalsX + totalsWidth - 5, y, { align: "right" });
-  y += 7;
-  
-  // VAT
-  doc.text("VAT (15%):", totalsX + 5, y);
-  doc.text(`${parseFloat(order.tax).toFixed(2)}`, totalsX + totalsWidth - 5, y, { align: "right" });
-  y += 2;
-  
-  // Line separator
-  doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
-  doc.setLineWidth(0.5);
-  doc.line(totalsX, y, totalsX + totalsWidth, y);
-  y += 7;
-  
-  // Total - Highlighted
-  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.roundedRect(totalsX, y - 4, totalsWidth, 13, 2, 2, 'F');
-  
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text("TOTAL AMOUNT", totalsX + 5, y + 3);
-  doc.setFontSize(14);
-  doc.text(`${parseFloat(order.total).toFixed(2)} SAR`, totalsX + totalsWidth - 5, y + 3, { align: "right" });
-  
-  doc.setTextColor(0, 0, 0);
-  y += 20;
-
-  // ============ QR CODE SECTION ============
-  const qrSize = 55;
-  const qrX = (pageWidth / 2) - (qrSize / 2);
-  
-  // QR Code border
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
-  doc.setLineWidth(0.5);
-  doc.roundedRect(qrX - 4, y - 4, qrSize + 8, qrSize + 8, 3, 3, 'FD');
-  
-  // Add QR code
-  doc.addImage(qrCodeDataURL, 'PNG', qrX, y, qrSize, qrSize);
-  
-  y += qrSize + 10;
-  
-  // QR Code instructions
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-  doc.text("Scan QR code to view and verify this invoice online", pageWidth / 2, y, { align: "center" });
-  
-  y += 12;
-
-  // ============ FOOTER ============
-  // Footer background
-  doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
-  doc.rect(0, 277, pageWidth, 20, 'F');
-  
-  // ZATCA Badge
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("ZATCA COMPLIANT E-INVOICE", pageWidth / 2, 284, { align: "center" });
-  
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-  doc.text("Saudi Tax Authority (ZATCA) Approved Electronic Invoice", pageWidth / 2, 289, { align: "center" });
-  
-  doc.setFontSize(7);
-  doc.text("Thank you for your business", pageWidth / 2, 293, { align: "center" });
-
-  // Convert to buffer
-  const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
-  return { pdfBuffer, qrCode: invoiceUrl };
+    return { pdfBuffer: Buffer.from(pdfBuffer), qrCode: invoiceUrl };
+  } finally {
+    await browser.close();
+  }
 }
 
 interface FinancialStatementData {
@@ -384,172 +513,267 @@ interface FinancialStatementData {
 }
 
 export async function generateFinancialStatementPDF(data: FinancialStatementData): Promise<Buffer> {
-  const doc = new jsPDF();
   const { companyName, companyVAT, year, period, yearlyData, monthlyData } = data;
   
-  let y = 20;
-
-  // Header - Company Name
-  doc.setFontSize(22);
-  doc.setFont("helvetica", "bold");
-  doc.text(companyName, 105, y, { align: "center" });
-  y += 10;
-
-  // Subheader
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "normal");
-  doc.text("Financial Statement", 105, y, { align: "center" });
-  y += 8;
-  
-  doc.setFontSize(12);
-  doc.text(`Year ${year}`, 105, y, { align: "center" });
-  y += 15;
-
-  // Company VAT
-  doc.setFontSize(10);
-  doc.text(`VAT Number: ${companyVAT}`, 20, y);
-  y += 6;
-  doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, y);
-  y += 12;
-
-  // Summary Box
-  doc.setDrawColor(100);
-  doc.setFillColor(245, 247, 250);
-  doc.rect(20, y, 170, 45, 'FD');
-  
-  y += 8;
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.text("Annual Summary", 25, y);
-  
-  y += 10;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  
-  // Two column layout for summary
-  const col1X = 25;
-  const col2X = 115;
-  
-  doc.setFont("helvetica", "bold");
-  doc.text("Total Revenue:", col1X, y);
-  doc.text("VAT Collected:", col2X, y);
-  doc.setFont("helvetica", "normal");
-  y += 6;
-  
-  const revenue = parseFloat(yearlyData.revenue);
-  const vat = parseFloat(yearlyData.vat);
-  
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text(`${revenue.toFixed(2)} SAR`, col1X, y);
-  doc.text(`${vat.toFixed(2)} SAR`, col2X, y);
-  
-  y += 10;
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.text("Total Transactions:", col1X, y);
-  doc.text("Invoices Generated:", col2X, y);
-  doc.setFont("helvetica", "normal");
-  y += 6;
-  
-  doc.setFontSize(11);
-  doc.text(yearlyData.transactions.toString(), col1X, y);
-  doc.text(yearlyData.invoices.toString(), col2X, y);
-  
-  y += 18;
-
-  // Monthly Breakdown
-  if (period === "monthly" && monthlyData && monthlyData.length > 0) {
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("Monthly Breakdown", 20, y);
-    y += 8;
-
-    // Table Header
-    doc.setFillColor(240, 240, 240);
-    doc.rect(20, y, 170, 8, 'F');
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
     
-    doc.text("Month", 25, y + 6);
-    doc.text("Revenue (SAR)", 90, y + 6, { align: "right" });
-    doc.text("VAT (SAR)", 135, y + 6, { align: "right" });
-    doc.text("Trans.", 175, y + 6, { align: "right" });
-    y += 8;
-
-    // Table Rows
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
     
-    monthlyData.forEach((month, index) => {
-      if (y > 270) {
-        doc.addPage();
-        y = 20;
-        
-        // Repeat header
-        doc.setFillColor(240, 240, 240);
-        doc.rect(20, y, 170, 8, 'F');
-        doc.setFont("helvetica", "bold");
-        doc.text("Month", 25, y + 6);
-        doc.text("Revenue (SAR)", 90, y + 6, { align: "right" });
-        doc.text("VAT (SAR)", 135, y + 6, { align: "right" });
-        doc.text("Trans.", 175, y + 6, { align: "right" });
-        y += 8;
-        doc.setFont("helvetica", "normal");
-      }
+    body {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background: white;
+      padding: 40px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      border-bottom: 3px solid #2962ff;
+      padding-bottom: 20px;
+    }
+    
+    .company-name {
+      font-size: 32px;
+      font-weight: 700;
+      color: #2962ff;
+      margin-bottom: 10px;
+    }
+    
+    .document-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+    
+    .year {
+      font-size: 18px;
+      color: #6b7280;
+    }
+    
+    .meta-info {
+      margin-bottom: 30px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    
+    .summary-box {
+      background: linear-gradient(135deg, #2962ff 0%, #1e40af 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 8px;
+      margin-bottom: 40px;
+    }
+    
+    .summary-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    
+    .summary-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 6px;
+    }
+    
+    .summary-label {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-bottom: 4px;
+    }
+    
+    .summary-value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e40af;
+      margin-bottom: 15px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+    }
+    
+    .data-table thead {
+      background: #f3f4f6;
+    }
+    
+    .data-table th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #374151;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .data-table th.text-right {
+      text-align: right;
+    }
+    
+    .data-table tbody tr:nth-child(even) {
+      background: #f9fafb;
+    }
+    
+    .data-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .data-table td.text-right {
+      text-align: right;
+    }
+    
+    .data-table tfoot {
+      font-weight: 700;
+      background: #f3f4f6;
+    }
+    
+    .data-table tfoot td {
+      padding: 12px;
+      border-top: 2px solid #2962ff;
+    }
+    
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+      font-size: 11px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="company-name">${companyName}</div>
+    <div class="document-title">Financial Statement</div>
+    <div class="year">Year ${year}</div>
+  </div>
+  
+  <div class="meta-info">
+    <div>VAT Number: ${companyVAT}</div>
+    <div>Generated: ${new Date().toLocaleDateString('en-GB')}</div>
+  </div>
+  
+  <div class="summary-box">
+    <div class="summary-title">Annual Summary</div>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="summary-label">Total Revenue</div>
+        <div class="summary-value">${parseFloat(yearlyData.revenue).toFixed(2)} SAR</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">VAT Collected</div>
+        <div class="summary-value">${parseFloat(yearlyData.vat).toFixed(2)} SAR</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Total Transactions</div>
+        <div class="summary-value">${yearlyData.transactions}</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Invoices Generated</div>
+        <div class="summary-value">${yearlyData.invoices}</div>
+      </div>
+    </div>
+  </div>
+  
+  ${period === "monthly" && monthlyData && monthlyData.length > 0 ? `
+    <div class="section-title">Monthly Breakdown</div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th class="text-right">Revenue (SAR)</th>
+          <th class="text-right">VAT (SAR)</th>
+          <th class="text-right">Transactions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${monthlyData.map(month => `
+          <tr>
+            <td>${month.month}</td>
+            <td class="text-right">${parseFloat(month.revenue).toFixed(2)}</td>
+            <td class="text-right">${parseFloat(month.vat).toFixed(2)}</td>
+            <td class="text-right">${month.transactions}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>TOTAL</td>
+          <td class="text-right">${monthlyData.reduce((sum, m) => sum + parseFloat(m.revenue), 0).toFixed(2)}</td>
+          <td class="text-right">${monthlyData.reduce((sum, m) => sum + parseFloat(m.vat), 0).toFixed(2)}</td>
+          <td class="text-right">${monthlyData.reduce((sum, m) => sum + m.transactions, 0)}</td>
+        </tr>
+      </tfoot>
+    </table>
+  ` : ''}
+  
+  <div class="footer">
+    <div>RestoPOS Financial Statement</div>
+    <div>VAT Compliant - Saudi Arabia</div>
+  </div>
+</body>
+</html>
+  `;
 
-      // Alternate row colors
-      if (index % 2 === 0) {
-        doc.setFillColor(250, 250, 250);
-        doc.rect(20, y, 170, 7, 'F');
-      }
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu'
+    ]
+  });
 
-      doc.text(month.month, 25, y + 5);
-      doc.text(parseFloat(month.revenue).toFixed(2), 90, y + 5, { align: "right" });
-      doc.text(parseFloat(month.vat).toFixed(2), 135, y + 5, { align: "right" });
-      doc.text(month.transactions.toString(), 175, y + 5, { align: "right" });
-      y += 7;
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '15mm',
+        right: '15mm',
+        bottom: '15mm',
+        left: '15mm'
+      }
     });
 
-    y += 8;
-
-    // Monthly totals
-    doc.setDrawColor(100);
-    doc.line(20, y, 190, y);
-    y += 6;
-    
-    const monthlyTotalRevenue = monthlyData.reduce((sum, m) => sum + parseFloat(m.revenue), 0);
-    const monthlyTotalVAT = monthlyData.reduce((sum, m) => sum + parseFloat(m.vat), 0);
-    const monthlyTotalTrans = monthlyData.reduce((sum, m) => sum + m.transactions, 0);
-    
-    doc.setFont("helvetica", "bold");
-    doc.text("TOTAL:", 25, y);
-    doc.text(monthlyTotalRevenue.toFixed(2), 90, y, { align: "right" });
-    doc.text(monthlyTotalVAT.toFixed(2), 135, y, { align: "right" });
-    doc.text(monthlyTotalTrans.toString(), 175, y, { align: "right" });
+    return Buffer.from(pdfBuffer);
+  } finally {
+    await browser.close();
   }
-
-  // Footer
-  const pageCount = doc.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(100);
-    doc.text(
-      `RestoPOS Financial Statement - Page ${i} of ${pageCount}`,
-      105,
-      285,
-      { align: "center" }
-    );
-    doc.text(
-      `VAT Compliant - Saudi Arabia`,
-      105,
-      290,
-      { align: "center" }
-    );
-  }
-
-  const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
-  return pdfBuffer;
 }
