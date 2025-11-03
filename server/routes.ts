@@ -1328,6 +1328,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Excel Export/Import Routes
   const XLSX = await import('xlsx');
 
+  // Download Excel Templates (Empty with headers only)
+  app.get("/api/templates/inventory", async (req, res) => {
+    try {
+      const templateData = [{
+        name: "Sample Item",
+        category: "Sample Category",
+        quantity: 100,
+        unit: "kg",
+        supplier: "Sample Supplier",
+        status: "In Stock",
+        branchId: ""
+      }];
+      
+      const worksheet = XLSX.utils.json_to_sheet(templateData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory Template");
+      
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=inventory_template.xlsx');
+      res.send(buffer);
+    } catch (error) {
+      console.error("Template generation error:", error);
+      res.status(500).json({ error: "Failed to generate template" });
+    }
+  });
+
+  app.get("/api/templates/menu", async (req, res) => {
+    try {
+      const templateData = [{
+        name: "Sample Dish",
+        category: "Main Course",
+        basePrice: 50.00,
+        price: 57.50,
+        vatAmount: 7.50,
+        discount: 0,
+        description: "Sample description",
+        available: true,
+        imageUrl: ""
+      }];
+      
+      const worksheet = XLSX.utils.json_to_sheet(templateData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Menu Template");
+      
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=menu_template.xlsx');
+      res.send(buffer);
+    } catch (error) {
+      console.error("Template generation error:", error);
+      res.status(500).json({ error: "Failed to generate template" });
+    }
+  });
+
+  app.get("/api/templates/recipes", async (req, res) => {
+    try {
+      const templateData = [{
+        name: "Sample Recipe",
+        menuItemId: "",
+        prepTime: "15 min",
+        cookTime: "30 min",
+        servings: 4,
+        cost: 25.00,
+        ingredients: JSON.stringify([
+          { inventoryItemId: "", name: "Sample Ingredient", quantity: 2, unit: "kg" }
+        ]),
+        steps: JSON.stringify([
+          "Step 1: Sample preparation step",
+          "Step 2: Sample cooking step"
+        ])
+      }];
+      
+      const worksheet = XLSX.utils.json_to_sheet(templateData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Recipes Template");
+      
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=recipes_template.xlsx');
+      res.send(buffer);
+    } catch (error) {
+      console.error("Template generation error:", error);
+      res.status(500).json({ error: "Failed to generate template" });
+    }
+  });
+
   // Export Inventory to Excel
   app.get("/api/export/inventory", async (req, res) => {
     try {
@@ -1484,6 +1574,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Procurement export error:", error);
       res.status(500).json({ error: "Failed to export procurement" });
+    }
+  });
+
+  // Export Customers to Excel
+  app.get("/api/export/customers", async (req, res) => {
+    try {
+      const customers = await storage.getCustomers();
+      
+      const worksheet = XLSX.utils.json_to_sheet(customers);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Customers");
+      
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=customers.xlsx');
+      res.send(buffer);
+    } catch (error) {
+      console.error("Customers export error:", error);
+      res.status(500).json({ error: "Failed to export customers" });
     }
   });
 
