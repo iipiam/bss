@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, Minus, X, Search, Receipt, UtensilsCrossed, UserCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -29,6 +29,12 @@ interface Branch {
   name: string;
 }
 
+interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+}
+
 export default function POS() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -36,6 +42,8 @@ export default function POS() {
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerTab, setCustomerTab] = useState("new");
+  const [customerSearch, setCustomerSearch] = useState("");
   const { toast } = useToast();
   const { t } = useLanguage();
 
@@ -45,6 +53,10 @@ export default function POS() {
 
   const { data: branches = [] } = useQuery<Branch[]>({
     queryKey: ["/api/branches"],
+  });
+
+  const { data: customers = [] } = useQuery<Customer[]>({
+    queryKey: ["/api/customers"],
   });
 
   const createOrderMutation = useMutation({
@@ -415,50 +427,118 @@ export default function POS() {
                 {customerName ? "Edit Customer" : "Add Customer"}
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Customer Information</DialogTitle>
                 <DialogDescription>
                   Add customer details for this order (optional)
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="customer-name">{t.customerName}</Label>
-                  <Input
-                    id="customer-name"
-                    placeholder="Enter customer name"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    data-testid="input-pos-customer-name"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="customer-phone">{t.phone}</Label>
-                  <Input
-                    id="customer-phone"
-                    placeholder="+966 XX XXX XXXX"
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    data-testid="input-pos-customer-phone"
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setCustomerDialogOpen(false)}
-                    data-testid="button-cancel-customer"
-                  >
-                    {t.cancel}
-                  </Button>
-                  <Button
-                    onClick={handleSaveCustomer}
-                    data-testid="button-save-customer"
-                  >
-                    {t.save}
-                  </Button>
-                </div>
-              </div>
+              <Tabs value={customerTab} onValueChange={setCustomerTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="new" data-testid="tab-new-customer">{t.newCustomer}</TabsTrigger>
+                  <TabsTrigger value="existing" data-testid="tab-existing-customer">{t.existingCustomer}</TabsTrigger>
+                </TabsList>
+                <TabsContent value="new" className="space-y-4 mt-4">
+                  <div>
+                    <Label htmlFor="customer-name">{t.customerName}</Label>
+                    <Input
+                      id="customer-name"
+                      placeholder="Enter customer name"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      data-testid="input-pos-customer-name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="customer-phone">{t.phone}</Label>
+                    <Input
+                      id="customer-phone"
+                      placeholder="+966 XX XXX XXXX"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      data-testid="input-pos-customer-phone"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCustomerDialogOpen(false)}
+                      data-testid="button-cancel-customer"
+                    >
+                      {t.cancel}
+                    </Button>
+                    <Button
+                      onClick={handleSaveCustomer}
+                      data-testid="button-save-customer"
+                    >
+                      {t.save}
+                    </Button>
+                  </div>
+                </TabsContent>
+                <TabsContent value="existing" className="space-y-4 mt-4">
+                  <div>
+                    <Label htmlFor="customer-search">{t.search}</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="customer-search"
+                        placeholder="Search by name or phone..."
+                        value={customerSearch}
+                        onChange={(e) => setCustomerSearch(e.target.value)}
+                        className="pl-9"
+                        data-testid="input-customer-search"
+                      />
+                    </div>
+                  </div>
+                  <div className="max-h-60 overflow-y-auto space-y-2">
+                    {customers
+                      .filter(c => 
+                        customerSearch === "" ||
+                        c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+                        c.phone.includes(customerSearch)
+                      )
+                      .map(customer => (
+                        <Card
+                          key={customer.id}
+                          className="cursor-pointer hover-elevate active-elevate-2"
+                          onClick={() => {
+                            setCustomerName(customer.name);
+                            setCustomerPhone(customer.phone);
+                            setCustomerDialogOpen(false);
+                            setCustomerSearch("");
+                            toast({
+                              title: t.success,
+                              description: `${t.selectCustomer}: ${customer.name}`,
+                            });
+                          }}
+                          data-testid={`card-customer-${customer.id}`}
+                        >
+                          <CardContent className="p-3">
+                            <p className="font-medium">{customer.name}</p>
+                            <p className="text-sm text-muted-foreground">{customer.phone}</p>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    {customers.filter(c => 
+                      customerSearch === "" ||
+                      c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+                      c.phone.includes(customerSearch)
+                    ).length === 0 && (
+                      <p className="text-center text-muted-foreground py-8">{t.noData}</p>
+                    )}
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCustomerDialogOpen(false)}
+                      data-testid="button-cancel-select-customer"
+                    >
+                      {t.cancel}
+                    </Button>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </DialogContent>
           </Dialog>
 
