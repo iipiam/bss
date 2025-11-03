@@ -79,8 +79,8 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     
     body {
       font-family: 'Inter', 'Noto Naskh Arabic', sans-serif;
-      font-size: 14px;
-      line-height: 1.6;
+      font-size: 11px;
+      line-height: 1.4;
       color: #1a1a1a;
       background: white;
     }
@@ -88,46 +88,46 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     .invoice-container {
       max-width: 210mm;
       margin: 0 auto;
-      padding: 20px;
+      padding: 12mm;
     }
     
     .header {
       background: linear-gradient(135deg, #2962ff 0%, #1e40af 100%);
       color: white;
-      padding: 30px;
+      padding: 15px 20px;
       text-align: center;
-      border-radius: 8px 8px 0 0;
-      margin-bottom: 20px;
+      border-radius: 6px 6px 0 0;
+      margin-bottom: 12px;
     }
     
     .company-name {
-      font-size: 32px;
+      font-size: 22px;
       font-weight: 700;
-      margin-bottom: 12px;
-      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
     }
     
     .invoice-badge {
       display: inline-block;
       background: white;
       color: #2962ff;
-      padding: 8px 24px;
-      border-radius: 20px;
+      padding: 4px 16px;
+      border-radius: 12px;
       font-weight: 700;
-      font-size: 13px;
-      margin-top: 8px;
+      font-size: 10px;
+      margin-top: 4px;
     }
     
     .bilingual-section {
       display: flex;
-      gap: 20px;
-      margin-bottom: 20px;
+      gap: 12px;
+      margin-bottom: 10px;
     }
     
     .section-left, .section-right {
       flex: 1;
-      padding: 20px;
-      border-radius: 8px;
+      padding: 10px 12px;
+      border-radius: 4px;
       border: 1px solid #e5e7eb;
     }
     
@@ -143,17 +143,18 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     
     .section-title {
       font-weight: 700;
-      font-size: 12px;
+      font-size: 9px;
       color: #1e40af;
-      margin-bottom: 12px;
+      margin-bottom: 6px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
     
     .info-row {
       display: flex;
-      margin-bottom: 8px;
-      font-size: 11px;
+      margin-bottom: 4px;
+      font-size: 9px;
+      line-height: 1.3;
     }
     
     .section-right .info-row {
@@ -163,7 +164,7 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     
     .info-label {
       font-weight: 600;
-      min-width: 100px;
+      min-width: 80px;
       color: #374151;
     }
     
@@ -174,18 +175,27 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     
     .customer-section {
       background: #f8f9fa;
-      padding: 15px 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-bottom: 10px;
       border: 1px solid #e5e7eb;
+    }
+    
+    .customer-grid {
+      display: flex;
+      gap: 20px;
+    }
+    
+    .customer-col {
+      flex: 1;
     }
     
     .items-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       border: 1px solid #e5e7eb;
-      border-radius: 8px;
+      border-radius: 4px;
       overflow: hidden;
     }
     
@@ -195,12 +205,12 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     }
     
     .items-table th {
-      padding: 12px;
+      padding: 6px 8px;
       text-align: left;
       font-weight: 600;
-      font-size: 11px;
+      font-size: 8px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
     
     .items-table th.rtl {
@@ -216,9 +226,10 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     }
     
     .items-table td {
-      padding: 10px 12px;
-      font-size: 11px;
+      padding: 5px 8px;
+      font-size: 9px;
       word-break: break-word;
+      line-height: 1.3;
     }
     
     .text-right {
@@ -230,79 +241,68 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     }
     
     .totals-section {
-      max-width: 400px;
+      max-width: 300px;
       margin-left: auto;
-      margin-bottom: 30px;
+      margin-bottom: 10px;
     }
     
     .totals-row {
       display: flex;
       justify-content: space-between;
-      padding: 8px 12px;
-      font-size: 12px;
+      padding: 4px 10px;
+      font-size: 10px;
     }
     
     .totals-row.total {
       background: #2962ff;
       color: white;
       font-weight: 700;
-      font-size: 16px;
-      border-radius: 8px;
-      padding: 15px 20px;
-      margin-top: 10px;
+      font-size: 13px;
+      border-radius: 4px;
+      padding: 8px 12px;
+      margin-top: 6px;
     }
     
     .totals-row.subtotal {
       border-bottom: 1px solid #e5e7eb;
     }
     
-    .qr-section {
-      text-align: center;
-      padding: 20px;
-      margin-bottom: 20px;
+    .qr-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      background: #f8f9fa;
+      padding: 10px 15px;
+      border-radius: 4px;
+      border: 1px solid #e5e7eb;
     }
     
     .qr-code {
-      width: 150px;
-      height: 150px;
-      margin: 0 auto 10px;
-      border: 3px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 8px;
+      width: 80px;
+      height: 80px;
+      border: 2px solid #e5e7eb;
+      border-radius: 4px;
+      padding: 4px;
+      flex-shrink: 0;
     }
     
-    .qr-instruction {
-      font-size: 10px;
-      color: #6b7280;
-      margin-top: 8px;
-    }
-    
-    .qr-instruction-ar {
-      font-size: 10px;
-      color: #6b7280;
-      direction: rtl;
-      margin-top: 4px;
-    }
-    
-    .footer {
-      background: #f8f9fa;
-      padding: 20px;
-      text-align: center;
-      border-radius: 8px;
-      border: 1px solid #e5e7eb;
+    .footer-content {
+      flex: 1;
     }
     
     .zatca-badge {
       color: #2962ff;
       font-weight: 700;
-      font-size: 13px;
-      margin-bottom: 6px;
+      font-size: 10px;
+      margin-bottom: 4px;
     }
     
     .footer-text {
-      font-size: 10px;
+      font-size: 8px;
       color: #6b7280;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
+      line-height: 1.3;
     }
     
     .arabic {
@@ -422,14 +422,14 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     ${order.customerName || order.table || order.address ? `
     <!-- Customer Information -->
     <div class="customer-section">
-      <div style="display: flex; gap: 40px;">
-        <div class="english" style="flex: 1;">
+      <div class="customer-grid">
+        <div class="customer-col english">
           <div class="section-title">Customer Information</div>
           ${order.customerName ? `<div class="info-row"><div class="info-label">Customer:</div><div class="info-value">${escapeHtml(order.customerName)}</div></div>` : ''}
           ${order.table ? `<div class="info-row"><div class="info-label">Table:</div><div class="info-value">${escapeHtml(order.table)}</div></div>` : ''}
-          ${order.address ? `<div class="info-row"><div class="info-label">Delivery Address:</div><div class="info-value">${escapeHtml(order.address)}</div></div>` : ''}
+          ${order.address ? `<div class="info-row"><div class="info-label">Address:</div><div class="info-value">${escapeHtml(order.address)}</div></div>` : ''}
         </div>
-        <div class="arabic" style="flex: 1; direction: rtl; text-align: right;">
+        <div class="customer-col arabic" style="direction: rtl; text-align: right;">
           <div class="section-title">معلومات العميل</div>
           ${order.customerName ? `<div class="info-row"><div class="info-value">${escapeHtml(order.customerName)}</div><div class="info-label">:العميل</div></div>` : ''}
           ${order.table ? `<div class="info-row"><div class="info-value">${escapeHtml(order.table)}</div><div class="info-label">:الطاولة</div></div>` : ''}
@@ -446,8 +446,8 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
           <th class="english">ITEM NAME</th>
           <th class="rtl arabic">اسم الصنف</th>
           <th class="text-center english">QTY</th>
-          <th class="text-center english">PRICE (SAR)</th>
-          <th class="text-center english">TOTAL (SAR)</th>
+          <th class="text-center english">PRICE</th>
+          <th class="text-center english">TOTAL</th>
         </tr>
       </thead>
       <tbody>
@@ -479,19 +479,17 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
       </div>
     </div>
     
-    <!-- QR Code -->
-    <div class="qr-section">
+    <!-- QR Code & Footer -->
+    <div class="qr-footer">
       <img src="${qrCodeDataURL}" alt="QR Code" class="qr-code">
-      <div class="qr-instruction english">Scan QR code to view and verify this invoice online</div>
-      <div class="qr-instruction-ar arabic">امسح رمز الاستجابة السريعة لعرض الفاتورة والتحقق منها عبر الإنترنت</div>
-    </div>
-    
-    <!-- Footer -->
-    <div class="footer">
-      <div class="zatca-badge">ZATCA COMPLIANT E-INVOICE | فاتورة إلكترونية متوافقة مع هيئة الزكاة</div>
-      <div class="footer-text english">Saudi Tax Authority (ZATCA) Approved Electronic Invoice</div>
-      <div class="footer-text arabic">فاتورة إلكترونية معتمدة من هيئة الزكاة والضريبة والجمارك</div>
-      <div class="footer-text english" style="margin-top: 8px;">Thank you for your business | شكراً لتعاملكم معنا</div>
+      <div class="footer-content">
+        <div class="zatca-badge">ZATCA COMPLIANT E-INVOICE | فاتورة إلكترونية متوافقة</div>
+        <div class="footer-text english">Scan QR code to view and verify this invoice online</div>
+        <div class="footer-text arabic">امسح رمز الاستجابة السريعة لعرض الفاتورة والتحقق منها</div>
+        <div class="footer-text english">Saudi Tax Authority (ZATCA) Approved Electronic Invoice</div>
+        <div class="footer-text arabic">فاتورة إلكترونية معتمدة من هيئة الزكاة والضريبة والجمارك</div>
+        <div class="footer-text english" style="margin-top: 4px;">Thank you for your business | شكراً لتعاملكم معنا</div>
+      </div>
     </div>
   </div>
 </body>
@@ -515,10 +513,10 @@ export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuff
       format: 'A4',
       printBackground: true,
       margin: {
-        top: '10mm',
-        right: '10mm',
-        bottom: '10mm',
-        left: '10mm'
+        top: '8mm',
+        right: '8mm',
+        bottom: '8mm',
+        left: '8mm'
       }
     });
 
