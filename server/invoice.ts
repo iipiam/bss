@@ -38,16 +38,16 @@ export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuff
   doc.text("Tax Invoice / فاتورة ضريبية", 105, y, { align: "center" });
   y += 15;
 
-  // Company Details
+  // Company Details - Bilingual
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`VAT Number: ${companyVAT}`, 20, y);
+  doc.text(`VAT Number / الرقم الضريبي: ${companyVAT}`, 20, y);
   y += 6;
-  doc.text(`Address: ${branchAddress}`, 20, y);
+  doc.text(`Address / العنوان: ${branchAddress}`, 20, y);
   y += 6;
-  doc.text(`Email: ${companyEmail}`, 20, y);
+  doc.text(`Email / البريد الإلكتروني: ${companyEmail}`, 20, y);
   y += 6;
-  doc.text(`Phone: ${companyPhone}`, 20, y);
+  doc.text(`Phone / الهاتف: ${companyPhone}`, 20, y);
   y += 10;
 
   // Invoice Details Box
@@ -55,41 +55,43 @@ export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuff
   doc.rect(20, y, 170, 20);
   y += 6;
   doc.setFont("helvetica", "bold");
-  doc.text(`Invoice #: ${invoiceNumber}`, 25, y);
-  doc.text(`Date: ${invoiceDate.toLocaleDateString()}`, 120, y);
+  doc.text(`Invoice / فاتورة #: ${invoiceNumber}`, 25, y);
+  doc.text(`Date / التاريخ: ${invoiceDate.toLocaleDateString()}`, 120, y);
   y += 8;
   doc.setFont("helvetica", "normal");
-  doc.text(`Order #: ${order.orderNumber}`, 25, y);
-  doc.text(`Order Type: ${order.orderType}`, 120, y);
+  doc.text(`Order / طلب #: ${order.orderNumber}`, 25, y);
+  doc.text(`Type / النوع: ${order.orderType}`, 120, y);
   y += 12;
 
-  // Customer Information (if available)
+  // Customer Information (if available) - Bilingual
   if (order.customerName) {
-    doc.text(`Customer: ${order.customerName}`, 20, y);
+    doc.text(`Customer / العميل: ${order.customerName}`, 20, y);
     y += 6;
   }
   if (order.table) {
-    doc.text(`Table: ${order.table}`, 20, y);
+    doc.text(`Table / الطاولة: ${order.table}`, 20, y);
     y += 6;
   }
   if (order.address) {
-    doc.text(`Address: ${order.address}`, 20, y);
+    doc.text(`Address / العنوان: ${order.address}`, 20, y);
     y += 6;
   }
   y += 4;
 
-  // Items Table Header
+  // Items Table Header - Bilingual
   doc.setFillColor(240, 240, 240);
-  doc.rect(20, y, 170, 8, 'F');
+  doc.rect(20, y, 170, 10, 'F');
   doc.setFont("helvetica", "bold");
-  doc.text("Item", 22, y + 6);
-  doc.text("Qty", 120, y + 6);
-  doc.text("Price", 140, y + 6);
-  doc.text("Total", 170, y + 6);
-  y += 8;
+  doc.setFontSize(9);
+  doc.text("Item / الصنف", 22, y + 7);
+  doc.text("Qty / الكمية", 115, y + 7);
+  doc.text("Price / السعر", 138, y + 7);
+  doc.text("Total / الإجمالي", 165, y + 7);
+  y += 10;
 
   // Items
   doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
   order.items.forEach((item) => {
     if (y > 250) {
       doc.addPage();
@@ -97,14 +99,14 @@ export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuff
     }
     doc.text(item.name, 22, y + 6);
     doc.text(item.quantity.toString(), 120, y + 6);
-    doc.text(`${parseFloat(item.price.toString()).toFixed(2)} SAR`, 140, y + 6);
-    doc.text(`${(item.quantity * item.price).toFixed(2)} SAR`, 170, y + 6);
+    doc.text(`${parseFloat(item.price.toString()).toFixed(2)}`, 140, y + 6);
+    doc.text(`${(item.quantity * item.price).toFixed(2)}`, 170, y + 6);
     y += 6;
   });
 
   y += 6;
 
-  // Totals Section
+  // Totals Section - Bilingual
   doc.setDrawColor(0);
   doc.line(20, y, 190, y);
   y += 8;
@@ -114,17 +116,17 @@ export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuff
   const totalNum = parseFloat(order.total);
 
   doc.setFont("helvetica", "normal");
-  doc.text("Subtotal:", 130, y);
+  doc.text("Subtotal / المجموع الفرعي:", 115, y);
   doc.text(`${subtotalNum.toFixed(2)} SAR`, 170, y);
   y += 6;
 
-  doc.text(`VAT (15%):`, 130, y);
+  doc.text(`VAT (15%) / ضريبة القيمة المضافة:`, 115, y);
   doc.text(`${taxNum.toFixed(2)} SAR`, 170, y);
   y += 8;
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("Total Amount:", 130, y);
+  doc.text("Total Amount / المبلغ الإجمالي:", 115, y);
   doc.text(`${totalNum.toFixed(2)} SAR`, 170, y);
   y += 12;
 
@@ -132,12 +134,12 @@ export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuff
   doc.addImage(qrCodeDataURL, 'PNG', 75, y, 60, 60);
   y += 65;
 
-  // Footer
+  // Footer - Bilingual
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
-  doc.text("ZATCA Compliant E-Invoice", 105, y, { align: "center" });
+  doc.text("ZATCA Compliant E-Invoice / فاتورة إلكترونية متوافقة مع هيئة الزكاة", 105, y, { align: "center" });
   y += 4;
-  doc.text("Scan QR code for invoice verification", 105, y, { align: "center" });
+  doc.text("Scan QR code for invoice verification / امسح رمز الاستجابة السريعة للتحقق", 105, y, { align: "center" });
 
   // Convert to buffer
   const pdfBuffer = Buffer.from(doc.output('arraybuffer'));

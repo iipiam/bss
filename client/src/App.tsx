@@ -24,6 +24,7 @@ import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
 import Menu from "@/pages/menu";
 import Recipes from "@/pages/recipes";
+import Customers from "@/pages/customers";
 import Sales from "@/pages/sales";
 import Reports from "@/pages/reports";
 import Forecasting from "@/pages/forecasting";
@@ -51,6 +52,7 @@ function Router() {
       <Route path="/inventory" component={Inventory} />
       <Route path="/menu" component={Menu} />
       <Route path="/recipes" component={Recipes} />
+      <Route path="/customers" component={Customers} />
       <Route path="/sales" component={Sales} />
       <Route path="/reports" component={Reports} />
       <Route path="/forecasting" component={Forecasting} />

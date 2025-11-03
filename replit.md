@@ -6,6 +6,29 @@ RestoPOS is a comprehensive restaurant management system tailored for Saudi Arab
 
 ## Recent Changes (November 3, 2025)
 
+### Customer Management System
+Implemented comprehensive customer database with CRUD operations:
+- **Database Schema**: Customers table with id, name, and phone fields
+- **CRUD Operations**: Full create, read, update, delete functionality
+- **Customer Page**: Dedicated `/customers` page in management section of sidebar
+- **Search Functionality**: Filter customers by name or phone number
+- **Card Layout**: Clean card-based UI showing customer name and phone
+- **Multi-Language Support**: Customer labels translated to all 7 languages
+- **Form Validation**: Zod validation for required name and phone fields
+- **Integration Ready**: Customer data can be linked to orders via customerName field
+- **API Endpoints**: Complete REST API (GET, POST, PATCH, DELETE at `/api/customers`)
+
+### Bilingual Invoice Enhancement
+Enhanced ZATCA-compliant invoices with full Arabic and English support:
+- **Bilingual Headers**: All section labels show both English and Arabic
+- **Company Details**: VAT number, address, email, phone labels in both languages
+- **Invoice Information**: Invoice number, date, order details in Arabic and English
+- **Table Headers**: Item, quantity, price, total columns labeled bilingually
+- **Totals Section**: Subtotal, VAT, and total amount labels in both languages
+- **Footer Text**: ZATCA compliance notice and QR instructions in Arabic and English
+- **Professional Layout**: Clean formatting with proper spacing for readability
+- **ZATCA Compliant**: Maintains full compliance with Saudi e-invoicing regulations
+
 ### Menu Item Discount System
 Implemented comprehensive discount functionality for menu items:
 - **Discount Field**: Menu items support percentage-based discounts (0-100%)

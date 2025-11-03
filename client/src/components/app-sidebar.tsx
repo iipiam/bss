@@ -16,6 +16,7 @@ import {
   Settings,
   Users,
   Calculator,
+  UserCircle,
 } from "lucide-react";
 import {
   Sidebar,
@@ -45,6 +46,7 @@ export function AppSidebar() {
     { title: t.inventory, url: "/inventory", icon: Package, testId: "inventory" },
     { title: t.menu, url: "/menu", icon: UtensilsCrossed, testId: "menu" },
     { title: t.recipes, url: "/recipes", icon: ChefHat, testId: "recipes" },
+    { title: t.customers, url: "/customers", icon: UserCircle, testId: "customers" },
     { title: t.branches, url: "/branches", icon: Building2, testId: "branches" },
     { title: t.procurement, url: "/procurement", icon: ShoppingBag, testId: "procurement" },
   ];
