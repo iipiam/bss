@@ -3,11 +3,14 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Minus, X, Search, Receipt, UtensilsCrossed } from "lucide-react";
+import { Plus, Minus, X, Search, Receipt, UtensilsCrossed, UserCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 import type { MenuItem } from "@shared/schema";
 
 interface CartItem {
@@ -30,7 +33,11 @@ export default function POS() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [orderType, setOrderType] = useState("Dine-In");
+  const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const { data: menuItems = [], isLoading } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu"],
@@ -133,6 +140,8 @@ export default function POS() {
 
   const clearCart = () => {
     setCartItems([]);
+    setCustomerName("");
+    setCustomerPhone("");
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -144,11 +153,27 @@ export default function POS() {
     ? availableMenuItems
     : availableMenuItems.filter(item => item.category === selectedCategory);
 
+  const handleSaveCustomer = () => {
+    if (!customerName.trim()) {
+      toast({
+        title: t.error,
+        description: `${t.customerName} is required`,
+        variant: "destructive",
+      });
+      return;
+    }
+    setCustomerDialogOpen(false);
+    toast({
+      title: t.success,
+      description: `${t.customerName}: ${customerName}${customerPhone ? ` (${customerPhone})` : ''}`,
+    });
+  };
+
   const handleCheckout = () => {
     if (cartItems.length === 0) {
       toast({
-        title: "Cart is empty",
-        description: "Add items to the cart before checkout",
+        title: t.error,
+        description: "Cart is empty",
         variant: "destructive",
       });
       return;
@@ -161,6 +186,8 @@ export default function POS() {
       orderNumber: `ORD-${Date.now()}`,
       branchId,
       orderType,
+      customerName: customerName.trim() || undefined,
+      customerPhone: customerPhone.trim() || undefined,
       items: cartItems.map(item => ({
         id: item.id,
         name: item.name,
@@ -350,6 +377,91 @@ export default function POS() {
               <span className="font-mono">{total.toFixed(2)} SAR</span>
             </div>
           </div>
+
+          {customerName && (
+            <div className="mb-4 p-3 bg-muted rounded-md">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <UserCircle className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium" data-testid="text-customer-name">{customerName}</p>
+                    {customerPhone && <p className="text-xs text-muted-foreground" data-testid="text-customer-phone">{customerPhone}</p>}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => {
+                    setCustomerName("");
+                    setCustomerPhone("");
+                  }}
+                  data-testid="button-remove-customer"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <Dialog open={customerDialogOpen} onOpenChange={setCustomerDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full mb-2"
+                data-testid="button-add-customer"
+              >
+                <UserCircle className="h-4 w-4 mr-2" />
+                {customerName ? "Edit Customer" : "Add Customer"}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Customer Information</DialogTitle>
+                <DialogDescription>
+                  Add customer details for this order (optional)
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="customer-name">{t.customerName}</Label>
+                  <Input
+                    id="customer-name"
+                    placeholder="Enter customer name"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    data-testid="input-pos-customer-name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="customer-phone">{t.phone}</Label>
+                  <Input
+                    id="customer-phone"
+                    placeholder="+966 XX XXX XXXX"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    data-testid="input-pos-customer-phone"
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCustomerDialogOpen(false)}
+                    data-testid="button-cancel-customer"
+                  >
+                    {t.cancel}
+                  </Button>
+                  <Button
+                    onClick={handleSaveCustomer}
+                    data-testid="button-save-customer"
+                  >
+                    {t.save}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <div className="flex gap-2">
             <Button
               variant="outline"
