@@ -5,7 +5,9 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Search, Edit, UserCircle, Trash2, Phone, User } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Search, Edit, UserCircle, Trash2, Phone, User, ChevronDown, ShoppingBag, Calendar, DollarSign } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +20,19 @@ interface Customer {
   id: string;
   name: string;
   phone: string;
+}
+
+interface Order {
+  id: number;
+  orderNumber: string;
+  orderType: string;
+  status: string;
+  total: string;
+  createdAt: string;
+  items: Array<{ name: string; quantity: number; price: string }>;
+  table?: string;
+  customerName?: string;
+  customerPhone?: string;
 }
 
 const customerFormSchema = z.object({
@@ -45,6 +60,10 @@ export default function Customers() {
 
   const { data: customers = [], isLoading } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
+  });
+
+  const { data: orders = [] } = useQuery<Order[]>({
+    queryKey: ["/api/orders"],
   });
 
   const createCustomerMutation = useMutation({
@@ -151,6 +170,12 @@ export default function Customers() {
     customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     customer.phone.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const getCustomerOrders = (customer: Customer) => {
+    return orders.filter(order => 
+      order.customerName === customer.name || order.customerPhone === customer.phone
+    ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -260,42 +285,105 @@ export default function Customers() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredCustomers.map((customer) => (
-            <Card key={customer.id} data-testid={`card-customer-${customer.id}`}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="font-semibold" data-testid={`text-customer-name-${customer.id}`}>
-                    {customer.name}
-                  </h3>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEdit(customer)}
-                    data-testid={`button-edit-${customer.id}`}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setDeletingCustomer(customer)}
-                    data-testid={`button-delete-${customer.id}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Phone className="h-3 w-3" />
-                  <span data-testid={`text-customer-phone-${customer.id}`}>{customer.phone}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {filteredCustomers.map((customer) => {
+            const customerOrders = getCustomerOrders(customer);
+            return (
+              <Card key={customer.id} data-testid={`card-customer-${customer.id}`}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="font-semibold" data-testid={`text-customer-name-${customer.id}`}>
+                      {customer.name}
+                    </h3>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEdit(customer)}
+                      data-testid={`button-edit-${customer.id}`}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setDeletingCustomer(customer)}
+                      data-testid={`button-delete-${customer.id}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Phone className="h-3 w-3" />
+                    <span data-testid={`text-customer-phone-${customer.id}`}>{customer.phone}</span>
+                  </div>
+                  
+                  {customerOrders.length > 0 && (
+                    <Collapsible>
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-between"
+                          data-testid={`button-view-orders-${customer.id}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <ShoppingBag className="h-3 w-3" />
+                            <span>{customerOrders.length} {customerOrders.length === 1 ? 'Order' : 'Orders'}</span>
+                          </div>
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-2 space-y-2">
+                        {customerOrders.map((order) => (
+                          <div
+                            key={order.id}
+                            className="p-2 rounded-md bg-muted/50 text-sm"
+                            data-testid={`order-${order.id}`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-mono font-semibold">#{order.orderNumber}</span>
+                              <Badge variant={order.status === 'Completed' ? 'default' : 'secondary'}>
+                                {order.status}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                <span>{new Date(order.createdAt).toLocaleDateString()}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <DollarSign className="h-3 w-3" />
+                                <span>{parseFloat(order.total).toFixed(2)} SAR</span>
+                              </div>
+                            </div>
+                            {order.items.length > 0 && (
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                {order.items.slice(0, 2).map((item, idx) => (
+                                  <div key={idx}>
+                                    {item.quantity}x {item.name}
+                                  </div>
+                                ))}
+                                {order.items.length > 2 && (
+                                  <div className="italic">+{order.items.length - 2} more items</div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
+                  {customerOrders.length === 0 && (
+                    <p className="text-xs text-muted-foreground italic">No orders yet</p>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
