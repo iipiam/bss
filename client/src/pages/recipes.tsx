@@ -102,9 +102,7 @@ export default function Recipes() {
       return sum + (quantity * price);
     }, 0);
     
-    if (totalCost > 0) {
-      setCost(totalCost.toFixed(2));
-    }
+    setCost(totalCost.toFixed(2));
   }, [ingredients]);
 
   const addStep = () => {
