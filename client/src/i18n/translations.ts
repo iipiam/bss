@@ -137,6 +137,13 @@ export interface Translations {
   itemDeleted: string;
   settingsUpdated: string;
   savingSettings: string;
+  
+  // Customer
+  addCustomer: string;
+  editCustomer: string;
+  newCustomer: string;
+  existingCustomer: string;
+  selectCustomer: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -274,6 +281,13 @@ export const translations: Record<Language, Translations> = {
     itemDeleted: 'Item deleted successfully',
     settingsUpdated: 'Settings updated successfully',
     savingSettings: 'Saving...',
+    
+    // Customer
+    addCustomer: 'Add Customer',
+    editCustomer: 'Edit Customer',
+    newCustomer: 'New Customer',
+    existingCustomer: 'Existing Customer',
+    selectCustomer: 'Select Customer',
   },
   
   Arabic: {
@@ -410,6 +424,13 @@ export const translations: Record<Language, Translations> = {
     itemDeleted: 'تم حذف العنصر بنجاح',
     settingsUpdated: 'تم تحديث الإعدادات بنجاح',
     savingSettings: 'جاري الحفظ...',
+    
+    // Customer
+    addCustomer: 'إضافة عميل',
+    editCustomer: 'تعديل عميل',
+    newCustomer: 'عميل جديد',
+    existingCustomer: 'عميل موجود',
+    selectCustomer: 'اختر عميل',
   },
   
   Chinese: {
@@ -546,6 +567,13 @@ export const translations: Record<Language, Translations> = {
     itemDeleted: '项目删除成功',
     settingsUpdated: '设置更新成功',
     savingSettings: '保存中...',
+    
+    // Customer
+    addCustomer: '添加客户',
+    editCustomer: '编辑客户',
+    newCustomer: '新客户',
+    existingCustomer: '现有客户',
+    selectCustomer: '选择客户',
   },
   
   German: {
@@ -682,6 +710,13 @@ export const translations: Record<Language, Translations> = {
     itemDeleted: 'Element erfolgreich gelöscht',
     settingsUpdated: 'Einstellungen erfolgreich aktualisiert',
     savingSettings: 'Speichern...',
+    
+    // Customer
+    addCustomer: 'Kunde hinzufügen',
+    editCustomer: 'Kunde bearbeiten',
+    newCustomer: 'Neuer Kunde',
+    existingCustomer: 'Bestehender Kunde',
+    selectCustomer: 'Kunde auswählen',
   },
   
   Hindi: {
@@ -818,6 +853,13 @@ export const translations: Record<Language, Translations> = {
     itemDeleted: 'आइटम सफलतापूर्वक हटाया गया',
     settingsUpdated: 'सेटिंग्स सफलतापूर्वक अपडेट की गईं',
     savingSettings: 'सहेजा जा रहा है...',
+    
+    // Customer
+    addCustomer: 'ग्राहक जोड़ें',
+    editCustomer: 'ग्राहक संपादित करें',
+    newCustomer: 'नया ग्राहक',
+    existingCustomer: 'मौजूदा ग्राहक',
+    selectCustomer: 'ग्राहक चुनें',
   },
   
   Urdu: {
@@ -954,6 +996,13 @@ export const translations: Record<Language, Translations> = {
     itemDeleted: 'آئٹم کامیابی سے حذف کیا گیا',
     settingsUpdated: 'ترتیبات کامیابی سے اپ ڈیٹ ہو گئیں',
     savingSettings: 'محفوظ ہو رہا ہے...',
+    
+    // Customer
+    addCustomer: 'گاہک شامل کریں',
+    editCustomer: 'گاہک میں ترمیم کریں',
+    newCustomer: 'نیا گاہک',
+    existingCustomer: 'موجودہ گاہک',
+    selectCustomer: 'گاہک منتخب کریں',
   },
   
   Bengali: {
@@ -1090,6 +1139,13 @@ export const translations: Record<Language, Translations> = {
     itemDeleted: 'আইটেম সফলভাবে মুছে ফেলা হয়েছে',
     settingsUpdated: 'সেটিংস সফলভাবে আপডেট হয়েছে',
     savingSettings: 'সংরক্ষণ করা হচ্ছে...',
+    
+    // Customer
+    addCustomer: 'গ্রাহক যোগ করুন',
+    editCustomer: 'গ্রাহক সম্পাদনা করুন',
+    newCustomer: 'নতুন গ্রাহক',
+    existingCustomer: 'বিদ্যমান গ্রাহক',
+    selectCustomer: 'গ্রাহক নির্বাচন করুন',
   },
 };
 
