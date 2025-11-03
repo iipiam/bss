@@ -1,4 +1,4 @@
-import puppeteer from "puppeteer";
+import puppeteer, { Browser } from "puppeteer";
 import QRCode from "qrcode";
 import type { Order } from "@shared/schema";
 
@@ -15,8 +15,49 @@ interface InvoiceData {
   baseUrl: string;
 }
 
+// HTML escaping function to prevent injection
+function escapeHtml(text: string): string {
+  const map: { [key: string]: string } = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m]);
+}
+
+// Shared browser instance for better performance
+let browserInstance: Browser | null = null;
+
+async function getBrowser(): Promise<Browser> {
+  if (!browserInstance || !browserInstance.isConnected()) {
+    browserInstance = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-software-rasterizer'
+      ]
+    });
+  }
+  return browserInstance;
+}
+
 function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string): string {
   const { order, companyName, companyVAT, branchAddress, companyEmail, companyPhone, invoiceNumber, invoiceDate } = data;
+  
+  // Escape all user inputs
+  const escapedCompanyName = escapeHtml(companyName);
+  const escapedCompanyVAT = escapeHtml(companyVAT);
+  const escapedBranchAddress = escapeHtml(branchAddress);
+  const escapedCompanyEmail = escapeHtml(companyEmail);
+  const escapedCompanyPhone = escapeHtml(companyPhone);
+  const escapedInvoiceNumber = escapeHtml(invoiceNumber);
+  const escapedOrderNumber = escapeHtml(order.orderNumber);
+  const escapedOrderType = escapeHtml(order.orderType);
   
   const subtotal = parseFloat(order.subtotal);
   const tax = parseFloat(order.tax);
@@ -128,6 +169,7 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     
     .info-value {
       color: #1a1a1a;
+      word-break: break-word;
     }
     
     .customer-section {
@@ -176,6 +218,7 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     .items-table td {
       padding: 10px 12px;
       font-size: 11px;
+      word-break: break-word;
     }
     
     .text-right {
@@ -282,7 +325,7 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
   <div class="invoice-container">
     <!-- Header -->
     <div class="header">
-      <div class="company-name english">${companyName}</div>
+      <div class="company-name english">${escapedCompanyName}</div>
       <div class="invoice-badge">TAX INVOICE | فاتورة ضريبية</div>
     </div>
     
@@ -293,19 +336,19 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
         <div class="section-title">Company Information</div>
         <div class="info-row">
           <div class="info-label">VAT Number:</div>
-          <div class="info-value">${companyVAT}</div>
+          <div class="info-value">${escapedCompanyVAT}</div>
         </div>
         <div class="info-row">
           <div class="info-label">Phone:</div>
-          <div class="info-value">${companyPhone}</div>
+          <div class="info-value">${escapedCompanyPhone}</div>
         </div>
         <div class="info-row">
           <div class="info-label">Email:</div>
-          <div class="info-value">${companyEmail}</div>
+          <div class="info-value">${escapedCompanyEmail}</div>
         </div>
         <div class="info-row">
           <div class="info-label">Address:</div>
-          <div class="info-value">${branchAddress}</div>
+          <div class="info-value">${escapedBranchAddress}</div>
         </div>
       </div>
       
@@ -313,19 +356,19 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
       <div class="section-right arabic">
         <div class="section-title">معلومات الشركة</div>
         <div class="info-row">
-          <div class="info-value">${companyVAT}</div>
+          <div class="info-value">${escapedCompanyVAT}</div>
           <div class="info-label">:الرقم الضريبي</div>
         </div>
         <div class="info-row">
-          <div class="info-value">${companyPhone}</div>
+          <div class="info-value">${escapedCompanyPhone}</div>
           <div class="info-label">:الهاتف</div>
         </div>
         <div class="info-row">
-          <div class="info-value">${companyEmail}</div>
+          <div class="info-value">${escapedCompanyEmail}</div>
           <div class="info-label">:البريد الإلكتروني</div>
         </div>
         <div class="info-row">
-          <div class="info-value">${branchAddress}</div>
+          <div class="info-value">${escapedBranchAddress}</div>
           <div class="info-label">:العنوان</div>
         </div>
       </div>
@@ -338,7 +381,7 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
         <div class="section-title">Invoice Details</div>
         <div class="info-row">
           <div class="info-label">Invoice No:</div>
-          <div class="info-value">${invoiceNumber}</div>
+          <div class="info-value">${escapedInvoiceNumber}</div>
         </div>
         <div class="info-row">
           <div class="info-label">Date:</div>
@@ -346,11 +389,11 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
         </div>
         <div class="info-row">
           <div class="info-label">Order No:</div>
-          <div class="info-value">${order.orderNumber}</div>
+          <div class="info-value">${escapedOrderNumber}</div>
         </div>
         <div class="info-row">
           <div class="info-label">Type:</div>
-          <div class="info-value">${order.orderType}</div>
+          <div class="info-value">${escapedOrderType}</div>
         </div>
       </div>
       
@@ -358,7 +401,7 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
       <div class="section-right arabic">
         <div class="section-title">تفاصيل الفاتورة</div>
         <div class="info-row">
-          <div class="info-value">${invoiceNumber}</div>
+          <div class="info-value">${escapedInvoiceNumber}</div>
           <div class="info-label">:رقم الفاتورة</div>
         </div>
         <div class="info-row">
@@ -366,11 +409,11 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
           <div class="info-label">:التاريخ</div>
         </div>
         <div class="info-row">
-          <div class="info-value">${order.orderNumber}</div>
+          <div class="info-value">${escapedOrderNumber}</div>
           <div class="info-label">:رقم الطلب</div>
         </div>
         <div class="info-row">
-          <div class="info-value">${order.orderType}</div>
+          <div class="info-value">${escapedOrderType}</div>
           <div class="info-label">:النوع</div>
         </div>
       </div>
@@ -382,15 +425,15 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
       <div style="display: flex; gap: 40px;">
         <div class="english" style="flex: 1;">
           <div class="section-title">Customer Information</div>
-          ${order.customerName ? `<div class="info-row"><div class="info-label">Customer:</div><div class="info-value">${order.customerName}</div></div>` : ''}
-          ${order.table ? `<div class="info-row"><div class="info-label">Table:</div><div class="info-value">${order.table}</div></div>` : ''}
-          ${order.address ? `<div class="info-row"><div class="info-label">Delivery Address:</div><div class="info-value">${order.address}</div></div>` : ''}
+          ${order.customerName ? `<div class="info-row"><div class="info-label">Customer:</div><div class="info-value">${escapeHtml(order.customerName)}</div></div>` : ''}
+          ${order.table ? `<div class="info-row"><div class="info-label">Table:</div><div class="info-value">${escapeHtml(order.table)}</div></div>` : ''}
+          ${order.address ? `<div class="info-row"><div class="info-label">Delivery Address:</div><div class="info-value">${escapeHtml(order.address)}</div></div>` : ''}
         </div>
         <div class="arabic" style="flex: 1; direction: rtl; text-align: right;">
           <div class="section-title">معلومات العميل</div>
-          ${order.customerName ? `<div class="info-row"><div class="info-value">${order.customerName}</div><div class="info-label">:العميل</div></div>` : ''}
-          ${order.table ? `<div class="info-row"><div class="info-value">${order.table}</div><div class="info-label">:الطاولة</div></div>` : ''}
-          ${order.address ? `<div class="info-row"><div class="info-value">${order.address}</div><div class="info-label">:عنوان التوصيل</div></div>` : ''}
+          ${order.customerName ? `<div class="info-row"><div class="info-value">${escapeHtml(order.customerName)}</div><div class="info-label">:العميل</div></div>` : ''}
+          ${order.table ? `<div class="info-row"><div class="info-value">${escapeHtml(order.table)}</div><div class="info-label">:الطاولة</div></div>` : ''}
+          ${order.address ? `<div class="info-row"><div class="info-value">${escapeHtml(order.address)}</div><div class="info-label">:عنوان التوصيل</div></div>` : ''}
         </div>
       </div>
     </div>
@@ -410,8 +453,8 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
       <tbody>
         ${order.items.map(item => `
           <tr>
-            <td class="english">${item.name}</td>
-            <td class="text-right arabic">${item.name}</td>
+            <td class="english">${escapeHtml(item.name)}</td>
+            <td class="text-right arabic">${escapeHtml(item.name)}</td>
             <td class="text-center">${item.quantity}</td>
             <td class="text-center">${parseFloat(item.price.toString()).toFixed(2)}</td>
             <td class="text-center">${(item.quantity * parseFloat(item.price.toString())).toFixed(2)}</td>
@@ -462,18 +505,10 @@ export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuff
 
   const html = generateBilingualInvoiceHTML(data, qrCodeDataURL);
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu'
-    ]
-  });
+  const browser = await getBrowser();
+  const page = await browser.newPage();
 
   try {
-    const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
     
     const pdfBuffer = await page.pdf({
@@ -489,7 +524,7 @@ export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuff
 
     return { pdfBuffer: Buffer.from(pdfBuffer), qrCode: invoiceUrl };
   } finally {
-    await browser.close();
+    await page.close();
   }
 }
 
@@ -514,6 +549,11 @@ interface FinancialStatementData {
 
 export async function generateFinancialStatementPDF(data: FinancialStatementData): Promise<Buffer> {
   const { companyName, companyVAT, year, period, yearlyData, monthlyData } = data;
+  
+  // Escape all user inputs
+  const escapedCompanyName = escapeHtml(companyName);
+  const escapedCompanyVAT = escapeHtml(companyVAT);
+  const escapedYear = escapeHtml(year);
   
   const html = `
 <!DOCTYPE html>
@@ -647,6 +687,7 @@ export async function generateFinancialStatementPDF(data: FinancialStatementData
     .data-table td {
       padding: 10px 12px;
       border-bottom: 1px solid #e5e7eb;
+      word-break: break-word;
     }
     
     .data-table td.text-right {
@@ -675,13 +716,13 @@ export async function generateFinancialStatementPDF(data: FinancialStatementData
 </head>
 <body>
   <div class="header">
-    <div class="company-name">${companyName}</div>
+    <div class="company-name">${escapedCompanyName}</div>
     <div class="document-title">Financial Statement</div>
-    <div class="year">Year ${year}</div>
+    <div class="year">Year ${escapedYear}</div>
   </div>
   
   <div class="meta-info">
-    <div>VAT Number: ${companyVAT}</div>
+    <div>VAT Number: ${escapedCompanyVAT}</div>
     <div>Generated: ${new Date().toLocaleDateString('en-GB')}</div>
   </div>
   
@@ -721,7 +762,7 @@ export async function generateFinancialStatementPDF(data: FinancialStatementData
       <tbody>
         ${monthlyData.map(month => `
           <tr>
-            <td>${month.month}</td>
+            <td>${escapeHtml(month.month)}</td>
             <td class="text-right">${parseFloat(month.revenue).toFixed(2)}</td>
             <td class="text-right">${parseFloat(month.vat).toFixed(2)}</td>
             <td class="text-right">${month.transactions}</td>
@@ -747,18 +788,10 @@ export async function generateFinancialStatementPDF(data: FinancialStatementData
 </html>
   `;
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu'
-    ]
-  });
+  const browser = await getBrowser();
+  const page = await browser.newPage();
 
   try {
-    const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
     
     const pdfBuffer = await page.pdf({
@@ -774,6 +807,14 @@ export async function generateFinancialStatementPDF(data: FinancialStatementData
 
     return Buffer.from(pdfBuffer);
   } finally {
-    await browser.close();
+    await page.close();
+  }
+}
+
+// Cleanup function for graceful shutdown
+export async function closeBrowser(): Promise<void> {
+  if (browserInstance) {
+    await browserInstance.close();
+    browserInstance = null;
   }
 }
