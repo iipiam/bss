@@ -16,6 +16,7 @@ import {
   insertProcurementSchema,
   insertUserSchema,
   insertInvoiceSchema,
+  insertCustomerSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -148,6 +149,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const success = await storage.deleteMenuItem(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Menu item not found" });
+    }
+    res.status(204).send();
+  });
+
+  // Customers
+  app.get("/api/customers", async (_req, res) => {
+    const customers = await storage.getCustomers();
+    res.json(customers);
+  });
+
+  app.get("/api/customers/:id", async (req, res) => {
+    const customer = await storage.getCustomer(req.params.id);
+    if (!customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+    res.json(customer);
+  });
+
+  app.post("/api/customers", async (req, res) => {
+    try {
+      const data = insertCustomerSchema.parse(req.body);
+      const customer = await storage.createCustomer(data);
+      res.status(201).json(customer);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid customer data" });
+    }
+  });
+
+  app.patch("/api/customers/:id", async (req, res) => {
+    try {
+      const customer = await storage.updateCustomer(req.params.id, req.body);
+      if (!customer) {
+        return res.status(404).json({ error: "Customer not found" });
+      }
+      res.json(customer);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid customer data" });
+    }
+  });
+
+  app.delete("/api/customers/:id", async (req, res) => {
+    const success = await storage.deleteCustomer(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Customer not found" });
     }
     res.status(204).send();
   });

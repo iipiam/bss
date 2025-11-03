@@ -10,6 +10,7 @@ export interface Translations {
   inventory: string;
   menu: string;
   recipes: string;
+  customers: string;
   orders: string;
   kitchen: string;
   procurement: string;
@@ -146,6 +147,7 @@ export const translations: Record<Language, Translations> = {
     inventory: 'Inventory',
     menu: 'Menu',
     recipes: 'Recipes',
+    customers: 'Customers',
     orders: 'Orders',
     kitchen: 'Kitchen',
     procurement: 'Procurement',
@@ -281,6 +283,7 @@ export const translations: Record<Language, Translations> = {
     inventory: 'المخزون',
     menu: 'القائمة',
     recipes: 'الوصفات',
+    customers: 'العملاء',
     orders: 'الطلبات',
     kitchen: 'المطبخ',
     procurement: 'المشتريات',
@@ -416,6 +419,7 @@ export const translations: Record<Language, Translations> = {
     inventory: '库存',
     menu: '菜单',
     recipes: '食谱',
+    customers: '客户',
     orders: '订单',
     kitchen: '厨房',
     procurement: '采购',
@@ -551,6 +555,7 @@ export const translations: Record<Language, Translations> = {
     inventory: 'Inventar',
     menu: 'Menü',
     recipes: 'Rezepte',
+    customers: 'Kunden',
     orders: 'Bestellungen',
     kitchen: 'Küche',
     procurement: 'Beschaffung',
@@ -686,6 +691,7 @@ export const translations: Record<Language, Translations> = {
     inventory: 'इन्वेंटरी',
     menu: 'मेनू',
     recipes: 'व्यंजन विधि',
+    customers: 'ग्राहक',
     orders: 'ऑर्डर',
     kitchen: 'रसोई',
     procurement: 'खरीद',
@@ -821,6 +827,7 @@ export const translations: Record<Language, Translations> = {
     inventory: 'انوینٹری',
     menu: 'مینو',
     recipes: 'ترکیبیں',
+    customers: 'گاہک',
     orders: 'آرڈرز',
     kitchen: 'باورچی خانہ',
     procurement: 'خریداری',
@@ -956,6 +963,7 @@ export const translations: Record<Language, Translations> = {
     inventory: 'ইনভেন্টরি',
     menu: 'মেনু',
     recipes: 'রেসিপি',
+    customers: 'গ্রাহক',
     orders: 'অর্ডার',
     kitchen: 'রান্নাঘর',
     procurement: 'ক্রয়',

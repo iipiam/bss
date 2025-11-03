@@ -80,7 +80,9 @@ export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   orderNumber: text("order_number").notNull().unique(),
   branchId: varchar("branch_id").references(() => branches.id),
+  customerId: varchar("customer_id").references(() => customers.id),
   customerName: text("customer_name"),
+  customerPhone: text("customer_phone"),
   orderType: text("order_type").notNull(),
   table: text("table"),
   address: text("address"),
@@ -156,6 +158,18 @@ export const procurement = pgTable("procurement", {
 export const insertProcurementSchema = createInsertSchema(procurement).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertProcurement = z.infer<typeof insertProcurementSchema>;
 export type Procurement = typeof procurement.$inferSelect;
+
+// Customers
+export const customers = pgTable("customers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  phone: text("phone").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertCustomerSchema = createInsertSchema(customers).omit({ id: true, createdAt: true });
+export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
+export type Customer = typeof customers.$inferSelect;
 
 // Users
 export const users = pgTable("users", {
