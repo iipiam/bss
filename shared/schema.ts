@@ -25,6 +25,7 @@ export const inventoryItems = pgTable("inventory_items", {
   category: text("category").notNull(),
   quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
   unit: text("unit").notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull().default("0"), // Price per unit in SAR
   supplier: text("supplier").notNull(),
   status: text("status").notNull().default("In Stock"),
   branchId: varchar("branch_id").references(() => branches.id),

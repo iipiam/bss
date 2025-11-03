@@ -56,6 +56,7 @@ import { z } from "zod";
 
 const formSchema = insertInventoryItemSchema.extend({
   quantity: z.coerce.number().positive("Quantity must be a positive number"),
+  price: z.coerce.number().min(0, "Price must be zero or positive"),
 });
 
 export default function Inventory() {
@@ -76,6 +77,7 @@ export default function Inventory() {
       category: "",
       quantity: 0,
       unit: "",
+      price: 0,
       supplier: "",
       status: "In Stock",
       branchId: null,
@@ -91,6 +93,7 @@ export default function Inventory() {
       return await apiRequest("POST", "/api/inventory", {
         ...data,
         quantity: data.quantity.toFixed(2),
+        price: data.price.toFixed(2),
       });
     },
     onSuccess: () => {
@@ -115,6 +118,7 @@ export default function Inventory() {
       return await apiRequest("PATCH", `/api/inventory/${id}`, {
         ...data,
         quantity: data.quantity.toFixed(2),
+        price: data.price.toFixed(2),
       });
     },
     onSuccess: () => {
@@ -165,6 +169,7 @@ export default function Inventory() {
 
   const handleEditItem = (item: InventoryItem) => {
     const quantity = parseFloat(item.quantity);
+    const price = parseFloat(item.price);
     if (isNaN(quantity)) {
       toast({
         title: "Invalid data",
@@ -180,6 +185,7 @@ export default function Inventory() {
       category: item.category,
       quantity,
       unit: item.unit,
+      price: isNaN(price) ? 0 : price,
       supplier: item.supplier,
       status: item.status,
       branchId: item.branchId,
@@ -429,19 +435,34 @@ export default function Inventory() {
                       )}
                     />
                   </div>
-                  <FormField
-                    control={form.control}
-                    name="quantity"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Quantity</FormLabel>
-                        <FormControl>
-                          <Input {...field} type="number" step="0.01" placeholder="0.00" data-testid="input-item-quantity" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="quantity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Quantity</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" step="0.01" placeholder="0.00" data-testid="input-item-quantity" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Price per Unit (SAR)</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" step="0.01" placeholder="0.00" data-testid="input-item-price" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <FormField
                     control={form.control}
                     name="supplier"
@@ -537,6 +558,7 @@ export default function Inventory() {
               <TableHead>Category</TableHead>
               <TableHead>Quantity</TableHead>
               <TableHead>Unit</TableHead>
+              <TableHead>Price/Unit</TableHead>
               <TableHead>Supplier</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -549,6 +571,7 @@ export default function Inventory() {
                 <TableCell>{item.category}</TableCell>
                 <TableCell className="font-mono">{parseFloat(item.quantity).toFixed(2)}</TableCell>
                 <TableCell>{item.unit}</TableCell>
+                <TableCell className="font-mono text-primary">{parseFloat(item.price).toFixed(2)} SAR</TableCell>
                 <TableCell className="text-muted-foreground">{item.supplier}</TableCell>
                 <TableCell>
                   <Badge variant={item.status === "Low Stock" ? "destructive" : "secondary"}>
