@@ -20,126 +20,315 @@ export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuff
   const { order, companyName, companyVAT, branchAddress, companyEmail, companyPhone, invoiceNumber, invoiceDate, invoiceId, baseUrl } = data;
 
   // ZATCA QR Code - Contains URL to view invoice
-  // When scanned, the QR code will open the invoice in a browser
   const invoiceUrl = `${baseUrl}/public/invoice/${invoiceId}`;
-  const qrCodeDataURL = await QRCode.toDataURL(invoiceUrl);
+  const qrCodeDataURL = await QRCode.toDataURL(invoiceUrl, { width: 150, margin: 1 });
 
-  // PDF Layout
-  let y = 20;
+  // Color scheme - Professional blue
+  const primaryColor = [41, 98, 255]; // RGB for primary blue
+  const lightGray = [245, 247, 250];
+  const darkGray = [100, 100, 100];
+  const borderGray = [220, 220, 220];
 
-  // Header - Company Name
-  doc.setFontSize(20);
+  let y = 15;
+  const pageWidth = 210; // A4 width in mm
+  const margin = 15;
+  const contentWidth = pageWidth - (margin * 2);
+
+  // ============ HEADER SECTION ============
+  // Top colored bar
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.rect(0, 0, pageWidth, 35, 'F');
+
+  // Company Name - White text on blue background
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(24);
   doc.setFont("helvetica", "bold");
-  doc.text(companyName, 105, y, { align: "center" });
-  y += 10;
+  doc.text(companyName, pageWidth / 2, 15, { align: "center" });
 
-  // Subheader - Tax Invoice (English/Arabic)
-  doc.setFontSize(16);
-  doc.text("Tax Invoice / فاتورة ضريبية", 105, y, { align: "center" });
-  y += 15;
+  // Tax Invoice badge - English and Arabic
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "normal");
+  doc.text("TAX INVOICE", 50, 25);
+  doc.text("فاتورة ضريبية", pageWidth - 50, 25, { align: "right" });
 
-  // Company Details - Bilingual
+  // Reset text color
+  doc.setTextColor(0, 0, 0);
+  y = 45;
+
+  // ============ COMPANY & INVOICE INFO SECTION ============
+  // Two-column layout: Company info on left, Invoice info on right
+  
+  // Left column - Company Details
+  doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+  doc.roundedRect(margin, y, (contentWidth / 2) - 3, 42, 2, 2, 'F');
+  
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+  doc.text("COMPANY INFORMATION | معلومات الشركة", margin + 3, y + 6);
+  
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(9);
+  
+  let leftY = y + 12;
+  doc.setFont("helvetica", "bold");
+  doc.text("VAT No. | الرقم الضريبي:", margin + 3, leftY);
+  doc.setFont("helvetica", "normal");
+  doc.text(companyVAT, margin + 50, leftY);
+  
+  leftY += 6;
+  doc.setFont("helvetica", "bold");
+  doc.text("Address | العنوان:", margin + 3, leftY);
+  doc.setFont("helvetica", "normal");
+  const addressLines = doc.splitTextToSize(branchAddress, 50);
+  doc.text(addressLines, margin + 3, leftY + 5);
+  
+  leftY += (addressLines.length * 5) + 3;
+  doc.setFont("helvetica", "bold");
+  doc.text("Email | البريد:", margin + 3, leftY);
+  doc.setFont("helvetica", "normal");
+  doc.text(companyEmail, margin + 3, leftY + 5);
+  
+  // Right column - Invoice Details
+  const rightX = pageWidth / 2 + 3;
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.roundedRect(rightX, y, (contentWidth / 2) - 3, 42, 2, 2, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.text("INVOICE DETAILS | تفاصيل الفاتورة", rightX + 3, y + 6);
+  
+  let rightY = y + 14;
   doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text(`VAT Number / الرقم الضريبي: ${companyVAT}`, 20, y);
-  y += 6;
-  doc.text(`Address / العنوان: ${branchAddress}`, 20, y);
-  y += 6;
-  doc.text(`Email / البريد الإلكتروني: ${companyEmail}`, 20, y);
-  y += 6;
-  doc.text(`Phone / الهاتف: ${companyPhone}`, 20, y);
-  y += 10;
-
-  // Invoice Details Box
-  doc.setDrawColor(200);
-  doc.rect(20, y, 170, 20);
-  y += 6;
+  doc.text("Invoice No. | رقم الفاتورة:", rightX + 3, rightY);
   doc.setFont("helvetica", "bold");
-  doc.text(`Invoice / فاتورة #: ${invoiceNumber}`, 25, y);
-  doc.text(`Date / التاريخ: ${invoiceDate.toLocaleDateString()}`, 120, y);
-  y += 8;
+  doc.setFontSize(11);
+  doc.text(invoiceNumber, rightX + 50, rightY);
+  
+  rightY += 8;
   doc.setFont("helvetica", "normal");
-  doc.text(`Order / طلب #: ${order.orderNumber}`, 25, y);
-  doc.text(`Type / النوع: ${order.orderType}`, 120, y);
-  y += 12;
+  doc.setFontSize(10);
+  doc.text("Date | التاريخ:", rightX + 3, rightY);
+  doc.text(invoiceDate.toLocaleDateString('en-GB'), rightX + 50, rightY);
+  
+  rightY += 8;
+  doc.text("Order No. | رقم الطلب:", rightX + 3, rightY);
+  doc.text(order.orderNumber, rightX + 50, rightY);
+  
+  rightY += 8;
+  doc.text("Type | النوع:", rightX + 3, rightY);
+  doc.text(order.orderType, rightX + 50, rightY);
 
-  // Customer Information (if available) - Bilingual
-  if (order.customerName) {
-    doc.text(`Customer / العميل: ${order.customerName}`, 20, y);
-    y += 6;
-  }
-  if (order.table) {
-    doc.text(`Table / الطاولة: ${order.table}`, 20, y);
-    y += 6;
-  }
-  if (order.address) {
-    doc.text(`Address / العنوان: ${order.address}`, 20, y);
-    y += 6;
-  }
-  y += 4;
+  doc.setTextColor(0, 0, 0);
+  y += 50;
 
-  // Items Table Header - Bilingual
-  doc.setFillColor(240, 240, 240);
-  doc.rect(20, y, 170, 10, 'F');
+  // ============ CUSTOMER INFORMATION SECTION ============
+  if (order.customerName || order.table || order.address) {
+    doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+    const customerHeight = 8 + (order.customerName ? 6 : 0) + (order.table ? 6 : 0) + (order.address ? 6 : 0);
+    doc.roundedRect(margin, y, contentWidth, customerHeight, 2, 2, 'F');
+    
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+    doc.text("CUSTOMER INFORMATION | معلومات العميل", margin + 3, y + 6);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    let custY = y + 6;
+    
+    if (order.customerName) {
+      custY += 6;
+      doc.setFont("helvetica", "bold");
+      doc.text("Customer | العميل:", margin + 3, custY);
+      doc.setFont("helvetica", "normal");
+      doc.text(order.customerName, margin + 35, custY);
+    }
+    
+    if (order.table) {
+      custY += 6;
+      doc.setFont("helvetica", "bold");
+      doc.text("Table | الطاولة:", margin + 3, custY);
+      doc.setFont("helvetica", "normal");
+      doc.text(order.table, margin + 35, custY);
+    }
+    
+    if (order.address) {
+      custY += 6;
+      doc.setFont("helvetica", "bold");
+      doc.text("Address | العنوان:", margin + 3, custY);
+      doc.setFont("helvetica", "normal");
+      doc.text(order.address, margin + 35, custY);
+    }
+    
+    y += customerHeight + 8;
+  } else {
+    y += 6;
+  }
+
+  // ============ ITEMS TABLE ============
+  // Table header with gradient effect
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.rect(margin, y, contentWidth, 10, 'F');
+  
+  doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.text("Item / الصنف", 22, y + 7);
-  doc.text("Qty / الكمية", 115, y + 7);
-  doc.text("Price / السعر", 138, y + 7);
-  doc.text("Total / الإجمالي", 165, y + 7);
+  
+  // Column headers - Bilingual
+  doc.text("ITEM NAME", margin + 3, y + 6.5);
+  doc.text("الصنف", margin + 3, y + 6.5 + 3, { maxWidth: 40 });
+  
+  doc.text("QTY", margin + 105, y + 6.5, { align: "center" });
+  doc.text("الكمية", margin + 105, y + 6.5 + 3, { align: "center" });
+  
+  doc.text("PRICE", margin + 130, y + 6.5, { align: "center" });
+  doc.text("السعر", margin + 130, y + 6.5 + 3, { align: "center" });
+  
+  doc.text("TOTAL", margin + 165, y + 6.5, { align: "right" });
+  doc.text("المجموع", margin + 165, y + 6.5 + 3, { align: "right" });
+  
   y += 10;
-
-  // Items
+  
+  // Table border
+  doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2]);
+  doc.setLineWidth(0.5);
+  
+  // Items rows with alternating colors
+  doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  order.items.forEach((item) => {
+  doc.setFontSize(9);
+  
+  order.items.forEach((item, index) => {
+    // Check for page overflow
     if (y > 250) {
       doc.addPage();
       y = 20;
+      
+      // Repeat table header on new page
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.rect(margin, y, contentWidth, 10, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.text("ITEM NAME | الصنف", margin + 3, y + 6.5);
+      doc.text("QTY | الكمية", margin + 105, y + 6.5, { align: "center" });
+      doc.text("PRICE | السعر", margin + 130, y + 6.5, { align: "center" });
+      doc.text("TOTAL | المجموع", margin + 165, y + 6.5, { align: "right" });
+      y += 10;
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "normal");
     }
-    doc.text(item.name, 22, y + 6);
-    doc.text(item.quantity.toString(), 120, y + 6);
-    doc.text(`${parseFloat(item.price.toString()).toFixed(2)}`, 140, y + 6);
-    doc.text(`${(item.quantity * item.price).toFixed(2)}`, 170, y + 6);
-    y += 6;
+    
+    const rowHeight = 8;
+    
+    // Alternating row colors
+    if (index % 2 === 0) {
+      doc.setFillColor(252, 252, 252);
+      doc.rect(margin, y, contentWidth, rowHeight, 'F');
+    }
+    
+    // Draw row borders
+    doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2]);
+    doc.rect(margin, y, contentWidth, rowHeight);
+    
+    // Item data
+    const itemName = doc.splitTextToSize(item.name, 95);
+    doc.text(itemName[0], margin + 3, y + 5.5);
+    
+    doc.text(item.quantity.toString(), margin + 105, y + 5.5, { align: "center" });
+    
+    doc.text(`${parseFloat(item.price.toString()).toFixed(2)}`, margin + 130, y + 5.5, { align: "center" });
+    
+    const itemTotal = (item.quantity * parseFloat(item.price.toString())).toFixed(2);
+    doc.text(`${itemTotal}`, margin + 165, y + 5.5, { align: "right" });
+    
+    y += rowHeight;
   });
 
-  y += 6;
-
-  // Totals Section - Bilingual
-  doc.setDrawColor(0);
-  doc.line(20, y, 190, y);
+  // Close table border
+  doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2]);
+  doc.line(margin, y, margin + contentWidth, y);
+  
   y += 8;
 
-  const subtotalNum = parseFloat(order.subtotal);
-  const taxNum = parseFloat(order.tax);
-  const totalNum = parseFloat(order.total);
-
+  // ============ TOTALS SECTION ============
+  const totalsX = margin + 105;
+  const totalsWidth = contentWidth - 105;
+  
+  // Subtotal
   doc.setFont("helvetica", "normal");
-  doc.text("Subtotal / المجموع الفرعي:", 115, y);
-  doc.text(`${subtotalNum.toFixed(2)} SAR`, 170, y);
+  doc.setFontSize(10);
+  doc.text("Subtotal | المجموع الفرعي:", totalsX + 5, y);
+  doc.text(`${parseFloat(order.subtotal).toFixed(2)} SAR`, totalsX + totalsWidth - 5, y, { align: "right" });
+  y += 7;
+  
+  // VAT
+  doc.text("VAT (15%) | ضريبة القيمة المضافة:", totalsX + 5, y);
+  doc.text(`${parseFloat(order.tax).toFixed(2)} SAR`, totalsX + totalsWidth - 5, y, { align: "right" });
+  y += 2;
+  
+  // Separator line
+  doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2]);
+  doc.setLineWidth(0.5);
+  doc.line(totalsX, y, totalsX + totalsWidth, y);
   y += 6;
-
-  doc.text(`VAT (15%) / ضريبة القيمة المضافة:`, 115, y);
-  doc.text(`${taxNum.toFixed(2)} SAR`, 170, y);
-  y += 8;
-
+  
+  // Total - Highlighted
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.roundedRect(totalsX, y - 4, totalsWidth, 12, 2, 2, 'F');
+  
+  doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("Total Amount / المبلغ الإجمالي:", 115, y);
-  doc.text(`${totalNum.toFixed(2)} SAR`, 170, y);
-  y += 12;
+  doc.text("TOTAL AMOUNT", totalsX + 5, y + 3);
+  doc.text("المبلغ الإجمالي", totalsX + 5, y + 7);
+  doc.setFontSize(14);
+  doc.text(`${parseFloat(order.total).toFixed(2)} SAR`, totalsX + totalsWidth - 5, y + 5, { align: "right" });
+  
+  doc.setTextColor(0, 0, 0);
+  y += 20;
 
-  // QR Code
-  doc.addImage(qrCodeDataURL, 'PNG', 75, y, 60, 60);
-  y += 65;
-
-  // Footer - Bilingual
+  // ============ QR CODE & FOOTER SECTION ============
+  // QR Code with border and label
+  const qrSize = 50;
+  const qrX = (pageWidth / 2) - (qrSize / 2);
+  
+  // QR Code background
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(qrX - 3, y - 3, qrSize + 6, qrSize + 6, 2, 2, 'FD');
+  
+  // Add QR code
+  doc.addImage(qrCodeDataURL, 'PNG', qrX, y, qrSize, qrSize);
+  
+  y += qrSize + 8;
+  
+  // QR Code instructions
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
-  doc.text("ZATCA Compliant E-Invoice / فاتورة إلكترونية متوافقة مع هيئة الزكاة", 105, y, { align: "center" });
+  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+  doc.text("Scan QR code to view and verify invoice online", pageWidth / 2, y, { align: "center" });
   y += 4;
-  doc.text("Scan QR code for invoice verification / امسح رمز الاستجابة السريعة للتحقق", 105, y, { align: "center" });
+  doc.text("امسح رمز الاستجابة السريعة لعرض الفاتورة والتحقق منها", pageWidth / 2, y, { align: "center" });
+  
+  y += 10;
+
+  // ============ FOOTER ============
+  // Footer bar
+  doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+  doc.rect(0, 280, pageWidth, 17, 'F');
+  
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("ZATCA COMPLIANT E-INVOICE", pageWidth / 2, 286, { align: "center" });
+  doc.text("فاتورة إلكترونية متوافقة مع هيئة الزكاة والضريبة والجمارك", pageWidth / 2, 290, { align: "center" });
+  
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+  doc.text("Thank you for your business | شكراً لتعاملكم معنا", pageWidth / 2, 294, { align: "center" });
 
   // Convert to buffer
   const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
