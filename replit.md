@@ -33,8 +33,8 @@ Preferred communication style: Simple, everyday language.
 - **Design Rationale**: PostgreSQL for ACID compliance; Drizzle ORM for TypeScript integration.
 
 ### Core Features & Implementations
-- **ZATCA Compliance**: Bilingual invoicing (Arabic/English), QR code generation for public invoice viewer, and PDF export for invoices meeting Saudi e-invoicing regulations.
-- **Invoice Management**: Dedicated invoices page displaying all saved ZATCA-compliant invoices with search functionality (by invoice number or customer name) and PDF download capabilities. Invoices are automatically saved during POS checkout.
+- **ZATCA Compliance**: Bilingual invoicing (Arabic/English) using Puppeteer-based PDF generation with headless Chromium, QR code generation for public invoice viewer, and PDF export for invoices meeting Saudi e-invoicing regulations. Invoice PDFs feature professional HTML templates with proper RTL/LTR support, Google Fonts (Inter for English, Noto Naskh Arabic for Arabic), and ZATCA-compliant bilingual layout.
+- **Invoice Management**: Dedicated invoices page displaying all saved ZATCA-compliant invoices with search functionality (by invoice number or customer name) and PDF download capabilities. Invoices are automatically saved during POS checkout with secure HTML escaping and shared browser instance for optimal performance.
 - **Multi-Language Support**: Comprehensive support for 7 languages (English, Arabic, Chinese, German, Hindi, Urdu, Bengali) with RTL support for Arabic/Urdu, persistent language settings, and a dedicated language selector.
 - **Customer Management**: Full CRUD operations for customer data, customer order history display, and integration into POS with search and selection.
 - **Menu Item Management**: Full CRUD operations for menu items, including a discount system with correct pricing flow (discount applied before VAT) and real-time price previews.
@@ -60,10 +60,16 @@ Preferred communication style: Simple, everyday language.
 - **Zod**: TypeScript-first schema validation.
 
 ### Utilities & Other
-- **jsPDF**: PDF generation (for ZATCA invoices).
+- **Puppeteer**: Headless Chromium for PDF generation (ZATCA invoices with bilingual support).
 - **QRCode**: QR code generation.
 - **Recharts**: Charting for analytics.
 - **bcrypt**: Password hashing.
 - **express-session**: Session middleware.
 - **date-fns**: Date manipulation.
 - **xlsx**: Excel generation and parsing.
+
+### System Dependencies (for Puppeteer)
+- **Chromium**: Headless browser for PDF rendering.
+- **Graphics Libraries**: libxkbcommon, glib, gtk3, nss, freetype, harfbuzz, fontconfig.
+- **X11 Libraries**: xorg.libX11, xorg.libXcomposite, xorg.libxcb, xorg.libXdamage, xorg.libXext, xorg.libXfixes, xorg.libXrandr.
+- **Other**: mesa, cairo, cups, dbus, gdk-pixbuf, pango, alsa-lib, at-spi2-atk, at-spi2-core, atk, cacert.
