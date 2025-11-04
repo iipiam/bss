@@ -2,7 +2,7 @@
 
 ## Overview
 
-RestoPOS is a comprehensive, ZATCA-compliant restaurant management system designed for Saudi Arabian restaurants. It integrates Point of Sale (POS), inventory, menu and recipe management, multi-branch operations, order processing, kitchen display, and advanced analytics. The system focuses on data clarity, operational efficiency, and adherence to Saudi regulatory requirements for streamlined operations, profitability optimization, and strategic decision-making. Key capabilities include sales analytics, business reporting, demand forecasting, and tools for financial performance and cost management.
+RestoPOS is a comprehensive, ZATCA-compliant restaurant management system for Saudi Arabian restaurants. It integrates Point of Sale (POS), inventory, menu/recipe management, multi-branch operations, order processing, kitchen display, and advanced analytics. The system aims to enhance operational efficiency, ensure regulatory compliance, optimize profitability, and support strategic decision-making through features like sales analytics, business reporting, and demand forecasting.
 
 ## User Preferences
 
@@ -10,59 +10,39 @@ Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-### Frontend Architecture
+### Frontend
 - **Framework**: React with TypeScript (Vite).
-- **UI**: Shadcn UI (New York style) built on Radix UI and Tailwind CSS, adhering to Material Design principles.
+- **UI**: Shadcn UI (New York style) based on Radix UI and Tailwind CSS, following Material Design principles.
 - **State Management**: TanStack Query for server state; local React state for UI.
 - **Form Handling**: React Hook Form with Zod validation.
 - **Styling**: Tailwind CSS with custom design tokens, responsive layouts.
-- **Design Rationale**: Single-page application, modular features, fast navigation.
 
-### Backend Architecture
+### Backend
 - **Runtime**: Node.js with Express.js.
-- **API Design**: RESTful API organized by domain.
-- **Data Validation**: Zod schemas shared between frontend and backend.
-- **Authentication**: Bcrypt for password hashing, session-based authentication.
-- **Design Rationale**: Monolithic Express server for simplified deployment and separation of concerns; shared schemas for type safety.
+- **API Design**: RESTful API, domain-organized.
+- **Data Validation**: Zod schemas (shared with frontend).
+- **Authentication**: Bcrypt for hashing, session-based authentication.
 
 ### Data Storage
 - **Database**: PostgreSQL via Neon serverless driver.
 - **ORM**: Drizzle ORM for type-safe queries.
-- **Schema Design**: Supports multi-branch operations, inventory (with unit pricing for cost tracking), menu (with VAT-inclusive pricing), recipes, orders, transactions, procurement, users (role-based permissions), ZATCA-compliant invoices, customers, and system settings.
+- **Schema Design**: Supports multi-branch operations, inventory, menu, recipes, orders, transactions, procurement, users (role-based), ZATCA-compliant invoices, customers, and system settings.
 - **Migration Strategy**: Drizzle Kit.
-- **Design Rationale**: PostgreSQL for ACID compliance; Drizzle ORM for TypeScript integration.
 
 ### Core Features & Implementations
-- **Dashboard Performance Analytics**: Real-time performance comparison across multiple time periods including Day-over-Day (DoD), Week-over-Week (WoW), Month-over-Month (MoM), and Year-over-Year (YoY) metrics. Features visual trend indicators (green for growth, red for decline), percentage change calculations, and fully internationalized labels across all 7 supported languages.
-- **Daily Demand Forecasting per Menu Item**: Comprehensive demand forecasting system analyzing historical sales data for each menu item over the last 30 days. Features include average daily demand calculation, trend analysis (up/down/stable), forecasted daily demand using moving average and linear trend analysis, color-coded trend badges, and summary cards showing total items tracked and trending items. The system helps with inventory planning by displaying forecasted units per day for each item, enabling better ingredient procurement and stock preparation decisions. Only tracks items that have been sold at least once, sorted by average daily demand (highest first).
-- **Peak Hours Analysis with Customer Drill-Down**: Identifies busiest sales hours with hourly sales distribution visualization using interactive bar charts. Automatically determines peak hour and displays total sales for that period. Features locale-aware 12-hour time formatting with translated AM/PM indicators across all 7 languages. Users can click on any hour bar to view detailed customer orders for that specific time period, including customer names (with localized "Walk-in Customer" for anonymous transactions), phone numbers, order totals, item counts, payment methods, and order types. The drill-down modal includes proper loading states, error handling, and empty state messages, enabling better staff scheduling, operational planning, and customer behavior analysis.
-- **ZATCA Compliance**: Bilingual invoicing (Arabic/English) using Puppeteer-based PDF generation with headless Chromium, QR code generation for public invoice viewer, and PDF export for invoices meeting Saudi e-invoicing regulations. Invoice PDFs feature professional HTML templates with proper RTL/LTR support, Google Fonts (Inter for English, Noto Naskh Arabic for Arabic), and ZATCA-compliant bilingual layout. Invoices optimized to fit on single A4 page with compact spacing and reduced font sizes.
-- **Invoice Management**: Dedicated invoices page displaying all saved ZATCA-compliant invoices with search functionality (by invoice number or customer name) and PDF download capabilities. Invoices are automatically saved during POS checkout with secure HTML escaping and shared browser instance for optimal performance.
-- **Multi-Language Support**: Comprehensive support for 7 languages (English, Arabic, Chinese, German, Hindi, Urdu, Bengali) with RTL support for Arabic/Urdu, persistent language settings, and a dedicated language selector.
-- **Creative UI/UX**: Modern gradient designs on tabs with smooth animations (fade-in, hover effects, active state glow), creative sidebar navigation with unique gradient colors per menu item, and responsive hover interactions throughout the interface. Help/Support section integrated into sidebar with modal dialog displaying contact information including email (int@mwcdtr.org) and WhatsApp link (+966 50 000 0000).
-- **Customer Management**: Full CRUD operations for customer data, customer order history display, and integration into POS with search and selection.
-- **Menu Item Management**: Full CRUD operations for menu items, including a discount system with correct pricing flow (discount applied before VAT) and real-time price previews.
-- **Inventory Management**: Complete CRUD operations for inventory items with price tracking per unit (SAR), smart numeric validation, error handling, and Excel template download/import/export functionality for bulk data management.
-- **Recipe Management**: Complete CRUD operations with inventory-linked ingredients for accurate cost calculation. Ingredients must be selected from existing inventory items, and recipe costs are automatically calculated based on ingredient quantities and unit prices.
-- **Daily Stock Management**: Intelligent stock calculation system that automatically determines available servings for each menu item based on current inventory levels and recipe requirements. The POS page displays real-time stock counts for each meal, showing "X available" with a package icon. Items with zero stock are visually distinguished with reduced opacity and "OUT OF STOCK" badges, preventing orders for unavailable items. The stock calculation considers all recipe ingredients and inventory quantities to provide accurate availability information.
-- **Financial Features**: PDF export for financial statements, Excel export/import functionality for various data tables (inventory, menu, recipes, orders, etc.).
-- **Strategic Decision-Making**: Profitability analysis with dedicated tabs for Strategic Overview, Pricing Analysis, Scaling Viability, and Cost Management. The Pricing Analysis tab features an enhanced Price Coverage Analysis section with comprehensive detailed tables categorizing all menu items by margin: Below Cost (with loss amounts and suggested prices), Low Margin 0-20% (with profit and price recommendations), Healthy Margin 20-40% (with profit analysis), and Premium Margin 40%+ (highlighting top performers). Each category uses color-coded tables (red, orange, blue, green) for quick visual identification and includes sorting by margin for actionable decision-making.
-- **Authentication**: Subscription-based authentication with Commercial Registration field, password recovery (token-based), and secure password hashing.
-- **Shop Working Hours**: Manual configuration of shop opening and closing times in the Settings page. Allows restaurant owners to set their daily operating hours (e.g., 09:00 to 22:00) which can be referenced for operational planning and customer communication.
-- **Shop Management**: Complete expense tracking system with dual tabs for Employee Salaries and Shop Bills. Manages employee salary records (name, position, amount, payment date, status, notes) and shop bills (rent, electricity, water, gas, internet, maintenance, foundational, etc.) with flexible payment period options (one-time payment, weekly, monthly, quarterly, semi-annually, yearly). Features include search functionality, summary cards showing total/paid/pending amounts, full CRUD operations, and proper date handling with ISO format conversion. When new employees are created through the Employee Management page, monthly salary entries are automatically generated for the 1st of the next month and can be manually modified in the Shop tab.
-- **Bills Management & Analysis**: Comprehensive expense tracking and business integration system spanning multiple analytics pages:
-  - **Bills Page**: Dedicated navigation item for bill management with advanced filtering (by type, status, date range), search functionality, archive/unarchive capabilities, Excel export, and summary analytics showing total/paid/pending amounts. Bills are automatically saved from Shop tab and support flexible payment periods (weekly, monthly, quarterly, semi-annually, yearly, one-time).
-  - **Financial Integration**: Expenses tab in Financial page displaying monthly expense trends (line chart), expense breakdown by category (pie chart), summary cards (total/paid/pending), and detailed bills table filtered by selected year.
-  - **Profitability Integration**: Cost Management tab enhanced with operating expenses section showing total operating expenses, paid/pending breakdown, and expense category analysis alongside recipe cost optimization tools.
-  - **Dashboard Integration**: Operating Expenses card with bar chart showing chronologically sorted last 6 months of expense trends, total expenses, and pending payments summary for real-time financial monitoring.
-- **Tutorial System**: Comprehensive visual tutorial page featuring 12 detailed guides covering all major system features (POS, Inventory, Menu, Recipes, Customers, Orders, Dashboard, Sales, Profitability, Forecasting, Invoices, Financial). Each tutorial card displays a high-quality contextual photo, gradient-themed icon, title, and description. The page also includes a "Getting Started" guide with 5 step-by-step instructions for new users. Features smooth hover animations with image zoom effects and gradient overlays for enhanced visual appeal.
-- **Device-Specific Responsive Design**: User-configurable device preference system in Settings page with three options (Laptop, iPad, iPhone) that adjusts the entire app's responsive design. Device preference is stored in the database and persists across sessions. Features include:
-  - **DeviceContext**: Global context provider managing device state with optimistic updates and error rollback on mutation failure
-  - **Centered Container Layout**: Uses nested flex containers to constrain app width for iPad (820px) and iPhone (430px) while maintaining full width for laptop
-  - **Device-Specific CSS**: Automatically applies typography and padding adjustments based on selected device (smaller fonts/padding for iPhone, medium for iPad, default for laptop)
-  - **Account Section UI**: Settings page displays user account information (Full Name, Email, Commercial Registration, Role) with visual device selector cards showing device icons and names
-  - **Layout Stability**: Sidebar maintains consistent width across all devices, preventing content collapse and ensuring usable interface on all screen sizes
-  - **Mobile-Optimized POS**: iPhone mode features a dedicated mobile layout with tab-based navigation between Menu and Cart views. The mobile POS includes a 2-column menu grid, compact item cards with smaller fonts and padding, floating cart button showing item count and total, full-screen cart view with optimized spacing, and streamlined checkout interface designed for small screens
+- **Analytics & Reporting**: Dashboard with DoD, WoW, MoM, YoY performance metrics; Daily Demand Forecasting per menu item; Peak Hours Analysis with customer drill-down.
+- **ZATCA Compliance**: Bilingual (Arabic/English) PDF invoice generation using Puppeteer, QR code generation, and professional HTML templates.
+- **Invoice Management**: Dedicated page for ZATCA-compliant invoices with search and download.
+- **Multi-Language Support**: Comprehensive support for 7 languages including RTL for Arabic/Urdu, with persistent settings.
+- **UI/UX**: Modern gradient designs, smooth animations, creative sidebar navigation, and responsive hover interactions.
+- **Management Modules**: Full CRUD for Customer, Menu Item (with discount system), Inventory (with Excel import/export), and Recipe (inventory-linked costing).
+- **Daily Stock Management**: Real-time stock calculation for menu items based on inventory and recipes, displayed on POS.
+- **Financial Features**: PDF export for financial statements, Excel export/import for various data tables.
+- **Strategic Decision-Making**: Profitability analysis with tabs for Strategic Overview, Pricing Analysis (including Price Coverage Analysis by margin), Scaling Viability, and Cost Management.
+- **Authentication**: Subscription-based, with Commercial Registration field and password recovery.
+- **Shop & Bills Management**: Manual configuration of shop working hours; comprehensive expense tracking for employee salaries and shop bills with summary analytics and integration into financial and profitability views.
+- **Tutorial System**: Visual tutorial page with 12 detailed guides and a "Getting Started" section.
+- **Device-Specific Responsive Design**: User-configurable device preference (Laptop, iPad, iPhone) stored in database, adjusting layout, typography, and specific components (e.g., mobile-optimized POS).
 
 ## External Dependencies
 
@@ -80,16 +60,10 @@ Preferred communication style: Simple, everyday language.
 - **Zod**: TypeScript-first schema validation.
 
 ### Utilities & Other
-- **Puppeteer**: Headless Chromium for PDF generation (ZATCA invoices with bilingual support).
+- **Puppeteer**: Headless Chromium for PDF generation.
 - **QRCode**: QR code generation.
 - **Recharts**: Charting for analytics.
 - **bcrypt**: Password hashing.
 - **express-session**: Session middleware.
 - **date-fns**: Date manipulation.
 - **xlsx**: Excel generation and parsing.
-
-### System Dependencies (for Puppeteer)
-- **Chromium**: Headless browser for PDF rendering.
-- **Graphics Libraries**: libxkbcommon, glib, gtk3, nss, freetype, harfbuzz, fontconfig.
-- **X11 Libraries**: xorg.libX11, xorg.libXcomposite, xorg.libxcb, xorg.libXdamage, xorg.libXext, xorg.libXfixes, xorg.libXrandr.
-- **Other**: mesa, cairo, cups, dbus, gdk-pixbuf, pango, alsa-lib, at-spi2-atk, at-spi2-core, atk, cacert.

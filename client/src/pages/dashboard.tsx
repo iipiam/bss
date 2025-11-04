@@ -6,7 +6,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { useQuery } from "@tanstack/react-query";
 import type { Order, ShopBill } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useDevice } from "@/contexts/DeviceContext";
+import { useDeviceLayout, useCompactChartConfig } from "@/lib/mobileLayout";
 import { useState } from "react";
 
 interface PerformanceMetric {
@@ -265,8 +265,8 @@ const PeakHoursCard = ({
 
 export default function Dashboard() {
   const { t } = useLanguage();
-  const { device } = useDevice();
-  const isMobile = device === 'iphone';
+  const layout = useDeviceLayout();
+  const chartConfig = useCompactChartConfig();
 
   const { data: dashboardData, isLoading: dashboardLoading } = useQuery<DashboardData>({
     queryKey: ["/api/analytics/dashboard"],
@@ -311,9 +311,9 @@ export default function Dashboard() {
 
   if (dashboardLoading || salesLoading || billsLoading) {
     return (
-      <div className={isMobile ? "p-4 space-y-4" : "p-8 space-y-8"}>
+      <div className={`${layout.padding} ${layout.spaceY}`}>
         <div>
-          <h1 className="text-3xl font-bold mb-2">{t.dashboard}</h1>
+          <h1 className={`${layout.text3Xl} font-bold mb-2`}>{t.dashboard}</h1>
           <p className="text-muted-foreground">{t.loading}...</p>
         </div>
       </div>
@@ -321,12 +321,12 @@ export default function Dashboard() {
   }
 
   return (
-    <div className={isMobile ? "p-4 space-y-4" : "p-8 space-y-8"}>
+    <div className={`${layout.padding} ${layout.spaceY}`}>
       <div>
-        <h1 className="text-3xl font-bold mb-2 text-[#ffffff]">{t.dashboard}</h1>
+        <h1 className={`${layout.text3Xl} font-bold mb-2 text-[#ffffff]`}>{t.dashboard}</h1>
         <p className="text-muted-foreground text-sm">{t.dashboardOverview || "Overview of your restaurant performance"}</p>
       </div>
-      <div className={`grid gap-${isMobile ? '3' : '6'} ${isMobile ? 'grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-4'}`}>
+      <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 4, mobile: 2 })}`}>
         <MetricCard
           title="Today's Sales"
           value={`${dashboardData?.todaysSales || "0.00"} SAR`}
@@ -356,10 +356,10 @@ export default function Dashboard() {
       {dashboardData?.performance && (
         <div className="space-y-4">
           <div>
-            <h2 className="text-2xl font-bold mb-1">{t.performanceAnalysis || "Performance Analysis"}</h2>
-            <p className="text-muted-foreground">{t.performanceAnalysisDesc || "Compare sales across different time periods"}</p>
+            <h2 className={`${layout.text2Xl} font-bold mb-1`}>{t.performanceAnalysis || "Performance Analysis"}</h2>
+            <p className="text-muted-foreground text-sm">{t.performanceAnalysisDesc || "Compare sales across different time periods"}</p>
           </div>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 4, mobile: 2 })}`}>
             <PerformanceCard 
               title={t.dod || "Day-over-Day (DoD)"}
               metric={dashboardData.performance.dod}
@@ -391,32 +391,39 @@ export default function Dashboard() {
 
       {/* Expense Trends Section */}
       <Card className="hover-elevate transition-all">
-        <CardHeader>
-          <div className="flex items-center justify-between">
+        <CardHeader className={layout.isMobile ? "p-4" : ""}>
+          <div className={`flex items-center ${layout.isMobile ? 'flex-col gap-3' : 'justify-between'}`}>
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-orange-500/10">
                 <Wallet className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <CardTitle>Operating Expenses</CardTitle>
-                <CardDescription>Monthly expense trends and summary</CardDescription>
+                <CardTitle className={layout.isMobile ? "text-base" : ""}>Operating Expenses</CardTitle>
+                <CardDescription className="text-xs">Monthly expense trends and summary</CardDescription>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold font-mono text-orange-600">{totalExpenses.toFixed(2)} SAR</p>
+            <div className={layout.isMobile ? "text-center w-full" : "text-right"}>
+              <p className={`${layout.text2Xl} font-bold font-mono text-orange-600`}>{totalExpenses.toFixed(2)} SAR</p>
               <p className="text-xs text-muted-foreground">
                 Pending: <span className="font-mono">{pendingExpenses.toFixed(2)} SAR</span>
               </p>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className={layout.isMobile ? "p-3" : ""}>
           {expenseTrendData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={layout.chartHeight}>
               <BarChart data={expenseTrendData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="month" className="text-xs" />
-                <YAxis className="text-xs" />
+                <CartesianGrid {...chartConfig.cartesianGrid} className="stroke-border" />
+                <XAxis 
+                  dataKey="month" 
+                  style={{ fontSize: chartConfig.fontSize }}
+                  tick={{ fontSize: chartConfig.fontSize }}
+                />
+                <YAxis 
+                  style={{ fontSize: chartConfig.fontSize }}
+                  tick={{ fontSize: chartConfig.fontSize }}
+                />
                 <Tooltip formatter={(value: number) => `${value.toFixed(2)} SAR`} />
                 <Bar dataKey="expenses" fill="hsl(var(--destructive))" name="Expenses" />
               </BarChart>
@@ -430,17 +437,24 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 2, mobile: 1 })}`}>
         <Card>
-          <CardHeader>
-            <CardTitle>Sales This Week</CardTitle>
+          <CardHeader className={layout.cardHeaderPadding}>
+            <CardTitle className={layout.isMobile ? "text-base" : ""}>Sales This Week</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+          <CardContent className={layout.cardPadding}>
+            <ResponsiveContainer width="100%" height={layout.chartHeight}>
               <LineChart data={salesData || []}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="date" className="text-xs" />
-                <YAxis className="text-xs" />
+                <CartesianGrid {...chartConfig.cartesianGrid} className="stroke-border" />
+                <XAxis 
+                  dataKey="date" 
+                  style={{ fontSize: chartConfig.fontSize }}
+                  tick={{ fontSize: chartConfig.fontSize }}
+                />
+                <YAxis 
+                  style={{ fontSize: chartConfig.fontSize }}
+                  tick={{ fontSize: chartConfig.fontSize }}
+                />
                 <Tooltip />
                 <Line type="monotone" dataKey="sales" stroke="hsl(var(--primary))" strokeWidth={2} />
               </LineChart>
@@ -449,21 +463,21 @@ export default function Dashboard() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Recent Orders</CardTitle>
+          <CardHeader className={layout.cardHeaderPadding}>
+            <CardTitle className={layout.isMobile ? "text-base" : ""}>Recent Orders</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className={layout.cardPadding}>
+            <div className={layout.isMobile ? "space-y-2" : "space-y-4"}>
               {dashboardData?.recentOrders?.map((order) => (
-                <div key={order.id} className="flex items-center justify-between hover-elevate p-3 rounded-md">
+                <div key={order.id} className={`flex items-center justify-between hover-elevate ${layout.isMobile ? 'p-2' : 'p-3'} rounded-md`}>
                   <div className="flex-1">
-                    <p className="font-mono font-semibold">#{order.orderNumber}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className={`font-mono font-semibold ${layout.isMobile ? 'text-sm' : ''}`}>#{order.orderNumber}</p>
+                    <p className="text-xs text-muted-foreground">
                       {new Date(order.createdAt).toLocaleTimeString()} • {order.items.length} items
                     </p>
                   </div>
-                  <div className="text-right mr-4">
-                    <p className="font-mono font-semibold">{parseFloat(order.total).toFixed(2)} SAR</p>
+                  <div className={`text-right ${layout.isMobile ? 'mr-2' : 'mr-4'}`}>
+                    <p className={`font-mono font-semibold ${layout.isMobile ? 'text-sm' : ''}`}>{parseFloat(order.total).toFixed(2)} SAR</p>
                     <p className={`text-xs ${
                       order.status === "Completed" || order.status === "Delivered" ? "text-green-600" :
                       order.status === "Ready" ? "text-blue-600" :

@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { TableList } from "@/components/TableList";
+import { useDeviceLayout } from "@/lib/mobileLayout";
+import type { TableColumn } from "@/lib/mobileLayout";
 import {
   Table,
   TableBody,
@@ -60,6 +63,7 @@ const formSchema = insertInventoryItemSchema.extend({
 });
 
 export default function Inventory() {
+  const layout = useDeviceLayout();
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -318,21 +322,21 @@ export default function Inventory() {
 
   if (isLoading) {
     return (
-      <div className="p-8">
-        <h1 className="text-3xl font-bold mb-2">Inventory Management</h1>
+      <div className={layout.padding}>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Inventory Management</h1>
         <p className="text-muted-foreground">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className={`${layout.padding} ${layout.spaceY}`}>
+      <div className={`flex ${layout.isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
         <div>
-          <h1 className="text-3xl font-bold mb-2">Inventory Management</h1>
-          <p className="text-muted-foreground">Track and manage your stock levels</p>
+          <h1 className={`${layout.text3Xl} font-bold mb-2`}>Inventory Management</h1>
+          <p className="text-muted-foreground text-sm">Track and manage your stock levels</p>
         </div>
-        <div className="flex gap-2">
+        <div className={`flex gap-2 ${layout.isMobile ? 'flex-wrap' : ''}`}>
           <Button variant="outline" onClick={handleDownloadTemplate} data-testid="button-download-template">
             <FileDown className="h-4 w-4 mr-2" />
             Template
@@ -513,8 +517,8 @@ export default function Inventory() {
         </div>
       </div>
 
-      <Card className="p-6">
-        <div className="flex gap-4 mb-6">
+      <Card className={layout.cardPadding}>
+        <div className={`flex ${layout.isMobile ? 'flex-col' : 'gap-4'} ${layout.isMobile ? 'space-y-3' : ''} mb-4`}>
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -526,7 +530,7 @@ export default function Inventory() {
             />
           </div>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-48" data-testid="select-category">
+            <SelectTrigger className={layout.isMobile ? "w-full" : "w-48"} data-testid="select-category">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
@@ -539,7 +543,7 @@ export default function Inventory() {
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48" data-testid="select-status">
+            <SelectTrigger className={layout.isMobile ? "w-full" : "w-48"} data-testid="select-status">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -551,7 +555,8 @@ export default function Inventory() {
           </Select>
         </div>
 
-        <Table>
+        {!layout.isMobile ? (
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Item Name</TableHead>
@@ -597,6 +602,61 @@ export default function Inventory() {
             ))}
           </TableBody>
         </Table>
+        ) : (
+          <div className="space-y-3">
+            {filteredItems.map((item) => (
+              <Card key={item.id} className="hover-elevate" data-testid={`card-item-${item.id}`}>
+                <CardContent className="p-3">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-base">{item.name}</h3>
+                      <p className="text-xs text-muted-foreground">{item.category}</p>
+                    </div>
+                    <Badge variant={item.status === "Low Stock" ? "destructive" : "secondary"} className="text-xs">
+                      {item.status}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+                    <div>
+                      <span className="text-xs text-muted-foreground">Quantity:</span>
+                      <p className="font-mono font-medium">{parseFloat(item.quantity).toFixed(2)} {item.unit}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground">Price/Unit:</span>
+                      <p className="font-mono font-medium text-primary">{parseFloat(item.price).toFixed(2)} SAR</p>
+                    </div>
+                  </div>
+                  <div className="mb-3">
+                    <span className="text-xs text-muted-foreground">Supplier:</span>
+                    <p className="text-sm">{item.supplier}</p>
+                  </div>
+                  <div className="flex gap-2 pt-2 border-t">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1" 
+                      onClick={() => handleEditItem(item)} 
+                      data-testid={`button-edit-${item.id}`}
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => handleDeleteClick(item)}
+                      data-testid={`button-delete-${item.id}`}
+                    >
+                      <Trash2 className="h-3 w-3 mr-1 text-destructive" />
+                      Delete
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </Card>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

@@ -18,11 +18,14 @@ export function useDeviceLayout() {
     gap: isMobile ? 'gap-3' : 'gap-6',
     spaceY: isMobile ? 'space-y-4' : 'space-y-8',
     
-    // Grid utilities
+    // Grid utilities - returns literal Tailwind classes for static extraction
     gridCols: ({ desktop = 4, tablet = 3, mobile = 2 }: { desktop?: number; tablet?: number; mobile?: number }) => {
-      if (isMobile) return `grid-cols-${mobile}`;
-      if (isTablet) return `grid-cols-${tablet}`;
-      return `md:grid-cols-2 lg:grid-cols-${desktop}`;
+      // Map to literal Tailwind classes for static extraction
+      const mobileClass = mobile === 1 ? 'grid-cols-1' : mobile === 2 ? 'grid-cols-2' : mobile === 3 ? 'grid-cols-3' : 'grid-cols-4';
+      const tabletClass = tablet === 1 ? 'md:grid-cols-1' : tablet === 2 ? 'md:grid-cols-2' : tablet === 3 ? 'md:grid-cols-3' : 'md:grid-cols-4';
+      const desktopClass = desktop === 1 ? 'lg:grid-cols-1' : desktop === 2 ? 'lg:grid-cols-2' : desktop === 3 ? 'lg:grid-cols-3' : desktop === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-4';
+      
+      return `${mobileClass} ${tabletClass} ${desktopClass}`;
     },
     
     // Card padding

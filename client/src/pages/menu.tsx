@@ -17,6 +17,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { insertMenuItemSchema, type MenuItem } from "@shared/schema";
+import { useDeviceLayout } from "@/lib/mobileLayout";
 
 // Form schema for UI - only collect basePrice and discount, calculate VAT on submit
 const menuFormSchema = z.object({
@@ -36,6 +37,7 @@ const menuFormSchema = z.object({
 type MenuFormValues = z.infer<typeof menuFormSchema>;
 
 export default function Menu() {
+  const layout = useDeviceLayout();
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
@@ -317,21 +319,21 @@ export default function Menu() {
 
   if (isLoading) {
     return (
-      <div className="p-8">
-        <h1 className="text-3xl font-bold mb-2">Menu Management</h1>
+      <div className={layout.padding}>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Menu Management</h1>
         <p className="text-muted-foreground">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className={`${layout.padding} ${layout.spaceY}`}>
+      <div className={`flex ${layout.isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
         <div>
-          <h1 className="text-3xl font-bold mb-2">Menu Management</h1>
-          <p className="text-muted-foreground">Manage your menu items and pricing</p>
+          <h1 className={`${layout.text3Xl} font-bold mb-2`}>Menu Management</h1>
+          <p className="text-muted-foreground text-sm">Manage your menu items and pricing</p>
         </div>
-        <div className="flex gap-3">
+        <div className={`flex gap-2 ${layout.isMobile ? 'flex-wrap' : ''}`}>
           <Button variant="outline" onClick={handleDownloadTemplate} data-testid="button-download-template">
             <FileDown className="h-4 w-4 mr-2" />
             Template
@@ -579,7 +581,7 @@ export default function Menu() {
         />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 4, tablet: 3, mobile: 2 })}`}>
         {filteredItems.map((item) => (
           <Card key={item.id} className="overflow-hidden" data-testid={`card-menu-${item.id}`}>
             <CardHeader className="p-0">
@@ -587,10 +589,10 @@ export default function Menu() {
                 <UtensilsCrossed className="h-16 w-16 text-primary/40" />
               </div>
             </CardHeader>
-            <CardContent className="p-4">
+            <CardContent className={layout.isMobile ? "p-3" : "p-4"}>
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-1">{item.name}</h3>
+                  <h3 className={`font-semibold ${layout.isMobile ? 'text-base' : 'text-lg'} mb-1`}>{item.name}</h3>
                   <div className="flex gap-2 mb-2">
                     <Badge variant="secondary">{item.category}</Badge>
                     {item.discount && parseFloat(item.discount) > 0 && (
@@ -645,7 +647,7 @@ export default function Menu() {
                 )}
               </div>
             </CardContent>
-            <CardFooter className="p-4 pt-0 flex items-center justify-between gap-2">
+            <CardFooter className={`${layout.isMobile ? 'p-3' : 'p-4'} pt-0 flex items-center justify-between gap-2`}>
               <div className="flex items-center gap-2">
                 <Switch
                   checked={item.available}
