@@ -52,6 +52,15 @@ export interface Translations {
   predictedSales: string;
   totalSales: string;
   
+  // Performance Analysis
+  performanceAnalysis: string;
+  performanceAnalysisDesc: string;
+  dod: string;
+  wow: string;
+  mom: string;
+  yoy: string;
+  dashboardOverview: string;
+  
   // Common
   add: string;
   edit: string;
@@ -220,6 +229,15 @@ export const translations: Record<Language, Translations> = {
     predictedSales: 'Predicted Sales',
     totalSales: 'Total Sales',
     
+    // Performance Analysis
+    performanceAnalysis: 'Performance Analysis',
+    performanceAnalysisDesc: 'Compare sales across different time periods',
+    dod: 'Day-over-Day (DoD)',
+    wow: 'Week-over-Week (WoW)',
+    mom: 'Month-over-Month (MoM)',
+    yoy: 'Year-over-Year (YoY)',
+    dashboardOverview: 'Overview of your restaurant performance',
+    
     // Common
     add: 'Add',
     edit: 'Edit',
@@ -386,6 +404,15 @@ export const translations: Record<Language, Translations> = {
     forecastPeriod: 'فترة التنبؤ',
     predictedSales: 'المبيعات المتوقعة',
     totalSales: 'إجمالي المبيعات',
+    
+    // Performance Analysis
+    performanceAnalysis: 'تحليل الأداء',
+    performanceAnalysisDesc: 'قارن المبيعات عبر فترات زمنية مختلفة',
+    dod: 'يوم بيوم',
+    wow: 'أسبوع بأسبوع',
+    mom: 'شهر بشهر',
+    yoy: 'سنة بسنة',
+    dashboardOverview: 'نظرة عامة على أداء مطعمك',
     
     // Common
     add: 'إضافة',
@@ -554,6 +581,15 @@ export const translations: Record<Language, Translations> = {
     predictedSales: '预测销售额',
     totalSales: '总销售额',
     
+    // Performance Analysis
+    performanceAnalysis: '业绩分析',
+    performanceAnalysisDesc: '比较不同时期的销售情况',
+    dod: '日环比',
+    wow: '周环比',
+    mom: '月环比',
+    yoy: '年同比',
+    dashboardOverview: '您的餐厅业绩概览',
+    
     // Common
     add: '添加',
     edit: '编辑',
@@ -720,6 +756,15 @@ export const translations: Record<Language, Translations> = {
     forecastPeriod: 'Prognosezeitraum',
     predictedSales: 'Prognostizierte Verkäufe',
     totalSales: 'Gesamtumsatz',
+    
+    // Performance Analysis
+    performanceAnalysis: 'Leistungsanalyse',
+    performanceAnalysisDesc: 'Vergleichen Sie Verkäufe über verschiedene Zeiträume',
+    dod: 'Tag für Tag (DoD)',
+    wow: 'Woche für Woche (WoW)',
+    mom: 'Monat für Monat (MoM)',
+    yoy: 'Jahr für Jahr (YoY)',
+    dashboardOverview: 'Übersicht über Ihre Restaurant-Leistung',
     
     // Common
     add: 'Hinzufügen',
@@ -888,6 +933,15 @@ export const translations: Record<Language, Translations> = {
     predictedSales: 'अनुमानित बिक्री',
     totalSales: 'कुल बिक्री',
     
+    // Performance Analysis
+    performanceAnalysis: 'प्रदर्शन विश्लेषण',
+    performanceAnalysisDesc: 'विभिन्न समय अवधियों में बिक्री की तुलना करें',
+    dod: 'दिन-दर-दिन',
+    wow: 'सप्ताह-दर-सप्ताह',
+    mom: 'महीना-दर-महीना',
+    yoy: 'वर्ष-दर-वर्ष',
+    dashboardOverview: 'आपके रेस्तरां के प्रदर्शन का अवलोकन',
+    
     // Common
     add: 'जोड़ें',
     edit: 'संपादित करें',
@@ -1055,6 +1109,15 @@ export const translations: Record<Language, Translations> = {
     predictedSales: 'متوقع فروخت',
     totalSales: 'کل فروخت',
     
+    // Performance Analysis
+    performanceAnalysis: 'کارکردگی کا تجزیہ',
+    performanceAnalysisDesc: 'مختلف وقتوں میں فروخت کا موازنہ کریں',
+    dod: 'روز بہ روز',
+    wow: 'ہفتہ بہ ہفتہ',
+    mom: 'ماہ بہ ماہ',
+    yoy: 'سال بہ سال',
+    dashboardOverview: 'آپ کے ریستوراں کی کارکردگی کا جائزہ',
+    
     // Common
     add: 'شامل کریں',
     edit: 'ترمیم کریں',
@@ -1221,6 +1284,15 @@ export const translations: Record<Language, Translations> = {
     forecastPeriod: 'পূর্বাভাস সময়কাল',
     predictedSales: 'প্রত্যাশিত বিক্রয়',
     totalSales: 'মোট বিক্রয়',
+    
+    // Performance Analysis
+    performanceAnalysis: 'কর্মক্ষমতা বিশ্লেষণ',
+    performanceAnalysisDesc: 'বিভিন্ন সময়ের বিক্রয়ের তুলনা করুন',
+    dod: 'দিন-প্রতি-দিন',
+    wow: 'সপ্তাহ-প্রতি-সপ্তাহ',
+    mom: 'মাস-প্রতি-মাস',
+    yoy: 'বছর-প্রতি-বছর',
+    dashboardOverview: 'আপনার রেস্তোরাঁর কর্মক্ষমতার সংক্ষিপ্ত বিবরণ',
     
     // Common
     add: 'যোগ করুন',
