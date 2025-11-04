@@ -191,6 +191,65 @@ export interface Translations {
   newCustomer: string;
   existingCustomer: string;
   selectCustomer: string;
+  
+  // Tutorial
+  tutorial: string;
+  tutorialSubtitle: string;
+  tutorialGettingStarted: string;
+  tutorialPOS: string;
+  tutorialPOSDesc: string;
+  tutorialInventory: string;
+  tutorialInventoryDesc: string;
+  tutorialMenu: string;
+  tutorialMenuDesc: string;
+  tutorialRecipes: string;
+  tutorialRecipesDesc: string;
+  tutorialCustomers: string;
+  tutorialCustomersDesc: string;
+  tutorialOrders: string;
+  tutorialOrdersDesc: string;
+  tutorialDashboard: string;
+  tutorialDashboardDesc: string;
+  tutorialSales: string;
+  tutorialSalesDesc: string;
+  tutorialProfitability: string;
+  tutorialProfitabilityDesc: string;
+  tutorialForecasting: string;
+  tutorialForecastingDesc: string;
+  tutorialInvoices: string;
+  tutorialInvoicesDesc: string;
+  tutorialFinancial: string;
+  tutorialFinancialDesc: string;
+  tutorialStep1: string;
+  tutorialStep2: string;
+  tutorialStep3: string;
+  tutorialStep4: string;
+  tutorialStep5: string;
+  
+  // Shop
+  shop: string;
+  shopExpenses: string;
+  salaries: string;
+  salary: string;
+  employeeName: string;
+  position: string;
+  amount: string;
+  paymentDate: string;
+  addSalary: string;
+  editSalary: string;
+  shopBills: string;
+  billType: string;
+  rent: string;
+  electricity: string;
+  water: string;
+  gas: string;
+  other: string;
+  addBill: string;
+  editBill: string;
+  totalSalaries: string;
+  totalBills: string;
+  totalShopExpenses: string;
+  monthlyExpenses: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -382,6 +441,65 @@ export const translations: Record<Language, Translations> = {
     newCustomer: 'New Customer',
     existingCustomer: 'Existing Customer',
     selectCustomer: 'Select Customer',
+    
+    // Tutorial
+    tutorial: 'Tutorial',
+    tutorialSubtitle: 'Learn how to use all features of the restaurant management system',
+    tutorialGettingStarted: 'Getting Started',
+    tutorialPOS: 'Point of Sale (POS)',
+    tutorialPOSDesc: 'Navigate to POS to create new sales transactions. Add items from your menu, select payment method (Cash/ATM), choose customer (or walk-in), and complete the sale. ZATCA-compliant invoices are automatically generated.',
+    tutorialInventory: 'Inventory Management',
+    tutorialInventoryDesc: 'Add and track inventory items with quantities and unit prices. Use Excel import/export for bulk management. Monitor stock levels and receive low stock alerts.',
+    tutorialMenu: 'Menu Management',
+    tutorialMenuDesc: 'Create menu items with VAT-inclusive pricing (15% Saudi VAT). Set base prices, apply discounts, and link to recipes for automatic cost calculation. Mark items as available or unavailable.',
+    tutorialRecipes: 'Recipe Management',
+    tutorialRecipesDesc: 'Create recipes by linking ingredients from inventory. System automatically calculates recipe costs based on ingredient quantities and unit prices for accurate profitability analysis.',
+    tutorialCustomers: 'Customer Management',
+    tutorialCustomersDesc: 'Add and manage customer information including names, phone numbers, and addresses. View order history for each customer and select them during POS checkout.',
+    tutorialOrders: 'Order Management',
+    tutorialOrdersDesc: 'View and manage all orders with different statuses (Pending, Preparing, Ready, Completed). Track order types (Dine-in, Takeaway, Delivery) and payment methods.',
+    tutorialDashboard: 'Dashboard Analytics',
+    tutorialDashboardDesc: 'Monitor real-time performance with DoD/WoW/MoM/YoY comparisons. Analyze peak hours with customer drill-down. View sales trends, active orders, and key metrics at a glance.',
+    tutorialSales: 'Sales Reports',
+    tutorialSalesDesc: 'Generate detailed sales reports by date range, branch, or category. Export data to Excel for further analysis. Track revenue trends and identify top-selling items.',
+    tutorialProfitability: 'Profitability Analysis',
+    tutorialProfitabilityDesc: 'Analyze profit margins, cost structures, and pricing strategies. Compare menu item profitability and identify opportunities for cost optimization and revenue growth.',
+    tutorialForecasting: 'Demand Forecasting',
+    tutorialForecastingDesc: 'Use AI-powered forecasting to predict future sales trends. Plan inventory purchases and staff scheduling based on predicted demand patterns.',
+    tutorialInvoices: 'ZATCA Invoices',
+    tutorialInvoicesDesc: 'View all ZATCA-compliant bilingual invoices (Arabic/English). Search by invoice number or customer name. Download PDF copies with QR codes for verification.',
+    tutorialFinancial: 'Financial Reports',
+    tutorialFinancialDesc: 'Generate comprehensive financial statements including income statements and expense reports. Export to PDF for accounting purposes and regulatory compliance.',
+    tutorialStep1: 'Set up your restaurant information in Settings (restaurant name, VAT number, contact details)',
+    tutorialStep2: 'Add inventory items with unit prices and quantities',
+    tutorialStep3: 'Create menu items and link them to recipes for cost tracking',
+    tutorialStep4: 'Add customers or use walk-in option for quick sales',
+    tutorialStep5: 'Start selling through POS and monitor analytics on the Dashboard',
+    
+    // Shop
+    shop: 'Shop',
+    shopExpenses: 'Shop Expenses',
+    salaries: 'Salaries',
+    salary: 'Salary',
+    employeeName: 'Employee Name',
+    position: 'Position',
+    amount: 'Amount',
+    paymentDate: 'Payment Date',
+    addSalary: 'Add Salary',
+    editSalary: 'Edit Salary',
+    shopBills: 'Shop Bills',
+    billType: 'Bill Type',
+    rent: 'Rent',
+    electricity: 'Electricity',
+    water: 'Water',
+    gas: 'Gas',
+    other: 'Other',
+    addBill: 'Add Bill',
+    editBill: 'Edit Bill',
+    totalSalaries: 'Total Salaries',
+    totalBills: 'Total Bills',
+    totalShopExpenses: 'Total Shop Expenses',
+    monthlyExpenses: 'Monthly Expenses',
   },
   
   Arabic: {
@@ -572,6 +690,65 @@ export const translations: Record<Language, Translations> = {
     newCustomer: 'عميل جديد',
     existingCustomer: 'عميل موجود',
     selectCustomer: 'اختر عميل',
+    
+    // Tutorial
+    tutorial: 'دليل الاستخدام',
+    tutorialSubtitle: 'تعلم كيفية استخدام جميع ميزات نظام إدارة المطاعم',
+    tutorialGettingStarted: 'البدء',
+    tutorialPOS: 'نقطة البيع',
+    tutorialPOSDesc: 'انتقل إلى نقطة البيع لإنشاء معاملات بيع جديدة. أضف عناصر من القائمة، واختر طريقة الدفع (نقدي/صراف آلي)، واختر العميل (أو الدخول المباشر)، وأكمل عملية البيع. يتم إنشاء الفواتير المتوافقة مع هيئة الزكاة والضريبة تلقائياً.',
+    tutorialInventory: 'إدارة المخزون',
+    tutorialInventoryDesc: 'أضف وتتبع عناصر المخزون بالكميات وأسعار الوحدات. استخدم استيراد/تصدير Excel للإدارة الجماعية. راقب مستويات المخزون واحصل على تنبيهات انخفاض المخزون.',
+    tutorialMenu: 'إدارة القائمة',
+    tutorialMenuDesc: 'إنشاء عناصر القائمة بأسعار شاملة ضريبة القيمة المضافة (15٪ ضريبة السعودية). حدد الأسعار الأساسية، وطبق الخصومات، واربط بالوصفات لحساب التكلفة التلقائي. حدد العناصر كمتاحة أو غير متاحة.',
+    tutorialRecipes: 'إدارة الوصفات',
+    tutorialRecipesDesc: 'إنشاء الوصفات عن طريق ربط المكونات من المخزون. يحسب النظام تلقائياً تكاليف الوصفات بناءً على كميات المكونات وأسعار الوحدات لتحليل الربحية الدقيق.',
+    tutorialCustomers: 'إدارة العملاء',
+    tutorialCustomersDesc: 'إضافة وإدارة معلومات العملاء بما في ذلك الأسماء وأرقام الهواتف والعناوين. عرض سجل الطلبات لكل عميل واختيارهم أثناء الدفع في نقطة البيع.',
+    tutorialOrders: 'إدارة الطلبات',
+    tutorialOrdersDesc: 'عرض وإدارة جميع الطلبات بحالات مختلفة (قيد الانتظار، قيد التحضير، جاهز، مكتمل). تتبع أنواع الطلبات (تناول الطعام، الطلبات الخارجية، التوصيل) وطرق الدفع.',
+    tutorialDashboard: 'تحليلات لوحة التحكم',
+    tutorialDashboardDesc: 'مراقبة الأداء في الوقت الفعلي مع مقارنات يومية/أسبوعية/شهرية/سنوية. تحليل ساعات الذروة مع تفاصيل العملاء. عرض اتجاهات المبيعات والطلبات النشطة والمقاييس الرئيسية بلمحة.',
+    tutorialSales: 'تقارير المبيعات',
+    tutorialSalesDesc: 'إنشاء تقارير مبيعات تفصيلية حسب نطاق التاريخ أو الفرع أو الفئة. تصدير البيانات إلى Excel لمزيد من التحليل. تتبع اتجاهات الإيرادات وتحديد العناصر الأكثر مبيعاً.',
+    tutorialProfitability: 'تحليل الربحية',
+    tutorialProfitabilityDesc: 'تحليل هوامش الربح وهياكل التكلفة واستراتيجيات التسعير. مقارنة ربحية عناصر القائمة وتحديد فرص تحسين التكلفة ونمو الإيرادات.',
+    tutorialForecasting: 'التنبؤ بالطلب',
+    tutorialForecastingDesc: 'استخدام التنبؤ المدعوم بالذكاء الاصطناعي للتنبؤ باتجاهات المبيعات المستقبلية. خطط لمشتريات المخزون وجدولة الموظفين بناءً على أنماط الطلب المتوقعة.',
+    tutorialInvoices: 'فواتير هيئة الزكاة',
+    tutorialInvoicesDesc: 'عرض جميع الفواتير الثنائية اللغة (عربي/إنجليزي) المتوافقة مع هيئة الزكاة. البحث برقم الفاتورة أو اسم العميل. تنزيل نسخ PDF مع رموز QR للتحقق.',
+    tutorialFinancial: 'التقارير المالية',
+    tutorialFinancialDesc: 'إنشاء بيانات مالية شاملة بما في ذلك بيانات الدخل وتقارير المصروفات. التصدير إلى PDF لأغراض المحاسبة والامتثال التنظيمي.',
+    tutorialStep1: 'قم بإعداد معلومات مطعمك في الإعدادات (اسم المطعم، الرقم الضريبي، تفاصيل الاتصال)',
+    tutorialStep2: 'أضف عناصر المخزون بأسعار الوحدات والكميات',
+    tutorialStep3: 'إنشاء عناصر القائمة وربطها بالوصفات لتتبع التكلفة',
+    tutorialStep4: 'أضف العملاء أو استخدم خيار الدخول المباشر للمبيعات السريعة',
+    tutorialStep5: 'ابدأ البيع من خلال نقطة البيع وراقب التحليلات على لوحة التحكم',
+    
+    // Shop
+    shop: 'المتجر',
+    shopExpenses: 'مصاريف المتجر',
+    salaries: 'الرواتب',
+    salary: 'راتب',
+    employeeName: 'اسم الموظف',
+    position: 'المنصب',
+    amount: 'المبلغ',
+    paymentDate: 'تاريخ الدفع',
+    addSalary: 'إضافة راتب',
+    editSalary: 'تعديل راتب',
+    shopBills: 'فواتير المتجر',
+    billType: 'نوع الفاتورة',
+    rent: 'إيجار',
+    electricity: 'كهرباء',
+    water: 'ماء',
+    gas: 'غاز',
+    other: 'أخرى',
+    addBill: 'إضافة فاتورة',
+    editBill: 'تعديل فاتورة',
+    totalSalaries: 'إجمالي الرواتب',
+    totalBills: 'إجمالي الفواتير',
+    totalShopExpenses: 'إجمالي مصاريف المتجر',
+    monthlyExpenses: 'المصاريف الشهرية',
   },
   
   Chinese: {
@@ -762,6 +939,65 @@ export const translations: Record<Language, Translations> = {
     newCustomer: '新客户',
     existingCustomer: '现有客户',
     selectCustomer: '选择客户',
+    
+    // Tutorial
+    tutorial: '教程',
+    tutorialSubtitle: '学习如何使用餐厅管理系统的所有功能',
+    tutorialGettingStarted: '入门指南',
+    tutorialPOS: '收银系统(POS)',
+    tutorialPOSDesc: '导航到收银系统创建新的销售交易。添加菜单项目，选择支付方式（现金/ATM），选择客户（或散客），完成销售。系统自动生成ZATCA合规发票。',
+    tutorialInventory: '库存管理',
+    tutorialInventoryDesc: '添加和跟踪库存项目的数量和单价。使用Excel导入/导出进行批量管理。监控库存水平并接收低库存警报。',
+    tutorialMenu: '菜单管理',
+    tutorialMenuDesc: '创建含增值税的菜单项（15%沙特增值税）。设置基本价格，应用折扣，并链接到食谱以自动计算成本。将项目标记为可用或不可用。',
+    tutorialRecipes: '食谱管理',
+    tutorialRecipesDesc: '通过链接库存中的配料创建食谱。系统根据配料数量和单价自动计算食谱成本，以进行准确的盈利分析。',
+    tutorialCustomers: '客户管理',
+    tutorialCustomersDesc: '添加和管理客户信息，包括姓名、电话号码和地址。查看每个客户的订单历史记录，并在收银结账时选择他们。',
+    tutorialOrders: '订单管理',
+    tutorialOrdersDesc: '查看和管理所有订单的不同状态（待处理、准备中、就绪、已完成）。跟踪订单类型（堂食、外卖、配送）和支付方式。',
+    tutorialDashboard: '仪表板分析',
+    tutorialDashboardDesc: '使用日/周/月/年比较监控实时性能。分析高峰时段并深入了解客户详情。一目了然地查看销售趋势、活跃订单和关键指标。',
+    tutorialSales: '销售报告',
+    tutorialSalesDesc: '按日期范围、分店或类别生成详细的销售报告。将数据导出到Excel进行进一步分析。跟踪收入趋势并识别畅销商品。',
+    tutorialProfitability: '盈利能力分析',
+    tutorialProfitabilityDesc: '分析利润率、成本结构和定价策略。比较菜单项盈利能力，确定成本优化和收入增长的机会。',
+    tutorialForecasting: '需求预测',
+    tutorialForecastingDesc: '使用AI驱动的预测来预测未来的销售趋势。根据预测的需求模式计划库存采购和员工调度。',
+    tutorialInvoices: 'ZATCA发票',
+    tutorialInvoicesDesc: '查看所有符合ZATCA的双语发票（阿拉伯语/英语）。按发票号或客户名称搜索。下载带有二维码验证的PDF副本。',
+    tutorialFinancial: '财务报告',
+    tutorialFinancialDesc: '生成包括损益表和费用报告在内的综合财务报表。导出为PDF用于会计和法规合规。',
+    tutorialStep1: '在设置中设置餐厅信息（餐厅名称、税号、联系方式）',
+    tutorialStep2: '添加库存项目及单价和数量',
+    tutorialStep3: '创建菜单项并将其链接到食谱以进行成本跟踪',
+    tutorialStep4: '添加客户或使用散客选项进行快速销售',
+    tutorialStep5: '通过收银系统开始销售并在仪表板上监控分析',
+    
+    // Shop
+    shop: '商店',
+    shopExpenses: '商店费用',
+    salaries: '薪资',
+    salary: '工资',
+    employeeName: '员工姓名',
+    position: '职位',
+    amount: '金额',
+    paymentDate: '支付日期',
+    addSalary: '添加工资',
+    editSalary: '编辑工资',
+    shopBills: '商店账单',
+    billType: '账单类型',
+    rent: '租金',
+    electricity: '电费',
+    water: '水费',
+    gas: '燃气费',
+    other: '其他',
+    addBill: '添加账单',
+    editBill: '编辑账单',
+    totalSalaries: '总薪资',
+    totalBills: '总账单',
+    totalShopExpenses: '总商店费用',
+    monthlyExpenses: '月度费用',
   },
   
   German: {
@@ -952,6 +1188,65 @@ export const translations: Record<Language, Translations> = {
     newCustomer: 'Neuer Kunde',
     existingCustomer: 'Bestehender Kunde',
     selectCustomer: 'Kunde auswählen',
+    
+    // Tutorial
+    tutorial: 'Tutorial',
+    tutorialSubtitle: 'Lernen Sie alle Funktionen des Restaurantmanagementsystems kennen',
+    tutorialGettingStarted: 'Erste Schritte',
+    tutorialPOS: 'Kassensystem (POS)',
+    tutorialPOSDesc: 'Navigieren Sie zum Kassensystem, um neue Verkaufstransaktionen zu erstellen. Fügen Sie Menüpunkte hinzu, wählen Sie die Zahlungsmethode (Bar/ATM), wählen Sie Kunde (oder Laufkundschaft), und schließen Sie den Verkauf ab. ZATCA-konforme Rechnungen werden automatisch generiert.',
+    tutorialInventory: 'Bestandsverwaltung',
+    tutorialInventoryDesc: 'Hinzufügen und Nachverfolgen von Inventarartikeln mit Mengen und Einzelpreisen. Excel-Import/-Export für Massenverwaltung verwenden. Bestandsniveaus überwachen und Niedrigbestandswarnungen erhalten.',
+    tutorialMenu: 'Menüverwaltung',
+    tutorialMenuDesc: 'Menüpunkte mit MwSt.-inklusiven Preisen erstellen (15% saudi MwSt.). Basispreise festlegen, Rabatte anwenden und mit Rezepten verknüpfen für automatische Kostenberechnung. Artikel als verfügbar oder nicht verfügbar markieren.',
+    tutorialRecipes: 'Rezeptverwaltung',
+    tutorialRecipesDesc: 'Rezepte erstellen durch Verknüpfung von Zutaten aus dem Inventar. System berechnet automatisch Rezeptkosten basierend auf Zutatenmengen und Einzelpreisen für genaue Rentabilitätsanalyse.',
+    tutorialCustomers: 'Kundenverwaltung',
+    tutorialCustomersDesc: 'Kundeninformationen hinzufügen und verwalten, einschließlich Namen, Telefonnummern und Adressen. Bestellhistorie für jeden Kunden ansehen und während des POS-Checkouts auswählen.',
+    tutorialOrders: 'Bestellverwaltung',
+    tutorialOrdersDesc: 'Alle Bestellungen mit verschiedenen Status anzeigen und verwalten (Ausstehend, In Vorbereitung, Bereit, Abgeschlossen). Bestelltypen (Vor-Ort, Zum Mitnehmen, Lieferung) und Zahlungsmethoden nachverfolgen.',
+    tutorialDashboard: 'Dashboard-Analytik',
+    tutorialDashboardDesc: 'Echtzeitleistung mit Tag/Woche/Monat/Jahr-Vergleichen überwachen. Stoßzeiten mit Kundendetails analysieren. Verkaufstrends, aktive Bestellungen und Schlüsselkennzahlen auf einen Blick anzeigen.',
+    tutorialSales: 'Verkaufsberichte',
+    tutorialSalesDesc: 'Detaillierte Verkaufsberichte nach Datumsbereich, Filiale oder Kategorie generieren. Daten zur weiteren Analyse nach Excel exportieren. Umsatztrends verfolgen und meistverkaufte Artikel identifizieren.',
+    tutorialProfitability: 'Rentabilitätsanalyse',
+    tutorialProfitabilityDesc: 'Gewinnmargen, Kostenstrukturen und Preisstrategien analysieren. Rentabilität von Menüpunkten vergleichen und Möglichkeiten zur Kostenoptimierung und Umsatzsteigerung identifizieren.',
+    tutorialForecasting: 'Nachfrageprognose',
+    tutorialForecastingDesc: 'KI-gestützte Prognosen nutzen, um zukünftige Verkaufstrends vorherzusagen. Lagereinkäufe und Personalplanung basierend auf vorhergesagten Nachfragemustern planen.',
+    tutorialInvoices: 'ZATCA-Rechnungen',
+    tutorialInvoicesDesc: 'Alle ZATCA-konformen zweisprachigen Rechnungen (Arabisch/Englisch) anzeigen. Nach Rechnungsnummer oder Kundenname suchen. PDF-Kopien mit QR-Codes zur Überprüfung herunterladen.',
+    tutorialFinancial: 'Finanzberichte',
+    tutorialFinancialDesc: 'Umfassende Finanzberichte einschließlich Gewinn- und Verlustrechnungen und Ausgabenberichten generieren. Als PDF für Buchhaltungszwecke und behördliche Compliance exportieren.',
+    tutorialStep1: 'Restaurantinformationen in Einstellungen einrichten (Restaurantname, Steuernummer, Kontaktdaten)',
+    tutorialStep2: 'Inventarartikel mit Einzelpreisen und Mengen hinzufügen',
+    tutorialStep3: 'Menüpunkte erstellen und mit Rezepten verknüpfen für Kostenverfolgung',
+    tutorialStep4: 'Kunden hinzufügen oder Laufkundschaft-Option für schnelle Verkäufe verwenden',
+    tutorialStep5: 'Über Kassensystem verkaufen und Analytik im Dashboard überwachen',
+    
+    // Shop
+    shop: 'Geschäft',
+    shopExpenses: 'Geschäftsausgaben',
+    salaries: 'Gehälter',
+    salary: 'Gehalt',
+    employeeName: 'Mitarbeitername',
+    position: 'Position',
+    amount: 'Betrag',
+    paymentDate: 'Zahlungsdatum',
+    addSalary: 'Gehalt hinzufügen',
+    editSalary: 'Gehalt bearbeiten',
+    shopBills: 'Geschäftsrechnungen',
+    billType: 'Rechnungstyp',
+    rent: 'Miete',
+    electricity: 'Strom',
+    water: 'Wasser',
+    gas: 'Gas',
+    other: 'Sonstige',
+    addBill: 'Rechnung hinzufügen',
+    editBill: 'Rechnung bearbeiten',
+    totalSalaries: 'Gesamtgehälter',
+    totalBills: 'Gesamtrechnungen',
+    totalShopExpenses: 'Gesamtgeschäftsausgaben',
+    monthlyExpenses: 'Monatliche Ausgaben',
   },
   
   Hindi: {
@@ -1142,6 +1437,65 @@ export const translations: Record<Language, Translations> = {
     newCustomer: 'नया ग्राहक',
     existingCustomer: 'मौजूदा ग्राहक',
     selectCustomer: 'ग्राहक चुनें',
+    
+    // Tutorial
+    tutorial: 'ट्यूटोरियल',
+    tutorialSubtitle: 'रेस्तरां प्रबंधन प्रणाली की सभी सुविधाओं का उपयोग करना सीखें',
+    tutorialGettingStarted: 'शुरुआत करना',
+    tutorialPOS: 'पॉइंट ऑफ सेल (POS)',
+    tutorialPOSDesc: 'नए बिक्री लेनदेन बनाने के लिए POS पर जाएं। अपने मेनू से आइटम जोड़ें, भुगतान विधि चुनें (नकद/एटीएम), ग्राहक चुनें (या वॉक-इन), और बिक्री पूरी करें। ZATCA-अनुरूप चालान स्वचालित रूप से उत्पन्न होते हैं।',
+    tutorialInventory: 'इन्वेंटरी प्रबंधन',
+    tutorialInventoryDesc: 'मात्रा और इकाई कीमतों के साथ इन्वेंटरी आइटम जोड़ें और ट्रैक करें। थोक प्रबंधन के लिए Excel आयात/निर्यात का उपयोग करें। स्टॉक स्तरों की निगरानी करें और कम स्टॉक चेतावनी प्राप्त करें।',
+    tutorialMenu: 'मेनू प्रबंधन',
+    tutorialMenuDesc: 'वैट-समावेशी मूल्य निर्धारण (15% सऊदी वैट) के साथ मेनू आइटम बनाएं। आधार मूल्य सेट करें, छूट लागू करें, और स्वचालित लागत गणना के लिए व्यंजनों से लिंक करें। आइटम को उपलब्ध या अनुपलब्ध के रूप में चिह्नित करें।',
+    tutorialRecipes: 'व्यंजन विधि प्रबंधन',
+    tutorialRecipesDesc: 'इन्वेंटरी से सामग्री लिंक करके व्यंजन बनाएं। सटीक लाभप्रदता विश्लेषण के लिए सामग्री मात्रा और इकाई कीमतों के आधार पर सिस्टम स्वचालित रूप से व्यंजन लागत की गणना करता है।',
+    tutorialCustomers: 'ग्राहक प्रबंधन',
+    tutorialCustomersDesc: 'नाम, फोन नंबर और पते सहित ग्राहक जानकारी जोड़ें और प्रबंधित करें। प्रत्येक ग्राहक के लिए ऑर्डर इतिहास देखें और POS चेकआउट के दौरान उन्हें चुनें।',
+    tutorialOrders: 'ऑर्डर प्रबंधन',
+    tutorialOrdersDesc: 'विभिन्न स्थितियों (लंबित, तैयारी में, तैयार, पूर्ण) के साथ सभी ऑर्डर देखें और प्रबंधित करें। ऑर्डर प्रकार (डाइन-इन, टेकअवे, डिलीवरी) और भुगतान विधियों को ट्रैक करें।',
+    tutorialDashboard: 'डैशबोर्ड एनालिटिक्स',
+    tutorialDashboardDesc: 'DoD/WoW/MoM/YoY तुलनाओं के साथ वास्तविक समय प्रदर्शन की निगरानी करें। ग्राहक ड्रिल-डाउन के साथ चरम घंटों का विश्लेषण करें। एक नज़र में बिक्री रुझान, सक्रिय ऑर्डर और प्रमुख मैट्रिक्स देखें।',
+    tutorialSales: 'बिक्री रिपोर्ट',
+    tutorialSalesDesc: 'दिनांक सीमा, शाखा या श्रेणी के अनुसार विस्तृत बिक्री रिपोर्ट उत्पन्न करें। आगे के विश्लेषण के लिए डेटा को Excel में निर्यात करें। राजस्व रुझानों को ट्रैक करें और शीर्ष बिकने वाले आइटम की पहचान करें।',
+    tutorialProfitability: 'लाभप्रदता विश्लेषण',
+    tutorialProfitabilityDesc: 'लाभ मार्जिन, लागत संरचनाओं और मूल्य निर्धारण रणनीतियों का विश्लेषण करें। मेनू आइटम लाभप्रदता की तुलना करें और लागत अनुकूलन और राजस्व वृद्धि के अवसरों की पहचान करें।',
+    tutorialForecasting: 'मांग पूर्वानुमान',
+    tutorialForecastingDesc: 'भविष्य की बिक्री प्रवृत्तियों की भविष्यवाणी करने के लिए AI-संचालित पूर्वानुमान का उपयोग करें। पूर्वानुमानित मांग पैटर्न के आधार पर इन्वेंटरी खरीद और स्टाफ शेड्यूलिंग की योजना बनाएं।',
+    tutorialInvoices: 'ZATCA चालान',
+    tutorialInvoicesDesc: 'सभी ZATCA-अनुरूप द्विभाषी चालान (अरबी/अंग्रेजी) देखें। चालान संख्या या ग्राहक नाम से खोजें। सत्यापन के लिए QR कोड के साथ PDF प्रतियां डाउनलोड करें।',
+    tutorialFinancial: 'वित्तीय रिपोर्ट',
+    tutorialFinancialDesc: 'आय विवरण और व्यय रिपोर्ट सहित व्यापक वित्तीय विवरण उत्पन्न करें। लेखा उद्देश्यों और नियामक अनुपालन के लिए PDF में निर्यात करें।',
+    tutorialStep1: 'सेटिंग्स में अपनी रेस्तरां जानकारी सेट अप करें (रेस्तरां का नाम, वैट नंबर, संपर्क विवरण)',
+    tutorialStep2: 'इकाई कीमतों और मात्राओं के साथ इन्वेंटरी आइटम जोड़ें',
+    tutorialStep3: 'लागत ट्रैकिंग के लिए मेनू आइटम बनाएं और उन्हें व्यंजनों से लिंक करें',
+    tutorialStep4: 'त्वरित बिक्री के लिए ग्राहक जोड़ें या वॉक-इन विकल्प का उपयोग करें',
+    tutorialStep5: 'POS के माध्यम से बिक्री शुरू करें और डैशबोर्ड पर एनालिटिक्स की निगरानी करें',
+    
+    // Shop
+    shop: 'दुकान',
+    shopExpenses: 'दुकान व्यय',
+    salaries: 'वेतन',
+    salary: 'वेतन',
+    employeeName: 'कर्मचारी का नाम',
+    position: 'पद',
+    amount: 'राशि',
+    paymentDate: 'भुगतान तिथि',
+    addSalary: 'वेतन जोड़ें',
+    editSalary: 'वेतन संपादित करें',
+    shopBills: 'दुकान बिल',
+    billType: 'बिल प्रकार',
+    rent: 'किराया',
+    electricity: 'बिजली',
+    water: 'पानी',
+    gas: 'गैस',
+    other: 'अन्य',
+    addBill: 'बिल जोड़ें',
+    editBill: 'बिल संपादित करें',
+    totalSalaries: 'कुल वेतन',
+    totalBills: 'कुल बिल',
+    totalShopExpenses: 'कुल दुकान व्यय',
+    monthlyExpenses: 'मासिक व्यय',
   },
   
   Urdu: {
@@ -1332,6 +1686,65 @@ export const translations: Record<Language, Translations> = {
     newCustomer: 'نیا گاہک',
     existingCustomer: 'موجودہ گاہک',
     selectCustomer: 'گاہک منتخب کریں',
+    
+    // Tutorial
+    tutorial: 'ٹیوٹوریل',
+    tutorialSubtitle: 'ریستوران مینجمنٹ سسٹم کی تمام خصوصیات استعمال کرنا سیکھیں',
+    tutorialGettingStarted: 'شروع کرنا',
+    tutorialPOS: 'پوائنٹ آف سیل (POS)',
+    tutorialPOSDesc: 'نئے فروخت لین دین بنانے کے لیے POS پر جائیں۔ اپنے مینو سے اشیاء شامل کریں، ادائیگی کا طریقہ منتخب کریں (نقد/ATM)، گاہک منتخب کریں (یا واک-ان)، اور فروخت مکمل کریں۔ ZATCA کے مطابق رسیدیں خودکار طور پر تیار ہوتی ہیں۔',
+    tutorialInventory: 'انوینٹری مینجمنٹ',
+    tutorialInventoryDesc: 'مقدار اور یونٹ کی قیمتوں کے ساتھ انوینٹری اشیاء شامل اور ٹریک کریں۔ بڑی تعداد میں انتظام کے لیے Excel امپورٹ/ایکسپورٹ استعمال کریں۔ اسٹاک کی سطح کی نگرانی کریں اور کم اسٹاک کی انتباہات حاصل کریں۔',
+    tutorialMenu: 'مینو مینجمنٹ',
+    tutorialMenuDesc: 'VAT سمیت قیمتوں کے ساتھ مینو آئٹمز بنائیں (15% سعودی VAT)۔ بنیادی قیمتیں مقرر کریں، رعایتیں لاگو کریں، اور خودکار لاگت کی گنتی کے لیے ترکیبوں سے منسلک کریں۔ اشیاء کو دستیاب یا غیر دستیاب کے طور پر نشان زد کریں۔',
+    tutorialRecipes: 'ترکیب مینجمنٹ',
+    tutorialRecipesDesc: 'انوینٹری سے اجزاء منسلک کرکے ترکیبیں بنائیں۔ درست منافع کے تجزیے کے لیے اجزاء کی مقدار اور یونٹ کی قیمتوں کی بنیاد پر سسٹم خودکار طور پر ترکیب کی لاگت کا حساب لگاتا ہے۔',
+    tutorialCustomers: 'گاہک مینجمنٹ',
+    tutorialCustomersDesc: 'نام، فون نمبر اور پتے سمیت گاہک کی معلومات شامل اور منظم کریں۔ ہر گاہک کے لیے آرڈر کی تاریخ دیکھیں اور POS چیک آؤٹ کے دوران انہیں منتخب کریں۔',
+    tutorialOrders: 'آرڈر مینجمنٹ',
+    tutorialOrdersDesc: 'مختلف حیثیتوں (زیر التوا، تیاری میں، تیار، مکمل) کے ساتھ تمام آرڈرز دیکھیں اور منظم کریں۔ آرڈر کی اقسام (ڈائن-ان، ٹیک اوے، ڈیلیوری) اور ادائیگی کے طریقوں کو ٹریک کریں۔',
+    tutorialDashboard: 'ڈیش بورڈ تجزیات',
+    tutorialDashboardDesc: 'DoD/WoW/MoM/YoY موازنہ کے ساتھ حقیقی وقت کی کارکردگی کی نگرانی کریں۔ گاہکوں کی تفصیلات کے ساتھ چوٹی کے اوقات کا تجزیہ کریں۔ ایک نظر میں فروخت کے رجحانات، فعال آرڈرز اور اہم میٹرکس دیکھیں۔',
+    tutorialSales: 'فروخت کی رپورٹس',
+    tutorialSalesDesc: 'تاریخ کی حد، شاخ یا زمرے کے مطابق تفصیلی فروخت کی رپورٹس تیار کریں۔ مزید تجزیہ کے لیے ڈیٹا کو Excel میں ایکسپورٹ کریں۔ آمدنی کے رجحانات کو ٹریک کریں اور سب سے زیادہ فروخت ہونے والی اشیاء کی شناخت کریں۔',
+    tutorialProfitability: 'منافع کا تجزیہ',
+    tutorialProfitabilityDesc: 'منافع کے مارجن، لاگت کے ڈھانچے اور قیمتوں کی حکمت عملی کا تجزیہ کریں۔ مینو آئٹمز کی منافع بخشی کا موازنہ کریں اور لاگت کی اصلاح اور آمدنی میں اضافے کے مواقع کی شناخت کریں۔',
+    tutorialForecasting: 'طلب کی پیشن گوئی',
+    tutorialForecastingDesc: 'مستقبل کی فروخت کے رجحانات کی پیشن گوئی کرنے کے لیے AI سے چلنے والی پیشن گوئی استعمال کریں۔ متوقع طلب کے نمونوں کی بنیاد پر انوینٹری کی خریداری اور عملے کی شیڈولنگ کی منصوبہ بندی کریں۔',
+    tutorialInvoices: 'ZATCA رسیدیں',
+    tutorialInvoicesDesc: 'تمام ZATCA کے مطابق دو لسانی رسیدیں (عربی/انگریزی) دیکھیں۔ رسید نمبر یا گاہک کے نام سے تلاش کریں۔ تصدیق کے لیے QR کوڈز کے ساتھ PDF کاپیاں ڈاؤن لوڈ کریں۔',
+    tutorialFinancial: 'مالی رپورٹس',
+    tutorialFinancialDesc: 'آمدنی کے بیانات اور اخراجات کی رپورٹوں سمیت جامع مالیاتی بیانات تیار کریں۔ اکاؤنٹنگ کے مقاصد اور ریگولیٹری تعمیل کے لیے PDF میں ایکسپورٹ کریں۔',
+    tutorialStep1: 'سیٹنگز میں اپنے ریستوران کی معلومات ترتیب دیں (ریستوران کا نام، VAT نمبر، رابطے کی تفصیلات)',
+    tutorialStep2: 'یونٹ کی قیمتوں اور مقداروں کے ساتھ انوینٹری آئٹمز شامل کریں',
+    tutorialStep3: 'لاگت کی ٹریکنگ کے لیے مینو آئٹمز بنائیں اور انہیں ترکیبوں سے منسلک کریں',
+    tutorialStep4: 'تیز فروخت کے لیے گاہک شامل کریں یا واک-ان آپشن استعمال کریں',
+    tutorialStep5: 'POS کے ذریعے فروخت شروع کریں اور ڈیش بورڈ پر تجزیات کی نگرانی کریں',
+    
+    // Shop
+    shop: 'دکان',
+    shopExpenses: 'دکان کے اخراجات',
+    salaries: 'تنخواہیں',
+    salary: 'تنخواہ',
+    employeeName: 'ملازم کا نام',
+    position: 'عہدہ',
+    amount: 'رقم',
+    paymentDate: 'ادائیگی کی تاریخ',
+    addSalary: 'تنخواہ شامل کریں',
+    editSalary: 'تنخواہ میں ترمیم کریں',
+    shopBills: 'دکان کے بل',
+    billType: 'بل کی قسم',
+    rent: 'کرایہ',
+    electricity: 'بجلی',
+    water: 'پانی',
+    gas: 'گیس',
+    other: 'دیگر',
+    addBill: 'بل شامل کریں',
+    editBill: 'بل میں ترمیم کریں',
+    totalSalaries: 'کل تنخواہیں',
+    totalBills: 'کل بل',
+    totalShopExpenses: 'کل دکان کے اخراجات',
+    monthlyExpenses: 'ماہانہ اخراجات',
   },
   
   Bengali: {
@@ -1522,6 +1935,65 @@ export const translations: Record<Language, Translations> = {
     newCustomer: 'নতুন গ্রাহক',
     existingCustomer: 'বিদ্যমান গ্রাহক',
     selectCustomer: 'গ্রাহক নির্বাচন করুন',
+    
+    // Tutorial
+    tutorial: 'টিউটোরিয়াল',
+    tutorialSubtitle: 'রেস্তোরাঁ ব্যবস্থাপনা সিস্টেমের সমস্ত বৈশিষ্ট্য কীভাবে ব্যবহার করবেন তা শিখুন',
+    tutorialGettingStarted: 'শুরু করা',
+    tutorialPOS: 'পয়েন্ট অফ সেল (POS)',
+    tutorialPOSDesc: 'নতুন বিক্রয় লেনদেন তৈরি করতে POS-এ নেভিগেট করুন। আপনার মেনু থেকে আইটেম যোগ করুন, পেমেন্ট পদ্ধতি নির্বাচন করুন (নগদ/ATM), গ্রাহক নির্বাচন করুন (বা ওয়াক-ইন), এবং বিক্রয় সম্পূর্ণ করুন। ZATCA-অনুগত চালান স্বয়ংক্রিয়ভাবে তৈরি হয়।',
+    tutorialInventory: 'ইনভেন্টরি ব্যবস্থাপনা',
+    tutorialInventoryDesc: 'পরিমাণ এবং ইউনিট মূল্য সহ ইনভেন্টরি আইটেম যোগ এবং ট্র্যাক করুন। বাল্ক ম্যানেজমেন্টের জন্য Excel আমদানি/রপ্তানি ব্যবহার করুন। স্টক লেভেল মনিটর করুন এবং কম স্টক সতর্কতা পান।',
+    tutorialMenu: 'মেনু ব্যবস্থাপনা',
+    tutorialMenuDesc: 'VAT-সহ মূল্য নির্ধারণের সাথে মেনু আইটেম তৈরি করুন (15% সৌদি VAT)। বেস মূল্য সেট করুন, ছাড় প্রয়োগ করুন, এবং স্বয়ংক্রিয় খরচ গণনার জন্য রেসিপির সাথে লিঙ্ক করুন। আইটেমগুলিকে উপলব্ধ বা অনুপলব্ধ হিসাবে চিহ্নিত করুন।',
+    tutorialRecipes: 'রেসিপি ব্যবস্থাপনা',
+    tutorialRecipesDesc: 'ইনভেন্টরি থেকে উপাদান লিঙ্ক করে রেসিপি তৈরি করুন। নির্ভুল লাভজনকতা বিশ্লেষণের জন্য উপাদানের পরিমাণ এবং ইউনিট মূল্যের উপর ভিত্তি করে সিস্টেম স্বয়ংক্রিয়ভাবে রেসিপি খরচ গণনা করে।',
+    tutorialCustomers: 'গ্রাহক ব্যবস্থাপনা',
+    tutorialCustomersDesc: 'নাম, ফোন নম্বর এবং ঠিকানা সহ গ্রাহক তথ্য যোগ এবং পরিচালনা করুন। প্রতিটি গ্রাহকের জন্য অর্ডার ইতিহাস দেখুন এবং POS চেকআউটের সময় তাদের নির্বাচন করুন।',
+    tutorialOrders: 'অর্ডার ব্যবস্থাপনা',
+    tutorialOrdersDesc: 'বিভিন্ন স্ট্যাটাস (মুলতবি, প্রস্তুতিতে, প্রস্তুত, সম্পূর্ণ) সহ সমস্ত অর্ডার দেখুন এবং পরিচালনা করুন। অর্ডারের ধরন (ডাইন-ইন, টেকঅ্যাওয়ে, ডেলিভারি) এবং পেমেন্ট পদ্ধতি ট্র্যাক করুন।',
+    tutorialDashboard: 'ড্যাশবোর্ড বিশ্লেষণ',
+    tutorialDashboardDesc: 'DoD/WoW/MoM/YoY তুলনা সহ রিয়েল-টাইম পারফরম্যান্স মনিটর করুন। গ্রাহক ড্রিল-ডাউন সহ পিক আওয়ার বিশ্লেষণ করুন। এক নজরে বিক্রয় ট্রেন্ড, সক্রিয় অর্ডার এবং মূল মেট্রিক্স দেখুন।',
+    tutorialSales: 'বিক্রয় রিপোর্ট',
+    tutorialSalesDesc: 'তারিখ পরিসীমা, শাখা বা বিভাগ অনুসারে বিস্তারিত বিক্রয় রিপোর্ট তৈরি করুন। আরও বিশ্লেষণের জন্য ডেটা Excel-এ রপ্তানি করুন। রাজস্ব প্রবণতা ট্র্যাক করুন এবং শীর্ষ বিক্রয় আইটেম সনাক্ত করুন।',
+    tutorialProfitability: 'লাভজনকতা বিশ্লেষণ',
+    tutorialProfitabilityDesc: 'লাভ মার্জিন, খরচ কাঠামো এবং মূল্য নির্ধারণ কৌশল বিশ্লেষণ করুন। মেনু আইটেম লাভজনকতা তুলনা করুন এবং খরচ অপ্টিমাইজেশন এবং রাজস্ব বৃদ্ধির সুযোগ সনাক্ত করুন।',
+    tutorialForecasting: 'চাহিদা পূর্বাভাস',
+    tutorialForecastingDesc: 'ভবিষ্যতের বিক্রয় প্রবণতা পূর্বাভাস করতে AI-চালিত পূর্বাভাস ব্যবহার করুন। পূর্বাভাসিত চাহিদা প্যাটার্নের উপর ভিত্তি করে ইনভেন্টরি ক্রয় এবং স্টাফ শিডিউলিং পরিকল্পনা করুন।',
+    tutorialInvoices: 'ZATCA চালান',
+    tutorialInvoicesDesc: 'সমস্ত ZATCA-অনুগত দ্বিভাষিক চালান (আরবি/ইংরেজি) দেখুন। চালান নম্বর বা গ্রাহক নাম দ্বারা অনুসন্ধান করুন। যাচাইয়ের জন্য QR কোড সহ PDF কপি ডাউনলোড করুন।',
+    tutorialFinancial: 'আর্থিক রিপোর্ট',
+    tutorialFinancialDesc: 'আয় বিবরণী এবং ব্যয় রিপোর্ট সহ ব্যাপক আর্থিক বিবৃতি তৈরি করুন। অ্যাকাউন্টিং উদ্দেশ্য এবং নিয়ন্ত্রক সম্মতির জন্য PDF-এ রপ্তানি করুন।',
+    tutorialStep1: 'সেটিংসে আপনার রেস্তোরাঁর তথ্য সেট আপ করুন (রেস্তোরাঁর নাম, VAT নম্বর, যোগাযোগের বিবরণ)',
+    tutorialStep2: 'ইউনিট মূল্য এবং পরিমাণ সহ ইনভেন্টরি আইটেম যোগ করুন',
+    tutorialStep3: 'খরচ ট্র্যাকিংয়ের জন্য মেনু আইটেম তৈরি করুন এবং তাদের রেসিপির সাথে লিঙ্ক করুন',
+    tutorialStep4: 'দ্রুত বিক্রয়ের জন্য গ্রাহক যোগ করুন বা ওয়াক-ইন বিকল্প ব্যবহার করুন',
+    tutorialStep5: 'POS-এর মাধ্যমে বিক্রয় শুরু করুন এবং ড্যাশবোর্ডে বিশ্লেষণ মনিটর করুন',
+    
+    // Shop
+    shop: 'দোকান',
+    shopExpenses: 'দোকান খরচ',
+    salaries: 'বেতন',
+    salary: 'বেতন',
+    employeeName: 'কর্মচারীর নাম',
+    position: 'পদ',
+    amount: 'পরিমাণ',
+    paymentDate: 'পেমেন্ট তারিখ',
+    addSalary: 'বেতন যোগ করুন',
+    editSalary: 'বেতন সম্পাদনা করুন',
+    shopBills: 'দোকান বিল',
+    billType: 'বিল প্রকার',
+    rent: 'ভাড়া',
+    electricity: 'বিদ্যুৎ',
+    water: 'পানি',
+    gas: 'গ্যাস',
+    other: 'অন্যান্য',
+    addBill: 'বিল যোগ করুন',
+    editBill: 'বিল সম্পাদনা করুন',
+    totalSalaries: 'মোট বেতন',
+    totalBills: 'মোট বিল',
+    totalShopExpenses: 'মোট দোকান খরচ',
+    monthlyExpenses: 'মাসিক খরচ',
   },
 };
 
