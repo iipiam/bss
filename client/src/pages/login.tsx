@@ -36,7 +36,7 @@ export default function Login() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,13 +45,13 @@ export default function Login() {
     try {
       await login(loginUsername, loginPassword);
       toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
+        title: t.welcomeBack,
+        description: t.loginSuccessDesc,
       });
     } catch (error: any) {
       toast({
-        title: "Login failed",
-        description: error.message || "Invalid username or password",
+        title: t.loginFailed,
+        description: error.message || t.invalidCredentials,
         variant: "destructive",
       });
     } finally {
@@ -83,24 +83,24 @@ export default function Login() {
     },
     onSuccess: async () => {
       toast({
-        title: "Account created!",
-        description: "Please sign in with your credentials.",
+        title: t.accountCreated,
+        description: t.accountCreatedDesc,
       });
       // Auto-login after signup
       try {
         await login(signupUsername, signupPassword);
       } catch (error: any) {
         toast({
-          title: "Login failed",
-          description: "Please try logging in manually.",
+          title: t.loginFailed,
+          description: t.accountCreatedDesc,
           variant: "destructive",
         });
       }
     },
     onError: (error: any) => {
       toast({
-        title: "Sign up failed",
-        description: error.message || "Could not create account",
+        title: t.signUpFailed,
+        description: error.message || t.signUpFailedDesc,
         variant: "destructive",
       });
     },
@@ -127,13 +127,13 @@ export default function Login() {
           </div>
           <div>
             <CardTitle className="text-2xl">RestoPOS</CardTitle>
-            <CardDescription>Restaurant management system</CardDescription>
+            <CardDescription>{t.restaurantManagementSystem}</CardDescription>
           </div>
           <div className="flex items-center justify-center gap-2 pt-2">
             <Languages className="h-4 w-4 text-muted-foreground" />
             <Select value={language} onValueChange={(value) => setLanguage(value as Language)}>
               <SelectTrigger className="w-40" data-testid="select-language">
-                <SelectValue placeholder="Select language" />
+                <SelectValue placeholder={t.selectLanguage} />
               </SelectTrigger>
               <SelectContent>
                 {languages.map((lang) => (
@@ -152,18 +152,18 @@ export default function Login() {
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login" data-testid="tab-login">Login</TabsTrigger>
-              <TabsTrigger value="signup" data-testid="tab-signup">Sign Up</TabsTrigger>
+              <TabsTrigger value="login" data-testid="tab-login">{t.login}</TabsTrigger>
+              <TabsTrigger value="signup" data-testid="tab-signup">{t.signup}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login" className="space-y-4">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-username">Username</Label>
+                  <Label htmlFor="login-username">{t.username}</Label>
                   <Input
                     id="login-username"
                     type="text"
-                    placeholder="Enter your username"
+                    placeholder={t.enterUsername}
                     value={loginUsername}
                     onChange={(e) => setLoginUsername(e.target.value)}
                     required
@@ -171,11 +171,11 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
+                  <Label htmlFor="login-password">{t.password}</Label>
                   <Input
                     id="login-password"
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder={t.enterPassword}
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required
@@ -188,16 +188,16 @@ export default function Login() {
                     className="text-sm text-primary hover:underline"
                     data-testid="link-forgot-password"
                   >
-                    Forgot password?
+                    {t.forgotPassword}?
                   </Link>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoggingIn} data-testid="button-login">
                   {isLoggingIn ? (
-                    "Signing in..."
+                    t.signingIn
                   ) : (
                     <>
                       <LogIn className="mr-2 h-4 w-4" />
-                      Sign In
+                      {t.signIn}
                     </>
                   )}
                 </Button>
@@ -207,11 +207,11 @@ export default function Login() {
             <TabsContent value="signup" className="space-y-4">
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
+                  <Label htmlFor="signup-name">{t.fullName}</Label>
                   <Input
                     id="signup-name"
                     type="text"
-                    placeholder="Enter your full name"
+                    placeholder={t.enterFullName}
                     value={signupName}
                     onChange={(e) => setSignupName(e.target.value)}
                     required
@@ -219,11 +219,11 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email">{t.email}</Label>
                   <Input
                     id="signup-email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder={t.enterEmail}
                     value={signupEmail}
                     onChange={(e) => setSignupEmail(e.target.value)}
                     required
@@ -231,24 +231,24 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-commercial-reg">Commercial Registration *</Label>
+                  <Label htmlFor="signup-commercial-reg">{t.commercialRegistration} *</Label>
                   <Input
                     id="signup-commercial-reg"
                     type="text"
-                    placeholder="Saudi Commercial Registration number"
+                    placeholder={t.commercialRegistrationPlaceholder}
                     value={signupCommercialReg}
                     onChange={(e) => setSignupCommercialReg(e.target.value)}
                     required
                     data-testid="input-signup-commercial-reg"
                   />
-                  <p className="text-xs text-muted-foreground">Required for all restaurant businesses in Saudi Arabia</p>
+                  <p className="text-xs text-muted-foreground">{t.commercialRegistrationNote}</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-username">Username</Label>
+                  <Label htmlFor="signup-username">{t.username}</Label>
                   <Input
                     id="signup-username"
                     type="text"
-                    placeholder="Choose a username"
+                    placeholder={t.chooseUsername}
                     value={signupUsername}
                     onChange={(e) => setSignupUsername(e.target.value)}
                     required
@@ -256,11 +256,11 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
+                  <Label htmlFor="signup-password">{t.password}</Label>
                   <Input
                     id="signup-password"
                     type="password"
-                    placeholder="Choose a password"
+                    placeholder={t.choosePassword}
                     value={signupPassword}
                     onChange={(e) => setSignupPassword(e.target.value)}
                     required
@@ -270,7 +270,7 @@ export default function Login() {
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Subscription Plan</Label>
+                  <Label>{t.subscriptionPlan}</Label>
                   <RadioGroup value={subscriptionPlan} onValueChange={setSubscriptionPlan} data-testid="radiogroup-subscription">
                     <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors cursor-pointer ${
                       subscriptionPlan === 'monthly' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
@@ -279,12 +279,12 @@ export default function Login() {
                       <Label htmlFor="monthly" className="flex-1 cursor-pointer">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="font-semibold">Monthly</p>
-                            <p className="text-sm text-muted-foreground">Billed monthly</p>
+                            <p className="font-semibold">{t.monthly}</p>
+                            <p className="text-sm text-muted-foreground">{t.billedMonthly}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold">119.75 SAR</p>
-                            <p className="text-xs text-muted-foreground">per month</p>
+                            <p className="text-xl font-bold">119.75 {t.sar}</p>
+                            <p className="text-xs text-muted-foreground">{t.perMonth}</p>
                           </div>
                         </div>
                       </Label>
@@ -298,16 +298,16 @@ export default function Login() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div>
-                              <p className="font-semibold">Yearly</p>
-                              <p className="text-sm text-muted-foreground">Billed annually</p>
+                              <p className="font-semibold">{t.yearly}</p>
+                              <p className="text-sm text-muted-foreground">{t.billedYearly}</p>
                             </div>
                             <Badge variant="default" className="bg-green-600 hover:bg-green-700">
-                              Save 17%
+                              {t.save} 17%
                             </Badge>
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold">1,197.50 SAR</p>
-                            <p className="text-xs text-muted-foreground">per year</p>
+                            <p className="text-xl font-bold">1,197.50 {t.sar}</p>
+                            <p className="text-xs text-muted-foreground">{t.perYear}</p>
                           </div>
                         </div>
                       </Label>
@@ -325,11 +325,11 @@ export default function Login() {
                   data-testid="button-signup"
                 >
                   {signupMutation.isPending ? (
-                    "Creating account..."
+                    `${t.loading}...`
                   ) : (
                     <>
                       <UserPlus className="mr-2 h-4 w-4" />
-                      Create Account & Continue to Payment
+                      {t.signup}
                     </>
                   )}
                 </Button>
