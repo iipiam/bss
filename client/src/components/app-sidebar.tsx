@@ -23,6 +23,7 @@ import {
   MessageCircle,
   BookOpen,
   Store,
+  LogOut,
 } from "lucide-react";
 import {
   Sidebar,
@@ -44,12 +45,32 @@ import {
 } from "@/components/ui/dialog";
 import { Link, useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/lib/auth";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export function AppSidebar() {
   const [location] = useLocation();
   const { t } = useLanguage();
+  const { logout } = useAuth();
+  const { toast } = useToast();
   const [helpDialogOpen, setHelpDialogOpen] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: t.logout,
+        description: "You have been logged out successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to logout. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const operations = [
     { title: t.pos, url: "/pos", icon: ShoppingCart, testId: "pos", gradient: "from-emerald-500 to-teal-500" },
@@ -213,6 +234,18 @@ export function AppSidebar() {
                     </div>
                   </DialogContent>
                 </Dialog>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <button
+                  onClick={handleLogout}
+                  data-testid="button-logout"
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover-elevate active-elevate-2 group relative overflow-visible transition-all duration-300"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-rose-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-md" />
+                  <LogOut className="h-4 w-4 relative z-10" />
+                  <span className="relative z-10">{t.logout}</span>
+                </button>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
