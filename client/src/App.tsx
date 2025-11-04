@@ -91,6 +91,17 @@ function AppContent() {
     retry: false,
   });
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Immediately redirect to login page
+      window.location.href = "/";
+    } catch (error) {
+      // Error handling - though user will rarely see this since redirect happens fast
+      console.error("Logout failed:", error);
+    }
+  };
+
   // Adjust layout based on device preference
   const getDeviceStyles = () => {
     switch (device) {
@@ -177,7 +188,7 @@ function AppContent() {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => logout()} data-testid="button-logout">
+                    <DropdownMenuItem onClick={handleLogout} data-testid="button-logout-header">
                       <LogOut className="mr-2 h-4 w-4" />
                       {t.logout}
                     </DropdownMenuItem>

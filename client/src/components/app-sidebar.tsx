@@ -59,10 +59,8 @@ export function AppSidebar() {
   const handleLogout = async () => {
     try {
       await logout();
-      toast({
-        title: t.logout,
-        description: "You have been logged out successfully",
-      });
+      // Immediately redirect to login page
+      window.location.href = "/";
     } catch (error) {
       toast({
         title: "Error",
