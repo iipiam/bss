@@ -282,6 +282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const bill = await storage.createShopBill(data);
       res.status(201).json(bill);
     } catch (error) {
+      console.error("[SHOP] Bill validation error:", error);
       res.status(400).json({ error: "Invalid bill data" });
     }
   });

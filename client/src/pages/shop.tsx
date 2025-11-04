@@ -32,6 +32,7 @@ const billFormSchema = z.object({
   billType: z.string().min(1, "Bill type is required"),
   amount: z.string().min(1, "Amount is required"),
   paymentDate: z.string().min(1, "Payment date is required"),
+  paymentPeriod: z.enum(["weekly", "monthly", "quarterly", "semi-annually", "yearly"]).default("monthly"),
   status: z.enum(["pending", "paid", "overdue"]).default("pending"),
   description: z.string().optional(),
   branchId: z.string().optional(),
@@ -73,6 +74,7 @@ export default function Shop() {
       billType: "rent",
       amount: "",
       paymentDate: new Date().toISOString().split("T")[0],
+      paymentPeriod: "monthly",
       status: "pending",
       description: "",
     },
@@ -144,6 +146,7 @@ export default function Shop() {
         billType: data.billType,
         amount: data.amount,
         paymentDate: new Date(data.paymentDate).toISOString(),
+        paymentPeriod: data.paymentPeriod,
         status: data.status,
       };
       if (data.description && data.description.trim()) {
@@ -232,6 +235,7 @@ export default function Shop() {
       billType: bill.billType,
       amount: bill.amount,
       paymentDate: bill.paymentDate ? new Date(bill.paymentDate).toISOString().split("T")[0] : "",
+      paymentPeriod: bill.paymentPeriod as "weekly" | "monthly" | "quarterly" | "semi-annually" | "yearly",
       status: bill.status as "pending" | "paid" | "overdue",
       description: bill.description || "",
     });
@@ -603,6 +607,30 @@ export default function Shop() {
                               <FormControl>
                                 <Input type="date" {...field} data-testid="input-bill-payment-date" />
                               </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={billForm.control}
+                          name="paymentPeriod"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t.paymentPeriod || "Payment Period"}</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger data-testid="select-payment-period">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="weekly">{t.weekly || "Weekly"}</SelectItem>
+                                  <SelectItem value="monthly">{t.monthly || "Monthly"}</SelectItem>
+                                  <SelectItem value="quarterly">{t.quarterly || "Quarterly (1/4 Year)"}</SelectItem>
+                                  <SelectItem value="semi-annually">{t.semiAnnually || "Semi-Annually (1/2 Year)"}</SelectItem>
+                                  <SelectItem value="yearly">{t.yearly || "Yearly"}</SelectItem>
+                                </SelectContent>
+                              </Select>
                               <FormMessage />
                             </FormItem>
                           )}

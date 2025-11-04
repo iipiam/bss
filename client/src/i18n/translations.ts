@@ -272,6 +272,12 @@ export interface Translations {
   pendingBills: string;
   overdue: string;
   searchBills: string;
+  paymentPeriod: string;
+  weekly: string;
+  monthly: string;
+  quarterly: string;
+  semiAnnually: string;
+  yearly: string;
   noBills: string;
   billAdded: string;
   billUpdated: string;
@@ -553,6 +559,12 @@ export const translations: Record<Language, Translations> = {
     pendingBills: 'Pending Bills',
     overdue: 'Overdue',
     searchBills: 'Search bills by type or description...',
+    paymentPeriod: 'Payment Period',
+    weekly: 'Weekly',
+    monthly: 'Monthly',
+    quarterly: 'Quarterly (1/4 Year)',
+    semiAnnually: 'Semi-Annually (1/2 Year)',
+    yearly: 'Yearly',
     noBills: 'No bills found',
     billAdded: 'Bill added successfully',
     billUpdated: 'Bill updated successfully',
@@ -835,6 +847,12 @@ export const translations: Record<Language, Translations> = {
     pendingBills: 'الفواتير المعلقة',
     overdue: 'متأخر',
     searchBills: 'البحث عن الفواتير حسب النوع أو الوصف...',
+    paymentPeriod: 'فترة الدفع',
+    weekly: 'أسبوعي',
+    monthly: 'شهري',
+    quarterly: 'ربع سنوي (1/4 سنة)',
+    semiAnnually: 'نصف سنوي (1/2 سنة)',
+    yearly: 'سنوي',
     noBills: 'لا توجد فواتير',
     billAdded: 'تمت إضافة الفاتورة بنجاح',
     billUpdated: 'تم تحديث الفاتورة بنجاح',
