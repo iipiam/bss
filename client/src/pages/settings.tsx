@@ -152,6 +152,30 @@ export default function SettingsPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="openingTime">{t.openingTime}</Label>
+                <Input
+                  id="openingTime"
+                  type="time"
+                  value={formData.openingTime || settings?.openingTime || ""}
+                  onChange={(e) => handleChange("openingTime", e.target.value)}
+                  placeholder="09:00"
+                  data-testid="input-opening-time"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="closingTime">{t.closingTime}</Label>
+                <Input
+                  id="closingTime"
+                  type="time"
+                  value={formData.closingTime || settings?.closingTime || ""}
+                  onChange={(e) => handleChange("closingTime", e.target.value)}
+                  placeholder="22:00"
+                  data-testid="input-closing-time"
+                />
+              </div>
             </div>
 
             <div className="pt-4 border-t">

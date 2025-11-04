@@ -127,6 +127,8 @@ export const settings = pgTable("settings", {
   email: text("email").notNull(),
   phone: text("phone").notNull(),
   language: text("language").notNull().default("English"),
+  openingTime: text("opening_time"),
+  closingTime: text("closing_time"),
 });
 
 export const insertSettingsSchema = createInsertSchema(settings).omit({ id: true });

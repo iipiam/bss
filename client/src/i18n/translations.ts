@@ -164,6 +164,8 @@ export interface Translations {
   enterEmail: string;
   enterPhone: string;
   enterAddress: string;
+  openingTime: string;
+  closingTime: string;
   enterDiscount: string;
   
   // Authentication
@@ -451,6 +453,8 @@ export const translations: Record<Language, Translations> = {
     enterEmail: 'info@restaurant.com',
     enterPhone: '+966 XX XXX XXXX',
     enterAddress: 'Enter full address',
+    openingTime: 'Opening Time',
+    closingTime: 'Closing Time',
     enterDiscount: 'Enter discount percentage (0-100)',
     
     // Authentication
@@ -737,6 +741,8 @@ export const translations: Record<Language, Translations> = {
     enterEmail: 'info@restaurant.com',
     enterPhone: '+966 XX XXX XXXX',
     enterAddress: 'أدخل العنوان الكامل',
+    openingTime: 'وقت الفتح',
+    closingTime: 'وقت الإغلاق',
     enterDiscount: 'أدخل نسبة الخصم (0-100)',
     
     // Authentication
@@ -1023,6 +1029,8 @@ export const translations: Record<Language, Translations> = {
     enterEmail: 'info@restaurant.com',
     enterPhone: '+966 XX XXX XXXX',
     enterAddress: '输入完整地址',
+    openingTime: '开业时间',
+    closingTime: '关门时间',
     enterDiscount: '输入折扣百分比 (0-100)',
     
     // Authentication
@@ -1272,6 +1280,8 @@ export const translations: Record<Language, Translations> = {
     enterEmail: 'info@restaurant.com',
     enterPhone: '+966 XX XXX XXXX',
     enterAddress: 'Vollständige Adresse eingeben',
+    openingTime: 'Öffnungszeit',
+    closingTime: 'Schließzeit',
     enterDiscount: 'Rabattanteil eingeben (0-100)',
     
     // Authentication
@@ -1521,6 +1531,8 @@ export const translations: Record<Language, Translations> = {
     enterEmail: 'info@restaurant.com',
     enterPhone: '+966 XX XXX XXXX',
     enterAddress: 'पूरा पता दर्ज करें',
+    openingTime: 'खुलने का समय',
+    closingTime: 'बंद होने का समय',
     enterDiscount: 'छूट प्रतिशत दर्ज करें (0-100)',
     
     // Authentication
@@ -1770,6 +1782,8 @@ export const translations: Record<Language, Translations> = {
     enterEmail: 'info@restaurant.com',
     enterPhone: '+966 XX XXX XXXX',
     enterAddress: 'مکمل پتہ درج کریں',
+    openingTime: 'کھلنے کا وقت',
+    closingTime: 'بند ہونے کا وقت',
     enterDiscount: 'رعایت کا فیصد درج کریں (0-100)',
     
     // Authentication
@@ -2019,6 +2033,8 @@ export const translations: Record<Language, Translations> = {
     enterEmail: 'info@restaurant.com',
     enterPhone: '+966 XX XXX XXXX',
     enterAddress: 'সম্পূর্ণ ঠিকানা লিখুন',
+    openingTime: 'খোলার সময়',
+    closingTime: 'বন্ধ করার সময়',
     enterDiscount: 'ছাড় শতাংশ লিখুন (0-100)',
     
     // Authentication

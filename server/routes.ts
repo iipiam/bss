@@ -226,7 +226,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/shop/salaries", async (req, res) => {
     try {
       console.log("[SALARY] Request body:", JSON.stringify(req.body, null, 2));
-      const data = insertSalarySchema.parse(req.body);
+      // Convert ISO date string to Date object
+      const bodyWithDate = {
+        ...req.body,
+        paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate) : undefined,
+      };
+      const data = insertSalarySchema.parse(bodyWithDate);
       console.log("[SALARY] Parsed data:", JSON.stringify(data, null, 2));
       const salary = await storage.createSalary(data);
       res.status(201).json(salary);
@@ -278,7 +283,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/shop/bills", async (req, res) => {
     try {
-      const data = insertShopBillSchema.parse(req.body);
+      // Convert ISO date string to Date object
+      const bodyWithDate = {
+        ...req.body,
+        paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate) : undefined,
+      };
+      const data = insertShopBillSchema.parse(bodyWithDate);
       const bill = await storage.createShopBill(data);
       res.status(201).json(bill);
     } catch (error) {
