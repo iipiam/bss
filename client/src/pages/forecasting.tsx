@@ -1,184 +1,255 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from "recharts";
-import { Button } from "@/components/ui/button";
-import { TrendingUp, TrendingDown, Calendar } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-
-const historicalData = [
-  { month: "May", actual: 95000, predicted: null },
-  { month: "Jun", actual: 102000, predicted: null },
-  { month: "Jul", actual: 108000, predicted: null },
-  { month: "Aug", actual: 105000, predicted: null },
-  { month: "Sep", actual: 112000, predicted: null },
-  { month: "Oct", actual: 118000, predicted: null },
-  { month: "Nov", actual: null, predicted: 125000 },
-  { month: "Dec", actual: null, predicted: 138000 },
-  { month: "Jan", actual: null, predicted: 142000 },
-];
-
-const demandForecast = [
-  { item: "Margherita Pizza", currentDemand: 245, predictedDemand: 285, trend: "up", change: 16.3 },
-  { item: "Chicken Shawarma", currentDemand: 198, predictedDemand: 215, trend: "up", change: 8.6 },
-  { item: "Beef Burger", currentDemand: 176, predictedDemand: 165, trend: "down", change: -6.3 },
-  { item: "Caesar Salad", currentDemand: 152, predictedDemand: 178, trend: "up", change: 17.1 },
-  { item: "Pepperoni Pizza", currentDemand: 143, predictedDemand: 158, trend: "up", change: 10.5 },
-];
-
-const peakHours = [
-  { hour: "11 AM", orders: 12 },
-  { hour: "12 PM", orders: 28 },
-  { hour: "1 PM", orders: 45 },
-  { hour: "2 PM", orders: 38 },
-  { hour: "3 PM", orders: 18 },
-  { hour: "6 PM", orders: 25 },
-  { hour: "7 PM", orders: 52 },
-  { hour: "8 PM", orders: 48 },
-  { hour: "9 PM", orders: 35 },
-];
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TrendingUp, TrendingDown, Calendar, DollarSign } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useLanguage } from "@/contexts/LanguageContext";
+import type { Transaction } from "@shared/schema";
 
 export default function Forecasting() {
+  const { t } = useLanguage();
+  const [forecastPeriod, setForecastPeriod] = useState("7");
+
+  const { data: transactions = [] } = useQuery<Transaction[]>({
+    queryKey: ["/api/transactions"],
+  });
+
+  // Prepare historical sales data (last 30 days)
+  const last30Days = Array.from({ length: 30 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (29 - i));
+    return date.toISOString().split('T')[0];
+  });
+
+  const historicalData = last30Days.map(date => {
+    const dayTransactions = transactions.filter(t => 
+      new Date(t.createdAt).toISOString().split('T')[0] === date
+    );
+    const total = dayTransactions.reduce((sum, t) => sum + parseFloat(t.total), 0);
+    return {
+      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      sales: total,
+      transactions: dayTransactions.length,
+    };
+  });
+
+  // Calculate simple linear trend for forecasting
+  const calculateForecast = (days: number) => {
+    if (historicalData.length < 2) return [];
+    
+    // Simple moving average for trend
+    const recentData = historicalData.slice(-14);
+    const avgSales = recentData.reduce((sum, d) => sum + d.sales, 0) / recentData.length;
+    
+    // Calculate trend (simple linear)
+    const trend = (recentData[recentData.length - 1].sales - recentData[0].sales) / recentData.length;
+    
+    return Array.from({ length: days }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() + i + 1);
+      return {
+        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        predictedSales: Math.max(0, avgSales + (trend * (i + 1))),
+      };
+    });
+  };
+
+  const forecastData = calculateForecast(parseInt(forecastPeriod));
+
+  // Calculate metrics
+  const totalSales = transactions.reduce((sum, t) => sum + parseFloat(t.total), 0);
+  const avgDailySales = historicalData.length > 0 
+    ? historicalData.reduce((sum, d) => sum + d.sales, 0) / historicalData.length 
+    : 0;
+  const predictedRevenue = forecastData.reduce((sum, d) => sum + d.predictedSales, 0);
+  
+  // Trend calculation
+  const last7Days = historicalData.slice(-7);
+  const prev7Days = historicalData.slice(-14, -7);
+  const last7Total = last7Days.reduce((sum, d) => sum + d.sales, 0);
+  const prev7Total = prev7Days.reduce((sum, d) => sum + d.sales, 0);
+  const trendPercentage = prev7Total > 0 ? ((last7Total - prev7Total) / prev7Total) * 100 : 0;
+
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Sales Forecasting</h1>
-          <p className="text-muted-foreground">Predictive analytics and demand forecasting</p>
+          <h1 className="text-3xl font-bold">{t.forecasting}</h1>
+          <p className="text-muted-foreground mt-1">{t.demandForecasting}</p>
         </div>
-        <Button variant="outline" data-testid="button-forecast-settings">
-          <Calendar className="h-4 w-4 mr-2" />
-          Adjust Forecast Period
-        </Button>
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <Select value={forecastPeriod} onValueChange={setForecastPeriod}>
+            <SelectTrigger className="w-40" data-testid="select-forecast-period">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7" data-testid="option-7-days">7 Days</SelectItem>
+              <SelectItem value="14" data-testid="option-14-days">14 Days</SelectItem>
+              <SelectItem value="30" data-testid="option-30-days">30 Days</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Predicted Revenue</CardTitle>
+          <CardHeader className="pb-3">
+            <CardDescription>{t.totalSales}</CardDescription>
+            <CardTitle className="text-3xl font-bold font-mono">
+              {totalSales.toFixed(2)} SAR
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold font-mono">125,000 SAR</p>
-            <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
-              <TrendingUp className="h-4 w-4" />
-              +5.9% from this month
-            </p>
+            <div className="flex items-center gap-2 text-sm">
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Last 30 days</span>
+            </div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Expected Orders</CardTitle>
+          <CardHeader className="pb-3">
+            <CardDescription>Average Daily Sales</CardDescription>
+            <CardTitle className="text-3xl font-bold font-mono">
+              {avgDailySales.toFixed(2)} SAR
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold font-mono">920</p>
-            <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
-              <TrendingUp className="h-4 w-4" />
-              +8.6% predicted growth
-            </p>
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Per day average</span>
+            </div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Confidence Level</CardTitle>
+          <CardHeader className="pb-3">
+            <CardDescription>{t.predictedSales}</CardDescription>
+            <CardTitle className="text-3xl font-bold font-mono">
+              {predictedRevenue.toFixed(2)} SAR
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold font-mono">87%</p>
-            <p className="text-sm text-muted-foreground mt-2">Based on 6 months data</p>
+            <div className="flex items-center gap-2 text-sm">
+              <TrendingUp className="h-4 w-4 text-green-600" />
+              <span className="text-muted-foreground">Next {forecastPeriod} days</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardDescription>{t.trendAnalysis}</CardDescription>
+            <CardTitle className="text-3xl font-bold font-mono">
+              {trendPercentage >= 0 ? '+' : ''}{trendPercentage.toFixed(1)}%
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2 text-sm">
+              {trendPercentage >= 0 ? (
+                <TrendingUp className="h-4 w-4 text-green-600" />
+              ) : (
+                <TrendingDown className="h-4 w-4 text-red-600" />
+              )}
+              <span className="text-muted-foreground">vs previous week</span>
+            </div>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Revenue Forecast - Next 3 Months</CardTitle>
+          <CardTitle>{t.salesPrediction}</CardTitle>
+          <CardDescription>
+            Historical sales data and future predictions based on trend analysis
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={historicalData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="month" className="text-xs" />
-              <YAxis className="text-xs" />
-              <Tooltip />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="actual"
-                stroke="hsl(var(--primary))"
-                strokeWidth={2}
-                name="Actual Sales"
-                dot={{ r: 4 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="predicted"
-                stroke="hsl(var(--chart-2))"
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                name="Predicted Sales"
-                dot={{ r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={[...historicalData.slice(-14), ...forecastData]}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="date" 
+                  className="text-xs"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <YAxis 
+                  className="text-xs"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '6px',
+                  }}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="sales" 
+                  stroke="hsl(var(--primary))" 
+                  strokeWidth={2}
+                  name="Historical Sales (SAR)"
+                  dot={{ fill: 'hsl(var(--primary))' }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="predictedSales" 
+                  stroke="hsl(var(--chart-2))" 
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  name="Predicted Sales (SAR)"
+                  dot={{ fill: 'hsl(var(--chart-2))' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Item Demand Forecast</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {demandForecast.map((item, idx) => (
-                <div key={idx} className="p-4 rounded-md border">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="font-semibold">{item.item}</p>
-                    <Badge variant={item.trend === "up" ? "default" : "secondary"}>
-                      {item.trend === "up" ? (
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                      ) : (
-                        <TrendingDown className="h-3 w-3 mr-1" />
-                      )}
-                      {Math.abs(item.change)}%
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Current Demand</p>
-                      <p className="font-mono font-semibold">{item.currentDemand}/month</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Predicted Demand</p>
-                      <p className="font-mono font-semibold">{item.predictedDemand}/month</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Peak Hours Analysis</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={350}>
-              <AreaChart data={peakHours}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="hour" className="text-xs" />
-                <YAxis className="text-xs" />
-                <Tooltip />
-                <Area
-                  type="monotone"
-                  dataKey="orders"
-                  stroke="hsl(var(--primary))"
-                  fill="hsl(var(--primary))"
-                  fillOpacity={0.2}
+      <Card>
+        <CardHeader>
+          <CardTitle>Transaction Volume</CardTitle>
+          <CardDescription>
+            Number of transactions per day over the last 30 days
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={historicalData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="date" 
+                  className="text-xs"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
                 />
-              </AreaChart>
+                <YAxis 
+                  className="text-xs"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '6px',
+                  }}
+                />
+                <Bar 
+                  dataKey="transactions" 
+                  fill="hsl(var(--chart-3))" 
+                  name="Transactions"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -50,6 +50,7 @@ export interface Translations {
   trendAnalysis: string;
   forecastPeriod: string;
   predictedSales: string;
+  totalSales: string;
   
   // Common
   add: string;
@@ -217,6 +218,7 @@ export const translations: Record<Language, Translations> = {
     trendAnalysis: 'Trend Analysis',
     forecastPeriod: 'Forecast Period',
     predictedSales: 'Predicted Sales',
+    totalSales: 'Total Sales',
     
     // Common
     add: 'Add',
@@ -383,6 +385,7 @@ export const translations: Record<Language, Translations> = {
     trendAnalysis: 'تحليل الاتجاهات',
     forecastPeriod: 'فترة التنبؤ',
     predictedSales: 'المبيعات المتوقعة',
+    totalSales: 'إجمالي المبيعات',
     
     // Common
     add: 'إضافة',
@@ -549,6 +552,7 @@ export const translations: Record<Language, Translations> = {
     trendAnalysis: '趋势分析',
     forecastPeriod: '预测周期',
     predictedSales: '预测销售额',
+    totalSales: '总销售额',
     
     // Common
     add: '添加',
@@ -715,6 +719,7 @@ export const translations: Record<Language, Translations> = {
     trendAnalysis: 'Trendanalyse',
     forecastPeriod: 'Prognosezeitraum',
     predictedSales: 'Prognostizierte Verkäufe',
+    totalSales: 'Gesamtumsatz',
     
     // Common
     add: 'Hinzufügen',
@@ -881,6 +886,7 @@ export const translations: Record<Language, Translations> = {
     trendAnalysis: 'रुझान विश्लेषण',
     forecastPeriod: 'पूर्वानुमान अवधि',
     predictedSales: 'अनुमानित बिक्री',
+    totalSales: 'कुल बिक्री',
     
     // Common
     add: 'जोड़ें',
@@ -1047,6 +1053,7 @@ export const translations: Record<Language, Translations> = {
     trendAnalysis: 'رجحان کا تجزیہ',
     forecastPeriod: 'پیش گوئی کی مدت',
     predictedSales: 'متوقع فروخت',
+    totalSales: 'کل فروخت',
     
     // Common
     add: 'شامل کریں',
@@ -1213,6 +1220,7 @@ export const translations: Record<Language, Translations> = {
     trendAnalysis: 'প্রবণতা বিশ্লেষণ',
     forecastPeriod: 'পূর্বাভাস সময়কাল',
     predictedSales: 'প্রত্যাশিত বিক্রয়',
+    totalSales: 'মোট বিক্রয়',
     
     // Common
     add: 'যোগ করুন',
