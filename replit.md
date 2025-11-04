@@ -42,7 +42,15 @@ Preferred communication style: Simple, everyday language.
 - **Authentication**: Subscription-based, with Commercial Registration field and password recovery.
 - **Shop & Bills Management**: Manual configuration of shop working hours; comprehensive expense tracking for employee salaries and shop bills with summary analytics and integration into financial and profitability views.
 - **Tutorial System**: Visual tutorial page with 12 detailed guides and a "Getting Started" section.
-- **Device-Specific Responsive Design**: User-configurable device preference (Laptop, iPad, iPhone) stored in database, adjusting layout, typography, and specific components (e.g., mobile-optimized POS).
+- **Device-Specific Responsive Design**: User-configurable device preference (Laptop, iPad, iPhone) stored in database, adjusting layout, typography, and specific components.
+  - **Mobile Optimization Toolkit**: Centralized `mobileLayout.ts` utility providing responsive classes for grid columns, text sizes, spacing, and padding across all device types.
+  - **TableList Component**: Production-ready mobile list component with swipeable actions for compact data display.
+  - **iPhone-Optimized Interfaces**: 
+    - Dashboard: Single-column metric cards with enhanced readability
+    - Inventory: Horizontal card layout with swipe actions
+    - Menu: Single-column grid with 112px images, horizontal card layout, simplified pricing, and 44px minimum touch targets for all interactive elements
+    - POS: Mobile-optimized layout with streamlined order flow
+  - **Accessibility Compliance**: All mobile interactive elements meet 44px minimum touch target size (WCAG 2.1 Level AAA).
 
 ## External Dependencies
 
