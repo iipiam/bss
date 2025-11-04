@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Minus, X, Search, Receipt, UtensilsCrossed, UserCircle } from "lucide-react";
+import { Plus, Minus, X, Search, Receipt, UtensilsCrossed, UserCircle, CreditCard, Wallet } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +40,7 @@ export default function POS() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [orderType, setOrderType] = useState("Dine-In");
+  const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -74,7 +76,7 @@ export default function POS() {
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
         total: total.toFixed(2),
-        paymentMethod: "Cash",
+        paymentMethod: paymentMethod,
       };
       await apiRequest("POST", "/api/transactions", transaction);
       
@@ -209,6 +211,7 @@ export default function POS() {
       subtotal: subtotal.toFixed(2),
       tax: tax.toFixed(2),
       total: total.toFixed(2),
+      paymentMethod: paymentMethod,
       status: "Pending",
     };
 
@@ -388,6 +391,29 @@ export default function POS() {
               <span>Total</span>
               <span className="font-mono">{total.toFixed(2)} SAR</span>
             </div>
+          </div>
+
+          <div className="mb-4">
+            <Label className="text-sm font-medium mb-2 block">{t.paymentMethod}</Label>
+            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+              <SelectTrigger data-testid="select-payment-method" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Cash" data-testid="option-cash">
+                  <div className="flex items-center gap-2">
+                    <Wallet className="h-4 w-4" />
+                    {t.cash}
+                  </div>
+                </SelectItem>
+                <SelectItem value="ATM" data-testid="option-atm">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    {t.atm}
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {customerName && (
