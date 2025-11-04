@@ -96,10 +96,10 @@ const PeakHoursCard = ({
   const { t } = useLanguage();
   
   const formatHour = (hour: number) => {
-    if (hour === 0) return '12 AM';
-    if (hour === 12) return '12 PM';
-    if (hour < 12) return `${hour} AM`;
-    return `${hour - 12} PM`;
+    if (hour === 0) return `12 ${t.am}`;
+    if (hour === 12) return `12 ${t.pm}`;
+    if (hour < 12) return `${hour} ${t.am}`;
+    return `${hour - 12} ${t.pm}`;
   };
 
   const chartData = peakHours.hourlyData.map(d => ({

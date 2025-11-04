@@ -68,6 +68,8 @@ export interface Translations {
   peakHour: string;
   hourlySalesDistribution: string;
   salesAmount: string;
+  am: string;
+  pm: string;
   
   // Common
   add: string;
@@ -253,6 +255,8 @@ export const translations: Record<Language, Translations> = {
     peakHour: 'Peak Hour',
     hourlySalesDistribution: 'Hourly Sales Distribution',
     salesAmount: 'Sales Amount',
+    am: 'AM',
+    pm: 'PM',
     
     // Common
     add: 'Add',
@@ -437,6 +441,8 @@ export const translations: Record<Language, Translations> = {
     peakHour: 'ساعة الذروة',
     hourlySalesDistribution: 'توزيع المبيعات بالساعة',
     salesAmount: 'مبلغ المبيعات',
+    am: 'ص',
+    pm: 'م',
     
     // Common
     add: 'إضافة',
@@ -621,6 +627,8 @@ export const translations: Record<Language, Translations> = {
     peakHour: '高峰时段',
     hourlySalesDistribution: '每小时销售分布',
     salesAmount: '销售额',
+    am: '上午',
+    pm: '下午',
     
     // Common
     add: '添加',
@@ -805,6 +813,8 @@ export const translations: Record<Language, Translations> = {
     peakHour: 'Stoßzeit',
     hourlySalesDistribution: 'Stündliche Verkaufsverteilung',
     salesAmount: 'Verkaufsbetrag',
+    am: 'AM',
+    pm: 'PM',
     
     // Common
     add: 'Hinzufügen',
@@ -989,6 +999,8 @@ export const translations: Record<Language, Translations> = {
     peakHour: 'चरम घंटा',
     hourlySalesDistribution: 'प्रति घंटा बिक्री वितरण',
     salesAmount: 'बिक्री राशि',
+    am: 'पूर्वाह्न',
+    pm: 'अपराह्न',
     
     // Common
     add: 'जोड़ें',
@@ -1173,6 +1185,8 @@ export const translations: Record<Language, Translations> = {
     peakHour: 'چوٹی کا وقت',
     hourlySalesDistribution: 'گھنٹہ وار فروخت کی تقسیم',
     salesAmount: 'فروخت کی رقم',
+    am: 'صبح',
+    pm: 'شام',
     
     // Common
     add: 'شامل کریں',
@@ -1357,6 +1371,8 @@ export const translations: Record<Language, Translations> = {
     peakHour: 'সর্বোচ্চ সময়',
     hourlySalesDistribution: 'ঘণ্টাওয়ারী বিক্রয় বিতরণ',
     salesAmount: 'বিক্রয় পরিমাণ',
+    am: 'পূর্বাহ্ন',
+    pm: 'অপরাহ্ন',
     
     // Common
     add: 'যোগ করুন',
