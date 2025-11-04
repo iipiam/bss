@@ -275,11 +275,13 @@ export interface Translations {
   overdue: string;
   searchBills: string;
   paymentPeriod: string;
+  oneTime: string;
   weekly: string;
   monthly: string;
   quarterly: string;
   semiAnnually: string;
   yearly: string;
+  foundational: string;
   noBills: string;
   billAdded: string;
   billUpdated: string;
@@ -564,11 +566,13 @@ export const translations: Record<Language, Translations> = {
     overdue: 'Overdue',
     searchBills: 'Search bills by type or description...',
     paymentPeriod: 'Payment Period',
+    oneTime: 'One Time Payment',
     weekly: 'Weekly',
     monthly: 'Monthly',
     quarterly: 'Quarterly (1/4 Year)',
     semiAnnually: 'Semi-Annually (1/2 Year)',
     yearly: 'Yearly',
+    foundational: 'Foundational',
     noBills: 'No bills found',
     billAdded: 'Bill added successfully',
     billUpdated: 'Bill updated successfully',
@@ -854,11 +858,13 @@ export const translations: Record<Language, Translations> = {
     overdue: 'متأخر',
     searchBills: 'البحث عن الفواتير حسب النوع أو الوصف...',
     paymentPeriod: 'فترة الدفع',
+    oneTime: 'دفعة واحدة',
     weekly: 'أسبوعي',
     monthly: 'شهري',
     quarterly: 'ربع سنوي (1/4 سنة)',
     semiAnnually: 'نصف سنوي (1/2 سنة)',
     yearly: 'سنوي',
+    foundational: 'أساسي',
     noBills: 'لا توجد فواتير',
     billAdded: 'تمت إضافة الفاتورة بنجاح',
     billUpdated: 'تم تحديث الفاتورة بنجاح',
@@ -1117,6 +1123,14 @@ export const translations: Record<Language, Translations> = {
     totalBills: '总账单',
     totalShopExpenses: '总商店费用',
     monthlyExpenses: '月度费用',
+    paymentPeriod: '付款周期',
+    oneTime: '一次性付款',
+    weekly: '每周',
+    monthly: '每月',
+    quarterly: '每季度 (1/4 年)',
+    semiAnnually: '每半年 (1/2 年)',
+    yearly: '每年',
+    foundational: '基础',
   },
   
   German: {
