@@ -176,6 +176,32 @@ export interface Translations {
   username: string;
   forgotPassword: string;
   resetPassword: string;
+  fullName: string;
+  enterFullName: string;
+  enterUsername: string;
+  chooseUsername: string;
+  enterPassword: string;
+  choosePassword: string;
+  commercialRegistration: string;
+  commercialRegistrationPlaceholder: string;
+  commercialRegistrationNote: string;
+  subscriptionPlan: string;
+  billedMonthly: string;
+  billedYearly: string;
+  perMonth: string;
+  perYear: string;
+  signIn: string;
+  signingIn: string;
+  welcomeBack: string;
+  loginSuccessDesc: string;
+  loginFailed: string;
+  invalidCredentials: string;
+  accountCreated: string;
+  accountCreatedDesc: string;
+  signUpFailed: string;
+  signUpFailedDesc: string;
+  selectLanguage: string;
+  restaurantManagementSystem: string;
   
   // Messages
   success: string;
@@ -490,6 +516,32 @@ export const translations: Record<Language, Translations> = {
     username: 'Username',
     forgotPassword: 'Forgot Password',
     resetPassword: 'Reset Password',
+    fullName: 'Full Name',
+    enterFullName: 'Enter your full name',
+    enterUsername: 'Enter your username',
+    chooseUsername: 'Choose a username',
+    enterPassword: 'Enter your password',
+    choosePassword: 'Choose a password',
+    commercialRegistration: 'Commercial Registration',
+    commercialRegistrationPlaceholder: 'Saudi Commercial Registration number',
+    commercialRegistrationNote: 'Required for all restaurant businesses in Saudi Arabia',
+    subscriptionPlan: 'Subscription Plan',
+    billedMonthly: 'Billed monthly',
+    billedYearly: 'Billed yearly',
+    perMonth: 'per month',
+    perYear: 'per year',
+    signIn: 'Sign In',
+    signingIn: 'Signing in...',
+    welcomeBack: 'Welcome back!',
+    loginSuccessDesc: 'You have successfully logged in.',
+    loginFailed: 'Login failed',
+    invalidCredentials: 'Invalid username or password',
+    accountCreated: 'Account created!',
+    accountCreatedDesc: 'Please sign in with your credentials.',
+    signUpFailed: 'Sign up failed',
+    signUpFailedDesc: 'Could not create account',
+    selectLanguage: 'Select language',
+    restaurantManagementSystem: 'Restaurant management system',
     
     // Messages
     success: 'Success',
@@ -803,6 +855,32 @@ export const translations: Record<Language, Translations> = {
     username: 'اسم المستخدم',
     forgotPassword: 'نسيت كلمة المرور',
     resetPassword: 'إعادة تعيين كلمة المرور',
+    fullName: 'الاسم الكامل',
+    enterFullName: 'أدخل اسمك الكامل',
+    enterUsername: 'أدخل اسم المستخدم',
+    chooseUsername: 'اختر اسم مستخدم',
+    enterPassword: 'أدخل كلمة المرور',
+    choosePassword: 'اختر كلمة مرور',
+    commercialRegistration: 'السجل التجاري',
+    commercialRegistrationPlaceholder: 'رقم السجل التجاري السعودي',
+    commercialRegistrationNote: 'مطلوب لجميع الأعمال التجارية للمطاعم في المملكة العربية السعودية',
+    subscriptionPlan: 'خطة الاشتراك',
+    billedMonthly: 'يتم الدفع شهرياً',
+    billedYearly: 'يتم الدفع سنوياً',
+    perMonth: 'شهرياً',
+    perYear: 'سنوياً',
+    signIn: 'تسجيل الدخول',
+    signingIn: 'جاري تسجيل الدخول...',
+    welcomeBack: 'مرحباً بعودتك!',
+    loginSuccessDesc: 'تم تسجيل الدخول بنجاح.',
+    loginFailed: 'فشل تسجيل الدخول',
+    invalidCredentials: 'اسم المستخدم أو كلمة المرور غير صحيحة',
+    accountCreated: 'تم إنشاء الحساب!',
+    accountCreatedDesc: 'يرجى تسجيل الدخول باستخدام بيانات الاعتماد الخاصة بك.',
+    signUpFailed: 'فشل إنشاء الحساب',
+    signUpFailedDesc: 'لا يمكن إنشاء الحساب',
+    selectLanguage: 'اختر اللغة',
+    restaurantManagementSystem: 'نظام إدارة المطاعم',
     
     // Messages
     success: 'نجح',
@@ -1116,6 +1194,32 @@ export const translations: Record<Language, Translations> = {
     username: '用户名',
     forgotPassword: '忘记密码',
     resetPassword: '重置密码',
+    fullName: '全名',
+    enterFullName: '输入您的全名',
+    enterUsername: '输入您的用户名',
+    chooseUsername: '选择用户名',
+    enterPassword: '输入您的密码',
+    choosePassword: '选择密码',
+    commercialRegistration: '商业登记',
+    commercialRegistrationPlaceholder: '沙特商业登记号',
+    commercialRegistrationNote: '沙特阿拉伯所有餐厅企业都需要',
+    subscriptionPlan: '订阅计划',
+    billedMonthly: '按月计费',
+    billedYearly: '按年计费',
+    perMonth: '每月',
+    perYear: '每年',
+    signIn: '登录',
+    signingIn: '正在登录...',
+    welcomeBack: '欢迎回来！',
+    loginSuccessDesc: '您已成功登录。',
+    loginFailed: '登录失败',
+    invalidCredentials: '用户名或密码无效',
+    accountCreated: '账户已创建！',
+    accountCreatedDesc: '请使用您的凭据登录。',
+    signUpFailed: '注册失败',
+    signUpFailedDesc: '无法创建账户',
+    selectLanguage: '选择语言',
+    restaurantManagementSystem: '餐厅管理系统',
     
     // Messages
     success: '成功',
@@ -1375,6 +1479,32 @@ export const translations: Record<Language, Translations> = {
     username: 'Benutzername',
     forgotPassword: 'Passwort vergessen',
     resetPassword: 'Passwort zurücksetzen',
+    fullName: 'Vollständiger Name',
+    enterFullName: 'Geben Sie Ihren vollständigen Namen ein',
+    enterUsername: 'Geben Sie Ihren Benutzernamen ein',
+    chooseUsername: 'Wählen Sie einen Benutzernamen',
+    enterPassword: 'Geben Sie Ihr Passwort ein',
+    choosePassword: 'Wählen Sie ein Passwort',
+    commercialRegistration: 'Handelsregister',
+    commercialRegistrationPlaceholder: 'Saudische Handelsregisternummer',
+    commercialRegistrationNote: 'Erforderlich für alle Restaurantunternehmen in Saudi-Arabien',
+    subscriptionPlan: 'Abonnementplan',
+    billedMonthly: 'Monatlich abgerechnet',
+    billedYearly: 'Jährlich abgerechnet',
+    perMonth: 'pro Monat',
+    perYear: 'pro Jahr',
+    signIn: 'Anmelden',
+    signingIn: 'Anmelden...',
+    welcomeBack: 'Willkommen zurück!',
+    loginSuccessDesc: 'Sie haben sich erfolgreich angemeldet.',
+    loginFailed: 'Anmeldung fehlgeschlagen',
+    invalidCredentials: 'Ungültiger Benutzername oder Passwort',
+    accountCreated: 'Konto erstellt!',
+    accountCreatedDesc: 'Bitte melden Sie sich mit Ihren Anmeldedaten an.',
+    signUpFailed: 'Registrierung fehlgeschlagen',
+    signUpFailedDesc: 'Konto konnte nicht erstellt werden',
+    selectLanguage: 'Sprache wählen',
+    restaurantManagementSystem: 'Restaurant-Managementsystem',
     
     // Messages
     success: 'Erfolgreich',
@@ -1626,6 +1756,32 @@ export const translations: Record<Language, Translations> = {
     username: 'उपयोगकर्ता नाम',
     forgotPassword: 'पासवर्ड भूल गए',
     resetPassword: 'पासवर्ड रीसेट करें',
+    fullName: 'पूरा नाम',
+    enterFullName: 'अपना पूरा नाम दर्ज करें',
+    enterUsername: 'अपना उपयोगकर्ता नाम दर्ज करें',
+    chooseUsername: 'उपयोगकर्ता नाम चुनें',
+    enterPassword: 'अपना पासवर्ड दर्ज करें',
+    choosePassword: 'पासवर्ड चुनें',
+    commercialRegistration: 'व्यावसायिक पंजीकरण',
+    commercialRegistrationPlaceholder: 'सऊदी व्यावसायिक पंजीकरण संख्या',
+    commercialRegistrationNote: 'सऊदी अरब में सभी रेस्तरां व्यवसायों के लिए आवश्यक',
+    subscriptionPlan: 'सदस्यता योजना',
+    billedMonthly: 'मासिक बिल',
+    billedYearly: 'वार्षिक बिल',
+    perMonth: 'प्रति माह',
+    perYear: 'प्रति वर्ष',
+    signIn: 'साइन इन करें',
+    signingIn: 'साइन इन हो रहा है...',
+    welcomeBack: 'वापसी पर स्वागत है!',
+    loginSuccessDesc: 'आप सफलतापूर्वक लॉग इन हो गए हैं।',
+    loginFailed: 'लॉगिन विफल',
+    invalidCredentials: 'अमान्य उपयोगकर्ता नाम या पासवर्ड',
+    accountCreated: 'खाता बनाया गया!',
+    accountCreatedDesc: 'कृपया अपने क्रेडेंशियल्स के साथ साइन इन करें।',
+    signUpFailed: 'साइन अप विफल',
+    signUpFailedDesc: 'खाता नहीं बनाया जा सका',
+    selectLanguage: 'भाषा चुनें',
+    restaurantManagementSystem: 'रेस्तरां प्रबंधन प्रणाली',
     
     // Messages
     success: 'सफलता',
@@ -1877,6 +2033,32 @@ export const translations: Record<Language, Translations> = {
     username: 'صارف نام',
     forgotPassword: 'پاس ورڈ بھول گئے',
     resetPassword: 'پاس ورڈ ری سیٹ',
+    fullName: 'پورا نام',
+    enterFullName: 'اپنا پورا نام درج کریں',
+    enterUsername: 'اپنا صارف نام درج کریں',
+    chooseUsername: 'صارف نام منتخب کریں',
+    enterPassword: 'اپنا پاس ورڈ درج کریں',
+    choosePassword: 'پاس ورڈ منتخب کریں',
+    commercialRegistration: 'تجارتی رجسٹریشن',
+    commercialRegistrationPlaceholder: 'سعودی تجارتی رجسٹریشن نمبر',
+    commercialRegistrationNote: 'سعودی عرب میں تمام ریستوراں کاروباروں کے لیے ضروری',
+    subscriptionPlan: 'سبسکرپشن منصوبہ',
+    billedMonthly: 'ماہانہ بل',
+    billedYearly: 'سالانہ بل',
+    perMonth: 'ماہانہ',
+    perYear: 'سالانہ',
+    signIn: 'سائن ان',
+    signingIn: 'سائن ان ہو رہا ہے...',
+    welcomeBack: 'واپسی پر خوش آمدید!',
+    loginSuccessDesc: 'آپ کامیابی سے لاگ ان ہو گئے ہیں۔',
+    loginFailed: 'لاگ ان ناکام',
+    invalidCredentials: 'غلط صارف نام یا پاس ورڈ',
+    accountCreated: 'اکاؤنٹ بنایا گیا!',
+    accountCreatedDesc: 'براہ کرم اپنی اسناد کے ساتھ سائن ان کریں۔',
+    signUpFailed: 'سائن اپ ناکام',
+    signUpFailedDesc: 'اکاؤنٹ نہیں بنایا جا سکا',
+    selectLanguage: 'زبان منتخب کریں',
+    restaurantManagementSystem: 'ریستوراں مینجمنٹ سسٹم',
     
     // Messages
     success: 'کامیابی',
@@ -2128,6 +2310,32 @@ export const translations: Record<Language, Translations> = {
     username: 'ব্যবহারকারীর নাম',
     forgotPassword: 'পাসওয়ার্ড ভুলে গেছেন',
     resetPassword: 'পাসওয়ার্ড রিসেট',
+    fullName: 'পুরো নাম',
+    enterFullName: 'আপনার পুরো নাম লিখুন',
+    enterUsername: 'আপনার ব্যবহারকারী নাম লিখুন',
+    chooseUsername: 'ব্যবহারকারী নাম নির্বাচন করুন',
+    enterPassword: 'আপনার পাসওয়ার্ড লিখুন',
+    choosePassword: 'পাসওয়ার্ড নির্বাচন করুন',
+    commercialRegistration: 'বাণিজ্যিক নিবন্ধন',
+    commercialRegistrationPlaceholder: 'সৌদি বাণিজ্যিক নিবন্ধন নম্বর',
+    commercialRegistrationNote: 'সৌদি আরবের সমস্ত রেস্তোরাঁ ব্যবসার জন্য প্রয়োজনীয়',
+    subscriptionPlan: 'সাবস্ক্রিপশন প্ল্যান',
+    billedMonthly: 'মাসিক বিল',
+    billedYearly: 'বার্ষিক বিল',
+    perMonth: 'প্রতি মাসে',
+    perYear: 'প্রতি বছরে',
+    signIn: 'সাইন ইন করুন',
+    signingIn: 'সাইন ইন হচ্ছে...',
+    welcomeBack: 'ফিরে আসায় স্বাগতম!',
+    loginSuccessDesc: 'আপনি সফলভাবে লগ ইন করেছেন।',
+    loginFailed: 'লগইন ব্যর্থ',
+    invalidCredentials: 'অবৈধ ব্যবহারকারী নাম বা পাসওয়ার্ড',
+    accountCreated: 'অ্যাকাউন্ট তৈরি হয়েছে!',
+    accountCreatedDesc: 'অনুগ্রহ করে আপনার শংসাপত্র দিয়ে সাইন ইন করুন।',
+    signUpFailed: 'সাইন আপ ব্যর্থ',
+    signUpFailedDesc: 'অ্যাকাউন্ট তৈরি করা যায়নি',
+    selectLanguage: 'ভাষা নির্বাচন করুন',
+    restaurantManagementSystem: 'রেস্তোরাঁ ব্যবস্থাপনা সিস্টেম',
     
     // Messages
     success: 'সফল',
