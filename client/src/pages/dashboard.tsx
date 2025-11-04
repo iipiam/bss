@@ -6,6 +6,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { useQuery } from "@tanstack/react-query";
 import type { Order, ShopBill } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useDevice } from "@/contexts/DeviceContext";
 import { useState } from "react";
 
 interface PerformanceMetric {
@@ -264,6 +265,9 @@ const PeakHoursCard = ({
 
 export default function Dashboard() {
   const { t } = useLanguage();
+  const { device } = useDevice();
+  const isMobile = device === 'iphone';
+
   const { data: dashboardData, isLoading: dashboardLoading } = useQuery<DashboardData>({
     queryKey: ["/api/analytics/dashboard"],
   });
@@ -307,7 +311,7 @@ export default function Dashboard() {
 
   if (dashboardLoading || salesLoading || billsLoading) {
     return (
-      <div className="p-8 space-y-8">
+      <div className={isMobile ? "p-4 space-y-4" : "p-8 space-y-8"}>
         <div>
           <h1 className="text-3xl font-bold mb-2">{t.dashboard}</h1>
           <p className="text-muted-foreground">{t.loading}...</p>
@@ -317,12 +321,12 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-8 space-y-8">
+    <div className={isMobile ? "p-4 space-y-4" : "p-8 space-y-8"}>
       <div>
         <h1 className="text-3xl font-bold mb-2 text-[#ffffff]">{t.dashboard}</h1>
-        <p className="text-muted-foreground">{t.dashboardOverview || "Overview of your restaurant performance"}</p>
+        <p className="text-muted-foreground text-sm">{t.dashboardOverview || "Overview of your restaurant performance"}</p>
       </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid gap-${isMobile ? '3' : '6'} ${isMobile ? 'grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-4'}`}>
         <MetricCard
           title="Today's Sales"
           value={`${dashboardData?.todaysSales || "0.00"} SAR`}
