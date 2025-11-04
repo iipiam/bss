@@ -228,28 +228,59 @@ export interface Translations {
   
   // Shop
   shop: string;
+  shopTitle: string;
+  shopDescription: string;
   shopExpenses: string;
   salaries: string;
   salary: string;
   employeeName: string;
+  employeeSalaries: string;
+  manageSalaries: string;
   position: string;
   amount: string;
+  monthlySalary: string;
   paymentDate: string;
+  paid: string;
+  notes: string;
   addSalary: string;
   editSalary: string;
+  salaryFormDescription: string;
+  totalSalaries: string;
+  paidSalaries: string;
+  pendingSalaries: string;
+  searchSalaries: string;
+  noSalaries: string;
+  salaryAdded: string;
+  salaryUpdated: string;
+  salaryDeleted: string;
+  salaryError: string;
   shopBills: string;
+  manageBills: string;
   billType: string;
   rent: string;
   electricity: string;
   water: string;
   gas: string;
+  internet: string;
+  maintenance: string;
   other: string;
   addBill: string;
   editBill: string;
-  totalSalaries: string;
+  billFormDescription: string;
   totalBills: string;
+  paidBills: string;
+  pendingBills: string;
+  overdue: string;
+  searchBills: string;
+  noBills: string;
+  billAdded: string;
+  billUpdated: string;
+  billDeleted: string;
+  billError: string;
   totalShopExpenses: string;
   monthlyExpenses: string;
+  currency: string;
+  saving: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -478,28 +509,59 @@ export const translations: Record<Language, Translations> = {
     
     // Shop
     shop: 'Shop',
+    shopTitle: 'Shop',
+    shopDescription: 'Manage employee salaries and shop expenses',
     shopExpenses: 'Shop Expenses',
     salaries: 'Salaries',
     salary: 'Salary',
     employeeName: 'Employee Name',
+    employeeSalaries: 'Employee Salaries',
+    manageSalaries: 'Manage employee salary payments and records',
     position: 'Position',
     amount: 'Amount',
+    monthlySalary: 'Monthly Salary',
     paymentDate: 'Payment Date',
+    paid: 'Paid',
+    notes: 'Notes',
     addSalary: 'Add Salary',
     editSalary: 'Edit Salary',
+    salaryFormDescription: 'Enter employee salary information',
+    totalSalaries: 'Total Salaries',
+    paidSalaries: 'Paid Salaries',
+    pendingSalaries: 'Pending Salaries',
+    searchSalaries: 'Search salaries by employee name or position...',
+    noSalaries: 'No salaries found',
+    salaryAdded: 'Salary added successfully',
+    salaryUpdated: 'Salary updated successfully',
+    salaryDeleted: 'Salary deleted successfully',
+    salaryError: 'Error processing salary',
     shopBills: 'Shop Bills',
+    manageBills: 'Manage shop bills and expenses',
     billType: 'Bill Type',
     rent: 'Rent',
     electricity: 'Electricity',
     water: 'Water',
     gas: 'Gas',
+    internet: 'Internet',
+    maintenance: 'Maintenance',
     other: 'Other',
     addBill: 'Add Bill',
     editBill: 'Edit Bill',
-    totalSalaries: 'Total Salaries',
+    billFormDescription: 'Enter bill information',
     totalBills: 'Total Bills',
+    paidBills: 'Paid Bills',
+    pendingBills: 'Pending Bills',
+    overdue: 'Overdue',
+    searchBills: 'Search bills by type or description...',
+    noBills: 'No bills found',
+    billAdded: 'Bill added successfully',
+    billUpdated: 'Bill updated successfully',
+    billDeleted: 'Bill deleted successfully',
+    billError: 'Error processing bill',
     totalShopExpenses: 'Total Shop Expenses',
     monthlyExpenses: 'Monthly Expenses',
+    currency: 'SAR',
+    saving: 'Saving...',
   },
   
   Arabic: {
