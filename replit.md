@@ -43,9 +43,11 @@ Preferred communication style: Simple, everyday language.
 - **Menu Item Management**: Full CRUD operations for menu items, including a discount system with correct pricing flow (discount applied before VAT) and real-time price previews.
 - **Inventory Management**: Complete CRUD operations for inventory items with price tracking per unit (SAR), smart numeric validation, error handling, and Excel template download/import/export functionality for bulk data management.
 - **Recipe Management**: Complete CRUD operations with inventory-linked ingredients for accurate cost calculation. Ingredients must be selected from existing inventory items, and recipe costs are automatically calculated based on ingredient quantities and unit prices.
+- **Daily Stock Management**: Intelligent stock calculation system that automatically determines available servings for each menu item based on current inventory levels and recipe requirements. The POS page displays real-time stock counts for each meal, showing "X available" with a package icon. Items with zero stock are visually distinguished with reduced opacity and "OUT OF STOCK" badges, preventing orders for unavailable items. The stock calculation considers all recipe ingredients and inventory quantities to provide accurate availability information.
 - **Financial Features**: PDF export for financial statements, Excel export/import functionality for various data tables (inventory, menu, recipes, orders, etc.).
 - **Strategic Decision-Making**: Profitability analysis with dedicated tabs for Strategic Overview, Pricing Analysis, Scaling Viability, and Cost Management.
 - **Authentication**: Subscription-based authentication with Commercial Registration field, password recovery (token-based), and secure password hashing.
+- **Shop Management**: Complete expense tracking system with dual tabs for Employee Salaries and Shop Bills. Manages employee salary records (name, position, amount, payment date, status, notes) and shop bills (rent, electricity, water, gas, internet, maintenance, etc.). Features include search functionality, summary cards showing total/paid/pending amounts, full CRUD operations, and proper date handling with ISO format conversion.
 
 ## External Dependencies
 
