@@ -63,6 +63,12 @@ export interface Translations {
   currentPeriod: string;
   previous: string;
   
+  // Peak Hours Analysis
+  peakHoursAnalysis: string;
+  peakHour: string;
+  hourlySalesDistribution: string;
+  salesAmount: string;
+  
   // Common
   add: string;
   edit: string;
@@ -242,6 +248,12 @@ export const translations: Record<Language, Translations> = {
     currentPeriod: 'Current Period',
     previous: 'Previous',
     
+    // Peak Hours Analysis
+    peakHoursAnalysis: 'Peak Hours Analysis',
+    peakHour: 'Peak Hour',
+    hourlySalesDistribution: 'Hourly Sales Distribution',
+    salesAmount: 'Sales Amount',
+    
     // Common
     add: 'Add',
     edit: 'Edit',
@@ -419,6 +431,12 @@ export const translations: Record<Language, Translations> = {
     dashboardOverview: 'نظرة عامة على أداء مطعمك',
     currentPeriod: 'الفترة الحالية',
     previous: 'السابق',
+    
+    // Peak Hours Analysis
+    peakHoursAnalysis: 'تحليل ساعات الذروة',
+    peakHour: 'ساعة الذروة',
+    hourlySalesDistribution: 'توزيع المبيعات بالساعة',
+    salesAmount: 'مبلغ المبيعات',
     
     // Common
     add: 'إضافة',
@@ -598,6 +616,12 @@ export const translations: Record<Language, Translations> = {
     currentPeriod: '当前时期',
     previous: '上一时期',
     
+    // Peak Hours Analysis
+    peakHoursAnalysis: '高峰时段分析',
+    peakHour: '高峰时段',
+    hourlySalesDistribution: '每小时销售分布',
+    salesAmount: '销售额',
+    
     // Common
     add: '添加',
     edit: '编辑',
@@ -775,6 +799,12 @@ export const translations: Record<Language, Translations> = {
     dashboardOverview: 'Übersicht über Ihre Restaurant-Leistung',
     currentPeriod: 'Aktueller Zeitraum',
     previous: 'Vorheriger',
+    
+    // Peak Hours Analysis
+    peakHoursAnalysis: 'Stoßzeiten-Analyse',
+    peakHour: 'Stoßzeit',
+    hourlySalesDistribution: 'Stündliche Verkaufsverteilung',
+    salesAmount: 'Verkaufsbetrag',
     
     // Common
     add: 'Hinzufügen',
@@ -954,6 +984,12 @@ export const translations: Record<Language, Translations> = {
     currentPeriod: 'वर्तमान अवधि',
     previous: 'पिछला',
     
+    // Peak Hours Analysis
+    peakHoursAnalysis: 'चरम घंटे विश्लेषण',
+    peakHour: 'चरम घंटा',
+    hourlySalesDistribution: 'प्रति घंटा बिक्री वितरण',
+    salesAmount: 'बिक्री राशि',
+    
     // Common
     add: 'जोड़ें',
     edit: 'संपादित करें',
@@ -1132,6 +1168,12 @@ export const translations: Record<Language, Translations> = {
     currentPeriod: 'موجودہ مدت',
     previous: 'پچھلا',
     
+    // Peak Hours Analysis
+    peakHoursAnalysis: 'چوٹی کے اوقات کا تجزیہ',
+    peakHour: 'چوٹی کا وقت',
+    hourlySalesDistribution: 'گھنٹہ وار فروخت کی تقسیم',
+    salesAmount: 'فروخت کی رقم',
+    
     // Common
     add: 'شامل کریں',
     edit: 'ترمیم کریں',
@@ -1309,6 +1351,12 @@ export const translations: Record<Language, Translations> = {
     dashboardOverview: 'আপনার রেস্তোরাঁর কর্মক্ষমতার সংক্ষিপ্ত বিবরণ',
     currentPeriod: 'বর্তমান সময়কাল',
     previous: 'পূর্ববর্তী',
+    
+    // Peak Hours Analysis
+    peakHoursAnalysis: 'সর্বোচ্চ সময় বিশ্লেষণ',
+    peakHour: 'সর্বোচ্চ সময়',
+    hourlySalesDistribution: 'ঘণ্টাওয়ারী বিক্রয় বিতরণ',
+    salesAmount: 'বিক্রয় পরিমাণ',
     
     // Common
     add: 'যোগ করুন',
