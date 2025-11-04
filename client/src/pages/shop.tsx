@@ -18,15 +18,23 @@ import { Plus, Pencil, Trash2, DollarSign, FileText, Search } from "lucide-react
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
-const salaryFormSchema = insertSalarySchema.extend({
+const salaryFormSchema = z.object({
+  employeeName: z.string().min(1, "Employee name is required"),
+  position: z.string().min(1, "Position is required"),
+  amount: z.string().min(1, "Amount is required"),
   paymentDate: z.string().min(1, "Payment date is required"),
   status: z.enum(["pending", "paid"]).default("pending"),
   notes: z.string().optional(),
+  branchId: z.string().optional(),
 });
 
-const billFormSchema = insertShopBillSchema.extend({
+const billFormSchema = z.object({
+  billType: z.string().min(1, "Bill type is required"),
+  amount: z.string().min(1, "Amount is required"),
   paymentDate: z.string().min(1, "Payment date is required"),
   status: z.enum(["pending", "paid", "overdue"]).default("pending"),
+  description: z.string().optional(),
+  branchId: z.string().optional(),
 });
 
 export default function Shop() {
@@ -72,10 +80,19 @@ export default function Shop() {
 
   const createSalaryMutation = useMutation({
     mutationFn: async (data: z.infer<typeof salaryFormSchema>) => {
-      const payload = {
-        ...data,
+      const payload: any = {
+        employeeName: data.employeeName,
+        position: data.position,
+        amount: data.amount,
         paymentDate: new Date(data.paymentDate).toISOString(),
+        status: data.status,
       };
+      if (data.notes && data.notes.trim()) {
+        payload.notes = data.notes;
+      }
+      if (data.branchId) {
+        payload.branchId = data.branchId;
+      }
       return await apiRequest("POST", "/api/shop/salaries", payload);
     },
     onSuccess: () => {
@@ -123,10 +140,18 @@ export default function Shop() {
 
   const createBillMutation = useMutation({
     mutationFn: async (data: z.infer<typeof billFormSchema>) => {
-      const payload = {
-        ...data,
+      const payload: any = {
+        billType: data.billType,
+        amount: data.amount,
         paymentDate: new Date(data.paymentDate).toISOString(),
+        status: data.status,
       };
+      if (data.description && data.description.trim()) {
+        payload.description = data.description;
+      }
+      if (data.branchId) {
+        payload.branchId = data.branchId;
+      }
       return await apiRequest("POST", "/api/shop/bills", payload);
     },
     onSuccess: () => {

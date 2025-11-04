@@ -155,6 +155,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(204).send();
   });
 
+  // Menu Stock (based on inventory and recipes)
+  app.get("/api/menu/stock", async (req, res) => {
+    const branchId = req.query.branchId as string | undefined;
+    const stock = await storage.getMenuItemsStock(branchId);
+    res.json(stock);
+  });
+
   // Customers
   app.get("/api/customers", async (_req, res) => {
     const customers = await storage.getCustomers();
@@ -218,11 +225,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/shop/salaries", async (req, res) => {
     try {
+      console.log("[SALARY] Request body:", JSON.stringify(req.body, null, 2));
       const data = insertSalarySchema.parse(req.body);
+      console.log("[SALARY] Parsed data:", JSON.stringify(data, null, 2));
       const salary = await storage.createSalary(data);
       res.status(201).json(salary);
     } catch (error) {
-      res.status(400).json({ error: "Invalid salary data" });
+      console.error("[SALARY] Validation error:", error);
+      if (error instanceof Error) {
+        console.error("[SALARY] Error message:", error.message);
+      }
+      res.status(400).json({ error: "Invalid salary data", details: error instanceof Error ? error.message : String(error) });
     }
   });
 

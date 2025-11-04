@@ -64,6 +64,7 @@ export interface IStorage {
   createMenuItem(item: InsertMenuItem): Promise<MenuItem>;
   updateMenuItem(id: string, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined>;
   deleteMenuItem(id: string): Promise<boolean>;
+  getMenuItemsStock(branchId?: string): Promise<Record<string, number>>;
 
   // Recipes
   getRecipes(): Promise<Recipe[]>;
@@ -212,6 +213,45 @@ export class DatabaseStorage implements IStorage {
   async deleteMenuItem(id: string): Promise<boolean> {
     const result = await db.delete(menuItems).where(eq(menuItems.id, id));
     return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async getMenuItemsStock(branchId?: string): Promise<Record<string, number>> {
+    // Get all recipes
+    const allRecipes = await this.getRecipes();
+    // Get inventory items for the branch
+    const inventory = await this.getInventoryItems(branchId);
+    
+    const stock: Record<string, number> = {};
+    
+    for (const recipe of allRecipes) {
+      if (!recipe.menuItemId) continue;
+      
+      // Calculate how many servings we can make based on available inventory
+      let minServings = Infinity;
+      
+      for (const ingredient of recipe.ingredients as any[]) {
+        const inventoryItem = inventory.find(item => item.id === ingredient.inventoryItemId);
+        
+        if (!inventoryItem) {
+          // If any ingredient is missing, we can't make this item
+          minServings = 0;
+          break;
+        }
+        
+        const availableQuantity = parseFloat(inventoryItem.quantity);
+        const requiredQuantity = ingredient.quantity;
+        
+        if (requiredQuantity > 0) {
+          const possibleServings = Math.floor(availableQuantity / requiredQuantity);
+          minServings = Math.min(minServings, possibleServings);
+        }
+      }
+      
+      // Store the stock for this menu item
+      stock[recipe.menuItemId] = minServings === Infinity ? 0 : minServings;
+    }
+    
+    return stock;
   }
 
   // Recipes

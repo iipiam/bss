@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Minus, X, Search, Receipt, UtensilsCrossed, UserCircle, CreditCard, Wallet } from "lucide-react";
+import { Plus, Minus, X, Search, Receipt, UtensilsCrossed, UserCircle, CreditCard, Wallet, Package } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -51,6 +51,10 @@ export default function POS() {
 
   const { data: menuItems = [], isLoading } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu"],
+  });
+
+  const { data: stock = {} } = useQuery<Record<string, number>>({
+    queryKey: ["/api/menu/stock"],
   });
 
   const { data: branches = [] } = useQuery<Branch[]>({
@@ -265,16 +269,24 @@ export default function POS() {
             // Show final price with VAT for display purposes
             const finalPrice = discountedBase * 1.15;
             
+            const stockCount = stock[item.id] ?? 0;
+            const isOutOfStock = stockCount === 0;
+            
             return (
               <Card
                 key={item.id}
-                className="cursor-pointer hover-elevate active-elevate-2 relative"
-                onClick={() => addToCart(item)}
+                className={`cursor-pointer hover-elevate active-elevate-2 relative ${isOutOfStock ? 'opacity-50' : ''}`}
+                onClick={() => !isOutOfStock && addToCart(item)}
                 data-testid={`card-pos-item-${item.id}`}
               >
-                {hasDiscount && (
+                {hasDiscount && !isOutOfStock && (
                   <div className="absolute top-2 right-2 z-10 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded">
                     {parseFloat(item.discount).toFixed(0)}% OFF
+                  </div>
+                )}
+                {isOutOfStock && (
+                  <div className="absolute top-2 right-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
+                    OUT OF STOCK
                   </div>
                 )}
                 <CardHeader className="p-4 pb-2">
@@ -292,6 +304,10 @@ export default function POS() {
                   ) : (
                     <p className="text-xl font-bold font-mono text-primary">{originalPrice.toFixed(2)} SAR</p>
                   )}
+                  <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
+                    <Package className="h-3 w-3" />
+                    <span data-testid={`text-stock-${item.id}`}>{stockCount} {t.available || 'available'}</span>
+                  </div>
                 </CardContent>
               </Card>
             );
