@@ -382,17 +382,18 @@ export default function Menu() {
                 Manage Categories
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Manage Menu Categories</DialogTitle>
                 <DialogDescription>Add, edit, or remove menu categories</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
-                <div className="flex gap-2">
+                <div className={`flex gap-2 ${layout.isMobile ? 'flex-col' : ''}`}>
                   <Input
                     placeholder="New category name..."
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
+                    className={layout.isMobile ? 'w-full' : ''}
                     data-testid="input-new-category"
                   />
                   <Button
@@ -406,6 +407,7 @@ export default function Menu() {
                         });
                       }
                     }}
+                    className={layout.isMobile ? 'w-full h-11' : ''}
                     data-testid="button-add-category"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -450,7 +452,7 @@ export default function Menu() {
                 Add Menu Item
               </Button>
             </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingItem ? "Edit Menu Item" : "Add New Menu Item"}</DialogTitle>
               <DialogDescription>
@@ -570,13 +572,20 @@ export default function Menu() {
                     </FormItem>
                   )}
                 />
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={handleCloseDialog} data-testid="button-cancel">
+                <div className={`flex gap-3 pt-4 ${layout.isMobile ? 'flex-col' : 'justify-end'}`}>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleCloseDialog} 
+                    className={layout.isMobile ? 'w-full h-11' : ''}
+                    data-testid="button-cancel"
+                  >
                     Cancel
                   </Button>
                   <Button 
                     type="submit" 
                     disabled={createMenuItemMutation.isPending || updateMenuItemMutation.isPending} 
+                    className={layout.isMobile ? 'w-full h-11' : ''}
                     data-testid="button-save-menu"
                   >
                     {editingItem 
