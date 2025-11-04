@@ -56,6 +56,12 @@ Preferred communication style: Simple, everyday language.
   - **Profitability Integration**: Cost Management tab enhanced with operating expenses section showing total operating expenses, paid/pending breakdown, and expense category analysis alongside recipe cost optimization tools.
   - **Dashboard Integration**: Operating Expenses card with bar chart showing chronologically sorted last 6 months of expense trends, total expenses, and pending payments summary for real-time financial monitoring.
 - **Tutorial System**: Comprehensive visual tutorial page featuring 12 detailed guides covering all major system features (POS, Inventory, Menu, Recipes, Customers, Orders, Dashboard, Sales, Profitability, Forecasting, Invoices, Financial). Each tutorial card displays a high-quality contextual photo, gradient-themed icon, title, and description. The page also includes a "Getting Started" guide with 5 step-by-step instructions for new users. Features smooth hover animations with image zoom effects and gradient overlays for enhanced visual appeal.
+- **Device-Specific Responsive Design**: User-configurable device preference system in Settings page with three options (Laptop, iPad, iPhone) that adjusts the entire app's responsive design. Device preference is stored in the database and persists across sessions. Features include:
+  - **DeviceContext**: Global context provider managing device state with optimistic updates and error rollback on mutation failure
+  - **Centered Container Layout**: Uses nested flex containers to constrain app width for iPad (820px) and iPhone (430px) while maintaining full width for laptop
+  - **Device-Specific CSS**: Automatically applies typography and padding adjustments based on selected device (smaller fonts/padding for iPhone, medium for iPad, default for laptop)
+  - **Account Section UI**: Settings page displays user account information (Full Name, Email, Commercial Registration, Role) with visual device selector cards showing device icons and names
+  - **Layout Stability**: Sidebar maintains consistent width across all devices, preventing content collapse and ensuring usable interface on all screen sizes
 
 ## External Dependencies
 
