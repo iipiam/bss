@@ -16,6 +16,19 @@ import {
   FileCheck
 } from "lucide-react";
 
+import posImage from "@assets/generated_images/POS_System_Interface_a1bc794e.png";
+import inventoryImage from "@assets/generated_images/Inventory_Management_System_f84dcc3a.png";
+import menuImage from "@assets/generated_images/Restaurant_Menu_Display_b812c237.png";
+import recipesImage from "@assets/generated_images/Recipe_Preparation_Kitchen_c2b136e5.png";
+import customersImage from "@assets/generated_images/Happy_Restaurant_Customers_4b909963.png";
+import ordersImage from "@assets/generated_images/Order_Management_Display_4049f259.png";
+import dashboardImage from "@assets/generated_images/Business_Analytics_Dashboard_3301d762.png";
+import salesImage from "@assets/generated_images/Sales_and_Payment_System_5634d834.png";
+import profitabilityImage from "@assets/generated_images/Profitability_Analysis_Setup_1bed8640.png";
+import forecastingImage from "@assets/generated_images/Business_Forecasting_Analytics_6bf96b65.png";
+import invoicesImage from "@assets/generated_images/Invoice_Documents_37f6d13b.png";
+import financialImage from "@assets/generated_images/Financial_Reports_Display_af93422d.png";
+
 export default function Tutorial() {
   const { t } = useLanguage();
 
@@ -24,73 +37,85 @@ export default function Tutorial() {
       icon: ShoppingCart,
       title: t.tutorialPOS,
       description: t.tutorialPOSDesc,
-      gradient: "from-emerald-500 to-teal-500"
+      gradient: "from-emerald-500 to-teal-500",
+      image: posImage
     },
     {
       icon: Package,
       title: t.tutorialInventory,
       description: t.tutorialInventoryDesc,
-      gradient: "from-blue-500 to-indigo-500"
+      gradient: "from-blue-500 to-indigo-500",
+      image: inventoryImage
     },
     {
       icon: UtensilsCrossed,
       title: t.tutorialMenu,
       description: t.tutorialMenuDesc,
-      gradient: "from-green-500 to-emerald-500"
+      gradient: "from-green-500 to-emerald-500",
+      image: menuImage
     },
     {
       icon: ChefHat,
       title: t.tutorialRecipes,
       description: t.tutorialRecipesDesc,
-      gradient: "from-yellow-500 to-orange-500"
+      gradient: "from-yellow-500 to-orange-500",
+      image: recipesImage
     },
     {
       icon: UserCircle,
       title: t.tutorialCustomers,
       description: t.tutorialCustomersDesc,
-      gradient: "from-cyan-500 to-blue-500"
+      gradient: "from-cyan-500 to-blue-500",
+      image: customersImage
     },
     {
       icon: ClipboardList,
       title: t.tutorialOrders,
       description: t.tutorialOrdersDesc,
-      gradient: "from-blue-500 to-cyan-500"
+      gradient: "from-blue-500 to-cyan-500",
+      image: ordersImage
     },
     {
       icon: BarChart3,
       title: t.tutorialDashboard,
       description: t.tutorialDashboardDesc,
-      gradient: "from-purple-500 to-pink-500"
+      gradient: "from-purple-500 to-pink-500",
+      image: dashboardImage
     },
     {
       icon: DollarSign,
       title: t.tutorialSales,
       description: t.tutorialSalesDesc,
-      gradient: "from-green-500 to-teal-500"
+      gradient: "from-green-500 to-teal-500",
+      image: salesImage
     },
     {
       icon: Calculator,
       title: t.tutorialProfitability,
       description: t.tutorialProfitabilityDesc,
-      gradient: "from-amber-500 to-orange-500"
+      gradient: "from-amber-500 to-orange-500",
+      image: profitabilityImage
     },
     {
       icon: TrendingUp,
       title: t.tutorialForecasting,
       description: t.tutorialForecastingDesc,
-      gradient: "from-cyan-500 to-sky-500"
+      gradient: "from-cyan-500 to-sky-500",
+      image: forecastingImage
     },
     {
       icon: FileCheck,
       title: t.tutorialInvoices,
       description: t.tutorialInvoicesDesc,
-      gradient: "from-violet-500 to-purple-500"
+      gradient: "from-violet-500 to-purple-500",
+      image: invoicesImage
     },
     {
       icon: Receipt,
       title: t.tutorialFinancial,
       description: t.tutorialFinancialDesc,
-      gradient: "from-blue-500 to-purple-500"
+      gradient: "from-blue-500 to-purple-500",
+      image: financialImage
     }
   ];
 
@@ -113,11 +138,19 @@ export default function Tutorial() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {tutorials.map((tutorial, index) => (
-            <Card key={index} className="hover-elevate group transition-all duration-300" data-testid={`card-tutorial-${index}`}>
-              <CardHeader>
-                <div className={`mb-4 p-3 rounded-lg bg-gradient-to-r ${tutorial.gradient} w-fit`}>
-                  <tutorial.icon className="h-6 w-6 text-white" />
+            <Card key={index} className="hover-elevate group transition-all duration-300 overflow-hidden" data-testid={`card-tutorial-${index}`}>
+              <div className="relative h-48 overflow-hidden">
+                <img 
+                  src={tutorial.image} 
+                  alt={tutorial.title}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                <div className={`absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t ${tutorial.gradient} opacity-80`} />
+                <div className={`absolute bottom-3 left-3 p-2 rounded-lg bg-gradient-to-r ${tutorial.gradient}`}>
+                  <tutorial.icon className="h-5 w-5 text-white" />
                 </div>
+              </div>
+              <CardHeader>
                 <CardTitle className="text-lg">{tutorial.title}</CardTitle>
               </CardHeader>
               <CardContent>
