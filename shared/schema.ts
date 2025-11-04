@@ -260,6 +260,7 @@ export const shopBills = pgTable("shop_bills", {
   billType: text("bill_type").notNull(), // "rent", "electricity", "water", "gas", "internet", "maintenance", "other"
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   paymentDate: timestamp("payment_date").notNull(),
+  paymentPeriod: text("payment_period").notNull().default("monthly"), // "weekly", "monthly", "quarterly", "semi-annually", "yearly"
   status: text("status").notNull().default("pending"), // "pending", "paid", "overdue"
   description: text("description"),
   branchId: varchar("branch_id").references(() => branches.id),
