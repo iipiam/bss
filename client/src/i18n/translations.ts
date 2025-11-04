@@ -202,6 +202,7 @@ export interface Translations {
   signUpFailedDesc: string;
   selectLanguage: string;
   restaurantManagementSystem: string;
+  vatDisclaimer: string;
   
   // Messages
   success: string;
@@ -542,6 +543,7 @@ export const translations: Record<Language, Translations> = {
     signUpFailedDesc: 'Could not create account',
     selectLanguage: 'Select language',
     restaurantManagementSystem: 'Restaurant management system',
+    vatDisclaimer: 'All prices include 15% VAT as required by Saudi law',
     
     // Messages
     success: 'Success',
@@ -881,6 +883,7 @@ export const translations: Record<Language, Translations> = {
     signUpFailedDesc: 'لا يمكن إنشاء الحساب',
     selectLanguage: 'اختر اللغة',
     restaurantManagementSystem: 'نظام إدارة المطاعم',
+    vatDisclaimer: 'جميع الأسعار تشمل ضريبة القيمة المضافة 15٪ كما يتطلب القانون السعودي',
     
     // Messages
     success: 'نجح',
@@ -1220,6 +1223,7 @@ export const translations: Record<Language, Translations> = {
     signUpFailedDesc: '无法创建账户',
     selectLanguage: '选择语言',
     restaurantManagementSystem: '餐厅管理系统',
+    vatDisclaimer: '所有价格均包含沙特法律要求的15%增值税',
     
     // Messages
     success: '成功',
@@ -1505,6 +1509,7 @@ export const translations: Record<Language, Translations> = {
     signUpFailedDesc: 'Konto konnte nicht erstellt werden',
     selectLanguage: 'Sprache wählen',
     restaurantManagementSystem: 'Restaurant-Managementsystem',
+    vatDisclaimer: 'Alle Preise beinhalten 15% MwSt. gemäß saudi-arabischem Recht',
     
     // Messages
     success: 'Erfolgreich',
@@ -1782,6 +1787,7 @@ export const translations: Record<Language, Translations> = {
     signUpFailedDesc: 'खाता नहीं बनाया जा सका',
     selectLanguage: 'भाषा चुनें',
     restaurantManagementSystem: 'रेस्तरां प्रबंधन प्रणाली',
+    vatDisclaimer: 'सभी कीमतों में सऊदी कानून के अनुसार 15% वैट शामिल है',
     
     // Messages
     success: 'सफलता',
@@ -2059,6 +2065,7 @@ export const translations: Record<Language, Translations> = {
     signUpFailedDesc: 'اکاؤنٹ نہیں بنایا جا سکا',
     selectLanguage: 'زبان منتخب کریں',
     restaurantManagementSystem: 'ریستوراں مینجمنٹ سسٹم',
+    vatDisclaimer: 'تمام قیمتوں میں سعودی قانون کے مطابق 15% VAT شامل ہے',
     
     // Messages
     success: 'کامیابی',
@@ -2336,6 +2343,7 @@ export const translations: Record<Language, Translations> = {
     signUpFailedDesc: 'অ্যাকাউন্ট তৈরি করা যায়নি',
     selectLanguage: 'ভাষা নির্বাচন করুন',
     restaurantManagementSystem: 'রেস্তোরাঁ ব্যবস্থাপনা সিস্টেম',
+    vatDisclaimer: 'সমস্ত মূল্য সৌদি আইন অনুযায়ী 15% ভ্যাট অন্তর্ভুক্ত',
     
     // Messages
     success: 'সফল',

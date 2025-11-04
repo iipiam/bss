@@ -314,7 +314,7 @@ export default function Login() {
                     </div>
                   </RadioGroup>
                   <p className="text-xs text-muted-foreground">
-                    All prices include 15% VAT as required by Saudi law
+                    {t.vatDisclaimer}
                   </p>
                 </div>
 
