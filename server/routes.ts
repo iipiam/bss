@@ -448,6 +448,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  app.get("/api/analytics/peak-hours/:hour", async (req, res) => {
+    const hour = parseInt(req.params.hour);
+    if (isNaN(hour) || hour < 0 || hour > 23) {
+      return res.status(400).json({ error: "Invalid hour parameter (must be 0-23)" });
+    }
+
+    const branchId = req.query.branchId as string | undefined;
+    const transactions = await storage.getTransactions(branchId);
+    const orders = await storage.getOrders(branchId);
+
+    const transactionsInHour = transactions.filter(t => {
+      const date = new Date(t.createdAt);
+      return date.getHours() === hour;
+    });
+
+    const orderMap = new Map(orders.map(o => [o.id, o]));
+
+    const results = transactionsInHour.map(transaction => {
+      const order = transaction.orderId ? orderMap.get(transaction.orderId) : null;
+      return {
+        transactionId: transaction.transactionId,
+        customerName: order?.customerName || null,
+        customerPhone: order?.customerPhone || "",
+        total: parseFloat(transaction.total),
+        itemCount: transaction.itemCount,
+        paymentMethod: transaction.paymentMethod,
+        orderType: order?.orderType || "",
+        createdAt: transaction.createdAt,
+      };
+    });
+
+    res.json(results);
+  });
+
   app.get("/api/analytics/sales", async (req, res) => {
     const branchId = req.query.branchId as string | undefined;
     const transactions = await storage.getTransactions(branchId);

@@ -1,10 +1,12 @@
 import { MetricCard } from "@/components/metric-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, ShoppingCart, Package, AlertTriangle, TrendingUp, TrendingDown, Calendar, CalendarDays, Clock } from "lucide-react";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DollarSign, ShoppingCart, Package, AlertTriangle, TrendingUp, TrendingDown, Calendar, CalendarDays, Clock, User, Phone, CreditCard } from "lucide-react";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import type { Order } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useState } from "react";
 
 interface PerformanceMetric {
   current: number;
@@ -15,6 +17,17 @@ interface PerformanceMetric {
 interface PeakHoursData {
   hour: number;
   sales: number;
+}
+
+interface HourlyCustomerOrder {
+  transactionId: string;
+  customerName: string | null;
+  customerPhone: string;
+  total: number;
+  itemCount: number;
+  paymentMethod: string;
+  orderType: string;
+  createdAt: Date;
 }
 
 interface DashboardData {
@@ -94,6 +107,13 @@ const PeakHoursCard = ({
   peakHours: { hourlyData: PeakHoursData[]; peakHour: number; peakSales: number }
 }) => {
   const { t } = useLanguage();
+  const [selectedHour, setSelectedHour] = useState<number | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  
+  const { data: customerOrders, isLoading: ordersLoading, isError } = useQuery<HourlyCustomerOrder[]>({
+    queryKey: [`/api/analytics/peak-hours/${selectedHour}`],
+    enabled: selectedHour !== null,
+  });
   
   const formatHour = (hour: number) => {
     if (hour === 0) return `12 ${t.am}`;
@@ -104,55 +124,141 @@ const PeakHoursCard = ({
 
   const chartData = peakHours.hourlyData.map(d => ({
     hour: formatHour(d.hour),
+    hourNumber: d.hour,
     sales: d.sales,
     isPeak: d.hour === peakHours.peakHour
   }));
 
+  const handleBarClick = (data: any) => {
+    if (data && data.hourNumber !== undefined) {
+      setSelectedHour(data.hourNumber);
+      setModalOpen(true);
+    }
+  };
+
   return (
-    <Card className="hover-elevate transition-all">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Clock className="w-5 h-5 text-primary" />
+    <>
+      <Card className="hover-elevate transition-all">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Clock className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>{t.peakHoursAnalysis}</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">{t.hourlySalesDistribution}</p>
+              </div>
             </div>
-            <div>
-              <CardTitle>{t.peakHoursAnalysis}</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">{t.hourlySalesDistribution}</p>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">{t.peakHour}</p>
+              <p className="text-2xl font-bold">{formatHour(peakHours.peakHour)}</p>
+              <p className="text-sm font-mono text-muted-foreground">{peakHours.peakSales.toFixed(2)} SAR</p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground">{t.peakHour}</p>
-            <p className="text-2xl font-bold">{formatHour(peakHours.peakHour)}</p>
-            <p className="text-sm font-mono text-muted-foreground">{peakHours.peakSales.toFixed(2)} SAR</p>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+              <XAxis 
+                dataKey="hour" 
+                className="text-xs" 
+                angle={-45}
+                textAnchor="end"
+                height={80}
+              />
+              <YAxis className="text-xs" />
+              <Tooltip 
+                formatter={(value: number) => [`${value.toFixed(2)} SAR`, t.salesAmount]}
+                labelClassName="text-sm font-semibold"
+              />
+              <Bar 
+                dataKey="sales" 
+                fill="hsl(var(--primary))"
+                radius={[4, 4, 0, 0]}
+                onClick={handleBarClick}
+                cursor="pointer"
+                data-testid="bar-peak-hours"
+              >
+                {chartData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`}
+                    fill={entry.isPeak ? "hsl(var(--chart-1))" : "hsl(var(--primary))"}
+                    opacity={entry.isPeak ? 1 : 0.7}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto" data-testid="dialog-customer-orders">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedHour !== null && `${t.customersAt} ${formatHour(selectedHour)}`}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {ordersLoading ? (
+              <p className="text-center text-muted-foreground">{t.loading}...</p>
+            ) : isError ? (
+              <p className="text-center text-red-600 dark:text-red-400 py-8" data-testid="text-error">
+                {t.error || "Error loading customer orders"}
+              </p>
+            ) : customerOrders && customerOrders.length > 0 ? (
+              <div className="space-y-3">
+                {customerOrders.map((order) => (
+                  <Card key={order.transactionId} className="hover-elevate" data-testid={`card-order-${order.transactionId}`}>
+                    <CardContent className="p-4">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-muted-foreground" />
+                            <span className="font-semibold" data-testid={`text-customer-${order.transactionId}`}>
+                              {order.customerName || t.walkInCustomer}
+                            </span>
+                          </div>
+                          {order.customerPhone && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Phone className="w-4 h-4" />
+                              <span>{order.customerPhone}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 text-sm">
+                            <CreditCard className="w-4 h-4 text-muted-foreground" />
+                            <span>{order.paymentMethod}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2 text-right md:text-left">
+                          <p className="text-2xl font-bold" data-testid={`text-total-${order.transactionId}`}>
+                            {order.total.toFixed(2)} SAR
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {order.itemCount} {order.itemCount === 1 ? t.itemName : t.itemName + 's'}
+                          </p>
+                          {order.orderType && (
+                            <p className="text-sm text-muted-foreground">
+                              {t.orderType}: {order.orderType}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8" data-testid="text-no-customers">
+                {t.noCustomersFound}
+              </p>
+            )}
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-            <XAxis 
-              dataKey="hour" 
-              className="text-xs" 
-              angle={-45}
-              textAnchor="end"
-              height={80}
-            />
-            <YAxis className="text-xs" />
-            <Tooltip 
-              formatter={(value: number) => [`${value.toFixed(2)} SAR`, t.salesAmount]}
-              labelClassName="text-sm font-semibold"
-            />
-            <Bar 
-              dataKey="sales" 
-              fill="hsl(var(--primary))"
-              radius={[4, 4, 0, 0]}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

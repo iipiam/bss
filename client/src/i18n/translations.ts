@@ -70,6 +70,10 @@ export interface Translations {
   salesAmount: string;
   am: string;
   pm: string;
+  customersAt: string;
+  customerOrders: string;
+  noCustomersFound: string;
+  walkInCustomer: string;
   
   // Common
   add: string;
@@ -257,6 +261,10 @@ export const translations: Record<Language, Translations> = {
     salesAmount: 'Sales Amount',
     am: 'AM',
     pm: 'PM',
+    customersAt: 'Customers at',
+    customerOrders: 'Customer Orders',
+    noCustomersFound: 'No customers found for this hour',
+    walkInCustomer: 'Walk-in Customer',
     
     // Common
     add: 'Add',
@@ -443,6 +451,10 @@ export const translations: Record<Language, Translations> = {
     salesAmount: 'مبلغ المبيعات',
     am: 'ص',
     pm: 'م',
+    customersAt: 'العملاء في',
+    customerOrders: 'طلبات العملاء',
+    noCustomersFound: 'لا يوجد عملاء في هذه الساعة',
+    walkInCustomer: 'عميل مباشر',
     
     // Common
     add: 'إضافة',
@@ -629,6 +641,10 @@ export const translations: Record<Language, Translations> = {
     salesAmount: '销售额',
     am: '上午',
     pm: '下午',
+    customersAt: '顾客在',
+    customerOrders: '顾客订单',
+    noCustomersFound: '此时段没有顾客',
+    walkInCustomer: '到店顾客',
     
     // Common
     add: '添加',
@@ -815,6 +831,10 @@ export const translations: Record<Language, Translations> = {
     salesAmount: 'Verkaufsbetrag',
     am: 'AM',
     pm: 'PM',
+    customersAt: 'Kunden um',
+    customerOrders: 'Kundenbestellungen',
+    noCustomersFound: 'Keine Kunden für diese Stunde gefunden',
+    walkInCustomer: 'Laufkundschaft',
     
     // Common
     add: 'Hinzufügen',
@@ -1001,6 +1021,10 @@ export const translations: Record<Language, Translations> = {
     salesAmount: 'बिक्री राशि',
     am: 'पूर्वाह्न',
     pm: 'अपराह्न',
+    customersAt: 'ग्राहक',
+    customerOrders: 'ग्राहक आदेश',
+    noCustomersFound: 'इस घंटे के लिए कोई ग्राहक नहीं मिला',
+    walkInCustomer: 'वॉक-इन ग्राहक',
     
     // Common
     add: 'जोड़ें',
@@ -1187,6 +1211,10 @@ export const translations: Record<Language, Translations> = {
     salesAmount: 'فروخت کی رقم',
     am: 'صبح',
     pm: 'شام',
+    customersAt: 'گاہک',
+    customerOrders: 'گاہک کے آرڈرز',
+    noCustomersFound: 'اس گھنٹے کے لیے کوئی گاہک نہیں ملا',
+    walkInCustomer: 'براہ راست گاہک',
     
     // Common
     add: 'شامل کریں',
@@ -1373,6 +1401,10 @@ export const translations: Record<Language, Translations> = {
     salesAmount: 'বিক্রয় পরিমাণ',
     am: 'পূর্বাহ্ন',
     pm: 'অপরাহ্ন',
+    customersAt: 'গ্রাহক',
+    customerOrders: 'গ্রাহক অর্ডার',
+    noCustomersFound: 'এই ঘণ্টার জন্য কোনো গ্রাহক পাওয়া যায়নি',
+    walkInCustomer: 'ওয়াক-ইন গ্রাহক',
     
     // Common
     add: 'যোগ করুন',
