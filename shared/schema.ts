@@ -210,6 +210,7 @@ export const users = pgTable("users", {
   subscriptionEndDate: timestamp("subscription_end_date"),
   passwordResetToken: text("password_reset_token"),
   passwordResetExpiry: timestamp("password_reset_expiry"),
+  devicePreference: text("device_preference").default("laptop"), // "laptop", "ipad", or "iphone"
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
