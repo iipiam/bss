@@ -390,6 +390,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const activeOrders = orders.filter(o => o.status !== "Completed" && o.status !== "Cancelled").length;
     const lowStockItems = inventory.filter(i => i.status === "Low Stock").length;
 
+    // Calculate peak hours analysis
+    const salesByHour: Record<number, number> = {};
+    for (let i = 0; i < 24; i++) {
+      salesByHour[i] = 0;
+    }
+
+    transactions.forEach(t => {
+      const date = new Date(t.createdAt);
+      const hour = date.getHours();
+      salesByHour[hour] += parseFloat(t.total);
+    });
+
+    const peakHoursData = Object.entries(salesByHour).map(([hour, sales]) => ({
+      hour: parseInt(hour),
+      sales: parseFloat(sales.toFixed(2)),
+    })).sort((a, b) => a.hour - b.hour);
+
+    // Find peak hour (hour with highest sales)
+    const peakHour = peakHoursData.reduce((max, current) => 
+      current.sales > max.sales ? current : max, 
+      peakHoursData[0]
+    );
+
     res.json({
       todaysSales: todaysSales.toFixed(2),
       activeOrders,
@@ -416,6 +439,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           previous: lastYearSales,
           change: calculateChange(thisYearSales, lastYearSales),
         },
+      },
+      peakHours: {
+        hourlyData: peakHoursData,
+        peakHour: peakHour.hour,
+        peakSales: peakHour.sales,
       },
     });
   });
