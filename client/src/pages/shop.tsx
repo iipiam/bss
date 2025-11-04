@@ -72,7 +72,11 @@ export default function Shop() {
 
   const createSalaryMutation = useMutation({
     mutationFn: async (data: z.infer<typeof salaryFormSchema>) => {
-      return await apiRequest("POST", "/api/shop/salaries", data);
+      const payload = {
+        ...data,
+        paymentDate: new Date(data.paymentDate).toISOString(),
+      };
+      return await apiRequest("POST", "/api/shop/salaries", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/shop/salaries"] });
@@ -87,7 +91,10 @@ export default function Shop() {
 
   const updateSalaryMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<z.infer<typeof salaryFormSchema>> }) => {
-      return await apiRequest("PATCH", `/api/shop/salaries/${id}`, data);
+      const payload = data.paymentDate
+        ? { ...data, paymentDate: new Date(data.paymentDate).toISOString() }
+        : data;
+      return await apiRequest("PATCH", `/api/shop/salaries/${id}`, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/shop/salaries"] });
@@ -116,7 +123,11 @@ export default function Shop() {
 
   const createBillMutation = useMutation({
     mutationFn: async (data: z.infer<typeof billFormSchema>) => {
-      return await apiRequest("POST", "/api/shop/bills", data);
+      const payload = {
+        ...data,
+        paymentDate: new Date(data.paymentDate).toISOString(),
+      };
+      return await apiRequest("POST", "/api/shop/bills", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/shop/bills"] });
@@ -131,7 +142,10 @@ export default function Shop() {
 
   const updateBillMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<z.infer<typeof billFormSchema>> }) => {
-      return await apiRequest("PATCH", `/api/shop/bills/${id}`, data);
+      const payload = data.paymentDate
+        ? { ...data, paymentDate: new Date(data.paymentDate).toISOString() }
+        : data;
+      return await apiRequest("PATCH", `/api/shop/bills/${id}`, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/shop/bills"] });
