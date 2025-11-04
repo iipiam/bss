@@ -10,7 +10,7 @@ import { TrendingUp, TrendingDown, DollarSign, Percent, Package, Calculator, Ale
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import type { MenuItem, Recipe, Order } from "@shared/schema";
+import type { MenuItem, Recipe, Order, ShopBill } from "@shared/schema";
 
 const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
@@ -30,7 +30,16 @@ export default function Profitability() {
     queryKey: ["/api/orders"],
   });
 
-  const isLoading = isLoadingMenu || isLoadingRecipes || isLoadingOrders;
+  const { data: bills = [], isLoading: isLoadingBills } = useQuery<ShopBill[]>({
+    queryKey: ["/api/shop/bills"],
+    queryFn: async () => {
+      const response = await fetch("/api/shop/bills?includeArchived=false");
+      if (!response.ok) throw new Error("Failed to fetch bills");
+      return response.json();
+    },
+  });
+
+  const isLoading = isLoadingMenu || isLoadingRecipes || isLoadingOrders || isLoadingBills;
 
   // Filter orders by period
   const filteredOrders = useMemo(() => {
@@ -507,7 +516,31 @@ export default function Profitability() {
 
           {/* Cost Management Tab */}
           <TabsContent value="cost-management" className="space-y-6">
-            <CostManagementTab profitabilityData={profitabilityData} />
+            <CostManagementTab 
+              profitabilityData={profitabilityData} 
+              bills={bills.filter((bill) => {
+                const billDate = new Date(bill.paymentDate);
+                const now = new Date();
+                const cutoffDate = new Date();
+                
+                switch (period) {
+                  case "week":
+                    cutoffDate.setDate(now.getDate() - 7);
+                    break;
+                  case "month":
+                    cutoffDate.setMonth(now.getMonth() - 1);
+                    break;
+                  case "quarter":
+                    cutoffDate.setMonth(now.getMonth() - 3);
+                    break;
+                  case "year":
+                    cutoffDate.setFullYear(now.getFullYear() - 1);
+                    break;
+                }
+                
+                return billDate >= cutoffDate;
+              })}
+            />
           </TabsContent>
         </Tabs>
       )}
@@ -907,7 +940,7 @@ function ScalingAnalysisTab({ profitabilityData, totalRevenue, totalProfit }: { 
 }
 
 // Cost Management Tab Component
-function CostManagementTab({ profitabilityData }: { profitabilityData: any[] }) {
+function CostManagementTab({ profitabilityData, bills }: { profitabilityData: any[]; bills: ShopBill[] }) {
   // Identify cost reduction opportunities
   const highCostItems = profitabilityData
     .filter(item => item.cost > 0)
@@ -918,14 +951,91 @@ function CostManagementTab({ profitabilityData }: { profitabilityData: any[] }) 
     .filter(item => item.margin < 30 && item.cost > 10)
     .sort((a, b) => b.cost - a.cost);
 
+  // Calculate operating expenses from bills
+  const totalOperatingExpenses = bills.reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
+  const paidExpenses = bills.filter(b => b.status === "paid").reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
+  const pendingExpenses = bills.filter(b => b.status === "pending").reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
+
+  // Group bills by type
+  const expensesByType = bills.reduce((acc, bill) => {
+    const type = bill.billType;
+    acc[type] = (acc[type] || 0) + parseFloat(bill.amount || "0");
+    return acc;
+  }, {} as Record<string, number>);
+
+  const expenseTypeData = Object.entries(expensesByType)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
+
   return (
     <>
+      {/* Operating Expenses Summary */}
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Operating Expenses</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold font-mono text-orange-600">{totalOperatingExpenses.toFixed(2)} SAR</div>
+            <p className="text-xs text-muted-foreground">Rent, utilities, salaries, etc.</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Paid Expenses</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold font-mono text-green-600">{paidExpenses.toFixed(2)} SAR</div>
+            <p className="text-xs text-muted-foreground">{((paidExpenses / totalOperatingExpenses) * 100 || 0).toFixed(1)}% of total</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Expenses</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold font-mono text-orange-600">{pendingExpenses.toFixed(2)} SAR</div>
+            <p className="text-xs text-muted-foreground">{((pendingExpenses / totalOperatingExpenses) * 100 || 0).toFixed(1)}% of total</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Operating Expenses Breakdown */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Operating Expenses by Category</CardTitle>
+          <CardDescription>Fixed and variable operating costs</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {expenseTypeData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={expenseTypeData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
+                <YAxis />
+                <Tooltip formatter={(value: number) => `${value.toFixed(2)} SAR`} />
+                <Bar dataKey="value" fill="hsl(var(--destructive))" name="Expense Amount" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              No operating expense data available for this period
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Alert>
         <Scissors className="h-4 w-4" />
         <AlertTitle>Cost Reduction Strategy</AlertTitle>
         <AlertDescription>
           Reducing costs by just 10% on high-cost items can significantly improve margins without changing prices. 
-          Focus on ingredient substitutions, supplier negotiations, and portion control.
+          Focus on ingredient substitutions, supplier negotiations, portion control, and operating expense optimization.
         </AlertDescription>
       </Alert>
 

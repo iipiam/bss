@@ -1,10 +1,10 @@
 import { MetricCard } from "@/components/metric-card";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DollarSign, ShoppingCart, Package, AlertTriangle, TrendingUp, TrendingDown, Calendar, CalendarDays, Clock, User, Phone, CreditCard } from "lucide-react";
+import { DollarSign, ShoppingCart, Package, AlertTriangle, TrendingUp, TrendingDown, Calendar, CalendarDays, Clock, User, Phone, CreditCard, Wallet } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { useQuery } from "@tanstack/react-query";
-import type { Order } from "@shared/schema";
+import type { Order, ShopBill } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState } from "react";
 
@@ -272,7 +272,40 @@ export default function Dashboard() {
     queryKey: ["/api/analytics/sales"],
   });
 
-  if (dashboardLoading || salesLoading) {
+  const { data: bills = [], isLoading: billsLoading } = useQuery<ShopBill[]>({
+    queryKey: ["/api/shop/bills"],
+    queryFn: async () => {
+      const response = await fetch("/api/shop/bills?includeArchived=false");
+      if (!response.ok) throw new Error("Failed to fetch bills");
+      return response.json();
+    },
+  });
+
+  // Calculate monthly expense trends (last 6 months)
+  const monthlyExpensesMap = bills.reduce((acc, bill) => {
+    const billDate = new Date(bill.paymentDate);
+    const monthKey = `${billDate.getFullYear()}-${String(billDate.getMonth() + 1).padStart(2, '0')}`;
+    if (!acc[monthKey]) {
+      acc[monthKey] = { date: billDate, amount: 0 };
+    }
+    acc[monthKey].amount += parseFloat(bill.amount || "0");
+    return acc;
+  }, {} as Record<string, { date: Date; amount: number }>);
+
+  const expenseTrendData = Object.entries(monthlyExpensesMap)
+    .map(([key, value]) => ({
+      month: value.date.toLocaleDateString('default', { month: 'short', year: 'numeric' }),
+      expenses: value.amount,
+      sortKey: key
+    }))
+    .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+    .slice(-6)
+    .map(({ month, expenses }) => ({ month, expenses }));
+
+  const totalExpenses = bills.reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
+  const pendingExpenses = bills.filter(b => b.status === "pending").reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
+
+  if (dashboardLoading || salesLoading || billsLoading) {
     return (
       <div className="p-8 space-y-8">
         <div>
@@ -351,6 +384,47 @@ export default function Dashboard() {
       {dashboardData?.peakHours && (
         <PeakHoursCard peakHours={dashboardData.peakHours} />
       )}
+
+      {/* Expense Trends Section */}
+      <Card className="hover-elevate transition-all">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-orange-500/10">
+                <Wallet className="w-5 h-5 text-orange-600" />
+              </div>
+              <div>
+                <CardTitle>Operating Expenses</CardTitle>
+                <CardDescription>Monthly expense trends and summary</CardDescription>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold font-mono text-orange-600">{totalExpenses.toFixed(2)} SAR</p>
+              <p className="text-xs text-muted-foreground">
+                Pending: <span className="font-mono">{pendingExpenses.toFixed(2)} SAR</span>
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {expenseTrendData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={expenseTrendData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="month" className="text-xs" />
+                <YAxis className="text-xs" />
+                <Tooltip formatter={(value: number) => `${value.toFixed(2)} SAR`} />
+                <Bar dataKey="expenses" fill="hsl(var(--destructive))" name="Expenses" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <Wallet className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No expense data available</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
