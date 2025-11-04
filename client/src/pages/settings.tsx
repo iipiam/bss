@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useDevice } from "@/contexts/DeviceContext";
+import { useAuth } from "@/lib/auth";
 import type { Settings } from "@shared/schema";
-import { Save } from "lucide-react";
+import { Save, Laptop, Tablet, Smartphone } from "lucide-react";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -202,6 +204,119 @@ export default function SettingsPage() {
           </p>
         </CardContent>
       </Card>
+
+      <DevicePreferenceSection />
     </div>
+  );
+}
+
+function DevicePreferenceSection() {
+  const { device, setDevice, isUpdating } = useDevice();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const handleDeviceChange = async (newDevice: 'laptop' | 'ipad' | 'iphone') => {
+    try {
+      await setDevice(newDevice);
+      toast({
+        title: "Success",
+        description: `Device preference updated to ${newDevice === 'laptop' ? 'Laptop' : newDevice === 'ipad' ? 'iPad' : 'iPhone'}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update device preference",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deviceOptions = [
+    { value: 'laptop' as const, label: 'Laptop', icon: Laptop, description: 'Full desktop experience with all features' },
+    { value: 'ipad' as const, label: 'iPad', icon: Tablet, description: 'Tablet-optimized layout with touch-friendly controls' },
+    { value: 'iphone' as const, label: 'iPhone', icon: Smartphone, description: 'Compact mobile layout for smartphones' },
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Account & Device Preference</CardTitle>
+        <CardDescription>
+          Choose your device type to optimize the interface layout
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Account</Label>
+              <div className="flex items-center gap-3 p-3 bg-muted rounded-md">
+                <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
+                  {user?.fullName?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium">{user?.fullName}</p>
+                  <p className="text-sm text-muted-foreground">{user?.email || user?.username}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Role & Status</Label>
+              <div className="p-3 bg-muted rounded-md space-y-1">
+                <p className="text-sm"><span className="font-medium">Role:</span> {user?.role}</p>
+                <p className="text-sm"><span className="font-medium">Status:</span> {user?.active ? 'Active' : 'Inactive'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-4 border-t">
+            <Label>Device Preference</Label>
+            <div className="grid gap-3">
+              {deviceOptions.map((option) => {
+                const Icon = option.icon;
+                const isSelected = device === option.value;
+                
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => handleDeviceChange(option.value)}
+                    disabled={isUpdating}
+                    className={`flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left ${
+                      isSelected
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover-elevate active-elevate-2'
+                    }`}
+                    data-testid={`button-device-${option.value}`}
+                  >
+                    <div className={`h-12 w-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                    }`}>
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{option.label}</h3>
+                        {isSelected && (
+                          <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {option.description}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              The app layout will automatically adjust to match your selected device for the best experience.
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -33,8 +33,15 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
   });
 
   const setDevice = async (newDevice: DeviceType) => {
+    const previousDevice = device;
     setDeviceState(newDevice);
-    await updateDeviceMutation.mutateAsync(newDevice);
+    try {
+      await updateDeviceMutation.mutateAsync(newDevice);
+    } catch (error) {
+      // Rollback to previous device state on error
+      setDeviceState(previousDevice);
+      throw error;
+    }
   };
 
   return (

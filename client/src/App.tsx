@@ -9,7 +9,7 @@ import { BranchSelector } from "@/components/branch-selector";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
-import { DeviceProvider } from "@/contexts/DeviceContext";
+import { DeviceProvider, useDevice } from "@/contexts/DeviceContext";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -83,6 +83,7 @@ function Router() {
 function AppContent() {
   const { user, isLoading, logout } = useAuth();
   const { t } = useLanguage();
+  const { device } = useDevice();
   
   // Check if this is the first run (no users exist)
   const { data: firstRunCheck, isLoading: isCheckingFirstRun } = useQuery<{ firstRun: boolean }>({
@@ -90,10 +91,32 @@ function AppContent() {
     retry: false,
   });
 
-  const style = {
-    "--sidebar-width": "16rem",
-    "--sidebar-width-icon": "3rem",
+  // Adjust layout based on device preference
+  const getDeviceStyles = () => {
+    switch (device) {
+      case 'iphone':
+        return {
+          "--sidebar-width": "16rem",
+          "--sidebar-width-icon": "3rem",
+        };
+      case 'ipad':
+        return {
+          "--sidebar-width": "14rem",
+          "--sidebar-width-icon": "3rem",
+        };
+      case 'laptop':
+      default:
+        return {
+          "--sidebar-width": "16rem",
+          "--sidebar-width-icon": "3rem",
+        };
+    }
   };
+
+  const style = getDeviceStyles();
+  
+  // Apply device-specific container styles
+  const containerMaxWidth = device === 'iphone' ? '430px' : device === 'ipad' ? '820px' : '100%';
 
   // Handle public routes (forgot-password, reset-password) before checking authentication
   const currentPath = window.location.pathname;
@@ -126,44 +149,46 @@ function AppContent() {
     return <Login />;
   }
 
-  // Show main app if authenticated
+  // Show main app if authenticated with device-responsive layout
   return (
     <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full">
-        <AppSidebar />
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="flex items-center justify-between p-4 border-b h-16 flex-shrink-0">
-            <div className="flex items-center gap-4">
-              <SidebarTrigger data-testid="button-sidebar-toggle" />
-              <BranchSelector />
-            </div>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" data-testid="button-user-menu">
-                    <UserIcon className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col">
-                      <span className="font-semibold">{user?.fullName}</span>
-                      <span className="text-xs text-muted-foreground">{user?.role}</span>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => logout()} data-testid="button-logout">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    {t.logout}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </header>
-          <main className="flex-1 overflow-auto">
-            <Router />
-          </main>
+      <div className="flex h-screen w-full justify-center bg-background">
+        <div className="flex h-screen w-full" style={{ maxWidth: containerMaxWidth }}>
+          <AppSidebar />
+          <div className="flex flex-col flex-1 overflow-hidden">
+            <header className="flex items-center justify-between p-4 border-b h-16 flex-shrink-0">
+              <div className="flex items-center gap-4">
+                <SidebarTrigger data-testid="button-sidebar-toggle" />
+                <BranchSelector />
+              </div>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" data-testid="button-user-menu">
+                      <UserIcon className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col">
+                        <span className="font-semibold">{user?.fullName}</span>
+                        <span className="text-xs text-muted-foreground">{user?.role}</span>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => logout()} data-testid="button-logout">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      {t.logout}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </header>
+            <main className={`flex-1 overflow-auto device-${device}`} data-device={device}>
+              <Router />
+            </main>
+          </div>
         </div>
       </div>
     </SidebarProvider>
