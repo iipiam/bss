@@ -9,6 +9,7 @@ import { BranchSelector } from "@/components/branch-selector";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
+import { DeviceProvider } from "@/contexts/DeviceContext";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -176,7 +177,9 @@ export default function App() {
         <LanguageProvider>
           <TooltipProvider>
             <AuthProvider>
-              <AppContent />
+              <DeviceProvider>
+                <AppContent />
+              </DeviceProvider>
             </AuthProvider>
             <Toaster />
           </TooltipProvider>
