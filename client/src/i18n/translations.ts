@@ -291,6 +291,29 @@ export interface Translations {
   monthlyExpenses: string;
   currency: string;
   saving: string;
+  
+  // Bills Page
+  bills: string;
+  sar: string;
+  archived: string;
+  yes: string;
+  no: string;
+  exportedSuccessfully: string;
+  exportToExcel: string;
+  filters: string;
+  filterBills: string;
+  all: string;
+  startDate: string;
+  endDate: string;
+  hideArchived: string;
+  showArchived: string;
+  billsList: string;
+  billsFound: string;
+  noBillsFound: string;
+  actions: string;
+  unarchive: string;
+  archive: string;
+  somethingWentWrong: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -582,6 +605,29 @@ export const translations: Record<Language, Translations> = {
     monthlyExpenses: 'Monthly Expenses',
     currency: 'SAR',
     saving: 'Saving...',
+    
+    // Bills Page
+    bills: 'Bills',
+    sar: 'SAR',
+    archived: 'Archived',
+    yes: 'Yes',
+    no: 'No',
+    exportedSuccessfully: 'Exported successfully',
+    exportToExcel: 'Export to Excel',
+    filters: 'Filters',
+    filterBills: 'Filter bills by various criteria',
+    all: 'All',
+    startDate: 'Start Date',
+    endDate: 'End Date',
+    hideArchived: 'Hide Archived',
+    showArchived: 'Show Archived',
+    billsList: 'Bills List',
+    billsFound: 'bills found',
+    noBillsFound: 'No bills found',
+    actions: 'Actions',
+    unarchive: 'Unarchive',
+    archive: 'Archive',
+    somethingWentWrong: 'Something went wrong',
   },
   
   Arabic: {
@@ -872,6 +918,29 @@ export const translations: Record<Language, Translations> = {
     billError: 'خطأ في معالجة الفاتورة',
     currency: 'ريال',
     saving: 'جاري الحفظ...',
+    
+    // Bills Page
+    bills: 'الفواتير',
+    sar: 'ريال',
+    archived: 'مؤرشف',
+    yes: 'نعم',
+    no: 'لا',
+    exportedSuccessfully: 'تم التصدير بنجاح',
+    exportToExcel: 'تصدير إلى Excel',
+    filters: 'الفلاتر',
+    filterBills: 'تصفية الفواتير حسب معايير مختلفة',
+    all: 'الكل',
+    startDate: 'تاريخ البدء',
+    endDate: 'تاريخ الانتهاء',
+    hideArchived: 'إخفاء المؤرشف',
+    showArchived: 'إظهار المؤرشف',
+    billsList: 'قائمة الفواتير',
+    billsFound: 'فاتورة موجودة',
+    noBillsFound: 'لم يتم العثور على فواتير',
+    actions: 'الإجراءات',
+    unarchive: 'إلغاء الأرشفة',
+    archive: 'أرشفة',
+    somethingWentWrong: 'حدث خطأ ما',
   },
   
   Chinese: {

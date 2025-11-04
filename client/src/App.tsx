@@ -32,6 +32,7 @@ import Analysis from "@/pages/analysis";
 import Profitability from "@/pages/profitability";
 import Financial from "@/pages/financial";
 import Invoices from "@/pages/invoices";
+import Bills from "@/pages/bills";
 import POS from "@/pages/pos";
 import Branches from "@/pages/branches";
 import Orders from "@/pages/orders";
@@ -63,6 +64,7 @@ function Router() {
       <Route path="/profitability" component={Profitability} />
       <Route path="/financial" component={Financial} />
       <Route path="/invoices" component={Invoices} />
+      <Route path="/bills" component={Bills} />
       <Route path="/pos" component={POS} />
       <Route path="/branches" component={Branches} />
       <Route path="/orders" component={Orders} />
