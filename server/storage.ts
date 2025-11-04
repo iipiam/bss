@@ -21,6 +21,10 @@ import {
   type InsertInvoice,
   type Customer,
   type InsertCustomer,
+  type Salary,
+  type InsertSalary,
+  type ShopBill,
+  type InsertShopBill,
   branches,
   inventoryItems,
   menuItems,
@@ -32,6 +36,8 @@ import {
   users,
   invoices,
   customers,
+  salaries,
+  shopBills,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
@@ -113,6 +119,20 @@ export interface IStorage {
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
   deleteCustomer(id: string): Promise<boolean>;
+
+  // Shop Salaries
+  getSalaries(branchId?: string, startDate?: Date, endDate?: Date): Promise<Salary[]>;
+  getSalary(id: string): Promise<Salary | undefined>;
+  createSalary(salary: InsertSalary): Promise<Salary>;
+  updateSalary(id: string, salary: Partial<InsertSalary>): Promise<Salary | undefined>;
+  deleteSalary(id: string): Promise<boolean>;
+
+  // Shop Bills
+  getShopBills(branchId?: string, startDate?: Date, endDate?: Date): Promise<ShopBill[]>;
+  getShopBill(id: string): Promise<ShopBill | undefined>;
+  createShopBill(bill: InsertShopBill): Promise<ShopBill>;
+  updateShopBill(id: string, bill: Partial<InsertShopBill>): Promise<ShopBill | undefined>;
+  deleteShopBill(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -464,6 +484,78 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCustomer(id: string): Promise<boolean> {
     const result = await db.delete(customers).where(eq(customers.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Shop Salaries
+  async getSalaries(branchId?: string, startDate?: Date, endDate?: Date): Promise<Salary[]> {
+    const conditions = [];
+    if (branchId) conditions.push(eq(salaries.branchId, branchId));
+    if (startDate) conditions.push(gte(salaries.paymentDate, startDate));
+    if (endDate) conditions.push(lte(salaries.paymentDate, endDate));
+    
+    if (conditions.length > 0) {
+      return await db.select().from(salaries).where(and(...conditions));
+    }
+    return await db.select().from(salaries);
+  }
+
+  async getSalary(id: string): Promise<Salary | undefined> {
+    const [salary] = await db.select().from(salaries).where(eq(salaries.id, id));
+    return salary;
+  }
+
+  async createSalary(salary: InsertSalary): Promise<Salary> {
+    const [created] = await db.insert(salaries).values(salary).returning();
+    return created;
+  }
+
+  async updateSalary(id: string, salary: Partial<InsertSalary>): Promise<Salary | undefined> {
+    const [updated] = await db.update(salaries)
+      .set(salary)
+      .where(eq(salaries.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteSalary(id: string): Promise<boolean> {
+    const result = await db.delete(salaries).where(eq(salaries.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Shop Bills
+  async getShopBills(branchId?: string, startDate?: Date, endDate?: Date): Promise<ShopBill[]> {
+    const conditions = [];
+    if (branchId) conditions.push(eq(shopBills.branchId, branchId));
+    if (startDate) conditions.push(gte(shopBills.paymentDate, startDate));
+    if (endDate) conditions.push(lte(shopBills.paymentDate, endDate));
+    
+    if (conditions.length > 0) {
+      return await db.select().from(shopBills).where(and(...conditions));
+    }
+    return await db.select().from(shopBills);
+  }
+
+  async getShopBill(id: string): Promise<ShopBill | undefined> {
+    const [bill] = await db.select().from(shopBills).where(eq(shopBills.id, id));
+    return bill;
+  }
+
+  async createShopBill(bill: InsertShopBill): Promise<ShopBill> {
+    const [created] = await db.insert(shopBills).values(bill).returning();
+    return created;
+  }
+
+  async updateShopBill(id: string, bill: Partial<InsertShopBill>): Promise<ShopBill | undefined> {
+    const [updated] = await db.update(shopBills)
+      .set(bill)
+      .where(eq(shopBills.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteShopBill(id: string): Promise<boolean> {
+    const result = await db.delete(shopBills).where(eq(shopBills.id, id));
     return result.rowCount ? result.rowCount > 0 : false;
   }
 }

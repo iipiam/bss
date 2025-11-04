@@ -236,3 +236,33 @@ export const invoices = pgTable("invoices", {
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({ id: true, createdAt: true });
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 export type Invoice = typeof invoices.$inferSelect;
+
+// Shop Salaries
+export const salaries = pgTable("salaries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  employeeName: text("employee_name").notNull(),
+  position: text("position").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  paymentDate: timestamp("payment_date").notNull(),
+  branchId: varchar("branch_id").references(() => branches.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertSalarySchema = createInsertSchema(salaries).omit({ id: true, createdAt: true });
+export type InsertSalary = z.infer<typeof insertSalarySchema>;
+export type Salary = typeof salaries.$inferSelect;
+
+// Shop Bills
+export const shopBills = pgTable("shop_bills", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  billType: text("bill_type").notNull(), // "rent", "electricity", "water", "gas", "other"
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  paymentDate: timestamp("payment_date").notNull(),
+  description: text("description"),
+  branchId: varchar("branch_id").references(() => branches.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertShopBillSchema = createInsertSchema(shopBills).omit({ id: true, createdAt: true });
+export type InsertShopBill = z.infer<typeof insertShopBillSchema>;
+export type ShopBill = typeof shopBills.$inferSelect;

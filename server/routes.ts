@@ -17,6 +17,8 @@ import {
   insertUserSchema,
   insertInvoiceSchema,
   insertCustomerSchema,
+  insertSalarySchema,
+  insertShopBillSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -193,6 +195,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const success = await storage.deleteCustomer(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Customer not found" });
+    }
+    res.status(204).send();
+  });
+
+  // Shop Salaries
+  app.get("/api/shop/salaries", async (req, res) => {
+    const branchId = req.query.branchId as string | undefined;
+    const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+    const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+    const salaries = await storage.getSalaries(branchId, startDate, endDate);
+    res.json(salaries);
+  });
+
+  app.get("/api/shop/salaries/:id", async (req, res) => {
+    const salary = await storage.getSalary(req.params.id);
+    if (!salary) {
+      return res.status(404).json({ error: "Salary not found" });
+    }
+    res.json(salary);
+  });
+
+  app.post("/api/shop/salaries", async (req, res) => {
+    try {
+      const data = insertSalarySchema.parse(req.body);
+      const salary = await storage.createSalary(data);
+      res.status(201).json(salary);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid salary data" });
+    }
+  });
+
+  app.patch("/api/shop/salaries/:id", async (req, res) => {
+    try {
+      const salary = await storage.updateSalary(req.params.id, req.body);
+      if (!salary) {
+        return res.status(404).json({ error: "Salary not found" });
+      }
+      res.json(salary);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid salary data" });
+    }
+  });
+
+  app.delete("/api/shop/salaries/:id", async (req, res) => {
+    const success = await storage.deleteSalary(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Salary not found" });
+    }
+    res.status(204).send();
+  });
+
+  // Shop Bills
+  app.get("/api/shop/bills", async (req, res) => {
+    const branchId = req.query.branchId as string | undefined;
+    const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+    const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+    const bills = await storage.getShopBills(branchId, startDate, endDate);
+    res.json(bills);
+  });
+
+  app.get("/api/shop/bills/:id", async (req, res) => {
+    const bill = await storage.getShopBill(req.params.id);
+    if (!bill) {
+      return res.status(404).json({ error: "Bill not found" });
+    }
+    res.json(bill);
+  });
+
+  app.post("/api/shop/bills", async (req, res) => {
+    try {
+      const data = insertShopBillSchema.parse(req.body);
+      const bill = await storage.createShopBill(data);
+      res.status(201).json(bill);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid bill data" });
+    }
+  });
+
+  app.patch("/api/shop/bills/:id", async (req, res) => {
+    try {
+      const bill = await storage.updateShopBill(req.params.id, req.body);
+      if (!bill) {
+        return res.status(404).json({ error: "Bill not found" });
+      }
+      res.json(bill);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid bill data" });
+    }
+  });
+
+  app.delete("/api/shop/bills/:id", async (req, res) => {
+    const success = await storage.deleteShopBill(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Bill not found" });
     }
     res.status(204).send();
   });
