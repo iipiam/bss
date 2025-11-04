@@ -259,12 +259,13 @@ export type Salary = typeof salaries.$inferSelect;
 // Shop Bills
 export const shopBills = pgTable("shop_bills", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  billType: text("bill_type").notNull(), // "rent", "electricity", "water", "gas", "internet", "maintenance", "other"
+  billType: text("bill_type").notNull(), // "rent", "electricity", "water", "gas", "internet", "maintenance", "foundational", "other"
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   paymentDate: timestamp("payment_date").notNull(),
-  paymentPeriod: text("payment_period").notNull().default("monthly"), // "weekly", "monthly", "quarterly", "semi-annually", "yearly"
+  paymentPeriod: text("payment_period").notNull().default("monthly"), // "one-time", "weekly", "monthly", "quarterly", "semi-annually", "yearly"
   status: text("status").notNull().default("pending"), // "pending", "paid", "overdue"
   description: text("description"),
+  archived: boolean("archived").notNull().default(false), // For archiving old bills
   branchId: varchar("branch_id").references(() => branches.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

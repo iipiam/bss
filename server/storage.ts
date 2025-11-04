@@ -129,11 +129,12 @@ export interface IStorage {
   deleteSalary(id: string): Promise<boolean>;
 
   // Shop Bills
-  getShopBills(branchId?: string, startDate?: Date, endDate?: Date): Promise<ShopBill[]>;
+  getShopBills(branchId?: string, startDate?: Date, endDate?: Date, includeArchived?: boolean): Promise<ShopBill[]>;
   getShopBill(id: string): Promise<ShopBill | undefined>;
   createShopBill(bill: InsertShopBill): Promise<ShopBill>;
   updateShopBill(id: string, bill: Partial<InsertShopBill>): Promise<ShopBill | undefined>;
   deleteShopBill(id: string): Promise<boolean>;
+  archiveShopBill(id: string, archived: boolean): Promise<ShopBill | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -564,11 +565,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Shop Bills
-  async getShopBills(branchId?: string, startDate?: Date, endDate?: Date): Promise<ShopBill[]> {
+  async getShopBills(branchId?: string, startDate?: Date, endDate?: Date, includeArchived: boolean = false): Promise<ShopBill[]> {
     const conditions = [];
     if (branchId) conditions.push(eq(shopBills.branchId, branchId));
     if (startDate) conditions.push(gte(shopBills.paymentDate, startDate));
     if (endDate) conditions.push(lte(shopBills.paymentDate, endDate));
+    if (!includeArchived) conditions.push(eq(shopBills.archived, false));
     
     if (conditions.length > 0) {
       return await db.select().from(shopBills).where(and(...conditions));
@@ -597,6 +599,14 @@ export class DatabaseStorage implements IStorage {
   async deleteShopBill(id: string): Promise<boolean> {
     const result = await db.delete(shopBills).where(eq(shopBills.id, id));
     return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async archiveShopBill(id: string, archived: boolean): Promise<ShopBill | undefined> {
+    const [updated] = await db.update(shopBills)
+      .set({ archived })
+      .where(eq(shopBills.id, id))
+      .returning();
+    return updated;
   }
 }
 

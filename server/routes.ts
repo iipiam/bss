@@ -317,6 +317,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(204).send();
   });
 
+  app.patch("/api/shop/bills/:id/archive", async (req, res) => {
+    try {
+      const { archived } = req.body;
+      const bill = await storage.archiveShopBill(req.params.id, archived);
+      if (!bill) {
+        return res.status(404).json({ error: "Bill not found" });
+      }
+      res.json(bill);
+    } catch (error) {
+      res.status(400).json({ error: "Failed to archive bill" });
+    }
+  });
+
   // Recipes
   app.get("/api/recipes", async (_req, res) => {
     const recipes = await storage.getRecipes();
