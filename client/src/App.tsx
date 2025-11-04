@@ -39,6 +39,8 @@ import Kitchen from "@/pages/kitchen";
 import Procurement from "@/pages/procurement";
 import SettingsPage from "@/pages/settings";
 import Employees from "@/pages/employees";
+import Tutorial from "@/pages/tutorial";
+import Shop from "@/pages/shop";
 import Login from "@/pages/login";
 import Setup from "@/pages/setup";
 import ForgotPassword from "@/pages/forgot-password";
@@ -68,6 +70,8 @@ function Router() {
       <Route path="/procurement" component={Procurement} />
       <Route path="/settings" component={SettingsPage} />
       <Route path="/employees" component={Employees} />
+      <Route path="/tutorial" component={Tutorial} />
+      <Route path="/shop" component={Shop} />
       <Route component={NotFound} />
     </Switch>
   );
