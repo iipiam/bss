@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrendingUp, TrendingDown, Calendar, DollarSign } from "lucide-react";
+import { TrendingUp, TrendingDown, Calendar, DollarSign, Package, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
-import type { Transaction } from "@shared/schema";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import type { Transaction, Order, MenuItem } from "@shared/schema";
 
 export default function Forecasting() {
   const { t } = useLanguage();
@@ -13,6 +15,14 @@ export default function Forecasting() {
 
   const { data: transactions = [] } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions"],
+  });
+
+  const { data: orders = [] } = useQuery<Order[]>({
+    queryKey: ["/api/orders"],
+  });
+
+  const { data: menuItems = [] } = useQuery<MenuItem[]>({
+    queryKey: ["/api/menu-items"],
   });
 
   // Prepare historical sales data (last 30 days)
@@ -70,6 +80,99 @@ export default function Forecasting() {
   const last7Total = last7Days.reduce((sum, d) => sum + d.sales, 0);
   const prev7Total = prev7Days.reduce((sum, d) => sum + d.sales, 0);
   const trendPercentage = prev7Total > 0 ? ((last7Total - prev7Total) / prev7Total) * 100 : 0;
+
+  // Calculate per-item daily demand forecasting
+  const calculateItemDemand = () => {
+    // Create a map to store demand data for each menu item
+    const itemDemandMap = new Map<string, {
+      name: string;
+      historicalDemand: number[];
+      avgDailyDemand: number;
+      forecastedDemand: number;
+      trend: number;
+      trendPercentage: number;
+    }>();
+
+    // Initialize map with all menu items
+    menuItems.forEach(item => {
+      itemDemandMap.set(item.id, {
+        name: item.name,
+        historicalDemand: new Array(30).fill(0),
+        avgDailyDemand: 0,
+        forecastedDemand: 0,
+        trend: 0,
+        trendPercentage: 0,
+      });
+    });
+
+    // Process orders to count item demand per day
+    orders.forEach(order => {
+      const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
+      const dayIndex = last30Days.indexOf(orderDate);
+      
+      if (dayIndex !== -1 && order.items && Array.isArray(order.items)) {
+        order.items.forEach((item: any) => {
+          const itemData = itemDemandMap.get(item.id);
+          if (itemData) {
+            itemData.historicalDemand[dayIndex] += item.quantity || 0;
+          }
+        });
+      }
+    });
+
+    // Calculate statistics for each item
+    const itemForecasts: Array<{
+      id: string;
+      name: string;
+      avgDailyDemand: number;
+      forecastedDemand: number;
+      trend: 'up' | 'down' | 'stable';
+      trendPercentage: number;
+      last7DaysDemand: number;
+      prev7DaysDemand: number;
+    }> = [];
+
+    itemDemandMap.forEach((data, itemId) => {
+      const totalDemand = data.historicalDemand.reduce((sum, d) => sum + d, 0);
+      data.avgDailyDemand = totalDemand / 30;
+
+      // Calculate trend using last 14 days
+      const last14Days = data.historicalDemand.slice(-14);
+      const recentAvg = last14Days.reduce((sum, d) => sum + d, 0) / last14Days.length;
+      
+      // Simple linear trend
+      const firstHalf = last14Days.slice(0, 7).reduce((sum, d) => sum + d, 0) / 7;
+      const secondHalf = last14Days.slice(7).reduce((sum, d) => sum + d, 0) / 7;
+      const trendSlope = secondHalf - firstHalf;
+      
+      // Forecast for next period
+      data.forecastedDemand = Math.max(0, Math.round(recentAvg + trendSlope));
+      
+      // Trend percentage
+      const last7 = data.historicalDemand.slice(-7).reduce((sum, d) => sum + d, 0);
+      const prev7 = data.historicalDemand.slice(-14, -7).reduce((sum, d) => sum + d, 0);
+      data.trendPercentage = prev7 > 0 ? ((last7 - prev7) / prev7) * 100 : 0;
+      
+      // Only include items that have been sold
+      if (totalDemand > 0) {
+        itemForecasts.push({
+          id: itemId,
+          name: data.name,
+          avgDailyDemand: parseFloat(data.avgDailyDemand.toFixed(1)),
+          forecastedDemand: data.forecastedDemand,
+          trend: data.trendPercentage > 5 ? 'up' : data.trendPercentage < -5 ? 'down' : 'stable',
+          trendPercentage: parseFloat(data.trendPercentage.toFixed(1)),
+          last7DaysDemand: last7,
+          prev7DaysDemand: prev7,
+        });
+      }
+    });
+
+    // Sort by average daily demand (highest first)
+    return itemForecasts.sort((a, b) => b.avgDailyDemand - a.avgDailyDemand);
+  };
+
+  const itemDemandForecasts = calculateItemDemand();
 
   return (
     <div className="p-6 space-y-6">
@@ -248,6 +351,137 @@ export default function Forecasting() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Daily Demand Forecasting per Menu Item
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Predicted daily demand for each menu item based on last 30 days of sales data
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {itemDemandForecasts.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No sales data available yet</p>
+              <p className="text-sm mt-1">Start selling items to see demand forecasts</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <Card className="bg-muted/50">
+                  <CardHeader className="pb-3">
+                    <CardDescription>Total Items Tracked</CardDescription>
+                    <CardTitle className="text-2xl font-bold">
+                      {itemDemandForecasts.length}
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
+                <Card className="bg-muted/50">
+                  <CardHeader className="pb-3">
+                    <CardDescription>Trending Up</CardDescription>
+                    <CardTitle className="text-2xl font-bold text-green-600">
+                      {itemDemandForecasts.filter(i => i.trend === 'up').length}
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
+                <Card className="bg-muted/50">
+                  <CardHeader className="pb-3">
+                    <CardDescription>Trending Down</CardDescription>
+                    <CardTitle className="text-2xl font-bold text-red-600">
+                      {itemDemandForecasts.filter(i => i.trend === 'down').length}
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
+              </div>
+
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[250px]">Menu Item</TableHead>
+                      <TableHead className="text-center">Avg Daily Demand (30d)</TableHead>
+                      <TableHead className="text-center">Last 7 Days</TableHead>
+                      <TableHead className="text-center">Prev 7 Days</TableHead>
+                      <TableHead className="text-center">Trend</TableHead>
+                      <TableHead className="text-center">Forecasted Daily Demand</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {itemDemandForecasts.map((item) => (
+                      <TableRow key={item.id} data-testid={`row-item-forecast-${item.id}`}>
+                        <TableCell className="font-medium" data-testid={`text-item-name-${item.id}`}>
+                          {item.name}
+                        </TableCell>
+                        <TableCell className="text-center font-mono" data-testid={`text-avg-demand-${item.id}`}>
+                          {item.avgDailyDemand}
+                        </TableCell>
+                        <TableCell className="text-center font-mono" data-testid={`text-last7-${item.id}`}>
+                          {item.last7DaysDemand}
+                        </TableCell>
+                        <TableCell className="text-center font-mono" data-testid={`text-prev7-${item.id}`}>
+                          {item.prev7DaysDemand}
+                        </TableCell>
+                        <TableCell className="text-center" data-testid={`text-trend-${item.id}`}>
+                          <div className="flex items-center justify-center gap-2">
+                            {item.trend === 'up' ? (
+                              <>
+                                <Badge variant="default" className="bg-green-600 hover:bg-green-700">
+                                  <ArrowUp className="h-3 w-3 mr-1" />
+                                  +{item.trendPercentage}%
+                                </Badge>
+                              </>
+                            ) : item.trend === 'down' ? (
+                              <>
+                                <Badge variant="destructive">
+                                  <ArrowDown className="h-3 w-3 mr-1" />
+                                  {item.trendPercentage}%
+                                </Badge>
+                              </>
+                            ) : (
+                              <>
+                                <Badge variant="secondary">
+                                  <Minus className="h-3 w-3 mr-1" />
+                                  {item.trendPercentage}%
+                                </Badge>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center" data-testid={`text-forecast-${item.id}`}>
+                          <div className="font-bold text-lg font-mono">
+                            {item.forecastedDemand}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            units/day
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="text-sm text-muted-foreground mt-4 p-4 bg-muted/50 rounded-lg">
+                <p className="font-medium mb-2">How to use this forecast:</p>
+                <ul className="space-y-1 ml-4 list-disc">
+                  <li>Use the "Forecasted Daily Demand" column to plan inventory and ingredient procurement</li>
+                  <li>Items trending <span className="text-green-600 font-medium">up ↑</span> may need increased stock preparation</li>
+                  <li>Items trending <span className="text-red-600 font-medium">down ↓</span> may need promotional efforts</li>
+                  <li>Forecasts are based on moving average and trend analysis of the last 14 days</li>
+                </ul>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
