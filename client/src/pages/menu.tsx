@@ -328,22 +328,37 @@ export default function Menu() {
 
   return (
     <div className={`${layout.padding} ${layout.spaceY}`}>
-      <div className={`flex ${layout.isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
+      <div className={layout.isMobile ? 'space-y-4' : 'flex items-center justify-between'}>
         <div>
           <h1 className={`${layout.text3Xl} font-bold mb-2`}>Menu Management</h1>
           <p className="text-muted-foreground text-sm">Manage your menu items and pricing</p>
         </div>
-        <div className={`flex gap-2 ${layout.isMobile ? 'flex-wrap' : ''}`}>
-          <Button variant="outline" onClick={handleDownloadTemplate} data-testid="button-download-template">
+        <div className={`flex gap-2 ${layout.isMobile ? 'flex-col' : ''}`}>
+          <Button 
+            variant="outline" 
+            onClick={handleDownloadTemplate} 
+            className={layout.isMobile ? 'w-full justify-start h-11' : ''}
+            data-testid="button-download-template"
+          >
             <FileDown className="h-4 w-4 mr-2" />
             Template
           </Button>
-          <Button variant="outline" onClick={handleExport} data-testid="button-export">
+          <Button 
+            variant="outline" 
+            onClick={handleExport} 
+            className={layout.isMobile ? 'w-full justify-start h-11' : ''}
+            data-testid="button-export"
+          >
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button variant="outline" asChild disabled={isImporting}>
-            <label htmlFor="import-menu" className="cursor-pointer" data-testid="button-import">
+          <Button 
+            variant="outline" 
+            asChild 
+            disabled={isImporting}
+            className={layout.isMobile ? 'w-full h-11' : ''}
+          >
+            <label htmlFor="import-menu" className={`cursor-pointer ${layout.isMobile ? 'justify-start' : ''}`} data-testid="button-import">
               <Upload className="h-4 w-4 mr-2" />
               {isImporting ? "Importing..." : "Import"}
               <input
@@ -358,7 +373,11 @@ export default function Menu() {
           </Button>
           <Dialog open={categoriesOpen} onOpenChange={setCategoriesOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" data-testid="button-manage-categories">
+              <Button 
+                variant="outline" 
+                className={layout.isMobile ? 'w-full justify-start h-11' : ''}
+                data-testid="button-manage-categories"
+              >
                 <Settings2 className="h-4 w-4 mr-2" />
                 Manage Categories
               </Button>
@@ -423,7 +442,10 @@ export default function Menu() {
           </Dialog>
           <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-              <Button data-testid="button-add-menu-item">
+              <Button 
+                className={layout.isMobile ? 'w-full justify-start h-11' : ''}
+                data-testid="button-add-menu-item"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Menu Item
               </Button>
@@ -581,104 +603,170 @@ export default function Menu() {
         />
       </div>
 
-      <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 4, tablet: 3, mobile: 2 })}`}>
-        {filteredItems.map((item) => (
-          <Card key={item.id} className="overflow-hidden" data-testid={`card-menu-${item.id}`}>
-            <CardHeader className="p-0">
-              <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                <UtensilsCrossed className="h-16 w-16 text-primary/40" />
-              </div>
-            </CardHeader>
-            <CardContent className={layout.isMobile ? "p-3" : "p-4"}>
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex-1">
-                  <h3 className={`font-semibold ${layout.isMobile ? 'text-base' : 'text-lg'} mb-1`}>{item.name}</h3>
-                  <div className="flex gap-2 mb-2">
-                    <Badge variant="secondary">{item.category}</Badge>
-                    {item.discount && parseFloat(item.discount) > 0 && (
-                      <Badge className="bg-green-600 text-white" data-testid={`badge-discount-${item.id}`}>
-                        {parseFloat(item.discount).toFixed(0)}% OFF
-                      </Badge>
-                    )}
+      <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 4, tablet: 3, mobile: 1 })}`}>
+        {filteredItems.map((item) => {
+          if (layout.isMobile) {
+            // Mobile horizontal layout
+            return (
+              <Card key={item.id} className="overflow-hidden" data-testid={`card-menu-${item.id}`}>
+                <div className="flex">
+                  <div className="w-28 h-28 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
+                    <UtensilsCrossed className="h-12 w-12 text-primary/40" />
+                  </div>
+                  <div className="flex-1 p-3">
+                    <h3 className="font-semibold text-base mb-1">{item.name}</h3>
+                    <div className="flex gap-1 mb-2 flex-wrap">
+                      <Badge variant="secondary" className="text-xs">{item.category}</Badge>
+                      {item.discount && parseFloat(item.discount) > 0 && (
+                        <Badge className="bg-green-600 text-white text-xs" data-testid={`badge-discount-${item.id}`}>
+                          {parseFloat(item.discount).toFixed(0)}% OFF
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{item.description}</p>
+                    <p className="text-lg font-bold font-mono text-primary">
+                      {item.discount && parseFloat(item.discount) > 0 
+                        ? (parseFloat(item.basePrice) * (1 - parseFloat(item.discount) / 100) * 1.15).toFixed(2)
+                        : parseFloat(item.price).toFixed(2)
+                      } SAR
+                    </p>
                   </div>
                 </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-3">{item.description}</p>
-              <div className="space-y-1">
-                {item.discount && parseFloat(item.discount) > 0 ? (
-                  <>
-                    <div className="flex items-baseline gap-2">
-                      <p className="text-2xl font-bold font-mono text-primary">
-                        {(parseFloat(item.basePrice) * (1 - parseFloat(item.discount) / 100) * 1.15).toFixed(2)} SAR
-                      </p>
-                      <p className="text-sm font-mono text-muted-foreground line-through">
-                        {parseFloat(item.price).toFixed(2)} SAR
-                      </p>
+                <div className="border-t p-3 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={item.available}
+                      onCheckedChange={(checked) =>
+                        toggleAvailabilityMutation.mutate({ id: item.id, available: checked })
+                      }
+                      data-testid={`switch-available-${item.id}`}
+                    />
+                    <span className="text-sm">{item.available ? "Available" : "Unavailable"}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="ghost" 
+                      className="h-11"
+                      onClick={() => handleEdit(item)}
+                      data-testid={`button-edit-menu-${item.id}`}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                    <Button 
+                      variant="ghost"
+                      className="h-11"
+                      onClick={() => setDeletingItem(item)}
+                      data-testid={`button-delete-menu-${item.id}`}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            );
+          }
+          
+          // Desktop vertical layout
+          return (
+            <Card key={item.id} className="overflow-hidden" data-testid={`card-menu-${item.id}`}>
+              <CardHeader className="p-0">
+                <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                  <UtensilsCrossed className="h-16 w-16 text-primary/40" />
+                </div>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg mb-1">{item.name}</h3>
+                    <div className="flex gap-2 mb-2">
+                      <Badge variant="secondary">{item.category}</Badge>
+                      {item.discount && parseFloat(item.discount) > 0 && (
+                        <Badge className="bg-green-600 text-white" data-testid={`badge-discount-${item.id}`}>
+                          {parseFloat(item.discount).toFixed(0)}% OFF
+                        </Badge>
+                      )}
                     </div>
-                    <div className="text-xs text-muted-foreground font-mono">
-                      <div className="flex justify-between">
-                        <span>Original Base:</span>
-                        <span>{parseFloat(item.basePrice).toFixed(2)} SAR</span>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">{item.description}</p>
+                <div className="space-y-1">
+                  {item.discount && parseFloat(item.discount) > 0 ? (
+                    <>
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-2xl font-bold font-mono text-primary">
+                          {(parseFloat(item.basePrice) * (1 - parseFloat(item.discount) / 100) * 1.15).toFixed(2)} SAR
+                        </p>
+                        <p className="text-sm font-mono text-muted-foreground line-through">
+                          {parseFloat(item.price).toFixed(2)} SAR
+                        </p>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Discounted Base:</span>
-                        <span>{(parseFloat(item.basePrice) * (1 - parseFloat(item.discount) / 100)).toFixed(2)} SAR</span>
+                      <div className="text-xs text-muted-foreground font-mono">
+                        <div className="flex justify-between">
+                          <span>Original Base:</span>
+                          <span>{parseFloat(item.basePrice).toFixed(2)} SAR</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Discounted Base:</span>
+                          <span>{(parseFloat(item.basePrice) * (1 - parseFloat(item.discount) / 100)).toFixed(2)} SAR</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>VAT (15%):</span>
+                          <span>+{(parseFloat(item.basePrice) * (1 - parseFloat(item.discount) / 100) * 0.15).toFixed(2)} SAR</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span>VAT (15%):</span>
-                        <span>+{(parseFloat(item.basePrice) * (1 - parseFloat(item.discount) / 100) * 0.15).toFixed(2)} SAR</span>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold font-mono text-primary">{parseFloat(item.price).toFixed(2)} SAR</p>
+                      <div className="text-xs text-muted-foreground font-mono">
+                        <div className="flex justify-between">
+                          <span>Base Price:</span>
+                          <span>{parseFloat(item.basePrice).toFixed(2)} SAR</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>VAT (15%):</span>
+                          <span>+{parseFloat(item.vatAmount).toFixed(2)} SAR</span>
+                        </div>
                       </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-2xl font-bold font-mono text-primary">{parseFloat(item.price).toFixed(2)} SAR</p>
-                    <div className="text-xs text-muted-foreground font-mono">
-                      <div className="flex justify-between">
-                        <span>Base Price:</span>
-                        <span>{parseFloat(item.basePrice).toFixed(2)} SAR</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>VAT (15%):</span>
-                        <span>+{parseFloat(item.vatAmount).toFixed(2)} SAR</span>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter className={`${layout.isMobile ? 'p-3' : 'p-4'} pt-0 flex items-center justify-between gap-2`}>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={item.available}
-                  onCheckedChange={(checked) =>
-                    toggleAvailabilityMutation.mutate({ id: item.id, available: checked })
-                  }
-                  data-testid={`switch-available-${item.id}`}
-                />
-                <span className="text-sm">{item.available ? "Available" : "Unavailable"}</span>
-              </div>
-              <div className="flex gap-1">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => handleEdit(item)}
-                  data-testid={`button-edit-menu-${item.id}`}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => setDeletingItem(item)}
-                  data-testid={`button-delete-menu-${item.id}`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardFooter>
-          </Card>
-        ))}
+                    </>
+                  )}
+                </div>
+              </CardContent>
+              <CardFooter className="p-4 pt-0 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={item.available}
+                    onCheckedChange={(checked) =>
+                      toggleAvailabilityMutation.mutate({ id: item.id, available: checked })
+                    }
+                    data-testid={`switch-available-${item.id}`}
+                  />
+                  <span className="text-sm">{item.available ? "Available" : "Unavailable"}</span>
+                </div>
+                <div className="flex gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => handleEdit(item)}
+                    data-testid={`button-edit-menu-${item.id}`}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => setDeletingItem(item)}
+                    data-testid={`button-delete-menu-${item.id}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardFooter>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Delete Confirmation Dialog */}
