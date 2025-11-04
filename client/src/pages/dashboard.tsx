@@ -1,7 +1,7 @@
 import { MetricCard } from "@/components/metric-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, ShoppingCart, Package, AlertTriangle, TrendingUp, TrendingDown, Calendar, CalendarDays } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { DollarSign, ShoppingCart, Package, AlertTriangle, TrendingUp, TrendingDown, Calendar, CalendarDays, Clock } from "lucide-react";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import type { Order } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -10,6 +10,11 @@ interface PerformanceMetric {
   current: number;
   previous: number;
   change: number;
+}
+
+interface PeakHoursData {
+  hour: number;
+  sales: number;
 }
 
 interface DashboardData {
@@ -22,6 +27,11 @@ interface DashboardData {
     wow: PerformanceMetric;
     mom: PerformanceMetric;
     yoy: PerformanceMetric;
+  };
+  peakHours: {
+    hourlyData: PeakHoursData[];
+    peakHour: number;
+    peakSales: number;
   };
 }
 
@@ -73,6 +83,74 @@ const PerformanceCard = ({
             </p>
           </div>
         </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const PeakHoursCard = ({ 
+  peakHours 
+}: { 
+  peakHours: { hourlyData: PeakHoursData[]; peakHour: number; peakSales: number }
+}) => {
+  const { t } = useLanguage();
+  
+  const formatHour = (hour: number) => {
+    if (hour === 0) return '12 AM';
+    if (hour === 12) return '12 PM';
+    if (hour < 12) return `${hour} AM`;
+    return `${hour - 12} PM`;
+  };
+
+  const chartData = peakHours.hourlyData.map(d => ({
+    hour: formatHour(d.hour),
+    sales: d.sales,
+    isPeak: d.hour === peakHours.peakHour
+  }));
+
+  return (
+    <Card className="hover-elevate transition-all">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Clock className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle>{t.peakHoursAnalysis}</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">{t.hourlySalesDistribution}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-muted-foreground">{t.peakHour}</p>
+            <p className="text-2xl font-bold">{formatHour(peakHours.peakHour)}</p>
+            <p className="text-sm font-mono text-muted-foreground">{peakHours.peakSales.toFixed(2)} SAR</p>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <XAxis 
+              dataKey="hour" 
+              className="text-xs" 
+              angle={-45}
+              textAnchor="end"
+              height={80}
+            />
+            <YAxis className="text-xs" />
+            <Tooltip 
+              formatter={(value: number) => [`${value.toFixed(2)} SAR`, t.salesAmount]}
+              labelClassName="text-sm font-semibold"
+            />
+            <Bar 
+              dataKey="sales" 
+              fill="hsl(var(--primary))"
+              radius={[4, 4, 0, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
       </CardContent>
     </Card>
   );
@@ -161,6 +239,11 @@ export default function Dashboard() {
             />
           </div>
         </div>
+      )}
+
+      {/* Peak Hours Analysis Section */}
+      {dashboardData?.peakHours && (
+        <PeakHoursCard peakHours={dashboardData.peakHours} />
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
