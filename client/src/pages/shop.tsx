@@ -32,7 +32,7 @@ const billFormSchema = z.object({
   billType: z.string().min(1, "Bill type is required"),
   amount: z.string().min(1, "Amount is required"),
   paymentDate: z.string().min(1, "Payment date is required"),
-  paymentPeriod: z.enum(["weekly", "monthly", "quarterly", "semi-annually", "yearly"]).default("monthly"),
+  paymentPeriod: z.enum(["oneTime", "weekly", "monthly", "quarterly", "semi-annually", "yearly"]).default("monthly"),
   status: z.enum(["pending", "paid", "overdue"]).default("pending"),
   description: z.string().optional(),
   branchId: z.string().optional(),
@@ -578,6 +578,7 @@ export default function Shop() {
                                   <SelectItem value="gas">{t.gas}</SelectItem>
                                   <SelectItem value="internet">{t.internet}</SelectItem>
                                   <SelectItem value="maintenance">{t.maintenance}</SelectItem>
+                                  <SelectItem value="foundational">{t.foundational}</SelectItem>
                                   <SelectItem value="other">{t.other}</SelectItem>
                                 </SelectContent>
                               </Select>
@@ -624,6 +625,7 @@ export default function Shop() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
+                                  <SelectItem value="oneTime">{t.oneTime || "One Time Payment"}</SelectItem>
                                   <SelectItem value="weekly">{t.weekly || "Weekly"}</SelectItem>
                                   <SelectItem value="monthly">{t.monthly || "Monthly"}</SelectItem>
                                   <SelectItem value="quarterly">{t.quarterly || "Quarterly (1/4 Year)"}</SelectItem>
