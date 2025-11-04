@@ -39,6 +39,7 @@ const PerformanceCard = ({
   metric: PerformanceMetric; 
   icon: React.ElementType;
 }) => {
+  const { t } = useLanguage();
   const isPositive = metric.change >= 0;
   const TrendIcon = isPositive ? TrendingUp : TrendingDown;
   
@@ -64,11 +65,11 @@ const PerformanceCard = ({
         <div className="space-y-2">
           <div>
             <p className="text-2xl font-bold">{metric.current.toFixed(2)} SAR</p>
-            <p className="text-xs text-muted-foreground">Current Period</p>
+            <p className="text-xs text-muted-foreground">{t.currentPeriod}</p>
           </div>
           <div className="pt-2 border-t">
             <p className="text-sm text-muted-foreground">
-              Previous: <span className="font-mono">{metric.previous.toFixed(2)} SAR</span>
+              {t.previous}: <span className="font-mono">{metric.previous.toFixed(2)} SAR</span>
             </p>
           </div>
         </div>

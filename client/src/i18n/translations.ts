@@ -60,6 +60,8 @@ export interface Translations {
   mom: string;
   yoy: string;
   dashboardOverview: string;
+  currentPeriod: string;
+  previous: string;
   
   // Common
   add: string;
@@ -237,6 +239,8 @@ export const translations: Record<Language, Translations> = {
     mom: 'Month-over-Month (MoM)',
     yoy: 'Year-over-Year (YoY)',
     dashboardOverview: 'Overview of your restaurant performance',
+    currentPeriod: 'Current Period',
+    previous: 'Previous',
     
     // Common
     add: 'Add',
@@ -413,6 +417,8 @@ export const translations: Record<Language, Translations> = {
     mom: 'شهر بشهر',
     yoy: 'سنة بسنة',
     dashboardOverview: 'نظرة عامة على أداء مطعمك',
+    currentPeriod: 'الفترة الحالية',
+    previous: 'السابق',
     
     // Common
     add: 'إضافة',
@@ -589,6 +595,8 @@ export const translations: Record<Language, Translations> = {
     mom: '月环比',
     yoy: '年同比',
     dashboardOverview: '您的餐厅业绩概览',
+    currentPeriod: '当前时期',
+    previous: '上一时期',
     
     // Common
     add: '添加',
@@ -765,6 +773,8 @@ export const translations: Record<Language, Translations> = {
     mom: 'Monat für Monat (MoM)',
     yoy: 'Jahr für Jahr (YoY)',
     dashboardOverview: 'Übersicht über Ihre Restaurant-Leistung',
+    currentPeriod: 'Aktueller Zeitraum',
+    previous: 'Vorheriger',
     
     // Common
     add: 'Hinzufügen',
@@ -941,6 +951,8 @@ export const translations: Record<Language, Translations> = {
     mom: 'महीना-दर-महीना',
     yoy: 'वर्ष-दर-वर्ष',
     dashboardOverview: 'आपके रेस्तरां के प्रदर्शन का अवलोकन',
+    currentPeriod: 'वर्तमान अवधि',
+    previous: 'पिछला',
     
     // Common
     add: 'जोड़ें',
@@ -1117,6 +1129,8 @@ export const translations: Record<Language, Translations> = {
     mom: 'ماہ بہ ماہ',
     yoy: 'سال بہ سال',
     dashboardOverview: 'آپ کے ریستوراں کی کارکردگی کا جائزہ',
+    currentPeriod: 'موجودہ مدت',
+    previous: 'پچھلا',
     
     // Common
     add: 'شامل کریں',
@@ -1293,6 +1307,8 @@ export const translations: Record<Language, Translations> = {
     mom: 'মাস-প্রতি-মাস',
     yoy: 'বছর-প্রতি-বছর',
     dashboardOverview: 'আপনার রেস্তোরাঁর কর্মক্ষমতার সংক্ষিপ্ত বিবরণ',
+    currentPeriod: 'বর্তমান সময়কাল',
+    previous: 'পূর্ববর্তী',
     
     // Common
     add: 'যোগ করুন',
