@@ -8,10 +8,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn, UserPlus, UtensilsCrossed, Check } from "lucide-react";
+import { LogIn, UserPlus, UtensilsCrossed, Check, Languages } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Language } from "@/i18n/translations";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const languages: Language[] = ['English', 'Arabic', 'Chinese', 'German', 'Hindi', 'Urdu', 'Bengali'];
 
 export default function Login() {
   const [loginUsername, setLoginUsername] = useState("");
@@ -25,6 +36,7 @@ export default function Login() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
+  const { language, setLanguage } = useLanguage();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,6 +128,25 @@ export default function Login() {
           <div>
             <CardTitle className="text-2xl">RestoPOS</CardTitle>
             <CardDescription>Restaurant management system</CardDescription>
+          </div>
+          <div className="flex items-center justify-center gap-2 pt-2">
+            <Languages className="h-4 w-4 text-muted-foreground" />
+            <Select value={language} onValueChange={(value) => setLanguage(value as Language)}>
+              <SelectTrigger className="w-40" data-testid="select-language">
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                {languages.map((lang) => (
+                  <SelectItem 
+                    key={lang} 
+                    value={lang}
+                    data-testid={`option-language-${lang.toLowerCase()}`}
+                  >
+                    {lang}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent>
