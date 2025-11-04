@@ -38,6 +38,19 @@ export interface Translations {
   whatsapp: string;
   getInTouch: string;
   
+  // Payment Methods
+  paymentMethod: string;
+  cash: string;
+  atm: string;
+  
+  // Forecasting
+  forecasting: string;
+  demandForecasting: string;
+  salesPrediction: string;
+  trendAnalysis: string;
+  forecastPeriod: string;
+  predictedSales: string;
+  
   // Common
   add: string;
   edit: string;
@@ -192,6 +205,19 @@ export const translations: Record<Language, Translations> = {
     whatsapp: 'WhatsApp',
     getInTouch: 'Get in touch with our support team',
     
+    // Payment Methods
+    paymentMethod: 'Payment Method',
+    cash: 'Cash',
+    atm: 'ATM / Card',
+    
+    // Forecasting
+    forecasting: 'Forecasting',
+    demandForecasting: 'Demand Forecasting',
+    salesPrediction: 'Sales Prediction',
+    trendAnalysis: 'Trend Analysis',
+    forecastPeriod: 'Forecast Period',
+    predictedSales: 'Predicted Sales',
+    
     // Common
     add: 'Add',
     edit: 'Edit',
@@ -344,6 +370,19 @@ export const translations: Record<Language, Translations> = {
     contactInformation: 'معلومات الاتصال',
     whatsapp: 'واتساب',
     getInTouch: 'تواصل مع فريق الدعم لدينا',
+    
+    // Payment Methods
+    paymentMethod: 'طريقة الدفع',
+    cash: 'نقداً',
+    atm: 'بطاقة / صراف آلي',
+    
+    // Forecasting
+    forecasting: 'التنبؤ',
+    demandForecasting: 'التنبؤ بالطلب',
+    salesPrediction: 'توقع المبيعات',
+    trendAnalysis: 'تحليل الاتجاهات',
+    forecastPeriod: 'فترة التنبؤ',
+    predictedSales: 'المبيعات المتوقعة',
     
     // Common
     add: 'إضافة',
@@ -498,6 +537,19 @@ export const translations: Record<Language, Translations> = {
     whatsapp: 'WhatsApp',
     getInTouch: '与我们的支持团队联系',
     
+    // Payment Methods
+    paymentMethod: '付款方式',
+    cash: '现金',
+    atm: '银行卡 / ATM',
+    
+    // Forecasting
+    forecasting: '预测',
+    demandForecasting: '需求预测',
+    salesPrediction: '销售预测',
+    trendAnalysis: '趋势分析',
+    forecastPeriod: '预测周期',
+    predictedSales: '预测销售额',
+    
     // Common
     add: '添加',
     edit: '编辑',
@@ -650,6 +702,19 @@ export const translations: Record<Language, Translations> = {
     contactInformation: 'Kontaktinformationen',
     whatsapp: 'WhatsApp',
     getInTouch: 'Kontaktieren Sie unser Support-Team',
+    
+    // Payment Methods
+    paymentMethod: 'Zahlungsmethode',
+    cash: 'Bargeld',
+    atm: 'Karte / Geldautomat',
+    
+    // Forecasting
+    forecasting: 'Prognose',
+    demandForecasting: 'Nachfrageprognose',
+    salesPrediction: 'Verkaufsprognose',
+    trendAnalysis: 'Trendanalyse',
+    forecastPeriod: 'Prognosezeitraum',
+    predictedSales: 'Prognostizierte Verkäufe',
     
     // Common
     add: 'Hinzufügen',
@@ -804,6 +869,19 @@ export const translations: Record<Language, Translations> = {
     whatsapp: 'व्हाट्सएप',
     getInTouch: 'हमारी सहायता टीम से संपर्क करें',
     
+    // Payment Methods
+    paymentMethod: 'भुगतान विधि',
+    cash: 'नकद',
+    atm: 'कार्ड / एटीएम',
+    
+    // Forecasting
+    forecasting: 'पूर्वानुमान',
+    demandForecasting: 'मांग पूर्वानुमान',
+    salesPrediction: 'बिक्री पूर्वानुमान',
+    trendAnalysis: 'रुझान विश्लेषण',
+    forecastPeriod: 'पूर्वानुमान अवधि',
+    predictedSales: 'अनुमानित बिक्री',
+    
     // Common
     add: 'जोड़ें',
     edit: 'संपादित करें',
@@ -957,6 +1035,19 @@ export const translations: Record<Language, Translations> = {
     whatsapp: 'واٹس ایپ',
     getInTouch: 'ہماری سپورٹ ٹیم سے رابطہ کریں',
     
+    // Payment Methods
+    paymentMethod: 'ادائیگی کا طریقہ',
+    cash: 'نقد',
+    atm: 'کارڈ / اے ٹی ایم',
+    
+    // Forecasting
+    forecasting: 'پیش گوئی',
+    demandForecasting: 'مانگ کی پیش گوئی',
+    salesPrediction: 'فروخت کی پیش گوئی',
+    trendAnalysis: 'رجحان کا تجزیہ',
+    forecastPeriod: 'پیش گوئی کی مدت',
+    predictedSales: 'متوقع فروخت',
+    
     // Common
     add: 'شامل کریں',
     edit: 'ترمیم کریں',
@@ -1109,6 +1200,19 @@ export const translations: Record<Language, Translations> = {
     contactInformation: 'যোগাযোগের তথ্য',
     whatsapp: 'হোয়াটসঅ্যাপ',
     getInTouch: 'আমাদের সহায়তা দলের সাথে যোগাযোগ করুন',
+    
+    // Payment Methods
+    paymentMethod: 'পেমেন্ট পদ্ধতি',
+    cash: 'নগদ',
+    atm: 'কার্ড / এটিএম',
+    
+    // Forecasting
+    forecasting: 'পূর্বাভাস',
+    demandForecasting: 'চাহিদা পূর্বাভাস',
+    salesPrediction: 'বিক্রয় পূর্বাভাস',
+    trendAnalysis: 'প্রবণতা বিশ্লেষণ',
+    forecastPeriod: 'পূর্বাভাস সময়কাল',
+    predictedSales: 'প্রত্যাশিত বিক্রয়',
     
     // Common
     add: 'যোগ করুন',

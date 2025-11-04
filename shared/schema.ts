@@ -91,6 +91,7 @@ export const orders = pgTable("orders", {
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: text("payment_method").notNull().default("Cash"),
   status: text("status").notNull().default("Pending"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
