@@ -1,15 +1,28 @@
 import { MetricCard } from "@/components/metric-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, ShoppingCart, Package, AlertTriangle } from "lucide-react";
+import { DollarSign, ShoppingCart, Package, AlertTriangle, TrendingUp, TrendingDown, Calendar, CalendarDays } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import type { Order } from "@shared/schema";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+interface PerformanceMetric {
+  current: number;
+  previous: number;
+  change: number;
+}
 
 interface DashboardData {
   todaysSales: string;
   activeOrders: number;
   lowStockItems: number;
   recentOrders: Order[];
+  performance: {
+    dod: PerformanceMetric;
+    wow: PerformanceMetric;
+    mom: PerformanceMetric;
+    yoy: PerformanceMetric;
+  };
 }
 
 interface SalesChartData {
@@ -17,7 +30,55 @@ interface SalesChartData {
   sales: number;
 }
 
+const PerformanceCard = ({ 
+  title, 
+  metric, 
+  icon: Icon 
+}: { 
+  title: string; 
+  metric: PerformanceMetric; 
+  icon: React.ElementType;
+}) => {
+  const isPositive = metric.change >= 0;
+  const TrendIcon = isPositive ? TrendingUp : TrendingDown;
+  
+  return (
+    <Card className="hover-elevate transition-all">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Icon className="w-5 h-5 text-primary" />
+            </div>
+            <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
+          </div>
+          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
+            isPositive 
+              ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
+              : 'bg-red-500/10 text-red-600 dark:text-red-400'
+          }`}>
+            <TrendIcon className="w-3 h-3" />
+            <span>{Math.abs(metric.change).toFixed(1)}%</span>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div>
+            <p className="text-2xl font-bold">{metric.current.toFixed(2)} SAR</p>
+            <p className="text-xs text-muted-foreground">Current Period</p>
+          </div>
+          <div className="pt-2 border-t">
+            <p className="text-sm text-muted-foreground">
+              Previous: <span className="font-mono">{metric.previous.toFixed(2)} SAR</span>
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 export default function Dashboard() {
+  const { t } = useLanguage();
   const { data: dashboardData, isLoading: dashboardLoading } = useQuery<DashboardData>({
     queryKey: ["/api/analytics/dashboard"],
   });
@@ -30,8 +91,8 @@ export default function Dashboard() {
     return (
       <div className="p-8 space-y-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">Loading...</p>
+          <h1 className="text-3xl font-bold mb-2">{t.dashboard}</h1>
+          <p className="text-muted-foreground">{t.loading}...</p>
         </div>
       </div>
     );
@@ -40,8 +101,8 @@ export default function Dashboard() {
   return (
     <div className="p-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold mb-2 text-[#ffffff]">Dashboard</h1>
-        <p className="text-muted-foreground">Overview of your restaurant performance</p>
+        <h1 className="text-3xl font-bold mb-2 text-[#ffffff]">{t.dashboard}</h1>
+        <p className="text-muted-foreground">{t.dashboardOverview || "Overview of your restaurant performance"}</p>
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
@@ -68,6 +129,39 @@ export default function Dashboard() {
           icon={AlertTriangle}
         />
       </div>
+
+      {/* Performance Analysis Section */}
+      {dashboardData?.performance && (
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-2xl font-bold mb-1">{t.performanceAnalysis || "Performance Analysis"}</h2>
+            <p className="text-muted-foreground">{t.performanceAnalysisDesc || "Compare sales across different time periods"}</p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <PerformanceCard 
+              title={t.dod || "Day-over-Day (DoD)"}
+              metric={dashboardData.performance.dod}
+              icon={Calendar}
+            />
+            <PerformanceCard 
+              title={t.wow || "Week-over-Week (WoW)"}
+              metric={dashboardData.performance.wow}
+              icon={CalendarDays}
+            />
+            <PerformanceCard 
+              title={t.mom || "Month-over-Month (MoM)"}
+              metric={dashboardData.performance.mom}
+              icon={CalendarDays}
+            />
+            <PerformanceCard 
+              title={t.yoy || "Year-over-Year (YoY)"}
+              metric={dashboardData.performance.yoy}
+              icon={CalendarDays}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
