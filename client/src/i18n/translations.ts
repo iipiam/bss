@@ -34,6 +34,9 @@ export interface Translations {
   help: string;
   technicalSupport: string;
   contactSupport: string;
+  contactInformation: string;
+  whatsapp: string;
+  getInTouch: string;
   
   // Common
   add: string;
@@ -185,6 +188,9 @@ export const translations: Record<Language, Translations> = {
     help: 'Help',
     technicalSupport: 'Technical Support',
     contactSupport: 'Contact Support',
+    contactInformation: 'Contact Information',
+    whatsapp: 'WhatsApp',
+    getInTouch: 'Get in touch with our support team',
     
     // Common
     add: 'Add',
@@ -335,6 +341,9 @@ export const translations: Record<Language, Translations> = {
     help: 'المساعدة',
     technicalSupport: 'الدعم الفني',
     contactSupport: 'اتصل بالدعم',
+    contactInformation: 'معلومات الاتصال',
+    whatsapp: 'واتساب',
+    getInTouch: 'تواصل مع فريق الدعم لدينا',
     
     // Common
     add: 'إضافة',
@@ -485,6 +494,9 @@ export const translations: Record<Language, Translations> = {
     help: '帮助',
     technicalSupport: '技术支持',
     contactSupport: '联系支持',
+    contactInformation: '联系信息',
+    whatsapp: 'WhatsApp',
+    getInTouch: '与我们的支持团队联系',
     
     // Common
     add: '添加',
@@ -635,6 +647,9 @@ export const translations: Record<Language, Translations> = {
     help: 'Hilfe',
     technicalSupport: 'Technischer Support',
     contactSupport: 'Support kontaktieren',
+    contactInformation: 'Kontaktinformationen',
+    whatsapp: 'WhatsApp',
+    getInTouch: 'Kontaktieren Sie unser Support-Team',
     
     // Common
     add: 'Hinzufügen',
@@ -785,6 +800,9 @@ export const translations: Record<Language, Translations> = {
     help: 'मदद',
     technicalSupport: 'तकनीकी सहायता',
     contactSupport: 'सहायता से संपर्क करें',
+    contactInformation: 'संपर्क जानकारी',
+    whatsapp: 'व्हाट्सएप',
+    getInTouch: 'हमारी सहायता टीम से संपर्क करें',
     
     // Common
     add: 'जोड़ें',
@@ -935,6 +953,9 @@ export const translations: Record<Language, Translations> = {
     help: 'مدد',
     technicalSupport: 'تکنیکی سپورٹ',
     contactSupport: 'سپورٹ سے رابطہ کریں',
+    contactInformation: 'رابطے کی معلومات',
+    whatsapp: 'واٹس ایپ',
+    getInTouch: 'ہماری سپورٹ ٹیم سے رابطہ کریں',
     
     // Common
     add: 'شامل کریں',
@@ -1085,6 +1106,9 @@ export const translations: Record<Language, Translations> = {
     help: 'সাহায্য',
     technicalSupport: 'প্রযুক্তিগত সহায়তা',
     contactSupport: 'সহায়তার সাথে যোগাযোগ করুন',
+    contactInformation: 'যোগাযোগের তথ্য',
+    whatsapp: 'হোয়াটসঅ্যাপ',
+    getInTouch: 'আমাদের সহায়তা দলের সাথে যোগাযোগ করুন',
     
     // Common
     add: 'যোগ করুন',

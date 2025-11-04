@@ -19,6 +19,8 @@ import {
   UserCircle,
   FileCheck,
   HeadphonesIcon,
+  Mail,
+  MessageCircle,
 } from "lucide-react";
 import {
   Sidebar,
@@ -30,12 +32,22 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Link, useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useState } from "react";
 
 export function AppSidebar() {
   const [location] = useLocation();
   const { t } = useLanguage();
+  const [helpDialogOpen, setHelpDialogOpen] = useState(false);
 
   const operations = [
     { title: t.pos, url: "/pos", icon: ShoppingCart, testId: "pos", gradient: "from-emerald-500 to-teal-500" },
@@ -142,19 +154,59 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <a 
-                    href="mailto:int@mwcdtr.org" 
-                    data-testid="link-help"
-                    className="group relative overflow-hidden transition-all duration-300"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
-                    <div className="relative flex items-center gap-2">
-                      <HeadphonesIcon />
-                      <span>{t.help}</span>
+                <Dialog open={helpDialogOpen} onOpenChange={setHelpDialogOpen}>
+                  <DialogTrigger asChild>
+                    <button
+                      data-testid="button-help"
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover-elevate active-elevate-2 group relative overflow-visible transition-all duration-300"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-md" />
+                      <HeadphonesIcon className="h-4 w-4 relative z-10" />
+                      <span className="relative z-10">{t.help}</span>
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md" data-testid="dialog-help">
+                    <DialogHeader>
+                      <DialogTitle className="text-xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+                        {t.contactInformation}
+                      </DialogTitle>
+                      <DialogDescription>
+                        {t.getInTouch}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-4">
+                      <a
+                        href="mailto:int@mwcdtr.org"
+                        data-testid="link-email"
+                        className="flex items-center gap-3 p-4 rounded-lg border border-border hover-elevate active-elevate-2 group transition-all duration-300"
+                      >
+                        <div className="p-2 rounded-md bg-gradient-to-r from-blue-500 to-cyan-500">
+                          <Mail className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-foreground">{t.email}</p>
+                          <p className="text-sm text-muted-foreground">int@mwcdtr.org</p>
+                        </div>
+                      </a>
+                      
+                      <a
+                        href="https://wa.me/966500000000"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        data-testid="link-whatsapp"
+                        className="flex items-center gap-3 p-4 rounded-lg border border-border hover-elevate active-elevate-2 group transition-all duration-300"
+                      >
+                        <div className="p-2 rounded-md bg-gradient-to-r from-green-500 to-emerald-500">
+                          <MessageCircle className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-foreground">{t.whatsapp}</p>
+                          <p className="text-sm text-muted-foreground">+966 50 000 0000</p>
+                        </div>
+                      </a>
                     </div>
-                  </a>
-                </SidebarMenuButton>
+                  </DialogContent>
+                </Dialog>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
