@@ -318,11 +318,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const transactions = await storage.getTransactions(branchId);
     const inventory = await storage.getInventoryItems(branchId);
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todaysTransactions = transactions.filter(t => new Date(t.createdAt) >= today);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const twoWeeksAgo = new Date(weekAgo);
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 7);
+    
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    
+    const yearStart = new Date(now.getFullYear(), 0, 1);
+    const lastYearStart = new Date(now.getFullYear() - 1, 0, 1);
+    const lastYearEnd = new Date(now.getFullYear() - 1, 11, 31);
 
-    const todaysSales = todaysTransactions.reduce((sum, t) => sum + parseFloat(t.total), 0);
+    // Calculate sales for different periods
+    const todaysSales = transactions
+      .filter(t => new Date(t.createdAt) >= today)
+      .reduce((sum, t) => sum + parseFloat(t.total), 0);
+    
+    const yesterdaysSales = transactions
+      .filter(t => {
+        const date = new Date(t.createdAt);
+        return date >= yesterday && date < today;
+      })
+      .reduce((sum, t) => sum + parseFloat(t.total), 0);
+    
+    const thisWeekSales = transactions
+      .filter(t => new Date(t.createdAt) >= weekAgo)
+      .reduce((sum, t) => sum + parseFloat(t.total), 0);
+    
+    const lastWeekSales = transactions
+      .filter(t => {
+        const date = new Date(t.createdAt);
+        return date >= twoWeeksAgo && date < weekAgo;
+      })
+      .reduce((sum, t) => sum + parseFloat(t.total), 0);
+    
+    const thisMonthSales = transactions
+      .filter(t => new Date(t.createdAt) >= monthStart)
+      .reduce((sum, t) => sum + parseFloat(t.total), 0);
+    
+    const lastMonthSales = transactions
+      .filter(t => {
+        const date = new Date(t.createdAt);
+        return date >= lastMonthStart && date <= lastMonthEnd;
+      })
+      .reduce((sum, t) => sum + parseFloat(t.total), 0);
+    
+    const thisYearSales = transactions
+      .filter(t => new Date(t.createdAt) >= yearStart)
+      .reduce((sum, t) => sum + parseFloat(t.total), 0);
+    
+    const lastYearSales = transactions
+      .filter(t => {
+        const date = new Date(t.createdAt);
+        return date >= lastYearStart && date <= lastYearEnd;
+      })
+      .reduce((sum, t) => sum + parseFloat(t.total), 0);
+
+    // Calculate percentage changes
+    const calculateChange = (current: number, previous: number) => {
+      if (previous === 0) return current > 0 ? 100 : 0;
+      return ((current - previous) / previous) * 100;
+    };
+
     const activeOrders = orders.filter(o => o.status !== "Completed" && o.status !== "Cancelled").length;
     const lowStockItems = inventory.filter(i => i.status === "Low Stock").length;
 
@@ -331,6 +395,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       activeOrders,
       lowStockItems,
       recentOrders: orders.slice(0, 4),
+      performance: {
+        dod: {
+          current: todaysSales,
+          previous: yesterdaysSales,
+          change: calculateChange(todaysSales, yesterdaysSales),
+        },
+        wow: {
+          current: thisWeekSales,
+          previous: lastWeekSales,
+          change: calculateChange(thisWeekSales, lastWeekSales),
+        },
+        mom: {
+          current: thisMonthSales,
+          previous: lastMonthSales,
+          change: calculateChange(thisMonthSales, lastMonthSales),
+        },
+        yoy: {
+          current: thisYearSales,
+          previous: lastYearSales,
+          change: calculateChange(thisYearSales, lastYearSales),
+        },
+      },
     });
   });
 
