@@ -1072,7 +1072,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const data = insertUserSchema.parse(req.body);
+      const { monthlySalary, ...userData } = req.body;
+      const data = insertUserSchema.parse(userData);
+      
+      // Validate monthlySalary if provided
+      if (monthlySalary) {
+        const salaryValue = parseFloat(monthlySalary);
+        if (isNaN(salaryValue) || salaryValue <= 0) {
+          return res.status(400).json({ error: "Invalid monthly salary amount" });
+        }
+      }
       
       // Check if username already exists
       const existingUser = await storage.getUserByUsername(data.username);
@@ -1082,6 +1091,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // storage.createUser handles password hashing
       const user = await storage.createUser(data);
+      
+      // Auto-create monthly salary entry if monthlySalary is provided
+      if (monthlySalary && parseFloat(monthlySalary) > 0) {
+        try {
+          const today = new Date();
+          const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+          
+          await storage.createSalary({
+            employeeName: user.fullName,
+            position: user.role,
+            amount: monthlySalary,
+            paymentDate: nextMonth,
+            status: "pending",
+            branchId: user.branchId || undefined,
+          });
+        } catch (salaryError) {
+          console.error("Failed to create salary entry:", salaryError);
+          // Delete the user if salary creation fails to maintain consistency
+          await storage.deleteUser(user.id);
+          return res.status(400).json({ error: "Failed to create employee salary entry" });
+        }
+      }
+      
       const { password: _, ...userWithoutPassword } = user;
       res.status(201).json(userWithoutPassword);
     } catch (error) {

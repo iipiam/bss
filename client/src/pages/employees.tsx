@@ -24,6 +24,7 @@ export default function Employees() {
     email: "",
     phone: "",
     role: "employee",
+    monthlySalary: "",
     permissions: {
       dashboard: true,
       inventory: false,
@@ -104,6 +105,7 @@ export default function Employees() {
       email: "",
       phone: "",
       role: "employee",
+      monthlySalary: "",
       permissions: {
         dashboard: true,
         inventory: false,
@@ -128,7 +130,7 @@ export default function Employees() {
   };
 
   const handleCreate = () => {
-    if (!formData.username || !formData.password || !formData.fullName) {
+    if (!formData.username || !formData.password || !formData.fullName || !formData.monthlySalary) {
       toast({
         title: "Missing fields",
         description: "Please fill in all required fields",
@@ -275,6 +277,22 @@ export default function Employees() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="monthlySalary">Monthly Salary (SAR) *</Label>
+                <Input
+                  id="monthlySalary"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={formData.monthlySalary}
+                  onChange={(e) => setFormData({ ...formData, monthlySalary: e.target.value })}
+                  data-testid="input-monthly-salary"
+                />
+                <p className="text-xs text-muted-foreground">
+                  A monthly salary entry will be automatically created for this employee
+                </p>
               </div>
 
               <div className="space-y-4">

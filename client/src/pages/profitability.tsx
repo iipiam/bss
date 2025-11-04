@@ -700,56 +700,177 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Items Requiring Price Review</CardTitle>
-          <CardDescription>Items with margins below 20%</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/50">
-                <tr>
-                  <th className="p-3 text-left font-medium">Item</th>
-                  <th className="p-3 text-right font-medium">Current Price</th>
-                  <th className="p-3 text-right font-medium">Cost</th>
-                  <th className="p-3 text-right font-medium">Current Margin</th>
-                  <th className="p-3 text-right font-medium">Recommended Price</th>
-                  <th className="p-3 text-right font-medium">Target Margin</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...belowCostItems, ...lowMarginItems]
-                  .sort((a, b) => a.margin - b.margin)
-                  .map((item) => {
-                    // Calculate recommended price for 30% margin
-                    const recommendedPrice = item.cost / 0.7;
-                    const targetMargin = 30;
-                    
-                    return (
-                      <tr key={item.id} className="border-b">
-                        <td className="p-3 font-medium">{item.name}</td>
-                        <td className="p-3 text-right font-mono">{item.basePrice.toFixed(2)} SAR</td>
-                        <td className="p-3 text-right font-mono">{item.cost.toFixed(2)} SAR</td>
-                        <td className="p-3 text-right font-mono">
-                          <Badge variant={item.margin < 0 ? "destructive" : "secondary"}>
-                            {item.margin.toFixed(1)}%
-                          </Badge>
-                        </td>
-                        <td className="p-3 text-right font-mono text-green-600 dark:text-green-500 font-semibold">
-                          {recommendedPrice.toFixed(2)} SAR
-                        </td>
-                        <td className="p-3 text-right font-mono text-green-600 dark:text-green-500">
-                          {targetMargin}%
-                        </td>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Detailed Item Analysis by Margin Category</CardTitle>
+            <CardDescription>Comprehensive breakdown of all menu items across margin categories</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {belowCostItems.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-500" />
+                  <h4 className="font-semibold text-lg">Below Cost Items ({belowCostItems.length})</h4>
+                </div>
+                <div className="rounded-md border border-red-200 dark:border-red-900">
+                  <table className="w-full text-sm">
+                    <thead className="border-b bg-red-50 dark:bg-red-950">
+                      <tr>
+                        <th className="p-3 text-left font-medium">Item</th>
+                        <th className="p-3 text-right font-medium">Price</th>
+                        <th className="p-3 text-right font-medium">Cost</th>
+                        <th className="p-3 text-right font-medium">Loss</th>
+                        <th className="p-3 text-right font-medium">Margin</th>
+                        <th className="p-3 text-right font-medium">Suggested Price</th>
                       </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                    </thead>
+                    <tbody>
+                      {belowCostItems.sort((a, b) => a.margin - b.margin).map((item) => {
+                        const suggestedPrice = item.cost / 0.7;
+                        const loss = item.cost - item.basePrice;
+                        return (
+                          <tr key={item.id} className="border-b" data-testid={`item-below-cost-${item.id}`}>
+                            <td className="p-3 font-medium">{item.name}</td>
+                            <td className="p-3 text-right font-mono">{item.basePrice.toFixed(2)} SAR</td>
+                            <td className="p-3 text-right font-mono">{item.cost.toFixed(2)} SAR</td>
+                            <td className="p-3 text-right font-mono text-red-600 dark:text-red-500">{loss.toFixed(2)} SAR</td>
+                            <td className="p-3 text-right font-mono">
+                              <Badge variant="destructive">{item.margin.toFixed(1)}%</Badge>
+                            </td>
+                            <td className="p-3 text-right font-mono text-green-600 dark:text-green-500 font-semibold">
+                              {suggestedPrice.toFixed(2)} SAR
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {lowMarginItems.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <TrendingDown className="h-5 w-5 text-orange-500" />
+                  <h4 className="font-semibold text-lg">Low Margin Items (0-20%) ({lowMarginItems.length})</h4>
+                </div>
+                <div className="rounded-md border border-orange-200 dark:border-orange-900">
+                  <table className="w-full text-sm">
+                    <thead className="border-b bg-orange-50 dark:bg-orange-950">
+                      <tr>
+                        <th className="p-3 text-left font-medium">Item</th>
+                        <th className="p-3 text-right font-medium">Price</th>
+                        <th className="p-3 text-right font-medium">Cost</th>
+                        <th className="p-3 text-right font-medium">Profit</th>
+                        <th className="p-3 text-right font-medium">Margin</th>
+                        <th className="p-3 text-right font-medium">Suggested Price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lowMarginItems.sort((a, b) => a.margin - b.margin).map((item) => {
+                        const suggestedPrice = item.cost / 0.7;
+                        const profit = item.basePrice - item.cost;
+                        return (
+                          <tr key={item.id} className="border-b" data-testid={`item-low-margin-${item.id}`}>
+                            <td className="p-3 font-medium">{item.name}</td>
+                            <td className="p-3 text-right font-mono">{item.basePrice.toFixed(2)} SAR</td>
+                            <td className="p-3 text-right font-mono">{item.cost.toFixed(2)} SAR</td>
+                            <td className="p-3 text-right font-mono text-orange-600 dark:text-orange-500">{profit.toFixed(2)} SAR</td>
+                            <td className="p-3 text-right font-mono">
+                              <Badge variant="secondary" className="bg-orange-100 dark:bg-orange-900">{item.margin.toFixed(1)}%</Badge>
+                            </td>
+                            <td className="p-3 text-right font-mono text-green-600 dark:text-green-500 font-semibold">
+                              {suggestedPrice.toFixed(2)} SAR
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {healthyMarginItems.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-blue-500" />
+                  <h4 className="font-semibold text-lg">Healthy Margin Items (20-40%) ({healthyMarginItems.length})</h4>
+                </div>
+                <div className="rounded-md border border-blue-200 dark:border-blue-900">
+                  <table className="w-full text-sm">
+                    <thead className="border-b bg-blue-50 dark:bg-blue-950">
+                      <tr>
+                        <th className="p-3 text-left font-medium">Item</th>
+                        <th className="p-3 text-right font-medium">Price</th>
+                        <th className="p-3 text-right font-medium">Cost</th>
+                        <th className="p-3 text-right font-medium">Profit</th>
+                        <th className="p-3 text-right font-medium">Margin</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {healthyMarginItems.sort((a, b) => b.margin - a.margin).map((item) => {
+                        const profit = item.basePrice - item.cost;
+                        return (
+                          <tr key={item.id} className="border-b" data-testid={`item-healthy-margin-${item.id}`}>
+                            <td className="p-3 font-medium">{item.name}</td>
+                            <td className="p-3 text-right font-mono">{item.basePrice.toFixed(2)} SAR</td>
+                            <td className="p-3 text-right font-mono">{item.cost.toFixed(2)} SAR</td>
+                            <td className="p-3 text-right font-mono text-blue-600 dark:text-blue-500">{profit.toFixed(2)} SAR</td>
+                            <td className="p-3 text-right font-mono">
+                              <Badge className="bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100">{item.margin.toFixed(1)}%</Badge>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {highMarginItems.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-green-500" />
+                  <h4 className="font-semibold text-lg">Premium Margin Items (40%+) ({highMarginItems.length})</h4>
+                </div>
+                <div className="rounded-md border border-green-200 dark:border-green-900">
+                  <table className="w-full text-sm">
+                    <thead className="border-b bg-green-50 dark:bg-green-950">
+                      <tr>
+                        <th className="p-3 text-left font-medium">Item</th>
+                        <th className="p-3 text-right font-medium">Price</th>
+                        <th className="p-3 text-right font-medium">Cost</th>
+                        <th className="p-3 text-right font-medium">Profit</th>
+                        <th className="p-3 text-right font-medium">Margin</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {highMarginItems.sort((a, b) => b.margin - a.margin).map((item) => {
+                        const profit = item.basePrice - item.cost;
+                        return (
+                          <tr key={item.id} className="border-b" data-testid={`item-premium-margin-${item.id}`}>
+                            <td className="p-3 font-medium">{item.name}</td>
+                            <td className="p-3 text-right font-mono">{item.basePrice.toFixed(2)} SAR</td>
+                            <td className="p-3 text-right font-mono">{item.cost.toFixed(2)} SAR</td>
+                            <td className="p-3 text-right font-mono text-green-600 dark:text-green-500 font-semibold">{profit.toFixed(2)} SAR</td>
+                            <td className="p-3 text-right font-mono">
+                              <Badge className="bg-green-100 dark:bg-green-900 text-green-900 dark:text-green-100">{item.margin.toFixed(1)}%</Badge>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </>
   );
 }
