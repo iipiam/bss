@@ -48,6 +48,7 @@ Preferred communication style: Simple, everyday language.
 - **Strategic Decision-Making**: Profitability analysis with dedicated tabs for Strategic Overview, Pricing Analysis, Scaling Viability, and Cost Management.
 - **Authentication**: Subscription-based authentication with Commercial Registration field, password recovery (token-based), and secure password hashing.
 - **Shop Management**: Complete expense tracking system with dual tabs for Employee Salaries and Shop Bills. Manages employee salary records (name, position, amount, payment date, status, notes) and shop bills (rent, electricity, water, gas, internet, maintenance, etc.). Features include search functionality, summary cards showing total/paid/pending amounts, full CRUD operations, and proper date handling with ISO format conversion.
+- **Tutorial System**: Comprehensive visual tutorial page featuring 12 detailed guides covering all major system features (POS, Inventory, Menu, Recipes, Customers, Orders, Dashboard, Sales, Profitability, Forecasting, Invoices, Financial). Each tutorial card displays a high-quality contextual photo, gradient-themed icon, title, and description. The page also includes a "Getting Started" guide with 5 step-by-step instructions for new users. Features smooth hover animations with image zoom effects and gradient overlays for enhanced visual appeal.
 
 ## External Dependencies
 
