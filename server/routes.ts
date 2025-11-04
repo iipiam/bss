@@ -1019,6 +1019,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(userWithoutPassword);
   });
 
+  app.patch("/api/auth/me", async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const { devicePreference } = req.body;
+      
+      // Validate device preference
+      if (devicePreference && !['laptop', 'ipad', 'iphone'].includes(devicePreference)) {
+        return res.status(400).json({ error: "Invalid device preference. Must be 'laptop', 'ipad', or 'iphone'" });
+      }
+
+      const updatedUser = await storage.updateUser(req.session.userId, { devicePreference });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Update user preference error:", error);
+      res.status(500).json({ error: "Failed to update user preferences" });
+    }
+  });
+
   // Users Management (Admin only)
   app.get("/api/users", async (req, res) => {
     if (!req.session?.userId) {
