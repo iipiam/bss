@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Minus, X, Search, Receipt, UtensilsCrossed, UserCircle, CreditCard, Wallet, Package } from "lucide-react";
+import { Plus, Minus, X, Search, Receipt, UtensilsCrossed, UserCircle, CreditCard, Wallet, Package, ShoppingCart } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useDevice } from "@/contexts/DeviceContext";
 import type { MenuItem } from "@shared/schema";
 
 interface CartItem {
@@ -46,8 +47,10 @@ export default function POS() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerTab, setCustomerTab] = useState("new");
   const [customerSearch, setCustomerSearch] = useState("");
+  const [mobileView, setMobileView] = useState<"menu" | "cart">("menu");
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { device } = useDevice();
 
   const { data: menuItems = [], isLoading } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu"],
@@ -230,6 +233,427 @@ export default function POS() {
     );
   }
 
+  const isMobile = device === 'iphone';
+  const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Mobile layout for iPhone
+  if (isMobile) {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="flex-shrink-0 p-4 border-b">
+          <h1 className="text-2xl font-bold mb-3">Point of Sale</h1>
+          <Tabs value={mobileView} onValueChange={(v) => setMobileView(v as "menu" | "cart")}>
+            <TabsList className="w-full grid grid-cols-2">
+              <TabsTrigger value="menu" data-testid="tab-mobile-menu">
+                <UtensilsCrossed className="h-4 w-4 mr-2" />
+                Menu
+              </TabsTrigger>
+              <TabsTrigger value="cart" data-testid="tab-mobile-cart">
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Cart {itemCount > 0 && `(${itemCount})`}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
+        {mobileView === "menu" ? (
+          <div className="flex-1 overflow-auto p-4">
+            <div className="mb-4">
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search items..."
+                  className="pl-10"
+                  data-testid="input-search-pos"
+                />
+              </div>
+
+              <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+                <TabsList className="w-full overflow-x-auto flex justify-start">
+                  {categories.map(cat => (
+                    <TabsTrigger key={cat} value={cat} data-testid={`tab-category-${cat.toLowerCase()}`} className="whitespace-nowrap">
+                      {cat}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {filteredItems.map(item => {
+                const hasDiscount = item.discount && parseFloat(item.discount) > 0;
+                const basePrice = parseFloat(item.basePrice);
+                const originalPrice = basePrice * 1.15;
+                const discountedBase = hasDiscount
+                  ? basePrice * (1 - parseFloat(item.discount) / 100)
+                  : basePrice;
+                const finalPrice = discountedBase * 1.15;
+                
+                const stockCount = stock[item.id] ?? 0;
+                const isOutOfStock = stockCount === 0;
+                
+                return (
+                  <Card
+                    key={item.id}
+                    className={`cursor-pointer hover-elevate active-elevate-2 relative ${isOutOfStock ? 'opacity-50' : ''}`}
+                    onClick={() => !isOutOfStock && addToCart(item)}
+                    data-testid={`card-pos-item-${item.id}`}
+                  >
+                    {hasDiscount && !isOutOfStock && (
+                      <div className="absolute top-1 right-1 z-10 bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                        {parseFloat(item.discount).toFixed(0)}%
+                      </div>
+                    )}
+                    {isOutOfStock && (
+                      <div className="absolute top-1 right-1 z-10 bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                        OUT
+                      </div>
+                    )}
+                    <CardHeader className="p-3 pb-2">
+                      <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-md flex items-center justify-center mb-2">
+                        <UtensilsCrossed className="h-8 w-8 text-primary/40" />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-3 pt-0">
+                      <p className="font-semibold text-sm mb-1 line-clamp-2">{item.name}</p>
+                      {hasDiscount ? (
+                        <div className="space-y-0.5">
+                          <p className="text-base font-bold font-mono text-primary">{finalPrice.toFixed(2)}</p>
+                          <p className="text-xs font-mono text-muted-foreground line-through">{originalPrice.toFixed(2)}</p>
+                        </div>
+                      ) : (
+                        <p className="text-base font-bold font-mono text-primary">{originalPrice.toFixed(2)}</p>
+                      )}
+                      <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                        <Package className="h-3 w-3" />
+                        <span data-testid={`text-stock-${item.id}`}>{stockCount}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {itemCount > 0 && (
+              <div className="fixed bottom-4 left-4 right-4 z-10">
+                <Button
+                  size="lg"
+                  className="w-full shadow-lg"
+                  onClick={() => setMobileView("cart")}
+                  data-testid="button-view-cart"
+                >
+                  <ShoppingCart className="h-5 w-5 mr-2" />
+                  View Cart ({itemCount} items) - {total.toFixed(2)} SAR
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col">
+            <div className="p-4 border-b">
+              <Tabs value={orderType} onValueChange={setOrderType}>
+                <TabsList className="w-full grid grid-cols-3">
+                  <TabsTrigger value="Dine-In" className="text-xs">Dine-In</TabsTrigger>
+                  <TabsTrigger value="Takeout" className="text-xs">Takeout</TabsTrigger>
+                  <TabsTrigger value="Delivery" className="text-xs">Delivery</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+
+            <div className="flex-1 overflow-auto p-4">
+              {cartItems.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+                  <Receipt className="h-16 w-16 mb-4 opacity-20" />
+                  <p>No items in cart</p>
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => setMobileView("menu")}
+                  >
+                    Browse Menu
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {cartItems.map(item => (
+                    <Card key={item.id} data-testid={`cart-item-${item.id}`}>
+                      <CardContent className="p-3">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{item.name}</p>
+                            {item.discount > 0 ? (
+                              <div className="flex items-baseline gap-1.5">
+                                <p className="text-xs font-mono text-primary">{item.price.toFixed(2)}</p>
+                                <p className="text-xs font-mono text-muted-foreground line-through">{item.originalPrice.toFixed(2)}</p>
+                                <span className="text-xs bg-green-600 text-white px-1 py-0.5 rounded">{item.discount.toFixed(0)}%</span>
+                              </div>
+                            ) : (
+                              <p className="text-xs text-muted-foreground font-mono">{item.price.toFixed(2)} SAR</p>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => removeItem(item.id)}
+                            data-testid={`button-remove-${item.id}`}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => updateQuantity(item.id, -1)}
+                              data-testid={`button-decrease-${item.id}`}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span className="w-6 text-center font-mono font-semibold text-sm">{item.quantity}</span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => updateQuantity(item.id, 1)}
+                              data-testid={`button-increase-${item.id}`}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <p className="font-mono font-bold text-sm">{(item.price * item.quantity).toFixed(2)} SAR</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="border-t p-4">
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Subtotal</span>
+                  <span className="font-mono">{subtotal.toFixed(2)} SAR</span>
+                </div>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Tax (15%)</span>
+                  <span className="font-mono">{tax.toFixed(2)} SAR</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between text-lg font-bold">
+                  <span>Total</span>
+                  <span className="font-mono">{total.toFixed(2)} SAR</span>
+                </div>
+              </div>
+
+              <div className="mb-3">
+                <Label className="text-xs font-medium mb-1 block">{t.paymentMethod}</Label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger data-testid="select-payment-method" className="w-full h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Cash" data-testid="option-cash">
+                      <div className="flex items-center gap-2">
+                        <Wallet className="h-4 w-4" />
+                        {t.cash}
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="ATM" data-testid="option-atm">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="h-4 w-4" />
+                        {t.atm}
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {customerName && (
+                <div className="mb-3 p-2 bg-muted rounded-md">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <UserCircle className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs font-medium" data-testid="text-customer-name">{customerName}</p>
+                        {customerPhone && <p className="text-xs text-muted-foreground" data-testid="text-customer-phone">{customerPhone}</p>}
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => {
+                        setCustomerName("");
+                        setCustomerPhone("");
+                      }}
+                      data-testid="button-remove-customer"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <Dialog open={customerDialogOpen} onOpenChange={setCustomerDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mb-2"
+                    data-testid="button-add-customer"
+                  >
+                    <UserCircle className="h-4 w-4 mr-2" />
+                    {customerName ? "Edit Customer" : "Add Customer"}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Customer Information</DialogTitle>
+                    <DialogDescription>
+                      Add customer details for this order (optional)
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Tabs value={customerTab} onValueChange={setCustomerTab} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="new" data-testid="tab-new-customer">{t.newCustomer}</TabsTrigger>
+                      <TabsTrigger value="existing" data-testid="tab-existing-customer">{t.existingCustomer}</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="new" className="space-y-4 mt-4">
+                      <div>
+                        <Label htmlFor="customer-name">{t.customerName}</Label>
+                        <Input
+                          id="customer-name"
+                          placeholder="Enter customer name"
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                          data-testid="input-pos-customer-name"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="customer-phone">{t.phone}</Label>
+                        <Input
+                          id="customer-phone"
+                          placeholder="+966 XX XXX XXXX"
+                          value={customerPhone}
+                          onChange={(e) => setCustomerPhone(e.target.value)}
+                          data-testid="input-pos-customer-phone"
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setCustomerDialogOpen(false)}
+                          data-testid="button-cancel-customer"
+                        >
+                          {t.cancel}
+                        </Button>
+                        <Button
+                          onClick={handleSaveCustomer}
+                          data-testid="button-save-customer"
+                        >
+                          {t.save}
+                        </Button>
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="existing" className="space-y-4 mt-4">
+                      <div>
+                        <Label htmlFor="customer-search">{t.search}</Label>
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="customer-search"
+                            placeholder="Search by name or phone..."
+                            value={customerSearch}
+                            onChange={(e) => setCustomerSearch(e.target.value)}
+                            className="pl-9"
+                            data-testid="input-customer-search"
+                          />
+                        </div>
+                      </div>
+                      <div className="max-h-60 overflow-y-auto space-y-2">
+                        {customers
+                          .filter(c => 
+                            customerSearch === "" ||
+                            c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+                            c.phone.includes(customerSearch)
+                          )
+                          .map(customer => (
+                            <Card
+                              key={customer.id}
+                              className="cursor-pointer hover-elevate active-elevate-2"
+                              onClick={() => {
+                                setCustomerName(customer.name);
+                                setCustomerPhone(customer.phone);
+                                setCustomerDialogOpen(false);
+                                setCustomerSearch("");
+                                toast({
+                                  title: t.success,
+                                  description: `${t.selectCustomer}: ${customer.name}`,
+                                });
+                              }}
+                              data-testid={`card-customer-${customer.id}`}
+                            >
+                              <CardContent className="p-3">
+                                <p className="font-medium">{customer.name}</p>
+                                <p className="text-sm text-muted-foreground">{customer.phone}</p>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        {customers.filter(c => 
+                          customerSearch === "" ||
+                          c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+                          c.phone.includes(customerSearch)
+                        ).length === 0 && (
+                          <p className="text-center text-muted-foreground py-8">{t.noData}</p>
+                        )}
+                      </div>
+                      <div className="flex justify-end">
+                        <Button
+                          variant="outline"
+                          onClick={() => setCustomerDialogOpen(false)}
+                          data-testid="button-cancel-select-customer"
+                        >
+                          {t.cancel}
+                        </Button>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </DialogContent>
+              </Dialog>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  size="sm"
+                  onClick={clearCart}
+                  disabled={cartItems.length === 0}
+                  data-testid="button-clear-cart"
+                >
+                  Clear
+                </Button>
+                <Button
+                  className="flex-1"
+                  size="sm"
+                  onClick={handleCheckout}
+                  disabled={cartItems.length === 0 || createOrderMutation.isPending}
+                  data-testid="button-checkout"
+                >
+                  {createOrderMutation.isPending ? "Processing..." : "Checkout"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop/Tablet layout for iPad and Laptop
   return (
     <div className="h-screen flex">
       <div className="flex-1 p-6 overflow-auto">

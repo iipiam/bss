@@ -62,6 +62,7 @@ Preferred communication style: Simple, everyday language.
   - **Device-Specific CSS**: Automatically applies typography and padding adjustments based on selected device (smaller fonts/padding for iPhone, medium for iPad, default for laptop)
   - **Account Section UI**: Settings page displays user account information (Full Name, Email, Commercial Registration, Role) with visual device selector cards showing device icons and names
   - **Layout Stability**: Sidebar maintains consistent width across all devices, preventing content collapse and ensuring usable interface on all screen sizes
+  - **Mobile-Optimized POS**: iPhone mode features a dedicated mobile layout with tab-based navigation between Menu and Cart views. The mobile POS includes a 2-column menu grid, compact item cards with smaller fonts and padding, floating cart button showing item count and total, full-screen cart view with optimized spacing, and streamlined checkout interface designed for small screens
 
 ## External Dependencies
 
