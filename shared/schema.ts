@@ -35,11 +35,28 @@ export const insertInventoryItemSchema = createInsertSchema(inventoryItems).omit
 export type InsertInventoryItem = z.infer<typeof insertInventoryItemSchema>;
 export type InventoryItem = typeof inventoryItems.$inferSelect;
 
+// Recipes (must be defined before menuItems for foreign key reference)
+export const recipes = pgTable("recipes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  prepTime: text("prep_time").notNull(),
+  cookTime: text("cook_time").notNull(),
+  servings: integer("servings").notNull(),
+  cost: decimal("cost", { precision: 10, scale: 2 }).notNull(),
+  ingredients: jsonb("ingredients").notNull().$type<Array<{ inventoryItemId: string; name: string; quantity: number; unit: string; unitPrice: number }>>(),
+  steps: jsonb("steps").notNull().$type<string[]>(),
+});
+
+export const insertRecipeSchema = createInsertSchema(recipes).omit({ id: true });
+export type InsertRecipe = z.infer<typeof insertRecipeSchema>;
+export type Recipe = typeof recipes.$inferSelect;
+
 // Menu Items
 export const menuItems = pgTable("menu_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   category: text("category").notNull(),
+  recipeId: varchar("recipe_id").references(() => recipes.id), // Optional: menu item can have a recipe
   price: decimal("price", { precision: 10, scale: 2 }).notNull(), // VAT-inclusive price (15% Saudi VAT)
   basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(), // Price before VAT
   vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).notNull(), // VAT amount (15%)
@@ -58,23 +75,6 @@ export const insertMenuItemSchema = createInsertSchema(menuItems).omit({ id: tru
 );
 export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
 export type MenuItem = typeof menuItems.$inferSelect;
-
-// Recipes
-export const recipes = pgTable("recipes", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  menuItemId: varchar("menu_item_id").references(() => menuItems.id),
-  name: text("name").notNull(),
-  prepTime: text("prep_time").notNull(),
-  cookTime: text("cook_time").notNull(),
-  servings: integer("servings").notNull(),
-  cost: decimal("cost", { precision: 10, scale: 2 }).notNull(),
-  ingredients: jsonb("ingredients").notNull().$type<Array<{ inventoryItemId: string; name: string; quantity: number; unit: string; unitPrice: number }>>(),
-  steps: jsonb("steps").notNull().$type<string[]>(),
-});
-
-export const insertRecipeSchema = createInsertSchema(recipes).omit({ id: true });
-export type InsertRecipe = z.infer<typeof insertRecipeSchema>;
-export type Recipe = typeof recipes.$inferSelect;
 
 // Orders
 export const orders = pgTable("orders", {
