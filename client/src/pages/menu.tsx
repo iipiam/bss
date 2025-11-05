@@ -83,7 +83,7 @@ export default function Menu() {
   });
 
   // Get selected recipe details and calculate stock
-  const selectedRecipe = recipes.find(r => r.id === selectedRecipeId);
+  const selectedRecipe = recipes.find(r => r.id === selectedRecipeId && selectedRecipeId !== "none");
   const recipeStockInfo = selectedRecipe?.ingredients.map(ing => {
     const inventoryItem = inventoryItems.find(inv => inv.id === ing.inventoryItemId);
     return {
@@ -114,8 +114,8 @@ export default function Menu() {
         available: true,
       };
 
-      // Only include recipeId if it's set
-      if (data.recipeId) {
+      // Only include recipeId if it's set and not "none"
+      if (data.recipeId && data.recipeId !== "none") {
         menuItemData.recipeId = data.recipeId;
       }
 
@@ -152,7 +152,7 @@ export default function Menu() {
         name: data.name,
         description: data.description,
         category: data.category,
-        recipeId: data.recipeId || null, // Send null to clear recipe or actual ID
+        recipeId: (data.recipeId && data.recipeId !== "none") ? data.recipeId : null, // Send null to clear recipe or actual ID
         basePrice: basePriceNum.toFixed(2), // Store original base price
         vatAmount: vatAmount.toFixed(2), // VAT on discounted base
         price: price.toFixed(2), // Final price with discount and VAT
@@ -224,12 +224,12 @@ export default function Menu() {
 
   const handleEdit = (item: MenuItem) => {
     setEditingItem(item);
-    setSelectedRecipeId(item.recipeId || "");
+    setSelectedRecipeId(item.recipeId || "none");
     form.reset({
       name: item.name,
       description: item.description || "",
       category: item.category,
-      recipeId: item.recipeId || "",
+      recipeId: item.recipeId || "none",
       basePrice: item.basePrice || "",
       discount: item.discount || "0",
     });
@@ -241,7 +241,7 @@ export default function Menu() {
     if (!isOpen) {
       // Clear state when closing
       setEditingItem(null);
-      setSelectedRecipeId("");
+      setSelectedRecipeId("none");
       form.reset();
     }
   };
@@ -249,7 +249,7 @@ export default function Menu() {
   const handleCloseDialog = () => {
     setOpen(false);
     setEditingItem(null);
-    setSelectedRecipeId("");
+    setSelectedRecipeId("none");
     form.reset();
   };
 
@@ -573,7 +573,7 @@ export default function Menu() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">No Recipe</SelectItem>
+                          <SelectItem value="none">No Recipe</SelectItem>
                           {recipes.map((recipe) => (
                             <SelectItem key={recipe.id} value={recipe.id}>
                               {recipe.name}
