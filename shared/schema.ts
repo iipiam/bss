@@ -57,6 +57,7 @@ export const menuItems = pgTable("menu_items", {
   name: text("name").notNull(),
   category: text("category").notNull(),
   recipeId: varchar("recipe_id").references(() => recipes.id), // Optional: menu item can have a recipe
+  stockNo: decimal("stock_no", { precision: 10, scale: 2 }), // Required when no recipe is linked
   price: decimal("price", { precision: 10, scale: 2 }).notNull(), // VAT-inclusive price (15% Saudi VAT)
   basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(), // Price before VAT
   vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).notNull(), // VAT amount (15%)
@@ -70,6 +71,7 @@ export const insertMenuItemSchema = createInsertSchema(menuItems)
   .omit({ id: true })
   .extend({
     recipeId: z.string().nullable().optional(), // Allow null to clear recipe
+    stockNo: z.string().optional(), // Stock number (required when no recipe)
   })
   .refine(
     (data) => {
@@ -77,6 +79,16 @@ export const insertMenuItemSchema = createInsertSchema(menuItems)
       return discount >= 0 && discount <= 100;
     },
     { message: "Discount must be between 0 and 100" }
+  )
+  .refine(
+    (data) => {
+      // If no recipe, stockNo is required
+      if (!data.recipeId || data.recipeId === "none") {
+        return !!data.stockNo && data.stockNo.trim() !== "";
+      }
+      return true;
+    },
+    { message: "Stock number is required when no recipe is selected", path: ["stockNo"] }
   );
 export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
 export type MenuItem = typeof menuItems.$inferSelect;
