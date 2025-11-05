@@ -66,13 +66,18 @@ export const menuItems = pgTable("menu_items", {
   imageUrl: text("image_url"),
 });
 
-export const insertMenuItemSchema = createInsertSchema(menuItems).omit({ id: true }).refine(
-  (data) => {
-    const discount = parseFloat(data.discount || "0");
-    return discount >= 0 && discount <= 100;
-  },
-  { message: "Discount must be between 0 and 100" }
-);
+export const insertMenuItemSchema = createInsertSchema(menuItems)
+  .omit({ id: true })
+  .extend({
+    recipeId: z.string().nullable().optional(), // Allow null to clear recipe
+  })
+  .refine(
+    (data) => {
+      const discount = parseFloat(data.discount || "0");
+      return discount >= 0 && discount <= 100;
+    },
+    { message: "Discount must be between 0 and 100" }
+  );
 export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
 export type MenuItem = typeof menuItems.$inferSelect;
 

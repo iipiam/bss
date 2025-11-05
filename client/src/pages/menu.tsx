@@ -16,13 +16,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { insertMenuItemSchema, type MenuItem } from "@shared/schema";
+import { insertMenuItemSchema, type MenuItem, type Recipe, type InventoryItem } from "@shared/schema";
 import { useDeviceLayout } from "@/lib/mobileLayout";
 
 // Form schema for UI - only collect basePrice and discount, calculate VAT on submit
 const menuFormSchema = z.object({
   name: z.string().min(1, "Item name is required"),
   category: z.string().min(1, "Category is required"),
+  recipeId: z.string().optional(),
   basePrice: z.string().min(1, "Base price is required"),
   discount: z.string().default("0").refine(
     (val) => {
@@ -55,12 +56,15 @@ export default function Menu() {
   const [newCategory, setNewCategory] = useState("");
   const { toast } = useToast();
 
+  const [selectedRecipeId, setSelectedRecipeId] = useState<string>("");
+
   const form = useForm<MenuFormValues>({
     resolver: zodResolver(menuFormSchema),
     defaultValues: {
       name: "",
       description: "",
       category: "",
+      recipeId: "",
       basePrice: "",
       discount: "0",
     },
@@ -68,6 +72,26 @@ export default function Menu() {
 
   const { data: menuItems = [], isLoading } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu"],
+  });
+
+  const { data: recipes = [] } = useQuery<Recipe[]>({
+    queryKey: ["/api/recipes"],
+  });
+
+  const { data: inventoryItems = [] } = useQuery<InventoryItem[]>({
+    queryKey: ["/api/inventory"],
+  });
+
+  // Get selected recipe details and calculate stock
+  const selectedRecipe = recipes.find(r => r.id === selectedRecipeId);
+  const recipeStockInfo = selectedRecipe?.ingredients.map(ing => {
+    const inventoryItem = inventoryItems.find(inv => inv.id === ing.inventoryItemId);
+    return {
+      ...ing,
+      availableStock: inventoryItem?.quantity || "0",
+      unit: inventoryItem?.unit || ing.unit,
+      inStock: inventoryItem ? parseFloat(inventoryItem.quantity) >= ing.quantity : false,
+    };
   });
 
   const createMenuItemMutation = useMutation({
@@ -79,7 +103,7 @@ export default function Menu() {
       const vatAmount = discountedBase * 0.15;
       const price = discountedBase + vatAmount;
 
-      const menuItemData = {
+      const menuItemData: any = {
         name: data.name,
         description: data.description,
         category: data.category,
@@ -89,6 +113,11 @@ export default function Menu() {
         discount: discountNum.toFixed(2),
         available: true,
       };
+
+      // Only include recipeId if it's set
+      if (data.recipeId) {
+        menuItemData.recipeId = data.recipeId;
+      }
 
       return await apiRequest("POST", "/api/menu", menuItemData);
     },
@@ -119,10 +148,11 @@ export default function Menu() {
       const vatAmount = discountedBase * 0.15;
       const price = discountedBase + vatAmount;
 
-      const menuItemData = {
+      const menuItemData: any = {
         name: data.name,
         description: data.description,
         category: data.category,
+        recipeId: data.recipeId || null, // Send null to clear recipe or actual ID
         basePrice: basePriceNum.toFixed(2), // Store original base price
         vatAmount: vatAmount.toFixed(2), // VAT on discounted base
         price: price.toFixed(2), // Final price with discount and VAT
@@ -194,10 +224,12 @@ export default function Menu() {
 
   const handleEdit = (item: MenuItem) => {
     setEditingItem(item);
+    setSelectedRecipeId(item.recipeId || "");
     form.reset({
       name: item.name,
       description: item.description || "",
       category: item.category,
+      recipeId: item.recipeId || "",
       basePrice: item.basePrice || "",
       discount: item.discount || "0",
     });
@@ -209,6 +241,7 @@ export default function Menu() {
     if (!isOpen) {
       // Clear state when closing
       setEditingItem(null);
+      setSelectedRecipeId("");
       form.reset();
     }
   };
@@ -216,6 +249,7 @@ export default function Menu() {
   const handleCloseDialog = () => {
     setOpen(false);
     setEditingItem(null);
+    setSelectedRecipeId("");
     form.reset();
   };
 
@@ -520,6 +554,65 @@ export default function Menu() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="recipeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Recipe (Optional)</FormLabel>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setSelectedRecipeId(value);
+                        }} 
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger data-testid="select-menu-recipe">
+                            <SelectValue placeholder="Select a recipe" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">No Recipe</SelectItem>
+                          {recipes.map((recipe) => (
+                            <SelectItem key={recipe.id} value={recipe.id}>
+                              {recipe.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {selectedRecipeId && recipeStockInfo && recipeStockInfo.length > 0 && (
+                  <div className="rounded-lg border p-4 space-y-3 bg-muted/30">
+                    <h4 className="text-sm font-semibold">Ingredient Stock Availability</h4>
+                    <div className="space-y-2">
+                      {recipeStockInfo.map((ingredient, index) => (
+                        <div key={index} className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <div className={`h-2 w-2 rounded-full ${ingredient.inStock ? 'bg-green-500' : 'bg-red-500'}`} />
+                            <span className="text-muted-foreground">{ingredient.name}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-muted-foreground">
+                              Need: {ingredient.quantity} {ingredient.unit}
+                            </span>
+                            <Badge variant={ingredient.inStock ? "default" : "destructive"} className="text-xs">
+                              Stock: {ingredient.availableStock} {ingredient.unit}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {recipeStockInfo.some(ing => !ing.inStock) && (
+                      <p className="text-xs text-destructive mt-2">
+                        ⚠️ Some ingredients are low in stock
+                      </p>
+                    )}
+                  </div>
+                )}
                 <FormField
                   control={form.control}
                   name="basePrice"
