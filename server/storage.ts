@@ -239,15 +239,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMenuItemsStock(branchId?: string): Promise<Record<string, number>> {
-    // Get all recipes
-    const allRecipes = await this.getRecipes();
+    // Get all menu items
+    const allMenuItems = await this.getMenuItems();
     // Get inventory items for the branch
     const inventory = await this.getInventoryItems(branchId);
     
     const stock: Record<string, number> = {};
     
-    for (const recipe of allRecipes) {
-      if (!recipe.menuItemId) continue;
+    // For each menu item, calculate stock based on its recipe (if it has one)
+    for (const menuItem of allMenuItems) {
+      // If menu item has no recipe, it has infinite stock
+      if (!menuItem.recipeId) {
+        stock[menuItem.id] = 999999; // Effectively infinite
+        continue;
+      }
+      
+      // Get the recipe for this menu item
+      const recipe = await this.getRecipe(menuItem.recipeId);
+      if (!recipe) {
+        stock[menuItem.id] = 999999; // No recipe found, treat as infinite
+        continue;
+      }
       
       // Calculate how many servings we can make based on available inventory
       let minServings = Infinity;
@@ -271,7 +283,7 @@ export class DatabaseStorage implements IStorage {
       }
       
       // Store the stock for this menu item
-      stock[recipe.menuItemId] = minServings === Infinity ? 0 : minServings;
+      stock[menuItem.id] = minServings === Infinity ? 0 : minServings;
     }
     
     return stock;
@@ -672,13 +684,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createDeliveryApp(app: InsertDeliveryApp): Promise<DeliveryApp> {
-    const [created] = await db.insert(deliveryApps).values(app).returning();
+    const [created] = await db.insert(deliveryApps).values(app as any).returning();
     return created;
   }
 
   async updateDeliveryApp(id: string, app: Partial<InsertDeliveryApp>): Promise<DeliveryApp | undefined> {
     const [updated] = await db.update(deliveryApps)
-      .set(app)
+      .set(app as any)
       .where(eq(deliveryApps.id, id))
       .returning();
     return updated;

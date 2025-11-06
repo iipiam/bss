@@ -313,6 +313,22 @@ export const deliveryApps = pgTable("delivery_apps", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const insertDeliveryAppSchema = createInsertSchema(deliveryApps).omit({ id: true, createdAt: true });
+const subsidyTierSchema = z.object({
+  minAmount: z.number().min(0, "Minimum amount must be 0 or higher"),
+  maxAmount: z.number().nullable(),
+  subsidy: z.number().min(0, "Subsidy must be 0 or higher"),
+}).refine(
+  (data) => data.maxAmount === null || data.maxAmount > data.minAmount,
+  {
+    message: "Maximum amount must be greater than minimum amount",
+    path: ["maxAmount"],
+  }
+);
+
+export const insertDeliveryAppSchema = createInsertSchema(deliveryApps)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    subsidyTiers: z.array(subsidyTierSchema).max(3, "Maximum 3 subsidy tiers allowed"),
+  });
 export type InsertDeliveryApp = z.infer<typeof insertDeliveryAppSchema>;
 export type DeliveryApp = typeof deliveryApps.$inferSelect;

@@ -371,13 +371,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/delivery-apps/:id", async (req, res) => {
     try {
-      const deliveryApp = await storage.updateDeliveryApp(req.params.id, req.body);
+      const data = insertDeliveryAppSchema.partial().parse(req.body);
+      const deliveryApp = await storage.updateDeliveryApp(req.params.id, data);
       if (!deliveryApp) {
         return res.status(404).json({ error: "Delivery app not found" });
       }
       res.json(deliveryApp);
     } catch (error) {
-      res.status(400).json({ error: "Invalid delivery app data" });
+      console.error("[DELIVERY_APP] Validation error:", error);
+      res.status(400).json({ error: "Invalid delivery app data", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -1975,7 +1977,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const flattenedRecipes = recipes.map(recipe => ({
         id: recipe.id,
         name: recipe.name,
-        menuItemId: recipe.menuItemId,
         prepTime: recipe.prepTime,
         cookTime: recipe.cookTime,
         servings: recipe.servings,
@@ -2155,7 +2156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Calculate profitability data
       const profitabilityData = menuItems.map((item) => {
-        const recipe = recipes.find((r) => r.menuItemId === item.id);
+        const recipe = item.recipeId ? recipes.find((r) => r.id === item.recipeId) : null;
         const cost = recipe ? parseFloat(recipe.cost) : 0;
         const basePrice = parseFloat(item.basePrice);
         const profit = basePrice - cost;
@@ -2479,7 +2480,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           await storage.createRecipe({
             name: row.name,
-            menuItemId: row.menuItemId,
             prepTime: row.prepTime,
             cookTime: row.cookTime,
             servings: Number(row.servings),
