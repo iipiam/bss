@@ -1217,6 +1217,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(204).send();
   });
 
+  // User Profile Management
+  app.get("/api/profile", async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const user = await storage.getUserProfile(req.session.userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const { password: _, passwordResetToken, passwordResetExpiry, ...userProfile } = user;
+      res.json(userProfile);
+    } catch (error) {
+      console.error("Get profile error:", error);
+      res.status(500).json({ error: "Failed to get profile" });
+    }
+  });
+
+  app.put("/api/profile", async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const { email, phone } = req.body;
+      const profileUpdate: { email?: string; phone?: string } = {};
+
+      if (email !== undefined) profileUpdate.email = email;
+      if (phone !== undefined) profileUpdate.phone = phone;
+
+      const updatedUser = await storage.updateUserProfile(req.session.userId, profileUpdate);
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const { password: _, passwordResetToken, passwordResetExpiry, ...userProfile } = updatedUser;
+      res.json(userProfile);
+    } catch (error) {
+      console.error("Update profile error:", error);
+      res.status(500).json({ error: "Failed to update profile" });
+    }
+  });
+
+  // Subscription Management
+  app.post("/api/subscription/cancel", async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      if (user.subscriptionStatus !== 'active') {
+        return res.status(400).json({ error: "No active subscription to cancel" });
+      }
+
+      const updatedUser = await storage.cancelSubscription(req.session.userId);
+      if (!updatedUser) {
+        return res.status(500).json({ error: "Failed to cancel subscription" });
+      }
+
+      const { password: _, passwordResetToken, passwordResetExpiry, ...userProfile } = updatedUser;
+      res.json(userProfile);
+    } catch (error) {
+      console.error("Cancel subscription error:", error);
+      res.status(500).json({ error: "Failed to cancel subscription" });
+    }
+  });
+
   // Financial Analytics
   app.get("/api/analytics/financial", async (req, res) => {
     const { period, year } = req.query;
