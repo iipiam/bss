@@ -350,6 +350,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(apps);
   });
 
+  app.patch("/api/delivery-apps/sort", async (req, res) => {
+    try {
+      const { updates } = req.body;
+      if (!Array.isArray(updates)) {
+        return res.status(400).json({ error: "Invalid updates format" });
+      }
+      await storage.updateDeliveryAppsSortOrder(updates);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.get("/api/delivery-apps/:id", async (req, res) => {
     const app = await storage.getDeliveryApp(req.params.id);
     if (!app) {
@@ -389,19 +402,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Delivery app not found" });
     }
     res.status(204).send();
-  });
-
-  app.patch("/api/delivery-apps/sort", async (req, res) => {
-    try {
-      const { updates } = req.body;
-      if (!Array.isArray(updates)) {
-        return res.status(400).json({ error: "Invalid updates format" });
-      }
-      await storage.updateDeliveryAppsSortOrder(updates);
-      res.json({ success: true });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
   });
 
   // Recipes
