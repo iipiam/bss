@@ -83,9 +83,10 @@ interface SortableInventoryRowProps {
   item: InventoryItem;
   onEdit: (item: InventoryItem) => void;
   onDelete: (item: InventoryItem) => void;
+  disabled?: boolean;
 }
 
-function SortableInventoryRow({ item, onEdit, onDelete }: SortableInventoryRowProps) {
+function SortableInventoryRow({ item, onEdit, onDelete, disabled = false }: SortableInventoryRowProps) {
   const {
     attributes,
     listeners,
@@ -93,7 +94,7 @@ function SortableInventoryRow({ item, onEdit, onDelete }: SortableInventoryRowPr
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: item.id });
+  } = useSortable({ id: item.id, disabled });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -105,15 +106,17 @@ function SortableInventoryRow({ item, onEdit, onDelete }: SortableInventoryRowPr
     <TableRow ref={setNodeRef} style={style} data-testid={`row-item-${item.id}`}>
       <TableCell>
         <div className="flex items-center gap-2">
-          <div
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing p-1 hover-elevate active-elevate-2 rounded-md touch-none"
-            style={{ minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            data-testid={`drag-handle-item-${item.id}`}
-          >
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
-          </div>
+          {!disabled && (
+            <div
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing p-1 hover-elevate active-elevate-2 rounded-md touch-none"
+              style={{ minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              data-testid={`drag-handle-item-${item.id}`}
+            >
+              <GripVertical className="h-4 w-4 text-muted-foreground" />
+            </div>
+          )}
           <span className="font-medium">{item.name}</span>
         </div>
       </TableCell>
@@ -146,7 +149,7 @@ function SortableInventoryRow({ item, onEdit, onDelete }: SortableInventoryRowPr
   );
 }
 
-function SortableInventoryCard({ item, onEdit, onDelete }: SortableInventoryRowProps) {
+function SortableInventoryCard({ item, onEdit, onDelete, disabled = false }: SortableInventoryRowProps) {
   const {
     attributes,
     listeners,
@@ -154,7 +157,7 @@ function SortableInventoryCard({ item, onEdit, onDelete }: SortableInventoryRowP
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: item.id });
+  } = useSortable({ id: item.id, disabled });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -168,15 +171,17 @@ function SortableInventoryCard({ item, onEdit, onDelete }: SortableInventoryRowP
         <CardContent className="p-3">
           <div className="flex justify-between items-start mb-3">
             <div className="flex items-start gap-2 flex-1">
-              <div
-                {...attributes}
-                {...listeners}
-                className="cursor-grab active:cursor-grabbing p-2 hover-elevate active-elevate-2 rounded-md touch-none"
-                style={{ minWidth: '44px', minHeight: '44px' }}
-                data-testid={`drag-handle-item-${item.id}`}
-              >
-                <GripVertical className="h-5 w-5 text-muted-foreground" />
-              </div>
+              {!disabled && (
+                <div
+                  {...attributes}
+                  {...listeners}
+                  className="cursor-grab active:cursor-grabbing p-2 hover-elevate active-elevate-2 rounded-md touch-none"
+                  style={{ minWidth: '44px', minHeight: '44px' }}
+                  data-testid={`drag-handle-item-${item.id}`}
+                >
+                  <GripVertical className="h-5 w-5 text-muted-foreground" />
+                </div>
+              )}
               <div className="flex-1">
                 <h3 className="font-semibold text-base">{item.name}</h3>
                 <p className="text-xs text-muted-foreground">{item.category}</p>
@@ -538,6 +543,8 @@ export default function Inventory() {
     }
   };
 
+  const hasActiveFilters = searchQuery !== "" || categoryFilter !== "all" || statusFilter !== "all";
+
   const filteredItems = inventoryItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === "all" || item.category.toLowerCase() === categoryFilter;
@@ -547,6 +554,9 @@ export default function Inventory() {
       (statusFilter === "out-of-stock" && item.status === "Out of Stock");
     return matchesSearch && matchesCategory && matchesStatus;
   });
+
+  // Use full inventory for drag-and-drop when no filters, otherwise use filtered items (but disable drag)
+  const displayItems = hasActiveFilters ? filteredItems : inventoryItems;
 
   if (isLoading) {
     return (
@@ -789,7 +799,7 @@ export default function Inventory() {
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={filteredItems.map(item => item.id)}
+            items={displayItems.map(item => item.id)}
             strategy={verticalListSortingStrategy}
           >
             {!layout.isMobile ? (
@@ -807,24 +817,26 @@ export default function Inventory() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredItems.map((item) => (
+                  {displayItems.map((item) => (
                     <SortableInventoryRow
                       key={item.id}
                       item={item}
                       onEdit={handleEditItem}
                       onDelete={handleDeleteClick}
+                      disabled={hasActiveFilters}
                     />
                   ))}
                 </TableBody>
               </Table>
             ) : (
               <div className="space-y-3">
-                {filteredItems.map((item) => (
+                {displayItems.map((item) => (
                   <SortableInventoryCard
                     key={item.id}
                     item={item}
                     onEdit={handleEditItem}
                     onDelete={handleDeleteClick}
+                    disabled={hasActiveFilters}
                   />
                 ))}
               </div>
