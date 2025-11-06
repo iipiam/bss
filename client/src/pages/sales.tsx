@@ -10,13 +10,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Download, Search } from "lucide-react";
+import { FileDown, FileSpreadsheet, Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import type { Transaction } from "@shared/schema";
 import { useState } from "react";
+import { exportToPDF, exportToExcel } from "@/lib/exportUtils";
 
 export default function Sales() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
   
   const { data: transactions = [], isLoading } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions"],
@@ -29,6 +32,70 @@ export default function Sales() {
     t.transactionId.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleExportPDF = () => {
+    try {
+      const columns = [
+        { header: "Transaction ID", accessor: "transactionId" },
+        { header: "Date & Time", accessor: (row: Transaction) => new Date(row.createdAt).toLocaleString() },
+        { header: "Items", accessor: (row: Transaction) => row.itemCount.toString() },
+        { header: "Subtotal", accessor: (row: Transaction) => `${parseFloat(row.subtotal).toFixed(2)} SAR` },
+        { header: "Tax (15%)", accessor: (row: Transaction) => `${parseFloat(row.tax).toFixed(2)} SAR` },
+        { header: "Total", accessor: (row: Transaction) => `${parseFloat(row.total).toFixed(2)} SAR` },
+        { header: "Payment", accessor: "paymentMethod" },
+      ];
+
+      const result = exportToPDF("Sales Tracking Report", filteredTransactions, columns, {
+        subtitle: `Total Sales: ${todaysSales.toFixed(2)} SAR | Transactions: ${transactions.length} | Avg Order: ${avgOrderValue.toFixed(2)} SAR`,
+      });
+
+      if (result.success) {
+        toast({
+          title: "Export Successful",
+          description: `PDF exported as ${result.fileName}`,
+        });
+      } else {
+        throw new Error("PDF export failed");
+      }
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: error instanceof Error ? error.message : "Failed to export PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportExcel = () => {
+    try {
+      const exportData = filteredTransactions.map((transaction) => ({
+        "Transaction ID": transaction.transactionId,
+        "Date & Time": new Date(transaction.createdAt).toLocaleString(),
+        "Items": transaction.itemCount,
+        "Subtotal (SAR)": parseFloat(transaction.subtotal).toFixed(2),
+        "Tax (SAR)": parseFloat(transaction.tax).toFixed(2),
+        "Total (SAR)": parseFloat(transaction.total).toFixed(2),
+        "Payment Method": transaction.paymentMethod,
+      }));
+
+      const result = exportToExcel("Sales Tracking", exportData);
+
+      if (result.success) {
+        toast({
+          title: "Export Successful",
+          description: `Excel exported as ${result.fileName}`,
+        });
+      } else {
+        throw new Error("Excel export failed");
+      }
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: error instanceof Error ? error.message : "Failed to export Excel",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-8">
@@ -40,15 +107,21 @@ export default function Sales() {
 
   return (
     <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-3xl font-bold mb-2">Sales Tracking</h1>
           <p className="text-muted-foreground">View transaction history and summaries</p>
         </div>
-        <Button data-testid="button-export-sales">
-          <Download className="h-4 w-4 mr-2" />
-          Export Data
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportPDF} data-testid="button-export-pdf">
+            <FileDown className="h-4 w-4 mr-2" />
+            Export PDF
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportExcel} data-testid="button-export-excel">
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Export Excel
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
