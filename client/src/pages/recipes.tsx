@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, ChefHat, Trash2, Download, Upload, FileDown, GripVertical } from "lucide-react";
+import { Plus, ChefHat, Trash2, Download, Upload, FileDown, GripVertical, Edit, X } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -31,7 +32,13 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-function SortableRecipeCard({ recipe }: { recipe: Recipe }) {
+interface SortableRecipeCardProps {
+  recipe: Recipe;
+  onEdit: (recipe: Recipe) => void;
+  onDelete: (recipe: Recipe) => void;
+}
+
+function SortableRecipeCard({ recipe, onEdit, onDelete }: SortableRecipeCardProps) {
   const {
     attributes,
     listeners,
@@ -75,6 +82,24 @@ function SortableRecipeCard({ recipe }: { recipe: Recipe }) {
               </div>
             </div>
             <div className="text-right">
+              <div className="flex gap-2 mb-2">
+                <Button 
+                  variant="ghost" 
+                  className="h-[44px] w-[44px]" 
+                  onClick={() => onEdit(recipe)}
+                  data-testid={`button-edit-recipe-${recipe.id}`}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="h-[44px] w-[44px]" 
+                  onClick={() => onDelete(recipe)}
+                  data-testid={`button-delete-recipe-${recipe.id}`}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </div>
               <p className="text-sm text-muted-foreground mb-1">Cost per Serving</p>
               <p className="text-2xl font-bold font-mono text-primary">{parseFloat(recipe.cost).toFixed(2)} SAR</p>
             </div>
@@ -120,6 +145,9 @@ export default function Recipes() {
   const layout = useDeviceLayout();
   const [open, setOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [recipeToDelete, setRecipeToDelete] = useState<Recipe | null>(null);
   const [name, setName] = useState("");
   const [prepTime, setPrepTime] = useState("");
   const [cookTime, setCookTime] = useState("");
@@ -221,6 +249,80 @@ export default function Recipes() {
     },
   });
 
+  const updateRecipeMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      return await apiRequest("PATCH", `/api/recipes/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+      setOpen(false);
+      setEditingRecipe(null);
+      resetForm();
+      toast({
+        title: "Recipe updated",
+        description: "The recipe has been updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to update recipe",
+        description: error.message || "Could not update recipe",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteRecipeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest("DELETE", `/api/recipes/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+      setDeleteDialogOpen(false);
+      setRecipeToDelete(null);
+      toast({
+        title: "Recipe deleted",
+        description: "The recipe has been deleted successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to delete recipe",
+        description: error.message || "Could not delete recipe",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEditRecipe = (recipe: Recipe) => {
+    setEditingRecipe(recipe);
+    setName(recipe.name);
+    setPrepTime(recipe.prepTime);
+    setCookTime(recipe.cookTime);
+    setServings(recipe.servings.toString());
+    setCost(recipe.cost);
+    setIngredients(recipe.ingredients.map(ing => ({
+      inventoryItemId: ing.inventoryItemId,
+      name: ing.name,
+      quantity: ing.quantity.toString(),
+      unit: ing.unit,
+      unitPrice: ing.unitPrice
+    })));
+    setSteps(recipe.steps);
+    setOpen(true);
+  };
+
+  const handleDeleteClick = (recipe: Recipe) => {
+    setRecipeToDelete(recipe);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (recipeToDelete) {
+      deleteRecipeMutation.mutate(recipeToDelete.id);
+    }
+  };
+
   const resetForm = () => {
     setName("");
     setPrepTime("");
@@ -229,6 +331,7 @@ export default function Recipes() {
     setCost("");
     setIngredients([{ inventoryItemId: "", name: "", quantity: "", unit: "", unitPrice: 0 }]);
     setSteps([""]);
+    setEditingRecipe(null);
   };
 
   const addIngredient = () => {
@@ -299,7 +402,7 @@ export default function Recipes() {
       return;
     }
     
-    createRecipeMutation.mutate({
+    const recipeData = {
       name,
       prepTime,
       cookTime,
@@ -313,7 +416,13 @@ export default function Recipes() {
         unitPrice: i.unitPrice,
       })),
       steps: steps.filter(s => s.trim() !== ""),
-    });
+    };
+
+    if (editingRecipe) {
+      updateRecipeMutation.mutate({ id: editingRecipe.id, data: recipeData });
+    } else {
+      createRecipeMutation.mutate(recipeData);
+    }
   };
 
   const handleDownloadTemplate = async () => {
@@ -476,8 +585,8 @@ export default function Recipes() {
             </DialogTrigger>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Recipe</DialogTitle>
-              <DialogDescription>Create a new recipe with ingredients and instructions</DialogDescription>
+              <DialogTitle>{editingRecipe ? "Edit Recipe" : "Add New Recipe"}</DialogTitle>
+              <DialogDescription>{editingRecipe ? "Update the recipe details" : "Create a new recipe with ingredients and instructions"}</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
@@ -637,8 +746,11 @@ export default function Recipes() {
                 <Button type="button" variant="outline" onClick={() => setOpen(false)} data-testid="button-cancel">
                   Cancel
                 </Button>
-                <Button type="submit" disabled={createRecipeMutation.isPending} data-testid="button-save-recipe">
-                  {createRecipeMutation.isPending ? "Creating..." : "Create Recipe"}
+                <Button type="submit" disabled={createRecipeMutation.isPending || updateRecipeMutation.isPending} data-testid="button-save-recipe">
+                  {editingRecipe 
+                    ? (updateRecipeMutation.isPending ? "Updating..." : "Update Recipe")
+                    : (createRecipeMutation.isPending ? "Creating..." : "Create Recipe")
+                  }
                 </Button>
               </div>
             </form>
@@ -658,11 +770,32 @@ export default function Recipes() {
         >
           <div className="grid gap-6">
             {recipes.map((recipe) => (
-              <SortableRecipeCard key={recipe.id} recipe={recipe} />
+              <SortableRecipeCard key={recipe.id} recipe={recipe} onEdit={handleEditRecipe} onDelete={handleDeleteClick} />
             ))}
           </div>
         </SortableContext>
       </DndContext>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{recipeToDelete?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
