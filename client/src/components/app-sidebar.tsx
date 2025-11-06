@@ -24,6 +24,7 @@ import {
   BookOpen,
   Store,
   LogOut,
+  Truck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -84,6 +85,7 @@ export function AppSidebar() {
     { title: t.pos, url: "/pos", icon: ShoppingCart, testId: "pos", gradient: "from-emerald-500 to-teal-500" },
     { title: t.orders, url: "/orders", icon: ClipboardList, testId: "orders", gradient: "from-blue-500 to-cyan-500" },
     { title: t.kitchen, url: "/kitchen", icon: Flame, testId: "kitchen", gradient: "from-orange-500 to-red-500" },
+    { title: t.deliveryApps || "Delivery Apps", url: "/delivery-apps", icon: Truck, testId: "delivery-apps", gradient: "from-violet-500 to-purple-500" },
   ];
 
   const management = [
