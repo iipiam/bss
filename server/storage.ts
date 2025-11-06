@@ -108,6 +108,9 @@ export interface IStorage {
   getUserByResetToken(token: string): Promise<User | undefined>;
   updatePassword(userId: string, newPassword: string): Promise<void>;
   clearPasswordResetToken(userId: string): Promise<void>;
+  getUserProfile(userId: string): Promise<User | undefined>;
+  updateUserProfile(userId: string, profile: { email?: string; phone?: string }): Promise<User | undefined>;
+  cancelSubscription(userId: string): Promise<User | undefined>;
 
   // Invoices
   getInvoices(branchId?: string, startDate?: Date, endDate?: Date): Promise<Invoice[]>;
@@ -474,6 +477,30 @@ export class DatabaseStorage implements IStorage {
         passwordResetExpiry: null
       })
       .where(eq(users.id, userId));
+  }
+
+  async getUserProfile(userId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    return user;
+  }
+
+  async updateUserProfile(userId: string, profile: { email?: string; phone?: string }): Promise<User | undefined> {
+    const [updated] = await db.update(users)
+      .set(profile)
+      .where(eq(users.id, userId))
+      .returning();
+    return updated;
+  }
+
+  async cancelSubscription(userId: string): Promise<User | undefined> {
+    const [updated] = await db.update(users)
+      .set({
+        subscriptionStatus: 'cancelled',
+        subscriptionCancelledAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return updated;
   }
 
   // Invoices
