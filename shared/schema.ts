@@ -29,6 +29,7 @@ export const inventoryItems = pgTable("inventory_items", {
   supplier: text("supplier").notNull(),
   status: text("status").notNull().default("In Stock"),
   branchId: varchar("branch_id").references(() => branches.id),
+  sortOrder: integer("sort_order").default(0),
 });
 
 export const insertInventoryItemSchema = createInsertSchema(inventoryItems).omit({ id: true });
@@ -45,6 +46,7 @@ export const recipes = pgTable("recipes", {
   cost: decimal("cost", { precision: 10, scale: 2 }).notNull(),
   ingredients: jsonb("ingredients").notNull().$type<Array<{ inventoryItemId: string; name: string; quantity: number; unit: string; unitPrice: number }>>(),
   steps: jsonb("steps").notNull().$type<string[]>(),
+  sortOrder: integer("sort_order").default(0),
 });
 
 export const insertRecipeSchema = createInsertSchema(recipes).omit({ id: true });
