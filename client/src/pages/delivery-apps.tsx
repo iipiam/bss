@@ -444,7 +444,7 @@ export default function DeliveryApps() {
               {t.add}
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingApp ? t.editDeliveryApp : t.addDeliveryApp}</DialogTitle>
               <DialogDescription>
