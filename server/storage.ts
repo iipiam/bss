@@ -171,7 +171,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateBranch(id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined> {
-    const [updated] = await db.update(branches).set(branch).where(eq(branches.id, id)).returning();
+    const updateData = Object.fromEntries(
+      Object.entries(branch).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getBranch(id);
+    }
+    const [updated] = await db.update(branches).set(updateData).where(eq(branches.id, id)).returning();
     return updated;
   }
 
@@ -199,7 +205,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateInventoryItem(id: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined> {
-    const [updated] = await db.update(inventoryItems).set(item).where(eq(inventoryItems.id, id)).returning();
+    const updateData = Object.fromEntries(
+      Object.entries(item).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getInventoryItem(id);
+    }
+    const [updated] = await db.update(inventoryItems).set(updateData).where(eq(inventoryItems.id, id)).returning();
     return updated;
   }
 
@@ -230,7 +242,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateMenuItem(id: string, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined> {
-    const [updated] = await db.update(menuItems).set(item).where(eq(menuItems.id, id)).returning();
+    const updateData = Object.fromEntries(
+      Object.entries(item).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getMenuItem(id);
+    }
+    const [updated] = await db.update(menuItems).set(updateData).where(eq(menuItems.id, id)).returning();
     return updated;
   }
 
@@ -306,7 +324,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateRecipe(id: string, recipe: Partial<InsertRecipe>): Promise<Recipe | undefined> {
-    const [updated] = await db.update(recipes).set(recipe as any).where(eq(recipes.id, id)).returning();
+    const updateData = Object.fromEntries(
+      Object.entries(recipe).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getRecipe(id);
+    }
+    const [updated] = await db.update(recipes).set(updateData as any).where(eq(recipes.id, id)).returning();
     return updated;
   }
 
@@ -344,7 +368,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateOrder(id: string, order: Partial<InsertOrder>): Promise<Order | undefined> {
-    const [updated] = await db.update(orders).set(order as any).where(eq(orders.id, id)).returning();
+    // Filter out undefined values to avoid "No values to set" error
+    const updateData = Object.fromEntries(
+      Object.entries(order).filter(([_, value]) => value !== undefined)
+    );
+    
+    if (Object.keys(updateData).length === 0) {
+      // If no valid fields to update, just return the existing record
+      return this.getOrder(id);
+    }
+    
+    const [updated] = await db.update(orders).set(updateData as any).where(eq(orders.id, id)).returning();
     return updated;
   }
 
@@ -420,8 +454,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateProcurement(id: string, procurementData: Partial<InsertProcurement>): Promise<Procurement | undefined> {
+    const updateData = Object.fromEntries(
+      Object.entries(procurementData).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getProcurement(id);
+    }
     const [updated] = await db.update(procurement)
-      .set({ ...procurementData, updatedAt: new Date() })
+      .set({ ...updateData, updatedAt: new Date() })
       .where(eq(procurement.id, id))
       .returning();
     return updated;
@@ -462,11 +502,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined> {
-    // Hash password if it's being updated
-    if (user.password) {
-      user.password = await bcrypt.hash(user.password, 10);
+    const updateData = Object.fromEntries(
+      Object.entries(user).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getUser(id);
     }
-    const [updated] = await db.update(users).set(user).where(eq(users.id, id)).returning();
+    // Hash password if it's being updated
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password as string, 10);
+    }
+    const [updated] = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
     return updated;
   }
 
@@ -558,8 +604,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateInvoice(id: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined> {
+    const updateData = Object.fromEntries(
+      Object.entries(invoice).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getInvoice(id);
+    }
     const [updated] = await db.update(invoices)
-      .set(invoice as any)
+      .set(updateData as any)
       .where(eq(invoices.id, id))
       .returning();
     return updated;
@@ -581,8 +633,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined> {
+    const updateData = Object.fromEntries(
+      Object.entries(customer).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getCustomer(id);
+    }
     const [updated] = await db.update(customers)
-      .set(customer)
+      .set(updateData)
       .where(eq(customers.id, id))
       .returning();
     return updated;
@@ -617,8 +675,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateSalary(id: string, salary: Partial<InsertSalary>): Promise<Salary | undefined> {
+    const updateData = Object.fromEntries(
+      Object.entries(salary).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getSalary(id);
+    }
     const [updated] = await db.update(salaries)
-      .set(salary)
+      .set(updateData)
       .where(eq(salaries.id, id))
       .returning();
     return updated;
@@ -654,8 +718,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateShopBill(id: string, bill: Partial<InsertShopBill>): Promise<ShopBill | undefined> {
+    const updateData = Object.fromEntries(
+      Object.entries(bill).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getShopBill(id);
+    }
     const [updated] = await db.update(shopBills)
-      .set(bill)
+      .set(updateData)
       .where(eq(shopBills.id, id))
       .returning();
     return updated;
@@ -690,8 +760,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateDeliveryApp(id: string, app: Partial<InsertDeliveryApp>): Promise<DeliveryApp | undefined> {
+    // Filter out undefined values to avoid "No values to set" error
+    const updateData = Object.fromEntries(
+      Object.entries(app).filter(([_, value]) => value !== undefined)
+    );
+    
+    if (Object.keys(updateData).length === 0) {
+      // If no valid fields to update, just return the existing record
+      return this.getDeliveryApp(id);
+    }
+    
     const [updated] = await db.update(deliveryApps)
-      .set(app as any)
+      .set(updateData as any)
       .where(eq(deliveryApps.id, id))
       .returning();
     return updated;

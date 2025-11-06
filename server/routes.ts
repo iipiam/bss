@@ -520,7 +520,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(order);
     } catch (error) {
-      res.status(400).json({ error: "Invalid order data" });
+      console.error("[ORDER] Update error:", error);
+      res.status(400).json({ 
+        error: "Invalid order data", 
+        details: error instanceof Error ? error.message : String(error) 
+      });
     }
   });
 
