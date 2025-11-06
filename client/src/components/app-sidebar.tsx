@@ -60,9 +60,8 @@ export function AppSidebar() {
 
   const handleLogout = async () => {
     try {
-      // Cancel all pending mutations and queries to prevent data saves during logout
+      // Cancel all pending queries to prevent data fetches during logout
       await queryClient.cancelQueries();
-      await queryClient.cancelMutations();
       
       // Perform logout
       await logout();
