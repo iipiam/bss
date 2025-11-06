@@ -61,22 +61,21 @@ export function AppSidebar() {
     try {
       // Cancel all pending mutations and queries to prevent data saves during logout
       await queryClient.cancelQueries();
+      await queryClient.cancelMutations();
       
       // Perform logout
       await logout();
-      
-      // Clear all cached data
-      queryClient.clear();
-      
-      // Immediately redirect to login page
-      window.location.href = "/";
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to logout. Please try again.",
         variant: "destructive",
       });
-      // Still redirect even on error to ensure user is logged out
+    } finally {
+      // Always clear cached data before redirecting, even if logout fails
+      queryClient.clear();
+      
+      // Immediately redirect to login page
       window.location.href = "/";
     }
   };

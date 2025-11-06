@@ -39,7 +39,7 @@ Preferred communication style: Simple, everyday language.
 - **Daily Stock Management**: Real-time stock calculation for menu items based on inventory and recipes, displayed on POS.
 - **Financial Features**: PDF export for financial statements, Excel export/import for various data tables.
 - **Strategic Decision-Making**: Profitability analysis with tabs for Strategic Overview, Pricing Analysis (including Price Coverage Analysis by margin), Scaling Viability, and Cost Management.
-- **Authentication**: Subscription-based, with Commercial Registration field and password recovery.
+- **Authentication**: Subscription-based, with Commercial Registration field and password recovery. Secure logout flow prevents data loss by cancelling all pending queries/mutations and clearing cache before redirect.
 - **Shop & Bills Management**: Manual configuration of shop working hours; comprehensive expense tracking for employee salaries and shop bills with summary analytics and integration into financial and profitability views.
 - **Tutorial System**: Visual tutorial page with 12 detailed guides and a "Getting Started" section.
 - **Device-Specific Responsive Design**: User-configurable device preference (Laptop, iPad, iPhone) stored in database, adjusting layout, typography, and specific components.
