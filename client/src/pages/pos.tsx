@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,12 +8,13 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDevice } from "@/contexts/DeviceContext";
-import type { MenuItem } from "@shared/schema";
+import type { MenuItem, DeliveryApp } from "@shared/schema";
 
 interface CartItem {
   id: string;
@@ -49,6 +50,8 @@ export default function POS() {
   const [customerSearch, setCustomerSearch] = useState("");
   const [tableNumber, setTableNumber] = useState("");
   const [mobileView, setMobileView] = useState<"menu" | "cart">("menu");
+  const [selectedDeliveryAppId, setSelectedDeliveryAppId] = useState<string | null>(null);
+  const [earningsDecreaseApplied, setEarningsDecreaseApplied] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
   const { device } = useDevice();
@@ -68,6 +71,17 @@ export default function POS() {
   const { data: customers = [] } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
   });
+
+  const { data: deliveryApps = [] } = useQuery<DeliveryApp[]>({
+    queryKey: ["/api/delivery-apps"],
+  });
+
+  // Reset earnings decrease when delivery app is deselected
+  useEffect(() => {
+    if (!selectedDeliveryAppId) {
+      setEarningsDecreaseApplied(false);
+    }
+  }, [selectedDeliveryAppId]);
 
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
@@ -165,6 +179,8 @@ export default function POS() {
     setCustomerName("");
     setCustomerPhone("");
     setTableNumber("");
+    setSelectedDeliveryAppId(null);
+    setEarningsDecreaseApplied(false);
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -212,6 +228,8 @@ export default function POS() {
       table: tableNumber.trim() || undefined,
       customerName: customerName.trim() || undefined,
       customerPhone: customerPhone.trim() || undefined,
+      deliveryAppId: selectedDeliveryAppId || undefined,
+      earningsDecreaseApplied,
       items: cartItems.map(item => ({
         id: item.id,
         name: item.name,
@@ -474,6 +492,41 @@ export default function POS() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="mb-3">
+                <Label className="text-xs font-medium mb-1 block">Delivery App (Optional)</Label>
+                <Select value={selectedDeliveryAppId || ""} onValueChange={(value) => setSelectedDeliveryAppId(value || null)}>
+                  <SelectTrigger data-testid="select-delivery-app" className="w-full h-11">
+                    <SelectValue placeholder="Select delivery app" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {deliveryApps.filter(app => app.active).map(app => (
+                      <SelectItem key={app.id} value={app.id}>
+                        {app.name} ({parseFloat(app.commission).toFixed(0)}%)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectedDeliveryAppId && (
+                <div className="mb-3 flex items-center space-x-2">
+                  <Checkbox
+                    id="earnings-decrease-mobile"
+                    checked={earningsDecreaseApplied}
+                    onCheckedChange={(checked) => setEarningsDecreaseApplied(checked as boolean)}
+                    data-testid="checkbox-decrease-earnings"
+                    className="h-11 w-11"
+                  />
+                  <Label
+                    htmlFor="earnings-decrease-mobile"
+                    className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Decrease earnings by 2 SAR
+                  </Label>
+                </div>
+              )}
 
               {customerName && (
                 <div className="mb-3 p-2 bg-muted rounded-md">
@@ -874,6 +927,40 @@ export default function POS() {
               </SelectContent>
             </Select>
           </div>
+
+          <div className="mb-4">
+            <Label className="text-sm font-medium mb-2 block">Delivery App (Optional)</Label>
+            <Select value={selectedDeliveryAppId || ""} onValueChange={(value) => setSelectedDeliveryAppId(value || null)}>
+              <SelectTrigger data-testid="select-delivery-app" className="w-full">
+                <SelectValue placeholder="Select delivery app" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None</SelectItem>
+                {deliveryApps.filter(app => app.active).map(app => (
+                  <SelectItem key={app.id} value={app.id}>
+                    {app.name} ({parseFloat(app.commission).toFixed(0)}%)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {selectedDeliveryAppId && (
+            <div className="mb-4 flex items-center space-x-2">
+              <Checkbox
+                id="earnings-decrease-desktop"
+                checked={earningsDecreaseApplied}
+                onCheckedChange={(checked) => setEarningsDecreaseApplied(checked as boolean)}
+                data-testid="checkbox-decrease-earnings"
+              />
+              <Label
+                htmlFor="earnings-decrease-desktop"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Decrease earnings by 2 SAR
+              </Label>
+            </div>
+          )}
 
           {customerName && (
             <div className="mb-4 p-3 bg-muted rounded-md">
