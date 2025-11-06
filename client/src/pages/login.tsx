@@ -32,7 +32,7 @@ export default function Login() {
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupCommercialReg, setSignupCommercialReg] = useState("");
-  const [subscriptionPlan, setSubscriptionPlan] = useState("monthly");
+  const [subscriptionPlan, setSubscriptionPlan] = useState("weekly");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
@@ -296,6 +296,24 @@ export default function Login() {
                 <div className="space-y-3">
                   <Label>{t.subscriptionPlan}</Label>
                   <RadioGroup value={subscriptionPlan} onValueChange={setSubscriptionPlan} data-testid="radiogroup-subscription">
+                    <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors cursor-pointer ${
+                      subscriptionPlan === 'weekly' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                    }`} onClick={() => setSubscriptionPlan('weekly')}>
+                      <RadioGroupItem value="weekly" id="weekly" data-testid="radio-weekly" />
+                      <Label htmlFor="weekly" className="flex-1 cursor-pointer">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold">Weekly</p>
+                            <p className="text-sm text-muted-foreground">Billed weekly</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xl font-bold">39.90 {t.sar}</p>
+                            <p className="text-xs text-muted-foreground">per week</p>
+                          </div>
+                        </div>
+                      </Label>
+                    </div>
+
                     <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors cursor-pointer ${
                       subscriptionPlan === 'monthly' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
                     }`} onClick={() => setSubscriptionPlan('monthly')}>
