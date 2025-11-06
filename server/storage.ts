@@ -765,17 +765,28 @@ export class DatabaseStorage implements IStorage {
         const subsidy = applicableTier ? applicableTier.subsidy : 0;
         
         // New formula:
-        // Result1 = original price - subsidy (base for commission)
-        // Result2 = original price * banking fees % (banking fee amount)
-        // Result3 = Result1 * commission % (commission amount)
+        // Result1 = (orderTotal - subsidy) * commission % (commission amount)
+        // Result2 = orderTotal * banking fees % (banking fee amount)
+        // Result3 = posFees (fixed POS fees)
+        // Total commission = (Result1 + Result2 + Result3) * 1.15 (15% VAT applied)
         const result1 = orderTotal - subsidy;
-        const bankingFeesAmount = orderTotal * (bankingFeesPercent / 100);
         const commissionAmount = result1 * (commissionPercent / 100);
+        const bankingFeesAmount = orderTotal * (bankingFeesPercent / 100);
         
-        totalBankingFeesCost += bankingFeesAmount;
-        totalCommissionCost += commissionAmount;
+        // Apply 15% VAT on total fees
+        const totalFeesBeforeVat = commissionAmount + bankingFeesAmount + posFees;
+        const totalFeesWithVat = totalFeesBeforeVat * 1.15;
+        
+        // Distribute the VAT proportionally back to each component for tracking
+        const vatMultiplier = 1.15;
+        const commissionAmountWithVat = commissionAmount * vatMultiplier;
+        const bankingFeesAmountWithVat = bankingFeesAmount * vatMultiplier;
+        const posFeesWithVat = posFees * vatMultiplier;
+        
+        totalBankingFeesCost += bankingFeesAmountWithVat;
+        totalCommissionCost += commissionAmountWithVat;
         totalSubsidy += subsidy;
-        totalPosFees += posFees;
+        totalPosFees += posFeesWithVat;
         
         // Calculate item costs (safely handle null/empty items)
         const orderItems = Array.isArray(order.items) ? order.items : [];
