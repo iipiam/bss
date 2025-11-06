@@ -108,6 +108,8 @@ export const orders = pgTable("orders", {
   orderType: text("order_type").notNull(),
   table: text("table"),
   address: text("address"),
+  deliveryAppId: varchar("delivery_app_id").references(() => deliveryApps.id),
+  earningsDecreaseApplied: boolean("earnings_decrease_applied").notNull().default(false), // Track if 2 SAR decrease applied
   items: jsonb("items").notNull().$type<Array<{ id: string; name: string; quantity: number; price: number }>>(),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
