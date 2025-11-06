@@ -91,6 +91,30 @@ export interface Translations {
   loading: string;
   noData: string;
   
+  // Delivery Apps
+  deliveryApps: string;
+  addDeliveryApp: string;
+  editDeliveryApp: string;
+  deleteDeliveryApp: string;
+  commission: string;
+  bankingFees: string;
+  subsidy: string;
+  posFees: string;
+  netEarningsCalculator: string;
+  orderAmount: string;
+  grossAmount: string;
+  afterCommission: string;
+  afterBankingFees: string;
+  afterSubsidy: string;
+  afterPosFees: string;
+  netEarnings: string;
+  calculationExample: string;
+  testOrderAmount: string;
+  enterCommission: string;
+  enterBankingFees: string;
+  enterSubsidy: string;
+  enterPosFees: string;
+  
   // Dashboard
   totalRevenue: string;
   totalOrders: string;
@@ -434,6 +458,30 @@ export const translations: Record<Language, Translations> = {
     loading: 'Loading...',
     noData: 'No data available',
     
+    // Delivery Apps
+    deliveryApps: 'Delivery Apps',
+    addDeliveryApp: 'Add Delivery App',
+    editDeliveryApp: 'Edit Delivery App',
+    deleteDeliveryApp: 'Delete Delivery App',
+    commission: 'Commission %',
+    bankingFees: 'Banking Fees %',
+    subsidy: 'Subsidy (SAR)',
+    posFees: 'POS Fees (SAR)',
+    netEarningsCalculator: 'Net Earnings Calculator',
+    orderAmount: 'Order Amount',
+    grossAmount: 'Gross Amount',
+    afterCommission: 'After Commission',
+    afterBankingFees: 'After Banking Fees',
+    afterSubsidy: 'After Subsidy',
+    afterPosFees: 'After POS Fees',
+    netEarnings: 'Net Earnings',
+    calculationExample: 'Calculation Example',
+    testOrderAmount: 'Test Order Amount',
+    enterCommission: 'Enter commission percentage',
+    enterBankingFees: 'Enter banking fees percentage',
+    enterSubsidy: 'Enter subsidy amount in SAR',
+    enterPosFees: 'Enter POS fees in SAR',
+    
     // Dashboard
     totalRevenue: 'Total Revenue',
     totalOrders: 'Total Orders',
@@ -775,6 +823,30 @@ export const translations: Record<Language, Translations> = {
     submit: 'إرسال',
     loading: 'جاري التحميل...',
     noData: 'لا توجد بيانات',
+    
+    // Delivery Apps
+    deliveryApps: 'تطبيقات التوصيل',
+    addDeliveryApp: 'إضافة تطبيق توصيل',
+    editDeliveryApp: 'تعديل تطبيق توصيل',
+    deleteDeliveryApp: 'حذف تطبيق توصيل',
+    commission: 'العمولة %',
+    bankingFees: 'رسوم البنك %',
+    subsidy: 'الدعم (ريال)',
+    posFees: 'رسوم نقاط البيع (ريال)',
+    netEarningsCalculator: 'حاسبة صافي الأرباح',
+    orderAmount: 'مبلغ الطلب',
+    grossAmount: 'المبلغ الإجمالي',
+    afterCommission: 'بعد العمولة',
+    afterBankingFees: 'بعد رسوم البنك',
+    afterSubsidy: 'بعد الدعم',
+    afterPosFees: 'بعد رسوم نقاط البيع',
+    netEarnings: 'صافي الأرباح',
+    calculationExample: 'مثال على الحساب',
+    testOrderAmount: 'مبلغ الطلب التجريبي',
+    enterCommission: 'أدخل نسبة العمولة',
+    enterBankingFees: 'أدخل نسبة رسوم البنك',
+    enterSubsidy: 'أدخل مبلغ الدعم بالريال',
+    enterPosFees: 'أدخل رسوم نقاط البيع بالريال',
     
     // Dashboard
     totalRevenue: 'إجمالي الإيرادات',
@@ -1118,6 +1190,30 @@ export const translations: Record<Language, Translations> = {
     loading: '加载中...',
     noData: '无数据',
     
+    // Delivery Apps
+    deliveryApps: 'Delivery Apps',
+    addDeliveryApp: 'Add Delivery App',
+    editDeliveryApp: 'Edit Delivery App',
+    deleteDeliveryApp: 'Delete Delivery App',
+    commission: 'Commission %',
+    bankingFees: 'Banking Fees %',
+    subsidy: 'Subsidy (SAR)',
+    posFees: 'POS Fees (SAR)',
+    netEarningsCalculator: 'Net Earnings Calculator',
+    orderAmount: 'Order Amount',
+    grossAmount: 'Gross Amount',
+    afterCommission: 'After Commission',
+    afterBankingFees: 'After Banking Fees',
+    afterSubsidy: 'After Subsidy',
+    afterPosFees: 'After POS Fees',
+    netEarnings: 'Net Earnings',
+    calculationExample: 'Calculation Example',
+    testOrderAmount: 'Test Order Amount',
+    enterCommission: 'Enter commission percentage',
+    enterBankingFees: 'Enter banking fees percentage',
+    enterSubsidy: 'Enter subsidy amount in SAR',
+    enterPosFees: 'Enter POS fees in SAR',
+    
     // Dashboard
     totalRevenue: '总收入',
     totalOrders: '总订单',
@@ -1406,6 +1502,30 @@ export const translations: Record<Language, Translations> = {
     loading: 'Wird geladen...',
     noData: 'Keine Daten verfügbar',
     
+    // Delivery Apps
+    deliveryApps: 'Delivery Apps',
+    addDeliveryApp: 'Add Delivery App',
+    editDeliveryApp: 'Edit Delivery App',
+    deleteDeliveryApp: 'Delete Delivery App',
+    commission: 'Commission %',
+    bankingFees: 'Banking Fees %',
+    subsidy: 'Subsidy (SAR)',
+    posFees: 'POS Fees (SAR)',
+    netEarningsCalculator: 'Net Earnings Calculator',
+    orderAmount: 'Order Amount',
+    grossAmount: 'Gross Amount',
+    afterCommission: 'After Commission',
+    afterBankingFees: 'After Banking Fees',
+    afterSubsidy: 'After Subsidy',
+    afterPosFees: 'After POS Fees',
+    netEarnings: 'Net Earnings',
+    calculationExample: 'Calculation Example',
+    testOrderAmount: 'Test Order Amount',
+    enterCommission: 'Enter commission percentage',
+    enterBankingFees: 'Enter banking fees percentage',
+    enterSubsidy: 'Enter subsidy amount in SAR',
+    enterPosFees: 'Enter POS fees in SAR',
+    
     // Dashboard
     totalRevenue: 'Gesamtumsatz',
     totalOrders: 'Gesamtbestellungen',
@@ -1685,6 +1805,30 @@ export const translations: Record<Language, Translations> = {
     submit: 'जमा करें',
     loading: 'लोड हो रहा है...',
     noData: 'कोई डेटा उपलब्ध नहीं',
+    
+    // Delivery Apps
+    deliveryApps: 'Delivery Apps',
+    addDeliveryApp: 'Add Delivery App',
+    editDeliveryApp: 'Edit Delivery App',
+    deleteDeliveryApp: 'Delete Delivery App',
+    commission: 'Commission %',
+    bankingFees: 'Banking Fees %',
+    subsidy: 'Subsidy (SAR)',
+    posFees: 'POS Fees (SAR)',
+    netEarningsCalculator: 'Net Earnings Calculator',
+    orderAmount: 'Order Amount',
+    grossAmount: 'Gross Amount',
+    afterCommission: 'After Commission',
+    afterBankingFees: 'After Banking Fees',
+    afterSubsidy: 'After Subsidy',
+    afterPosFees: 'After POS Fees',
+    netEarnings: 'Net Earnings',
+    calculationExample: 'Calculation Example',
+    testOrderAmount: 'Test Order Amount',
+    enterCommission: 'Enter commission percentage',
+    enterBankingFees: 'Enter banking fees percentage',
+    enterSubsidy: 'Enter subsidy amount in SAR',
+    enterPosFees: 'Enter POS fees in SAR',
     
     // Dashboard
     totalRevenue: 'कुल राजस्व',
@@ -1966,6 +2110,30 @@ export const translations: Record<Language, Translations> = {
     loading: 'لوڈ ہو رہا ہے...',
     noData: 'کوئی ڈیٹا دستیاب نہیں',
     
+    // Delivery Apps
+    deliveryApps: 'Delivery Apps',
+    addDeliveryApp: 'Add Delivery App',
+    editDeliveryApp: 'Edit Delivery App',
+    deleteDeliveryApp: 'Delete Delivery App',
+    commission: 'Commission %',
+    bankingFees: 'Banking Fees %',
+    subsidy: 'Subsidy (SAR)',
+    posFees: 'POS Fees (SAR)',
+    netEarningsCalculator: 'Net Earnings Calculator',
+    orderAmount: 'Order Amount',
+    grossAmount: 'Gross Amount',
+    afterCommission: 'After Commission',
+    afterBankingFees: 'After Banking Fees',
+    afterSubsidy: 'After Subsidy',
+    afterPosFees: 'After POS Fees',
+    netEarnings: 'Net Earnings',
+    calculationExample: 'Calculation Example',
+    testOrderAmount: 'Test Order Amount',
+    enterCommission: 'Enter commission percentage',
+    enterBankingFees: 'Enter banking fees percentage',
+    enterSubsidy: 'Enter subsidy amount in SAR',
+    enterPosFees: 'Enter POS fees in SAR',
+    
     // Dashboard
     totalRevenue: 'کل آمدنی',
     totalOrders: 'کل آرڈرز',
@@ -2245,6 +2413,30 @@ export const translations: Record<Language, Translations> = {
     submit: 'জমা দিন',
     loading: 'লোড হচ্ছে...',
     noData: 'কোন ডেটা নেই',
+    
+    // Delivery Apps
+    deliveryApps: 'Delivery Apps',
+    addDeliveryApp: 'Add Delivery App',
+    editDeliveryApp: 'Edit Delivery App',
+    deleteDeliveryApp: 'Delete Delivery App',
+    commission: 'Commission %',
+    bankingFees: 'Banking Fees %',
+    subsidy: 'Subsidy (SAR)',
+    posFees: 'POS Fees (SAR)',
+    netEarningsCalculator: 'Net Earnings Calculator',
+    orderAmount: 'Order Amount',
+    grossAmount: 'Gross Amount',
+    afterCommission: 'After Commission',
+    afterBankingFees: 'After Banking Fees',
+    afterSubsidy: 'After Subsidy',
+    afterPosFees: 'After POS Fees',
+    netEarnings: 'Net Earnings',
+    calculationExample: 'Calculation Example',
+    testOrderAmount: 'Test Order Amount',
+    enterCommission: 'Enter commission percentage',
+    enterBankingFees: 'Enter banking fees percentage',
+    enterSubsidy: 'Enter subsidy amount in SAR',
+    enterPosFees: 'Enter POS fees in SAR',
     
     // Dashboard
     totalRevenue: 'মোট আয়',
