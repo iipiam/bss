@@ -33,7 +33,7 @@ Preferred communication style: Simple, everyday language.
 - **Analytics & Reporting**: Dashboard with DoD, WoW, MoM, YoY performance metrics; Daily Demand Forecasting per menu item; Peak Hours Analysis with customer drill-down.
 - **ZATCA Compliance**: Bilingual (Arabic/English) PDF invoice generation using Puppeteer, QR code generation, and professional HTML templates.
 - **Invoice Management**: Dedicated page for ZATCA-compliant invoices with search and download.
-- **Delivery App Cost Formula**: Commission = (Price - Subsidy) × Commission%; Banking Fees = Price × Banking%; VAT (15%) applies to Subsidy, Commission, and Banking Fees only; POS Fees charged without VAT. Total Cost = (Subsidy + Commission + Banking Fees) × 1.15 + POS Fees. All costs deducted from restaurant revenue.
+- **Delivery App Cost Formula**: Commission = (Price - Subsidy) × Commission%; Banking Fees = Price × Banking%; VAT = (Commission + Subsidy + Banking Fees) × 0.15; POS Fees have no VAT. Total Cost = Commission + Subsidy + Banking Fees + VAT + POS Fees. Net Income = Item Price - Total Cost. All costs are deducted from restaurant revenue.
 - **Multi-Language Support**: Comprehensive support for 7 languages including RTL for Arabic/Urdu, with persistent settings.
 - **UI/UX**: Modern gradient designs, smooth animations, creative sidebar navigation, and responsive hover interactions.
 - **Management Modules**: Full CRUD for Customer, Menu Item (with discount system), Inventory (with Excel import/export), and Recipe (inventory-linked costing).

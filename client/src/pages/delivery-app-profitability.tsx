@@ -25,8 +25,9 @@ export default function DeliveryAppProfitability() {
       "Revenue (SAR)": app.totalGrossRevenue.toFixed(2),
       "Commission (SAR)": app.totalCommissionCost.toFixed(2),
       "Banking Fees (SAR)": app.totalBankingFeesCost.toFixed(2),
-      "POS Fees (SAR)": app.totalPosFees.toFixed(2),
       "Subsidy (SAR)": app.totalSubsidy.toFixed(2),
+      "VAT (SAR)": app.totalVat.toFixed(2),
+      "POS Fees (SAR)": app.totalPosFees.toFixed(2),
       "Item Costs (SAR)": app.totalItemCosts.toFixed(2),
       "Profit (SAR)": app.profit.toFixed(2),
       "Margin %": app.profitMargin.toFixed(1) + "%",
@@ -38,8 +39,9 @@ export default function DeliveryAppProfitability() {
       { header: "Revenue", accessor: "Revenue (SAR)", width: 23 },
       { header: "Commission", accessor: "Commission (SAR)", width: 23 },
       { header: "Banking", accessor: "Banking Fees (SAR)", width: 23 },
-      { header: "POS Fees", accessor: "POS Fees (SAR)", width: 23 },
       { header: "Subsidy", accessor: "Subsidy (SAR)", width: 23 },
+      { header: "VAT", accessor: "VAT (SAR)", width: 23 },
+      { header: "POS Fees", accessor: "POS Fees (SAR)", width: 23 },
       { header: "Item Cost", accessor: "Item Costs (SAR)", width: 23 },
       { header: "Profit", accessor: "Profit (SAR)", width: 23 },
       { header: "Margin %", accessor: "Margin %", width: 20 },
@@ -66,8 +68,9 @@ export default function DeliveryAppProfitability() {
       "Revenue (SAR)": parseFloat(app.totalGrossRevenue.toFixed(2)),
       "Commission (SAR)": parseFloat(app.totalCommissionCost.toFixed(2)),
       "Banking Fees (SAR)": parseFloat(app.totalBankingFeesCost.toFixed(2)),
-      "POS Fees (SAR)": parseFloat(app.totalPosFees.toFixed(2)),
       "Subsidy (SAR)": parseFloat(app.totalSubsidy.toFixed(2)),
+      "VAT (SAR)": parseFloat(app.totalVat.toFixed(2)),
+      "POS Fees (SAR)": parseFloat(app.totalPosFees.toFixed(2)),
       "Item Costs (SAR)": parseFloat(app.totalItemCosts.toFixed(2)),
       "Net Revenue (SAR)": parseFloat(app.netRevenue.toFixed(2)),
       "Profit (SAR)": parseFloat(app.profit.toFixed(2)),
@@ -104,7 +107,7 @@ export default function DeliveryAppProfitability() {
   const profitChartData = apps.map((app: any) => ({
     name: app.deliveryAppName,
     revenue: app.totalGrossRevenue,
-    costs: app.totalCommissionCost + app.totalBankingFeesCost + app.totalPosFees,
+    costs: app.totalCommissionCost + app.totalBankingFeesCost + app.totalSubsidy + app.totalVat + app.totalPosFees,
     itemCosts: app.totalItemCosts,
     profit: app.profit,
   }));
@@ -180,10 +183,10 @@ export default function DeliveryAppProfitability() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {(summary.totalCommissionCost + summary.totalBankingFeesCost + summary.totalPosFees + summary.totalItemCosts || 0).toFixed(2)} SAR
+              {(summary.totalCommissionCost + summary.totalBankingFeesCost + summary.totalSubsidy + summary.totalVat + summary.totalPosFees + summary.totalItemCosts || 0).toFixed(2)} SAR
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Fees + Item Costs
+              All Costs + VAT
             </p>
           </CardContent>
         </Card>
@@ -212,7 +215,7 @@ export default function DeliveryAppProfitability() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Commission Costs</p>
+              <p className="text-sm text-muted-foreground">Commission</p>
               <p className="text-lg font-semibold text-red-600 dark:text-red-400">
                 -{summary.totalCommissionCost?.toFixed(2) || "0.00"} SAR
               </p>
@@ -224,27 +227,27 @@ export default function DeliveryAppProfitability() {
               </p>
             </div>
             <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Subsidy</p>
+              <p className="text-lg font-semibold text-red-600 dark:text-red-400">
+                -{summary.totalSubsidy?.toFixed(2) || "0.00"} SAR
+              </p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">VAT (15%)</p>
+              <p className="text-lg font-semibold text-red-600 dark:text-red-400">
+                -{summary.totalVat?.toFixed(2) || "0.00"} SAR
+              </p>
+            </div>
+            <div className="space-y-2">
               <p className="text-sm text-muted-foreground">POS Fees</p>
               <p className="text-lg font-semibold text-red-600 dark:text-red-400">
                 -{summary.totalPosFees?.toFixed(2) || "0.00"} SAR
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Subsidies Received</p>
-              <p className="text-lg font-semibold text-green-600 dark:text-green-400">
-                +{summary.totalSubsidy?.toFixed(2) || "0.00"} SAR
-              </p>
-            </div>
-            <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Item Costs (COGS)</p>
               <p className="text-lg font-semibold text-red-600 dark:text-red-400">
                 -{summary.totalItemCosts?.toFixed(2) || "0.00"} SAR
-              </p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Net Revenue</p>
-              <p className="text-lg font-semibold text-primary">
-                {summary.netRevenue?.toFixed(2) || "0.00"} SAR
               </p>
             </div>
           </div>
@@ -320,6 +323,7 @@ export default function DeliveryAppProfitability() {
                   <th className="text-sm font-medium text-right p-2">Commission</th>
                   <th className="text-sm font-medium text-right p-2">Banking</th>
                   <th className="text-sm font-medium text-right p-2">Subsidy</th>
+                  <th className="text-sm font-medium text-right p-2">VAT</th>
                   <th className="text-sm font-medium text-right p-2">Item Cost</th>
                   <th className="text-sm font-medium text-right p-2">Profit</th>
                   <th className="text-sm font-medium text-right p-2">Margin %</th>
@@ -337,8 +341,11 @@ export default function DeliveryAppProfitability() {
                     <td className="text-sm p-2 text-right text-red-600 dark:text-red-400">
                       -{app.totalBankingFeesCost.toFixed(2)}
                     </td>
-                    <td className="text-sm p-2 text-right text-green-600 dark:text-green-400">
-                      +{app.totalSubsidy.toFixed(2)}
+                    <td className="text-sm p-2 text-right text-red-600 dark:text-red-400">
+                      -{app.totalSubsidy.toFixed(2)}
+                    </td>
+                    <td className="text-sm p-2 text-right text-red-600 dark:text-red-400">
+                      -{app.totalVat.toFixed(2)}
                     </td>
                     <td className="text-sm p-2 text-right text-red-600 dark:text-red-400">
                       -{app.totalItemCosts.toFixed(2)}

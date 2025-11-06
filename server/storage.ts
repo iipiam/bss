@@ -824,6 +824,7 @@ export class DatabaseStorage implements IStorage {
       let totalBankingFeesCost = 0;
       let totalSubsidy = 0;
       let totalPosFees = 0;
+      let totalVat = 0;
       let totalItemCosts = 0;
       
       appOrders.forEach(order => {
@@ -844,27 +845,27 @@ export class DatabaseStorage implements IStorage {
         });
         const subsidy = applicableTier ? applicableTier.subsidy : 0;
         
-        // Corrected formula per user requirements:
-        // The restaurant pays: Commission + Subsidy + Banking Fees (with VAT) + POS Fees (no VAT)
-        // Commission = (Price - Subsidy) × Commission%
-        // Banking Fees = Price × Banking%
-        // VAT (15%) applies ONLY to: Subsidy, Commission, and Banking Fees
-        // POS Fees are charged WITHOUT VAT
+        // Final formula per user requirements:
+        // Commission = (Item Price - Subsidy) × Commission%
+        // Banking Fees = Item Price × Banking%
+        // VAT = (Commission + Subsidy + Banking Fees) × 0.15
+        // Total Cost = Commission + Subsidy + Banking Fees + VAT + POS Fees
+        // Net Income = Item Price - Total Cost
+        
         const subsidizedPrice = orderTotal - subsidy;
         const commissionAmount = subsidizedPrice * (commissionPercent / 100);
         const bankingFeesAmount = orderTotal * (bankingFeesPercent / 100);
         
-        // Apply 15% VAT ONLY to subsidy, commission, and banking fees
-        const vatMultiplier = 1.15;
-        const subsidyWithVat = subsidy * vatMultiplier;
-        const commissionAmountWithVat = commissionAmount * vatMultiplier;
-        const bankingFeesAmountWithVat = bankingFeesAmount * vatMultiplier;
-        // POS fees are charged WITHOUT VAT (as per user requirement)
+        // Calculate VAT as 15% of (Commission + Subsidy + Banking Fees)
+        const vatBase = commissionAmount + subsidy + bankingFeesAmount;
+        const vatAmount = vatBase * 0.15;
         
-        totalBankingFeesCost += bankingFeesAmountWithVat;
-        totalCommissionCost += commissionAmountWithVat;
-        totalSubsidy += subsidyWithVat;
-        totalPosFees += posFees; // No VAT on POS fees
+        // Track totals (Commission, Banking, Subsidy are base amounts; VAT is tracked separately)
+        totalCommissionCost += commissionAmount;
+        totalBankingFeesCost += bankingFeesAmount;
+        totalSubsidy += subsidy;
+        totalPosFees += posFees; // POS fees have no VAT
+        totalVat += vatAmount; // VAT calculated on Commission + Subsidy + Banking Fees
         
         // Calculate item costs (safely handle null/empty items)
         const orderItems = Array.isArray(order.items) ? order.items : [];
@@ -874,9 +875,9 @@ export class DatabaseStorage implements IStorage {
         });
       });
       
-      // Net revenue: Restaurant receives order total minus all delivery app costs
-      // (Commission + Banking + POS + Subsidy all deducted with VAT)
-      const netRevenue = totalGrossRevenue - totalBankingFeesCost - totalCommissionCost - totalPosFees - totalSubsidy;
+      // Net revenue calculation per user formula:
+      // Net Income = Item Price - Commission - Subsidy - Banking Fees - VAT - POS Fees
+      const netRevenue = totalGrossRevenue - totalCommissionCost - totalSubsidy - totalBankingFeesCost - totalVat - totalPosFees;
       const profit = netRevenue - totalItemCosts;
       const profitMargin = totalGrossRevenue > 0 ? (profit / totalGrossRevenue) * 100 : 0;
       
@@ -888,6 +889,7 @@ export class DatabaseStorage implements IStorage {
         totalCommissionCost,
         totalBankingFeesCost,
         totalSubsidy,
+        totalVat,
         totalPosFees,
         netRevenue,
         totalItemCosts,
@@ -904,6 +906,7 @@ export class DatabaseStorage implements IStorage {
     const totalCommissionCost = profitabilityData.reduce((sum, app) => sum + app.totalCommissionCost, 0);
     const totalBankingFeesCost = profitabilityData.reduce((sum, app) => sum + app.totalBankingFeesCost, 0);
     const totalSubsidy = profitabilityData.reduce((sum, app) => sum + app.totalSubsidy, 0);
+    const totalVat = profitabilityData.reduce((sum, app) => sum + app.totalVat, 0);
     const totalPosFees = profitabilityData.reduce((sum, app) => sum + app.totalPosFees, 0);
     const netRevenue = profitabilityData.reduce((sum, app) => sum + app.netRevenue, 0);
     const totalItemCosts = profitabilityData.reduce((sum, app) => sum + app.totalItemCosts, 0);
@@ -916,6 +919,7 @@ export class DatabaseStorage implements IStorage {
       totalCommissionCost,
       totalBankingFeesCost,
       totalSubsidy,
+      totalVat,
       totalPosFees,
       netRevenue,
       totalItemCosts,
