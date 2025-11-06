@@ -19,6 +19,7 @@ import {
   insertCustomerSchema,
   insertSalarySchema,
   insertShopBillSchema,
+  insertDeliveryAppSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -340,6 +341,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(bill);
     } catch (error) {
       res.status(400).json({ error: "Failed to archive bill" });
+    }
+  });
+
+  // Delivery Apps
+  app.get("/api/delivery-apps", async (_req, res) => {
+    const apps = await storage.getDeliveryApps();
+    res.json(apps);
+  });
+
+  app.get("/api/delivery-apps/:id", async (req, res) => {
+    const app = await storage.getDeliveryApp(req.params.id);
+    if (!app) {
+      return res.status(404).json({ error: "Delivery app not found" });
+    }
+    res.json(app);
+  });
+
+  app.post("/api/delivery-apps", async (req, res) => {
+    try {
+      const data = insertDeliveryAppSchema.parse(req.body);
+      const deliveryApp = await storage.createDeliveryApp(data);
+      res.status(201).json(deliveryApp);
+    } catch (error) {
+      console.error("[DELIVERY_APP] Validation error:", error);
+      res.status(400).json({ error: "Invalid delivery app data", details: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.patch("/api/delivery-apps/:id", async (req, res) => {
+    try {
+      const deliveryApp = await storage.updateDeliveryApp(req.params.id, req.body);
+      if (!deliveryApp) {
+        return res.status(404).json({ error: "Delivery app not found" });
+      }
+      res.json(deliveryApp);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid delivery app data" });
+    }
+  });
+
+  app.delete("/api/delivery-apps/:id", async (req, res) => {
+    const success = await storage.deleteDeliveryApp(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Delivery app not found" });
+    }
+    res.status(204).send();
+  });
+
+  app.patch("/api/delivery-apps/sort", async (req, res) => {
+    try {
+      const { updates } = req.body;
+      if (!Array.isArray(updates)) {
+        return res.status(400).json({ error: "Invalid updates format" });
+      }
+      await storage.updateDeliveryAppsSortOrder(updates);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 

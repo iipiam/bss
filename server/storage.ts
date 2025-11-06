@@ -25,6 +25,8 @@ import {
   type InsertSalary,
   type ShopBill,
   type InsertShopBill,
+  type DeliveryApp,
+  type InsertDeliveryApp,
   branches,
   inventoryItems,
   menuItems,
@@ -38,6 +40,7 @@ import {
   customers,
   salaries,
   shopBills,
+  deliveryApps,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
@@ -140,6 +143,14 @@ export interface IStorage {
   updateShopBill(id: string, bill: Partial<InsertShopBill>): Promise<ShopBill | undefined>;
   deleteShopBill(id: string): Promise<boolean>;
   archiveShopBill(id: string, archived: boolean): Promise<ShopBill | undefined>;
+
+  // Delivery Apps
+  getDeliveryApps(): Promise<DeliveryApp[]>;
+  getDeliveryApp(id: string): Promise<DeliveryApp | undefined>;
+  createDeliveryApp(app: InsertDeliveryApp): Promise<DeliveryApp>;
+  updateDeliveryApp(id: string, app: Partial<InsertDeliveryApp>): Promise<DeliveryApp | undefined>;
+  deleteDeliveryApp(id: string): Promise<boolean>;
+  updateDeliveryAppsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -648,6 +659,42 @@ export class DatabaseStorage implements IStorage {
       .where(eq(shopBills.id, id))
       .returning();
     return updated;
+  }
+
+  // Delivery Apps
+  async getDeliveryApps(): Promise<DeliveryApp[]> {
+    return await db.select().from(deliveryApps).where(eq(deliveryApps.active, true)).orderBy(deliveryApps.sortOrder);
+  }
+
+  async getDeliveryApp(id: string): Promise<DeliveryApp | undefined> {
+    const [app] = await db.select().from(deliveryApps).where(eq(deliveryApps.id, id));
+    return app;
+  }
+
+  async createDeliveryApp(app: InsertDeliveryApp): Promise<DeliveryApp> {
+    const [created] = await db.insert(deliveryApps).values(app).returning();
+    return created;
+  }
+
+  async updateDeliveryApp(id: string, app: Partial<InsertDeliveryApp>): Promise<DeliveryApp | undefined> {
+    const [updated] = await db.update(deliveryApps)
+      .set(app)
+      .where(eq(deliveryApps.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteDeliveryApp(id: string): Promise<boolean> {
+    const result = await db.delete(deliveryApps).where(eq(deliveryApps.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async updateDeliveryAppsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void> {
+    for (const update of updates) {
+      await db.update(deliveryApps)
+        .set({ sortOrder: update.sortOrder })
+        .where(eq(deliveryApps.id, update.id));
+    }
   }
 }
 
