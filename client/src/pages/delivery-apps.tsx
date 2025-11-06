@@ -47,9 +47,18 @@ interface DeliveryApp {
 
 const subsidyTierSchema = z.object({
   minAmount: z.coerce.number().min(0, "Minimum amount must be 0 or higher"),
-  maxAmount: z.coerce.number().nullable().refine((val) => val === null || val > 0, "Maximum amount must be greater than 0 or unlimited"),
+  maxAmount: z.preprocess(
+    (val) => val === '' || val === null || val === undefined ? null : val,
+    z.coerce.number().nullable()
+  ),
   subsidy: z.coerce.number().min(0, "Subsidy must be 0 or higher"),
-});
+}).refine(
+  (data) => data.maxAmount === null || data.maxAmount > data.minAmount,
+  {
+    message: "Maximum amount must be greater than minimum amount",
+    path: ["maxAmount"],
+  }
+);
 
 const deliveryAppFormSchema = z.object({
   name: z.string().min(1, "Delivery app name is required"),
