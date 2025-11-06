@@ -57,6 +57,7 @@ export const menuItems = pgTable("menu_items", {
   name: text("name").notNull(),
   category: text("category").notNull(),
   recipeId: varchar("recipe_id").references(() => recipes.id), // Optional: menu item can have a recipe
+  portionSize: decimal("portion_size", { precision: 5, scale: 2 }).default("1.00"), // Multiplier for recipe (1.0=whole, 0.5=half, 0.25=quarter)
   stockNo: decimal("stock_no", { precision: 10, scale: 2 }), // Required when no recipe is linked
   price: decimal("price", { precision: 10, scale: 2 }).notNull(), // VAT-inclusive price (15% Saudi VAT)
   basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(), // Price before VAT
@@ -71,6 +72,7 @@ export const insertMenuItemSchema = createInsertSchema(menuItems)
   .omit({ id: true })
   .extend({
     recipeId: z.string().nullable().optional(), // Allow null to clear recipe
+    portionSize: z.string().optional(), // Portion multiplier (1.0, 0.5, 0.25)
     stockNo: z.string().optional(), // Stock number (required when no recipe)
   })
   .refine(

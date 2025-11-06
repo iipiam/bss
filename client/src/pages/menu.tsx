@@ -24,6 +24,7 @@ const menuFormSchema = z.object({
   name: z.string().min(1, "Item name is required"),
   category: z.string().min(1, "Category is required"),
   recipeId: z.string().optional(),
+  portionSize: z.string().default("1.00"),
   stockNo: z.string().optional(),
   basePrice: z.string().min(1, "Base price is required"),
   discount: z.string().default("0").refine(
@@ -75,6 +76,7 @@ export default function Menu() {
       description: "",
       category: "",
       recipeId: "",
+      portionSize: "1.00",
       stockNo: "",
       basePrice: "",
       discount: "0",
@@ -93,15 +95,19 @@ export default function Menu() {
     queryKey: ["/api/inventory"],
   });
 
-  // Get selected recipe details and calculate stock
+  // Get selected recipe details and calculate stock with portion size
   const selectedRecipe = recipes.find(r => r.id === selectedRecipeId && selectedRecipeId !== "none");
+  const portionMultiplier = parseFloat(form.watch("portionSize") || "1.00");
   const recipeStockInfo = selectedRecipe?.ingredients.map(ing => {
     const inventoryItem = inventoryItems.find(inv => inv.id === ing.inventoryItemId);
+    const adjustedQuantity = ing.quantity * portionMultiplier; // Apply portion size
     return {
       ...ing,
+      quantity: adjustedQuantity, // Show adjusted quantity
+      originalQuantity: ing.quantity, // Keep original for reference
       availableStock: inventoryItem?.quantity || "0",
       unit: inventoryItem?.unit || ing.unit,
-      inStock: inventoryItem ? parseFloat(inventoryItem.quantity) >= ing.quantity : false,
+      inStock: inventoryItem ? parseFloat(inventoryItem.quantity) >= adjustedQuantity : false,
     };
   });
 
@@ -128,6 +134,7 @@ export default function Menu() {
       // Only include recipeId if it's set and not "none"
       if (data.recipeId && data.recipeId !== "none") {
         menuItemData.recipeId = data.recipeId;
+        menuItemData.portionSize = data.portionSize || "1.00";
       }
 
       // Include stockNo if provided
@@ -169,6 +176,7 @@ export default function Menu() {
         description: data.description,
         category: data.category,
         recipeId: (data.recipeId && data.recipeId !== "none") ? data.recipeId : null, // Send null to clear recipe or actual ID
+        portionSize: (data.recipeId && data.recipeId !== "none") ? (data.portionSize || "1.00") : null,
         stockNo: data.stockNo || null, // Include stockNo (null if empty)
         basePrice: basePriceNum.toFixed(2), // Store original base price
         vatAmount: vatAmount.toFixed(2), // VAT on discounted base
@@ -247,6 +255,7 @@ export default function Menu() {
       description: item.description || "",
       category: item.category,
       recipeId: item.recipeId || "none",
+      portionSize: item.portionSize || "1.00",
       stockNo: item.stockNo || "",
       basePrice: item.basePrice || "",
       discount: item.discount || "0",
@@ -603,6 +612,34 @@ export default function Menu() {
                     </FormItem>
                   )}
                 />
+                {selectedRecipeId && selectedRecipeId !== "none" && (
+                  <FormField
+                    control={form.control}
+                    name="portionSize"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Portion Size</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger data-testid="select-menu-portion">
+                              <SelectValue placeholder="Select portion size" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="1.00">Whole (1x)</SelectItem>
+                            <SelectItem value="0.75">3/4 Portion (0.75x)</SelectItem>
+                            <SelectItem value="0.50">1/2 Portion (0.5x)</SelectItem>
+                            <SelectItem value="0.25">1/4 Portion (0.25x)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
                 {selectedRecipeId && recipeStockInfo && recipeStockInfo.length > 0 && (
                   <div className="rounded-lg border p-4 space-y-3 bg-muted/30">
                     <h4 className="text-sm font-semibold">Ingredient Stock Availability</h4>
