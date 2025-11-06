@@ -495,12 +495,12 @@ export default function POS() {
 
               <div className="mb-3">
                 <Label className="text-xs font-medium mb-1 block">Delivery App (Optional)</Label>
-                <Select value={selectedDeliveryAppId || ""} onValueChange={(value) => setSelectedDeliveryAppId(value || null)}>
+                <Select value={selectedDeliveryAppId || "none"} onValueChange={(value) => setSelectedDeliveryAppId(value === "none" ? null : value)}>
                   <SelectTrigger data-testid="select-delivery-app" className="w-full h-11">
                     <SelectValue placeholder="Select delivery app" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {deliveryApps.filter(app => app.active).map(app => (
                       <SelectItem key={app.id} value={app.id}>
                         {app.name} ({parseFloat(app.commission).toFixed(0)}%)
@@ -930,12 +930,12 @@ export default function POS() {
 
           <div className="mb-4">
             <Label className="text-sm font-medium mb-2 block">Delivery App (Optional)</Label>
-            <Select value={selectedDeliveryAppId || ""} onValueChange={(value) => setSelectedDeliveryAppId(value || null)}>
+            <Select value={selectedDeliveryAppId || "none"} onValueChange={(value) => setSelectedDeliveryAppId(value === "none" ? null : value)}>
               <SelectTrigger data-testid="select-delivery-app" className="w-full">
                 <SelectValue placeholder="Select delivery app" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
+                <SelectItem value="none">None</SelectItem>
                 {deliveryApps.filter(app => app.active).map(app => (
                   <SelectItem key={app.id} value={app.id}>
                     {app.name} ({parseFloat(app.commission).toFixed(0)}%)
