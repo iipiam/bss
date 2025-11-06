@@ -95,9 +95,8 @@ function AppContent() {
 
   const handleLogout = async () => {
     try {
-      // Cancel all pending mutations and queries to prevent data saves during logout
+      // Cancel all pending queries to prevent data saves during logout
       await queryClient.cancelQueries();
-      await queryClient.cancelMutations();
       
       // Perform logout
       await logout();
@@ -209,8 +208,8 @@ function AppContent() {
                         <span className="text-sm font-mono">{user?.commercialRegistration || 'N/A'}</span>
                       </div>
                       <div className="flex flex-col space-y-0.5">
-                        <span className="text-xs font-medium text-muted-foreground">Shop Name</span>
-                        <span className="text-sm">{user?.shopName || 'N/A'}</span>
+                        <span className="text-xs font-medium text-muted-foreground">Role</span>
+                        <span className="text-sm capitalize">{user?.role}</span>
                       </div>
                     </div>
                     <DropdownMenuSeparator />

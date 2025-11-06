@@ -13,7 +13,8 @@ import {
   Calculator,
   TrendingUp,
   BarChart3,
-  FileCheck
+  FileCheck,
+  PlayCircle
 } from "lucide-react";
 
 import posImage from "@assets/generated_images/POS_System_Interface_a1bc794e.png";
@@ -200,6 +201,89 @@ export default function Tutorial() {
                 </div>
                 <p className="text-sm pt-0.5">{t.tutorialStep5}</p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-emerald-500/20 bg-gradient-to-r from-emerald-500/5 to-teal-500/10">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500">
+                <PlayCircle className="h-5 w-5 text-white" />
+              </div>
+              <CardTitle className="text-xl bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
+                Video Tutorials
+              </CardTitle>
+            </div>
+            <CardDescription className="mt-2">
+              Watch comprehensive video guides to master RestoPOS features
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card className="hover-elevate group overflow-hidden">
+                <div className="relative aspect-video bg-muted/50 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-teal-500/20"></div>
+                  <div className="relative z-10 flex flex-col items-center gap-2">
+                    <PlayCircle className="h-16 w-16 text-emerald-500 group-hover:scale-110 transition-transform" />
+                    <p className="text-sm font-medium">Getting Started Guide</p>
+                  </div>
+                </div>
+                <CardHeader className="p-4">
+                  <CardTitle className="text-base">Introduction to RestoPOS</CardTitle>
+                  <CardDescription className="text-sm">
+                    Learn the basics and get your restaurant system up and running in minutes
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card className="hover-elevate group overflow-hidden">
+                <div className="relative aspect-video bg-muted/50 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-indigo-500/20"></div>
+                  <div className="relative z-10 flex flex-col items-center gap-2">
+                    <PlayCircle className="h-16 w-16 text-blue-500 group-hover:scale-110 transition-transform" />
+                    <p className="text-sm font-medium">POS Operations</p>
+                  </div>
+                </div>
+                <CardHeader className="p-4">
+                  <CardTitle className="text-base">Mastering the Point of Sale</CardTitle>
+                  <CardDescription className="text-sm">
+                    Process orders efficiently with table management and payment handling
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card className="hover-elevate group overflow-hidden">
+                <div className="relative aspect-video bg-muted/50 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20"></div>
+                  <div className="relative z-10 flex flex-col items-center gap-2">
+                    <PlayCircle className="h-16 w-16 text-purple-500 group-hover:scale-110 transition-transform" />
+                    <p className="text-sm font-medium">Inventory & Recipes</p>
+                  </div>
+                </div>
+                <CardHeader className="p-4">
+                  <CardTitle className="text-base">Inventory & Recipe Management</CardTitle>
+                  <CardDescription className="text-sm">
+                    Track ingredients, create recipes, and manage stock levels automatically
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card className="hover-elevate group overflow-hidden">
+                <div className="relative aspect-video bg-muted/50 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-orange-500/20"></div>
+                  <div className="relative z-10 flex flex-col items-center gap-2">
+                    <PlayCircle className="h-16 w-16 text-amber-500 group-hover:scale-110 transition-transform" />
+                    <p className="text-sm font-medium">Analytics & Reports</p>
+                  </div>
+                </div>
+                <CardHeader className="p-4">
+                  <CardTitle className="text-base">Business Analytics & Reporting</CardTitle>
+                  <CardDescription className="text-sm">
+                    Understand your business metrics and make data-driven decisions
+                  </CardDescription>
+                </CardHeader>
+              </Card>
             </div>
           </CardContent>
         </Card>
