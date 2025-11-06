@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { 
   BookOpen, 
@@ -32,6 +34,7 @@ import financialImage from "@assets/generated_images/Financial_Reports_Display_a
 
 export default function Tutorial() {
   const { t } = useLanguage();
+  const [selectedVideo, setSelectedVideo] = useState<{ title: string; videoUrl: string } | null>(null);
 
   const tutorials = [
     {
@@ -39,84 +42,96 @@ export default function Tutorial() {
       title: t.tutorialPOS,
       description: t.tutorialPOSDesc,
       gradient: "from-emerald-500 to-teal-500",
-      image: posImage
+      image: posImage,
+      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
     },
     {
       icon: Package,
       title: t.tutorialInventory,
       description: t.tutorialInventoryDesc,
       gradient: "from-blue-500 to-indigo-500",
-      image: inventoryImage
+      image: inventoryImage,
+      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
     },
     {
       icon: UtensilsCrossed,
       title: t.tutorialMenu,
       description: t.tutorialMenuDesc,
       gradient: "from-green-500 to-emerald-500",
-      image: menuImage
+      image: menuImage,
+      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
     },
     {
       icon: ChefHat,
       title: t.tutorialRecipes,
       description: t.tutorialRecipesDesc,
       gradient: "from-yellow-500 to-orange-500",
-      image: recipesImage
+      image: recipesImage,
+      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
     },
     {
       icon: UserCircle,
       title: t.tutorialCustomers,
       description: t.tutorialCustomersDesc,
       gradient: "from-cyan-500 to-blue-500",
-      image: customersImage
+      image: customersImage,
+      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
     },
     {
       icon: ClipboardList,
       title: t.tutorialOrders,
       description: t.tutorialOrdersDesc,
       gradient: "from-blue-500 to-cyan-500",
-      image: ordersImage
+      image: ordersImage,
+      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
     },
     {
       icon: BarChart3,
       title: t.tutorialDashboard,
       description: t.tutorialDashboardDesc,
       gradient: "from-purple-500 to-pink-500",
-      image: dashboardImage
+      image: dashboardImage,
+      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
     },
     {
       icon: DollarSign,
       title: t.tutorialSales,
       description: t.tutorialSalesDesc,
       gradient: "from-green-500 to-teal-500",
-      image: salesImage
+      image: salesImage,
+      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
     },
     {
       icon: Calculator,
       title: t.tutorialProfitability,
       description: t.tutorialProfitabilityDesc,
       gradient: "from-amber-500 to-orange-500",
-      image: profitabilityImage
+      image: profitabilityImage,
+      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
     },
     {
       icon: TrendingUp,
       title: t.tutorialForecasting,
       description: t.tutorialForecastingDesc,
       gradient: "from-cyan-500 to-sky-500",
-      image: forecastingImage
+      image: forecastingImage,
+      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
     },
     {
       icon: FileCheck,
       title: t.tutorialInvoices,
       description: t.tutorialInvoicesDesc,
       gradient: "from-violet-500 to-purple-500",
-      image: invoicesImage
+      image: invoicesImage,
+      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
     },
     {
       icon: Receipt,
       title: t.tutorialFinancial,
       description: t.tutorialFinancialDesc,
       gradient: "from-blue-500 to-purple-500",
-      image: financialImage
+      image: financialImage,
+      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
     }
   ];
 
@@ -139,7 +154,12 @@ export default function Tutorial() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {tutorials.map((tutorial, index) => (
-            <Card key={index} className="hover-elevate group transition-all duration-300 overflow-hidden" data-testid={`card-tutorial-${index}`}>
+            <Card 
+              key={index} 
+              className="hover-elevate group transition-all duration-300 overflow-hidden cursor-pointer" 
+              data-testid={`card-tutorial-${index}`}
+              onClick={() => setSelectedVideo({ title: tutorial.title, videoUrl: tutorial.videoUrl })}
+            >
               <div className="relative h-48 overflow-hidden">
                 <img 
                   src={tutorial.image} 
@@ -149,6 +169,11 @@ export default function Tutorial() {
                 <div className={`absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t ${tutorial.gradient} opacity-80`} />
                 <div className={`absolute bottom-3 left-3 p-2 rounded-lg bg-gradient-to-r ${tutorial.gradient}`}>
                   <tutorial.icon className="h-5 w-5 text-white" />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30">
+                  <div className="p-4 rounded-full bg-white/20 backdrop-blur-sm">
+                    <PlayCircle className="h-12 w-12 text-white" />
+                  </div>
                 </div>
               </div>
               <CardHeader>
@@ -205,89 +230,25 @@ export default function Tutorial() {
           </CardContent>
         </Card>
 
-        <Card className="border-emerald-500/20 bg-gradient-to-r from-emerald-500/5 to-teal-500/10">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500">
-                <PlayCircle className="h-5 w-5 text-white" />
-              </div>
-              <CardTitle className="text-xl bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
-                Video Tutorials
-              </CardTitle>
-            </div>
-            <CardDescription className="mt-2">
-              Watch comprehensive video guides to master RestoPOS features
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card className="hover-elevate group overflow-hidden">
-                <div className="relative aspect-video bg-muted/50 flex items-center justify-center">
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-teal-500/20"></div>
-                  <div className="relative z-10 flex flex-col items-center gap-2">
-                    <PlayCircle className="h-16 w-16 text-emerald-500 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm font-medium">Getting Started Guide</p>
-                  </div>
-                </div>
-                <CardHeader className="p-4">
-                  <CardTitle className="text-base">Introduction to RestoPOS</CardTitle>
-                  <CardDescription className="text-sm">
-                    Learn the basics and get your restaurant system up and running in minutes
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-
-              <Card className="hover-elevate group overflow-hidden">
-                <div className="relative aspect-video bg-muted/50 flex items-center justify-center">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-indigo-500/20"></div>
-                  <div className="relative z-10 flex flex-col items-center gap-2">
-                    <PlayCircle className="h-16 w-16 text-blue-500 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm font-medium">POS Operations</p>
-                  </div>
-                </div>
-                <CardHeader className="p-4">
-                  <CardTitle className="text-base">Mastering the Point of Sale</CardTitle>
-                  <CardDescription className="text-sm">
-                    Process orders efficiently with table management and payment handling
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-
-              <Card className="hover-elevate group overflow-hidden">
-                <div className="relative aspect-video bg-muted/50 flex items-center justify-center">
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20"></div>
-                  <div className="relative z-10 flex flex-col items-center gap-2">
-                    <PlayCircle className="h-16 w-16 text-purple-500 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm font-medium">Inventory & Recipes</p>
-                  </div>
-                </div>
-                <CardHeader className="p-4">
-                  <CardTitle className="text-base">Inventory & Recipe Management</CardTitle>
-                  <CardDescription className="text-sm">
-                    Track ingredients, create recipes, and manage stock levels automatically
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-
-              <Card className="hover-elevate group overflow-hidden">
-                <div className="relative aspect-video bg-muted/50 flex items-center justify-center">
-                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-orange-500/20"></div>
-                  <div className="relative z-10 flex flex-col items-center gap-2">
-                    <PlayCircle className="h-16 w-16 text-amber-500 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm font-medium">Analytics & Reports</p>
-                  </div>
-                </div>
-                <CardHeader className="p-4">
-                  <CardTitle className="text-base">Business Analytics & Reporting</CardTitle>
-                  <CardDescription className="text-sm">
-                    Understand your business metrics and make data-driven decisions
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            </div>
-          </CardContent>
-        </Card>
       </div>
+
+      <Dialog open={!!selectedVideo} onOpenChange={() => setSelectedVideo(null)}>
+        <DialogContent className="max-w-4xl w-full p-0">
+          <DialogHeader className="p-6 pb-4">
+            <DialogTitle className="text-2xl font-bold">{selectedVideo?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+            <iframe
+              src={selectedVideo?.videoUrl}
+              title={selectedVideo?.title}
+              className="absolute top-0 left-0 w-full h-full rounded-b-lg"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              data-testid="video-iframe"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
