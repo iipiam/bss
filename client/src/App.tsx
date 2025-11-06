@@ -13,6 +13,20 @@ import { DeviceProvider, useDevice } from "@/contexts/DeviceContext";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -20,7 +34,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { LogOut, User as UserIcon, CreditCard, Edit, XCircle } from "lucide-react";
 import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
 import Menu from "@/pages/menu";
@@ -86,6 +100,9 @@ function AppContent() {
   const { user, isLoading, logout } = useAuth();
   const { t } = useLanguage();
   const { device } = useDevice();
+  const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(user?.subscriptionPlan || 'monthly');
+  const [branchesCount, setBranchesCount] = useState(user?.branchesCount || 1);
   
   // Check if this is the first run (no users exist)
   const { data: firstRunCheck, isLoading: isCheckingFirstRun } = useQuery<{ firstRun: boolean }>({
@@ -212,6 +229,158 @@ function AppContent() {
                         <span className="text-sm capitalize">{user?.role}</span>
                       </div>
                     </div>
+                    <DropdownMenuSeparator />
+                    <Dialog open={subscriptionDialogOpen} onOpenChange={setSubscriptionDialogOpen}>
+                      <DialogTrigger asChild>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} data-testid="button-manage-subscription">
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          Manage Subscription
+                        </DropdownMenuItem>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+                            Manage Your Subscription
+                          </DialogTitle>
+                          <DialogDescription>
+                            Upgrade, modify, or cancel your subscription plan
+                          </DialogDescription>
+                        </DialogHeader>
+                        
+                        <div className="space-y-6 py-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="branches">Number of Branches</Label>
+                            <Input
+                              id="branches"
+                              type="number"
+                              min="1"
+                              value={branchesCount}
+                              onChange={(e) => setBranchesCount(parseInt(e.target.value) || 1)}
+                              data-testid="input-branches-count"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              First branch included. Additional branches: 7 SAR/week, 20 SAR/month, 240 SAR/year each
+                            </p>
+                          </div>
+
+                          <div className="space-y-3">
+                            <Label>Select Plan</Label>
+                            <RadioGroup value={selectedPlan} onValueChange={setSelectedPlan}>
+                              <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors cursor-pointer ${
+                                selectedPlan === 'weekly' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                              }`} onClick={() => setSelectedPlan('weekly')}>
+                                <RadioGroupItem value="weekly" id="sub-weekly" />
+                                <Label htmlFor="sub-weekly" className="flex-1 cursor-pointer">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <p className="font-semibold">Weekly</p>
+                                      <p className="text-sm text-muted-foreground">Billed weekly</p>
+                                      {branchesCount > 1 && (
+                                        <p className="text-xs text-muted-foreground mt-1">{branchesCount} branches</p>
+                                      )}
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-xl font-bold">{(39.90 + (branchesCount - 1) * 7).toFixed(2)} SAR</p>
+                                      <p className="text-xs text-muted-foreground">per week</p>
+                                    </div>
+                                  </div>
+                                </Label>
+                              </div>
+
+                              <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors cursor-pointer ${
+                                selectedPlan === 'monthly' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                              }`} onClick={() => setSelectedPlan('monthly')}>
+                                <RadioGroupItem value="monthly" id="sub-monthly" />
+                                <Label htmlFor="sub-monthly" className="flex-1 cursor-pointer">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <p className="font-semibold">Monthly</p>
+                                      <p className="text-sm text-muted-foreground">Billed monthly</p>
+                                      {branchesCount > 1 && (
+                                        <p className="text-xs text-muted-foreground mt-1">{branchesCount} branches</p>
+                                      )}
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-xl font-bold">{(119.75 + (branchesCount - 1) * 20).toFixed(2)} SAR</p>
+                                      <p className="text-xs text-muted-foreground">per month</p>
+                                    </div>
+                                  </div>
+                                </Label>
+                              </div>
+
+                              <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors cursor-pointer ${
+                                selectedPlan === 'yearly' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                              }`} onClick={() => setSelectedPlan('yearly')}>
+                                <RadioGroupItem value="yearly" id="sub-yearly" />
+                                <Label htmlFor="sub-yearly" className="flex-1 cursor-pointer">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <div>
+                                        <p className="font-semibold">Yearly</p>
+                                        <p className="text-sm text-muted-foreground">Billed yearly</p>
+                                        {branchesCount > 1 && (
+                                          <p className="text-xs text-muted-foreground mt-1">{branchesCount} branches</p>
+                                        )}
+                                      </div>
+                                      <Badge variant="default" className="bg-green-600 hover:bg-green-700">
+                                        Save 17%
+                                      </Badge>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-xl font-bold">{(1197.50 + (branchesCount - 1) * 240).toFixed(2)} SAR</p>
+                                      <p className="text-xs text-muted-foreground">per year</p>
+                                    </div>
+                                  </div>
+                                </Label>
+                              </div>
+                            </RadioGroup>
+                            <p className="text-xs text-muted-foreground">
+                              All prices include 15% VAT as required by Saudi law
+                            </p>
+                          </div>
+
+                          <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                            <h4 className="font-semibold">Current Plan Summary</h4>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <span className="text-muted-foreground">Current:</span>
+                              <span className="font-medium capitalize">{user?.subscriptionPlan}</span>
+                              <span className="text-muted-foreground">Branches:</span>
+                              <span className="font-medium">{user?.branchesCount || 1}</span>
+                              <span className="text-muted-foreground">Status:</span>
+                              <Badge variant={user?.subscriptionStatus === 'active' ? 'default' : 'secondary'}>
+                                {user?.subscriptionStatus}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+
+                        <DialogFooter className="flex gap-2">
+                          <Button
+                            variant="destructive"
+                            onClick={() => {
+                              if (confirm('Are you sure you want to cancel your subscription?')) {
+                                alert('Subscription cancellation requested. Please contact support.');
+                                setSubscriptionDialogOpen(false);
+                              }
+                            }}
+                            data-testid="button-cancel-subscription"
+                          >
+                            <XCircle className="mr-2 h-4 w-4" />
+                            Cancel Subscription
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              alert(`Subscription updated to ${selectedPlan} with ${branchesCount} branches. Changes will be reflected in the next billing cycle.`);
+                              setSubscriptionDialogOpen(false);
+                            }}
+                            data-testid="button-update-subscription"
+                          >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Update Plan
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} data-testid="button-logout-header">
                       <LogOut className="mr-2 h-4 w-4" />
