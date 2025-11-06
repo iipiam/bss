@@ -844,17 +844,17 @@ export class DatabaseStorage implements IStorage {
         });
         const subsidy = applicableTier ? applicableTier.subsidy : 0;
         
-        // New formula:
-        // Result1 = (orderTotal - subsidy) * commission % (commission amount)
-        // Result2 = orderTotal * banking fees % (banking fee amount)
-        // Result3 = posFees (fixed POS fees)
-        // Total commission = (Result1 + Result2 + Result3) * 1.15 (15% VAT applied)
-        const result1 = orderTotal - subsidy;
-        const commissionAmount = result1 * (commissionPercent / 100);
+        // Corrected formula per user requirements:
+        // The restaurant pays: Commission + Subsidy + Banking Fees + POS Fees (all with VAT)
+        // Commission = (Price - Subsidy) × Commission%
+        // Banking Fees = Price × Banking%
+        // Total Deduction = (Commission + Banking Fees + POS Fees + Subsidy) × 1.15 (15% VAT)
+        const subsidizedPrice = orderTotal - subsidy;
+        const commissionAmount = subsidizedPrice * (commissionPercent / 100);
         const bankingFeesAmount = orderTotal * (bankingFeesPercent / 100);
         
-        // Apply 15% VAT on total fees
-        const totalFeesBeforeVat = commissionAmount + bankingFeesAmount + posFees;
+        // Apply 15% VAT on total fees INCLUDING subsidy
+        const totalFeesBeforeVat = commissionAmount + bankingFeesAmount + posFees + subsidy;
         const totalFeesWithVat = totalFeesBeforeVat * 1.15;
         
         // Distribute the VAT proportionally back to each component for tracking
@@ -862,10 +862,11 @@ export class DatabaseStorage implements IStorage {
         const commissionAmountWithVat = commissionAmount * vatMultiplier;
         const bankingFeesAmountWithVat = bankingFeesAmount * vatMultiplier;
         const posFeesWithVat = posFees * vatMultiplier;
+        const subsidyWithVat = subsidy * vatMultiplier;
         
         totalBankingFeesCost += bankingFeesAmountWithVat;
         totalCommissionCost += commissionAmountWithVat;
-        totalSubsidy += subsidy;
+        totalSubsidy += subsidyWithVat;
         totalPosFees += posFeesWithVat;
         
         // Calculate item costs (safely handle null/empty items)
@@ -876,7 +877,9 @@ export class DatabaseStorage implements IStorage {
         });
       });
       
-      const netRevenue = totalGrossRevenue + totalSubsidy - totalBankingFeesCost - totalCommissionCost - totalPosFees;
+      // Net revenue: Restaurant receives order total minus all delivery app costs
+      // (Commission + Banking + POS + Subsidy all deducted with VAT)
+      const netRevenue = totalGrossRevenue - totalBankingFeesCost - totalCommissionCost - totalPosFees - totalSubsidy;
       const profit = netRevenue - totalItemCosts;
       const profitMargin = totalGrossRevenue > 0 ? (profit / totalGrossRevenue) * 100 : 0;
       
