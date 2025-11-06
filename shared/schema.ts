@@ -229,6 +229,7 @@ export const users = pgTable("users", {
   subscriptionStatus: text("subscription_status").default("inactive"), // "inactive", "active", "cancelled", "expired"
   subscriptionStartDate: timestamp("subscription_start_date"),
   subscriptionEndDate: timestamp("subscription_end_date"),
+  subscriptionCancelledAt: timestamp("subscription_cancelled_at"), // When user cancelled subscription
   passwordResetToken: text("password_reset_token"),
   passwordResetExpiry: timestamp("password_reset_expiry"),
   devicePreference: text("device_preference").default("laptop"), // "laptop", "ipad", or "iphone"
