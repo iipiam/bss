@@ -404,6 +404,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(204).send();
   });
 
+  app.get("/api/delivery-apps/analytics/profitability", async (_req, res) => {
+    try {
+      const profitability = await storage.getDeliveryAppProfitability();
+      res.json(profitability);
+    } catch (error) {
+      console.error("[DELIVERY_APP] Profitability error:", error);
+      res.status(500).json({ error: "Failed to calculate profitability" });
+    }
+  });
+
   // Recipes
   app.get("/api/recipes", async (_req, res) => {
     const recipes = await storage.getRecipes();

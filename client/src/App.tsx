@@ -59,6 +59,7 @@ import Tutorial from "@/pages/tutorial";
 import Shop from "@/pages/shop";
 import Profile from "@/pages/profile";
 import DeliveryApps from "@/pages/delivery-apps";
+import DeliveryAppProfitability from "@/pages/delivery-app-profitability";
 import Login from "@/pages/login";
 import Setup from "@/pages/setup";
 import ForgotPassword from "@/pages/forgot-password";
@@ -93,6 +94,7 @@ function Router() {
       <Route path="/shop" component={Shop} />
       <Route path="/profile" component={Profile} />
       <Route path="/delivery-apps" component={DeliveryApps} />
+      <Route path="/delivery-app-profitability" component={DeliveryAppProfitability} />
       <Route component={NotFound} />
     </Switch>
   );

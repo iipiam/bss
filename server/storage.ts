@@ -151,6 +151,7 @@ export interface IStorage {
   updateDeliveryApp(id: string, app: Partial<InsertDeliveryApp>): Promise<DeliveryApp | undefined>;
   deleteDeliveryApp(id: string): Promise<boolean>;
   updateDeliveryAppsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
+  getDeliveryAppProfitability(): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -707,6 +708,134 @@ export class DatabaseStorage implements IStorage {
         .set({ sortOrder: update.sortOrder })
         .where(eq(deliveryApps.id, update.id));
     }
+  }
+
+  async getDeliveryAppProfitability(): Promise<any> {
+    // Get all delivery apps
+    const apps = await db.select().from(deliveryApps).where(eq(deliveryApps.active, true));
+    
+    // Get all orders with delivery apps
+    const allOrders = await db.select().from(orders).where(sql`${orders.deliveryAppId} IS NOT NULL`);
+    
+    // Get all menu items and recipes for cost calculation
+    const allMenuItems = await db.select().from(menuItems);
+    const allRecipes = await db.select().from(recipes);
+    
+    // Create a map of menu item ID to cost (from recipe)
+    const itemCostMap = new Map<string, number>();
+    for (const item of allMenuItems) {
+      if (item.recipeId) {
+        const recipe = allRecipes.find(r => r.id === item.recipeId);
+        if (recipe) {
+          // Cost per item = recipe cost * portion size
+          const recipeCost = parseFloat(recipe.cost);
+          const portionSize = parseFloat(item.portionSize || "1.00");
+          itemCostMap.set(item.id, recipeCost * portionSize);
+        }
+      }
+    }
+    
+    // Calculate profitability for each delivery app
+    const profitabilityData = apps.map(app => {
+      const appOrders = allOrders.filter(order => order.deliveryAppId === app.id);
+      
+      let totalGrossRevenue = 0;
+      let totalCommissionCost = 0;
+      let totalBankingFeesCost = 0;
+      let totalSubsidy = 0;
+      let totalPosFees = 0;
+      let totalItemCosts = 0;
+      
+      appOrders.forEach(order => {
+        const orderTotal = parseFloat(order.total);
+        totalGrossRevenue += orderTotal;
+        
+        // Calculate fees using the new formula
+        const commissionPercent = parseFloat(app.commission);
+        const bankingFeesPercent = parseFloat(app.bankingFees);
+        const posFees = parseFloat(app.posFees);
+        
+        // Find applicable subsidy tier (safely handle null/undefined tiers)
+        const tiers = Array.isArray(app.subsidyTiers) ? app.subsidyTiers : [];
+        const applicableTier = tiers.find(tier => {
+          const isAboveMin = orderTotal >= tier.minAmount;
+          const isBelowMax = tier.maxAmount === null || orderTotal <= tier.maxAmount;
+          return isAboveMin && isBelowMax;
+        });
+        const subsidy = applicableTier ? applicableTier.subsidy : 0;
+        
+        // New formula:
+        // Result1 = original price - subsidy (base for commission)
+        // Result2 = original price * banking fees % (banking fee amount)
+        // Result3 = Result1 * commission % (commission amount)
+        const result1 = orderTotal - subsidy;
+        const bankingFeesAmount = orderTotal * (bankingFeesPercent / 100);
+        const commissionAmount = result1 * (commissionPercent / 100);
+        
+        totalBankingFeesCost += bankingFeesAmount;
+        totalCommissionCost += commissionAmount;
+        totalSubsidy += subsidy;
+        totalPosFees += posFees;
+        
+        // Calculate item costs (safely handle null/empty items)
+        const orderItems = Array.isArray(order.items) ? order.items : [];
+        orderItems.forEach((item: any) => {
+          const itemCost = itemCostMap.get(item.id) || 0;
+          totalItemCosts += itemCost * item.quantity;
+        });
+      });
+      
+      const netRevenue = totalGrossRevenue + totalSubsidy - totalBankingFeesCost - totalCommissionCost - totalPosFees;
+      const profit = netRevenue - totalItemCosts;
+      const profitMargin = totalGrossRevenue > 0 ? (profit / totalGrossRevenue) * 100 : 0;
+      
+      return {
+        deliveryAppId: app.id,
+        deliveryAppName: app.name,
+        totalOrders: appOrders.length,
+        totalGrossRevenue,
+        totalCommissionCost,
+        totalBankingFeesCost,
+        totalSubsidy,
+        totalPosFees,
+        netRevenue,
+        totalItemCosts,
+        profit,
+        profitMargin,
+        commissionPercent: parseFloat(app.commission),
+        bankingFeesPercent: parseFloat(app.bankingFees),
+      };
+    });
+    
+    // Add a summary with totals
+    const totalOrders = profitabilityData.reduce((sum, app) => sum + app.totalOrders, 0);
+    const totalGrossRevenue = profitabilityData.reduce((sum, app) => sum + app.totalGrossRevenue, 0);
+    const totalCommissionCost = profitabilityData.reduce((sum, app) => sum + app.totalCommissionCost, 0);
+    const totalBankingFeesCost = profitabilityData.reduce((sum, app) => sum + app.totalBankingFeesCost, 0);
+    const totalSubsidy = profitabilityData.reduce((sum, app) => sum + app.totalSubsidy, 0);
+    const totalPosFees = profitabilityData.reduce((sum, app) => sum + app.totalPosFees, 0);
+    const netRevenue = profitabilityData.reduce((sum, app) => sum + app.netRevenue, 0);
+    const totalItemCosts = profitabilityData.reduce((sum, app) => sum + app.totalItemCosts, 0);
+    const profit = profitabilityData.reduce((sum, app) => sum + app.profit, 0);
+    const profitMargin = totalGrossRevenue > 0 ? (profit / totalGrossRevenue) * 100 : 0;
+    
+    const summary = {
+      totalOrders,
+      totalGrossRevenue,
+      totalCommissionCost,
+      totalBankingFeesCost,
+      totalSubsidy,
+      totalPosFees,
+      netRevenue,
+      totalItemCosts,
+      profit,
+      profitMargin,
+    };
+    
+    return {
+      apps: profitabilityData,
+      summary,
+    };
   }
 }
 
