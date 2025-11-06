@@ -366,6 +366,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/recipes/sort", async (req, res) => {
+    try {
+      const { updates } = req.body;
+      if (!Array.isArray(updates)) {
+        return res.status(400).json({ error: "Invalid updates format" });
+      }
+      await storage.updateRecipesSortOrder(updates);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.delete("/api/recipes/:id", async (req, res) => {
     const success = await storage.deleteRecipe(req.params.id);
     if (!success) {

@@ -119,34 +119,48 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/10 to-primary/5">
-      <Card className="w-full max-w-md mx-4">
-        <CardHeader className="space-y-4 text-center">
-          <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit">
-            <UtensilsCrossed className="h-12 w-12 text-primary" />
+    <div className="relative flex items-center justify-center min-h-screen overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80">
+      {/* Animated Background Shapes */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-1/2 -left-40 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute -bottom-32 right-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+      </div>
+
+      <Card className="relative w-full max-w-md mx-4 border-none shadow-2xl backdrop-blur-sm bg-white/95 dark:bg-background/95">
+        <CardHeader className="space-y-6 text-center pb-6">
+          <div className="mx-auto relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/60 rounded-full blur-xl opacity-50"></div>
+            <div className="relative bg-gradient-to-br from-primary to-primary/80 p-5 rounded-2xl shadow-lg">
+              <UtensilsCrossed className="h-14 w-14 text-white" strokeWidth={1.5} />
+            </div>
           </div>
-          <div>
-            <CardTitle className="text-2xl">RestoPOS</CardTitle>
-            <CardDescription>{t.restaurantManagementSystem}</CardDescription>
+          <div className="space-y-2">
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              RestoPOS
+            </CardTitle>
+            <CardDescription className="text-base">{t.restaurantManagementSystem}</CardDescription>
           </div>
           <div className="flex items-center justify-center gap-2 pt-2">
-            <Languages className="h-4 w-4 text-muted-foreground" />
-            <Select value={language} onValueChange={(value) => setLanguage(value as Language)}>
-              <SelectTrigger className="w-40" data-testid="select-language">
-                <SelectValue placeholder={t.selectLanguage} />
-              </SelectTrigger>
-              <SelectContent>
-                {languages.map((lang) => (
-                  <SelectItem 
-                    key={lang} 
-                    value={lang}
-                    data-testid={`option-language-${lang.toLowerCase()}`}
-                  >
-                    {lang}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg">
+              <Languages className="h-4 w-4 text-muted-foreground" />
+              <Select value={language} onValueChange={(value) => setLanguage(value as Language)}>
+                <SelectTrigger className="w-36 border-none bg-transparent" data-testid="select-language">
+                  <SelectValue placeholder={t.selectLanguage} />
+                </SelectTrigger>
+                <SelectContent>
+                  {languages.map((lang) => (
+                    <SelectItem 
+                      key={lang} 
+                      value={lang}
+                      data-testid={`option-language-${lang.toLowerCase()}`}
+                    >
+                      {lang}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -156,10 +170,10 @@ export default function Login() {
               <TabsTrigger value="signup" data-testid="tab-signup">{t.signup}</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="login" className="space-y-4">
-              <form onSubmit={handleLogin} className="space-y-4">
+            <TabsContent value="login" className="space-y-5 pt-2">
+              <form onSubmit={handleLogin} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="login-username">{t.username}</Label>
+                  <Label htmlFor="login-username" className="text-sm font-medium">{t.username}</Label>
                   <Input
                     id="login-username"
                     type="text"
@@ -167,11 +181,12 @@ export default function Login() {
                     value={loginUsername}
                     onChange={(e) => setLoginUsername(e.target.value)}
                     required
+                    className="h-11"
                     data-testid="input-login-username"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">{t.password}</Label>
+                  <Label htmlFor="login-password" className="text-sm font-medium">{t.password}</Label>
                   <Input
                     id="login-password"
                     type="password"
@@ -179,24 +194,33 @@ export default function Login() {
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required
+                    className="h-11"
                     data-testid="input-login-password"
                   />
                 </div>
                 <div className="flex justify-end">
                   <Link 
                     href="/forgot-password" 
-                    className="text-sm text-primary hover:underline"
+                    className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
                     data-testid="link-forgot-password"
                   >
                     {t.forgotPassword}?
                   </Link>
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoggingIn} data-testid="button-login">
+                <Button 
+                  type="submit" 
+                  className="w-full h-11 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow-lg shadow-primary/20 transition-all" 
+                  disabled={isLoggingIn} 
+                  data-testid="button-login"
+                >
                   {isLoggingIn ? (
-                    t.signingIn
+                    <span className="flex items-center gap-2">
+                      <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      {t.signingIn}
+                    </span>
                   ) : (
                     <>
-                      <LogIn className="mr-2 h-4 w-4" />
+                      <LogIn className="mr-2 h-5 w-5" />
                       {t.signIn}
                     </>
                   )}
@@ -204,7 +228,7 @@ export default function Login() {
               </form>
             </TabsContent>
             
-            <TabsContent value="signup" className="space-y-4">
+            <TabsContent value="signup" className="space-y-4 pt-2">
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-name">{t.fullName}</Label>
@@ -320,15 +344,18 @@ export default function Login() {
 
                 <Button 
                   type="submit" 
-                  className="w-full" 
+                  className="w-full h-11 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow-lg shadow-primary/20 transition-all" 
                   disabled={signupMutation.isPending} 
                   data-testid="button-signup"
                 >
                   {signupMutation.isPending ? (
-                    `${t.loading}...`
+                    <span className="flex items-center gap-2">
+                      <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      {t.loading}...
+                    </span>
                   ) : (
                     <>
-                      <UserPlus className="mr-2 h-4 w-4" />
+                      <UserPlus className="mr-2 h-5 w-5" />
                       {t.signup}
                     </>
                   )}

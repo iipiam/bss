@@ -71,6 +71,7 @@ export interface IStorage {
   getRecipe(id: string): Promise<Recipe | undefined>;
   createRecipe(recipe: InsertRecipe): Promise<Recipe>;
   updateRecipe(id: string, recipe: Partial<InsertRecipe>): Promise<Recipe | undefined>;
+  updateRecipesSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
   deleteRecipe(id: string): Promise<boolean>;
 
   // Orders
@@ -273,6 +274,12 @@ export class DatabaseStorage implements IStorage {
   async updateRecipe(id: string, recipe: Partial<InsertRecipe>): Promise<Recipe | undefined> {
     const [updated] = await db.update(recipes).set(recipe as any).where(eq(recipes.id, id)).returning();
     return updated;
+  }
+
+  async updateRecipesSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void> {
+    for (const update of updates) {
+      await db.update(recipes).set({ sortOrder: update.sortOrder }).where(eq(recipes.id, update.id));
+    }
   }
 
   async deleteRecipe(id: string): Promise<boolean> {

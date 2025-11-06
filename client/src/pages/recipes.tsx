@@ -7,11 +7,113 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, ChefHat, Trash2, Download, Upload, FileDown } from "lucide-react";
+import { Plus, ChefHat, Trash2, Download, Upload, FileDown, GripVertical } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Recipe, InventoryItem } from "@shared/schema";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+function SortableRecipeCard({ recipe }: { recipe: Recipe }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: recipe.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <Card data-testid={`card-recipe-${recipe.id}`} className={isDragging ? "shadow-lg" : ""}>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3 flex-1">
+              <div
+                {...attributes}
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing p-2 hover-elevate active-elevate-2 rounded-md touch-none"
+                style={{ minWidth: '44px', minHeight: '44px' }}
+                data-testid={`drag-handle-recipe-${recipe.id}`}
+              >
+                <GripVertical className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center">
+                <ChefHat className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl mb-2">{recipe.name}</CardTitle>
+                <div className="flex gap-4 text-sm text-muted-foreground">
+                  <span>Prep: {recipe.prepTime}</span>
+                  <span>Cook: {recipe.cookTime}</span>
+                  <span>Servings: {recipe.servings}</span>
+                </div>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground mb-1">Cost per Serving</p>
+              <p className="text-2xl font-bold font-mono text-primary">{parseFloat(recipe.cost).toFixed(2)} SAR</p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <Badge variant="secondary">Ingredients</Badge>
+              </h4>
+              <ul className="space-y-2">
+                {recipe.ingredients.map((ingredient, idx) => (
+                  <li key={idx} className="text-sm flex justify-between">
+                    <span>{ingredient.name}</span>
+                    <span className="text-muted-foreground font-mono">
+                      {ingredient.quantity} {ingredient.unit}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <Badge variant="secondary">Instructions</Badge>
+              </h4>
+              <ol className="space-y-2 list-decimal list-inside">
+                {recipe.steps.map((step, idx) => (
+                  <li key={idx} className="text-sm text-muted-foreground">
+                    {step}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 export default function Recipes() {
   const [open, setOpen] = useState(false);
@@ -25,9 +127,71 @@ export default function Recipes() {
   const [steps, setSteps] = useState([""]);
   const { toast } = useToast();
 
-  const { data: recipes = [], isLoading } = useQuery<Recipe[]>({
+  const { data: recipesData = [], isLoading } = useQuery<Recipe[]>({
     queryKey: ["/api/recipes"],
   });
+
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+
+  // Sort recipes by sortOrder and update local state
+  useEffect(() => {
+    const sorted = [...recipesData].sort((a, b) => {
+      const orderA = a.sortOrder ?? 0;
+      const orderB = b.sortOrder ?? 0;
+      return orderA - orderB;
+    });
+    setRecipes(sorted);
+  }, [recipesData]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const updateSortOrderMutation = useMutation({
+    mutationFn: async (updates: { id: string; sortOrder: number }[]) => {
+      return await apiRequest("PATCH", "/api/recipes/sort", { updates });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to update order",
+        description: error.message || "Could not save new order",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setRecipes((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        const newOrder = arrayMove(items, oldIndex, newIndex);
+
+        // Update sortOrder for all affected items
+        const updates = newOrder.map((item, index) => ({
+          id: item.id,
+          sortOrder: index,
+        }));
+
+        updateSortOrderMutation.mutate(updates);
+
+        return newOrder;
+      });
+    }
+  };
 
   const { data: inventoryItems = [], isLoading: isLoadingInventory } = useQuery<InventoryItem[]>({
     queryKey: ["/api/inventory"],
@@ -463,64 +627,22 @@ export default function Recipes() {
         </div>
       </div>
 
-      <div className="grid gap-6">
-        {recipes.map((recipe) => (
-          <Card key={recipe.id} data-testid={`card-recipe-${recipe.id}`}>
-            <CardHeader>
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center">
-                    <ChefHat className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-2xl mb-2">{recipe.name}</CardTitle>
-                    <div className="flex gap-4 text-sm text-muted-foreground">
-                      <span>Prep: {recipe.prepTime}</span>
-                      <span>Cook: {recipe.cookTime}</span>
-                      <span>Servings: {recipe.servings}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground mb-1">Cost per Serving</p>
-                  <p className="text-2xl font-bold font-mono text-primary">{parseFloat(recipe.cost).toFixed(2)} SAR</p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <Badge variant="secondary">Ingredients</Badge>
-                  </h4>
-                  <ul className="space-y-2">
-                    {recipe.ingredients.map((ingredient, idx) => (
-                      <li key={idx} className="text-sm flex justify-between">
-                        <span>{ingredient.name}</span>
-                        <span className="text-muted-foreground font-mono">
-                          {ingredient.quantity} {ingredient.unit}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <Badge variant="secondary">Instructions</Badge>
-                  </h4>
-                  <ol className="space-y-2 list-decimal list-inside">
-                    {recipe.steps.map((step, idx) => (
-                      <li key={idx} className="text-sm text-muted-foreground">
-                        {step}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={recipes.map((r) => r.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="grid gap-6">
+            {recipes.map((recipe) => (
+              <SortableRecipeCard key={recipe.id} recipe={recipe} />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   );
 }
