@@ -297,3 +297,20 @@ export const shopBills = pgTable("shop_bills", {
 export const insertShopBillSchema = createInsertSchema(shopBills).omit({ id: true, createdAt: true });
 export type InsertShopBill = z.infer<typeof insertShopBillSchema>;
 export type ShopBill = typeof shopBills.$inferSelect;
+
+// Delivery Apps
+export const deliveryApps = pgTable("delivery_apps", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(), // Manually entered delivery app name (e.g., "HungerStation", "Jahez", "Mrsool")
+  commission: decimal("commission", { precision: 5, scale: 2 }).notNull(), // VAT-inclusive commission percentage (e.g., 20.00 for 20%)
+  bankingFees: decimal("banking_fees", { precision: 5, scale: 2 }).notNull(), // VAT-inclusive banking fees percentage (e.g., 2.50 for 2.5%)
+  subsidy: decimal("subsidy", { precision: 10, scale: 2 }).notNull().default("0"), // VAT-inclusive subsidy amount in SAR
+  posFees: decimal("pos_fees", { precision: 10, scale: 2 }).notNull().default("0"), // VAT-inclusive POS fees amount in SAR
+  active: boolean("active").notNull().default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertDeliveryAppSchema = createInsertSchema(deliveryApps).omit({ id: true, createdAt: true });
+export type InsertDeliveryApp = z.infer<typeof insertDeliveryAppSchema>;
+export type DeliveryApp = typeof deliveryApps.$inferSelect;
