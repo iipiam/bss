@@ -49,6 +49,15 @@ Preferred communication style: Simple, everyday language.
   - Topics: POS System, Inventory Management, Menu Management, Recipe Creation, Customer Management, Order Processing, Analytics Dashboard, Sales Analytics, Profitability Analysis, Demand Forecasting, Invoice Management, Financial Reports
   - Click-to-open modal dialogs with scrollable content
   - "Getting Started" section with quick overview
+  - Full multilingual support for all UI elements across all 7 languages
+- **Subscription Management**: Full subscription control accessible from user account dropdown:
+  - Interactive dialog with upgrade/downgrade/cancel options
+  - Dynamic pricing calculator showing real-time costs based on selected plan and branches
+  - Visual plan comparison with highlighting for current selection
+  - Supports Weekly (39.90 SAR + 7 SAR per additional branch), Monthly (119.75 SAR + 20 SAR per additional branch), and Yearly (1,197.50 SAR + 240 SAR per additional branch with 17% savings) plans
+  - Display of current subscription status, plan, and branches
+  - All pricing includes 15% VAT in compliance with Saudi regulations
+  - Branch count selector with minimum 1 branch (first included in base price)
 - **Device-Specific Responsive Design**: User-configurable device preference (Laptop, iPad, iPhone) stored in database, adjusting layout, typography, and specific components.
   - **Mobile Optimization Toolkit**: Centralized `mobileLayout.ts` utility providing responsive classes for grid columns, text sizes, spacing, and padding across all device types.
   - **TableList Component**: Production-ready mobile list component with swipeable actions for compact data display.
