@@ -41,7 +41,14 @@ Preferred communication style: Simple, everyday language.
 - **Strategic Decision-Making**: Profitability analysis with tabs for Strategic Overview, Pricing Analysis (including Price Coverage Analysis by margin), Scaling Viability, and Cost Management.
 - **Authentication**: Subscription-based, with Commercial Registration field and password recovery. Secure logout flow prevents data loss by cancelling all pending queries/mutations and clearing cache before redirect.
 - **Shop & Bills Management**: Manual configuration of shop working hours; comprehensive expense tracking for employee salaries and shop bills with summary analytics and integration into financial and profitability views.
-- **Tutorial System**: Visual tutorial page with 12 detailed guides and a "Getting Started" section.
+- **Tutorial System**: Interactive tutorial page with 12 comprehensive step-by-step text guides, each featuring:
+  - Practical demonstration screenshots of actual application interfaces
+  - Detailed step-by-step instructions (4-8 steps per tutorial)
+  - Estimated completion time (5-8 minutes per tutorial)
+  - Pro tips and best practices for each step
+  - Topics: POS System, Inventory Management, Menu Management, Recipe Creation, Customer Management, Order Processing, Analytics Dashboard, Sales Analytics, Profitability Analysis, Demand Forecasting, Invoice Management, Financial Reports
+  - Click-to-open modal dialogs with scrollable content
+  - "Getting Started" section with quick overview
 - **Device-Specific Responsive Design**: User-configurable device preference (Laptop, iPad, iPhone) stored in database, adjusting layout, typography, and specific components.
   - **Mobile Optimization Toolkit**: Centralized `mobileLayout.ts` utility providing responsive classes for grid columns, text sizes, spacing, and padding across all device types.
   - **TableList Component**: Production-ready mobile list component with swipeable actions for compact data display.
