@@ -390,15 +390,15 @@ export default function DeliveryApps() {
     if (!selectedApp) {
       return {
         gross: amount,
-        afterCommission: amount,
-        afterBanking: amount,
-        afterSubsidy: amount,
+        commissionAmount: 0,
+        bankingFeesAmount: 0,
+        subsidy: 0,
         netEarnings: amount,
       };
     }
 
-    const commission = parseFloat(selectedApp.commission);
-    const bankingFees = parseFloat(selectedApp.bankingFees);
+    const commissionPercent = parseFloat(selectedApp.commission);
+    const bankingFeesPercent = parseFloat(selectedApp.bankingFees);
     const posFees = parseFloat(selectedApp.posFees);
     
     // Find applicable subsidy tier (where order amount falls within the range)
@@ -409,21 +409,27 @@ export default function DeliveryApps() {
     });
     const subsidy = applicableTier ? applicableTier.subsidy : 0;
 
-    const afterCommission = amount * (1 - commission / 100);
-    const afterBanking = afterCommission * (1 - bankingFees / 100);
-    const afterSubsidy = afterBanking + subsidy;
-    const netEarnings = afterSubsidy - posFees;
+    // New formula:
+    // Result1 = original price - subsidy (base for commission calculation)
+    // Result2 = original price * banking fees % (banking fee amount)
+    // Result3 = Result1 * commission % (commission amount)
+    // Net = original + subsidy - Result2 - Result3 - POS fees
+    
+    const result1 = amount - subsidy; // Base for commission
+    const bankingFeesAmount = amount * (bankingFeesPercent / 100); // Banking fees on original price
+    const commissionAmount = result1 * (commissionPercent / 100); // Commission on (price - subsidy)
+    
+    const netEarnings = amount + subsidy - bankingFeesAmount - commissionAmount - posFees;
 
     return {
       gross: amount,
-      commission,
-      afterCommission,
-      bankingFees,
-      afterBanking,
+      commissionPercent,
+      commissionAmount,
+      bankingFeesPercent,
+      bankingFeesAmount,
       subsidy,
-      afterSubsidy,
-      posFees,
       netEarnings,
+      posFees,
     };
   };
 
@@ -668,24 +674,24 @@ export default function DeliveryApps() {
                   <span className="text-sm font-medium">{t.grossAmount}</span>
                   <span className="font-mono font-semibold">{calculation.gross.toFixed(2)} SAR</span>
                 </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground">{t.afterCommission} ({calculation.commission?.toFixed(2)}%)</span>
-                  <span className="font-mono">{calculation.afterCommission.toFixed(2)} SAR</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground">{t.afterBankingFees} ({calculation.bankingFees?.toFixed(2)}%)</span>
-                  <span className="font-mono">{calculation.afterBanking.toFixed(2)} SAR</span>
-                </div>
-                {calculation.subsidy! > 0 && (
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground">{t.afterSubsidy} (+{calculation.subsidy?.toFixed(2)} SAR)</span>
-                    <span className="font-mono">{calculation.afterSubsidy.toFixed(2)} SAR</span>
+                {calculation.subsidy > 0 && (
+                  <div className="flex justify-between items-center text-sm text-green-600 dark:text-green-400">
+                    <span>Subsidy Added</span>
+                    <span className="font-mono">+{calculation.subsidy.toFixed(2)} SAR</span>
                   </div>
                 )}
-                {calculation.posFees! > 0 && (
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground">{t.afterPosFees} (-{calculation.posFees?.toFixed(2)} SAR)</span>
-                    <span className="font-mono">{calculation.netEarnings.toFixed(2)} SAR</span>
+                <div className="flex justify-between items-center text-sm text-red-600 dark:text-red-400">
+                  <span>Banking Fees ({calculation.bankingFeesPercent?.toFixed(2)}%)</span>
+                  <span className="font-mono">-{calculation.bankingFeesAmount.toFixed(2)} SAR</span>
+                </div>
+                <div className="flex justify-between items-center text-sm text-red-600 dark:text-red-400">
+                  <span>Commission ({calculation.commissionPercent?.toFixed(2)}%)</span>
+                  <span className="font-mono">-{calculation.commissionAmount.toFixed(2)} SAR</span>
+                </div>
+                {calculation.posFees && calculation.posFees > 0 && (
+                  <div className="flex justify-between items-center text-sm text-red-600 dark:text-red-400">
+                    <span>{t.posFees}</span>
+                    <span className="font-mono">-{calculation.posFees.toFixed(2)} SAR</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center pt-3 border-t">
