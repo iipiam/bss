@@ -56,6 +56,7 @@ export interface IStorage {
   getInventoryItem(id: string): Promise<InventoryItem | undefined>;
   createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem>;
   updateInventoryItem(id: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined>;
+  updateInventoryItemsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
   deleteInventoryItem(id: string): Promise<boolean>;
 
   // Menu
@@ -188,6 +189,12 @@ export class DatabaseStorage implements IStorage {
   async updateInventoryItem(id: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined> {
     const [updated] = await db.update(inventoryItems).set(item).where(eq(inventoryItems.id, id)).returning();
     return updated;
+  }
+
+  async updateInventoryItemsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void> {
+    for (const update of updates) {
+      await db.update(inventoryItems).set({ sortOrder: update.sortOrder }).where(eq(inventoryItems.id, update.id));
+    }
   }
 
   async deleteInventoryItem(id: string): Promise<boolean> {

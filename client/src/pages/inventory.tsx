@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +13,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
   Select,
   SelectContent,
@@ -46,7 +63,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Edit, Trash2, Download, Upload, FileDown } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Download, Upload, FileDown, GripVertical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -61,6 +78,155 @@ const formSchema = insertInventoryItemSchema.extend({
   quantity: z.coerce.number().positive("Quantity must be a positive number"),
   price: z.coerce.number().min(0, "Price must be zero or positive"),
 });
+
+interface SortableInventoryRowProps {
+  item: InventoryItem;
+  onEdit: (item: InventoryItem) => void;
+  onDelete: (item: InventoryItem) => void;
+}
+
+function SortableInventoryRow({ item, onEdit, onDelete }: SortableInventoryRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <TableRow ref={setNodeRef} style={style} data-testid={`row-item-${item.id}`}>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-1 hover-elevate active-elevate-2 rounded-md touch-none"
+            style={{ minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            data-testid={`drag-handle-item-${item.id}`}
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <span className="font-medium">{item.name}</span>
+        </div>
+      </TableCell>
+      <TableCell>{item.category}</TableCell>
+      <TableCell className="font-mono">{parseFloat(item.quantity).toFixed(2)}</TableCell>
+      <TableCell>{item.unit}</TableCell>
+      <TableCell className="font-mono text-primary">{parseFloat(item.price).toFixed(2)} SAR</TableCell>
+      <TableCell className="text-muted-foreground">{item.supplier}</TableCell>
+      <TableCell>
+        <Badge variant={item.status === "Low Stock" ? "destructive" : "secondary"}>
+          {item.status}
+        </Badge>
+      </TableCell>
+      <TableCell className="text-right">
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" size="icon" onClick={() => onEdit(item)} data-testid={`button-edit-${item.id}`}>
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onDelete(item)}
+            data-testid={`button-delete-${item.id}`}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function SortableInventoryCard({ item, onEdit, onDelete }: SortableInventoryRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <Card className={isDragging ? "shadow-lg" : "hover-elevate"} data-testid={`card-item-${item.id}`}>
+        <CardContent className="p-3">
+          <div className="flex justify-between items-start mb-3">
+            <div className="flex items-start gap-2 flex-1">
+              <div
+                {...attributes}
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing p-2 hover-elevate active-elevate-2 rounded-md touch-none"
+                style={{ minWidth: '44px', minHeight: '44px' }}
+                data-testid={`drag-handle-item-${item.id}`}
+              >
+                <GripVertical className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-base">{item.name}</h3>
+                <p className="text-xs text-muted-foreground">{item.category}</p>
+              </div>
+            </div>
+            <Badge variant={item.status === "Low Stock" ? "destructive" : "secondary"} className="text-xs">
+              {item.status}
+            </Badge>
+          </div>
+          <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+            <div>
+              <span className="text-xs text-muted-foreground">Quantity:</span>
+              <p className="font-mono font-medium">{parseFloat(item.quantity).toFixed(2)} {item.unit}</p>
+            </div>
+            <div>
+              <span className="text-xs text-muted-foreground">Price/Unit:</span>
+              <p className="font-mono font-medium text-primary">{parseFloat(item.price).toFixed(2)} SAR</p>
+            </div>
+          </div>
+          <div className="mb-3">
+            <span className="text-xs text-muted-foreground">Supplier:</span>
+            <p className="text-sm">{item.supplier}</p>
+          </div>
+          <div className="flex gap-2 pt-2 border-t">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex-1" 
+              onClick={() => onEdit(item)} 
+              data-testid={`button-edit-${item.id}`}
+            >
+              <Edit className="h-3 w-3 mr-1" />
+              Edit
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() => onDelete(item)}
+              data-testid={`button-delete-${item.id}`}
+            >
+              <Trash2 className="h-3 w-3 mr-1 text-destructive" />
+              Delete
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 export default function Inventory() {
   const layout = useDeviceLayout();
@@ -88,9 +254,71 @@ export default function Inventory() {
     },
   });
 
-  const { data: inventoryItems = [], isLoading } = useQuery<InventoryItem[]>({
+  const { data: inventoryItemsData = [], isLoading } = useQuery<InventoryItem[]>({
     queryKey: ["/api/inventory"],
   });
+
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+
+  // Sort inventory items by sortOrder and update local state
+  useEffect(() => {
+    const sorted = [...inventoryItemsData].sort((a, b) => {
+      const orderA = a.sortOrder ?? 0;
+      const orderB = b.sortOrder ?? 0;
+      return orderA - orderB;
+    });
+    setInventoryItems(sorted);
+  }, [inventoryItemsData]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const updateSortOrderMutation = useMutation({
+    mutationFn: async (updates: { id: string; sortOrder: number }[]) => {
+      return await apiRequest("PATCH", "/api/inventory/sort", { updates });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to update order",
+        description: error.message || "Could not save new order",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setInventoryItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        const newOrder = arrayMove(items, oldIndex, newIndex);
+
+        // Update sortOrder for all affected items
+        const updates = newOrder.map((item, index) => ({
+          id: item.id,
+          sortOrder: index,
+        }));
+
+        updateSortOrderMutation.mutate(updates);
+
+        return newOrder;
+      });
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
@@ -555,108 +783,54 @@ export default function Inventory() {
           </Select>
         </div>
 
-        {!layout.isMobile ? (
-          <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Item Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Quantity</TableHead>
-              <TableHead>Unit</TableHead>
-              <TableHead>Price/Unit</TableHead>
-              <TableHead>Supplier</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredItems.map((item) => (
-              <TableRow key={item.id} data-testid={`row-item-${item.id}`}>
-                <TableCell className="font-medium">{item.name}</TableCell>
-                <TableCell>{item.category}</TableCell>
-                <TableCell className="font-mono">{parseFloat(item.quantity).toFixed(2)}</TableCell>
-                <TableCell>{item.unit}</TableCell>
-                <TableCell className="font-mono text-primary">{parseFloat(item.price).toFixed(2)} SAR</TableCell>
-                <TableCell className="text-muted-foreground">{item.supplier}</TableCell>
-                <TableCell>
-                  <Badge variant={item.status === "Low Stock" ? "destructive" : "secondary"}>
-                    {item.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => handleEditItem(item)} data-testid={`button-edit-${item.id}`}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteClick(item)}
-                      data-testid={`button-delete-${item.id}`}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        ) : (
-          <div className="space-y-3">
-            {filteredItems.map((item) => (
-              <Card key={item.id} className="hover-elevate" data-testid={`card-item-${item.id}`}>
-                <CardContent className="p-3">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-base">{item.name}</h3>
-                      <p className="text-xs text-muted-foreground">{item.category}</p>
-                    </div>
-                    <Badge variant={item.status === "Low Stock" ? "destructive" : "secondary"} className="text-xs">
-                      {item.status}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
-                    <div>
-                      <span className="text-xs text-muted-foreground">Quantity:</span>
-                      <p className="font-mono font-medium">{parseFloat(item.quantity).toFixed(2)} {item.unit}</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground">Price/Unit:</span>
-                      <p className="font-mono font-medium text-primary">{parseFloat(item.price).toFixed(2)} SAR</p>
-                    </div>
-                  </div>
-                  <div className="mb-3">
-                    <span className="text-xs text-muted-foreground">Supplier:</span>
-                    <p className="text-sm">{item.supplier}</p>
-                  </div>
-                  <div className="flex gap-2 pt-2 border-t">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1" 
-                      onClick={() => handleEditItem(item)} 
-                      data-testid={`button-edit-${item.id}`}
-                    >
-                      <Edit className="h-3 w-3 mr-1" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleDeleteClick(item)}
-                      data-testid={`button-delete-${item.id}`}
-                    >
-                      <Trash2 className="h-3 w-3 mr-1 text-destructive" />
-                      Delete
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={filteredItems.map(item => item.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {!layout.isMobile ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Item Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Unit</TableHead>
+                    <TableHead>Price/Unit</TableHead>
+                    <TableHead>Supplier</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredItems.map((item) => (
+                    <SortableInventoryRow
+                      key={item.id}
+                      item={item}
+                      onEdit={handleEditItem}
+                      onDelete={handleDeleteClick}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="space-y-3">
+                {filteredItems.map((item) => (
+                  <SortableInventoryCard
+                    key={item.id}
+                    item={item}
+                    onEdit={handleEditItem}
+                    onDelete={handleDeleteClick}
+                  />
+                ))}
+              </div>
+            )}
+          </SortableContext>
+        </DndContext>
       </Card>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

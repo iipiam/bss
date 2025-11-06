@@ -73,14 +73,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(items);
   });
 
-  app.get("/api/inventory/:id", async (req, res) => {
-    const item = await storage.getInventoryItem(req.params.id);
-    if (!item) {
-      return res.status(404).json({ error: "Item not found" });
-    }
-    res.json(item);
-  });
-
   app.post("/api/inventory", async (req, res) => {
     try {
       const data = insertInventoryItemSchema.parse(req.body);
@@ -89,6 +81,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(400).json({ error: "Invalid inventory data" });
     }
+  });
+
+  app.patch("/api/inventory/sort", async (req, res) => {
+    try {
+      const { updates } = req.body;
+      if (!Array.isArray(updates)) {
+        return res.status(400).json({ error: "Invalid updates format" });
+      }
+      await storage.updateInventoryItemsSortOrder(updates);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/inventory/:id", async (req, res) => {
+    const item = await storage.getInventoryItem(req.params.id);
+    if (!item) {
+      return res.status(404).json({ error: "Item not found" });
+    }
+    res.json(item);
   });
 
   app.patch("/api/inventory/:id", async (req, res) => {
