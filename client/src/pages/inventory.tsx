@@ -132,12 +132,12 @@ function SortableInventoryRow({ item, onEdit, onDelete, disabled = false }: Sort
       </TableCell>
       <TableCell className="text-right">
         <div className="flex justify-end gap-2">
-          <Button variant="ghost" size="icon" onClick={() => onEdit(item)} data-testid={`button-edit-${item.id}`}>
+          <Button variant="ghost" className="h-[44px] w-[44px]" onClick={() => onEdit(item)} data-testid={`button-edit-${item.id}`}>
             <Edit className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
-            size="icon"
+            className="h-[44px] w-[44px]"
             onClick={() => onDelete(item)}
             data-testid={`button-delete-${item.id}`}
           >
@@ -208,22 +208,20 @@ function SortableInventoryCard({ item, onEdit, onDelete, disabled = false }: Sor
           <div className="flex gap-2 pt-2 border-t">
             <Button 
               variant="outline" 
-              size="sm" 
-              className="flex-1" 
+              className="flex-1 h-[44px]" 
               onClick={() => onEdit(item)} 
               data-testid={`button-edit-${item.id}`}
             >
-              <Edit className="h-3 w-3 mr-1" />
+              <Edit className="h-4 w-4 mr-1" />
               Edit
             </Button>
             <Button
               variant="outline"
-              size="sm"
-              className="flex-1"
+              className="flex-1 h-[44px]"
               onClick={() => onDelete(item)}
               data-testid={`button-delete-${item.id}`}
             >
-              <Trash2 className="h-3 w-3 mr-1 text-destructive" />
+              <Trash2 className="h-4 w-4 mr-1 text-destructive" />
               Delete
             </Button>
           </div>

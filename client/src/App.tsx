@@ -195,7 +195,7 @@ function AppContent() {
 
   // Show main app if authenticated with device-responsive layout
   return (
-    <SidebarProvider style={style as React.CSSProperties}>
+    <SidebarProvider style={style as React.CSSProperties} defaultOpen={device !== 'iphone'}>
       <div className="flex h-screen w-full justify-center bg-background">
         <div className="flex h-screen w-full" style={{ maxWidth: containerMaxWidth }}>
           <AppSidebar />

@@ -64,18 +64,19 @@ const PerformanceCard = ({
   icon: React.ElementType;
 }) => {
   const { t } = useLanguage();
+  const layout = useDeviceLayout();
   const isPositive = metric.change >= 0;
   const TrendIcon = isPositive ? TrendingUp : TrendingDown;
   
   return (
     <Card className="hover-elevate transition-all">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
+      <CardContent className={layout.cardPadding}>
+        <div className={`flex items-center justify-between ${layout.isMobile ? 'mb-2' : 'mb-4'}`}>
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-primary/10">
-              <Icon className="w-5 h-5 text-primary" />
+              <Icon className={`${layout.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-primary`} />
             </div>
-            <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
+            <h3 className={`font-semibold ${layout.isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>{title}</h3>
           </div>
           <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
             isPositive 
@@ -88,7 +89,7 @@ const PerformanceCard = ({
         </div>
         <div className="space-y-2">
           <div>
-            <p className="text-2xl font-bold">{metric.current.toFixed(2)} SAR</p>
+            <p className={`${layout.text2Xl} font-bold`}>{metric.current.toFixed(2)} SAR</p>
             <p className="text-xs text-muted-foreground">{t.currentPeriod}</p>
           </div>
           <div className="pt-2 border-t">

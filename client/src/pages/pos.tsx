@@ -264,12 +264,12 @@ export default function POS() {
         <div className="flex-shrink-0 p-4 border-b">
           <h1 className="text-2xl font-bold mb-3">Point of Sale</h1>
           <Tabs value={mobileView} onValueChange={(v) => setMobileView(v as "menu" | "cart")}>
-            <TabsList className="w-full grid grid-cols-2">
-              <TabsTrigger value="menu" data-testid="tab-mobile-menu">
+            <TabsList className="w-full grid grid-cols-2 h-[44px]">
+              <TabsTrigger value="menu" data-testid="tab-mobile-menu" className="h-[44px]">
                 <UtensilsCrossed className="h-4 w-4 mr-2" />
                 Menu
               </TabsTrigger>
-              <TabsTrigger value="cart" data-testid="tab-mobile-cart">
+              <TabsTrigger value="cart" data-testid="tab-mobile-cart" className="h-[44px]">
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 Cart {itemCount > 0 && `(${itemCount})`}
               </TabsTrigger>
@@ -284,15 +284,15 @@ export default function POS() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search items..."
-                  className="pl-10"
+                  className="pl-10 h-[44px]"
                   data-testid="input-search-pos"
                 />
               </div>
 
               <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-                <TabsList className="w-full overflow-x-auto flex justify-start">
+                <TabsList className="w-full overflow-x-auto flex justify-start h-[44px]">
                   {categories.map(cat => (
-                    <TabsTrigger key={cat} value={cat} data-testid={`tab-category-${cat.toLowerCase()}`} className="whitespace-nowrap">
+                    <TabsTrigger key={cat} value={cat} data-testid={`tab-category-${cat.toLowerCase()}`} className="whitespace-nowrap h-[44px]">
                       {cat}
                     </TabsTrigger>
                   ))}
@@ -414,8 +414,7 @@ export default function POS() {
                           </div>
                           <Button
                             variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
+                            className="h-[44px] w-[44px]"
                             onClick={() => removeItem(item.id)}
                             data-testid={`button-remove-${item.id}`}
                           >
@@ -426,22 +425,20 @@ export default function POS() {
                           <div className="flex items-center gap-2">
                             <Button
                               variant="outline"
-                              size="icon"
-                              className="h-7 w-7"
+                              className="h-[44px] w-[44px]"
                               onClick={() => updateQuantity(item.id, -1)}
                               data-testid={`button-decrease-${item.id}`}
                             >
-                              <Minus className="h-3 w-3" />
+                              <Minus className="h-4 w-4" />
                             </Button>
-                            <span className="w-6 text-center font-mono font-semibold text-sm">{item.quantity}</span>
+                            <span className="w-8 text-center font-mono font-semibold">{item.quantity}</span>
                             <Button
                               variant="outline"
-                              size="icon"
-                              className="h-7 w-7"
+                              className="h-[44px] w-[44px]"
                               onClick={() => updateQuantity(item.id, 1)}
                               data-testid={`button-increase-${item.id}`}
                             >
-                              <Plus className="h-3 w-3" />
+                              <Plus className="h-4 w-4" />
                             </Button>
                           </div>
                           <p className="font-mono font-bold text-sm">{(item.price * item.quantity).toFixed(2)} SAR</p>
@@ -473,7 +470,7 @@ export default function POS() {
               <div className="mb-3">
                 <Label className="text-xs font-medium mb-1 block">{t.paymentMethod}</Label>
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <SelectTrigger data-testid="select-payment-method" className="w-full h-9">
+                  <SelectTrigger data-testid="select-payment-method" className="w-full h-[44px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -540,15 +537,14 @@ export default function POS() {
                     </div>
                     <Button
                       variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
+                      className="h-[44px] w-[44px]"
                       onClick={() => {
                         setCustomerName("");
                         setCustomerPhone("");
                       }}
                       data-testid="button-remove-customer"
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -563,7 +559,7 @@ export default function POS() {
                     value={tableNumber}
                     onChange={(e) => setTableNumber(e.target.value)}
                     data-testid="input-table-number"
-                    className="h-9"
+                    className="h-[44px]"
                   />
                 </div>
                 <div className="flex flex-col">
@@ -572,8 +568,7 @@ export default function POS() {
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
-                        size="sm"
-                        className="h-9"
+                        className="h-[44px]"
                         data-testid="button-add-customer"
                       >
                         <UserCircle className="h-4 w-4 mr-2" />
@@ -700,8 +695,7 @@ export default function POS() {
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  className="flex-1"
-                  size="sm"
+                  className="flex-1 h-[44px]"
                   onClick={clearCart}
                   disabled={cartItems.length === 0}
                   data-testid="button-clear-cart"
@@ -709,8 +703,7 @@ export default function POS() {
                   Clear
                 </Button>
                 <Button
-                  className="flex-1"
-                  size="sm"
+                  className="flex-1 h-[44px]"
                   onClick={handleCheckout}
                   disabled={cartItems.length === 0 || createOrderMutation.isPending}
                   data-testid="button-checkout"

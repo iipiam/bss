@@ -151,10 +151,11 @@ export default function Orders() {
                   </div>
                 ))}
               </div>
-              <div className="flex gap-2">
+              <div className={`flex ${layout.isMobile ? 'flex-col' : 'gap-2'} ${layout.isMobile ? 'space-y-2' : ''}`}>
                 {order.status === "Pending" && (
                   <Button
                     variant="default"
+                    className={layout.isMobile ? 'w-full h-[44px]' : ''}
                     onClick={() => updateStatusMutation.mutate({ id: order.id, status: "Preparing" })}
                     data-testid={`button-start-${order.id}`}
                   >
@@ -164,6 +165,7 @@ export default function Orders() {
                 {order.status === "Preparing" && (
                   <Button
                     variant="default"
+                    className={layout.isMobile ? 'w-full h-[44px]' : ''}
                     onClick={() => updateStatusMutation.mutate({ id: order.id, status: "Ready" })}
                     data-testid={`button-ready-${order.id}`}
                   >
@@ -173,6 +175,7 @@ export default function Orders() {
                 {order.status === "Ready" && (
                   <Button
                     variant="default"
+                    className={layout.isMobile ? 'w-full h-[44px]' : ''}
                     onClick={() => updateStatusMutation.mutate({ id: order.id, status: order.orderType === "Delivery" ? "Out for Delivery" : "Completed" })}
                     data-testid={`button-complete-${order.id}`}
                   >
@@ -182,6 +185,7 @@ export default function Orders() {
                 {order.status === "Out for Delivery" && (
                   <Button
                     variant="default"
+                    className={layout.isMobile ? 'w-full h-[44px]' : ''}
                     onClick={() => updateStatusMutation.mutate({ id: order.id, status: "Delivered" })}
                     data-testid={`button-delivered-${order.id}`}
                   >

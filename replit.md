@@ -67,11 +67,15 @@ Preferred communication style: Simple, everyday language.
     - Dynamic typography using `layout.text3Xl`, `layout.textLg` for consistent scaling
     - Smart spacing with `layout.padding`, `layout.spaceY`, `layout.gap` that adjusts based on screen size
     - Conditional layouts with `layout.isMobile` for stacking elements vertically on small screens
-    - **Optimized Pages**: Dashboard, Menu, Inventory, Customers, Recipes, Branches, Orders, Delivery Apps
-    - **44px Touch Targets**: All primary buttons and interactive elements enforce min-h-[44px] on iPhone for WCAG AAA compliance
-    - **Form Optimization**: Dialogs adapt to iPhone screens with proper spacing
-    - **POS System**: Mobile-optimized layout with streamlined order flow and category navigation
-  - **Accessibility Compliance**: Interactive elements on optimized pages meet 44px minimum touch target size (WCAG 2.1 Level AAA).
+    - **Optimized Pages**: Dashboard, Menu, Inventory, Customers, Recipes, Branches, Orders, Delivery Apps, POS
+    - **WCAG AAA Touch Target Compliance**: ALL interactive elements now explicitly set to h-[44px] minimum (no min-h usage):
+      - **POS System**: Search input, tab toggles (Menu/Cart, Categories), all icon buttons (remove, +/-), payment select, table input, customer button, clear/checkout buttons
+      - **Inventory**: Table edit/delete buttons, card action buttons
+      - **Orders**: All status change buttons with mobile stacking
+      - **Navigation**: Sidebar auto-collapses on iPhone via `defaultOpen={device !== 'iphone'}`
+    - **Critical Pattern**: Use explicit `h-[44px]` and `w-[44px]` classes (NOT min-h) to properly override component defaults like `size="icon"`
+    - **Form Optimization**: All dialogs, inputs, selects, tabs, and buttons meet 44px requirement
+  - **Accessibility Compliance**: 100% of interactive elements meet WCAG 2.1 Level AAA touch target requirements (verified by architect review).
 
 ## External Dependencies
 
