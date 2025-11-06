@@ -1,16 +1,87 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, DollarSign, Package, ShoppingCart, ArrowUp, ArrowDown } from "lucide-react";
+import { TrendingUp, DollarSign, Package, ShoppingCart, ArrowUp, ArrowDown, Download, FileSpreadsheet } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { exportToPDF, exportToExcel } from "@/lib/exportUtils";
+import { useToast } from "@/hooks/use-toast";
 
 export default function DeliveryAppProfitability() {
   const { t } = useLanguage();
+  const { toast } = useToast();
 
   const { data, isLoading } = useQuery<any>({
     queryKey: ["/api/delivery-apps/analytics/profitability"],
   });
+
+  const handleExportPDF = () => {
+    if (!data || !data.apps) return;
+
+    const exportData = data.apps.map((app: any) => ({
+      "App Name": app.deliveryAppName,
+      "Orders": app.totalOrders,
+      "Revenue (SAR)": app.totalGrossRevenue.toFixed(2),
+      "Commission (SAR)": app.totalCommissionCost.toFixed(2),
+      "Banking Fees (SAR)": app.totalBankingFeesCost.toFixed(2),
+      "POS Fees (SAR)": app.totalPosFees.toFixed(2),
+      "Subsidy (SAR)": app.totalSubsidy.toFixed(2),
+      "Item Costs (SAR)": app.totalItemCosts.toFixed(2),
+      "Profit (SAR)": app.profit.toFixed(2),
+      "Margin %": app.profitMargin.toFixed(1) + "%",
+    }));
+
+    const columns = [
+      { header: "App Name", accessor: "App Name", width: 35 },
+      { header: "Orders", accessor: "Orders", width: 18 },
+      { header: "Revenue", accessor: "Revenue (SAR)", width: 23 },
+      { header: "Commission", accessor: "Commission (SAR)", width: 23 },
+      { header: "Banking", accessor: "Banking Fees (SAR)", width: 23 },
+      { header: "POS Fees", accessor: "POS Fees (SAR)", width: 23 },
+      { header: "Subsidy", accessor: "Subsidy (SAR)", width: 23 },
+      { header: "Item Cost", accessor: "Item Costs (SAR)", width: 23 },
+      { header: "Profit", accessor: "Profit (SAR)", width: 23 },
+      { header: "Margin %", accessor: "Margin %", width: 20 },
+    ];
+
+    const result = exportToPDF("Delivery App Profitability", exportData, columns, {
+      subtitle: `Total Orders: ${data.summary.totalOrders} | Net Profit: ${data.summary.profit.toFixed(2)} SAR`,
+      orientation: "landscape",
+    });
+
+    if (result.success) {
+      toast({ title: "PDF exported successfully" });
+    } else {
+      toast({ title: "Failed to export PDF", variant: "destructive" });
+    }
+  };
+
+  const handleExportExcel = () => {
+    if (!data || !data.apps) return;
+
+    const exportData = data.apps.map((app: any) => ({
+      "App Name": app.deliveryAppName,
+      "Orders": app.totalOrders,
+      "Revenue (SAR)": parseFloat(app.totalGrossRevenue.toFixed(2)),
+      "Commission (SAR)": parseFloat(app.totalCommissionCost.toFixed(2)),
+      "Banking Fees (SAR)": parseFloat(app.totalBankingFeesCost.toFixed(2)),
+      "POS Fees (SAR)": parseFloat(app.totalPosFees.toFixed(2)),
+      "Subsidy (SAR)": parseFloat(app.totalSubsidy.toFixed(2)),
+      "Item Costs (SAR)": parseFloat(app.totalItemCosts.toFixed(2)),
+      "Net Revenue (SAR)": parseFloat(app.netRevenue.toFixed(2)),
+      "Profit (SAR)": parseFloat(app.profit.toFixed(2)),
+      "Profit Margin %": parseFloat(app.profitMargin.toFixed(2)),
+    }));
+
+    const result = exportToExcel("Delivery App Profitability", exportData);
+
+    if (result.success) {
+      toast({ title: "Excel exported successfully" });
+    } else {
+      toast({ title: "Failed to export Excel", variant: "destructive" });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -45,11 +116,33 @@ export default function DeliveryAppProfitability() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Delivery App Profitability Analysis</h1>
-        <p className="text-muted-foreground mt-1">
-          Compare delivery app performance, costs, and profitability
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Delivery App Profitability Analysis</h1>
+          <p className="text-muted-foreground mt-1">
+            Compare delivery app performance, costs, and profitability
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleExportPDF} 
+            variant="outline" 
+            size="default"
+            data-testid="button-export-pdf"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export PDF
+          </Button>
+          <Button 
+            onClick={handleExportExcel} 
+            variant="outline" 
+            size="default"
+            data-testid="button-export-excel"
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Export Excel
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}

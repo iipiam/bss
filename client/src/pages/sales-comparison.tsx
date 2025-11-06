@@ -1,13 +1,106 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Store, ShoppingBag, Truck, TrendingUp, DollarSign } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Store, ShoppingBag, Truck, TrendingUp, DollarSign, Download, FileSpreadsheet } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
+import { exportToPDF, exportToExcel } from "@/lib/exportUtils";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SalesComparison() {
+  const { toast } = useToast();
   const { data, isLoading } = useQuery<any>({
     queryKey: ["/api/analytics/sales-comparison"],
   });
+
+  const handleExportPDF = () => {
+    if (!data) return;
+    
+    const exportData = [
+      {
+        "Order Type": "Dine-In",
+        "Orders": dineIn.totalOrders || 0,
+        "Revenue (SAR)": dineIn.totalRevenue?.toFixed(2) || "0.00",
+        "Avg Order Value (SAR)": dineIn.avgOrderValue?.toFixed(2) || "0.00",
+        "% of Orders": dineIn.percentage?.toFixed(1) + "%" || "0.0%",
+        "% of Revenue": dineIn.revenuePercentage?.toFixed(1) + "%" || "0.0%",
+      },
+      {
+        "Order Type": "Take-Away",
+        "Orders": takeAway.totalOrders || 0,
+        "Revenue (SAR)": takeAway.totalRevenue?.toFixed(2) || "0.00",
+        "Avg Order Value (SAR)": takeAway.avgOrderValue?.toFixed(2) || "0.00",
+        "% of Orders": takeAway.percentage?.toFixed(1) + "%" || "0.0%",
+        "% of Revenue": takeAway.revenuePercentage?.toFixed(1) + "%" || "0.0%",
+      },
+      {
+        "Order Type": "Delivery Apps",
+        "Orders": deliveryApps.totalOrders || 0,
+        "Revenue (SAR)": deliveryApps.totalRevenue?.toFixed(2) || "0.00",
+        "Avg Order Value (SAR)": deliveryApps.avgOrderValue?.toFixed(2) || "0.00",
+        "% of Orders": deliveryApps.percentage?.toFixed(1) + "%" || "0.0%",
+        "% of Revenue": deliveryApps.revenuePercentage?.toFixed(1) + "%" || "0.0%",
+      },
+    ];
+
+    const columns = [
+      { header: "Order Type", accessor: "Order Type" },
+      { header: "Orders", accessor: "Orders" },
+      { header: "Revenue (SAR)", accessor: "Revenue (SAR)" },
+      { header: "Avg Order Value", accessor: "Avg Order Value (SAR)" },
+      { header: "% of Orders", accessor: "% of Orders" },
+      { header: "% of Revenue", accessor: "% of Revenue" },
+    ];
+
+    const result = exportToPDF("Sales Comparison Analysis", exportData, columns, {
+      subtitle: `Total Orders: ${summary.totalOrders || 0} | Total Revenue: ${summary.totalRevenue?.toFixed(2) || "0.00"} SAR`,
+    });
+
+    if (result.success) {
+      toast({ title: "PDF exported successfully" });
+    } else {
+      toast({ title: "Failed to export PDF", variant: "destructive" });
+    }
+  };
+
+  const handleExportExcel = () => {
+    if (!data) return;
+
+    const exportData = [
+      {
+        "Order Type": "Dine-In",
+        "Orders": dineIn.totalOrders || 0,
+        "Revenue (SAR)": dineIn.totalRevenue?.toFixed(2) || "0.00",
+        "Avg Order Value (SAR)": dineIn.avgOrderValue?.toFixed(2) || "0.00",
+        "% of Orders": dineIn.percentage?.toFixed(1) || "0.0",
+        "% of Revenue": dineIn.revenuePercentage?.toFixed(1) || "0.0",
+      },
+      {
+        "Order Type": "Take-Away",
+        "Orders": takeAway.totalOrders || 0,
+        "Revenue (SAR)": takeAway.totalRevenue?.toFixed(2) || "0.00",
+        "Avg Order Value (SAR)": takeAway.avgOrderValue?.toFixed(2) || "0.00",
+        "% of Orders": takeAway.percentage?.toFixed(1) || "0.0",
+        "% of Revenue": takeAway.revenuePercentage?.toFixed(1) || "0.0",
+      },
+      {
+        "Order Type": "Delivery Apps",
+        "Orders": deliveryApps.totalOrders || 0,
+        "Revenue (SAR)": deliveryApps.totalRevenue?.toFixed(2) || "0.00",
+        "Avg Order Value (SAR)": deliveryApps.avgOrderValue?.toFixed(2) || "0.00",
+        "% of Orders": deliveryApps.percentage?.toFixed(1) || "0.0",
+        "% of Revenue": deliveryApps.revenuePercentage?.toFixed(1) || "0.0",
+      },
+    ];
+
+    const result = exportToExcel("Sales Comparison Analysis", exportData);
+
+    if (result.success) {
+      toast({ title: "Excel exported successfully" });
+    } else {
+      toast({ title: "Failed to export Excel", variant: "destructive" });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -53,11 +146,33 @@ export default function SalesComparison() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Sales Comparison Analysis</h1>
-        <p className="text-muted-foreground mt-1">
-          Compare performance across dine-in, take-away, and delivery app orders
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Sales Comparison Analysis</h1>
+          <p className="text-muted-foreground mt-1">
+            Compare performance across dine-in, take-away, and delivery app orders
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleExportPDF} 
+            variant="outline" 
+            size="default"
+            data-testid="button-export-pdf"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export PDF
+          </Button>
+          <Button 
+            onClick={handleExportExcel} 
+            variant="outline" 
+            size="default"
+            data-testid="button-export-excel"
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Export Excel
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
