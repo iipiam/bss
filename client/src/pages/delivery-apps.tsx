@@ -10,7 +10,7 @@ import { Plus, Search, Edit, Trash2, GripVertical, Calculator } from "lucide-rea
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -38,18 +38,23 @@ interface DeliveryApp {
   name: string;
   commission: string;
   bankingFees: string;
-  subsidy: string;
+  subsidyTiers: Array<{ threshold: number; amount: number }>;
   posFees: string;
   active: boolean;
   sortOrder: number;
   createdAt: string;
 }
 
+const subsidyTierSchema = z.object({
+  threshold: z.coerce.number().min(0, "Threshold must be 0 or higher"),
+  amount: z.coerce.number().min(0, "Amount must be 0 or higher"),
+});
+
 const deliveryAppFormSchema = z.object({
   name: z.string().min(1, "Delivery app name is required"),
   commission: z.coerce.number().min(0, "Commission must be 0 or higher").max(100, "Commission cannot exceed 100%"),
   bankingFees: z.coerce.number().min(0, "Banking fees must be 0 or higher").max(100, "Banking fees cannot exceed 100%"),
-  subsidy: z.coerce.number().min(0, "Subsidy must be 0 or higher").default(0),
+  subsidyTiers: z.array(subsidyTierSchema).max(3, "Maximum 3 subsidy tiers allowed").default([]),
   posFees: z.coerce.number().min(0, "POS fees must be 0 or higher").default(0),
 });
 
@@ -84,8 +89,13 @@ function SortableDeliveryAppCard({ app, onEdit, onDelete, testOrderAmount, t, la
   const calculateNet = (amount: number) => {
     const commission = parseFloat(app.commission);
     const bankingFees = parseFloat(app.bankingFees);
-    const subsidy = parseFloat(app.subsidy);
     const posFees = parseFloat(app.posFees);
+    
+    // Find applicable subsidy tier (highest threshold that order qualifies for)
+    const applicableTier = app.subsidyTiers
+      .filter(tier => amount >= tier.threshold)
+      .sort((a, b) => b.threshold - a.threshold)[0];
+    const subsidy = applicableTier ? applicableTier.amount : 0;
 
     const afterCommission = amount * (1 - commission / 100);
     const afterBanking = afterCommission * (1 - bankingFees / 100);
@@ -136,9 +146,21 @@ function SortableDeliveryAppCard({ app, onEdit, onDelete, testOrderAmount, t, la
               <span className="text-muted-foreground">{t.bankingFees}</span>
               <p className="font-semibold">{parseFloat(app.bankingFees).toFixed(2)}%</p>
             </div>
-            <div>
-              <span className="text-muted-foreground">{t.subsidy}</span>
-              <p className="font-semibold">{parseFloat(app.subsidy).toFixed(2)} SAR</p>
+            <div className="col-span-2">
+              <span className="text-muted-foreground">Subsidy Tiers</span>
+              {app.subsidyTiers.length > 0 ? (
+                <div className="space-y-1 mt-1">
+                  {app.subsidyTiers.sort((a, b) => a.threshold - b.threshold).map((tier, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-xs">
+                      <Badge variant="outline" className="font-mono">
+                        ≥{tier.threshold} SAR → +{tier.amount} SAR
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs italic text-muted-foreground">No tiers</p>
+              )}
             </div>
             <div>
               <span className="text-muted-foreground">{t.posFees}</span>
@@ -186,7 +208,7 @@ export default function DeliveryApps() {
       name: "",
       commission: 0,
       bankingFees: 0,
-      subsidy: 0,
+      subsidyTiers: [],
       posFees: 0,
     },
   });
@@ -208,7 +230,7 @@ export default function DeliveryApps() {
         name: data.name,
         commission: data.commission.toFixed(2),
         bankingFees: data.bankingFees.toFixed(2),
-        subsidy: data.subsidy.toFixed(2),
+        subsidyTiers: data.subsidyTiers,
         posFees: data.posFees.toFixed(2),
       });
     },
@@ -236,7 +258,7 @@ export default function DeliveryApps() {
         name: data.name,
         commission: data.commission.toFixed(2),
         bankingFees: data.bankingFees.toFixed(2),
-        subsidy: data.subsidy.toFixed(2),
+        subsidyTiers: data.subsidyTiers,
         posFees: data.posFees.toFixed(2),
       });
     },
@@ -310,7 +332,7 @@ export default function DeliveryApps() {
       name: app.name,
       commission: parseFloat(app.commission),
       bankingFees: parseFloat(app.bankingFees),
-      subsidy: parseFloat(app.subsidy),
+      subsidyTiers: app.subsidyTiers || [],
       posFees: parseFloat(app.posFees),
     });
     setOpen(true);
@@ -365,8 +387,13 @@ export default function DeliveryApps() {
 
     const commission = parseFloat(selectedApp.commission);
     const bankingFees = parseFloat(selectedApp.bankingFees);
-    const subsidy = parseFloat(selectedApp.subsidy);
     const posFees = parseFloat(selectedApp.posFees);
+    
+    // Find applicable subsidy tier (highest threshold that order qualifies for)
+    const applicableTier = selectedApp.subsidyTiers
+      .filter(tier => amount >= tier.threshold)
+      .sort((a, b) => b.threshold - a.threshold)[0];
+    const subsidy = applicableTier ? applicableTier.amount : 0;
 
     const afterCommission = amount * (1 - commission / 100);
     const afterBanking = afterCommission * (1 - bankingFees / 100);
@@ -463,25 +490,86 @@ export default function DeliveryApps() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="subsidy"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t.subsidy}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder={t.enterSubsidy}
-                          {...field}
-                          data-testid="input-subsidy"
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Subsidy Tiers (Max 3)</FormLabel>
+                    {form.watch("subsidyTiers").length < 3 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const current = form.getValues("subsidyTiers");
+                          form.setValue("subsidyTiers", [...current, { threshold: 0, amount: 0 }]);
+                        }}
+                        data-testid="button-add-tier"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Tier
+                      </Button>
+                    )}
+                  </div>
+                  {form.watch("subsidyTiers").map((tier, index) => (
+                    <div key={index} className="flex gap-2 items-start p-3 border rounded-md bg-muted/30">
+                      <div className="flex-1 grid grid-cols-2 gap-2">
+                        <FormField
+                          control={form.control}
+                          name={`subsidyTiers.${index}.threshold`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">Min Order (SAR)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="0"
+                                  {...field}
+                                  data-testid={`input-tier-threshold-${index}`}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                        <FormField
+                          control={form.control}
+                          name={`subsidyTiers.${index}.amount`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">Subsidy (SAR)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="0"
+                                  {...field}
+                                  data-testid={`input-tier-amount-${index}`}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                          const current = form.getValues("subsidyTiers");
+                          form.setValue("subsidyTiers", current.filter((_, i) => i !== index));
+                        }}
+                        data-testid={`button-delete-tier-${index}`}
+                        className="mt-6"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {form.watch("subsidyTiers").length === 0 && (
+                    <p className="text-sm text-muted-foreground italic">No subsidy tiers added. Click "Add Tier" to create one.</p>
                   )}
-                />
+                </div>
                 <FormField
                   control={form.control}
                   name="posFees"
