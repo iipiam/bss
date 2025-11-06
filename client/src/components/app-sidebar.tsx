@@ -48,6 +48,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/lib/auth";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 export function AppSidebar() {
   const [location] = useLocation();
@@ -58,7 +59,15 @@ export function AppSidebar() {
 
   const handleLogout = async () => {
     try {
+      // Cancel all pending mutations and queries to prevent data saves during logout
+      await queryClient.cancelQueries();
+      
+      // Perform logout
       await logout();
+      
+      // Clear all cached data
+      queryClient.clear();
+      
       // Immediately redirect to login page
       window.location.href = "/";
     } catch (error) {
@@ -67,6 +76,8 @@ export function AppSidebar() {
         description: "Failed to logout. Please try again.",
         variant: "destructive",
       });
+      // Still redirect even on error to ensure user is logged out
+      window.location.href = "/";
     }
   };
 

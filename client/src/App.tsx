@@ -93,12 +93,22 @@ function AppContent() {
 
   const handleLogout = async () => {
     try {
+      // Cancel all pending mutations and queries to prevent data saves during logout
+      await queryClient.cancelQueries();
+      
+      // Perform logout
       await logout();
+      
+      // Clear all cached data
+      queryClient.clear();
+      
       // Immediately redirect to login page
       window.location.href = "/";
     } catch (error) {
       // Error handling - though user will rarely see this since redirect happens fast
       console.error("Logout failed:", error);
+      // Still redirect even on error to ensure user is logged out
+      window.location.href = "/";
     }
   };
 
