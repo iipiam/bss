@@ -191,13 +191,28 @@ function AppContent() {
                       <UserIcon className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="w-72">
                     <DropdownMenuLabel>
-                      <div className="flex flex-col">
-                        <span className="font-semibold">{user?.fullName}</span>
-                        <span className="text-xs text-muted-foreground">{user?.role}</span>
+                      <div className="flex flex-col space-y-1">
+                        <span className="font-semibold text-base">{user?.fullName}</span>
+                        <span className="text-xs text-muted-foreground">{user?.email}</span>
                       </div>
                     </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <div className="px-2 py-2 space-y-2">
+                      <div className="flex flex-col space-y-0.5">
+                        <span className="text-xs font-medium text-muted-foreground">Subscription Plan</span>
+                        <span className="text-sm font-semibold capitalize">{user?.subscriptionPlan}</span>
+                      </div>
+                      <div className="flex flex-col space-y-0.5">
+                        <span className="text-xs font-medium text-muted-foreground">Commercial Registration</span>
+                        <span className="text-sm font-mono">{user?.commercialRegistration || 'N/A'}</span>
+                      </div>
+                      <div className="flex flex-col space-y-0.5">
+                        <span className="text-xs font-medium text-muted-foreground">Shop Name</span>
+                        <span className="text-sm">{user?.shopName || 'N/A'}</span>
+                      </div>
+                    </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} data-testid="button-logout-header">
                       <LogOut className="mr-2 h-4 w-4" />
