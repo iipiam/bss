@@ -414,6 +414,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/analytics/sales-comparison", async (_req, res) => {
+    try {
+      const comparison = await storage.getSalesComparison();
+      res.json(comparison);
+    } catch (error) {
+      console.error("[ANALYTICS] Sales comparison error:", error);
+      res.status(500).json({ error: "Failed to get sales comparison data" });
+    }
+  });
+
   // Recipes
   app.get("/api/recipes", async (_req, res) => {
     const recipes = await storage.getRecipes();

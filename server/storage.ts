@@ -848,6 +848,72 @@ export class DatabaseStorage implements IStorage {
       summary,
     };
   }
+
+  async getSalesComparison(): Promise<any> {
+    // Get all orders
+    const allOrders = await db.select().from(orders);
+    
+    // Categorize orders by type
+    const dineInOrders = allOrders.filter(o => o.orderType === 'Dine-in' && !o.deliveryAppId);
+    const takeAwayOrders = allOrders.filter(o => o.orderType === 'Take-away' && !o.deliveryAppId);
+    const deliveryAppOrders = allOrders.filter(o => o.deliveryAppId !== null);
+    
+    // Calculate metrics for each category
+    const calculateMetrics = (orderList: any[]) => {
+      const totalOrders = orderList.length;
+      const totalRevenue = orderList.reduce((sum, o) => sum + parseFloat(o.total), 0);
+      const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+      
+      return {
+        totalOrders,
+        totalRevenue,
+        avgOrderValue,
+      };
+    };
+    
+    const dineInMetrics = calculateMetrics(dineInOrders);
+    const takeAwayMetrics = calculateMetrics(takeAwayOrders);
+    const deliveryAppMetrics = calculateMetrics(deliveryAppOrders);
+    
+    // Calculate percentages
+    const totalOrders = dineInMetrics.totalOrders + takeAwayMetrics.totalOrders + deliveryAppMetrics.totalOrders;
+    const totalRevenue = dineInMetrics.totalRevenue + takeAwayMetrics.totalRevenue + deliveryAppMetrics.totalRevenue;
+    
+    // Get delivery app breakdown
+    const deliveryAppsData = await db.select().from(deliveryApps).where(eq(deliveryApps.active, true));
+    const deliveryAppBreakdown = deliveryAppsData.map(app => {
+      const appOrders = deliveryAppOrders.filter(o => o.deliveryAppId === app.id);
+      const metrics = calculateMetrics(appOrders);
+      return {
+        appId: app.id,
+        appName: app.name,
+        ...metrics,
+      };
+    });
+    
+    return {
+      summary: {
+        totalOrders,
+        totalRevenue,
+      },
+      dineIn: {
+        ...dineInMetrics,
+        percentage: totalOrders > 0 ? (dineInMetrics.totalOrders / totalOrders) * 100 : 0,
+        revenuePercentage: totalRevenue > 0 ? (dineInMetrics.totalRevenue / totalRevenue) * 100 : 0,
+      },
+      takeAway: {
+        ...takeAwayMetrics,
+        percentage: totalOrders > 0 ? (takeAwayMetrics.totalOrders / totalOrders) * 100 : 0,
+        revenuePercentage: totalRevenue > 0 ? (takeAwayMetrics.totalRevenue / totalRevenue) * 100 : 0,
+      },
+      deliveryApps: {
+        ...deliveryAppMetrics,
+        percentage: totalOrders > 0 ? (deliveryAppMetrics.totalOrders / totalOrders) * 100 : 0,
+        revenuePercentage: totalRevenue > 0 ? (deliveryAppMetrics.totalRevenue / totalRevenue) * 100 : 0,
+        breakdown: deliveryAppBreakdown,
+      },
+    };
+  }
 }
 
 export const storage = new DatabaseStorage();
