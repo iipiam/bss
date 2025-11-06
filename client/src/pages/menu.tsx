@@ -24,6 +24,7 @@ const menuFormSchema = z.object({
   name: z.string().min(1, "Item name is required"),
   category: z.string().min(1, "Category is required"),
   recipeId: z.string().optional(),
+  stockNo: z.string().optional(),
   basePrice: z.string().min(1, "Base price is required"),
   discount: z.string().default("0").refine(
     (val) => {
@@ -33,7 +34,16 @@ const menuFormSchema = z.object({
     { message: "Discount must be between 0 and 100" }
   ),
   description: z.string().min(1, "Description is required"),
-});
+}).refine(
+  (data) => {
+    // If no recipe, stockNo is required
+    if (!data.recipeId || data.recipeId === "none") {
+      return !!data.stockNo && data.stockNo.trim() !== "";
+    }
+    return true;
+  },
+  { message: "Stock number is required when no recipe is selected", path: ["stockNo"] }
+);
 
 type MenuFormValues = z.infer<typeof menuFormSchema>;
 
@@ -65,6 +75,7 @@ export default function Menu() {
       description: "",
       category: "",
       recipeId: "",
+      stockNo: "",
       basePrice: "",
       discount: "0",
     },
@@ -119,6 +130,11 @@ export default function Menu() {
         menuItemData.recipeId = data.recipeId;
       }
 
+      // Include stockNo if provided
+      if (data.stockNo) {
+        menuItemData.stockNo = data.stockNo;
+      }
+
       return await apiRequest("POST", "/api/menu", menuItemData);
     },
     onSuccess: () => {
@@ -153,6 +169,7 @@ export default function Menu() {
         description: data.description,
         category: data.category,
         recipeId: (data.recipeId && data.recipeId !== "none") ? data.recipeId : null, // Send null to clear recipe or actual ID
+        stockNo: data.stockNo || null, // Include stockNo (null if empty)
         basePrice: basePriceNum.toFixed(2), // Store original base price
         vatAmount: vatAmount.toFixed(2), // VAT on discounted base
         price: price.toFixed(2), // Final price with discount and VAT
@@ -230,6 +247,7 @@ export default function Menu() {
       description: item.description || "",
       category: item.category,
       recipeId: item.recipeId || "none",
+      stockNo: item.stockNo || "",
       basePrice: item.basePrice || "",
       discount: item.discount || "0",
     });
@@ -612,6 +630,27 @@ export default function Menu() {
                       </p>
                     )}
                   </div>
+                )}
+                {(!selectedRecipeId || selectedRecipeId === "none") && (
+                  <FormField
+                    control={form.control}
+                    name="stockNo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Stock Number *</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            step="0.01"
+                            placeholder="e.g., 50"
+                            data-testid="input-menu-stockno"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
                 <FormField
                   control={form.control}
