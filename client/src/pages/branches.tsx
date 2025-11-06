@@ -14,6 +14,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { insertBranchSchema, type Branch } from "@shared/schema";
+import { useDeviceLayout } from "@/lib/mobileLayout";
 
 const branchFormSchema = insertBranchSchema.extend({
   staff: z.string().min(1, "Staff count is required"),
@@ -22,6 +23,7 @@ const branchFormSchema = insertBranchSchema.extend({
 type BranchFormValues = z.infer<typeof branchFormSchema>;
 
 export default function Branches() {
+  const layout = useDeviceLayout();
   const [open, setOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
   const { toast } = useToast();
@@ -131,18 +133,18 @@ export default function Branches() {
 
   if (isLoading) {
     return (
-      <div className="p-8">
-        <h1 className="text-3xl font-bold mb-2">Branch Management</h1>
+      <div className={layout.padding}>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Branch Management</h1>
         <p className="text-muted-foreground">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className={`${layout.padding} ${layout.spaceY}`}>
+      <div className={`flex ${layout.isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
         <div>
-          <h1 className="text-3xl font-bold mb-2">Branch Management</h1>
+          <h1 className={`${layout.text3Xl} font-bold mb-2`}>Branch Management</h1>
           <p className="text-muted-foreground">Manage your restaurant locations</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -330,8 +332,8 @@ export default function Branches() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <CardContent className={layout.cardPadding}>
+              <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 4, tablet: 2, mobile: 1 })}`}>
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
                     <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />

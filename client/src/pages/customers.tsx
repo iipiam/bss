@@ -15,6 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useDeviceLayout } from "@/lib/mobileLayout";
 
 interface Customer {
   id: string;
@@ -49,6 +50,7 @@ export default function Customers() {
   const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(null);
   const { toast } = useToast();
   const { t } = useLanguage();
+  const layout = useDeviceLayout();
 
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerFormSchema),
@@ -207,13 +209,13 @@ export default function Customers() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className={`${layout.padding} ${layout.spaceY}`}>
+      <div className={`flex ${layout.isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
         <div className="flex items-center gap-2">
           <UserCircle className="h-8 w-8" />
-          <h1 className="text-3xl font-bold">{t.customers}</h1>
+          <h1 className={`${layout.text3Xl} font-bold`}>{t.customers}</h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={handleExport} data-testid="button-export">
             <Download className="h-4 w-4 mr-2" />
             Export
@@ -319,7 +321,7 @@ export default function Customers() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 3, tablet: 2, mobile: 1 })}`}>
           {filteredCustomers.map((customer) => {
             const customerOrders = getCustomerOrders(customer);
             return (

@@ -12,6 +12,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Recipe, InventoryItem } from "@shared/schema";
+import { useDeviceLayout } from "@/lib/mobileLayout";
 import {
   DndContext,
   closestCenter,
@@ -116,6 +117,7 @@ function SortableRecipeCard({ recipe }: { recipe: Recipe }) {
 }
 
 export default function Recipes() {
+  const layout = useDeviceLayout();
   const [open, setOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [name, setName] = useState("");
