@@ -38,7 +38,7 @@ interface DeliveryApp {
   name: string;
   commission: string;
   bankingFees: string;
-  subsidyTiers: Array<{ threshold: number; amount: number }>;
+  subsidyTiers: Array<{ minAmount: number; maxAmount: number | null; subsidy: number }>;
   posFees: string;
   active: boolean;
   sortOrder: number;
@@ -46,8 +46,9 @@ interface DeliveryApp {
 }
 
 const subsidyTierSchema = z.object({
-  threshold: z.coerce.number().min(0, "Threshold must be 0 or higher"),
-  amount: z.coerce.number().min(0, "Amount must be 0 or higher"),
+  minAmount: z.coerce.number().min(0, "Minimum amount must be 0 or higher"),
+  maxAmount: z.coerce.number().nullable().refine((val) => val === null || val > 0, "Maximum amount must be greater than 0 or unlimited"),
+  subsidy: z.coerce.number().min(0, "Subsidy must be 0 or higher"),
 });
 
 const deliveryAppFormSchema = z.object({
@@ -91,11 +92,13 @@ function SortableDeliveryAppCard({ app, onEdit, onDelete, testOrderAmount, t, la
     const bankingFees = parseFloat(app.bankingFees);
     const posFees = parseFloat(app.posFees);
     
-    // Find applicable subsidy tier (highest threshold that order qualifies for)
-    const applicableTier = app.subsidyTiers
-      .filter(tier => amount >= tier.threshold)
-      .sort((a, b) => b.threshold - a.threshold)[0];
-    const subsidy = applicableTier ? applicableTier.amount : 0;
+    // Find applicable subsidy tier (where order amount falls within the range)
+    const applicableTier = app.subsidyTiers.find(tier => {
+      const isAboveMin = amount >= tier.minAmount;
+      const isBelowMax = tier.maxAmount === null || amount <= tier.maxAmount;
+      return isAboveMin && isBelowMax;
+    });
+    const subsidy = applicableTier ? applicableTier.subsidy : 0;
 
     const afterCommission = amount * (1 - commission / 100);
     const afterBanking = afterCommission * (1 - bankingFees / 100);
@@ -150,10 +153,10 @@ function SortableDeliveryAppCard({ app, onEdit, onDelete, testOrderAmount, t, la
               <span className="text-muted-foreground">Subsidy Tiers</span>
               {app.subsidyTiers.length > 0 ? (
                 <div className="space-y-1 mt-1">
-                  {app.subsidyTiers.sort((a, b) => a.threshold - b.threshold).map((tier, idx) => (
+                  {app.subsidyTiers.sort((a, b) => a.minAmount - b.minAmount).map((tier, idx) => (
                     <div key={idx} className="flex items-center gap-2 text-xs">
                       <Badge variant="outline" className="font-mono">
-                        ≥{tier.threshold} SAR → +{tier.amount} SAR
+                        {tier.minAmount}-{tier.maxAmount ?? '∞'} SAR → +{tier.subsidy} SAR
                       </Badge>
                     </div>
                   ))}
@@ -389,11 +392,13 @@ export default function DeliveryApps() {
     const bankingFees = parseFloat(selectedApp.bankingFees);
     const posFees = parseFloat(selectedApp.posFees);
     
-    // Find applicable subsidy tier (highest threshold that order qualifies for)
-    const applicableTier = selectedApp.subsidyTiers
-      .filter(tier => amount >= tier.threshold)
-      .sort((a, b) => b.threshold - a.threshold)[0];
-    const subsidy = applicableTier ? applicableTier.amount : 0;
+    // Find applicable subsidy tier (where order amount falls within the range)
+    const applicableTier = selectedApp.subsidyTiers.find(tier => {
+      const isAboveMin = amount >= tier.minAmount;
+      const isBelowMax = tier.maxAmount === null || amount <= tier.maxAmount;
+      return isAboveMin && isBelowMax;
+    });
+    const subsidy = applicableTier ? applicableTier.subsidy : 0;
 
     const afterCommission = amount * (1 - commission / 100);
     const afterBanking = afterCommission * (1 - bankingFees / 100);
@@ -500,7 +505,7 @@ export default function DeliveryApps() {
                         variant="outline"
                         onClick={() => {
                           const current = form.getValues("subsidyTiers");
-                          form.setValue("subsidyTiers", [...current, { threshold: 0, amount: 0 }]);
+                          form.setValue("subsidyTiers", [...current, { minAmount: 0, maxAmount: null, subsidy: 0 }]);
                         }}
                         data-testid="button-add-tier"
                       >
@@ -511,20 +516,20 @@ export default function DeliveryApps() {
                   </div>
                   {form.watch("subsidyTiers").map((tier, index) => (
                     <div key={index} className="flex gap-2 items-start p-3 border rounded-md bg-muted/30">
-                      <div className="flex-1 grid grid-cols-2 gap-2">
+                      <div className="flex-1 grid grid-cols-3 gap-2">
                         <FormField
                           control={form.control}
-                          name={`subsidyTiers.${index}.threshold`}
+                          name={`subsidyTiers.${index}.minAmount`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs">Min Order (SAR)</FormLabel>
+                              <FormLabel className="text-xs">Min (SAR)</FormLabel>
                               <FormControl>
                                 <Input
                                   type="number"
                                   step="0.01"
                                   placeholder="0"
                                   {...field}
-                                  data-testid={`input-tier-threshold-${index}`}
+                                  data-testid={`input-tier-min-${index}`}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -533,7 +538,31 @@ export default function DeliveryApps() {
                         />
                         <FormField
                           control={form.control}
-                          name={`subsidyTiers.${index}.amount`}
+                          name={`subsidyTiers.${index}.maxAmount`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">Max (SAR)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="∞"
+                                  {...field}
+                                  value={field.value ?? ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    field.onChange(val === '' ? null : parseFloat(val));
+                                  }}
+                                  data-testid={`input-tier-max-${index}`}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`subsidyTiers.${index}.subsidy`}
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-xs">Subsidy (SAR)</FormLabel>
@@ -543,7 +572,7 @@ export default function DeliveryApps() {
                                   step="0.01"
                                   placeholder="0"
                                   {...field}
-                                  data-testid={`input-tier-amount-${index}`}
+                                  data-testid={`input-tier-subsidy-${index}`}
                                 />
                               </FormControl>
                               <FormMessage />
