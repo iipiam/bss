@@ -254,6 +254,8 @@ export interface Translations {
   tutorialStep3: string;
   tutorialStep4: string;
   tutorialStep5: string;
+  tutorialStepByStepGuide: string;
+  tutorialEstimatedTime: string;
   
   // Shop
   shop: string;
@@ -595,6 +597,8 @@ export const translations: Record<Language, Translations> = {
     tutorialStep3: 'Create menu items and link them to recipes for cost tracking',
     tutorialStep4: 'Add customers or use walk-in option for quick sales',
     tutorialStep5: 'Start selling through POS and monitor analytics on the Dashboard',
+    tutorialStepByStepGuide: 'Step-by-Step Guide',
+    tutorialEstimatedTime: 'Estimated time',
     
     // Shop
     shop: 'Shop',
@@ -935,6 +939,8 @@ export const translations: Record<Language, Translations> = {
     tutorialStep3: 'إنشاء عناصر القائمة وربطها بالوصفات لتتبع التكلفة',
     tutorialStep4: 'أضف العملاء أو استخدم خيار الدخول المباشر للمبيعات السريعة',
     tutorialStep5: 'ابدأ البيع من خلال نقطة البيع وراقب التحليلات على لوحة التحكم',
+    tutorialStepByStepGuide: 'دليل خطوة بخطوة',
+    tutorialEstimatedTime: 'الوقت المقدر',
     
     // Shop
     shop: 'المتجر',
@@ -1275,6 +1281,8 @@ export const translations: Record<Language, Translations> = {
     tutorialStep3: '创建菜单项并将其链接到食谱以进行成本跟踪',
     tutorialStep4: '添加客户或使用散客选项进行快速销售',
     tutorialStep5: '通过收银系统开始销售并在仪表板上监控分析',
+    tutorialStepByStepGuide: '分步指南',
+    tutorialEstimatedTime: '预计时间',
     
     // Shop
     shop: '商店',
@@ -1561,6 +1569,8 @@ export const translations: Record<Language, Translations> = {
     tutorialStep3: 'Menüpunkte erstellen und mit Rezepten verknüpfen für Kostenverfolgung',
     tutorialStep4: 'Kunden hinzufügen oder Laufkundschaft-Option für schnelle Verkäufe verwenden',
     tutorialStep5: 'Über Kassensystem verkaufen und Analytik im Dashboard überwachen',
+    tutorialStepByStepGuide: 'Schritt-für-Schritt-Anleitung',
+    tutorialEstimatedTime: 'Geschätzte Zeit',
     
     // Shop
     shop: 'Geschäft',
@@ -1839,6 +1849,8 @@ export const translations: Record<Language, Translations> = {
     tutorialStep3: 'लागत ट्रैकिंग के लिए मेनू आइटम बनाएं और उन्हें व्यंजनों से लिंक करें',
     tutorialStep4: 'त्वरित बिक्री के लिए ग्राहक जोड़ें या वॉक-इन विकल्प का उपयोग करें',
     tutorialStep5: 'POS के माध्यम से बिक्री शुरू करें और डैशबोर्ड पर एनालिटिक्स की निगरानी करें',
+    tutorialStepByStepGuide: 'चरण-दर-चरण गाइड',
+    tutorialEstimatedTime: 'अनुमानित समय',
     
     // Shop
     shop: 'दुकान',
@@ -2117,6 +2129,8 @@ export const translations: Record<Language, Translations> = {
     tutorialStep3: 'لاگت کی ٹریکنگ کے لیے مینو آئٹمز بنائیں اور انہیں ترکیبوں سے منسلک کریں',
     tutorialStep4: 'تیز فروخت کے لیے گاہک شامل کریں یا واک-ان آپشن استعمال کریں',
     tutorialStep5: 'POS کے ذریعے فروخت شروع کریں اور ڈیش بورڈ پر تجزیات کی نگرانی کریں',
+    tutorialStepByStepGuide: 'قدم بہ قدم گائیڈ',
+    tutorialEstimatedTime: 'تخمینہ شدہ وقت',
     
     // Shop
     shop: 'دکان',
@@ -2395,6 +2409,8 @@ export const translations: Record<Language, Translations> = {
     tutorialStep3: 'খরচ ট্র্যাকিংয়ের জন্য মেনু আইটেম তৈরি করুন এবং তাদের রেসিপির সাথে লিঙ্ক করুন',
     tutorialStep4: 'দ্রুত বিক্রয়ের জন্য গ্রাহক যোগ করুন বা ওয়াক-ইন বিকল্প ব্যবহার করুন',
     tutorialStep5: 'POS-এর মাধ্যমে বিক্রয় শুরু করুন এবং ড্যাশবোর্ডে বিশ্লেষণ মনিটর করুন',
+    tutorialStepByStepGuide: 'ধাপে ধাপে নির্দেশিকা',
+    tutorialEstimatedTime: 'আনুমানিক সময়',
     
     // Shop
     shop: 'দোকান',
