@@ -845,29 +845,26 @@ export class DatabaseStorage implements IStorage {
         const subsidy = applicableTier ? applicableTier.subsidy : 0;
         
         // Corrected formula per user requirements:
-        // The restaurant pays: Commission + Subsidy + Banking Fees + POS Fees (all with VAT)
+        // The restaurant pays: Commission + Subsidy + Banking Fees (with VAT) + POS Fees (no VAT)
         // Commission = (Price - Subsidy) × Commission%
         // Banking Fees = Price × Banking%
-        // Total Deduction = (Commission + Banking Fees + POS Fees + Subsidy) × 1.15 (15% VAT)
+        // VAT (15%) applies ONLY to: Subsidy, Commission, and Banking Fees
+        // POS Fees are charged WITHOUT VAT
         const subsidizedPrice = orderTotal - subsidy;
         const commissionAmount = subsidizedPrice * (commissionPercent / 100);
         const bankingFeesAmount = orderTotal * (bankingFeesPercent / 100);
         
-        // Apply 15% VAT on total fees INCLUDING subsidy
-        const totalFeesBeforeVat = commissionAmount + bankingFeesAmount + posFees + subsidy;
-        const totalFeesWithVat = totalFeesBeforeVat * 1.15;
-        
-        // Distribute the VAT proportionally back to each component for tracking
+        // Apply 15% VAT ONLY to subsidy, commission, and banking fees
         const vatMultiplier = 1.15;
+        const subsidyWithVat = subsidy * vatMultiplier;
         const commissionAmountWithVat = commissionAmount * vatMultiplier;
         const bankingFeesAmountWithVat = bankingFeesAmount * vatMultiplier;
-        const posFeesWithVat = posFees * vatMultiplier;
-        const subsidyWithVat = subsidy * vatMultiplier;
+        // POS fees are charged WITHOUT VAT (as per user requirement)
         
         totalBankingFeesCost += bankingFeesAmountWithVat;
         totalCommissionCost += commissionAmountWithVat;
         totalSubsidy += subsidyWithVat;
-        totalPosFees += posFeesWithVat;
+        totalPosFees += posFees; // No VAT on POS fees
         
         // Calculate item costs (safely handle null/empty items)
         const orderItems = Array.isArray(order.items) ? order.items : [];
