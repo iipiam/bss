@@ -226,6 +226,7 @@ export const users = pgTable("users", {
   branchId: varchar("branch_id").references(() => branches.id),
   commercialRegistration: text("commercial_registration"), // Saudi Arabia Commercial Registration number (mandatory for signup)
   subscriptionPlan: text("subscription_plan"), // "weekly", "monthly" or "yearly"
+  branchesCount: integer("branches_count").notNull().default(1), // Number of branches (minimum 1, affects pricing)
   subscriptionStatus: text("subscription_status").default("inactive"), // "inactive", "active", "cancelled", "expired"
   subscriptionStartDate: timestamp("subscription_start_date"),
   subscriptionEndDate: timestamp("subscription_end_date"),

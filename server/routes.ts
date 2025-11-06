@@ -836,15 +836,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public endpoint for user signup
   app.post("/api/auth/signup", async (req, res) => {
     try {
-      const { username, password, name, email, commercialRegistration, subscriptionPlan } = req.body;
+      const { username, password, name, email, commercialRegistration, subscriptionPlan, branchesCount } = req.body;
       
-      if (!username || !password || !name || !email || !commercialRegistration || !subscriptionPlan) {
-        return res.status(400).json({ error: "All fields are required including Commercial Registration and subscription plan" });
+      if (!username || !password || !name || !email || !commercialRegistration || !subscriptionPlan || !branchesCount) {
+        return res.status(400).json({ error: "All fields are required including Commercial Registration, subscription plan, and number of branches" });
       }
 
       // Validate subscription plan
-      if (!['monthly', 'yearly'].includes(subscriptionPlan)) {
+      if (!['weekly', 'monthly', 'yearly'].includes(subscriptionPlan)) {
         return res.status(400).json({ error: "Invalid subscription plan" });
+      }
+
+      // Validate branches count
+      const branches = parseInt(branchesCount);
+      if (isNaN(branches) || branches < 1) {
+        return res.status(400).json({ error: "Number of branches must be at least 1" });
       }
 
       // Check if username already exists
@@ -861,6 +867,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email,
         commercialRegistration,
         subscriptionPlan,
+        branchesCount: branches,
         subscriptionStatus: "inactive" as const, // Will be activated after payment
         role: "employee" as const,
         active: true,
@@ -891,6 +898,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fullName: user.fullName,
         role: user.role,
         subscriptionPlan: user.subscriptionPlan,
+        branchesCount: user.branchesCount,
         subscriptionStatus: user.subscriptionStatus
       });
     } catch (error) {

@@ -32,11 +32,33 @@ export default function Login() {
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupCommercialReg, setSignupCommercialReg] = useState("");
+  const [branchesCount, setBranchesCount] = useState(1);
   const [subscriptionPlan, setSubscriptionPlan] = useState("weekly");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
   const { language, setLanguage, t } = useLanguage();
+
+  // Calculate total price with branches
+  const calculateTotalPrice = () => {
+    const basePrices = {
+      weekly: 39.90,
+      monthly: 119.75,
+      yearly: 1197.50
+    };
+    
+    const perBranchPrices = {
+      weekly: 7,
+      monthly: 20,
+      yearly: 240 // 20 * 12 months
+    };
+    
+    const basePrice = basePrices[subscriptionPlan as keyof typeof basePrices];
+    const branchPrice = perBranchPrices[subscriptionPlan as keyof typeof perBranchPrices];
+    const additionalBranches = Math.max(0, branchesCount - 1); // First branch is included
+    
+    return (basePrice + (branchPrice * additionalBranches)).toFixed(2);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +89,7 @@ export default function Login() {
       email: string; 
       commercialRegistration: string;
       subscriptionPlan: string;
+      branchesCount: number;
     }) => {
       const response = await fetch("/api/auth/signup", {
         method: "POST",
@@ -115,6 +138,7 @@ export default function Login() {
       email: signupEmail,
       commercialRegistration: signupCommercialReg,
       subscriptionPlan: subscriptionPlan,
+      branchesCount: branchesCount,
     });
   };
 
@@ -268,6 +292,22 @@ export default function Login() {
                   <p className="text-xs text-muted-foreground">{t.commercialRegistrationNote}</p>
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="signup-branches">Number of Branches *</Label>
+                  <Input
+                    id="signup-branches"
+                    type="number"
+                    min="1"
+                    placeholder="Enter number of branches"
+                    value={branchesCount}
+                    onChange={(e) => setBranchesCount(Math.max(1, parseInt(e.target.value) || 1))}
+                    required
+                    data-testid="input-signup-branches"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Additional branches: +{7} {t.sar}/week, +{20} {t.sar}/month per branch
+                  </p>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="signup-username">{t.username}</Label>
                   <Input
                     id="signup-username"
@@ -305,9 +345,14 @@ export default function Login() {
                           <div>
                             <p className="font-semibold">Weekly</p>
                             <p className="text-sm text-muted-foreground">Billed weekly</p>
+                            {branchesCount > 1 && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {branchesCount} branches
+                              </p>
+                            )}
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold">39.90 {t.sar}</p>
+                            <p className="text-xl font-bold">{(39.90 + (branchesCount - 1) * 7).toFixed(2)} {t.sar}</p>
                             <p className="text-xs text-muted-foreground">per week</p>
                           </div>
                         </div>
@@ -323,9 +368,14 @@ export default function Login() {
                           <div>
                             <p className="font-semibold">{t.monthly}</p>
                             <p className="text-sm text-muted-foreground">{t.billedMonthly}</p>
+                            {branchesCount > 1 && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {branchesCount} branches
+                              </p>
+                            )}
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold">119.75 {t.sar}</p>
+                            <p className="text-xl font-bold">{(119.75 + (branchesCount - 1) * 20).toFixed(2)} {t.sar}</p>
                             <p className="text-xs text-muted-foreground">{t.perMonth}</p>
                           </div>
                         </div>
@@ -342,13 +392,18 @@ export default function Login() {
                             <div>
                               <p className="font-semibold">{t.yearly}</p>
                               <p className="text-sm text-muted-foreground">{t.billedYearly}</p>
+                              {branchesCount > 1 && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {branchesCount} branches
+                                </p>
+                              )}
                             </div>
                             <Badge variant="default" className="bg-green-600 hover:bg-green-700">
                               {t.save} 17%
                             </Badge>
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold">1,197.50 {t.sar}</p>
+                            <p className="text-xl font-bold">{(1197.50 + (branchesCount - 1) * 240).toFixed(2)} {t.sar}</p>
                             <p className="text-xs text-muted-foreground">{t.perYear}</p>
                           </div>
                         </div>

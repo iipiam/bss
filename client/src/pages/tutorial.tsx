@@ -491,6 +491,12 @@ export default function Tutorial() {
           <p className="text-muted-foreground" data-testid="text-subtitle">
             {t.tutorialSubtitle}
           </p>
+          <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <BookOpenCheck className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+            <p className="text-xs text-blue-700 dark:text-blue-300">
+              Detailed step-by-step guides are currently available in English. UI elements respect your selected language.
+            </p>
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
