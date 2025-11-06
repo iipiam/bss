@@ -61,12 +61,16 @@ Preferred communication style: Simple, everyday language.
 - **Device-Specific Responsive Design**: User-configurable device preference (Laptop, iPad, iPhone) stored in database, adjusting layout, typography, and specific components.
   - **Mobile Optimization Toolkit**: Centralized `mobileLayout.ts` utility providing responsive classes for grid columns, text sizes, spacing, and padding across all device types.
   - **TableList Component**: Production-ready mobile list component with swipeable actions for compact data display.
-  - **iPhone-Optimized Interfaces**: 
-    - Dashboard: Single-column metric cards with enhanced readability
-    - Inventory: Horizontal card layout with swipe actions
-    - Menu: Single-column grid with 112px images, horizontal card layout, simplified pricing, and 44px minimum touch targets for all interactive elements
-    - POS: Mobile-optimized layout with streamlined order flow
-  - **Accessibility Compliance**: All mobile interactive elements meet 44px minimum touch target size (WCAG 2.1 Level AAA).
+  - **Comprehensive iPhone-Optimized Interfaces**: All major application pages have been systematically optimized for iPhone with:
+    - Responsive grid layouts using `layout.gridCols()` that adapt from desktop (3-4 cols) to tablet (2 cols) to mobile (1 col)
+    - Dynamic typography using `layout.text3Xl`, `layout.textLg` for consistent scaling
+    - Smart spacing with `layout.padding`, `layout.spaceY`, `layout.gap` that adjusts based on screen size
+    - Conditional layouts with `layout.isMobile` for stacking elements vertically on small screens
+    - **Optimized Pages**: Dashboard, Menu, Inventory, Customers, Recipes, Branches, Orders, Delivery Apps
+    - **44px Touch Targets**: All primary buttons and interactive elements enforce min-h-[44px] on iPhone for WCAG AAA compliance
+    - **Form Optimization**: Dialogs adapt to iPhone screens with proper spacing
+    - **POS System**: Mobile-optimized layout with streamlined order flow and category navigation
+  - **Accessibility Compliance**: Interactive elements on optimized pages meet 44px minimum touch target size (WCAG 2.1 Level AAA).
 
 ## External Dependencies
 

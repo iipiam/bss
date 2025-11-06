@@ -216,13 +216,21 @@ export default function Customers() {
           <h1 className={`${layout.text3Xl} font-bold`}>{t.customers}</h1>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={handleExport} data-testid="button-export">
+          <Button 
+            variant="outline" 
+            onClick={handleExport} 
+            data-testid="button-export"
+            className={layout.isMobile ? 'min-h-[44px] min-w-[44px] h-11' : ''}
+          >
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
           <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-              <Button data-testid="button-add-customer">
+              <Button 
+                data-testid="button-add-customer"
+                className={layout.isMobile ? 'min-h-[44px] min-w-[44px] h-11' : ''}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 {t.add} {t.customers}
               </Button>

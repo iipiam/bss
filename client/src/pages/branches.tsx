@@ -149,7 +149,11 @@ export default function Branches() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button onClick={handleAddNew} data-testid="button-add-branch">
+            <Button 
+              onClick={handleAddNew} 
+              data-testid="button-add-branch"
+              className={layout.isMobile ? 'min-h-[44px] min-w-[44px] h-11' : ''}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add Branch
             </Button>

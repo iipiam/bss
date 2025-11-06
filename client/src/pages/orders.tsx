@@ -6,6 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Order } from "@shared/schema";
+import { useDeviceLayout } from "@/lib/mobileLayout";
 
 const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; color: string }> = {
   "Pending": { variant: "secondary", color: "text-orange-600" },
@@ -18,6 +19,7 @@ const statusConfig: Record<string, { variant: "default" | "secondary" | "destruc
 
 export default function Orders() {
   const { toast } = useToast();
+  const layout = useDeviceLayout();
   
   const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
@@ -46,21 +48,21 @@ export default function Orders() {
 
   if (isLoading) {
     return (
-      <div className="p-8">
-        <h1 className="text-3xl font-bold mb-2">Orders Tracking</h1>
+      <div className={layout.padding}>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Orders Tracking</h1>
         <p className="text-muted-foreground">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-8 space-y-6">
+    <div className={`${layout.padding} ${layout.spaceY}`}>
       <div>
-        <h1 className="text-3xl font-bold mb-2">Orders Tracking</h1>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Orders Tracking</h1>
         <p className="text-muted-foreground">Monitor and manage all orders in real-time</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 4, tablet: 2, mobile: 1 })}`}>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Pending</CardTitle>

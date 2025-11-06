@@ -412,30 +412,45 @@ export default function Recipes() {
 
   if (isLoading) {
     return (
-      <div className="p-8">
-        <h1 className="text-3xl font-bold mb-2">Recipes</h1>
+      <div className={layout.padding}>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Recipes</h1>
         <p className="text-muted-foreground">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className={`${layout.padding} ${layout.spaceY}`}>
+      <div className={`flex ${layout.isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
         <div>
-          <h1 className="text-3xl font-bold mb-2">Recipes</h1>
+          <h1 className={`${layout.text3Xl} font-bold mb-2`}>Recipes</h1>
           <p className="text-muted-foreground">Manage recipes and preparation instructions</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleDownloadTemplate} data-testid="button-download-template">
+        <div className="flex gap-2 flex-wrap">
+          <Button 
+            variant="outline" 
+            onClick={handleDownloadTemplate} 
+            data-testid="button-download-template"
+            className={layout.isMobile ? 'min-h-[44px] h-11' : ''}
+          >
             <FileDown className="h-4 w-4 mr-2" />
             Template
           </Button>
-          <Button variant="outline" onClick={handleExport} data-testid="button-export">
+          <Button 
+            variant="outline" 
+            onClick={handleExport} 
+            data-testid="button-export"
+            className={layout.isMobile ? 'min-h-[44px] h-11' : ''}
+          >
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button variant="outline" asChild disabled={isImporting}>
+          <Button 
+            variant="outline" 
+            asChild 
+            disabled={isImporting}
+            className={layout.isMobile ? 'min-h-[44px] h-11' : ''}
+          >
             <label htmlFor="import-recipes" className="cursor-pointer" data-testid="button-import">
               <Upload className="h-4 w-4 mr-2" />
               {isImporting ? "Importing..." : "Import"}
@@ -451,7 +466,10 @@ export default function Recipes() {
           </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="button-add-recipe">
+              <Button 
+                data-testid="button-add-recipe"
+                className={layout.isMobile ? 'min-h-[44px] h-11' : ''}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Recipe
               </Button>
