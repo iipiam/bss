@@ -14,7 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Language } from "@/i18n/translations";
-import kangalLogo from "@assets/SaudiKangal_1762538198513.png";
+import kinzhalLogo from "@assets/SaudiKangal_1762538198513.png";
 import {
   Select,
   SelectContent,
@@ -444,9 +444,9 @@ export default function Login() {
         {/* Branding Footer */}
         <div className="text-center branding-slide" data-testid="branding-footer">
           <div className="flex items-center justify-center gap-3">
-            <img src={kangalLogo} alt="Saudi Kangal Logo" className="h-10 w-10 object-contain" />
+            <img src={kinzhalLogo} alt="Saudi Kinzhal Logo" className="h-10 w-10 object-contain" />
             <p className="text-sm text-white/80">
-              Made By <span className="font-semibold text-white">Saudi Kangal</span>
+              Made By <span className="font-semibold text-white">Saudi Kinzhal</span>
             </p>
           </div>
         </div>

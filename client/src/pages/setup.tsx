@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UtensilsCrossed, User } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import kangalLogo from "@assets/SaudiKangal_1762538198513.png";
+import kinzhalLogo from "@assets/SaudiKangal_1762538198513.png";
 
 export default function Setup() {
   const [formData, setFormData] = useState({
@@ -211,9 +211,9 @@ export default function Setup() {
         {/* Branding Footer */}
         <div className="text-center branding-slide" data-testid="branding-footer">
           <div className="flex items-center justify-center gap-3">
-            <img src={kangalLogo} alt="Saudi Kangal Logo" className="h-10 w-10 object-contain" />
+            <img src={kinzhalLogo} alt="Saudi Kinzhal Logo" className="h-10 w-10 object-contain" />
             <p className="text-sm text-muted-foreground">
-              Made By <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Saudi Kangal</span>
+              Made By <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Saudi Kinzhal</span>
             </p>
           </div>
         </div>

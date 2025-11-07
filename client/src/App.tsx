@@ -67,7 +67,7 @@ import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
 import NotFound from "@/pages/not-found";
 import type { User } from "@shared/schema";
-import kangalLogo from "@assets/SaudiKangal_1762538198513.png";
+import kinzhalLogo from "@assets/SaudiKangal_1762538198513.png";
 
 function Router() {
   return (
@@ -402,9 +402,9 @@ function AppContent() {
             </main>
             <footer className="border-t py-3 px-4 flex-shrink-0 branding-slide" data-testid="branding-footer">
               <div className="flex items-center justify-center gap-3">
-                <img src={kangalLogo} alt="Saudi Kangal Logo" className="h-8 w-8 object-contain" />
+                <img src={kinzhalLogo} alt="Saudi Kinzhal Logo" className="h-8 w-8 object-contain" />
                 <p className="text-xs text-muted-foreground">
-                  Made By <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Saudi Kangal</span>
+                  Made By <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Saudi Kinzhal</span>
                 </p>
               </div>
             </footer>
