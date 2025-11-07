@@ -105,7 +105,7 @@ export const addons = pgTable("addons", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(), // VAT-inclusive price
   basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(), // Price before VAT
   vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).notNull(), // VAT amount (15%)
-  menuItemId: varchar("menu_item_id").references(() => menuItems.id), // Optional: link to specific menu item
+  menuItemIds: varchar("menu_item_ids").array(), // Optional: link to multiple menu items (null means "All items")
   available: boolean("available").notNull().default(true),
   sortOrder: integer("sort_order").default(0),
 });
@@ -113,7 +113,7 @@ export const addons = pgTable("addons", {
 export const insertAddonSchema = createInsertSchema(addons)
   .omit({ id: true })
   .extend({
-    menuItemId: z.string().nullable().optional(),
+    menuItemIds: z.array(z.string()).nullable().optional(),
   });
 export type InsertAddon = z.infer<typeof insertAddonSchema>;
 export type Addon = typeof addons.$inferSelect;
