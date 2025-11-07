@@ -14,7 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Language } from "@/i18n/translations";
-import kangalLogo from "@assets/Kangal3_1762537941435.png";
+import kangalLogo from "@assets/SaudiKangal_1762538198513.png";
 import {
   Select,
   SelectContent,

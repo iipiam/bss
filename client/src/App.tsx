@@ -67,7 +67,7 @@ import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
 import NotFound from "@/pages/not-found";
 import type { User } from "@shared/schema";
-import kangalLogo from "@assets/Kangal3_1762537941435.png";
+import kangalLogo from "@assets/SaudiKangal_1762538198513.png";
 
 function Router() {
   return (

@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UtensilsCrossed, User } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import kangalLogo from "@assets/Kangal3_1762537941435.png";
+import kangalLogo from "@assets/SaudiKangal_1762538198513.png";
 
 export default function Setup() {
   const [formData, setFormData] = useState({
