@@ -19,14 +19,14 @@ import { z } from "zod";
 import { insertMenuItemSchema, type MenuItem, type Recipe, type InventoryItem } from "@shared/schema";
 import { useDeviceLayout } from "@/lib/mobileLayout";
 
-// Form schema for UI - only collect basePrice and discount, calculate VAT on submit
+// Form schema for UI - collect VAT-inclusive price and discount, calculate base price and VAT on submit
 const menuFormSchema = z.object({
   name: z.string().min(1, "Item name is required"),
   category: z.string().min(1, "Category is required"),
   recipeId: z.string().optional(),
   portionSize: z.string().default("1.00"),
   stockNo: z.string().optional(),
-  basePrice: z.string().min(1, "Base price is required"),
+  price: z.string().min(1, "Price is required"),
   discount: z.string().default("0").refine(
     (val) => {
       const num = parseFloat(val || "0");
@@ -78,7 +78,7 @@ export default function Menu() {
       recipeId: "",
       portionSize: "1.00",
       stockNo: "",
-      basePrice: "",
+      price: "",
       discount: "0",
     },
   });
@@ -113,20 +113,26 @@ export default function Menu() {
 
   const createMenuItemMutation = useMutation({
     mutationFn: async (data: MenuFormValues) => {
-      // Apply discount to base price, then calculate VAT
-      const basePriceNum = parseFloat(data.basePrice);
+      // Price is VAT-inclusive, calculate base price and VAT from ORIGINAL price
+      const priceNum = parseFloat(data.price); // Original VAT-inclusive price
       const discountNum = parseFloat(data.discount || "0");
-      const discountedBase = basePriceNum * (1 - discountNum / 100);
-      const vatAmount = discountedBase * 0.15;
-      const price = discountedBase + vatAmount;
+      
+      // Calculate base price and VAT from original VAT-inclusive price (before discount)
+      const basePrice = priceNum / 1.15;
+      const vatAmount = priceNum - basePrice;
+      
+      // Calculate final price after discount
+      const discountedBase = basePrice * (1 - discountNum / 100);
+      const discountedVAT = discountedBase * 0.15;
+      const finalPrice = discountedBase + discountedVAT;
 
       const menuItemData: any = {
         name: data.name,
         description: data.description,
         category: data.category,
-        basePrice: basePriceNum.toFixed(2), // Store original base price
-        vatAmount: vatAmount.toFixed(2), // VAT on discounted base
-        price: price.toFixed(2), // Final price with discount and VAT
+        price: finalPrice.toFixed(2), // Final price after discount and VAT
+        basePrice: basePrice.toFixed(2), // Original base price (before discount)
+        vatAmount: discountedVAT.toFixed(2), // VAT on discounted base
         discount: discountNum.toFixed(2),
         available: true,
       };
@@ -164,12 +170,18 @@ export default function Menu() {
 
   const updateMenuItemMutation = useMutation({
     mutationFn: async (data: MenuFormValues & { id: string }) => {
-      // Apply discount to base price, then calculate VAT
-      const basePriceNum = parseFloat(data.basePrice);
+      // Price is VAT-inclusive, calculate base price and VAT from ORIGINAL price
+      const priceNum = parseFloat(data.price); // Original VAT-inclusive price
       const discountNum = parseFloat(data.discount || "0");
-      const discountedBase = basePriceNum * (1 - discountNum / 100);
-      const vatAmount = discountedBase * 0.15;
-      const price = discountedBase + vatAmount;
+      
+      // Calculate base price and VAT from original VAT-inclusive price (before discount)
+      const basePrice = priceNum / 1.15;
+      const vatAmount = priceNum - basePrice;
+      
+      // Calculate final price after discount
+      const discountedBase = basePrice * (1 - discountNum / 100);
+      const discountedVAT = discountedBase * 0.15;
+      const finalPrice = discountedBase + discountedVAT;
 
       const menuItemData: any = {
         name: data.name,
@@ -178,9 +190,9 @@ export default function Menu() {
         recipeId: (data.recipeId && data.recipeId !== "none") ? data.recipeId : null, // Send null to clear recipe or actual ID
         portionSize: (data.recipeId && data.recipeId !== "none") ? (data.portionSize || "1.00") : null,
         stockNo: data.stockNo || null, // Include stockNo (null if empty)
-        basePrice: basePriceNum.toFixed(2), // Store original base price
-        vatAmount: vatAmount.toFixed(2), // VAT on discounted base
-        price: price.toFixed(2), // Final price with discount and VAT
+        price: finalPrice.toFixed(2), // Final price after discount and VAT
+        basePrice: basePrice.toFixed(2), // Original base price (before discount)
+        vatAmount: discountedVAT.toFixed(2), // VAT on discounted base
         discount: discountNum.toFixed(2),
       };
 
@@ -250,6 +262,11 @@ export default function Menu() {
   const handleEdit = (item: MenuItem) => {
     setEditingItem(item);
     setSelectedRecipeId(item.recipeId || "none");
+    
+    // basePrice is stored as original (before discount), so calculate original VAT-inclusive price
+    const basePrice = parseFloat(item.basePrice || "0");
+    const originalPrice = basePrice * 1.15; // Add 15% VAT to get original VAT-inclusive price
+    
     form.reset({
       name: item.name,
       description: item.description || "",
@@ -257,7 +274,7 @@ export default function Menu() {
       recipeId: item.recipeId || "none",
       portionSize: item.portionSize || "1.00",
       stockNo: item.stockNo || "",
-      basePrice: item.basePrice || "",
+      price: originalPrice.toFixed(2), // Original VAT-inclusive price
       discount: item.discount || "0",
     });
     setOpen(true);
@@ -691,23 +708,23 @@ export default function Menu() {
                 )}
                 <FormField
                   control={form.control}
-                  name="basePrice"
+                  name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Base Price (SAR, before VAT)</FormLabel>
+                      <FormLabel>Price (SAR, incl. VAT)</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           type="number"
                           step="0.01"
-                          placeholder="e.g., 25.00"
-                          data-testid="input-menu-baseprice"
+                          placeholder="e.g., 28.75"
+                          data-testid="input-menu-price"
                         />
                       </FormControl>
                       {field.value && (
                         <p className="text-xs text-muted-foreground mt-1 font-mono">
-                          VAT (15%): +{(parseFloat(field.value) * 0.15).toFixed(2)} SAR | 
-                          Total: {(parseFloat(field.value) * 1.15).toFixed(2)} SAR
+                          Base: {(parseFloat(field.value) / 1.15).toFixed(2)} SAR | 
+                          VAT (15%): {(parseFloat(field.value) - parseFloat(field.value) / 1.15).toFixed(2)} SAR
                         </p>
                       )}
                       <FormMessage />
@@ -731,10 +748,10 @@ export default function Menu() {
                           data-testid="input-menu-discount"
                         />
                       </FormControl>
-                      {field.value && parseFloat(field.value) > 0 && form.watch("basePrice") && (
+                      {field.value && parseFloat(field.value) > 0 && form.watch("price") && (
                         <p className="text-xs text-muted-foreground mt-1 font-mono">
-                          Discounted Base: {(parseFloat(form.watch("basePrice")) * (1 - parseFloat(field.value) / 100)).toFixed(2)} SAR | 
-                          Final Price: {(parseFloat(form.watch("basePrice")) * (1 - parseFloat(field.value) / 100) * 1.15).toFixed(2)} SAR
+                          Discounted Price: {(parseFloat(form.watch("price")) * (1 - parseFloat(field.value) / 100)).toFixed(2)} SAR | 
+                          Base (after discount): {((parseFloat(form.watch("price")) * (1 - parseFloat(field.value) / 100)) / 1.15).toFixed(2)} SAR
                         </p>
                       )}
                       <FormMessage />
