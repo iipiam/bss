@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { User, Mail, Phone, CreditCard, Calendar, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { User, Mail, Phone, CreditCard, Calendar, AlertTriangle, CheckCircle2, XCircle, Shield } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
 import {
   AlertDialog,
@@ -49,16 +49,17 @@ export default function Profile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       toast({
         title: "Profile Updated",
         description: "Your profile has been updated successfully.",
       });
       setIsEditing(false);
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: "Update Failed",
-        description: "Failed to update profile. Please try again.",
+        description: error.message || "Failed to update profile. Please try again.",
         variant: "destructive",
       });
     },
@@ -284,6 +285,16 @@ export default function Profile() {
                     Phone Number
                   </Label>
                   <p className="text-base font-medium" data-testid="text-phone">{profile.phone || "Not set"}</p>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    <Shield className="inline-block mr-2 h-4 w-4" />
+                    Role
+                  </Label>
+                  <p className="text-base font-medium capitalize" data-testid="text-role">{profile.role || "Employee"}</p>
                 </div>
 
                 <Button
