@@ -102,7 +102,8 @@ export default function Setup() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/10 to-primary/5 p-4">
-      <Card className="w-full max-w-2xl">
+      <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
+        <Card className="w-full">
         <CardHeader className="space-y-4 text-center">
           <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit">
             <UtensilsCrossed className="h-12 w-12 text-primary" />
@@ -204,7 +205,15 @@ export default function Setup() {
             </Button>
           </form>
         </CardContent>
-      </Card>
+        </Card>
+        
+        {/* Branding Footer */}
+        <div className="text-center" data-testid="branding-footer">
+          <p className="text-sm text-muted-foreground">
+            Made By <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Saudi Kangal</span>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

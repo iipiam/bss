@@ -151,7 +151,8 @@ export default function Login() {
         <div className="absolute -bottom-32 right-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      <Card className="relative w-full max-w-md mx-4 border-none shadow-2xl backdrop-blur-sm bg-white/95 dark:bg-background/95">
+      <div className="flex flex-col items-center gap-6 w-full max-w-md mx-4">
+        <Card className="relative w-full border-none shadow-2xl backdrop-blur-sm bg-white/95 dark:bg-background/95">
         <CardHeader className="space-y-6 text-center pb-6">
           <div className="mx-auto relative">
             <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/60 rounded-full blur-xl opacity-50"></div>
@@ -437,7 +438,15 @@ export default function Login() {
             </TabsContent>
           </Tabs>
         </CardContent>
-      </Card>
+        </Card>
+        
+        {/* Branding Footer */}
+        <div className="text-center" data-testid="branding-footer">
+          <p className="text-sm text-white/80">
+            Made By <span className="font-semibold text-white">Saudi Kangal</span>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

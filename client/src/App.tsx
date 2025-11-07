@@ -399,6 +399,11 @@ function AppContent() {
             <main className={`flex-1 overflow-auto device-${device}`} data-device={device}>
               <Router />
             </main>
+            <footer className="border-t py-3 px-4 flex-shrink-0" data-testid="branding-footer">
+              <p className="text-xs text-center text-muted-foreground">
+                Made By <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Saudi Kangal</span>
+              </p>
+            </footer>
           </div>
         </div>
       </div>
