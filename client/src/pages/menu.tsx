@@ -398,7 +398,7 @@ export default function Menu() {
           <Button 
             variant="outline" 
             onClick={handleDownloadTemplate} 
-            className={layout.isMobile ? 'w-full justify-start h-11' : ''}
+            className={layout.isMobile ? 'w-full justify-start h-[44px]' : ''}
             data-testid="button-download-template"
           >
             <FileDown className="h-4 w-4 mr-2" />
@@ -407,7 +407,7 @@ export default function Menu() {
           <Button 
             variant="outline" 
             onClick={handleExport} 
-            className={layout.isMobile ? 'w-full justify-start h-11' : ''}
+            className={layout.isMobile ? 'w-full justify-start h-[44px]' : ''}
             data-testid="button-export"
           >
             <Download className="h-4 w-4 mr-2" />
@@ -417,7 +417,7 @@ export default function Menu() {
             variant="outline" 
             asChild 
             disabled={isImporting}
-            className={layout.isMobile ? 'w-full h-11' : ''}
+            className={layout.isMobile ? 'w-full h-[44px]' : ''}
           >
             <label htmlFor="import-menu" className={`cursor-pointer ${layout.isMobile ? 'justify-start' : ''}`} data-testid="button-import">
               <Upload className="h-4 w-4 mr-2" />
@@ -436,7 +436,7 @@ export default function Menu() {
             <DialogTrigger asChild>
               <Button 
                 variant="outline" 
-                className={layout.isMobile ? 'w-full justify-start h-11' : ''}
+                className={layout.isMobile ? 'w-full justify-start h-[44px]' : ''}
                 data-testid="button-manage-categories"
               >
                 <Settings2 className="h-4 w-4 mr-2" />
@@ -468,7 +468,7 @@ export default function Menu() {
                         });
                       }
                     }}
-                    className={layout.isMobile ? 'w-full h-11' : ''}
+                    className={layout.isMobile ? 'w-full h-[44px]' : ''}
                     data-testid="button-add-category"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -506,7 +506,7 @@ export default function Menu() {
           <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
               <Button 
-                className={layout.isMobile ? 'w-full justify-start h-11' : ''}
+                className={layout.isMobile ? 'w-full justify-start h-[44px]' : ''}
                 data-testid="button-add-menu-item"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -746,7 +746,7 @@ export default function Menu() {
                     type="button" 
                     variant="outline" 
                     onClick={handleCloseDialog} 
-                    className={layout.isMobile ? 'w-full h-11' : ''}
+                    className={layout.isMobile ? 'w-full h-[44px]' : ''}
                     data-testid="button-cancel"
                   >
                     Cancel
@@ -754,7 +754,7 @@ export default function Menu() {
                   <Button 
                     type="submit" 
                     disabled={createMenuItemMutation.isPending || updateMenuItemMutation.isPending} 
-                    className={layout.isMobile ? 'w-full h-11' : ''}
+                    className={layout.isMobile ? 'w-full h-[44px]' : ''}
                     data-testid="button-save-menu"
                   >
                     {editingItem 
@@ -824,7 +824,7 @@ export default function Menu() {
                   <div className="flex gap-2">
                     <Button 
                       variant="ghost" 
-                      className="h-11"
+                      className="h-[44px]"
                       onClick={() => handleEdit(item)}
                       data-testid={`button-edit-menu-${item.id}`}
                     >
@@ -833,7 +833,7 @@ export default function Menu() {
                     </Button>
                     <Button 
                       variant="ghost"
-                      className="h-11"
+                      className="h-[44px]"
                       onClick={() => setDeletingItem(item)}
                       data-testid={`button-delete-menu-${item.id}`}
                     >

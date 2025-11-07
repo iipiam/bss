@@ -220,7 +220,7 @@ export default function Customers() {
             variant="outline" 
             onClick={handleExport} 
             data-testid="button-export"
-            className={layout.isMobile ? 'min-h-[44px] min-w-[44px] h-11' : ''}
+            className={layout.isMobile ? 'h-[44px]' : ''}
           >
             <Download className="h-4 w-4 mr-2" />
             Export
@@ -229,7 +229,7 @@ export default function Customers() {
             <DialogTrigger asChild>
               <Button 
                 data-testid="button-add-customer"
-                className={layout.isMobile ? 'min-h-[44px] min-w-[44px] h-11' : ''}
+                className={layout.isMobile ? 'h-[44px]' : ''}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 {t.add} {t.customers}

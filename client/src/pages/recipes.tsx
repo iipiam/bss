@@ -540,7 +540,7 @@ export default function Recipes() {
             variant="outline" 
             onClick={handleDownloadTemplate} 
             data-testid="button-download-template"
-            className={layout.isMobile ? 'min-h-[44px] h-11' : ''}
+            className={layout.isMobile ? 'h-[44px]' : ''}
           >
             <FileDown className="h-4 w-4 mr-2" />
             Template
@@ -549,7 +549,7 @@ export default function Recipes() {
             variant="outline" 
             onClick={handleExport} 
             data-testid="button-export"
-            className={layout.isMobile ? 'min-h-[44px] h-11' : ''}
+            className={layout.isMobile ? 'h-[44px]' : ''}
           >
             <Download className="h-4 w-4 mr-2" />
             Export
@@ -558,7 +558,7 @@ export default function Recipes() {
             variant="outline" 
             asChild 
             disabled={isImporting}
-            className={layout.isMobile ? 'min-h-[44px] h-11' : ''}
+            className={layout.isMobile ? 'h-[44px]' : ''}
           >
             <label htmlFor="import-recipes" className="cursor-pointer" data-testid="button-import">
               <Upload className="h-4 w-4 mr-2" />
@@ -577,7 +577,7 @@ export default function Recipes() {
             <DialogTrigger asChild>
               <Button 
                 data-testid="button-add-recipe"
-                className={layout.isMobile ? 'min-h-[44px] h-11' : ''}
+                className={layout.isMobile ? 'h-[44px]' : ''}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Recipe

@@ -493,7 +493,7 @@ export default function POS() {
               <div className="mb-3">
                 <Label className="text-xs font-medium mb-1 block">Delivery App (Optional)</Label>
                 <Select value={selectedDeliveryAppId || "none"} onValueChange={(value) => setSelectedDeliveryAppId(value === "none" ? null : value)}>
-                  <SelectTrigger data-testid="select-delivery-app" className="w-full h-11">
+                  <SelectTrigger data-testid="select-delivery-app" className="w-full h-[44px]">
                     <SelectValue placeholder="Select delivery app" />
                   </SelectTrigger>
                   <SelectContent>
@@ -514,7 +514,7 @@ export default function POS() {
                     checked={earningsDecreaseApplied}
                     onCheckedChange={(checked) => setEarningsDecreaseApplied(checked as boolean)}
                     data-testid="checkbox-decrease-earnings"
-                    className="h-11 w-11"
+                    className="h-[44px] w-[44px]"
                   />
                   <Label
                     htmlFor="earnings-decrease-mobile"

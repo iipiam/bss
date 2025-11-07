@@ -205,7 +205,7 @@ export default function Login() {
                     value={loginUsername}
                     onChange={(e) => setLoginUsername(e.target.value)}
                     required
-                    className="h-11"
+                    className="h-[44px]"
                     data-testid="input-login-username"
                   />
                 </div>
@@ -218,7 +218,7 @@ export default function Login() {
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required
-                    className="h-11"
+                    className="h-[44px]"
                     data-testid="input-login-password"
                   />
                 </div>
@@ -233,7 +233,7 @@ export default function Login() {
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full h-11 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow-lg shadow-primary/20 transition-all" 
+                  className="w-full h-[44px] bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow-lg shadow-primary/20 transition-all" 
                   disabled={isLoggingIn} 
                   data-testid="button-login"
                 >
@@ -417,7 +417,7 @@ export default function Login() {
 
                 <Button 
                   type="submit" 
-                  className="w-full h-11 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow-lg shadow-primary/20 transition-all" 
+                  className="w-full h-[44px] bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow-lg shadow-primary/20 transition-all" 
                   disabled={signupMutation.isPending} 
                   data-testid="button-signup"
                 >
