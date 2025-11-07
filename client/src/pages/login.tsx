@@ -14,6 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Language } from "@/i18n/translations";
+import kangalLogo from "@assets/Kangal3_1762537941435.png";
 import {
   Select,
   SelectContent,
@@ -441,10 +442,13 @@ export default function Login() {
         </Card>
         
         {/* Branding Footer */}
-        <div className="text-center" data-testid="branding-footer">
-          <p className="text-sm text-white/80">
-            Made By <span className="font-semibold text-white">Saudi Kangal</span>
-          </p>
+        <div className="text-center branding-slide" data-testid="branding-footer">
+          <div className="flex items-center justify-center gap-3">
+            <img src={kangalLogo} alt="Saudi Kangal Logo" className="h-10 w-10 object-contain" />
+            <p className="text-sm text-white/80">
+              Made By <span className="font-semibold text-white">Saudi Kangal</span>
+            </p>
+          </div>
         </div>
       </div>
     </div>

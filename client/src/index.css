@@ -425,3 +425,24 @@
     font-size: 16px;
   }
 }
+
+/* Branding Footer Animation */
+@keyframes slideHorizontal {
+  0%, 100% {
+    transform: translateX(-10px);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+}
+
+.branding-slide {
+  animation: slideHorizontal 3s ease-in-out infinite;
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .branding-slide {
+    animation: none;
+  }
+}

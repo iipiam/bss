@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UtensilsCrossed, User } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import kangalLogo from "@assets/Kangal3_1762537941435.png";
 
 export default function Setup() {
   const [formData, setFormData] = useState({
@@ -208,10 +209,13 @@ export default function Setup() {
         </Card>
         
         {/* Branding Footer */}
-        <div className="text-center" data-testid="branding-footer">
-          <p className="text-sm text-muted-foreground">
-            Made By <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Saudi Kangal</span>
-          </p>
+        <div className="text-center branding-slide" data-testid="branding-footer">
+          <div className="flex items-center justify-center gap-3">
+            <img src={kangalLogo} alt="Saudi Kangal Logo" className="h-10 w-10 object-contain" />
+            <p className="text-sm text-muted-foreground">
+              Made By <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Saudi Kangal</span>
+            </p>
+          </div>
         </div>
       </div>
     </div>
