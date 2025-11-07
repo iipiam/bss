@@ -964,6 +964,7 @@ export default function Inventory() {
                                 <SelectItem value="Grains">Grains</SelectItem>
                                 <SelectItem value="Oils">Oils</SelectItem>
                                 <SelectItem value="Spices">Spices</SelectItem>
+                                <SelectItem value="Packaging">Packaging</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -1095,6 +1096,7 @@ export default function Inventory() {
                   <SelectItem value="dairy">Dairy</SelectItem>
                   <SelectItem value="grains">Grains</SelectItem>
                   <SelectItem value="oils">Oils</SelectItem>
+                  <SelectItem value="packaging">Packaging</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
