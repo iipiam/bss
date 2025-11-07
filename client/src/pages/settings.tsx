@@ -214,6 +214,7 @@ function DevicePreferenceSection() {
   const { device, setDevice, isUpdating } = useDevice();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const handleDeviceChange = async (newDevice: 'laptop' | 'ipad' | 'iphone') => {
     try {
@@ -225,7 +226,7 @@ function DevicePreferenceSection() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update device preference",
+        description: t.failedToUpdateDevicePreference,
         variant: "destructive",
       });
     }

@@ -16,10 +16,12 @@ import { useToast } from "@/hooks/use-toast";
 import type { Transaction } from "@shared/schema";
 import { useState } from "react";
 import { exportToPDF, exportToExcel } from "@/lib/exportUtils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Sales() {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   const { data: transactions = [], isLoading } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions"],
@@ -59,7 +61,7 @@ export default function Sales() {
     } catch (error) {
       toast({
         title: "Export Failed",
-        description: error instanceof Error ? error.message : "Failed to export PDF",
+        description: error instanceof Error ? error.message : t.failedToExportPDF,
         variant: "destructive",
       });
     }
@@ -90,7 +92,7 @@ export default function Sales() {
     } catch (error) {
       toast({
         title: "Export Failed",
-        description: error instanceof Error ? error.message : "Failed to export Excel",
+        description: error instanceof Error ? error.message : t.failedToExportExcel,
         variant: "destructive",
       });
     }

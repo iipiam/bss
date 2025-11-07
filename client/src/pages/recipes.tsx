@@ -196,8 +196,8 @@ export default function Recipes() {
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to update order",
-        description: error.message || "Could not save new order",
+        title: t.failedToUpdateOrder,
+        description: error.message || t.couldNotSaveNewOrder,
         variant: "destructive",
       });
     },
@@ -244,8 +244,8 @@ export default function Recipes() {
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to create recipe",
-        description: error.message || "Could not create recipe",
+        title: t.failedToCreateRecipe,
+        description: error.message || t.couldNotCreateRecipe,
         variant: "destructive",
       });
     },
@@ -267,8 +267,8 @@ export default function Recipes() {
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to update recipe",
-        description: error.message || "Could not update recipe",
+        title: t.failedToUpdateRecipe,
+        description: error.message || t.couldNotUpdateRecipe,
         variant: "destructive",
       });
     },
@@ -289,8 +289,8 @@ export default function Recipes() {
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to delete recipe",
-        description: error.message || "Could not delete recipe",
+        title: t.failedToDeleteRecipe,
+        description: error.message || t.couldNotDeleteRecipe,
         variant: "destructive",
       });
     },

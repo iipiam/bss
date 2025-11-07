@@ -11,12 +11,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import type { MenuItem, Recipe, Order, ShopBill } from "@shared/schema";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
 export default function Profitability() {
   const [period, setPeriod] = useState<string>("month");
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const { data: menuItems = [], isLoading: isLoadingMenu } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu"],
@@ -34,7 +36,7 @@ export default function Profitability() {
     queryKey: ["/api/shop/bills"],
     queryFn: async () => {
       const response = await fetch("/api/shop/bills?includeArchived=false");
-      if (!response.ok) throw new Error("Failed to fetch bills");
+      if (!response.ok) throw new Error(t.failedToFetchBills);
       return response.json();
     },
   });
@@ -165,7 +167,7 @@ export default function Profitability() {
     } catch (error) {
       toast({
         title: "Export failed",
-        description: error instanceof Error ? error.message : "Failed to export profitability data",
+        description: error instanceof Error ? error.message : t.failedToExportProfitability,
         variant: "destructive",
       });
     }

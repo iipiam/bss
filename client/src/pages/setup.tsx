@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UtensilsCrossed, User } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Setup() {
   const [formData, setFormData] = useState({
@@ -20,14 +21,15 @@ export default function Setup() {
   const [isLoading, setIsLoading] = useState(false);
   const { refetchUser } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
       toast({
-        title: "Passwords don't match",
-        description: "Please make sure both passwords are the same",
+        title: t.passwordsDontMatch,
+        description: t.passwordsDontMatchDesc,
         variant: "destructive",
       });
       return;
@@ -35,8 +37,8 @@ export default function Setup() {
 
     if (formData.password.length < 6) {
       toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters long",
+        title: t.passwordTooShort,
+        description: t.passwordTooShortDesc,
         variant: "destructive",
       });
       return;
@@ -90,7 +92,7 @@ export default function Setup() {
     } catch (error: any) {
       toast({
         title: "Setup failed",
-        description: error.message || "Failed to create admin account",
+        description: error.message || t.failedToCreateAdminAccount,
         variant: "destructive",
       });
     } finally {

@@ -6,12 +6,14 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,18 +28,18 @@ export default function ForgotPassword() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to send reset email");
+        throw new Error(error.error || t.failedToSendResetEmail);
       }
 
       setIsSubmitted(true);
       toast({
-        title: "Reset email sent",
-        description: "Check your email for password reset instructions.",
+        title: t.resetEmailSent,
+        description: t.resetEmailSentDesc,
       });
     } catch (error: any) {
       toast({
-        title: "Failed to send reset email",
-        description: error.message || "Please try again later.",
+        title: t.failedToSendResetEmail,
+        description: error.message || t.pleaseTryAgainLater,
         variant: "destructive",
       });
     } finally {
@@ -49,11 +51,11 @@ export default function ForgotPassword() {
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/10 to-primary/5">
       <Card className="w-full max-w-md mx-4">
         <CardHeader className="space-y-2">
-          <CardTitle className="text-2xl">Forgot Password</CardTitle>
+          <CardTitle className="text-2xl">{t.forgotPassword}</CardTitle>
           <CardDescription>
             {isSubmitted
-              ? "Check your email for reset instructions"
-              : "Enter your email address and we'll send you a link to reset your password"}
+              ? t.resetEmailSentDesc
+              : t.forgotPasswordDesc}
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, Check } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -14,6 +15,7 @@ export default function ResetPassword() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [token, setToken] = useState("");
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -24,8 +26,8 @@ export default function ResetPassword() {
       setToken(resetToken);
     } else {
       toast({
-        title: "Invalid reset link",
-        description: "The password reset link is invalid or expired.",
+        title: t.invalidResetLink,
+        description: t.invalidResetLinkDesc,
         variant: "destructive",
       });
       setTimeout(() => setLocation("/login"), 3000);
@@ -37,8 +39,8 @@ export default function ResetPassword() {
 
     if (password !== confirmPassword) {
       toast({
-        title: "Passwords don't match",
-        description: "Please make sure both passwords are the same.",
+        title: t.passwordsDontMatch,
+        description: t.passwordsDontMatchDesc,
         variant: "destructive",
       });
       return;
@@ -46,8 +48,8 @@ export default function ResetPassword() {
 
     if (password.length < 6) {
       toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters long.",
+        title: t.passwordTooShort,
+        description: t.passwordTooShortDesc,
         variant: "destructive",
       });
       return;
@@ -64,21 +66,21 @@ export default function ResetPassword() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to reset password");
+        throw new Error(error.error || t.failedToResetPassword);
       }
 
       setIsSuccess(true);
       toast({
-        title: "Password reset successful",
-        description: "You can now log in with your new password.",
+        title: t.passwordResetSuccessful,
+        description: t.passwordResetSuccessfulDesc,
       });
 
       // Redirect to login after 3 seconds
       setTimeout(() => setLocation("/login"), 3000);
     } catch (error: any) {
       toast({
-        title: "Failed to reset password",
-        description: error.message || "Please try again or request a new reset link.",
+        title: t.failedToResetPassword,
+        description: error.message || t.pleaseTryAgainOrRequestNew,
         variant: "destructive",
       });
     } finally {
@@ -94,11 +96,11 @@ export default function ResetPassword() {
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/10 to-primary/5">
       <Card className="w-full max-w-md mx-4">
         <CardHeader className="space-y-2">
-          <CardTitle className="text-2xl">Reset Password</CardTitle>
+          <CardTitle className="text-2xl">{t.resetPassword}</CardTitle>
           <CardDescription>
             {isSuccess
-              ? "Your password has been reset successfully"
-              : "Enter your new password below"}
+              ? t.passwordResetSuccessfulDesc
+              : t.resetPasswordDesc}
           </CardDescription>
         </CardHeader>
         <CardContent>

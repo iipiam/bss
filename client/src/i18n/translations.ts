@@ -411,6 +411,33 @@ export interface Translations {
   failedToUpdateEmployee: string;
   failedToExportFinancial: string;
   exportFailed: string;
+  failedToResetPassword: string;
+  failedToSendResetEmail: string;
+  failedToUpdateDevicePreference: string;
+  failedToExportProfitability: string;
+  failedToCreateAdminAccount: string;
+  failedToCreateRecipe: string;
+  failedToUpdateRecipe: string;
+  failedToDeleteRecipe: string;
+  couldNotSaveNewOrder: string;
+  couldNotCreateRecipe: string;
+  couldNotUpdateRecipe: string;
+  couldNotDeleteRecipe: string;
+  failedToFetchBills: string;
+  invalidResetLink: string;
+  invalidResetLinkDesc: string;
+  passwordsDontMatch: string;
+  passwordsDontMatchDesc: string;
+  passwordTooShort: string;
+  passwordTooShortDesc: string;
+  passwordResetSuccessful: string;
+  passwordResetSuccessfulDesc: string;
+  resetEmailSent: string;
+  resetEmailSentDesc: string;
+  resetPasswordDesc: string;
+  forgotPasswordDesc: string;
+  pleaseTryAgainOrRequestNew: string;
+  pleaseTryAgainLater: string;
   
   // Additional Pages
   deliveryProfitability: string;
@@ -826,6 +853,33 @@ export const translations: Record<Language, Translations> = {
     failedToUpdateEmployee: 'Failed to update employee',
     failedToExportFinancial: 'Failed to export financial data',
     exportFailed: 'Export failed',
+    failedToResetPassword: 'Failed to reset password',
+    failedToSendResetEmail: 'Failed to send reset email',
+    failedToUpdateDevicePreference: 'Failed to update device preference',
+    failedToExportProfitability: 'Failed to export profitability data',
+    failedToCreateAdminAccount: 'Failed to create admin account',
+    failedToCreateRecipe: 'Failed to create recipe',
+    failedToUpdateRecipe: 'Failed to update recipe',
+    failedToDeleteRecipe: 'Failed to delete recipe',
+    couldNotSaveNewOrder: 'Could not save new order',
+    couldNotCreateRecipe: 'Could not create recipe',
+    couldNotUpdateRecipe: 'Could not update recipe',
+    couldNotDeleteRecipe: 'Could not delete recipe',
+    failedToFetchBills: 'Failed to fetch bills',
+    invalidResetLink: 'Invalid reset link',
+    invalidResetLinkDesc: 'The password reset link is invalid or expired.',
+    passwordsDontMatch: "Passwords don't match",
+    passwordsDontMatchDesc: 'Please make sure both passwords are the same.',
+    passwordTooShort: 'Password too short',
+    passwordTooShortDesc: 'Password must be at least 6 characters long.',
+    passwordResetSuccessful: 'Password reset successful',
+    passwordResetSuccessfulDesc: 'You can now log in with your new password.',
+    resetEmailSent: 'Reset email sent',
+    resetEmailSentDesc: 'Check your email for password reset instructions.',
+    resetPasswordDesc: 'Enter your new password below. It must be at least 6 characters long.',
+    forgotPasswordDesc: 'Enter your email address and we will send you instructions to reset your password.',
+    pleaseTryAgainOrRequestNew: 'Please try again or request a new reset link.',
+    pleaseTryAgainLater: 'Please try again later.',
     
     // Additional Pages
     deliveryProfitability: 'Delivery Profitability',
@@ -1240,6 +1294,33 @@ export const translations: Record<Language, Translations> = {
     failedToUpdateEmployee: 'فشل تحديث الموظف',
     failedToExportFinancial: 'فشل تصدير البيانات المالية',
     exportFailed: 'فشل التصدير',
+    failedToResetPassword: 'فشل إعادة تعيين كلمة المرور',
+    failedToSendResetEmail: 'فشل إرسال بريد إعادة التعيين',
+    failedToUpdateDevicePreference: 'فشل تحديث تفضيل الجهاز',
+    failedToExportProfitability: 'فشل تصدير بيانات الربحية',
+    failedToCreateAdminAccount: 'فشل إنشاء حساب المسؤول',
+    failedToCreateRecipe: 'فشل إنشاء الوصفة',
+    failedToUpdateRecipe: 'فشل تحديث الوصفة',
+    failedToDeleteRecipe: 'فشل حذف الوصفة',
+    couldNotSaveNewOrder: 'لا يمكن حفظ الطلب الجديد',
+    couldNotCreateRecipe: 'لا يمكن إنشاء الوصفة',
+    couldNotUpdateRecipe: 'لا يمكن تحديث الوصفة',
+    couldNotDeleteRecipe: 'لا يمكن حذف الوصفة',
+    failedToFetchBills: 'فشل جلب الفواتير',
+    invalidResetLink: 'رابط إعادة التعيين غير صالح',
+    invalidResetLinkDesc: 'رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية.',
+    passwordsDontMatch: 'كلمات المرور غير متطابقة',
+    passwordsDontMatchDesc: 'يرجى التأكد من تطابق كلمتي المرور.',
+    passwordTooShort: 'كلمة المرور قصيرة جداً',
+    passwordTooShortDesc: 'يجب أن تكون كلمة المرور 6 أحرف على الأقل.',
+    passwordResetSuccessful: 'تمت إعادة تعيين كلمة المرور بنجاح',
+    passwordResetSuccessfulDesc: 'يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.',
+    resetEmailSent: 'تم إرسال بريد إعادة التعيين',
+    resetEmailSentDesc: 'تحقق من بريدك الإلكتروني للحصول على تعليمات إعادة تعيين كلمة المرور.',
+    resetPasswordDesc: 'أدخل كلمة المرور الجديدة أدناه. يجب أن تكون 6 أحرف على الأقل.',
+    forgotPasswordDesc: 'أدخل عنوان بريدك الإلكتروني وسنرسل لك تعليمات إعادة تعيين كلمة المرور.',
+    pleaseTryAgainOrRequestNew: 'يرجى المحاولة مرة أخرى أو طلب رابط إعادة تعيين جديد.',
+    pleaseTryAgainLater: 'يرجى المحاولة مرة أخرى لاحقاً.',
     
     // Additional Pages
     deliveryProfitability: 'ربحية التوصيل',
@@ -1654,6 +1735,33 @@ export const translations: Record<Language, Translations> = {
     failedToUpdateEmployee: '更新员工失败',
     failedToExportFinancial: '导出财务数据失败',
     exportFailed: '导出失败',
+    failedToResetPassword: '重置密码失败',
+    failedToSendResetEmail: '发送重置邮件失败',
+    failedToUpdateDevicePreference: '更新设备偏好失败',
+    failedToExportProfitability: '导出盈利数据失败',
+    failedToCreateAdminAccount: '创建管理员账户失败',
+    failedToCreateRecipe: '创建配方失败',
+    failedToUpdateRecipe: '更新配方失败',
+    failedToDeleteRecipe: '删除配方失败',
+    couldNotSaveNewOrder: '无法保存新订单',
+    couldNotCreateRecipe: '无法创建配方',
+    couldNotUpdateRecipe: '无法更新配方',
+    couldNotDeleteRecipe: '无法删除配方',
+    failedToFetchBills: '获取账单失败',
+    invalidResetLink: '无效的重置链接',
+    invalidResetLinkDesc: '密码重置链接无效或已过期。',
+    passwordsDontMatch: '密码不匹配',
+    passwordsDontMatchDesc: '请确保两个密码相同。',
+    passwordTooShort: '密码太短',
+    passwordTooShortDesc: '密码必须至少6个字符。',
+    passwordResetSuccessful: '密码重置成功',
+    passwordResetSuccessfulDesc: '您现在可以使用新密码登录。',
+    resetEmailSent: '重置邮件已发送',
+    resetEmailSentDesc: '查看您的电子邮件以获取密码重置说明。',
+    resetPasswordDesc: '在下面输入您的新密码。它必须至少6个字符。',
+    forgotPasswordDesc: '输入您的电子邮件地址，我们将向您发送重置密码的说明。',
+    pleaseTryAgainOrRequestNew: '请重试或请求新的重置链接。',
+    pleaseTryAgainLater: '请稍后重试。',
     
     // Additional Pages
     deliveryProfitability: '配送盈利能力',
@@ -2068,6 +2176,33 @@ export const translations: Record<Language, Translations> = {
     failedToUpdateEmployee: 'Mitarbeiter konnte nicht aktualisiert werden',
     failedToExportFinancial: 'Finanzdaten konnten nicht exportiert werden',
     exportFailed: 'Export fehlgeschlagen',
+    failedToResetPassword: 'Passwort konnte nicht zurückgesetzt werden',
+    failedToSendResetEmail: 'Reset-E-Mail konnte nicht gesendet werden',
+    failedToUpdateDevicePreference: 'Geräteeinstellung konnte nicht aktualisiert werden',
+    failedToExportProfitability: 'Rentabilitätsdaten konnten nicht exportiert werden',
+    failedToCreateAdminAccount: 'Administratorkonto konnte nicht erstellt werden',
+    failedToCreateRecipe: 'Rezept konnte nicht erstellt werden',
+    failedToUpdateRecipe: 'Rezept konnte nicht aktualisiert werden',
+    failedToDeleteRecipe: 'Rezept konnte nicht gelöscht werden',
+    couldNotSaveNewOrder: 'Neue Bestellung konnte nicht gespeichert werden',
+    couldNotCreateRecipe: 'Rezept konnte nicht erstellt werden',
+    couldNotUpdateRecipe: 'Rezept konnte nicht aktualisiert werden',
+    couldNotDeleteRecipe: 'Rezept konnte nicht gelöscht werden',
+    failedToFetchBills: 'Rechnungen konnten nicht abgerufen werden',
+    invalidResetLink: 'Ungültiger Reset-Link',
+    invalidResetLinkDesc: 'Der Passwort-Reset-Link ist ungültig oder abgelaufen.',
+    passwordsDontMatch: 'Passwörter stimmen nicht überein',
+    passwordsDontMatchDesc: 'Bitte stellen Sie sicher, dass beide Passwörter gleich sind.',
+    passwordTooShort: 'Passwort zu kurz',
+    passwordTooShortDesc: 'Das Passwort muss mindestens 6 Zeichen lang sein.',
+    passwordResetSuccessful: 'Passwort erfolgreich zurückgesetzt',
+    passwordResetSuccessfulDesc: 'Sie können sich jetzt mit Ihrem neuen Passwort anmelden.',
+    resetEmailSent: 'Reset-E-Mail gesendet',
+    resetEmailSentDesc: 'Überprüfen Sie Ihre E-Mail für Anweisungen zum Zurücksetzen des Passworts.',
+    resetPasswordDesc: 'Geben Sie unten Ihr neues Passwort ein. Es muss mindestens 6 Zeichen lang sein.',
+    forgotPasswordDesc: 'Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen Anweisungen zum Zurücksetzen Ihres Passworts.',
+    pleaseTryAgainOrRequestNew: 'Bitte versuchen Sie es erneut oder fordern Sie einen neuen Reset-Link an.',
+    pleaseTryAgainLater: 'Bitte versuchen Sie es später erneut.',
     
     // Additional Pages
     deliveryProfitability: 'Lieferrentabilität',
@@ -2482,6 +2617,33 @@ export const translations: Record<Language, Translations> = {
     failedToUpdateEmployee: 'कर्मचारी अपडेट करने में विफल',
     failedToExportFinancial: 'वित्तीय डेटा निर्यात करने में विफल',
     exportFailed: 'निर्यात विफल',
+    failedToResetPassword: 'पासवर्ड रीसेट करने में विफल',
+    failedToSendResetEmail: 'रीसेट ईमेल भेजने में विफल',
+    failedToUpdateDevicePreference: 'डिवाइस वरीयता अपडेट करने में विफल',
+    failedToExportProfitability: 'लाभप्रदता डेटा निर्यात करने में विफल',
+    failedToCreateAdminAccount: 'व्यवस्थापक खाता बनाने में विफल',
+    failedToCreateRecipe: 'रेसिपी बनाने में विफल',
+    failedToUpdateRecipe: 'रेसिपी अपडेट करने में विफल',
+    failedToDeleteRecipe: 'रेसिपी हटाने में विफल',
+    couldNotSaveNewOrder: 'नया ऑर्डर सहेज नहीं सका',
+    couldNotCreateRecipe: 'रेसिपी बना नहीं सका',
+    couldNotUpdateRecipe: 'रेसिपी अपडेट नहीं कर सका',
+    couldNotDeleteRecipe: 'रेसिपी हटा नहीं सका',
+    failedToFetchBills: 'बिल लाने में विफल',
+    invalidResetLink: 'अमान्य रीसेट लिंक',
+    invalidResetLinkDesc: 'पासवर्ड रीसेट लिंक अमान्य या समाप्त हो गया है।',
+    passwordsDontMatch: 'पासवर्ड मेल नहीं खाते',
+    passwordsDontMatchDesc: 'कृपया सुनिश्चित करें कि दोनों पासवर्ड समान हैं।',
+    passwordTooShort: 'पासवर्ड बहुत छोटा है',
+    passwordTooShortDesc: 'पासवर्ड कम से कम 6 अक्षर लंबा होना चाहिए।',
+    passwordResetSuccessful: 'पासवर्ड रीसेट सफल',
+    passwordResetSuccessfulDesc: 'अब आप अपने नए पासवर्ड से लॉग इन कर सकते हैं।',
+    resetEmailSent: 'रीसेट ईमेल भेजा गया',
+    resetEmailSentDesc: 'पासवर्ड रीसेट निर्देशों के लिए अपना ईमेल जांचें।',
+    resetPasswordDesc: 'नीचे अपना नया पासवर्ड दर्ज करें। यह कम से कम 6 अक्षर लंबा होना चाहिए।',
+    forgotPasswordDesc: 'अपना ईमेल पता दर्ज करें और हम आपको पासवर्ड रीसेट करने के निर्देश भेजेंगे।',
+    pleaseTryAgainOrRequestNew: 'कृपया फिर से प्रयास करें या नया रीसेट लिंक का अनुरोध करें।',
+    pleaseTryAgainLater: 'कृपया बाद में पुनः प्रयास करें।',
     
     // Additional Pages
     deliveryProfitability: 'डिलीवरी लाभप्रदता',
@@ -2896,6 +3058,33 @@ export const translations: Record<Language, Translations> = {
     failedToUpdateEmployee: 'ملازم کو اپ ڈیٹ کرنے میں ناکام',
     failedToExportFinancial: 'مالیاتی ڈیٹا برآمد کرنے میں ناکام',
     exportFailed: 'برآمد ناکام',
+    failedToResetPassword: 'پاس ورڈ ری سیٹ کرنے میں ناکام',
+    failedToSendResetEmail: 'ری سیٹ ای میل بھیجنے میں ناکام',
+    failedToUpdateDevicePreference: 'ڈیوائس ترجیح اپ ڈیٹ کرنے میں ناکام',
+    failedToExportProfitability: 'منافع ڈیٹا برآمد کرنے میں ناکام',
+    failedToCreateAdminAccount: 'ایڈمن اکاؤنٹ بنانے میں ناکام',
+    failedToCreateRecipe: 'ترکیب بنانے میں ناکام',
+    failedToUpdateRecipe: 'ترکیب اپ ڈیٹ کرنے میں ناکام',
+    failedToDeleteRecipe: 'ترکیب حذف کرنے میں ناکام',
+    couldNotSaveNewOrder: 'نیا آرڈر محفوظ نہیں کر سکا',
+    couldNotCreateRecipe: 'ترکیب بنا نہیں سکا',
+    couldNotUpdateRecipe: 'ترکیب اپ ڈیٹ نہیں کر سکا',
+    couldNotDeleteRecipe: 'ترکیب حذف نہیں کر سکا',
+    failedToFetchBills: 'بل لانے میں ناکام',
+    invalidResetLink: 'غلط ری سیٹ لنک',
+    invalidResetLinkDesc: 'پاس ورڈ ری سیٹ لنک غلط یا میعاد ختم ہو گیا ہے۔',
+    passwordsDontMatch: 'پاس ورڈ میل نہیں کھاتے',
+    passwordsDontMatchDesc: 'براہ کرم یقینی بنائیں کہ دونوں پاس ورڈ ایک جیسے ہیں۔',
+    passwordTooShort: 'پاس ورڈ بہت چھوٹا ہے',
+    passwordTooShortDesc: 'پاس ورڈ کم از کم 6 حروف لمبا ہونا چاہیے۔',
+    passwordResetSuccessful: 'پاس ورڈ ری سیٹ کامیاب',
+    passwordResetSuccessfulDesc: 'اب آپ اپنے نئے پاس ورڈ سے لاگ ان کر سکتے ہیں۔',
+    resetEmailSent: 'ری سیٹ ای میل بھیج دیا گیا',
+    resetEmailSentDesc: 'پاس ورڈ ری سیٹ کی ہدایات کے لیے اپنا ای میل چیک کریں۔',
+    resetPasswordDesc: 'نیچے اپنا نیا پاس ورڈ درج کریں۔ یہ کم از کم 6 حروف لمبا ہونا چاہیے۔',
+    forgotPasswordDesc: 'اپنا ای میل ایڈریس درج کریں اور ہم آپ کو پاس ورڈ ری سیٹ کرنے کی ہدایات بھیجیں گے۔',
+    pleaseTryAgainOrRequestNew: 'براہ کرم دوبارہ کوشش کریں یا نیا ری سیٹ لنک کی درخواست کریں۔',
+    pleaseTryAgainLater: 'براہ کرم بعد میں دوبارہ کوشش کریں۔',
     
     // Additional Pages
     deliveryProfitability: 'ڈیلیوری منافع',
@@ -3310,6 +3499,33 @@ export const translations: Record<Language, Translations> = {
     failedToUpdateEmployee: 'কর্মচারী আপডেট করতে ব্যর্থ',
     failedToExportFinancial: 'আর্থিক ডেটা রপ্তানি করতে ব্যর্থ',
     exportFailed: 'রপ্তানি ব্যর্থ',
+    failedToResetPassword: 'পাসওয়ার্ড রিসেট করতে ব্যর্থ',
+    failedToSendResetEmail: 'রিসেট ইমেল পাঠাতে ব্যর্থ',
+    failedToUpdateDevicePreference: 'ডিভাইস পছন্দ আপডেট করতে ব্যর্থ',
+    failedToExportProfitability: 'লাভজনকতা ডেটা রপ্তানি করতে ব্যর্থ',
+    failedToCreateAdminAccount: 'অ্যাডমিন অ্যাকাউন্ট তৈরি করতে ব্যর্থ',
+    failedToCreateRecipe: 'রেসিপি তৈরি করতে ব্যর্থ',
+    failedToUpdateRecipe: 'রেসিপি আপডেট করতে ব্যর্থ',
+    failedToDeleteRecipe: 'রেসিপি মুছতে ব্যর্থ',
+    couldNotSaveNewOrder: 'নতুন অর্ডার সংরক্ষণ করতে পারিনি',
+    couldNotCreateRecipe: 'রেসিপি তৈরি করতে পারিনি',
+    couldNotUpdateRecipe: 'রেসিপি আপডেট করতে পারিনি',
+    couldNotDeleteRecipe: 'রেসিপি মুছতে পারিনি',
+    failedToFetchBills: 'বিল আনতে ব্যর্থ',
+    invalidResetLink: 'অবৈধ রিসেট লিঙ্ক',
+    invalidResetLinkDesc: 'পাসওয়ার্ড রিসেট লিঙ্কটি অবৈধ বা মেয়াদ শেষ হয়ে গেছে।',
+    passwordsDontMatch: 'পাসওয়ার্ড মিলছে না',
+    passwordsDontMatchDesc: 'অনুগ্রহ করে নিশ্চিত করুন যে উভয় পাসওয়ার্ড একই।',
+    passwordTooShort: 'পাসওয়ার্ড খুব ছোট',
+    passwordTooShortDesc: 'পাসওয়ার্ড কমপক্ষে 6 অক্ষরের হতে হবে।',
+    passwordResetSuccessful: 'পাসওয়ার্ড রিসেট সফল',
+    passwordResetSuccessfulDesc: 'আপনি এখন আপনার নতুন পাসওয়ার্ড দিয়ে লগ ইন করতে পারেন।',
+    resetEmailSent: 'রিসেট ইমেল পাঠানো হয়েছে',
+    resetEmailSentDesc: 'পাসওয়ার্ড রিসেট নির্দেশাবলীর জন্য আপনার ইমেল চেক করুন।',
+    resetPasswordDesc: 'নিচে আপনার নতুন পাসওয়ার্ড লিখুন। এটি কমপক্ষে 6 অক্ষরের হতে হবে।',
+    forgotPasswordDesc: 'আপনার ইমেল ঠিকানা লিখুন এবং আমরা আপনাকে পাসওয়ার্ড রিসেট করার নির্দেশাবলী পাঠাব।',
+    pleaseTryAgainOrRequestNew: 'অনুগ্রহ করে আবার চেষ্টা করুন বা নতুন রিসেট লিঙ্কের অনুরোধ করুন।',
+    pleaseTryAgainLater: 'অনুগ্রহ করে পরে আবার চেষ্টা করুন।',
     
     // Additional Pages
     deliveryProfitability: 'ডেলিভারি লাভজনকতা',
