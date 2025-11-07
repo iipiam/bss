@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UtensilsCrossed, User } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import kinzhalLogo from "@assets/Kanzhal_1762540570017.jpg";
+import kinzhalLogo from "@assets/SKinzhal_1762548840624.jpeg";
 
 export default function Setup() {
   const [formData, setFormData] = useState({
