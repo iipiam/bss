@@ -944,7 +944,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Username already exists" });
       }
 
-      // Create employee user with default permissions
+      // Create admin user with full permissions (each signup = restaurant owner)
       const userData = {
         username,
         password, // Will be hashed in storage
@@ -954,25 +954,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscriptionPlan,
         branchesCount: branches,
         subscriptionStatus: "inactive" as const, // Will be activated after payment
-        role: "employee" as const,
+        role: "admin" as const,
         active: true,
         permissions: {
           dashboard: true,
-          inventory: false,
-          menu: false,
-          recipes: false,
-          branches: false,
-          procurement: false,
+          inventory: true,
+          menu: true,
+          recipes: true,
+          branches: true,
+          procurement: true,
           pos: true,
           orders: true,
           kitchen: true,
-          sales: false,
-          reports: false,
-          forecasting: false,
-          analysis: false,
-          settings: false,
-          financial: false,
-          employees: false,
+          sales: true,
+          reports: true,
+          forecasting: true,
+          analysis: true,
+          settings: true,
+          financial: true,
+          employees: true,
         },
       };
 

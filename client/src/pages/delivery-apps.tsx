@@ -272,7 +272,7 @@ export default function DeliveryApps() {
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to create delivery app",
+        title: t.failedToCreateDeliveryApp,
         description: error.message || "Could not create delivery app",
         variant: "destructive",
       });
@@ -301,7 +301,7 @@ export default function DeliveryApps() {
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to update delivery app",
+        title: t.failedToUpdateDeliveryApp,
         description: error.message || "Could not update delivery app",
         variant: "destructive",
       });
@@ -322,7 +322,7 @@ export default function DeliveryApps() {
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to delete delivery app",
+        title: t.failedToDeleteDeliveryApp,
         description: error.message || "Could not delete delivery app",
         variant: "destructive",
       });
@@ -338,7 +338,7 @@ export default function DeliveryApps() {
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to update order",
+        title: t.failedToUpdateOrder,
         description: error.message || "Could not update delivery app order",
         variant: "destructive",
       });

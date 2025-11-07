@@ -53,9 +53,9 @@ export default function DeliveryAppProfitability() {
     });
 
     if (result.success) {
-      toast({ title: "PDF exported successfully" });
+      toast({ title: t.success });
     } else {
-      toast({ title: "Failed to export PDF", variant: "destructive" });
+      toast({ title: t.failedToExportPDF, variant: "destructive" });
     }
   };
 
@@ -80,9 +80,9 @@ export default function DeliveryAppProfitability() {
     const result = exportToExcel("Delivery App Profitability", exportData);
 
     if (result.success) {
-      toast({ title: "Excel exported successfully" });
+      toast({ title: t.success });
     } else {
-      toast({ title: "Failed to export Excel", variant: "destructive" });
+      toast({ title: t.failedToExportExcel, variant: "destructive" });
     }
   };
 

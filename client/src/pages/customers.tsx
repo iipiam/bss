@@ -77,13 +77,13 @@ export default function Customers() {
       setOpen(false);
       form.reset();
       toast({
-        title: "Customer created",
-        description: "The customer has been added successfully.",
+        title: t.customerCreated,
+        description: t.customerCreatedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to create customer",
+        title: t.failedToCreateCustomer,
         description: error.message || "Could not create customer",
         variant: "destructive",
       });
@@ -103,13 +103,13 @@ export default function Customers() {
       setEditingCustomer(null);
       form.reset();
       toast({
-        title: "Customer updated",
-        description: "The customer has been updated successfully.",
+        title: t.customerUpdated,
+        description: t.customerUpdatedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to update customer",
+        title: t.failedToUpdateCustomer,
         description: error.message || "Could not update customer",
         variant: "destructive",
       });
@@ -124,13 +124,13 @@ export default function Customers() {
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       setDeletingCustomer(null);
       toast({
-        title: "Customer deleted",
-        description: "The customer has been removed successfully.",
+        title: t.customerDeleted,
+        description: t.customerDeletedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to delete customer",
+        title: t.failedToDeleteCustomer,
         description: error.message || "Could not delete customer",
         variant: "destructive",
       });
@@ -201,8 +201,8 @@ export default function Customers() {
       });
     } catch (error) {
       toast({
-        title: "Export failed",
-        description: error instanceof Error ? error.message : "Failed to export customer data",
+        title: t.exportFailed,
+        description: error instanceof Error ? error.message : t.failedToExportCustomers,
         variant: "destructive",
       });
     }

@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Recipe, InventoryItem } from "@shared/schema";
 import { useDeviceLayout } from "@/lib/mobileLayout";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   DndContext,
   closestCenter,
@@ -156,6 +157,7 @@ export default function Recipes() {
   const [ingredients, setIngredients] = useState([{ inventoryItemId: "", name: "", quantity: "", unit: "", unitPrice: 0 }]);
   const [steps, setSteps] = useState([""]);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const { data: recipesData = [], isLoading } = useQuery<Recipe[]>({
     queryKey: ["/api/recipes"],
@@ -236,8 +238,8 @@ export default function Recipes() {
       setOpen(false);
       resetForm();
       toast({
-        title: "Recipe created",
-        description: "The recipe has been added successfully.",
+        title: t.recipeCreated,
+        description: t.recipeCreatedDesc,
       });
     },
     onError: (error: any) => {
@@ -259,8 +261,8 @@ export default function Recipes() {
       setEditingRecipe(null);
       resetForm();
       toast({
-        title: "Recipe updated",
-        description: "The recipe has been updated successfully.",
+        title: t.recipeUpdated,
+        description: t.recipeUpdatedDesc,
       });
     },
     onError: (error: any) => {
@@ -281,8 +283,8 @@ export default function Recipes() {
       setDeleteDialogOpen(false);
       setRecipeToDelete(null);
       toast({
-        title: "Recipe deleted",
-        description: "The recipe has been deleted successfully.",
+        title: t.recipeDeleted,
+        description: t.recipeDeletedDesc,
       });
     },
     onError: (error: any) => {

@@ -67,8 +67,8 @@ export function AppSidebar() {
       await logout();
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to logout. Please try again.",
+        title: t.error,
+        description: t.failedToLogout,
         variant: "destructive",
       });
     } finally {
@@ -84,7 +84,7 @@ export function AppSidebar() {
     { title: t.pos, url: "/pos", icon: ShoppingCart, testId: "pos", gradient: "from-emerald-500 to-teal-500" },
     { title: t.orders, url: "/orders", icon: ClipboardList, testId: "orders", gradient: "from-blue-500 to-cyan-500" },
     { title: t.kitchen, url: "/kitchen", icon: Flame, testId: "kitchen", gradient: "from-orange-500 to-red-500" },
-    { title: t.deliveryApps || "Delivery Apps", url: "/delivery-apps", icon: Truck, testId: "delivery-apps", gradient: "from-violet-500 to-purple-500" },
+    { title: t.deliveryApps, url: "/delivery-apps", icon: Truck, testId: "delivery-apps", gradient: "from-violet-500 to-purple-500" },
   ];
 
   const management = [
@@ -101,11 +101,11 @@ export function AppSidebar() {
     { title: t.sales, url: "/sales", icon: DollarSign, testId: "sales", gradient: "from-green-500 to-teal-500" },
     { title: t.financial, url: "/financial", icon: Receipt, testId: "financial", gradient: "from-blue-500 to-purple-500" },
     { title: t.profitability, url: "/profitability", icon: Calculator, testId: "profitability", gradient: "from-amber-500 to-orange-500" },
-    { title: "Delivery Profitability", url: "/delivery-app-profitability", icon: Truck, testId: "delivery-profitability", gradient: "from-green-500 to-emerald-500" },
-    { title: "Sales Comparison", url: "/sales-comparison", icon: BarChart3, testId: "sales-comparison", gradient: "from-purple-500 to-pink-500" },
+    { title: t.deliveryProfitability, url: "/delivery-app-profitability", icon: Truck, testId: "delivery-profitability", gradient: "from-green-500 to-emerald-500" },
+    { title: t.salesComparison, url: "/sales-comparison", icon: BarChart3, testId: "sales-comparison", gradient: "from-purple-500 to-pink-500" },
     { title: t.forecasting, url: "/forecasting", icon: TrendingUp, testId: "forecasting", gradient: "from-cyan-500 to-sky-500" },
     { title: t.invoices, url: "/invoices", icon: FileCheck, testId: "invoices", gradient: "from-violet-500 to-purple-500" },
-    { title: t.bills || "Bills", url: "/bills", icon: FileText, testId: "bills", gradient: "from-rose-500 to-pink-500" },
+    { title: t.bills, url: "/bills", icon: FileText, testId: "bills", gradient: "from-rose-500 to-pink-500" },
   ];
 
   const system = [

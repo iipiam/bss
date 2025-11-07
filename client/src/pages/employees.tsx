@@ -12,19 +12,47 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, UserCheck, UserX } from "lucide-react";
 import type { User, InsertUser } from "@shared/schema";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Employees() {
+  const { t } = useLanguage();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    username: string;
+    password: string;
+    fullName: string;
+    email: string;
+    phone: string;
+    role: string;
+    permissions: {
+      dashboard: boolean;
+      inventory: boolean;
+      menu: boolean;
+      recipes: boolean;
+      branches: boolean;
+      procurement: boolean;
+      pos: boolean;
+      orders: boolean;
+      kitchen: boolean;
+      sales: boolean;
+      reports: boolean;
+      forecasting: boolean;
+      analysis: boolean;
+      settings: boolean;
+      financial: boolean;
+      employees: boolean;
+    };
+    branchId: string | null;
+    active: boolean;
+  }>({
     username: "",
     password: "",
     fullName: "",
     email: "",
     phone: "",
     role: "employee",
-    monthlySalary: "",
     permissions: {
       dashboard: true,
       inventory: false,
@@ -62,14 +90,14 @@ export default function Employees() {
       setIsCreateDialogOpen(false);
       resetForm();
       toast({
-        title: "Employee created",
-        description: "The employee has been created successfully",
+        title: t.employeeCreated,
+        description: t.employeeCreatedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create employee",
+        title: t.error,
+        description: error.message || t.failedToCreateEmployee,
         variant: "destructive",
       });
     },
@@ -84,14 +112,14 @@ export default function Employees() {
       setIsEditDialogOpen(false);
       setSelectedUser(null);
       toast({
-        title: "Employee updated",
-        description: "The employee has been updated successfully",
+        title: t.employeeUpdated,
+        description: t.employeeUpdatedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update employee",
+        title: t.error,
+        description: error.message || t.failedToUpdateEmployee,
         variant: "destructive",
       });
     },
@@ -105,7 +133,6 @@ export default function Employees() {
       email: "",
       phone: "",
       role: "employee",
-      monthlySalary: "",
       permissions: {
         dashboard: true,
         inventory: false,
@@ -130,7 +157,7 @@ export default function Employees() {
   };
 
   const handleCreate = () => {
-    if (!formData.username || !formData.password || !formData.fullName || !formData.monthlySalary) {
+    if (!formData.username || !formData.password || !formData.fullName) {
       toast({
         title: "Missing fields",
         description: "Please fill in all required fields",
@@ -151,7 +178,7 @@ export default function Employees() {
       phone: user.phone || "",
       role: user.role,
       permissions: user.permissions,
-      branchId: user.branchId,
+      branchId: user.branchId || null,
       active: user.active,
     });
     setIsEditDialogOpen(true);

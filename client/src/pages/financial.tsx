@@ -9,11 +9,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 import type { Invoice, ShopBill } from "@shared/schema";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Financial() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedPeriod, setSelectedPeriod] = useState<"monthly" | "yearly">("monthly");
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const { data: financialData, isLoading: financialLoading } = useQuery({
     queryKey: ["/api/analytics/financial", selectedYear, selectedPeriod],
@@ -110,8 +112,8 @@ export default function Financial() {
       });
     } catch (error) {
       toast({
-        title: "Export failed",
-        description: error instanceof Error ? error.message : "Failed to export financial data",
+        title: t.exportFailed,
+        description: error instanceof Error ? error.message : t.failedToExportFinancial,
         variant: "destructive",
       });
     }
@@ -139,8 +141,8 @@ export default function Financial() {
       });
     } catch (error) {
       toast({
-        title: "Export failed",
-        description: error instanceof Error ? error.message : "Failed to export PDF",
+        title: t.exportFailed,
+        description: error instanceof Error ? error.message : t.failedToExportPDF,
         variant: "destructive",
       });
     }

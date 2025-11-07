@@ -132,8 +132,8 @@ export default function POS() {
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/financial"] });
       
       toast({
-        title: "Order completed successfully",
-        description: `Order #${order.orderNumber} has been placed and invoice generated`,
+        title: t.orderCompleted,
+        description: t.orderCompletedDesc.replace('${order.orderNumber}', order.orderNumber),
       });
       
       clearCart();

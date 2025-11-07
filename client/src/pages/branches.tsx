@@ -15,6 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { insertBranchSchema, type Branch } from "@shared/schema";
 import { useDeviceLayout } from "@/lib/mobileLayout";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const branchFormSchema = insertBranchSchema.extend({
   staff: z.string().min(1, "Staff count is required"),
@@ -27,6 +28,7 @@ export default function Branches() {
   const [open, setOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const form = useForm<BranchFormValues>({
     resolver: zodResolver(branchFormSchema),
@@ -57,13 +59,13 @@ export default function Branches() {
       setOpen(false);
       form.reset();
       toast({
-        title: "Branch created",
-        description: "The branch has been added successfully.",
+        title: t.branchCreated,
+        description: t.branchCreatedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to create branch",
+        title: t.failedToCreateBranch,
         description: error.message || "Could not create branch",
         variant: "destructive",
       });
@@ -84,13 +86,13 @@ export default function Branches() {
       setEditingBranch(null);
       form.reset();
       toast({
-        title: "Branch updated",
-        description: "The branch has been updated successfully.",
+        title: t.branchUpdated,
+        description: t.branchUpdatedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to update branch",
+        title: t.failedToUpdateBranch,
         description: error.message || "Could not update branch",
         variant: "destructive",
       });

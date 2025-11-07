@@ -18,6 +18,7 @@ import type { Procurement, InsertProcurement } from "@shared/schema";
 import { insertProcurementSchema } from "@shared/schema";
 import { Plus, Package, Wrench, HardHat, Computer, Calendar, User, AlertCircle, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { format } from "date-fns";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const typeIcons = {
   inventory: Package,
@@ -53,6 +54,7 @@ const statusIcons = {
 
 export default function ProcurementPage() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all-statuses");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -109,7 +111,7 @@ export default function ProcurementPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/procurement"] });
-      toast({ title: "Success", description: "Procurement item created successfully" });
+      toast({ title: t.success, description: t.procurementCreated });
       setIsDialogOpen(false);
       form.reset();
     },
@@ -121,7 +123,7 @@ export default function ProcurementPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/procurement"] });
-      toast({ title: "Success", description: "Procurement item updated successfully" });
+      toast({ title: t.success, description: t.procurementUpdated });
       setIsDialogOpen(false);
       setEditingItem(null);
       form.reset();
@@ -134,7 +136,7 @@ export default function ProcurementPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/procurement"] });
-      toast({ title: "Success", description: "Procurement item deleted successfully" });
+      toast({ title: t.success, description: t.procurementDeleted });
     },
   });
 
