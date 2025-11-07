@@ -224,15 +224,15 @@ function AppContent() {
                     <DropdownMenuSeparator />
                     <div className="px-2 py-2 space-y-2">
                       <div className="flex flex-col space-y-0.5">
-                        <span className="text-xs font-medium text-muted-foreground">Subscription Plan</span>
+                        <span className="text-xs font-medium text-muted-foreground">{t.subscriptionPlan}</span>
                         <span className="text-sm font-semibold capitalize">{user?.subscriptionPlan}</span>
                       </div>
                       <div className="flex flex-col space-y-0.5">
-                        <span className="text-xs font-medium text-muted-foreground">Commercial Registration</span>
+                        <span className="text-xs font-medium text-muted-foreground">{t.commercialRegistration}</span>
                         <span className="text-sm font-mono">{user?.commercialRegistration || 'N/A'}</span>
                       </div>
                       <div className="flex flex-col space-y-0.5">
-                        <span className="text-xs font-medium text-muted-foreground">Role</span>
+                        <span className="text-xs font-medium text-muted-foreground">{t.role}</span>
                         <span className="text-sm capitalize">{user?.role}</span>
                       </div>
                     </div>
@@ -241,22 +241,22 @@ function AppContent() {
                       <DialogTrigger asChild>
                         <DropdownMenuItem onSelect={(e) => e.preventDefault()} data-testid="button-manage-subscription">
                           <CreditCard className="mr-2 h-4 w-4" />
-                          Manage Subscription
+                          {t.manageSubscription}
                         </DropdownMenuItem>
                       </DialogTrigger>
                       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-                            Manage Your Subscription
+                            {t.manageYourSubscription}
                           </DialogTitle>
                           <DialogDescription>
-                            Upgrade, modify, or cancel your subscription plan
+                            {t.upgradeModifyCancel}
                           </DialogDescription>
                         </DialogHeader>
                         
                         <div className="space-y-6 py-4">
                           <div className="space-y-2">
-                            <Label htmlFor="branches">Number of Branches</Label>
+                            <Label htmlFor="branches">{t.numberOfBranches}</Label>
                             <Input
                               id="branches"
                               type="number"
@@ -347,13 +347,13 @@ function AppContent() {
                           </div>
 
                           <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-                            <h4 className="font-semibold">Current Plan Summary</h4>
+                            <h4 className="font-semibold">{t.currentPlanSummary}</h4>
                             <div className="grid grid-cols-2 gap-2 text-sm">
-                              <span className="text-muted-foreground">Current:</span>
+                              <span className="text-muted-foreground">{t.current}:</span>
                               <span className="font-medium capitalize">{user?.subscriptionPlan}</span>
-                              <span className="text-muted-foreground">Branches:</span>
+                              <span className="text-muted-foreground">{t.branches}:</span>
                               <span className="font-medium">{user?.branchesCount || 1}</span>
-                              <span className="text-muted-foreground">Status:</span>
+                              <span className="text-muted-foreground">{t.status}:</span>
                               <Badge variant={user?.subscriptionStatus === 'active' ? 'default' : 'secondary'}>
                                 {user?.subscriptionStatus}
                               </Badge>
@@ -365,25 +365,25 @@ function AppContent() {
                           <Button
                             variant="destructive"
                             onClick={() => {
-                              if (confirm('Are you sure you want to cancel your subscription?')) {
-                                alert('Subscription cancellation requested. Please contact support.');
+                              if (confirm(t.confirmCancelSubscription)) {
+                                alert(t.subscriptionCanceled);
                                 setSubscriptionDialogOpen(false);
                               }
                             }}
                             data-testid="button-cancel-subscription"
                           >
                             <XCircle className="mr-2 h-4 w-4" />
-                            Cancel Subscription
+                            {t.cancelSubscription}
                           </Button>
                           <Button
                             onClick={() => {
-                              alert(`Subscription updated to ${selectedPlan} with ${branchesCount} branches. Changes will be reflected in the next billing cycle.`);
+                              alert(t.subscriptionUpdated.replace('{plan}', selectedPlan).replace('{branches}', branchesCount.toString()));
                               setSubscriptionDialogOpen(false);
                             }}
                             data-testid="button-update-subscription"
                           >
                             <Edit className="mr-2 h-4 w-4" />
-                            Update Plan
+                            {t.updatePlan}
                           </Button>
                         </DialogFooter>
                       </DialogContent>
