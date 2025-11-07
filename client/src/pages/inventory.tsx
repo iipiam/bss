@@ -70,7 +70,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Edit, Trash2, Download, Upload, FileDown, GripVertical } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Search, Edit, Trash2, Download, Upload, FileDown, GripVertical, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -87,24 +100,30 @@ const formSchema = insertInventoryItemSchema.extend({
   price: z.coerce.number().min(0, "Price must be zero or positive"),
 });
 
-// Addon form schema with VAT auto-calculation
-const addonFormSchema = z.object({
+// Addon form schema (input) - before transformation
+const addonFormSchemaInput = z.object({
   name: z.string().min(1, "Name is required"),
   category: z.string().min(1, "Category is required"),
   price: z.coerce.number().positive("Price must be a positive number"),
   available: z.boolean().default(true),
-  menuItemId: z.string().nullable().optional(),
-}).transform((data) => {
+  menuItemIds: z.array(z.string()).nullable().optional(),
+});
+
+// Addon form schema with VAT auto-calculation (output) - after transformation
+const addonFormSchema = addonFormSchemaInput.transform((data) => {
   // Calculate VAT (15% Saudi VAT)
   const price = data.price;
   const basePrice = price / 1.15;
   const vatAmount = price - basePrice;
   
+  // Convert empty array to null (meaning "All items")
+  const menuItemIds = data.menuItemIds && data.menuItemIds.length > 0 ? data.menuItemIds : null;
+  
   return {
     ...data,
     basePrice: basePrice.toFixed(2),
     vatAmount: vatAmount.toFixed(2),
-    menuItemId: data.menuItemId === "all" ? null : data.menuItemId,
+    menuItemIds,
   };
 });
 
@@ -262,12 +281,12 @@ function SortableInventoryCard({ item, onEdit, onDelete, disabled = false }: Sor
 
 interface SortableAddonRowProps {
   addon: Addon;
-  menuItemName: string | null;
+  menuItemNames: string;
   onEdit: (addon: Addon) => void;
   onDelete: (addon: Addon) => void;
 }
 
-function SortableAddonRow({ addon, menuItemName, onEdit, onDelete }: SortableAddonRowProps) {
+function SortableAddonRow({ addon, menuItemNames, onEdit, onDelete }: SortableAddonRowProps) {
   const { t } = useLanguage();
   
   return (
@@ -275,7 +294,7 @@ function SortableAddonRow({ addon, menuItemName, onEdit, onDelete }: SortableAdd
       <TableCell className="font-medium">{addon.name}</TableCell>
       <TableCell>{addon.category}</TableCell>
       <TableCell className="font-mono text-primary">{parseFloat(addon.price).toFixed(2)} SAR</TableCell>
-      <TableCell className="text-muted-foreground">{menuItemName || t.all}</TableCell>
+      <TableCell className="text-muted-foreground">{menuItemNames}</TableCell>
       <TableCell>
         <Badge variant={addon.available ? "secondary" : "outline"}>
           {addon.available ? t.available : t.unavailable}
@@ -300,7 +319,7 @@ function SortableAddonRow({ addon, menuItemName, onEdit, onDelete }: SortableAdd
   );
 }
 
-function SortableAddonCard({ addon, menuItemName, onEdit, onDelete }: SortableAddonRowProps) {
+function SortableAddonCard({ addon, menuItemNames, onEdit, onDelete }: SortableAddonRowProps) {
   const { t } = useLanguage();
   
   return (
@@ -321,8 +340,8 @@ function SortableAddonCard({ addon, menuItemName, onEdit, onDelete }: SortableAd
             <p className="font-mono font-medium text-primary">{parseFloat(addon.price).toFixed(2)} SAR</p>
           </div>
           <div>
-            <span className="text-xs text-muted-foreground">Menu Item:</span>
-            <p className="text-sm">{menuItemName || t.all}</p>
+            <span className="text-xs text-muted-foreground">Menu Items:</span>
+            <p className="text-sm">{menuItemNames}</p>
           </div>
         </div>
         <div className="flex gap-2 pt-2 border-t">
@@ -385,14 +404,14 @@ export default function Inventory() {
     },
   });
 
-  const addonForm = useForm({
+  const addonForm = useForm<z.infer<typeof addonFormSchemaInput>>({
     resolver: zodResolver(addonFormSchema),
     defaultValues: {
       name: "",
       category: "",
       price: 0,
       available: true,
-      menuItemId: "all",
+      menuItemIds: null,
     },
   });
 
@@ -662,7 +681,7 @@ export default function Inventory() {
         category: "",
         price: 0,
         available: true,
-        menuItemId: "all",
+        menuItemIds: null,
       });
     }
   };
@@ -675,7 +694,7 @@ export default function Inventory() {
       category: "",
       price: 0,
       available: true,
-      menuItemId: "all",
+      menuItemIds: null,
     });
   };
 
@@ -696,7 +715,7 @@ export default function Inventory() {
       category: addon.category,
       price,
       available: addon.available,
-      menuItemId: addon.menuItemId || "all",
+      menuItemIds: addon.menuItemIds || null,
     });
     setAddonOpen(true);
   };
@@ -1233,25 +1252,71 @@ export default function Inventory() {
                     />
                     <FormField
                       control={addonForm.control}
-                      name="menuItemId"
+                      name="menuItemIds"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Link to Menu Item (Optional)</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value || "all"}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-addon-menuitem">
-                                <SelectValue placeholder="All items" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="all">{t.all}</SelectItem>
-                              {menuItems.map((item) => (
-                                <SelectItem key={item.id} value={item.id}>
-                                  {item.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <FormLabel>Link to Menu Items (Optional)</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button 
+                                  variant="outline" 
+                                  className="h-[44px] w-full justify-between"
+                                  data-testid="button-select-menu-items"
+                                >
+                                  {field.value && field.value.length > 0
+                                    ? field.value.length === 1
+                                      ? menuItems.find(item => item.id === field.value![0])?.name || `1 item selected`
+                                      : field.value.length === 2
+                                        ? menuItems.filter(item => field.value!.includes(item.id)).map(item => item.name).join(", ")
+                                        : `${field.value.length} items selected`
+                                    : t.all}
+                                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-full p-0" align="start">
+                              <Command>
+                                <CommandInput placeholder="Search menu items..." data-testid="input-search-menu-items" />
+                                <CommandEmpty>No menu items found.</CommandEmpty>
+                                <CommandGroup className="max-h-64 overflow-auto">
+                                  <CommandItem
+                                    onSelect={() => {
+                                      field.onChange(null);
+                                    }}
+                                    className="cursor-pointer"
+                                    data-testid="command-item-all"
+                                  >
+                                    <Checkbox
+                                      checked={!field.value || field.value.length === 0}
+                                      className="mr-2"
+                                    />
+                                    <span>{t.all}</span>
+                                  </CommandItem>
+                                  {menuItems.map((item) => (
+                                    <CommandItem
+                                      key={item.id}
+                                      onSelect={() => {
+                                        const currentValue = field.value || [];
+                                        const newValue = currentValue.includes(item.id)
+                                          ? currentValue.filter((id) => id !== item.id)
+                                          : [...currentValue, item.id];
+                                        field.onChange(newValue.length > 0 ? newValue : null);
+                                      }}
+                                      className="cursor-pointer"
+                                      data-testid={`command-item-${item.id}`}
+                                    >
+                                      <Checkbox
+                                        checked={field.value?.includes(item.id) || false}
+                                        className="mr-2"
+                                      />
+                                      <span>{item.name}</span>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -1337,14 +1402,19 @@ export default function Inventory() {
                     </TableRow>
                   ) : (
                     filteredAddons.map((addon) => {
-                      const linkedMenuItem = addon.menuItemId 
-                        ? menuItems.find(item => item.id === addon.menuItemId)?.name ?? null
-                        : null;
+                      const linkedMenuItemNames = addon.menuItemIds && addon.menuItemIds.length > 0
+                        ? addon.menuItemIds.length > 2
+                          ? `${addon.menuItemIds.length} items`
+                          : menuItems
+                              .filter(item => addon.menuItemIds!.includes(item.id))
+                              .map(item => item.name)
+                              .join(", ")
+                        : t.all;
                       return (
                         <SortableAddonRow
                           key={addon.id}
                           addon={addon}
-                          menuItemName={linkedMenuItem}
+                          menuItemNames={linkedMenuItemNames}
                           onEdit={handleEditAddon}
                           onDelete={handleDeleteAddonClick}
                         />
@@ -1361,14 +1431,19 @@ export default function Inventory() {
                   </div>
                 ) : (
                   filteredAddons.map((addon) => {
-                    const linkedMenuItem = addon.menuItemId 
-                      ? menuItems.find(item => item.id === addon.menuItemId)?.name ?? null
-                      : null;
+                    const linkedMenuItemNames = addon.menuItemIds && addon.menuItemIds.length > 0
+                      ? addon.menuItemIds.length > 2
+                        ? `${addon.menuItemIds.length} items`
+                        : menuItems
+                            .filter(item => addon.menuItemIds!.includes(item.id))
+                            .map(item => item.name)
+                            .join(", ")
+                      : t.all;
                     return (
                       <SortableAddonCard
                         key={addon.id}
                         addon={addon}
-                        menuItemName={linkedMenuItem}
+                        menuItemNames={linkedMenuItemNames}
                         onEdit={handleEditAddon}
                         onDelete={handleDeleteAddonClick}
                       />

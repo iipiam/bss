@@ -46,7 +46,7 @@ import {
   deliveryApps,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, sql } from "drizzle-orm";
+import { eq, and, gte, lte, sql, or, isNull } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export interface IStorage {
@@ -322,7 +322,14 @@ export class DatabaseStorage implements IStorage {
   // Add-ons
   async getAddons(menuItemId?: string): Promise<Addon[]> {
     if (menuItemId) {
-      return await db.select().from(addons).where(eq(addons.menuItemId, menuItemId));
+      // Return add-ons where menuItemIds is null (available for all items)
+      // OR menuItemIds array contains the given menuItemId
+      return await db.select().from(addons).where(
+        or(
+          isNull(addons.menuItemIds),
+          sql`${addons.menuItemIds} @> ARRAY[${menuItemId}]::varchar[]`
+        )
+      );
     }
     return await db.select().from(addons);
   }

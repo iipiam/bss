@@ -102,7 +102,7 @@ export default function POS() {
   const getAvailableAddons = (menuItemId: string) => {
     return allAddons.filter(addon =>
       addon.available &&
-      (addon.menuItemId === menuItemId || addon.menuItemId === null)
+      (addon.menuItemIds === null || addon.menuItemIds?.includes(menuItemId))
     );
   };
 
