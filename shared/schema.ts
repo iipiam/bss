@@ -97,6 +97,27 @@ export const insertMenuItemSchema = createInsertSchema(menuItems)
 export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
 export type MenuItem = typeof menuItems.$inferSelect;
 
+// Add-ons
+export const addons = pgTable("addons", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  category: text("category").notNull(), // e.g., "Toppings", "Sides", "Sauces", "Extras"
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(), // VAT-inclusive price
+  basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(), // Price before VAT
+  vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).notNull(), // VAT amount (15%)
+  menuItemId: varchar("menu_item_id").references(() => menuItems.id), // Optional: link to specific menu item
+  available: boolean("available").notNull().default(true),
+  sortOrder: integer("sort_order").default(0),
+});
+
+export const insertAddonSchema = createInsertSchema(addons)
+  .omit({ id: true })
+  .extend({
+    menuItemId: z.string().nullable().optional(),
+  });
+export type InsertAddon = z.infer<typeof insertAddonSchema>;
+export type Addon = typeof addons.$inferSelect;
+
 // Orders
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -110,7 +131,7 @@ export const orders = pgTable("orders", {
   address: text("address"),
   deliveryAppId: varchar("delivery_app_id").references(() => deliveryApps.id),
   earningsDecreaseApplied: boolean("earnings_decrease_applied").notNull().default(false), // Track if 2 SAR decrease applied
-  items: jsonb("items").notNull().$type<Array<{ id: string; name: string; quantity: number; price: number }>>(),
+  items: jsonb("items").notNull().$type<Array<{ id: string; name: string; quantity: number; price: number; addons?: Array<{ id: string; name: string; price: number }> }>>(),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
