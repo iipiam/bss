@@ -104,7 +104,7 @@ function Router() {
 
 function AppContent() {
   const { user, isLoading, logout } = useAuth();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { device } = useDevice();
   const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(user?.subscriptionPlan || 'monthly');
@@ -197,7 +197,7 @@ function AppContent() {
   return (
     <SidebarProvider style={style as React.CSSProperties} defaultOpen={device !== 'iphone'}>
       <div className="flex h-screen w-full justify-center bg-background">
-        <div className="flex h-screen w-full" style={{ maxWidth: containerMaxWidth }}>
+        <div className={`flex h-screen w-full ${isRTL ? 'flex-row-reverse' : ''}`} style={{ maxWidth: containerMaxWidth }}>
           <AppSidebar />
           <div className="flex flex-col flex-1 overflow-hidden">
             <header className="flex items-center justify-between p-4 border-b h-16 flex-shrink-0">
