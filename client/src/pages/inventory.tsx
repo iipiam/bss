@@ -14,6 +14,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import {
   DndContext,
   closestCenter,
   KeyboardSensor,
@@ -70,13 +77,35 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertInventoryItemSchema } from "@shared/schema";
-import type { InventoryItem } from "@shared/schema";
+import { insertInventoryItemSchema, insertAddonSchema } from "@shared/schema";
+import type { InventoryItem, Addon, MenuItem } from "@shared/schema";
 import { z } from "zod";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const formSchema = insertInventoryItemSchema.extend({
   quantity: z.coerce.number().positive("Quantity must be a positive number"),
   price: z.coerce.number().min(0, "Price must be zero or positive"),
+});
+
+// Addon form schema with VAT auto-calculation
+const addonFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  category: z.string().min(1, "Category is required"),
+  price: z.coerce.number().positive("Price must be a positive number"),
+  available: z.boolean().default(true),
+  menuItemId: z.string().nullable().optional(),
+}).transform((data) => {
+  // Calculate VAT (15% Saudi VAT)
+  const price = data.price;
+  const basePrice = price / 1.15;
+  const vatAmount = price - basePrice;
+  
+  return {
+    ...data,
+    basePrice: basePrice.toFixed(2),
+    vatAmount: vatAmount.toFixed(2),
+    menuItemId: data.menuItemId === "all" ? null : data.menuItemId,
+  };
 });
 
 interface SortableInventoryRowProps {
@@ -231,8 +260,99 @@ function SortableInventoryCard({ item, onEdit, onDelete, disabled = false }: Sor
   );
 }
 
+interface SortableAddonRowProps {
+  addon: Addon;
+  menuItemName: string | null;
+  onEdit: (addon: Addon) => void;
+  onDelete: (addon: Addon) => void;
+}
+
+function SortableAddonRow({ addon, menuItemName, onEdit, onDelete }: SortableAddonRowProps) {
+  const { t } = useLanguage();
+  
+  return (
+    <TableRow data-testid={`row-addon-${addon.id}`}>
+      <TableCell className="font-medium">{addon.name}</TableCell>
+      <TableCell>{addon.category}</TableCell>
+      <TableCell className="font-mono text-primary">{parseFloat(addon.price).toFixed(2)} SAR</TableCell>
+      <TableCell className="text-muted-foreground">{menuItemName || t.all}</TableCell>
+      <TableCell>
+        <Badge variant={addon.available ? "secondary" : "outline"}>
+          {addon.available ? t.available : t.unavailable}
+        </Badge>
+      </TableCell>
+      <TableCell className="text-right">
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" className="h-[44px] w-[44px]" onClick={() => onEdit(addon)} data-testid={`button-edit-addon-${addon.id}`}>
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            className="h-[44px] w-[44px]"
+            onClick={() => onDelete(addon)}
+            data-testid={`button-delete-addon-${addon.id}`}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function SortableAddonCard({ addon, menuItemName, onEdit, onDelete }: SortableAddonRowProps) {
+  const { t } = useLanguage();
+  
+  return (
+    <Card className="hover-elevate" data-testid={`card-addon-${addon.id}`}>
+      <CardContent className="p-3">
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex-1">
+            <h3 className="font-semibold text-base">{addon.name}</h3>
+            <p className="text-xs text-muted-foreground">{addon.category}</p>
+          </div>
+          <Badge variant={addon.available ? "secondary" : "outline"} className="text-xs">
+            {addon.available ? t.available : t.unavailable}
+          </Badge>
+        </div>
+        <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+          <div>
+            <span className="text-xs text-muted-foreground">{t.price}:</span>
+            <p className="font-mono font-medium text-primary">{parseFloat(addon.price).toFixed(2)} SAR</p>
+          </div>
+          <div>
+            <span className="text-xs text-muted-foreground">Menu Item:</span>
+            <p className="text-sm">{menuItemName || t.all}</p>
+          </div>
+        </div>
+        <div className="flex gap-2 pt-2 border-t">
+          <Button 
+            variant="outline" 
+            className="flex-1 h-[44px]" 
+            onClick={() => onEdit(addon)} 
+            data-testid={`button-edit-addon-${addon.id}`}
+          >
+            <Edit className="h-4 w-4 mr-1" />
+            {t.edit}
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1 h-[44px]"
+            onClick={() => onDelete(addon)}
+            data-testid={`button-delete-addon-${addon.id}`}
+          >
+            <Trash2 className="h-4 w-4 mr-1 text-destructive" />
+            {t.delete}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Inventory() {
   const layout = useDeviceLayout();
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -242,6 +362,14 @@ export default function Inventory() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
   const { toast } = useToast();
+
+  // Add-ons state
+  const [addonSearchQuery, setAddonSearchQuery] = useState("");
+  const [addonCategoryFilter, setAddonCategoryFilter] = useState("all");
+  const [addonOpen, setAddonOpen] = useState(false);
+  const [editingAddon, setEditingAddon] = useState<Addon | null>(null);
+  const [addonDeleteDialogOpen, setAddonDeleteDialogOpen] = useState(false);
+  const [addonToDelete, setAddonToDelete] = useState<Addon | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -257,8 +385,27 @@ export default function Inventory() {
     },
   });
 
+  const addonForm = useForm({
+    resolver: zodResolver(addonFormSchema),
+    defaultValues: {
+      name: "",
+      category: "",
+      price: 0,
+      available: true,
+      menuItemId: "all",
+    },
+  });
+
   const { data: inventoryItemsData = [], isLoading } = useQuery<InventoryItem[]>({
     queryKey: ["/api/inventory"],
+  });
+
+  const { data: addonsData = [], isLoading: isLoadingAddons } = useQuery<Addon[]>({
+    queryKey: ["/api/addons"],
+  });
+
+  const { data: menuItems = [] } = useQuery<MenuItem[]>({
+    queryKey: ["/api/menu"],
   });
 
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
@@ -388,6 +535,64 @@ export default function Inventory() {
     },
   });
 
+  // Add-ons mutations
+  const createAddonMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("POST", "/api/addons", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/addons"] });
+      toast({
+        title: t.addonAdded,
+        description: t.addonAdded,
+      });
+      handleCloseAddonDialog();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to create add-on",
+        description: error.message || "An error occurred while creating the add-on",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateAddonMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      return await apiRequest("PATCH", `/api/addons/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/addons"] });
+      toast({
+        title: t.addonUpdated,
+        description: t.addonUpdated,
+      });
+      handleCloseAddonDialog();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update add-on",
+        description: error.message || "An error occurred while updating the add-on",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteAddonMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/addons/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/addons"] });
+      toast({
+        title: t.addonDeleted,
+        description: t.addonDeleted,
+      });
+      setAddonDeleteDialogOpen(false);
+      setAddonToDelete(null);
+    },
+  });
+
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
     if (!isOpen) {
@@ -444,6 +649,74 @@ export default function Inventory() {
       updateMutation.mutate({ id: editingItem.id, data });
     } else {
       createMutation.mutate(data);
+    }
+  };
+
+  // Add-ons handlers
+  const handleOpenAddonChange = (isOpen: boolean) => {
+    setAddonOpen(isOpen);
+    if (!isOpen) {
+      setEditingAddon(null);
+      addonForm.reset({
+        name: "",
+        category: "",
+        price: 0,
+        available: true,
+        menuItemId: "all",
+      });
+    }
+  };
+
+  const handleCloseAddonDialog = () => {
+    setAddonOpen(false);
+    setEditingAddon(null);
+    addonForm.reset({
+      name: "",
+      category: "",
+      price: 0,
+      available: true,
+      menuItemId: "all",
+    });
+  };
+
+  const handleEditAddon = (addon: Addon) => {
+    const price = parseFloat(addon.price);
+    if (isNaN(price)) {
+      toast({
+        title: "Invalid data",
+        description: "Unable to edit add-on - invalid price value",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setEditingAddon(addon);
+    addonForm.reset({
+      name: addon.name,
+      category: addon.category,
+      price,
+      available: addon.available,
+      menuItemId: addon.menuItemId || "all",
+    });
+    setAddonOpen(true);
+  };
+
+  const handleDeleteAddonClick = (addon: Addon) => {
+    setAddonToDelete(addon);
+    setAddonDeleteDialogOpen(true);
+  };
+
+  const confirmAddonDelete = () => {
+    if (addonToDelete) {
+      deleteAddonMutation.mutate(addonToDelete.id);
+    }
+  };
+
+  const onAddonSubmit = (data: any) => {
+    if (editingAddon) {
+      updateAddonMutation.mutate({ id: editingAddon.id, data });
+    } else {
+      createAddonMutation.mutate(data);
     }
   };
 
@@ -553,14 +826,29 @@ export default function Inventory() {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
+  // Filter and sort add-ons
+  const filteredAddons = addonsData
+    .filter(addon => {
+      const matchesSearch = addon.name.toLowerCase().includes(addonSearchQuery.toLowerCase());
+      const matchesCategory = addonCategoryFilter === "all" || addon.category.toLowerCase() === addonCategoryFilter.toLowerCase();
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      // Sort by category first, then by name
+      if (a.category !== b.category) {
+        return a.category.localeCompare(b.category);
+      }
+      return a.name.localeCompare(b.name);
+    });
+
   // Use full inventory for drag-and-drop when no filters, otherwise use filtered items (but disable drag)
   const displayItems = hasActiveFilters ? filteredItems : inventoryItems;
 
-  if (isLoading) {
+  if (isLoading || isLoadingAddons) {
     return (
       <div className={layout.padding}>
         <h1 className={`${layout.text3Xl} font-bold mb-2`}>Inventory Management</h1>
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{t.loading}...</p>
       </div>
     );
   }
@@ -570,80 +858,359 @@ export default function Inventory() {
       <div className={`flex ${layout.isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
         <div>
           <h1 className={`${layout.text3Xl} font-bold mb-2`}>Inventory Management</h1>
-          <p className="text-muted-foreground text-sm">Track and manage your stock levels</p>
+          <p className="text-muted-foreground text-sm">Track and manage your stock levels and add-ons</p>
         </div>
-        <div className={`flex gap-2 ${layout.isMobile ? 'flex-wrap' : ''}`}>
-          <Button variant="outline" onClick={handleDownloadTemplate} data-testid="button-download-template">
-            <FileDown className="h-4 w-4 mr-2" />
-            Template
-          </Button>
-          <Button variant="outline" onClick={handleExport} data-testid="button-export">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button variant="outline" asChild disabled={isImporting}>
-            <label htmlFor="import-inventory" className="cursor-pointer" data-testid="button-import">
-              <Upload className="h-4 w-4 mr-2" />
-              {isImporting ? "Importing..." : "Import"}
-              <input
-                id="import-inventory"
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={handleImport}
-                className="hidden"
-                data-testid="input-import-file"
-              />
-            </label>
-          </Button>
-          <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
-              <Button data-testid="button-add-item">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Item
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>{editingItem ? "Edit Inventory Item" : "Add New Inventory Item"}</DialogTitle>
-                <DialogDescription>
-                  {editingItem ? "Update the inventory item details" : "Add a new item to your inventory"}
-                </DialogDescription>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Item Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="e.g., Tomatoes" data-testid="input-item-name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="grid grid-cols-2 gap-4">
+      </div>
+
+      <Tabs defaultValue="inventory" className="w-full">
+        <TabsList className="w-full justify-start" data-testid="tabs-inventory">
+          <TabsTrigger value="inventory" data-testid="tab-trigger-inventory">
+            {t.inventory}
+          </TabsTrigger>
+          <TabsTrigger value="addons" data-testid="tab-trigger-addons">
+            {t.addons}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="inventory" className={layout.spaceY}>
+          <div className={`flex gap-2 ${layout.isMobile ? 'flex-wrap' : ''}`}>
+            <Button variant="outline" onClick={handleDownloadTemplate} data-testid="button-download-template">
+              <FileDown className="h-4 w-4 mr-2" />
+              Template
+            </Button>
+            <Button variant="outline" onClick={handleExport} data-testid="button-export">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button variant="outline" asChild disabled={isImporting}>
+              <label htmlFor="import-inventory" className="cursor-pointer" data-testid="button-import">
+                <Upload className="h-4 w-4 mr-2" />
+                {isImporting ? "Importing..." : "Import"}
+                <input
+                  id="import-inventory"
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleImport}
+                  className="hidden"
+                  data-testid="input-import-file"
+                />
+              </label>
+            </Button>
+            <Dialog open={open} onOpenChange={handleOpenChange}>
+              <DialogTrigger asChild>
+                <Button data-testid="button-add-item">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Item
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>{editingItem ? "Edit Inventory Item" : "Add New Inventory Item"}</DialogTitle>
+                  <DialogDescription>
+                    {editingItem ? "Update the inventory item details" : "Add a new item to your inventory"}
+                  </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <FormField
                       control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Item Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="e.g., Tomatoes" data-testid="input-item-name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Category</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-item-category">
+                                  <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Vegetables">Vegetables</SelectItem>
+                                <SelectItem value="Meat">Meat</SelectItem>
+                                <SelectItem value="Dairy">Dairy</SelectItem>
+                                <SelectItem value="Grains">Grains</SelectItem>
+                                <SelectItem value="Oils">Oils</SelectItem>
+                                <SelectItem value="Spices">Spices</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="unit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Unit</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-item-unit">
+                                  <SelectValue placeholder="Select unit" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="kg">kg</SelectItem>
+                                <SelectItem value="g">g</SelectItem>
+                                <SelectItem value="l">l</SelectItem>
+                                <SelectItem value="ml">ml</SelectItem>
+                                <SelectItem value="pcs">pcs</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="quantity"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Quantity</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="number" step="0.01" placeholder="0.00" data-testid="input-item-quantity" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="price"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Price per Unit (SAR)</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="number" step="0.01" placeholder="0.00" data-testid="input-item-price" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="supplier"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Supplier</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="e.g., ABC Suppliers" data-testid="input-item-supplier" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-item-status">
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="In Stock">In Stock</SelectItem>
+                              <SelectItem value="Low Stock">Low Stock</SelectItem>
+                              <SelectItem value="Out of Stock">Out of Stock</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex justify-end gap-2 pt-4">
+                      <Button type="button" variant="outline" onClick={handleCloseDialog} data-testid="button-cancel">
+                        Cancel
+                      </Button>
+                      <Button type="submit" data-testid="button-save-item" disabled={createMutation.isPending || updateMutation.isPending}>
+                        {editingItem ? "Update Item" : "Create Item"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <Card className={layout.cardPadding}>
+            <div className={`flex ${layout.isMobile ? 'flex-col' : 'gap-4'} ${layout.isMobile ? 'space-y-3' : ''} mb-4`}>
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search items..."
+                  className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  data-testid="input-search"
+                />
+              </div>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className={layout.isMobile ? "w-full" : "w-48"} data-testid="select-category">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="vegetables">Vegetables</SelectItem>
+                  <SelectItem value="meat">Meat</SelectItem>
+                  <SelectItem value="dairy">Dairy</SelectItem>
+                  <SelectItem value="grains">Grains</SelectItem>
+                  <SelectItem value="oils">Oils</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className={layout.isMobile ? "w-full" : "w-48"} data-testid="select-status">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="in-stock">In Stock</SelectItem>
+                  <SelectItem value="low-stock">Low Stock</SelectItem>
+                  <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={displayItems.map(item => item.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {!layout.isMobile ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Item Name</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Quantity</TableHead>
+                        <TableHead>Unit</TableHead>
+                        <TableHead>Price/Unit</TableHead>
+                        <TableHead>Supplier</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {displayItems.map((item) => (
+                        <SortableInventoryRow
+                          key={item.id}
+                          item={item}
+                          onEdit={handleEditItem}
+                          onDelete={handleDeleteClick}
+                          disabled={hasActiveFilters}
+                        />
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="space-y-3">
+                    {displayItems.map((item) => (
+                      <SortableInventoryCard
+                        key={item.id}
+                        item={item}
+                        onEdit={handleEditItem}
+                        onDelete={handleDeleteClick}
+                        disabled={hasActiveFilters}
+                      />
+                    ))}
+                  </div>
+                )}
+              </SortableContext>
+            </DndContext>
+          </Card>
+
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete <strong>{itemToDelete?.name}</strong> from your inventory.
+                  This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmDelete} data-testid="button-confirm-delete">
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </TabsContent>
+
+        <TabsContent value="addons" className={layout.spaceY}>
+          <div className={`flex gap-2 ${layout.isMobile ? 'flex-wrap' : ''}`}>
+            <Dialog open={addonOpen} onOpenChange={handleOpenAddonChange}>
+              <DialogTrigger asChild>
+                <Button data-testid="button-add-addon">
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t.addAddon}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>{editingAddon ? t.editAddon : t.addAddon}</DialogTitle>
+                  <DialogDescription>
+                    {editingAddon ? "Update the add-on details" : "Add a new add-on to your menu"}
+                  </DialogDescription>
+                </DialogHeader>
+                <Form {...addonForm}>
+                  <form onSubmit={addonForm.handleSubmit(onAddonSubmit)} className="space-y-4">
+                    <FormField
+                      control={addonForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t.addonName}</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="e.g., Extra Cheese" data-testid="input-addon-name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={addonForm.control}
                       name="category"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Category</FormLabel>
+                          <FormLabel>{t.addonCategory}</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger data-testid="select-item-category">
+                              <SelectTrigger data-testid="select-addon-category">
                                 <SelectValue placeholder="Select category" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Vegetables">Vegetables</SelectItem>
-                              <SelectItem value="Meat">Meat</SelectItem>
-                              <SelectItem value="Dairy">Dairy</SelectItem>
-                              <SelectItem value="Grains">Grains</SelectItem>
-                              <SelectItem value="Oils">Oils</SelectItem>
-                              <SelectItem value="Spices">Spices</SelectItem>
+                              <SelectItem value="Toppings">Toppings</SelectItem>
+                              <SelectItem value="Sides">Sides</SelectItem>
+                              <SelectItem value="Sauces">Sauces</SelectItem>
+                              <SelectItem value="Extras">Extras</SelectItem>
+                              <SelectItem value="Drinks">Drinks</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -651,215 +1218,186 @@ export default function Inventory() {
                       )}
                     />
                     <FormField
-                      control={form.control}
-                      name="unit"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Unit</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-item-unit">
-                                <SelectValue placeholder="Select unit" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="kg">kg</SelectItem>
-                              <SelectItem value="g">g</SelectItem>
-                              <SelectItem value="l">l</SelectItem>
-                              <SelectItem value="ml">ml</SelectItem>
-                              <SelectItem value="pcs">pcs</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="quantity"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Quantity</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" step="0.01" placeholder="0.00" data-testid="input-item-quantity" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
+                      control={addonForm.control}
                       name="price"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Price per Unit (SAR)</FormLabel>
+                          <FormLabel>{t.addonPrice} (SAR, incl. VAT)</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" step="0.01" placeholder="0.00" data-testid="input-item-price" />
+                            <Input {...field} type="number" step="0.01" placeholder="0.00" data-testid="input-addon-price" />
                           </FormControl>
+                          <FormMessage />
+                          <p className="text-xs text-muted-foreground">VAT (15%) will be calculated automatically</p>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={addonForm.control}
+                      name="menuItemId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Link to Menu Item (Optional)</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || "all"}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-addon-menuitem">
+                                <SelectValue placeholder="All items" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="all">{t.all}</SelectItem>
+                              {menuItems.map((item) => (
+                                <SelectItem key={item.id} value={item.id}>
+                                  {item.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
-                  <FormField
-                    control={form.control}
-                    name="supplier"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Supplier</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="e.g., ABC Suppliers" data-testid="input-item-supplier" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                    <FormField
+                      control={addonForm.control}
+                      name="available"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center justify-between rounded-md border p-3">
+                          <div>
+                            <FormLabel className="text-base">{t.available}</FormLabel>
+                            <p className="text-xs text-muted-foreground">Make this add-on available for orders</p>
+                          </div>
                           <FormControl>
-                            <SelectTrigger data-testid="select-item-status">
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              data-testid="switch-addon-available"
+                            />
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="In Stock">In Stock</SelectItem>
-                            <SelectItem value="Low Stock">Low Stock</SelectItem>
-                            <SelectItem value="Out of Stock">Out of Stock</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="flex justify-end gap-2 pt-4">
-                    <Button type="button" variant="outline" onClick={handleCloseDialog} data-testid="button-cancel">
-                      Cancel
-                    </Button>
-                    <Button type="submit" data-testid="button-save-item" disabled={createMutation.isPending || updateMutation.isPending}>
-                      {editingItem ? "Update Item" : "Create Item"}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      <Card className={layout.cardPadding}>
-        <div className={`flex ${layout.isMobile ? 'flex-col' : 'gap-4'} ${layout.isMobile ? 'space-y-3' : ''} mb-4`}>
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search items..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              data-testid="input-search"
-            />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex justify-end gap-2 pt-4">
+                      <Button type="button" variant="outline" onClick={handleCloseAddonDialog} data-testid="button-cancel-addon">
+                        {t.cancel}
+                      </Button>
+                      <Button type="submit" data-testid="button-save-addon" disabled={createAddonMutation.isPending || updateAddonMutation.isPending}>
+                        {editingAddon ? t.save : t.add}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
           </div>
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className={layout.isMobile ? "w-full" : "w-48"} data-testid="select-category">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="vegetables">Vegetables</SelectItem>
-              <SelectItem value="meat">Meat</SelectItem>
-              <SelectItem value="dairy">Dairy</SelectItem>
-              <SelectItem value="grains">Grains</SelectItem>
-              <SelectItem value="oils">Oils</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className={layout.isMobile ? "w-full" : "w-48"} data-testid="select-status">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="in-stock">In Stock</SelectItem>
-              <SelectItem value="low-stock">Low Stock</SelectItem>
-              <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
 
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={displayItems.map(item => item.id)}
-            strategy={verticalListSortingStrategy}
-          >
+          <Card className={layout.cardPadding}>
+            <div className={`flex ${layout.isMobile ? 'flex-col' : 'gap-4'} ${layout.isMobile ? 'space-y-3' : ''} mb-4`}>
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search add-ons..."
+                  className="pl-10"
+                  value={addonSearchQuery}
+                  onChange={(e) => setAddonSearchQuery(e.target.value)}
+                  data-testid="input-search-addons"
+                />
+              </div>
+              <Select value={addonCategoryFilter} onValueChange={setAddonCategoryFilter}>
+                <SelectTrigger className={layout.isMobile ? "w-full" : "w-48"} data-testid="select-addon-category-filter">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="Toppings">Toppings</SelectItem>
+                  <SelectItem value="Sides">Sides</SelectItem>
+                  <SelectItem value="Sauces">Sauces</SelectItem>
+                  <SelectItem value="Extras">Extras</SelectItem>
+                  <SelectItem value="Drinks">Drinks</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {!layout.isMobile ? (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Item Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Unit</TableHead>
-                    <TableHead>Price/Unit</TableHead>
-                    <TableHead>Supplier</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>{t.addonName}</TableHead>
+                    <TableHead>{t.category}</TableHead>
+                    <TableHead>{t.price}</TableHead>
+                    <TableHead>Menu Item</TableHead>
+                    <TableHead>{t.status}</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {displayItems.map((item) => (
-                    <SortableInventoryRow
-                      key={item.id}
-                      item={item}
-                      onEdit={handleEditItem}
-                      onDelete={handleDeleteClick}
-                      disabled={hasActiveFilters}
-                    />
-                  ))}
+                  {filteredAddons.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                        {t.noAddonsAvailable}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredAddons.map((addon) => {
+                      const linkedMenuItem = addon.menuItemId 
+                        ? menuItems.find(item => item.id === addon.menuItemId)?.name ?? null
+                        : null;
+                      return (
+                        <SortableAddonRow
+                          key={addon.id}
+                          addon={addon}
+                          menuItemName={linkedMenuItem}
+                          onEdit={handleEditAddon}
+                          onDelete={handleDeleteAddonClick}
+                        />
+                      );
+                    })
+                  )}
                 </TableBody>
               </Table>
             ) : (
               <div className="space-y-3">
-                {displayItems.map((item) => (
-                  <SortableInventoryCard
-                    key={item.id}
-                    item={item}
-                    onEdit={handleEditItem}
-                    onDelete={handleDeleteClick}
-                    disabled={hasActiveFilters}
-                  />
-                ))}
+                {filteredAddons.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8">
+                    {t.noAddonsAvailable}
+                  </div>
+                ) : (
+                  filteredAddons.map((addon) => {
+                    const linkedMenuItem = addon.menuItemId 
+                      ? menuItems.find(item => item.id === addon.menuItemId)?.name ?? null
+                      : null;
+                    return (
+                      <SortableAddonCard
+                        key={addon.id}
+                        addon={addon}
+                        menuItemName={linkedMenuItem}
+                        onEdit={handleEditAddon}
+                        onDelete={handleDeleteAddonClick}
+                      />
+                    );
+                  })
+                )}
               </div>
             )}
-          </SortableContext>
-        </DndContext>
-      </Card>
+          </Card>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete <strong>{itemToDelete?.name}</strong> from your inventory.
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} data-testid="button-confirm-delete">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          <AlertDialog open={addonDeleteDialogOpen} onOpenChange={setAddonDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete <strong>{addonToDelete?.name}</strong> from your add-ons.
+                  This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel data-testid="button-cancel-delete-addon">{t.cancel}</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmAddonDelete} data-testid="button-confirm-delete-addon">
+                  {t.delete}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

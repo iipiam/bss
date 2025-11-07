@@ -145,6 +145,23 @@ export interface Translations {
   available: string;
   unavailable: string;
   
+  // Add-ons
+  addons: string;
+  addon: string;
+  addAddon: string;
+  editAddon: string;
+  deleteAddon: string;
+  addonName: string;
+  addonCategory: string;
+  addonPrice: string;
+  selectAddons: string;
+  availableAddons: string;
+  selectedAddons: string;
+  noAddonsAvailable: string;
+  addonAdded: string;
+  addonUpdated: string;
+  addonDeleted: string;
+  
   // Orders
   orderNumber: string;
   customerName: string;
@@ -599,6 +616,23 @@ export const translations: Record<Language, Translations> = {
     available: 'Available',
     unavailable: 'Unavailable',
     
+    // Add-ons
+    addons: 'Add-ons',
+    addon: 'Add-on',
+    addAddon: 'Add Add-on',
+    editAddon: 'Edit Add-on',
+    deleteAddon: 'Delete Add-on',
+    addonName: 'Add-on Name',
+    addonCategory: 'Add-on Category',
+    addonPrice: 'Add-on Price',
+    selectAddons: 'Select Add-ons',
+    availableAddons: 'Available Add-ons',
+    selectedAddons: 'Selected Add-ons',
+    noAddonsAvailable: 'No add-ons available',
+    addonAdded: 'Add-on added successfully',
+    addonUpdated: 'Add-on updated successfully',
+    addonDeleted: 'Add-on deleted successfully',
+    
     // Orders
     orderNumber: 'Order Number',
     customerName: 'Customer Name',
@@ -1051,6 +1085,23 @@ export const translations: Record<Language, Translations> = {
     description: 'الوصف',
     available: 'متاح',
     unavailable: 'غير متاح',
+    
+    // Add-ons
+    addons: 'الإضافات',
+    addon: 'إضافة',
+    addAddon: 'إضافة إضافة',
+    editAddon: 'تعديل إضافة',
+    deleteAddon: 'حذف إضافة',
+    addonName: 'اسم الإضافة',
+    addonCategory: 'فئة الإضافة',
+    addonPrice: 'سعر الإضافة',
+    selectAddons: 'اختر الإضافات',
+    availableAddons: 'الإضافات المتاحة',
+    selectedAddons: 'الإضافات المحددة',
+    noAddonsAvailable: 'لا توجد إضافات متاحة',
+    addonAdded: 'تمت إضافة الإضافة بنجاح',
+    addonUpdated: 'تم تحديث الإضافة بنجاح',
+    addonDeleted: 'تم حذف الإضافة بنجاح',
     
     // Orders
     orderNumber: 'رقم الطلب',
@@ -1505,6 +1556,23 @@ export const translations: Record<Language, Translations> = {
     available: '可用',
     unavailable: '不可用',
     
+    // Add-ons
+    addons: '附加项',
+    addon: '附加项',
+    addAddon: '添加附加项',
+    editAddon: '编辑附加项',
+    deleteAddon: '删除附加项',
+    addonName: '附加项名称',
+    addonCategory: '附加项类别',
+    addonPrice: '附加项价格',
+    selectAddons: '选择附加项',
+    availableAddons: '可用附加项',
+    selectedAddons: '已选附加项',
+    noAddonsAvailable: '无可用附加项',
+    addonAdded: '附加项添加成功',
+    addonUpdated: '附加项更新成功',
+    addonDeleted: '附加项删除成功',
+    
     // Orders
     orderNumber: '订单号',
     customerName: '客户名称',
@@ -1957,6 +2025,23 @@ export const translations: Record<Language, Translations> = {
     description: 'Beschreibung',
     available: 'Verfügbar',
     unavailable: 'Nicht verfügbar',
+    
+    // Add-ons
+    addons: 'Zusätze',
+    addon: 'Zusatz',
+    addAddon: 'Zusatz hinzufügen',
+    editAddon: 'Zusatz bearbeiten',
+    deleteAddon: 'Zusatz löschen',
+    addonName: 'Zusatzname',
+    addonCategory: 'Zusatzkategorie',
+    addonPrice: 'Zusatzpreis',
+    selectAddons: 'Zusätze auswählen',
+    availableAddons: 'Verfügbare Zusätze',
+    selectedAddons: 'Ausgewählte Zusätze',
+    noAddonsAvailable: 'Keine Zusätze verfügbar',
+    addonAdded: 'Zusatz erfolgreich hinzugefügt',
+    addonUpdated: 'Zusatz erfolgreich aktualisiert',
+    addonDeleted: 'Zusatz erfolgreich gelöscht',
     
     // Orders
     orderNumber: 'Bestellnummer',
@@ -2411,6 +2496,23 @@ export const translations: Record<Language, Translations> = {
     available: 'उपलब्ध',
     unavailable: 'अनुपलब्ध',
     
+    // Add-ons
+    addons: 'ऐड-ऑन',
+    addon: 'ऐड-ऑन',
+    addAddon: 'ऐड-ऑन जोड़ें',
+    editAddon: 'ऐड-ऑन संपादित करें',
+    deleteAddon: 'ऐड-ऑन हटाएं',
+    addonName: 'ऐड-ऑन नाम',
+    addonCategory: 'ऐड-ऑन श्रेणी',
+    addonPrice: 'ऐड-ऑन कीमत',
+    selectAddons: 'ऐड-ऑन चुनें',
+    availableAddons: 'उपलब्ध ऐड-ऑन',
+    selectedAddons: 'चयनित ऐड-ऑन',
+    noAddonsAvailable: 'कोई ऐड-ऑन उपलब्ध नहीं',
+    addonAdded: 'ऐड-ऑन सफलतापूर्वक जोड़ा गया',
+    addonUpdated: 'ऐड-ऑन सफलतापूर्वक अपडेट किया गया',
+    addonDeleted: 'ऐड-ऑन सफलतापूर्वक हटाया गया',
+    
     // Orders
     orderNumber: 'ऑर्डर नंबर',
     customerName: 'ग्राहक का नाम',
@@ -2864,6 +2966,23 @@ export const translations: Record<Language, Translations> = {
     available: 'دستیاب',
     unavailable: 'ناقابل دستیاب',
     
+    // Add-ons
+    addons: 'اضافی اشیاء',
+    addon: 'اضافی شے',
+    addAddon: 'اضافی شے شامل کریں',
+    editAddon: 'اضافی شے میں ترمیم کریں',
+    deleteAddon: 'اضافی شے حذف کریں',
+    addonName: 'اضافی شے کا نام',
+    addonCategory: 'اضافی شے کا زمرہ',
+    addonPrice: 'اضافی شے کی قیمت',
+    selectAddons: 'اضافی اشیاء منتخب کریں',
+    availableAddons: 'دستیاب اضافی اشیاء',
+    selectedAddons: 'منتخب شدہ اضافی اشیاء',
+    noAddonsAvailable: 'کوئی اضافی شے دستیاب نہیں',
+    addonAdded: 'اضافی شے کامیابی سے شامل کی گئی',
+    addonUpdated: 'اضافی شے کامیابی سے اپ ڈیٹ کی گئی',
+    addonDeleted: 'اضافی شے کامیابی سے حذف کی گئی',
+    
     // Orders
     orderNumber: 'آرڈر نمبر',
     customerName: 'گاہک کا نام',
@@ -3316,6 +3435,23 @@ export const translations: Record<Language, Translations> = {
     description: 'বিবরণ',
     available: 'উপলব্ধ',
     unavailable: 'অনুপলব্ধ',
+    
+    // Add-ons
+    addons: 'অ্যাড-অন',
+    addon: 'অ্যাড-অন',
+    addAddon: 'অ্যাড-অন যোগ করুন',
+    editAddon: 'অ্যাড-অন সম্পাদনা করুন',
+    deleteAddon: 'অ্যাড-অন মুছুন',
+    addonName: 'অ্যাড-অনের নাম',
+    addonCategory: 'অ্যাড-অন ক্যাটাগরি',
+    addonPrice: 'অ্যাড-অন মূল্য',
+    selectAddons: 'অ্যাড-অন নির্বাচন করুন',
+    availableAddons: 'উপলব্ধ অ্যাড-অন',
+    selectedAddons: 'নির্বাচিত অ্যাড-অন',
+    noAddonsAvailable: 'কোনো অ্যাড-অন উপলব্ধ নেই',
+    addonAdded: 'অ্যাড-অন সফলভাবে যোগ করা হয়েছে',
+    addonUpdated: 'অ্যাড-অন সফলভাবে আপডেট করা হয়েছে',
+    addonDeleted: 'অ্যাড-অন সফলভাবে মুছে ফেলা হয়েছে',
     
     // Orders
     orderNumber: 'অর্ডার নম্বর',

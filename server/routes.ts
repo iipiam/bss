@@ -9,6 +9,7 @@ import {
   insertBranchSchema,
   insertInventoryItemSchema,
   insertMenuItemSchema,
+  insertAddonSchema,
   insertRecipeSchema,
   insertOrderSchema,
   insertTransactionSchema,
@@ -174,6 +175,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const branchId = req.query.branchId as string | undefined;
     const stock = await storage.getMenuItemsStock(branchId);
     res.json(stock);
+  });
+
+  // Add-ons
+  app.get("/api/addons", async (req, res) => {
+    const menuItemId = req.query.menuItemId as string | undefined;
+    const addons = await storage.getAddons(menuItemId);
+    res.json(addons);
+  });
+
+  app.get("/api/addons/:id", async (req, res) => {
+    const addon = await storage.getAddon(req.params.id);
+    if (!addon) {
+      return res.status(404).json({ error: "Add-on not found" });
+    }
+    res.json(addon);
+  });
+
+  app.post("/api/addons", async (req, res) => {
+    try {
+      const data = insertAddonSchema.parse(req.body);
+      const addon = await storage.createAddon(data);
+      res.status(201).json(addon);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid add-on data" });
+    }
+  });
+
+  app.patch("/api/addons/:id", async (req, res) => {
+    try {
+      const addon = await storage.updateAddon(req.params.id, req.body);
+      if (!addon) {
+        return res.status(404).json({ error: "Add-on not found" });
+      }
+      res.json(addon);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid add-on data" });
+    }
+  });
+
+  app.delete("/api/addons/:id", async (req, res) => {
+    const success = await storage.deleteAddon(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Add-on not found" });
+    }
+    res.status(204).send();
+  });
+
+  app.patch("/api/addons/sort-order", async (req, res) => {
+    try {
+      await storage.updateAddonsSortOrder(req.body);
+      res.status(204).send();
+    } catch (error) {
+      res.status(400).json({ error: "Invalid sort order data" });
+    }
   });
 
   // Customers

@@ -5,6 +5,8 @@ import {
   type InsertInventoryItem,
   type MenuItem,
   type InsertMenuItem,
+  type Addon,
+  type InsertAddon,
   type Recipe,
   type InsertRecipe,
   type Order,
@@ -30,6 +32,7 @@ import {
   branches,
   inventoryItems,
   menuItems,
+  addons,
   recipes,
   orders,
   transactions,
@@ -69,6 +72,14 @@ export interface IStorage {
   updateMenuItem(id: string, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined>;
   deleteMenuItem(id: string): Promise<boolean>;
   getMenuItemsStock(branchId?: string): Promise<Record<string, number>>;
+
+  // Add-ons
+  getAddons(menuItemId?: string): Promise<Addon[]>;
+  getAddon(id: string): Promise<Addon | undefined>;
+  createAddon(addon: InsertAddon): Promise<Addon>;
+  updateAddon(id: string, addon: Partial<InsertAddon>): Promise<Addon | undefined>;
+  deleteAddon(id: string): Promise<boolean>;
+  updateAddonsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
 
   // Recipes
   getRecipes(): Promise<Recipe[]>;
@@ -306,6 +317,46 @@ export class DatabaseStorage implements IStorage {
     }
     
     return stock;
+  }
+
+  // Add-ons
+  async getAddons(menuItemId?: string): Promise<Addon[]> {
+    if (menuItemId) {
+      return await db.select().from(addons).where(eq(addons.menuItemId, menuItemId));
+    }
+    return await db.select().from(addons);
+  }
+
+  async getAddon(id: string): Promise<Addon | undefined> {
+    const [addon] = await db.select().from(addons).where(eq(addons.id, id));
+    return addon;
+  }
+
+  async createAddon(addon: InsertAddon): Promise<Addon> {
+    const [created] = await db.insert(addons).values(addon).returning();
+    return created;
+  }
+
+  async updateAddon(id: string, addon: Partial<InsertAddon>): Promise<Addon | undefined> {
+    const updateData = Object.fromEntries(
+      Object.entries(addon).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getAddon(id);
+    }
+    const [updated] = await db.update(addons).set(updateData).where(eq(addons.id, id)).returning();
+    return updated;
+  }
+
+  async deleteAddon(id: string): Promise<boolean> {
+    const result = await db.delete(addons).where(eq(addons.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async updateAddonsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void> {
+    for (const update of updates) {
+      await db.update(addons).set({ sortOrder: update.sortOrder }).where(eq(addons.id, update.id));
+    }
   }
 
   // Recipes

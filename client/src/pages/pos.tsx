@@ -14,7 +14,13 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDevice } from "@/contexts/DeviceContext";
-import type { MenuItem, DeliveryApp } from "@shared/schema";
+import type { MenuItem, DeliveryApp, Addon } from "@shared/schema";
+
+interface CartItemAddon {
+  id: string;
+  name: string;
+  price: number;
+}
 
 interface CartItem {
   id: string;
@@ -23,6 +29,7 @@ interface CartItem {
   originalPrice: number;
   discount: number;
   quantity: number;
+  addons?: CartItemAddon[];
 }
 
 const categories = ["All", "Pizza", "Burgers", "Sandwiches", "Salads", "Drinks"];
@@ -52,6 +59,10 @@ export default function POS() {
   const [mobileView, setMobileView] = useState<"menu" | "cart">("menu");
   const [selectedDeliveryAppId, setSelectedDeliveryAppId] = useState<string | null>(null);
   const [earningsDecreaseApplied, setEarningsDecreaseApplied] = useState(false);
+  const [addonDialogOpen, setAddonDialogOpen] = useState(false);
+  const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
+  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+  const [itemQuantity, setItemQuantity] = useState(1);
   const { toast } = useToast();
   const { t } = useLanguage();
   const { device } = useDevice();
@@ -76,12 +87,24 @@ export default function POS() {
     queryKey: ["/api/delivery-apps"],
   });
 
+  const { data: allAddons = [] } = useQuery<Addon[]>({
+    queryKey: ["/api/addons"],
+  });
+
   // Reset earnings decrease when delivery app is deselected
   useEffect(() => {
     if (!selectedDeliveryAppId) {
       setEarningsDecreaseApplied(false);
     }
   }, [selectedDeliveryAppId]);
+
+  // Get available add-ons for a specific menu item
+  const getAvailableAddons = (menuItemId: string) => {
+    return allAddons.filter(addon =>
+      addon.available &&
+      (addon.menuItemId === menuItemId || addon.menuItemId === null)
+    );
+  };
 
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
@@ -140,28 +163,83 @@ export default function POS() {
     },
   });
 
-  const addToCart = (item: MenuItem) => {
-    const existing = cartItems.find(ci => ci.id === item.id);
+  const handleItemClick = (item: MenuItem) => {
+    const availableAddons = getAvailableAddons(item.id);
+    
+    // If no add-ons available, add directly to cart
+    if (availableAddons.length === 0) {
+      addToCartDirectly(item);
+    } else {
+      // Show add-on dialog
+      setSelectedMenuItem(item);
+      setSelectedAddons([]);
+      setItemQuantity(1);
+      setAddonDialogOpen(true);
+    }
+  };
+
+  const addToCartDirectly = (item: MenuItem) => {
+    const existing = cartItems.find(ci => ci.id === item.id && !ci.addons?.length);
     const basePrice = parseFloat(item.basePrice);
     const discountPercent = parseFloat(item.discount || "0");
-    // Apply discount to base price (store as pre-VAT price since checkout adds VAT)
     const discountedBase = basePrice * (1 - discountPercent / 100);
     const originalBase = basePrice;
     
     if (existing) {
       setCartItems(cartItems.map(ci =>
-        ci.id === item.id ? { ...ci, quantity: ci.quantity + 1 } : ci
+        ci.id === item.id && !ci.addons?.length ? { ...ci, quantity: ci.quantity + 1 } : ci
       ));
     } else {
       setCartItems([...cartItems, { 
         id: item.id, 
         name: item.name, 
-        price: discountedBase, // Store discounted base price (VAT added at checkout)
-        originalPrice: originalBase, // Original base price
+        price: discountedBase,
+        originalPrice: originalBase,
         discount: discountPercent,
-        quantity: 1 
+        quantity: 1,
+        addons: []
       }]);
     }
+  };
+
+  const addToCartWithAddons = () => {
+    if (!selectedMenuItem) return;
+
+    const basePrice = parseFloat(selectedMenuItem.basePrice);
+    const discountPercent = parseFloat(selectedMenuItem.discount || "0");
+    const discountedBase = basePrice * (1 - discountPercent / 100);
+    const originalBase = basePrice;
+
+    const selectedAddonItems = allAddons
+      .filter(addon => selectedAddons.includes(addon.id))
+      .map(addon => ({
+        id: addon.id,
+        name: addon.name,
+        price: parseFloat(addon.basePrice),
+      }));
+
+    setCartItems([...cartItems, {
+      id: selectedMenuItem.id,
+      name: selectedMenuItem.name,
+      price: discountedBase,
+      originalPrice: originalBase,
+      discount: discountPercent,
+      quantity: itemQuantity,
+      addons: selectedAddonItems.length > 0 ? selectedAddonItems : undefined,
+    }]);
+
+    setAddonDialogOpen(false);
+    setSelectedMenuItem(null);
+    setSelectedAddons([]);
+    setItemQuantity(1);
+  };
+
+  const toggleAddon = (addonId: string) => {
+    setSelectedAddons(prev =>
+      prev.includes(addonId)
+        ? prev.filter(id => id !== addonId)
+        : [...prev, addonId]
+    );
   };
 
   const updateQuantity = (id: string, delta: number) => {
@@ -183,7 +261,12 @@ export default function POS() {
     setEarningsDecreaseApplied(false);
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const calculateItemTotal = (item: CartItem) => {
+    const addonTotal = item.addons?.reduce((sum, addon) => sum + addon.price, 0) || 0;
+    return (item.price + addonTotal) * item.quantity;
+  };
+
+  const subtotal = cartItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
   const tax = subtotal * 0.15;
   const total = subtotal + tax;
 
@@ -235,6 +318,7 @@ export default function POS() {
         name: item.name,
         quantity: item.quantity,
         price: item.price,
+        addons: item.addons,
       })),
       subtotal: subtotal.toFixed(2),
       tax: tax.toFixed(2),
@@ -317,7 +401,7 @@ export default function POS() {
                   <Card
                     key={item.id}
                     className={`cursor-pointer hover-elevate active-elevate-2 relative ${isOutOfStock ? 'opacity-50' : ''}`}
-                    onClick={() => !isOutOfStock && addToCart(item)}
+                    onClick={() => !isOutOfStock && handleItemClick(item)}
                     data-testid={`card-pos-item-${item.id}`}
                   >
                     {hasDiscount && !isOutOfStock && (
@@ -411,6 +495,16 @@ export default function POS() {
                             ) : (
                               <p className="text-xs text-muted-foreground font-mono">{item.price.toFixed(2)} SAR</p>
                             )}
+                            {item.addons && item.addons.length > 0 && (
+                              <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-muted">
+                                {item.addons.map(addon => (
+                                  <div key={addon.id} className="flex items-center justify-between text-xs text-muted-foreground">
+                                    <span>+ {addon.name}</span>
+                                    <span className="font-mono">+{addon.price.toFixed(2)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                           <Button
                             variant="ghost"
@@ -441,7 +535,7 @@ export default function POS() {
                               <Plus className="h-4 w-4" />
                             </Button>
                           </div>
-                          <p className="font-mono font-bold text-sm">{(item.price * item.quantity).toFixed(2)} SAR</p>
+                          <p className="font-mono font-bold text-sm">{calculateItemTotal(item).toFixed(2)} SAR</p>
                         </div>
                       </CardContent>
                     </Card>
@@ -765,7 +859,7 @@ export default function POS() {
               <Card
                 key={item.id}
                 className={`cursor-pointer hover-elevate active-elevate-2 relative ${isOutOfStock ? 'opacity-50' : ''}`}
-                onClick={() => !isOutOfStock && addToCart(item)}
+                onClick={() => !isOutOfStock && handleItemClick(item)}
                 data-testid={`card-pos-item-${item.id}`}
               >
                 {hasDiscount && !isOutOfStock && (
@@ -839,6 +933,16 @@ export default function POS() {
                         ) : (
                           <p className="text-sm text-muted-foreground font-mono">{item.price.toFixed(2)} SAR (base)</p>
                         )}
+                        {item.addons && item.addons.length > 0 && (
+                          <div className="mt-2 space-y-1 pl-3 border-l-2 border-muted">
+                            {item.addons.map(addon => (
+                              <div key={addon.id} className="flex items-center justify-between text-sm text-muted-foreground">
+                                <span>+ {addon.name}</span>
+                                <span className="font-mono">+{addon.price.toFixed(2)} SAR</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <Button
                         variant="ghost"
@@ -872,7 +976,7 @@ export default function POS() {
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
-                      <p className="font-mono font-bold">{(item.price * item.quantity).toFixed(2)} SAR</p>
+                      <p className="font-mono font-bold">{calculateItemTotal(item).toFixed(2)} SAR</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -1142,6 +1246,136 @@ export default function POS() {
           </div>
         </div>
       </div>
+
+      {/* Add-on Selection Dialog */}
+      <Dialog open={addonDialogOpen} onOpenChange={setAddonDialogOpen}>
+        <DialogContent className={`max-w-md ${isMobile ? 'max-h-[90vh]' : ''}`}>
+          <DialogHeader>
+            <DialogTitle>{t.selectAddons}</DialogTitle>
+            <DialogDescription>
+              {selectedMenuItem?.name} - {selectedMenuItem ? (parseFloat(selectedMenuItem.basePrice) * 1.15).toFixed(2) : '0.00'} SAR
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+            {selectedMenuItem && getAvailableAddons(selectedMenuItem.id).length > 0 ? (
+              <>
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">{t.availableAddons}</Label>
+                  <div className="space-y-2">
+                    {getAvailableAddons(selectedMenuItem.id).map(addon => (
+                      <div
+                        key={addon.id}
+                        className={`flex items-center space-x-3 p-3 rounded-md border ${isMobile ? 'min-h-[44px]' : ''} hover-elevate cursor-pointer`}
+                        onClick={() => toggleAddon(addon.id)}
+                        data-testid={`addon-option-${addon.id}`}
+                      >
+                        <Checkbox
+                          checked={selectedAddons.includes(addon.id)}
+                          onCheckedChange={() => toggleAddon(addon.id)}
+                          className={isMobile ? 'h-[44px] w-[44px]' : ''}
+                          data-testid={`checkbox-addon-${addon.id}`}
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-baseline justify-between">
+                            <span className="font-medium text-sm">{addon.name}</span>
+                            <span className="font-mono text-sm text-primary">+{parseFloat(addon.basePrice).toFixed(2)} SAR</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{addon.category}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+              </>
+            ) : (
+              <p className="text-center text-muted-foreground py-4">{t.noAddonsAvailable}</p>
+            )}
+
+            <div>
+              <Label className="text-sm font-medium mb-2 block">{t.quantity}</Label>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  className={isMobile ? 'h-[44px] w-[44px]' : 'h-10 w-10'}
+                  onClick={() => setItemQuantity(Math.max(1, itemQuantity - 1))}
+                  data-testid="button-decrease-quantity"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="text-lg font-mono font-semibold w-12 text-center" data-testid="text-quantity">{itemQuantity}</span>
+                <Button
+                  variant="outline"
+                  className={isMobile ? 'h-[44px] w-[44px]' : 'h-10 w-10'}
+                  onClick={() => setItemQuantity(itemQuantity + 1)}
+                  data-testid="button-increase-quantity"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="p-3 bg-muted rounded-md">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-sm text-muted-foreground">{t.subtotal}</span>
+                <span className="font-mono text-sm">
+                  {selectedMenuItem ? (
+                    (parseFloat(selectedMenuItem.basePrice) * (1 - parseFloat(selectedMenuItem.discount || "0") / 100) * itemQuantity).toFixed(2)
+                  ) : '0.00'} SAR
+                </span>
+              </div>
+              {selectedAddons.length > 0 && (
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-sm text-muted-foreground">{t.addons}</span>
+                  <span className="font-mono text-sm">
+                    +{allAddons
+                      .filter(a => selectedAddons.includes(a.id))
+                      .reduce((sum, a) => sum + parseFloat(a.basePrice), 0)
+                      .toFixed(2)} SAR × {itemQuantity}
+                  </span>
+                </div>
+              )}
+              <Separator className="my-2" />
+              <div className="flex justify-between items-center font-bold">
+                <span>{t.total}</span>
+                <span className="font-mono text-lg text-primary">
+                  {selectedMenuItem ? (
+                    (
+                      (parseFloat(selectedMenuItem.basePrice) * (1 - parseFloat(selectedMenuItem.discount || "0") / 100) +
+                        allAddons
+                          .filter(a => selectedAddons.includes(a.id))
+                          .reduce((sum, a) => sum + parseFloat(a.basePrice), 0)) *
+                      itemQuantity *
+                      1.15
+                    ).toFixed(2)
+                  ) : '0.00'} SAR
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">{t.tax} (15%) included</p>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className={`flex-1 ${isMobile ? 'h-[44px]' : ''}`}
+              onClick={() => setAddonDialogOpen(false)}
+              data-testid="button-cancel-addons"
+            >
+              {t.cancel}
+            </Button>
+            <Button
+              className={`flex-1 ${isMobile ? 'h-[44px]' : ''}`}
+              onClick={addToCartWithAddons}
+              data-testid="button-confirm-addons"
+            >
+              {t.add}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
