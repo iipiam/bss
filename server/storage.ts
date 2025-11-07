@@ -29,6 +29,8 @@ import {
   type InsertShopBill,
   type DeliveryApp,
   type InsertDeliveryApp,
+  type Investor,
+  type InsertInvestor,
   branches,
   inventoryItems,
   menuItems,
@@ -44,6 +46,7 @@ import {
   salaries,
   shopBills,
   deliveryApps,
+  investors,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, or, isNull } from "drizzle-orm";
@@ -163,6 +166,13 @@ export interface IStorage {
   deleteDeliveryApp(id: string): Promise<boolean>;
   updateDeliveryAppsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
   getDeliveryAppProfitability(): Promise<any>;
+
+  // Investors
+  getInvestors(): Promise<Investor[]>;
+  getInvestor(id: string): Promise<Investor | undefined>;
+  createInvestor(investor: InsertInvestor): Promise<Investor>;
+  updateInvestor(id: string, investor: Partial<InsertInvestor>): Promise<Investor | undefined>;
+  deleteInvestor(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1055,6 +1065,40 @@ export class DatabaseStorage implements IStorage {
         breakdown: deliveryAppBreakdown,
       },
     };
+  }
+
+  // Investors
+  async getInvestors(): Promise<Investor[]> {
+    return await db.select().from(investors).where(eq(investors.active, true)).orderBy(investors.createdAt);
+  }
+
+  async getInvestor(id: string): Promise<Investor | undefined> {
+    const [investor] = await db.select().from(investors).where(eq(investors.id, id));
+    return investor;
+  }
+
+  async createInvestor(investor: InsertInvestor): Promise<Investor> {
+    const [created] = await db.insert(investors).values(investor as any).returning();
+    return created;
+  }
+
+  async updateInvestor(id: string, investor: Partial<InsertInvestor>): Promise<Investor | undefined> {
+    const updateData = Object.fromEntries(
+      Object.entries(investor).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getInvestor(id);
+    }
+    const [updated] = await db.update(investors)
+      .set(updateData as any)
+      .where(eq(investors.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteInvestor(id: string): Promise<boolean> {
+    const result = await db.delete(investors).where(eq(investors.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 }
 

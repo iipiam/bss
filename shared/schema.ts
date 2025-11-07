@@ -353,3 +353,26 @@ export const insertDeliveryAppSchema = createInsertSchema(deliveryApps)
   });
 export type InsertDeliveryApp = z.infer<typeof insertDeliveryAppSchema>;
 export type DeliveryApp = typeof deliveryApps.$inferSelect;
+
+// Investors
+export const investors = pgTable("investors", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  amountInvested: decimal("amount_invested", { precision: 12, scale: 2 }).notNull(), // Amount invested in SAR
+  interestPercentage: decimal("interest_percentage", { precision: 5, scale: 2 }).notNull(), // Percentage of net profit (e.g., 10.00 for 10%)
+  active: boolean("active").notNull().default(true),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertInvestorSchema = createInsertSchema(investors)
+  .omit({ id: true, createdAt: true })
+  .refine(
+    (data) => {
+      const percentage = parseFloat(data.interestPercentage || "0");
+      return percentage >= 0 && percentage <= 100;
+    },
+    { message: "Interest percentage must be between 0 and 100" }
+  );
+export type InsertInvestor = z.infer<typeof insertInvestorSchema>;
+export type Investor = typeof investors.$inferSelect;
