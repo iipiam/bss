@@ -331,7 +331,7 @@ export default function Employees() {
               <TabsContent value="basic" className="space-y-4 mt-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="fullName">{t.fullName || "Full Name"} *</Label>
+                    <Label htmlFor="fullName">{t.empFullName || "Full Name"} *</Label>
                     <Input
                       id="fullName"
                       className="h-[44px]"
@@ -341,7 +341,7 @@ export default function Employees() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="username">{t.username || "Username"} *</Label>
+                    <Label htmlFor="username">{t.empUsername || "Username"} *</Label>
                     <Input
                       id="username"
                       className="h-[44px]"
@@ -354,7 +354,7 @@ export default function Employees() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="email">{t.email || "Email"}</Label>
+                    <Label htmlFor="email">{t.empEmail || "Email"}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -365,7 +365,7 @@ export default function Employees() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">{t.phone || "Phone"}</Label>
+                    <Label htmlFor="phone">{t.empPhone || "Phone"}</Label>
                     <Input
                       id="phone"
                       className="h-[44px]"
@@ -378,7 +378,7 @@ export default function Employees() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="password">{t.password || "Password"} *</Label>
+                    <Label htmlFor="password">{t.empPassword || "Password"} *</Label>
                     <Input
                       id="password"
                       type="password"
@@ -802,7 +802,7 @@ export default function Employees() {
             <TabsContent value="basic" className="space-y-4 mt-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-fullName">{t.fullName || "Full Name"}</Label>
+                  <Label htmlFor="edit-fullName">{t.empFullName || "Full Name"}</Label>
                   <Input
                     id="edit-fullName"
                     className="h-[44px]"
@@ -812,7 +812,7 @@ export default function Employees() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-username">{t.username || "Username"}</Label>
+                  <Label htmlFor="edit-username">{t.empUsername || "Username"}</Label>
                   <Input
                     id="edit-username"
                     className="h-[44px]"
@@ -825,7 +825,7 @@ export default function Employees() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-email">{t.email || "Email"}</Label>
+                  <Label htmlFor="edit-email">{t.empEmail || "Email"}</Label>
                   <Input
                     id="edit-email"
                     type="email"
@@ -836,7 +836,7 @@ export default function Employees() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-phone">{t.phone || "Phone"}</Label>
+                  <Label htmlFor="edit-phone">{t.empPhone || "Phone"}</Label>
                   <Input
                     id="edit-phone"
                     className="h-[44px]"

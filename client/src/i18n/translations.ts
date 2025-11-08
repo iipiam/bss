@@ -350,6 +350,11 @@ export interface Translations {
   compliance: string;
   
   // Employee Basic Info
+  empFullName: string;
+  empUsername: string;
+  empPassword: string;
+  empEmail: string;
+  empPhone: string;
   newPassword: string;
   leaveEmpty: string;
   enterNewPassword: string;
@@ -934,14 +939,14 @@ export const translations: Record<Language, Translations> = {
     compliance: 'Compliance',
     
     // Employee Basic Info
-    fullName: 'Full Name',
-    username: 'Username',
-    password: 'Password',
+    empFullName: 'Full Name',
+    empUsername: 'Username',
+    empPassword: 'Password',
     newPassword: 'New Password',
     leaveEmpty: 'leave empty to keep current',
     enterNewPassword: 'Enter new password or leave blank',
-    email: 'Email',
-    phone: 'Phone',
+    empEmail: 'Email',
+    empPhone: 'Phone',
     admin: 'Admin',
     employee: 'Employee',
     activeStatus: 'Active Status',
@@ -1522,6 +1527,11 @@ export const translations: Record<Language, Translations> = {
     compliance: 'الامتثال',
     
     // Employee Basic Info
+    empFullName: 'الاسم الكامل',
+    empUsername: 'اسم المستخدم',
+    empPassword: 'كلمة المرور',
+    empEmail: 'البريد الإلكتروني',
+    empPhone: 'الهاتف',
     newPassword: 'كلمة المرور الجديدة',
     leaveEmpty: 'اتركها فارغة للحفاظ على الحالية',
     enterNewPassword: 'أدخل كلمة مرور جديدة أو اتركها فارغة',
@@ -2101,6 +2111,11 @@ export const translations: Record<Language, Translations> = {
     ticket: '机票',
     performance: '绩效',
     compliance: '合规',
+    empFullName: '全名',
+    empUsername: '用户名',
+    empPassword: '密码',
+    empEmail: '电子邮件',
+    empPhone: '电话',
     newPassword: '新密码',
     leaveEmpty: '留空以保持当前',
     enterNewPassword: '输入新密码或留空',
@@ -2670,6 +2685,11 @@ export const translations: Record<Language, Translations> = {
     ticket: 'Ticket',
     performance: 'Leistung',
     compliance: 'Compliance',
+    empFullName: 'Vollständiger Name',
+    empUsername: 'Benutzername',
+    empPassword: 'Passwort',
+    empEmail: 'E-Mail',
+    empPhone: 'Telefon',
     newPassword: 'Neues Passwort',
     leaveEmpty: 'leer lassen, um aktuelles zu behalten',
     enterNewPassword: 'Neues Passwort eingeben oder leer lassen',
@@ -3239,6 +3259,11 @@ export const translations: Record<Language, Translations> = {
     ticket: 'टिकट',
     performance: 'प्रदर्शन',
     compliance: 'अनुपालन',
+    empFullName: 'पूरा नाम',
+    empUsername: 'उपयोगकर्ता नाम',
+    empPassword: 'पासवर्ड',
+    empEmail: 'ईमेल',
+    empPhone: 'फ़ोन',
     newPassword: 'नया पासवर्ड',
     leaveEmpty: 'वर्तमान रखने के लिए खाली छोड़ें',
     enterNewPassword: 'नया पासवर्ड दर्ज करें या खाली छोड़ें',
@@ -3808,6 +3833,11 @@ export const translations: Record<Language, Translations> = {
     ticket: 'ٹکٹ',
     performance: 'کارکردگی',
     compliance: 'تعمیل',
+    empFullName: 'مکمل نام',
+    empUsername: 'صارف نام',
+    empPassword: 'پاس ورڈ',
+    empEmail: 'ای میل',
+    empPhone: 'فون',
     newPassword: 'نیا پاس ورڈ',
     leaveEmpty: 'موجودہ رکھنے کے لیے خالی چھوڑ دیں',
     enterNewPassword: 'نیا پاس ورڈ درج کریں یا خالی چھوڑ دیں',
@@ -4377,6 +4407,11 @@ export const translations: Record<Language, Translations> = {
     ticket: 'টিকিট',
     performance: 'কর্মক্ষমতা',
     compliance: 'সম্মতি',
+    empFullName: 'পূর্ণ নাম',
+    empUsername: 'ব্যবহারকারীর নাম',
+    empPassword: 'পাসওয়ার্ড',
+    empEmail: 'ইমেল',
+    empPhone: 'ফোন',
     newPassword: 'নতুন পাসওয়ার্ড',
     leaveEmpty: 'বর্তমান রাখতে খালি রাখুন',
     enterNewPassword: 'নতুন পাসওয়ার্ড লিখুন বা খালি রাখুন',

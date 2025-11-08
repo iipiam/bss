@@ -22,6 +22,7 @@ import {
   insertShopBillSchema,
   insertDeliveryAppSchema,
   insertInvestorSchema,
+  updateInvestorSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -517,7 +518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/investors/:id", async (req, res) => {
     try {
-      const data = insertInvestorSchema.partial().parse(req.body);
+      const data = updateInvestorSchema.parse(req.body);
       const investor = await storage.updateInvestor(req.params.id, data);
       if (!investor) {
         return res.status(404).json({ error: "Investor not found" });

@@ -404,14 +404,27 @@ export const investors = pgTable("investors", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const insertInvestorSchema = createInsertSchema(investors)
-  .omit({ id: true, createdAt: true })
-  .refine(
-    (data) => {
+const baseInvestorSchema = createInsertSchema(investors).omit({ id: true, createdAt: true });
+
+export const insertInvestorSchema = baseInvestorSchema.refine(
+  (data) => {
+    const percentage = parseFloat(data.interestPercentage || "0");
+    return percentage >= 0 && percentage <= 100;
+  },
+  { message: "Interest percentage must be between 0 and 100" }
+);
+
+export const updateInvestorSchema = baseInvestorSchema.partial().refine(
+  (data) => {
+    if (data.interestPercentage !== undefined) {
       const percentage = parseFloat(data.interestPercentage || "0");
       return percentage >= 0 && percentage <= 100;
-    },
-    { message: "Interest percentage must be between 0 and 100" }
-  );
+    }
+    return true;
+  },
+  { message: "Interest percentage must be between 0 and 100" }
+);
+
 export type InsertInvestor = z.infer<typeof insertInvestorSchema>;
+export type UpdateInvestor = z.infer<typeof updateInvestorSchema>;
 export type Investor = typeof investors.$inferSelect;
