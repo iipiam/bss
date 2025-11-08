@@ -35,6 +35,12 @@ import {
   type InsertSubscriptionInvoice,
   type MonthlyVatReport,
   type InsertMonthlyVatReport,
+  type SupportTicket,
+  type InsertSupportTicket,
+  type TicketMessage,
+  type InsertTicketMessage,
+  type EmployeeActivityLog,
+  type InsertEmployeeActivityLog,
   branches,
   inventoryItems,
   menuItems,
@@ -53,6 +59,9 @@ import {
   investors,
   subscriptionInvoices,
   monthlyVatReports,
+  supportTickets,
+  ticketMessages,
+  employeeActivityLog,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, or, isNull } from "drizzle-orm";
@@ -192,6 +201,24 @@ export interface IStorage {
   getVatReportByMonth(userId: string, month: number, year: number): Promise<MonthlyVatReport | undefined>;
   createVatReport(report: InsertMonthlyVatReport): Promise<MonthlyVatReport>;
   getNextVatReportSerialNumber(year: number, month: number): Promise<string>;
+
+  // Support Tickets
+  getSupportTickets(userId?: string, status?: string): Promise<SupportTicket[]>;
+  getSupportTicket(id: string): Promise<SupportTicket | undefined>;
+  createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket>;
+  updateSupportTicket(id: string, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined>;
+  getNextTicketNumber(): Promise<string>;
+
+  // Ticket Messages
+  getTicketMessages(ticketId: string): Promise<TicketMessage[]>;
+  createTicketMessage(message: InsertTicketMessage): Promise<TicketMessage>;
+  markMessagesAsRead(ticketId: string, userId: string): Promise<void>;
+  getUnreadMessageCount(userId: string): Promise<number>;
+
+  // Employee Activity Log
+  getEmployeeActivities(employeeId?: string, category?: string, startDate?: Date, endDate?: Date): Promise<EmployeeActivityLog[]>;
+  createEmployeeActivity(activity: InsertEmployeeActivityLog): Promise<EmployeeActivityLog>;
+  getEmployeeActivityStats(employeeId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1203,6 +1230,193 @@ export class DatabaseStorage implements IStorage {
     const serialNumber = `VAT-${year}-${month.toString().padStart(2, '0')}-${count.toString().padStart(4, '0')}`;
     
     return serialNumber;
+  }
+
+  // Support Tickets
+  async getSupportTickets(userId?: string, status?: string): Promise<SupportTicket[]> {
+    let query = db.select().from(supportTickets);
+    
+    const conditions = [];
+    if (userId) {
+      conditions.push(eq(supportTickets.userId, userId));
+    }
+    if (status) {
+      conditions.push(eq(supportTickets.status, status));
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+    
+    return await query.orderBy(sql`${supportTickets.createdAt} DESC`);
+  }
+
+  async getSupportTicket(id: string): Promise<SupportTicket | undefined> {
+    const [ticket] = await db.select().from(supportTickets).where(eq(supportTickets.id, id));
+    return ticket;
+  }
+
+  async createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket> {
+    const ticketNumber = await this.getNextTicketNumber();
+    const [created] = await db.insert(supportTickets).values({
+      ...ticket,
+      ticketNumber,
+    } as any).returning();
+    return created;
+  }
+
+  async updateSupportTicket(id: string, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined> {
+    const updateData: any = { ...ticket, updatedAt: new Date() };
+    
+    // Set resolved/closed timestamps
+    if (ticket.status === 'resolved' && !updateData.resolvedAt) {
+      updateData.resolvedAt = new Date();
+    }
+    if (ticket.status === 'closed' && !updateData.closedAt) {
+      updateData.closedAt = new Date();
+    }
+    
+    const [updated] = await db.update(supportTickets)
+      .set(updateData)
+      .where(eq(supportTickets.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getNextTicketNumber(): Promise<string> {
+    const [result] = await db.select({ count: sql<number>`count(*)` }).from(supportTickets);
+    const count = (result?.count || 0) + 1;
+    
+    // Format: TKT-YYYYMMDD-XXXX
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+    const serialNumber = `TKT-${dateStr}-${count.toString().padStart(4, '0')}`;
+    
+    return serialNumber;
+  }
+
+  // Ticket Messages
+  async getTicketMessages(ticketId: string): Promise<TicketMessage[]> {
+    return await db.select().from(ticketMessages)
+      .where(eq(ticketMessages.ticketId, ticketId))
+      .orderBy(sql`${ticketMessages.createdAt} ASC`);
+  }
+
+  async createTicketMessage(message: InsertTicketMessage): Promise<TicketMessage> {
+    const [created] = await db.insert(ticketMessages).values(message as any).returning();
+    
+    // Update ticket's updatedAt timestamp
+    await db.update(supportTickets)
+      .set({ updatedAt: new Date() })
+      .where(eq(supportTickets.id, message.ticketId));
+    
+    return created;
+  }
+
+  async markMessagesAsRead(ticketId: string, userId: string): Promise<void> {
+    // Mark all messages in this ticket as read where the sender is NOT the current user
+    await db.update(ticketMessages)
+      .set({ isRead: true })
+      .where(
+        and(
+          eq(ticketMessages.ticketId, ticketId),
+          sql`${ticketMessages.senderId} != ${userId}`
+        )
+      );
+  }
+
+  async getUnreadMessageCount(userId: string): Promise<number> {
+    // Get tickets for this user
+    const userTickets = await db.select({ id: supportTickets.id })
+      .from(supportTickets)
+      .where(eq(supportTickets.userId, userId));
+    
+    if (userTickets.length === 0) return 0;
+    
+    const ticketIds = userTickets.map(t => t.id);
+    
+    // Count unread messages in user's tickets where sender is NOT the user
+    const [result] = await db.select({ count: sql<number>`count(*)` })
+      .from(ticketMessages)
+      .where(
+        and(
+          sql`${ticketMessages.ticketId} IN (${sql.join(ticketIds.map(id => sql`${id}`), sql`, `)})`,
+          eq(ticketMessages.isRead, false),
+          sql`${ticketMessages.senderId} != ${userId}`
+        )
+      );
+    
+    return result?.count || 0;
+  }
+
+  // Employee Activity Log
+  async getEmployeeActivities(
+    employeeId?: string,
+    category?: string,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<EmployeeActivityLog[]> {
+    let query = db.select().from(employeeActivityLog);
+    
+    const conditions = [];
+    if (employeeId) {
+      conditions.push(eq(employeeActivityLog.employeeId, employeeId));
+    }
+    if (category) {
+      conditions.push(eq(employeeActivityLog.actionCategory, category));
+    }
+    if (startDate) {
+      conditions.push(gte(employeeActivityLog.createdAt, startDate));
+    }
+    if (endDate) {
+      conditions.push(lte(employeeActivityLog.createdAt, endDate));
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+    
+    return await query.orderBy(sql`${employeeActivityLog.createdAt} DESC`);
+  }
+
+  async createEmployeeActivity(activity: InsertEmployeeActivityLog): Promise<EmployeeActivityLog> {
+    const [created] = await db.insert(employeeActivityLog).values(activity as any).returning();
+    return created;
+  }
+
+  async getEmployeeActivityStats(employeeId: string): Promise<any> {
+    // Get total activity count
+    const [totalResult] = await db.select({ count: sql<number>`count(*)` })
+      .from(employeeActivityLog)
+      .where(eq(employeeActivityLog.employeeId, employeeId));
+    
+    // Get activities by category
+    const categoryCounts = await db.select({
+      category: employeeActivityLog.actionCategory,
+      count: sql<number>`count(*)`,
+    })
+      .from(employeeActivityLog)
+      .where(eq(employeeActivityLog.employeeId, employeeId))
+      .groupBy(employeeActivityLog.actionCategory);
+    
+    // Get recent activities (last 24 hours)
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const [recentResult] = await db.select({ count: sql<number>`count(*)` })
+      .from(employeeActivityLog)
+      .where(
+        and(
+          eq(employeeActivityLog.employeeId, employeeId),
+          gte(employeeActivityLog.createdAt, yesterday)
+        )
+      );
+    
+    return {
+      totalActivities: totalResult?.count || 0,
+      categoryCounts: categoryCounts.map(c => ({ category: c.category, count: c.count })),
+      recentActivities24h: recentResult?.count || 0,
+    };
   }
 }
 
