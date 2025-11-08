@@ -134,6 +134,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(items);
   });
 
+  // Menu Stock (based on inventory and recipes) - MUST be before /:id route
+  app.get("/api/menu/stock", async (req, res) => {
+    const branchId = req.query.branchId as string | undefined;
+    const stock = await storage.getMenuItemsStock(branchId);
+    res.json(stock);
+  });
+
   app.get("/api/menu/:id", async (req, res) => {
     const item = await storage.getMenuItem(req.params.id);
     if (!item) {
@@ -170,13 +177,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Menu item not found" });
     }
     res.status(204).send();
-  });
-
-  // Menu Stock (based on inventory and recipes)
-  app.get("/api/menu/stock", async (req, res) => {
-    const branchId = req.query.branchId as string | undefined;
-    const stock = await storage.getMenuItemsStock(branchId);
-    res.json(stock);
   });
 
   // Add-ons
