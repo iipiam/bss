@@ -26,7 +26,7 @@ export default function VatReports() {
 
   const generateMutation = useMutation({
     mutationFn: async (data: { month: number; year: number }) => {
-      return apiRequest("/api/vat-reports/generate", "POST", data);
+      return apiRequest("POST", "/api/vat-reports/generate", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vat-reports"] });
