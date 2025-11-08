@@ -245,7 +245,7 @@ export function WelcomeVideo({ open, onClose }: WelcomeVideoProps) {
 
           {/* Control buttons */}
           <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-4">
-            {!isPlaying && currentSlide < slides.length - 1 && (
+            {!isPlaying && (
               <Button
                 variant="default"
                 size="lg"
@@ -254,7 +254,7 @@ export function WelcomeVideo({ open, onClose }: WelcomeVideoProps) {
                 data-testid="button-play-welcome-video"
               >
                 <Play className="h-5 w-5 mr-2" />
-                Play
+                {currentSlide >= slides.length - 1 ? "Replay" : "Play"}
               </Button>
             )}
             <Button
