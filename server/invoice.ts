@@ -1218,6 +1218,389 @@ export async function generateSubscriptionInvoice(data: {
   }
 }
 
+// Generate ZATCA-compliant monthly VAT report
+export async function generateMonthlyVatReport(data: {
+  serialNumber: string;
+  reportMonth: number;
+  reportYear: number;
+  restaurantName: string;
+  taxNumber: string;
+  totalSales: number;
+  totalSalesBaseAmount: number;
+  totalSalesVat: number;
+  totalPurchases: number;
+  totalPurchasesBaseAmount: number;
+  totalPurchasesVat: number;
+  netVatPayable: number;
+  generatedDate: Date;
+}): Promise<Buffer> {
+  // Generate QR code for ZATCA compliance
+  const monthNames = [
+    { en: "January", ar: "يناير" }, { en: "February", ar: "فبراير" }, { en: "March", ar: "مارس" },
+    { en: "April", ar: "أبريل" }, { en: "May", ar: "مايو" }, { en: "June", ar: "يونيو" },
+    { en: "July", ar: "يوليو" }, { en: "August", ar: "أغسطس" }, { en: "September", ar: "سبتمبر" },
+    { en: "October", ar: "أكتوبر" }, { en: "November", ar: "نوفمبر" }, { en: "December", ar: "ديسمبر" }
+  ];
+  
+  const monthName = monthNames[data.reportMonth - 1];
+  const qrData = `VAT Report: ${data.serialNumber}\nPeriod: ${monthName.en} ${data.reportYear}\nNet VAT: ${data.netVatPayable.toFixed(2)} SAR\nTax Number: ${data.taxNumber}`;
+  const qrCodeDataURL = await QRCode.toDataURL(qrData);
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      line-height: 1.6;
+      padding: 40px;
+    }
+
+    .invoice-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .company-name {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .invoice-title {
+      font-size: 20px;
+      opacity: 0.95;
+      margin-top: 16px;
+    }
+
+    .content {
+      padding: 40px;
+    }
+
+    .info-section {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 40px;
+      gap: 30px;
+    }
+
+    .info-block {
+      flex: 1;
+    }
+
+    .info-block h3 {
+      font-size: 14px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .info-block p {
+      margin: 6px 0;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .info-block strong {
+      color: #1f2937;
+    }
+
+    .invoice-details {
+      background: #f0fdf4;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      border: 1px solid #bbf7d0;
+    }
+
+    .invoice-details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+    }
+
+    .detail-label {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .detail-value {
+      font-weight: 600;
+      color: #1f2937;
+      font-size: 14px;
+    }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 30px 0;
+    }
+
+    .items-table th {
+      background: #f3f4f6;
+      padding: 12px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .items-table td {
+      padding: 16px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .items-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    .summary {
+      background: #f0fdf4;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 30px;
+      border: 1px solid #bbf7d0;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      font-size: 14px;
+    }
+
+    .summary-row.highlight {
+      background: #dcfce7;
+      padding: 12px;
+      border-radius: 6px;
+      margin: 8px 0;
+    }
+
+    .summary-row.total {
+      border-top: 2px solid #16a34a;
+      margin-top: 15px;
+      padding-top: 15px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #16a34a;
+    }
+
+    .qr-section {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 2px solid #e5e7eb;
+    }
+
+    .qr-code {
+      width: 150px;
+      height: 150px;
+      margin: 20px auto;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .zatca-notice {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 20px 0;
+      text-align: center;
+      font-size: 13px;
+      color: #92400e;
+    }
+
+    .bilingual {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .en { text-align: left; }
+    .ar {
+      text-align: right;
+      font-family: 'Noto Naskh Arabic', serif;
+      direction: rtl;
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice-container">
+    <div class="header">
+      <div class="company-name">RestoPOS</div>
+      <div class="bilingual">
+        <div class="en invoice-title">Monthly VAT Report</div>
+        <div class="ar invoice-title">تقرير ضريبة القيمة المضافة الشهري</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="invoice-details">
+        <div class="invoice-details-grid">
+          <div class="detail-row">
+            <span class="detail-label">Report Number / رقم التقرير:</span>
+            <span class="detail-value">${escapeHtml(data.serialNumber)}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Period / الفترة:</span>
+            <span class="detail-value">${monthName.en} ${data.reportYear} / ${monthName.ar} ${data.reportYear}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Generated / تاريخ الإنشاء:</span>
+            <span class="detail-value">${data.generatedDate.toLocaleDateString('en-GB')}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Tax Number / الرقم الضريبي:</span>
+            <span class="detail-value">${escapeHtml(data.taxNumber)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="zatca-notice">
+        <strong>⚠️ ZATCA Compliance Notice / إشعار الامتثال لهيئة الزكاة</strong><br/>
+        This report is prepared for VAT return submission to ZATCA<br/>
+        هذا التقرير معد لتقديم الإقرار الضريبي إلى هيئة الزكاة والضريبة والجمارك
+      </div>
+
+      <div class="info-section">
+        <div class="info-block">
+          <h3>Taxpayer Information / معلومات دافع الضرائب</h3>
+          <p><strong>${escapeHtml(data.restaurantName)}</strong></p>
+          <p>Tax Number / الرقم الضريبي: ${escapeHtml(data.taxNumber)}</p>
+        </div>
+      </div>
+
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Description / الوصف</th>
+            <th class="text-right">Base Amount / المبلغ الأساسي</th>
+            <th class="text-right">VAT (15%) / ضريبة القيمة المضافة</th>
+            <th class="text-right">Total / الإجمالي</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <strong>Total Sales / إجمالي المبيعات</strong><br/>
+              <small>Sales subject to VAT / المبيعات الخاضعة للضريبة</small>
+            </td>
+            <td class="text-right">${data.totalSalesBaseAmount.toFixed(2)} SAR</td>
+            <td class="text-right">${data.totalSalesVat.toFixed(2)} SAR</td>
+            <td class="text-right">${data.totalSales.toFixed(2)} SAR</td>
+          </tr>
+          <tr>
+            <td>
+              <strong>Total Purchases / إجمالي المشتريات</strong><br/>
+              <small>Purchases subject to VAT / المشتريات الخاضعة للضريبة</small>
+            </td>
+            <td class="text-right">${data.totalPurchasesBaseAmount.toFixed(2)} SAR</td>
+            <td class="text-right">${data.totalPurchasesVat.toFixed(2)} SAR</td>
+            <td class="text-right">${data.totalPurchases.toFixed(2)} SAR</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="summary">
+        <div class="summary-row highlight">
+          <span><strong>Output VAT (Sales) / ضريبة المخرجات (المبيعات):</strong></span>
+          <span><strong>${data.totalSalesVat.toFixed(2)} SAR</strong></span>
+        </div>
+        <div class="summary-row highlight">
+          <span><strong>Input VAT (Purchases) / ضريبة المدخلات (المشتريات):</strong></span>
+          <span><strong>(${data.totalPurchasesVat.toFixed(2)}) SAR</strong></span>
+        </div>
+        <div class="summary-row total">
+          <span>Net VAT Payable / صافي ضريبة القيمة المضافة المستحقة:</span>
+          <span>${data.netVatPayable.toFixed(2)} SAR</span>
+        </div>
+      </div>
+
+      <div class="qr-section">
+        <p style="color: #6b7280; margin-bottom: 10px;">Scan for ZATCA Verification / امسح للتحقق من هيئة الزكاة</p>
+        <img src="${qrCodeDataURL}" class="qr-code" alt="QR Code"/>
+      </div>
+
+      <div class="footer">
+        <p><strong>Instructions / التعليمات:</strong></p>
+        <p>Submit this report to ZATCA through their portal within the prescribed deadline</p>
+        <p>قم بتقديم هذا التقرير إلى هيئة الزكاة والضريبة والجمارك عبر بوابتهم ضمن المهلة المحددة</p>
+        <p style="margin-top: 15px;">This is a ZATCA-compliant VAT return certificate / هذه شهادة إقرار ضريبة القيمة المضافة متوافقة مع هيئة الزكاة</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+
+  try {
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '10mm',
+        right: '10mm',
+        bottom: '10mm',
+        left: '10mm'
+      }
+    });
+
+    return Buffer.from(pdfBuffer);
+  } finally {
+    await page.close();
+  }
+}
+
 // Cleanup function for graceful shutdown
 export async function closeBrowser(): Promise<void> {
   if (browserInstance) {
