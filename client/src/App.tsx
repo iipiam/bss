@@ -64,6 +64,8 @@ import DeliveryApps from "@/pages/delivery-apps";
 import DeliveryAppProfitability from "@/pages/delivery-app-profitability";
 import SalesComparison from "@/pages/sales-comparison";
 import Investors from "@/pages/investors";
+import Support from "@/pages/support";
+import SupportDetail from "@/pages/support-detail";
 import Login from "@/pages/login";
 import Setup from "@/pages/setup";
 import ForgotPassword from "@/pages/forgot-password";
@@ -103,6 +105,8 @@ function Router() {
       <Route path="/delivery-app-profitability" component={DeliveryAppProfitability} />
       <Route path="/sales-comparison" component={SalesComparison} />
       <Route path="/investors" component={Investors} />
+      <Route path="/support" component={Support} />
+      <Route path="/support/:id" component={SupportDetail} />
       <Route component={NotFound} />
     </Switch>
   );
