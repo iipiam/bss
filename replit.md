@@ -59,6 +59,14 @@ Preferred communication style: Simple, everyday language.
   - Display of current subscription status, plan, and branches
   - All pricing includes 15% VAT in compliance with Saudi regulations
   - Branch count selector with minimum 1 branch (first included in base price)
+- **Branch Management**: Dynamic branch selection system with BranchContext for multi-branch operations:
+  - Fetches branches from `/api/branches` endpoint
+  - Current branch stored in localStorage with key `currentBranchId` for persistence across sessions
+  - Automatically initializes to user's default branchId or first available branch
+  - BranchSelector component in header displays current branch with name and location
+  - Loading state while fetching branches, empty state when no branches available
+  - Seamless branch switching with context-based state management
+  - Provider hierarchy: QueryClient > Theme > Language > Tooltip > Auth > Branch > Device > AppContent
 - **Device-Specific Responsive Design**: User-configurable device preference (Laptop, iPad, iPhone) stored in database, adjusting layout, typography, and specific components.
   - **Mobile Optimization Toolkit**: Centralized `mobileLayout.ts` utility providing responsive classes for grid columns, text sizes, spacing, and padding across all device types.
   - **TableList Component**: Production-ready mobile list component with swipeable actions for compact data display.
