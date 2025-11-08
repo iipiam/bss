@@ -3184,6 +3184,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const message = await storage.createTicketMessage({
         ticketId: req.params.ticketId,
         senderId: user.id,
+        senderName: user.username || 'User',
+        senderRole: user.role || 'employee',
         message: req.body.message,
         isRead: false,
       });
