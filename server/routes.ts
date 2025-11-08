@@ -2872,7 +2872,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all VAT reports for the logged-in user
   app.get("/api/vat-reports", async (req, res) => {
     try {
-      if (!req.isAuthenticated || !req.isAuthenticated()) {
+      if (!req.user) {
         return res.status(401).json({ error: "Not authenticated" });
       }
       const userId = (req.user as any).id;
@@ -2887,7 +2887,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate monthly VAT report
   app.post("/api/vat-reports/generate", async (req, res) => {
     try {
-      if (!req.isAuthenticated || !req.isAuthenticated()) {
+      if (!req.user) {
         return res.status(401).json({ error: "Not authenticated" });
       }
       const userId = (req.user as any).id;
@@ -3000,7 +3000,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Download VAT report PDF
   app.get("/api/vat-reports/:id/download", async (req, res) => {
     try {
-      if (!req.isAuthenticated || !req.isAuthenticated()) {
+      if (!req.user) {
         return res.status(401).json({ error: "Not authenticated" });
       }
       const userId = (req.user as any).id;
@@ -3032,7 +3032,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Support Tickets
   app.get("/api/tickets", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -3054,7 +3054,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/tickets/:id", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -3079,7 +3079,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/tickets", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -3102,7 +3102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.patch("/api/tickets/:id", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -3134,7 +3134,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Ticket Messages
   app.get("/api/tickets/:ticketId/messages", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -3164,7 +3164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/tickets/:ticketId/messages", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -3204,7 +3204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/tickets/unread/count", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -3220,7 +3220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Employee Activity Log
   app.get("/api/employee-activities", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -3246,7 +3246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/employee-activities/stats/:employeeId", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
