@@ -38,6 +38,7 @@ Preferred communication style: Simple, everyday language.
 - **UI/UX**: Modern gradient designs, smooth animations, creative sidebar navigation, and responsive hover interactions.
 - **Management Modules**: Full CRUD for Customer, Menu Item (with discount system), Inventory (with Excel import/export), and Recipe (inventory-linked costing).
 - **Daily Stock Management**: Real-time stock calculation for menu items based on inventory and recipes, displayed on POS.
+- **Real-Time Inventory Deduction**: Automatic inventory deduction when orders are placed through POS with validation, rollback on failure, branch consistency enforcement, and complete audit trail via inventory_transactions table. Supports both recipe-based items (deducts ingredients) and simple items (uses inventoryItemId + stockNo). Returns 409 error with detailed message if insufficient stock.
 - **Financial Features**: PDF export for financial statements, Excel export/import for various data tables.
 - **Strategic Decision-Making**: Profitability analysis with tabs for Strategic Overview, Pricing Analysis (including Price Coverage Analysis by margin), Scaling Viability, and Cost Management.
 - **Authentication**: Subscription-based, with Commercial Registration field and password recovery. Secure logout flow prevents data loss by cancelling all pending queries/mutations and clearing cache before redirect.
