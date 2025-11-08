@@ -33,6 +33,8 @@ import {
   type InsertInvestor,
   type SubscriptionInvoice,
   type InsertSubscriptionInvoice,
+  type MonthlyVatReport,
+  type InsertMonthlyVatReport,
   branches,
   inventoryItems,
   menuItems,
@@ -50,6 +52,7 @@ import {
   deliveryApps,
   investors,
   subscriptionInvoices,
+  monthlyVatReports,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, or, isNull } from "drizzle-orm";
@@ -182,6 +185,12 @@ export interface IStorage {
   getSubscriptionInvoice(id: string): Promise<SubscriptionInvoice | undefined>;
   createSubscriptionInvoice(invoice: InsertSubscriptionInvoice): Promise<SubscriptionInvoice>;
   getNextSubscriptionInvoiceSerialNumber(): Promise<string>;
+
+  // Monthly VAT Reports
+  getMonthlyVatReports(userId?: string): Promise<MonthlyVatReport[]>;
+  getVatReportByMonth(userId: string, month: number, year: number): Promise<MonthlyVatReport | undefined>;
+  createVatReport(report: InsertMonthlyVatReport): Promise<MonthlyVatReport>;
+  getNextVatReportSerialNumber(year: number, month: number): Promise<string>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1140,6 +1149,52 @@ export class DatabaseStorage implements IStorage {
     const dateStr = now.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
     const timeStr = now.toISOString().slice(11, 19).replace(/:/g, ''); // HHMMSS
     const serialNumber = `${count.toString().padStart(4, '0')}-${dateStr}-${timeStr}`;
+    
+    return serialNumber;
+  }
+
+  // Monthly VAT Reports
+  async getMonthlyVatReports(userId?: string): Promise<MonthlyVatReport[]> {
+    if (userId) {
+      return await db.select().from(monthlyVatReports)
+        .where(eq(monthlyVatReports.userId, userId))
+        .orderBy(sql`${monthlyVatReports.reportYear} DESC, ${monthlyVatReports.reportMonth} DESC`);
+    }
+    return await db.select().from(monthlyVatReports)
+      .orderBy(sql`${monthlyVatReports.reportYear} DESC, ${monthlyVatReports.reportMonth} DESC`);
+  }
+
+  async getVatReportByMonth(userId: string, month: number, year: number): Promise<MonthlyVatReport | undefined> {
+    const [report] = await db.select().from(monthlyVatReports)
+      .where(
+        and(
+          eq(monthlyVatReports.userId, userId),
+          eq(monthlyVatReports.reportMonth, month),
+          eq(monthlyVatReports.reportYear, year)
+        )
+      );
+    return report;
+  }
+
+  async createVatReport(report: InsertMonthlyVatReport): Promise<MonthlyVatReport> {
+    const [created] = await db.insert(monthlyVatReports).values(report as any).returning();
+    return created;
+  }
+
+  async getNextVatReportSerialNumber(year: number, month: number): Promise<string> {
+    // Count reports for the specific month
+    const [result] = await db.select({ count: sql<number>`count(*)` })
+      .from(monthlyVatReports)
+      .where(
+        and(
+          eq(monthlyVatReports.reportYear, year),
+          eq(monthlyVatReports.reportMonth, month)
+        )
+      );
+    const count = (result?.count || 0) + 1;
+    
+    // Format: VAT-YYYY-MM-XXXX
+    const serialNumber = `VAT-${year}-${month.toString().padStart(2, '0')}-${count.toString().padStart(4, '0')}`;
     
     return serialNumber;
   }
