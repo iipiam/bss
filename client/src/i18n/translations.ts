@@ -448,6 +448,51 @@ export interface Translations {
   tutorialStepByStepGuide: string;
   tutorialEstimatedTime: string;
   
+  // Support Tickets
+  supportTickets: string;
+  supportTicketsDescription: string;
+  createTicket: string;
+  myTickets: string;
+  allTickets: string;
+  ticketSubject: string;
+  ticketCategory: string;
+  ticketPriority: string;
+  ticketDescription: string;
+  ticketStatusOpen: string;
+  ticketStatusInProgress: string;
+  ticketStatusResolved: string;
+  ticketStatusClosed: string;
+  priorityLow: string;
+  priorityMedium: string;
+  priorityHigh: string;
+  priorityUrgent: string;
+  categoryTechnical: string;
+  categoryBilling: string;
+  categoryFeature: string;
+  categoryOther: string;
+  sendMessage: string;
+  viewTicket: string;
+  backToTickets: string;
+  messages: string;
+  noMessages: string;
+  typeMessage: string;
+  updateStatus: string;
+  ticketDetails: string;
+  lastUpdated: string;
+  ticketCreated: string;
+  ticketResolved: string;
+  ticketClosed: string;
+  itSupport: string;
+  you: string;
+  enterSubject: string;
+  enterDescription: string;
+  selectCategory: string;
+  selectPriority: string;
+  ticketCreatedSuccess: string;
+  messageSent: string;
+  statusUpdated: string;
+  filterByStatus: string;
+  
   // Shop
   shop: string;
   shopTitle: string;
@@ -1051,6 +1096,51 @@ export const translations: Record<Language, Translations> = {
     tutorialStepByStepGuide: 'Step-by-Step Guide',
     tutorialEstimatedTime: 'Estimated time',
     
+    // Support Tickets
+    supportTickets: 'Support Tickets',
+    supportTicketsDescription: 'Create and manage support tickets for technical assistance',
+    createTicket: 'Create Ticket',
+    myTickets: 'My Tickets',
+    allTickets: 'All Tickets',
+    ticketSubject: 'Subject',
+    ticketCategory: 'Category',
+    ticketPriority: 'Priority',
+    ticketDescription: 'Description',
+    ticketStatusOpen: 'Open',
+    ticketStatusInProgress: 'In Progress',
+    ticketStatusResolved: 'Resolved',
+    ticketStatusClosed: 'Closed',
+    priorityLow: 'Low',
+    priorityMedium: 'Medium',
+    priorityHigh: 'High',
+    priorityUrgent: 'Urgent',
+    categoryTechnical: 'Technical Issue',
+    categoryBilling: 'Billing Question',
+    categoryFeature: 'Feature Request',
+    categoryOther: 'Other',
+    sendMessage: 'Send Message',
+    viewTicket: 'View Ticket',
+    backToTickets: 'Back to Tickets',
+    messages: 'Messages',
+    noMessages: 'No messages yet. Start a conversation!',
+    typeMessage: 'Type your message...',
+    updateStatus: 'Update Status',
+    ticketDetails: 'Ticket Details',
+    lastUpdated: 'Last Updated',
+    ticketCreated: 'Ticket Created',
+    ticketResolved: 'Ticket Resolved',
+    ticketClosed: 'Ticket Closed',
+    itSupport: 'IT Support',
+    you: 'You',
+    enterSubject: 'Enter ticket subject',
+    enterDescription: 'Describe your issue in detail',
+    selectCategory: 'Select a category',
+    selectPriority: 'Select priority level',
+    ticketCreatedSuccess: 'Ticket created successfully',
+    messageSent: 'Message sent',
+    statusUpdated: 'Status updated successfully',
+    filterByStatus: 'Filter by status',
+    
     // Shop
     shop: 'Shop',
     shopTitle: 'Shop',
@@ -1653,7 +1743,52 @@ export const translations: Record<Language, Translations> = {
     tutorialStepByStepGuide: 'دليل خطوة بخطوة',
     tutorialEstimatedTime: 'الوقت المقدر',
     
-    // Shop
+    
+    // Support Tickets
+    supportTickets: 'Support Tickets',
+    supportTicketsDescription: 'Create and manage support tickets for technical assistance',
+    createTicket: 'Create Ticket',
+    myTickets: 'My Tickets',
+    allTickets: 'All Tickets',
+    ticketSubject: 'Subject',
+    ticketCategory: 'Category',
+    ticketPriority: 'Priority',
+    ticketDescription: 'Description',
+    ticketStatusOpen: 'Open',
+    ticketStatusInProgress: 'In Progress',
+    ticketStatusResolved: 'Resolved',
+    ticketStatusClosed: 'Closed',
+    priorityLow: 'Low',
+    priorityMedium: 'Medium',
+    priorityHigh: 'High',
+    priorityUrgent: 'Urgent',
+    categoryTechnical: 'Technical Issue',
+    categoryBilling: 'Billing Question',
+    categoryFeature: 'Feature Request',
+    categoryOther: 'Other',
+    sendMessage: 'Send Message',
+    viewTicket: 'View Ticket',
+    backToTickets: 'Back to Tickets',
+    messages: 'Messages',
+    noMessages: 'No messages yet. Start a conversation!',
+    typeMessage: 'Type your message...',
+    updateStatus: 'Update Status',
+    ticketDetails: 'Ticket Details',
+    lastUpdated: 'Last Updated',
+    ticketCreated: 'Ticket Created',
+    ticketResolved: 'Ticket Resolved',
+    ticketClosed: 'Ticket Closed',
+    itSupport: 'IT Support',
+    you: 'You',
+    enterSubject: 'Enter ticket subject',
+    enterDescription: 'Describe your issue in detail',
+    selectCategory: 'Select a category',
+    selectPriority: 'Select priority level',
+    ticketCreatedSuccess: 'Ticket created successfully',
+    messageSent: 'Message sent',
+    statusUpdated: 'Status updated successfully',
+    filterByStatus: 'Filter by status',
+// Shop
     shop: 'المتجر',
     shopExpenses: 'مصاريف المتجر',
     salaries: 'الرواتب',
@@ -2241,7 +2376,52 @@ export const translations: Record<Language, Translations> = {
     tutorialStepByStepGuide: '分步指南',
     tutorialEstimatedTime: '预计时间',
     
-    // Shop
+    
+    // Support Tickets
+    supportTickets: 'Support Tickets',
+    supportTicketsDescription: 'Create and manage support tickets for technical assistance',
+    createTicket: 'Create Ticket',
+    myTickets: 'My Tickets',
+    allTickets: 'All Tickets',
+    ticketSubject: 'Subject',
+    ticketCategory: 'Category',
+    ticketPriority: 'Priority',
+    ticketDescription: 'Description',
+    ticketStatusOpen: 'Open',
+    ticketStatusInProgress: 'In Progress',
+    ticketStatusResolved: 'Resolved',
+    ticketStatusClosed: 'Closed',
+    priorityLow: 'Low',
+    priorityMedium: 'Medium',
+    priorityHigh: 'High',
+    priorityUrgent: 'Urgent',
+    categoryTechnical: 'Technical Issue',
+    categoryBilling: 'Billing Question',
+    categoryFeature: 'Feature Request',
+    categoryOther: 'Other',
+    sendMessage: 'Send Message',
+    viewTicket: 'View Ticket',
+    backToTickets: 'Back to Tickets',
+    messages: 'Messages',
+    noMessages: 'No messages yet. Start a conversation!',
+    typeMessage: 'Type your message...',
+    updateStatus: 'Update Status',
+    ticketDetails: 'Ticket Details',
+    lastUpdated: 'Last Updated',
+    ticketCreated: 'Ticket Created',
+    ticketResolved: 'Ticket Resolved',
+    ticketClosed: 'Ticket Closed',
+    itSupport: 'IT Support',
+    you: 'You',
+    enterSubject: 'Enter ticket subject',
+    enterDescription: 'Describe your issue in detail',
+    selectCategory: 'Select a category',
+    selectPriority: 'Select priority level',
+    ticketCreatedSuccess: 'Ticket created successfully',
+    messageSent: 'Message sent',
+    statusUpdated: 'Status updated successfully',
+    filterByStatus: 'Filter by status',
+// Shop
     shop: '商店',
     shopExpenses: '商店费用',
     salaries: '薪资',
@@ -2829,7 +3009,52 @@ export const translations: Record<Language, Translations> = {
     tutorialStepByStepGuide: 'Schritt-für-Schritt-Anleitung',
     tutorialEstimatedTime: 'Geschätzte Zeit',
     
-    // Shop
+    
+    // Support Tickets
+    supportTickets: 'Support Tickets',
+    supportTicketsDescription: 'Create and manage support tickets for technical assistance',
+    createTicket: 'Create Ticket',
+    myTickets: 'My Tickets',
+    allTickets: 'All Tickets',
+    ticketSubject: 'Subject',
+    ticketCategory: 'Category',
+    ticketPriority: 'Priority',
+    ticketDescription: 'Description',
+    ticketStatusOpen: 'Open',
+    ticketStatusInProgress: 'In Progress',
+    ticketStatusResolved: 'Resolved',
+    ticketStatusClosed: 'Closed',
+    priorityLow: 'Low',
+    priorityMedium: 'Medium',
+    priorityHigh: 'High',
+    priorityUrgent: 'Urgent',
+    categoryTechnical: 'Technical Issue',
+    categoryBilling: 'Billing Question',
+    categoryFeature: 'Feature Request',
+    categoryOther: 'Other',
+    sendMessage: 'Send Message',
+    viewTicket: 'View Ticket',
+    backToTickets: 'Back to Tickets',
+    messages: 'Messages',
+    noMessages: 'No messages yet. Start a conversation!',
+    typeMessage: 'Type your message...',
+    updateStatus: 'Update Status',
+    ticketDetails: 'Ticket Details',
+    lastUpdated: 'Last Updated',
+    ticketCreated: 'Ticket Created',
+    ticketResolved: 'Ticket Resolved',
+    ticketClosed: 'Ticket Closed',
+    itSupport: 'IT Support',
+    you: 'You',
+    enterSubject: 'Enter ticket subject',
+    enterDescription: 'Describe your issue in detail',
+    selectCategory: 'Select a category',
+    selectPriority: 'Select priority level',
+    ticketCreatedSuccess: 'Ticket created successfully',
+    messageSent: 'Message sent',
+    statusUpdated: 'Status updated successfully',
+    filterByStatus: 'Filter by status',
+// Shop
     shop: 'Geschäft',
     shopExpenses: 'Geschäftsausgaben',
     salaries: 'Gehälter',
@@ -3417,7 +3642,52 @@ export const translations: Record<Language, Translations> = {
     tutorialStepByStepGuide: 'चरण-दर-चरण गाइड',
     tutorialEstimatedTime: 'अनुमानित समय',
     
-    // Shop
+    
+    // Support Tickets
+    supportTickets: 'Support Tickets',
+    supportTicketsDescription: 'Create and manage support tickets for technical assistance',
+    createTicket: 'Create Ticket',
+    myTickets: 'My Tickets',
+    allTickets: 'All Tickets',
+    ticketSubject: 'Subject',
+    ticketCategory: 'Category',
+    ticketPriority: 'Priority',
+    ticketDescription: 'Description',
+    ticketStatusOpen: 'Open',
+    ticketStatusInProgress: 'In Progress',
+    ticketStatusResolved: 'Resolved',
+    ticketStatusClosed: 'Closed',
+    priorityLow: 'Low',
+    priorityMedium: 'Medium',
+    priorityHigh: 'High',
+    priorityUrgent: 'Urgent',
+    categoryTechnical: 'Technical Issue',
+    categoryBilling: 'Billing Question',
+    categoryFeature: 'Feature Request',
+    categoryOther: 'Other',
+    sendMessage: 'Send Message',
+    viewTicket: 'View Ticket',
+    backToTickets: 'Back to Tickets',
+    messages: 'Messages',
+    noMessages: 'No messages yet. Start a conversation!',
+    typeMessage: 'Type your message...',
+    updateStatus: 'Update Status',
+    ticketDetails: 'Ticket Details',
+    lastUpdated: 'Last Updated',
+    ticketCreated: 'Ticket Created',
+    ticketResolved: 'Ticket Resolved',
+    ticketClosed: 'Ticket Closed',
+    itSupport: 'IT Support',
+    you: 'You',
+    enterSubject: 'Enter ticket subject',
+    enterDescription: 'Describe your issue in detail',
+    selectCategory: 'Select a category',
+    selectPriority: 'Select priority level',
+    ticketCreatedSuccess: 'Ticket created successfully',
+    messageSent: 'Message sent',
+    statusUpdated: 'Status updated successfully',
+    filterByStatus: 'Filter by status',
+// Shop
     shop: 'दुकान',
     shopExpenses: 'दुकान व्यय',
     salaries: 'वेतन',
@@ -4005,7 +4275,52 @@ export const translations: Record<Language, Translations> = {
     tutorialStepByStepGuide: 'قدم بہ قدم گائیڈ',
     tutorialEstimatedTime: 'تخمینہ شدہ وقت',
     
-    // Shop
+    
+    // Support Tickets
+    supportTickets: 'Support Tickets',
+    supportTicketsDescription: 'Create and manage support tickets for technical assistance',
+    createTicket: 'Create Ticket',
+    myTickets: 'My Tickets',
+    allTickets: 'All Tickets',
+    ticketSubject: 'Subject',
+    ticketCategory: 'Category',
+    ticketPriority: 'Priority',
+    ticketDescription: 'Description',
+    ticketStatusOpen: 'Open',
+    ticketStatusInProgress: 'In Progress',
+    ticketStatusResolved: 'Resolved',
+    ticketStatusClosed: 'Closed',
+    priorityLow: 'Low',
+    priorityMedium: 'Medium',
+    priorityHigh: 'High',
+    priorityUrgent: 'Urgent',
+    categoryTechnical: 'Technical Issue',
+    categoryBilling: 'Billing Question',
+    categoryFeature: 'Feature Request',
+    categoryOther: 'Other',
+    sendMessage: 'Send Message',
+    viewTicket: 'View Ticket',
+    backToTickets: 'Back to Tickets',
+    messages: 'Messages',
+    noMessages: 'No messages yet. Start a conversation!',
+    typeMessage: 'Type your message...',
+    updateStatus: 'Update Status',
+    ticketDetails: 'Ticket Details',
+    lastUpdated: 'Last Updated',
+    ticketCreated: 'Ticket Created',
+    ticketResolved: 'Ticket Resolved',
+    ticketClosed: 'Ticket Closed',
+    itSupport: 'IT Support',
+    you: 'You',
+    enterSubject: 'Enter ticket subject',
+    enterDescription: 'Describe your issue in detail',
+    selectCategory: 'Select a category',
+    selectPriority: 'Select priority level',
+    ticketCreatedSuccess: 'Ticket created successfully',
+    messageSent: 'Message sent',
+    statusUpdated: 'Status updated successfully',
+    filterByStatus: 'Filter by status',
+// Shop
     shop: 'دکان',
     shopExpenses: 'دکان کے اخراجات',
     salaries: 'تنخواہیں',
@@ -4593,7 +4908,52 @@ export const translations: Record<Language, Translations> = {
     tutorialStepByStepGuide: 'ধাপে ধাপে নির্দেশিকা',
     tutorialEstimatedTime: 'আনুমানিক সময়',
     
-    // Shop
+    
+    // Support Tickets
+    supportTickets: 'Support Tickets',
+    supportTicketsDescription: 'Create and manage support tickets for technical assistance',
+    createTicket: 'Create Ticket',
+    myTickets: 'My Tickets',
+    allTickets: 'All Tickets',
+    ticketSubject: 'Subject',
+    ticketCategory: 'Category',
+    ticketPriority: 'Priority',
+    ticketDescription: 'Description',
+    ticketStatusOpen: 'Open',
+    ticketStatusInProgress: 'In Progress',
+    ticketStatusResolved: 'Resolved',
+    ticketStatusClosed: 'Closed',
+    priorityLow: 'Low',
+    priorityMedium: 'Medium',
+    priorityHigh: 'High',
+    priorityUrgent: 'Urgent',
+    categoryTechnical: 'Technical Issue',
+    categoryBilling: 'Billing Question',
+    categoryFeature: 'Feature Request',
+    categoryOther: 'Other',
+    sendMessage: 'Send Message',
+    viewTicket: 'View Ticket',
+    backToTickets: 'Back to Tickets',
+    messages: 'Messages',
+    noMessages: 'No messages yet. Start a conversation!',
+    typeMessage: 'Type your message...',
+    updateStatus: 'Update Status',
+    ticketDetails: 'Ticket Details',
+    lastUpdated: 'Last Updated',
+    ticketCreated: 'Ticket Created',
+    ticketResolved: 'Ticket Resolved',
+    ticketClosed: 'Ticket Closed',
+    itSupport: 'IT Support',
+    you: 'You',
+    enterSubject: 'Enter ticket subject',
+    enterDescription: 'Describe your issue in detail',
+    selectCategory: 'Select a category',
+    selectPriority: 'Select priority level',
+    ticketCreatedSuccess: 'Ticket created successfully',
+    messageSent: 'Message sent',
+    statusUpdated: 'Status updated successfully',
+    filterByStatus: 'Filter by status',
+// Shop
     shop: 'দোকান',
     shopExpenses: 'দোকান খরচ',
     salaries: 'বেতন',

@@ -50,6 +50,26 @@ type TicketMessage = {
   isRead: boolean;
 };
 
+const getStatusLabel = (status: string, t: any) => {
+  switch (status) {
+    case 'open': return t.ticketStatusOpen;
+    case 'in-progress': return t.ticketStatusInProgress;
+    case 'resolved': return t.ticketStatusResolved;
+    case 'closed': return t.ticketStatusClosed;
+    default: return status;
+  }
+};
+
+const getPriorityLabel = (priority: string, t: any) => {
+  switch (priority) {
+    case 'low': return t.priorityLow;
+    case 'medium': return t.priorityMedium;
+    case 'high': return t.priorityHigh;
+    case 'urgent': return t.priorityUrgent;
+    default: return priority;
+  }
+};
+
 export default function SupportDetail() {
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
@@ -71,10 +91,7 @@ export default function SupportDetail() {
 
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
-      return await apiRequest(`/api/tickets/${id}/messages`, {
-        method: 'POST',
-        body: JSON.stringify({ message }),
-      });
+      return await apiRequest('POST', `/api/tickets/${id}/messages`, { message });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tickets', id, 'messages'] });
@@ -84,7 +101,7 @@ export default function SupportDetail() {
     },
     onError: (error: any) => {
       toast({
-        title: t("common.error") || "Error",
+        title: "Error",
         description: error.message || "Failed to send message",
         variant: "destructive",
       });
@@ -93,22 +110,19 @@ export default function SupportDetail() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async (status: string) => {
-      return await apiRequest(`/api/tickets/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status }),
-      });
+      return await apiRequest('PATCH', `/api/tickets/${id}`, { status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tickets', id] });
       queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
       toast({
-        title: t("support.statusUpdated") || "Status updated",
-        description: t("support.statusUpdatedDesc") || "Ticket status has been updated.",
+        title: t.statusUpdated,
+        description: "Ticket status has been updated.",
       });
     },
     onError: (error: any) => {
       toast({
-        title: t("common.error") || "Error",
+        title: "Error",
         description: error.message || "Failed to update status",
         variant: "destructive",
       });
@@ -199,7 +213,7 @@ export default function SupportDetail() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <AlertCircle className="h-12 w-12 text-destructive mb-4" />
             <p className="text-muted-foreground">
-              {t("support.ticketNotFound") || "Ticket not found"}
+              {"Ticket not found"}
             </p>
             <Button
               onClick={() => navigate('/support')}
@@ -208,7 +222,7 @@ export default function SupportDetail() {
               data-testid="button-back-to-support"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              {t("support.backToTickets") || "Back to Tickets"}
+              {t.backToTickets}
             </Button>
           </CardContent>
         </Card>
@@ -225,7 +239,7 @@ export default function SupportDetail() {
           data-testid="button-back"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          {t("support.backToTickets") || "Back to Tickets"}
+          {t.backToTickets}
         </Button>
         {isAdmin && ticket.status !== 'closed' && (
           <div className="flex gap-2">
@@ -237,7 +251,7 @@ export default function SupportDetail() {
                 disabled={updateStatusMutation.isPending}
                 data-testid="button-status-in-progress"
               >
-                {t("support.markInProgress") || "Mark In Progress"}
+                {"Mark In Progress"}
               </Button>
             )}
             {ticket.status === 'in-progress' && (
@@ -248,7 +262,7 @@ export default function SupportDetail() {
                 disabled={updateStatusMutation.isPending}
                 data-testid="button-status-resolved"
               >
-                {t("support.markResolved") || "Mark Resolved"}
+                {"Mark Resolved"}
               </Button>
             )}
             {ticket.status === 'resolved' && (
@@ -259,7 +273,7 @@ export default function SupportDetail() {
                 disabled={updateStatusMutation.isPending}
                 data-testid="button-status-closed"
               >
-                {t("support.markClosed") || "Close Ticket"}
+                {"Close Ticket"}
               </Button>
             )}
           </div>
@@ -272,42 +286,42 @@ export default function SupportDetail() {
             <div className="flex-1">
               <CardTitle className="text-2xl">{ticket.subject}</CardTitle>
               <p className="text-sm text-muted-foreground mt-2">
-                {t("support.ticketNumber") || "Ticket"}: <span className="font-mono">{ticket.ticketNumber}</span>
+                {"Ticket" || "Ticket"}: <span className="font-mono">{ticket.ticketNumber}</span>
               </p>
             </div>
             <div className="flex flex-col gap-2 items-end">
               <Badge variant={getStatusVariant(ticket.status)} className="flex items-center gap-1">
                 {getStatusIcon(ticket.status)}
-                {t(`support.status.${ticket.status}`) || ticket.status}
+                {getStatusLabel(ticket.status, t)}
               </Badge>
               <Badge variant={getPriorityVariant(ticket.priority)}>
-                {t(`support.priority.${ticket.priority}`) || ticket.priority}
+                {getPriorityLabel(ticket.priority, t)}
               </Badge>
             </div>
           </div>
           <Separator />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
-              <p className="text-muted-foreground">{t("support.category") || "Category"}</p>
+              <p className="text-muted-foreground">{t.ticketCategory || "Category"}</p>
               <p className="font-medium">{ticket.category}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">{t("support.created") || "Created"}</p>
+              <p className="text-muted-foreground">{t.ticketCreated || "Created"}</p>
               <p className="font-medium">{format(new Date(ticket.createdAt), 'MMM d, yyyy HH:mm')}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">{t("support.updated") || "Updated"}</p>
+              <p className="text-muted-foreground">{t.lastUpdated || "Updated"}</p>
               <p className="font-medium">{format(new Date(ticket.updatedAt), 'MMM d, yyyy HH:mm')}</p>
             </div>
             {ticket.resolvedAt && (
               <div>
-                <p className="text-muted-foreground">{t("support.resolved") || "Resolved"}</p>
+                <p className="text-muted-foreground">{t.ticketResolved || "Resolved"}</p>
                 <p className="font-medium">{format(new Date(ticket.resolvedAt), 'MMM d, yyyy HH:mm')}</p>
               </div>
             )}
           </div>
           <div>
-            <p className="text-sm text-muted-foreground mb-2">{t("support.description") || "Description"}</p>
+            <p className="text-sm text-muted-foreground mb-2">{t.ticketDescription || "Description"}</p>
             <p className="text-sm">{ticket.description}</p>
           </div>
         </CardHeader>
@@ -315,7 +329,7 @@ export default function SupportDetail() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">{t("support.conversation") || "Conversation"}</CardTitle>
+          <CardTitle className="text-lg">{t.messages || "Conversation"}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <ScrollArea className="h-[400px] pr-4">
@@ -353,8 +367,8 @@ export default function SupportDetail() {
                         <div className={`flex items-baseline gap-2 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
                           <span className="text-sm font-medium">{message.senderName}</span>
                           {isAdminMessage && (
-                            <Badge variant="default" size="sm">
-                              {t("support.supportTeam") || "Support"}
+                            <Badge variant="default">
+                              {t.itSupport || "Support"}
                             </Badge>
                           )}
                           <span className="text-xs text-muted-foreground">
@@ -374,7 +388,7 @@ export default function SupportDetail() {
                 })
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  {t("support.noMessages") || "No messages yet. Start the conversation!"}
+                  {t.noMessages || "No messages yet. Start the conversation!"}
                 </div>
               )}
               <div ref={messagesEndRef} />
@@ -387,7 +401,7 @@ export default function SupportDetail() {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={handleKeyPress}
-                placeholder={t("support.typeMessage") || "Type your message..."}
+                placeholder={t.typeMessage}
                 className="flex-1 min-h-[80px]"
                 data-testid="textarea-message"
               />
@@ -405,7 +419,7 @@ export default function SupportDetail() {
 
           {ticket.status === 'closed' && (
             <div className="bg-muted p-4 rounded-lg text-center text-muted-foreground">
-              {t("support.ticketClosed") || "This ticket is closed and no longer accepts new messages."}
+              {"This ticket is closed and no longer accepts new messages."}
             </div>
           )}
         </CardContent>
