@@ -453,3 +453,26 @@ export const subscriptionInvoices = pgTable("subscription_invoices", {
 export const insertSubscriptionInvoiceSchema = createInsertSchema(subscriptionInvoices).omit({ id: true, invoiceDate: true });
 export type InsertSubscriptionInvoice = z.infer<typeof insertSubscriptionInvoiceSchema>;
 export type SubscriptionInvoice = typeof subscriptionInvoices.$inferSelect;
+
+// Monthly VAT Reports
+export const monthlyVatReports = pgTable("monthly_vat_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  reportMonth: integer("report_month").notNull(), // 1-12
+  reportYear: integer("report_year").notNull(), // e.g., 2025
+  serialNumber: text("serial_number").notNull().unique(), // Format: VAT-YYYY-MM-XXXX
+  totalSales: decimal("total_sales", { precision: 12, scale: 2 }).notNull().default("0"), // Total sales (including VAT)
+  totalSalesBaseAmount: decimal("total_sales_base_amount", { precision: 12, scale: 2 }).notNull().default("0"), // Sales before VAT
+  totalSalesVat: decimal("total_sales_vat", { precision: 12, scale: 2 }).notNull().default("0"), // Sales VAT (15%)
+  totalPurchases: decimal("total_purchases", { precision: 12, scale: 2 }).notNull().default("0"), // Total purchases/costs (including VAT)
+  totalPurchasesBaseAmount: decimal("total_purchases_base_amount", { precision: 12, scale: 2 }).notNull().default("0"), // Purchases before VAT
+  totalPurchasesVat: decimal("total_purchases_vat", { precision: 12, scale: 2 }).notNull().default("0"), // Purchases VAT (15%)
+  netVatPayable: decimal("net_vat_payable", { precision: 12, scale: 2 }).notNull().default("0"), // Sales VAT - Purchases VAT
+  generatedAt: timestamp("generated_at").notNull().defaultNow(),
+  pdfPath: text("pdf_path"), // Path to generated PDF report
+  qrCode: text("qr_code"), // QR code data URL for ZATCA compliance
+});
+
+export const insertMonthlyVatReportSchema = createInsertSchema(monthlyVatReports).omit({ id: true, generatedAt: true });
+export type InsertMonthlyVatReport = z.infer<typeof insertMonthlyVatReportSchema>;
+export type MonthlyVatReport = typeof monthlyVatReports.$inferSelect;
