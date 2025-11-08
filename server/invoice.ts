@@ -1,6 +1,8 @@
 import puppeteer, { Browser } from "puppeteer";
 import QRCode from "qrcode";
 import type { Order } from "@shared/schema";
+import { execSync } from "child_process";
+import { existsSync } from "fs";
 
 interface InvoiceData {
   order: Order;
@@ -27,19 +29,64 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 
+// Detect Chromium executable path with fallbacks
+function getChromiumPath(): string | undefined {
+  // 1. Check environment variable override
+  if (process.env.CHROMIUM_PATH && existsSync(process.env.CHROMIUM_PATH)) {
+    console.log(`[Invoice] Using Chromium from env: ${process.env.CHROMIUM_PATH}`);
+    return process.env.CHROMIUM_PATH;
+  }
+
+  // 2. Try to find via which command
+  try {
+    const chromiumPath = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null', { encoding: 'utf8' }).trim();
+    if (chromiumPath && existsSync(chromiumPath)) {
+      console.log(`[Invoice] Found Chromium via which: ${chromiumPath}`);
+      return chromiumPath;
+    }
+  } catch (e) {
+    // Continue to next fallback
+  }
+
+  // 3. Common Nix store paths (Replit environment)
+  const nixPaths = [
+    '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+    // Add more common paths as needed
+  ];
+  
+  for (const path of nixPaths) {
+    if (existsSync(path)) {
+      console.log(`[Invoice] Using Nix Chromium: ${path}`);
+      return path;
+    }
+  }
+
+  console.warn('[Invoice] No Chromium executable found, falling back to Puppeteer default');
+  return undefined;
+}
+
 // Shared browser instance for better performance
 let browserInstance: Browser | null = null;
 
 async function getBrowser(): Promise<Browser> {
   if (!browserInstance || !browserInstance.isConnected()) {
+    const chromiumPath = getChromiumPath();
+    
+    if (!chromiumPath) {
+      throw new Error('Chromium executable not found. Please install Chromium or set CHROMIUM_PATH environment variable.');
+    }
+
     browserInstance = await puppeteer.launch({
       headless: true,
+      executablePath: chromiumPath,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
-        '--disable-software-rasterizer'
+        '--disable-software-rasterizer',
+        '--single-process',
+        '--no-zygote'
       ]
     });
   }
