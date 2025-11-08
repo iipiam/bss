@@ -106,8 +106,8 @@ export default function SupportDetail() {
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to send message",
+        title: t.error,
+        description: error.message || t.failedToSendMessage,
         variant: "destructive",
       });
     },
@@ -122,13 +122,13 @@ export default function SupportDetail() {
       queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
       toast({
         title: t.statusUpdated,
-        description: "Ticket status has been updated.",
+        description: t.ticketStatusUpdatedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update status",
+        title: t.error,
+        description: error.message || t.failedToUpdateStatus,
         variant: "destructive",
       });
     },
@@ -218,7 +218,7 @@ export default function SupportDetail() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <AlertCircle className="h-12 w-12 text-destructive mb-4" />
             <p className="text-muted-foreground">
-              {"Ticket not found"}
+              {t.ticketNotFound}
             </p>
             <Button
               onClick={() => navigate('/support')}
@@ -256,7 +256,7 @@ export default function SupportDetail() {
                 disabled={updateStatusMutation.isPending}
                 data-testid="button-status-in-progress"
               >
-                {"Mark In Progress"}
+                {t.markInProgress}
               </Button>
             )}
             {ticket.status === 'in-progress' && (
@@ -267,7 +267,7 @@ export default function SupportDetail() {
                 disabled={updateStatusMutation.isPending}
                 data-testid="button-status-resolved"
               >
-                {"Mark Resolved"}
+                {t.markResolved}
               </Button>
             )}
             {ticket.status === 'resolved' && (
@@ -278,7 +278,7 @@ export default function SupportDetail() {
                 disabled={updateStatusMutation.isPending}
                 data-testid="button-status-closed"
               >
-                {"Close Ticket"}
+                {t.closeTicket}
               </Button>
             )}
           </div>
@@ -291,7 +291,7 @@ export default function SupportDetail() {
             <div className="flex-1">
               <CardTitle className="text-2xl">{ticket.subject}</CardTitle>
               <p className="text-sm text-muted-foreground mt-2">
-                {"Ticket" || "Ticket"}: <span className="font-mono">{ticket.ticketNumber}</span>
+                {t.ticket}: <span className="font-mono">{ticket.ticketNumber}</span>
               </p>
             </div>
             <div className="flex flex-col gap-2 items-end">
@@ -424,7 +424,7 @@ export default function SupportDetail() {
 
           {ticket.status === 'closed' && (
             <div className="bg-muted p-4 rounded-lg text-center text-muted-foreground">
-              {"This ticket is closed and no longer accepts new messages."}
+              {t.ticketClosedMessage}
             </div>
           )}
         </CardContent>

@@ -492,6 +492,25 @@ export interface Translations {
   messageSent: string;
   statusUpdated: string;
   filterByStatus: string;
+  subjectValidation: string;
+  categoryValidation: string;
+  descriptionValidation: string;
+  ticketCreatedSuccessDesc: string;
+  failedToCreateTicket: string;
+  failedToSendMessage: string;
+  ticketStatusUpdatedDesc: string;
+  failedToUpdateStatus: string;
+  categoryBugReport: string;
+  categoryGeneralQuestion: string;
+  viewChat: string;
+  ticketNotFound: string;
+  markInProgress: string;
+  markResolved: string;
+  closeTicket: string;
+  ticketClosedMessage: string;
+  noTicketsYet: string;
+  createFirstTicket: string;
+  noTicketsWithStatus: string;
   
   // Shop
   shop: string;
@@ -1140,6 +1159,25 @@ export const translations: Record<Language, Translations> = {
     messageSent: 'Message sent',
     statusUpdated: 'Status updated successfully',
     filterByStatus: 'Filter by status',
+    subjectValidation: 'Subject must be at least 5 characters',
+    categoryValidation: 'Please select a category',
+    descriptionValidation: 'Description must be at least 10 characters',
+    ticketCreatedSuccessDesc: 'Your support ticket has been created successfully',
+    failedToCreateTicket: 'Failed to create ticket',
+    failedToSendMessage: 'Failed to send message',
+    ticketStatusUpdatedDesc: 'Ticket status has been updated',
+    failedToUpdateStatus: 'Failed to update status',
+    categoryBugReport: 'Bug Report',
+    categoryGeneralQuestion: 'General Question',
+    viewChat: 'View Chat',
+    ticketNotFound: 'Ticket not found',
+    markInProgress: 'Mark In Progress',
+    markResolved: 'Mark Resolved',
+    closeTicket: 'Close Ticket',
+    ticketClosedMessage: 'This ticket is closed and no longer accepts new messages',
+    noTicketsYet: 'No support tickets yet. Create one to get started!',
+    createFirstTicket: 'Create Your First Ticket',
+    noTicketsWithStatus: 'No tickets found with this status',
     
     // Shop
     shop: 'Shop',
@@ -1788,6 +1826,25 @@ export const translations: Record<Language, Translations> = {
     messageSent: 'Message sent',
     statusUpdated: 'Status updated successfully',
     filterByStatus: 'Filter by status',
+    subjectValidation: 'Subject must be at least 5 characters',
+    categoryValidation: 'Please select a category',
+    descriptionValidation: 'Description must be at least 10 characters',
+    ticketCreatedSuccessDesc: 'Your support ticket has been created successfully',
+    failedToCreateTicket: 'Failed to create ticket',
+    failedToSendMessage: 'Failed to send message',
+    ticketStatusUpdatedDesc: 'Ticket status has been updated',
+    failedToUpdateStatus: 'Failed to update status',
+    categoryBugReport: 'Bug Report',
+    categoryGeneralQuestion: 'General Question',
+    viewChat: 'View Chat',
+    ticketNotFound: 'Ticket not found',
+    markInProgress: 'Mark In Progress',
+    markResolved: 'Mark Resolved',
+    closeTicket: 'Close Ticket',
+    ticketClosedMessage: 'This ticket is closed and no longer accepts new messages',
+    noTicketsYet: 'No support tickets yet. Create one to get started!',
+    createFirstTicket: 'Create Your First Ticket',
+    noTicketsWithStatus: 'No tickets found with this status',
 // Shop
     shop: 'المتجر',
     shopExpenses: 'مصاريف المتجر',
@@ -2421,6 +2478,25 @@ export const translations: Record<Language, Translations> = {
     messageSent: 'Message sent',
     statusUpdated: 'Status updated successfully',
     filterByStatus: 'Filter by status',
+    subjectValidation: 'Subject must be at least 5 characters',
+    categoryValidation: 'Please select a category',
+    descriptionValidation: 'Description must be at least 10 characters',
+    ticketCreatedSuccessDesc: 'Your support ticket has been created successfully',
+    failedToCreateTicket: 'Failed to create ticket',
+    failedToSendMessage: 'Failed to send message',
+    ticketStatusUpdatedDesc: 'Ticket status has been updated',
+    failedToUpdateStatus: 'Failed to update status',
+    categoryBugReport: 'Bug Report',
+    categoryGeneralQuestion: 'General Question',
+    viewChat: 'View Chat',
+    ticketNotFound: 'Ticket not found',
+    markInProgress: 'Mark In Progress',
+    markResolved: 'Mark Resolved',
+    closeTicket: 'Close Ticket',
+    ticketClosedMessage: 'This ticket is closed and no longer accepts new messages',
+    noTicketsYet: 'No support tickets yet. Create one to get started!',
+    createFirstTicket: 'Create Your First Ticket',
+    noTicketsWithStatus: 'No tickets found with this status',
 // Shop
     shop: '商店',
     shopExpenses: '商店费用',
@@ -3054,6 +3130,25 @@ export const translations: Record<Language, Translations> = {
     messageSent: 'Message sent',
     statusUpdated: 'Status updated successfully',
     filterByStatus: 'Filter by status',
+    subjectValidation: 'Subject must be at least 5 characters',
+    categoryValidation: 'Please select a category',
+    descriptionValidation: 'Description must be at least 10 characters',
+    ticketCreatedSuccessDesc: 'Your support ticket has been created successfully',
+    failedToCreateTicket: 'Failed to create ticket',
+    failedToSendMessage: 'Failed to send message',
+    ticketStatusUpdatedDesc: 'Ticket status has been updated',
+    failedToUpdateStatus: 'Failed to update status',
+    categoryBugReport: 'Bug Report',
+    categoryGeneralQuestion: 'General Question',
+    viewChat: 'View Chat',
+    ticketNotFound: 'Ticket not found',
+    markInProgress: 'Mark In Progress',
+    markResolved: 'Mark Resolved',
+    closeTicket: 'Close Ticket',
+    ticketClosedMessage: 'This ticket is closed and no longer accepts new messages',
+    noTicketsYet: 'No support tickets yet. Create one to get started!',
+    createFirstTicket: 'Create Your First Ticket',
+    noTicketsWithStatus: 'No tickets found with this status',
 // Shop
     shop: 'Geschäft',
     shopExpenses: 'Geschäftsausgaben',
@@ -3687,6 +3782,25 @@ export const translations: Record<Language, Translations> = {
     messageSent: 'Message sent',
     statusUpdated: 'Status updated successfully',
     filterByStatus: 'Filter by status',
+    subjectValidation: 'Subject must be at least 5 characters',
+    categoryValidation: 'Please select a category',
+    descriptionValidation: 'Description must be at least 10 characters',
+    ticketCreatedSuccessDesc: 'Your support ticket has been created successfully',
+    failedToCreateTicket: 'Failed to create ticket',
+    failedToSendMessage: 'Failed to send message',
+    ticketStatusUpdatedDesc: 'Ticket status has been updated',
+    failedToUpdateStatus: 'Failed to update status',
+    categoryBugReport: 'Bug Report',
+    categoryGeneralQuestion: 'General Question',
+    viewChat: 'View Chat',
+    ticketNotFound: 'Ticket not found',
+    markInProgress: 'Mark In Progress',
+    markResolved: 'Mark Resolved',
+    closeTicket: 'Close Ticket',
+    ticketClosedMessage: 'This ticket is closed and no longer accepts new messages',
+    noTicketsYet: 'No support tickets yet. Create one to get started!',
+    createFirstTicket: 'Create Your First Ticket',
+    noTicketsWithStatus: 'No tickets found with this status',
 // Shop
     shop: 'दुकान',
     shopExpenses: 'दुकान व्यय',
@@ -4320,6 +4434,25 @@ export const translations: Record<Language, Translations> = {
     messageSent: 'Message sent',
     statusUpdated: 'Status updated successfully',
     filterByStatus: 'Filter by status',
+    subjectValidation: 'Subject must be at least 5 characters',
+    categoryValidation: 'Please select a category',
+    descriptionValidation: 'Description must be at least 10 characters',
+    ticketCreatedSuccessDesc: 'Your support ticket has been created successfully',
+    failedToCreateTicket: 'Failed to create ticket',
+    failedToSendMessage: 'Failed to send message',
+    ticketStatusUpdatedDesc: 'Ticket status has been updated',
+    failedToUpdateStatus: 'Failed to update status',
+    categoryBugReport: 'Bug Report',
+    categoryGeneralQuestion: 'General Question',
+    viewChat: 'View Chat',
+    ticketNotFound: 'Ticket not found',
+    markInProgress: 'Mark In Progress',
+    markResolved: 'Mark Resolved',
+    closeTicket: 'Close Ticket',
+    ticketClosedMessage: 'This ticket is closed and no longer accepts new messages',
+    noTicketsYet: 'No support tickets yet. Create one to get started!',
+    createFirstTicket: 'Create Your First Ticket',
+    noTicketsWithStatus: 'No tickets found with this status',
 // Shop
     shop: 'دکان',
     shopExpenses: 'دکان کے اخراجات',
@@ -4953,6 +5086,25 @@ export const translations: Record<Language, Translations> = {
     messageSent: 'Message sent',
     statusUpdated: 'Status updated successfully',
     filterByStatus: 'Filter by status',
+    subjectValidation: 'Subject must be at least 5 characters',
+    categoryValidation: 'Please select a category',
+    descriptionValidation: 'Description must be at least 10 characters',
+    ticketCreatedSuccessDesc: 'Your support ticket has been created successfully',
+    failedToCreateTicket: 'Failed to create ticket',
+    failedToSendMessage: 'Failed to send message',
+    ticketStatusUpdatedDesc: 'Ticket status has been updated',
+    failedToUpdateStatus: 'Failed to update status',
+    categoryBugReport: 'Bug Report',
+    categoryGeneralQuestion: 'General Question',
+    viewChat: 'View Chat',
+    ticketNotFound: 'Ticket not found',
+    markInProgress: 'Mark In Progress',
+    markResolved: 'Mark Resolved',
+    closeTicket: 'Close Ticket',
+    ticketClosedMessage: 'This ticket is closed and no longer accepts new messages',
+    noTicketsYet: 'No support tickets yet. Create one to get started!',
+    createFirstTicket: 'Create Your First Ticket',
+    noTicketsWithStatus: 'No tickets found with this status',
 // Shop
     shop: 'দোকান',
     shopExpenses: 'দোকান খরচ',

@@ -64,14 +64,12 @@ type SupportTicket = {
   closedAt: string | null;
 };
 
-const ticketSchema = z.object({
-  subject: z.string().min(5, "Subject must be at least 5 characters"),
-  category: z.string().min(1, "Please select a category"),
+const createTicketSchema = (t: any) => z.object({
+  subject: z.string().min(5, t.subjectValidation),
+  category: z.string().min(1, t.categoryValidation),
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
-  description: z.string().min(10, "Description must be at least 10 characters"),
+  description: z.string().min(10, t.descriptionValidation),
 });
-
-type TicketFormData = z.infer<typeof ticketSchema>;
 
 const getStatusLabel = (status: string, t: any) => {
   switch (status) {
@@ -100,6 +98,9 @@ export default function Support() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
+  const ticketSchema = createTicketSchema(t);
+  type TicketFormData = z.infer<typeof ticketSchema>;
+
   const form = useForm<TicketFormData>({
     resolver: zodResolver(ticketSchema),
     defaultValues: {
@@ -126,15 +127,15 @@ export default function Support() {
       queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
       toast({
         title: t.ticketCreatedSuccess,
-        description: "Your support ticket has been created successfully.",
+        description: t.ticketCreatedSuccessDesc,
       });
       setIsCreateDialogOpen(false);
       form.reset();
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create ticket",
+        title: t.error,
+        description: error.message || t.failedToCreateTicket,
         variant: "destructive",
       });
     },
@@ -277,8 +278,8 @@ export default function Support() {
             <Ticket className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-center">
               {statusFilter === "all" 
-                ? t.noData || "No support tickets yet. Create one to get started!"
-                : t.noData || `No ${statusFilter} tickets found.`}
+                ? t.noTicketsYet
+                : t.noTicketsWithStatus}
             </p>
             {statusFilter === "all" && (
               <Button
@@ -288,7 +289,7 @@ export default function Support() {
                 data-testid="button-create-first-ticket"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                {t.createTicket || "Create Your First Ticket"}
+                {t.createFirstTicket}
               </Button>
             )}
           </CardContent>
@@ -324,7 +325,7 @@ export default function Support() {
                 <Link href={`/support/${ticket.id}`}>
                   <Button variant="outline" className="w-full" data-testid={`button-view-ticket-${ticket.id}`}>
                     <MessageCircle className="h-4 w-4 mr-2" />
-                    {t.viewTicket || "View Chat"}
+                    {t.viewChat}
                     <ArrowRight className="h-4 w-4 ml-auto" />
                   </Button>
                 </Link>
@@ -375,12 +376,12 @@ export default function Support() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="technical">Technical Issue</SelectItem>
-                        <SelectItem value="billing">Billing & Subscription</SelectItem>
-                        <SelectItem value="feature">Feature Request</SelectItem>
-                        <SelectItem value="bug">Bug Report</SelectItem>
-                        <SelectItem value="general">General Question</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value="technical">{t.categoryTechnical}</SelectItem>
+                        <SelectItem value="billing">{t.categoryBilling}</SelectItem>
+                        <SelectItem value="feature">{t.categoryFeature}</SelectItem>
+                        <SelectItem value="bug">{t.categoryBugReport}</SelectItem>
+                        <SelectItem value="general">{t.categoryGeneralQuestion}</SelectItem>
+                        <SelectItem value="other">{t.categoryOther}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
