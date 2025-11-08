@@ -85,6 +85,17 @@ Preferred communication style: Simple, everyday language.
     - **Critical Pattern**: Use explicit `h-[44px]` and `w-[44px]` classes (NOT min-h) to properly override component defaults like `size="icon"`
     - **Form Optimization**: All dialogs, inputs, selects, tabs, and buttons meet 44px requirement
   - **Accessibility Compliance**: 100% of interactive elements meet WCAG 2.1 Level AAA touch target requirements (verified by architect review).
+- **Ticketing System & IT Support**: Comprehensive support ticket management with real-time chat interface:
+  - **Support Tickets** (supportTickets table): Full ticket lifecycle management with status tracking (open, in-progress, resolved, closed), priority levels (low, medium, high, urgent), and automatic ticket numbering (TKT-YYYYMMDD-XXXX format)
+  - **Chat Interface** (ticketMessages table): Real-time messaging between users and IT support with message threading, read status tracking, and sender identification (name, role)
+  - **Activity Logging** (employeeActivityLog table): Comprehensive audit trail tracking all employee actions (create, update, delete) across all system entities with JSON change tracking, categorization, and timestamp tracking
+  - **Authorization**: Role-based access control - regular users can only view/manage their own tickets, admins can view all tickets and update status
+  - **Auto-Refresh**: Ticket messages auto-refresh every 5 seconds for near real-time chat experience
+  - **Status Management**: Admins can progress tickets through statuses with automatic timestamp tracking (resolvedAt, closedAt)
+  - **Frontend Pages**: `/support` for ticket list/creation, `/support/:id` for individual ticket chat view
+  - **API Endpoints**: Full REST API for tickets (GET/POST/PATCH), messages (GET/POST), activity logs (GET), and unread count tracking
+  - **Activity Logger Utility** (server/activityLogger.ts): Helper functions for logging employee actions throughout the application
+  - **Note**: Translation keys defined but need to be populated in all 7 languages
 
 ## External Dependencies
 
