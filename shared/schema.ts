@@ -507,3 +507,75 @@ export const monthlyVatReports = pgTable("monthly_vat_reports", {
 export const insertMonthlyVatReportSchema = createInsertSchema(monthlyVatReports).omit({ id: true, generatedAt: true });
 export type InsertMonthlyVatReport = z.infer<typeof insertMonthlyVatReportSchema>;
 export type MonthlyVatReport = typeof monthlyVatReports.$inferSelect;
+
+// Support Tickets (IT Help System)
+export const supportTickets = pgTable("support_tickets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  ticketNumber: text("ticket_number").notNull().unique(), // Format: TKT-YYYYMMDD-XXXX
+  subject: text("subject").notNull(),
+  category: text("category").notNull(), // 'technical', 'billing', 'feature_request', 'bug_report', 'other'
+  priority: text("priority").notNull().default("medium"), // 'low', 'medium', 'high', 'urgent'
+  status: text("status").notNull().default("open"), // 'open', 'in_progress', 'waiting_response', 'resolved', 'closed'
+  description: text("description").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+  closedAt: timestamp("closed_at"),
+  assignedToIt: boolean("assigned_to_it").notNull().default(true), // Always assign to IT by default
+});
+
+export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit({ 
+  id: true, 
+  ticketNumber: true, 
+  createdAt: true, 
+  updatedAt: true, 
+  resolvedAt: true, 
+  closedAt: true 
+});
+export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
+export type SupportTicket = typeof supportTickets.$inferSelect;
+
+// Ticket Messages (Chat between user and IT)
+export const ticketMessages = pgTable("ticket_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ticketId: varchar("ticket_id").notNull().references(() => supportTickets.id, { onDelete: 'cascade' }),
+  senderId: varchar("sender_id").notNull().references(() => users.id),
+  senderName: text("sender_name").notNull(), // Store name for display
+  senderRole: text("sender_role").notNull(), // 'user' or 'it_support'
+  message: text("message").notNull(),
+  attachmentUrl: text("attachment_url"), // Optional file attachment
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  isRead: boolean("is_read").notNull().default(false),
+});
+
+export const insertTicketMessageSchema = createInsertSchema(ticketMessages).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type InsertTicketMessage = z.infer<typeof insertTicketMessageSchema>;
+export type TicketMessage = typeof ticketMessages.$inferSelect;
+
+// Employee Activity Log (Track all actions by sub-accounts)
+export const employeeActivityLog = pgTable("employee_activity_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  employeeId: varchar("employee_id").notNull().references(() => users.id),
+  employeeName: text("employee_name").notNull(), // Store for quick display
+  action: text("action").notNull(), // e.g., 'created_order', 'updated_inventory', 'modified_menu_item', etc.
+  actionCategory: text("action_category").notNull(), // 'orders', 'inventory', 'menu', 'customers', 'settings', etc.
+  description: text("description").notNull(), // Human-readable description
+  entityType: text("entity_type"), // e.g., 'order', 'inventory_item', 'menu_item'
+  entityId: text("entity_id"), // ID of the affected entity
+  previousData: jsonb("previous_data").$type<Record<string, any>>(), // Before state (for updates/deletes)
+  newData: jsonb("new_data").$type<Record<string, any>>(), // After state (for creates/updates)
+  ipAddress: text("ip_address"),
+  branchId: varchar("branch_id").references(() => branches.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertEmployeeActivityLogSchema = createInsertSchema(employeeActivityLog).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type InsertEmployeeActivityLog = z.infer<typeof insertEmployeeActivityLogSchema>;
+export type EmployeeActivityLog = typeof employeeActivityLog.$inferSelect;
