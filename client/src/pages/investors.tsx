@@ -104,26 +104,32 @@ export default function Investors() {
 
   const { data: transactions = [] } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions"],
+    retry: false,
   });
 
   const { data: orders = [] } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
+    retry: false,
   });
 
   const { data: menuItems = [] } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu"],
+    retry: false,
   });
 
   const { data: recipes = [] } = useQuery<Recipe[]>({
     queryKey: ["/api/recipes"],
+    retry: false,
   });
 
   const { data: salaries = [] } = useQuery<Salary[]>({
-    queryKey: ["/api/salaries"],
+    queryKey: ["/api/shop/salaries"],
+    retry: false,
   });
 
   const { data: shopBills = [] } = useQuery<ShopBill[]>({
-    queryKey: ["/api/shop-bills"],
+    queryKey: ["/api/shop/bills"],
+    retry: false,
   });
 
   const createInvestorMutation = useMutation({
@@ -387,10 +393,10 @@ export default function Investors() {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.notes || "Notes"} ({t.optional || "Optional"})</FormLabel>
+                      <FormLabel>{t.notes || "Notes"} (Optional)</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder={t.enterNotes || "Enter any additional notes"}
+                          placeholder="Enter any additional notes"
                           {...field}
                           data-testid="input-investor-notes"
                         />
@@ -434,7 +440,7 @@ export default function Investors() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
-            <h3 className={layout.textLg + " font-semibold"}>{t.netProfitSummary || "Net Profit Summary"}</h3>
+            <h3 className={layout.textXl + " font-semibold"}>{t.netProfitSummary || "Net Profit Summary"}</h3>
           </div>
         </CardHeader>
         <CardContent>
@@ -461,7 +467,7 @@ export default function Investors() {
       </div>
 
       {/* Investors List */}
-      <div className={`grid ${layout.gridCols()} gap-4`}>
+      <div className={`grid ${layout.gridCols({ desktop: 3, tablet: 2, mobile: 1 })} gap-4`}>
         {filteredInvestors.length === 0 ? (
           <Card className="col-span-full">
             <CardContent className="flex flex-col items-center justify-center py-12">
@@ -471,7 +477,7 @@ export default function Investors() {
               </h3>
               <p className="text-muted-foreground text-center">
                 {searchQuery
-                  ? t.tryDifferentSearch || "Try a different search term"
+                  ? "Try a different search term"
                   : t.addFirstInvestor || "Add your first investor to get started"}
               </p>
             </CardContent>
