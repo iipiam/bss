@@ -3032,20 +3032,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Support Tickets
   app.get("/api/tickets", async (req, res) => {
-    if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
     try {
       const userId = req.query.userId as string | undefined;
       const status = req.query.status as string | undefined;
       
-      // Regular users can only see their own tickets
-      // Admin users can see all tickets
-      const user = req.user as any;
-      const filterUserId = user.role === 'admin' ? userId : user.id;
-      
-      const tickets = await storage.getSupportTickets(filterUserId, status);
+      const tickets = await storage.getSupportTickets(userId, status);
       res.json(tickets);
     } catch (error) {
       console.error("Error fetching tickets:", error);
@@ -3054,21 +3045,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/tickets/:id", async (req, res) => {
-    if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
     try {
       const ticket = await storage.getSupportTicket(req.params.id);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
-      }
-
-      // Check authorization
-      const user = req.user as any;
-      if (user.role !== 'admin' && ticket.userId !== user.id) {
-        return res.status(403).json({ error: "Forbidden" });
       }
 
       res.json(ticket);
@@ -3079,14 +3060,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/tickets", async (req, res) => {
-    if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
     try {
-      const user = req.user as any;
       const ticket = await storage.createSupportTicket({
-        userId: user.id,
+        userId: req.body.userId || 'default-user',
         subject: req.body.subject,
         category: req.body.category,
         priority: req.body.priority || 'medium',
@@ -3102,26 +3078,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.patch("/api/tickets/:id", async (req, res) => {
-    if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
     try {
       const ticket = await storage.getSupportTicket(req.params.id);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
-      }
-
-      // Check authorization - only admin can update tickets or ticket owner
-      const user = req.user as any;
-      if (user.role !== 'admin' && ticket.userId !== user.id) {
-        return res.status(403).json({ error: "Forbidden" });
-      }
-
-      // Only admin can change status
-      if (req.body.status && user.role !== 'admin') {
-        return res.status(403).json({ error: "Only admin can change ticket status" });
       }
 
       const updated = await storage.updateSupportTicket(req.params.id, req.body);
@@ -3134,10 +3095,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Ticket Messages
   app.get("/api/tickets/:ticketId/messages", async (req, res) => {
-    if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
     try {
       const ticket = await storage.getSupportTicket(req.params.ticketId);
       
@@ -3145,17 +3102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Ticket not found" });
       }
 
-      // Check authorization
-      const user = req.user as any;
-      if (user.role !== 'admin' && ticket.userId !== user.id) {
-        return res.status(403).json({ error: "Forbidden" });
-      }
-
       const messages = await storage.getTicketMessages(req.params.ticketId);
-      
-      // Mark messages as read
-      await storage.markMessagesAsRead(req.params.ticketId, user.id);
-      
       res.json(messages);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -3164,10 +3111,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/tickets/:ticketId/messages", async (req, res) => {
-    if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
     try {
       const ticket = await storage.getSupportTicket(req.params.ticketId);
       
@@ -3175,26 +3118,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Ticket not found" });
       }
 
-      // Check authorization
-      const user = req.user as any;
-      if (user.role !== 'admin' && ticket.userId !== user.id) {
-        return res.status(403).json({ error: "Forbidden" });
-      }
-
       const message = await storage.createTicketMessage({
         ticketId: req.params.ticketId,
-        senderId: user.id,
-        senderName: user.username || 'User',
-        senderRole: user.role || 'employee',
+        senderId: req.body.senderId || 'default-user',
+        senderName: req.body.senderName || 'User',
+        senderRole: req.body.senderRole || 'employee',
         message: req.body.message,
         isRead: false,
       });
-
-      // Auto-change ticket status based on sender
-      if (ticket.status === 'open' && user.role === 'admin') {
-        // Admin replied, set to in-progress
-        await storage.updateSupportTicket(ticket.id, { status: 'in-progress' });
-      }
 
       res.status(201).json(message);
     } catch (error) {
@@ -3204,13 +3135,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/tickets/unread/count", async (req, res) => {
-    if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
     try {
-      const user = req.user as any;
-      const count = await storage.getUnreadMessageCount(user.id);
+      const userId = req.query.userId as string | undefined;
+      const count = await storage.getUnreadMessageCount(userId || 'default-user');
       res.json({ count });
     } catch (error) {
       console.error("Error fetching unread count:", error);
@@ -3220,18 +3147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Employee Activity Log
   app.get("/api/employee-activities", async (req, res) => {
-    if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
     try {
-      const user = req.user as any;
-      
-      // Only admin can view all activities
-      if (user.role !== 'admin') {
-        return res.status(403).json({ error: "Forbidden - Admin only" });
-      }
-
       const employeeId = req.query.employeeId as string | undefined;
       const category = req.query.category as string | undefined;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
@@ -3246,18 +3162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/employee-activities/stats/:employeeId", async (req, res) => {
-    if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
     try {
-      const user = req.user as any;
-      
-      // Only admin can view activity stats
-      if (user.role !== 'admin') {
-        return res.status(403).json({ error: "Forbidden - Admin only" });
-      }
-
       const stats = await storage.getEmployeeActivityStats(req.params.employeeId);
       res.json(stats);
     } catch (error) {

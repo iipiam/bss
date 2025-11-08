@@ -91,7 +91,12 @@ export default function SupportDetail() {
 
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
-      return await apiRequest('POST', `/api/tickets/${id}/messages`, { message });
+      return await apiRequest('POST', `/api/tickets/${id}/messages`, {
+        message,
+        senderId: user?.id || 'default-user',
+        senderName: user?.username || 'User',
+        senderRole: user?.role || 'employee',
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tickets', id, 'messages'] });

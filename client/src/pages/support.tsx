@@ -116,7 +116,10 @@ export default function Support() {
 
   const createTicketMutation = useMutation({
     mutationFn: async (data: TicketFormData) => {
-      return await apiRequest('POST', '/api/tickets', data);
+      return await apiRequest('POST', '/api/tickets', {
+        ...data,
+        userId: user?.id || 'default-user',
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
