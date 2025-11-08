@@ -307,26 +307,26 @@ export default function SupportDetail() {
           <Separator />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
-              <p className="text-muted-foreground">{t.ticketCategory || "Category"}</p>
+              <p className="text-muted-foreground">{t.ticketCategory}</p>
               <p className="font-medium">{ticket.category}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">{t.ticketCreated || "Created"}</p>
+              <p className="text-muted-foreground">{t.ticketCreated}</p>
               <p className="font-medium">{format(new Date(ticket.createdAt), 'MMM d, yyyy HH:mm')}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">{t.lastUpdated || "Updated"}</p>
+              <p className="text-muted-foreground">{t.lastUpdated}</p>
               <p className="font-medium">{format(new Date(ticket.updatedAt), 'MMM d, yyyy HH:mm')}</p>
             </div>
             {ticket.resolvedAt && (
               <div>
-                <p className="text-muted-foreground">{t.ticketResolved || "Resolved"}</p>
+                <p className="text-muted-foreground">{t.ticketResolved}</p>
                 <p className="font-medium">{format(new Date(ticket.resolvedAt), 'MMM d, yyyy HH:mm')}</p>
               </div>
             )}
           </div>
           <div>
-            <p className="text-sm text-muted-foreground mb-2">{t.ticketDescription || "Description"}</p>
+            <p className="text-sm text-muted-foreground mb-2">{t.ticketDescription}</p>
             <p className="text-sm">{ticket.description}</p>
           </div>
         </CardHeader>
@@ -334,7 +334,7 @@ export default function SupportDetail() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">{t.messages || "Conversation"}</CardTitle>
+          <CardTitle className="text-lg">{t.messages}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <ScrollArea className="h-[400px] pr-4">
@@ -373,7 +373,7 @@ export default function SupportDetail() {
                           <span className="text-sm font-medium">{message.senderName}</span>
                           {isAdminMessage && (
                             <Badge variant="default">
-                              {t.itSupport || "Support"}
+                              {t.itSupport}
                             </Badge>
                           )}
                           <span className="text-xs text-muted-foreground">
@@ -393,7 +393,7 @@ export default function SupportDetail() {
                 })
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  {t.noMessages || "No messages yet. Start the conversation!"}
+                  {t.noMessages}
                 </div>
               )}
               <div ref={messagesEndRef} />

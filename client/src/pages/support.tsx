@@ -194,10 +194,10 @@ export default function Support() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Ticket className="h-8 w-8" />
-            {t.supportTickets || "Help & Support"}
+            {t.supportTickets}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {t.supportTicketsDescription || "Get help with your questions and issues"}
+            {t.supportTicketsDescription}
           </p>
         </div>
         <Button
@@ -206,7 +206,7 @@ export default function Support() {
           data-testid="button-create-ticket"
         >
           <Plus className="h-4 w-4 mr-2" />
-          {t.createTicket || "New Ticket"}
+          {t.createTicket}
         </Button>
       </div>
 
@@ -218,7 +218,7 @@ export default function Support() {
           data-testid="filter-all"
         >
           <Filter className="h-3 w-3 mr-1" />
-          {t.allTickets || "All"} ({statusCounts.all})
+          {t.allTickets} ({statusCounts.all})
         </Button>
         <Button
           variant={statusFilter === "open" ? "default" : "outline"}
@@ -227,7 +227,7 @@ export default function Support() {
           data-testid="filter-open"
         >
           <Clock className="h-3 w-3 mr-1" />
-          {t.ticketStatusOpen || "Open"} ({statusCounts.open})
+          {t.ticketStatusOpen} ({statusCounts.open})
         </Button>
         <Button
           variant={statusFilter === "in-progress" ? "default" : "outline"}
@@ -236,7 +236,7 @@ export default function Support() {
           data-testid="filter-in-progress"
         >
           <AlertCircle className="h-3 w-3 mr-1" />
-          {t.ticketStatusInProgress || "In Progress"} ({statusCounts['in-progress']})
+          {t.ticketStatusInProgress} ({statusCounts['in-progress']})
         </Button>
         <Button
           variant={statusFilter === "resolved" ? "default" : "outline"}
@@ -245,7 +245,7 @@ export default function Support() {
           data-testid="filter-resolved"
         >
           <CheckCircle className="h-3 w-3 mr-1" />
-          {t.ticketStatusResolved || "Resolved"} ({statusCounts.resolved})
+          {t.ticketStatusResolved} ({statusCounts.resolved})
         </Button>
         <Button
           variant={statusFilter === "closed" ? "default" : "outline"}
@@ -254,7 +254,7 @@ export default function Support() {
           data-testid="filter-closed"
         >
           <XCircle className="h-3 w-3 mr-1" />
-          {t.ticketStatusClosed || "Closed"} ({statusCounts.closed})
+          {t.ticketStatusClosed} ({statusCounts.closed})
         </Button>
       </div>
 
@@ -319,7 +319,7 @@ export default function Support() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{t.ticketCategory || "Category"}: {ticket.category}</span>
+                  <span>{t.ticketCategory}: {ticket.category}</span>
                   <span>{format(new Date(ticket.createdAt), 'MMM d, yyyy')}</span>
                 </div>
                 <Link href={`/support/${ticket.id}`}>
@@ -340,7 +340,7 @@ export default function Support() {
           <DialogHeader>
             <DialogTitle>{t.createTicket}</DialogTitle>
             <DialogDescription>
-              Describe your issue and our support team will help you.
+              {t.createTicketDialogDesc}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -350,10 +350,10 @@ export default function Support() {
                 name="subject"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t.ticketSubject || "Subject"}</FormLabel>
+                    <FormLabel>{t.ticketSubject}</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder={t.enterSubject || "Brief description of your issue"}
+                        placeholder={t.enterSubject}
                         {...field}
                         data-testid="input-ticket-subject"
                       />
@@ -368,11 +368,11 @@ export default function Support() {
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t.ticketCategory || "Category"}</FormLabel>
+                    <FormLabel>{t.ticketCategory}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-ticket-category">
-                          <SelectValue placeholder={t.selectCategory || "Select a category"} />
+                          <SelectValue placeholder={t.selectCategory} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -394,7 +394,7 @@ export default function Support() {
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t.ticketPriority || "Priority"}</FormLabel>
+                    <FormLabel>{t.ticketPriority}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-ticket-priority">
@@ -402,10 +402,10 @@ export default function Support() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="low">{t.priorityLow || "Low"}</SelectItem>
-                        <SelectItem value="medium">{t.priorityMedium || "Medium"}</SelectItem>
-                        <SelectItem value="high">{t.priorityHigh || "High"}</SelectItem>
-                        <SelectItem value="urgent">{t.priorityUrgent || "Urgent"}</SelectItem>
+                        <SelectItem value="low">{t.priorityLow}</SelectItem>
+                        <SelectItem value="medium">{t.priorityMedium}</SelectItem>
+                        <SelectItem value="high">{t.priorityHigh}</SelectItem>
+                        <SelectItem value="urgent">{t.priorityUrgent}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -418,10 +418,10 @@ export default function Support() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t.supportTicketsDescription || "Description"}</FormLabel>
+                    <FormLabel>{t.ticketDescription}</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder={t.enterDescription || "Provide detailed information about your issue..."}
+                        placeholder={t.enterDescription}
                         className="min-h-[120px]"
                         {...field}
                         data-testid="textarea-ticket-description"
@@ -439,16 +439,14 @@ export default function Support() {
                   onClick={() => setIsCreateDialogOpen(false)}
                   data-testid="button-cancel-ticket"
                 >
-                  {t.cancel || "Cancel"}
+                  {t.cancel}
                 </Button>
                 <Button
                   type="submit"
                   disabled={createTicketMutation.isPending}
                   data-testid="button-submit-ticket"
                 >
-                  {createTicketMutation.isPending
-                    ? t.submit || "Creating..."
-                    : t.submit || "Create"}
+                  {createTicketMutation.isPending ? t.loading : t.submit}
                 </Button>
               </DialogFooter>
             </form>

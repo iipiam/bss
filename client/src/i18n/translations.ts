@@ -511,6 +511,7 @@ export interface Translations {
   noTicketsYet: string;
   createFirstTicket: string;
   noTicketsWithStatus: string;
+  createTicketDialogDesc: string;
   
   // Shop
   shop: string;
@@ -1178,6 +1179,7 @@ export const translations: Record<Language, Translations> = {
     noTicketsYet: 'No support tickets yet. Create one to get started!',
     createFirstTicket: 'Create Your First Ticket',
     noTicketsWithStatus: 'No tickets found with this status',
+    createTicketDialogDesc: 'Describe your issue and our support team will help you',
     
     // Shop
     shop: 'Shop',
@@ -1845,6 +1847,7 @@ export const translations: Record<Language, Translations> = {
     noTicketsYet: 'No support tickets yet. Create one to get started!',
     createFirstTicket: 'Create Your First Ticket',
     noTicketsWithStatus: 'No tickets found with this status',
+    createTicketDialogDesc: 'Describe your issue and our support team will help you',
 // Shop
     shop: 'المتجر',
     shopExpenses: 'مصاريف المتجر',
@@ -2497,6 +2500,7 @@ export const translations: Record<Language, Translations> = {
     noTicketsYet: 'No support tickets yet. Create one to get started!',
     createFirstTicket: 'Create Your First Ticket',
     noTicketsWithStatus: 'No tickets found with this status',
+    createTicketDialogDesc: 'Describe your issue and our support team will help you',
 // Shop
     shop: '商店',
     shopExpenses: '商店费用',
@@ -3149,6 +3153,7 @@ export const translations: Record<Language, Translations> = {
     noTicketsYet: 'No support tickets yet. Create one to get started!',
     createFirstTicket: 'Create Your First Ticket',
     noTicketsWithStatus: 'No tickets found with this status',
+    createTicketDialogDesc: 'Describe your issue and our support team will help you',
 // Shop
     shop: 'Geschäft',
     shopExpenses: 'Geschäftsausgaben',
@@ -3801,6 +3806,7 @@ export const translations: Record<Language, Translations> = {
     noTicketsYet: 'No support tickets yet. Create one to get started!',
     createFirstTicket: 'Create Your First Ticket',
     noTicketsWithStatus: 'No tickets found with this status',
+    createTicketDialogDesc: 'Describe your issue and our support team will help you',
 // Shop
     shop: 'दुकान',
     shopExpenses: 'दुकान व्यय',
@@ -4453,6 +4459,7 @@ export const translations: Record<Language, Translations> = {
     noTicketsYet: 'No support tickets yet. Create one to get started!',
     createFirstTicket: 'Create Your First Ticket',
     noTicketsWithStatus: 'No tickets found with this status',
+    createTicketDialogDesc: 'Describe your issue and our support team will help you',
 // Shop
     shop: 'دکان',
     shopExpenses: 'دکان کے اخراجات',
@@ -5105,6 +5112,7 @@ export const translations: Record<Language, Translations> = {
     noTicketsYet: 'No support tickets yet. Create one to get started!',
     createFirstTicket: 'Create Your First Ticket',
     noTicketsWithStatus: 'No tickets found with this status',
+    createTicketDialogDesc: 'Describe your issue and our support team will help you',
 // Shop
     shop: 'দোকান',
     shopExpenses: 'দোকান খরচ',
