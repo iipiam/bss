@@ -22,6 +22,7 @@ interface Investor {
   name: string;
   amountInvested: string;
   interestPercentage: string;
+  monthlyEarnings?: string; // Calculated field based on net profit
   active: boolean;
   notes?: string;
   createdAt: string;
@@ -437,7 +438,7 @@ export default function Investors() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
+          <div className="text-2xl font-bold" data-testid="text-net-profit">
             {netProfit.toFixed(2)} {t.sar || "SAR"}
           </div>
           <p className="text-sm text-muted-foreground mt-1">
@@ -529,7 +530,10 @@ export default function Investors() {
                         <span className="text-sm font-medium">{t.monthlyEarnings || "Monthly Earnings"}</span>
                         <div className="flex items-center gap-2">
                           <DollarSign className="h-4 w-4 text-green-600" />
-                          <span className="font-bold text-green-600">
+                          <span 
+                            className="font-bold text-green-600"
+                            data-testid={`text-monthly-earnings-${investor.id}`}
+                          >
                             {monthlyEarnings.toFixed(2)} {t.sar || "SAR"}
                           </span>
                         </div>
