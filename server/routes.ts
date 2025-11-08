@@ -1,8 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { generateZATCAInvoice, generateSubscriptionInvoice } from "./invoice";
+import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport } from "./invoice";
 import bcrypt from "bcrypt";
+import QRCode from "qrcode";
 import * as fs from "fs";
 import * as path from "path";
 import {
@@ -2821,6 +2822,169 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Branches import error:", error);
       res.status(500).json({ error: "Failed to import branches" });
+    }
+  });
+
+  // ==================== Monthly VAT Reports ====================
+
+  // Get all VAT reports for the logged-in user
+  app.get("/api/vat-reports", async (req, res) => {
+    try {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = (req.user as any).id;
+      const reports = await storage.getMonthlyVatReports(userId);
+      res.json(reports);
+    } catch (error) {
+      console.error("Error fetching VAT reports:", error);
+      res.status(500).json({ error: "Failed to fetch VAT reports" });
+    }
+  });
+
+  // Generate monthly VAT report
+  app.post("/api/vat-reports/generate", async (req, res) => {
+    try {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = (req.user as any).id;
+      const { month, year } = req.body;
+
+      // Validate input
+      if (!month || !year || month < 1 || month > 12) {
+        return res.status(400).json({ error: "Invalid month or year" });
+      }
+
+      // Check if report already exists for this month
+      const existingReport = await storage.getVatReportByMonth(userId, month, year);
+      if (existingReport) {
+        return res.status(400).json({ error: "Report for this month already exists" });
+      }
+
+      // Get user data for the invoice
+      const user = await storage.getUserProfile(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Calculate sales data for the month (from transactions/orders)
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0, 23, 59, 59);
+
+      const transactions = await storage.getTransactions(undefined, startDate, endDate);
+      
+      // Calculate total sales (sum of all transaction totals)
+      const totalSales = transactions.reduce((sum, tx) => sum + parseFloat(tx.total), 0);
+      const totalSalesBaseAmount = totalSales / 1.15; // Remove 15% VAT
+      const totalSalesVat = totalSales - totalSalesBaseAmount;
+
+      // Calculate total purchases (from procurement)
+      const procurements = await storage.getProcurements(undefined, undefined, undefined);
+      const monthProcurements = procurements.filter(p => {
+        if (!p.orderDate) return false;
+        const procDate = new Date(p.orderDate);
+        return procDate >= startDate && procDate <= endDate;
+      });
+      
+      const totalPurchases = monthProcurements.reduce((sum, p) => {
+        const amount = parseFloat(p.totalCost);
+        return sum + amount;
+      }, 0);
+      const totalPurchasesBaseAmount = totalPurchases / 1.15; // Remove 15% VAT
+      const totalPurchasesVat = totalPurchases - totalPurchasesBaseAmount;
+
+      // Calculate net VAT payable
+      const netVatPayable = totalSalesVat - totalPurchasesVat;
+
+      // Generate serial number
+      const serialNumber = await storage.getNextVatReportSerialNumber(year, month);
+
+      // Generate PDF invoice
+      const pdfBuffer = await generateMonthlyVatReport({
+        serialNumber,
+        reportMonth: month,
+        reportYear: year,
+        restaurantName: user.restaurantName || user.username,
+        taxNumber: user.taxNumber || 'N/A',
+        totalSales,
+        totalSalesBaseAmount,
+        totalSalesVat,
+        totalPurchases,
+        totalPurchasesBaseAmount,
+        totalPurchasesVat,
+        netVatPayable,
+        generatedDate: new Date(),
+      });
+
+      // Save PDF to file
+      const pdfDir = path.join(process.cwd(), 'public', 'vat-reports');
+      if (!fs.existsSync(pdfDir)) {
+        fs.mkdirSync(pdfDir, { recursive: true });
+      }
+
+      const pdfFilename = `VAT-${year}-${month.toString().padStart(2, '0')}-${serialNumber.replace(/\//g, '-')}.pdf`;
+      const pdfPath = path.join(pdfDir, pdfFilename);
+      fs.writeFileSync(pdfPath, pdfBuffer);
+
+      // Generate QR code
+      const qrData = `VAT Report: ${serialNumber}\nPeriod: ${month}/${year}\nNet VAT: ${netVatPayable.toFixed(2)} SAR`;
+      const qrCode = await QRCode.toDataURL(qrData);
+
+      // Create VAT report record
+      const report = await storage.createVatReport({
+        userId,
+        reportMonth: month,
+        reportYear: year,
+        serialNumber,
+        totalSales: totalSales.toFixed(2),
+        totalSalesBaseAmount: totalSalesBaseAmount.toFixed(2),
+        totalSalesVat: totalSalesVat.toFixed(2),
+        totalPurchases: totalPurchases.toFixed(2),
+        totalPurchasesBaseAmount: totalPurchasesBaseAmount.toFixed(2),
+        totalPurchasesVat: totalPurchasesVat.toFixed(2),
+        netVatPayable: netVatPayable.toFixed(2),
+        pdfPath: `/vat-reports/${pdfFilename}`,
+        qrCode,
+      });
+
+      res.json(report);
+    } catch (error) {
+      console.error("Error generating VAT report:", error);
+      res.status(500).json({ error: "Failed to generate VAT report" });
+    }
+  });
+
+  // Download VAT report PDF
+  app.get("/api/vat-reports/:id/download", async (req, res) => {
+    try {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = (req.user as any).id;
+      const reportId = req.params.id;
+
+      const reports = await storage.getMonthlyVatReports(userId);
+      const report = reports.find(r => r.id === reportId);
+
+      if (!report) {
+        return res.status(404).json({ error: "Report not found" });
+      }
+
+      if (!report.pdfPath) {
+        return res.status(404).json({ error: "PDF not available" });
+      }
+
+      const pdfFullPath = path.join(process.cwd(), 'public', report.pdfPath);
+      
+      if (!fs.existsSync(pdfFullPath)) {
+        return res.status(404).json({ error: "PDF file not found" });
+      }
+
+      res.download(pdfFullPath, path.basename(pdfFullPath));
+    } catch (error) {
+      console.error("Error downloading VAT report:", error);
+      res.status(500).json({ error: "Failed to download VAT report" });
     }
   });
 
