@@ -21,6 +21,7 @@ import {
   insertSalarySchema,
   insertShopBillSchema,
   insertDeliveryAppSchema,
+  insertInvestorSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -476,6 +477,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("[ANALYTICS] Sales comparison error:", error);
       res.status(500).json({ error: "Failed to get sales comparison data" });
+    }
+  });
+
+  // Investors
+  app.get("/api/investors", async (_req, res) => {
+    try {
+      const investors = await storage.getInvestors();
+      res.json(investors);
+    } catch (error) {
+      console.error("[INVESTORS] Get investors error:", error);
+      res.status(500).json({ error: "Failed to get investors" });
+    }
+  });
+
+  app.get("/api/investors/:id", async (req, res) => {
+    try {
+      const investor = await storage.getInvestor(req.params.id);
+      if (!investor) {
+        return res.status(404).json({ error: "Investor not found" });
+      }
+      res.json(investor);
+    } catch (error) {
+      console.error("[INVESTORS] Get investor error:", error);
+      res.status(500).json({ error: "Failed to get investor" });
+    }
+  });
+
+  app.post("/api/investors", async (req, res) => {
+    try {
+      const data = insertInvestorSchema.parse(req.body);
+      const investor = await storage.createInvestor(data);
+      res.status(201).json(investor);
+    } catch (error) {
+      console.error("[INVESTORS] Create investor error:", error);
+      res.status(400).json({ error: "Invalid investor data", details: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.patch("/api/investors/:id", async (req, res) => {
+    try {
+      const data = insertInvestorSchema.partial().parse(req.body);
+      const investor = await storage.updateInvestor(req.params.id, data);
+      if (!investor) {
+        return res.status(404).json({ error: "Investor not found" });
+      }
+      res.json(investor);
+    } catch (error) {
+      console.error("[INVESTORS] Update investor error:", error);
+      res.status(400).json({ error: "Invalid investor data", details: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.delete("/api/investors/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteInvestor(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Investor not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("[INVESTORS] Delete investor error:", error);
+      res.status(500).json({ error: "Failed to delete investor" });
     }
   });
 
