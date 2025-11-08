@@ -219,45 +219,13 @@ export const insertCustomerSchema = createInsertSchema(customers).omit({ id: tru
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
 export type Customer = typeof customers.$inferSelect;
 
-// Users
-export const users = pgTable("users", {
+// Employees (HR Data)
+export const employees = pgTable("employees", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(), // hashed password
   fullName: text("full_name").notNull(),
   email: text("email"),
   phone: text("phone"),
-  role: text("role").notNull().default("employee"), // "admin" or "employee"
-  permissions: jsonb("permissions").notNull().$type<{
-    dashboard: boolean;
-    inventory: boolean;
-    menu: boolean;
-    recipes: boolean;
-    branches: boolean;
-    procurement: boolean;
-    pos: boolean;
-    orders: boolean;
-    kitchen: boolean;
-    sales: boolean;
-    reports: boolean;
-    forecasting: boolean;
-    analysis: boolean;
-    settings: boolean;
-    financial: boolean;
-    employees: boolean;
-  }>(),
   branchId: varchar("branch_id").references(() => branches.id),
-  commercialRegistration: text("commercial_registration"), // Saudi Arabia Commercial Registration number (mandatory for signup)
-  subscriptionPlan: text("subscription_plan"), // "weekly", "monthly" or "yearly"
-  branchesCount: integer("branches_count").notNull().default(1), // Number of branches (minimum 1, affects pricing)
-  subscriptionStatus: text("subscription_status").default("inactive"), // "inactive", "active", "cancelled", "expired"
-  subscriptionStartDate: timestamp("subscription_start_date"),
-  subscriptionEndDate: timestamp("subscription_end_date"),
-  subscriptionCancelledAt: timestamp("subscription_cancelled_at"), // When user cancelled subscription
-  passwordResetToken: text("password_reset_token"),
-  passwordResetExpiry: timestamp("password_reset_expiry"),
-  devicePreference: text("device_preference").default("laptop"), // "laptop", "ipad", or "iphone"
-  active: boolean("active").notNull().default(true),
   
   // Recruitment Data
   employeeNumber: text("employee_number"),
@@ -296,6 +264,50 @@ export const users = pgTable("users", {
   }>>(),
   certifications: text("certifications").array(),
   trainingCompleted: text("training_completed").array(),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertEmployeeSchema = createInsertSchema(employees).omit({ id: true, createdAt: true });
+export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
+export type Employee = typeof employees.$inferSelect;
+
+// Users (Authentication & Authorization)
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  employeeId: varchar("employee_id").unique().references(() => employees.id, { onDelete: "set null" }), // Optional link to employee record
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(), // hashed password
+  role: text("role").notNull().default("employee"), // "admin" or "employee"
+  permissions: jsonb("permissions").notNull().$type<{
+    dashboard: boolean;
+    inventory: boolean;
+    menu: boolean;
+    recipes: boolean;
+    branches: boolean;
+    procurement: boolean;
+    pos: boolean;
+    orders: boolean;
+    kitchen: boolean;
+    sales: boolean;
+    reports: boolean;
+    forecasting: boolean;
+    analysis: boolean;
+    settings: boolean;
+    financial: boolean;
+    employees: boolean;
+  }>(),
+  commercialRegistration: text("commercial_registration"), // Saudi Arabia Commercial Registration number (mandatory for signup)
+  subscriptionPlan: text("subscription_plan"), // "weekly", "monthly" or "yearly"
+  branchesCount: integer("branches_count").notNull().default(1), // Number of branches (minimum 1, affects pricing)
+  subscriptionStatus: text("subscription_status").default("inactive"), // "inactive", "active", "cancelled", "expired"
+  subscriptionStartDate: timestamp("subscription_start_date"),
+  subscriptionEndDate: timestamp("subscription_end_date"),
+  subscriptionCancelledAt: timestamp("subscription_cancelled_at"), // When user cancelled subscription
+  passwordResetToken: text("password_reset_token"),
+  passwordResetExpiry: timestamp("password_reset_expiry"),
+  devicePreference: text("device_preference").default("laptop"), // "laptop", "ipad", or "iphone"
+  active: boolean("active").notNull().default(true),
   
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
