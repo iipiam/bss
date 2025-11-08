@@ -152,6 +152,7 @@ export default function Menu() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       setOpen(false);
       form.reset();
       toast({
@@ -200,6 +201,7 @@ export default function Menu() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       setOpen(false);
       setEditingItem(null);
       form.reset();
@@ -223,6 +225,7 @@ export default function Menu() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       setDeletingItem(null);
       toast({
         title: "Menu item deleted",
@@ -244,6 +247,7 @@ export default function Menu() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
         title: "Menu item updated",
         description: "Availability status has been changed",
@@ -375,6 +379,7 @@ export default function Menu() {
       }
       
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
         title: "Import successful",
         description: result.message || "Menu data imported from Excel",

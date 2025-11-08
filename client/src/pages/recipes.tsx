@@ -193,6 +193,7 @@ export default function Recipes() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
     },
     onError: (error: any) => {
       toast({
@@ -235,6 +236,7 @@ export default function Recipes() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       setOpen(false);
       resetForm();
       toast({
@@ -257,6 +259,7 @@ export default function Recipes() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       setOpen(false);
       setEditingRecipe(null);
       resetForm();
@@ -280,6 +283,7 @@ export default function Recipes() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       setDeleteDialogOpen(false);
       setRecipeToDelete(null);
       toast({
@@ -505,6 +509,7 @@ export default function Recipes() {
       }
       
       queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
         title: "Import successful",
         description: result.message || "Recipes imported from Excel",
