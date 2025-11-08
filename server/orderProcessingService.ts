@@ -193,7 +193,9 @@ export class OrderProcessingService {
           .limit(1);
 
         if (invItem && invItem.length > 0) {
-          if (branchId && invItem[0].branchId !== branchId) {
+          // Only enforce branch consistency if both inventory item and order have branchId
+          // Items with branchId=null are global and available to all branches
+          if (branchId && invItem[0].branchId && invItem[0].branchId !== branchId) {
             throw new Error(`Inventory item ${invItem[0].id} (${invItem[0].name}) belongs to branch ${invItem[0].branchId} but order is for branch ${branchId}`);
           }
           
@@ -233,7 +235,9 @@ export class OrderProcessingService {
 
     const invItem = invItems[0];
     
-    if (branchId && invItem.branchId !== branchId) {
+    // Only enforce branch consistency if both inventory item and order have branchId
+    // Items with branchId=null are global and available to all branches
+    if (branchId && invItem.branchId && invItem.branchId !== branchId) {
       throw new Error(`Inventory item ${invItem.id} (${invItem.name}) belongs to branch ${invItem.branchId} but order is for branch ${branchId}`);
     }
 
