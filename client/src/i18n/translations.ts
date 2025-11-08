@@ -326,6 +326,87 @@ export interface Translations {
   confirmDeleteInvestorDesc: string;
   interestPercentageHelp: string;
   
+  // Employee Management
+  employeeManagement: string;
+  manageEmployees: string;
+  addEmployee: string;
+  editEmployee: string;
+  createNewEmployee: string;
+  addNewEmployeeDesc: string;
+  createEmployee: string;
+  updateEmployee: string;
+  updateEmployeeInfo: string;
+  searchEmployees: string;
+  creating: string;
+  updating: string;
+  
+  // Employee Form Sections
+  basic: string;
+  recruitment: string;
+  vacation: string;
+  visa: string;
+  ticket: string;
+  performance: string;
+  compliance: string;
+  
+  // Employee Basic Info
+  newPassword: string;
+  leaveEmpty: string;
+  enterNewPassword: string;
+  admin: string;
+  employee: string;
+  activeStatus: string;
+  active: string;
+  inactive: string;
+  permissions: string;
+  
+  // Recruitment Data
+  employeeNumber: string;
+  hireDate: string;
+  recruitmentSource: string;
+  selectSource: string;
+  referral: string;
+  jobBoard: string;
+  agency: string;
+  walkIn: string;
+  contractType: string;
+  selectType: string;
+  fullTime: string;
+  partTime: string;
+  contract: string;
+  temporary: string;
+  probationEndDate: string;
+  
+  // Vacation Tracking
+  vacationDaysTotal: string;
+  vacationDaysUsed: string;
+  vacationDaysRemaining: string;
+  daysLeft: string;
+  
+  // Visa Information
+  visaNumber: string;
+  visaFees: string;
+  visaExpiryDate: string;
+  visaStatus: string;
+  selectStatus: string;
+  valid: string;
+  expired: string;
+  notApplicable: string;
+  
+  // Ticket Information
+  ticketAmount: string;
+  ticketDestination: string;
+  ticketDate: string;
+  ticketStatus: string;
+  booked: string;
+  used: string;
+  
+  // Performance Tracking
+  performanceRating: string;
+  lastReviewDate: string;
+  performanceNotes: string;
+  enterPerformanceNotes: string;
+  
   // Tutorial
   tutorial: string;
   tutorialSubtitle: string;
@@ -829,6 +910,92 @@ export const translations: Record<Language, Translations> = {
     confirmDeleteInvestorDesc: 'Are you sure you want to delete this investor? This action cannot be undone.',
     interestPercentageHelp: 'Percentage of net profit to be earned',
     
+    // Employee Management
+    employeeManagement: 'Employee Management',
+    manageEmployees: 'Manage employees and their information',
+    addEmployee: 'Add Employee',
+    editEmployee: 'Edit Employee',
+    createNewEmployee: 'Create New Employee',
+    addNewEmployeeDesc: 'Add a new employee to your system',
+    createEmployee: 'Create Employee',
+    updateEmployee: 'Update Employee',
+    updateEmployeeInfo: 'Update employee information and settings',
+    searchEmployees: 'Search employees by name, username, email, phone, or employee number...',
+    creating: 'Creating...',
+    updating: 'Updating...',
+    
+    // Employee Form Sections
+    basic: 'Basic',
+    recruitment: 'Recruitment',
+    vacation: 'Vacation',
+    visa: 'Visa',
+    ticket: 'Ticket',
+    performance: 'Performance',
+    compliance: 'Compliance',
+    
+    // Employee Basic Info
+    fullName: 'Full Name',
+    username: 'Username',
+    password: 'Password',
+    newPassword: 'New Password',
+    leaveEmpty: 'leave empty to keep current',
+    enterNewPassword: 'Enter new password or leave blank',
+    email: 'Email',
+    phone: 'Phone',
+    admin: 'Admin',
+    employee: 'Employee',
+    activeStatus: 'Active Status',
+    active: 'Active',
+    inactive: 'Inactive',
+    permissions: 'Permissions',
+    
+    // Recruitment Data
+    employeeNumber: 'Employee Number',
+    hireDate: 'Hire Date',
+    recruitmentSource: 'Recruitment Source',
+    selectSource: 'Select source',
+    referral: 'Referral',
+    jobBoard: 'Job Board',
+    agency: 'Agency',
+    walkIn: 'Walk-in',
+    contractType: 'Contract Type',
+    selectType: 'Select type',
+    fullTime: 'Full Time',
+    partTime: 'Part Time',
+    contract: 'Contract',
+    temporary: 'Temporary',
+    probationEndDate: 'Probation End Date',
+    
+    // Vacation Tracking
+    vacationDaysTotal: 'Total Vacation Days',
+    vacationDaysUsed: 'Vacation Days Used',
+    vacationDaysRemaining: 'Vacation Days Remaining',
+    daysLeft: 'days left',
+    
+    // Visa Information
+    visaNumber: 'Visa Number',
+    visaFees: 'Visa Fees',
+    visaExpiryDate: 'Visa Expiry Date',
+    visaStatus: 'Visa Status',
+    selectStatus: 'Select status',
+    valid: 'Valid',
+    expired: 'Expired',
+    notApplicable: 'Not Applicable',
+    
+    // Ticket Information
+    ticketAmount: 'Ticket Amount',
+    ticketDestination: 'Ticket Destination',
+    ticketDate: 'Ticket Date',
+    ticketStatus: 'Ticket Status',
+    booked: 'Booked',
+    used: 'Used',
+    
+    // Performance Tracking
+    performanceRating: 'Performance Rating',
+    lastReviewDate: 'Last Review Date',
+    performanceNotes: 'Performance Notes',
+    enterPerformanceNotes: 'Enter performance notes and feedback',
+    
     // Tutorial
     tutorial: 'Tutorial',
     tutorialSubtitle: 'Learn how to use all features of the restaurant management system',
@@ -1330,6 +1497,87 @@ export const translations: Record<Language, Translations> = {
     updateInvestor: 'تحديث المستثمر',
     confirmDeleteInvestorDesc: 'هل أنت متأكد من أنك تريد حذف هذا المستثمر؟ لا يمكن التراجع عن هذا الإجراء.',
     interestPercentageHelp: 'نسبة صافي الربح المراد كسبها',
+    
+    // Employee Management
+    employeeManagement: 'إدارة الموظفين',
+    manageEmployees: 'إدارة الموظفين ومعلوماتهم',
+    addEmployee: 'إضافة موظف',
+    editEmployee: 'تعديل موظف',
+    createNewEmployee: 'إنشاء موظف جديد',
+    addNewEmployeeDesc: 'إضافة موظف جديد إلى نظامك',
+    createEmployee: 'إنشاء موظف',
+    updateEmployee: 'تحديث الموظف',
+    updateEmployeeInfo: 'تحديث معلومات وإعدادات الموظف',
+    searchEmployees: 'البحث في الموظفين بالاسم أو اسم المستخدم أو البريد الإلكتروني أو الهاتف أو رقم الموظف...',
+    creating: 'جاري الإنشاء...',
+    updating: 'جاري التحديث...',
+    
+    // Employee Form Sections
+    basic: 'أساسي',
+    recruitment: 'التوظيف',
+    vacation: 'الإجازة',
+    visa: 'التأشيرة',
+    ticket: 'التذكرة',
+    performance: 'الأداء',
+    compliance: 'الامتثال',
+    
+    // Employee Basic Info
+    newPassword: 'كلمة المرور الجديدة',
+    leaveEmpty: 'اتركها فارغة للحفاظ على الحالية',
+    enterNewPassword: 'أدخل كلمة مرور جديدة أو اتركها فارغة',
+    admin: 'مدير',
+    employee: 'موظف',
+    activeStatus: 'حالة النشاط',
+    active: 'نشط',
+    inactive: 'غير نشط',
+    permissions: 'الصلاحيات',
+    
+    // Recruitment Data
+    employeeNumber: 'رقم الموظف',
+    hireDate: 'تاريخ التوظيف',
+    recruitmentSource: 'مصدر التوظيف',
+    selectSource: 'اختر المصدر',
+    referral: 'إحالة',
+    jobBoard: 'لوحة الوظائف',
+    agency: 'وكالة',
+    walkIn: 'دخول مباشر',
+    contractType: 'نوع العقد',
+    selectType: 'اختر النوع',
+    fullTime: 'دوام كامل',
+    partTime: 'دوام جزئي',
+    contract: 'عقد',
+    temporary: 'مؤقت',
+    probationEndDate: 'تاريخ انتهاء التجربة',
+    
+    // Vacation Tracking
+    vacationDaysTotal: 'إجمالي أيام الإجازة',
+    vacationDaysUsed: 'أيام الإجازة المستخدمة',
+    vacationDaysRemaining: 'أيام الإجازة المتبقية',
+    daysLeft: 'أيام متبقية',
+    
+    // Visa Information
+    visaNumber: 'رقم التأشيرة',
+    visaFees: 'رسوم التأشيرة',
+    visaExpiryDate: 'تاريخ انتهاء التأشيرة',
+    visaStatus: 'حالة التأشيرة',
+    selectStatus: 'اختر الحالة',
+    valid: 'صالحة',
+    expired: 'منتهية',
+    notApplicable: 'غير قابل للتطبيق',
+    
+    // Ticket Information
+    ticketAmount: 'مبلغ التذكرة',
+    ticketDestination: 'وجهة التذكرة',
+    ticketDate: 'تاريخ التذكرة',
+    ticketStatus: 'حالة التذكرة',
+    booked: 'محجوزة',
+    used: 'مستخدمة',
+    
+    // Performance Tracking
+    performanceRating: 'تقييم الأداء',
+    lastReviewDate: 'تاريخ آخر مراجعة',
+    performanceNotes: 'ملاحظات الأداء',
+    enterPerformanceNotes: 'أدخل ملاحظات وملاحظات الأداء',
     
     // Tutorial
     tutorial: 'دليل الاستخدام',
@@ -1833,6 +2081,73 @@ export const translations: Record<Language, Translations> = {
     confirmDeleteInvestorDesc: '您确定要删除此投资者吗？此操作无法撤消。',
     interestPercentageHelp: '要赚取的净利润百分比',
     
+    // Employee Management
+    employeeManagement: '员工管理',
+    manageEmployees: '管理员工及其信息',
+    addEmployee: '添加员工',
+    editEmployee: '编辑员工',
+    createNewEmployee: '创建新员工',
+    addNewEmployeeDesc: '向系统添加新员工',
+    createEmployee: '创建员工',
+    updateEmployee: '更新员工',
+    updateEmployeeInfo: '更新员工信息和设置',
+    searchEmployees: '按姓名、用户名、电子邮件、电话或员工编号搜索员工...',
+    creating: '正在创建...',
+    updating: '正在更新...',
+    basic: '基本',
+    recruitment: '招聘',
+    vacation: '假期',
+    visa: '签证',
+    ticket: '机票',
+    performance: '绩效',
+    compliance: '合规',
+    newPassword: '新密码',
+    leaveEmpty: '留空以保持当前',
+    enterNewPassword: '输入新密码或留空',
+    admin: '管理员',
+    employee: '员工',
+    activeStatus: '活跃状态',
+    active: '活跃',
+    inactive: '不活跃',
+    permissions: '权限',
+    employeeNumber: '员工编号',
+    hireDate: '入职日期',
+    recruitmentSource: '招聘来源',
+    selectSource: '选择来源',
+    referral: '推荐',
+    jobBoard: '招聘网站',
+    agency: '中介',
+    walkIn: '上门',
+    contractType: '合同类型',
+    selectType: '选择类型',
+    fullTime: '全职',
+    partTime: '兼职',
+    contract: '合同',
+    temporary: '临时',
+    probationEndDate: '试用期结束日期',
+    vacationDaysTotal: '总假期天数',
+    vacationDaysUsed: '已使用假期天数',
+    vacationDaysRemaining: '剩余假期天数',
+    daysLeft: '天剩余',
+    visaNumber: '签证号码',
+    visaFees: '签证费用',
+    visaExpiryDate: '签证到期日',
+    visaStatus: '签证状态',
+    selectStatus: '选择状态',
+    valid: '有效',
+    expired: '已过期',
+    notApplicable: '不适用',
+    ticketAmount: '机票金额',
+    ticketDestination: '机票目的地',
+    ticketDate: '机票日期',
+    ticketStatus: '机票状态',
+    booked: '已预订',
+    used: '已使用',
+    performanceRating: '绩效评分',
+    lastReviewDate: '上次审查日期',
+    performanceNotes: '绩效备注',
+    enterPerformanceNotes: '输入绩效备注和反馈',
+    
     // Tutorial
     tutorial: '教程',
     tutorialSubtitle: '学习如何使用餐厅管理系统的所有功能',
@@ -2334,6 +2649,73 @@ export const translations: Record<Language, Translations> = {
     updateInvestor: 'Investor aktualisieren',
     confirmDeleteInvestorDesc: 'Möchten Sie diesen Investor wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.',
     interestPercentageHelp: 'Prozentsatz des zu verdienenden Nettogewinns',
+    
+    // Employee Management
+    employeeManagement: 'Mitarbeiterverwaltung',
+    manageEmployees: 'Mitarbeiter und deren Informationen verwalten',
+    addEmployee: 'Mitarbeiter hinzufügen',
+    editEmployee: 'Mitarbeiter bearbeiten',
+    createNewEmployee: 'Neuen Mitarbeiter erstellen',
+    addNewEmployeeDesc: 'Einen neuen Mitarbeiter zu Ihrem System hinzufügen',
+    createEmployee: 'Mitarbeiter erstellen',
+    updateEmployee: 'Mitarbeiter aktualisieren',
+    updateEmployeeInfo: 'Mitarbeiterinformationen und Einstellungen aktualisieren',
+    searchEmployees: 'Mitarbeiter nach Name, Benutzername, E-Mail, Telefon oder Mitarbeiternummer suchen...',
+    creating: 'Wird erstellt...',
+    updating: 'Wird aktualisiert...',
+    basic: 'Grundlegend',
+    recruitment: 'Rekrutierung',
+    vacation: 'Urlaub',
+    visa: 'Visum',
+    ticket: 'Ticket',
+    performance: 'Leistung',
+    compliance: 'Compliance',
+    newPassword: 'Neues Passwort',
+    leaveEmpty: 'leer lassen, um aktuelles zu behalten',
+    enterNewPassword: 'Neues Passwort eingeben oder leer lassen',
+    admin: 'Administrator',
+    employee: 'Mitarbeiter',
+    activeStatus: 'Aktiver Status',
+    active: 'Aktiv',
+    inactive: 'Inaktiv',
+    permissions: 'Berechtigungen',
+    employeeNumber: 'Mitarbeiternummer',
+    hireDate: 'Einstellungsdatum',
+    recruitmentSource: 'Rekrutierungsquelle',
+    selectSource: 'Quelle auswählen',
+    referral: 'Empfehlung',
+    jobBoard: 'Jobbörse',
+    agency: 'Agentur',
+    walkIn: 'Laufkundschaft',
+    contractType: 'Vertragsart',
+    selectType: 'Art auswählen',
+    fullTime: 'Vollzeit',
+    partTime: 'Teilzeit',
+    contract: 'Vertrag',
+    temporary: 'Befristet',
+    probationEndDate: 'Probezeit-Enddatum',
+    vacationDaysTotal: 'Gesamte Urlaubstage',
+    vacationDaysUsed: 'Verwendete Urlaubstage',
+    vacationDaysRemaining: 'Verbleibende Urlaubstage',
+    daysLeft: 'Tage übrig',
+    visaNumber: 'Visumnummer',
+    visaFees: 'Visumgebühren',
+    visaExpiryDate: 'Visumablaufdatum',
+    visaStatus: 'Visumstatus',
+    selectStatus: 'Status auswählen',
+    valid: 'Gültig',
+    expired: 'Abgelaufen',
+    notApplicable: 'Nicht anwendbar',
+    ticketAmount: 'Ticketbetrag',
+    ticketDestination: 'Ticketziel',
+    ticketDate: 'Ticketdatum',
+    ticketStatus: 'Ticketstatus',
+    booked: 'Gebucht',
+    used: 'Verwendet',
+    performanceRating: 'Leistungsbewertung',
+    lastReviewDate: 'Letztes Überprüfungsdatum',
+    performanceNotes: 'Leistungsnotizen',
+    enterPerformanceNotes: 'Leistungsnotizen und Feedback eingeben',
     
     // Tutorial
     tutorial: 'Tutorial',
@@ -2837,6 +3219,73 @@ export const translations: Record<Language, Translations> = {
     confirmDeleteInvestorDesc: 'क्या आप वाकई इस निवेशक को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।',
     interestPercentageHelp: 'अर्जित होने वाले शुद्ध लाभ का प्रतिशत',
     
+    // Employee Management
+    employeeManagement: 'कर्मचारी प्रबंधन',
+    manageEmployees: 'कर्मचारियों और उनकी जानकारी का प्रबंधन करें',
+    addEmployee: 'कर्मचारी जोड़ें',
+    editEmployee: 'कर्मचारी संपादित करें',
+    createNewEmployee: 'नया कर्मचारी बनाएं',
+    addNewEmployeeDesc: 'अपने सिस्टम में एक नया कर्मचारी जोड़ें',
+    createEmployee: 'कर्मचारी बनाएं',
+    updateEmployee: 'कर्मचारी अपडेट करें',
+    updateEmployeeInfo: 'कर्मचारी जानकारी और सेटिंग्स अपडेट करें',
+    searchEmployees: 'नाम, उपयोगकर्ता नाम, ईमेल, फ़ोन या कर्मचारी संख्या से कर्मचारियों को खोजें...',
+    creating: 'बनाया जा रहा है...',
+    updating: 'अपडेट किया जा रहा है...',
+    basic: 'बुनियादी',
+    recruitment: 'भर्ती',
+    vacation: 'छुट्टी',
+    visa: 'वीज़ा',
+    ticket: 'टिकट',
+    performance: 'प्रदर्शन',
+    compliance: 'अनुपालन',
+    newPassword: 'नया पासवर्ड',
+    leaveEmpty: 'वर्तमान रखने के लिए खाली छोड़ें',
+    enterNewPassword: 'नया पासवर्ड दर्ज करें या खाली छोड़ें',
+    admin: 'व्यवस्थापक',
+    employee: 'कर्मचारी',
+    activeStatus: 'सक्रिय स्थिति',
+    active: 'सक्रिय',
+    inactive: 'निष्क्रिय',
+    permissions: 'अनुमतियाँ',
+    employeeNumber: 'कर्मचारी संख्या',
+    hireDate: 'नियुक्ति तिथि',
+    recruitmentSource: 'भर्ती स्रोत',
+    selectSource: 'स्रोत चुनें',
+    referral: 'रेफरल',
+    jobBoard: 'जॉब बोर्ड',
+    agency: 'एजेंसी',
+    walkIn: 'वॉक-इन',
+    contractType: 'अनुबंध प्रकार',
+    selectType: 'प्रकार चुनें',
+    fullTime: 'पूर्णकालिक',
+    partTime: 'अंशकालिक',
+    contract: 'अनुबंध',
+    temporary: 'अस्थायी',
+    probationEndDate: 'परिवीक्षा समाप्ति तिथि',
+    vacationDaysTotal: 'कुल छुट्टी के दिन',
+    vacationDaysUsed: 'उपयोग किए गए छुट्टी के दिन',
+    vacationDaysRemaining: 'शेष छुट्टी के दिन',
+    daysLeft: 'दिन शेष',
+    visaNumber: 'वीज़ा संख्या',
+    visaFees: 'वीज़ा शुल्क',
+    visaExpiryDate: 'वीज़ा समाप्ति तिथि',
+    visaStatus: 'वीज़ा स्थिति',
+    selectStatus: 'स्थिति चुनें',
+    valid: 'वैध',
+    expired: 'समाप्त',
+    notApplicable: 'लागू नहीं',
+    ticketAmount: 'टिकट राशि',
+    ticketDestination: 'टिकट गंतव्य',
+    ticketDate: 'टिकट तिथि',
+    ticketStatus: 'टिकट स्थिति',
+    booked: 'बुक किया गया',
+    used: 'उपयोग किया गया',
+    performanceRating: 'प्रदर्शन मूल्यांकन',
+    lastReviewDate: 'अंतिम समीक्षा तिथि',
+    performanceNotes: 'प्रदर्शन टिप्पणियाँ',
+    enterPerformanceNotes: 'प्रदर्शन टिप्पणियाँ और फीडबैक दर्ज करें',
+    
     // Tutorial
     tutorial: 'ट्यूटोरियल',
     tutorialSubtitle: 'रेस्तरां प्रबंधन प्रणाली की सभी सुविधाओं का उपयोग करना सीखें',
@@ -3339,6 +3788,73 @@ export const translations: Record<Language, Translations> = {
     confirmDeleteInvestorDesc: 'کیا آپ واقعی اس سرمایہ کار کو حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں کیا جا سکتا۔',
     interestPercentageHelp: 'کمانے کے لیے خالص منافع کی فیصد',
     
+    // Employee Management
+    employeeManagement: 'ملازمین کی انتظامیہ',
+    manageEmployees: 'ملازمین اور ان کی معلومات کا انتظام کریں',
+    addEmployee: 'ملازم شامل کریں',
+    editEmployee: 'ملازم میں ترمیم کریں',
+    createNewEmployee: 'نیا ملازم بنائیں',
+    addNewEmployeeDesc: 'اپنے سسٹم میں نیا ملازم شامل کریں',
+    createEmployee: 'ملازم بنائیں',
+    updateEmployee: 'ملازم اپ ڈیٹ کریں',
+    updateEmployeeInfo: 'ملازم کی معلومات اور ترتیبات کو اپ ڈیٹ کریں',
+    searchEmployees: 'نام، صارف نام، ای میل، فون یا ملازم نمبر کے ذریعے ملازمین تلاش کریں...',
+    creating: 'بنایا جا رہا ہے...',
+    updating: 'اپ ڈیٹ کیا جا رہا ہے...',
+    basic: 'بنیادی',
+    recruitment: 'بھرتی',
+    vacation: 'چھٹی',
+    visa: 'ویزا',
+    ticket: 'ٹکٹ',
+    performance: 'کارکردگی',
+    compliance: 'تعمیل',
+    newPassword: 'نیا پاس ورڈ',
+    leaveEmpty: 'موجودہ رکھنے کے لیے خالی چھوڑ دیں',
+    enterNewPassword: 'نیا پاس ورڈ درج کریں یا خالی چھوڑ دیں',
+    admin: 'منتظم',
+    employee: 'ملازم',
+    activeStatus: 'فعال حیثیت',
+    active: 'فعال',
+    inactive: 'غیر فعال',
+    permissions: 'اجازتیں',
+    employeeNumber: 'ملازم نمبر',
+    hireDate: 'ملازمت کی تاریخ',
+    recruitmentSource: 'بھرتی کا ذریعہ',
+    selectSource: 'ذریعہ منتخب کریں',
+    referral: 'ریفرل',
+    jobBoard: 'جاب بورڈ',
+    agency: 'ایجنسی',
+    walkIn: 'واک-ان',
+    contractType: 'معاہدے کی قسم',
+    selectType: 'قسم منتخب کریں',
+    fullTime: 'مکمل وقت',
+    partTime: 'جزوی وقت',
+    contract: 'معاہدہ',
+    temporary: 'عارضی',
+    probationEndDate: 'آزمائشی مدت ختم ہونے کی تاریخ',
+    vacationDaysTotal: 'کل چھٹیوں کے دن',
+    vacationDaysUsed: 'استعمال شدہ چھٹیوں کے دن',
+    vacationDaysRemaining: 'باقی چھٹیوں کے دن',
+    daysLeft: 'دن باقی',
+    visaNumber: 'ویزا نمبر',
+    visaFees: 'ویزا فیس',
+    visaExpiryDate: 'ویزا کی میعاد ختم ہونے کی تاریخ',
+    visaStatus: 'ویزا کی حیثیت',
+    selectStatus: 'حیثیت منتخب کریں',
+    valid: 'درست',
+    expired: 'ختم شدہ',
+    notApplicable: 'لاگو نہیں',
+    ticketAmount: 'ٹکٹ کی رقم',
+    ticketDestination: 'ٹکٹ کی منزل',
+    ticketDate: 'ٹکٹ کی تاریخ',
+    ticketStatus: 'ٹکٹ کی حیثیت',
+    booked: 'بک کیا گیا',
+    used: 'استعمال شدہ',
+    performanceRating: 'کارکردگی کی درجہ بندی',
+    lastReviewDate: 'آخری جائزہ کی تاریخ',
+    performanceNotes: 'کارکردگی کے نوٹس',
+    enterPerformanceNotes: 'کارکردگی کے نوٹس اور تاثرات درج کریں',
+    
     // Tutorial
     tutorial: 'ٹیوٹوریل',
     tutorialSubtitle: 'ریستوران مینجمنٹ سسٹم کی تمام خصوصیات استعمال کرنا سیکھیں',
@@ -3840,6 +4356,73 @@ export const translations: Record<Language, Translations> = {
     updateInvestor: 'বিনিয়োগকারী আপডেট করুন',
     confirmDeleteInvestorDesc: 'আপনি কি নিশ্চিত যে আপনি এই বিনিয়োগকারীকে মুছে ফেলতে চান? এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না।',
     interestPercentageHelp: 'অর্জিত নিট লাভের শতাংশ',
+    
+    // Employee Management
+    employeeManagement: 'কর্মচারী ব্যবস্থাপনা',
+    manageEmployees: 'কর্মচারী এবং তাদের তথ্য পরিচালনা করুন',
+    addEmployee: 'কর্মচারী যোগ করুন',
+    editEmployee: 'কর্মচারী সম্পাদনা করুন',
+    createNewEmployee: 'নতুন কর্মচারী তৈরি করুন',
+    addNewEmployeeDesc: 'আপনার সিস্টেমে একটি নতুন কর্মচারী যোগ করুন',
+    createEmployee: 'কর্মচারী তৈরি করুন',
+    updateEmployee: 'কর্মচারী আপডেট করুন',
+    updateEmployeeInfo: 'কর্মচারী তথ্য এবং সেটিংস আপডেট করুন',
+    searchEmployees: 'নাম, ব্যবহারকারীর নাম, ইমেল, ফোন বা কর্মচারী নম্বর দ্বারা কর্মচারী অনুসন্ধান করুন...',
+    creating: 'তৈরি করা হচ্ছে...',
+    updating: 'আপডেট করা হচ্ছে...',
+    basic: 'মৌলিক',
+    recruitment: 'নিয়োগ',
+    vacation: 'ছুটি',
+    visa: 'ভিসা',
+    ticket: 'টিকিট',
+    performance: 'কর্মক্ষমতা',
+    compliance: 'সম্মতি',
+    newPassword: 'নতুন পাসওয়ার্ড',
+    leaveEmpty: 'বর্তমান রাখতে খালি রাখুন',
+    enterNewPassword: 'নতুন পাসওয়ার্ড লিখুন বা খালি রাখুন',
+    admin: 'প্রশাসক',
+    employee: 'কর্মচারী',
+    activeStatus: 'সক্রিয় স্থিতি',
+    active: 'সক্রিয়',
+    inactive: 'নিষ্ক্রিয়',
+    permissions: 'অনুমতি',
+    employeeNumber: 'কর্মচারী নম্বর',
+    hireDate: 'নিয়োগের তারিখ',
+    recruitmentSource: 'নিয়োগের উৎস',
+    selectSource: 'উৎস নির্বাচন করুন',
+    referral: 'রেফারেল',
+    jobBoard: 'জব বোর্ড',
+    agency: 'এজেন্সি',
+    walkIn: 'ওয়াক-ইন',
+    contractType: 'চুক্তির ধরন',
+    selectType: 'ধরন নির্বাচন করুন',
+    fullTime: 'পূর্ণকালীন',
+    partTime: 'খণ্ডকালীন',
+    contract: 'চুক্তি',
+    temporary: 'অস্থায়ী',
+    probationEndDate: 'পরীক্ষামূলক সমাপ্তির তারিখ',
+    vacationDaysTotal: 'মোট ছুটির দিন',
+    vacationDaysUsed: 'ব্যবহৃত ছুটির দিন',
+    vacationDaysRemaining: 'অবশিষ্ট ছুটির দিন',
+    daysLeft: 'দিন বাকি',
+    visaNumber: 'ভিসা নম্বর',
+    visaFees: 'ভিসা ফি',
+    visaExpiryDate: 'ভিসা মেয়াদ শেষ তারিখ',
+    visaStatus: 'ভিসা স্থিতি',
+    selectStatus: 'স্থিতি নির্বাচন করুন',
+    valid: 'বৈধ',
+    expired: 'মেয়াদ উত্তীর্ণ',
+    notApplicable: 'প্রযোজ্য নয়',
+    ticketAmount: 'টিকিটের পরিমাণ',
+    ticketDestination: 'টিকিটের গন্তব্য',
+    ticketDate: 'টিকিটের তারিখ',
+    ticketStatus: 'টিকিট স্থিতি',
+    booked: 'বুক করা হয়েছে',
+    used: 'ব্যবহৃত',
+    performanceRating: 'কর্মক্ষমতা মূল্যায়ন',
+    lastReviewDate: 'শেষ পর্যালোচনার তারিখ',
+    performanceNotes: 'কর্মক্ষমতা মন্তব্য',
+    enterPerformanceNotes: 'কর্মক্ষমতা মন্তব্য এবং প্রতিক্রিয়া লিখুন',
     
     // Tutorial
     tutorial: 'টিউটোরিয়াল',
