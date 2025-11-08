@@ -3030,6 +3030,240 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Support Tickets
+  app.get("/api/tickets", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const userId = req.query.userId as string | undefined;
+      const status = req.query.status as string | undefined;
+      
+      // Regular users can only see their own tickets
+      // Admin users can see all tickets
+      const user = req.user as any;
+      const filterUserId = user.role === 'admin' ? userId : user.id;
+      
+      const tickets = await storage.getSupportTickets(filterUserId, status);
+      res.json(tickets);
+    } catch (error) {
+      console.error("Error fetching tickets:", error);
+      res.status(500).json({ error: "Failed to fetch tickets" });
+    }
+  });
+
+  app.get("/api/tickets/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const ticket = await storage.getSupportTicket(req.params.id);
+      
+      if (!ticket) {
+        return res.status(404).json({ error: "Ticket not found" });
+      }
+
+      // Check authorization
+      const user = req.user as any;
+      if (user.role !== 'admin' && ticket.userId !== user.id) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+
+      res.json(ticket);
+    } catch (error) {
+      console.error("Error fetching ticket:", error);
+      res.status(500).json({ error: "Failed to fetch ticket" });
+    }
+  });
+
+  app.post("/api/tickets", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const user = req.user as any;
+      const ticket = await storage.createSupportTicket({
+        userId: user.id,
+        subject: req.body.subject,
+        category: req.body.category,
+        priority: req.body.priority || 'medium',
+        description: req.body.description,
+        status: 'open',
+      });
+
+      res.status(201).json(ticket);
+    } catch (error) {
+      console.error("Error creating ticket:", error);
+      res.status(500).json({ error: "Failed to create ticket" });
+    }
+  });
+
+  app.patch("/api/tickets/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const ticket = await storage.getSupportTicket(req.params.id);
+      
+      if (!ticket) {
+        return res.status(404).json({ error: "Ticket not found" });
+      }
+
+      // Check authorization - only admin can update tickets or ticket owner
+      const user = req.user as any;
+      if (user.role !== 'admin' && ticket.userId !== user.id) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+
+      // Only admin can change status
+      if (req.body.status && user.role !== 'admin') {
+        return res.status(403).json({ error: "Only admin can change ticket status" });
+      }
+
+      const updated = await storage.updateSupportTicket(req.params.id, req.body);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating ticket:", error);
+      res.status(500).json({ error: "Failed to update ticket" });
+    }
+  });
+
+  // Ticket Messages
+  app.get("/api/tickets/:ticketId/messages", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const ticket = await storage.getSupportTicket(req.params.ticketId);
+      
+      if (!ticket) {
+        return res.status(404).json({ error: "Ticket not found" });
+      }
+
+      // Check authorization
+      const user = req.user as any;
+      if (user.role !== 'admin' && ticket.userId !== user.id) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+
+      const messages = await storage.getTicketMessages(req.params.ticketId);
+      
+      // Mark messages as read
+      await storage.markMessagesAsRead(req.params.ticketId, user.id);
+      
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  app.post("/api/tickets/:ticketId/messages", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const ticket = await storage.getSupportTicket(req.params.ticketId);
+      
+      if (!ticket) {
+        return res.status(404).json({ error: "Ticket not found" });
+      }
+
+      // Check authorization
+      const user = req.user as any;
+      if (user.role !== 'admin' && ticket.userId !== user.id) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+
+      const message = await storage.createTicketMessage({
+        ticketId: req.params.ticketId,
+        senderId: user.id,
+        message: req.body.message,
+        isRead: false,
+      });
+
+      // Auto-change ticket status based on sender
+      if (ticket.status === 'open' && user.role === 'admin') {
+        // Admin replied, set to in-progress
+        await storage.updateSupportTicket(ticket.id, { status: 'in-progress' });
+      }
+
+      res.status(201).json(message);
+    } catch (error) {
+      console.error("Error creating message:", error);
+      res.status(500).json({ error: "Failed to create message" });
+    }
+  });
+
+  app.get("/api/tickets/unread/count", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const user = req.user as any;
+      const count = await storage.getUnreadMessageCount(user.id);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+      res.status(500).json({ error: "Failed to fetch unread count" });
+    }
+  });
+
+  // Employee Activity Log
+  app.get("/api/employee-activities", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const user = req.user as any;
+      
+      // Only admin can view all activities
+      if (user.role !== 'admin') {
+        return res.status(403).json({ error: "Forbidden - Admin only" });
+      }
+
+      const employeeId = req.query.employeeId as string | undefined;
+      const category = req.query.category as string | undefined;
+      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+
+      const activities = await storage.getEmployeeActivities(employeeId, category, startDate, endDate);
+      res.json(activities);
+    } catch (error) {
+      console.error("Error fetching activities:", error);
+      res.status(500).json({ error: "Failed to fetch activities" });
+    }
+  });
+
+  app.get("/api/employee-activities/stats/:employeeId", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const user = req.user as any;
+      
+      // Only admin can view activity stats
+      if (user.role !== 'admin') {
+        return res.status(403).json({ error: "Forbidden - Admin only" });
+      }
+
+      const stats = await storage.getEmployeeActivityStats(req.params.employeeId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching activity stats:", error);
+      res.status(500).json({ error: "Failed to fetch activity stats" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
