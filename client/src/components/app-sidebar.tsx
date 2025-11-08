@@ -18,6 +18,7 @@ import {
   Calculator,
   UserCircle,
   FileCheck,
+  FileBarChart2,
   HeadphonesIcon,
   Mail,
   MessageCircle,
@@ -106,6 +107,7 @@ export function AppSidebar() {
     { title: t.salesComparison, url: "/sales-comparison", icon: BarChart3, testId: "sales-comparison", gradient: "from-purple-500 to-pink-500" },
     { title: t.forecasting, url: "/forecasting", icon: TrendingUp, testId: "forecasting", gradient: "from-cyan-500 to-sky-500" },
     { title: t.invoices, url: "/invoices", icon: FileCheck, testId: "invoices", gradient: "from-violet-500 to-purple-500" },
+    { title: t.vatReports, url: "/vat-reports", icon: FileBarChart2, testId: "vat-reports", gradient: "from-indigo-500 to-blue-500" },
     { title: t.bills, url: "/bills", icon: FileText, testId: "bills", gradient: "from-rose-500 to-pink-500" },
   ];
 
