@@ -3070,6 +3070,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'open',
       });
 
+      // Send email notification to IT support
+      const { sendTicketNotificationEmail } = await import('./emailService');
+      sendTicketNotificationEmail({
+        ticketNumber: ticket.ticketNumber,
+        subject: ticket.subject,
+        category: ticket.category,
+        priority: ticket.priority,
+        description: ticket.description,
+        userId: ticket.userId,
+        userName: req.body.userName,
+        createdAt: ticket.createdAt,
+      }).catch(err => {
+        console.error('Failed to send email notification:', err);
+        // Don't fail the request if email fails
+      });
+
       res.status(201).json(ticket);
     } catch (error) {
       console.error("Error creating ticket:", error);

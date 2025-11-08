@@ -119,6 +119,7 @@ export default function Support() {
       return await apiRequest('POST', '/api/tickets', {
         ...data,
         userId: user?.id || 'default-user',
+        userName: user?.username || 'User',
       });
     },
     onSuccess: () => {
