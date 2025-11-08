@@ -294,6 +294,38 @@ export interface Translations {
   existingCustomer: string;
   selectCustomer: string;
   
+  // Investors
+  investors: string;
+  investor: string;
+  addInvestor: string;
+  editInvestor: string;
+  addInvestorDesc: string;
+  editInvestorDesc: string;
+  investorName: string;
+  enterInvestorName: string;
+  amountInvested: string;
+  interestPercentage: string;
+  monthlyEarnings: string;
+  netProfitSummary: string;
+  netProfitDesc: string;
+  manageInvestors: string;
+  searchInvestors: string;
+  noInvestorsFound: string;
+  addFirstInvestor: string;
+  investorCreated: string;
+  investorUpdated: string;
+  investorDeleted: string;
+  investorCreatedDesc: string;
+  investorUpdatedDesc: string;
+  investorDeletedDesc: string;
+  failedToCreateInvestor: string;
+  failedToUpdateInvestor: string;
+  failedToDeleteInvestor: string;
+  createInvestor: string;
+  updateInvestor: string;
+  confirmDeleteInvestorDesc: string;
+  interestPercentageHelp: string;
+  
   // Tutorial
   tutorial: string;
   tutorialSubtitle: string;
@@ -765,6 +797,38 @@ export const translations: Record<Language, Translations> = {
     existingCustomer: 'Existing Customer',
     selectCustomer: 'Select Customer',
     
+    // Investors
+    investors: 'Investors',
+    investor: 'Investor',
+    addInvestor: 'Add Investor',
+    editInvestor: 'Edit Investor',
+    addInvestorDesc: 'Add a new investor to track their earnings.',
+    editInvestorDesc: 'Update investor details.',
+    investorName: 'Investor Name',
+    enterInvestorName: 'Enter investor name',
+    amountInvested: 'Amount Invested',
+    interestPercentage: 'Interest Percentage',
+    monthlyEarnings: 'Monthly Earnings',
+    netProfitSummary: 'Net Profit Summary',
+    netProfitDesc: 'Total net profit after all costs (used for investor earnings calculation)',
+    manageInvestors: 'Manage investors and track their earnings',
+    searchInvestors: 'Search investors...',
+    noInvestorsFound: 'No investors found',
+    addFirstInvestor: 'Add your first investor to get started',
+    investorCreated: 'Investor Created',
+    investorUpdated: 'Investor Updated',
+    investorDeleted: 'Investor Deleted',
+    investorCreatedDesc: 'New investor has been added successfully.',
+    investorUpdatedDesc: 'Investor details have been updated successfully.',
+    investorDeletedDesc: 'Investor has been removed successfully.',
+    failedToCreateInvestor: 'Failed to Create Investor',
+    failedToUpdateInvestor: 'Failed to Update Investor',
+    failedToDeleteInvestor: 'Failed to Delete Investor',
+    createInvestor: 'Create Investor',
+    updateInvestor: 'Update Investor',
+    confirmDeleteInvestorDesc: 'Are you sure you want to delete this investor? This action cannot be undone.',
+    interestPercentageHelp: 'Percentage of net profit to be earned',
+    
     // Tutorial
     tutorial: 'Tutorial',
     tutorialSubtitle: 'Learn how to use all features of the restaurant management system',
@@ -1234,6 +1298,38 @@ export const translations: Record<Language, Translations> = {
     newCustomer: 'عميل جديد',
     existingCustomer: 'عميل موجود',
     selectCustomer: 'اختر عميل',
+    
+    // Investors
+    investors: 'المستثمرون',
+    investor: 'مستثمر',
+    addInvestor: 'إضافة مستثمر',
+    editInvestor: 'تعديل مستثمر',
+    addInvestorDesc: 'إضافة مستثمر جديد لتتبع أرباحه.',
+    editInvestorDesc: 'تحديث تفاصيل المستثمر.',
+    investorName: 'اسم المستثمر',
+    enterInvestorName: 'أدخل اسم المستثمر',
+    amountInvested: 'المبلغ المستثمر',
+    interestPercentage: 'نسبة الفائدة',
+    monthlyEarnings: 'الأرباح الشهرية',
+    netProfitSummary: 'ملخص صافي الربح',
+    netProfitDesc: 'إجمالي صافي الربح بعد جميع التكاليف (يستخدم لحساب أرباح المستثمرين)',
+    manageInvestors: 'إدارة المستثمرين وتتبع أرباحهم',
+    searchInvestors: 'ابحث عن المستثمرين...',
+    noInvestorsFound: 'لم يتم العثور على مستثمرين',
+    addFirstInvestor: 'أضف أول مستثمر لديك للبدء',
+    investorCreated: 'تم إنشاء المستثمر',
+    investorUpdated: 'تم تحديث المستثمر',
+    investorDeleted: 'تم حذف المستثمر',
+    investorCreatedDesc: 'تم إضافة مستثمر جديد بنجاح.',
+    investorUpdatedDesc: 'تم تحديث تفاصيل المستثمر بنجاح.',
+    investorDeletedDesc: 'تم إزالة المستثمر بنجاح.',
+    failedToCreateInvestor: 'فشل إنشاء المستثمر',
+    failedToUpdateInvestor: 'فشل تحديث المستثمر',
+    failedToDeleteInvestor: 'فشل حذف المستثمر',
+    createInvestor: 'إنشاء مستثمر',
+    updateInvestor: 'تحديث المستثمر',
+    confirmDeleteInvestorDesc: 'هل أنت متأكد من أنك تريد حذف هذا المستثمر؟ لا يمكن التراجع عن هذا الإجراء.',
+    interestPercentageHelp: 'نسبة صافي الربح المراد كسبها',
     
     // Tutorial
     tutorial: 'دليل الاستخدام',
@@ -1705,6 +1801,38 @@ export const translations: Record<Language, Translations> = {
     existingCustomer: '现有客户',
     selectCustomer: '选择客户',
     
+    // Investors
+    investors: '投资者',
+    investor: '投资者',
+    addInvestor: '添加投资者',
+    editInvestor: '编辑投资者',
+    addInvestorDesc: '添加新投资者以跟踪其收益。',
+    editInvestorDesc: '更新投资者详细信息。',
+    investorName: '投资者姓名',
+    enterInvestorName: '输入投资者姓名',
+    amountInvested: '投资金额',
+    interestPercentage: '利息百分比',
+    monthlyEarnings: '每月收益',
+    netProfitSummary: '净利润摘要',
+    netProfitDesc: '扣除所有成本后的总净利润（用于投资者收益计算）',
+    manageInvestors: '管理投资者并跟踪其收益',
+    searchInvestors: '搜索投资者...',
+    noInvestorsFound: '未找到投资者',
+    addFirstInvestor: '添加您的第一个投资者以开始',
+    investorCreated: '投资者已创建',
+    investorUpdated: '投资者已更新',
+    investorDeleted: '投资者已删除',
+    investorCreatedDesc: '新投资者已成功添加。',
+    investorUpdatedDesc: '投资者详细信息已成功更新。',
+    investorDeletedDesc: '投资者已成功删除。',
+    failedToCreateInvestor: '创建投资者失败',
+    failedToUpdateInvestor: '更新投资者失败',
+    failedToDeleteInvestor: '删除投资者失败',
+    createInvestor: '创建投资者',
+    updateInvestor: '更新投资者',
+    confirmDeleteInvestorDesc: '您确定要删除此投资者吗？此操作无法撤消。',
+    interestPercentageHelp: '要赚取的净利润百分比',
+    
     // Tutorial
     tutorial: '教程',
     tutorialSubtitle: '学习如何使用餐厅管理系统的所有功能',
@@ -2174,6 +2302,38 @@ export const translations: Record<Language, Translations> = {
     newCustomer: 'Neuer Kunde',
     existingCustomer: 'Bestehender Kunde',
     selectCustomer: 'Kunde auswählen',
+    
+    // Investors
+    investors: 'Investoren',
+    investor: 'Investor',
+    addInvestor: 'Investor hinzufügen',
+    editInvestor: 'Investor bearbeiten',
+    addInvestorDesc: 'Fügen Sie einen neuen Investor hinzu, um deren Einnahmen zu verfolgen.',
+    editInvestorDesc: 'Investordetails aktualisieren.',
+    investorName: 'Investorname',
+    enterInvestorName: 'Investorname eingeben',
+    amountInvested: 'Investierte Summe',
+    interestPercentage: 'Zinssatz',
+    monthlyEarnings: 'Monatliche Einnahmen',
+    netProfitSummary: 'Nettogewinnübersicht',
+    netProfitDesc: 'Gesamtnettogewinn nach allen Kosten (wird für die Berechnung der Investoreneinnahmen verwendet)',
+    manageInvestors: 'Investoren verwalten und deren Einnahmen verfolgen',
+    searchInvestors: 'Investoren suchen...',
+    noInvestorsFound: 'Keine Investoren gefunden',
+    addFirstInvestor: 'Fügen Sie Ihren ersten Investor hinzu, um zu beginnen',
+    investorCreated: 'Investor erstellt',
+    investorUpdated: 'Investor aktualisiert',
+    investorDeleted: 'Investor gelöscht',
+    investorCreatedDesc: 'Neuer Investor wurde erfolgreich hinzugefügt.',
+    investorUpdatedDesc: 'Investordetails wurden erfolgreich aktualisiert.',
+    investorDeletedDesc: 'Investor wurde erfolgreich entfernt.',
+    failedToCreateInvestor: 'Investor konnte nicht erstellt werden',
+    failedToUpdateInvestor: 'Investor konnte nicht aktualisiert werden',
+    failedToDeleteInvestor: 'Investor konnte nicht gelöscht werden',
+    createInvestor: 'Investor erstellen',
+    updateInvestor: 'Investor aktualisieren',
+    confirmDeleteInvestorDesc: 'Möchten Sie diesen Investor wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.',
+    interestPercentageHelp: 'Prozentsatz des zu verdienenden Nettogewinns',
     
     // Tutorial
     tutorial: 'Tutorial',
@@ -2645,6 +2805,38 @@ export const translations: Record<Language, Translations> = {
     existingCustomer: 'मौजूदा ग्राहक',
     selectCustomer: 'ग्राहक चुनें',
     
+    // Investors
+    investors: 'निवेशक',
+    investor: 'निवेशक',
+    addInvestor: 'निवेशक जोड़ें',
+    editInvestor: 'निवेशक संपादित करें',
+    addInvestorDesc: 'उनकी कमाई ट्रैक करने के लिए एक नया निवेशक जोड़ें।',
+    editInvestorDesc: 'निवेशक विवरण अपडेट करें।',
+    investorName: 'निवेशक का नाम',
+    enterInvestorName: 'निवेशक का नाम दर्ज करें',
+    amountInvested: 'निवेश की गई राशि',
+    interestPercentage: 'ब्याज प्रतिशत',
+    monthlyEarnings: 'मासिक कमाई',
+    netProfitSummary: 'शुद्ध लाभ सारांश',
+    netProfitDesc: 'सभी लागतों के बाद कुल शुद्ध लाभ (निवेशकों की कमाई की गणना के लिए उपयोग किया जाता है)',
+    manageInvestors: 'निवेशकों को प्रबंधित करें और उनकी कमाई ट्रैक करें',
+    searchInvestors: 'निवेशकों को खोजें...',
+    noInvestorsFound: 'कोई निवेशक नहीं मिला',
+    addFirstInvestor: 'शुरू करने के लिए अपना पहला निवेशक जोड़ें',
+    investorCreated: 'निवेशक बनाया गया',
+    investorUpdated: 'निवेशक अपडेट किया गया',
+    investorDeleted: 'निवेशक हटाया गया',
+    investorCreatedDesc: 'नया निवेशक सफलतापूर्वक जोड़ा गया है।',
+    investorUpdatedDesc: 'निवेशक विवरण सफलतापूर्वक अपडेट किए गए हैं।',
+    investorDeletedDesc: 'निवेशक सफलतापूर्वक हटा दिया गया है।',
+    failedToCreateInvestor: 'निवेशक बनाने में विफल',
+    failedToUpdateInvestor: 'निवेशक अपडेट करने में विफल',
+    failedToDeleteInvestor: 'निवेशक हटाने में विफल',
+    createInvestor: 'निवेशक बनाएं',
+    updateInvestor: 'निवेशक अपडेट करें',
+    confirmDeleteInvestorDesc: 'क्या आप वाकई इस निवेशक को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।',
+    interestPercentageHelp: 'अर्जित होने वाले शुद्ध लाभ का प्रतिशत',
+    
     // Tutorial
     tutorial: 'ट्यूटोरियल',
     tutorialSubtitle: 'रेस्तरां प्रबंधन प्रणाली की सभी सुविधाओं का उपयोग करना सीखें',
@@ -3115,6 +3307,38 @@ export const translations: Record<Language, Translations> = {
     existingCustomer: 'موجودہ گاہک',
     selectCustomer: 'گاہک منتخب کریں',
     
+    // Investors
+    investors: 'سرمایہ کار',
+    investor: 'سرمایہ کار',
+    addInvestor: 'سرمایہ کار شامل کریں',
+    editInvestor: 'سرمایہ کار میں ترمیم کریں',
+    addInvestorDesc: 'ان کی آمدنی کو ٹریک کرنے کے لیے ایک نیا سرمایہ کار شامل کریں۔',
+    editInvestorDesc: 'سرمایہ کار کی تفصیلات کو اپ ڈیٹ کریں۔',
+    investorName: 'سرمایہ کار کا نام',
+    enterInvestorName: 'سرمایہ کار کا نام درج کریں',
+    amountInvested: 'سرمایہ کاری کی رقم',
+    interestPercentage: 'سود کی شرح',
+    monthlyEarnings: 'ماہانہ آمدنی',
+    netProfitSummary: 'خالص منافع کا خلاصہ',
+    netProfitDesc: 'تمام اخراجات کے بعد کل خالص منافع (سرمایہ کاروں کی آمدنی کی گणنا کے لیے استعمال کیا جاتا ہے)',
+    manageInvestors: 'سرمایہ کاروں کا انتظام کریں اور ان کی آمدنی کو ٹریک کریں',
+    searchInvestors: 'سرمایہ کاروں کو تلاش کریں...',
+    noInvestorsFound: 'کوئی سرمایہ کار نہیں ملا',
+    addFirstInvestor: 'شروع کرنے کے لیے اپنا پہلا سرمایہ کار شامل کریں',
+    investorCreated: 'سرمایہ کار بنایا گیا',
+    investorUpdated: 'سرمایہ کار اپ ڈیٹ کیا گیا',
+    investorDeleted: 'سرمایہ کار حذف کیا گیا',
+    investorCreatedDesc: 'نیا سرمایہ کار کامیابی سے شامل کیا گیا ہے۔',
+    investorUpdatedDesc: 'سرمایہ کار کی تفصیلات کامیابی سے اپ ڈیٹ کی گئی ہیں۔',
+    investorDeletedDesc: 'سرمایہ کار کامیابی سے ہٹا دیا گیا ہے۔',
+    failedToCreateInvestor: 'سرمایہ کار بنانے میں ناکام',
+    failedToUpdateInvestor: 'سرمایہ کار اپ ڈیٹ کرنے میں ناکام',
+    failedToDeleteInvestor: 'سرمایہ کار حذف کرنے میں ناکام',
+    createInvestor: 'سرمایہ کار بنائیں',
+    updateInvestor: 'سرمایہ کار اپ ڈیٹ کریں',
+    confirmDeleteInvestorDesc: 'کیا آپ واقعی اس سرمایہ کار کو حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں کیا جا سکتا۔',
+    interestPercentageHelp: 'کمانے کے لیے خالص منافع کی فیصد',
+    
     // Tutorial
     tutorial: 'ٹیوٹوریل',
     tutorialSubtitle: 'ریستوران مینجمنٹ سسٹم کی تمام خصوصیات استعمال کرنا سیکھیں',
@@ -3584,6 +3808,38 @@ export const translations: Record<Language, Translations> = {
     newCustomer: 'নতুন গ্রাহক',
     existingCustomer: 'বিদ্যমান গ্রাহক',
     selectCustomer: 'গ্রাহক নির্বাচন করুন',
+    
+    // Investors
+    investors: 'বিনিয়োগকারী',
+    investor: 'বিনিয়োগকারী',
+    addInvestor: 'বিনিয়োগকারী যোগ করুন',
+    editInvestor: 'বিনিয়োগকারী সম্পাদনা করুন',
+    addInvestorDesc: 'তাদের আয় ট্র্যাক করতে একটি নতুন বিনিয়োগকারী যোগ করুন।',
+    editInvestorDesc: 'বিনিয়োগকারীর বিবরণ আপডেট করুন।',
+    investorName: 'বিনিয়োগকারীর নাম',
+    enterInvestorName: 'বিনিয়োগকারীর নাম লিখুন',
+    amountInvested: 'বিনিয়োগকৃত পরিমাণ',
+    interestPercentage: 'সুদের হার',
+    monthlyEarnings: 'মাসিক আয়',
+    netProfitSummary: 'নিট লাভের সারসংক্ষেপ',
+    netProfitDesc: 'সমস্ত খরচের পরে মোট নিট লাভ (বিনিয়োগকারীদের আয় গণনার জন্য ব্যবহৃত)',
+    manageInvestors: 'বিনিয়োগকারীদের পরিচালনা করুন এবং তাদের আয় ট্র্যাক করুন',
+    searchInvestors: 'বিনিয়োগকারী অনুসন্ধান করুন...',
+    noInvestorsFound: 'কোনো বিনিয়োগকারী পাওয়া যায়নি',
+    addFirstInvestor: 'শুরু করতে আপনার প্রথম বিনিয়োগকারী যোগ করুন',
+    investorCreated: 'বিনিয়োগকারী তৈরি করা হয়েছে',
+    investorUpdated: 'বিনিয়োগকারী আপডেট করা হয়েছে',
+    investorDeleted: 'বিনিয়োগকারী মুছে ফেলা হয়েছে',
+    investorCreatedDesc: 'নতুন বিনিয়োগকারী সফলভাবে যোগ করা হয়েছে।',
+    investorUpdatedDesc: 'বিনিয়োগকারীর বিবরণ সফলভাবে আপডেট করা হয়েছে।',
+    investorDeletedDesc: 'বিনিয়োগকারী সফলভাবে সরানো হয়েছে।',
+    failedToCreateInvestor: 'বিনিয়োগকারী তৈরি করতে ব্যর্থ',
+    failedToUpdateInvestor: 'বিনিয়োগকারী আপডেট করতে ব্যর্থ',
+    failedToDeleteInvestor: 'বিনিয়োগকারী মুছতে ব্যর্থ',
+    createInvestor: 'বিনিয়োগকারী তৈরি করুন',
+    updateInvestor: 'বিনিয়োগকারী আপডেট করুন',
+    confirmDeleteInvestorDesc: 'আপনি কি নিশ্চিত যে আপনি এই বিনিয়োগকারীকে মুছে ফেলতে চান? এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না।',
+    interestPercentageHelp: 'অর্জিত নিট লাভের শতাংশ',
     
     // Tutorial
     tutorial: 'টিউটোরিয়াল',
