@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { WelcomeVideo } from "@/components/WelcomeVideo";
 
 const languages: Language[] = ['English', 'Arabic', 'Chinese', 'German', 'Hindi', 'Urdu', 'Bengali'];
 
@@ -40,6 +41,7 @@ export default function Login() {
   const [branchesCount, setBranchesCount] = useState(1);
   const [subscriptionPlan, setSubscriptionPlan] = useState("weekly");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showWelcomeVideo, setShowWelcomeVideo] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
   const { language, setLanguage, t } = useLanguage();
@@ -114,10 +116,14 @@ export default function Login() {
       return response.json();
     },
     onSuccess: async () => {
+      // Show welcome video for new users
+      setShowWelcomeVideo(true);
+      
       toast({
         title: t.accountCreated,
         description: t.accountCreatedDesc,
       });
+      
       // Auto-login after signup
       try {
         await login(signupUsername, signupPassword);
@@ -529,6 +535,12 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      {/* Welcome Video Dialog */}
+      <WelcomeVideo 
+        open={showWelcomeVideo} 
+        onClose={() => setShowWelcomeVideo(false)} 
+      />
     </div>
   );
 }
