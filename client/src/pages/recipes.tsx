@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -163,17 +163,22 @@ export default function Recipes() {
     queryKey: ["/api/recipes"],
   });
 
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-
-  // Sort recipes by sortOrder and update local state
-  useEffect(() => {
-    const sorted = [...recipesData].sort((a, b) => {
+  // Sort recipes by sortOrder directly without local state to avoid infinite loops
+  const recipes = useMemo(() => {
+    if (!recipesData) return [];
+    return [...recipesData].sort((a, b) => {
       const orderA = a.sortOrder ?? 0;
       const orderB = b.sortOrder ?? 0;
       return orderA - orderB;
     });
-    setRecipes(sorted);
   }, [recipesData]);
+  
+  const [localRecipes, setLocalRecipes] = useState<Recipe[]>([]);
+  
+  // Sync localRecipes with recipes when recipes changes
+  useEffect(() => {
+    setLocalRecipes(recipes);
+  }, [recipes]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -208,7 +213,7 @@ export default function Recipes() {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setRecipes((items) => {
+      setLocalRecipes((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
         const newOrder = arrayMove(items, oldIndex, newIndex);
@@ -772,11 +777,11 @@ export default function Recipes() {
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={recipes.map((r) => r.id)}
+          items={localRecipes.map((r) => r.id)}
           strategy={verticalListSortingStrategy}
         >
           <div className="grid gap-6">
-            {recipes.map((recipe) => (
+            {localRecipes.map((recipe) => (
               <SortableRecipeCard key={recipe.id} recipe={recipe} onEdit={handleEditRecipe} onDelete={handleDeleteClick} />
             ))}
           </div>

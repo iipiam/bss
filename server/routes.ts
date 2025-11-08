@@ -620,14 +620,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/orders", async (req, res) => {
     try {
       const data = insertOrderSchema.parse(req.body);
+      
+      const { orderProcessingService } = await import("./orderProcessingService");
+      const orderItems = Array.isArray(data.items) ? data.items.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        addons: item.addons
+      })) : [];
+      
+      const prepResult = await orderProcessingService.prepareOrderStock(
+        orderItems,
+        data.branchId || ""
+      );
+      
+      if (!prepResult.isValid) {
+        return res.status(409).json({
+          error: "Insufficient inventory",
+          message: prepResult.message,
+          insufficientItems: prepResult.insufficientItems,
+        });
+      }
+      
       const order = await storage.createOrder(data);
-      res.status(201).json(order);
+      
+      try {
+        if (prepResult.stockRequirements) {
+          await orderProcessingService.finalizeOrderWithInventory(
+            data,
+            prepResult.stockRequirements,
+            order.id,
+            data.branchId || ""
+          );
+        }
+        res.status(201).json(order);
+      } catch (deductionError) {
+        console.error("Inventory deduction failed, attempting to delete order:", order.id);
+        try {
+          await storage.deleteOrder(order.id);
+        } catch (deleteError) {
+          console.error("Failed to delete order after inventory deduction failure:", deleteError);
+        }
+        throw deductionError;
+      }
     } catch (error) {
-      console.error("Order validation error:", error);
+      console.error("Order creation error:", error);
       if (error instanceof Error) {
-        res.status(400).json({ error: "Invalid order data", details: error.message });
+        res.status(400).json({ error: "Failed to create order", details: error.message });
       } else {
-        res.status(400).json({ error: "Invalid order data" });
+        res.status(400).json({ error: "Failed to create order" });
       }
     }
   });

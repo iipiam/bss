@@ -103,6 +103,7 @@ export interface IStorage {
   getOrder(id: string): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrder(id: string, order: Partial<InsertOrder>): Promise<Order | undefined>;
+  deleteOrder(id: string): Promise<boolean>;
 
   // Transactions
   getTransactions(branchId?: string, startDate?: Date, endDate?: Date): Promise<Transaction[]>;
@@ -466,6 +467,11 @@ export class DatabaseStorage implements IStorage {
     
     const [updated] = await db.update(orders).set(updateData as any).where(eq(orders.id, id)).returning();
     return updated;
+  }
+
+  async deleteOrder(id: string): Promise<boolean> {
+    const result = await db.delete(orders).where(eq(orders.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
   // Transactions

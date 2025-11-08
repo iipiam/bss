@@ -59,8 +59,9 @@ export const menuItems = pgTable("menu_items", {
   name: text("name").notNull(),
   category: text("category").notNull(),
   recipeId: varchar("recipe_id").references(() => recipes.id), // Optional: menu item can have a recipe
+  inventoryItemId: varchar("inventory_item_id").references(() => inventoryItems.id), // Optional: for simple items without recipes
   portionSize: decimal("portion_size", { precision: 5, scale: 2 }).default("1.00"), // Multiplier for recipe (1.0=whole, 0.5=half, 0.25=quarter)
-  stockNo: decimal("stock_no", { precision: 10, scale: 2 }), // Required when no recipe is linked
+  stockNo: decimal("stock_no", { precision: 10, scale: 2 }), // Quantity per item when inventoryItemId is set
   price: decimal("price", { precision: 10, scale: 2 }).notNull(), // VAT-inclusive price (15% Saudi VAT)
   basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(), // Price before VAT
   vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).notNull(), // VAT amount (15%)
@@ -74,8 +75,9 @@ export const insertMenuItemSchema = createInsertSchema(menuItems)
   .omit({ id: true })
   .extend({
     recipeId: z.string().nullable().optional(), // Allow null to clear recipe
+    inventoryItemId: z.string().nullable().optional(), // Allow null, for simple items
     portionSize: z.string().optional(), // Portion multiplier (1.0, 0.5, 0.25)
-    stockNo: z.string().optional(), // Stock number (required when no recipe)
+    stockNo: z.string().optional(), // Stock quantity per item
   })
   .refine(
     (data) => {
@@ -86,13 +88,24 @@ export const insertMenuItemSchema = createInsertSchema(menuItems)
   )
   .refine(
     (data) => {
-      // If no recipe, stockNo is required
-      if (!data.recipeId || data.recipeId === "none") {
+      // Must have either recipeId OR inventoryItemId
+      const hasRecipe = data.recipeId && data.recipeId !== "none";
+      const hasInventoryItem = data.inventoryItemId && data.inventoryItemId !== "none";
+      return hasRecipe || hasInventoryItem;
+    },
+    { message: "Menu item must have either a recipe or be linked to an inventory item" }
+  )
+  .refine(
+    (data) => {
+      // If linked to inventory item (not recipe), stockNo is required
+      const hasInventoryItem = data.inventoryItemId && data.inventoryItemId !== "none";
+      const hasRecipe = data.recipeId && data.recipeId !== "none";
+      if (hasInventoryItem && !hasRecipe) {
         return !!data.stockNo && data.stockNo.trim() !== "";
       }
       return true;
     },
-    { message: "Stock number is required when no recipe is selected", path: ["stockNo"] }
+    { message: "Stock quantity is required for non-recipe items", path: ["stockNo"] }
   );
 export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
 export type MenuItem = typeof menuItems.$inferSelect;
@@ -143,6 +156,24 @@ export const orders = pgTable("orders", {
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true });
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
+
+// Inventory Transactions (audit trail for all inventory movements) - Must be after orders
+export const inventoryTransactions = pgTable("inventory_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  inventoryItemId: varchar("inventory_item_id").references(() => inventoryItems.id).notNull(),
+  orderId: varchar("order_id").references(() => orders.id), // Optional: links to orders table
+  type: text("type").notNull(), // "sale", "procurement", "adjustment", "wastage"
+  quantityChange: decimal("quantity_change", { precision: 10, scale: 2 }).notNull(), // Negative for deductions, positive for additions
+  quantityBefore: decimal("quantity_before", { precision: 10, scale: 2 }).notNull(),
+  quantityAfter: decimal("quantity_after", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes"), // Additional details (e.g., "Sold in Order ORD-123", "Procurement PO-456")
+  branchId: varchar("branch_id").references(() => branches.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertInventoryTransactionSchema = createInsertSchema(inventoryTransactions).omit({ id: true, createdAt: true });
+export type InsertInventoryTransaction = z.infer<typeof insertInventoryTransactionSchema>;
+export type InventoryTransaction = typeof inventoryTransactions.$inferSelect;
 
 // Transactions (Sales)
 export const transactions = pgTable("transactions", {
