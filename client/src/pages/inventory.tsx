@@ -457,6 +457,7 @@ export default function Inventory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
     },
     onError: (error: any) => {
       toast({
@@ -499,6 +500,7 @@ export default function Inventory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
         title: "Item created",
         description: "Inventory item has been added",
@@ -524,6 +526,7 @@ export default function Inventory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
         title: "Item updated",
         description: "Inventory item has been updated",
@@ -545,6 +548,7 @@ export default function Inventory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
         title: "Item deleted",
         description: "Inventory item has been removed",
@@ -817,6 +821,7 @@ export default function Inventory() {
       }
       
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
         title: "Import successful",
         description: result.message || "Inventory data imported from Excel",
