@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
 import { DeviceProvider, useDevice } from "@/contexts/DeviceContext";
+import { BranchProvider } from "@/contexts/BranchContext";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -471,9 +472,11 @@ export default function App() {
         <LanguageProvider>
           <TooltipProvider>
             <AuthProvider>
-              <DeviceProvider>
-                <AppContent />
-              </DeviceProvider>
+              <BranchProvider>
+                <DeviceProvider>
+                  <AppContent />
+                </DeviceProvider>
+              </BranchProvider>
             </AuthProvider>
             <Toaster />
           </TooltipProvider>
