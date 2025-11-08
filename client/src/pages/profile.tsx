@@ -45,7 +45,7 @@ export default function Profile() {
   // Profile update mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
-      return await apiRequest("/api/profile", "PUT", data);
+      return await apiRequest("PUT", "/api/profile", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
@@ -68,7 +68,7 @@ export default function Profile() {
   // Cancel subscription mutation
   const cancelSubscriptionMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("/api/subscription/cancel", "POST", {});
+      return await apiRequest("POST", "/api/subscription/cancel", {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
