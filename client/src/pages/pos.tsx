@@ -417,8 +417,12 @@ export default function POS() {
                       </div>
                     )}
                     <CardHeader className="p-3 pb-2">
-                      <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-md flex items-center justify-center mb-2">
-                        <UtensilsCrossed className="h-8 w-8 text-primary/40" />
+                      <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-md flex items-center justify-center mb-2 overflow-hidden">
+                        {item.imageUrl ? (
+                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <UtensilsCrossed className="h-8 w-8 text-primary/40" />
+                        )}
                       </div>
                     </CardHeader>
                     <CardContent className="p-3 pt-0">

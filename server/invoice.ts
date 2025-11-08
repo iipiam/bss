@@ -856,6 +856,368 @@ export async function generateFinancialStatementPDF(data: FinancialStatementData
   }
 }
 
+// Generate ZATCA-compliant subscription invoice
+export async function generateSubscriptionInvoice(data: {
+  serialNumber: string;
+  userFullName: string;
+  userEmail: string;
+  restaurantName: string;
+  nationalId: string;
+  taxNumber: string;
+  commercialRegistration: string;
+  subscriptionPlan: string;
+  branchesCount: number;
+  basePlanPrice: number;
+  additionalBranchesPrice: number;
+  subtotal: number;
+  vatAmount: number;
+  total: number;
+  invoiceDate: Date;
+}): Promise<Buffer> {
+  // Generate QR code for ZATCA compliance
+  const qrData = `Invoice: ${data.serialNumber}\nDate: ${data.invoiceDate.toLocaleDateString('en-GB')}\nTotal: ${data.total.toFixed(2)} SAR\nVAT: ${data.vatAmount.toFixed(2)} SAR`;
+  const qrCodeDataURL = await QRCode.toDataURL(qrData);
+
+  const planNames: Record<string, { en: string; ar: string }> = {
+    weekly: { en: "Weekly Plan", ar: "الخطة الأسبوعية" },
+    monthly: { en: "Monthly Plan", ar: "الخطة الشهرية" },
+    yearly: { en: "Annual Plan", ar: "الخطة السنوية" },
+  };
+
+  const planName = planNames[data.subscriptionPlan] || { en: data.subscriptionPlan, ar: data.subscriptionPlan };
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      line-height: 1.6;
+      padding: 40px;
+    }
+
+    .invoice-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .company-name {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .invoice-title {
+      font-size: 20px;
+      opacity: 0.95;
+      margin-top: 16px;
+    }
+
+    .content {
+      padding: 40px;
+    }
+
+    .info-section {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 40px;
+      gap: 30px;
+    }
+
+    .info-block {
+      flex: 1;
+    }
+
+    .info-block h3 {
+      font-size: 14px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .info-block p {
+      margin: 6px 0;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .info-block strong {
+      color: #1f2937;
+    }
+
+    .invoice-details {
+      background: #f9fafb;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+
+    .invoice-details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+    }
+
+    .detail-label {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .detail-value {
+      font-weight: 600;
+      color: #1f2937;
+      font-size: 14px;
+    }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 30px 0;
+    }
+
+    .items-table th {
+      background: #f3f4f6;
+      padding: 12px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .items-table td {
+      padding: 16px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .items-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    .summary {
+      background: #f9fafb;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 30px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      font-size: 14px;
+    }
+
+    .summary-row.total {
+      border-top: 2px solid #e5e7eb;
+      margin-top: 10px;
+      padding-top: 15px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e40af;
+    }
+
+    .qr-section {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 2px solid #e5e7eb;
+    }
+
+    .qr-code {
+      width: 150px;
+      height: 150px;
+      margin: 20px auto;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .bilingual {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .en { text-align: left; }
+    .ar {
+      text-align: right;
+      font-family: 'Noto Naskh Arabic', serif;
+      direction: rtl;
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice-container">
+    <div class="header">
+      <div class="company-name">RestoPOS</div>
+      <div class="bilingual">
+        <div class="en invoice-title">Subscription Invoice</div>
+        <div class="ar invoice-title">فاتورة الاشتراك</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="invoice-details">
+        <div class="invoice-details-grid">
+          <div class="detail-row">
+            <span class="detail-label">Invoice Number / رقم الفاتورة:</span>
+            <span class="detail-value">${escapeHtml(data.serialNumber)}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Date / التاريخ:</span>
+            <span class="detail-value">${data.invoiceDate.toLocaleDateString('en-GB')}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-block">
+          <h3>Bill To / الفاتورة إلى</h3>
+          <p><strong>${escapeHtml(data.restaurantName)}</strong></p>
+          <p>${escapeHtml(data.userFullName)}</p>
+          <p>${escapeHtml(data.userEmail)}</p>
+          <p>National ID: ${escapeHtml(data.nationalId)}</p>
+          <p>Tax Number: ${escapeHtml(data.taxNumber)}</p>
+          <p>CR: ${escapeHtml(data.commercialRegistration)}</p>
+        </div>
+        <div class="info-block">
+          <h3>From / من</h3>
+          <p><strong>Saudi Kinzhal</strong></p>
+          <p>RestoPOS Platform</p>
+          <p>IT@SaudiKinzhal.org</p>
+          <p>Saudi Arabia</p>
+        </div>
+      </div>
+
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Description / الوصف</th>
+            <th class="text-right">Quantity / الكمية</th>
+            <th class="text-right">Unit Price / سعر الوحدة</th>
+            <th class="text-right">Total / الإجمالي</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <strong>${planName.en} / ${planName.ar}</strong><br/>
+              <small>(Includes 1 branch)</small>
+            </td>
+            <td class="text-right">1</td>
+            <td class="text-right">${data.basePlanPrice.toFixed(2)} SAR</td>
+            <td class="text-right">${data.basePlanPrice.toFixed(2)} SAR</td>
+          </tr>
+          ${data.branchesCount > 1 ? `
+          <tr>
+            <td>
+              <strong>Additional Branches / فروع إضافية</strong><br/>
+              <small>(${data.branchesCount - 1} branches)</small>
+            </td>
+            <td class="text-right">${data.branchesCount - 1}</td>
+            <td class="text-right">${(data.additionalBranchesPrice / (data.branchesCount - 1)).toFixed(2)} SAR</td>
+            <td class="text-right">${data.additionalBranchesPrice.toFixed(2)} SAR</td>
+          </tr>
+          ` : ''}
+        </tbody>
+      </table>
+
+      <div class="summary">
+        <div class="summary-row">
+          <span>Subtotal / المجموع الفرعي:</span>
+          <span>${data.subtotal.toFixed(2)} SAR</span>
+        </div>
+        <div class="summary-row">
+          <span>VAT (15%) / ضريبة القيمة المضافة:</span>
+          <span>${data.vatAmount.toFixed(2)} SAR</span>
+        </div>
+        <div class="summary-row total">
+          <span>Total Amount / المبلغ الإجمالي:</span>
+          <span>${data.total.toFixed(2)} SAR</span>
+        </div>
+      </div>
+
+      <div class="qr-section">
+        <p style="color: #6b7280; margin-bottom: 10px;">Scan for ZATCA Verification / امسح للتحقق من هيئة الزكاة</p>
+        <img src="${qrCodeDataURL}" class="qr-code" alt="QR Code"/>
+      </div>
+
+      <div class="footer">
+        <p>This is a ZATCA-compliant tax invoice / هذه فاتورة ضريبية متوافقة مع هيئة الزكاة</p>
+        <p>Thank you for your business / شكراً لتعاملكم معنا</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+
+  try {
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '10mm',
+        right: '10mm',
+        bottom: '10mm',
+        left: '10mm'
+      }
+    });
+
+    return Buffer.from(pdfBuffer);
+  } finally {
+    await page.close();
+  }
+}
+
 // Cleanup function for graceful shutdown
 export async function closeBrowser(): Promise<void> {
   if (browserInstance) {

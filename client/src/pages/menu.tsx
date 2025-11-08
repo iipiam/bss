@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Edit, UtensilsCrossed, Settings2, Trash2, X, Download, Upload, FileDown } from "lucide-react";
+import { Plus, Search, Edit, UtensilsCrossed, Settings2, Trash2, X, Download, Upload, FileDown, ImagePlus } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -68,6 +68,10 @@ export default function Menu() {
   const { toast } = useToast();
 
   const [selectedRecipeId, setSelectedRecipeId] = useState<string>("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<MenuFormValues>({
     resolver: zodResolver(menuFormSchema),
@@ -112,7 +116,7 @@ export default function Menu() {
   });
 
   const createMenuItemMutation = useMutation({
-    mutationFn: async (data: MenuFormValues) => {
+    mutationFn: async (data: MenuFormValues & { imageUrl?: string | null }) => {
       // Price is VAT-inclusive, calculate base price and VAT from ORIGINAL price
       const priceNum = parseFloat(data.price); // Original VAT-inclusive price
       const discountNum = parseFloat(data.discount || "0");
@@ -135,6 +139,7 @@ export default function Menu() {
         vatAmount: discountedVAT.toFixed(2), // VAT on discounted base
         discount: discountNum.toFixed(2),
         available: true,
+        imageUrl: data.imageUrl || null,
       };
 
       // Only include recipeId if it's set and not "none"
@@ -155,6 +160,8 @@ export default function Menu() {
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       setOpen(false);
       form.reset();
+      setImageFile(null);
+      setImagePreview(null);
       toast({
         title: "Menu item created",
         description: "The menu item has been added successfully.",
@@ -170,7 +177,7 @@ export default function Menu() {
   });
 
   const updateMenuItemMutation = useMutation({
-    mutationFn: async (data: MenuFormValues & { id: string }) => {
+    mutationFn: async (data: MenuFormValues & { id: string; imageUrl?: string | null }) => {
       // Price is VAT-inclusive, calculate base price and VAT from ORIGINAL price
       const priceNum = parseFloat(data.price); // Original VAT-inclusive price
       const discountNum = parseFloat(data.discount || "0");
@@ -195,6 +202,7 @@ export default function Menu() {
         basePrice: basePrice.toFixed(2), // Original base price (before discount)
         vatAmount: discountedVAT.toFixed(2), // VAT on discounted base
         discount: discountNum.toFixed(2),
+        imageUrl: data.imageUrl !== undefined ? data.imageUrl : undefined,
       };
 
       return await apiRequest("PATCH", `/api/menu/${data.id}`, menuItemData);
@@ -255,17 +263,75 @@ export default function Menu() {
     },
   });
 
-  const onSubmit = (data: MenuFormValues) => {
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!imageFile) return null;
+    
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', imageFile);
+      
+      const response = await fetch('/api/menu/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Image upload failed');
+      }
+      
+      const result = await response.json();
+      return result.imageUrl;
+    } catch (error) {
+      console.error('Image upload error:', error);
+      toast({
+        title: "Image upload failed",
+        description: "Could not upload image. Please try again.",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const onSubmit = async (data: MenuFormValues) => {
+    let imageUrl = editingItem?.imageUrl || null;
+    
+    // Upload new image if selected
+    if (imageFile) {
+      const uploadedUrl = await uploadImage();
+      if (uploadedUrl) {
+        imageUrl = uploadedUrl;
+      }
+    }
+    
+    const dataWithImage = { ...data, imageUrl };
+    
     if (editingItem) {
-      updateMenuItemMutation.mutate({ ...data, id: editingItem.id });
+      updateMenuItemMutation.mutate({ ...dataWithImage, id: editingItem.id });
     } else {
-      createMenuItemMutation.mutate(data);
+      createMenuItemMutation.mutate(dataWithImage);
     }
   };
 
   const handleEdit = (item: MenuItem) => {
     setEditingItem(item);
     setSelectedRecipeId(item.recipeId || "none");
+    setImagePreview(item.imageUrl || null);
+    setImageFile(null);
     
     // basePrice is stored as original (before discount), so calculate original VAT-inclusive price
     const basePrice = parseFloat(item.basePrice || "0");
@@ -290,6 +356,8 @@ export default function Menu() {
       // Clear state when closing
       setEditingItem(null);
       setSelectedRecipeId("none");
+      setImageFile(null);
+      setImagePreview(null);
       form.reset();
     }
   };
@@ -298,6 +366,8 @@ export default function Menu() {
     setOpen(false);
     setEditingItem(null);
     setSelectedRecipeId("none");
+    setImageFile(null);
+    setImagePreview(null);
     form.reset();
   };
 
@@ -579,6 +649,47 @@ export default function Menu() {
                     </FormItem>
                   )}
                 />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Item Image (Optional)</label>
+                  <div className="flex gap-3 items-start">
+                    {imagePreview && (
+                      <div className="relative w-24 h-24 rounded-lg overflow-hidden border">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6"
+                          onClick={() => {
+                            setImageFile(null);
+                            setImagePreview(null);
+                            if (fileInputRef.current) fileInputRef.current.value = '';
+                          }}
+                          data-testid="button-remove-image"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <Input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="cursor-pointer"
+                        data-testid="input-menu-image"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Upload an image for this menu item (max 5MB)
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 <FormField
                   control={form.control}
                   name="category"
@@ -810,8 +921,12 @@ export default function Menu() {
             return (
               <Card key={item.id} className="overflow-hidden" data-testid={`card-menu-${item.id}`}>
                 <div className="flex">
-                  <div className="w-28 h-28 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
-                    <UtensilsCrossed className="h-12 w-12 text-primary/40" />
+                  <div className="w-28 h-28 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {item.imageUrl ? (
+                      <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <UtensilsCrossed className="h-12 w-12 text-primary/40" />
+                    )}
                   </div>
                   <div className="flex-1 p-3">
                     <h3 className="font-semibold text-base mb-1">{item.name}</h3>
@@ -872,8 +987,12 @@ export default function Menu() {
           return (
             <Card key={item.id} className="overflow-hidden" data-testid={`card-menu-${item.id}`}>
               <CardHeader className="p-0">
-                <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                  <UtensilsCrossed className="h-16 w-16 text-primary/40" />
+                <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden">
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <UtensilsCrossed className="h-16 w-16 text-primary/40" />
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="p-4">

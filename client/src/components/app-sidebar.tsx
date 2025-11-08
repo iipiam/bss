@@ -216,7 +216,7 @@ export function AppSidebar() {
                     </DialogHeader>
                     <div className="space-y-4 mt-4">
                       <a
-                        href="mailto:int@mwcdtr.org"
+                        href="mailto:IT@SaudiKinzhal.org"
                         data-testid="link-email"
                         className="flex items-center gap-3 p-4 rounded-lg border border-border hover-elevate active-elevate-2 group transition-all duration-300"
                       >
@@ -225,23 +225,7 @@ export function AppSidebar() {
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-semibold text-foreground">{t.email}</p>
-                          <p className="text-sm text-muted-foreground">int@mwcdtr.org</p>
-                        </div>
-                      </a>
-                      
-                      <a
-                        href="https://wa.me/966500000000"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        data-testid="link-whatsapp"
-                        className="flex items-center gap-3 p-4 rounded-lg border border-border hover-elevate active-elevate-2 group transition-all duration-300"
-                      >
-                        <div className="p-2 rounded-md bg-gradient-to-r from-green-500 to-emerald-500">
-                          <MessageCircle className="h-5 w-5 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-foreground">{t.whatsapp}</p>
-                          <p className="text-sm text-muted-foreground">+966 50 000 0000</p>
+                          <p className="text-sm text-muted-foreground">IT@SaudiKinzhal.org</p>
                         </div>
                       </a>
                     </div>

@@ -248,6 +248,10 @@ export const users = pgTable("users", {
   }>(),
   branchId: varchar("branch_id").references(() => branches.id),
   commercialRegistration: text("commercial_registration"), // Saudi Arabia Commercial Registration number (mandatory for signup)
+  restaurantName: text("restaurant_name"), // Restaurant name (mandatory for signup)
+  nationalId: text("national_id"), // National ID or Company Name (mandatory for signup)
+  taxNumber: text("tax_number"), // Unified Tax Number (mandatory for signup)
+  restaurantType: text("restaurant_type"), // "Cloud Kitchen" or "Restaurant" (mandatory for signup)
   subscriptionPlan: text("subscription_plan"), // "weekly", "monthly" or "yearly"
   branchesCount: integer("branches_count").notNull().default(1), // Number of branches (minimum 1, affects pricing)
   subscriptionStatus: text("subscription_status").default("inactive"), // "inactive", "active", "cancelled", "expired"
@@ -428,3 +432,24 @@ export const updateInvestorSchema = baseInvestorSchema.partial().refine(
 export type InsertInvestor = z.infer<typeof insertInvestorSchema>;
 export type UpdateInvestor = z.infer<typeof updateInvestorSchema>;
 export type Investor = typeof investors.$inferSelect;
+
+// Subscription Invoices
+export const subscriptionInvoices = pgTable("subscription_invoices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  serialNumber: text("serial_number").notNull().unique(), // Format: 0001-YYYYMMDD-HHMMSS
+  subscriptionPlan: text("subscription_plan").notNull(), // weekly, monthly, yearly
+  branchesCount: integer("branches_count").notNull(),
+  basePlanPrice: decimal("base_plan_price", { precision: 10, scale: 2 }).notNull(), // Base price without VAT
+  additionalBranchesPrice: decimal("additional_branches_price", { precision: 10, scale: 2 }).notNull(), // Extra branches price without VAT
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(), // Base + additional branches (before VAT)
+  vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).notNull(), // 15% VAT
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(), // Final amount with VAT
+  invoiceDate: timestamp("invoice_date").notNull().defaultNow(),
+  pdfPath: text("pdf_path"), // Path to generated PDF invoice
+  qrCode: text("qr_code"), // QR code data URL for ZATCA compliance
+});
+
+export const insertSubscriptionInvoiceSchema = createInsertSchema(subscriptionInvoices).omit({ id: true, invoiceDate: true });
+export type InsertSubscriptionInvoice = z.infer<typeof insertSubscriptionInvoiceSchema>;
+export type SubscriptionInvoice = typeof subscriptionInvoices.$inferSelect;

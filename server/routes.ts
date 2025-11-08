@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { generateZATCAInvoice } from "./invoice";
+import { generateZATCAInvoice, generateSubscriptionInvoice } from "./invoice";
 import bcrypt from "bcrypt";
 import * as fs from "fs";
 import * as path from "path";
@@ -1040,10 +1040,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public endpoint for user signup
   app.post("/api/auth/signup", async (req, res) => {
     try {
-      const { username, password, name, email, commercialRegistration, subscriptionPlan, branchesCount } = req.body;
+      const { username, password, name, email, commercialRegistration, restaurantName, nationalId, taxNumber, restaurantType, subscriptionPlan, branchesCount } = req.body;
       
-      if (!username || !password || !name || !email || !commercialRegistration || !subscriptionPlan || !branchesCount) {
-        return res.status(400).json({ error: "All fields are required including Commercial Registration, subscription plan, and number of branches" });
+      if (!username || !password || !name || !email || !commercialRegistration || !restaurantName || !nationalId || !taxNumber || !restaurantType || !subscriptionPlan || !branchesCount) {
+        return res.status(400).json({ error: "All fields are required including Restaurant Name, National ID, Tax Number, Restaurant Type, Commercial Registration, subscription plan, and number of branches" });
+      }
+
+      // Validate restaurant type
+      if (!['Cloud Kitchen', 'Restaurant'].includes(restaurantType)) {
+        return res.status(400).json({ error: "Invalid restaurant type. Must be 'Cloud Kitchen' or 'Restaurant'" });
       }
 
       // Validate subscription plan
@@ -1070,6 +1075,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fullName: name,
         email,
         commercialRegistration,
+        restaurantName,
+        nationalId,
+        taxNumber,
+        restaurantType,
         subscriptionPlan,
         branchesCount: branches,
         subscriptionStatus: "inactive" as const, // Will be activated after payment
@@ -1096,11 +1105,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const user = await storage.createUser(userData);
+
+      // Generate subscription invoice
+      try {
+        // Calculate subscription prices based on plan
+        const planPrices: Record<string, { base: number; perBranch: number }> = {
+          weekly: { base: 39.90, perBranch: 7 },
+          monthly: { base: 119.75, perBranch: 20 },
+          yearly: { base: 1197.50, perBranch: 240 },
+        };
+
+        const prices = planPrices[subscriptionPlan];
+        const basePlanPrice = prices.base;
+        const additionalBranchesCount = Math.max(0, branches - 1);
+        const additionalBranchesPrice = additionalBranchesCount * prices.perBranch;
+        const subtotal = basePlanPrice + additionalBranchesPrice;
+        const vatAmount = subtotal * 0.15; // 15% VAT
+        const total = subtotal + vatAmount;
+
+        // Generate serial number
+        const serialNumber = await storage.getNextSubscriptionInvoiceSerialNumber();
+
+        // Generate subscription invoice PDF
+        const pdfBuffer = await generateSubscriptionInvoice({
+          serialNumber,
+          userFullName: user.fullName,
+          userEmail: user.email,
+          restaurantName: user.restaurantName!,
+          nationalId: user.nationalId!,
+          taxNumber: user.taxNumber!,
+          commercialRegistration: user.commercialRegistration,
+          subscriptionPlan: user.subscriptionPlan,
+          branchesCount: user.branchesCount,
+          basePlanPrice,
+          additionalBranchesPrice,
+          subtotal,
+          vatAmount,
+          total,
+          invoiceDate: new Date(),
+        });
+
+        // Save PDF to disk
+        const invoicesDir = path.join(process.cwd(), 'public', 'subscription-invoices');
+        if (!fs.existsSync(invoicesDir)) {
+          fs.mkdirSync(invoicesDir, { recursive: true });
+        }
+
+        const pdfFilename = `subscription-${serialNumber}.pdf`;
+        const pdfPath = path.join(invoicesDir, pdfFilename);
+        fs.writeFileSync(pdfPath, pdfBuffer);
+
+        // Generate QR code for ZATCA compliance
+        const QRCode = await import('qrcode');
+        const qrData = `Invoice: ${serialNumber}\nDate: ${new Date().toLocaleDateString('en-GB')}\nTotal: ${total.toFixed(2)} SAR\nVAT: ${vatAmount.toFixed(2)} SAR`;
+        const qrCode = await QRCode.toDataURL(qrData);
+
+        // Save invoice to database
+        await storage.createSubscriptionInvoice({
+          userId: user.id,
+          serialNumber,
+          subscriptionPlan: user.subscriptionPlan,
+          branchesCount: user.branchesCount,
+          basePlanPrice: basePlanPrice.toString(),
+          additionalBranchesPrice: additionalBranchesPrice.toString(),
+          subtotal: subtotal.toString(),
+          vatAmount: vatAmount.toString(),
+          total: total.toString(),
+          pdfPath: `/subscription-invoices/${pdfFilename}`,
+          qrCode,
+        });
+
+        console.log(`[SIGNUP] Subscription invoice generated: ${serialNumber}`);
+      } catch (invoiceError) {
+        console.error("[SIGNUP] Failed to generate subscription invoice:", invoiceError);
+        // Don't fail signup if invoice generation fails
+      }
+
       res.status(201).json({ 
         id: user.id, 
         username: user.username, 
         fullName: user.fullName,
         role: user.role,
+        restaurantName: user.restaurantName,
+        nationalId: user.nationalId,
+        taxNumber: user.taxNumber,
+        restaurantType: user.restaurantType,
         subscriptionPlan: user.subscriptionPlan,
         branchesCount: user.branchesCount,
         subscriptionStatus: user.subscriptionStatus
@@ -2522,6 +2611,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Import routes with file upload
   const multer = await import('multer');
   const upload = multer.default({ storage: multer.default.memoryStorage() });
+
+  // Configure multer for menu image uploads (disk storage)
+  const menuImageStorage = multer.default.diskStorage({
+    destination: function (req, file, cb) {
+      const uploadPath = path.join(process.cwd(), 'uploads', 'menu-images');
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+      cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, 'menu-' + uniqueSuffix + ext);
+    }
+  });
+
+  const uploadMenuImage = multer.default({
+    storage: menuImageStorage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: function (req, file, cb) {
+      const allowedTypes = /jpeg|jpg|png|gif|webp/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const mimetype = allowedTypes.test(file.mimetype);
+      if (mimetype && extname) {
+        return cb(null, true);
+      }
+      cb(new Error('Only image files are allowed!'));
+    }
+  });
+
+  // Upload menu item image
+  app.post("/api/menu/upload-image", uploadMenuImage.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No image uploaded" });
+      }
+      
+      const imageUrl = `/uploads/menu-images/${req.file.filename}`;
+      res.json({ imageUrl });
+    } catch (error) {
+      console.error("Image upload error:", error);
+      res.status(500).json({ error: "Failed to upload image" });
+    }
+  });
+
+  // Serve uploaded menu images
+  app.use('/uploads/menu-images', (req, res, next) => {
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+    next();
+  });
+  app.use('/uploads/menu-images', (await import('express')).static(path.join(process.cwd(), 'uploads', 'menu-images')));
 
   // Import Inventory from Excel
   app.post("/api/import/inventory", upload.single('file'), async (req, res) => {

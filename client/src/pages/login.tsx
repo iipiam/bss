@@ -33,6 +33,10 @@ export default function Login() {
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupCommercialReg, setSignupCommercialReg] = useState("");
+  const [signupRestaurantName, setSignupRestaurantName] = useState("");
+  const [signupNationalId, setSignupNationalId] = useState("");
+  const [signupTaxNumber, setSignupTaxNumber] = useState("");
+  const [signupRestaurantType, setSignupRestaurantType] = useState("");
   const [branchesCount, setBranchesCount] = useState(1);
   const [subscriptionPlan, setSubscriptionPlan] = useState("weekly");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -89,6 +93,10 @@ export default function Login() {
       name: string; 
       email: string; 
       commercialRegistration: string;
+      restaurantName: string;
+      nationalId: string;
+      taxNumber: string;
+      restaurantType: string;
       subscriptionPlan: string;
       branchesCount: number;
     }) => {
@@ -132,12 +140,27 @@ export default function Login() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!signupRestaurantName || !signupNationalId || !signupTaxNumber || !signupRestaurantType) {
+      toast({
+        title: "Missing Required Fields",
+        description: "Please fill in all required fields: Restaurant Name, National ID, Tax Number, and Restaurant Type",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     signupMutation.mutate({
       username: signupUsername,
       password: signupPassword,
       name: signupName,
       email: signupEmail,
       commercialRegistration: signupCommercialReg,
+      restaurantName: signupRestaurantName,
+      nationalId: signupNationalId,
+      taxNumber: signupTaxNumber,
+      restaurantType: signupRestaurantType,
       subscriptionPlan: subscriptionPlan,
       branchesCount: branchesCount,
     });
@@ -279,6 +302,57 @@ export default function Login() {
                     required
                     data-testid="input-signup-email"
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-restaurant-name">Restaurant Name *</Label>
+                  <Input
+                    id="signup-restaurant-name"
+                    type="text"
+                    placeholder="Enter your restaurant name"
+                    value={signupRestaurantName}
+                    onChange={(e) => setSignupRestaurantName(e.target.value)}
+                    required
+                    data-testid="input-signup-restaurant-name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-national-id">National ID / Company Name *</Label>
+                  <Input
+                    id="signup-national-id"
+                    type="text"
+                    placeholder="Enter National ID or Company Name"
+                    value={signupNationalId}
+                    onChange={(e) => setSignupNationalId(e.target.value)}
+                    required
+                    data-testid="input-signup-national-id"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-tax-number">Unified Tax Number *</Label>
+                  <Input
+                    id="signup-tax-number"
+                    type="text"
+                    placeholder="Enter Unified Tax Number"
+                    value={signupTaxNumber}
+                    onChange={(e) => setSignupTaxNumber(e.target.value)}
+                    required
+                    data-testid="input-signup-tax-number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-restaurant-type">Restaurant Type *</Label>
+                  <Select
+                    value={signupRestaurantType}
+                    onValueChange={setSignupRestaurantType}
+                  >
+                    <SelectTrigger id="signup-restaurant-type" data-testid="select-signup-restaurant-type">
+                      <SelectValue placeholder="Select Restaurant Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Cloud Kitchen">Cloud Kitchen</SelectItem>
+                      <SelectItem value="Restaurant">Restaurant</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-commercial-reg">{t.commercialRegistration} *</Label>
@@ -443,11 +517,15 @@ export default function Login() {
         
         {/* Branding Footer */}
         <div className="text-center branding-slide" data-testid="branding-footer">
-          <div className="flex items-center justify-center gap-3">
-            <img src={kinzhalLogo} alt="Saudi Kinzhal Logo" className="h-10 w-10 object-contain" />
-            <p className="text-sm text-white/80">
-              Made By <span className="font-semibold text-white">Saudi Kinzhal</span>
-            </p>
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-3">
+              <img src={kinzhalLogo} alt="Saudi Kinzhal Logo" className="h-10 w-10 object-contain" />
+              <p className="text-sm text-white/80">
+                Made By <span className="font-semibold text-white">Saudi Kinzhal</span>
+              </p>
+            </div>
+            <p className="text-xs text-white/60">© 2025 Saudi Kinzhal. All rights reserved.</p>
+            <p className="text-xs text-white/50">Empowering restaurants with innovative POS solutions</p>
           </div>
         </div>
       </div>

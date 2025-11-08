@@ -31,6 +31,8 @@ import {
   type InsertDeliveryApp,
   type Investor,
   type InsertInvestor,
+  type SubscriptionInvoice,
+  type InsertSubscriptionInvoice,
   branches,
   inventoryItems,
   menuItems,
@@ -47,6 +49,7 @@ import {
   shopBills,
   deliveryApps,
   investors,
+  subscriptionInvoices,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, or, isNull } from "drizzle-orm";
@@ -173,6 +176,12 @@ export interface IStorage {
   createInvestor(investor: InsertInvestor): Promise<Investor>;
   updateInvestor(id: string, investor: Partial<InsertInvestor>): Promise<Investor | undefined>;
   deleteInvestor(id: string): Promise<boolean>;
+
+  // Subscription Invoices
+  getSubscriptionInvoices(userId?: string): Promise<SubscriptionInvoice[]>;
+  getSubscriptionInvoice(id: string): Promise<SubscriptionInvoice | undefined>;
+  createSubscriptionInvoice(invoice: InsertSubscriptionInvoice): Promise<SubscriptionInvoice>;
+  getNextSubscriptionInvoiceSerialNumber(): Promise<string>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -564,7 +573,7 @@ export class DatabaseStorage implements IStorage {
     // Hash password before storing
     const hashedPassword = await bcrypt.hash(user.password, 10);
     const [created] = await db.insert(users)
-      .values({ ...user, password: hashedPassword })
+      .values({ ...user, password: hashedPassword } as any)
       .returning();
     return created;
   }
@@ -1099,6 +1108,40 @@ export class DatabaseStorage implements IStorage {
   async deleteInvestor(id: string): Promise<boolean> {
     const result = await db.delete(investors).where(eq(investors.id, id));
     return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Subscription Invoices
+  async getSubscriptionInvoices(userId?: string): Promise<SubscriptionInvoice[]> {
+    if (userId) {
+      return await db.select().from(subscriptionInvoices)
+        .where(eq(subscriptionInvoices.userId, userId))
+        .orderBy(subscriptionInvoices.invoiceDate);
+    }
+    return await db.select().from(subscriptionInvoices).orderBy(subscriptionInvoices.invoiceDate);
+  }
+
+  async getSubscriptionInvoice(id: string): Promise<SubscriptionInvoice | undefined> {
+    const [invoice] = await db.select().from(subscriptionInvoices).where(eq(subscriptionInvoices.id, id));
+    return invoice;
+  }
+
+  async createSubscriptionInvoice(invoice: InsertSubscriptionInvoice): Promise<SubscriptionInvoice> {
+    const [created] = await db.insert(subscriptionInvoices).values(invoice as any).returning();
+    return created;
+  }
+
+  async getNextSubscriptionInvoiceSerialNumber(): Promise<string> {
+    // Get the count of existing invoices
+    const [result] = await db.select({ count: sql<number>`count(*)` }).from(subscriptionInvoices);
+    const count = (result?.count || 0) + 1;
+    
+    // Format: 0001-YYYYMMDD-HHMMSS
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+    const timeStr = now.toISOString().slice(11, 19).replace(/:/g, ''); // HHMMSS
+    const serialNumber = `${count.toString().padStart(4, '0')}-${dateStr}-${timeStr}`;
+    
+    return serialNumber;
   }
 }
 
