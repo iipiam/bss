@@ -589,6 +589,20 @@ export interface Translations {
   // Additional Pages
   deliveryProfitability: string;
   salesComparison: string;
+  
+  // Welcome Video Slides
+  videoSlide1Title: string;
+  videoSlide1Subtitle: string;
+  videoSlide2Title: string;
+  videoSlide2Subtitle: string;
+  videoSlide3Title: string;
+  videoSlide3Subtitle: string;
+  videoSlide4Title: string;
+  videoSlide4Subtitle: string;
+  videoSlide5Title: string;
+  videoSlide5Subtitle: string;
+  videoSlide6Title: string;
+  videoSlide6Subtitle: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -1178,6 +1192,20 @@ export const translations: Record<Language, Translations> = {
     // Additional Pages
     deliveryProfitability: 'Delivery Profitability',
     salesComparison: 'Sales Comparison',
+    
+    // Welcome Video Slides
+    videoSlide1Title: 'Meet Ahmad - Restaurant Owner',
+    videoSlide1Subtitle: 'Struggling with manual inventory, lost orders, and declining profits',
+    videoSlide2Title: 'Real-Time POS System',
+    videoSlide2Subtitle: 'Process orders instantly • Track sales live • Accept multiple payment methods',
+    videoSlide3Title: 'Smart Inventory Management',
+    videoSlide3Subtitle: 'Automatic stock deduction • Low stock alerts • Never run out of ingredients',
+    videoSlide4Title: 'ZATCA-Compliant Invoices',
+    videoSlide4Subtitle: 'Generate bilingual invoices instantly • QR codes • Full tax compliance',
+    videoSlide5Title: 'Powerful Analytics Dashboard',
+    videoSlide5Subtitle: 'Track profitability • Forecast demand • Make data-driven decisions',
+    videoSlide6Title: 'Ahmad\'s Success Story',
+    videoSlide6Subtitle: '300% revenue growth • 5 new branches • Join thousands of thriving restaurants',
   },
   
   Arabic: {
@@ -1766,6 +1794,20 @@ export const translations: Record<Language, Translations> = {
     // Additional Pages
     deliveryProfitability: 'ربحية التوصيل',
     salesComparison: 'مقارنة المبيعات',
+    
+    // Welcome Video Slides
+    videoSlide1Title: 'تعرف على أحمد - صاحب مطعم',
+    videoSlide1Subtitle: 'يعاني من المخزون اليدوي، الطلبات المفقودة، وانخفاض الأرباح',
+    videoSlide2Title: 'نظام نقطة بيع فوري',
+    videoSlide2Subtitle: 'معالجة الطلبات فورياً • تتبع المبيعات مباشرة • قبول طرق دفع متعددة',
+    videoSlide3Title: 'إدارة مخزون ذكية',
+    videoSlide3Subtitle: 'خصم تلقائي للمخزون • تنبيهات المخزون المنخفض • لن تنفد المكونات أبداً',
+    videoSlide4Title: 'فواتير متوافقة مع الزكاة',
+    videoSlide4Subtitle: 'إنشاء فواتير ثنائية اللغة فورياً • رموز QR • امتثال كامل للضرائب',
+    videoSlide5Title: 'لوحة تحليلات قوية',
+    videoSlide5Subtitle: 'تتبع الربحية • توقع الطلب • اتخاذ قرارات مدعومة بالبيانات',
+    videoSlide6Title: 'قصة نجاح أحمد',
+    videoSlide6Subtitle: '300% نمو في الإيرادات • 5 فروع جديدة • انضم لآلاف المطاعم المزدهرة',
   },
   
   Chinese: {
@@ -2338,6 +2380,20 @@ export const translations: Record<Language, Translations> = {
     pleaseTryAgainLater: '请稍后重试。',
     
     // Additional Pages
+    
+    // Welcome Video Slides
+    videoSlide1Title: '认识艾哈迈德 - 餐厅老板',
+    videoSlide1Subtitle: '手动库存管理困难、订单丢失、利润下降',
+    videoSlide2Title: '实时收银系统',
+    videoSlide2Subtitle: '即时处理订单 • 实时跟踪销售 • 接受多种支付方式',
+    videoSlide3Title: '智能库存管理',
+    videoSlide3Subtitle: '自动扣除库存 • 低库存警报 • 永不缺货',
+    videoSlide4Title: '符合ZATCA的发票',
+    videoSlide4Subtitle: '即时生成双语发票 • 二维码 • 完全符合税务',
+    videoSlide5Title: '强大的分析仪表板',
+    videoSlide5Subtitle: '跟踪盈利能力 • 预测需求 • 数据驱动决策',
+    videoSlide6Title: '艾哈迈德的成功故事',
+    videoSlide6Subtitle: '收入增长300% • 5家新分店 • 加入数千家繁荣的餐厅',
     deliveryProfitability: '配送盈利能力',
     salesComparison: '销售对比',
   },
@@ -2898,6 +2954,20 @@ export const translations: Record<Language, Translations> = {
     failedToFetchBills: 'Rechnungen konnten nicht abgerufen werden',
     invalidResetLink: 'Ungültiger Reset-Link',
     invalidResetLinkDesc: 'Der Passwort-Reset-Link ist ungültig oder abgelaufen.',
+    
+    // Welcome Video Slides
+    videoSlide1Title: 'Lernen Sie Ahmad kennen - Restaurantbesitzer',
+    videoSlide1Subtitle: 'Kämpft mit manueller Bestandsverwaltung, verlorenen Bestellungen und sinkenden Gewinnen',
+    videoSlide2Title: 'Echtzeit-Kassensystem',
+    videoSlide2Subtitle: 'Sofortige Bestellabwicklung • Live-Verkaufsverfolgung • Mehrere Zahlungsmethoden',
+    videoSlide3Title: 'Intelligente Bestandsverwaltung',
+    videoSlide3Subtitle: 'Automatischer Lagerabzug • Warnungen bei niedrigem Bestand • Nie mehr ohne Zutaten',
+    videoSlide4Title: 'ZATCA-konforme Rechnungen',
+    videoSlide4Subtitle: 'Sofortige zweisprachige Rechnungen • QR-Codes • Vollständige Steuerkonformität',
+    videoSlide5Title: 'Leistungsstarkes Analyse-Dashboard',
+    videoSlide5Subtitle: 'Rentabilität verfolgen • Nachfrage prognostizieren • Datengestützte Entscheidungen',
+    videoSlide6Title: 'Ahmads Erfolgsgeschichte',
+    videoSlide6Subtitle: '300% Umsatzwachstum • 5 neue Filialen • Schließen Sie sich Tausenden erfolgreichen Restaurants an',
     passwordsDontMatch: 'Passwörter stimmen nicht überein',
     passwordsDontMatchDesc: 'Bitte stellen Sie sicher, dass beide Passwörter gleich sind.',
     passwordTooShort: 'Passwort zu kurz',
@@ -3458,6 +3528,20 @@ export const translations: Record<Language, Translations> = {
     failedToExportFinancial: 'वित्तीय डेटा निर्यात करने में विफल',
     exportFailed: 'निर्यात विफल',
     failedToResetPassword: 'पासवर्ड रीसेट करने में विफल',
+    
+    // Welcome Video Slides
+    videoSlide1Title: 'अहमद से मिलें - रेस्तरां मालिक',
+    videoSlide1Subtitle: 'मैनुअल इन्वेंटरी, खोए ऑर्डर, और गिरते मुनाफे से जूझ रहे हैं',
+    videoSlide2Title: 'रियल-टाइम POS सिस्टम',
+    videoSlide2Subtitle: 'तुरंत ऑर्डर प्रोसेस करें • लाइव सेल्स ट्रैक करें • कई भुगतान विधियां स्वीकार करें',
+    videoSlide3Title: 'स्मार्ट इन्वेंटरी प्रबंधन',
+    videoSlide3Subtitle: 'स्वचालित स्टॉक कटौती • कम स्टॉक अलर्ट • कभी सामग्री खत्म नहीं होगी',
+    videoSlide4Title: 'ZATCA-अनुपालक चालान',
+    videoSlide4Subtitle: 'तुरंत द्विभाषी चालान जेनरेट करें • QR कोड • पूर्ण कर अनुपालन',
+    videoSlide5Title: 'शक्तिशाली विश्लेषण डैशबोर्ड',
+    videoSlide5Subtitle: 'लाभप्रदता ट्रैक करें • मांग का पूर्वानुमान लगाएं • डेटा-आधारित निर्णय लें',
+    videoSlide6Title: 'अहमद की सफलता की कहानी',
+    videoSlide6Subtitle: '300% राजस्व वृद्धि • 5 नई शाखाएं • हजारों समृद्ध रेस्तरां में शामिल हों',
     failedToSendResetEmail: 'रीसेट ईमेल भेजने में विफल',
     failedToUpdateDevicePreference: 'डिवाइस वरीयता अपडेट करने में विफल',
     failedToExportProfitability: 'लाभप्रदता डेटा निर्यात करने में विफल',
@@ -4018,6 +4102,20 @@ export const translations: Record<Language, Translations> = {
     failedToCreateBranch: 'شاخ بنانے میں ناکام',
     failedToUpdateBranch: 'شاخ کو اپ ڈیٹ کرنے میں ناکام',
     failedToCreateCustomer: 'گاہک بنانے میں ناکام',
+    
+    // Welcome Video Slides
+    videoSlide1Title: 'احمد سے ملیں - ریستوران کے مالک',
+    videoSlide1Subtitle: 'دستی انوینٹری، گمشدہ آرڈرز، اور گرتے ہوئے منافع سے نمٹنا',
+    videoSlide2Title: 'ریئل ٹائم POS سسٹم',
+    videoSlide2Subtitle: 'فوری طور پر آرڈرز کی کارروائی • لائیو سیلز ٹریک کریں • متعدد ادائیگی کے طریقے',
+    videoSlide3Title: 'سمارٹ انوینٹری مینجمنٹ',
+    videoSlide3Subtitle: 'خودکار اسٹاک کی کٹوتی • کم اسٹاک الرٹس • اجزاء کبھی ختم نہیں ہوں گے',
+    videoSlide4Title: 'ZATCA کے مطابق رسیدیں',
+    videoSlide4Subtitle: 'فوری طور پر دو لسانی رسیدیں بنائیں • QR کوڈز • مکمل ٹیکس تعمیل',
+    videoSlide5Title: 'طاقتور تجزیات ڈیش بورڈ',
+    videoSlide5Subtitle: 'منافع کو ٹریک کریں • طلب کی پیش گوئی کریں • ڈیٹا پر مبنی فیصلے کریں',
+    videoSlide6Title: 'احمد کی کامیابی کی کہانی',
+    videoSlide6Subtitle: '300% آمدنی میں اضافہ • 5 نئی شاخیں • ہزاروں خوشحال ریستورانوں میں شامل ہوں',
     failedToUpdateCustomer: 'گاہک کو اپ ڈیٹ کرنے میں ناکام',
     failedToDeleteCustomer: 'گاہک کو حذف کرنے میں ناکام',
     failedToExportCustomers: 'گاہک ڈیٹا برآمد کرنے میں ناکام',
@@ -4578,6 +4676,20 @@ export const translations: Record<Language, Translations> = {
     billsFound: 'বিল পাওয়া গেছে',
     noBillsFound: 'কোন বিল পাওয়া যায়নি',
     actions: 'কর্ম',
+    
+    // Welcome Video Slides
+    videoSlide1Title: 'আহমাদের সাথে দেখা করুন - রেস্তোরাঁ মালিক',
+    videoSlide1Subtitle: 'ম্যানুয়াল ইনভেন্টরি, হারানো অর্ডার, এবং কমতে থাকা লাভের সাথে লড়াই',
+    videoSlide2Title: 'রিয়েল-টাইম POS সিস্টেম',
+    videoSlide2Subtitle: 'তাৎক্ষণিক অর্ডার প্রসেস করুন • লাইভ বিক্রয় ট্র্যাক করুন • একাধিক পেমেন্ট পদ্ধতি',
+    videoSlide3Title: 'স্মার্ট ইনভেন্টরি ম্যানেজমেন্ট',
+    videoSlide3Subtitle: 'স্বয়ংক্রিয় স্টক কর্তন • কম স্টক সতর্কতা • উপাদান কখনও শেষ হবে না',
+    videoSlide4Title: 'ZATCA-সম্মত চালান',
+    videoSlide4Subtitle: 'তাৎক্ষণিক দ্বিভাষিক চালান তৈরি করুন • QR কোড • সম্পূর্ণ কর সম্মতি',
+    videoSlide5Title: 'শক্তিশালী বিশ্লেষণ ড্যাশবোর্ড',
+    videoSlide5Subtitle: 'লাভজনকতা ট্র্যাক করুন • চাহিদার পূর্বাভাস দিন • ডেটা-চালিত সিদ্ধান্ত নিন',
+    videoSlide6Title: 'আহমাদের সাফল্যের গল্প',
+    videoSlide6Subtitle: '300% রাজস্ব বৃদ্ধি • 5টি নতুন শাখা • হাজার হাজার সমৃদ্ধ রেস্তোরাঁয় যোগ দিন',
     unarchive: 'সংরক্ষণাগার থেকে বের করুন',
     archive: 'সংরক্ষণাগারভুক্ত করুন',
     somethingWentWrong: 'কিছু ভুল হয়েছে',
