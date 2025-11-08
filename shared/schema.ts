@@ -258,6 +258,45 @@ export const users = pgTable("users", {
   passwordResetExpiry: timestamp("password_reset_expiry"),
   devicePreference: text("device_preference").default("laptop"), // "laptop", "ipad", or "iphone"
   active: boolean("active").notNull().default(true),
+  
+  // Recruitment Data
+  employeeNumber: text("employee_number"),
+  hireDate: timestamp("hire_date"),
+  recruitmentSource: text("recruitment_source"), // "referral", "job_board", "agency", "walk_in", "other"
+  probationEndDate: timestamp("probation_end_date"),
+  contractType: text("contract_type"), // "full_time", "part_time", "contract", "temporary"
+  
+  // Vacation Days Tracking
+  vacationDaysTotal: integer("vacation_days_total").default(0),
+  vacationDaysUsed: integer("vacation_days_used").default(0),
+  
+  // Visa Information
+  visaNumber: text("visa_number"),
+  visaFees: decimal("visa_fees", { precision: 10, scale: 2 }),
+  visaExpiryDate: timestamp("visa_expiry_date"),
+  visaStatus: text("visa_status"), // "valid", "expired", "pending", "not_applicable"
+  
+  // Ticket Information
+  ticketAmount: decimal("ticket_amount", { precision: 10, scale: 2 }),
+  ticketDestination: text("ticket_destination"),
+  ticketDate: timestamp("ticket_date"),
+  ticketStatus: text("ticket_status"), // "pending", "booked", "used", "not_applicable"
+  
+  // Performance Tracking
+  performanceRating: decimal("performance_rating", { precision: 3, scale: 2 }), // 0.00 to 5.00
+  lastReviewDate: timestamp("last_review_date"),
+  performanceNotes: text("performance_notes"),
+  
+  // Compliance
+  documents: jsonb("documents").$type<Array<{
+    name: string;
+    type: string; // "iqama", "passport", "contract", "medical", "other"
+    expiryDate: string | null;
+    status: string; // "valid", "expired", "pending"
+  }>>(),
+  certifications: text("certifications").array(),
+  trainingCompleted: text("training_completed").array(),
+  
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
