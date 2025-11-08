@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn, UserPlus, UtensilsCrossed, Check, Languages } from "lucide-react";
+import { LogIn, UserPlus, UtensilsCrossed, Check, Languages, Play, Video } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
@@ -116,9 +116,6 @@ export default function Login() {
       return response.json();
     },
     onSuccess: async () => {
-      // Show welcome video for new users
-      setShowWelcomeVideo(true);
-      
       toast({
         title: t.accountCreated,
         description: t.accountCreatedDesc,
@@ -219,6 +216,35 @@ export default function Login() {
           </div>
         </CardHeader>
         <CardContent>
+          {/* Video Preview Card - Watch before signing up */}
+          <div className="mb-6">
+            <button
+              onClick={() => setShowWelcomeVideo(true)}
+              className="w-full group relative overflow-hidden rounded-xl bg-gradient-to-r from-primary to-primary/80 p-6 hover-elevate active-elevate-2 transition-all"
+              data-testid="button-watch-intro-video"
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex-shrink-0 bg-white/20 backdrop-blur-sm rounded-full p-3 group-hover:bg-white/30 transition-colors">
+                    <Play className="h-8 w-8 text-white fill-white" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-lg font-bold text-white mb-1">
+                      Watch Our Success Story
+                    </h3>
+                    <p className="text-sm text-white/90">
+                      See how RestoPOS transforms businesses • 30 sec
+                    </p>
+                  </div>
+                </div>
+                <Video className="h-8 w-8 text-white/80 group-hover:text-white transition-colors" />
+              </div>
+              
+              {/* Animated shimmer effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+            </button>
+          </div>
+
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login" data-testid="tab-login">{t.login}</TabsTrigger>
