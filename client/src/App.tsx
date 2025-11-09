@@ -67,6 +67,7 @@ import Investors from "@/pages/investors";
 import Support from "@/pages/support";
 import SupportDetail from "@/pages/support-detail";
 import Login from "@/pages/login";
+import Signup from "@/pages/signup";
 import Setup from "@/pages/setup";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
@@ -173,8 +174,11 @@ function AppContent() {
   // Apply device-specific container styles
   const containerMaxWidth = device === 'iphone' ? '430px' : device === 'ipad' ? '820px' : '100%';
 
-  // Handle public routes (forgot-password, reset-password) before checking authentication
+  // Handle public routes (signup, forgot-password, reset-password) before checking authentication
   const currentPath = window.location.pathname;
+  if (currentPath === "/signup") {
+    return <Signup />;
+  }
   if (currentPath === "/forgot-password") {
     return <ForgotPassword />;
   }

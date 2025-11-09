@@ -668,3 +668,89 @@ export const insertEmployeeActivityLogSchema = createInsertSchema(employeeActivi
 });
 export type InsertEmployeeActivityLog = z.infer<typeof insertEmployeeActivityLogSchema>;
 export type EmployeeActivityLog = typeof employeeActivityLog.$inferSelect;
+
+// Signup Drafts (Multi-Step Registration - Tenant-Agnostic until completion)
+export const signupDrafts = pgTable("signup_drafts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Step 1-2: Company Info + Owner Details
+  restaurantName: text("restaurant_name").notNull(),
+  commercialRegistration: text("commercial_registration").notNull(), // Unique business identifier
+  nationalId: text("national_id").notNull(),
+  taxNumber: text("tax_number").notNull(),
+  restaurantType: text("restaurant_type").notNull(), // Restaurant, Cloud Kitchen, Coffee Shop, Tea Shop, Sweets Shop
+  address: text("address").notNull(),
+  businessPhone: text("business_phone").notNull(),
+  
+  ownerName: text("owner_name").notNull(),
+  ownerEmail: text("owner_email").notNull(), // Unique per signup
+  ownerPhone: text("owner_phone").notNull(),
+  username: text("username").notNull(),
+  // NOTE: Password is NEVER stored in draft - only hashed in final restaurant creation
+  
+  // Step 3: Plan Selection & Pricing (15% VAT compliance)
+  subscriptionPlan: text("subscription_plan"), // weekly | monthly | yearly
+  branchesCount: integer("branches_count"),
+  basePrice: decimal("base_price", { precision: 10, scale: 2 }), // Before VAT
+  vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }), // 15% VAT
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }), // Total including VAT
+  
+  // Step 4: Payment (Stripe Integration)
+  stripeCustomerId: text("stripe_customer_id"), // Unique
+  stripePaymentIntentId: text("stripe_payment_intent_id"), // Unique
+  stripeSubscriptionId: text("stripe_subscription_id"), // Unique
+  paymentStatus: text("payment_status").notNull().default("pending"), // pending | succeeded | failed | refunded
+  paymentCompletedAt: timestamp("payment_completed_at"),
+  
+  // Step 5: OTP Verification (Twilio SMS - Security: Hashed Storage)
+  otpCodeHash: text("otp_code_hash"), // Bcrypt hashed OTP for security
+  otpSentAt: timestamp("otp_sent_at"),
+  otpVerifiedAt: timestamp("otp_verified_at"),
+  otpAttempts: integer("otp_attempts").notNull().default(0), // Max 5 attempts
+  otpLockedAt: timestamp("otp_locked_at"), // Lock after 5 failed attempts
+  
+  // Step 6: Completion Status
+  status: text("status").notNull().default("draft"), // draft | payment_pending | otp_pending | completed | failed | expired
+  completedAt: timestamp("completed_at"),
+  failureReason: text("failure_reason"), // Error message if failed
+  
+  // Post-Activation Reference (filled after completion)
+  restaurantId: varchar("restaurant_id"), // NO foreign key - reference only
+  userId: varchar("user_id"), // Admin user created after signup
+  
+  // Idempotency & Rate Limiting
+  idempotencyKey: text("idempotency_key"), // For preventing duplicate submissions
+  ipAddress: text("ip_address"), // Track for rate limiting
+  userAgent: text("user_agent"),
+  
+  // Lifecycle Management
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at").notNull().default(sql`NOW() + INTERVAL '24 hours'`), // Auto-expire drafts
+  
+}, (table) => ({
+  // Prevent duplicate signups from same business
+  uniqueCommercialReg: uniqueIndex("signup_drafts_commercial_reg_idx").on(table.commercialRegistration),
+  uniqueOwnerEmail: uniqueIndex("signup_drafts_owner_email_idx").on(table.ownerEmail),
+  // Index for cleanup cron job
+  expiresAtIdx: uniqueIndex("signup_drafts_expires_at_idx").on(table.expiresAt),
+  // Stripe reference uniqueness
+  stripePaymentIntentIdx: uniqueIndex("signup_drafts_stripe_intent_idx").on(table.stripePaymentIntentId),
+}));
+
+export const insertSignupDraftSchema = createInsertSchema(signupDrafts).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true,
+  expiresAt: true,
+}).extend({
+  restaurantType: z.enum(["Restaurant", "Cloud Kitchen", "Coffee Shop", "Tea Shop", "Sweets Shop"]),
+  subscriptionPlan: z.enum(["weekly", "monthly", "yearly"]).optional(),
+  status: z.enum(["draft", "payment_pending", "otp_pending", "completed", "failed", "expired"]).default("draft"),
+  paymentStatus: z.enum(["pending", "succeeded", "failed", "refunded"]).default("pending"),
+  ownerEmail: z.string().email("Invalid email address"),
+  branchesCount: z.number().min(1, "Must have at least 1 branch").optional(),
+});
+
+export type InsertSignupDraft = z.infer<typeof insertSignupDraftSchema>;
+export type SignupDraft = typeof signupDrafts.$inferSelect;
