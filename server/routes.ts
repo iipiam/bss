@@ -1234,6 +1234,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Don't fail signup if invoice generation fails
       }
 
+      // Store user in session (Task 12: Include restaurantId)
+      if (req.session) {
+        req.session.userId = user.id;
+        req.session.role = user.role;
+        req.session.restaurantId = user.restaurantId; // NEW: Store restaurantId
+        console.log("[SIGNUP] Session created for new user:", user.id, "restaurant:", user.restaurantId);
+      }
+
       res.status(201).json({ 
         id: user.id, 
         username: user.username, 
@@ -1288,11 +1296,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
-      // Store user in session
+      // Store user in session (Task 12: Include restaurantId)
       if (req.session) {
         req.session.userId = user.id;
         req.session.role = user.role;
-        console.log("[AUTH] Session created for user:", user.id);
+        req.session.restaurantId = user.restaurantId; // NEW: Store restaurantId
+        console.log("[AUTH] Session created for user:", user.id, "restaurant:", user.restaurantId);
       }
 
       // Return user without password

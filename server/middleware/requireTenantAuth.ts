@@ -68,14 +68,21 @@ export async function requireTenantAuth(req: Request, res: Response, next: NextF
     req.restaurantId = user.restaurantId;
     req.currentUser = user;
 
-    next();
+    // Ensure session changes are persisted (especially for legacy sessions)
+    req.session.save((err) => {
+      if (err) {
+        console.error("[AUTH MIDDLEWARE] Session save error:", err);
+        return next(err);
+      }
+      next();
+    });
   } catch (error) {
     console.error("[AUTH MIDDLEWARE] Error:", error);
     res.status(500).json({ error: "Authentication failed" });
   }
 }
 
-// Optional: Middleware for routes that also need admin role
+// Middleware for routes that also need admin role
 export async function requireAdminAuth(req: Request, res: Response, next: NextFunction) {
   await requireTenantAuth(req, res, () => {
     if (req.currentUser?.role !== "admin") {
