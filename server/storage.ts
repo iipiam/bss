@@ -69,266 +69,265 @@ import bcrypt from "bcrypt";
 
 export interface IStorage {
   // Branches
-  getBranches(): Promise<Branch[]>;
-  getBranch(id: string): Promise<Branch | undefined>;
-  createBranch(branch: InsertBranch): Promise<Branch>;
-  updateBranch(id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined>;
-  deleteBranch(id: string): Promise<boolean>;
+  getBranches(restaurantId: string): Promise<Branch[]>;
+  getBranch(restaurantId: string, id: string): Promise<Branch | undefined>;
+  createBranch(restaurantId: string, branch: InsertBranch): Promise<Branch>;
+  updateBranch(restaurantId: string, id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined>;
+  deleteBranch(restaurantId: string, id: string): Promise<boolean>;
 
   // Inventory
-  getInventoryItems(branchId?: string): Promise<InventoryItem[]>;
-  getInventoryItem(id: string): Promise<InventoryItem | undefined>;
-  createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem>;
-  updateInventoryItem(id: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined>;
-  updateInventoryItemsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
-  deleteInventoryItem(id: string): Promise<boolean>;
+  getInventoryItems(restaurantId: string, branchId?: string): Promise<InventoryItem[]>;
+  getInventoryItem(restaurantId: string, id: string): Promise<InventoryItem | undefined>;
+  createInventoryItem(restaurantId: string, item: InsertInventoryItem): Promise<InventoryItem>;
+  updateInventoryItem(restaurantId: string, id: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined>;
+  updateInventoryItemsSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void>;
+  deleteInventoryItem(restaurantId: string, id: string): Promise<boolean>;
 
   // Menu
-  getMenuItems(): Promise<MenuItem[]>;
-  getMenuItem(id: string): Promise<MenuItem | undefined>;
-  createMenuItem(item: InsertMenuItem): Promise<MenuItem>;
-  updateMenuItem(id: string, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined>;
-  deleteMenuItem(id: string): Promise<boolean>;
-  getMenuItemsStock(branchId?: string): Promise<Record<string, number>>;
+  getMenuItems(restaurantId: string): Promise<MenuItem[]>;
+  getMenuItem(restaurantId: string, id: string): Promise<MenuItem | undefined>;
+  createMenuItem(restaurantId: string, item: InsertMenuItem): Promise<MenuItem>;
+  updateMenuItem(restaurantId: string, id: string, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined>;
+  deleteMenuItem(restaurantId: string, id: string): Promise<boolean>;
+  getMenuItemsStock(restaurantId: string, branchId?: string): Promise<Record<string, number>>;
 
   // Add-ons
-  getAddons(menuItemId?: string): Promise<Addon[]>;
-  getAddon(id: string): Promise<Addon | undefined>;
-  createAddon(addon: InsertAddon): Promise<Addon>;
-  updateAddon(id: string, addon: Partial<InsertAddon>): Promise<Addon | undefined>;
-  deleteAddon(id: string): Promise<boolean>;
-  updateAddonsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
+  getAddons(restaurantId: string, menuItemId?: string): Promise<Addon[]>;
+  getAddon(restaurantId: string, id: string): Promise<Addon | undefined>;
+  createAddon(restaurantId: string, addon: InsertAddon): Promise<Addon>;
+  updateAddon(restaurantId: string, id: string, addon: Partial<InsertAddon>): Promise<Addon | undefined>;
+  deleteAddon(restaurantId: string, id: string): Promise<boolean>;
+  updateAddonsSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void>;
 
   // Recipes
-  getRecipes(): Promise<Recipe[]>;
-  getRecipe(id: string): Promise<Recipe | undefined>;
-  createRecipe(recipe: InsertRecipe): Promise<Recipe>;
-  updateRecipe(id: string, recipe: Partial<InsertRecipe>): Promise<Recipe | undefined>;
-  updateRecipesSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
-  deleteRecipe(id: string): Promise<boolean>;
+  getRecipes(restaurantId: string): Promise<Recipe[]>;
+  getRecipe(restaurantId: string, id: string): Promise<Recipe | undefined>;
+  createRecipe(restaurantId: string, recipe: InsertRecipe): Promise<Recipe>;
+  updateRecipe(restaurantId: string, id: string, recipe: Partial<InsertRecipe>): Promise<Recipe | undefined>;
+  updateRecipesSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void>;
+  deleteRecipe(restaurantId: string, id: string): Promise<boolean>;
 
   // Orders
-  getOrders(branchId?: string, status?: string): Promise<Order[]>;
-  getOrder(id: string): Promise<Order | undefined>;
-  createOrder(order: InsertOrder): Promise<Order>;
-  updateOrder(id: string, order: Partial<InsertOrder>): Promise<Order | undefined>;
-  deleteOrder(id: string): Promise<boolean>;
+  getOrders(restaurantId: string, branchId?: string, status?: string): Promise<Order[]>;
+  getOrder(restaurantId: string, id: string): Promise<Order | undefined>;
+  createOrder(restaurantId: string, order: InsertOrder): Promise<Order>;
+  updateOrder(restaurantId: string, id: string, order: Partial<InsertOrder>): Promise<Order | undefined>;
+  deleteOrder(restaurantId: string, id: string): Promise<boolean>;
 
   // Transactions
-  getTransactions(branchId?: string, startDate?: Date, endDate?: Date): Promise<Transaction[]>;
-  getTransaction(id: string): Promise<Transaction | undefined>;
-  createTransaction(transaction: InsertTransaction): Promise<Transaction>;
+  getTransactions(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date): Promise<Transaction[]>;
+  getTransaction(restaurantId: string, id: string): Promise<Transaction | undefined>;
+  createTransaction(restaurantId: string, transaction: InsertTransaction): Promise<Transaction>;
 
   // Settings
-  getSettings(): Promise<Settings | undefined>;
-  updateSettings(settings: Partial<InsertSettings>): Promise<Settings>;
+  getSettings(restaurantId: string): Promise<Settings | undefined>;
+  updateSettings(restaurantId: string, settings: Partial<InsertSettings>): Promise<Settings>;
 
   // Procurement
-  getProcurements(type?: string, status?: string, branchId?: string): Promise<Procurement[]>;
-  getProcurement(id: string): Promise<Procurement | undefined>;
-  createProcurement(procurement: InsertProcurement): Promise<Procurement>;
-  updateProcurement(id: string, procurement: Partial<InsertProcurement>): Promise<Procurement | undefined>;
-  deleteProcurement(id: string): Promise<boolean>;
+  getProcurements(restaurantId: string, type?: string, status?: string, branchId?: string): Promise<Procurement[]>;
+  getProcurement(restaurantId: string, id: string): Promise<Procurement | undefined>;
+  createProcurement(restaurantId: string, procurement: InsertProcurement): Promise<Procurement>;
+  updateProcurement(restaurantId: string, id: string, procurement: Partial<InsertProcurement>): Promise<Procurement | undefined>;
+  deleteProcurement(restaurantId: string, id: string): Promise<boolean>;
 
   // Users
-  getUsers(): Promise<User[]>;
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
-  deleteUser(id: string): Promise<boolean>;
-  setPasswordResetToken(userId: string, token: string, expiry: Date): Promise<void>;
-  getUserByResetToken(token: string): Promise<User | undefined>;
-  updatePassword(userId: string, newPassword: string): Promise<void>;
-  clearPasswordResetToken(userId: string): Promise<void>;
-  getUserProfile(userId: string): Promise<User | undefined>;
-  updateUserProfile(userId: string, profile: { email?: string; phone?: string }): Promise<User | undefined>;
-  cancelSubscription(userId: string): Promise<User | undefined>;
+  getUsers(restaurantId: string): Promise<User[]>;
+  getUser(restaurantId: string, id: string): Promise<User | undefined>;
+  getUserByUsername(restaurantId: string, username: string): Promise<User | undefined>;
+  getUserByEmail(restaurantId: string, email: string): Promise<User | undefined>;
+  createUser(restaurantId: string, user: InsertUser): Promise<User>;
+  updateUser(restaurantId: string, id: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(restaurantId: string, id: string): Promise<boolean>;
+  setPasswordResetToken(restaurantId: string, userId: string, token: string, expiry: Date): Promise<void>;
+  getUserByResetToken(restaurantId: string, token: string): Promise<User | undefined>;
+  updatePassword(restaurantId: string, userId: string, newPassword: string): Promise<void>;
+  clearPasswordResetToken(restaurantId: string, userId: string): Promise<void>;
+  getUserProfile(restaurantId: string, userId: string): Promise<User | undefined>;
+  updateUserProfile(restaurantId: string, userId: string, profile: { email?: string; phone?: string }): Promise<User | undefined>;
+  cancelSubscription(restaurantId: string, userId: string): Promise<User | undefined>;
 
   // Invoices
-  getInvoices(branchId?: string, startDate?: Date, endDate?: Date): Promise<Invoice[]>;
-  getInvoice(id: string): Promise<Invoice | undefined>;
-  createInvoice(invoice: InsertInvoice): Promise<Invoice>;
-  updateInvoice(id: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined>;
+  getInvoices(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date): Promise<Invoice[]>;
+  getInvoice(restaurantId: string, id: string): Promise<Invoice | undefined>;
+  createInvoice(restaurantId: string, invoice: InsertInvoice): Promise<Invoice>;
+  updateInvoice(restaurantId: string, id: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined>;
 
   // Customers
-  getCustomers(): Promise<Customer[]>;
-  getCustomer(id: string): Promise<Customer | undefined>;
-  createCustomer(customer: InsertCustomer): Promise<Customer>;
-  updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
-  deleteCustomer(id: string): Promise<boolean>;
+  getCustomers(restaurantId: string): Promise<Customer[]>;
+  getCustomer(restaurantId: string, id: string): Promise<Customer | undefined>;
+  createCustomer(restaurantId: string, customer: InsertCustomer): Promise<Customer>;
+  updateCustomer(restaurantId: string, id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
+  deleteCustomer(restaurantId: string, id: string): Promise<boolean>;
 
   // Shop Salaries
-  getSalaries(branchId?: string, startDate?: Date, endDate?: Date): Promise<Salary[]>;
-  getSalary(id: string): Promise<Salary | undefined>;
-  createSalary(salary: InsertSalary): Promise<Salary>;
-  updateSalary(id: string, salary: Partial<InsertSalary>): Promise<Salary | undefined>;
-  deleteSalary(id: string): Promise<boolean>;
+  getSalaries(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date): Promise<Salary[]>;
+  getSalary(restaurantId: string, id: string): Promise<Salary | undefined>;
+  createSalary(restaurantId: string, salary: InsertSalary): Promise<Salary>;
+  updateSalary(restaurantId: string, id: string, salary: Partial<InsertSalary>): Promise<Salary | undefined>;
+  deleteSalary(restaurantId: string, id: string): Promise<boolean>;
 
   // Shop Bills
-  getShopBills(branchId?: string, startDate?: Date, endDate?: Date, includeArchived?: boolean): Promise<ShopBill[]>;
-  getShopBill(id: string): Promise<ShopBill | undefined>;
-  createShopBill(bill: InsertShopBill): Promise<ShopBill>;
-  updateShopBill(id: string, bill: Partial<InsertShopBill>): Promise<ShopBill | undefined>;
-  deleteShopBill(id: string): Promise<boolean>;
-  archiveShopBill(id: string, archived: boolean): Promise<ShopBill | undefined>;
+  getShopBills(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date, includeArchived?: boolean): Promise<ShopBill[]>;
+  getShopBill(restaurantId: string, id: string): Promise<ShopBill | undefined>;
+  createShopBill(restaurantId: string, bill: InsertShopBill): Promise<ShopBill>;
+  updateShopBill(restaurantId: string, id: string, bill: Partial<InsertShopBill>): Promise<ShopBill | undefined>;
+  deleteShopBill(restaurantId: string, id: string): Promise<boolean>;
+  archiveShopBill(restaurantId: string, id: string, archived: boolean): Promise<ShopBill | undefined>;
 
   // Delivery Apps
-  getDeliveryApps(): Promise<DeliveryApp[]>;
-  getDeliveryApp(id: string): Promise<DeliveryApp | undefined>;
-  createDeliveryApp(app: InsertDeliveryApp): Promise<DeliveryApp>;
-  updateDeliveryApp(id: string, app: Partial<InsertDeliveryApp>): Promise<DeliveryApp | undefined>;
-  deleteDeliveryApp(id: string): Promise<boolean>;
-  updateDeliveryAppsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
-  getDeliveryAppProfitability(): Promise<any>;
+  getDeliveryApps(restaurantId: string): Promise<DeliveryApp[]>;
+  getDeliveryApp(restaurantId: string, id: string): Promise<DeliveryApp | undefined>;
+  createDeliveryApp(restaurantId: string, app: InsertDeliveryApp): Promise<DeliveryApp>;
+  updateDeliveryApp(restaurantId: string, id: string, app: Partial<InsertDeliveryApp>): Promise<DeliveryApp | undefined>;
+  deleteDeliveryApp(restaurantId: string, id: string): Promise<boolean>;
+  updateDeliveryAppsSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void>;
+  getDeliveryAppProfitability(restaurantId: string): Promise<any>;
 
   // Investors
-  getInvestors(): Promise<Investor[]>;
-  getInvestor(id: string): Promise<Investor | undefined>;
-  createInvestor(investor: InsertInvestor): Promise<Investor>;
-  updateInvestor(id: string, investor: Partial<InsertInvestor>): Promise<Investor | undefined>;
-  deleteInvestor(id: string): Promise<boolean>;
+  getInvestors(restaurantId: string): Promise<Investor[]>;
+  getInvestor(restaurantId: string, id: string): Promise<Investor | undefined>;
+  createInvestor(restaurantId: string, investor: InsertInvestor): Promise<Investor>;
+  updateInvestor(restaurantId: string, id: string, investor: Partial<InsertInvestor>): Promise<Investor | undefined>;
+  deleteInvestor(restaurantId: string, id: string): Promise<boolean>;
 
   // Subscription Invoices
-  getSubscriptionInvoices(userId?: string): Promise<SubscriptionInvoice[]>;
-  getSubscriptionInvoice(id: string): Promise<SubscriptionInvoice | undefined>;
-  createSubscriptionInvoice(invoice: InsertSubscriptionInvoice): Promise<SubscriptionInvoice>;
-  getNextSubscriptionInvoiceSerialNumber(): Promise<string>;
+  getSubscriptionInvoices(restaurantId: string, userId?: string): Promise<SubscriptionInvoice[]>;
+  getSubscriptionInvoice(restaurantId: string, id: string): Promise<SubscriptionInvoice | undefined>;
+  createSubscriptionInvoice(restaurantId: string, invoice: InsertSubscriptionInvoice): Promise<SubscriptionInvoice>;
+  getNextSubscriptionInvoiceSerialNumber(restaurantId: string): Promise<string>;
 
   // Monthly VAT Reports
-  getMonthlyVatReports(userId?: string): Promise<MonthlyVatReport[]>;
-  getVatReportByMonth(userId: string, month: number, year: number): Promise<MonthlyVatReport | undefined>;
-  createVatReport(report: InsertMonthlyVatReport): Promise<MonthlyVatReport>;
-  getNextVatReportSerialNumber(year: number, month: number): Promise<string>;
+  getMonthlyVatReports(restaurantId: string, userId?: string): Promise<MonthlyVatReport[]>;
+  getVatReportByMonth(restaurantId: string, userId: string, month: number, year: number): Promise<MonthlyVatReport | undefined>;
+  createVatReport(restaurantId: string, report: InsertMonthlyVatReport): Promise<MonthlyVatReport>;
+  getNextVatReportSerialNumber(restaurantId: string, year: number, month: number): Promise<string>;
 
   // Support Tickets
-  getSupportTickets(userId?: string, status?: string): Promise<SupportTicket[]>;
-  getSupportTicket(id: string): Promise<SupportTicket | undefined>;
-  createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket>;
-  updateSupportTicket(id: string, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined>;
-  getNextTicketNumber(): Promise<string>;
+  getSupportTickets(restaurantId: string, userId?: string, status?: string): Promise<SupportTicket[]>;
+  getSupportTicket(restaurantId: string, id: string): Promise<SupportTicket | undefined>;
+  createSupportTicket(restaurantId: string, ticket: InsertSupportTicket): Promise<SupportTicket>;
+  updateSupportTicket(restaurantId: string, id: string, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined>;
+  getNextTicketNumber(restaurantId: string): Promise<string>;
 
   // Ticket Messages
-  getTicketMessages(ticketId: string): Promise<TicketMessage[]>;
-  createTicketMessage(message: InsertTicketMessage): Promise<TicketMessage>;
-  markMessagesAsRead(ticketId: string, userId: string): Promise<void>;
-  getUnreadMessageCount(userId: string): Promise<number>;
+  getTicketMessages(restaurantId: string, ticketId: string): Promise<TicketMessage[]>;
+  createTicketMessage(restaurantId: string, message: InsertTicketMessage): Promise<TicketMessage>;
+  markMessagesAsRead(restaurantId: string, ticketId: string, userId: string): Promise<void>;
+  getUnreadMessageCount(restaurantId: string, userId: string): Promise<number>;
 
   // Employee Activity Log
-  getEmployeeActivities(employeeId?: string, category?: string, startDate?: Date, endDate?: Date): Promise<EmployeeActivityLog[]>;
-  createEmployeeActivity(activity: InsertEmployeeActivityLog): Promise<EmployeeActivityLog>;
-  getEmployeeActivityStats(employeeId: string): Promise<any>;
+  getEmployeeActivities(restaurantId: string, employeeId?: string, category?: string, startDate?: Date, endDate?: Date): Promise<EmployeeActivityLog[]>;
+  createEmployeeActivity(restaurantId: string, activity: InsertEmployeeActivityLog): Promise<EmployeeActivityLog>;
+  getEmployeeActivityStats(restaurantId: string, employeeId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
   // Branches
-  async getBranches(): Promise<Branch[]> {
-    return await db.select().from(branches);
+  async getBranches(restaurantId: string): Promise<Branch[]> {
+    return await db.select().from(branches).where(eq(branches.restaurantId, restaurantId));
   }
 
-  async getBranch(id: string): Promise<Branch | undefined> {
-    const [branch] = await db.select().from(branches).where(eq(branches.id, id));
+  async getBranch(restaurantId: string, id: string): Promise<Branch | undefined> {
+    const [branch] = await db.select().from(branches).where(and(eq(branches.restaurantId, restaurantId), eq(branches.id, id)));
     return branch;
   }
 
-  async createBranch(branch: InsertBranch): Promise<Branch> {
-    const [created] = await db.insert(branches).values(branch).returning();
+  async createBranch(restaurantId: string, branch: InsertBranch): Promise<Branch> {
+    const [created] = await db.insert(branches).values({ ...branch, restaurantId }).returning();
     return created;
   }
 
-  async updateBranch(id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined> {
+  async updateBranch(restaurantId: string, id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(branch).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getBranch(id);
+      return this.getBranch(restaurantId, id);
     }
-    const [updated] = await db.update(branches).set(updateData).where(eq(branches.id, id)).returning();
+    const [updated] = await db.update(branches).set(updateData).where(and(eq(branches.restaurantId, restaurantId), eq(branches.id, id))).returning();
     return updated;
   }
 
-  async deleteBranch(id: string): Promise<boolean> {
-    const result = await db.delete(branches).where(eq(branches.id, id));
+  async deleteBranch(restaurantId: string, id: string): Promise<boolean> {
+    const result = await db.delete(branches).where(and(eq(branches.restaurantId, restaurantId), eq(branches.id, id)));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
   // Inventory
-  async getInventoryItems(branchId?: string): Promise<InventoryItem[]> {
-    if (branchId) {
-      return await db.select().from(inventoryItems).where(eq(inventoryItems.branchId, branchId));
-    }
-    return await db.select().from(inventoryItems);
+  async getInventoryItems(restaurantId: string, branchId?: string): Promise<InventoryItem[]> {
+    const filters = [eq(inventoryItems.restaurantId, restaurantId)];
+    if (branchId) filters.push(eq(inventoryItems.branchId, branchId));
+    return await db.select().from(inventoryItems).where(and(...filters));
   }
 
-  async getInventoryItem(id: string): Promise<InventoryItem | undefined> {
-    const [item] = await db.select().from(inventoryItems).where(eq(inventoryItems.id, id));
+  async getInventoryItem(restaurantId: string, id: string): Promise<InventoryItem | undefined> {
+    const [item] = await db.select().from(inventoryItems).where(and(eq(inventoryItems.restaurantId, restaurantId), eq(inventoryItems.id, id)));
     return item;
   }
 
-  async createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem> {
-    const [created] = await db.insert(inventoryItems).values(item).returning();
+  async createInventoryItem(restaurantId: string, item: InsertInventoryItem): Promise<InventoryItem> {
+    const [created] = await db.insert(inventoryItems).values({ ...item, restaurantId }).returning();
     return created;
   }
 
-  async updateInventoryItem(id: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined> {
+  async updateInventoryItem(restaurantId: string, id: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(item).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getInventoryItem(id);
+      return this.getInventoryItem(restaurantId, id);
     }
-    const [updated] = await db.update(inventoryItems).set(updateData).where(eq(inventoryItems.id, id)).returning();
+    const [updated] = await db.update(inventoryItems).set(updateData).where(and(eq(inventoryItems.restaurantId, restaurantId), eq(inventoryItems.id, id))).returning();
     return updated;
   }
 
-  async updateInventoryItemsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void> {
+  async updateInventoryItemsSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void> {
     for (const update of updates) {
-      await db.update(inventoryItems).set({ sortOrder: update.sortOrder }).where(eq(inventoryItems.id, update.id));
+      await db.update(inventoryItems).set({ sortOrder: update.sortOrder }).where(and(eq(inventoryItems.restaurantId, restaurantId), eq(inventoryItems.id, update.id)));
     }
   }
 
-  async deleteInventoryItem(id: string): Promise<boolean> {
-    const result = await db.delete(inventoryItems).where(eq(inventoryItems.id, id));
+  async deleteInventoryItem(restaurantId: string, id: string): Promise<boolean> {
+    const result = await db.delete(inventoryItems).where(and(eq(inventoryItems.restaurantId, restaurantId), eq(inventoryItems.id, id)));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
   // Menu
-  async getMenuItems(): Promise<MenuItem[]> {
-    return await db.select().from(menuItems);
+  async getMenuItems(restaurantId: string): Promise<MenuItem[]> {
+    return await db.select().from(menuItems).where(eq(menuItems.restaurantId, restaurantId));
   }
 
-  async getMenuItem(id: string): Promise<MenuItem | undefined> {
-    const [item] = await db.select().from(menuItems).where(eq(menuItems.id, id));
+  async getMenuItem(restaurantId: string, id: string): Promise<MenuItem | undefined> {
+    const [item] = await db.select().from(menuItems).where(and(eq(menuItems.restaurantId, restaurantId), eq(menuItems.id, id)));
     return item;
   }
 
-  async createMenuItem(item: InsertMenuItem): Promise<MenuItem> {
-    const [created] = await db.insert(menuItems).values(item).returning();
+  async createMenuItem(restaurantId: string, item: InsertMenuItem): Promise<MenuItem> {
+    const [created] = await db.insert(menuItems).values({ ...item, restaurantId }).returning();
     return created;
   }
 
-  async updateMenuItem(id: string, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined> {
+  async updateMenuItem(restaurantId: string, id: string, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(item).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getMenuItem(id);
+      return this.getMenuItem(restaurantId, id);
     }
-    const [updated] = await db.update(menuItems).set(updateData).where(eq(menuItems.id, id)).returning();
+    const [updated] = await db.update(menuItems).set(updateData).where(and(eq(menuItems.restaurantId, restaurantId), eq(menuItems.id, id))).returning();
     return updated;
   }
 
-  async deleteMenuItem(id: string): Promise<boolean> {
-    const result = await db.delete(menuItems).where(eq(menuItems.id, id));
+  async deleteMenuItem(restaurantId: string, id: string): Promise<boolean> {
+    const result = await db.delete(menuItems).where(and(eq(menuItems.restaurantId, restaurantId), eq(menuItems.id, id)));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
-  async getMenuItemsStock(branchId?: string): Promise<Record<string, number>> {
+  async getMenuItemsStock(restaurantId: string, branchId?: string): Promise<Record<string, number>> {
     // Get all menu items
-    const allMenuItems = await this.getMenuItems();
+    const allMenuItems = await this.getMenuItems(restaurantId);
     // Get inventory items for the branch
-    const inventory = await this.getInventoryItems(branchId);
+    const inventory = await this.getInventoryItems(restaurantId, branchId);
     
     const stock: Record<string, number> = {};
     
@@ -341,7 +340,7 @@ export class DatabaseStorage implements IStorage {
       }
       
       // Get the recipe for this menu item
-      const recipe = await this.getRecipe(menuItem.recipeId);
+      const recipe = await this.getRecipe(restaurantId, menuItem.recipeId);
       if (!recipe) {
         stock[menuItem.id] = 999999; // No recipe found, treat as infinite
         continue;
@@ -376,112 +375,112 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Add-ons
-  async getAddons(menuItemId?: string): Promise<Addon[]> {
+  async getAddons(restaurantId: string, menuItemId?: string): Promise<Addon[]> {
     if (menuItemId) {
       // Return add-ons where menuItemIds is null (available for all items)
       // OR menuItemIds array contains the given menuItemId
       return await db.select().from(addons).where(
-        or(
-          isNull(addons.menuItemIds),
-          sql`${addons.menuItemIds} @> ARRAY[${menuItemId}]::varchar[]`
+        and(
+          eq(addons.restaurantId, restaurantId),
+          or(
+            isNull(addons.menuItemIds),
+            sql`${addons.menuItemIds} @> ARRAY[${menuItemId}]::varchar[]`
+          )
         )
       );
     }
-    return await db.select().from(addons);
+    return await db.select().from(addons).where(eq(addons.restaurantId, restaurantId));
   }
 
-  async getAddon(id: string): Promise<Addon | undefined> {
-    const [addon] = await db.select().from(addons).where(eq(addons.id, id));
+  async getAddon(restaurantId: string, id: string): Promise<Addon | undefined> {
+    const [addon] = await db.select().from(addons).where(and(eq(addons.restaurantId, restaurantId), eq(addons.id, id)));
     return addon;
   }
 
-  async createAddon(addon: InsertAddon): Promise<Addon> {
-    const [created] = await db.insert(addons).values(addon).returning();
+  async createAddon(restaurantId: string, addon: InsertAddon): Promise<Addon> {
+    const [created] = await db.insert(addons).values({ ...addon, restaurantId }).returning();
     return created;
   }
 
-  async updateAddon(id: string, addon: Partial<InsertAddon>): Promise<Addon | undefined> {
+  async updateAddon(restaurantId: string, id: string, addon: Partial<InsertAddon>): Promise<Addon | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(addon).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getAddon(id);
+      return this.getAddon(restaurantId, id);
     }
-    const [updated] = await db.update(addons).set(updateData).where(eq(addons.id, id)).returning();
+    const [updated] = await db.update(addons).set(updateData).where(and(eq(addons.restaurantId, restaurantId), eq(addons.id, id))).returning();
     return updated;
   }
 
-  async deleteAddon(id: string): Promise<boolean> {
-    const result = await db.delete(addons).where(eq(addons.id, id));
+  async deleteAddon(restaurantId: string, id: string): Promise<boolean> {
+    const result = await db.delete(addons).where(and(eq(addons.restaurantId, restaurantId), eq(addons.id, id)));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
-  async updateAddonsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void> {
+  async updateAddonsSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void> {
     for (const update of updates) {
-      await db.update(addons).set({ sortOrder: update.sortOrder }).where(eq(addons.id, update.id));
+      await db.update(addons).set({ sortOrder: update.sortOrder }).where(and(eq(addons.restaurantId, restaurantId), eq(addons.id, update.id)));
     }
   }
 
   // Recipes
-  async getRecipes(): Promise<Recipe[]> {
-    return await db.select().from(recipes);
+  async getRecipes(restaurantId: string): Promise<Recipe[]> {
+    return await db.select().from(recipes).where(eq(recipes.restaurantId, restaurantId));
   }
 
-  async getRecipe(id: string): Promise<Recipe | undefined> {
-    const [recipe] = await db.select().from(recipes).where(eq(recipes.id, id));
+  async getRecipe(restaurantId: string, id: string): Promise<Recipe | undefined> {
+    const [recipe] = await db.select().from(recipes).where(and(eq(recipes.restaurantId, restaurantId), eq(recipes.id, id)));
     return recipe;
   }
 
-  async createRecipe(recipe: InsertRecipe): Promise<Recipe> {
-    const [created] = await db.insert(recipes).values(recipe as any).returning();
+  async createRecipe(restaurantId: string, recipe: InsertRecipe): Promise<Recipe> {
+    const [created] = await db.insert(recipes).values({ ...recipe, restaurantId } as any).returning();
     return created;
   }
 
-  async updateRecipe(id: string, recipe: Partial<InsertRecipe>): Promise<Recipe | undefined> {
+  async updateRecipe(restaurantId: string, id: string, recipe: Partial<InsertRecipe>): Promise<Recipe | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(recipe).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getRecipe(id);
+      return this.getRecipe(restaurantId, id);
     }
-    const [updated] = await db.update(recipes).set(updateData as any).where(eq(recipes.id, id)).returning();
+    const [updated] = await db.update(recipes).set(updateData as any).where(and(eq(recipes.restaurantId, restaurantId), eq(recipes.id, id))).returning();
     return updated;
   }
 
-  async updateRecipesSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void> {
+  async updateRecipesSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void> {
     for (const update of updates) {
-      await db.update(recipes).set({ sortOrder: update.sortOrder }).where(eq(recipes.id, update.id));
+      await db.update(recipes).set({ sortOrder: update.sortOrder }).where(and(eq(recipes.restaurantId, restaurantId), eq(recipes.id, update.id)));
     }
   }
 
-  async deleteRecipe(id: string): Promise<boolean> {
-    const result = await db.delete(recipes).where(eq(recipes.id, id));
+  async deleteRecipe(restaurantId: string, id: string): Promise<boolean> {
+    const result = await db.delete(recipes).where(and(eq(recipes.restaurantId, restaurantId), eq(recipes.id, id)));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
   // Orders
-  async getOrders(branchId?: string, status?: string): Promise<Order[]> {
-    const conditions = [];
+  async getOrders(restaurantId: string, branchId?: string, status?: string): Promise<Order[]> {
+    const conditions = [eq(orders.restaurantId, restaurantId)];
     if (branchId) conditions.push(eq(orders.branchId, branchId));
     if (status) conditions.push(eq(orders.status, status));
     
-    if (conditions.length > 0) {
-      return await db.select().from(orders).where(and(...conditions));
-    }
-    return await db.select().from(orders);
+    return await db.select().from(orders).where(and(...conditions));
   }
 
-  async getOrder(id: string): Promise<Order | undefined> {
-    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+  async getOrder(restaurantId: string, id: string): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(and(eq(orders.restaurantId, restaurantId), eq(orders.id, id)));
     return order;
   }
 
-  async createOrder(order: InsertOrder): Promise<Order> {
-    const [created] = await db.insert(orders).values(order as any).returning();
+  async createOrder(restaurantId: string, order: InsertOrder): Promise<Order> {
+    const [created] = await db.insert(orders).values({ ...order, restaurantId } as any).returning();
     return created;
   }
 
-  async updateOrder(id: string, order: Partial<InsertOrder>): Promise<Order | undefined> {
+  async updateOrder(restaurantId: string, id: string, order: Partial<InsertOrder>): Promise<Order | undefined> {
     // Filter out undefined values to avoid "No values to set" error
     const updateData = Object.fromEntries(
       Object.entries(order).filter(([_, value]) => value !== undefined)
@@ -489,50 +488,47 @@ export class DatabaseStorage implements IStorage {
     
     if (Object.keys(updateData).length === 0) {
       // If no valid fields to update, just return the existing record
-      return this.getOrder(id);
+      return this.getOrder(restaurantId, id);
     }
     
-    const [updated] = await db.update(orders).set(updateData as any).where(eq(orders.id, id)).returning();
+    const [updated] = await db.update(orders).set(updateData as any).where(and(eq(orders.restaurantId, restaurantId), eq(orders.id, id))).returning();
     return updated;
   }
 
-  async deleteOrder(id: string): Promise<boolean> {
-    const result = await db.delete(orders).where(eq(orders.id, id));
+  async deleteOrder(restaurantId: string, id: string): Promise<boolean> {
+    const result = await db.delete(orders).where(and(eq(orders.restaurantId, restaurantId), eq(orders.id, id)));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
   // Transactions
-  async getTransactions(branchId?: string, startDate?: Date, endDate?: Date): Promise<Transaction[]> {
-    const conditions = [];
+  async getTransactions(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date): Promise<Transaction[]> {
+    const conditions = [eq(transactions.restaurantId, restaurantId)];
     if (branchId) conditions.push(eq(transactions.branchId, branchId));
     if (startDate) conditions.push(gte(transactions.createdAt, startDate));
     if (endDate) conditions.push(lte(transactions.createdAt, endDate));
     
-    if (conditions.length > 0) {
-      return await db.select().from(transactions).where(and(...conditions));
-    }
-    return await db.select().from(transactions);
+    return await db.select().from(transactions).where(and(...conditions));
   }
 
-  async getTransaction(id: string): Promise<Transaction | undefined> {
-    const [transaction] = await db.select().from(transactions).where(eq(transactions.id, id));
+  async getTransaction(restaurantId: string, id: string): Promise<Transaction | undefined> {
+    const [transaction] = await db.select().from(transactions).where(and(eq(transactions.restaurantId, restaurantId), eq(transactions.id, id)));
     return transaction;
   }
 
-  async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
-    const [created] = await db.insert(transactions).values(transaction).returning();
+  async createTransaction(restaurantId: string, transaction: InsertTransaction): Promise<Transaction> {
+    const [created] = await db.insert(transactions).values({ ...transaction, restaurantId }).returning();
     return created;
   }
 
   // Settings
-  async getSettings(): Promise<Settings | undefined> {
-    const [setting] = await db.select().from(settings).limit(1);
+  async getSettings(restaurantId: string): Promise<Settings | undefined> {
+    const [setting] = await db.select().from(settings).where(eq(settings.restaurantId, restaurantId)).limit(1);
     return setting;
   }
 
-  async updateSettings(settingsData: Partial<InsertSettings>): Promise<Settings> {
+  async updateSettings(restaurantId: string, settingsData: Partial<InsertSettings>): Promise<Settings> {
     // Get existing settings
-    const existing = await this.getSettings();
+    const existing = await this.getSettings(restaurantId);
     
     if (existing) {
       const [updated] = await db.update(settings)
@@ -543,115 +539,113 @@ export class DatabaseStorage implements IStorage {
     } else {
       // Create new settings if none exist
       const [created] = await db.insert(settings)
-        .values(settingsData as InsertSettings)
+        .values({ ...settingsData, restaurantId } as InsertSettings)
         .returning();
       return created;
     }
   }
 
   // Procurement
-  async getProcurements(type?: string, status?: string, branchId?: string): Promise<Procurement[]> {
-    const conditions = [];
+  async getProcurements(restaurantId: string, type?: string, status?: string, branchId?: string): Promise<Procurement[]> {
+    const conditions = [eq(procurement.restaurantId, restaurantId)];
     if (type) conditions.push(eq(procurement.type, type));
     if (status) conditions.push(eq(procurement.status, status));
     if (branchId) conditions.push(eq(procurement.branchId, branchId));
     
-    if (conditions.length > 0) {
-      return await db.select().from(procurement).where(and(...conditions));
-    }
-    return await db.select().from(procurement);
+    return await db.select().from(procurement).where(and(...conditions));
   }
 
-  async getProcurement(id: string): Promise<Procurement | undefined> {
-    const [item] = await db.select().from(procurement).where(eq(procurement.id, id));
+  async getProcurement(restaurantId: string, id: string): Promise<Procurement | undefined> {
+    const [item] = await db.select().from(procurement).where(and(eq(procurement.restaurantId, restaurantId), eq(procurement.id, id)));
     return item;
   }
 
-  async createProcurement(procurementData: InsertProcurement): Promise<Procurement> {
-    const [created] = await db.insert(procurement).values(procurementData).returning();
+  async createProcurement(restaurantId: string, procurementData: InsertProcurement): Promise<Procurement> {
+    const [created] = await db.insert(procurement).values({ ...procurementData, restaurantId }).returning();
     return created;
   }
 
-  async updateProcurement(id: string, procurementData: Partial<InsertProcurement>): Promise<Procurement | undefined> {
+  async updateProcurement(restaurantId: string, id: string, procurementData: Partial<InsertProcurement>): Promise<Procurement | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(procurementData).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getProcurement(id);
+      return this.getProcurement(restaurantId, id);
     }
     const [updated] = await db.update(procurement)
       .set({ ...updateData, updatedAt: new Date() })
-      .where(eq(procurement.id, id))
+      .where(and(eq(procurement.restaurantId, restaurantId), eq(procurement.id, id)))
       .returning();
     return updated;
   }
 
-  async deleteProcurement(id: string): Promise<boolean> {
-    const result = await db.delete(procurement).where(eq(procurement.id, id));
+  async deleteProcurement(restaurantId: string, id: string): Promise<boolean> {
+    const result = await db.delete(procurement).where(and(eq(procurement.restaurantId, restaurantId), eq(procurement.id, id)));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
   // Users
-  async getUsers(): Promise<User[]> {
-    return await db.select().from(users);
+  async getUsers(restaurantId: string): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.restaurantId, restaurantId));
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+  async getUser(restaurantId: string, id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(and(eq(users.restaurantId, restaurantId), eq(users.id, id)));
     return user;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+  async getUserByUsername(restaurantId: string, username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(and(eq(users.restaurantId, restaurantId), eq(users.username, username)));
     return user;
   }
 
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
+  async getUserByEmail(restaurantId: string, email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(and(eq(users.restaurantId, restaurantId), eq(users.email, email)));
     return user;
   }
 
-  async createUser(user: InsertUser): Promise<User> {
+  async createUser(restaurantId: string, user: InsertUser): Promise<User> {
     // Hash password before storing
     const hashedPassword = await bcrypt.hash(user.password, 10);
     const [created] = await db.insert(users)
-      .values({ ...user, password: hashedPassword } as any)
+      .values({ ...user, password: hashedPassword, restaurantId } as any)
       .returning();
     return created;
   }
 
-  async updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined> {
+  async updateUser(restaurantId: string, id: string, user: Partial<InsertUser>): Promise<User | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(user).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getUser(id);
+      return this.getUser(restaurantId, id);
     }
     // Hash password if it's being updated
     if (updateData.password) {
       updateData.password = await bcrypt.hash(updateData.password as string, 10);
     }
-    const [updated] = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
+    const [updated] = await db.update(users).set(updateData).where(and(eq(users.restaurantId, restaurantId), eq(users.id, id))).returning();
     return updated;
   }
 
-  async deleteUser(id: string): Promise<boolean> {
-    const result = await db.delete(users).where(eq(users.id, id));
+  async deleteUser(restaurantId: string, id: string): Promise<boolean> {
+    const result = await db.delete(users).where(and(eq(users.restaurantId, restaurantId), eq(users.id, id)));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
-  async setPasswordResetToken(userId: string, token: string, expiry: Date): Promise<void> {
+  async setPasswordResetToken(restaurantId: string, userId: string, token: string, expiry: Date): Promise<void> {
     await db.update(users)
       .set({ 
         passwordResetToken: token,
         passwordResetExpiry: expiry
       })
-      .where(eq(users.id, userId));
+      .where(and(eq(users.restaurantId, restaurantId), eq(users.id, userId)));
   }
 
-  async getUserByResetToken(token: string): Promise<User | undefined> {
+  async getUserByResetToken(restaurantId: string, token: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(
       and(
+        eq(users.restaurantId, restaurantId),
         eq(users.passwordResetToken, token),
         gte(users.passwordResetExpiry, new Date()) // Check token not expired
       )
@@ -659,226 +653,217 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updatePassword(userId: string, newPassword: string): Promise<void> {
+  async updatePassword(restaurantId: string, userId: string, newPassword: string): Promise<void> {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await db.update(users)
       .set({ password: hashedPassword })
-      .where(eq(users.id, userId));
+      .where(and(eq(users.restaurantId, restaurantId), eq(users.id, userId)));
   }
 
-  async clearPasswordResetToken(userId: string): Promise<void> {
+  async clearPasswordResetToken(restaurantId: string, userId: string): Promise<void> {
     await db.update(users)
       .set({ 
         passwordResetToken: null,
         passwordResetExpiry: null
       })
-      .where(eq(users.id, userId));
+      .where(and(eq(users.restaurantId, restaurantId), eq(users.id, userId)));
   }
 
-  async getUserProfile(userId: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, userId));
+  async getUserProfile(restaurantId: string, userId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(and(eq(users.restaurantId, restaurantId), eq(users.id, userId)));
     return user;
   }
 
-  async updateUserProfile(userId: string, profile: { email?: string; phone?: string }): Promise<User | undefined> {
+  async updateUserProfile(restaurantId: string, userId: string, profile: { email?: string; phone?: string }): Promise<User | undefined> {
     const [updated] = await db.update(users)
       .set(profile)
-      .where(eq(users.id, userId))
+      .where(and(eq(users.restaurantId, restaurantId), eq(users.id, userId)))
       .returning();
     return updated;
   }
 
-  async cancelSubscription(userId: string): Promise<User | undefined> {
+  async cancelSubscription(restaurantId: string, userId: string): Promise<User | undefined> {
     const [updated] = await db.update(users)
       .set({
         subscriptionStatus: 'cancelled',
         subscriptionCancelledAt: new Date()
       })
-      .where(eq(users.id, userId))
+      .where(and(eq(users.restaurantId, restaurantId), eq(users.id, userId)))
       .returning();
     return updated;
   }
 
   // Invoices
-  async getInvoices(branchId?: string, startDate?: Date, endDate?: Date): Promise<Invoice[]> {
-    const conditions = [];
+  async getInvoices(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date): Promise<Invoice[]> {
+    const conditions = [eq(invoices.restaurantId, restaurantId)];
     if (branchId) conditions.push(eq(invoices.branchId, branchId));
     if (startDate) conditions.push(gte(invoices.createdAt, startDate));
     if (endDate) conditions.push(lte(invoices.createdAt, endDate));
     
-    if (conditions.length > 0) {
-      return await db.select().from(invoices).where(and(...conditions));
-    }
-    return await db.select().from(invoices);
+    return await db.select().from(invoices).where(and(...conditions));
   }
 
-  async getInvoice(id: string): Promise<Invoice | undefined> {
-    const [invoice] = await db.select().from(invoices).where(eq(invoices.id, id));
+  async getInvoice(restaurantId: string, id: string): Promise<Invoice | undefined> {
+    const [invoice] = await db.select().from(invoices).where(and(eq(invoices.restaurantId, restaurantId), eq(invoices.id, id)));
     return invoice;
   }
 
-  async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
-    const [created] = await db.insert(invoices).values(invoice as any).returning();
+  async createInvoice(restaurantId: string, invoice: InsertInvoice): Promise<Invoice> {
+    const [created] = await db.insert(invoices).values({ ...invoice, restaurantId } as any).returning();
     return created;
   }
 
-  async updateInvoice(id: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined> {
+  async updateInvoice(restaurantId: string, id: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(invoice).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getInvoice(id);
+      return this.getInvoice(restaurantId, id);
     }
     const [updated] = await db.update(invoices)
       .set(updateData as any)
-      .where(eq(invoices.id, id))
+      .where(and(eq(invoices.restaurantId, restaurantId), eq(invoices.id, id)))
       .returning();
     return updated;
   }
 
   // Customers
-  async getCustomers(): Promise<Customer[]> {
-    return await db.select().from(customers);
+  async getCustomers(restaurantId: string): Promise<Customer[]> {
+    return await db.select().from(customers).where(eq(customers.restaurantId, restaurantId));
   }
 
-  async getCustomer(id: string): Promise<Customer | undefined> {
-    const [customer] = await db.select().from(customers).where(eq(customers.id, id));
+  async getCustomer(restaurantId: string, id: string): Promise<Customer | undefined> {
+    const [customer] = await db.select().from(customers).where(and(eq(customers.restaurantId, restaurantId), eq(customers.id, id)));
     return customer;
   }
 
-  async createCustomer(customer: InsertCustomer): Promise<Customer> {
-    const [created] = await db.insert(customers).values(customer).returning();
+  async createCustomer(restaurantId: string, customer: InsertCustomer): Promise<Customer> {
+    const [created] = await db.insert(customers).values({ ...customer, restaurantId }).returning();
     return created;
   }
 
-  async updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined> {
+  async updateCustomer(restaurantId: string, id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(customer).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getCustomer(id);
+      return this.getCustomer(restaurantId, id);
     }
     const [updated] = await db.update(customers)
       .set(updateData)
-      .where(eq(customers.id, id))
+      .where(and(eq(customers.restaurantId, restaurantId), eq(customers.id, id)))
       .returning();
     return updated;
   }
 
-  async deleteCustomer(id: string): Promise<boolean> {
-    const result = await db.delete(customers).where(eq(customers.id, id));
+  async deleteCustomer(restaurantId: string, id: string): Promise<boolean> {
+    const result = await db.delete(customers).where(and(eq(customers.restaurantId, restaurantId), eq(customers.id, id)));
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
   // Shop Salaries
-  async getSalaries(branchId?: string, startDate?: Date, endDate?: Date): Promise<Salary[]> {
-    const conditions = [];
+  async getSalaries(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date): Promise<Salary[]> {
+    const conditions = [eq(salaries.restaurantId, restaurantId)];
     if (branchId) conditions.push(eq(salaries.branchId, branchId));
     if (startDate) conditions.push(gte(salaries.paymentDate, startDate));
     if (endDate) conditions.push(lte(salaries.paymentDate, endDate));
     
-    if (conditions.length > 0) {
-      return await db.select().from(salaries).where(and(...conditions));
-    }
-    return await db.select().from(salaries);
+    return await db.select().from(salaries).where(and(...conditions));
   }
 
-  async getSalary(id: string): Promise<Salary | undefined> {
-    const [salary] = await db.select().from(salaries).where(eq(salaries.id, id));
+  async getSalary(restaurantId: string, id: string): Promise<Salary | undefined> {
+    const [salary] = await db.select().from(salaries).where(and(eq(salaries.restaurantId, restaurantId), eq(salaries.id, id)));
     return salary;
   }
 
-  async createSalary(salary: InsertSalary): Promise<Salary> {
-    const [created] = await db.insert(salaries).values(salary).returning();
+  async createSalary(restaurantId: string, salary: InsertSalary): Promise<Salary> {
+    const [created] = await db.insert(salaries).values({ ...salary, restaurantId }).returning();
     return created;
   }
 
-  async updateSalary(id: string, salary: Partial<InsertSalary>): Promise<Salary | undefined> {
+  async updateSalary(restaurantId: string, id: string, salary: Partial<InsertSalary>): Promise<Salary | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(salary).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getSalary(id);
+      return this.getSalary(restaurantId, id);
     }
     const [updated] = await db.update(salaries)
       .set(updateData)
-      .where(eq(salaries.id, id))
+      .where(and(eq(salaries.restaurantId, restaurantId), eq(salaries.id, id)))
       .returning();
     return updated;
   }
 
-  async deleteSalary(id: string): Promise<boolean> {
-    const result = await db.delete(salaries).where(eq(salaries.id, id));
+  async deleteSalary(restaurantId: string, id: string): Promise<boolean> {
+    const result = await db.delete(salaries).where(and(eq(salaries.restaurantId, restaurantId), eq(salaries.id, id)));
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
   // Shop Bills
-  async getShopBills(branchId?: string, startDate?: Date, endDate?: Date, includeArchived: boolean = false): Promise<ShopBill[]> {
-    const conditions = [];
+  async getShopBills(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date, includeArchived: boolean = false): Promise<ShopBill[]> {
+    const conditions = [eq(shopBills.restaurantId, restaurantId)];
     if (branchId) conditions.push(eq(shopBills.branchId, branchId));
     if (startDate) conditions.push(gte(shopBills.paymentDate, startDate));
     if (endDate) conditions.push(lte(shopBills.paymentDate, endDate));
     if (!includeArchived) conditions.push(eq(shopBills.archived, false));
     
-    if (conditions.length > 0) {
-      return await db.select().from(shopBills).where(and(...conditions));
-    }
-    return await db.select().from(shopBills);
+    return await db.select().from(shopBills).where(and(...conditions));
   }
 
-  async getShopBill(id: string): Promise<ShopBill | undefined> {
-    const [bill] = await db.select().from(shopBills).where(eq(shopBills.id, id));
+  async getShopBill(restaurantId: string, id: string): Promise<ShopBill | undefined> {
+    const [bill] = await db.select().from(shopBills).where(and(eq(shopBills.restaurantId, restaurantId), eq(shopBills.id, id)));
     return bill;
   }
 
-  async createShopBill(bill: InsertShopBill): Promise<ShopBill> {
-    const [created] = await db.insert(shopBills).values(bill).returning();
+  async createShopBill(restaurantId: string, bill: InsertShopBill): Promise<ShopBill> {
+    const [created] = await db.insert(shopBills).values({ ...bill, restaurantId }).returning();
     return created;
   }
 
-  async updateShopBill(id: string, bill: Partial<InsertShopBill>): Promise<ShopBill | undefined> {
+  async updateShopBill(restaurantId: string, id: string, bill: Partial<InsertShopBill>): Promise<ShopBill | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(bill).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getShopBill(id);
+      return this.getShopBill(restaurantId, id);
     }
     const [updated] = await db.update(shopBills)
       .set(updateData)
-      .where(eq(shopBills.id, id))
+      .where(and(eq(shopBills.restaurantId, restaurantId), eq(shopBills.id, id)))
       .returning();
     return updated;
   }
 
-  async deleteShopBill(id: string): Promise<boolean> {
-    const result = await db.delete(shopBills).where(eq(shopBills.id, id));
+  async deleteShopBill(restaurantId: string, id: string): Promise<boolean> {
+    const result = await db.delete(shopBills).where(and(eq(shopBills.restaurantId, restaurantId), eq(shopBills.id, id)));
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
-  async archiveShopBill(id: string, archived: boolean): Promise<ShopBill | undefined> {
+  async archiveShopBill(restaurantId: string, id: string, archived: boolean): Promise<ShopBill | undefined> {
     const [updated] = await db.update(shopBills)
       .set({ archived })
-      .where(eq(shopBills.id, id))
+      .where(and(eq(shopBills.restaurantId, restaurantId), eq(shopBills.id, id)))
       .returning();
     return updated;
   }
 
   // Delivery Apps
-  async getDeliveryApps(): Promise<DeliveryApp[]> {
-    return await db.select().from(deliveryApps).where(eq(deliveryApps.active, true)).orderBy(deliveryApps.sortOrder);
+  async getDeliveryApps(restaurantId: string): Promise<DeliveryApp[]> {
+    return await db.select().from(deliveryApps).where(and(eq(deliveryApps.restaurantId, restaurantId), eq(deliveryApps.active, true))).orderBy(deliveryApps.sortOrder);
   }
 
-  async getDeliveryApp(id: string): Promise<DeliveryApp | undefined> {
-    const [app] = await db.select().from(deliveryApps).where(eq(deliveryApps.id, id));
+  async getDeliveryApp(restaurantId: string, id: string): Promise<DeliveryApp | undefined> {
+    const [app] = await db.select().from(deliveryApps).where(and(eq(deliveryApps.restaurantId, restaurantId), eq(deliveryApps.id, id)));
     return app;
   }
 
-  async createDeliveryApp(app: InsertDeliveryApp): Promise<DeliveryApp> {
-    const [created] = await db.insert(deliveryApps).values(app as any).returning();
+  async createDeliveryApp(restaurantId: string, app: InsertDeliveryApp): Promise<DeliveryApp> {
+    const [created] = await db.insert(deliveryApps).values({ ...app, restaurantId } as any).returning();
     return created;
   }
 
-  async updateDeliveryApp(id: string, app: Partial<InsertDeliveryApp>): Promise<DeliveryApp | undefined> {
+  async updateDeliveryApp(restaurantId: string, id: string, app: Partial<InsertDeliveryApp>): Promise<DeliveryApp | undefined> {
     // Filter out undefined values to avoid "No values to set" error
     const updateData = Object.fromEntries(
       Object.entries(app).filter(([_, value]) => value !== undefined)
@@ -886,39 +871,39 @@ export class DatabaseStorage implements IStorage {
     
     if (Object.keys(updateData).length === 0) {
       // If no valid fields to update, just return the existing record
-      return this.getDeliveryApp(id);
+      return this.getDeliveryApp(restaurantId, id);
     }
     
     const [updated] = await db.update(deliveryApps)
       .set(updateData as any)
-      .where(eq(deliveryApps.id, id))
+      .where(and(eq(deliveryApps.restaurantId, restaurantId), eq(deliveryApps.id, id)))
       .returning();
     return updated;
   }
 
-  async deleteDeliveryApp(id: string): Promise<boolean> {
-    const result = await db.delete(deliveryApps).where(eq(deliveryApps.id, id));
+  async deleteDeliveryApp(restaurantId: string, id: string): Promise<boolean> {
+    const result = await db.delete(deliveryApps).where(and(eq(deliveryApps.restaurantId, restaurantId), eq(deliveryApps.id, id)));
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
-  async updateDeliveryAppsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void> {
+  async updateDeliveryAppsSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void> {
     for (const update of updates) {
       await db.update(deliveryApps)
         .set({ sortOrder: update.sortOrder })
-        .where(eq(deliveryApps.id, update.id));
+        .where(and(eq(deliveryApps.restaurantId, restaurantId), eq(deliveryApps.id, update.id)));
     }
   }
 
-  async getDeliveryAppProfitability(): Promise<any> {
+  async getDeliveryAppProfitability(restaurantId: string): Promise<any> {
     // Get all delivery apps
-    const apps = await db.select().from(deliveryApps).where(eq(deliveryApps.active, true));
+    const apps = await db.select().from(deliveryApps).where(and(eq(deliveryApps.restaurantId, restaurantId), eq(deliveryApps.active, true)));
     
     // Get all orders with delivery apps
-    const allOrders = await db.select().from(orders).where(sql`${orders.deliveryAppId} IS NOT NULL`);
+    const allOrders = await db.select().from(orders).where(and(eq(orders.restaurantId, restaurantId), sql`${orders.deliveryAppId} IS NOT NULL`));
     
     // Get all menu items and recipes for cost calculation
-    const allMenuItems = await db.select().from(menuItems);
-    const allRecipes = await db.select().from(recipes);
+    const allMenuItems = await db.select().from(menuItems).where(eq(menuItems.restaurantId, restaurantId));
+    const allRecipes = await db.select().from(recipes).where(eq(recipes.restaurantId, restaurantId));
     
     // Create a map of menu item ID to cost (from recipe)
     const itemCostMap = new Map<string, number>();
@@ -1052,9 +1037,9 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getSalesComparison(): Promise<any> {
+  async getSalesComparison(restaurantId: string): Promise<any> {
     // Get all orders
-    const allOrders = await db.select().from(orders);
+    const allOrders = await db.select().from(orders).where(eq(orders.restaurantId, restaurantId));
     
     // Categorize orders by type
     const dineInOrders = allOrders.filter(o => o.orderType === 'Dine-in' && !o.deliveryAppId);
@@ -1083,7 +1068,7 @@ export class DatabaseStorage implements IStorage {
     const totalRevenue = dineInMetrics.totalRevenue + takeAwayMetrics.totalRevenue + deliveryAppMetrics.totalRevenue;
     
     // Get delivery app breakdown
-    const deliveryAppsData = await db.select().from(deliveryApps).where(eq(deliveryApps.active, true));
+    const deliveryAppsData = await db.select().from(deliveryApps).where(and(eq(deliveryApps.restaurantId, restaurantId), eq(deliveryApps.active, true)));
     const deliveryAppBreakdown = deliveryAppsData.map(app => {
       const appOrders = deliveryAppOrders.filter(o => o.deliveryAppId === app.id);
       const metrics = calculateMetrics(appOrders);
@@ -1119,62 +1104,63 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Investors
-  async getInvestors(): Promise<Investor[]> {
-    return await db.select().from(investors).where(eq(investors.active, true)).orderBy(investors.createdAt);
+  async getInvestors(restaurantId: string): Promise<Investor[]> {
+    return await db.select().from(investors).where(and(eq(investors.restaurantId, restaurantId), eq(investors.active, true))).orderBy(investors.createdAt);
   }
 
-  async getInvestor(id: string): Promise<Investor | undefined> {
-    const [investor] = await db.select().from(investors).where(eq(investors.id, id));
+  async getInvestor(restaurantId: string, id: string): Promise<Investor | undefined> {
+    const [investor] = await db.select().from(investors).where(and(eq(investors.restaurantId, restaurantId), eq(investors.id, id)));
     return investor;
   }
 
-  async createInvestor(investor: InsertInvestor): Promise<Investor> {
-    const [created] = await db.insert(investors).values(investor as any).returning();
+  async createInvestor(restaurantId: string, investor: InsertInvestor): Promise<Investor> {
+    const [created] = await db.insert(investors).values({ ...investor, restaurantId } as any).returning();
     return created;
   }
 
-  async updateInvestor(id: string, investor: Partial<InsertInvestor>): Promise<Investor | undefined> {
+  async updateInvestor(restaurantId: string, id: string, investor: Partial<InsertInvestor>): Promise<Investor | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(investor).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getInvestor(id);
+      return this.getInvestor(restaurantId, id);
     }
     const [updated] = await db.update(investors)
       .set(updateData as any)
-      .where(eq(investors.id, id))
+      .where(and(eq(investors.restaurantId, restaurantId), eq(investors.id, id)))
       .returning();
     return updated;
   }
 
-  async deleteInvestor(id: string): Promise<boolean> {
-    const result = await db.delete(investors).where(eq(investors.id, id));
+  async deleteInvestor(restaurantId: string, id: string): Promise<boolean> {
+    const result = await db.delete(investors).where(and(eq(investors.restaurantId, restaurantId), eq(investors.id, id)));
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
   // Subscription Invoices
-  async getSubscriptionInvoices(userId?: string): Promise<SubscriptionInvoice[]> {
+  async getSubscriptionInvoices(restaurantId: string, userId?: string): Promise<SubscriptionInvoice[]> {
+    const conditions = [eq(subscriptionInvoices.restaurantId, restaurantId)];
     if (userId) {
-      return await db.select().from(subscriptionInvoices)
-        .where(eq(subscriptionInvoices.userId, userId))
-        .orderBy(subscriptionInvoices.invoiceDate);
+      conditions.push(eq(subscriptionInvoices.userId, userId));
     }
-    return await db.select().from(subscriptionInvoices).orderBy(subscriptionInvoices.invoiceDate);
+    return await db.select().from(subscriptionInvoices)
+      .where(and(...conditions))
+      .orderBy(subscriptionInvoices.invoiceDate);
   }
 
-  async getSubscriptionInvoice(id: string): Promise<SubscriptionInvoice | undefined> {
-    const [invoice] = await db.select().from(subscriptionInvoices).where(eq(subscriptionInvoices.id, id));
+  async getSubscriptionInvoice(restaurantId: string, id: string): Promise<SubscriptionInvoice | undefined> {
+    const [invoice] = await db.select().from(subscriptionInvoices).where(and(eq(subscriptionInvoices.restaurantId, restaurantId), eq(subscriptionInvoices.id, id)));
     return invoice;
   }
 
-  async createSubscriptionInvoice(invoice: InsertSubscriptionInvoice): Promise<SubscriptionInvoice> {
-    const [created] = await db.insert(subscriptionInvoices).values(invoice as any).returning();
+  async createSubscriptionInvoice(restaurantId: string, invoice: InsertSubscriptionInvoice): Promise<SubscriptionInvoice> {
+    const [created] = await db.insert(subscriptionInvoices).values({ ...invoice, restaurantId } as any).returning();
     return created;
   }
 
-  async getNextSubscriptionInvoiceSerialNumber(): Promise<string> {
-    // Get the count of existing invoices
-    const [result] = await db.select({ count: sql<number>`count(*)` }).from(subscriptionInvoices);
+  async getNextSubscriptionInvoiceSerialNumber(restaurantId: string): Promise<string> {
+    // Get the count of existing invoices for this restaurant
+    const [result] = await db.select({ count: sql<number>`count(*)` }).from(subscriptionInvoices).where(eq(subscriptionInvoices.restaurantId, restaurantId));
     const count = (result?.count || 0) + 1;
     
     // Format: 0001-YYYYMMDD-HHMMSS
@@ -1187,20 +1173,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Monthly VAT Reports
-  async getMonthlyVatReports(userId?: string): Promise<MonthlyVatReport[]> {
+  async getMonthlyVatReports(restaurantId: string, userId?: string): Promise<MonthlyVatReport[]> {
+    const conditions = [eq(monthlyVatReports.restaurantId, restaurantId)];
     if (userId) {
-      return await db.select().from(monthlyVatReports)
-        .where(eq(monthlyVatReports.userId, userId))
-        .orderBy(sql`${monthlyVatReports.reportYear} DESC, ${monthlyVatReports.reportMonth} DESC`);
+      conditions.push(eq(monthlyVatReports.userId, userId));
     }
     return await db.select().from(monthlyVatReports)
+      .where(and(...conditions))
       .orderBy(sql`${monthlyVatReports.reportYear} DESC, ${monthlyVatReports.reportMonth} DESC`);
   }
 
-  async getVatReportByMonth(userId: string, month: number, year: number): Promise<MonthlyVatReport | undefined> {
+  async getVatReportByMonth(restaurantId: string, userId: string, month: number, year: number): Promise<MonthlyVatReport | undefined> {
     const [report] = await db.select().from(monthlyVatReports)
       .where(
         and(
+          eq(monthlyVatReports.restaurantId, restaurantId),
           eq(monthlyVatReports.userId, userId),
           eq(monthlyVatReports.reportMonth, month),
           eq(monthlyVatReports.reportYear, year)
@@ -1209,17 +1196,18 @@ export class DatabaseStorage implements IStorage {
     return report;
   }
 
-  async createVatReport(report: InsertMonthlyVatReport): Promise<MonthlyVatReport> {
-    const [created] = await db.insert(monthlyVatReports).values(report as any).returning();
+  async createVatReport(restaurantId: string, report: InsertMonthlyVatReport): Promise<MonthlyVatReport> {
+    const [created] = await db.insert(monthlyVatReports).values({ ...report, restaurantId } as any).returning();
     return created;
   }
 
-  async getNextVatReportSerialNumber(year: number, month: number): Promise<string> {
-    // Count reports for the specific month
+  async getNextVatReportSerialNumber(restaurantId: string, year: number, month: number): Promise<string> {
+    // Count reports for the specific month and restaurant
     const [result] = await db.select({ count: sql<number>`count(*)` })
       .from(monthlyVatReports)
       .where(
         and(
+          eq(monthlyVatReports.restaurantId, restaurantId),
           eq(monthlyVatReports.reportYear, year),
           eq(monthlyVatReports.reportMonth, month)
         )
@@ -1233,10 +1221,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Support Tickets
-  async getSupportTickets(userId?: string, status?: string): Promise<SupportTicket[]> {
+  async getSupportTickets(restaurantId: string, userId?: string, status?: string): Promise<SupportTicket[]> {
     let query = db.select().from(supportTickets);
     
-    const conditions = [];
+    const conditions = [eq(supportTickets.restaurantId, restaurantId)];
     if (userId) {
       conditions.push(eq(supportTickets.userId, userId));
     }
@@ -1244,28 +1232,27 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(supportTickets.status, status));
     }
     
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as any;
-    }
+    query = query.where(and(...conditions)) as any;
     
     return await query.orderBy(sql`${supportTickets.createdAt} DESC`);
   }
 
-  async getSupportTicket(id: string): Promise<SupportTicket | undefined> {
-    const [ticket] = await db.select().from(supportTickets).where(eq(supportTickets.id, id));
+  async getSupportTicket(restaurantId: string, id: string): Promise<SupportTicket | undefined> {
+    const [ticket] = await db.select().from(supportTickets).where(and(eq(supportTickets.restaurantId, restaurantId), eq(supportTickets.id, id)));
     return ticket;
   }
 
-  async createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket> {
-    const ticketNumber = await this.getNextTicketNumber();
+  async createSupportTicket(restaurantId: string, ticket: InsertSupportTicket): Promise<SupportTicket> {
+    const ticketNumber = await this.getNextTicketNumber(restaurantId);
     const [created] = await db.insert(supportTickets).values({
       ...ticket,
+      restaurantId,
       ticketNumber,
     } as any).returning();
     return created;
   }
 
-  async updateSupportTicket(id: string, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined> {
+  async updateSupportTicket(restaurantId: string, id: string, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined> {
     const updateData: any = { ...ticket, updatedAt: new Date() };
     
     // Set resolved/closed timestamps
@@ -1278,13 +1265,13 @@ export class DatabaseStorage implements IStorage {
     
     const [updated] = await db.update(supportTickets)
       .set(updateData)
-      .where(eq(supportTickets.id, id))
+      .where(and(eq(supportTickets.restaurantId, restaurantId), eq(supportTickets.id, id)))
       .returning();
     return updated;
   }
 
-  async getNextTicketNumber(): Promise<string> {
-    const [result] = await db.select({ count: sql<number>`count(*)` }).from(supportTickets);
+  async getNextTicketNumber(restaurantId: string): Promise<string> {
+    const [result] = await db.select({ count: sql<number>`count(*)` }).from(supportTickets).where(eq(supportTickets.restaurantId, restaurantId));
     const count = (result?.count || 0) + 1;
     
     // Format: TKT-YYYYMMDD-XXXX
@@ -1296,16 +1283,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Ticket Messages
-  async getTicketMessages(ticketId: string): Promise<TicketMessage[]> {
+  async getTicketMessages(restaurantId: string, ticketId: string): Promise<TicketMessage[]> {
     return await db.select().from(ticketMessages)
-      .where(eq(ticketMessages.ticketId, ticketId))
+      .where(and(eq(ticketMessages.restaurantId, restaurantId), eq(ticketMessages.ticketId, ticketId)))
       .orderBy(sql`${ticketMessages.createdAt} ASC`);
   }
 
-  async createTicketMessage(message: InsertTicketMessage): Promise<TicketMessage> {
-    const [created] = await db.insert(ticketMessages).values(message as any).returning();
+  async createTicketMessage(restaurantId: string, message: InsertTicketMessage): Promise<TicketMessage> {
+    const [created] = await db.insert(ticketMessages).values({ ...message, restaurantId } as any).returning();
     
-    // Update ticket's updatedAt timestamp
+    // Update ticket's updatedAt timestamp - no need to filter by restaurantId here as we already know the ticketId
     await db.update(supportTickets)
       .set({ updatedAt: new Date() })
       .where(eq(supportTickets.id, message.ticketId));
@@ -1313,23 +1300,24 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async markMessagesAsRead(ticketId: string, userId: string): Promise<void> {
+  async markMessagesAsRead(restaurantId: string, ticketId: string, userId: string): Promise<void> {
     // Mark all messages in this ticket as read where the sender is NOT the current user
     await db.update(ticketMessages)
       .set({ isRead: true })
       .where(
         and(
+          eq(ticketMessages.restaurantId, restaurantId),
           eq(ticketMessages.ticketId, ticketId),
           sql`${ticketMessages.senderId} != ${userId}`
         )
       );
   }
 
-  async getUnreadMessageCount(userId: string): Promise<number> {
+  async getUnreadMessageCount(restaurantId: string, userId: string): Promise<number> {
     // Get tickets for this user
     const userTickets = await db.select({ id: supportTickets.id })
       .from(supportTickets)
-      .where(eq(supportTickets.userId, userId));
+      .where(and(eq(supportTickets.restaurantId, restaurantId), eq(supportTickets.userId, userId)));
     
     if (userTickets.length === 0) return 0;
     
@@ -1340,6 +1328,7 @@ export class DatabaseStorage implements IStorage {
       .from(ticketMessages)
       .where(
         and(
+          eq(ticketMessages.restaurantId, restaurantId),
           sql`${ticketMessages.ticketId} IN (${sql.join(ticketIds.map(id => sql`${id}`), sql`, `)})`,
           eq(ticketMessages.isRead, false),
           sql`${ticketMessages.senderId} != ${userId}`
@@ -1351,6 +1340,7 @@ export class DatabaseStorage implements IStorage {
 
   // Employee Activity Log
   async getEmployeeActivities(
+    restaurantId: string,
     employeeId?: string,
     category?: string,
     startDate?: Date,
@@ -1358,7 +1348,7 @@ export class DatabaseStorage implements IStorage {
   ): Promise<EmployeeActivityLog[]> {
     let query = db.select().from(employeeActivityLog);
     
-    const conditions = [];
+    const conditions = [eq(employeeActivityLog.restaurantId, restaurantId)];
     if (employeeId) {
       conditions.push(eq(employeeActivityLog.employeeId, employeeId));
     }
@@ -1372,23 +1362,21 @@ export class DatabaseStorage implements IStorage {
       conditions.push(lte(employeeActivityLog.createdAt, endDate));
     }
     
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as any;
-    }
+    query = query.where(and(...conditions)) as any;
     
     return await query.orderBy(sql`${employeeActivityLog.createdAt} DESC`);
   }
 
-  async createEmployeeActivity(activity: InsertEmployeeActivityLog): Promise<EmployeeActivityLog> {
-    const [created] = await db.insert(employeeActivityLog).values(activity as any).returning();
+  async createEmployeeActivity(restaurantId: string, activity: InsertEmployeeActivityLog): Promise<EmployeeActivityLog> {
+    const [created] = await db.insert(employeeActivityLog).values({ ...activity, restaurantId } as any).returning();
     return created;
   }
 
-  async getEmployeeActivityStats(employeeId: string): Promise<any> {
+  async getEmployeeActivityStats(restaurantId: string, employeeId: string): Promise<any> {
     // Get total activity count
     const [totalResult] = await db.select({ count: sql<number>`count(*)` })
       .from(employeeActivityLog)
-      .where(eq(employeeActivityLog.employeeId, employeeId));
+      .where(and(eq(employeeActivityLog.restaurantId, restaurantId), eq(employeeActivityLog.employeeId, employeeId)));
     
     // Get activities by category
     const categoryCounts = await db.select({
@@ -1396,7 +1384,7 @@ export class DatabaseStorage implements IStorage {
       count: sql<number>`count(*)`,
     })
       .from(employeeActivityLog)
-      .where(eq(employeeActivityLog.employeeId, employeeId))
+      .where(and(eq(employeeActivityLog.restaurantId, restaurantId), eq(employeeActivityLog.employeeId, employeeId)))
       .groupBy(employeeActivityLog.actionCategory);
     
     // Get recent activities (last 24 hours)
@@ -1407,6 +1395,7 @@ export class DatabaseStorage implements IStorage {
       .from(employeeActivityLog)
       .where(
         and(
+          eq(employeeActivityLog.restaurantId, restaurantId),
           eq(employeeActivityLog.employeeId, employeeId),
           gte(employeeActivityLog.createdAt, yesterday)
         )
