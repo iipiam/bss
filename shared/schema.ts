@@ -1,11 +1,64 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, decimal, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, decimal, boolean, timestamp, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Restaurants (Multi-Tenant Master Table)
+export const restaurants = pgTable("restaurants", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(), // Restaurant business name
+  commercialRegistration: text("commercial_registration").notNull(), // Saudi Commercial Registration number
+  nationalId: text("national_id").notNull(), // National ID or Company ID
+  taxNumber: text("tax_number").notNull(), // Unified Tax Number (Saudi VAT)
+  restaurantType: text("restaurant_type").notNull(), // "Restaurant", "Cloud Kitchen", "Coffee Shop", "Tea Shop", "Sweets Shop"
+  
+  // Subscription Management
+  subscriptionPlan: text("subscription_plan").notNull().default("monthly"), // "weekly" | "monthly" | "yearly"
+  subscriptionStatus: text("subscription_status").notNull().default("inactive"), // "inactive" | "active" | "cancelled" | "expired"
+  branchesCount: integer("branches_count").notNull().default(1), // Number of branches (minimum 1, affects pricing)
+  subscriptionStartDate: timestamp("subscription_start_date"),
+  subscriptionEndDate: timestamp("subscription_end_date"),
+  subscriptionCancelledAt: timestamp("subscription_cancelled_at"),
+  
+  // Contact & Billing
+  billingEmail: text("billing_email").notNull(),
+  phone: text("phone").notNull(),
+  address: text("address").notNull(),
+  
+  // Settings & Preferences
+  settings: jsonb("settings").$type<{
+    language?: string;
+    currency?: string;
+    timezone?: string;
+    theme?: string;
+  }>(),
+  
+  // Metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  active: boolean("active").notNull().default(true),
+});
+
+export const insertRestaurantSchema = createInsertSchema(restaurants).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+}).extend({
+  restaurantType: z.enum(["Restaurant", "Cloud Kitchen", "Coffee Shop", "Tea Shop", "Sweets Shop"]),
+  subscriptionPlan: z.enum(["weekly", "monthly", "yearly"]),
+  subscriptionStatus: z.enum(["inactive", "active", "cancelled", "expired"]),
+  branchesCount: z.number().min(1, "Must have at least 1 branch"),
+  billingEmail: z.string().email("Invalid email address"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+});
+
+export type InsertRestaurant = z.infer<typeof insertRestaurantSchema>;
+export type Restaurant = typeof restaurants.$inferSelect;
 
 // Branches
 export const branches = pgTable("branches", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   location: text("location").notNull(),
   phone: text("phone").notNull(),
@@ -21,6 +74,7 @@ export type Branch = typeof branches.$inferSelect;
 // Inventory Items
 export const inventoryItems = pgTable("inventory_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   category: text("category").notNull(),
   quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
@@ -39,6 +93,7 @@ export type InventoryItem = typeof inventoryItems.$inferSelect;
 // Recipes (must be defined before menuItems for foreign key reference)
 export const recipes = pgTable("recipes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   prepTime: text("prep_time").notNull(),
   cookTime: text("cook_time").notNull(),
@@ -56,6 +111,7 @@ export type Recipe = typeof recipes.$inferSelect;
 // Menu Items
 export const menuItems = pgTable("menu_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   category: text("category").notNull(),
   recipeId: varchar("recipe_id").references(() => recipes.id), // Optional: menu item can have a recipe
@@ -113,6 +169,7 @@ export type MenuItem = typeof menuItems.$inferSelect;
 // Add-ons
 export const addons = pgTable("addons", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   category: text("category").notNull(), // e.g., "Toppings", "Sides", "Sauces", "Extras"
   price: decimal("price", { precision: 10, scale: 2 }).notNull(), // VAT-inclusive price
@@ -134,7 +191,8 @@ export type Addon = typeof addons.$inferSelect;
 // Orders
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  orderNumber: text("order_number").notNull().unique(),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
+  orderNumber: text("order_number").notNull(), // Unique per restaurant via composite index
   branchId: varchar("branch_id").references(() => branches.id),
   customerId: varchar("customer_id").references(() => customers.id),
   customerName: text("customer_name"),
@@ -150,8 +208,11 @@ export const orders = pgTable("orders", {
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: text("payment_method").notNull().default("Cash"),
   status: text("status").notNull().default("Pending"),
+  notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  uniqueOrderNumber: uniqueIndex("unique_order_number_per_restaurant").on(table.restaurantId, table.orderNumber),
+}));
 
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true });
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
@@ -160,6 +221,7 @@ export type Order = typeof orders.$inferSelect;
 // Inventory Transactions (audit trail for all inventory movements) - Must be after orders
 export const inventoryTransactions = pgTable("inventory_transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   inventoryItemId: varchar("inventory_item_id").references(() => inventoryItems.id).notNull(),
   orderId: varchar("order_id").references(() => orders.id), // Optional: links to orders table
   type: text("type").notNull(), // "sale", "procurement", "adjustment", "wastage"
@@ -178,7 +240,8 @@ export type InventoryTransaction = typeof inventoryTransactions.$inferSelect;
 // Transactions (Sales)
 export const transactions = pgTable("transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  transactionId: text("transaction_id").notNull().unique(),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
+  transactionId: text("transaction_id").notNull(), // Unique per restaurant via composite index
   orderId: varchar("order_id").references(() => orders.id),
   branchId: varchar("branch_id").references(() => branches.id),
   itemCount: integer("item_count").notNull(),
@@ -187,7 +250,9 @@ export const transactions = pgTable("transactions", {
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: text("payment_method").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  uniqueTransactionId: uniqueIndex("unique_transaction_id_per_restaurant").on(table.restaurantId, table.transactionId),
+}));
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true, createdAt: true });
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
@@ -196,6 +261,7 @@ export type Transaction = typeof transactions.$inferSelect;
 // Settings
 export const settings = pgTable("settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   restaurantName: text("restaurant_name").notNull(),
   vatNumber: text("vat_number").notNull(),
   address: text("address").notNull(),
@@ -213,6 +279,7 @@ export type Settings = typeof settings.$inferSelect;
 // Procurement
 export const procurement = pgTable("procurement", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   type: text("type").notNull(), // "inventory", "maintenance", "installation", "equipment"
   title: text("title").notNull(),
   description: text("description"),
@@ -241,6 +308,7 @@ export type Procurement = typeof procurement.$inferSelect;
 // Customers
 export const customers = pgTable("customers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   phone: text("phone").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -253,7 +321,8 @@ export type Customer = typeof customers.$inferSelect;
 // Users
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
+  username: text("username").notNull(), // Unique per restaurant via composite index
   password: text("password").notNull(), // hashed password
   fullName: text("full_name").notNull(),
   email: text("email"),
@@ -333,7 +402,9 @@ export const users = pgTable("users", {
   trainingCompleted: text("training_completed").array(),
   
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  uniqueUsername: uniqueIndex("unique_username_per_restaurant").on(table.restaurantId, table.username),
+}));
 
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -342,7 +413,8 @@ export type User = typeof users.$inferSelect;
 // Invoices (ZATCA-compliant)
 export const invoices = pgTable("invoices", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  invoiceNumber: text("invoice_number").notNull().unique(),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
+  invoiceNumber: text("invoice_number").notNull(), // Unique per restaurant via composite index
   transactionId: varchar("transaction_id").references(() => transactions.id),
   orderId: varchar("order_id").references(() => orders.id),
   branchId: varchar("branch_id").references(() => branches.id),
@@ -354,7 +426,9 @@ export const invoices = pgTable("invoices", {
   qrCode: text("qr_code"), // Base64 encoded QR code
   pdfPath: text("pdf_path"), // Path to generated PDF
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  uniqueInvoiceNumber: uniqueIndex("unique_invoice_number_per_restaurant").on(table.restaurantId, table.invoiceNumber),
+}));
 
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({ id: true, createdAt: true });
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
@@ -363,6 +437,7 @@ export type Invoice = typeof invoices.$inferSelect;
 // Shop Salaries
 export const salaries = pgTable("salaries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   employeeName: text("employee_name").notNull(),
   position: text("position").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
@@ -380,6 +455,7 @@ export type Salary = typeof salaries.$inferSelect;
 // Shop Bills
 export const shopBills = pgTable("shop_bills", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   billType: text("bill_type").notNull(), // "rent", "electricity", "water", "gas", "internet", "maintenance", "foundational", "other"
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   paymentDate: timestamp("payment_date").notNull(),
@@ -398,6 +474,7 @@ export type ShopBill = typeof shopBills.$inferSelect;
 // Delivery Apps
 export const deliveryApps = pgTable("delivery_apps", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   name: text("name").notNull(), // Manually entered delivery app name (e.g., "HungerStation", "Jahez", "Mrsool")
   commission: decimal("commission", { precision: 5, scale: 2 }).notNull(), // VAT-inclusive commission percentage (e.g., 20.00 for 20%)
   bankingFees: decimal("banking_fees", { precision: 5, scale: 2 }).notNull(), // VAT-inclusive banking fees percentage (e.g., 2.50 for 2.5%)
@@ -431,6 +508,7 @@ export type DeliveryApp = typeof deliveryApps.$inferSelect;
 // Investors
 export const investors = pgTable("investors", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   amountInvested: decimal("amount_invested", { precision: 12, scale: 2 }).notNull(), // Amount invested in SAR
   interestPercentage: decimal("interest_percentage", { precision: 5, scale: 2 }).notNull(), // Percentage of net profit (e.g., 10.00 for 10%)
@@ -467,8 +545,9 @@ export type Investor = typeof investors.$inferSelect;
 // Subscription Invoices
 export const subscriptionInvoices = pgTable("subscription_invoices", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   userId: varchar("user_id").notNull().references(() => users.id),
-  serialNumber: text("serial_number").notNull().unique(), // Format: 0001-YYYYMMDD-HHMMSS
+  serialNumber: text("serial_number").notNull(), // Format: 0001-YYYYMMDD-HHMMSS, unique per restaurant via composite index
   subscriptionPlan: text("subscription_plan").notNull(), // weekly, monthly, yearly
   branchesCount: integer("branches_count").notNull(),
   basePlanPrice: decimal("base_plan_price", { precision: 10, scale: 2 }).notNull(), // Base price without VAT
@@ -479,7 +558,9 @@ export const subscriptionInvoices = pgTable("subscription_invoices", {
   invoiceDate: timestamp("invoice_date").notNull().defaultNow(),
   pdfPath: text("pdf_path"), // Path to generated PDF invoice
   qrCode: text("qr_code"), // QR code data URL for ZATCA compliance
-});
+}, (table) => ({
+  uniqueSerialNumber: uniqueIndex("unique_subscription_invoice_serial_per_restaurant").on(table.restaurantId, table.serialNumber),
+}));
 
 export const insertSubscriptionInvoiceSchema = createInsertSchema(subscriptionInvoices).omit({ id: true, invoiceDate: true });
 export type InsertSubscriptionInvoice = z.infer<typeof insertSubscriptionInvoiceSchema>;
@@ -488,10 +569,11 @@ export type SubscriptionInvoice = typeof subscriptionInvoices.$inferSelect;
 // Monthly VAT Reports
 export const monthlyVatReports = pgTable("monthly_vat_reports", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   userId: varchar("user_id").notNull().references(() => users.id),
   reportMonth: integer("report_month").notNull(), // 1-12
   reportYear: integer("report_year").notNull(), // e.g., 2025
-  serialNumber: text("serial_number").notNull().unique(), // Format: VAT-YYYY-MM-XXXX
+  serialNumber: text("serial_number").notNull(), // Format: VAT-YYYY-MM-XXXX, unique per restaurant via composite index
   totalSales: decimal("total_sales", { precision: 12, scale: 2 }).notNull().default("0"), // Total sales (including VAT)
   totalSalesBaseAmount: decimal("total_sales_base_amount", { precision: 12, scale: 2 }).notNull().default("0"), // Sales before VAT
   totalSalesVat: decimal("total_sales_vat", { precision: 12, scale: 2 }).notNull().default("0"), // Sales VAT (15%)
@@ -502,7 +584,9 @@ export const monthlyVatReports = pgTable("monthly_vat_reports", {
   generatedAt: timestamp("generated_at").notNull().defaultNow(),
   pdfPath: text("pdf_path"), // Path to generated PDF report
   qrCode: text("qr_code"), // QR code data URL for ZATCA compliance
-});
+}, (table) => ({
+  uniqueVatSerialNumber: uniqueIndex("unique_vat_report_serial_per_restaurant").on(table.restaurantId, table.serialNumber),
+}));
 
 export const insertMonthlyVatReportSchema = createInsertSchema(monthlyVatReports).omit({ id: true, generatedAt: true });
 export type InsertMonthlyVatReport = z.infer<typeof insertMonthlyVatReportSchema>;
@@ -511,8 +595,9 @@ export type MonthlyVatReport = typeof monthlyVatReports.$inferSelect;
 // Support Tickets (IT Help System)
 export const supportTickets = pgTable("support_tickets", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   userId: varchar("user_id").notNull().references(() => users.id),
-  ticketNumber: text("ticket_number").notNull().unique(), // Format: TKT-YYYYMMDD-XXXX
+  ticketNumber: text("ticket_number").notNull(), // Format: TKT-YYYYMMDD-XXXX, unique per restaurant via composite index
   subject: text("subject").notNull(),
   category: text("category").notNull(), // 'technical', 'billing', 'feature_request', 'bug_report', 'other'
   priority: text("priority").notNull().default("medium"), // 'low', 'medium', 'high', 'urgent'
@@ -523,7 +608,9 @@ export const supportTickets = pgTable("support_tickets", {
   resolvedAt: timestamp("resolved_at"),
   closedAt: timestamp("closed_at"),
   assignedToIt: boolean("assigned_to_it").notNull().default(true), // Always assign to IT by default
-});
+}, (table) => ({
+  uniqueTicketNumber: uniqueIndex("unique_ticket_number_per_restaurant").on(table.restaurantId, table.ticketNumber),
+}));
 
 export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit({ 
   id: true, 
@@ -539,6 +626,7 @@ export type SupportTicket = typeof supportTickets.$inferSelect;
 // Ticket Messages (Chat between user and IT)
 export const ticketMessages = pgTable("ticket_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   ticketId: varchar("ticket_id").notNull().references(() => supportTickets.id, { onDelete: 'cascade' }),
   senderId: varchar("sender_id").notNull().references(() => users.id),
   senderName: text("sender_name").notNull(), // Store name for display
@@ -559,6 +647,7 @@ export type TicketMessage = typeof ticketMessages.$inferSelect;
 // Employee Activity Log (Track all actions by sub-accounts)
 export const employeeActivityLog = pgTable("employee_activity_log", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
   employeeId: varchar("employee_id").notNull().references(() => users.id),
   employeeName: text("employee_name").notNull(), // Store for quick display
   action: text("action").notNull(), // e.g., 'created_order', 'updated_inventory', 'modified_menu_item', etc.
