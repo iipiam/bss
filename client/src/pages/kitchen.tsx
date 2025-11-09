@@ -2,73 +2,49 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, AlertCircle } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import type { Order } from "@shared/schema";
+import { useDeviceLayout } from "@/lib/mobileLayout";
+import { useEffect } from "react";
 
-const orders = {
-  pending: [
-    {
-      id: "#12847",
-      table: "Table 5",
-      items: [
-        { name: "Margherita Pizza", quantity: 2, notes: "Extra cheese" },
-        { name: "Caesar Salad", quantity: 1, notes: "" },
-      ],
-      time: "2 min ago",
-      priority: "normal",
-    },
-    {
-      id: "#12848",
-      table: "Delivery",
-      items: [
-        { name: "Beef Burger", quantity: 3, notes: "No onions on 1" },
-        { name: "Fries", quantity: 3, notes: "Extra crispy" },
-      ],
-      time: "Just now",
-      priority: "urgent",
-    },
-  ],
-  inProgress: [
-    {
-      id: "#12846",
-      table: "Table 12",
-      items: [
-        { name: "Chicken Shawarma", quantity: 2, notes: "" },
-        { name: "Fresh Juice", quantity: 2, notes: "Orange" },
-      ],
-      time: "5 min ago",
-      priority: "normal",
-    },
-    {
-      id: "#12843",
-      table: "Delivery",
-      items: [
-        { name: "Pepperoni Pizza", quantity: 1, notes: "" },
-        { name: "Greek Salad", quantity: 1, notes: "Dressing on side" },
-      ],
-      time: "8 min ago",
-      priority: "normal",
-    },
-  ],
-  ready: [
-    {
-      id: "#12845",
-      table: "Table 8",
-      items: [
-        { name: "Grilled Salmon", quantity: 1, notes: "" },
-        { name: "Steamed Vegetables", quantity: 1, notes: "" },
-      ],
-      time: "12 min ago",
-      priority: "normal",
-    },
-  ],
-};
+function KitchenOrderCard({ 
+  order, 
+  status, 
+  onStatusChange,
+  isPending 
+}: { 
+  order: Order; 
+  status: string; 
+  onStatusChange: (id: string, newStatus: string) => void;
+  isPending: boolean;
+}) {
+  const layout = useDeviceLayout();
+  
+  const getTimeAgo = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    const minutes = Math.floor((Date.now() - dateObj.getTime()) / 60000);
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.floor(minutes / 60);
+    return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  };
+  
+  const isUrgent = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    const minutes = Math.floor((Date.now() - dateObj.getTime()) / 60000);
+    return minutes > 10;
+  };
 
-function KitchenOrderCard({ order, status }: { order: typeof orders.pending[0]; status: string }) {
+  const urgent = isUrgent(order.createdAt);
+
   return (
-    <Card className={order.priority === "urgent" ? "border-orange-500 border-2" : ""} data-testid={`kitchen-card-${order.id}`}>
+    <Card className={urgent ? "border-orange-500 border-2" : ""} data-testid={`kitchen-card-${order.id}`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-mono">{order.id}</CardTitle>
-          {order.priority === "urgent" && (
+          <CardTitle className="text-xl font-mono">#{order.orderNumber}</CardTitle>
+          {urgent && (
             <Badge variant="destructive" className="flex items-center gap-1">
               <AlertCircle className="h-3 w-3" />
               Urgent
@@ -76,10 +52,10 @@ function KitchenOrderCard({ order, status }: { order: typeof orders.pending[0]; 
           )}
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="font-semibold">{order.table}</span>
+          <span className="font-semibold">{order.table || order.orderType || "Order"}</span>
           <div className="flex items-center gap-1 text-muted-foreground">
             <Clock className="h-3 w-3" />
-            <span>{order.time}</span>
+            <span>{getTimeAgo(order.createdAt)}</span>
           </div>
         </div>
       </CardHeader>
@@ -92,19 +68,32 @@ function KitchenOrderCard({ order, status }: { order: typeof orders.pending[0]; 
                 x{item.quantity}
               </Badge>
             </div>
-            {item.notes && (
-              <p className="text-sm text-muted-foreground italic">Note: {item.notes}</p>
-            )}
           </div>
         ))}
+        {(order as any).notes && (
+          <div className="p-3 rounded-md bg-orange-100 dark:bg-orange-950 border border-orange-200 dark:border-orange-900">
+            <p className="text-sm font-semibold mb-1 text-orange-900 dark:text-orange-100">Order Notes:</p>
+            <p className="text-sm text-orange-800 dark:text-orange-200">{(order as any).notes}</p>
+          </div>
+        )}
         <Button
-          className="w-full mt-2"
+          className={`w-full mt-2 ${layout.isMobile ? 'h-[44px]' : ''}`}
           variant={status === "ready" ? "outline" : "default"}
           data-testid={`button-kitchen-action-${order.id}`}
+          onClick={() => {
+            if (status === "pending") {
+              onStatusChange(order.id, "Preparing");
+            } else if (status === "inProgress") {
+              onStatusChange(order.id, "Ready");
+            } else if (status === "ready") {
+              onStatusChange(order.id, order.orderType === "Delivery" ? "Out for Delivery" : "Completed");
+            }
+          }}
+          disabled={isPending}
         >
           {status === "pending" ? "Start Cooking" :
            status === "inProgress" ? "Mark as Ready" :
-           "Serve / Complete"}
+           order.orderType === "Delivery" ? "Out for Delivery" : "Serve / Complete"}
         </Button>
       </CardContent>
     </Card>
@@ -112,42 +101,158 @@ function KitchenOrderCard({ order, status }: { order: typeof orders.pending[0]; 
 }
 
 export default function Kitchen() {
+  const { toast } = useToast();
+  const layout = useDeviceLayout();
+  
+  const { data: orders = [], isLoading, isError, error, refetch } = useQuery<Order[]>({
+    queryKey: ["/api/orders"],
+  });
+
+  // Show toast on error
+  useEffect(() => {
+    if (isError && error) {
+      toast({
+        title: "Error loading orders",
+        description: error instanceof Error ? error.message : "Failed to load orders",
+        variant: "destructive",
+      });
+    }
+  }, [isError, error, toast]);
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      await apiRequest("PATCH", `/api/orders/${id}`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
+      toast({
+        title: "Order status updated",
+        description: "The order status has been changed",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update order status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleStatusChange = (id: string, newStatus: string) => {
+    updateStatusMutation.mutate({ id, status: newStatus });
+  };
+
+  const pendingOrders = orders.filter(o => o.status === "Pending");
+  const inProgressOrders = orders.filter(o => o.status === "Preparing");
+  const readyOrders = orders.filter(o => o.status === "Ready");
+
+  if (isLoading) {
+    return (
+      <div className={layout.padding}>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Kitchen Display</h1>
+        <p className="text-muted-foreground">Loading orders...</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className={layout.padding}>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Kitchen Display</h1>
+        <Card>
+          <CardContent className="py-8 text-center">
+            <p className="text-destructive mb-4">
+              {error instanceof Error ? error.message : "Failed to load orders"}
+            </p>
+            <Button onClick={() => refetch()}>
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-8 space-y-6">
+    <div className={`${layout.padding} ${layout.spaceY}`}>
       <div>
-        <h1 className="text-3xl font-bold mb-2">Kitchen Display</h1>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Kitchen Display</h1>
         <p className="text-muted-foreground">Real-time order tracking and preparation guidance</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 3, tablet: 2, mobile: 1 })}`}>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Pending</h2>
-            <Badge variant="secondary">{orders.pending.length}</Badge>
+            <Badge variant="secondary">{pendingOrders.length}</Badge>
           </div>
-          {orders.pending.map((order) => (
-            <KitchenOrderCard key={order.id} order={order} status="pending" />
-          ))}
+          {pendingOrders.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                No pending orders
+              </CardContent>
+            </Card>
+          ) : (
+            pendingOrders.map((order) => (
+              <KitchenOrderCard 
+                key={order.id} 
+                order={order} 
+                status="pending"
+                onStatusChange={handleStatusChange}
+                isPending={updateStatusMutation.isPending}
+              />
+            ))
+          )}
         </div>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">In Progress</h2>
-            <Badge variant="default">{orders.inProgress.length}</Badge>
+            <Badge variant="default">{inProgressOrders.length}</Badge>
           </div>
-          {orders.inProgress.map((order) => (
-            <KitchenOrderCard key={order.id} order={order} status="inProgress" />
-          ))}
+          {inProgressOrders.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                No orders in progress
+              </CardContent>
+            </Card>
+          ) : (
+            inProgressOrders.map((order) => (
+              <KitchenOrderCard 
+                key={order.id} 
+                order={order} 
+                status="inProgress"
+                onStatusChange={handleStatusChange}
+                isPending={updateStatusMutation.isPending}
+              />
+            ))
+          )}
         </div>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Ready</h2>
-            <Badge variant="default" className="bg-green-600">{orders.ready.length}</Badge>
+            <Badge variant="default" className="bg-green-600">{readyOrders.length}</Badge>
           </div>
-          {orders.ready.map((order) => (
-            <KitchenOrderCard key={order.id} order={order} status="ready" />
-          ))}
+          {readyOrders.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                No orders ready
+              </CardContent>
+            </Card>
+          ) : (
+            readyOrders.map((order) => (
+              <KitchenOrderCard 
+                key={order.id} 
+                order={order} 
+                status="ready"
+                onStatusChange={handleStatusChange}
+                isPending={updateStatusMutation.isPending}
+              />
+            ))
+          )}
         </div>
       </div>
     </div>
