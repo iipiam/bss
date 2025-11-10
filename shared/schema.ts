@@ -372,7 +372,20 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true }).extend({
+  // Transform empty date strings to null for optional date fields
+  hireDate: z.union([z.string().transform((val) => val ? new Date(val) : null), z.date(), z.null()]).optional(),
+  probationEndDate: z.union([z.string().transform((val) => val ? new Date(val) : null), z.date(), z.null()]).optional(),
+  visaExpiryDate: z.union([z.string().transform((val) => val ? new Date(val) : null), z.date(), z.null()]).optional(),
+  ticketDate: z.union([z.string().transform((val) => val ? new Date(val) : null), z.date(), z.null()]).optional(),
+  lastReviewDate: z.union([z.string().transform((val) => val ? new Date(val) : null), z.date(), z.null()]).optional(),
+  // Transform empty numeric strings to null for optional numeric fields
+  visaFees: z.union([z.string().transform((val) => val ? parseFloat(val) : null), z.number(), z.null()]).optional(),
+  ticketAmount: z.union([z.string().transform((val) => val ? parseFloat(val) : null), z.number(), z.null()]).optional(),
+  performanceRating: z.union([z.string().transform((val) => val ? parseFloat(val) : null), z.number(), z.null()]).optional(),
+  vacationDaysTotal: z.union([z.string().transform((val) => val ? parseInt(val) : 0), z.number()]).optional(),
+  vacationDaysUsed: z.union([z.string().transform((val) => val ? parseInt(val) : 0), z.number()]).optional(),
+});
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
