@@ -26,6 +26,7 @@ import {
   Store,
   LogOut,
   Truck,
+  Key,
 } from "lucide-react";
 import {
   Sidebar,
@@ -118,6 +119,7 @@ export function AppSidebar() {
     { title: t.support || "Support", url: "/support", icon: HeadphonesIcon, testId: "support", gradient: "from-emerald-500 to-teal-500" },
     { title: t.settings, url: "/settings", icon: Settings, testId: "settings", gradient: "from-slate-500 to-gray-500" },
     { title: t.employees, url: "/employees", icon: Users, testId: "employees", gradient: "from-sky-500 to-blue-500" },
+    { title: "Password Manager", url: "/password-manager", icon: Key, testId: "password-manager", gradient: "from-red-500 to-rose-500" },
   ];
 
   const renderMenuItems = (items: typeof operations) => (

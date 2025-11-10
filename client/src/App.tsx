@@ -67,6 +67,7 @@ import Investors from "@/pages/investors";
 import Support from "@/pages/support";
 import SupportDetail from "@/pages/support-detail";
 import PaymentTest from "@/pages/payment-test";
+import PasswordManager from "@/pages/password-manager";
 import Login from "@/pages/login";
 import Setup from "@/pages/setup";
 import ForgotPassword from "@/pages/forgot-password";
@@ -99,6 +100,7 @@ function Router() {
       <Route path="/procurement" component={Procurement} />
       <Route path="/settings" component={SettingsPage} />
       <Route path="/employees" component={Employees} />
+      <Route path="/password-manager" component={PasswordManager} />
       <Route path="/tutorial" component={Tutorial} />
       <Route path="/shop" component={Shop} />
       <Route path="/profile" component={Profile} />
