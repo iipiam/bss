@@ -695,10 +695,10 @@ export const signupDrafts = pgTable("signup_drafts", {
   vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }), // 15% VAT
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }), // Total including VAT
   
-  // Step 4: Payment (Stripe Integration)
-  stripeCustomerId: text("stripe_customer_id"), // Unique
-  stripePaymentIntentId: text("stripe_payment_intent_id"), // Unique
-  stripeSubscriptionId: text("stripe_subscription_id"), // Unique
+  // Step 4: Payment (Moyasar Integration - Saudi Arabia)
+  paymentProvider: text("payment_provider").notNull().default("moyasar"), // Payment gateway used (moyasar)
+  paymentReferenceId: text("payment_reference_id"), // Unique payment transaction ID from gateway
+  paymentInvoiceUrl: text("payment_invoice_url"), // Payment receipt/invoice URL from gateway
   paymentStatus: text("payment_status").notNull().default("pending"), // pending | succeeded | failed | refunded
   paymentCompletedAt: timestamp("payment_completed_at"),
   
@@ -734,8 +734,8 @@ export const signupDrafts = pgTable("signup_drafts", {
   uniqueOwnerEmail: uniqueIndex("signup_drafts_owner_email_idx").on(table.ownerEmail),
   // Index for cleanup cron job
   expiresAtIdx: uniqueIndex("signup_drafts_expires_at_idx").on(table.expiresAt),
-  // Stripe reference uniqueness
-  stripePaymentIntentIdx: uniqueIndex("signup_drafts_stripe_intent_idx").on(table.stripePaymentIntentId),
+  // Payment reference uniqueness (prevents duplicate payments)
+  paymentReferenceIdx: uniqueIndex("signup_drafts_payment_ref_idx").on(table.paymentReferenceId),
 }));
 
 export const insertSignupDraftSchema = createInsertSchema(signupDrafts).omit({ 

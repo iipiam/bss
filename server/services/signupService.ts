@@ -189,20 +189,21 @@ export class SignupService {
   }
 
   /**
-   * Update draft with Stripe payment information
+   * Update draft with Moyasar payment information
    */
   static async updatePaymentInfo(
     draftId: string,
-    stripeData: {
-      stripeCustomerId: string;
-      stripePaymentIntentId: string;
-      stripeSubscriptionId?: string;
+    paymentData: {
+      paymentReferenceId: string;
+      paymentInvoiceUrl?: string;
     }
   ): Promise<SignupDraft> {
     const [updated] = await db
       .update(signupDrafts)
       .set({
-        ...stripeData,
+        paymentProvider: 'moyasar',
+        paymentReferenceId: paymentData.paymentReferenceId,
+        paymentInvoiceUrl: paymentData.paymentInvoiceUrl || null,
         updatedAt: new Date(),
       })
       .where(eq(signupDrafts.id, draftId))

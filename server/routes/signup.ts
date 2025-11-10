@@ -160,9 +160,8 @@ router.post("/payment-intent", async (req, res) => {
 
     // Store payment information in draft
     await SignupService.updatePaymentInfo(draftId, {
-      stripeCustomerId: payment.id, // Using as payment ID reference
-      stripePaymentIntentId: payment.id,
-      stripeSubscriptionId: payment.id,
+      paymentReferenceId: payment.id, // Moyasar payment ID
+      paymentInvoiceUrl: payment.source?.message || null, // Payment receipt/invoice URL if available
     });
 
     res.json({
