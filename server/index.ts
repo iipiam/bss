@@ -51,6 +51,11 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: false }));
 
+// PRODUCTION GUARD: Require SESSION_SECRET in production
+if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+  throw new Error('FATAL: SESSION_SECRET required in production for secure session encryption');
+}
+
 // Session middleware with conditional store (Task 12: Production-ready session persistence)
 app.use(session({
   store: sessionStore, // PostgreSQL if DATABASE_URL set, otherwise MemoryStore

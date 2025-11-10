@@ -127,3 +127,38 @@ Preferred communication style: Simple, everyday language.
 - **express-session**: Session middleware.
 - **date-fns**: Date manipulation.
 - **xlsx**: Excel generation and parsing.
+- **node-cron**: Scheduled tasks (cleanup jobs).
+- **twilio**: WhatsApp API for OTP delivery.
+
+## Deployment & Production
+
+### AWS Cloud Deployment
+- **Target Platform**: AWS Cloud (EC2, ECS Fargate, or Elastic Beanstalk)
+- **Database**: AWS RDS PostgreSQL (Multi-AZ recommended)
+- **Load Balancer**: Application Load Balancer (ALB) with HTTPS
+- **SSL/TLS**: AWS Certificate Manager (ACM)
+- **DNS**: Route 53
+- **Monitoring**: CloudWatch Logs & Metrics
+- **Deployment Guide**: See `AWS_DEPLOYMENT_GUIDE.md` for complete setup instructions
+
+### Production Environment Variables
+Required for production deployment:
+- `NODE_ENV=production`
+- `PORT=5000` (required by AWS)
+- `DATABASE_URL` (AWS RDS PostgreSQL connection string)
+- `SESSION_SECRET` (strong random secret for session encryption)
+- `MOYASAR_SECRET_KEY` / `VITE_MOYASAR_PUBLIC_KEY` (production API keys)
+- `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_PHONE_NUMBER` (WhatsApp-enabled)
+
+### Production Features
+- **Session Persistence**: PostgreSQL-backed sessions (falls back to memory in dev)
+- **Cron Jobs**: Automated signup draft cleanup (runs hourly)
+- **Error Handling**: Production-safe error messages (hides sensitive details)
+- **Security**: OTP logging disabled in production, HTTPS-only cookies
+- **Database Backups**: 7-day retention via RDS automated snapshots
+
+### Scaling for 750+ Restaurants
+- **Compute**: 2-4 EC2/ECS instances (t3.large or equivalent)
+- **Database**: db.m5.xlarge with read replicas for analytics
+- **Auto-scaling**: CPU-based scaling (target 60-70%)
+- **Estimated Cost**: ~$1,350/month On-Demand, ~$1,000/month with 1-year Reserved Instances (see deployment guide)
