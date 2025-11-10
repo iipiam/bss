@@ -193,6 +193,41 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({ i
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Transaction = typeof transactions.$inferSelect;
 
+// Moyasar Payments (Payment Gateway Integration)
+export const moyasarPayments = pgTable("moyasar_payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  moyasarId: text("moyasar_id").notNull().unique(), // Moyasar payment ID from their API
+  orderId: varchar("order_id").references(() => orders.id),
+  transactionId: varchar("transaction_id").references(() => transactions.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Amount in SAR
+  amountHalalas: integer("amount_halalas").notNull(), // Amount in halalas (1 SAR = 100 halalas)
+  currency: text("currency").notNull().default("SAR"),
+  status: text("status").notNull(), // "initiated", "paid", "failed", "refunded", "authorized"
+  paymentMethod: text("payment_method"), // "creditcard", "mada", "applepay", "stcpay"
+  cardBrand: text("card_brand"), // "visa", "mastercard", "mada", etc.
+  cardLast4: text("card_last4"), // Last 4 digits of card
+  fee: decimal("fee", { precision: 10, scale: 2 }), // Moyasar transaction fee
+  refundedAmount: decimal("refunded_amount", { precision: 10, scale: 2 }).default("0"),
+  description: text("description"),
+  customerName: text("customer_name"),
+  customerEmail: text("customer_email"),
+  customerPhone: text("customer_phone"),
+  callbackUrl: text("callback_url"),
+  metadata: jsonb("metadata").$type<Record<string, any>>(), // Additional data
+  errorMessage: text("error_message"), // Error details if payment failed
+  branchId: varchar("branch_id").references(() => branches.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertMoyasarPaymentSchema = createInsertSchema(moyasarPayments).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+export type InsertMoyasarPayment = z.infer<typeof insertMoyasarPaymentSchema>;
+export type MoyasarPayment = typeof moyasarPayments.$inferSelect;
+
 // Settings
 export const settings = pgTable("settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

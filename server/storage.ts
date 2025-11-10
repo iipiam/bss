@@ -62,6 +62,9 @@ import {
   supportTickets,
   ticketMessages,
   employeeActivityLog,
+  moyasarPayments,
+  type MoyasarPayment,
+  type InsertMoyasarPayment,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, or, isNull } from "drizzle-orm";
@@ -219,6 +222,13 @@ export interface IStorage {
   getEmployeeActivities(employeeId?: string, category?: string, startDate?: Date, endDate?: Date): Promise<EmployeeActivityLog[]>;
   createEmployeeActivity(activity: InsertEmployeeActivityLog): Promise<EmployeeActivityLog>;
   getEmployeeActivityStats(employeeId: string): Promise<any>;
+
+  // Moyasar Payments
+  getMoyasarPayments(branchId?: string): Promise<MoyasarPayment[]>;
+  getMoyasarPayment(id: string): Promise<MoyasarPayment | undefined>;
+  getMoyasarPaymentByMoyasarId(moyasarId: string): Promise<MoyasarPayment | undefined>;
+  createMoyasarPayment(payment: InsertMoyasarPayment): Promise<MoyasarPayment>;
+  updateMoyasarPayment(id: string, payment: Partial<InsertMoyasarPayment>): Promise<MoyasarPayment | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1417,6 +1427,49 @@ export class DatabaseStorage implements IStorage {
       categoryCounts: categoryCounts.map(c => ({ category: c.category, count: c.count })),
       recentActivities24h: recentResult?.count || 0,
     };
+  }
+
+  // Moyasar Payments
+  async getMoyasarPayments(branchId?: string): Promise<MoyasarPayment[]> {
+    if (branchId) {
+      return await db.select().from(moyasarPayments)
+        .where(eq(moyasarPayments.branchId, branchId))
+        .orderBy(sql`${moyasarPayments.createdAt} DESC`);
+    }
+    return await db.select().from(moyasarPayments)
+      .orderBy(sql`${moyasarPayments.createdAt} DESC`);
+  }
+
+  async getMoyasarPayment(id: string): Promise<MoyasarPayment | undefined> {
+    const [payment] = await db.select().from(moyasarPayments).where(eq(moyasarPayments.id, id));
+    return payment;
+  }
+
+  async getMoyasarPaymentByMoyasarId(moyasarId: string): Promise<MoyasarPayment | undefined> {
+    const [payment] = await db.select().from(moyasarPayments).where(eq(moyasarPayments.moyasarId, moyasarId));
+    return payment;
+  }
+
+  async createMoyasarPayment(payment: InsertMoyasarPayment): Promise<MoyasarPayment> {
+    const [created] = await db.insert(moyasarPayments).values(payment as any).returning();
+    return created;
+  }
+
+  async updateMoyasarPayment(id: string, payment: Partial<InsertMoyasarPayment>): Promise<MoyasarPayment | undefined> {
+    const updateData = Object.fromEntries(
+      Object.entries(payment).filter(([_, value]) => value !== undefined)
+    );
+    updateData.updatedAt = new Date();
+    
+    if (Object.keys(updateData).length === 0) {
+      return this.getMoyasarPayment(id);
+    }
+    
+    const [updated] = await db.update(moyasarPayments)
+      .set(updateData as any)
+      .where(eq(moyasarPayments.id, id))
+      .returning();
+    return updated;
   }
 }
 

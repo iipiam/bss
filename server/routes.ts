@@ -3030,6 +3030,199 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Moyasar Payment Gateway
+  app.get("/api/moyasar/config", (_req, res) => {
+    try {
+      const { getPublishableKey } = require('./moyasarService');
+      res.json({ 
+        publishableKey: getPublishableKey(),
+        currency: 'SAR',
+      });
+    } catch (error) {
+      console.error("Error getting Moyasar config:", error);
+      res.status(500).json({ error: "Failed to get payment configuration" });
+    }
+  });
+
+  app.post("/api/moyasar/create-payment", async (req, res) => {
+    try {
+      const { orderId, amount, description, token, customerName, customerEmail, customerPhone } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: "Invalid amount" });
+      }
+
+      const { createPayment } = require('./moyasarService');
+      const callbackUrl = `${req.protocol}://${req.get('host')}/api/moyasar/callback`;
+
+      // Create payment with Moyasar
+      const payment = await createPayment({
+        amount: parseFloat(amount),
+        description: description || `Order Payment`,
+        callbackUrl,
+        source: token ? {
+          type: 'token' as const,
+          token,
+        } : undefined,
+        metadata: {
+          orderId,
+          customerName,
+          customerEmail,
+          customerPhone,
+        },
+      });
+
+      // Save payment record to database
+      const amountSar = payment.amount / 100;
+      const moyasarPayment = await storage.createMoyasarPayment({
+        moyasarId: payment.id,
+        orderId: orderId || null,
+        transactionId: null,
+        amount: amountSar.toString(),
+        amountHalalas: payment.amount,
+        currency: payment.currency,
+        status: payment.status,
+        paymentMethod: payment.source?.type || null,
+        cardBrand: payment.source?.company || null,
+        cardLast4: payment.source?.number ? payment.source.number.slice(-4) : null,
+        fee: payment.fee ? (payment.fee / 100).toString() : null,
+        refundedAmount: payment.refunded ? (payment.refunded / 100).toString() : "0",
+        description: payment.description,
+        customerName,
+        customerEmail,
+        customerPhone,
+        callbackUrl: payment.callback_url,
+        metadata: payment.metadata,
+        errorMessage: payment.source?.message || null,
+        branchId: req.body.branchId || null,
+      });
+
+      res.json({
+        success: true,
+        payment: moyasarPayment,
+        moyasarPayment: payment,
+      });
+    } catch (error: any) {
+      console.error("Error creating Moyasar payment:", error);
+      res.status(500).json({ 
+        error: "Payment creation failed",
+        message: error.message,
+      });
+    }
+  });
+
+  app.get("/api/moyasar/payment/:paymentId", async (req, res) => {
+    try {
+      const { fetchPayment } = require('./moyasarService');
+      const payment = await fetchPayment(req.params.paymentId);
+
+      // Update payment in database
+      const moyasarPayment = await storage.getMoyasarPaymentByMoyasarId(req.params.paymentId);
+      if (moyasarPayment) {
+        await storage.updateMoyasarPayment(moyasarPayment.id, {
+          status: payment.status,
+          paymentMethod: payment.source?.type || moyasarPayment.paymentMethod,
+          cardBrand: payment.source?.company || moyasarPayment.cardBrand,
+          cardLast4: payment.source?.number ? payment.source.number.slice(-4) : moyasarPayment.cardLast4,
+          fee: payment.fee ? (payment.fee / 100).toString() : moyasarPayment.fee,
+          refundedAmount: payment.refunded ? (payment.refunded / 100).toString() : moyasarPayment.refundedAmount,
+          errorMessage: payment.source?.message || moyasarPayment.errorMessage,
+        });
+      }
+
+      res.json(payment);
+    } catch (error: any) {
+      console.error("Error fetching Moyasar payment:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch payment",
+        message: error.message,
+      });
+    }
+  });
+
+  app.post("/api/moyasar/refund/:paymentId", async (req, res) => {
+    try {
+      const { amount } = req.body;
+      const { refundPayment } = require('./moyasarService');
+      
+      const payment = await refundPayment(
+        req.params.paymentId, 
+        amount ? parseFloat(amount) : undefined
+      );
+
+      // Update payment in database
+      const moyasarPayment = await storage.getMoyasarPaymentByMoyasarId(req.params.paymentId);
+      if (moyasarPayment) {
+        await storage.updateMoyasarPayment(moyasarPayment.id, {
+          status: payment.status,
+          refundedAmount: payment.refunded ? (payment.refunded / 100).toString() : moyasarPayment.refundedAmount,
+        });
+      }
+
+      res.json({
+        success: true,
+        payment,
+      });
+    } catch (error: any) {
+      console.error("Error refunding Moyasar payment:", error);
+      res.status(500).json({ 
+        error: "Refund failed",
+        message: error.message,
+      });
+    }
+  });
+
+  app.post("/api/moyasar/callback", async (req, res) => {
+    try {
+      const { id: paymentId, status, amount, source } = req.body;
+
+      // Verify payment with Moyasar
+      const { fetchPayment } = require('./moyasarService');
+      const payment = await fetchPayment(paymentId);
+
+      // Update payment in database
+      const moyasarPayment = await storage.getMoyasarPaymentByMoyasarId(paymentId);
+      if (moyasarPayment) {
+        await storage.updateMoyasarPayment(moyasarPayment.id, {
+          status: payment.status,
+          paymentMethod: payment.source?.type || moyasarPayment.paymentMethod,
+          cardBrand: payment.source?.company || moyasarPayment.cardBrand,
+          cardLast4: payment.source?.number ? payment.source.number.slice(-4) : moyasarPayment.cardLast4,
+          fee: payment.fee ? (payment.fee / 100).toString() : moyasarPayment.fee,
+          refundedAmount: payment.refunded ? (payment.refunded / 100).toString() : moyasarPayment.refundedAmount,
+          errorMessage: payment.source?.message || moyasarPayment.errorMessage,
+        });
+
+        // If payment is successful and linked to an order, update order status
+        if (payment.status === 'paid' && moyasarPayment.orderId) {
+          await storage.updateOrder(moyasarPayment.orderId, {
+            status: 'paid',
+            paymentMethod: 'Moyasar - ' + (payment.source?.company || payment.source?.type || 'Online'),
+          });
+        }
+      }
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error processing Moyasar callback:", error);
+      res.status(500).json({ 
+        error: "Callback processing failed",
+        message: error.message,
+      });
+    }
+  });
+
+  app.get("/api/moyasar/payments", async (req, res) => {
+    try {
+      const branchId = req.query.branchId as string | undefined;
+      const payments = await storage.getMoyasarPayments(branchId);
+      res.json(payments);
+    } catch (error) {
+      console.error("Error fetching payments:", error);
+      res.status(500).json({ error: "Failed to fetch payments" });
+    }
+  });
+
   // Support Tickets
   app.get("/api/tickets", async (req, res) => {
     try {
