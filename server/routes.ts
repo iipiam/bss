@@ -1079,11 +1079,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Note: This bypasses restaurantId filtering because we're checking for ANY users across all restaurants
   app.get("/api/auth/check-first-run", async (_req, res) => {
     try {
-      // For first-run check, we need to check all users across all restaurants
-      // Using a temporary bypass - in production, this would query the users table directly
-      // For now, we'll use an empty restaurantId check
-      const users = await storage.getUsers(""); // Empty string indicates global check
-      res.json({ firstRun: users.length === 0 });
+      // Check if ANY users exist in the database (across all restaurants)
+      const hasUsers = await storage.anyUsersExist();
+      res.json({ firstRun: !hasUsers });
     } catch (error) {
       console.error("First-run check error:", error);
       res.status(500).json({ error: "Failed to check first-run status" });
@@ -1117,7 +1115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if username already exists (across all restaurants for signup)
       // During signup, we need to check username uniqueness globally
-      const existingUser = await storage.getUserByUsername("", username);
+      const existingUser = await storage.getUserByUsernameGlobal(username);
       if (existingUser) {
         return res.status(400).json({ error: "Username already exists" });
       }
@@ -1276,7 +1274,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Username and password required" });
       }
 
-      const user = await storage.getUserByUsername("", username); // Global check for login
+      // Use global method to find user across all restaurants
+      const user = await storage.getUserByUsernameGlobal(username);
       
       console.log("[AUTH] User found:", user ? `Yes (id: ${user.id}, active: ${user.active})` : "No");
       
@@ -1336,7 +1335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Find user by email (global check across all restaurants)
-      const user = await storage.getUserByEmail("", email);
+      const user = await storage.getUserByEmailGlobal(email);
       
       // Don't reveal if user exists or not for security
       if (!user) {
@@ -1377,7 +1376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Find user by reset token and check if not expired (global check)
-      const user = await storage.getUserByResetToken("", token);
+      const user = await storage.getUserByResetTokenGlobal(token);
       
       if (!user) {
         return res.status(400).json({ error: "Invalid or expired reset token" });
@@ -1397,12 +1396,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/me", async (req, res) => {
-    if (!req.session?.userId) {
+    if (!req.session?.userId || !req.session?.restaurantId) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
-    // Global check for current user (not tenant-filtered yet)
-    const user = await storage.getUser("", req.session.userId);
+    // Get current user using restaurantId from session
+    const user = await storage.getUser(req.session.restaurantId, req.session.userId);
     
     if (!user || !user.active) {
       return res.status(401).json({ error: "Not authenticated" });
@@ -1413,7 +1412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.patch("/api/auth/me", async (req, res) => {
-    if (!req.session?.userId) {
+    if (!req.session?.userId || !req.session?.restaurantId) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -1425,7 +1424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid device preference. Must be 'laptop', 'ipad', or 'iphone'" });
       }
 
-      const updatedUser = await storage.updateUser("", req.session.userId, { devicePreference }); // Global update for current user
+      const updatedUser = await storage.updateUser(req.session.restaurantId, req.session.userId, { devicePreference });
       
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
@@ -1459,19 +1458,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users", async (req, res) => {
     try {
       // Check if this is the first user (setup mode)
-      const allUsers = await storage.getUsers("");
-      const isFirstUser = allUsers.length === 0;
+      const hasUsers = await storage.anyUsersExist();
+      const isFirstUser = !hasUsers;
 
       // Determine restaurantId based on whether this is first user or admin creating
       let restaurantId = "";
       
       // If not first user, require admin authentication
       if (!isFirstUser) {
-        if (!req.session?.userId) {
+        if (!req.session?.userId || !req.session?.restaurantId) {
           return res.status(401).json({ error: "Not authenticated" });
         }
 
-        const currentUser = await storage.getUser("", req.session.userId);
+        const currentUser = await storage.getUser(req.session.restaurantId, req.session.userId);
         if (currentUser?.role !== "admin") {
           return res.status(403).json({ error: "Admin access required" });
         }

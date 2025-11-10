@@ -145,6 +145,12 @@ export interface IStorage {
   getUserProfile(restaurantId: string, userId: string): Promise<User | undefined>;
   updateUserProfile(restaurantId: string, userId: string, profile: { email?: string; phone?: string }): Promise<User | undefined>;
   cancelSubscription(restaurantId: string, userId: string): Promise<User | undefined>;
+  
+  // Global user methods (for pre-authentication flows)
+  getUserByUsernameGlobal(username: string): Promise<User | undefined>;
+  getUserByEmailGlobal(email: string): Promise<User | undefined>;
+  getUserByResetTokenGlobal(token: string): Promise<User | undefined>;
+  anyUsersExist(): Promise<boolean>;
 
   // Invoices
   getInvoices(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date): Promise<Invoice[]>;
@@ -691,6 +697,32 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(users.restaurantId, restaurantId), eq(users.id, userId)))
       .returning();
     return updated;
+  }
+
+  // Global user methods (for pre-authentication flows)
+  async getUserByUsernameGlobal(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async getUserByEmailGlobal(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async getUserByResetTokenGlobal(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(
+      and(
+        eq(users.passwordResetToken, token),
+        gte(users.passwordResetExpiry, new Date()) // Check token not expired
+      )
+    );
+    return user;
+  }
+
+  async anyUsersExist(): Promise<boolean> {
+    const result = await db.select().from(users).limit(1);
+    return result.length > 0;
   }
 
   // Invoices
