@@ -72,6 +72,7 @@ import Login from "@/pages/login";
 import Setup from "@/pages/setup";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
+import EmergencyReset from "@/pages/emergency-reset";
 import NotFound from "@/pages/not-found";
 import type { User } from "@shared/schema";
 import kinzhalLogo from "@assets/SKinzhal_1762548840624.jpeg";
@@ -177,13 +178,16 @@ function AppContent() {
   // Apply device-specific container styles
   const containerMaxWidth = device === 'iphone' ? '430px' : device === 'ipad' ? '820px' : '100%';
 
-  // Handle public routes (forgot-password, reset-password) before checking authentication
+  // Handle public routes (forgot-password, reset-password, emergency-reset) before checking authentication
   const currentPath = window.location.pathname;
   if (currentPath === "/forgot-password") {
     return <ForgotPassword />;
   }
   if (currentPath === "/reset-password") {
     return <ResetPassword />;
+  }
+  if (currentPath === "/emergency-reset") {
+    return <EmergencyReset />;
   }
 
   // Show loading state

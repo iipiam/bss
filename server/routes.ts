@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport } from "./invoice";
 import bcrypt from "bcrypt";
 import QRCode from "qrcode";
+import rateLimit from "express-rate-limit";
 import * as fs from "fs";
 import * as path from "path";
 import {
@@ -27,6 +28,19 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Rate limiter for emergency bootstrap reset endpoint
+  const bootstrapResetLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // Limit each IP to 10 attempts per 15 minutes
+    message: { error: "Too many reset attempts. Please try again in 15 minutes." },
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    handler: (req, res) => {
+      console.log(`[BOOTSTRAP] Rate limit exceeded from IP: ${req.ip || req.socket.remoteAddress}`);
+      res.status(429).json({ error: "Too many reset attempts. Please try again in 15 minutes." });
+    },
+  });
+
   // Branches
   app.get("/api/branches", async (_req, res) => {
     const branches = await storage.getBranches();
@@ -1374,6 +1388,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Password reset successful" });
     } catch (error) {
       console.error("Reset password error:", error);
+      res.status(500).json({ error: "Failed to reset password" });
+    }
+  });
+
+  // Bootstrap emergency admin reset (one-time use, requires secret token)
+  app.post("/api/auth/bootstrap-reset", bootstrapResetLimiter, async (req, res) => {
+    try {
+      const { token, username, password } = req.body;
+      const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+      
+      // Validate inputs
+      if (!token || !username || !password) {
+        console.log(`[BOOTSTRAP] Invalid request - missing fields from IP: ${clientIp}`);
+        return res.status(400).json({ error: "Token, username, and password are required" });
+      }
+
+      if (password.length < 6) {
+        console.log(`[BOOTSTRAP] Password too short from IP: ${clientIp}`);
+        return res.status(400).json({ error: "Password must be at least 6 characters long" });
+      }
+
+      // Check if token is valid and not consumed
+      const validToken = await storage.getValidBootstrapToken(token);
+      
+      if (!validToken) {
+        console.log(`[BOOTSTRAP] Invalid or consumed token attempted from IP: ${clientIp}`);
+        return res.status(401).json({ error: "Invalid or already used reset token" });
+      }
+
+      // Find admin user by username
+      const user = await storage.getUserByUsername(username);
+      
+      if (!user) {
+        console.log(`[BOOTSTRAP] User not found: ${username} from IP: ${clientIp}`);
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      if (user.role !== 'admin') {
+        console.log(`[BOOTSTRAP] Attempted reset of non-admin account: ${username} from IP: ${clientIp}`);
+        return res.status(403).json({ error: "Can only reset admin accounts via bootstrap" });
+      }
+
+      // Reset the password
+      await storage.updatePassword(user.id, password);
+
+      // Mark token as consumed
+      await storage.consumeBootstrapToken(validToken.id, username, clientIp);
+
+      console.log(`[BOOTSTRAP] Successfully reset password for admin: ${username} from IP: ${clientIp}`);
+      
+      res.json({ 
+        message: "Admin password reset successful. You can now log in with your new password.",
+        username: username 
+      });
+    } catch (error) {
+      console.error("[BOOTSTRAP] Reset error:", error);
       res.status(500).json({ error: "Failed to reset password" });
     }
   });

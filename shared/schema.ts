@@ -629,3 +629,22 @@ export const insertEmployeeActivityLogSchema = createInsertSchema(employeeActivi
 });
 export type InsertEmployeeActivityLog = z.infer<typeof insertEmployeeActivityLogSchema>;
 export type EmployeeActivityLog = typeof employeeActivityLog.$inferSelect;
+
+// Bootstrap Reset Tokens (One-time emergency admin password reset)
+export const bootstrapResetTokens = pgTable("bootstrap_reset_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  tokenHash: text("token_hash").notNull(), // Bcrypt hash of the reset token
+  consumed: boolean("consumed").notNull().default(false), // One-time use flag
+  consumedAt: timestamp("consumed_at"),
+  consumedBy: text("consumed_by"), // Username of admin that was reset
+  ipAddress: text("ip_address"), // IP that consumed the token
+  expiresAt: timestamp("expires_at").notNull(), // Token expiration time (15-30 minutes recommended)
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertBootstrapResetTokenSchema = createInsertSchema(bootstrapResetTokens).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type InsertBootstrapResetToken = z.infer<typeof insertBootstrapResetTokenSchema>;
+export type BootstrapResetToken = typeof bootstrapResetTokens.$inferSelect;

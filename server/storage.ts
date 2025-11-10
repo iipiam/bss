@@ -65,6 +65,9 @@ import {
   moyasarPayments,
   type MoyasarPayment,
   type InsertMoyasarPayment,
+  bootstrapResetTokens,
+  type BootstrapResetToken,
+  type InsertBootstrapResetToken,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, or, isNull } from "drizzle-orm";
@@ -148,6 +151,10 @@ export interface IStorage {
   getUserProfile(userId: string): Promise<User | undefined>;
   updateUserProfile(userId: string, profile: { email?: string; phone?: string }): Promise<User | undefined>;
   cancelSubscription(userId: string): Promise<User | undefined>;
+  
+  // Bootstrap Reset Tokens
+  getValidBootstrapToken(plainToken: string): Promise<{ id: string; tokenHash: string } | undefined>;
+  consumeBootstrapToken(tokenId: string, username: string, ipAddress: string): Promise<void>;
 
   // Invoices
   getInvoices(branchId?: string, startDate?: Date, endDate?: Date): Promise<Invoice[]>;
@@ -683,6 +690,35 @@ export class DatabaseStorage implements IStorage {
         passwordResetExpiry: null
       })
       .where(eq(users.id, userId));
+  }
+
+  async getValidBootstrapToken(plainToken: string): Promise<{ id: string; tokenHash: string } | undefined> {
+    const tokens = await db.select().from(bootstrapResetTokens).where(
+      and(
+        eq(bootstrapResetTokens.consumed, false),
+        gte(bootstrapResetTokens.expiresAt, new Date()) // Check token not expired
+      )
+    );
+    
+    for (const token of tokens) {
+      const isValid = await bcrypt.compare(plainToken, token.tokenHash);
+      if (isValid) {
+        return { id: token.id, tokenHash: token.tokenHash };
+      }
+    }
+    
+    return undefined;
+  }
+
+  async consumeBootstrapToken(tokenId: string, username: string, ipAddress: string): Promise<void> {
+    await db.update(bootstrapResetTokens)
+      .set({ 
+        consumed: true,
+        consumedAt: new Date(),
+        consumedBy: username,
+        ipAddress: ipAddress
+      })
+      .where(eq(bootstrapResetTokens.id, tokenId));
   }
 
   async getUserProfile(userId: string): Promise<User | undefined> {
