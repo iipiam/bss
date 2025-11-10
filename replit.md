@@ -30,6 +30,13 @@ Preferred communication style: Simple, everyday language.
 - **Migration Strategy**: Drizzle Kit.
 
 ### Core Features & Implementations
+- **Multi-Tenant SaaS Platform**: Complete transformation to support 750+ restaurant clients in Saudi Arabia with isolated data, row-level security, and AWS deployment readiness.
+  - **Restaurant Signup Wizard**: 6-step public signup flow - Company Info → Owner Details → Plan Selection → Payment → WhatsApp OTP → Password Setup
+  - **Payment Gateway**: Moyasar integration (SAMA-licensed) with support for Mada, STC Pay, SADAD, Apple Pay, and credit cards. Handles recurring subscriptions with 15% VAT compliance.
+  - **WhatsApp OTP Verification**: Twilio WhatsApp API for secure phone verification during signup. Bilingual messages (Arabic/English) with automatic Saudi phone formatting (+966).
+  - **Subscription Plans**: Weekly (39.90 SAR), Monthly (119.75 SAR), Yearly (1,197.50 SAR) with per-branch pricing (7/20/240 SAR respectively). First branch included in base price.
+  - **Draft Management**: Secure signup draft persistence with 24-hour expiration, SHA-256 OTP hashing, constant-time comparison, and automatic cleanup.
+  - **Multi-tenant Database**: All core tables updated with restaurantId foreign keys, composite indexes, and tenant isolation enforced at API level.
 - **Analytics & Reporting**: Dashboard with DoD, WoW, MoM, YoY performance metrics; Daily Demand Forecasting per menu item; Peak Hours Analysis with customer drill-down.
 - **ZATCA Compliance**: Bilingual (Arabic/English) PDF invoice generation using Puppeteer, QR code generation, and professional HTML templates.
 - **Invoice Management**: Dedicated page for ZATCA-compliant invoices with search and download.

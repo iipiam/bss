@@ -229,7 +229,7 @@ router.get("/payment-callback", async (req, res) => {
   }
 });
 
-// Step 5a: Send OTP via SMS (will integrate Twilio later)
+// Step 5a: Send OTP via WhatsApp (using Twilio)
 router.post("/send-otp", async (req, res) => {
   try {
     const schema = z.object({
@@ -261,15 +261,97 @@ router.post("/send-otp", async (req, res) => {
     // Store hashed OTP
     await SignupService.storeOTP(draftId, hash);
 
-    // TODO: Send OTP via Twilio SMS (Task 9)
-    // For now, log it (development only - remove in production)
-    console.log(`[DEV] OTP for ${draft.ownerPhone}: ${otp}`);
+    // Send OTP via Twilio WhatsApp
+    let otpSent = false;
+    let devOtp: string | undefined;
+
+    // Helper function to normalize Saudi phone numbers
+    const normalizeSaudiPhone = (phone: string): string => {
+      // Remove all non-digit characters (spaces, hyphens, parentheses)
+      const digits = phone.replace(/\D/g, '');
+      
+      // Handle different Saudi number formats:
+      // 966XXXXXXXXX (without country code prefix)
+      // 00966XXXXXXXXX (with 00 prefix)
+      // +966XXXXXXXXX (with + prefix)
+      // 05XXXXXXXX (local format)
+      
+      if (digits.startsWith('00966')) {
+        // Remove 00 prefix
+        return `+${digits.slice(2)}`;
+      } else if (digits.startsWith('966')) {
+        // Already has country code
+        return `+${digits}`;
+      } else if (digits.startsWith('05') && digits.length === 10) {
+        // Local Saudi format (05XXXXXXXX)
+        return `+966${digits.slice(1)}`; // Remove leading 0, add +966
+      } else if (digits.startsWith('5') && digits.length === 9) {
+        // Already stripped local format (5XXXXXXXX)
+        return `+966${digits}`;
+      } else {
+        // Invalid format
+        throw new Error(`Invalid Saudi phone number format: ${phone}`);
+      }
+    };
+
+    if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER) {
+      try {
+        const twilio = require('twilio');
+        const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
+        // Normalize recipient phone number
+        const recipientPhone = normalizeSaudiPhone(draft.ownerPhone);
+        
+        // Validate normalized phone (should be +966XXXXXXXXX, 13 chars total)
+        if (!recipientPhone.match(/^\+966\d{9}$/)) {
+          throw new Error(`Invalid Saudi phone number after normalization: ${recipientPhone}`);
+        }
+
+        // Normalize Twilio number - remove whatsapp: prefix if present
+        const twilioNumber = process.env.TWILIO_PHONE_NUMBER.replace(/^whatsapp:/, '');
+
+        const message = await client.messages.create({
+          from: `whatsapp:${twilioNumber}`,
+          to: `whatsapp:${recipientPhone}`,
+          body: `مرحباً بك في RestoPOS!\n\nرمز التحقق الخاص بك هو: ${otp}\n\nWelcome to RestoPOS!\n\nYour verification code is: ${otp}\n\nThis code will expire in 10 minutes.`,
+        });
+
+        console.log(`[WhatsApp OTP] Sent successfully, SID: ${message.sid}`);
+        otpSent = true;
+      } catch (twilioError: any) {
+        console.error("Twilio WhatsApp error:", twilioError);
+        
+        // SECURITY: Never log OTP in production
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[DEV] WhatsApp failed, OTP: ${otp}`);
+          devOtp = otp;
+        }
+        
+        // Return error to frontend - don't claim success when Twilio fails
+        return res.status(500).json({
+          success: false,
+          message: "Failed to send OTP via WhatsApp. Please try again or contact support.",
+          error: process.env.NODE_ENV === 'development' ? twilioError.message : undefined,
+        });
+      }
+    } else {
+      // Development mode - no Twilio credentials configured
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[DEV] Twilio not configured, OTP: ${otp}`);
+        devOtp = otp;
+      } else {
+        // Production without Twilio - critical error
+        return res.status(500).json({
+          success: false,
+          message: "OTP service not configured. Please contact support.",
+        });
+      }
+    }
 
     res.json({
       success: true,
-      message: "OTP sent successfully",
-      // TODO: Remove this in production - only for development testing
-      devOtp: process.env.NODE_ENV === 'development' ? otp : undefined,
+      message: otpSent ? "OTP sent via WhatsApp" : "OTP generated (development mode)",
+      devOtp,
     });
   } catch (error: any) {
     console.error("Send OTP error:", error);
