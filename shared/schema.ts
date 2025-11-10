@@ -319,7 +319,7 @@ export const users = pgTable("users", {
   restaurantName: text("restaurant_name"), // Restaurant name (mandatory for signup)
   nationalId: text("national_id"), // National ID or Company Name (mandatory for signup)
   taxNumber: text("tax_number"), // Unified Tax Number (mandatory for signup)
-  restaurantType: text("restaurant_type"), // "Cloud Kitchen" or "Restaurant" (mandatory for signup)
+  restaurantType: text("restaurant_type"), // "Cloud Kitchen", "Restaurant", "Coffee Shop", "Tea Shop", "Sweets", "Bakery" (mandatory for signup)
   subscriptionPlan: text("subscription_plan"), // "weekly", "monthly" or "yearly"
   branchesCount: integer("branches_count").notNull().default(1), // Number of branches (minimum 1, affects pricing)
   subscriptionStatus: text("subscription_status").default("inactive"), // "inactive", "active", "cancelled", "expired"

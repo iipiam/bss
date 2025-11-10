@@ -383,6 +383,10 @@ export default function Login() {
                     <SelectContent>
                       <SelectItem value="Cloud Kitchen">Cloud Kitchen</SelectItem>
                       <SelectItem value="Restaurant">Restaurant</SelectItem>
+                      <SelectItem value="Coffee Shop">Coffee Shop</SelectItem>
+                      <SelectItem value="Tea Shop">Tea Shop</SelectItem>
+                      <SelectItem value="Sweets">Sweets</SelectItem>
+                      <SelectItem value="Bakery">Bakery</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
