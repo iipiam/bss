@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, UserCheck, UserX, Calendar, FileText, Plane, Award, Shield, Briefcase, Clock } from "lucide-react";
+import { Plus, Edit, UserCheck, UserX, Calendar, FileText, Plane, Award, Shield, Briefcase, Clock, Info, Key, LogIn } from "lucide-react";
 import type { User } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeviceLayout } from "@/lib/mobileLayout";
@@ -693,6 +693,56 @@ export default function Employees() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Quick Guide Card */}
+      <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+        <CardHeader>
+          <div className="flex items-start gap-3">
+            <div className="bg-primary/10 p-2 rounded-lg">
+              <Info className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Employee Account Quick Guide</CardTitle>
+              <CardDescription className="mt-2">
+                Follow these simple steps to manage employee accounts
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <div className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-xs">1</div>
+                <span>Create Employee Account</span>
+              </div>
+              <p className="text-sm text-muted-foreground pl-8">
+                Click "Add Employee" button above. Fill in their name, username, and password. Save the credentials to share with them.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <div className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-xs">2</div>
+                <LogIn className="h-4 w-4" />
+                <span>Employee Login</span>
+              </div>
+              <p className="text-sm text-muted-foreground pl-8">
+                Employees can log in using their <strong>username</strong> and password (not email). They use the same login page as admins.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <div className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-xs">3</div>
+                <Key className="h-4 w-4" />
+                <span>Reset Password</span>
+              </div>
+              <p className="text-sm text-muted-foreground pl-8">
+                Forgot a password? Go to <strong>Password Manager</strong> in the sidebar to reset any account password instantly.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Search Bar */}
       <div className="flex gap-4">
