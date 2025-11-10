@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport } from "./invoice";
 import { requireTenantAuth, requireAdminAuth } from "./middleware/requireTenantAuth";
+import signupRoutes from "./routes/signup";
 import bcrypt from "bcrypt";
 import QRCode from "qrcode";
 import * as fs from "fs";
@@ -28,6 +29,8 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Public signup routes (no authentication required)
+  app.use("/api/signup", signupRoutes);
   // Branches
   app.get("/api/branches", requireTenantAuth, async (req, res) => {
     const branches = await storage.getBranches(req.restaurantId!);
