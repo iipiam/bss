@@ -39,44 +39,86 @@ export function MoyasarPayment({
   const moyasarInstanceRef = useRef<any>(null);
 
   useEffect(() => {
-    const loadMoyasarScript = async () => {
-      if (window.Moyasar) {
-        initializeMoyasar();
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = 'https://cdn.moyasar.com/mpf/1.14.0/moyasar.js';
-      script.async = true;
-      script.onload = () => {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = 'https://cdn.moyasar.com/mpf/1.14.0/moyasar.css';
-        document.head.appendChild(link);
-        
-        initializeMoyasar();
-      };
-      script.onerror = () => {
-        setError('Failed to load payment gateway');
+    // Set a timeout for initialization
+    const initTimeout = setTimeout(() => {
+      if (isLoading) {
+        setError('Payment form initialization timed out. Please check your internet connection and try again.');
         setIsLoading(false);
-      };
-      document.head.appendChild(script);
+      }
+    }, 10000); // 10 second timeout
+
+    const loadMoyasarScript = async () => {
+      try {
+        if (window.Moyasar) {
+          await initializeMoyasar();
+          clearTimeout(initTimeout);
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://cdn.moyasar.com/mpf/1.14.0/moyasar.js';
+        script.async = true;
+        script.onload = async () => {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = 'https://cdn.moyasar.com/mpf/1.14.0/moyasar.css';
+          document.head.appendChild(link);
+          
+          await initializeMoyasar();
+          clearTimeout(initTimeout);
+        };
+        script.onerror = () => {
+          clearTimeout(initTimeout);
+          setError('Failed to load payment gateway scripts. Please check your internet connection.');
+          setIsLoading(false);
+        };
+        document.head.appendChild(script);
+      } catch (err) {
+        clearTimeout(initTimeout);
+        setError('Unexpected error loading payment form');
+        setIsLoading(false);
+      }
     };
 
     const initializeMoyasar = async () => {
       try {
+        console.log('[Moyasar] Fetching settings...');
         const response = await fetch('/api/settings');
         const settings = await response.json();
         const publishableKey = settings.moyasarPublishableKey;
 
-        if (!publishableKey) {
-          setError('Payment gateway not configured');
+        console.log('[Moyasar] Publishable key present:', !!publishableKey);
+        console.log('[Moyasar] Key starts with:', publishableKey?.substring(0, 10));
+
+        if (!publishableKey || publishableKey === 'null' || publishableKey === 'undefined') {
+          setError('Payment gateway not configured. Please contact support to set up Moyasar API keys.');
           setIsLoading(false);
           return;
         }
 
-        if (!formRef.current) return;
+        // Wait for form ref to be available (with retries)
+        let retries = 0;
+        while (!formRef.current && retries < 20) {
+          console.log('[Moyasar] Waiting for form container...', retries);
+          await new Promise(resolve => setTimeout(resolve, 100));
+          retries++;
+        }
 
+        if (!formRef.current) {
+          console.log('[Moyasar] Form ref not available after retries');
+          setError('Payment form container not ready. Please refresh the page and try again.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (!window.Moyasar) {
+          console.log('[Moyasar] SDK not loaded');
+          setError('Moyasar SDK not loaded');
+          setIsLoading(false);
+          return;
+        }
+
+        console.log('[Moyasar] Initializing form with amount:', amount);
         moyasarInstanceRef.current = window.Moyasar.init({
           element: formRef.current,
           amount: Math.round(amount * 100),
@@ -91,6 +133,7 @@ export function MoyasarPayment({
             customerPhone: customerPhone || '',
           },
           on_completed: async (payment: any) => {
+            console.log('[Moyasar] Payment completed:', payment.id);
             setPaymentStatus('processing');
             try {
               const verifyResponse = await apiRequest('POST', '/api/payments/verify', {
@@ -106,19 +149,23 @@ export function MoyasarPayment({
                 onError('Payment verification failed');
               }
             } catch (err) {
+              console.error('[Moyasar] Verification error:', err);
               setPaymentStatus('failed');
               onError('Payment verification error');
             }
           },
           on_failure: (error: any) => {
+            console.error('[Moyasar] Payment failed:', error);
             setPaymentStatus('failed');
             onError(error.message || 'Payment failed');
           },
         });
 
+        console.log('[Moyasar] Form initialized successfully');
         setIsLoading(false);
       } catch (err) {
-        setError('Failed to initialize payment form');
+        console.error('[Moyasar] Initialization error:', err);
+        setError(`Failed to initialize payment form: ${err instanceof Error ? err.message : 'Unknown error'}`);
         setIsLoading(false);
       }
     };
@@ -126,60 +173,12 @@ export function MoyasarPayment({
     loadMoyasarScript();
 
     return () => {
+      clearTimeout(initTimeout);
       if (moyasarInstanceRef.current && moyasarInstanceRef.current.teardown) {
         moyasarInstanceRef.current.teardown();
       }
     };
   }, [amount, description, orderId, customerName, customerPhone, onSuccess, onError]);
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading payment form...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <XCircle className="h-4 w-4" />
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    );
-  }
-
-  if (paymentStatus === 'success') {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <CheckCircle2 className="h-12 w-12 text-green-500" />
-            <h3 className="text-lg font-semibold">Payment Successful</h3>
-            <p className="text-sm text-muted-foreground">Your payment has been processed successfully</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (paymentStatus === 'processing') {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Verifying payment...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card>
@@ -187,20 +186,55 @@ export function MoyasarPayment({
         <CardTitle>Payment Details</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 p-4 bg-muted rounded-lg">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm text-muted-foreground">Amount</span>
-            <span className="text-lg font-semibold">{amount.toFixed(2)} SAR</span>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <XCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {paymentStatus === 'success' && (
+          <div className="flex flex-col items-center gap-3 text-center py-8">
+            <CheckCircle2 className="h-12 w-12 text-green-500" />
+            <h3 className="text-lg font-semibold">Payment Successful</h3>
+            <p className="text-sm text-muted-foreground">Your payment has been processed successfully</p>
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Description</span>
-            <span className="text-sm">{description}</span>
+        )}
+
+        {paymentStatus === 'processing' && (
+          <div className="flex flex-col items-center gap-3 py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Verifying payment...</p>
           </div>
-        </div>
+        )}
+
+        {!error && paymentStatus === 'idle' && (
+          <>
+            {isLoading && (
+              <div className="flex flex-col items-center gap-3 py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Loading payment form...</p>
+              </div>
+            )}
+
+            <div className={isLoading ? 'hidden' : ''}>
+              <div className="mb-4 p-4 bg-muted rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-muted-foreground">Amount</span>
+                  <span className="text-lg font-semibold">{amount.toFixed(2)} SAR</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Description</span>
+                  <span className="text-sm">{description}</span>
+                </div>
+              </div>
+              
+              <div ref={formRef} className="moyasar-form" data-testid="moyasar-payment-form"></div>
+            </div>
+          </>
+        )}
         
-        <div ref={formRef} className="moyasar-form" data-testid="moyasar-payment-form"></div>
-        
-        {onCancel && (
+        {onCancel && !paymentStatus && (
           <div className="mt-4 flex justify-end">
             <Button
               variant="outline"
