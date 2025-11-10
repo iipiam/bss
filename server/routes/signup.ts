@@ -130,7 +130,7 @@ router.post("/payment-intent", async (req, res) => {
       amount: amountInHalalas,
       currency: "SAR",
       description: `RestoPOS Subscription - ${draft.restaurantName}`,
-      callback_url: `${req.protocol}://${req.get('host')}/signup/payment-callback`,
+      callback_url: `${req.protocol}://${req.get('host')}/api/signup/payment-callback`,
       metadata: {
         draft_id: draftId,
         restaurant_name: draft.restaurantName,

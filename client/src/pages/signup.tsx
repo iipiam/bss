@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,31 +9,24 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Check, Building2, User, CreditCard, Smartphone, Settings } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Building2, User, CreditCard, Smartphone, Settings, Loader2, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 
-// Step 1: Company Information
-const companyInfoSchema = z.object({
+// Step 1-2: Company Info + Owner Details combined
+const companyAndOwnerSchema = z.object({
   restaurantName: z.string().min(3, "Restaurant name must be at least 3 characters"),
   commercialRegistration: z.string().min(10, "Commercial registration number is required"),
   nationalId: z.string().min(10, "National ID is required"),
   taxNumber: z.string().min(15, "VAT number must be 15 digits"),
   restaurantType: z.enum(["Restaurant", "Cloud Kitchen", "Coffee Shop", "Tea Shop", "Sweets Shop"]),
   address: z.string().min(10, "Full address is required"),
-  phone: z.string().min(10, "Phone number is required"),
-});
-
-// Step 2: Owner Details
-const ownerDetailsSchema = z.object({
+  businessPhone: z.string().min(10, "Phone number is required"),
   ownerName: z.string().min(3, "Owner name is required"),
   ownerEmail: z.string().email("Valid email is required"),
   ownerPhone: z.string().min(10, "Phone number is required"),
   username: z.string().min(3, "Username must be at least 3 characters"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
 });
 
 // Step 3: Plan Selection
@@ -42,18 +35,18 @@ const planSelectionSchema = z.object({
   branchesCount: z.number().min(1, "At least 1 branch is required"),
 });
 
-// Combined schema for all steps
-type CompanyInfo = z.infer<typeof companyInfoSchema>;
-type OwnerDetails = z.infer<typeof ownerDetailsSchema>;
-type PlanSelection = z.infer<typeof planSelectionSchema>;
+// Step 6: Final password setup
+const passwordSchema = z.object({
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
 
-interface SignupData {
-  companyInfo?: CompanyInfo;
-  ownerDetails?: OwnerDetails;
-  planSelection?: PlanSelection;
-  paymentSuccess?: boolean;
-  otpVerified?: boolean;
-}
+type CompanyAndOwner = z.infer<typeof companyAndOwnerSchema>;
+type PlanSelection = z.infer<typeof planSelectionSchema>;
+type PasswordSetup = z.infer<typeof passwordSchema>;
 
 const PLAN_PRICING = {
   weekly: { base: 39.90, perBranch: 7 },
@@ -63,8 +56,37 @@ const PLAN_PRICING = {
 
 export default function Signup() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [signupData, setSignupData] = useState<SignupData>({});
+  const [draftId, setDraftId] = useState<string | null>(null);
+  const [pricing, setPricing] = useState<any>(null);
+  const [devOtp, setDevOtp] = useState<string | null>(null);
   const { toast } = useToast();
+  const [, navigate] = useLocation();
+
+  // Check URL params for payment callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get('payment');
+    const urlDraftId = params.get('draftId');
+    const stepParam = params.get('step');
+
+    if (paymentStatus === 'success' && urlDraftId) {
+      setDraftId(urlDraftId);
+      setCurrentStep(5); // Move to OTP verification
+      toast({
+        title: "Payment Successful",
+        description: "Please verify your phone number to continue",
+      });
+    } else if (paymentStatus === 'failed') {
+      toast({
+        title: "Payment Failed",
+        description: "Please try again or contact support",
+        variant: "destructive",
+      });
+    } else if (stepParam && urlDraftId) {
+      setDraftId(urlDraftId);
+      setCurrentStep(parseInt(stepParam));
+    }
+  }, []);
 
   const steps = [
     { number: 1, title: "Company Info", icon: Building2 },
@@ -74,14 +96,6 @@ export default function Signup() {
     { number: 5, title: "OTP Verification", icon: Smartphone },
     { number: 6, title: "Setup Complete", icon: Check },
   ];
-
-  const handleNext = () => {
-    if (currentStep < 6) setCurrentStep(currentStep + 1);
-  };
-
-  const handleBack = () => {
-    if (currentStep > 1) setCurrentStep(currentStep - 1);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
@@ -141,18 +155,61 @@ export default function Signup() {
               {currentStep === 1 && "Tell us about your restaurant business"}
               {currentStep === 2 && "Create your admin account"}
               {currentStep === 3 && "Select the best plan for your needs"}
-              {currentStep === 4 && "Secure payment powered by Stripe"}
+              {currentStep === 4 && "Secure payment powered by Moyasar (SAMA-licensed)"}
               {currentStep === 5 && "Enter the code sent to your phone"}
               {currentStep === 6 && "Your account is ready to use"}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {currentStep === 1 && <CompanyInfoStep onNext={handleNext} signupData={signupData} setSignupData={setSignupData} />}
-            {currentStep === 2 && <OwnerDetailsStep onNext={handleNext} onBack={handleBack} signupData={signupData} setSignupData={setSignupData} />}
-            {currentStep === 3 && <PlanSelectionStep onNext={handleNext} onBack={handleBack} signupData={signupData} setSignupData={setSignupData} />}
-            {currentStep === 4 && <PaymentStep onNext={handleNext} onBack={handleBack} signupData={signupData} setSignupData={setSignupData} />}
-            {currentStep === 5 && <OTPVerificationStep onNext={handleNext} onBack={handleBack} signupData={signupData} />}
-            {currentStep === 6 && <SetupCompleteStep />}
+            {currentStep === 1 && (
+              <CompanyInfoStep
+                onNext={(id: string) => {
+                  setDraftId(id);
+                  setCurrentStep(2);
+                }}
+                draftId={draftId}
+              />
+            )}
+            {currentStep === 2 && (
+              <OwnerDetailsStep
+                onNext={() => setCurrentStep(3)}
+                onBack={() => setCurrentStep(1)}
+                draftId={draftId!}
+              />
+            )}
+            {currentStep === 3 && (
+              <PlanSelectionStep
+                onNext={(pricingData: any) => {
+                  setPricing(pricingData);
+                  setCurrentStep(4);
+                }}
+                onBack={() => setCurrentStep(2)}
+                draftId={draftId!}
+              />
+            )}
+            {currentStep === 4 && (
+              <PaymentStep
+                onNext={() => setCurrentStep(5)}
+                onBack={() => setCurrentStep(3)}
+                draftId={draftId!}
+                pricing={pricing}
+              />
+            )}
+            {currentStep === 5 && (
+              <OTPVerificationStep
+                onNext={() => setCurrentStep(6)}
+                onBack={() => setCurrentStep(4)}
+                draftId={draftId!}
+                devOtp={devOtp}
+                setDevOtp={setDevOtp}
+              />
+            )}
+            {currentStep === 6 && (
+              <SetupCompleteStep
+                draftId={draftId!}
+                onComplete={() => navigate("/")}
+              />
+            )}
           </CardContent>
         </Card>
       </div>
@@ -161,15 +218,37 @@ export default function Signup() {
 }
 
 // Step 1: Company Information
-function CompanyInfoStep({ onNext, signupData, setSignupData }: any) {
-  const form = useForm<CompanyInfo>({
-    resolver: zodResolver(companyInfoSchema),
-    defaultValues: signupData.companyInfo || {},
+function CompanyInfoStep({ onNext, draftId }: { onNext: (id: string) => void; draftId: string | null }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const form = useForm<CompanyAndOwner>({
+    resolver: zodResolver(companyAndOwnerSchema),
+    defaultValues: {},
   });
 
-  const onSubmit = (data: CompanyInfo) => {
-    setSignupData({ ...signupData, companyInfo: data });
-    onNext();
+  const onSubmit = async (data: CompanyAndOwner) => {
+    setIsLoading(true);
+    try {
+      const res = await apiRequest("POST", "/api/signup/draft", { ...data, draftId });
+      const response = await res.json();
+
+      if (response.success) {
+        toast({
+          title: "Progress Saved",
+          description: "Company information saved successfully",
+        });
+        onNext(response.draftId);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save company information",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -276,7 +355,7 @@ function CompanyInfoStep({ onNext, signupData, setSignupData }: any) {
 
         <FormField
           control={form.control}
-          name="phone"
+          name="businessPhone"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Business Phone</FormLabel>
@@ -288,8 +367,72 @@ function CompanyInfoStep({ onNext, signupData, setSignupData }: any) {
           )}
         />
 
+        {/* Owner Details - Combined in Step 1 */}
+        <div className="border-t pt-4 mt-6">
+          <h3 className="text-lg font-semibold mb-4">Owner Details</h3>
+          
+          <FormField
+            control={form.control}
+            name="ownerName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Full Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Ahmed Al-Saud" {...field} data-testid="input-owner-name" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <FormField
+              control={form.control}
+              name="ownerEmail"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Address</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="ahmed@example.com" {...field} data-testid="input-owner-email" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="ownerPhone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mobile Phone</FormLabel>
+                  <FormControl>
+                    <Input placeholder="+966501234567" {...field} data-testid="input-owner-phone" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem className="mt-4">
+                <FormLabel>Username (for login)</FormLabel>
+                <FormControl>
+                  <Input placeholder="ahmed_admin" {...field} data-testid="input-username" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <div className="flex justify-end pt-4">
-          <Button type="submit" className="w-full md:w-auto" data-testid="button-next-step">
+          <Button type="submit" className="w-full md:w-auto" disabled={isLoading} data-testid="button-next-step">
+            {isLoading ? <Loader2 className="mr-2 w-4 h-4 animate-spin" /> : null}
             Next <ChevronRight className="ml-2 w-4 h-4" />
           </Button>
         </div>
@@ -298,127 +441,25 @@ function CompanyInfoStep({ onNext, signupData, setSignupData }: any) {
   );
 }
 
-// Step 2: Owner Details
-function OwnerDetailsStep({ onNext, onBack, signupData, setSignupData }: any) {
-  const form = useForm<OwnerDetails>({
-    resolver: zodResolver(ownerDetailsSchema),
-    defaultValues: signupData.ownerDetails || {},
-  });
-
-  const onSubmit = (data: OwnerDetails) => {
-    setSignupData({ ...signupData, ownerDetails: data });
+// Step 2: Owner Details (Hidden - merged with Step 1)
+function OwnerDetailsStep({ onNext, onBack, draftId }: any) {
+  // This step is now combined with Step 1
+  // Automatically skip to next
+  useEffect(() => {
     onNext();
-  };
+  }, []);
 
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="ownerName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Full Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Ahmed Al-Saud" {...field} data-testid="input-owner-name" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="ownerEmail"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email Address</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="ahmed@example.com" {...field} data-testid="input-owner-email" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="ownerPhone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Mobile Phone</FormLabel>
-                <FormControl>
-                  <Input placeholder="+966501234567" {...field} data-testid="input-owner-phone" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Username (for login)</FormLabel>
-              <FormControl>
-                <Input placeholder="ahmed_admin" {...field} data-testid="input-username" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="••••••••" {...field} data-testid="input-password" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="confirmPassword"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Confirm Password</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="••••••••" {...field} data-testid="input-confirm-password" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="flex justify-between pt-4">
-          <Button type="button" variant="outline" onClick={onBack} data-testid="button-back">
-            <ChevronLeft className="mr-2 w-4 h-4" /> Back
-          </Button>
-          <Button type="submit" data-testid="button-next-step">
-            Next <ChevronRight className="ml-2 w-4 h-4" />
-          </Button>
-        </div>
-      </form>
-    </Form>
-  );
+  return null;
 }
 
 // Step 3: Plan Selection
-function PlanSelectionStep({ onNext, onBack, signupData, setSignupData }: any) {
+function PlanSelectionStep({ onNext, onBack, draftId }: { onNext: (pricing: any) => void; onBack: () => void; draftId: string }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
   const form = useForm<PlanSelection>({
     resolver: zodResolver(planSelectionSchema),
-    defaultValues: signupData.planSelection || { plan: "monthly", branchesCount: 1 },
+    defaultValues: { plan: "monthly", branchesCount: 1 },
   });
 
   const watchPlan = form.watch("plan");
@@ -434,9 +475,28 @@ function PlanSelectionStep({ onNext, onBack, signupData, setSignupData }: any) {
 
   const { subtotal, vat, total } = calculateTotal();
 
-  const onSubmit = (data: PlanSelection) => {
-    setSignupData({ ...signupData, planSelection: data });
-    onNext();
+  const onSubmit = async (data: PlanSelection) => {
+    setIsLoading(true);
+    try {
+      const res = await apiRequest("POST", "/api/signup/plan", { draftId, ...data });
+      const response = await res.json();
+
+      if (response.success) {
+        toast({
+          title: "Plan Selected",
+          description: `${data.plan} plan with ${data.branchesCount} branch(es)`,
+        });
+        onNext(response.pricing);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save plan selection",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -562,10 +622,11 @@ function PlanSelectionStep({ onNext, onBack, signupData, setSignupData }: any) {
         </div>
 
         <div className="flex justify-between pt-4">
-          <Button type="button" variant="outline" onClick={onBack} data-testid="button-back">
+          <Button type="button" variant="outline" onClick={onBack} disabled={isLoading} data-testid="button-back">
             <ChevronLeft className="mr-2 w-4 h-4" /> Back
           </Button>
-          <Button type="submit" data-testid="button-next-step">
+          <Button type="submit" disabled={isLoading} data-testid="button-next-step">
+            {isLoading ? <Loader2 className="mr-2 w-4 h-4 animate-spin" /> : null}
             Continue to Payment <ChevronRight className="ml-2 w-4 h-4" />
           </Button>
         </div>
@@ -574,133 +635,332 @@ function PlanSelectionStep({ onNext, onBack, signupData, setSignupData }: any) {
   );
 }
 
-// Step 4: Payment (Placeholder - will integrate Stripe)
-function PaymentStep({ onNext, onBack, signupData, setSignupData }: any) {
+// Step 4: Payment with Moyasar
+function PaymentStep({ onNext, onBack, draftId, pricing }: any) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [moyasarLoaded, setMoyasarLoaded] = useState(false);
   const { toast } = useToast();
 
-  const handlePayment = () => {
-    // TODO: Integrate Stripe payment
-    toast({
-      title: "Payment Integration Pending",
-      description: "Stripe integration will be added in Task 8",
-    });
-    setSignupData({ ...signupData, paymentSuccess: true });
-    onNext();
+  useEffect(() => {
+    // Load Moyasar.js script
+    const script = document.createElement('script');
+    script.src = 'https://cdn.moyasar.com/mpf/1.14.0/moyasar.js';
+    script.async = true;
+    script.onload = () => setMoyasarLoaded(true);
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  const initializeMoyasar = async () => {
+    setIsLoading(true);
+    try {
+      // Create payment intent
+      const res = await apiRequest("POST", "/api/signup/payment-intent", { draftId });
+      const response = await res.json();
+
+      if (response.success && moyasarLoaded) {
+        // Initialize Moyasar payment form
+        (window as any).Moyasar.init({
+          element: '#moyasar-form',
+          amount: Math.round(parseFloat(response.amount) * 100), // Convert to halalas
+          currency: 'SAR',
+          description: `RestoPOS Subscription`,
+          publishable_api_key: response.publishableKey || import.meta.env.VITE_MOYASAR_PUBLIC_KEY,
+          callback_url: `${window.location.origin}/api/signup/payment-callback`,
+          methods: ['creditcard', 'applepay', 'stcpay'],
+          metadata: {
+            draft_id: draftId,
+          },
+          on_initiating: function() {
+            setIsLoading(true);
+          },
+          on_completed: function(payment: any) {
+            setIsLoading(false);
+            if (payment.status === 'paid') {
+              toast({
+                title: "Payment Successful",
+                description: "Redirecting to verification...",
+              });
+              setTimeout(() => onNext(), 1500);
+            }
+          },
+          on_failure: function(error: any) {
+            setIsLoading(false);
+            toast({
+              title: "Payment Failed",
+              description: error.message || "Please try again",
+              variant: "destructive",
+            });
+          },
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to initialize payment",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
   };
+
+  useEffect(() => {
+    if (moyasarLoaded && draftId) {
+      initializeMoyasar();
+    }
+  }, [moyasarLoaded, draftId]);
 
   return (
     <div className="space-y-6">
-      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-        <p className="text-sm text-blue-700 dark:text-blue-300">
-          🔒 Secure payment powered by Stripe. Your payment information is encrypted and never stored on our servers.
-        </p>
+      {/* Payment Summary */}
+      {pricing && (
+        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg space-y-2">
+          <h3 className="font-semibold mb-2">Payment Summary</h3>
+          <div className="flex justify-between text-sm">
+            <span>Subtotal:</span>
+            <span>{pricing.subtotal?.toFixed(2)} SAR</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>VAT (15%):</span>
+            <span>{pricing.vat?.toFixed(2)} SAR</span>
+          </div>
+          <div className="flex justify-between font-bold text-lg border-t pt-2">
+            <span>Total:</span>
+            <span>{pricing.total?.toFixed(2)} SAR</span>
+          </div>
+        </div>
+      )}
+
+      {/* Moyasar Payment Form */}
+      <div id="moyasar-form" className="min-h-[300px]">
+        {!moyasarLoaded && (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+          </div>
+        )}
       </div>
 
-      <div className="space-y-2">
-        <p className="font-semibold">Payment Summary:</p>
-        <p>Plan: {signupData.planSelection?.plan || "N/A"}</p>
-        <p>Branches: {signupData.planSelection?.branchesCount || 1}</p>
-      </div>
-
-      {/* Stripe Elements will go here */}
-      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-        <CreditCard className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-        <p className="text-gray-500">Stripe payment form will appear here</p>
-        <p className="text-sm text-gray-400 mt-2">(Integration pending - Task 8)</p>
+      {/* Security Notice */}
+      <div className="text-sm text-gray-500 text-center">
+        🔒 Secure payment powered by Moyasar (SAMA-licensed)
       </div>
 
       <div className="flex justify-between pt-4">
-        <Button type="button" variant="outline" onClick={onBack} data-testid="button-back">
+        <Button type="button" variant="outline" onClick={onBack} disabled={isLoading} data-testid="button-back">
           <ChevronLeft className="mr-2 w-4 h-4" /> Back
-        </Button>
-        <Button onClick={handlePayment} data-testid="button-process-payment">
-          Process Payment <ChevronRight className="ml-2 w-4 h-4" />
         </Button>
       </div>
     </div>
   );
 }
 
-// Step 5: OTP Verification (Placeholder - will integrate Twilio)
-function OTPVerificationStep({ onNext, onBack, signupData }: any) {
+// Step 5: OTP Verification
+function OTPVerificationStep({ onNext, onBack, draftId, devOtp, setDevOtp }: any) {
   const [otp, setOtp] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
 
-  const handleVerify = () => {
-    // TODO: Integrate Twilio OTP
-    if (otp.length === 6) {
+  const sendOTP = async () => {
+    setIsSending(true);
+    try {
+      const res = await apiRequest("POST", "/api/signup/send-otp", { draftId });
+      const response = await res.json();
+
+      if (response.success) {
+        toast({
+          title: "OTP Sent",
+          description: "Check your phone for the verification code",
+        });
+        
+        // Store dev OTP if in development
+        if (response.devOtp) {
+          setDevOtp(response.devOtp);
+        }
+      }
+    } catch (error: any) {
       toast({
-        title: "OTP Verification Pending",
-        description: "Twilio SMS integration will be added in Task 9",
+        title: "Error",
+        description: error.message || "Failed to send OTP",
+        variant: "destructive",
       });
-      onNext();
-    } else {
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  useEffect(() => {
+    // Auto-send OTP on mount
+    sendOTP();
+  }, []);
+
+  const verifyOTP = async () => {
+    if (otp.length !== 6) {
       toast({
         title: "Invalid OTP",
         description: "Please enter a 6-digit code",
         variant: "destructive",
       });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await apiRequest("POST", "/api/signup/verify-otp", { draftId, otp });
+      const response = await res.json();
+
+      if (response.success) {
+        toast({
+          title: "OTP Verified",
+          description: "Phone number verified successfully",
+        });
+        onNext();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Verification Failed",
+        description: error.message || "Invalid OTP code",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-        <p className="text-sm text-green-700 dark:text-green-300">
-          📱 We've sent a 6-digit verification code to {signupData.ownerDetails?.ownerPhone || "your phone"}
-        </p>
-      </div>
+      {devOtp && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200">
+          <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-200">Development Mode</p>
+          <p className="text-sm text-yellow-700 dark:text-yellow-300">OTP Code: <strong>{devOtp}</strong></p>
+        </div>
+      )}
 
-      <div className="flex flex-col items-center space-y-4">
-        <Smartphone className="w-16 h-16 text-orange-500" />
+      <div className="space-y-4">
+        <Label>Enter 6-digit OTP</Label>
         <Input
           type="text"
-          placeholder="Enter 6-digit code"
-          value={otp}
-          onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-          className="text-center text-2xl tracking-widest w-64"
           maxLength={6}
+          placeholder="000000"
+          value={otp}
+          onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+          className="text-center text-2xl tracking-widest"
           data-testid="input-otp"
         />
-        <Button variant="ghost" className="text-sm" data-testid="button-resend-otp">
-          Didn't receive the code? Resend
-        </Button>
       </div>
 
+      <Button
+        type="button"
+        variant="outline"
+        onClick={sendOTP}
+        disabled={isSending}
+        className="w-full"
+        data-testid="button-resend-otp"
+      >
+        {isSending ? <Loader2 className="mr-2 w-4 h-4 animate-spin" /> : null}
+        Resend OTP
+      </Button>
+
       <div className="flex justify-between pt-4">
-        <Button type="button" variant="outline" onClick={onBack} data-testid="button-back">
+        <Button type="button" variant="outline" onClick={onBack} disabled={isLoading} data-testid="button-back">
           <ChevronLeft className="mr-2 w-4 h-4" /> Back
         </Button>
-        <Button onClick={handleVerify} disabled={otp.length !== 6} data-testid="button-verify-otp">
-          Verify & Complete <Check className="ml-2 w-4 h-4" />
+        <Button onClick={verifyOTP} disabled={isLoading || otp.length !== 6} data-testid="button-verify-otp">
+          {isLoading ? <Loader2 className="mr-2 w-4 h-4 animate-spin" /> : null}
+          Verify & Continue
         </Button>
       </div>
     </div>
   );
 }
 
-// Step 6: Setup Complete
-function SetupCompleteStep() {
+// Step 6: Setup Complete with Password
+function SetupCompleteStep({ draftId, onComplete }: { draftId: string; onComplete: () => void }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const form = useForm<PasswordSetup>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {},
+  });
+
+  const onSubmit = async (data: PasswordSetup) => {
+    setIsLoading(true);
+    try {
+      const res = await apiRequest("POST", "/api/signup/complete", { draftId, password: data.password });
+      const response = await res.json();
+
+      if (response.success) {
+        toast({
+          title: "Welcome to RestoPOS!",
+          description: "Your account has been created successfully",
+        });
+        
+        // Wait a moment then redirect
+        setTimeout(() => {
+          onComplete();
+        }, 2000);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to complete setup",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="text-center space-y-6 py-8">
-      <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto">
-        <Check className="w-12 h-12 text-white" />
+    <div className="space-y-6">
+      <div className="flex flex-col items-center justify-center py-8">
+        <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-4">
+          <CheckCircle2 className="w-12 h-12 text-green-500" />
+        </div>
+        <h3 className="text-2xl font-bold mb-2">Almost There!</h3>
+        <p className="text-gray-500 text-center">Set your password to complete the setup</p>
       </div>
-      <h2 className="text-2xl font-bold text-green-600 dark:text-green-400">
-        Your Account is Ready!
-      </h2>
-      <p className="text-gray-600 dark:text-gray-300">
-        Welcome to RestoPOS! Your restaurant management system is now set up and ready to use.
-      </p>
-      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-        <p className="text-sm text-blue-700 dark:text-blue-300">
-          📧 We've sent a confirmation email to {" "}
-          <span className="font-semibold">your email</span> with login instructions and next steps.
-        </p>
-      </div>
-      <Button size="lg" className="w-full md:w-auto" data-testid="button-go-to-dashboard">
-        Go to Dashboard <ChevronRight className="ml-2 w-4 h-4" />
-      </Button>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="••••••••" {...field} data-testid="input-password" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="••••••••" {...field} data-testid="input-confirm-password" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <Button type="submit" className="w-full" disabled={isLoading} data-testid="button-complete-setup">
+            {isLoading ? <Loader2 className="mr-2 w-4 h-4 animate-spin" /> : null}
+            Complete Setup & Login
+          </Button>
+        </form>
+      </Form>
     </div>
   );
 }
