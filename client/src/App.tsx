@@ -67,8 +67,6 @@ import Investors from "@/pages/investors";
 import Support from "@/pages/support";
 import SupportDetail from "@/pages/support-detail";
 import Login from "@/pages/login";
-import Signup from "@/pages/signup";
-import Landing from "@/pages/landing";
 import Setup from "@/pages/setup";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
@@ -175,14 +173,8 @@ function AppContent() {
   // Apply device-specific container styles
   const containerMaxWidth = device === 'iphone' ? '430px' : device === 'ipad' ? '820px' : '100%';
 
-  // Handle public routes (landing, signup, login, forgot-password, reset-password) before checking authentication
+  // Handle public routes (forgot-password, reset-password) before checking authentication
   const currentPath = window.location.pathname;
-  if (currentPath === "/signup") {
-    return <Signup />;
-  }
-  if (currentPath === "/login") {
-    return <Login />;
-  }
   if (currentPath === "/forgot-password") {
     return <ForgotPassword />;
   }
@@ -207,9 +199,9 @@ function AppContent() {
     return <Setup />;
   }
 
-  // Show landing page if not authenticated
+  // Show login page if not authenticated
   if (!user) {
-    return <Landing />;
+    return <Login />;
   }
 
   // Show main app if authenticated with device-responsive layout

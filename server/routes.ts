@@ -2,8 +2,6 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport } from "./invoice";
-import { requireTenantAuth, requireAdminAuth } from "./middleware/requireTenantAuth";
-import signupRoutes from "./routes/signup";
 import bcrypt from "bcrypt";
 import QRCode from "qrcode";
 import * as fs from "fs";
@@ -29,35 +27,33 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Public signup routes (no authentication required)
-  app.use("/api/signup", signupRoutes);
   // Branches
-  app.get("/api/branches", requireTenantAuth, async (req, res) => {
-    const branches = await storage.getBranches(req.restaurantId!);
+  app.get("/api/branches", async (_req, res) => {
+    const branches = await storage.getBranches();
     res.json(branches);
   });
 
-  app.get("/api/branches/:id", requireTenantAuth, async (req, res) => {
-    const branch = await storage.getBranch(req.restaurantId!, req.params.id);
+  app.get("/api/branches/:id", async (req, res) => {
+    const branch = await storage.getBranch(req.params.id);
     if (!branch) {
       return res.status(404).json({ error: "Branch not found" });
     }
     res.json(branch);
   });
 
-  app.post("/api/branches", requireTenantAuth, async (req, res) => {
+  app.post("/api/branches", async (req, res) => {
     try {
       const data = insertBranchSchema.parse(req.body);
-      const branch = await storage.createBranch(req.restaurantId!, data);
+      const branch = await storage.createBranch(data);
       res.status(201).json(branch);
     } catch (error) {
       res.status(400).json({ error: "Invalid branch data" });
     }
   });
 
-  app.patch("/api/branches/:id", requireTenantAuth, async (req, res) => {
+  app.patch("/api/branches/:id", async (req, res) => {
     try {
-      const branch = await storage.updateBranch(req.restaurantId!, req.params.id, req.body);
+      const branch = await storage.updateBranch(req.params.id, req.body);
       if (!branch) {
         return res.status(404).json({ error: "Branch not found" });
       }
@@ -67,8 +63,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/branches/:id", requireTenantAuth, async (req, res) => {
-    const success = await storage.deleteBranch(req.restaurantId!, req.params.id);
+  app.delete("/api/branches/:id", async (req, res) => {
+    const success = await storage.deleteBranch(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Branch not found" });
     }
@@ -76,46 +72,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Inventory
-  app.get("/api/inventory", requireTenantAuth, async (req, res) => {
+  app.get("/api/inventory", async (req, res) => {
     const branchId = req.query.branchId as string | undefined;
-    const items = await storage.getInventoryItems(req.restaurantId!, branchId);
+    const items = await storage.getInventoryItems(branchId);
     res.json(items);
   });
 
-  app.post("/api/inventory", requireTenantAuth, async (req, res) => {
+  app.post("/api/inventory", async (req, res) => {
     try {
       const data = insertInventoryItemSchema.parse(req.body);
-      const item = await storage.createInventoryItem(req.restaurantId!, data);
+      const item = await storage.createInventoryItem(data);
       res.status(201).json(item);
     } catch (error) {
       res.status(400).json({ error: "Invalid inventory data" });
     }
   });
 
-  app.patch("/api/inventory/sort", requireTenantAuth, async (req, res) => {
+  app.patch("/api/inventory/sort", async (req, res) => {
     try {
       const { updates } = req.body;
       if (!Array.isArray(updates)) {
         return res.status(400).json({ error: "Invalid updates format" });
       }
-      await storage.updateInventoryItemsSortOrder(req.restaurantId!, updates);
+      await storage.updateInventoryItemsSortOrder(updates);
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
 
-  app.get("/api/inventory/:id", requireTenantAuth, async (req, res) => {
-    const item = await storage.getInventoryItem(req.restaurantId!, req.params.id);
+  app.get("/api/inventory/:id", async (req, res) => {
+    const item = await storage.getInventoryItem(req.params.id);
     if (!item) {
       return res.status(404).json({ error: "Item not found" });
     }
     res.json(item);
   });
 
-  app.patch("/api/inventory/:id", requireTenantAuth, async (req, res) => {
+  app.patch("/api/inventory/:id", async (req, res) => {
     try {
-      const item = await storage.updateInventoryItem(req.restaurantId!, req.params.id, req.body);
+      const item = await storage.updateInventoryItem(req.params.id, req.body);
       if (!item) {
         return res.status(404).json({ error: "Item not found" });
       }
@@ -125,8 +121,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/inventory/:id", requireTenantAuth, async (req, res) => {
-    const success = await storage.deleteInventoryItem(req.restaurantId!, req.params.id);
+  app.delete("/api/inventory/:id", async (req, res) => {
+    const success = await storage.deleteInventoryItem(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Item not found" });
     }
@@ -134,39 +130,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Menu
-  app.get("/api/menu", requireTenantAuth, async (req, res) => {
-    const items = await storage.getMenuItems(req.restaurantId!);
+  app.get("/api/menu", async (_req, res) => {
+    const items = await storage.getMenuItems();
     res.json(items);
   });
 
   // Menu Stock (based on inventory and recipes) - MUST be before /:id route
-  app.get("/api/menu/stock", requireTenantAuth, async (req, res) => {
+  app.get("/api/menu/stock", async (req, res) => {
     const branchId = req.query.branchId as string | undefined;
-    const stock = await storage.getMenuItemsStock(req.restaurantId!, branchId);
+    const stock = await storage.getMenuItemsStock(branchId);
     res.json(stock);
   });
 
-  app.get("/api/menu/:id", requireTenantAuth, async (req, res) => {
-    const item = await storage.getMenuItem(req.restaurantId!, req.params.id);
+  app.get("/api/menu/:id", async (req, res) => {
+    const item = await storage.getMenuItem(req.params.id);
     if (!item) {
       return res.status(404).json({ error: "Menu item not found" });
     }
     res.json(item);
   });
 
-  app.post("/api/menu", requireTenantAuth, async (req, res) => {
+  app.post("/api/menu", async (req, res) => {
     try {
       const data = insertMenuItemSchema.parse(req.body);
-      const item = await storage.createMenuItem(req.restaurantId!, data);
+      const item = await storage.createMenuItem(data);
       res.status(201).json(item);
     } catch (error) {
       res.status(400).json({ error: "Invalid menu data" });
     }
   });
 
-  app.patch("/api/menu/:id", requireTenantAuth, async (req, res) => {
+  app.patch("/api/menu/:id", async (req, res) => {
     try {
-      const item = await storage.updateMenuItem(req.restaurantId!, req.params.id, req.body);
+      const item = await storage.updateMenuItem(req.params.id, req.body);
       if (!item) {
         return res.status(404).json({ error: "Menu item not found" });
       }
@@ -176,8 +172,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/menu/:id", requireTenantAuth, async (req, res) => {
-    const success = await storage.deleteMenuItem(req.restaurantId!, req.params.id);
+  app.delete("/api/menu/:id", async (req, res) => {
+    const success = await storage.deleteMenuItem(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Menu item not found" });
     }
@@ -185,33 +181,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add-ons
-  app.get("/api/addons", requireTenantAuth, async (req, res) => {
+  app.get("/api/addons", async (req, res) => {
     const menuItemId = req.query.menuItemId as string | undefined;
-    const addons = await storage.getAddons(req.restaurantId!, menuItemId);
+    const addons = await storage.getAddons(menuItemId);
     res.json(addons);
   });
 
-  app.get("/api/addons/:id", requireTenantAuth, async (req, res) => {
-    const addon = await storage.getAddon(req.restaurantId!, req.params.id);
+  app.get("/api/addons/:id", async (req, res) => {
+    const addon = await storage.getAddon(req.params.id);
     if (!addon) {
       return res.status(404).json({ error: "Add-on not found" });
     }
     res.json(addon);
   });
 
-  app.post("/api/addons", requireTenantAuth, async (req, res) => {
+  app.post("/api/addons", async (req, res) => {
     try {
       const data = insertAddonSchema.parse(req.body);
-      const addon = await storage.createAddon(req.restaurantId!, data);
+      const addon = await storage.createAddon(data);
       res.status(201).json(addon);
     } catch (error) {
       res.status(400).json({ error: "Invalid add-on data" });
     }
   });
 
-  app.patch("/api/addons/:id", requireTenantAuth, async (req, res) => {
+  app.patch("/api/addons/:id", async (req, res) => {
     try {
-      const addon = await storage.updateAddon(req.restaurantId!, req.params.id, req.body);
+      const addon = await storage.updateAddon(req.params.id, req.body);
       if (!addon) {
         return res.status(404).json({ error: "Add-on not found" });
       }
@@ -221,17 +217,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/addons/:id", requireTenantAuth, async (req, res) => {
-    const success = await storage.deleteAddon(req.restaurantId!, req.params.id);
+  app.delete("/api/addons/:id", async (req, res) => {
+    const success = await storage.deleteAddon(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Add-on not found" });
     }
     res.status(204).send();
   });
 
-  app.patch("/api/addons/sort-order", requireTenantAuth, async (req, res) => {
+  app.patch("/api/addons/sort-order", async (req, res) => {
     try {
-      await storage.updateAddonsSortOrder(req.restaurantId!, req.body);
+      await storage.updateAddonsSortOrder(req.body);
       res.status(204).send();
     } catch (error) {
       res.status(400).json({ error: "Invalid sort order data" });
@@ -239,32 +235,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Customers
-  app.get("/api/customers", requireTenantAuth, async (req, res) => {
-    const customers = await storage.getCustomers(req.restaurantId!);
+  app.get("/api/customers", async (_req, res) => {
+    const customers = await storage.getCustomers();
     res.json(customers);
   });
 
-  app.get("/api/customers/:id", requireTenantAuth, async (req, res) => {
-    const customer = await storage.getCustomer(req.restaurantId!, req.params.id);
+  app.get("/api/customers/:id", async (req, res) => {
+    const customer = await storage.getCustomer(req.params.id);
     if (!customer) {
       return res.status(404).json({ error: "Customer not found" });
     }
     res.json(customer);
   });
 
-  app.post("/api/customers", requireTenantAuth, async (req, res) => {
+  app.post("/api/customers", async (req, res) => {
     try {
       const data = insertCustomerSchema.parse(req.body);
-      const customer = await storage.createCustomer(req.restaurantId!, data);
+      const customer = await storage.createCustomer(data);
       res.status(201).json(customer);
     } catch (error) {
       res.status(400).json({ error: "Invalid customer data" });
     }
   });
 
-  app.patch("/api/customers/:id", requireTenantAuth, async (req, res) => {
+  app.patch("/api/customers/:id", async (req, res) => {
     try {
-      const customer = await storage.updateCustomer(req.restaurantId!, req.params.id, req.body);
+      const customer = await storage.updateCustomer(req.params.id, req.body);
       if (!customer) {
         return res.status(404).json({ error: "Customer not found" });
       }
@@ -274,8 +270,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/customers/:id", requireTenantAuth, async (req, res) => {
-    const success = await storage.deleteCustomer(req.restaurantId!, req.params.id);
+  app.delete("/api/customers/:id", async (req, res) => {
+    const success = await storage.deleteCustomer(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Customer not found" });
     }
@@ -283,23 +279,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Shop Salaries
-  app.get("/api/shop/salaries", requireTenantAuth, async (req, res) => {
+  app.get("/api/shop/salaries", async (req, res) => {
     const branchId = req.query.branchId as string | undefined;
     const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
     const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
-    const salaries = await storage.getSalaries(req.restaurantId!, branchId, startDate, endDate);
+    const salaries = await storage.getSalaries(branchId, startDate, endDate);
     res.json(salaries);
   });
 
-  app.get("/api/shop/salaries/:id", requireTenantAuth, async (req, res) => {
-    const salary = await storage.getSalary(req.restaurantId!, req.params.id);
+  app.get("/api/shop/salaries/:id", async (req, res) => {
+    const salary = await storage.getSalary(req.params.id);
     if (!salary) {
       return res.status(404).json({ error: "Salary not found" });
     }
     res.json(salary);
   });
 
-  app.post("/api/shop/salaries", requireTenantAuth, async (req, res) => {
+  app.post("/api/shop/salaries", async (req, res) => {
     try {
       console.log("[SALARY] Request body:", JSON.stringify(req.body, null, 2));
       // Convert ISO date string to Date object
@@ -309,7 +305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       const data = insertSalarySchema.parse(bodyWithDate);
       console.log("[SALARY] Parsed data:", JSON.stringify(data, null, 2));
-      const salary = await storage.createSalary(req.restaurantId!, data);
+      const salary = await storage.createSalary(data);
       res.status(201).json(salary);
     } catch (error) {
       console.error("[SALARY] Validation error:", error);
@@ -320,9 +316,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/shop/salaries/:id", requireTenantAuth, async (req, res) => {
+  app.patch("/api/shop/salaries/:id", async (req, res) => {
     try {
-      const salary = await storage.updateSalary(req.restaurantId!, req.params.id, req.body);
+      const salary = await storage.updateSalary(req.params.id, req.body);
       if (!salary) {
         return res.status(404).json({ error: "Salary not found" });
       }
@@ -332,8 +328,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/shop/salaries/:id", requireTenantAuth, async (req, res) => {
-    const success = await storage.deleteSalary(req.restaurantId!, req.params.id);
+  app.delete("/api/shop/salaries/:id", async (req, res) => {
+    const success = await storage.deleteSalary(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Salary not found" });
     }
@@ -341,23 +337,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Shop Bills
-  app.get("/api/shop/bills", requireTenantAuth, async (req, res) => {
+  app.get("/api/shop/bills", async (req, res) => {
     const branchId = req.query.branchId as string | undefined;
     const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
     const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
-    const bills = await storage.getShopBills(req.restaurantId!, branchId, startDate, endDate);
+    const bills = await storage.getShopBills(branchId, startDate, endDate);
     res.json(bills);
   });
 
-  app.get("/api/shop/bills/:id", requireTenantAuth, async (req, res) => {
-    const bill = await storage.getShopBill(req.restaurantId!, req.params.id);
+  app.get("/api/shop/bills/:id", async (req, res) => {
+    const bill = await storage.getShopBill(req.params.id);
     if (!bill) {
       return res.status(404).json({ error: "Bill not found" });
     }
     res.json(bill);
   });
 
-  app.post("/api/shop/bills", requireTenantAuth, async (req, res) => {
+  app.post("/api/shop/bills", async (req, res) => {
     try {
       // Convert ISO date string to Date object
       const bodyWithDate = {
@@ -365,7 +361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate) : undefined,
       };
       const data = insertShopBillSchema.parse(bodyWithDate);
-      const bill = await storage.createShopBill(req.restaurantId!, data);
+      const bill = await storage.createShopBill(data);
       res.status(201).json(bill);
     } catch (error) {
       console.error("[SHOP] Bill validation error:", error);
@@ -373,9 +369,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/shop/bills/:id", requireTenantAuth, async (req, res) => {
+  app.patch("/api/shop/bills/:id", async (req, res) => {
     try {
-      const bill = await storage.updateShopBill(req.restaurantId!, req.params.id, req.body);
+      const bill = await storage.updateShopBill(req.params.id, req.body);
       if (!bill) {
         return res.status(404).json({ error: "Bill not found" });
       }
@@ -385,18 +381,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/shop/bills/:id", requireTenantAuth, async (req, res) => {
-    const success = await storage.deleteShopBill(req.restaurantId!, req.params.id);
+  app.delete("/api/shop/bills/:id", async (req, res) => {
+    const success = await storage.deleteShopBill(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Bill not found" });
     }
     res.status(204).send();
   });
 
-  app.patch("/api/shop/bills/:id/archive", requireTenantAuth, async (req, res) => {
+  app.patch("/api/shop/bills/:id/archive", async (req, res) => {
     try {
       const { archived } = req.body;
-      const bill = await storage.archiveShopBill(req.restaurantId!, req.params.id, archived);
+      const bill = await storage.archiveShopBill(req.params.id, archived);
       if (!bill) {
         return res.status(404).json({ error: "Bill not found" });
       }
@@ -407,36 +403,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delivery Apps
-  app.get("/api/delivery-apps", requireTenantAuth, async (req, res) => {
-    const apps = await storage.getDeliveryApps(req.restaurantId!);
+  app.get("/api/delivery-apps", async (_req, res) => {
+    const apps = await storage.getDeliveryApps();
     res.json(apps);
   });
 
-  app.patch("/api/delivery-apps/sort", requireTenantAuth, async (req, res) => {
+  app.patch("/api/delivery-apps/sort", async (req, res) => {
     try {
       const { updates } = req.body;
       if (!Array.isArray(updates)) {
         return res.status(400).json({ error: "Invalid updates format" });
       }
-      await storage.updateDeliveryAppsSortOrder(req.restaurantId!, updates);
+      await storage.updateDeliveryAppsSortOrder(updates);
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
 
-  app.get("/api/delivery-apps/:id", requireTenantAuth, async (req, res) => {
-    const app = await storage.getDeliveryApp(req.restaurantId!, req.params.id);
+  app.get("/api/delivery-apps/:id", async (req, res) => {
+    const app = await storage.getDeliveryApp(req.params.id);
     if (!app) {
       return res.status(404).json({ error: "Delivery app not found" });
     }
     res.json(app);
   });
 
-  app.post("/api/delivery-apps", requireTenantAuth, async (req, res) => {
+  app.post("/api/delivery-apps", async (req, res) => {
     try {
       const data = insertDeliveryAppSchema.parse(req.body);
-      const deliveryApp = await storage.createDeliveryApp(req.restaurantId!, data);
+      const deliveryApp = await storage.createDeliveryApp(data);
       res.status(201).json(deliveryApp);
     } catch (error) {
       console.error("[DELIVERY_APP] Validation error:", error);
@@ -444,10 +440,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/delivery-apps/:id", requireTenantAuth, async (req, res) => {
+  app.patch("/api/delivery-apps/:id", async (req, res) => {
     try {
       const data = insertDeliveryAppSchema.partial().parse(req.body);
-      const deliveryApp = await storage.updateDeliveryApp(req.restaurantId!, req.params.id, data);
+      const deliveryApp = await storage.updateDeliveryApp(req.params.id, data);
       if (!deliveryApp) {
         return res.status(404).json({ error: "Delivery app not found" });
       }
@@ -458,17 +454,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/delivery-apps/:id", requireTenantAuth, async (req, res) => {
-    const success = await storage.deleteDeliveryApp(req.restaurantId!, req.params.id);
+  app.delete("/api/delivery-apps/:id", async (req, res) => {
+    const success = await storage.deleteDeliveryApp(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Delivery app not found" });
     }
     res.status(204).send();
   });
 
-  app.get("/api/delivery-apps/analytics/profitability", requireTenantAuth, async (req, res) => {
+  app.get("/api/delivery-apps/analytics/profitability", async (_req, res) => {
     try {
-      const profitability = await storage.getDeliveryAppProfitability(req.restaurantId!);
+      const profitability = await storage.getDeliveryAppProfitability();
       res.json(profitability);
     } catch (error) {
       console.error("[DELIVERY_APP] Profitability error:", error);
@@ -476,9 +472,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/analytics/sales-comparison", requireTenantAuth, async (req, res) => {
+  app.get("/api/analytics/sales-comparison", async (_req, res) => {
     try {
-      const comparison = await storage.getSalesComparison(req.restaurantId!);
+      const comparison = await storage.getSalesComparison();
       res.json(comparison);
     } catch (error) {
       console.error("[ANALYTICS] Sales comparison error:", error);
@@ -487,9 +483,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Investors
-  app.get("/api/investors", requireTenantAuth, async (req, res) => {
+  app.get("/api/investors", async (_req, res) => {
     try {
-      const investors = await storage.getInvestors(req.restaurantId!);
+      const investors = await storage.getInvestors();
       res.json(investors);
     } catch (error) {
       console.error("[INVESTORS] Get investors error:", error);
@@ -497,9 +493,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/investors/:id", requireTenantAuth, async (req, res) => {
+  app.get("/api/investors/:id", async (req, res) => {
     try {
-      const investor = await storage.getInvestor(req.restaurantId!, req.params.id);
+      const investor = await storage.getInvestor(req.params.id);
       if (!investor) {
         return res.status(404).json({ error: "Investor not found" });
       }
@@ -510,10 +506,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/investors", requireTenantAuth, async (req, res) => {
+  app.post("/api/investors", async (req, res) => {
     try {
       const data = insertInvestorSchema.parse(req.body);
-      const investor = await storage.createInvestor(req.restaurantId!, data);
+      const investor = await storage.createInvestor(data);
       res.status(201).json(investor);
     } catch (error) {
       console.error("[INVESTORS] Create investor error:", error);
@@ -521,10 +517,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/investors/:id", requireTenantAuth, async (req, res) => {
+  app.patch("/api/investors/:id", async (req, res) => {
     try {
       const data = updateInvestorSchema.parse(req.body);
-      const investor = await storage.updateInvestor(req.restaurantId!, req.params.id, data);
+      const investor = await storage.updateInvestor(req.params.id, data);
       if (!investor) {
         return res.status(404).json({ error: "Investor not found" });
       }
@@ -535,9 +531,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/investors/:id", requireTenantAuth, async (req, res) => {
+  app.delete("/api/investors/:id", async (req, res) => {
     try {
-      const success = await storage.deleteInvestor(req.restaurantId!, req.params.id);
+      const success = await storage.deleteInvestor(req.params.id);
       if (!success) {
         return res.status(404).json({ error: "Investor not found" });
       }
@@ -549,32 +545,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Recipes
-  app.get("/api/recipes", requireTenantAuth, async (req, res) => {
-    const recipes = await storage.getRecipes(req.restaurantId!);
+  app.get("/api/recipes", async (_req, res) => {
+    const recipes = await storage.getRecipes();
     res.json(recipes);
   });
 
-  app.get("/api/recipes/:id", requireTenantAuth, async (req, res) => {
-    const recipe = await storage.getRecipe(req.restaurantId!, req.params.id);
+  app.get("/api/recipes/:id", async (req, res) => {
+    const recipe = await storage.getRecipe(req.params.id);
     if (!recipe) {
       return res.status(404).json({ error: "Recipe not found" });
     }
     res.json(recipe);
   });
 
-  app.post("/api/recipes", requireTenantAuth, async (req, res) => {
+  app.post("/api/recipes", async (req, res) => {
     try {
       const data = insertRecipeSchema.parse(req.body);
-      const recipe = await storage.createRecipe(req.restaurantId!, data);
+      const recipe = await storage.createRecipe(data);
       res.status(201).json(recipe);
     } catch (error) {
       res.status(400).json({ error: "Invalid recipe data" });
     }
   });
 
-  app.patch("/api/recipes/:id", requireTenantAuth, async (req, res) => {
+  app.patch("/api/recipes/:id", async (req, res) => {
     try {
-      const recipe = await storage.updateRecipe(req.restaurantId!, req.params.id, req.body);
+      const recipe = await storage.updateRecipe(req.params.id, req.body);
       if (!recipe) {
         return res.status(404).json({ error: "Recipe not found" });
       }
@@ -584,21 +580,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/recipes/sort", requireTenantAuth, async (req, res) => {
+  app.patch("/api/recipes/sort", async (req, res) => {
     try {
       const { updates } = req.body;
       if (!Array.isArray(updates)) {
         return res.status(400).json({ error: "Invalid updates format" });
       }
-      await storage.updateRecipesSortOrder(req.restaurantId!, updates);
+      await storage.updateRecipesSortOrder(updates);
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
 
-  app.delete("/api/recipes/:id", requireTenantAuth, async (req, res) => {
-    const success = await storage.deleteRecipe(req.restaurantId!, req.params.id);
+  app.delete("/api/recipes/:id", async (req, res) => {
+    const success = await storage.deleteRecipe(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Recipe not found" });
     }
@@ -606,22 +602,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Orders
-  app.get("/api/orders", requireTenantAuth, async (req, res) => {
+  app.get("/api/orders", async (req, res) => {
     const branchId = req.query.branchId as string | undefined;
     const status = req.query.status as string | undefined;
-    const orders = await storage.getOrders(req.restaurantId!, branchId, status);
+    const orders = await storage.getOrders(branchId, status);
     res.json(orders);
   });
 
-  app.get("/api/orders/:id", requireTenantAuth, async (req, res) => {
-    const order = await storage.getOrder(req.restaurantId!, req.params.id);
+  app.get("/api/orders/:id", async (req, res) => {
+    const order = await storage.getOrder(req.params.id);
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
     res.json(order);
   });
 
-  app.post("/api/orders", requireTenantAuth, async (req, res) => {
+  app.post("/api/orders", async (req, res) => {
     try {
       const data = insertOrderSchema.parse(req.body);
       
@@ -647,7 +643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      const order = await storage.createOrder(req.restaurantId!, data);
+      const order = await storage.createOrder(data);
       
       try {
         if (prepResult.stockRequirements) {
@@ -662,7 +658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (deductionError) {
         console.error("Inventory deduction failed, attempting to delete order:", order.id);
         try {
-          await storage.deleteOrder(req.restaurantId!, order.id);
+          await storage.deleteOrder(order.id);
         } catch (deleteError) {
           console.error("Failed to delete order after inventory deduction failure:", deleteError);
         }
@@ -678,9 +674,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/orders/:id", requireTenantAuth, async (req, res) => {
+  app.patch("/api/orders/:id", async (req, res) => {
     try {
-      const order = await storage.updateOrder(req.restaurantId!, req.params.id, req.body);
+      const order = await storage.updateOrder(req.params.id, req.body);
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
@@ -695,26 +691,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Transactions (Sales)
-  app.get("/api/transactions", requireTenantAuth, async (req, res) => {
+  app.get("/api/transactions", async (req, res) => {
     const branchId = req.query.branchId as string | undefined;
     const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
     const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
-    const transactions = await storage.getTransactions(req.restaurantId!, branchId, startDate, endDate);
+    const transactions = await storage.getTransactions(branchId, startDate, endDate);
     res.json(transactions);
   });
 
-  app.get("/api/transactions/:id", requireTenantAuth, async (req, res) => {
-    const transaction = await storage.getTransaction(req.restaurantId!, req.params.id);
+  app.get("/api/transactions/:id", async (req, res) => {
+    const transaction = await storage.getTransaction(req.params.id);
     if (!transaction) {
       return res.status(404).json({ error: "Transaction not found" });
     }
     res.json(transaction);
   });
 
-  app.post("/api/transactions", requireTenantAuth, async (req, res) => {
+  app.post("/api/transactions", async (req, res) => {
     try {
       const data = insertTransactionSchema.parse(req.body);
-      const transaction = await storage.createTransaction(req.restaurantId!, data);
+      const transaction = await storage.createTransaction(data);
       res.status(201).json(transaction);
     } catch (error) {
       res.status(400).json({ error: "Invalid transaction data" });
@@ -722,11 +718,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Analytics Endpoints
-  app.get("/api/analytics/dashboard", requireTenantAuth, async (req, res) => {
+  app.get("/api/analytics/dashboard", async (req, res) => {
     const branchId = req.query.branchId as string | undefined;
-    const orders = await storage.getOrders(req.restaurantId!, branchId);
-    const transactions = await storage.getTransactions(req.restaurantId!, branchId);
-    const inventory = await storage.getInventoryItems(req.restaurantId!, branchId);
+    const orders = await storage.getOrders(branchId);
+    const transactions = await storage.getTransactions(branchId);
+    const inventory = await storage.getInventoryItems(branchId);
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -858,15 +854,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.get("/api/analytics/peak-hours/:hour", requireTenantAuth, async (req, res) => {
+  app.get("/api/analytics/peak-hours/:hour", async (req, res) => {
     const hour = parseInt(req.params.hour);
     if (isNaN(hour) || hour < 0 || hour > 23) {
       return res.status(400).json({ error: "Invalid hour parameter (must be 0-23)" });
     }
 
     const branchId = req.query.branchId as string | undefined;
-    const transactions = await storage.getTransactions(req.restaurantId!, branchId);
-    const orders = await storage.getOrders(req.restaurantId!, branchId);
+    const transactions = await storage.getTransactions(branchId);
+    const orders = await storage.getOrders(branchId);
 
     const transactionsInHour = transactions.filter(t => {
       const date = new Date(t.createdAt);
@@ -892,9 +888,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(results);
   });
 
-  app.get("/api/analytics/sales", requireTenantAuth, async (req, res) => {
+  app.get("/api/analytics/sales", async (req, res) => {
     const branchId = req.query.branchId as string | undefined;
-    const transactions = await storage.getTransactions(req.restaurantId!, branchId);
+    const transactions = await storage.getTransactions(branchId);
 
     const salesByDay: Record<string, number> = {};
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -914,15 +910,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Settings
-  app.get("/api/settings", requireTenantAuth, async (req, res) => {
-    const settings = await storage.getSettings(req.restaurantId!);
+  app.get("/api/settings", async (_req, res) => {
+    const settings = await storage.getSettings();
     res.json(settings);
   });
 
-  app.patch("/api/settings", requireTenantAuth, async (req, res) => {
+  app.patch("/api/settings", async (req, res) => {
     try {
       const data = insertSettingsSchema.partial().parse(req.body);
-      const settings = await storage.updateSettings(req.restaurantId!, data);
+      const settings = await storage.updateSettings(data);
       res.json(settings);
     } catch (error) {
       res.status(400).json({ error: "Invalid settings data" });
@@ -930,10 +926,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Procurement
-  app.get("/api/procurement", requireTenantAuth, async (req, res) => {
+  app.get("/api/procurement", async (req, res) => {
     const { type, status, branchId } = req.query;
     const procurements = await storage.getProcurements(
-      req.restaurantId!,
       type as string | undefined,
       status as string | undefined,
       branchId as string | undefined
@@ -941,28 +936,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(procurements);
   });
 
-  app.get("/api/procurement/:id", requireTenantAuth, async (req, res) => {
-    const procurement = await storage.getProcurement(req.restaurantId!, req.params.id);
+  app.get("/api/procurement/:id", async (req, res) => {
+    const procurement = await storage.getProcurement(req.params.id);
     if (!procurement) {
       return res.status(404).json({ error: "Procurement not found" });
     }
     res.json(procurement);
   });
 
-  app.post("/api/procurement", requireTenantAuth, async (req, res) => {
+  app.post("/api/procurement", async (req, res) => {
     try {
       const data = insertProcurementSchema.parse(req.body);
-      const procurement = await storage.createProcurement(req.restaurantId!, data);
+      const procurement = await storage.createProcurement(data);
       res.status(201).json(procurement);
     } catch (error) {
       res.status(400).json({ error: "Invalid procurement data" });
     }
   });
 
-  app.patch("/api/procurement/:id", requireTenantAuth, async (req, res) => {
+  app.patch("/api/procurement/:id", async (req, res) => {
     try {
       const data = insertProcurementSchema.partial().parse(req.body);
-      const procurement = await storage.updateProcurement(req.restaurantId!, req.params.id, data);
+      const procurement = await storage.updateProcurement(req.params.id, data);
       if (!procurement) {
         return res.status(404).json({ error: "Procurement not found" });
       }
@@ -972,8 +967,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/procurement/:id", requireTenantAuth, async (req, res) => {
-    const success = await storage.deleteProcurement(req.restaurantId!, req.params.id);
+  app.delete("/api/procurement/:id", async (req, res) => {
+    const success = await storage.deleteProcurement(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Procurement not found" });
     }
@@ -981,7 +976,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POS - Generate Invoice (redirects to main invoice creation endpoint)
-  app.post("/api/pos/generate-invoice", requireTenantAuth, async (req, res) => {
+  app.post("/api/pos/generate-invoice", async (req, res) => {
     // This endpoint now redirects to the main invoice creation endpoint
     // which properly saves the invoice and generates QR code with URL
     try {
@@ -991,13 +986,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Order ID required" });
       }
 
-      const order = await storage.getOrder(req.restaurantId!, orderId);
+      const order = await storage.getOrder(orderId);
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
 
-      const settings = await storage.getSettings(req.restaurantId!);
-      const branch = order.branchId ? await storage.getBranch(req.restaurantId!, order.branchId) : null;
+      const settings = await storage.getSettings();
+      const branch = order.branchId ? await storage.getBranch(order.branchId) : null;
 
       const invoiceNumber = `INV-${order.orderNumber}`;
 
@@ -1017,7 +1012,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create invoice record first to get the ID
       const invoiceData = {
-        restaurantId: req.restaurantId!,
         invoiceNumber,
         orderId: order.id,
         branchId: order.branchId,
@@ -1030,7 +1024,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pdfPath: "",
       };
 
-      const createdInvoice = await storage.createInvoice(req.restaurantId!, invoiceData);
+      const createdInvoice = await storage.createInvoice(invoiceData);
       const baseUrl = `${req.protocol}://${req.get('host')}`;
 
       // Generate PDF with invoice ID for QR code
@@ -1061,7 +1055,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fs.writeFileSync(pdfPath, pdfBuffer);
 
       // Update invoice record with QR code and PDF path
-      await storage.updateInvoice(req.restaurantId!, createdInvoice.id, {
+      await storage.updateInvoice(createdInvoice.id, {
         qrCode,
         pdfPath: `/invoices/${pdfFilename}`,
       });
@@ -1076,12 +1070,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Public endpoint to check if any users exist (for first-run setup)
-  // Note: This bypasses restaurantId filtering because we're checking for ANY users across all restaurants
   app.get("/api/auth/check-first-run", async (_req, res) => {
     try {
-      // Check if ANY users exist in the database (across all restaurants)
-      const hasUsers = await storage.anyUsersExist();
-      res.json({ firstRun: !hasUsers });
+      const users = await storage.getUsers();
+      res.json({ firstRun: users.length === 0 });
     } catch (error) {
       console.error("First-run check error:", error);
       res.status(500).json({ error: "Failed to check first-run status" });
@@ -1113,16 +1105,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Number of branches must be at least 1" });
       }
 
-      // Check if username already exists (across all restaurants for signup)
-      // During signup, we need to check username uniqueness globally
-      const existingUser = await storage.getUserByUsernameGlobal(username);
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(username);
       if (existingUser) {
         return res.status(400).json({ error: "Username already exists" });
       }
 
       // Create admin user with full permissions (each signup = restaurant owner)
       const userData = {
-        restaurantId: "", // Will be generated by storage layer during creation
         username,
         password, // Will be hashed in storage
         fullName: name,
@@ -1157,7 +1147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       };
 
-      const user = await storage.createUser("", userData); // Empty restaurantId for signup - will be set by storage
+      const user = await storage.createUser(userData);
 
       // Generate subscription invoice
       try {
@@ -1177,19 +1167,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const total = subtotal + vatAmount;
 
         // Generate serial number
-        const serialNumber = await storage.getNextSubscriptionInvoiceSerialNumber(user.restaurantId);
+        const serialNumber = await storage.getNextSubscriptionInvoiceSerialNumber();
 
         // Generate subscription invoice PDF
         const pdfBuffer = await generateSubscriptionInvoice({
           serialNumber,
           userFullName: user.fullName,
-          userEmail: user.email || "",
-          restaurantName: user.restaurantName || "",
-          nationalId: user.nationalId || "",
-          taxNumber: user.taxNumber || "",
-          commercialRegistration: user.commercialRegistration || "",
-          subscriptionPlan: user.subscriptionPlan || "monthly",
-          branchesCount: user.branchesCount || 1,
+          userEmail: user.email,
+          restaurantName: user.restaurantName!,
+          nationalId: user.nationalId!,
+          taxNumber: user.taxNumber!,
+          commercialRegistration: user.commercialRegistration,
+          subscriptionPlan: user.subscriptionPlan,
+          branchesCount: user.branchesCount,
           basePlanPrice,
           additionalBranchesPrice,
           subtotal,
@@ -1214,12 +1204,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const qrCode = await QRCode.toDataURL(qrData);
 
         // Save invoice to database
-        await storage.createSubscriptionInvoice(user.restaurantId, {
+        await storage.createSubscriptionInvoice({
           userId: user.id,
-          restaurantId: user.restaurantId,
           serialNumber,
-          subscriptionPlan: user.subscriptionPlan || "monthly",
-          branchesCount: user.branchesCount || 1,
+          subscriptionPlan: user.subscriptionPlan,
+          branchesCount: user.branchesCount,
           basePlanPrice: basePlanPrice.toString(),
           additionalBranchesPrice: additionalBranchesPrice.toString(),
           subtotal: subtotal.toString(),
@@ -1233,14 +1222,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (invoiceError) {
         console.error("[SIGNUP] Failed to generate subscription invoice:", invoiceError);
         // Don't fail signup if invoice generation fails
-      }
-
-      // Store user in session (Task 12: Include restaurantId)
-      if (req.session) {
-        req.session.userId = user.id;
-        req.session.role = user.role;
-        req.session.restaurantId = user.restaurantId; // NEW: Store restaurantId
-        console.log("[SIGNUP] Session created for new user:", user.id, "restaurant:", user.restaurantId);
       }
 
       res.status(201).json({ 
@@ -1274,8 +1255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Username and password required" });
       }
 
-      // Use global method to find user across all restaurants
-      const user = await storage.getUserByUsernameGlobal(username);
+      const user = await storage.getUserByUsername(username);
       
       console.log("[AUTH] User found:", user ? `Yes (id: ${user.id}, active: ${user.active})` : "No");
       
@@ -1298,12 +1278,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
-      // Store user in session (Task 12: Include restaurantId)
+      // Store user in session
       if (req.session) {
         req.session.userId = user.id;
         req.session.role = user.role;
-        req.session.restaurantId = user.restaurantId; // NEW: Store restaurantId
-        console.log("[AUTH] Session created for user:", user.id, "restaurant:", user.restaurantId);
+        console.log("[AUTH] Session created for user:", user.id);
       }
 
       // Return user without password
@@ -1334,8 +1313,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Email is required" });
       }
 
-      // Find user by email (global check across all restaurants)
-      const user = await storage.getUserByEmailGlobal(email);
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
       
       // Don't reveal if user exists or not for security
       if (!user) {
@@ -1348,7 +1327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const resetExpiry = new Date(Date.now() + 3600000); // 1 hour from now
 
       // Save reset token to database
-      await storage.setPasswordResetToken(user.restaurantId, user.id, resetToken, resetExpiry);
+      await storage.setPasswordResetToken(user.id, resetToken, resetExpiry);
 
       // TODO: In production, send email with reset link
       // For now, we'll just log the token (in production this would be sent via email)
@@ -1375,18 +1354,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Password must be at least 6 characters long" });
       }
 
-      // Find user by reset token and check if not expired (global check)
-      const user = await storage.getUserByResetTokenGlobal(token);
+      // Find user by reset token and check if not expired
+      const user = await storage.getUserByResetToken(token);
       
       if (!user) {
         return res.status(400).json({ error: "Invalid or expired reset token" });
       }
 
       // Update password
-      await storage.updatePassword(user.restaurantId, user.id, password);
+      await storage.updatePassword(user.id, password);
 
       // Clear reset token
-      await storage.clearPasswordResetToken(user.restaurantId, user.id);
+      await storage.clearPasswordResetToken(user.id);
 
       res.json({ message: "Password reset successful" });
     } catch (error) {
@@ -1396,12 +1375,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/me", async (req, res) => {
-    if (!req.session?.userId || !req.session?.restaurantId) {
+    if (!req.session?.userId) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
-    // Get current user using restaurantId from session
-    const user = await storage.getUser(req.session.restaurantId, req.session.userId);
+    const user = await storage.getUser(req.session.userId);
     
     if (!user || !user.active) {
       return res.status(401).json({ error: "Not authenticated" });
@@ -1412,7 +1390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.patch("/api/auth/me", async (req, res) => {
-    if (!req.session?.userId || !req.session?.restaurantId) {
+    if (!req.session?.userId) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -1424,7 +1402,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid device preference. Must be 'laptop', 'ipad', or 'iphone'" });
       }
 
-      const updatedUser = await storage.updateUser(req.session.restaurantId, req.session.userId, { devicePreference });
+      const updatedUser = await storage.updateUser(req.session.userId, { devicePreference });
       
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
@@ -1439,14 +1417,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Users Management (Admin only)
-  app.get("/api/users", requireAdminAuth, async (req, res) => {
-    const users = await storage.getUsers(req.restaurantId!);
+  app.get("/api/users", async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const currentUser = await storage.getUser(req.session.userId);
+    if (currentUser?.role !== "admin") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    const users = await storage.getUsers();
     const usersWithoutPasswords = users.map(({ password: _, ...user }) => user);
     res.json(usersWithoutPasswords);
   });
 
-  app.get("/api/users/:id", requireAdminAuth, async (req, res) => {
-    const user = await storage.getUser(req.restaurantId!, req.params.id);
+  app.get("/api/users/:id", async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const currentUser = await storage.getUser(req.session.userId);
+    if (currentUser?.role !== "admin") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    const user = await storage.getUser(req.params.id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -1458,23 +1454,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users", async (req, res) => {
     try {
       // Check if this is the first user (setup mode)
-      const hasUsers = await storage.anyUsersExist();
-      const isFirstUser = !hasUsers;
+      const allUsers = await storage.getUsers();
+      const isFirstUser = allUsers.length === 0;
 
-      // Determine restaurantId based on whether this is first user or admin creating
-      let restaurantId = "";
-      
       // If not first user, require admin authentication
       if (!isFirstUser) {
-        if (!req.session?.userId || !req.session?.restaurantId) {
+        if (!req.session?.userId) {
           return res.status(401).json({ error: "Not authenticated" });
         }
 
-        const currentUser = await storage.getUser(req.session.restaurantId, req.session.userId);
+        const currentUser = await storage.getUser(req.session.userId);
         if (currentUser?.role !== "admin") {
           return res.status(403).json({ error: "Admin access required" });
         }
-        restaurantId = currentUser.restaurantId;
       }
 
       const { monthlySalary, ...userData } = req.body;
@@ -1489,13 +1481,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if username already exists
-      const existingUser = await storage.getUserByUsername(restaurantId, data.username);
+      const existingUser = await storage.getUserByUsername(data.username);
       if (existingUser) {
         return res.status(400).json({ error: "Username already exists" });
       }
 
       // storage.createUser handles password hashing
-      const user = await storage.createUser(restaurantId, data);
+      const user = await storage.createUser(data);
       
       // Auto-create monthly salary entry if monthlySalary is provided
       if (monthlySalary && parseFloat(monthlySalary) > 0) {
@@ -1503,8 +1495,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const today = new Date();
           const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
           
-          await storage.createSalary(user.restaurantId, {
-            restaurantId: user.restaurantId,
+          await storage.createSalary({
             employeeName: user.fullName,
             position: user.role,
             amount: monthlySalary,
@@ -1515,7 +1506,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (salaryError) {
           console.error("Failed to create salary entry:", salaryError);
           // Delete the user if salary creation fails to maintain consistency
-          await storage.deleteUser(user.restaurantId, user.id);
+          await storage.deleteUser(user.id);
           return res.status(400).json({ error: "Failed to create employee salary entry" });
         }
       }
@@ -1528,8 +1519,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/users/:id", requireAdminAuth, async (req, res) => {
+  app.patch("/api/users/:id", async (req, res) => {
     try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const currentUser = await storage.getUser(req.session.userId);
+      if (currentUser?.role !== "admin") {
+        return res.status(403).json({ error: "Admin access required" });
+      }
 
       const { password, ...updateData } = req.body;
       
@@ -1539,7 +1538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateData.password = hashedPassword;
       }
 
-      const user = await storage.updateUser(req.restaurantId!, req.params.id, updateData);
+      const user = await storage.updateUser(req.params.id, updateData);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -1552,14 +1551,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/users/:id", requireAdminAuth, async (req, res) => {
+  app.delete("/api/users/:id", async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const currentUser = await storage.getUser(req.session.userId);
+    if (currentUser?.role !== "admin") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
 
     // Prevent deleting own account
     if (req.params.id === req.session.userId) {
       return res.status(400).json({ error: "Cannot delete your own account" });
     }
 
-    const success = await storage.deleteUser(req.restaurantId!, req.params.id);
+    const success = await storage.deleteUser(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -1568,9 +1575,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User Profile Management
-  app.get("/api/profile", requireTenantAuth, async (req, res) => {
+  app.get("/api/profile", async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
     try {
-      const user = await storage.getUserProfile(req.restaurantId!, req.session!.userId!);
+      const user = await storage.getUserProfile(req.session.userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -1583,7 +1594,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/profile", requireTenantAuth, async (req, res) => {
+  app.put("/api/profile", async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
     try {
       const { email, phone } = req.body;
       const profileUpdate: { email?: string; phone?: string } = {};
@@ -1591,7 +1606,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (email !== undefined) profileUpdate.email = email;
       if (phone !== undefined) profileUpdate.phone = phone;
 
-      const updatedUser = await storage.updateUserProfile(req.restaurantId!, req.session!.userId!, profileUpdate);
+      const updatedUser = await storage.updateUserProfile(req.session.userId, profileUpdate);
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -1605,9 +1620,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Subscription Management
-  app.post("/api/subscription/cancel", requireTenantAuth, async (req, res) => {
+  app.post("/api/subscription/cancel", async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
     try {
-      const user = await storage.getUser(req.restaurantId!, req.session!.userId!);
+      const user = await storage.getUser(req.session.userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -1616,7 +1635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No active subscription to cancel" });
       }
 
-      const updatedUser = await storage.cancelSubscription(req.restaurantId!, req.session!.userId!);
+      const updatedUser = await storage.cancelSubscription(req.session.userId);
       if (!updatedUser) {
         return res.status(500).json({ error: "Failed to cancel subscription" });
       }
@@ -1630,11 +1649,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Financial Analytics
-  app.get("/api/analytics/financial", requireTenantAuth, async (req, res) => {
+  app.get("/api/analytics/financial", async (req, res) => {
     const { period, year } = req.query;
     
-    const transactions = await storage.getTransactions(req.restaurantId!);
-    const invoices = await storage.getInvoices(req.restaurantId!);
+    const transactions = await storage.getTransactions();
+    const invoices = await storage.getInvoices();
     
     // Calculate monthly data
     const monthlyData = Array.from({ length: 12 }, (_, i) => {
@@ -1671,14 +1690,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Invoices
-  app.get("/api/invoices", requireTenantAuth, async (req, res) => {
+  app.get("/api/invoices", async (req, res) => {
     const { branchId, startDate, endDate } = req.query;
     
     const start = startDate ? new Date(startDate as string) : undefined;
     const end = endDate ? new Date(endDate as string) : undefined;
     
     const invoices = await storage.getInvoices(
-      req.restaurantId!,
       branchId as string | undefined,
       start,
       end
@@ -1686,18 +1704,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(invoices);
   });
 
-  app.get("/api/invoices/:id", requireTenantAuth, async (req, res) => {
-    const invoice = await storage.getInvoice(req.restaurantId!, req.params.id);
+  app.get("/api/invoices/:id", async (req, res) => {
+    const invoice = await storage.getInvoice(req.params.id);
     if (!invoice) {
       return res.status(404).json({ error: "Invoice not found" });
     }
     res.json(invoice);
   });
 
-  app.post("/api/invoices", requireTenantAuth, async (req, res) => {
+  app.post("/api/invoices", async (req, res) => {
     try {
       const data = insertInvoiceSchema.parse(req.body);
-      const invoice = await storage.createInvoice(req.restaurantId!, data);
+      const invoice = await storage.createInvoice(data);
       res.status(201).json(invoice);
     } catch (error) {
       res.status(400).json({ error: "Invalid invoice data" });
@@ -1707,7 +1725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public invoice viewer (no auth required) - accessible via QR code
   app.get("/public/invoice/:id", async (req, res) => {
     try {
-      const invoice = await storage.getInvoice("", req.params.id); // Public endpoint - no tenant filtering
+      const invoice = await storage.getInvoice(req.params.id);
       if (!invoice) {
         return res.status(404).send(`
           <!DOCTYPE html>
@@ -1729,8 +1747,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `);
       }
 
-      const settings = await storage.getSettings(invoice.restaurantId);
-      const order = invoice.orderId ? await storage.getOrder(invoice.restaurantId, invoice.orderId) : null;
+      const settings = await storage.getSettings();
+      const order = invoice.orderId ? await storage.getOrder(invoice.orderId) : null;
       
       // Generate HTML invoice view
       const html = `
@@ -1997,7 +2015,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create invoice record and generate PDF
-  app.post("/api/invoices/create-and-generate", requireTenantAuth, async (req, res) => {
+  app.post("/api/invoices/create-and-generate", async (req, res) => {
     try {
       const { orderId } = req.body;
       
@@ -2005,13 +2023,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Order ID required" });
       }
 
-      const order = await storage.getOrder(req.restaurantId!, orderId);
+      const order = await storage.getOrder(orderId);
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
 
-      const settings = await storage.getSettings(req.restaurantId!);
-      const branch = order.branchId ? await storage.getBranch(req.restaurantId!, order.branchId) : null;
+      const settings = await storage.getSettings();
+      const branch = order.branchId ? await storage.getBranch(order.branchId) : null;
 
       const invoiceNumber = `INV-${order.orderNumber}`;
 
@@ -2031,7 +2049,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create invoice record first to get the ID (without QR code and PDF path yet)
       const invoiceData = {
-        restaurantId: req.restaurantId!,
         invoiceNumber,
         orderId: order.id,
         branchId: order.branchId,
@@ -2044,7 +2061,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pdfPath: "", // Will be updated after PDF generation
       };
 
-      const createdInvoice = await storage.createInvoice(req.restaurantId!, invoiceData);
+      const createdInvoice = await storage.createInvoice(invoiceData);
 
       // Get base URL from request
       const baseUrl = `${req.protocol}://${req.get('host')}`;
@@ -2077,7 +2094,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fs.writeFileSync(pdfPath, pdfBuffer);
 
       // Update invoice record with QR code and PDF path
-      await storage.updateInvoice(req.restaurantId!, createdInvoice.id, {
+      await storage.updateInvoice(createdInvoice.id, {
         qrCode,
         pdfPath: `/invoices/${pdfFilename}`,
       });
@@ -2186,10 +2203,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Inventory to Excel
-  app.get("/api/export/inventory", requireTenantAuth, async (req, res) => {
+  app.get("/api/export/inventory", async (req, res) => {
     try {
       const branchId = req.query.branchId as string | undefined;
-      const items = await storage.getInventoryItems(req.restaurantId!, branchId);
+      const items = await storage.getInventoryItems(branchId);
       
       const worksheet = XLSX.utils.json_to_sheet(items);
       const workbook = XLSX.utils.book_new();
@@ -2207,9 +2224,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Menu to Excel
-  app.get("/api/export/menu", requireTenantAuth, async (req, res) => {
+  app.get("/api/export/menu", async (req, res) => {
     try {
-      const items = await storage.getMenuItems(req.restaurantId!);
+      const items = await storage.getMenuItems();
       
       const worksheet = XLSX.utils.json_to_sheet(items);
       const workbook = XLSX.utils.book_new();
@@ -2227,9 +2244,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Recipes to Excel
-  app.get("/api/export/recipes", requireTenantAuth, async (req, res) => {
+  app.get("/api/export/recipes", async (req, res) => {
     try {
-      const recipes = await storage.getRecipes(req.restaurantId!);
+      const recipes = await storage.getRecipes();
       
       // Flatten recipe data for Excel
       const flattenedRecipes = recipes.map(recipe => ({
@@ -2259,11 +2276,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Orders to Excel
-  app.get("/api/export/orders", requireTenantAuth, async (req, res) => {
+  app.get("/api/export/orders", async (req, res) => {
     try {
       const branchId = req.query.branchId as string | undefined;
       const status = req.query.status as string | undefined;
-      const orders = await storage.getOrders(req.restaurantId!, branchId, status);
+      const orders = await storage.getOrders(branchId, status);
       
       // Flatten orders for Excel
       const flattenedOrders = orders.map(order => ({
@@ -2298,12 +2315,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Transactions to Excel
-  app.get("/api/export/transactions", requireTenantAuth, async (req, res) => {
+  app.get("/api/export/transactions", async (req, res) => {
     try {
       const branchId = req.query.branchId as string | undefined;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
-      const transactions = await storage.getTransactions(req.restaurantId!, branchId, startDate, endDate);
+      const transactions = await storage.getTransactions(branchId, startDate, endDate);
       
       const worksheet = XLSX.utils.json_to_sheet(transactions);
       const workbook = XLSX.utils.book_new();
@@ -2321,12 +2338,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Procurement to Excel
-  app.get("/api/export/procurement", requireTenantAuth, async (req, res) => {
+  app.get("/api/export/procurement", async (req, res) => {
     try {
       const type = req.query.type as string | undefined;
       const status = req.query.status as string | undefined;
       const branchId = req.query.branchId as string | undefined;
-      const procurements = await storage.getProcurements(req.restaurantId!, type, status, branchId);
+      const procurements = await storage.getProcurements(type, status, branchId);
       
       const worksheet = XLSX.utils.json_to_sheet(procurements);
       const workbook = XLSX.utils.book_new();
@@ -2344,9 +2361,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Customers to Excel
-  app.get("/api/export/customers", requireTenantAuth, async (req, res) => {
+  app.get("/api/export/customers", async (req, res) => {
     try {
-      const customers = await storage.getCustomers(req.restaurantId!);
+      const customers = await storage.getCustomers();
       
       const worksheet = XLSX.utils.json_to_sheet(customers);
       const workbook = XLSX.utils.book_new();
@@ -2364,9 +2381,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Branches to Excel
-  app.get("/api/export/branches", requireTenantAuth, async (req, res) => {
+  app.get("/api/export/branches", async (req, res) => {
     try {
-      const branches = await storage.getBranches(req.restaurantId!);
+      const branches = await storage.getBranches();
       
       const worksheet = XLSX.utils.json_to_sheet(branches);
       const workbook = XLSX.utils.book_new();
@@ -2384,14 +2401,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Profitability Data to Excel
-  app.get("/api/export/profitability", requireTenantAuth, async (req, res) => {
+  app.get("/api/export/profitability", async (req, res) => {
     try {
       const period = req.query.period as string || 'month';
       
       // Get menu items, recipes, and orders
-      const menuItems = await storage.getMenuItems(req.restaurantId!);
-      const recipes = await storage.getRecipes(req.restaurantId!);
-      const orders = await storage.getOrders(req.restaurantId!);
+      const menuItems = await storage.getMenuItems();
+      const recipes = await storage.getRecipes();
+      const orders = await storage.getOrders();
       
       // Filter orders by period
       const now = new Date();
@@ -2461,14 +2478,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Financial Data to Excel
-  app.get("/api/export/financial", requireTenantAuth, async (req, res) => {
+  app.get("/api/export/financial", async (req, res) => {
     try {
       const year = req.query.year as string || new Date().getFullYear().toString();
       const period = req.query.period as string || 'monthly';
       
       // Fetch financial data using same logic as the analytics endpoint
-      const transactions = await storage.getTransactions(req.restaurantId!);
-      const invoices = await storage.getInvoices(req.restaurantId!);
+      const transactions = await storage.getTransactions();
+      const invoices = await storage.getInvoices();
       
       // Filter by year
       const yearTransactions = transactions.filter(t => 
@@ -2538,16 +2555,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Financial Statement as PDF
-  app.get("/api/export/financial-pdf", requireTenantAuth, async (req, res) => {
+  app.get("/api/export/financial-pdf", async (req, res) => {
     try {
       const year = req.query.year as string || new Date().getFullYear().toString();
       const period = (req.query.period as "monthly" | "yearly") || 'monthly';
       
-      const settings = await storage.getSettings(req.restaurantId!);
+      const settings = await storage.getSettings();
       
       // Fetch financial data
-      const transactions = await storage.getTransactions(req.restaurantId!);
-      const invoices = await storage.getInvoices(req.restaurantId!);
+      const transactions = await storage.getTransactions();
+      const invoices = await storage.getInvoices();
       
       // Filter by year
       const yearTransactions = transactions.filter(t => 
@@ -2609,9 +2626,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Download individual invoice PDF
-  app.get("/api/invoices/:id/download", requireTenantAuth, async (req, res) => {
+  app.get("/api/invoices/:id/download", async (req, res) => {
     try {
-      const invoice = await storage.getInvoice(req.restaurantId!, req.params.id);
+      const invoice = await storage.getInvoice(req.params.id);
       if (!invoice) {
         return res.status(404).json({ error: "Invoice not found" });
       }
@@ -2691,7 +2708,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/uploads/menu-images', (await import('express')).static(path.join(process.cwd(), 'uploads', 'menu-images')));
 
   // Import Inventory from Excel
-  app.post("/api/import/inventory", requireTenantAuth, upload.single('file'), async (req, res) => {
+  app.post("/api/import/inventory", upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -2707,8 +2724,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (const row of data as any[]) {
         try {
-          await storage.createInventoryItem(req.restaurantId!, {
-            restaurantId: req.restaurantId!,
+          await storage.createInventoryItem({
             name: row.name,
             category: row.category,
             quantity: String(row.quantity),
@@ -2732,7 +2748,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Import Menu from Excel
-  app.post("/api/import/menu", requireTenantAuth, upload.single('file'), async (req, res) => {
+  app.post("/api/import/menu", upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -2748,8 +2764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (const row of data as any[]) {
         try {
-          await storage.createMenuItem(req.restaurantId!, {
-            restaurantId: req.restaurantId!,
+          await storage.createMenuItem({
             name: row.name,
             category: row.category,
             basePrice: String(row.basePrice),
@@ -2774,7 +2789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Import Recipes from Excel
-  app.post("/api/import/recipes", requireTenantAuth, upload.single('file'), async (req, res) => {
+  app.post("/api/import/recipes", upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -2790,8 +2805,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (const row of data as any[]) {
         try {
-          await storage.createRecipe(req.restaurantId!, {
-            restaurantId: req.restaurantId!,
+          await storage.createRecipe({
             name: row.name,
             prepTime: row.prepTime,
             cookTime: row.cookTime,
@@ -2815,7 +2829,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Import Branches from Excel
-  app.post("/api/import/branches", requireTenantAuth, upload.single('file'), async (req, res) => {
+  app.post("/api/import/branches", upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -2831,8 +2845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (const row of data as any[]) {
         try {
-          await storage.createBranch(req.restaurantId!, {
-            restaurantId: req.restaurantId!,
+          await storage.createBranch({
             name: row.name,
             location: row.location || row.address,
             phone: row.phone,
@@ -2857,10 +2870,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ==================== Monthly VAT Reports ====================
 
   // Get all VAT reports for the logged-in user
-  app.get("/api/vat-reports", requireTenantAuth, async (req, res) => {
+  app.get("/api/vat-reports", async (req, res) => {
     try {
-      const userId = req.session!.userId!;
-      const reports = await storage.getMonthlyVatReports(req.restaurantId!, userId);
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = (req.user as any).id;
+      const reports = await storage.getMonthlyVatReports(userId);
       res.json(reports);
     } catch (error) {
       console.error("Error fetching VAT reports:", error);
@@ -2869,9 +2885,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate monthly VAT report
-  app.post("/api/vat-reports/generate", requireTenantAuth, async (req, res) => {
+  app.post("/api/vat-reports/generate", async (req, res) => {
     try {
-      const userId = req.session!.userId!;
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = (req.user as any).id;
       const { month, year } = req.body;
 
       // Validate input
@@ -2880,13 +2899,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if report already exists for this month
-      const existingReport = await storage.getVatReportByMonth(req.restaurantId!, userId, month, year);
+      const existingReport = await storage.getVatReportByMonth(userId, month, year);
       if (existingReport) {
         return res.status(400).json({ error: "Report for this month already exists" });
       }
 
       // Get user data for the invoice
-      const user = await storage.getUserProfile(req.restaurantId!, userId);
+      const user = await storage.getUserProfile(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -2895,7 +2914,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const startDate = new Date(year, month - 1, 1);
       const endDate = new Date(year, month, 0, 23, 59, 59);
 
-      const transactions = await storage.getTransactions(req.restaurantId!, undefined, startDate, endDate);
+      const transactions = await storage.getTransactions(undefined, startDate, endDate);
       
       // Calculate total sales (sum of all transaction totals)
       const totalSales = transactions.reduce((sum, tx) => sum + parseFloat(tx.total), 0);
@@ -2903,10 +2922,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalSalesVat = totalSales - totalSalesBaseAmount;
 
       // Calculate total purchases (from procurement)
-      const procurements = await storage.getProcurements(req.restaurantId!, undefined, undefined, undefined);
+      const procurements = await storage.getProcurements(undefined, undefined, undefined);
       const monthProcurements = procurements.filter(p => {
         if (!p.orderDate) return false;
-        const procDate = typeof p.orderDate === 'string' ? new Date(p.orderDate) : p.orderDate;
+        const procDate = new Date(p.orderDate);
         return procDate >= startDate && procDate <= endDate;
       });
       
@@ -2921,7 +2940,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const netVatPayable = totalSalesVat - totalPurchasesVat;
 
       // Generate serial number
-      const serialNumber = await storage.getNextVatReportSerialNumber(req.restaurantId!, year, month);
+      const serialNumber = await storage.getNextVatReportSerialNumber(year, month);
 
       // Generate PDF invoice
       const pdfBuffer = await generateMonthlyVatReport({
@@ -2955,8 +2974,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const qrCode = await QRCode.toDataURL(qrData);
 
       // Create VAT report record
-      const report = await storage.createVatReport(req.restaurantId!, {
-        restaurantId: req.restaurantId!,
+      const report = await storage.createVatReport({
         userId,
         reportMonth: month,
         reportYear: year,
@@ -2980,12 +2998,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Download VAT report PDF
-  app.get("/api/vat-reports/:id/download", requireTenantAuth, async (req, res) => {
+  app.get("/api/vat-reports/:id/download", async (req, res) => {
     try {
-      const userId = req.session!.userId!;
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = (req.user as any).id;
       const reportId = req.params.id;
 
-      const reports = await storage.getMonthlyVatReports(req.restaurantId!, userId);
+      const reports = await storage.getMonthlyVatReports(userId);
       const report = reports.find(r => r.id === reportId);
 
       if (!report) {
@@ -3010,12 +3031,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Support Tickets
-  app.get("/api/tickets", requireTenantAuth, async (req, res) => {
+  app.get("/api/tickets", async (req, res) => {
     try {
       const userId = req.query.userId as string | undefined;
       const status = req.query.status as string | undefined;
       
-      const tickets = await storage.getSupportTickets(req.restaurantId!, userId, status);
+      const tickets = await storage.getSupportTickets(userId, status);
       res.json(tickets);
     } catch (error) {
       console.error("Error fetching tickets:", error);
@@ -3023,9 +3044,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/tickets/:id", requireTenantAuth, async (req, res) => {
+  app.get("/api/tickets/:id", async (req, res) => {
     try {
-      const ticket = await storage.getSupportTicket(req.restaurantId!, req.params.id);
+      const ticket = await storage.getSupportTicket(req.params.id);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
@@ -3038,11 +3059,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tickets", requireTenantAuth, async (req, res) => {
+  app.post("/api/tickets", async (req, res) => {
     try {
-      const ticket = await storage.createSupportTicket(req.restaurantId!, {
-        restaurantId: req.restaurantId!,
-        userId: req.body.userId || req.session?.userId || 'default-user',
+      const ticket = await storage.createSupportTicket({
+        userId: req.body.userId || 'default-user',
         subject: req.body.subject,
         category: req.body.category,
         priority: req.body.priority || 'medium',
@@ -3060,7 +3080,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: ticket.description,
         userId: ticket.userId,
         userName: req.body.userName,
-        createdAt: typeof ticket.createdAt === 'string' ? ticket.createdAt : ticket.createdAt.toISOString(),
+        createdAt: ticket.createdAt,
       }).catch(err => {
         console.error('Failed to send email notification:', err);
         // Don't fail the request if email fails
@@ -3073,15 +3093,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/tickets/:id", requireTenantAuth, async (req, res) => {
+  app.patch("/api/tickets/:id", async (req, res) => {
     try {
-      const ticket = await storage.getSupportTicket(req.restaurantId!, req.params.id);
+      const ticket = await storage.getSupportTicket(req.params.id);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
       }
 
-      const updated = await storage.updateSupportTicket(req.restaurantId!, req.params.id, req.body);
+      const updated = await storage.updateSupportTicket(req.params.id, req.body);
       res.json(updated);
     } catch (error) {
       console.error("Error updating ticket:", error);
@@ -3090,15 +3110,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Ticket Messages
-  app.get("/api/tickets/:ticketId/messages", requireTenantAuth, async (req, res) => {
+  app.get("/api/tickets/:ticketId/messages", async (req, res) => {
     try {
-      const ticket = await storage.getSupportTicket(req.restaurantId!, req.params.ticketId);
+      const ticket = await storage.getSupportTicket(req.params.ticketId);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
       }
 
-      const messages = await storage.getTicketMessages(req.restaurantId!, req.params.ticketId);
+      const messages = await storage.getTicketMessages(req.params.ticketId);
       res.json(messages);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -3106,16 +3126,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tickets/:ticketId/messages", requireTenantAuth, async (req, res) => {
+  app.post("/api/tickets/:ticketId/messages", async (req, res) => {
     try {
-      const ticket = await storage.getSupportTicket(req.restaurantId!, req.params.ticketId);
+      const ticket = await storage.getSupportTicket(req.params.ticketId);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
       }
 
-      const message = await storage.createTicketMessage(req.restaurantId!, {
-        restaurantId: req.restaurantId!,
+      const message = await storage.createTicketMessage({
         ticketId: req.params.ticketId,
         senderId: req.body.senderId || 'default-user',
         senderName: req.body.senderName || 'User',
@@ -3131,10 +3150,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/tickets/unread/count", requireTenantAuth, async (req, res) => {
+  app.get("/api/tickets/unread/count", async (req, res) => {
     try {
       const userId = req.query.userId as string | undefined;
-      const count = await storage.getUnreadMessageCount(req.restaurantId!, userId || req.session?.userId || 'default-user');
+      const count = await storage.getUnreadMessageCount(userId || 'default-user');
       res.json({ count });
     } catch (error) {
       console.error("Error fetching unread count:", error);
@@ -3143,14 +3162,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Employee Activity Log
-  app.get("/api/employee-activities", requireTenantAuth, async (req, res) => {
+  app.get("/api/employee-activities", async (req, res) => {
     try {
       const employeeId = req.query.employeeId as string | undefined;
       const category = req.query.category as string | undefined;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
 
-      const activities = await storage.getEmployeeActivities(req.restaurantId!, employeeId, category, startDate, endDate);
+      const activities = await storage.getEmployeeActivities(employeeId, category, startDate, endDate);
       res.json(activities);
     } catch (error) {
       console.error("Error fetching activities:", error);
@@ -3158,9 +3177,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/employee-activities/stats/:employeeId", requireTenantAuth, async (req, res) => {
+  app.get("/api/employee-activities/stats/:employeeId", async (req, res) => {
     try {
-      const stats = await storage.getEmployeeActivityStats(req.restaurantId!, req.params.employeeId);
+      const stats = await storage.getEmployeeActivityStats(req.params.employeeId);
       res.json(stats);
     } catch (error) {
       console.error("Error fetching activity stats:", error);

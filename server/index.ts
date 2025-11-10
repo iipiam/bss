@@ -1,40 +1,14 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
-import connectPgSimple from "connect-pg-simple";
-import pg from "pg";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { scheduleSignupDraftCleanup } from "./cron/cleanupSignupDrafts";
 
 const app = express();
-
-// Conditional session store (Task 12: Production-ready with fallback)
-let sessionStore: any;
-if (process.env.DATABASE_URL) {
-  const PgStore = connectPgSimple(session);
-  const pgPool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL,
-  });
-  sessionStore = new PgStore({
-    pool: pgPool,
-    tableName: 'session',
-    createTableIfMissing: true,
-  });
-  console.log('[SESSION] Using PostgreSQL session store');
-} else {
-  // PRODUCTION GUARD: Fail fast if production without DATABASE_URL
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('FATAL: DATABASE_URL required in production for persistent session storage');
-  }
-  console.warn('[SESSION] DATABASE_URL not set, using in-memory session store (NOT FOR PRODUCTION)');
-  sessionStore = undefined; // undefined means use default MemoryStore
-}
 
 declare module 'express-session' {
   interface SessionData {
     userId?: string;
     role?: string;
-    restaurantId?: string; // Task 12: Store restaurantId in session
   }
 }
 
@@ -51,14 +25,8 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: false }));
 
-// PRODUCTION GUARD: Require SESSION_SECRET in production
-if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
-  throw new Error('FATAL: SESSION_SECRET required in production for secure session encryption');
-}
-
-// Session middleware with conditional store (Task 12: Production-ready session persistence)
+// Session middleware
 app.use(session({
-  store: sessionStore, // PostgreSQL if DATABASE_URL set, otherwise MemoryStore
   secret: process.env.SESSION_SECRET || 'resto-pos-secret-key-change-in-production',
   resave: false,
   saveUninitialized: false,
@@ -118,9 +86,6 @@ app.use((req, res, next) => {
   } else {
     serveStatic(app);
   }
-
-  // Schedule cron jobs
-  scheduleSignupDraftCleanup();
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
