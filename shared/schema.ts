@@ -149,6 +149,8 @@ export const orders = pgTable("orders", {
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: text("payment_method").notNull().default("Cash"),
+  paymentStatus: text("payment_status").default("Unpaid"), // Track payment status separately: Unpaid, Paid, Refunded
+  moyasarPaymentId: text("moyasar_payment_id"), // Link to Moyasar payment if applicable
   status: text("status").notNull().default("Pending"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

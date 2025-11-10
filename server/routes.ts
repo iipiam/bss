@@ -912,7 +912,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Settings
   app.get("/api/settings", async (_req, res) => {
     const settings = await storage.getSettings();
-    res.json(settings);
+    const settingsWithKeys = {
+      ...settings,
+      moyasarPublishableKey: process.env.MOYASAR_PUBLISHABLE_KEY || null,
+    };
+    res.json(settingsWithKeys);
   });
 
   app.patch("/api/settings", async (req, res) => {

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Minus, X, Search, Receipt, UtensilsCrossed, UserCircle, CreditCard, Wallet, Package, ShoppingCart } from "lucide-react";
+import { Plus, Minus, X, Search, Receipt, UtensilsCrossed, UserCircle, CreditCard, Wallet, Package, ShoppingCart, Globe } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDevice } from "@/contexts/DeviceContext";
+import { MoyasarPayment } from "@/components/MoyasarPayment";
 import type { MenuItem, DeliveryApp, Addon } from "@shared/schema";
 
 interface CartItemAddon {
@@ -63,6 +64,8 @@ export default function POS() {
   const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [itemQuantity, setItemQuantity] = useState(1);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [pendingOrderData, setPendingOrderData] = useState<any>(null);
   const { toast } = useToast();
   const { t } = useLanguage();
   const { device } = useDevice();
@@ -340,7 +343,48 @@ export default function POS() {
       status: "Pending",
     };
 
-    createOrderMutation.mutate(orderData);
+    // If online payment is selected, show payment dialog
+    if (paymentMethod === "Online") {
+      setPendingOrderData(orderData);
+      setPaymentDialogOpen(true);
+    } else {
+      // For Cash and ATM, process order immediately
+      createOrderMutation.mutate(orderData);
+    }
+  };
+
+  const handlePaymentSuccess = async (paymentId: string) => {
+    if (!pendingOrderData) return;
+
+    // Update order data with payment ID and mark as paid
+    const orderDataWithPayment = {
+      ...pendingOrderData,
+      moyasarPaymentId: paymentId,
+      status: "Completed", // Mark order as completed since payment is successful
+      paymentStatus: "Paid", // Add explicit payment status
+    };
+
+    // Create the order
+    createOrderMutation.mutate(orderDataWithPayment);
+    setPaymentDialogOpen(false);
+    setPendingOrderData(null);
+  };
+
+  const handlePaymentError = (error: string) => {
+    toast({
+      title: "Payment Failed",
+      description: error,
+      variant: "destructive",
+    });
+  };
+
+  const handlePaymentCancel = () => {
+    setPaymentDialogOpen(false);
+    setPendingOrderData(null);
+    toast({
+      title: "Payment Cancelled",
+      description: "Order was not placed",
+    });
   };
 
   if (isLoading) {
@@ -595,6 +639,12 @@ export default function POS() {
                       <div className="flex items-center gap-2">
                         <CreditCard className="h-4 w-4" />
                         {t.atm}
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="Online" data-testid="option-online">
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-4 w-4" />
+                        Online Payment
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -1038,6 +1088,12 @@ export default function POS() {
                     {t.atm}
                   </div>
                 </SelectItem>
+                <SelectItem value="Online" data-testid="option-online">
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-4 w-4" />
+                    Online Payment
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1391,6 +1447,30 @@ export default function POS() {
               {t.add}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Moyasar Payment Dialog */}
+      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Complete Payment</DialogTitle>
+            <DialogDescription>
+              Complete your payment to process the order
+            </DialogDescription>
+          </DialogHeader>
+          {pendingOrderData && (
+            <MoyasarPayment
+              amount={parseFloat(pendingOrderData.total)}
+              description={`Order ${pendingOrderData.orderNumber} - ${itemCount} items`}
+              orderId={pendingOrderData.orderNumber}
+              customerName={pendingOrderData.customerName}
+              customerPhone={pendingOrderData.customerPhone}
+              onSuccess={handlePaymentSuccess}
+              onError={handlePaymentError}
+              onCancel={handlePaymentCancel}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>

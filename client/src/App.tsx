@@ -66,6 +66,7 @@ import SalesComparison from "@/pages/sales-comparison";
 import Investors from "@/pages/investors";
 import Support from "@/pages/support";
 import SupportDetail from "@/pages/support-detail";
+import PaymentTest from "@/pages/payment-test";
 import Login from "@/pages/login";
 import Setup from "@/pages/setup";
 import ForgotPassword from "@/pages/forgot-password";
@@ -107,6 +108,7 @@ function Router() {
       <Route path="/investors" component={Investors} />
       <Route path="/support" component={Support} />
       <Route path="/support/:id" component={SupportDetail} />
+      <Route path="/payment-test" component={PaymentTest} />
       <Route component={NotFound} />
     </Switch>
   );
