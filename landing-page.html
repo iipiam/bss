@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="RestoPOS - Complete restaurant management system for Saudi Arabian restaurants. ZATCA-compliant POS, inventory, multi-branch operations, and more.">
+    <meta name="keywords" content="restaurant management, POS system, Saudi Arabia, ZATCA compliance, inventory management, multi-branch">
+    <title>RestoPOS - Smart Restaurant Management for Saudi Arabia</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #f59e0b;
+            --background: #ffffff;
+            --surface: #f8fafc;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--background);
+        }
+
+        /* RTL Support */
+        html[dir="rtl"] {
+            direction: rtl;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .lang-toggle {
+            padding: 0.5rem 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .lang-toggle:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            margin-top: 80px;
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1" fill="white" opacity="0.1"/></svg>');
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .hero-text p {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: white;
+            color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            color: var(--primary);
+        }
+
+        .hero-image {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .mockup {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 1rem;
+            padding: 1rem;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* Features Section */
+        .features {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 6rem 2rem;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-header p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+        }
+
+        /* Pricing Section */
+        .pricing {
+            background: var(--surface);
+            padding: 6rem 2rem;
+        }
+
+        .pricing-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2.5rem;
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .pricing-card.popular {
+            border-color: var(--primary);
+            transform: scale(1.05);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .price {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .price span {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .price-period {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .features-list {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .features-list li {
+            padding: 0.75rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .features-list li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+
+        /* Stats Section */
+        .stats {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 3rem;
+            text-align: center;
+        }
+
+        .stat-item h3 {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-item p {
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            padding: 6rem 2rem;
+            text-align: center;
+            color: white;
+        }
+
+        .cta-section h2 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+        }
+
+        .cta-section p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--text);
+            color: white;
+            padding: 3rem 2rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-section a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 2rem auto 0;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .hero-text h1 {
+                font-size: 2.5rem;
+            }
+
+            .cta-buttons {
+                justify-content: center;
+            }
+
+            .pricing-card.popular {
+                transform: scale(1);
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .cta-section h2 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            animation: fadeIn 1s forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .slide-up {
+            transform: translateY(30px);
+            opacity: 0;
+            animation: slideUp 0.8s forwards;
+        }
+
+        @keyframes slideUp {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav>
+            <div class="logo">RestoPOS</div>
+            <ul class="nav-links">
+                <li><a href="#features" data-en="Features" data-ar="المميزات">Features</a></li>
+                <li><a href="#pricing" data-en="Pricing" data-ar="الأسعار">Pricing</a></li>
+                <li><a href="#contact" data-en="Contact" data-ar="تواصل معنا">Contact</a></li>
+            </ul>
+            <button class="lang-toggle" onclick="toggleLanguage()">
+                <span id="lang-text">عربي</span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text fade-in">
+                <h1 data-en="Smart Restaurant Management for Saudi Arabia" data-ar="نظام ذكي لإدارة المطاعم في السعودية">
+                    Smart Restaurant Management for Saudi Arabia
+                </h1>
+                <p data-en="Complete POS, inventory, and multi-branch management system. ZATCA-compliant with subscription plans starting from 39.90 SAR/week." data-ar="نظام نقاط بيع وإدارة مخزون ومتعدد الفروع. متوافق مع هيئة الزكاة والضريبة مع باقات تبدأ من 39.90 ريال/أسبوع.">
+                    Complete POS, inventory, and multi-branch management system. ZATCA-compliant with subscription plans starting from 39.90 SAR/week.
+                </p>
+                <div class="cta-buttons">
+                    <a href="/signup" class="btn btn-primary" data-en="Start Free Trial" data-ar="ابدأ تجربة مجانية">Start Free Trial</a>
+                    <a href="#pricing" class="btn btn-secondary" data-en="View Pricing" data-ar="عرض الأسعار">View Pricing</a>
+                </div>
+            </div>
+            <div class="hero-image slide-up">
+                <div class="mockup">
+                    <svg viewBox="0 0 400 300" style="width: 100%; height: auto;">
+                        <rect width="400" height="300" fill="#f8fafc"/>
+                        <rect x="20" y="20" width="360" height="60" rx="8" fill="#6366f1" opacity="0.1"/>
+                        <rect x="40" y="35" width="120" height="30" rx="4" fill="#6366f1"/>
+                        <rect x="20" y="100" width="170" height="180" rx="8" fill="white" stroke="#e2e8f0" stroke-width="2"/>
+                        <rect x="210" y="100" width="170" height="80" rx="8" fill="white" stroke="#e2e8f0" stroke-width="2"/>
+                        <rect x="210" y="200" width="170" height="80" rx="8" fill="white" stroke="#e2e8f0" stroke-width="2"/>
+                        <circle cx="105" cy="140" r="20" fill="#10b981" opacity="0.2"/>
+                        <circle cx="295" cy="140" r="20" fill="#f59e0b" opacity="0.2"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="stat-item fade-in">
+            <h3>750+</h3>
+            <p data-en="Active Restaurants" data-ar="مطعم نشط">Active Restaurants</p>
+        </div>
+        <div class="stat-item fade-in">
+            <h3>99.9%</h3>
+            <p data-en="Uptime" data-ar="وقت التشغيل">Uptime</p>
+        </div>
+        <div class="stat-item fade-in">
+            <h3>24/7</h3>
+            <p data-en="Support" data-ar="الدعم الفني">Support</p>
+        </div>
+        <div class="stat-item fade-in">
+            <h3>100%</h3>
+            <p data-en="ZATCA Compliant" data-ar="متوافق مع الزكاة">ZATCA Compliant</p>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="section-header">
+            <h2 data-en="Everything You Need to Run Your Restaurant" data-ar="كل ما تحتاجه لإدارة مطعمك">
+                Everything You Need to Run Your Restaurant
+            </h2>
+            <p data-en="Powerful features designed specifically for Saudi Arabian restaurants" data-ar="ميزات قوية مصممة خصيصاً للمطاعم السعودية">
+                Powerful features designed specifically for Saudi Arabian restaurants
+            </p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🏪</div>
+                <h3 data-en="Point of Sale" data-ar="نقطة البيع">Point of Sale</h3>
+                <p data-en="Fast, intuitive POS system with real-time inventory tracking and multiple payment methods." data-ar="نظام نقاط بيع سريع وسهل مع تتبع المخزون في الوقت الفعلي وطرق دفع متعددة.">
+                    Fast, intuitive POS system with real-time inventory tracking and multiple payment methods.
+                </p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">📦</div>
+                <h3 data-en="Inventory Management" data-ar="إدارة المخزون">Inventory Management</h3>
+                <p data-en="Track stock levels, automatic alerts, and recipe-based inventory deduction." data-ar="تتبع مستويات المخزون والتنبيهات التلقائية والخصم التلقائي للمكونات.">
+                    Track stock levels, automatic alerts, and recipe-based inventory deduction.
+                </p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🏢</div>
+                <h3 data-en="Multi-Branch" data-ar="متعدد الفروع">Multi-Branch</h3>
+                <p data-en="Manage multiple locations from a single dashboard with centralized reporting." data-ar="إدارة عدة فروع من لوحة تحكم واحدة مع تقارير مركزية.">
+                    Manage multiple locations from a single dashboard with centralized reporting.
+                </p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">📊</div>
+                <h3 data-en="Analytics & Reports" data-ar="التحليلات والتقارير">Analytics & Reports</h3>
+                <p data-en="Daily sales, demand forecasting, peak hours analysis, and profitability insights." data-ar="مبيعات يومية والتنبؤ بالطلب وتحليل ساعات الذروة ورؤى الربحية.">
+                    Daily sales, demand forecasting, peak hours analysis, and profitability insights.
+                </p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">📄</div>
+                <h3 data-en="ZATCA Compliant" data-ar="متوافق مع الزكاة">ZATCA Compliant</h3>
+                <p data-en="Bilingual invoices with QR codes, automatic VAT calculation, and e-invoicing." data-ar="فواتير ثنائية اللغة مع رموز QR وحساب ضريبة القيمة المضافة التلقائي والفوترة الإلكترونية.">
+                    Bilingual invoices with QR codes, automatic VAT calculation, and e-invoicing.
+                </p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🌐</div>
+                <h3 data-en="7 Languages" data-ar="7 لغات">7 Languages</h3>
+                <p data-en="Full support for Arabic, English, Urdu, and 4 more languages with RTL support." data-ar="دعم كامل للعربية والإنجليزية والأردية و4 لغات أخرى مع دعم الكتابة من اليمين لليسار.">
+                    Full support for Arabic, English, Urdu, and 4 more languages with RTL support.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing" id="pricing">
+        <div class="pricing-container">
+            <div class="section-header">
+                <h2 data-en="Simple, Transparent Pricing" data-ar="أسعار بسيطة وشفافة">Simple, Transparent Pricing</h2>
+                <p data-en="Choose the plan that fits your business. All plans include 15% VAT." data-ar="اختر الباقة التي تناسب عملك. جميع الباقات تشمل ضريبة القيمة المضافة 15٪.">
+                    Choose the plan that fits your business. All plans include 15% VAT.
+                </p>
+            </div>
+            <div class="pricing-grid">
+                <div class="pricing-card fade-in">
+                    <div class="plan-name" data-en="Weekly" data-ar="أسبوعي">Weekly</div>
+                    <div class="price">39.90 <span>SAR</span></div>
+                    <div class="price-period" data-en="per week (1 branch included)" data-ar="في الأسبوع (يشمل فرع واحد)">
+                        per week (1 branch included)
+                    </div>
+                    <ul class="features-list">
+                        <li data-en="Point of Sale System" data-ar="نظام نقطة البيع">Point of Sale System</li>
+                        <li data-en="Inventory Management" data-ar="إدارة المخزون">Inventory Management</li>
+                        <li data-en="ZATCA Compliance" data-ar="متوافق مع الزكاة">ZATCA Compliance</li>
+                        <li data-en="Basic Analytics" data-ar="تحليلات أساسية">Basic Analytics</li>
+                        <li data-en="Email Support" data-ar="الدعم عبر البريد">Email Support</li>
+                    </ul>
+                    <a href="/signup?plan=weekly" class="btn btn-primary" style="width: 100%; text-align: center;" data-en="Get Started" data-ar="ابدأ الآن">
+                        Get Started
+                    </a>
+                </div>
+
+                <div class="pricing-card popular fade-in">
+                    <div class="popular-badge" data-en="Most Popular" data-ar="الأكثر شعبية">Most Popular</div>
+                    <div class="plan-name" data-en="Monthly" data-ar="شهري">Monthly</div>
+                    <div class="price">119.75 <span>SAR</span></div>
+                    <div class="price-period" data-en="per month (1 branch included)" data-ar="في الشهر (يشمل فرع واحد)">
+                        per month (1 branch included)
+                    </div>
+                    <ul class="features-list">
+                        <li data-en="Everything in Weekly" data-ar="كل ما في الباقة الأسبوعية">Everything in Weekly</li>
+                        <li data-en="Advanced Analytics" data-ar="تحليلات متقدمة">Advanced Analytics</li>
+                        <li data-en="Multi-Branch Support" data-ar="دعم متعدد الفروع">Multi-Branch Support</li>
+                        <li data-en="Kitchen Display System" data-ar="نظام عرض المطبخ">Kitchen Display System</li>
+                        <li data-en="Priority Support" data-ar="الدعم ذو الأولوية">Priority Support</li>
+                    </ul>
+                    <a href="/signup?plan=monthly" class="btn btn-primary" style="width: 100%; text-align: center;" data-en="Get Started" data-ar="ابدأ الآن">
+                        Get Started
+                    </a>
+                </div>
+
+                <div class="pricing-card fade-in">
+                    <div class="plan-name" data-en="Yearly" data-ar="سنوي">Yearly</div>
+                    <div class="price">1,197.50 <span>SAR</span></div>
+                    <div class="price-period" data-en="per year (Save 17%!)" data-ar="في السنة (وفر 17٪!)">
+                        per year (Save 17%!)
+                    </div>
+                    <ul class="features-list">
+                        <li data-en="Everything in Monthly" data-ar="كل ما في الباقة الشهرية">Everything in Monthly</li>
+                        <li data-en="Unlimited Branches" data-ar="فروع غير محدودة">Unlimited Branches</li>
+                        <li data-en="Demand Forecasting" data-ar="التنبؤ بالطلب">Demand Forecasting</li>
+                        <li data-en="Custom Reports" data-ar="تقارير مخصصة">Custom Reports</li>
+                        <li data-en="24/7 Phone Support" data-ar="دعم هاتفي 24/7">24/7 Phone Support</li>
+                    </ul>
+                    <a href="/signup?plan=yearly" class="btn btn-primary" style="width: 100%; text-align: center;" data-en="Get Started" data-ar="ابدأ الآن">
+                        Get Started
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <h2 data-en="Ready to Transform Your Restaurant?" data-ar="هل أنت مستعد لتحويل مطعمك؟">
+            Ready to Transform Your Restaurant?
+        </h2>
+        <p data-en="Join 750+ restaurants across Saudi Arabia using RestoPOS" data-ar="انضم إلى أكثر من 750 مطعماً في جميع أنحاء السعودية يستخدمون RestoPOS">
+            Join 750+ restaurants across Saudi Arabia using RestoPOS
+        </p>
+        <a href="/signup" class="btn btn-primary" data-en="Start Your Free Trial" data-ar="ابدأ تجربتك المجانية">
+            Start Your Free Trial
+        </a>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>RestoPOS</h3>
+                <p data-en="Smart restaurant management for Saudi Arabia" data-ar="إدارة ذكية للمطاعم في السعودية">
+                    Smart restaurant management for Saudi Arabia
+                </p>
+            </div>
+            <div class="footer-section">
+                <h3 data-en="Product" data-ar="المنتج">Product</h3>
+                <ul>
+                    <li><a href="#features" data-en="Features" data-ar="المميزات">Features</a></li>
+                    <li><a href="#pricing" data-en="Pricing" data-ar="الأسعار">Pricing</a></li>
+                    <li><a href="/signup" data-en="Sign Up" data-ar="التسجيل">Sign Up</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3 data-en="Support" data-ar="الدعم">Support</h3>
+                <ul>
+                    <li><a href="#" data-en="Help Center" data-ar="مركز المساعدة">Help Center</a></li>
+                    <li><a href="#" data-en="Contact Us" data-ar="اتصل بنا">Contact Us</a></li>
+                    <li><a href="#" data-en="Tutorials" data-ar="الدروس">Tutorials</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3 data-en="Contact" data-ar="تواصل معنا">Contact</h3>
+                <ul>
+                    <li data-en="Email: support@restopos.com" data-ar="البريد: support@restopos.com">Email: support@restopos.com</li>
+                    <li data-en="Phone: +966 XX XXX XXXX" data-ar="الهاتف: +966 XX XXX XXXX">Phone: +966 XX XXX XXXX</li>
+                    <li data-en="Saudi Arabia" data-ar="المملكة العربية السعودية">Saudi Arabia</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 RestoPOS. <span data-en="All rights reserved." data-ar="جميع الحقوق محفوظة.">All rights reserved.</span></p>
+        </div>
+    </footer>
+
+    <script>
+        let currentLang = 'en';
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'ar' : 'en';
+            const html = document.documentElement;
+            const langText = document.getElementById('lang-text');
+            
+            // Toggle direction
+            html.setAttribute('dir', currentLang === 'ar' ? 'rtl' : 'ltr');
+            html.setAttribute('lang', currentLang);
+            
+            // Update language toggle button
+            langText.textContent = currentLang === 'en' ? 'عربي' : 'English';
+            
+            // Update all translatable elements
+            document.querySelectorAll('[data-en][data-ar]').forEach(element => {
+                const text = element.getAttribute(`data-${currentLang}`);
+                if (text) {
+                    element.textContent = text;
+                }
+            });
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.feature-card, .pricing-card, .stat-item').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
