@@ -1,13 +1,15 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Language, translations, Translations } from '@/i18n/translations';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { Settings } from '@shared/schema';
 
 interface LanguageContextType {
   language: Language;
-  setLanguage: (lang: Language) => void;
+  setLanguage: (lang: Language) => Promise<void>;
   t: Translations;
   isRTL: boolean;
+  isUpdating: boolean;
 }
 
 // Mapping from Language names to ISO 639-1 codes for accessibility
@@ -45,15 +47,32 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = languageToLocaleCode[language];
   }, [language]);
 
-  const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
+  const updateLanguageMutation = useMutation({
+    mutationFn: async (newLanguage: Language) => {
+      await apiRequest("PATCH", "/api/settings", { language: newLanguage });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+    },
+  });
+
+  const setLanguage = async (newLanguage: Language) => {
+    const previousLanguage = language;
+    setLanguageState(newLanguage);
+    try {
+      await updateLanguageMutation.mutateAsync(newLanguage);
+    } catch (error) {
+      // Rollback to previous language on error
+      setLanguageState(previousLanguage);
+      throw error;
+    }
   };
 
   const t = translations[language];
   const isRTL = language === 'Arabic' || language === 'Urdu';
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, isRTL }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, isRTL, isUpdating: updateLanguageMutation.isPending }}>
       {children}
     </LanguageContext.Provider>
   );
