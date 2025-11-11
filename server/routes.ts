@@ -1419,9 +1419,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Calculate subscription prices based on plan
         const planPrices: Record<string, { base: number; perBranch: number }> = {
-          weekly: { base: 39.90, perBranch: 7 },
-          monthly: { base: 119.75, perBranch: 20 },
-          yearly: { base: 1197.50, perBranch: 240 },
+          weekly: { base: 55.78, perBranch: 9.79 },
+          monthly: { base: 167.42, perBranch: 27.96 },
+          yearly: { base: 1674.24, perBranch: 335.58 },
         };
 
         const prices = planPrices[subscriptionPlan];
