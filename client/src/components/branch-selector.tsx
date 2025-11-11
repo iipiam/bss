@@ -7,16 +7,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useBranch } from "@/contexts/BranchContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export function BranchSelector() {
   const { currentBranch, branches, setCurrentBranch, isLoading } = useBranch();
+  const { t } = useLanguage();
 
   if (isLoading || !currentBranch) {
     return (
       <div className="flex items-center gap-2 w-64 h-10 px-3 border rounded-md bg-background">
         <Building2 className="h-4 w-4 text-muted-foreground" />
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">Loading branches...</span>
+        <span className="text-sm text-muted-foreground">{t.loadingBranches || "Loading branches..."}</span>
       </div>
     );
   }
@@ -25,7 +27,7 @@ export function BranchSelector() {
     return (
       <div className="flex items-center gap-2 w-64 h-10 px-3 border rounded-md bg-background">
         <Building2 className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">No branches available</span>
+        <span className="text-sm text-muted-foreground">{t.noBranchesAvailable || "No branches available"}</span>
       </div>
     );
   }

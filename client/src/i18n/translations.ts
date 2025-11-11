@@ -254,6 +254,8 @@ export interface Translations {
   createMenuItemDesc: string;
   updateMenuItem: string;
   createMenuItem: string;
+  loadingBranches: string;
+  noBranchesAvailable: string;
   
   // Placeholders
   enterRestaurantName: string;
@@ -978,6 +980,8 @@ export const translations: Record<Language, Translations> = {
     createMenuItemDesc: 'Create a new item for your menu with VAT-inclusive pricing',
     updateMenuItem: 'Update Menu Item',
     createMenuItem: 'Create Menu Item',
+    loadingBranches: 'Loading branches...',
+    noBranchesAvailable: 'No branches available',
     
     // Placeholders
     enterRestaurantName: 'Enter restaurant name',
@@ -1701,6 +1705,8 @@ export const translations: Record<Language, Translations> = {
     createMenuItemDesc: 'إنشاء عنصر جديد للقائمة بأسعار شاملة لضريبة القيمة المضافة',
     updateMenuItem: 'تحديث عنصر القائمة',
     createMenuItem: 'إنشاء عنصر القائمة',
+    loadingBranches: 'جاري تحميل الفروع...',
+    noBranchesAvailable: 'لا توجد فروع متاحة',
     
     // Placeholders
     enterRestaurantName: 'أدخل اسم المطعم',
@@ -2424,6 +2430,8 @@ export const translations: Record<Language, Translations> = {
     createMenuItemDesc: '为您的菜单创建新项目，含增值税定价',
     updateMenuItem: '更新菜单项',
     createMenuItem: '创建菜单项',
+    loadingBranches: '正在加载分店...',
+    noBranchesAvailable: '没有可用的分店',
     
     // Placeholders
     enterRestaurantName: '输入餐厅名称',
@@ -3133,6 +3141,8 @@ export const translations: Record<Language, Translations> = {
     createMenuItemDesc: 'Erstellen Sie ein neues Element für Ihr Menü mit MwSt.-inklusiver Preisgestaltung',
     updateMenuItem: 'Menüelement aktualisieren',
     createMenuItem: 'Menüelement erstellen',
+    loadingBranches: 'Filialen werden geladen...',
+    noBranchesAvailable: 'Keine Filialen verfügbar',
     
     // Placeholders
     enterRestaurantName: 'Restaurantname eingeben',
@@ -3842,6 +3852,8 @@ export const translations: Record<Language, Translations> = {
     createMenuItemDesc: 'VAT-सम्मिलित मूल्य निर्धारण के साथ अपने मेनू के लिए एक नया आइटम बनाएं',
     updateMenuItem: 'मेनू आइटम अपडेट करें',
     createMenuItem: 'मेनू आइटम बनाएं',
+    loadingBranches: 'शाखाएं लोड हो रही हैं...',
+    noBranchesAvailable: 'कोई शाखाएं उपलब्ध नहीं हैं',
     
     // Placeholders
     enterRestaurantName: 'रेस्तरां का नाम दर्ज करें',
@@ -4551,6 +4563,8 @@ export const translations: Record<Language, Translations> = {
     createMenuItemDesc: 'VAT شامل قیمت کے ساتھ اپنے مینو کے لیے نیا آئٹم بنائیں',
     updateMenuItem: 'مینو آئٹم اپ ڈیٹ کریں',
     createMenuItem: 'مینو آئٹم بنائیں',
+    loadingBranches: 'شاخیں لوڈ ہو رہی ہیں...',
+    noBranchesAvailable: 'کوئی شاخیں دستیاب نہیں ہیں',
     
     // Placeholders
     enterRestaurantName: 'ریستوراں کا نام درج کریں',
@@ -5260,6 +5274,8 @@ export const translations: Record<Language, Translations> = {
     createMenuItemDesc: 'VAT-অন্তর্ভুক্ত মূল্য নির্ধারণ সহ আপনার মেনুর জন্য একটি নতুন আইটেম তৈরি করুন',
     updateMenuItem: 'মেনু আইটেম আপডেট করুন',
     createMenuItem: 'মেনু আইটেম তৈরি করুন',
+    loadingBranches: 'শাখা লোড হচ্ছে...',
+    noBranchesAvailable: 'কোনো শাখা উপলব্ধ নেই',
     
     // Placeholders
     enterRestaurantName: 'রেস্তোরাঁর নাম লিখুন',
