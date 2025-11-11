@@ -8,6 +8,12 @@ RestoPOS is a comprehensive, ZATCA-compliant restaurant management system for Sa
 
 Preferred communication style: Simple, everyday language.
 
+## Branding
+
+- **Logo**: Saudi Kinzhal eagle with blue ethereal design (`IMG_8731_1762870212105.jpeg`)
+- **Logo Usage**: Displayed in app footer (App.tsx), login page, and setup page
+- **Logo Dimensions**: 8x8 (footer), 10x10 (login/setup pages)
+
 ## System Architecture
 
 ### Frontend
