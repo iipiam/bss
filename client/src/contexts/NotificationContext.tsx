@@ -46,9 +46,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const connect = () => {
     try {
-      // Connect to WebSocket server
+      // Connect to WebSocket server on dedicated notification path (avoids conflict with Vite HMR)
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}`;
+      const wsUrl = `${protocol}//${window.location.host}/ws/notifications`;
       
       wsRef.current = new WebSocket(wsUrl);
 

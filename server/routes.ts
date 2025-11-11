@@ -3516,16 +3516,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
 
-  // Setup WebSocket server for real-time notifications
-  const wss = new WebSocketServer({ server: httpServer });
+  // Setup WebSocket server for real-time notifications on specific path to avoid conflicts with Vite HMR
+  const wss = new WebSocketServer({ 
+    server: httpServer,
+    path: '/ws/notifications'
+  });
   wsClients = new Set<WebSocket>();
   
   wss.on('connection', (ws: WebSocket) => {
-    console.log('[WebSocket] Client connected');
+    console.log('[WebSocket] Client connected to notifications');
     wsClients!.add(ws);
     
     ws.on('close', () => {
-      console.log('[WebSocket] Client disconnected');
+      console.log('[WebSocket] Client disconnected from notifications');
       wsClients?.delete(ws);
     });
     

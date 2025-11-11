@@ -96,6 +96,21 @@ Preferred communication style: Simple, everyday language.
   - **API Endpoints**: Full REST API for tickets (GET/POST/PATCH), messages (GET/POST), activity logs (GET), and unread count tracking
   - **Activity Logger Utility** (server/activityLogger.ts): Helper functions for logging employee actions throughout the application
   - **Note**: Translation keys defined but need to be populated in all 7 languages
+- **WhatsApp Invoice Delivery**: Automatic deep-link integration for sending ZATCA-compliant invoices via WhatsApp after POS checkout:
+  - **Phone Number Formatting** (client/src/lib/whatsapp.ts): Intelligent normalization supporting all Saudi formats (00966, 966, 0-prefixed, local 9-10 digit numbers) to international format
+  - **Bilingual Message Templates**: ZATCA-compliant Arabic/English invoice messages with order details, total, VAT breakdown, and public invoice URL
+  - **Deep-Link Integration**: Opens WhatsApp web/app via wa.me links with pre-filled message on same device after invoice generation
+  - **POS Integration**: Automatically triggers after successful checkout with graceful handling of popup blockers via toast notifications
+  - **No API Required**: Uses standard WhatsApp deep-linking (no Business API account needed)
+- **Real-Time Employee Notification System**: WebSocket-based notification system for order lifecycle events with audio alerts:
+  - **WebSocket Server** (server/routes.ts): Dedicated WebSocket server on `/ws/notifications` path (avoids Vite HMR conflicts) with client connection tracking and broadcast infrastructure
+  - **Order Event Emissions**: Automatic notifications on order creation (POST /api/orders) and status updates (PATCH /api/orders/:id) with full order details
+  - **NotificationContext** (client/src/contexts/NotificationContext.tsx): Frontend notification manager with WebSocket connection, auto-reconnect (5-second backoff), audio playback (embedded beep), and localStorage preferences
+  - **Toast Notifications**: Localized toast messages showing order number, status, branch name, and first 3 items summary
+  - **Audio Alerts**: Embedded 200ms beep tone plays on each notification (browser permission required)
+  - **Multi-Language Support**: Fully localized across all 7 languages (newOrder, orderUpdated, branch, items translation keys)
+  - **User Preferences**: Enable/disable notifications via localStorage (UI toggle pending)
+  - **Provider Integration**: NotificationProvider in App.tsx provider hierarchy after DeviceProvider
 
 ## External Dependencies
 
