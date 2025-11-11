@@ -118,11 +118,30 @@ export default function Login() {
       
       return response.json();
     },
-    onSuccess: async () => {
+    onSuccess: async (data: any) => {
       toast({
         title: t.accountCreated,
         description: t.accountCreatedDesc,
       });
+      
+      // Auto-download subscription invoice PDF if available
+      if (data.invoicePath) {
+        try {
+          const link = document.createElement('a');
+          link.href = data.invoicePath;
+          link.download = data.invoicePath.split('/').pop() || 'subscription-invoice.pdf';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          toast({
+            title: "Invoice Downloaded",
+            description: "Your subscription invoice has been downloaded automatically.",
+          });
+        } catch (error) {
+          console.error('Failed to download invoice:', error);
+        }
+      }
       
       // Reset legal acknowledgement checkbox
       setLegalAcknowledgementChecked(false);

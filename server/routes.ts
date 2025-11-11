@@ -1485,18 +1485,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         console.log(`[SIGNUP] Subscription invoice generated: ${serialNumber}`);
+        
+        // Return invoice path for auto-download
+        res.status(201).json({ 
+          id: user.id, 
+          username: user.username, 
+          fullName: user.fullName,
+          role: user.role,
+          restaurantId: user.restaurantId,
+          invoicePath: `/subscription-invoices/${pdfFilename}`
+        });
       } catch (invoiceError) {
         console.error("[SIGNUP] Failed to generate subscription invoice:", invoiceError);
-        // Don't fail signup if invoice generation fails
+        // Don't fail signup if invoice generation fails - return without invoice path
+        res.status(201).json({ 
+          id: user.id, 
+          username: user.username, 
+          fullName: user.fullName,
+          role: user.role,
+          restaurantId: user.restaurantId
+        });
       }
-
-      res.status(201).json({ 
-        id: user.id, 
-        username: user.username, 
-        fullName: user.fullName,
-        role: user.role,
-        restaurantId: user.restaurantId
-      });
     } catch (error) {
       console.error("Signup error:", error);
       res.status(500).json({ error: "Failed to create account" });
