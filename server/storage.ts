@@ -158,21 +158,22 @@ export interface IStorage {
   updateProcurement(id: string, restaurantId: string, procurement: Partial<InsertProcurement>): Promise<Procurement | undefined>;
   deleteProcurement(id: string, restaurantId: string): Promise<boolean>;
 
-  // Users
-  getUsers(): Promise<User[]>;
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
+  // Users (MULTI-TENANT: requires restaurantId for all operations)
+  getAllUsers(): Promise<User[]>; // SPECIAL: For first-run check only, returns ALL users across ALL restaurants
+  getUsers(restaurantId: string): Promise<User[]>;
+  getUser(id: string, restaurantId: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>; // SPECIAL: Used for login, no restaurantId filter
+  getUserByEmail(email: string): Promise<User | undefined>; // SPECIAL: Used for password reset, no restaurantId filter
   createUser(user: InsertUser): Promise<User>;
-  updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
-  deleteUser(id: string): Promise<boolean>;
+  updateUser(id: string, restaurantId: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: string, restaurantId: string): Promise<boolean>;
   setPasswordResetToken(userId: string, token: string, expiry: Date): Promise<void>;
-  getUserByResetToken(token: string): Promise<User | undefined>;
+  getUserByResetToken(token: string): Promise<User | undefined>; // SPECIAL: Password reset flow, no restaurantId filter
   updatePassword(userId: string, newPassword: string): Promise<void>;
   clearPasswordResetToken(userId: string): Promise<void>;
-  getUserProfile(userId: string): Promise<User | undefined>;
-  updateUserProfile(userId: string, profile: { email?: string; phone?: string }): Promise<User | undefined>;
-  cancelSubscription(userId: string): Promise<User | undefined>;
+  getUserProfile(userId: string, restaurantId: string): Promise<User | undefined>;
+  updateUserProfile(userId: string, restaurantId: string, profile: { email?: string; phone?: string }): Promise<User | undefined>;
+  cancelSubscription(userId: string, restaurantId: string): Promise<User | undefined>;
   
   // Bootstrap Reset Tokens
   getValidBootstrapToken(plainToken: string): Promise<{ id: string; tokenHash: string } | undefined>;
@@ -685,13 +686,18 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount !== null && result.rowCount > 0;
   }
 
-  // Users
-  async getUsers(): Promise<User[]> {
+  // Users (MULTI-TENANT: SQL-level restaurantId filtering)
+  async getAllUsers(): Promise<User[]> {
+    // SPECIAL: For first-run check only - returns ALL users across ALL restaurants
     return await db.select().from(users);
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+  async getUsers(restaurantId: string): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.restaurantId, restaurantId));
+  }
+
+  async getUser(id: string, restaurantId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(and(eq(users.id, id), eq(users.restaurantId, restaurantId)));
     return user;
   }
 
@@ -714,23 +720,25 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined> {
+  async updateUser(id: string, restaurantId: string, user: Partial<InsertUser>): Promise<User | undefined> {
+    // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
+    const { restaurantId: _, ...safeData } = user;
     const updateData = Object.fromEntries(
-      Object.entries(user).filter(([_, value]) => value !== undefined)
+      Object.entries(safeData).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getUser(id);
+      return this.getUser(id, restaurantId);
     }
     // Hash password if it's being updated
     if (updateData.password) {
       updateData.password = await bcrypt.hash(updateData.password as string, 10);
     }
-    const [updated] = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
+    const [updated] = await db.update(users).set(updateData).where(and(eq(users.id, id), eq(users.restaurantId, restaurantId))).returning();
     return updated;
   }
 
-  async deleteUser(id: string): Promise<boolean> {
-    const result = await db.delete(users).where(eq(users.id, id));
+  async deleteUser(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(users).where(and(eq(users.id, id), eq(users.restaurantId, restaurantId)));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
@@ -798,22 +806,22 @@ export class DatabaseStorage implements IStorage {
       .where(eq(bootstrapResetTokens.id, tokenId));
   }
 
-  async getUserProfile(userId: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, userId));
+  async getUserProfile(userId: string, restaurantId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(and(eq(users.id, userId), eq(users.restaurantId, restaurantId)));
     return user;
   }
 
-  async updateUserProfile(userId: string, profile: { email?: string; phone?: string }): Promise<User | undefined> {
+  async updateUserProfile(userId: string, restaurantId: string, profile: { email?: string; phone?: string }): Promise<User | undefined> {
     const [updated] = await db.update(users)
       .set(profile)
-      .where(eq(users.id, userId))
+      .where(and(eq(users.id, userId), eq(users.restaurantId, restaurantId)))
       .returning();
     return updated;
   }
 
-  async cancelSubscription(userId: string): Promise<User | undefined> {
+  async cancelSubscription(userId: string, restaurantId: string): Promise<User | undefined> {
     // Get user to find their restaurantId
-    const user = await this.getUser(userId);
+    const user = await this.getUser(userId, restaurantId);
     if (!user) return undefined;
 
     // Update restaurant subscription status

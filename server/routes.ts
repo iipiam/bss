@@ -1320,9 +1320,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Public endpoint to check if any users exist (for first-run setup)
+  // NOTE: This is the ONLY route that should call getAllUsers() - all others must use getUsers(restaurantId)
   app.get("/api/auth/check-first-run", async (_req, res) => {
     try {
-      const users = await storage.getUsers();
+      const users = await storage.getAllUsers();
       res.json({ firstRun: users.length === 0 });
     } catch (error) {
       console.error("First-run check error:", error);
@@ -1690,12 +1691,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/auth/me", async (req, res) => {
-    if (!req.session?.userId) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
-
-    const user = await storage.getUser(req.session.userId);
+  app.get("/api/auth/me", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const user = await storage.getUser(req.session.userId, restaurantId);
     
     if (!user || !user.active) {
       return res.status(401).json({ error: "Not authenticated" });
@@ -1705,12 +1703,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(userWithoutPassword);
   });
 
-  app.patch("/api/auth/me", async (req, res) => {
-    if (!req.session?.userId) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
-
+  app.patch("/api/auth/me", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const { devicePreference } = req.body;
       
       // Validate device preference
@@ -1718,7 +1713,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid device preference. Must be 'laptop', 'ipad', or 'iphone'" });
       }
 
-      const updatedUser = await storage.updateUser(req.session.userId, { devicePreference });
+      const updatedUser = await storage.updateUser(req.session.userId, restaurantId, { devicePreference });
       
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
@@ -1733,32 +1728,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Users Management (Admin only)
-  app.get("/api/users", async (req, res) => {
-    if (!req.session?.userId) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
-
-    const currentUser = await storage.getUser(req.session.userId);
-    if (currentUser?.role !== "admin") {
+  app.get("/api/users", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    
+    // SECURITY: Check admin role from session (no redundant DB query)
+    if (req.session.user!.role !== "admin") {
       return res.status(403).json({ error: "Admin access required" });
     }
 
-    const users = await storage.getUsers();
+    const users = await storage.getUsers(restaurantId);
     const usersWithoutPasswords = users.map(({ password: _, ...user }) => user);
     res.json(usersWithoutPasswords);
   });
 
-  app.get("/api/users/:id", async (req, res) => {
-    if (!req.session?.userId) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
-
-    const currentUser = await storage.getUser(req.session.userId);
-    if (currentUser?.role !== "admin") {
+  app.get("/api/users/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    
+    // SECURITY: Check admin role from session (no redundant DB query)
+    if (req.session.user!.role !== "admin") {
       return res.status(403).json({ error: "Admin access required" });
     }
 
-    const user = await storage.getUser(req.params.id);
+    const user = await storage.getUser(req.params.id, restaurantId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -1770,17 +1761,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users", async (req, res) => {
     try {
       // Check if this is the first user (setup mode)
-      const allUsers = await storage.getUsers();
+      const allUsers = await storage.getAllUsers();
       const isFirstUser = allUsers.length === 0;
 
       // If not first user, require admin authentication
       if (!isFirstUser) {
-        if (!req.session?.userId) {
+        if (!req.session?.userId || !req.session?.user) {
           return res.status(401).json({ error: "Not authenticated" });
         }
 
-        const currentUser = await storage.getUser(req.session.userId);
-        if (currentUser?.role !== "admin") {
+        // SECURITY: Check admin role from session (no redundant DB query)
+        if (req.session.user.role !== "admin") {
           return res.status(403).json({ error: "Admin access required" });
         }
       }
@@ -1823,7 +1814,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (salaryError) {
           console.error("Failed to create salary entry:", salaryError);
           // Delete the user if salary creation fails to maintain consistency
-          await storage.deleteUser(user.id);
+          await storage.deleteUser(user.id, req.session.user!.restaurantId);
           return res.status(400).json({ error: "Failed to create employee salary entry" });
         }
       }
@@ -1836,18 +1827,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/users/:id", async (req, res) => {
+  app.patch("/api/users/:id", requireAuth, async (req, res) => {
     try {
-      if (!req.session?.userId) {
-        return res.status(401).json({ error: "Not authenticated" });
-      }
-
-      const currentUser = await storage.getUser(req.session.userId);
-      if (currentUser?.role !== "admin") {
+      const restaurantId = req.session.user!.restaurantId;
+      
+      // SECURITY: Check admin role from session (no redundant DB query)
+      if (req.session.user!.role !== "admin") {
         return res.status(403).json({ error: "Admin access required" });
       }
 
-      const { password, ...updateData } = req.body;
+      const { password, restaurantId: _, role: __, ...updateData } = req.body;
+      
+      // SECURITY: Strip restaurantId and role to prevent cross-tenant reassignment and privilege escalation
       
       // If password is being updated, hash it
       if (password) {
@@ -1855,12 +1846,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateData.password = hashedPassword;
       }
 
-      const user = await storage.updateUser(req.params.id, updateData);
+      const user = await storage.updateUser(req.params.id, restaurantId, updateData);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      const { password: _, ...userWithoutPassword } = user;
+      const { password: _p, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
     } catch (error) {
       console.error("Update user error:", error);
@@ -1868,13 +1859,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/users/:id", async (req, res) => {
-    if (!req.session?.userId) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
-
-    const currentUser = await storage.getUser(req.session.userId);
-    if (currentUser?.role !== "admin") {
+  app.delete("/api/users/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    
+    // SECURITY: Check admin role from session (no redundant DB query)
+    if (req.session.user!.role !== "admin") {
       return res.status(403).json({ error: "Admin access required" });
     }
 
@@ -1883,7 +1872,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Cannot delete your own account" });
     }
 
-    const success = await storage.deleteUser(req.params.id);
+    const success = await storage.deleteUser(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -1892,13 +1881,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User Profile Management
-  app.get("/api/profile", async (req, res) => {
-    if (!req.session?.userId) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
-
+  app.get("/api/profile", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    
     try {
-      const user = await storage.getUserProfile(req.session.userId);
+      const user = await storage.getUserProfile(req.session.userId, restaurantId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -1911,11 +1898,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/profile", async (req, res) => {
-    if (!req.session?.userId) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
-
+  app.put("/api/profile", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    
     try {
       const { email, phone } = req.body;
       const profileUpdate: { email?: string; phone?: string } = {};
@@ -1923,7 +1908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (email !== undefined) profileUpdate.email = email;
       if (phone !== undefined) profileUpdate.phone = phone;
 
-      const updatedUser = await storage.updateUserProfile(req.session.userId, profileUpdate);
+      const updatedUser = await storage.updateUserProfile(req.session.userId, restaurantId, profileUpdate);
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -1937,13 +1922,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Subscription Management
-  app.post("/api/subscription/cancel", async (req, res) => {
-    if (!req.session?.userId) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
-
+  app.post("/api/subscription/cancel", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    
     try {
-      const user = await storage.getUser(req.session.userId);
+      const user = await storage.getUser(req.session.userId, restaurantId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -1953,7 +1936,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No active subscription to cancel" });
       }
 
-      const updatedUser = await storage.cancelSubscription(req.session.userId);
+      const updatedUser = await storage.cancelSubscription(req.session.userId, restaurantId);
       if (!updatedUser) {
         return res.status(500).json({ error: "Failed to cancel subscription" });
       }
@@ -3232,13 +3215,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate monthly VAT report
-  app.post("/api/vat-reports/generate", async (req, res) => {
+  app.post("/api/vat-reports/generate", requireAuth, async (req, res) => {
     try {
-      const authUser = req.session?.user;
-      if (!authUser) {
-        return res.status(401).json({ error: "Not authenticated" });
-      }
+      const authUser = req.session.user!;
       const userId = authUser.id;
+      const restaurantId = authUser.restaurantId;
       const { month, year } = req.body;
 
       // Validate input
@@ -3253,7 +3234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get user data for the invoice
-      const user = await storage.getUserProfile(userId);
+      const user = await storage.getUserProfile(userId, restaurantId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
