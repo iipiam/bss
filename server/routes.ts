@@ -1146,9 +1146,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(chartData);
   });
 
-  // Settings
-  app.get("/api/settings", async (_req, res) => {
-    const settings = await storage.getSettings();
+  // Settings (MULTI-TENANT: require auth + restaurantId filtering)
+  app.get("/api/settings", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const settings = await storage.getSettings(restaurantId);
     const settingsWithKeys = {
       ...settings,
       moyasarPublishableKey: process.env.MOYASAR_PUBLISHABLE_KEY || null,
@@ -1156,10 +1157,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(settingsWithKeys);
   });
 
-  app.patch("/api/settings", async (req, res) => {
+  app.patch("/api/settings", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const data = insertSettingsSchema.partial().parse(req.body);
-      const settings = await storage.updateSettings(data);
+      // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
+      const { restaurantId: _, ...safeData } = data;
+      const settings = await storage.updateSettings(restaurantId, safeData);
       res.json(settings);
     } catch (error) {
       res.status(400).json({ error: "Invalid settings data" });
@@ -1240,7 +1244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Order not found" });
       }
 
-      const settings = await storage.getSettings();
+      const settings = await storage.getSettings(restaurantId);
       const branch = order.branchId ? await storage.getBranch(order.branchId) : null;
 
       const invoiceNumber = `INV-${order.orderNumber}`;
@@ -2053,7 +2057,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `);
       }
 
-      const settings = await storage.getSettings();
+      const settings = await storage.getSettings(invoice.restaurantId);
       const order = invoice.orderId ? await storage.getOrder(invoice.orderId, invoice.restaurantId) : null;
       
       // Generate HTML invoice view
@@ -2335,7 +2339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Order not found" });
       }
 
-      const settings = await storage.getSettings();
+      const settings = await storage.getSettings(restaurantId);
       const branch = order.branchId ? await storage.getBranch(order.branchId) : null;
 
       const invoiceNumber = `INV-${order.orderNumber}`;
@@ -2884,7 +2888,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const year = req.query.year as string || new Date().getFullYear().toString();
       const period = (req.query.period as "monthly" | "yearly") || 'monthly';
       
-      const settings = await storage.getSettings();
+      const settings = await storage.getSettings(restaurantId);
       
       // Fetch financial data
       const transactions = await storage.getTransactions({ restaurantId });

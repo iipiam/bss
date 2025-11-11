@@ -143,8 +143,8 @@ export interface IStorage {
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
 
   // Settings
-  getSettings(): Promise<Settings | undefined>;
-  updateSettings(settings: Partial<InsertSettings>): Promise<Settings>;
+  getSettings(restaurantId: string): Promise<Settings | undefined>;
+  updateSettings(restaurantId: string, settings: Partial<InsertSettings>): Promise<Settings>;
 
   // Procurement (MULTI-TENANT: requires restaurantId for all operations)
   getProcurements(filter: {
@@ -613,26 +613,29 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  // Settings
-  async getSettings(): Promise<Settings | undefined> {
-    const [setting] = await db.select().from(settings).limit(1);
+  // Settings (MULTI-TENANT: SQL-level restaurantId filtering)
+  async getSettings(restaurantId: string): Promise<Settings | undefined> {
+    const [setting] = await db.select().from(settings).where(eq(settings.restaurantId, restaurantId));
     return setting;
   }
 
-  async updateSettings(settingsData: Partial<InsertSettings>): Promise<Settings> {
-    // Get existing settings
-    const existing = await this.getSettings();
+  async updateSettings(restaurantId: string, settingsData: Partial<InsertSettings>): Promise<Settings> {
+    // SECURITY: Defensively strip restaurantId to prevent cross-tenant modification
+    const { restaurantId: _, ...safeData } = settingsData;
+    
+    // Get existing settings for this restaurant
+    const existing = await this.getSettings(restaurantId);
     
     if (existing) {
       const [updated] = await db.update(settings)
-        .set(settingsData)
-        .where(eq(settings.id, existing.id))
+        .set(safeData)
+        .where(and(eq(settings.id, existing.id), eq(settings.restaurantId, restaurantId)))
         .returning();
       return updated;
     } else {
-      // Create new settings if none exist
+      // Create new settings for this restaurant
       const [created] = await db.insert(settings)
-        .values(settingsData as InsertSettings)
+        .values({ ...safeData, restaurantId } as InsertSettings)
         .returning();
       return created;
     }
