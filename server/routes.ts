@@ -1566,13 +1566,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Fetch restaurant data to include subscription information
-      const restaurant = await storage.getRestaurant(user.restaurantId);
-      
-      if (!restaurant) {
-        return res.status(500).json({ error: "Restaurant not found" });
+      // Note: IT support/admin users without restaurantId don't have a restaurant
+      let restaurant = null;
+      if (user.restaurantId) {
+        restaurant = await storage.getRestaurant(user.restaurantId);
+        if (!restaurant) {
+          return res.status(500).json({ error: "Restaurant not found" });
+        }
       }
 
-      // Return user without password and include restaurant data
+      // Return user without password and include restaurant data (null for IT staff)
       const { password: _, ...userWithoutPassword } = user;
       console.log("[AUTH] Login successful");
       res.json({ user: userWithoutPassword, restaurant });
