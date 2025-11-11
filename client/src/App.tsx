@@ -76,7 +76,7 @@ import ResetPassword from "@/pages/reset-password";
 import EmergencyReset from "@/pages/emergency-reset";
 import NotFound from "@/pages/not-found";
 import type { User } from "@shared/schema";
-import kinzhalLogo from "@assets/SKinzhal_1762548840624.jpeg";
+import kinzhalLogo from "@assets/IMG_8731_1762870212105.jpeg";
 
 function Router() {
   return (
