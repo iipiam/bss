@@ -71,6 +71,7 @@ import SupportDetail from "@/pages/support-detail";
 import PaymentTest from "@/pages/payment-test";
 import PasswordManager from "@/pages/password-manager";
 import Login from "@/pages/login";
+import ITLogin from "@/pages/it-login";
 import Setup from "@/pages/setup";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
@@ -81,11 +82,11 @@ import kinzhalLogo from "@assets/IMG_8731_1762870212105.jpeg";
 
 function Router() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isITStaff = user?.userType === 'it_staff';
 
   return (
     <Switch>
-      {isAdmin ? (
+      {isITStaff ? (
         // IT Staff can only access support routes
         <>
           <Route path="/" component={Support} />
@@ -196,7 +197,7 @@ function AppContent() {
   // Apply device-specific container styles
   const containerMaxWidth = device === 'iphone' ? '430px' : device === 'ipad' ? '820px' : '100%';
 
-  // Handle public routes (forgot-password, reset-password, emergency-reset) before checking authentication
+  // Handle public routes (forgot-password, reset-password, emergency-reset, it-login) before checking authentication
   const currentPath = window.location.pathname;
   if (currentPath === "/forgot-password") {
     return <ForgotPassword />;
@@ -206,6 +207,9 @@ function AppContent() {
   }
   if (currentPath === "/emergency-reset") {
     return <EmergencyReset />;
+  }
+  if (currentPath === "/it-login") {
+    return <ITLogin />;
   }
 
   // Show loading state
