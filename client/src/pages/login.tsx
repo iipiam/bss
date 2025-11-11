@@ -53,15 +53,15 @@ export default function Login() {
   // Calculate total price with branches
   const calculateTotalPrice = () => {
     const basePrices = {
-      weekly: 55.78,
-      monthly: 167.42,
-      yearly: 1674.24
+      weekly: 66.33,
+      monthly: 199,
+      yearly: 1990
     };
     
     const perBranchPrices = {
-      weekly: 9.79,
-      monthly: 27.96,
-      yearly: 335.58
+      weekly: 11.63,
+      monthly: 33.23,
+      yearly: 398.63
     };
     
     const basePrice = basePrices[subscriptionPlan as keyof typeof basePrices];
@@ -530,7 +530,7 @@ export default function Login() {
                             )}
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold">{(55.78 + (branchesCount - 1) * 9.79).toFixed(2)} {t.sar}</p>
+                            <p className="text-xl font-bold">{(66.33 + (branchesCount - 1) * 11.63).toFixed(2)} {t.sar}</p>
                             <p className="text-xs text-muted-foreground">per week</p>
                           </div>
                         </div>
@@ -553,7 +553,7 @@ export default function Login() {
                             )}
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold">{(167.42 + (branchesCount - 1) * 27.96).toFixed(2)} {t.sar}</p>
+                            <p className="text-xl font-bold">{(199 + (branchesCount - 1) * 33.23).toFixed(2)} {t.sar}</p>
                             <p className="text-xs text-muted-foreground">{t.perMonth}</p>
                           </div>
                         </div>
@@ -581,7 +581,7 @@ export default function Login() {
                             </Badge>
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold">{(1674.24 + (branchesCount - 1) * 335.58).toFixed(2)} {t.sar}</p>
+                            <p className="text-xl font-bold">{(1990 + (branchesCount - 1) * 398.63).toFixed(2)} {t.sar}</p>
                             <p className="text-xs text-muted-foreground">{t.perYear}</p>
                           </div>
                         </div>
