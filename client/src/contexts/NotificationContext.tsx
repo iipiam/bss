@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from './LanguageContext';
+import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { playNotificationTone, type ToneId } from '@/lib/notificationTones';
 
@@ -25,6 +26,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { user } = useAuth();
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -37,9 +39,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const currentToneRef = useRef<ToneId>('tone1');
 
   // Fetch settings to get selected notification tone (refetches every 5s to get admin updates)
+  // Only query when authenticated to prevent 401 errors
   const { data: settings } = useQuery<{ notificationTone: ToneId }>({
     queryKey: ['/api/settings'],
-    enabled: notificationsEnabled,
+    enabled: notificationsEnabled && !!user,
     refetchInterval: 5000, // Refresh every 5 seconds so sub-accounts get admin's tone updates immediately
   });
 

@@ -119,12 +119,12 @@ function Router() {
 }
 
 function AppContent() {
-  const { user, isLoading, logout } = useAuth();
+  const { user, restaurant, isLoading, logout } = useAuth();
   const { t, isRTL } = useLanguage();
   const { device } = useDevice();
   const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState(user?.subscriptionPlan || 'monthly');
-  const [branchesCount, setBranchesCount] = useState(user?.branchesCount || 1);
+  const [selectedPlan, setSelectedPlan] = useState(restaurant?.subscriptionPlan || 'monthly');
+  const [branchesCount, setBranchesCount] = useState(restaurant?.branchesCount || 1);
   const [expiryAlertDismissed, setExpiryAlertDismissed] = useState(false);
   
   // Check if this is the first run (no users exist)
@@ -244,11 +244,11 @@ function AppContent() {
                     <div className="px-2 py-2 space-y-2">
                       <div className="flex flex-col space-y-0.5">
                         <span className="text-xs font-medium text-muted-foreground">{t.subscriptionPlan}</span>
-                        <span className="text-sm font-semibold capitalize">{user?.subscriptionPlan}</span>
+                        <span className="text-sm font-semibold capitalize">{restaurant?.subscriptionPlan}</span>
                       </div>
                       <div className="flex flex-col space-y-0.5">
                         <span className="text-xs font-medium text-muted-foreground">{t.commercialRegistration}</span>
-                        <span className="text-sm font-mono">{user?.commercialRegistration || 'N/A'}</span>
+                        <span className="text-sm font-mono">{restaurant?.commercialRegistration || 'N/A'}</span>
                       </div>
                       <div className="flex flex-col space-y-0.5">
                         <span className="text-xs font-medium text-muted-foreground">{t.role}</span>
@@ -285,7 +285,7 @@ function AppContent() {
                               data-testid="input-branches-count"
                             />
                             <p className="text-xs text-muted-foreground">
-                              First branch included. Additional branches: 11.63 SAR/week, 33.23 SAR/month, 398.63 SAR/year each
+                              First branch included. Additional branches: 15 SAR/week, 42.85 SAR/month, 398.63 SAR/year each
                             </p>
                           </div>
 
@@ -306,7 +306,7 @@ function AppContent() {
                                       )}
                                     </div>
                                     <div className="text-right">
-                                      <p className="text-xl font-bold">{(66.33 + (branchesCount - 1) * 11.63).toFixed(2)} SAR</p>
+                                      <p className="text-xl font-bold">{(66.33 + (branchesCount - 1) * 15).toFixed(2)} SAR</p>
                                       <p className="text-xs text-muted-foreground">per week</p>
                                     </div>
                                   </div>
@@ -327,7 +327,7 @@ function AppContent() {
                                       )}
                                     </div>
                                     <div className="text-right">
-                                      <p className="text-xl font-bold">{(199 + (branchesCount - 1) * 33.23).toFixed(2)} SAR</p>
+                                      <p className="text-xl font-bold">{(199 + (branchesCount - 1) * 42.85).toFixed(2)} SAR</p>
                                       <p className="text-xs text-muted-foreground">per month</p>
                                     </div>
                                   </div>
@@ -369,12 +369,12 @@ function AppContent() {
                             <h4 className="font-semibold">{t.currentPlanSummary}</h4>
                             <div className="grid grid-cols-2 gap-2 text-sm">
                               <span className="text-muted-foreground">{t.current}:</span>
-                              <span className="font-medium capitalize">{user?.subscriptionPlan}</span>
+                              <span className="font-medium capitalize">{restaurant?.subscriptionPlan}</span>
                               <span className="text-muted-foreground">{t.branches}:</span>
-                              <span className="font-medium">{user?.branchesCount || 1}</span>
+                              <span className="font-medium">{restaurant?.branchesCount || 1}</span>
                               <span className="text-muted-foreground">{t.status}:</span>
-                              <Badge variant={user?.subscriptionStatus === 'active' ? 'default' : 'secondary'}>
-                                {user?.subscriptionStatus}
+                              <Badge variant={restaurant?.subscriptionStatus === 'active' ? 'default' : 'secondary'}>
+                                {restaurant?.subscriptionStatus}
                               </Badge>
                             </div>
                           </div>
@@ -417,8 +417,8 @@ function AppContent() {
               </div>
             </header>
             {/* Subscription Expiry Alert */}
-            {!expiryAlertDismissed && user?.subscriptionEndDate && (() => {
-              const endDate = new Date(user.subscriptionEndDate);
+            {!expiryAlertDismissed && restaurant?.subscriptionEndDate && (() => {
+              const endDate = new Date(restaurant.subscriptionEndDate);
               const now = new Date();
               const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
               

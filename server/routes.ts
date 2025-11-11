@@ -1553,21 +1553,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.session.role = user.role;
         req.session.user = {
           id: user.id,
+          username: user.username,
           restaurantId: user.restaurantId, // CRITICAL: Multi-tenant isolation
+          role: user.role,
           email: user.email || '',
           fullName: user.fullName,
           branchId: user.branchId || '',
-          userRole: user.role,
           isMainAccount: user.role === 'admin',
           devicePreference: (user.devicePreference as 'laptop' | 'ipad' | 'iphone') || 'laptop'
         };
         console.log("[AUTH] Session created for user:", user.id, "restaurant:", user.restaurantId);
       }
 
-      // Return user without password
+      // Fetch restaurant data to include subscription information
+      const restaurant = await storage.getRestaurant(user.restaurantId);
+      
+      if (!restaurant) {
+        return res.status(500).json({ error: "Restaurant not found" });
+      }
+
+      // Return user without password and include restaurant data
       const { password: _, ...userWithoutPassword } = user;
       console.log("[AUTH] Login successful");
-      res.json(userWithoutPassword);
+      res.json({ user: userWithoutPassword, restaurant });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ error: "Login failed" });
@@ -1712,20 +1720,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/me", requireAuth, async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
-    const user = await storage.getUser(req.session.userId, restaurantId);
+    const restaurantId = req.session.user!.restaurantId!;
+    const user = await storage.getUser(req.session.userId!, restaurantId);
     
     if (!user || !user.active) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
+    // Fetch restaurant data to include subscription information
+    const restaurant = await storage.getRestaurant(restaurantId);
+    
+    if (!restaurant) {
+      return res.status(500).json({ error: "Restaurant not found" });
+    }
+
     const { password: _, ...userWithoutPassword } = user;
-    res.json(userWithoutPassword);
+    res.json({ user: userWithoutPassword, restaurant });
   });
 
   app.patch("/api/auth/me", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const { devicePreference } = req.body;
       
       // Validate device preference
@@ -1733,14 +1748,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid device preference. Must be 'laptop', 'ipad', or 'iphone'" });
       }
 
-      const updatedUser = await storage.updateUser(req.session.userId, restaurantId, { devicePreference });
+      const updatedUser = await storage.updateUser(req.session.userId!, restaurantId, { devicePreference });
       
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
 
+      // Fetch restaurant data to include subscription information
+      const restaurant = await storage.getRestaurant(restaurantId);
+      
+      if (!restaurant) {
+        return res.status(500).json({ error: "Restaurant not found" });
+      }
+
       const { password: _, ...userWithoutPassword } = updatedUser;
-      res.json(userWithoutPassword);
+      res.json({ user: userWithoutPassword, restaurant });
     } catch (error) {
       console.error("Update user preference error:", error);
       res.status(500).json({ error: "Failed to update user preferences" });
