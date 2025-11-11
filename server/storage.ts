@@ -73,8 +73,24 @@ import {
   type InsertBootstrapResetToken,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, sql, or, isNull } from "drizzle-orm";
+import { eq, and, gte, lte, sql, or, isNull, exists } from "drizzle-orm";
 import bcrypt from "bcrypt";
+
+// IT Support notification type
+export interface ItTicketNotification {
+  ticketId: string;
+  ticketNumber: string;
+  subject: string;
+  priority: string;
+  status: string;
+  createdAt: Date;
+  userName: string;
+  userEmail: string | null;
+  userPhone: string | null;
+  restaurantName: string;
+  commercialRegistration: string;
+  unreadCount: number;
+}
 
 export interface IStorage {
   // Restaurants (Multi-tenant isolation)
@@ -252,6 +268,10 @@ export interface IStorage {
   createTicketMessage(message: InsertTicketMessage): Promise<TicketMessage>;
   markMessagesAsRead(ticketId: string, restaurantId: string, userId: string): Promise<void>;
   getUnreadMessageCount(restaurantId: string, userId: string): Promise<number>;
+  
+  // IT Support: Cross-tenant notifications for admins
+  getItUnreadTicketCount(): Promise<number>;
+  getItTicketNotifications(): Promise<ItTicketNotification[]>;
 
   // Employee Activity Log (MULTI-TENANT: SQL-level restaurantId filtering)
   getEmployeeActivities(restaurantId: string, employeeId?: string, category?: string, startDate?: Date, endDate?: Date): Promise<EmployeeActivityLog[]>;
@@ -1542,6 +1562,94 @@ export class DatabaseStorage implements IStorage {
       );
     
     return result?.count || 0;
+  }
+
+  // IT Support: Get count of tickets with unread messages from users (cross-tenant)
+  async getItUnreadTicketCount(): Promise<number> {
+    const [result] = await db.select({ count: sql<number>`count(distinct ${supportTickets.id})` })
+      .from(supportTickets)
+      .where(
+        exists(
+          db.select({ id: ticketMessages.id })
+            .from(ticketMessages)
+            .where(
+              and(
+                eq(ticketMessages.ticketId, supportTickets.id),
+                eq(ticketMessages.isRead, false),
+                or(
+                  eq(ticketMessages.senderRole, 'user'),
+                  eq(ticketMessages.senderRole, 'employee')
+                )
+              )
+            )
+        )
+      );
+    
+    return result?.count || 0;
+  }
+
+  // IT Support: Get all tickets with unread user messages and their details (cross-tenant)
+  async getItTicketNotifications(): Promise<ItTicketNotification[]> {
+    const notifications = await db
+      .select({
+        ticketId: supportTickets.id,
+        ticketNumber: supportTickets.ticketNumber,
+        subject: supportTickets.subject,
+        priority: supportTickets.priority,
+        status: supportTickets.status,
+        createdAt: supportTickets.createdAt,
+        userName: users.fullName,
+        userEmail: users.email,
+        userPhone: users.phone,
+        restaurantName: restaurants.restaurantName,
+        commercialRegistration: restaurants.commercialRegistration,
+      })
+      .from(supportTickets)
+      .innerJoin(users, eq(supportTickets.userId, users.id))
+      .innerJoin(restaurants, eq(supportTickets.restaurantId, restaurants.id))
+      .where(
+        exists(
+          db.select({ id: ticketMessages.id })
+            .from(ticketMessages)
+            .where(
+              and(
+                eq(ticketMessages.ticketId, supportTickets.id),
+                eq(ticketMessages.isRead, false),
+                or(
+                  eq(ticketMessages.senderRole, 'user'),
+                  eq(ticketMessages.senderRole, 'employee')
+                )
+              )
+            )
+        )
+      )
+      .orderBy(sql`${supportTickets.createdAt} DESC`);
+
+    // Get unread count for each ticket
+    const result: ItTicketNotification[] = await Promise.all(
+      notifications.map(async (notif) => {
+        const [countResult] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(ticketMessages)
+          .where(
+            and(
+              eq(ticketMessages.ticketId, notif.ticketId),
+              eq(ticketMessages.isRead, false),
+              or(
+                eq(ticketMessages.senderRole, 'user'),
+                eq(ticketMessages.senderRole, 'employee')
+              )
+            )
+          );
+
+        return {
+          ...notif,
+          unreadCount: countResult?.count || 0,
+        };
+      })
+    );
+
+    return result;
   }
 
   // Employee Activity Log

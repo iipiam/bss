@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { BranchSelector } from "@/components/branch-selector";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ItSupportNotifications } from "@/components/ItSupportNotifications";
 import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
 import { DeviceProvider, useDevice } from "@/contexts/DeviceContext";
 import { BranchProvider } from "@/contexts/BranchContext";
@@ -227,6 +228,7 @@ function AppContent() {
               </div>
               <div className="flex items-center gap-2">
                 <ThemeToggle />
+                {user?.role === "admin" && <ItSupportNotifications />}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" data-testid="button-user-menu">

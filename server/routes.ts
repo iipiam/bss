@@ -3747,13 +3747,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/tickets/unread/count", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
-      const userId = req.session.user!.id;
+      const restaurantId = req.session.user!.restaurantId!;
+      const userId = req.session.userId!;
       const count = await storage.getUnreadMessageCount(restaurantId, userId);
       res.json({ count });
     } catch (error) {
       console.error("Error fetching unread count:", error);
       res.status(500).json({ error: "Failed to fetch unread count" });
+    }
+  });
+
+  // IT Support: Get count of all tickets with unread messages from users
+  app.get("/api/support/tickets/unread-count", requireAuth, async (req, res) => {
+    try {
+      // Only admins (IT staff) can access this endpoint
+      if (req.session.user!.role !== "admin") {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const count = await storage.getItUnreadTicketCount();
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching IT unread count:", error);
+      res.status(500).json({ error: "Failed to fetch IT unread count" });
+    }
+  });
+
+  // IT Support: Get all tickets with their details for notification panel
+  app.get("/api/support/tickets/notifications", requireAuth, async (req, res) => {
+    try {
+      // Only admins (IT staff) can access this endpoint
+      if (req.session.user!.role !== "admin") {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const tickets = await storage.getItTicketNotifications();
+      res.json(tickets);
+    } catch (error) {
+      console.error("Error fetching IT ticket notifications:", error);
+      res.status(500).json({ error: "Failed to fetch IT ticket notifications" });
     }
   });
 

@@ -525,6 +525,10 @@ export interface Translations {
   createTicket: string;
   myTickets: string;
   allTickets: string;
+  unreadTickets: string;
+  noUnreadTickets: string;
+  viewAllTickets: string;
+  new: string;
   ticketSubject: string;
   ticketCategory: string;
   ticketPriority: string;
@@ -1264,6 +1268,10 @@ export const translations: Record<Language, Translations> = {
     createTicket: 'Create Ticket',
     myTickets: 'My Tickets',
     allTickets: 'All Tickets',
+    unreadTickets: 'unread tickets',
+    noUnreadTickets: 'No unread tickets',
+    viewAllTickets: 'View all tickets',
+    new: 'new',
     ticketSubject: 'Subject',
     ticketCategory: 'Category',
     ticketPriority: 'Priority',
@@ -2003,6 +2011,10 @@ export const translations: Record<Language, Translations> = {
     createTicket: 'Create Ticket',
     myTickets: 'My Tickets',
     allTickets: 'All Tickets',
+    unreadTickets: 'unread tickets',
+    noUnreadTickets: 'No unread tickets',
+    viewAllTickets: 'View all tickets',
+    new: 'new',
     ticketSubject: 'Subject',
     ticketCategory: 'Category',
     ticketPriority: 'Priority',
@@ -2727,6 +2739,10 @@ export const translations: Record<Language, Translations> = {
     createTicket: 'Create Ticket',
     myTickets: 'My Tickets',
     allTickets: 'All Tickets',
+    unreadTickets: 'unread tickets',
+    noUnreadTickets: 'No unread tickets',
+    viewAllTickets: 'View all tickets',
+    new: 'new',
     ticketSubject: 'Subject',
     ticketCategory: 'Category',
     ticketPriority: 'Priority',
@@ -3451,6 +3467,10 @@ export const translations: Record<Language, Translations> = {
     createTicket: 'Create Ticket',
     myTickets: 'My Tickets',
     allTickets: 'All Tickets',
+    unreadTickets: 'unread tickets',
+    noUnreadTickets: 'No unread tickets',
+    viewAllTickets: 'View all tickets',
+    new: 'new',
     ticketSubject: 'Subject',
     ticketCategory: 'Category',
     ticketPriority: 'Priority',
@@ -4175,6 +4195,10 @@ export const translations: Record<Language, Translations> = {
     createTicket: 'Create Ticket',
     myTickets: 'My Tickets',
     allTickets: 'All Tickets',
+    unreadTickets: 'unread tickets',
+    noUnreadTickets: 'No unread tickets',
+    viewAllTickets: 'View all tickets',
+    new: 'new',
     ticketSubject: 'Subject',
     ticketCategory: 'Category',
     ticketPriority: 'Priority',
@@ -4899,6 +4923,10 @@ export const translations: Record<Language, Translations> = {
     createTicket: 'Create Ticket',
     myTickets: 'My Tickets',
     allTickets: 'All Tickets',
+    unreadTickets: 'unread tickets',
+    noUnreadTickets: 'No unread tickets',
+    viewAllTickets: 'View all tickets',
+    new: 'new',
     ticketSubject: 'Subject',
     ticketCategory: 'Category',
     ticketPriority: 'Priority',
@@ -5623,6 +5651,10 @@ export const translations: Record<Language, Translations> = {
     createTicket: 'Create Ticket',
     myTickets: 'My Tickets',
     allTickets: 'All Tickets',
+    unreadTickets: 'unread tickets',
+    noUnreadTickets: 'No unread tickets',
+    viewAllTickets: 'View all tickets',
+    new: 'new',
     ticketSubject: 'Subject',
     ticketCategory: 'Category',
     ticketPriority: 'Priority',
