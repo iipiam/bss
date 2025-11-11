@@ -33,9 +33,16 @@ Preferred communication style: Simple, everyday language.
 ### Data Storage
 - **Database**: PostgreSQL via Neon serverless driver.
 - **ORM**: Drizzle ORM for type-safe queries.
-- **Schema Design**: Multi-tenant architecture with complete data isolation using `restaurantId` foreign keys across 22 domain tables.
+- **Schema Design**: Multi-tenant architecture with complete data isolation using `restaurantId` foreign keys across 22 domain tables. Exception: Support tickets can have `restaurantId = null` for IT staff internal tickets.
 - **Migration Strategy**: Drizzle Kit.
-- **Security**: All API endpoints MUST filter by `req.session.user.restaurantId` to prevent cross-tenant data leakage.
+- **Security**: All API endpoints MUST filter by `req.session.user.restaurantId` to prevent cross-tenant data leakage. Exception: Ticket-related endpoints branch on user role (admin vs restaurant user) to allow IT staff full access while maintaining tenant isolation for restaurant users.
+
+### Admin/IT Staff Onboarding
+IT staff users have `role = 'admin'` and `restaurantId = null`. To create an admin user:
+1. Admin users must be manually created in the database during deployment
+2. Example SQL: `INSERT INTO users (email, password, role, restaurant_id) VALUES ('admin@restopos.com', <bcrypt_hash>, 'admin', NULL);`
+3. Default credentials for development: email="admin@restopos.com", password="admin123"
+4. Admin users can access all support tickets and create internal tickets, but cannot access restaurant-specific endpoints (POS, inventory, analytics, etc.)
 
 ### Core Features & Implementations
 - **Analytics & Reporting**: Dashboard with DoD, WoW, MoM, YoY performance metrics; Daily Demand Forecasting; Peak Hours Analysis.
@@ -51,7 +58,7 @@ Preferred communication style: Simple, everyday language.
 - **Shop & Bills Management**: Manual configuration of shop working hours; comprehensive expense tracking for salaries and bills.
 - **Subscription Management**: Full control for upgrade/downgrade/cancel plans, dynamic pricing calculator, and visual plan comparison.
 - **Branch Management**: Dynamic branch selection system with persistence, fetching branches from API, and context-based state management for multi-branch operations.
-- **Ticketing System & IT Support**: Comprehensive support ticket management with real-time chat, activity logging, and role-based access control. IT staff have restricted access to only support-related functions and data.
+- **Ticketing System & IT Support**: Comprehensive support ticket management with real-time chat, activity logging, and role-based access control. IT staff have restricted access to only support-related functions and data. **IT staff can create internal tickets with `restaurantId = null` for tracking internal issues.**
 - **WhatsApp Invoice Delivery**: Automatic deep-link integration for sending ZATCA-compliant invoices via WhatsApp after POS checkout, with intelligent phone number formatting and bilingual message templates.
 - **Real-Time Employee Notification System**: WebSocket-based notification system for order lifecycle events with audio alerts, localized toast messages, and user preferences.
 
