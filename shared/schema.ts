@@ -3,9 +3,31 @@ import { pgTable, text, varchar, integer, decimal, boolean, timestamp, jsonb } f
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Restaurants (Multi-tenant isolation)
+export const restaurants = pgTable("restaurants", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  nationalId: text("national_id").notNull(), // National ID or Company Name (10 digits)
+  taxNumber: text("tax_number").notNull(), // Unified Tax Number
+  commercialRegistration: text("commercial_registration").notNull(), // Commercial Registration (10 digits)
+  type: text("type").notNull(), // Restaurant type - NO validation, any type allowed
+  subscriptionPlan: text("subscription_plan").notNull(), // "weekly", "monthly", "yearly"
+  branchesCount: integer("branches_count").notNull().default(1),
+  subscriptionStatus: text("subscription_status").notNull().default("inactive"), // "inactive", "active", "cancelled", "expired"
+  subscriptionStartDate: timestamp("subscription_start_date"),
+  subscriptionEndDate: timestamp("subscription_end_date"),
+  subscriptionCancelledAt: timestamp("subscription_cancelled_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertRestaurantSchema = createInsertSchema(restaurants).omit({ id: true, createdAt: true });
+export type InsertRestaurant = z.infer<typeof insertRestaurantSchema>;
+export type Restaurant = typeof restaurants.$inferSelect;
+
 // Branches
 export const branches = pgTable("branches", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   name: text("name").notNull(),
   location: text("location").notNull(),
   phone: text("phone").notNull(),
@@ -21,6 +43,7 @@ export type Branch = typeof branches.$inferSelect;
 // Inventory Items
 export const inventoryItems = pgTable("inventory_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   name: text("name").notNull(),
   category: text("category").notNull(),
   quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
@@ -39,6 +62,7 @@ export type InventoryItem = typeof inventoryItems.$inferSelect;
 // Recipes (must be defined before menuItems for foreign key reference)
 export const recipes = pgTable("recipes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   name: text("name").notNull(),
   prepTime: text("prep_time").notNull(),
   cookTime: text("cook_time").notNull(),
@@ -56,6 +80,7 @@ export type Recipe = typeof recipes.$inferSelect;
 // Menu Items
 export const menuItems = pgTable("menu_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   name: text("name").notNull(),
   category: text("category").notNull(),
   recipeId: varchar("recipe_id").references(() => recipes.id), // Optional: menu item can have a recipe
@@ -104,6 +129,7 @@ export type MenuItem = typeof menuItems.$inferSelect;
 // Add-ons
 export const addons = pgTable("addons", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   name: text("name").notNull(),
   category: text("category").notNull(), // e.g., "Toppings", "Sides", "Sauces", "Extras"
   price: decimal("price", { precision: 10, scale: 2 }).notNull(), // VAT-inclusive price
@@ -125,6 +151,7 @@ export type Addon = typeof addons.$inferSelect;
 // Orders
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   orderNumber: text("order_number").notNull().unique(),
   branchId: varchar("branch_id").references(() => branches.id),
   customerId: varchar("customer_id").references(() => customers.id),
@@ -153,6 +180,7 @@ export type Order = typeof orders.$inferSelect;
 // Inventory Transactions (audit trail for all inventory movements) - Must be after orders
 export const inventoryTransactions = pgTable("inventory_transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   inventoryItemId: varchar("inventory_item_id").references(() => inventoryItems.id).notNull(),
   orderId: varchar("order_id").references(() => orders.id), // Optional: links to orders table
   type: text("type").notNull(), // "sale", "procurement", "adjustment", "wastage"
@@ -171,6 +199,7 @@ export type InventoryTransaction = typeof inventoryTransactions.$inferSelect;
 // Transactions (Sales)
 export const transactions = pgTable("transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   transactionId: text("transaction_id").notNull().unique(),
   orderId: varchar("order_id").references(() => orders.id),
   branchId: varchar("branch_id").references(() => branches.id),
@@ -189,6 +218,7 @@ export type Transaction = typeof transactions.$inferSelect;
 // Moyasar Payments (Payment Gateway Integration)
 export const moyasarPayments = pgTable("moyasar_payments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   moyasarId: text("moyasar_id").notNull().unique(), // Moyasar payment ID from their API
   orderId: varchar("order_id").references(() => orders.id),
   transactionId: varchar("transaction_id").references(() => transactions.id),
@@ -224,6 +254,7 @@ export type MoyasarPayment = typeof moyasarPayments.$inferSelect;
 // Settings
 export const settings = pgTable("settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull().unique(), // One settings per restaurant
   restaurantName: text("restaurant_name").notNull(),
   vatNumber: text("vat_number").notNull(),
   address: text("address").notNull(),
@@ -242,6 +273,7 @@ export type Settings = typeof settings.$inferSelect;
 // Procurement
 export const procurement = pgTable("procurement", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   type: text("type").notNull(), // "inventory", "maintenance", "installation", "equipment"
   title: text("title").notNull(),
   description: text("description"),
@@ -270,6 +302,7 @@ export type Procurement = typeof procurement.$inferSelect;
 // Customers
 export const customers = pgTable("customers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   name: text("name").notNull(),
   phone: text("phone").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -282,6 +315,7 @@ export type Customer = typeof customers.$inferSelect;
 // Users
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(), // Links user to their restaurant
   username: text("username").notNull().unique(),
   password: text("password").notNull(), // hashed password
   fullName: text("full_name").notNull(),
@@ -306,18 +340,7 @@ export const users = pgTable("users", {
     financial: boolean;
     employees: boolean;
   }>(),
-  branchId: varchar("branch_id").references(() => branches.id),
-  commercialRegistration: text("commercial_registration"), // Saudi Arabia Commercial Registration number (mandatory for signup)
-  restaurantName: text("restaurant_name"), // Restaurant name (mandatory for signup)
-  nationalId: text("national_id"), // National ID or Company Name (mandatory for signup)
-  taxNumber: text("tax_number"), // Unified Tax Number (mandatory for signup)
-  restaurantType: text("restaurant_type"), // "Cloud Kitchen", "Restaurant", "Coffee Shop", "Tea Shop", "Sweets", "Bakery" (mandatory for signup)
-  subscriptionPlan: text("subscription_plan"), // "weekly", "monthly" or "yearly"
-  branchesCount: integer("branches_count").notNull().default(1), // Number of branches (minimum 1, affects pricing)
-  subscriptionStatus: text("subscription_status").default("inactive"), // "inactive", "active", "cancelled", "expired"
-  subscriptionStartDate: timestamp("subscription_start_date"),
-  subscriptionEndDate: timestamp("subscription_end_date"),
-  subscriptionCancelledAt: timestamp("subscription_cancelled_at"), // When user cancelled subscription
+  branchId: varchar("branch_id").references(() => branches.id), // Default branch for this user
   passwordResetToken: text("password_reset_token"),
   passwordResetExpiry: timestamp("password_reset_expiry"),
   devicePreference: text("device_preference").default("laptop"), // "laptop", "ipad", or "iphone"
@@ -384,6 +407,7 @@ export type User = typeof users.$inferSelect;
 // Invoices (ZATCA-compliant)
 export const invoices = pgTable("invoices", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   invoiceNumber: text("invoice_number").notNull().unique(),
   transactionId: varchar("transaction_id").references(() => transactions.id),
   orderId: varchar("order_id").references(() => orders.id),
@@ -405,6 +429,7 @@ export type Invoice = typeof invoices.$inferSelect;
 // Shop Salaries
 export const salaries = pgTable("salaries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   employeeName: text("employee_name").notNull(),
   position: text("position").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
@@ -422,6 +447,7 @@ export type Salary = typeof salaries.$inferSelect;
 // Shop Bills
 export const shopBills = pgTable("shop_bills", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   billType: text("bill_type").notNull(), // "rent", "electricity", "water", "gas", "internet", "maintenance", "foundational", "other"
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   paymentDate: timestamp("payment_date").notNull(),
@@ -440,6 +466,7 @@ export type ShopBill = typeof shopBills.$inferSelect;
 // Delivery Apps
 export const deliveryApps = pgTable("delivery_apps", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   name: text("name").notNull(), // Manually entered delivery app name (e.g., "HungerStation", "Jahez", "Mrsool")
   commission: decimal("commission", { precision: 5, scale: 2 }).notNull(), // VAT-inclusive commission percentage (e.g., 20.00 for 20%)
   bankingFees: decimal("banking_fees", { precision: 5, scale: 2 }).notNull(), // VAT-inclusive banking fees percentage (e.g., 2.50 for 2.5%)
@@ -473,6 +500,7 @@ export type DeliveryApp = typeof deliveryApps.$inferSelect;
 // Investors
 export const investors = pgTable("investors", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   name: text("name").notNull(),
   amountInvested: decimal("amount_invested", { precision: 12, scale: 2 }).notNull(), // Amount invested in SAR
   interestPercentage: decimal("interest_percentage", { precision: 5, scale: 2 }).notNull(), // Percentage of net profit (e.g., 10.00 for 10%)
@@ -553,6 +581,7 @@ export type MonthlyVatReport = typeof monthlyVatReports.$inferSelect;
 // Support Tickets (IT Help System)
 export const supportTickets = pgTable("support_tickets", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   userId: varchar("user_id").notNull().references(() => users.id),
   ticketNumber: text("ticket_number").notNull().unique(), // Format: TKT-YYYYMMDD-XXXX
   subject: text("subject").notNull(),
@@ -581,6 +610,7 @@ export type SupportTicket = typeof supportTickets.$inferSelect;
 // Ticket Messages (Chat between user and IT)
 export const ticketMessages = pgTable("ticket_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   ticketId: varchar("ticket_id").notNull().references(() => supportTickets.id, { onDelete: 'cascade' }),
   senderId: varchar("sender_id").notNull().references(() => users.id),
   senderName: text("sender_name").notNull(), // Store name for display
@@ -601,6 +631,7 @@ export type TicketMessage = typeof ticketMessages.$inferSelect;
 // Employee Activity Log (Track all actions by sub-accounts)
 export const employeeActivityLog = pgTable("employee_activity_log", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   employeeId: varchar("employee_id").notNull().references(() => users.id),
   employeeName: text("employee_name").notNull(), // Store for quick display
   action: text("action").notNull(), // e.g., 'created_order', 'updated_inventory', 'modified_menu_item', etc.
