@@ -3392,8 +3392,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/moyasar/create-payment", async (req, res) => {
+  app.post("/api/moyasar/create-payment", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const { orderId, amount, description, token, customerName, customerEmail, customerPhone } = req.body;
       
       if (!amount || amount <= 0) {
@@ -3423,7 +3424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save payment record to database
       const amountSar = payment.amount / 100;
       const moyasarPayment = await storage.createMoyasarPayment({
-        restaurantId: req.session.user?.restaurantId || 'default-restaurant',
+        restaurantId,
         moyasarId: payment.id,
         orderId: orderId || null,
         transactionId: null,
@@ -3460,15 +3461,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/moyasar/payment/:paymentId", async (req, res) => {
+  app.get("/api/moyasar/payment/:paymentId", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const { fetchPayment } = require('./moyasarService');
       const payment = await fetchPayment(req.params.paymentId);
 
       // Update payment in database
-      const moyasarPayment = await storage.getMoyasarPaymentByMoyasarId(req.params.paymentId);
+      const moyasarPayment = await storage.getMoyasarPaymentByMoyasarId(req.params.paymentId, restaurantId);
       if (moyasarPayment) {
-        await storage.updateMoyasarPayment(moyasarPayment.id, {
+        await storage.updateMoyasarPayment(moyasarPayment.id, restaurantId, {
           status: payment.status,
           paymentMethod: payment.source?.type || moyasarPayment.paymentMethod,
           cardBrand: payment.source?.company || moyasarPayment.cardBrand,
@@ -3489,8 +3491,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/moyasar/refund/:paymentId", async (req, res) => {
+  app.post("/api/moyasar/refund/:paymentId", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const { amount } = req.body;
       const { refundPayment } = require('./moyasarService');
       
@@ -3500,9 +3503,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       // Update payment in database
-      const moyasarPayment = await storage.getMoyasarPaymentByMoyasarId(req.params.paymentId);
+      const moyasarPayment = await storage.getMoyasarPaymentByMoyasarId(req.params.paymentId, restaurantId);
       if (moyasarPayment) {
-        await storage.updateMoyasarPayment(moyasarPayment.id, {
+        await storage.updateMoyasarPayment(moyasarPayment.id, restaurantId, {
           status: payment.status,
           refundedAmount: payment.refunded ? (payment.refunded / 100).toString() : moyasarPayment.refundedAmount,
         });
@@ -3561,10 +3564,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/moyasar/payments", async (req, res) => {
+  app.get("/api/moyasar/payments", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const branchId = req.query.branchId as string | undefined;
-      const payments = await storage.getMoyasarPayments(branchId);
+      const payments = await storage.getMoyasarPayments(restaurantId, branchId);
       res.json(payments);
     } catch (error) {
       console.error("Error fetching payments:", error);
@@ -3573,12 +3577,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Support Tickets
-  app.get("/api/tickets", async (req, res) => {
+  app.get("/api/tickets", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const userId = req.query.userId as string | undefined;
       const status = req.query.status as string | undefined;
       
-      const tickets = await storage.getSupportTickets(userId, status);
+      const tickets = await storage.getSupportTickets(restaurantId, userId, status);
       res.json(tickets);
     } catch (error) {
       console.error("Error fetching tickets:", error);
@@ -3586,9 +3591,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/tickets/:id", async (req, res) => {
+  app.get("/api/tickets/:id", requireAuth, async (req, res) => {
     try {
-      const ticket = await storage.getSupportTicket(req.params.id);
+      const restaurantId = req.session.user!.restaurantId;
+      const ticket = await storage.getSupportTicket(req.params.id, restaurantId);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
@@ -3601,11 +3607,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tickets", async (req, res) => {
+  app.post("/api/tickets", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      
       const ticket = await storage.createSupportTicket({
-        restaurantId: req.session.user?.restaurantId || 'default-restaurant',
-        userId: req.body.userId || 'default-user',
+        restaurantId,
+        userId,
         subject: req.body.subject,
         category: req.body.category,
         priority: req.body.priority || 'medium',
@@ -3636,15 +3645,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/tickets/:id", async (req, res) => {
+  app.patch("/api/tickets/:id", requireAuth, async (req, res) => {
     try {
-      const ticket = await storage.getSupportTicket(req.params.id);
+      const restaurantId = req.session.user!.restaurantId;
+      // SECURITY: Strip restaurantId from request body to prevent cross-tenant reassignment
+      const { restaurantId: _, userId: __, ...safeData } = req.body;
       
-      if (!ticket) {
+      const updated = await storage.updateSupportTicket(req.params.id, restaurantId, safeData);
+      if (!updated) {
         return res.status(404).json({ error: "Ticket not found" });
       }
-
-      const updated = await storage.updateSupportTicket(req.params.id, req.body);
+      
       res.json(updated);
     } catch (error) {
       console.error("Error updating ticket:", error);
@@ -3653,15 +3664,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Ticket Messages
-  app.get("/api/tickets/:ticketId/messages", async (req, res) => {
+  app.get("/api/tickets/:ticketId/messages", requireAuth, async (req, res) => {
     try {
-      const ticket = await storage.getSupportTicket(req.params.ticketId);
+      const restaurantId = req.session.user!.restaurantId;
+      const ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
       }
 
-      const messages = await storage.getTicketMessages(req.params.ticketId);
+      const messages = await storage.getTicketMessages(req.params.ticketId, restaurantId);
       res.json(messages);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -3669,18 +3681,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tickets/:ticketId/messages", async (req, res) => {
+  app.post("/api/tickets/:ticketId/messages", requireAuth, async (req, res) => {
     try {
-      const ticket = await storage.getSupportTicket(req.params.ticketId);
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      
+      const ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
       }
 
       const message = await storage.createTicketMessage({
-        restaurantId: req.session.user?.restaurantId || 'default-restaurant',
+        restaurantId,
         ticketId: req.params.ticketId,
-        senderId: req.body.senderId || 'default-user',
+        senderId: userId,
         senderName: req.body.senderName || 'User',
         senderRole: req.body.senderRole || 'employee',
         message: req.body.message,
@@ -3694,10 +3709,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/tickets/unread/count", async (req, res) => {
+  app.get("/api/tickets/unread/count", requireAuth, async (req, res) => {
     try {
-      const userId = req.query.userId as string | undefined;
-      const count = await storage.getUnreadMessageCount(userId || 'default-user');
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      const count = await storage.getUnreadMessageCount(restaurantId, userId);
       res.json({ count });
     } catch (error) {
       console.error("Error fetching unread count:", error);
@@ -3706,14 +3722,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Employee Activity Log
-  app.get("/api/employee-activities", async (req, res) => {
+  app.get("/api/employee-activities", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const employeeId = req.query.employeeId as string | undefined;
       const category = req.query.category as string | undefined;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
 
-      const activities = await storage.getEmployeeActivities(employeeId, category, startDate, endDate);
+      const activities = await storage.getEmployeeActivities(restaurantId, employeeId, category, startDate, endDate);
       res.json(activities);
     } catch (error) {
       console.error("Error fetching activities:", error);
@@ -3721,9 +3738,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/employee-activities/stats/:employeeId", async (req, res) => {
+  app.get("/api/employee-activities/stats/:employeeId", requireAuth, async (req, res) => {
     try {
-      const stats = await storage.getEmployeeActivityStats(req.params.employeeId);
+      const restaurantId = req.session.user!.restaurantId;
+      const stats = await storage.getEmployeeActivityStats(req.params.employeeId, restaurantId);
       res.json(stats);
     } catch (error) {
       console.error("Error fetching activity stats:", error);

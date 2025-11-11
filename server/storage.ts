@@ -240,30 +240,30 @@ export interface IStorage {
   createVatReport(report: InsertMonthlyVatReport): Promise<MonthlyVatReport>;
   getNextVatReportSerialNumber(year: number, month: number): Promise<string>;
 
-  // Support Tickets
-  getSupportTickets(userId?: string, status?: string): Promise<SupportTicket[]>;
-  getSupportTicket(id: string): Promise<SupportTicket | undefined>;
+  // Support Tickets (MULTI-TENANT: SQL-level restaurantId filtering)
+  getSupportTickets(restaurantId: string, userId?: string, status?: string): Promise<SupportTicket[]>;
+  getSupportTicket(id: string, restaurantId: string): Promise<SupportTicket | undefined>;
   createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket>;
-  updateSupportTicket(id: string, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined>;
+  updateSupportTicket(id: string, restaurantId: string, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined>;
   getNextTicketNumber(): Promise<string>;
 
-  // Ticket Messages
-  getTicketMessages(ticketId: string): Promise<TicketMessage[]>;
+  // Ticket Messages (MULTI-TENANT: SQL-level restaurantId filtering)
+  getTicketMessages(ticketId: string, restaurantId: string): Promise<TicketMessage[]>;
   createTicketMessage(message: InsertTicketMessage): Promise<TicketMessage>;
-  markMessagesAsRead(ticketId: string, userId: string): Promise<void>;
-  getUnreadMessageCount(userId: string): Promise<number>;
+  markMessagesAsRead(ticketId: string, restaurantId: string, userId: string): Promise<void>;
+  getUnreadMessageCount(restaurantId: string, userId: string): Promise<number>;
 
-  // Employee Activity Log
-  getEmployeeActivities(employeeId?: string, category?: string, startDate?: Date, endDate?: Date): Promise<EmployeeActivityLog[]>;
+  // Employee Activity Log (MULTI-TENANT: SQL-level restaurantId filtering)
+  getEmployeeActivities(restaurantId: string, employeeId?: string, category?: string, startDate?: Date, endDate?: Date): Promise<EmployeeActivityLog[]>;
   createEmployeeActivity(activity: InsertEmployeeActivityLog): Promise<EmployeeActivityLog>;
-  getEmployeeActivityStats(employeeId: string): Promise<any>;
+  getEmployeeActivityStats(employeeId: string, restaurantId: string): Promise<any>;
 
-  // Moyasar Payments
-  getMoyasarPayments(branchId?: string): Promise<MoyasarPayment[]>;
+  // Moyasar Payments (MULTI-TENANT: SQL-level restaurantId filtering)
+  getMoyasarPayments(restaurantId: string, branchId?: string): Promise<MoyasarPayment[]>;
   getMoyasarPayment(id: string): Promise<MoyasarPayment | undefined>;
-  getMoyasarPaymentByMoyasarId(moyasarId: string): Promise<MoyasarPayment | undefined>;
+  getMoyasarPaymentByMoyasarId(moyasarId: string, restaurantId: string): Promise<MoyasarPayment | undefined>;
   createMoyasarPayment(payment: InsertMoyasarPayment): Promise<MoyasarPayment>;
-  updateMoyasarPayment(id: string, payment: Partial<InsertMoyasarPayment>): Promise<MoyasarPayment | undefined>;
+  updateMoyasarPayment(id: string, restaurantId: string, payment: Partial<InsertMoyasarPayment>): Promise<MoyasarPayment | undefined>;
 
   // Analytics (MULTI-TENANT: requires restaurantId)
   getSalesComparison(restaurantId: string): Promise<any>;
@@ -1424,10 +1424,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Support Tickets
-  async getSupportTickets(userId?: string, status?: string): Promise<SupportTicket[]> {
+  async getSupportTickets(restaurantId: string, userId?: string, status?: string): Promise<SupportTicket[]> {
     let query = db.select().from(supportTickets);
     
-    const conditions = [];
+    const conditions = [eq(supportTickets.restaurantId, restaurantId)];
     if (userId) {
       conditions.push(eq(supportTickets.userId, userId));
     }
@@ -1435,15 +1435,14 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(supportTickets.status, status));
     }
     
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as any;
-    }
+    query = query.where(and(...conditions)) as any;
     
     return await query.orderBy(sql`${supportTickets.createdAt} DESC`);
   }
 
-  async getSupportTicket(id: string): Promise<SupportTicket | undefined> {
-    const [ticket] = await db.select().from(supportTickets).where(eq(supportTickets.id, id));
+  async getSupportTicket(id: string, restaurantId: string): Promise<SupportTicket | undefined> {
+    const [ticket] = await db.select().from(supportTickets)
+      .where(and(eq(supportTickets.id, id), eq(supportTickets.restaurantId, restaurantId)));
     return ticket;
   }
 
@@ -1456,8 +1455,10 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateSupportTicket(id: string, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined> {
-    const updateData: any = { ...ticket, updatedAt: new Date() };
+  async updateSupportTicket(id: string, restaurantId: string, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined> {
+    // SECURITY: Defense-in-depth - strip restaurantId from update data to prevent cross-tenant reassignment
+    const { restaurantId: _, userId: __, ...safeTicket } = ticket;
+    const updateData: any = { ...safeTicket, updatedAt: new Date() };
     
     // Set resolved/closed timestamps
     if (ticket.status === 'resolved' && !updateData.resolvedAt) {
@@ -1469,7 +1470,7 @@ export class DatabaseStorage implements IStorage {
     
     const [updated] = await db.update(supportTickets)
       .set(updateData)
-      .where(eq(supportTickets.id, id))
+      .where(and(eq(supportTickets.id, id), eq(supportTickets.restaurantId, restaurantId)))
       .returning();
     return updated;
   }
@@ -1487,9 +1488,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Ticket Messages
-  async getTicketMessages(ticketId: string): Promise<TicketMessage[]> {
+  async getTicketMessages(ticketId: string, restaurantId: string): Promise<TicketMessage[]> {
     return await db.select().from(ticketMessages)
-      .where(eq(ticketMessages.ticketId, ticketId))
+      .where(and(eq(ticketMessages.ticketId, ticketId), eq(ticketMessages.restaurantId, restaurantId)))
       .orderBy(sql`${ticketMessages.createdAt} ASC`);
   }
 
@@ -1504,23 +1505,25 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async markMessagesAsRead(ticketId: string, userId: string): Promise<void> {
+  async markMessagesAsRead(ticketId: string, restaurantId: string, userId: string): Promise<void> {
+    // SECURITY: Mark messages as read only if ticket belongs to this restaurant
     // Mark all messages in this ticket as read where the sender is NOT the current user
     await db.update(ticketMessages)
       .set({ isRead: true })
       .where(
         and(
           eq(ticketMessages.ticketId, ticketId),
+          eq(ticketMessages.restaurantId, restaurantId),
           sql`${ticketMessages.senderId} != ${userId}`
         )
       );
   }
 
-  async getUnreadMessageCount(userId: string): Promise<number> {
-    // Get tickets for this user
+  async getUnreadMessageCount(restaurantId: string, userId: string): Promise<number> {
+    // Get tickets for this user in this restaurant
     const userTickets = await db.select({ id: supportTickets.id })
       .from(supportTickets)
-      .where(eq(supportTickets.userId, userId));
+      .where(and(eq(supportTickets.restaurantId, restaurantId), eq(supportTickets.userId, userId)));
     
     if (userTickets.length === 0) return 0;
     
@@ -1531,6 +1534,7 @@ export class DatabaseStorage implements IStorage {
       .from(ticketMessages)
       .where(
         and(
+          eq(ticketMessages.restaurantId, restaurantId),
           sql`${ticketMessages.ticketId} IN (${sql.join(ticketIds.map(id => sql`${id}`), sql`, `)})`,
           eq(ticketMessages.isRead, false),
           sql`${ticketMessages.senderId} != ${userId}`
@@ -1542,6 +1546,7 @@ export class DatabaseStorage implements IStorage {
 
   // Employee Activity Log
   async getEmployeeActivities(
+    restaurantId: string,
     employeeId?: string,
     category?: string,
     startDate?: Date,
@@ -1549,7 +1554,7 @@ export class DatabaseStorage implements IStorage {
   ): Promise<EmployeeActivityLog[]> {
     let query = db.select().from(employeeActivityLog);
     
-    const conditions = [];
+    const conditions = [eq(employeeActivityLog.restaurantId, restaurantId)];
     if (employeeId) {
       conditions.push(eq(employeeActivityLog.employeeId, employeeId));
     }
@@ -1563,9 +1568,7 @@ export class DatabaseStorage implements IStorage {
       conditions.push(lte(employeeActivityLog.createdAt, endDate));
     }
     
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as any;
-    }
+    query = query.where(and(...conditions)) as any;
     
     return await query.orderBy(sql`${employeeActivityLog.createdAt} DESC`);
   }
@@ -1575,11 +1578,11 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getEmployeeActivityStats(employeeId: string): Promise<any> {
+  async getEmployeeActivityStats(employeeId: string, restaurantId: string): Promise<any> {
     // Get total activity count
     const [totalResult] = await db.select({ count: sql<number>`count(*)` })
       .from(employeeActivityLog)
-      .where(eq(employeeActivityLog.employeeId, employeeId));
+      .where(and(eq(employeeActivityLog.employeeId, employeeId), eq(employeeActivityLog.restaurantId, restaurantId)));
     
     // Get activities by category
     const categoryCounts = await db.select({
@@ -1587,7 +1590,7 @@ export class DatabaseStorage implements IStorage {
       count: sql<number>`count(*)`,
     })
       .from(employeeActivityLog)
-      .where(eq(employeeActivityLog.employeeId, employeeId))
+      .where(and(eq(employeeActivityLog.employeeId, employeeId), eq(employeeActivityLog.restaurantId, restaurantId)))
       .groupBy(employeeActivityLog.actionCategory);
     
     // Get recent activities (last 24 hours)
@@ -1599,6 +1602,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(employeeActivityLog.employeeId, employeeId),
+          eq(employeeActivityLog.restaurantId, restaurantId),
           gte(employeeActivityLog.createdAt, yesterday)
         )
       );
@@ -1611,13 +1615,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Moyasar Payments
-  async getMoyasarPayments(branchId?: string): Promise<MoyasarPayment[]> {
+  async getMoyasarPayments(restaurantId: string, branchId?: string): Promise<MoyasarPayment[]> {
+    const conditions = [eq(moyasarPayments.restaurantId, restaurantId)];
     if (branchId) {
-      return await db.select().from(moyasarPayments)
-        .where(eq(moyasarPayments.branchId, branchId))
-        .orderBy(sql`${moyasarPayments.createdAt} DESC`);
+      conditions.push(eq(moyasarPayments.branchId, branchId));
     }
     return await db.select().from(moyasarPayments)
+      .where(and(...conditions))
       .orderBy(sql`${moyasarPayments.createdAt} DESC`);
   }
 
@@ -1626,8 +1630,9 @@ export class DatabaseStorage implements IStorage {
     return payment;
   }
 
-  async getMoyasarPaymentByMoyasarId(moyasarId: string): Promise<MoyasarPayment | undefined> {
-    const [payment] = await db.select().from(moyasarPayments).where(eq(moyasarPayments.moyasarId, moyasarId));
+  async getMoyasarPaymentByMoyasarId(moyasarId: string, restaurantId: string): Promise<MoyasarPayment | undefined> {
+    const [payment] = await db.select().from(moyasarPayments)
+      .where(and(eq(moyasarPayments.moyasarId, moyasarId), eq(moyasarPayments.restaurantId, restaurantId)));
     return payment;
   }
 
@@ -1636,9 +1641,11 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateMoyasarPayment(id: string, payment: Partial<InsertMoyasarPayment>): Promise<MoyasarPayment | undefined> {
+  async updateMoyasarPayment(id: string, restaurantId: string, payment: Partial<InsertMoyasarPayment>): Promise<MoyasarPayment | undefined> {
+    // SECURITY: Defense-in-depth - strip restaurantId from update data to prevent cross-tenant reassignment
+    const { restaurantId: _, ...safePayment } = payment;
     const updateData: any = Object.fromEntries(
-      Object.entries(payment).filter(([_, value]) => value !== undefined)
+      Object.entries(safePayment).filter(([_, value]) => value !== undefined)
     );
     updateData.updatedAt = new Date();
     
@@ -1648,7 +1655,7 @@ export class DatabaseStorage implements IStorage {
     
     const [updated] = await db.update(moyasarPayments)
       .set(updateData)
-      .where(eq(moyasarPayments.id, id))
+      .where(and(eq(moyasarPayments.id, id), eq(moyasarPayments.restaurantId, restaurantId)))
       .returning();
     return updated;
   }
