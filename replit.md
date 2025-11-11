@@ -26,8 +26,9 @@ Preferred communication style: Simple, everyday language.
 ### Data Storage
 - **Database**: PostgreSQL via Neon serverless driver.
 - **ORM**: Drizzle ORM for type-safe queries.
-- **Schema Design**: Supports multi-branch operations, inventory, menu, recipes, orders, transactions, procurement, users (role-based), ZATCA-compliant invoices, customers, and system settings.
+- **Schema Design**: **Multi-tenant architecture** with complete data isolation between restaurant accounts. Central `restaurants` table with `restaurantId` foreign key propagated to all domain tables (22 tables total). Supports multi-branch operations, inventory, menu, recipes, orders, transactions, procurement, users (role-based), ZATCA-compliant invoices, customers, and system settings.
 - **Migration Strategy**: Drizzle Kit.
+- **⚠️ CRITICAL SECURITY**: Every API endpoint MUST filter by `req.session.user.restaurantId` to prevent cross-tenant data leakage. Restaurant type validation removed - ANY restaurant type allowed during signup.
 
 ### Core Features & Implementations
 - **Analytics & Reporting**: Dashboard with DoD, WoW, MoM, YoY performance metrics; Daily Demand Forecasting per menu item; Peak Hours Analysis with customer drill-down.
