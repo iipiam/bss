@@ -256,15 +256,15 @@ export interface IStorage {
   createVatReport(report: InsertMonthlyVatReport): Promise<MonthlyVatReport>;
   getNextVatReportSerialNumber(year: number, month: number): Promise<string>;
 
-  // Support Tickets (MULTI-TENANT: SQL-level restaurantId filtering)
-  getSupportTickets(restaurantId: string, userId?: string, status?: string): Promise<SupportTicket[]>;
-  getSupportTicket(id: string, restaurantId: string): Promise<SupportTicket | undefined>;
+  // Support Tickets (MULTI-TENANT: SQL-level restaurantId filtering, nullable for IT staff)
+  getSupportTickets(restaurantId: string | null, userId?: string, status?: string): Promise<SupportTicket[]>;
+  getSupportTicket(id: string, restaurantId: string | null): Promise<SupportTicket | undefined>;
   createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket>;
-  updateSupportTicket(id: string, restaurantId: string, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined>;
+  updateSupportTicket(id: string, restaurantId: string | null, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined>;
   getNextTicketNumber(): Promise<string>;
 
-  // Ticket Messages (MULTI-TENANT: SQL-level restaurantId filtering)
-  getTicketMessages(ticketId: string, restaurantId: string): Promise<TicketMessage[]>;
+  // Ticket Messages (MULTI-TENANT: SQL-level restaurantId filtering, nullable for IT staff)
+  getTicketMessages(ticketId: string, restaurantId: string | null): Promise<TicketMessage[]>;
   createTicketMessage(message: InsertTicketMessage): Promise<TicketMessage>;
   markMessagesAsRead(ticketId: string, restaurantId: string, userId: string): Promise<void>;
   getUnreadMessageCount(restaurantId: string, userId: string): Promise<number>;
@@ -1444,10 +1444,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Support Tickets
-  async getSupportTickets(restaurantId: string, userId?: string, status?: string): Promise<SupportTicket[]> {
+  async getSupportTickets(restaurantId: string | null, userId?: string, status?: string): Promise<SupportTicket[]> {
     let query = db.select().from(supportTickets);
     
-    const conditions = [eq(supportTickets.restaurantId, restaurantId)];
+    const conditions = [];
+    
+    // If restaurantId is null, return all tickets (admin view)
+    // Otherwise, filter by restaurantId (restaurant user view)
+    if (restaurantId !== null) {
+      conditions.push(eq(supportTickets.restaurantId, restaurantId));
+    }
+    
     if (userId) {
       conditions.push(eq(supportTickets.userId, userId));
     }
@@ -1455,14 +1462,24 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(supportTickets.status, status));
     }
     
-    query = query.where(and(...conditions)) as any;
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
     
     return await query.orderBy(sql`${supportTickets.createdAt} DESC`);
   }
 
-  async getSupportTicket(id: string, restaurantId: string): Promise<SupportTicket | undefined> {
+  async getSupportTicket(id: string, restaurantId: string | null): Promise<SupportTicket | undefined> {
+    const conditions = [eq(supportTickets.id, id)];
+    
+    // If restaurantId is null (admin), get ticket by ID only
+    // Otherwise, filter by both ID and restaurantId (multi-tenant isolation)
+    if (restaurantId !== null) {
+      conditions.push(eq(supportTickets.restaurantId, restaurantId));
+    }
+    
     const [ticket] = await db.select().from(supportTickets)
-      .where(and(eq(supportTickets.id, id), eq(supportTickets.restaurantId, restaurantId)));
+      .where(and(...conditions));
     return ticket;
   }
 
@@ -1475,7 +1492,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateSupportTicket(id: string, restaurantId: string, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined> {
+  async updateSupportTicket(id: string, restaurantId: string | null, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined> {
     // SECURITY: Defense-in-depth - strip restaurantId from update data to prevent cross-tenant reassignment
     const { restaurantId: _, userId: __, ...safeTicket } = ticket;
     const updateData: any = { ...safeTicket, updatedAt: new Date() };
@@ -1488,9 +1505,17 @@ export class DatabaseStorage implements IStorage {
       updateData.closedAt = new Date();
     }
     
+    const conditions = [eq(supportTickets.id, id)];
+    
+    // If restaurantId is null (admin), update by ID only
+    // Otherwise, filter by both ID and restaurantId (multi-tenant isolation)
+    if (restaurantId !== null) {
+      conditions.push(eq(supportTickets.restaurantId, restaurantId));
+    }
+    
     const [updated] = await db.update(supportTickets)
       .set(updateData)
-      .where(and(eq(supportTickets.id, id), eq(supportTickets.restaurantId, restaurantId)))
+      .where(and(...conditions))
       .returning();
     return updated;
   }
@@ -1508,9 +1533,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Ticket Messages
-  async getTicketMessages(ticketId: string, restaurantId: string): Promise<TicketMessage[]> {
+  async getTicketMessages(ticketId: string, restaurantId: string | null): Promise<TicketMessage[]> {
+    const conditions = [eq(ticketMessages.ticketId, ticketId)];
+    
+    // If restaurantId is null (admin), get messages by ticketId only
+    // Otherwise, filter by both ticketId and restaurantId (multi-tenant isolation)
+    if (restaurantId !== null) {
+      conditions.push(eq(ticketMessages.restaurantId, restaurantId));
+    }
+    
     return await db.select().from(ticketMessages)
-      .where(and(eq(ticketMessages.ticketId, ticketId), eq(ticketMessages.restaurantId, restaurantId)))
+      .where(and(...conditions))
       .orderBy(sql`${ticketMessages.createdAt} ASC`);
   }
 
