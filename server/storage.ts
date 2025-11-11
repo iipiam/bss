@@ -82,31 +82,31 @@ export interface IStorage {
   getRestaurant(id: string): Promise<Restaurant | undefined>;
   updateRestaurant(id: string, restaurant: Partial<InsertRestaurant>): Promise<Restaurant | undefined>;
 
-  // Branches
-  getBranches(): Promise<Branch[]>;
+  // Branches (MULTI-TENANT: requires restaurantId)
+  getBranches(restaurantId: string): Promise<Branch[]>;
   getBranch(id: string): Promise<Branch | undefined>;
   createBranch(branch: InsertBranch): Promise<Branch>;
   updateBranch(id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined>;
   deleteBranch(id: string): Promise<boolean>;
 
-  // Inventory
-  getInventoryItems(branchId?: string): Promise<InventoryItem[]>;
+  // Inventory (MULTI-TENANT: requires restaurantId)
+  getInventoryItems(restaurantId: string, branchId?: string): Promise<InventoryItem[]>;
   getInventoryItem(id: string): Promise<InventoryItem | undefined>;
   createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem>;
   updateInventoryItem(id: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined>;
   updateInventoryItemsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
   deleteInventoryItem(id: string): Promise<boolean>;
 
-  // Menu
-  getMenuItems(): Promise<MenuItem[]>;
+  // Menu (MULTI-TENANT: requires restaurantId)
+  getMenuItems(restaurantId: string): Promise<MenuItem[]>;
   getMenuItem(id: string): Promise<MenuItem | undefined>;
   createMenuItem(item: InsertMenuItem): Promise<MenuItem>;
   updateMenuItem(id: string, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined>;
   deleteMenuItem(id: string): Promise<boolean>;
-  getMenuItemsStock(branchId?: string): Promise<Record<string, number>>;
+  getMenuItemsStock(restaurantId: string, branchId?: string): Promise<Record<string, number>>;
 
-  // Add-ons
-  getAddons(menuItemId?: string): Promise<Addon[]>;
+  // Add-ons (MULTI-TENANT: requires restaurantId)
+  getAddons(restaurantId: string, menuItemId?: string): Promise<Addon[]>;
   getAddon(id: string): Promise<Addon | undefined>;
   createAddon(addon: InsertAddon): Promise<Addon>;
   updateAddon(id: string, addon: Partial<InsertAddon>): Promise<Addon | undefined>;
@@ -170,39 +170,39 @@ export interface IStorage {
   createInvoice(invoice: InsertInvoice): Promise<Invoice>;
   updateInvoice(id: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined>;
 
-  // Customers
-  getCustomers(): Promise<Customer[]>;
+  // Customers (MULTI-TENANT: requires restaurantId)
+  getCustomers(restaurantId: string): Promise<Customer[]>;
   getCustomer(id: string): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
   deleteCustomer(id: string): Promise<boolean>;
 
-  // Shop Salaries
-  getSalaries(branchId?: string, startDate?: Date, endDate?: Date): Promise<Salary[]>;
+  // Shop Salaries (MULTI-TENANT: requires restaurantId)
+  getSalaries(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date): Promise<Salary[]>;
   getSalary(id: string): Promise<Salary | undefined>;
   createSalary(salary: InsertSalary): Promise<Salary>;
   updateSalary(id: string, salary: Partial<InsertSalary>): Promise<Salary | undefined>;
   deleteSalary(id: string): Promise<boolean>;
 
-  // Shop Bills
-  getShopBills(branchId?: string, startDate?: Date, endDate?: Date, includeArchived?: boolean): Promise<ShopBill[]>;
+  // Shop Bills (MULTI-TENANT: requires restaurantId)
+  getShopBills(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date, includeArchived?: boolean): Promise<ShopBill[]>;
   getShopBill(id: string): Promise<ShopBill | undefined>;
   createShopBill(bill: InsertShopBill): Promise<ShopBill>;
   updateShopBill(id: string, bill: Partial<InsertShopBill>): Promise<ShopBill | undefined>;
   deleteShopBill(id: string): Promise<boolean>;
   archiveShopBill(id: string, archived: boolean): Promise<ShopBill | undefined>;
 
-  // Delivery Apps
-  getDeliveryApps(): Promise<DeliveryApp[]>;
+  // Delivery Apps (MULTI-TENANT: requires restaurantId)
+  getDeliveryApps(restaurantId: string): Promise<DeliveryApp[]>;
   getDeliveryApp(id: string): Promise<DeliveryApp | undefined>;
   createDeliveryApp(app: InsertDeliveryApp): Promise<DeliveryApp>;
   updateDeliveryApp(id: string, app: Partial<InsertDeliveryApp>): Promise<DeliveryApp | undefined>;
   deleteDeliveryApp(id: string): Promise<boolean>;
   updateDeliveryAppsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
-  getDeliveryAppProfitability(): Promise<any>;
+  getDeliveryAppProfitability(restaurantId: string): Promise<any>;
 
-  // Investors
-  getInvestors(): Promise<Investor[]>;
+  // Investors (MULTI-TENANT: requires restaurantId)
+  getInvestors(restaurantId: string): Promise<Investor[]>;
   getInvestor(id: string): Promise<Investor | undefined>;
   createInvestor(investor: InsertInvestor): Promise<Investor>;
   updateInvestor(id: string, investor: Partial<InsertInvestor>): Promise<Investor | undefined>;
@@ -244,6 +244,9 @@ export interface IStorage {
   getMoyasarPaymentByMoyasarId(moyasarId: string): Promise<MoyasarPayment | undefined>;
   createMoyasarPayment(payment: InsertMoyasarPayment): Promise<MoyasarPayment>;
   updateMoyasarPayment(id: string, payment: Partial<InsertMoyasarPayment>): Promise<MoyasarPayment | undefined>;
+
+  // Analytics (MULTI-TENANT: requires restaurantId)
+  getSalesComparison(restaurantId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -269,9 +272,9 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  // Branches
-  async getBranches(): Promise<Branch[]> {
-    return await db.select().from(branches);
+  // Branches (MULTI-TENANT: filters by restaurantId)
+  async getBranches(restaurantId: string): Promise<Branch[]> {
+    return await db.select().from(branches).where(eq(branches.restaurantId, restaurantId));
   }
 
   async getBranch(id: string): Promise<Branch | undefined> {
@@ -300,12 +303,14 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount !== null && result.rowCount > 0;
   }
 
-  // Inventory
-  async getInventoryItems(branchId?: string): Promise<InventoryItem[]> {
+  // Inventory (MULTI-TENANT: filters by restaurantId)
+  async getInventoryItems(restaurantId: string, branchId?: string): Promise<InventoryItem[]> {
     if (branchId) {
-      return await db.select().from(inventoryItems).where(eq(inventoryItems.branchId, branchId));
+      return await db.select().from(inventoryItems).where(
+        and(eq(inventoryItems.restaurantId, restaurantId), eq(inventoryItems.branchId, branchId))
+      );
     }
-    return await db.select().from(inventoryItems);
+    return await db.select().from(inventoryItems).where(eq(inventoryItems.restaurantId, restaurantId));
   }
 
   async getInventoryItem(id: string): Promise<InventoryItem | undefined> {
@@ -340,9 +345,9 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount !== null && result.rowCount > 0;
   }
 
-  // Menu
-  async getMenuItems(): Promise<MenuItem[]> {
-    return await db.select().from(menuItems);
+  // Menu (MULTI-TENANT: filters by restaurantId)
+  async getMenuItems(restaurantId: string): Promise<MenuItem[]> {
+    return await db.select().from(menuItems).where(eq(menuItems.restaurantId, restaurantId));
   }
 
   async getMenuItem(id: string): Promise<MenuItem | undefined> {
@@ -371,11 +376,11 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount !== null && result.rowCount > 0;
   }
 
-  async getMenuItemsStock(branchId?: string): Promise<Record<string, number>> {
+  async getMenuItemsStock(restaurantId: string, branchId?: string): Promise<Record<string, number>> {
     // Get all menu items
-    const allMenuItems = await this.getMenuItems();
+    const allMenuItems = await this.getMenuItems(restaurantId);
     // Get inventory items for the branch
-    const inventory = await this.getInventoryItems(branchId);
+    const inventory = await this.getInventoryItems(restaurantId, branchId);
     
     const stock: Record<string, number> = {};
     
@@ -422,19 +427,23 @@ export class DatabaseStorage implements IStorage {
     return stock;
   }
 
-  // Add-ons
-  async getAddons(menuItemId?: string): Promise<Addon[]> {
+  // Add-ons (MULTI-TENANT: filters by restaurantId)
+  async getAddons(restaurantId: string, menuItemId?: string): Promise<Addon[]> {
     if (menuItemId) {
       // Return add-ons where menuItemIds is null (available for all items)
       // OR menuItemIds array contains the given menuItemId
+      // AND belongs to the restaurant
       return await db.select().from(addons).where(
-        or(
-          isNull(addons.menuItemIds),
-          sql`${addons.menuItemIds} @> ARRAY[${menuItemId}]::varchar[]`
+        and(
+          eq(addons.restaurantId, restaurantId),
+          or(
+            isNull(addons.menuItemIds),
+            sql`${addons.menuItemIds} @> ARRAY[${menuItemId}]::varchar[]`
+          )
         )
       );
     }
-    return await db.select().from(addons);
+    return await db.select().from(addons).where(eq(addons.restaurantId, restaurantId));
   }
 
   async getAddon(id: string): Promise<Addon | undefined> {
@@ -818,9 +827,9 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  // Customers
-  async getCustomers(): Promise<Customer[]> {
-    return await db.select().from(customers);
+  // Customers (MULTI-TENANT: filters by restaurantId)
+  async getCustomers(restaurantId: string): Promise<Customer[]> {
+    return await db.select().from(customers).where(eq(customers.restaurantId, restaurantId));
   }
 
   async getCustomer(id: string): Promise<Customer | undefined> {
@@ -852,17 +861,14 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
-  // Shop Salaries
-  async getSalaries(branchId?: string, startDate?: Date, endDate?: Date): Promise<Salary[]> {
-    const conditions = [];
+  // Shop Salaries (MULTI-TENANT: filters by restaurantId)
+  async getSalaries(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date): Promise<Salary[]> {
+    const conditions = [eq(salaries.restaurantId, restaurantId)];
     if (branchId) conditions.push(eq(salaries.branchId, branchId));
     if (startDate) conditions.push(gte(salaries.paymentDate, startDate));
     if (endDate) conditions.push(lte(salaries.paymentDate, endDate));
     
-    if (conditions.length > 0) {
-      return await db.select().from(salaries).where(and(...conditions));
-    }
-    return await db.select().from(salaries);
+    return await db.select().from(salaries).where(and(...conditions));
   }
 
   async getSalary(id: string): Promise<Salary | undefined> {
@@ -894,18 +900,15 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
-  // Shop Bills
-  async getShopBills(branchId?: string, startDate?: Date, endDate?: Date, includeArchived: boolean = false): Promise<ShopBill[]> {
-    const conditions = [];
+  // Shop Bills (MULTI-TENANT: filters by restaurantId)
+  async getShopBills(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date, includeArchived: boolean = false): Promise<ShopBill[]> {
+    const conditions = [eq(shopBills.restaurantId, restaurantId)];
     if (branchId) conditions.push(eq(shopBills.branchId, branchId));
     if (startDate) conditions.push(gte(shopBills.paymentDate, startDate));
     if (endDate) conditions.push(lte(shopBills.paymentDate, endDate));
     if (!includeArchived) conditions.push(eq(shopBills.archived, false));
     
-    if (conditions.length > 0) {
-      return await db.select().from(shopBills).where(and(...conditions));
-    }
-    return await db.select().from(shopBills);
+    return await db.select().from(shopBills).where(and(...conditions));
   }
 
   async getShopBill(id: string): Promise<ShopBill | undefined> {
@@ -945,9 +948,11 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  // Delivery Apps
-  async getDeliveryApps(): Promise<DeliveryApp[]> {
-    return await db.select().from(deliveryApps).where(eq(deliveryApps.active, true)).orderBy(deliveryApps.sortOrder);
+  // Delivery Apps (MULTI-TENANT: filters by restaurantId)
+  async getDeliveryApps(restaurantId: string): Promise<DeliveryApp[]> {
+    return await db.select().from(deliveryApps).where(
+      and(eq(deliveryApps.restaurantId, restaurantId), eq(deliveryApps.active, true))
+    ).orderBy(deliveryApps.sortOrder);
   }
 
   async getDeliveryApp(id: string): Promise<DeliveryApp | undefined> {
@@ -991,16 +996,20 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getDeliveryAppProfitability(): Promise<any> {
+  async getDeliveryAppProfitability(restaurantId: string): Promise<any> {
     // Get all delivery apps
-    const apps = await db.select().from(deliveryApps).where(eq(deliveryApps.active, true));
+    const apps = await db.select().from(deliveryApps).where(
+      and(eq(deliveryApps.restaurantId, restaurantId), eq(deliveryApps.active, true))
+    );
     
     // Get all orders with delivery apps
-    const allOrders = await db.select().from(orders).where(sql`${orders.deliveryAppId} IS NOT NULL`);
+    const allOrders = await db.select().from(orders).where(
+      and(eq(orders.restaurantId, restaurantId), sql`${orders.deliveryAppId} IS NOT NULL`)
+    );
     
     // Get all menu items and recipes for cost calculation
-    const allMenuItems = await db.select().from(menuItems);
-    const allRecipes = await db.select().from(recipes);
+    const allMenuItems = await db.select().from(menuItems).where(eq(menuItems.restaurantId, restaurantId));
+    const allRecipes = await db.select().from(recipes).where(eq(recipes.restaurantId, restaurantId));
     
     // Create a map of menu item ID to cost (from recipe)
     const itemCostMap = new Map<string, number>();
@@ -1134,9 +1143,9 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getSalesComparison(): Promise<any> {
+  async getSalesComparison(restaurantId: string): Promise<any> {
     // Get all orders
-    const allOrders = await db.select().from(orders);
+    const allOrders = await db.select().from(orders).where(eq(orders.restaurantId, restaurantId));
     
     // Categorize orders by type
     const dineInOrders = allOrders.filter(o => o.orderType === 'Dine-in' && !o.deliveryAppId);
@@ -1165,7 +1174,9 @@ export class DatabaseStorage implements IStorage {
     const totalRevenue = dineInMetrics.totalRevenue + takeAwayMetrics.totalRevenue + deliveryAppMetrics.totalRevenue;
     
     // Get delivery app breakdown
-    const deliveryAppsData = await db.select().from(deliveryApps).where(eq(deliveryApps.active, true));
+    const deliveryAppsData = await db.select().from(deliveryApps).where(
+      and(eq(deliveryApps.restaurantId, restaurantId), eq(deliveryApps.active, true))
+    );
     const deliveryAppBreakdown = deliveryAppsData.map(app => {
       const appOrders = deliveryAppOrders.filter(o => o.deliveryAppId === app.id);
       const metrics = calculateMetrics(appOrders);
@@ -1200,9 +1211,11 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  // Investors
-  async getInvestors(): Promise<Investor[]> {
-    return await db.select().from(investors).where(eq(investors.active, true)).orderBy(investors.createdAt);
+  // Investors (MULTI-TENANT: filters by restaurantId)
+  async getInvestors(restaurantId: string): Promise<Investor[]> {
+    return await db.select().from(investors).where(
+      and(eq(investors.restaurantId, restaurantId), eq(investors.active, true))
+    ).orderBy(investors.createdAt);
   }
 
   async getInvestor(id: string): Promise<Investor | undefined> {

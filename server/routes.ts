@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport } from "./invoice";
+import { sanitizePatchBody } from "./utils";
 import bcrypt from "bcrypt";
 import QRCode from "qrcode";
 import rateLimit from "express-rate-limit";
@@ -77,10 +78,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Branches (Multi-tenant isolated)
   app.get("/api/branches", requireAuth, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
-    const branches = await storage.getBranches();
-    // Filter by restaurantId for multi-tenant isolation
-    const filtered = branches.filter(b => b.restaurantId === restaurantId);
-    res.json(filtered);
+    const branches = await storage.getBranches(restaurantId);
+    res.json(branches);
   });
 
   app.get("/api/branches/:id", requireAuth, async (req, res) => {
@@ -112,7 +111,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Branch not found" });
       }
-      const branch = await storage.updateBranch(req.params.id, req.body);
+      const data = sanitizePatchBody(req.body, insertBranchSchema.partial());
+      const branch = await storage.updateBranch(req.params.id, data);
       res.json(branch);
     } catch (error) {
       res.status(400).json({ error: "Invalid branch data" });
@@ -189,7 +189,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Item not found" });
       }
-      const item = await storage.updateInventoryItem(req.params.id, req.body);
+      const data = sanitizePatchBody(req.body, insertInventoryItemSchema.partial());
+      const item = await storage.updateInventoryItem(req.params.id, data);
       res.json(item);
     } catch (error) {
       res.status(400).json({ error: "Invalid inventory data" });
@@ -252,7 +253,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Menu item not found" });
       }
-      const item = await storage.updateMenuItem(req.params.id, req.body);
+      const data = sanitizePatchBody(req.body, insertMenuItemSchema.partial());
+      const item = await storage.updateMenuItem(req.params.id, data);
       res.json(item);
     } catch (error) {
       res.status(400).json({ error: "Invalid menu data" });
@@ -307,7 +309,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Add-on not found" });
       }
-      const addon = await storage.updateAddon(req.params.id, req.body);
+      const data = sanitizePatchBody(req.body, insertAddonSchema.partial());
+      const addon = await storage.updateAddon(req.params.id, data);
       res.json(addon);
     } catch (error) {
       res.status(400).json({ error: "Invalid add-on data" });
@@ -378,7 +381,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Customer not found" });
       }
-      const customer = await storage.updateCustomer(req.params.id, req.body);
+      const data = sanitizePatchBody(req.body, insertCustomerSchema.partial());
+      const customer = await storage.updateCustomer(req.params.id, data);
       res.json(customer);
     } catch (error) {
       res.status(400).json({ error: "Invalid customer data" });
@@ -447,7 +451,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Salary not found" });
       }
-      const salary = await storage.updateSalary(req.params.id, req.body);
+      const data = sanitizePatchBody(req.body, insertSalarySchema.partial());
+      const salary = await storage.updateSalary(req.params.id, data);
       res.json(salary);
     } catch (error) {
       res.status(400).json({ error: "Invalid salary data" });
@@ -511,7 +516,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Bill not found" });
       }
-      const bill = await storage.updateShopBill(req.params.id, req.body);
+      const data = sanitizePatchBody(req.body, insertShopBillSchema.partial());
+      const bill = await storage.updateShopBill(req.params.id, data);
       res.json(bill);
     } catch (error) {
       res.status(400).json({ error: "Invalid bill data" });
@@ -577,15 +583,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/delivery-apps/:id", requireAuth, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const app = await storage.getDeliveryApp(req.params.id);
-    if (!app) {
+    if (!app || app.restaurantId !== restaurantId) {
       return res.status(404).json({ error: "Delivery app not found" });
     }
     res.json(app);
   });
 
-  app.post("/api/delivery-apps", async (req, res) => {
+  app.post("/api/delivery-apps", requireAuth, async (req, res) => {
     try {
-      const data = insertDeliveryAppSchema.parse(req.body);
+      const restaurantId = req.session.user!.restaurantId;
+      const data = insertDeliveryAppSchema.parse({ ...req.body, restaurantId });
       const deliveryApp = await storage.createDeliveryApp(data);
       res.status(201).json(deliveryApp);
     } catch (error) {
@@ -594,13 +601,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/delivery-apps/:id", async (req, res) => {
+  app.patch("/api/delivery-apps/:id", requireAuth, async (req, res) => {
     try {
-      const data = insertDeliveryAppSchema.partial().parse(req.body);
-      const deliveryApp = await storage.updateDeliveryApp(req.params.id, data);
-      if (!deliveryApp) {
+      const restaurantId = req.session.user!.restaurantId;
+      const existing = await storage.getDeliveryApp(req.params.id);
+      if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Delivery app not found" });
       }
+      const data = sanitizePatchBody(req.body, insertDeliveryAppSchema.partial());
+      const deliveryApp = await storage.updateDeliveryApp(req.params.id, data);
       res.json(deliveryApp);
     } catch (error) {
       console.error("[DELIVERY_APP] Validation error:", error);
@@ -608,7 +617,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/delivery-apps/:id", async (req, res) => {
+  app.delete("/api/delivery-apps/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const existing = await storage.getDeliveryApp(req.params.id);
+    if (!existing || existing.restaurantId !== restaurantId) {
+      return res.status(404).json({ error: "Delivery app not found" });
+    }
     const success = await storage.deleteDeliveryApp(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Delivery app not found" });
@@ -616,9 +630,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(204).send();
   });
 
-  app.get("/api/delivery-apps/analytics/profitability", async (_req, res) => {
+  app.get("/api/delivery-apps/analytics/profitability", requireAuth, async (req, res) => {
     try {
-      const profitability = await storage.getDeliveryAppProfitability();
+      const restaurantId = req.session.user!.restaurantId;
+      const profitability = await storage.getDeliveryAppProfitability(restaurantId);
       res.json(profitability);
     } catch (error) {
       console.error("[DELIVERY_APP] Profitability error:", error);
@@ -626,9 +641,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/analytics/sales-comparison", async (_req, res) => {
+  app.get("/api/analytics/sales-comparison", requireAuth, async (req, res) => {
     try {
-      const comparison = await storage.getSalesComparison();
+      const restaurantId = req.session.user!.restaurantId;
+      const comparison = await storage.getSalesComparison(restaurantId);
       res.json(comparison);
     } catch (error) {
       console.error("[ANALYTICS] Sales comparison error:", error);
@@ -637,9 +653,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Investors
-  app.get("/api/investors", async (_req, res) => {
+  app.get("/api/investors", requireAuth, async (req, res) => {
     try {
-      const investors = await storage.getInvestors();
+      const restaurantId = req.session.user!.restaurantId;
+      const investors = await storage.getInvestors(restaurantId);
       res.json(investors);
     } catch (error) {
       console.error("[INVESTORS] Get investors error:", error);
@@ -647,10 +664,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/investors/:id", async (req, res) => {
+  app.get("/api/investors/:id", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const investor = await storage.getInvestor(req.params.id);
-      if (!investor) {
+      if (!investor || investor.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Investor not found" });
       }
       res.json(investor);
@@ -660,9 +678,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/investors", async (req, res) => {
+  app.post("/api/investors", requireAuth, async (req, res) => {
     try {
-      const data = insertInvestorSchema.parse(req.body);
+      const restaurantId = req.session.user!.restaurantId;
+      const data = insertInvestorSchema.parse({ ...req.body, restaurantId });
       const investor = await storage.createInvestor(data);
       res.status(201).json(investor);
     } catch (error) {
@@ -671,13 +690,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/investors/:id", async (req, res) => {
+  app.patch("/api/investors/:id", requireAuth, async (req, res) => {
     try {
-      const data = updateInvestorSchema.parse(req.body);
-      const investor = await storage.updateInvestor(req.params.id, data);
-      if (!investor) {
+      const restaurantId = req.session.user!.restaurantId;
+      const existing = await storage.getInvestor(req.params.id);
+      if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Investor not found" });
       }
+      const data = sanitizePatchBody(req.body, updateInvestorSchema);
+      const investor = await storage.updateInvestor(req.params.id, data);
       res.json(investor);
     } catch (error) {
       console.error("[INVESTORS] Update investor error:", error);
@@ -685,8 +706,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/investors/:id", async (req, res) => {
+  app.delete("/api/investors/:id", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
+      const existing = await storage.getInvestor(req.params.id);
+      if (!existing || existing.restaurantId !== restaurantId) {
+        return res.status(404).json({ error: "Investor not found" });
+      }
       const success = await storage.deleteInvestor(req.params.id);
       if (!success) {
         return res.status(404).json({ error: "Investor not found" });
@@ -724,7 +750,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/recipes/:id", async (req, res) => {
     try {
-      const recipe = await storage.updateRecipe(req.params.id, req.body);
+      const data = sanitizePatchBody(req.body, insertRecipeSchema.partial());
+      const recipe = await storage.updateRecipe(req.params.id, data);
       if (!recipe) {
         return res.status(404).json({ error: "Recipe not found" });
       }
@@ -847,7 +874,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/orders/:id", async (req, res) => {
     try {
-      const order = await storage.updateOrder(req.params.id, req.body);
+      const data = sanitizePatchBody(req.body, insertOrderSchema.partial());
+      const order = await storage.updateOrder(req.params.id, data);
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
@@ -907,11 +935,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Analytics Endpoints
-  app.get("/api/analytics/dashboard", async (req, res) => {
+  app.get("/api/analytics/dashboard", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const branchId = req.query.branchId as string | undefined;
     const orders = await storage.getOrders(branchId);
     const transactions = await storage.getTransactions(branchId);
-    const inventory = await storage.getInventoryItems(branchId);
+    const inventory = await storage.getInventoryItems(restaurantId, branchId);
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -1149,7 +1178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/procurement/:id", async (req, res) => {
     try {
-      const data = insertProcurementSchema.partial().parse(req.body);
+      const data = sanitizePatchBody(req.body, insertProcurementSchema.partial());
       const procurement = await storage.updateProcurement(req.params.id, data);
       if (!procurement) {
         return res.status(404).json({ error: "Procurement not found" });
@@ -2462,10 +2491,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Inventory to Excel
-  app.get("/api/export/inventory", async (req, res) => {
+  app.get("/api/export/inventory", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const branchId = req.query.branchId as string | undefined;
-      const items = await storage.getInventoryItems(branchId);
+      const items = await storage.getInventoryItems(restaurantId, branchId);
       
       const worksheet = XLSX.utils.json_to_sheet(items);
       const workbook = XLSX.utils.book_new();
@@ -2483,9 +2513,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Menu to Excel
-  app.get("/api/export/menu", async (req, res) => {
+  app.get("/api/export/menu", requireAuth, async (req, res) => {
     try {
-      const items = await storage.getMenuItems();
+      const restaurantId = req.session.user!.restaurantId;
+      const items = await storage.getMenuItems(restaurantId);
       
       const worksheet = XLSX.utils.json_to_sheet(items);
       const workbook = XLSX.utils.book_new();
@@ -2620,9 +2651,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Customers to Excel
-  app.get("/api/export/customers", async (req, res) => {
+  app.get("/api/export/customers", requireAuth, async (req, res) => {
     try {
-      const customers = await storage.getCustomers();
+      const restaurantId = req.session.user!.restaurantId;
+      const customers = await storage.getCustomers(restaurantId);
       
       const worksheet = XLSX.utils.json_to_sheet(customers);
       const workbook = XLSX.utils.book_new();
@@ -2640,9 +2672,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Branches to Excel
-  app.get("/api/export/branches", async (req, res) => {
+  app.get("/api/export/branches", requireAuth, async (req, res) => {
     try {
-      const branches = await storage.getBranches();
+      const restaurantId = req.session.user!.restaurantId;
+      const branches = await storage.getBranches(restaurantId);
       
       const worksheet = XLSX.utils.json_to_sheet(branches);
       const workbook = XLSX.utils.book_new();
@@ -2660,12 +2693,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Profitability Data to Excel
-  app.get("/api/export/profitability", async (req, res) => {
+  app.get("/api/export/profitability", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const period = req.query.period as string || 'month';
       
       // Get menu items, recipes, and orders
-      const menuItems = await storage.getMenuItems();
+      const menuItems = await storage.getMenuItems(restaurantId);
       const recipes = await storage.getRecipes();
       const orders = await storage.getOrders();
       
