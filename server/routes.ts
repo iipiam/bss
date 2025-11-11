@@ -706,7 +706,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           orderId: order.id,
           orderNumber: order.orderNumber,
           status: order.status,
-          branchId: data.branchId,
+          branchId: data.branchId ?? undefined,
           branchName: branch?.name,
           itemsSummary,
         });
@@ -750,7 +750,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orderId: order.id,
         orderNumber: order.orderNumber,
         status: order.status,
-        branchId: order.branchId,
+        branchId: order.branchId ?? undefined,
         branchName: branch?.name,
         itemsSummary,
       });
@@ -1252,12 +1252,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const pdfBuffer = await generateSubscriptionInvoice({
           serialNumber,
           userFullName: user.fullName,
-          userEmail: user.email,
+          userEmail: user.email ?? "",
           restaurantName: user.restaurantName!,
           nationalId: user.nationalId!,
           taxNumber: user.taxNumber!,
-          commercialRegistration: user.commercialRegistration,
-          subscriptionPlan: user.subscriptionPlan,
+          commercialRegistration: user.commercialRegistration ?? "",
+          subscriptionPlan: user.subscriptionPlan ?? "",
           branchesCount: user.branchesCount,
           basePlanPrice,
           additionalBranchesPrice,
@@ -1286,7 +1286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createSubscriptionInvoice({
           userId: user.id,
           serialNumber,
-          subscriptionPlan: user.subscriptionPlan,
+          subscriptionPlan: user.subscriptionPlan ?? "",
           branchesCount: user.branchesCount,
           basePlanPrice: basePlanPrice.toString(),
           additionalBranchesPrice: additionalBranchesPrice.toString(),
@@ -1409,9 +1409,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.setPasswordResetToken(user.id, resetToken, resetExpiry);
 
       // TODO: In production, send email with reset link
-      // For now, we'll just log the token (in production this would be sent via email)
-      console.log(`Password reset token for ${email}: ${resetToken}`);
-      console.log(`Reset link: ${req.headers.origin}/reset-password?token=${resetToken}`);
+      // For development only, log the token (in production this would be sent via email)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[DEV ONLY] Password reset token for ${email}: ${resetToken}`);
+        console.log(`[DEV ONLY] Reset link: ${req.headers.origin}/reset-password?token=${resetToken}`);
+      }
 
       res.json({ message: "If an account with that email exists, we've sent a password reset link" });
     } catch (error) {
@@ -3007,10 +3009,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all VAT reports for the logged-in user
   app.get("/api/vat-reports", async (req, res) => {
     try {
-      if (!req.user) {
+      const authUser = req.session?.user;
+      if (!authUser) {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      const userId = (req.user as any).id;
+      const userId = authUser.id;
       const reports = await storage.getMonthlyVatReports(userId);
       res.json(reports);
     } catch (error) {
@@ -3022,10 +3025,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate monthly VAT report
   app.post("/api/vat-reports/generate", async (req, res) => {
     try {
-      if (!req.user) {
+      const authUser = req.session?.user;
+      if (!authUser) {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      const userId = (req.user as any).id;
+      const userId = authUser.id;
       const { month, year } = req.body;
 
       // Validate input
@@ -3135,10 +3139,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Download VAT report PDF
   app.get("/api/vat-reports/:id/download", async (req, res) => {
     try {
-      if (!req.user) {
+      const authUser = req.session?.user;
+      if (!authUser) {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      const userId = (req.user as any).id;
+      const userId = authUser.id;
       const reportId = req.params.id;
 
       const reports = await storage.getMonthlyVatReports(userId);
@@ -3408,7 +3413,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: ticket.description,
         userId: ticket.userId,
         userName: req.body.userName,
-        createdAt: ticket.createdAt,
+        createdAt: ticket.createdAt.toISOString(),
       }).catch(err => {
         console.error('Failed to send email notification:', err);
         // Don't fail the request if email fails
