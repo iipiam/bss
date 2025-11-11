@@ -32,6 +32,7 @@ export interface Translations {
   
   // Support
   help: string;
+  supportAndHelp: string;
   technicalSupport: string;
   contactSupport: string;
   contactInformation: string;
@@ -700,6 +701,7 @@ export const translations: Record<Language, Translations> = {
     
     // Support
     help: 'Help',
+    supportAndHelp: 'Support & Help',
     technicalSupport: 'Technical Support',
     contactSupport: 'Contact Support',
     contactInformation: 'Contact Information',
@@ -1367,6 +1369,7 @@ export const translations: Record<Language, Translations> = {
     
     // Support
     help: 'المساعدة',
+    supportAndHelp: 'الدعم والمساعدة',
     technicalSupport: 'الدعم الفني',
     contactSupport: 'اتصل بالدعم',
     contactInformation: 'معلومات الاتصال',
@@ -2034,6 +2037,7 @@ export const translations: Record<Language, Translations> = {
     
     // Support
     help: '帮助',
+    supportAndHelp: '支持与帮助',
     technicalSupport: '技术支持',
     contactSupport: '联系支持',
     contactInformation: '联系信息',
@@ -2687,6 +2691,7 @@ export const translations: Record<Language, Translations> = {
     
     // Support
     help: 'Hilfe',
+    supportAndHelp: 'Support & Hilfe',
     technicalSupport: 'Technischer Support',
     contactSupport: 'Support kontaktieren',
     contactInformation: 'Kontaktinformationen',
@@ -3340,6 +3345,7 @@ export const translations: Record<Language, Translations> = {
     
     // Support
     help: 'मदद',
+    supportAndHelp: 'सहायता और मदद',
     technicalSupport: 'तकनीकी सहायता',
     contactSupport: 'सहायता से संपर्क करें',
     contactInformation: 'संपर्क जानकारी',
@@ -3993,6 +3999,7 @@ export const translations: Record<Language, Translations> = {
     
     // Support
     help: 'مدد',
+    supportAndHelp: 'سپورٹ اور مدد',
     technicalSupport: 'تکنیکی سپورٹ',
     contactSupport: 'سپورٹ سے رابطہ کریں',
     contactInformation: 'رابطے کی معلومات',
@@ -4646,6 +4653,7 @@ export const translations: Record<Language, Translations> = {
     
     // Support
     help: 'সাহায্য',
+    supportAndHelp: 'সহায়তা এবং সাহায্য',
     technicalSupport: 'প্রযুক্তিগত সহায়তা',
     contactSupport: 'সহায়তার সাথে যোগাযোগ করুন',
     contactInformation: 'যোগাযোগের তথ্য',

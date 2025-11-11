@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn, UserPlus, UtensilsCrossed, Check, Languages, Play, Video } from "lucide-react";
+import { LogIn, UserPlus, UtensilsCrossed, Check, Languages, Play, Video, Mail, HelpCircle } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
@@ -548,6 +548,31 @@ export default function Login() {
               </form>
             </TabsContent>
           </Tabs>
+
+          {/* Support & Help Section */}
+          <div className="mt-6 p-4 rounded-lg bg-muted/50 border border-border" data-testid="section-support-help">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <HelpCircle className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 space-y-2">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  {t.supportAndHelp}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {t.contactInformation}
+                </p>
+                <a 
+                  href="mailto:it@saudikinzhal.org"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors hover-elevate active-elevate-2 px-3 py-2 rounded-md"
+                  data-testid="link-support-email"
+                >
+                  <Mail className="h-4 w-4" />
+                  it@saudikinzhal.org
+                </a>
+              </div>
+            </div>
+          </div>
         </CardContent>
         </Card>
         
