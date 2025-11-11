@@ -66,23 +66,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   });
 
-  // Branches
-  app.get("/api/branches", async (_req, res) => {
+  // Branches (Multi-tenant isolated)
+  app.get("/api/branches", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const branches = await storage.getBranches();
-    res.json(branches);
+    // Filter by restaurantId for multi-tenant isolation
+    const filtered = branches.filter(b => b.restaurantId === restaurantId);
+    res.json(filtered);
   });
 
-  app.get("/api/branches/:id", async (req, res) => {
+  app.get("/api/branches/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const branch = await storage.getBranch(req.params.id);
-    if (!branch) {
+    // Verify branch belongs to user's restaurant
+    if (!branch || branch.restaurantId !== restaurantId) {
       return res.status(404).json({ error: "Branch not found" });
     }
     res.json(branch);
   });
 
-  app.post("/api/branches", async (req, res) => {
+  app.post("/api/branches", requireAuth, async (req, res) => {
     try {
-      const data = insertBranchSchema.parse(req.body);
+      const restaurantId = req.session.user!.restaurantId;
+      const data = insertBranchSchema.parse({ ...req.body, restaurantId });
       const branch = await storage.createBranch(data);
       res.status(201).json(branch);
     } catch (error) {
@@ -90,19 +96,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/branches/:id", async (req, res) => {
+  app.patch("/api/branches/:id", requireAuth, async (req, res) => {
     try {
-      const branch = await storage.updateBranch(req.params.id, req.body);
-      if (!branch) {
+      const restaurantId = req.session.user!.restaurantId;
+      const existing = await storage.getBranch(req.params.id);
+      // Verify branch belongs to user's restaurant
+      if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Branch not found" });
       }
+      const branch = await storage.updateBranch(req.params.id, req.body);
       res.json(branch);
     } catch (error) {
       res.status(400).json({ error: "Invalid branch data" });
     }
   });
 
-  app.delete("/api/branches/:id", async (req, res) => {
+  app.delete("/api/branches/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const existing = await storage.getBranch(req.params.id);
+    // Verify branch belongs to user's restaurant
+    if (!existing || existing.restaurantId !== restaurantId) {
+      return res.status(404).json({ error: "Branch not found" });
+    }
     const success = await storage.deleteBranch(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Branch not found" });
@@ -1312,13 +1327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         username: user.username, 
         fullName: user.fullName,
         role: user.role,
-        restaurantName: user.restaurantName,
-        nationalId: user.nationalId,
-        taxNumber: user.taxNumber,
-        restaurantType: user.restaurantType,
-        subscriptionPlan: user.subscriptionPlan,
-        branchesCount: user.branchesCount,
-        subscriptionStatus: user.subscriptionStatus
+        restaurantId: user.restaurantId
       });
     } catch (error) {
       console.error("Signup error:", error);
@@ -1361,11 +1370,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
-      // Store user in session
+      // Store user in session with restaurantId for multi-tenant isolation
       if (req.session) {
         req.session.userId = user.id;
         req.session.role = user.role;
-        console.log("[AUTH] Session created for user:", user.id);
+        req.session.user = {
+          id: user.id,
+          restaurantId: user.restaurantId, // CRITICAL: Multi-tenant isolation
+          email: user.email || '',
+          fullName: user.fullName,
+          branchId: user.branchId || '',
+          userRole: user.role,
+          isMainAccount: user.role === 'admin',
+          devicePreference: (user.devicePreference as 'laptop' | 'ipad' | 'iphone') || 'laptop'
+        };
+        console.log("[AUTH] Session created for user:", user.id, "restaurant:", user.restaurantId);
       }
 
       // Return user without password
