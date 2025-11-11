@@ -136,6 +136,12 @@ export interface Translations {
   lowStock: string;
   outOfStock: string;
   
+  // Notifications
+  newOrder: string;
+  orderUpdated: string;
+  branch: string;
+  items: string;
+  
   // Menu
   price: string;
   basePrice: string;
@@ -862,6 +868,12 @@ export const translations: Record<Language, Translations> = {
     lowStock: 'Low Stock',
     outOfStock: 'Out of Stock',
     
+    // Notifications
+    newOrder: 'New Order',
+    orderUpdated: 'Order Updated',
+    branch: 'Branch',
+    items: 'Items',
+    
     // Menu
     price: 'Price',
     basePrice: 'Base Price',
@@ -1586,6 +1598,12 @@ export const translations: Record<Language, Translations> = {
     inStock: 'متوفر',
     lowStock: 'مخزون منخفض',
     outOfStock: 'غير متوفر',
+    
+    // Notifications
+    newOrder: 'طلب جديد',
+    orderUpdated: 'تحديث الطلب',
+    branch: 'الفرع',
+    items: 'العناصر',
     
     // Menu
     price: 'السعر',
@@ -2312,6 +2330,12 @@ export const translations: Record<Language, Translations> = {
     lowStock: '库存不足',
     outOfStock: '缺货',
     
+    // Notifications
+    newOrder: '新订单',
+    orderUpdated: '订单已更新',
+    branch: '分店',
+    items: '项目',
+    
     // Menu
     price: '价格',
     basePrice: '基础价格',
@@ -3022,6 +3046,12 @@ export const translations: Record<Language, Translations> = {
     inStock: 'Auf Lager',
     lowStock: 'Niedriger Lagerbestand',
     outOfStock: 'Nicht auf Lager',
+    
+    // Notifications
+    newOrder: 'Neue Bestellung',
+    orderUpdated: 'Bestellung Aktualisiert',
+    branch: 'Filiale',
+    items: 'Artikel',
     
     // Menu
     price: 'Preis',
@@ -3734,6 +3764,12 @@ export const translations: Record<Language, Translations> = {
     lowStock: 'कम स्टॉक',
     outOfStock: 'स्टॉक खत्म',
     
+    // Notifications
+    newOrder: 'नया ऑर्डर',
+    orderUpdated: 'ऑर्डर अपडेट',
+    branch: 'शाखा',
+    items: 'आइटम',
+    
     // Menu
     price: 'कीमत',
     basePrice: 'मूल कीमत',
@@ -4445,6 +4481,12 @@ export const translations: Record<Language, Translations> = {
     lowStock: 'کم اسٹاک',
     outOfStock: 'اسٹاک ختم',
     
+    // Notifications
+    newOrder: 'نیا آرڈر',
+    orderUpdated: 'آرڈر اپ ڈیٹ',
+    branch: 'برانچ',
+    items: 'اشیاء',
+    
     // Menu
     price: 'قیمت',
     basePrice: 'بنیادی قیمت',
@@ -5155,6 +5197,12 @@ export const translations: Record<Language, Translations> = {
     inStock: 'স্টকে আছে',
     lowStock: 'কম স্টক',
     outOfStock: 'স্টকে নেই',
+    
+    // Notifications
+    newOrder: 'নতুন অর্ডার',
+    orderUpdated: 'অর্ডার আপডেট',
+    branch: 'শাখা',
+    items: 'আইটেম',
     
     // Menu
     price: 'মূল্য',

@@ -11,6 +11,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
 import { DeviceProvider, useDevice } from "@/contexts/DeviceContext";
 import { BranchProvider } from "@/contexts/BranchContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -486,7 +487,9 @@ export default function App() {
             <AuthProvider>
               <BranchProvider>
                 <DeviceProvider>
-                  <AppContent />
+                  <NotificationProvider>
+                    <AppContent />
+                  </NotificationProvider>
                 </DeviceProvider>
               </BranchProvider>
             </AuthProvider>
