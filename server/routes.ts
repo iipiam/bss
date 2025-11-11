@@ -52,6 +52,14 @@ export function broadcastNotification(event: {
   console.log(`[WebSocket] Broadcast: ${event.type} - ${event.orderNumber}`);
 }
 
+// Authentication middleware - CRITICAL for multi-tenant isolation
+const requireAuth = (req: any, res: any, next: any) => {
+  if (!req.session?.user) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  next();
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Rate limiter for emergency bootstrap reset endpoint
   const bootstrapResetLimiter = rateLimit({
@@ -126,15 +134,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Inventory
-  app.get("/api/inventory", async (req, res) => {
+  app.get("/api/inventory", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const branchId = req.query.branchId as string | undefined;
-    const items = await storage.getInventoryItems(branchId);
+    const items = await storage.getInventoryItems(restaurantId, branchId);
     res.json(items);
   });
 
-  app.post("/api/inventory", async (req, res) => {
+  app.post("/api/inventory", requireAuth, async (req, res) => {
     try {
-      const data = insertInventoryItemSchema.parse(req.body);
+      const restaurantId = req.session.user!.restaurantId;
+      const data = insertInventoryItemSchema.parse({ ...req.body, restaurantId });
       const item = await storage.createInventoryItem(data);
       res.status(201).json(item);
     } catch (error) {
@@ -142,11 +152,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/inventory/sort", async (req, res) => {
+  app.patch("/api/inventory/sort", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const { updates } = req.body;
       if (!Array.isArray(updates)) {
         return res.status(400).json({ error: "Invalid updates format" });
+      }
+      // Verify all items belong to user's restaurant before updating
+      for (const update of updates) {
+        const item = await storage.getInventoryItem(update.id);
+        if (!item || item.restaurantId !== restaurantId) {
+          return res.status(403).json({ error: "Unauthorized" });
+        }
       }
       await storage.updateInventoryItemsSortOrder(updates);
       res.json({ success: true });
@@ -155,27 +173,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/inventory/:id", async (req, res) => {
+  app.get("/api/inventory/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const item = await storage.getInventoryItem(req.params.id);
-    if (!item) {
+    if (!item || item.restaurantId !== restaurantId) {
       return res.status(404).json({ error: "Item not found" });
     }
     res.json(item);
   });
 
-  app.patch("/api/inventory/:id", async (req, res) => {
+  app.patch("/api/inventory/:id", requireAuth, async (req, res) => {
     try {
-      const item = await storage.updateInventoryItem(req.params.id, req.body);
-      if (!item) {
+      const restaurantId = req.session.user!.restaurantId;
+      const existing = await storage.getInventoryItem(req.params.id);
+      if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Item not found" });
       }
+      const item = await storage.updateInventoryItem(req.params.id, req.body);
       res.json(item);
     } catch (error) {
       res.status(400).json({ error: "Invalid inventory data" });
     }
   });
 
-  app.delete("/api/inventory/:id", async (req, res) => {
+  app.delete("/api/inventory/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const existing = await storage.getInventoryItem(req.params.id);
+    if (!existing || existing.restaurantId !== restaurantId) {
+      return res.status(404).json({ error: "Item not found" });
+    }
     const success = await storage.deleteInventoryItem(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Item not found" });
@@ -184,29 +210,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Menu
-  app.get("/api/menu", async (_req, res) => {
-    const items = await storage.getMenuItems();
+  app.get("/api/menu", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const items = await storage.getMenuItems(restaurantId);
     res.json(items);
   });
 
   // Menu Stock (based on inventory and recipes) - MUST be before /:id route
-  app.get("/api/menu/stock", async (req, res) => {
+  app.get("/api/menu/stock", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const branchId = req.query.branchId as string | undefined;
-    const stock = await storage.getMenuItemsStock(branchId);
+    const stock = await storage.getMenuItemsStock(restaurantId, branchId);
     res.json(stock);
   });
 
-  app.get("/api/menu/:id", async (req, res) => {
+  app.get("/api/menu/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const item = await storage.getMenuItem(req.params.id);
-    if (!item) {
+    if (!item || item.restaurantId !== restaurantId) {
       return res.status(404).json({ error: "Menu item not found" });
     }
     res.json(item);
   });
 
-  app.post("/api/menu", async (req, res) => {
+  app.post("/api/menu", requireAuth, async (req, res) => {
     try {
-      const data = insertMenuItemSchema.parse(req.body);
+      const restaurantId = req.session.user!.restaurantId;
+      const data = insertMenuItemSchema.parse({ ...req.body, restaurantId });
       const item = await storage.createMenuItem(data);
       res.status(201).json(item);
     } catch (error) {
@@ -215,19 +245,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/menu/:id", async (req, res) => {
+  app.patch("/api/menu/:id", requireAuth, async (req, res) => {
     try {
-      const item = await storage.updateMenuItem(req.params.id, req.body);
-      if (!item) {
+      const restaurantId = req.session.user!.restaurantId;
+      const existing = await storage.getMenuItem(req.params.id);
+      if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Menu item not found" });
       }
+      const item = await storage.updateMenuItem(req.params.id, req.body);
       res.json(item);
     } catch (error) {
       res.status(400).json({ error: "Invalid menu data" });
     }
   });
 
-  app.delete("/api/menu/:id", async (req, res) => {
+  app.delete("/api/menu/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const existing = await storage.getMenuItem(req.params.id);
+    if (!existing || existing.restaurantId !== restaurantId) {
+      return res.status(404).json({ error: "Menu item not found" });
+    }
     const success = await storage.deleteMenuItem(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Menu item not found" });
@@ -236,23 +273,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add-ons
-  app.get("/api/addons", async (req, res) => {
+  app.get("/api/addons", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const menuItemId = req.query.menuItemId as string | undefined;
-    const addons = await storage.getAddons(menuItemId);
+    const addons = await storage.getAddons(restaurantId, menuItemId);
     res.json(addons);
   });
 
-  app.get("/api/addons/:id", async (req, res) => {
+  app.get("/api/addons/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const addon = await storage.getAddon(req.params.id);
-    if (!addon) {
+    if (!addon || addon.restaurantId !== restaurantId) {
       return res.status(404).json({ error: "Add-on not found" });
     }
     res.json(addon);
   });
 
-  app.post("/api/addons", async (req, res) => {
+  app.post("/api/addons", requireAuth, async (req, res) => {
     try {
-      const data = insertAddonSchema.parse(req.body);
+      const restaurantId = req.session.user!.restaurantId;
+      const data = insertAddonSchema.parse({ ...req.body, restaurantId });
       const addon = await storage.createAddon(data);
       res.status(201).json(addon);
     } catch (error) {
@@ -260,19 +300,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/addons/:id", async (req, res) => {
+  app.patch("/api/addons/:id", requireAuth, async (req, res) => {
     try {
-      const addon = await storage.updateAddon(req.params.id, req.body);
-      if (!addon) {
+      const restaurantId = req.session.user!.restaurantId;
+      const existing = await storage.getAddon(req.params.id);
+      if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Add-on not found" });
       }
+      const addon = await storage.updateAddon(req.params.id, req.body);
       res.json(addon);
     } catch (error) {
       res.status(400).json({ error: "Invalid add-on data" });
     }
   });
 
-  app.delete("/api/addons/:id", async (req, res) => {
+  app.delete("/api/addons/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const existing = await storage.getAddon(req.params.id);
+    if (!existing || existing.restaurantId !== restaurantId) {
+      return res.status(404).json({ error: "Add-on not found" });
+    }
     const success = await storage.deleteAddon(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Add-on not found" });
@@ -280,8 +327,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(204).send();
   });
 
-  app.patch("/api/addons/sort-order", async (req, res) => {
+  app.patch("/api/addons/sort-order", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
+      // Verify all addons belong to user's restaurant
+      for (const update of req.body) {
+        const addon = await storage.getAddon(update.id);
+        if (!addon || addon.restaurantId !== restaurantId) {
+          return res.status(403).json({ error: "Unauthorized" });
+        }
+      }
       await storage.updateAddonsSortOrder(req.body);
       res.status(204).send();
     } catch (error) {
@@ -290,22 +345,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Customers
-  app.get("/api/customers", async (_req, res) => {
-    const customers = await storage.getCustomers();
+  app.get("/api/customers", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const customers = await storage.getCustomers(restaurantId);
     res.json(customers);
   });
 
-  app.get("/api/customers/:id", async (req, res) => {
+  app.get("/api/customers/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const customer = await storage.getCustomer(req.params.id);
-    if (!customer) {
+    if (!customer || customer.restaurantId !== restaurantId) {
       return res.status(404).json({ error: "Customer not found" });
     }
     res.json(customer);
   });
 
-  app.post("/api/customers", async (req, res) => {
+  app.post("/api/customers", requireAuth, async (req, res) => {
     try {
-      const data = insertCustomerSchema.parse(req.body);
+      const restaurantId = req.session.user!.restaurantId;
+      const data = insertCustomerSchema.parse({ ...req.body, restaurantId });
       const customer = await storage.createCustomer(data);
       res.status(201).json(customer);
     } catch (error) {
@@ -313,19 +371,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/customers/:id", async (req, res) => {
+  app.patch("/api/customers/:id", requireAuth, async (req, res) => {
     try {
-      const customer = await storage.updateCustomer(req.params.id, req.body);
-      if (!customer) {
+      const restaurantId = req.session.user!.restaurantId;
+      const existing = await storage.getCustomer(req.params.id);
+      if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Customer not found" });
       }
+      const customer = await storage.updateCustomer(req.params.id, req.body);
       res.json(customer);
     } catch (error) {
       res.status(400).json({ error: "Invalid customer data" });
     }
   });
 
-  app.delete("/api/customers/:id", async (req, res) => {
+  app.delete("/api/customers/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const existing = await storage.getCustomer(req.params.id);
+    if (!existing || existing.restaurantId !== restaurantId) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
     const success = await storage.deleteCustomer(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Customer not found" });
@@ -334,28 +399,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Shop Salaries
-  app.get("/api/shop/salaries", async (req, res) => {
+  app.get("/api/shop/salaries", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const branchId = req.query.branchId as string | undefined;
     const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
     const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
-    const salaries = await storage.getSalaries(branchId, startDate, endDate);
+    const salaries = await storage.getSalaries(restaurantId, branchId, startDate, endDate);
     res.json(salaries);
   });
 
-  app.get("/api/shop/salaries/:id", async (req, res) => {
+  app.get("/api/shop/salaries/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const salary = await storage.getSalary(req.params.id);
-    if (!salary) {
+    if (!salary || salary.restaurantId !== restaurantId) {
       return res.status(404).json({ error: "Salary not found" });
     }
     res.json(salary);
   });
 
-  app.post("/api/shop/salaries", async (req, res) => {
+  app.post("/api/shop/salaries", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       console.log("[SALARY] Request body:", JSON.stringify(req.body, null, 2));
       // Convert ISO date string to Date object
       const bodyWithDate = {
         ...req.body,
+        restaurantId,
         paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate) : undefined,
       };
       const data = insertSalarySchema.parse(bodyWithDate);
@@ -371,19 +440,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/shop/salaries/:id", async (req, res) => {
+  app.patch("/api/shop/salaries/:id", requireAuth, async (req, res) => {
     try {
-      const salary = await storage.updateSalary(req.params.id, req.body);
-      if (!salary) {
+      const restaurantId = req.session.user!.restaurantId;
+      const existing = await storage.getSalary(req.params.id);
+      if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Salary not found" });
       }
+      const salary = await storage.updateSalary(req.params.id, req.body);
       res.json(salary);
     } catch (error) {
       res.status(400).json({ error: "Invalid salary data" });
     }
   });
 
-  app.delete("/api/shop/salaries/:id", async (req, res) => {
+  app.delete("/api/shop/salaries/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const existing = await storage.getSalary(req.params.id);
+    if (!existing || existing.restaurantId !== restaurantId) {
+      return res.status(404).json({ error: "Salary not found" });
+    }
     const success = await storage.deleteSalary(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Salary not found" });
@@ -392,27 +468,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Shop Bills
-  app.get("/api/shop/bills", async (req, res) => {
+  app.get("/api/shop/bills", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const branchId = req.query.branchId as string | undefined;
     const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
     const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
-    const bills = await storage.getShopBills(branchId, startDate, endDate);
+    const bills = await storage.getShopBills(restaurantId, branchId, startDate, endDate);
     res.json(bills);
   });
 
-  app.get("/api/shop/bills/:id", async (req, res) => {
+  app.get("/api/shop/bills/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const bill = await storage.getShopBill(req.params.id);
-    if (!bill) {
+    if (!bill || bill.restaurantId !== restaurantId) {
       return res.status(404).json({ error: "Bill not found" });
     }
     res.json(bill);
   });
 
-  app.post("/api/shop/bills", async (req, res) => {
+  app.post("/api/shop/bills", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       // Convert ISO date string to Date object
       const bodyWithDate = {
         ...req.body,
+        restaurantId,
         paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate) : undefined,
       };
       const data = insertShopBillSchema.parse(bodyWithDate);
@@ -424,19 +504,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/shop/bills/:id", async (req, res) => {
+  app.patch("/api/shop/bills/:id", requireAuth, async (req, res) => {
     try {
-      const bill = await storage.updateShopBill(req.params.id, req.body);
-      if (!bill) {
+      const restaurantId = req.session.user!.restaurantId;
+      const existing = await storage.getShopBill(req.params.id);
+      if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Bill not found" });
       }
+      const bill = await storage.updateShopBill(req.params.id, req.body);
       res.json(bill);
     } catch (error) {
       res.status(400).json({ error: "Invalid bill data" });
     }
   });
 
-  app.delete("/api/shop/bills/:id", async (req, res) => {
+  app.delete("/api/shop/bills/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const existing = await storage.getShopBill(req.params.id);
+    if (!existing || existing.restaurantId !== restaurantId) {
+      return res.status(404).json({ error: "Bill not found" });
+    }
     const success = await storage.deleteShopBill(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Bill not found" });
@@ -444,13 +531,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(204).send();
   });
 
-  app.patch("/api/shop/bills/:id/archive", async (req, res) => {
+  app.patch("/api/shop/bills/:id/archive", requireAuth, async (req, res) => {
     try {
-      const { archived } = req.body;
-      const bill = await storage.archiveShopBill(req.params.id, archived);
-      if (!bill) {
+      const restaurantId = req.session.user!.restaurantId;
+      const existing = await storage.getShopBill(req.params.id);
+      if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Bill not found" });
       }
+      const { archived } = req.body;
+      const bill = await storage.archiveShopBill(req.params.id, archived);
       res.json(bill);
     } catch (error) {
       res.status(400).json({ error: "Failed to archive bill" });
@@ -458,16 +547,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delivery Apps
-  app.get("/api/delivery-apps", async (_req, res) => {
-    const apps = await storage.getDeliveryApps();
+  app.get("/api/delivery-apps", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const apps = await storage.getDeliveryApps(restaurantId);
     res.json(apps);
   });
 
-  app.patch("/api/delivery-apps/sort", async (req, res) => {
+  app.patch("/api/delivery-apps/sort", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const { updates } = req.body;
       if (!Array.isArray(updates)) {
         return res.status(400).json({ error: "Invalid updates format" });
+      }
+      // Verify all apps belong to user's restaurant
+      for (const update of updates) {
+        const app = await storage.getDeliveryApp(update.id);
+        if (!app || app.restaurantId !== restaurantId) {
+          return res.status(403).json({ error: "Unauthorized" });
+        }
       }
       await storage.updateDeliveryAppsSortOrder(updates);
       res.json({ success: true });
@@ -476,7 +574,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/delivery-apps/:id", async (req, res) => {
+  app.get("/api/delivery-apps/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const app = await storage.getDeliveryApp(req.params.id);
     if (!app) {
       return res.status(404).json({ error: "Delivery app not found" });
