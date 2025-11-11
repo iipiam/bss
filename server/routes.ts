@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport } from "./invoice";
 import bcrypt from "bcrypt";
@@ -26,6 +27,30 @@ import {
   insertInvestorSchema,
   updateInvestorSchema,
 } from "@shared/schema";
+
+// WebSocket clients for notifications
+let wsClients: Set<WebSocket> | null = null;
+
+// Broadcast notification to all connected clients
+export function broadcastNotification(event: {
+  type: 'order:created' | 'order:statusUpdated';
+  orderId: string;
+  orderNumber: string;
+  status: string;
+  branchId?: string;
+  branchName?: string;
+  itemsSummary?: string;
+}) {
+  if (!wsClients) return;
+  
+  const message = JSON.stringify(event);
+  wsClients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
+  console.log(`[WebSocket] Broadcast: ${event.type} - ${event.orderNumber}`);
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Rate limiter for emergency bootstrap reset endpoint
@@ -668,6 +693,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             data.branchId || ""
           );
         }
+        
+        // Broadcast order created notification
+        const branch = data.branchId ? await storage.getBranch(data.branchId) : null;
+        const itemsSummary = orderItems.length > 0 
+          ? orderItems.slice(0, 3).map(item => item.name).join(', ') + (orderItems.length > 3 ? '...' : '')
+          : 'No items';
+        
+        broadcastNotification({
+          type: 'order:created',
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          status: order.status,
+          branchId: data.branchId,
+          branchName: branch?.name,
+          itemsSummary,
+        });
+        
         res.status(201).json(order);
       } catch (deductionError) {
         console.error("Inventory deduction failed, attempting to delete order:", order.id);
@@ -694,6 +736,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
+      
+      // Broadcast order status update notification
+      const branch = order.branchId ? await storage.getBranch(order.branchId) : null;
+      const items = Array.isArray(order.items) ? order.items : [];
+      const itemsSummary = items.length > 0 
+        ? items.slice(0, 3).map((item: any) => item.name).join(', ') + (items.length > 3 ? '...' : '')
+        : 'No items';
+      
+      broadcastNotification({
+        type: 'order:statusUpdated',
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        branchId: order.branchId,
+        branchName: branch?.name,
+        itemsSummary,
+      });
+      
       res.json(order);
     } catch (error) {
       console.error("[ORDER] Update error:", error);
@@ -3455,6 +3515,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+
+  // Setup WebSocket server for real-time notifications
+  const wss = new WebSocketServer({ server: httpServer });
+  wsClients = new Set<WebSocket>();
+  
+  wss.on('connection', (ws: WebSocket) => {
+    console.log('[WebSocket] Client connected');
+    wsClients!.add(ws);
+    
+    ws.on('close', () => {
+      console.log('[WebSocket] Client disconnected');
+      wsClients?.delete(ws);
+    });
+    
+    ws.on('error', (error) => {
+      console.error('[WebSocket] Error:', error);
+      wsClients?.delete(ws);
+    });
+  });
 
   return httpServer;
 }

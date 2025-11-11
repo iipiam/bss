@@ -155,54 +155,41 @@ export default function POS() {
         console.error("Invoice creation failed:", error);
       }
       
-      // Send invoice via WhatsApp if customer phone number is provided
+      // Send bilingual ZATCA invoice via WhatsApp if customer phone is provided
       if (order.customerPhone && order.customerPhone.trim()) {
-        try {
-          // Format phone number: remove spaces, dashes, parentheses
-          let phoneNumber = order.customerPhone.replace(/[\s\-\(\)]/g, '');
-          
-          // Handle different phone number formats
-          if (phoneNumber.startsWith('+966')) {
-            // Already correctly formatted: +9665XXXXXXXX
-            phoneNumber = phoneNumber.substring(1); // Remove + for WhatsApp URL
-          } else if (phoneNumber.startsWith('00966')) {
-            // International prefix format: 009665XXXXXXXX
-            phoneNumber = phoneNumber.substring(2); // Remove 00
-          } else if (phoneNumber.startsWith('966') && phoneNumber.length >= 12) {
-            // Country code without prefix: 9665XXXXXXXX
-            // Already correct, just use as is
-          } else if (phoneNumber.startsWith('0') && phoneNumber.length >= 10) {
-            // Local format with leading 0: 05XXXXXXXX
-            phoneNumber = `966${phoneNumber.substring(1)}`; // Replace 0 with 966
-          } else if (phoneNumber.length >= 9) {
-            // Local format without leading 0: 5XXXXXXXX
-            phoneNumber = `966${phoneNumber}`;
-          } else {
-            // Invalid format - log and skip WhatsApp
-            console.warn('Invalid phone number format:', order.customerPhone);
-            throw new Error('Invalid phone format');
+        const { isValidWhatsAppPhone, openWhatsAppWithMessage, createWhatsAppInvoiceMessage } = await import('@/lib/whatsapp');
+        
+        if (isValidWhatsAppPhone(order.customerPhone)) {
+          try {
+            // Get restaurant name from settings
+            const settingsResponse = await fetch('/api/settings');
+            const settings = settingsResponse.ok ? await settingsResponse.json() : null;
+            const restaurantName = settings?.restaurantName || "Restaurant";
+            
+            // Construct public invoice URL (matches invoice generation pattern)
+            const invoiceUrl = `${window.location.origin}/public/invoice/${order.id}`;
+            
+            // Create bilingual ZATCA-compliant message with invoice URL
+            const message = createWhatsAppInvoiceMessage({
+              invoiceNumber: order.orderNumber,
+              total: total.toFixed(2),
+              paymentMethod: paymentMethod,
+              invoiceUrl,
+              restaurantName,
+            });
+            
+            const success = openWhatsAppWithMessage(order.customerPhone, message);
+            
+            if (!success) {
+              toast({
+                title: "WhatsApp",
+                description: "Could not open WhatsApp. Please check your popup blocker settings.",
+                variant: "default",
+              });
+            }
+          } catch (error) {
+            console.error("WhatsApp invoice sending failed:", error);
           }
-          
-          // Create invoice message
-          const invoiceMessage = `*Invoice - ${order.orderNumber}*\n\n` +
-            `Customer: ${order.customerName || 'Guest'}\n` +
-            `Date: ${new Date().toLocaleDateString()}\n\n` +
-            `*Order Details:*\n` +
-            cartItems.map((item, idx) => 
-              `${idx + 1}. ${item.name} x${item.quantity} - ${(item.price * item.quantity).toFixed(2)} SAR${item.addons?.length ? `\n   + ${item.addons.map(a => a.name).join(', ')}` : ''}`
-            ).join('\n') +
-            `\n\n*Summary:*\n` +
-            `Subtotal: ${subtotal.toFixed(2)} SAR\n` +
-            `VAT (15%): ${tax.toFixed(2)} SAR\n` +
-            `*Total: ${total.toFixed(2)} SAR*\n\n` +
-            `Payment: ${paymentMethod}\n` +
-            `Thank you for your order!`;
-          
-          // Open WhatsApp with pre-filled message (phoneNumber is already formatted without +)
-          const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(invoiceMessage)}`;
-          window.open(whatsappUrl, '_blank');
-        } catch (error) {
-          console.error("WhatsApp invoice sending failed:", error);
         }
       }
       
