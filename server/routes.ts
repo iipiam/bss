@@ -3645,8 +3645,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/tickets", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
-      const userId = req.session.user!.id;
+      const restaurantId = req.session.user!.restaurantId!;
+      const userId = req.session.userId!;
       
       const ticket = await storage.createSupportTicket({
         restaurantId,
