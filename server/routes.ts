@@ -3662,9 +3662,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Support Tickets
   app.get("/api/tickets", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const isAdmin = req.session.user!.role === 'admin';
       const userId = req.query.userId as string | undefined;
       const status = req.query.status as string | undefined;
+      
+      // Admin users see all tickets (restaurantId = null)
+      // Restaurant users see only their tickets (filter by restaurantId)
+      const restaurantId = isAdmin ? null : req.session.user!.restaurantId!;
       
       const tickets = await storage.getSupportTickets(restaurantId, userId, status);
       res.json(tickets);
@@ -3676,7 +3680,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/tickets/:id", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const isAdmin = req.session.user!.role === 'admin';
+      const restaurantId = isAdmin ? null : req.session.user!.restaurantId!;
+      
       const ticket = await storage.getSupportTicket(req.params.id, restaurantId);
       
       if (!ticket) {
@@ -3692,8 +3698,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/tickets", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const isAdmin = req.session.user!.role === 'admin';
       const userId = req.session.userId!;
+      
+      // Admin users create tickets with null restaurantId
+      // Restaurant users create tickets with their restaurantId
+      const restaurantId = isAdmin ? null : req.session.user!.restaurantId!;
       
       const ticket = await storage.createSupportTicket({
         restaurantId,
@@ -3705,21 +3715,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'open',
       });
 
-      // Send email notification to IT support
-      const { sendTicketNotificationEmail } = await import('./emailService');
-      sendTicketNotificationEmail({
-        ticketNumber: ticket.ticketNumber,
-        subject: ticket.subject,
-        category: ticket.category,
-        priority: ticket.priority,
-        description: ticket.description,
-        userId: ticket.userId,
-        userName: req.body.userName,
-        createdAt: ticket.createdAt.toISOString(),
-      }).catch(err => {
-        console.error('Failed to send email notification:', err);
-        // Don't fail the request if email fails
-      });
+      // Send email notification to IT support (only for non-admin tickets)
+      if (!isAdmin) {
+        const { sendTicketNotificationEmail } = await import('./emailService');
+        sendTicketNotificationEmail({
+          ticketNumber: ticket.ticketNumber,
+          subject: ticket.subject,
+          category: ticket.category,
+          priority: ticket.priority,
+          description: ticket.description,
+          userId: ticket.userId,
+          userName: req.body.userName,
+          createdAt: ticket.createdAt.toISOString(),
+        }).catch(err => {
+          console.error('Failed to send email notification:', err);
+          // Don't fail the request if email fails
+        });
+      }
 
       res.status(201).json(ticket);
     } catch (error) {
@@ -3730,7 +3742,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/tickets/:id", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const isAdmin = req.session.user!.role === 'admin';
+      const restaurantId = isAdmin ? null : req.session.user!.restaurantId!;
+      
       // SECURITY: Strip restaurantId from request body to prevent cross-tenant reassignment
       const { restaurantId: _, userId: __, ...safeData } = req.body;
       
@@ -3749,7 +3763,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Ticket Messages
   app.get("/api/tickets/:ticketId/messages", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const isAdmin = req.session.user!.role === 'admin';
+      const restaurantId = isAdmin ? null : req.session.user!.restaurantId!;
+      
       const ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId);
       
       if (!ticket) {
@@ -3766,7 +3782,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/tickets/:ticketId/messages", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const isAdmin = req.session.user!.role === 'admin';
+      const restaurantId = isAdmin ? null : req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       
       const ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId);
@@ -3776,7 +3793,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const message = await storage.createTicketMessage({
-        restaurantId,
+        restaurantId: ticket.restaurantId, // Use ticket's restaurantId (might be null for admin tickets)
         ticketId: req.params.ticketId,
         senderId: userId,
         senderName: req.body.senderName || 'User',
