@@ -285,7 +285,7 @@ function AppContent() {
                               data-testid="input-branches-count"
                             />
                             <p className="text-xs text-muted-foreground">
-                              First branch included. Additional branches: 9.79 SAR/week, 27.96 SAR/month, 335.58 SAR/year each
+                              First branch included. Additional branches: 11.63 SAR/week, 33.23 SAR/month, 398.63 SAR/year each
                             </p>
                           </div>
 
@@ -306,7 +306,7 @@ function AppContent() {
                                       )}
                                     </div>
                                     <div className="text-right">
-                                      <p className="text-xl font-bold">{(55.78 + (branchesCount - 1) * 9.79).toFixed(2)} SAR</p>
+                                      <p className="text-xl font-bold">{(66.33 + (branchesCount - 1) * 11.63).toFixed(2)} SAR</p>
                                       <p className="text-xs text-muted-foreground">per week</p>
                                     </div>
                                   </div>
@@ -327,7 +327,7 @@ function AppContent() {
                                       )}
                                     </div>
                                     <div className="text-right">
-                                      <p className="text-xl font-bold">{(167.42 + (branchesCount - 1) * 27.96).toFixed(2)} SAR</p>
+                                      <p className="text-xl font-bold">{(199 + (branchesCount - 1) * 33.23).toFixed(2)} SAR</p>
                                       <p className="text-xs text-muted-foreground">per month</p>
                                     </div>
                                   </div>
@@ -353,7 +353,7 @@ function AppContent() {
                                       </Badge>
                                     </div>
                                     <div className="text-right">
-                                      <p className="text-xl font-bold">{(1674.24 + (branchesCount - 1) * 335.58).toFixed(2)} SAR</p>
+                                      <p className="text-xl font-bold">{(1990 + (branchesCount - 1) * 398.63).toFixed(2)} SAR</p>
                                       <p className="text-xs text-muted-foreground">per year</p>
                                     </div>
                                   </div>
