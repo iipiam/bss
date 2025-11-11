@@ -154,6 +154,28 @@ export default function Login() {
       return;
     }
     
+    // Validate National ID must be exactly 10 digits
+    const nationalIdDigits = signupNationalId.replace(/\D/g, ''); // Remove non-digits
+    if (nationalIdDigits.length !== 10) {
+      toast({
+        title: "Invalid National ID",
+        description: "National ID must be exactly 10 digits",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate Commercial Registration must be exactly 10 digits
+    const commercialRegDigits = signupCommercialReg.replace(/\D/g, ''); // Remove non-digits
+    if (commercialRegDigits.length !== 10) {
+      toast({
+        title: "Invalid Commercial Registration",
+        description: "Commercial Registration must be exactly 10 digits",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     signupMutation.mutate({
       username: signupUsername,
       password: signupPassword,
@@ -352,12 +374,15 @@ export default function Login() {
                   <Input
                     id="signup-national-id"
                     type="text"
-                    placeholder="Enter National ID or Company Name"
+                    placeholder="Enter 10-digit National ID or Company Name"
                     value={signupNationalId}
                     onChange={(e) => setSignupNationalId(e.target.value)}
                     required
+                    maxLength={10}
+                    pattern="\d{10}"
                     data-testid="input-signup-national-id"
                   />
+                  <p className="text-xs text-muted-foreground">Must be exactly 10 digits</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-tax-number">Unified Tax Number *</Label>
@@ -395,13 +420,15 @@ export default function Login() {
                   <Input
                     id="signup-commercial-reg"
                     type="text"
-                    placeholder={t.commercialRegistrationPlaceholder}
+                    placeholder="Enter 10-digit Commercial Registration"
                     value={signupCommercialReg}
                     onChange={(e) => setSignupCommercialReg(e.target.value)}
                     required
+                    maxLength={10}
+                    pattern="\d{10}"
                     data-testid="input-signup-commercial-reg"
                   />
-                  <p className="text-xs text-muted-foreground">{t.commercialRegistrationNote}</p>
+                  <p className="text-xs text-muted-foreground">Must be exactly 10 digits</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-branches">Number of Branches *</Label>

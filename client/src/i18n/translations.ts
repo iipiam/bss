@@ -221,6 +221,11 @@ export interface Translations {
   deviceLayoutNote: string;
   devicePreferenceUpdated: string;
   
+  // Notification Tone
+  notificationTone: string;
+  notificationToneDescription: string;
+  updatingTone: string;
+  
   // Menu Item Management
   menuItemCreated: string;
   menuItemCreatedDesc: string;
@@ -317,6 +322,8 @@ export interface Translations {
   accountCreatedDesc: string;
   signUpFailed: string;
   signUpFailedDesc: string;
+  legalAcknowledgement: string;
+  legalAcknowledgementRequired: string;
   selectLanguage: string;
   restaurantManagementSystem: string;
   vatDisclaimer: string;
@@ -953,6 +960,11 @@ export const translations: Record<Language, Translations> = {
     deviceLayoutNote: 'The app layout will automatically adjust to match your selected device for the best experience.',
     devicePreferenceUpdated: 'Device preference updated to',
     
+    // Notification Tone
+    notificationTone: 'Notification Tone',
+    notificationToneDescription: 'Select a notification tone for order alerts. This applies to all sub-accounts immediately.',
+    updatingTone: 'Updating tone for all accounts...',
+    
     // Menu Item Management
     menuItemCreated: 'Menu Item Created',
     menuItemCreatedDesc: 'The menu item has been added successfully',
@@ -1049,6 +1061,8 @@ export const translations: Record<Language, Translations> = {
     accountCreatedDesc: 'Please sign in with your credentials.',
     signUpFailed: 'Sign up failed',
     signUpFailedDesc: 'Could not create account',
+    legalAcknowledgement: 'I acknowledge that all the information, data and numbers entered by me are correct, as they will appear in my tax invoices and subscription invoice, and I take full responsibility if there is anything to the contrary, and the company owning the application has the right to dispose of the account to preserve its legal right before the authorities considered competent in fraud, tax evasion, forgery and forgery.',
+    legalAcknowledgementRequired: 'You must acknowledge the legal agreement to proceed',
     selectLanguage: 'Select language',
     restaurantManagementSystem: 'Restaurant management system',
     vatDisclaimer: 'All prices include 15% VAT as required by Saudi law',
@@ -1683,6 +1697,11 @@ export const translations: Record<Language, Translations> = {
     iphoneDesc: 'تخطيط محمول مدمج للهواتف الذكية',
     deviceLayoutNote: 'سيتم ضبط تخطيط التطبيق تلقائيًا ليتناسب مع جهازك المحدد للحصول على أفضل تجربة.',
     devicePreferenceUpdated: 'تم تحديث تفضيل الجهاز إلى',
+    
+    // Notification Tone
+    notificationTone: 'نغمة الإشعار',
+    notificationToneDescription: 'اختر نغمة الإشعار لتنبيهات الطلبات. ينطبق هذا على جميع الحسابات الفرعية على الفور.',
+    updatingTone: 'جاري تحديث النغمة لجميع الحسابات...',
     
     // Menu Item Management
     menuItemCreated: 'تم إنشاء عنصر القائمة',
@@ -2415,6 +2434,11 @@ export const translations: Record<Language, Translations> = {
     deviceLayoutNote: '应用程序布局将自动调整以匹配您选择的设备，以获得最佳体验。',
     devicePreferenceUpdated: '设备偏好已更新为',
     
+    // Notification Tone
+    notificationTone: '通知铃声',
+    notificationToneDescription: '选择订单提醒的通知铃声。这将立即应用于所有子账户。',
+    updatingTone: '正在为所有账户更新铃声...',
+    
     // Menu Item Management
     menuItemCreated: '菜单项已创建',
     menuItemCreatedDesc: '菜单项已成功添加',
@@ -3131,6 +3155,11 @@ export const translations: Record<Language, Translations> = {
     iphoneDesc: 'Kompaktes mobiles Layout für Smartphones',
     deviceLayoutNote: 'Das App-Layout wird automatisch an Ihr ausgewähltes Gerät angepasst, um die beste Erfahrung zu bieten.',
     devicePreferenceUpdated: 'Gerätepräferenz aktualisiert auf',
+    
+    // Notification Tone
+    notificationTone: 'Benachrichtigungston',
+    notificationToneDescription: 'Wählen Sie einen Benachrichtigungston für Bestellbenachrichtigungen. Dies gilt sofort für alle Unterkonten.',
+    updatingTone: 'Ton für alle Konten wird aktualisiert...',
     
     // Menu Item Management
     menuItemCreated: 'Menüelement erstellt',
@@ -3849,6 +3878,11 @@ export const translations: Record<Language, Translations> = {
     deviceLayoutNote: 'ऐप लेआउट स्वचालित रूप से आपके चयनित डिवाइस से मेल खाने के लिए समायोजित होगा ताकि सर्वोत्तम अनुभव मिल सके।',
     devicePreferenceUpdated: 'डिवाइस वरीयता अपडेट की गई',
     
+    // Notification Tone
+    notificationTone: 'सूचना स्वर',
+    notificationToneDescription: 'ऑर्डर अलर्ट के लिए सूचना स्वर चुनें। यह तुरंत सभी उप-खातों पर लागू होता है।',
+    updatingTone: 'सभी खातों के लिए स्वर अपडेट हो रहा है...',
+    
     // Menu Item Management
     menuItemCreated: 'मेनू आइटम बनाया गया',
     menuItemCreatedDesc: 'मेनू आइटम सफलतापूर्वक जोड़ा गया है',
@@ -4566,6 +4600,11 @@ export const translations: Record<Language, Translations> = {
     deviceLayoutNote: 'بہترین تجربے کے لیے ایپ لے آؤٹ خودکار طور پر آپ کی منتخب کردہ ڈیوائس سے مماثل ہو جائے گا۔',
     devicePreferenceUpdated: 'ڈیوائس کی ترجیح اپ ڈیٹ کی گئی',
     
+    // Notification Tone
+    notificationTone: 'اطلاع کی آواز',
+    notificationToneDescription: 'آرڈر الرٹس کے لیے اطلاع کی آواز منتخب کریں۔ یہ فوری طور پر تمام ذیلی اکاؤنٹس پر لاگو ہوتا ہے۔',
+    updatingTone: 'تمام اکاؤنٹس کے لیے آواز اپ ڈیٹ ہو رہی ہے...',
+    
     // Menu Item Management
     menuItemCreated: 'مینو آئٹم بنایا گیا',
     menuItemCreatedDesc: 'مینو آئٹم کامیابی سے شامل کیا گیا',
@@ -5282,6 +5321,11 @@ export const translations: Record<Language, Translations> = {
     iphoneDesc: 'স্মার্টফোনের জন্য কমপ্যাক্ট মোবাইল লেআউট',
     deviceLayoutNote: 'সর্বোত্তম অভিজ্ঞতার জন্য অ্যাপ লেআউট স্বয়ংক্রিয়ভাবে আপনার নির্বাচিত ডিভাইসের সাথে মিলবে।',
     devicePreferenceUpdated: 'ডিভাইস পছন্দ আপডেট করা হয়েছে',
+    
+    // Notification Tone
+    notificationTone: 'বিজ্ঞপ্তি টোন',
+    notificationToneDescription: 'অর্ডার সতর্কতার জন্য একটি বিজ্ঞপ্তি টোন নির্বাচন করুন। এটি অবিলম্বে সমস্ত উপ-অ্যাকাউন্টে প্রযোজ্য।',
+    updatingTone: 'সমস্ত অ্যাকাউন্টের জন্য টোন আপডেট হচ্ছে...',
     
     // Menu Item Management
     menuItemCreated: 'মেনু আইটেম তৈরি করা হয়েছে',

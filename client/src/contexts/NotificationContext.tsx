@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from './LanguageContext';
+import { useQuery } from '@tanstack/react-query';
+import { playNotificationTone, type ToneId } from '@/lib/notificationTones';
 
 interface OrderNotification {
   type: 'order:created' | 'order:statusUpdated';
@@ -30,18 +32,26 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem('notificationsEnabled');
     return saved === null ? true : saved === 'true';
   });
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  
+  // Store latest tone in ref so WebSocket handler always uses current value
+  const currentToneRef = useRef<ToneId>('tone1');
+
+  // Fetch settings to get selected notification tone (refetches every 5s to get admin updates)
+  const { data: settings } = useQuery<{ notificationTone: ToneId }>({
+    queryKey: ['/api/settings'],
+    enabled: notificationsEnabled,
+    refetchInterval: 5000, // Refresh every 5 seconds so sub-accounts get admin's tone updates immediately
+  });
+
+  // Update tone ref whenever settings change
+  useEffect(() => {
+    if (settings?.notificationTone) {
+      currentToneRef.current = settings.notificationTone;
+    }
+  }, [settings?.notificationTone]);
 
   useEffect(() => {
     localStorage.setItem('notificationsEnabled', String(notificationsEnabled));
-  }, [notificationsEnabled]);
-
-  useEffect(() => {
-    if (!notificationsEnabled) return;
-
-    // Initialize audio element with a simple beep sound (data URL)
-    // This is a 200ms 800Hz beep tone
-    audioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBzOM0fPTgjMGHm7A7+OZURE');
   }, [notificationsEnabled]);
 
   const connect = () => {
@@ -69,12 +79,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           
           if (!notificationsEnabled) return;
 
-          // Play alarm sound
-          if (audioRef.current) {
-            audioRef.current.play().catch(err => {
-              console.error('[Notifications] Audio play failed:', err);
-            });
-          }
+          // Play notification tone using Web Audio API - use ref for latest value
+          playNotificationTone(currentToneRef.current);
 
           // Show toast notification
           const title = notification.type === 'order:created' 

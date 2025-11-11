@@ -232,6 +232,7 @@ export const settings = pgTable("settings", {
   language: text("language").notNull().default("English"),
   openingTime: text("opening_time"),
   closingTime: text("closing_time"),
+  notificationTone: text("notification_tone").notNull().default("tone1"), // Admin-selected notification tone (tone1-tone15)
 });
 
 export const insertSettingsSchema = createInsertSchema(settings).omit({ id: true });

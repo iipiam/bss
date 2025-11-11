@@ -11,7 +11,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useDevice } from "@/contexts/DeviceContext";
 import { useAuth } from "@/lib/auth";
 import type { Settings } from "@shared/schema";
-import { Save, Laptop, Tablet, Smartphone } from "lucide-react";
+import { Save, Laptop, Tablet, Smartphone, Volume2, Bell } from "lucide-react";
+import { notificationTones, toneIds, playNotificationTone, getToneName, type ToneId } from "@/lib/notificationTones";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -206,6 +207,7 @@ export default function SettingsPage() {
       </Card>
 
       <DevicePreferenceSection />
+      <NotificationToneSection />
     </div>
   );
 }
@@ -318,6 +320,128 @@ function DevicePreferenceSection() {
             </p>
           </div>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function NotificationToneSection() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { t } = useLanguage();
+  const [selectedTone, setSelectedTone] = useState<ToneId>('tone1');
+
+  const { data: settings, isLoading } = useQuery<Settings>({
+    queryKey: ["/api/settings"],
+  });
+
+  useEffect(() => {
+    if (settings?.notificationTone) {
+      setSelectedTone(settings.notificationTone as ToneId);
+    }
+  }, [settings]);
+
+  const updateToneMutation = useMutation({
+    mutationFn: async (toneId: ToneId) => {
+      await apiRequest("PATCH", "/api/settings", { notificationTone: toneId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      toast({
+        title: t.success || "Success",
+        description: "Notification tone updated for all accounts",
+      });
+    },
+    onError: () => {
+      toast({
+        title: t.error || "Error",
+        description: "Failed to update notification tone",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleToneChange = (toneId: ToneId) => {
+    setSelectedTone(toneId);
+    updateToneMutation.mutate(toneId);
+  };
+
+  const handleTestTone = (toneId: ToneId) => {
+    playNotificationTone(toneId);
+  };
+
+  // Only show for admin users
+  if (user?.role !== 'admin') {
+    return null;
+  }
+
+  if (isLoading) {
+    return null;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Bell className="h-5 w-5" />
+          {t.notificationTone || "Notification Tone"}
+        </CardTitle>
+        <CardDescription>
+          {t.notificationToneDescription || "Select a notification tone for order alerts. This applies to all sub-accounts immediately."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {toneIds.map((toneId) => (
+            <button
+              key={toneId}
+              type="button"
+              onClick={() => handleToneChange(toneId)}
+              disabled={updateToneMutation.isPending}
+              className={`
+                relative p-4 border-2 rounded-lg transition-all
+                hover-elevate active-elevate-2
+                ${selectedTone === toneId 
+                  ? 'border-primary bg-primary/5' 
+                  : 'border-border'
+                }
+              `}
+              data-testid={`button-tone-${toneId}`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-medium text-sm">
+                  {getToneName(toneId)}
+                </h4>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleTestTone(toneId);
+                  }}
+                  data-testid={`button-test-${toneId}`}
+                >
+                  <Volume2 className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{notificationTones[toneId].frequency}Hz</span>
+                <span>•</span>
+                <span>{notificationTones[toneId].duration}ms</span>
+              </div>
+              {selectedTone === toneId && (
+                <div className="absolute top-2 right-2 h-3 w-3 rounded-full bg-primary" />
+              )}
+            </button>
+          ))}
+        </div>
+        {updateToneMutation.isPending && (
+          <p className="text-sm text-muted-foreground">
+            {t.updatingTone || "Updating tone for all accounts..."}
+          </p>
+        )}
       </CardContent>
     </Card>
   );
