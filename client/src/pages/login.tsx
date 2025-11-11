@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { LogIn, UserPlus, UtensilsCrossed, Check, Languages, Play, Video, Mail, HelpCircle } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
@@ -42,6 +44,7 @@ export default function Login() {
   const [subscriptionPlan, setSubscriptionPlan] = useState("weekly");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showWelcomeVideo, setShowWelcomeVideo] = useState(false);
+  const [legalAcknowledgementChecked, setLegalAcknowledgementChecked] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
   const { language, setLanguage, t } = useLanguage();
@@ -121,6 +124,9 @@ export default function Login() {
         description: t.accountCreatedDesc,
       });
       
+      // Reset legal acknowledgement checkbox
+      setLegalAcknowledgementChecked(false);
+      
       // Auto-login after signup
       try {
         await login(signupUsername, signupPassword);
@@ -143,6 +149,16 @@ export default function Login() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate legal acknowledgement checkbox
+    if (!legalAcknowledgementChecked) {
+      toast({
+        title: t.error,
+        description: t.legalAcknowledgementRequired,
+        variant: "destructive",
+      });
+      return;
+    }
     
     // Validate required fields
     if (!signupRestaurantName || !signupNationalId || !signupTaxNumber || !signupRestaurantType) {
@@ -552,6 +568,38 @@ export default function Login() {
                   <p className="text-xs text-muted-foreground">
                     {t.vatDisclaimer}
                   </p>
+                </div>
+
+                {/* Legal Acknowledgement */}
+                <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">{t.legalAcknowledgement.substring(0, 30)}...</Label>
+                    <ScrollArea className="h-32 w-full rounded-md border p-3 bg-background">
+                      <p className="text-xs leading-relaxed text-muted-foreground">
+                        {t.legalAcknowledgement}
+                      </p>
+                    </ScrollArea>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="legal-acknowledgement"
+                      checked={legalAcknowledgementChecked}
+                      onCheckedChange={(checked) => setLegalAcknowledgementChecked(checked === true)}
+                      data-testid="checkbox-legal-acknowledgement"
+                      className="mt-1"
+                    />
+                    <Label
+                      htmlFor="legal-acknowledgement"
+                      className="text-sm font-medium leading-relaxed cursor-pointer flex-1"
+                    >
+                      {t.legalAcknowledgementRequired}
+                    </Label>
+                  </div>
+                  {!legalAcknowledgementChecked && (
+                    <p className="text-xs text-destructive" data-testid="text-legal-acknowledgement-error">
+                      * {t.legalAcknowledgementRequired}
+                    </p>
+                  )}
                 </div>
 
                 <Button 
