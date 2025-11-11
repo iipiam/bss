@@ -722,18 +722,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Recipes
+  // Recipes (MULTI-TENANT: require auth + restaurantId filtering)
   app.get("/api/recipes", requireAuth, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
-    const recipes = await storage.getRecipes();
-    const filtered = recipes.filter(r => r.restaurantId === restaurantId);
-    res.json(filtered);
+    const recipes = await storage.getRecipes(restaurantId);
+    res.json(recipes);
   });
 
   app.get("/api/recipes/:id", requireAuth, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
-    const recipe = await storage.getRecipe(req.params.id);
-    if (!recipe || recipe.restaurantId !== restaurantId) {
+    const recipe = await storage.getRecipe(req.params.id, restaurantId);
+    if (!recipe) {
       return res.status(404).json({ error: "Recipe not found" });
     }
     res.json(recipe);
@@ -753,12 +752,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/recipes/:id", requireAuth, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
-      const existing = await storage.getRecipe(req.params.id);
-      if (!existing || existing.restaurantId !== restaurantId) {
+      const data = sanitizePatchBody(req.body, insertRecipeSchema.partial());
+      // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
+      const { restaurantId: _, ...safeData } = data;
+      const recipe = await storage.updateRecipe(req.params.id, restaurantId, safeData);
+      if (!recipe) {
         return res.status(404).json({ error: "Recipe not found" });
       }
-      const data = sanitizePatchBody(req.body, insertRecipeSchema.partial());
-      const recipe = await storage.updateRecipe(req.params.id, data);
       res.json(recipe);
     } catch (error) {
       res.status(400).json({ error: "Invalid recipe data" });
@@ -767,11 +767,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/recipes/sort", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const { updates } = req.body;
       if (!Array.isArray(updates)) {
         return res.status(400).json({ error: "Invalid updates format" });
       }
-      await storage.updateRecipesSortOrder(updates);
+      
+      // SECURITY: Verify all recipe IDs belong to this restaurant before updating
+      // This prevents cross-tenant metadata leak via probing
+      const recipeIds = updates.map((u: any) => u.id);
+      const allRecipes = await storage.getRecipes(restaurantId);
+      const validIds = new Set(allRecipes.map(r => r.id));
+      
+      const invalidIds = recipeIds.filter(id => !validIds.has(id));
+      if (invalidIds.length > 0) {
+        return res.status(403).json({ error: "Some recipe IDs do not belong to your restaurant" });
+      }
+      
+      await storage.updateRecipesSortOrder(restaurantId, updates);
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -780,11 +793,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/recipes/:id", requireAuth, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
-    const existing = await storage.getRecipe(req.params.id);
-    if (!existing || existing.restaurantId !== restaurantId) {
-      return res.status(404).json({ error: "Recipe not found" });
-    }
-    const success = await storage.deleteRecipe(req.params.id);
+    const success = await storage.deleteRecipe(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Recipe not found" });
     }
@@ -2558,9 +2567,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Recipes to Excel
-  app.get("/api/export/recipes", async (req, res) => {
+  app.get("/api/export/recipes", requireAuth, async (req, res) => {
     try {
-      const recipes = await storage.getRecipes();
+      const restaurantId = req.session.user!.restaurantId;
+      const recipes = await storage.getRecipes(restaurantId);
       
       // Flatten recipe data for Excel
       const flattenedRecipes = recipes.map(recipe => ({
@@ -2733,7 +2743,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get menu items, recipes, and orders
       const menuItems = await storage.getMenuItems(restaurantId);
-      const recipes = await storage.getRecipes();
+      const recipes = await storage.getRecipes(restaurantId);
       const orders = await storage.getOrders({ restaurantId });
       
       // Filter orders by period

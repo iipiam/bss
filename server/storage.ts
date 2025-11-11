@@ -113,13 +113,13 @@ export interface IStorage {
   deleteAddon(id: string): Promise<boolean>;
   updateAddonsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
 
-  // Recipes
-  getRecipes(): Promise<Recipe[]>;
-  getRecipe(id: string): Promise<Recipe | undefined>;
+  // Recipes (MULTI-TENANT: requires restaurantId for all operations)
+  getRecipes(restaurantId: string): Promise<Recipe[]>;
+  getRecipe(id: string, restaurantId: string): Promise<Recipe | undefined>;
   createRecipe(recipe: InsertRecipe): Promise<Recipe>;
-  updateRecipe(id: string, recipe: Partial<InsertRecipe>): Promise<Recipe | undefined>;
-  updateRecipesSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
-  deleteRecipe(id: string): Promise<boolean>;
+  updateRecipe(id: string, restaurantId: string, recipe: Partial<InsertRecipe>): Promise<Recipe | undefined>;
+  updateRecipesSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void>;
+  deleteRecipe(id: string, restaurantId: string): Promise<boolean>;
 
   // Orders (MULTI-TENANT: requires restaurantId for all operations)
   getOrders(filter: {
@@ -498,13 +498,14 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Recipes
-  async getRecipes(): Promise<Recipe[]> {
-    return await db.select().from(recipes);
+  // Recipes (MULTI-TENANT: SQL-level restaurantId filtering)
+  async getRecipes(restaurantId: string): Promise<Recipe[]> {
+    return await db.select().from(recipes).where(eq(recipes.restaurantId, restaurantId));
   }
 
-  async getRecipe(id: string): Promise<Recipe | undefined> {
-    const [recipe] = await db.select().from(recipes).where(eq(recipes.id, id));
+  async getRecipe(id: string, restaurantId: string): Promise<Recipe | undefined> {
+    const [recipe] = await db.select().from(recipes)
+      .where(and(eq(recipes.id, id), eq(recipes.restaurantId, restaurantId)));
     return recipe;
   }
 
@@ -513,25 +514,31 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateRecipe(id: string, recipe: Partial<InsertRecipe>): Promise<Recipe | undefined> {
+  async updateRecipe(id: string, restaurantId: string, recipe: Partial<InsertRecipe>): Promise<Recipe | undefined> {
+    // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
+    const { restaurantId: _, ...safeData } = recipe;
     const updateData = Object.fromEntries(
-      Object.entries(recipe).filter(([_, value]) => value !== undefined)
+      Object.entries(safeData).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getRecipe(id);
+      return this.getRecipe(id, restaurantId);
     }
-    const [updated] = await db.update(recipes).set(updateData as any).where(eq(recipes.id, id)).returning();
+    const [updated] = await db.update(recipes).set(updateData as any)
+      .where(and(eq(recipes.id, id), eq(recipes.restaurantId, restaurantId)))
+      .returning();
     return updated;
   }
 
-  async updateRecipesSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void> {
+  async updateRecipesSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void> {
     for (const update of updates) {
-      await db.update(recipes).set({ sortOrder: update.sortOrder }).where(eq(recipes.id, update.id));
+      await db.update(recipes).set({ sortOrder: update.sortOrder })
+        .where(and(eq(recipes.id, update.id), eq(recipes.restaurantId, restaurantId)));
     }
   }
 
-  async deleteRecipe(id: string): Promise<boolean> {
-    const result = await db.delete(recipes).where(eq(recipes.id, id));
+  async deleteRecipe(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(recipes)
+      .where(and(eq(recipes.id, id), eq(recipes.restaurantId, restaurantId)));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
