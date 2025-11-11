@@ -121,16 +121,25 @@ export interface IStorage {
   updateRecipesSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
   deleteRecipe(id: string): Promise<boolean>;
 
-  // Orders
-  getOrders(branchId?: string, status?: string): Promise<Order[]>;
-  getOrder(id: string): Promise<Order | undefined>;
+  // Orders (MULTI-TENANT: requires restaurantId for all operations)
+  getOrders(filter: {
+    restaurantId: string;
+    branchId?: string;
+    status?: string;
+    dateRange?: { start?: Date; end?: Date };
+  }): Promise<Order[]>;
+  getOrder(id: string, restaurantId: string): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
-  updateOrder(id: string, order: Partial<InsertOrder>): Promise<Order | undefined>;
-  deleteOrder(id: string): Promise<boolean>;
+  updateOrder(id: string, restaurantId: string, order: Partial<InsertOrder>): Promise<Order | undefined>;
+  deleteOrder(id: string, restaurantId: string): Promise<boolean>;
 
-  // Transactions
-  getTransactions(branchId?: string, startDate?: Date, endDate?: Date): Promise<Transaction[]>;
-  getTransaction(id: string): Promise<Transaction | undefined>;
+  // Transactions (MULTI-TENANT: requires restaurantId for all operations)
+  getTransactions(filter: {
+    restaurantId: string;
+    branchId?: string;
+    dateRange?: { start?: Date; end?: Date };
+  }): Promise<Transaction[]>;
+  getTransaction(id: string, restaurantId: string): Promise<Transaction | undefined>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
 
   // Settings
@@ -164,11 +173,16 @@ export interface IStorage {
   getValidBootstrapToken(plainToken: string): Promise<{ id: string; tokenHash: string } | undefined>;
   consumeBootstrapToken(tokenId: string, username: string, ipAddress: string): Promise<void>;
 
-  // Invoices
-  getInvoices(branchId?: string, startDate?: Date, endDate?: Date): Promise<Invoice[]>;
-  getInvoice(id: string): Promise<Invoice | undefined>;
+  // Invoices (MULTI-TENANT: requires restaurantId for all operations)
+  getInvoices(filter: {
+    restaurantId: string;
+    branchId?: string;
+    dateRange?: { start?: Date; end?: Date };
+  }): Promise<Invoice[]>;
+  getInvoice(id: string, restaurantId: string): Promise<Invoice | undefined>;
+  getInvoicePublic(id: string): Promise<Invoice | undefined>; // PUBLIC: For QR code access, bypasses restaurantId check
   createInvoice(invoice: InsertInvoice): Promise<Invoice>;
-  updateInvoice(id: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined>;
+  updateInvoice(id: string, restaurantId: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined>;
 
   // Customers (MULTI-TENANT: requires restaurantId)
   getCustomers(restaurantId: string): Promise<Customer[]>;
@@ -515,20 +529,25 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount !== null && result.rowCount > 0;
   }
 
-  // Orders
-  async getOrders(branchId?: string, status?: string): Promise<Order[]> {
-    const conditions = [];
-    if (branchId) conditions.push(eq(orders.branchId, branchId));
-    if (status) conditions.push(eq(orders.status, status));
+  // Orders (MULTI-TENANT: enforce restaurantId at SQL layer)
+  async getOrders(filter: {
+    restaurantId: string;
+    branchId?: string;
+    status?: string;
+    dateRange?: { start?: Date; end?: Date };
+  }): Promise<Order[]> {
+    const conditions = [eq(orders.restaurantId, filter.restaurantId)];
+    if (filter.branchId) conditions.push(eq(orders.branchId, filter.branchId));
+    if (filter.status) conditions.push(eq(orders.status, filter.status));
+    if (filter.dateRange?.start) conditions.push(gte(orders.createdAt, filter.dateRange.start));
+    if (filter.dateRange?.end) conditions.push(lte(orders.createdAt, filter.dateRange.end));
     
-    if (conditions.length > 0) {
-      return await db.select().from(orders).where(and(...conditions));
-    }
-    return await db.select().from(orders);
+    return await db.select().from(orders).where(and(...conditions));
   }
 
-  async getOrder(id: string): Promise<Order | undefined> {
-    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+  async getOrder(id: string, restaurantId: string): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders)
+      .where(and(eq(orders.id, id), eq(orders.restaurantId, restaurantId)));
     return order;
   }
 
@@ -537,7 +556,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateOrder(id: string, order: Partial<InsertOrder>): Promise<Order | undefined> {
+  async updateOrder(id: string, restaurantId: string, order: Partial<InsertOrder>): Promise<Order | undefined> {
     // Filter out undefined values to avoid "No values to set" error
     const updateData = Object.fromEntries(
       Object.entries(order).filter(([_, value]) => value !== undefined)
@@ -545,33 +564,39 @@ export class DatabaseStorage implements IStorage {
     
     if (Object.keys(updateData).length === 0) {
       // If no valid fields to update, just return the existing record
-      return this.getOrder(id);
+      return this.getOrder(id, restaurantId);
     }
     
-    const [updated] = await db.update(orders).set(updateData as any).where(eq(orders.id, id)).returning();
+    const [updated] = await db.update(orders)
+      .set(updateData as any)
+      .where(and(eq(orders.id, id), eq(orders.restaurantId, restaurantId)))
+      .returning();
     return updated;
   }
 
-  async deleteOrder(id: string): Promise<boolean> {
-    const result = await db.delete(orders).where(eq(orders.id, id));
+  async deleteOrder(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(orders)
+      .where(and(eq(orders.id, id), eq(orders.restaurantId, restaurantId)));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
-  // Transactions
-  async getTransactions(branchId?: string, startDate?: Date, endDate?: Date): Promise<Transaction[]> {
-    const conditions = [];
-    if (branchId) conditions.push(eq(transactions.branchId, branchId));
-    if (startDate) conditions.push(gte(transactions.createdAt, startDate));
-    if (endDate) conditions.push(lte(transactions.createdAt, endDate));
+  // Transactions (MULTI-TENANT: enforce restaurantId at SQL layer)
+  async getTransactions(filter: {
+    restaurantId: string;
+    branchId?: string;
+    dateRange?: { start?: Date; end?: Date };
+  }): Promise<Transaction[]> {
+    const conditions = [eq(transactions.restaurantId, filter.restaurantId)];
+    if (filter.branchId) conditions.push(eq(transactions.branchId, filter.branchId));
+    if (filter.dateRange?.start) conditions.push(gte(transactions.createdAt, filter.dateRange.start));
+    if (filter.dateRange?.end) conditions.push(lte(transactions.createdAt, filter.dateRange.end));
     
-    if (conditions.length > 0) {
-      return await db.select().from(transactions).where(and(...conditions));
-    }
-    return await db.select().from(transactions);
+    return await db.select().from(transactions).where(and(...conditions));
   }
 
-  async getTransaction(id: string): Promise<Transaction | undefined> {
-    const [transaction] = await db.select().from(transactions).where(eq(transactions.id, id));
+  async getTransaction(id: string, restaurantId: string): Promise<Transaction | undefined> {
+    const [transaction] = await db.select().from(transactions)
+      .where(and(eq(transactions.id, id), eq(transactions.restaurantId, restaurantId)));
     return transaction;
   }
 
@@ -791,19 +816,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Invoices
-  async getInvoices(branchId?: string, startDate?: Date, endDate?: Date): Promise<Invoice[]> {
-    const conditions = [];
-    if (branchId) conditions.push(eq(invoices.branchId, branchId));
-    if (startDate) conditions.push(gte(invoices.createdAt, startDate));
-    if (endDate) conditions.push(lte(invoices.createdAt, endDate));
+  async getInvoices(filter: {
+    restaurantId: string;
+    branchId?: string;
+    dateRange?: { start?: Date; end?: Date };
+  }): Promise<Invoice[]> {
+    const conditions = [eq(invoices.restaurantId, filter.restaurantId)];
+    if (filter.branchId) conditions.push(eq(invoices.branchId, filter.branchId));
+    if (filter.dateRange?.start) conditions.push(gte(invoices.createdAt, filter.dateRange.start));
+    if (filter.dateRange?.end) conditions.push(lte(invoices.createdAt, filter.dateRange.end));
     
-    if (conditions.length > 0) {
-      return await db.select().from(invoices).where(and(...conditions));
-    }
-    return await db.select().from(invoices);
+    return await db.select().from(invoices).where(and(...conditions));
   }
 
-  async getInvoice(id: string): Promise<Invoice | undefined> {
+  async getInvoice(id: string, restaurantId: string): Promise<Invoice | undefined> {
+    const [invoice] = await db.select().from(invoices)
+      .where(and(eq(invoices.id, id), eq(invoices.restaurantId, restaurantId)));
+    return invoice;
+  }
+
+  async getInvoicePublic(id: string): Promise<Invoice | undefined> {
+    // PUBLIC: For QR code access only, bypasses restaurantId check
     const [invoice] = await db.select().from(invoices).where(eq(invoices.id, id));
     return invoice;
   }
@@ -813,16 +846,16 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateInvoice(id: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined> {
+  async updateInvoice(id: string, restaurantId: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(invoice).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getInvoice(id);
+      return this.getInvoice(id, restaurantId);
     }
     const [updated] = await db.update(invoices)
       .set(updateData as any)
-      .where(eq(invoices.id, id))
+      .where(and(eq(invoices.id, id), eq(invoices.restaurantId, restaurantId)))
       .returning();
     return updated;
   }

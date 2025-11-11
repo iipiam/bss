@@ -13,6 +13,7 @@ import {
   insertBranchSchema,
   insertInventoryItemSchema,
   insertMenuItemSchema,
+  updateMenuItemSchema,
   insertAddonSchema,
   insertRecipeSchema,
   insertOrderSchema,
@@ -253,7 +254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Menu item not found" });
       }
-      const data = sanitizePatchBody(req.body, insertMenuItemSchema.partial());
+      const data = sanitizePatchBody(req.body, updateMenuItemSchema);
       const item = await storage.updateMenuItem(req.params.id, data);
       res.json(item);
     } catch (error) {
@@ -725,22 +726,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Recipes
-  app.get("/api/recipes", async (_req, res) => {
+  app.get("/api/recipes", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const recipes = await storage.getRecipes();
-    res.json(recipes);
+    const filtered = recipes.filter(r => r.restaurantId === restaurantId);
+    res.json(filtered);
   });
 
-  app.get("/api/recipes/:id", async (req, res) => {
+  app.get("/api/recipes/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const recipe = await storage.getRecipe(req.params.id);
-    if (!recipe) {
+    if (!recipe || recipe.restaurantId !== restaurantId) {
       return res.status(404).json({ error: "Recipe not found" });
     }
     res.json(recipe);
   });
 
-  app.post("/api/recipes", async (req, res) => {
+  app.post("/api/recipes", requireAuth, async (req, res) => {
     try {
-      const data = insertRecipeSchema.parse(req.body);
+      const restaurantId = req.session.user!.restaurantId;
+      const data = insertRecipeSchema.parse({ ...req.body, restaurantId });
       const recipe = await storage.createRecipe(data);
       res.status(201).json(recipe);
     } catch (error) {
@@ -748,20 +753,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/recipes/:id", async (req, res) => {
+  app.patch("/api/recipes/:id", requireAuth, async (req, res) => {
     try {
-      const data = sanitizePatchBody(req.body, insertRecipeSchema.partial());
-      const recipe = await storage.updateRecipe(req.params.id, data);
-      if (!recipe) {
+      const restaurantId = req.session.user!.restaurantId;
+      const existing = await storage.getRecipe(req.params.id);
+      if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Recipe not found" });
       }
+      const data = sanitizePatchBody(req.body, insertRecipeSchema.partial());
+      const recipe = await storage.updateRecipe(req.params.id, data);
       res.json(recipe);
     } catch (error) {
       res.status(400).json({ error: "Invalid recipe data" });
     }
   });
 
-  app.patch("/api/recipes/sort", async (req, res) => {
+  app.patch("/api/recipes/sort", requireAuth, async (req, res) => {
     try {
       const { updates } = req.body;
       if (!Array.isArray(updates)) {
@@ -774,7 +781,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/recipes/:id", async (req, res) => {
+  app.delete("/api/recipes/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const existing = await storage.getRecipe(req.params.id);
+    if (!existing || existing.restaurantId !== restaurantId) {
+      return res.status(404).json({ error: "Recipe not found" });
+    }
     const success = await storage.deleteRecipe(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Recipe not found" });
@@ -782,16 +794,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(204).send();
   });
 
-  // Orders
-  app.get("/api/orders", async (req, res) => {
+  // Orders (MULTI-TENANT: require auth + restaurantId filtering)
+  app.get("/api/orders", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const branchId = req.query.branchId as string | undefined;
     const status = req.query.status as string | undefined;
-    const orders = await storage.getOrders(branchId, status);
+    const orders = await storage.getOrders({ restaurantId, branchId, status });
     res.json(orders);
   });
 
-  app.get("/api/orders/:id", async (req, res) => {
-    const order = await storage.getOrder(req.params.id);
+  app.get("/api/orders/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const order = await storage.getOrder(req.params.id, restaurantId);
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
@@ -856,7 +870,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (deductionError) {
         console.error("Inventory deduction failed, attempting to delete order:", order.id);
         try {
-          await storage.deleteOrder(order.id);
+          await storage.deleteOrder(order.id, order.restaurantId);
         } catch (deleteError) {
           console.error("Failed to delete order after inventory deduction failure:", deleteError);
         }
@@ -872,10 +886,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/orders/:id", async (req, res) => {
+  app.patch("/api/orders/:id", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const data = sanitizePatchBody(req.body, insertOrderSchema.partial());
-      const order = await storage.updateOrder(req.params.id, data);
+      const order = await storage.updateOrder(req.params.id, restaurantId, data);
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
@@ -907,24 +922,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Transactions (Sales)
-  app.get("/api/transactions", async (req, res) => {
+  // Transactions (Sales) (MULTI-TENANT: require auth + restaurantId filtering)
+  app.get("/api/transactions", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const branchId = req.query.branchId as string | undefined;
     const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
     const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
-    const transactions = await storage.getTransactions(branchId, startDate, endDate);
+    const dateRange = (startDate || endDate) ? { start: startDate, end: endDate } : undefined;
+    const transactions = await storage.getTransactions({ restaurantId, branchId, dateRange });
     res.json(transactions);
   });
 
-  app.get("/api/transactions/:id", async (req, res) => {
-    const transaction = await storage.getTransaction(req.params.id);
+  app.get("/api/transactions/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const transaction = await storage.getTransaction(req.params.id, restaurantId);
     if (!transaction) {
       return res.status(404).json({ error: "Transaction not found" });
     }
     res.json(transaction);
   });
 
-  app.post("/api/transactions", async (req, res) => {
+  app.post("/api/transactions", requireAuth, async (req, res) => {
     try {
       const data = insertTransactionSchema.parse(req.body);
       const transaction = await storage.createTransaction(data);
@@ -938,8 +956,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/analytics/dashboard", requireAuth, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const branchId = req.query.branchId as string | undefined;
-    const orders = await storage.getOrders(branchId);
-    const transactions = await storage.getTransactions(branchId);
+    const orders = await storage.getOrders({ restaurantId, branchId });
+    const transactions = await storage.getTransactions({ restaurantId, branchId });
     const inventory = await storage.getInventoryItems(restaurantId, branchId);
 
     const now = new Date();
@@ -1072,15 +1090,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.get("/api/analytics/peak-hours/:hour", async (req, res) => {
+  app.get("/api/analytics/peak-hours/:hour", requireAuth, async (req, res) => {
     const hour = parseInt(req.params.hour);
     if (isNaN(hour) || hour < 0 || hour > 23) {
       return res.status(400).json({ error: "Invalid hour parameter (must be 0-23)" });
     }
 
+    const restaurantId = req.session.user!.restaurantId;
     const branchId = req.query.branchId as string | undefined;
-    const transactions = await storage.getTransactions(branchId);
-    const orders = await storage.getOrders(branchId);
+    const transactions = await storage.getTransactions({ restaurantId, branchId });
+    const orders = await storage.getOrders({ restaurantId, branchId });
 
     const transactionsInHour = transactions.filter(t => {
       const date = new Date(t.createdAt);
@@ -1106,9 +1125,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(results);
   });
 
-  app.get("/api/analytics/sales", async (req, res) => {
+  app.get("/api/analytics/sales", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const branchId = req.query.branchId as string | undefined;
-    const transactions = await storage.getTransactions(branchId);
+    const transactions = await storage.getTransactions({ restaurantId, branchId });
 
     const salesByDay: Record<string, number> = {};
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -1198,17 +1218,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POS - Generate Invoice (redirects to main invoice creation endpoint)
-  app.post("/api/pos/generate-invoice", async (req, res) => {
+  app.post("/api/pos/generate-invoice", requireAuth, async (req, res) => {
     // This endpoint now redirects to the main invoice creation endpoint
     // which properly saves the invoice and generates QR code with URL
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const { orderId } = req.body;
       
       if (!orderId) {
         return res.status(400).json({ error: "Order ID required" });
       }
 
-      const order = await storage.getOrder(orderId);
+      const order = await storage.getOrder(orderId, restaurantId);
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
@@ -1234,6 +1255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create invoice record first to get the ID
       const invoiceData = {
+        restaurantId: req.session.user!.restaurantId,
         invoiceNumber,
         orderId: order.id,
         branchId: order.branchId,
@@ -1433,8 +1455,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createSubscriptionInvoice({
           userId: user.id,
           serialNumber,
-          subscriptionPlan: user.subscriptionPlan ?? "",
-          branchesCount: user.branchesCount,
+          subscriptionPlan: restaurant.subscriptionPlan ?? "",
+          branchesCount: restaurant.branchesCount,
           basePlanPrice: basePlanPrice.toString(),
           additionalBranchesPrice: additionalBranchesPrice.toString(),
           subtotal: subtotal.toString(),
@@ -1784,6 +1806,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
           
           await storage.createSalary({
+            restaurantId: req.session.user!.restaurantId,
             employeeName: user.fullName,
             position: user.role,
             amount: monthlySalary,
@@ -1919,7 +1942,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
 
-      if (user.subscriptionStatus !== 'active') {
+      const restaurant = await storage.getRestaurant(user.restaurantId);
+      if (!restaurant || restaurant.subscriptionStatus !== 'active') {
         return res.status(400).json({ error: "No active subscription to cancel" });
       }
 
@@ -1937,11 +1961,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Financial Analytics
-  app.get("/api/analytics/financial", async (req, res) => {
+  app.get("/api/analytics/financial", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const { period, year } = req.query;
     
-    const transactions = await storage.getTransactions();
-    const invoices = await storage.getInvoices();
+    const transactions = await storage.getTransactions({ restaurantId });
+    const invoices = await storage.getInvoices({ restaurantId });
     
     // Calculate monthly data
     const monthlyData = Array.from({ length: 12 }, (_, i) => {
@@ -1977,23 +2002,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Invoices
-  app.get("/api/invoices", async (req, res) => {
+  // Invoices (MULTI-TENANT: require auth + restaurantId filtering)
+  app.get("/api/invoices", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const { branchId, startDate, endDate } = req.query;
     
     const start = startDate ? new Date(startDate as string) : undefined;
     const end = endDate ? new Date(endDate as string) : undefined;
+    const dateRange = (start || end) ? { start, end } : undefined;
     
-    const invoices = await storage.getInvoices(
-      branchId as string | undefined,
-      start,
-      end
-    );
+    const invoices = await storage.getInvoices({
+      restaurantId,
+      branchId: branchId as string | undefined,
+      dateRange
+    });
     res.json(invoices);
   });
 
-  app.get("/api/invoices/:id", async (req, res) => {
-    const invoice = await storage.getInvoice(req.params.id);
+  app.get("/api/invoices/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const invoice = await storage.getInvoice(req.params.id, restaurantId);
     if (!invoice) {
       return res.status(404).json({ error: "Invoice not found" });
     }
@@ -2013,7 +2041,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public invoice viewer (no auth required) - accessible via QR code
   app.get("/public/invoice/:id", async (req, res) => {
     try {
-      const invoice = await storage.getInvoice(req.params.id);
+      // Use public method that bypasses restaurantId check (safe for QR code access)
+      const invoice = await storage.getInvoicePublic(req.params.id);
       if (!invoice) {
         return res.status(404).send(`
           <!DOCTYPE html>
@@ -2036,7 +2065,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const settings = await storage.getSettings();
-      const order = invoice.orderId ? await storage.getOrder(invoice.orderId) : null;
+      const order = invoice.orderId ? await storage.getOrder(invoice.orderId, invoice.restaurantId) : null;
       
       // Generate HTML invoice view
       const html = `
@@ -2303,15 +2332,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create invoice record and generate PDF
-  app.post("/api/invoices/create-and-generate", async (req, res) => {
+  app.post("/api/invoices/create-and-generate", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const { orderId } = req.body;
       
       if (!orderId) {
         return res.status(400).json({ error: "Order ID required" });
       }
 
-      const order = await storage.getOrder(orderId);
+      const order = await storage.getOrder(orderId, restaurantId);
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
@@ -2337,6 +2367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create invoice record first to get the ID (without QR code and PDF path yet)
       const invoiceData = {
+        restaurantId: req.session.user!.restaurantId,
         invoiceNumber,
         orderId: order.id,
         branchId: order.branchId,
@@ -2566,11 +2597,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Orders to Excel
-  app.get("/api/export/orders", async (req, res) => {
+  app.get("/api/export/orders", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const branchId = req.query.branchId as string | undefined;
       const status = req.query.status as string | undefined;
-      const orders = await storage.getOrders(branchId, status);
+      const orders = await storage.getOrders({ restaurantId, branchId, status });
       
       // Flatten orders for Excel
       const flattenedOrders = orders.map(order => ({
@@ -2605,12 +2637,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Transactions to Excel
-  app.get("/api/export/transactions", async (req, res) => {
+  app.get("/api/export/transactions", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const branchId = req.query.branchId as string | undefined;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
-      const transactions = await storage.getTransactions(branchId, startDate, endDate);
+      const dateRange = (startDate || endDate) ? { start: startDate, end: endDate } : undefined;
+      const transactions = await storage.getTransactions({ restaurantId, branchId, dateRange });
       
       const worksheet = XLSX.utils.json_to_sheet(transactions);
       const workbook = XLSX.utils.book_new();
@@ -2701,7 +2735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get menu items, recipes, and orders
       const menuItems = await storage.getMenuItems(restaurantId);
       const recipes = await storage.getRecipes();
-      const orders = await storage.getOrders();
+      const orders = await storage.getOrders({ restaurantId });
       
       // Filter orders by period
       const now = new Date();
@@ -2771,14 +2805,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Financial Data to Excel
-  app.get("/api/export/financial", async (req, res) => {
+  app.get("/api/export/financial", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const year = req.query.year as string || new Date().getFullYear().toString();
       const period = req.query.period as string || 'monthly';
       
       // Fetch financial data using same logic as the analytics endpoint
-      const transactions = await storage.getTransactions();
-      const invoices = await storage.getInvoices();
+      const transactions = await storage.getTransactions({ restaurantId });
+      const invoices = await storage.getInvoices({ restaurantId });
       
       // Filter by year
       const yearTransactions = transactions.filter(t => 
@@ -2848,16 +2883,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Financial Statement as PDF
-  app.get("/api/export/financial-pdf", async (req, res) => {
+  app.get("/api/export/financial-pdf", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const year = req.query.year as string || new Date().getFullYear().toString();
       const period = (req.query.period as "monthly" | "yearly") || 'monthly';
       
       const settings = await storage.getSettings();
       
       // Fetch financial data
-      const transactions = await storage.getTransactions();
-      const invoices = await storage.getInvoices();
+      const transactions = await storage.getTransactions({ restaurantId });
+      const invoices = await storage.getInvoices({ restaurantId });
       
       // Filter by year
       const yearTransactions = transactions.filter(t => 
@@ -2919,9 +2955,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Download individual invoice PDF
-  app.get("/api/invoices/:id/download", async (req, res) => {
+  app.get("/api/invoices/:id/download", requireAuth, async (req, res) => {
     try {
-      const invoice = await storage.getInvoice(req.params.id);
+      const restaurantId = req.session.user!.restaurantId;
+      const invoice = await storage.getInvoice(req.params.id, restaurantId);
       if (!invoice) {
         return res.status(404).json({ error: "Invoice not found" });
       }
@@ -3018,6 +3055,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const row of data as any[]) {
         try {
           await storage.createInventoryItem({
+            restaurantId: req.session.user!.restaurantId,
             name: row.name,
             category: row.category,
             quantity: String(row.quantity),
@@ -3058,6 +3096,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const row of data as any[]) {
         try {
           await storage.createMenuItem({
+            restaurantId: req.session.user!.restaurantId,
             name: row.name,
             category: row.category,
             basePrice: String(row.basePrice),
@@ -3099,6 +3138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const row of data as any[]) {
         try {
           await storage.createRecipe({
+            restaurantId: req.session.user!.restaurantId,
             name: row.name,
             prepTime: row.prepTime,
             cookTime: row.cookTime,
@@ -3139,6 +3179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const row of data as any[]) {
         try {
           await storage.createBranch({
+            restaurantId: req.session.user!.restaurantId,
             name: row.name,
             location: row.location || row.address,
             phone: row.phone,
@@ -3209,7 +3250,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const startDate = new Date(year, month - 1, 1);
       const endDate = new Date(year, month, 0, 23, 59, 59);
 
-      const transactions = await storage.getTransactions(undefined, startDate, endDate);
+      const transactions = await storage.getTransactions({ 
+        restaurantId: user.restaurantId, 
+        dateRange: { start: startDate, end: endDate }
+      });
       
       // Calculate total sales (sum of all transaction totals)
       const totalSales = transactions.reduce((sum, tx) => sum + parseFloat(tx.total), 0);
@@ -3237,13 +3281,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate serial number
       const serialNumber = await storage.getNextVatReportSerialNumber(year, month);
 
+      // Fetch restaurant for company details
+      const restaurant = await storage.getRestaurant(user.restaurantId);
+
       // Generate PDF invoice
       const pdfBuffer = await generateMonthlyVatReport({
         serialNumber,
         reportMonth: month,
         reportYear: year,
-        restaurantName: user.restaurantName || user.username,
-        taxNumber: user.taxNumber || 'N/A',
+        restaurantName: restaurant?.name || user.username,
+        taxNumber: restaurant?.taxNumber || 'N/A',
         totalSales,
         totalSalesBaseAmount,
         totalSalesVat,
@@ -3371,6 +3418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save payment record to database
       const amountSar = payment.amount / 100;
       const moyasarPayment = await storage.createMoyasarPayment({
+        restaurantId: req.session.user?.restaurantId || 'default-restaurant',
         moyasarId: payment.id,
         orderId: orderId || null,
         transactionId: null,
@@ -3491,7 +3539,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // If payment is successful and linked to an order, update order status
         if (payment.status === 'paid' && moyasarPayment.orderId) {
-          await storage.updateOrder(moyasarPayment.orderId, {
+          await storage.updateOrder(moyasarPayment.orderId, moyasarPayment.restaurantId, {
             status: 'paid',
             paymentMethod: 'Moyasar - ' + (payment.source?.company || payment.source?.type || 'Online'),
           });
@@ -3551,6 +3599,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/tickets", async (req, res) => {
     try {
       const ticket = await storage.createSupportTicket({
+        restaurantId: req.session.user?.restaurantId || 'default-restaurant',
         userId: req.body.userId || 'default-user',
         subject: req.body.subject,
         category: req.body.category,
@@ -3624,6 +3673,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const message = await storage.createTicketMessage({
+        restaurantId: req.session.user?.restaurantId || 'default-restaurant',
         ticketId: req.params.ticketId,
         senderId: req.body.senderId || 'default-user',
         senderName: req.body.senderName || 'User',

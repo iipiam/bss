@@ -96,14 +96,18 @@ export const menuItems = pgTable("menu_items", {
   imageUrl: text("image_url"),
 });
 
-export const insertMenuItemSchema = createInsertSchema(menuItems)
+// Base menu item schema (before refinements) - reusable for insert and update
+const baseMenuItemSchema = createInsertSchema(menuItems)
   .omit({ id: true })
   .extend({
     recipeId: z.string().nullable().optional(), // Allow null to clear recipe
     inventoryItemId: z.string().nullable().optional(), // Allow null, for simple items
     portionSize: z.string().optional(), // Portion multiplier (1.0, 0.5, 0.25)
     stockNo: z.string().optional(), // Stock quantity per item
-  })
+  });
+
+// Insert schema with full validations
+export const insertMenuItemSchema = baseMenuItemSchema
   .refine(
     (data) => {
       const discount = parseFloat(data.discount || "0");
@@ -123,7 +127,39 @@ export const insertMenuItemSchema = createInsertSchema(menuItems)
     },
     { message: "Stock quantity is required for non-recipe items", path: ["stockNo"] }
   );
+
+// Update schema - partial with update-safe validations
+export const updateMenuItemSchema = baseMenuItemSchema.partial().superRefine((data, ctx) => {
+  // Only validate discount if it's being updated
+  if (data.discount !== undefined) {
+    const discount = parseFloat(data.discount || "0");
+    if (discount < 0 || discount > 100) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Discount must be between 0 and 100",
+        path: ["discount"],
+      });
+    }
+  }
+  
+  // Only validate stockNo if inventory/recipe fields are being updated
+  if (data.inventoryItemId !== undefined || data.recipeId !== undefined || data.stockNo !== undefined) {
+    const hasInventoryItem = data.inventoryItemId && data.inventoryItemId !== "none";
+    const hasRecipe = data.recipeId && data.recipeId !== "none";
+    if (hasInventoryItem && !hasRecipe) {
+      if (!data.stockNo || data.stockNo.trim() === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Stock quantity is required for non-recipe items",
+          path: ["stockNo"],
+        });
+      }
+    }
+  }
+});
+
 export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
+export type UpdateMenuItem = z.infer<typeof updateMenuItemSchema>;
 export type MenuItem = typeof menuItems.$inferSelect;
 
 // Add-ons
