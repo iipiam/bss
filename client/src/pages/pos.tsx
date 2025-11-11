@@ -111,12 +111,7 @@ export default function POS() {
 
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
-      const response = await apiRequest("POST", "/api/orders", orderData);
-      if (response.status === 409) {
-        const error = await response.json();
-        throw new Error(error.message || "Insufficient inventory");
-      }
-      return response.json();
+      return await apiRequest("POST", "/api/orders", orderData);
     },
     onSuccess: async (order: any) => {
       // Create transaction record
