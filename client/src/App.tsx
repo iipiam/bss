@@ -80,41 +80,57 @@ import type { User } from "@shared/schema";
 import kinzhalLogo from "@assets/IMG_8731_1762870212105.jpeg";
 
 function Router() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/inventory" component={Inventory} />
-      <Route path="/menu" component={Menu} />
-      <Route path="/recipes" component={Recipes} />
-      <Route path="/customers" component={Customers} />
-      <Route path="/sales" component={Sales} />
-      <Route path="/reports" component={Reports} />
-      <Route path="/forecasting" component={Forecasting} />
-      <Route path="/analysis" component={Analysis} />
-      <Route path="/profitability" component={Profitability} />
-      <Route path="/financial" component={Financial} />
-      <Route path="/invoices" component={Invoices} />
-      <Route path="/vat-reports" component={VatReports} />
-      <Route path="/bills" component={Bills} />
-      <Route path="/pos" component={POS} />
-      <Route path="/branches" component={Branches} />
-      <Route path="/orders" component={Orders} />
-      <Route path="/kitchen" component={Kitchen} />
-      <Route path="/procurement" component={Procurement} />
-      <Route path="/settings" component={SettingsPage} />
-      <Route path="/employees" component={Employees} />
-      <Route path="/password-manager" component={PasswordManager} />
-      <Route path="/tutorial" component={Tutorial} />
-      <Route path="/shop" component={Shop} />
-      <Route path="/profile" component={Profile} />
-      <Route path="/delivery-apps" component={DeliveryApps} />
-      <Route path="/delivery-app-profitability" component={DeliveryAppProfitability} />
-      <Route path="/sales-comparison" component={SalesComparison} />
-      <Route path="/investors" component={Investors} />
-      <Route path="/support" component={Support} />
-      <Route path="/support/:id" component={SupportDetail} />
-      <Route path="/payment-test" component={PaymentTest} />
-      <Route component={NotFound} />
+      {isAdmin ? (
+        // IT Staff can only access support routes
+        <>
+          <Route path="/" component={Support} />
+          <Route path="/support" component={Support} />
+          <Route path="/support/:id" component={SupportDetail} />
+          <Route component={Support} />
+        </>
+      ) : (
+        // Regular users have full access
+        <>
+          <Route path="/" component={Dashboard} />
+          <Route path="/inventory" component={Inventory} />
+          <Route path="/menu" component={Menu} />
+          <Route path="/recipes" component={Recipes} />
+          <Route path="/customers" component={Customers} />
+          <Route path="/sales" component={Sales} />
+          <Route path="/reports" component={Reports} />
+          <Route path="/forecasting" component={Forecasting} />
+          <Route path="/analysis" component={Analysis} />
+          <Route path="/profitability" component={Profitability} />
+          <Route path="/financial" component={Financial} />
+          <Route path="/invoices" component={Invoices} />
+          <Route path="/vat-reports" component={VatReports} />
+          <Route path="/bills" component={Bills} />
+          <Route path="/pos" component={POS} />
+          <Route path="/branches" component={Branches} />
+          <Route path="/orders" component={Orders} />
+          <Route path="/kitchen" component={Kitchen} />
+          <Route path="/procurement" component={Procurement} />
+          <Route path="/settings" component={SettingsPage} />
+          <Route path="/employees" component={Employees} />
+          <Route path="/password-manager" component={PasswordManager} />
+          <Route path="/tutorial" component={Tutorial} />
+          <Route path="/shop" component={Shop} />
+          <Route path="/profile" component={Profile} />
+          <Route path="/delivery-apps" component={DeliveryApps} />
+          <Route path="/delivery-app-profitability" component={DeliveryAppProfitability} />
+          <Route path="/sales-comparison" component={SalesComparison} />
+          <Route path="/investors" component={Investors} />
+          <Route path="/support" component={Support} />
+          <Route path="/support/:id" component={SupportDetail} />
+          <Route path="/payment-test" component={PaymentTest} />
+          <Route component={NotFound} />
+        </>
+      )}
     </Switch>
   );
 }
@@ -224,7 +240,7 @@ function AppContent() {
             <header className="flex items-center justify-between p-4 border-b h-16 flex-shrink-0">
               <div className="flex items-center gap-4">
                 <SidebarTrigger data-testid="button-sidebar-toggle" />
-                <BranchSelector />
+                {user?.role !== "admin" && <BranchSelector />}
               </div>
               <div className="flex items-center gap-2">
                 <ThemeToggle />
