@@ -2,11 +2,12 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { Language, translations, Translations } from '@/i18n/translations';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useAuth } from '@/lib/auth';
 import type { Settings } from '@shared/schema';
 
 interface LanguageContextType {
   language: Language;
-  setLanguage: (lang: Language) => Promise<void>;
+  setLanguage: (lang: Language) => void;
   t: Translations;
   isRTL: boolean;
   isUpdating: boolean;
@@ -23,20 +24,32 @@ const languageToLocaleCode: Record<Language, string> = {
   Bengali: 'bn'
 };
 
+const LANGUAGE_STORAGE_KEY = 'restopos-language';
+
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('English');
-
-  // Fetch settings to get the language preference
-  const { data: settings } = useQuery<Settings>({
-    queryKey: ['/api/settings'],
+  const { user } = useAuth();
+  
+  // Initialize language from localStorage or default to English
+  const [language, setLanguageState] = useState<Language>(() => {
+    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    return (stored as Language) || 'English';
   });
 
-  // Update language when settings are loaded
+  // Only fetch settings when user is authenticated
+  const { data: settings } = useQuery<Settings>({
+    queryKey: ['/api/settings'],
+    enabled: !!user,
+    retry: false,
+  });
+
+  // Sync language from backend settings when user logs in
   useEffect(() => {
     if (settings?.language) {
-      setLanguageState(settings.language as Language);
+      const backendLanguage = settings.language as Language;
+      setLanguageState(backendLanguage);
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, backendLanguage);
     }
   }, [settings]);
 
@@ -56,15 +69,22 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const setLanguage = async (newLanguage: Language) => {
+  const setLanguage = (newLanguage: Language) => {
     const previousLanguage = language;
+    
+    // Always update localStorage immediately
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, newLanguage);
     setLanguageState(newLanguage);
-    try {
-      await updateLanguageMutation.mutateAsync(newLanguage);
-    } catch (error) {
-      // Rollback to previous language on error
-      setLanguageState(previousLanguage);
-      throw error;
+    
+    // Only save to backend if authenticated
+    if (user) {
+      updateLanguageMutation.mutate(newLanguage, {
+        onError: () => {
+          // Rollback on error
+          localStorage.setItem(LANGUAGE_STORAGE_KEY, previousLanguage);
+          setLanguageState(previousLanguage);
+        }
+      });
     }
   };
 
