@@ -85,9 +85,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/branches/:id", requireAuth, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
-    const branch = await storage.getBranch(req.params.id);
-    // Verify branch belongs to user's restaurant
-    if (!branch || branch.restaurantId !== restaurantId) {
+    const branch = await storage.getBranch(req.params.id, restaurantId);
+    if (!branch) {
       return res.status(404).json({ error: "Branch not found" });
     }
     res.json(branch);
@@ -107,13 +106,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/branches/:id", requireAuth, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
-      const existing = await storage.getBranch(req.params.id);
-      // Verify branch belongs to user's restaurant
-      if (!existing || existing.restaurantId !== restaurantId) {
+      const data = sanitizePatchBody(req.body, insertBranchSchema.partial());
+      // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
+      const { restaurantId: _, ...safeData } = data;
+      const branch = await storage.updateBranch(req.params.id, restaurantId, safeData);
+      if (!branch) {
         return res.status(404).json({ error: "Branch not found" });
       }
-      const data = sanitizePatchBody(req.body, insertBranchSchema.partial());
-      const branch = await storage.updateBranch(req.params.id, data);
       res.json(branch);
     } catch (error) {
       res.status(400).json({ error: "Invalid branch data" });
@@ -122,12 +121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/branches/:id", requireAuth, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
-    const existing = await storage.getBranch(req.params.id);
-    // Verify branch belongs to user's restaurant
-    if (!existing || existing.restaurantId !== restaurantId) {
-      return res.status(404).json({ error: "Branch not found" });
-    }
-    const success = await storage.deleteBranch(req.params.id);
+    const success = await storage.deleteBranch(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Branch not found" });
     }
@@ -160,14 +154,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!Array.isArray(updates)) {
         return res.status(400).json({ error: "Invalid updates format" });
       }
-      // Verify all items belong to user's restaurant before updating
-      for (const update of updates) {
-        const item = await storage.getInventoryItem(update.id);
-        if (!item || item.restaurantId !== restaurantId) {
-          return res.status(403).json({ error: "Unauthorized" });
-        }
+      
+      // SECURITY: Verify all inventory IDs belong to this restaurant before updating
+      // This prevents cross-tenant metadata leak via probing
+      const itemIds = updates.map((u: any) => u.id);
+      const allItems = await storage.getInventoryItems(restaurantId);
+      const validIds = new Set(allItems.map(i => i.id));
+      
+      const invalidIds = itemIds.filter(id => !validIds.has(id));
+      if (invalidIds.length > 0) {
+        return res.status(403).json({ error: "Some inventory IDs do not belong to your restaurant" });
       }
-      await storage.updateInventoryItemsSortOrder(updates);
+      
+      await storage.updateInventoryItemsSortOrder(restaurantId, updates);
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -176,8 +175,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/inventory/:id", requireAuth, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
-    const item = await storage.getInventoryItem(req.params.id);
-    if (!item || item.restaurantId !== restaurantId) {
+    const item = await storage.getInventoryItem(req.params.id, restaurantId);
+    if (!item) {
       return res.status(404).json({ error: "Item not found" });
     }
     res.json(item);
@@ -186,12 +185,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/inventory/:id", requireAuth, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
-      const existing = await storage.getInventoryItem(req.params.id);
-      if (!existing || existing.restaurantId !== restaurantId) {
+      const data = sanitizePatchBody(req.body, insertInventoryItemSchema.partial());
+      // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
+      const { restaurantId: _, ...safeData } = data;
+      const item = await storage.updateInventoryItem(req.params.id, restaurantId, safeData);
+      if (!item) {
         return res.status(404).json({ error: "Item not found" });
       }
-      const data = sanitizePatchBody(req.body, insertInventoryItemSchema.partial());
-      const item = await storage.updateInventoryItem(req.params.id, data);
       res.json(item);
     } catch (error) {
       res.status(400).json({ error: "Invalid inventory data" });
@@ -200,11 +200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/inventory/:id", requireAuth, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
-    const existing = await storage.getInventoryItem(req.params.id);
-    if (!existing || existing.restaurantId !== restaurantId) {
-      return res.status(404).json({ error: "Item not found" });
-    }
-    const success = await storage.deleteInventoryItem(req.params.id);
+    const success = await storage.deleteInventoryItem(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Item not found" });
     }
@@ -228,8 +224,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/menu/:id", requireAuth, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
-    const item = await storage.getMenuItem(req.params.id);
-    if (!item || item.restaurantId !== restaurantId) {
+    const item = await storage.getMenuItem(req.params.id, restaurantId);
+    if (!item) {
       return res.status(404).json({ error: "Menu item not found" });
     }
     res.json(item);
@@ -250,12 +246,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/menu/:id", requireAuth, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
-      const existing = await storage.getMenuItem(req.params.id);
-      if (!existing || existing.restaurantId !== restaurantId) {
+      const data = sanitizePatchBody(req.body, updateMenuItemSchema);
+      // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
+      const { restaurantId: _, ...safeData } = data;
+      const item = await storage.updateMenuItem(req.params.id, restaurantId, safeData);
+      if (!item) {
         return res.status(404).json({ error: "Menu item not found" });
       }
-      const data = sanitizePatchBody(req.body, updateMenuItemSchema);
-      const item = await storage.updateMenuItem(req.params.id, data);
       res.json(item);
     } catch (error) {
       res.status(400).json({ error: "Invalid menu data" });
@@ -264,11 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/menu/:id", requireAuth, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
-    const existing = await storage.getMenuItem(req.params.id);
-    if (!existing || existing.restaurantId !== restaurantId) {
-      return res.status(404).json({ error: "Menu item not found" });
-    }
-    const success = await storage.deleteMenuItem(req.params.id);
+    const success = await storage.deleteMenuItem(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Menu item not found" });
     }
@@ -285,8 +278,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/addons/:id", requireAuth, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
-    const addon = await storage.getAddon(req.params.id);
-    if (!addon || addon.restaurantId !== restaurantId) {
+    const addon = await storage.getAddon(req.params.id, restaurantId);
+    if (!addon) {
       return res.status(404).json({ error: "Add-on not found" });
     }
     res.json(addon);
@@ -306,12 +299,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/addons/:id", requireAuth, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
-      const existing = await storage.getAddon(req.params.id);
-      if (!existing || existing.restaurantId !== restaurantId) {
+      const data = sanitizePatchBody(req.body, insertAddonSchema.partial());
+      // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
+      const { restaurantId: _, ...safeData } = data;
+      const addon = await storage.updateAddon(req.params.id, restaurantId, safeData);
+      if (!addon) {
         return res.status(404).json({ error: "Add-on not found" });
       }
-      const data = sanitizePatchBody(req.body, insertAddonSchema.partial());
-      const addon = await storage.updateAddon(req.params.id, data);
       res.json(addon);
     } catch (error) {
       res.status(400).json({ error: "Invalid add-on data" });
@@ -320,11 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/addons/:id", requireAuth, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
-    const existing = await storage.getAddon(req.params.id);
-    if (!existing || existing.restaurantId !== restaurantId) {
-      return res.status(404).json({ error: "Add-on not found" });
-    }
-    const success = await storage.deleteAddon(req.params.id);
+    const success = await storage.deleteAddon(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Add-on not found" });
     }
@@ -334,14 +324,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/addons/sort-order", requireAuth, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
-      // Verify all addons belong to user's restaurant
-      for (const update of req.body) {
-        const addon = await storage.getAddon(update.id);
-        if (!addon || addon.restaurantId !== restaurantId) {
-          return res.status(403).json({ error: "Unauthorized" });
-        }
+      if (!Array.isArray(req.body)) {
+        return res.status(400).json({ error: "Invalid updates format" });
       }
-      await storage.updateAddonsSortOrder(req.body);
+      
+      // SECURITY: Verify all addon IDs belong to this restaurant before updating
+      // This prevents cross-tenant metadata leak via probing
+      const addonIds = req.body.map((u: any) => u.id);
+      const allAddons = await storage.getAddons(restaurantId);
+      const validIds = new Set(allAddons.map(a => a.id));
+      
+      const invalidIds = addonIds.filter(id => !validIds.has(id));
+      if (invalidIds.length > 0) {
+        return res.status(403).json({ error: "Some addon IDs do not belong to your restaurant" });
+      }
+      
+      await storage.updateAddonsSortOrder(restaurantId, req.body);
       res.status(204).send();
     } catch (error) {
       res.status(400).json({ error: "Invalid sort order data" });
@@ -857,7 +855,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Broadcast order created notification
-        const branch = data.branchId ? await storage.getBranch(data.branchId) : null;
+        const branch = data.branchId ? await storage.getBranch(data.branchId, data.restaurantId) : null;
         const itemsSummary = orderItems.length > 0 
           ? orderItems.slice(0, 3).map(item => item.name).join(', ') + (orderItems.length > 3 ? '...' : '')
           : 'No items';
@@ -904,7 +902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Broadcast order status update notification
-      const branch = order.branchId ? await storage.getBranch(order.branchId) : null;
+      const branch = order.branchId ? await storage.getBranch(order.branchId, restaurantId) : null;
       const items = Array.isArray(order.items) ? order.items : [];
       const itemsSummary = items.length > 0 
         ? items.slice(0, 3).map((item: any) => item.name).join(', ') + (items.length > 3 ? '...' : '')
@@ -1254,7 +1252,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const settings = await storage.getSettings(restaurantId);
-      const branch = order.branchId ? await storage.getBranch(order.branchId) : null;
+      const branch = order.branchId ? await storage.getBranch(order.branchId, restaurantId) : null;
 
       const invoiceNumber = `INV-${order.orderNumber}`;
 
@@ -2349,7 +2347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const settings = await storage.getSettings(restaurantId);
-      const branch = order.branchId ? await storage.getBranch(order.branchId) : null;
+      const branch = order.branchId ? await storage.getBranch(order.branchId, restaurantId) : null;
 
       const invoiceNumber = `INV-${order.orderNumber}`;
 

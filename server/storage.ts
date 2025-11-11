@@ -82,36 +82,36 @@ export interface IStorage {
   getRestaurant(id: string): Promise<Restaurant | undefined>;
   updateRestaurant(id: string, restaurant: Partial<InsertRestaurant>): Promise<Restaurant | undefined>;
 
-  // Branches (MULTI-TENANT: requires restaurantId)
+  // Branches (MULTI-TENANT: requires restaurantId for all operations)
   getBranches(restaurantId: string): Promise<Branch[]>;
-  getBranch(id: string): Promise<Branch | undefined>;
+  getBranch(id: string, restaurantId: string): Promise<Branch | undefined>;
   createBranch(branch: InsertBranch): Promise<Branch>;
-  updateBranch(id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined>;
-  deleteBranch(id: string): Promise<boolean>;
+  updateBranch(id: string, restaurantId: string, branch: Partial<InsertBranch>): Promise<Branch | undefined>;
+  deleteBranch(id: string, restaurantId: string): Promise<boolean>;
 
-  // Inventory (MULTI-TENANT: requires restaurantId)
+  // Inventory (MULTI-TENANT: requires restaurantId for all operations)
   getInventoryItems(restaurantId: string, branchId?: string): Promise<InventoryItem[]>;
-  getInventoryItem(id: string): Promise<InventoryItem | undefined>;
+  getInventoryItem(id: string, restaurantId: string): Promise<InventoryItem | undefined>;
   createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem>;
-  updateInventoryItem(id: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined>;
-  updateInventoryItemsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
-  deleteInventoryItem(id: string): Promise<boolean>;
+  updateInventoryItem(id: string, restaurantId: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined>;
+  updateInventoryItemsSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void>;
+  deleteInventoryItem(id: string, restaurantId: string): Promise<boolean>;
 
-  // Menu (MULTI-TENANT: requires restaurantId)
+  // Menu (MULTI-TENANT: requires restaurantId for all operations)
   getMenuItems(restaurantId: string): Promise<MenuItem[]>;
-  getMenuItem(id: string): Promise<MenuItem | undefined>;
+  getMenuItem(id: string, restaurantId: string): Promise<MenuItem | undefined>;
   createMenuItem(item: InsertMenuItem): Promise<MenuItem>;
-  updateMenuItem(id: string, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined>;
-  deleteMenuItem(id: string): Promise<boolean>;
+  updateMenuItem(id: string, restaurantId: string, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined>;
+  deleteMenuItem(id: string, restaurantId: string): Promise<boolean>;
   getMenuItemsStock(restaurantId: string, branchId?: string): Promise<Record<string, number>>;
 
-  // Add-ons (MULTI-TENANT: requires restaurantId)
+  // Add-ons (MULTI-TENANT: requires restaurantId for all operations)
   getAddons(restaurantId: string, menuItemId?: string): Promise<Addon[]>;
-  getAddon(id: string): Promise<Addon | undefined>;
+  getAddon(id: string, restaurantId: string): Promise<Addon | undefined>;
   createAddon(addon: InsertAddon): Promise<Addon>;
-  updateAddon(id: string, addon: Partial<InsertAddon>): Promise<Addon | undefined>;
-  deleteAddon(id: string): Promise<boolean>;
-  updateAddonsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
+  updateAddon(id: string, restaurantId: string, addon: Partial<InsertAddon>): Promise<Addon | undefined>;
+  deleteAddon(id: string, restaurantId: string): Promise<boolean>;
+  updateAddonsSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void>;
 
   // Recipes (MULTI-TENANT: requires restaurantId for all operations)
   getRecipes(restaurantId: string): Promise<Recipe[]>;
@@ -292,13 +292,14 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  // Branches (MULTI-TENANT: filters by restaurantId)
+  // Branches (MULTI-TENANT: SQL-level restaurantId filtering)
   async getBranches(restaurantId: string): Promise<Branch[]> {
     return await db.select().from(branches).where(eq(branches.restaurantId, restaurantId));
   }
 
-  async getBranch(id: string): Promise<Branch | undefined> {
-    const [branch] = await db.select().from(branches).where(eq(branches.id, id));
+  async getBranch(id: string, restaurantId: string): Promise<Branch | undefined> {
+    const [branch] = await db.select().from(branches)
+      .where(and(eq(branches.id, id), eq(branches.restaurantId, restaurantId)));
     return branch;
   }
 
@@ -307,19 +308,24 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateBranch(id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined> {
+  async updateBranch(id: string, restaurantId: string, branch: Partial<InsertBranch>): Promise<Branch | undefined> {
+    // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
+    const { restaurantId: _, ...safeData } = branch;
     const updateData = Object.fromEntries(
-      Object.entries(branch).filter(([_, value]) => value !== undefined)
+      Object.entries(safeData).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getBranch(id);
+      return this.getBranch(id, restaurantId);
     }
-    const [updated] = await db.update(branches).set(updateData).where(eq(branches.id, id)).returning();
+    const [updated] = await db.update(branches).set(updateData)
+      .where(and(eq(branches.id, id), eq(branches.restaurantId, restaurantId)))
+      .returning();
     return updated;
   }
 
-  async deleteBranch(id: string): Promise<boolean> {
-    const result = await db.delete(branches).where(eq(branches.id, id));
+  async deleteBranch(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(branches)
+      .where(and(eq(branches.id, id), eq(branches.restaurantId, restaurantId)));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
@@ -333,8 +339,9 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(inventoryItems).where(eq(inventoryItems.restaurantId, restaurantId));
   }
 
-  async getInventoryItem(id: string): Promise<InventoryItem | undefined> {
-    const [item] = await db.select().from(inventoryItems).where(eq(inventoryItems.id, id));
+  async getInventoryItem(id: string, restaurantId: string): Promise<InventoryItem | undefined> {
+    const [item] = await db.select().from(inventoryItems)
+      .where(and(eq(inventoryItems.id, id), eq(inventoryItems.restaurantId, restaurantId)));
     return item;
   }
 
@@ -343,35 +350,42 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateInventoryItem(id: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined> {
+  async updateInventoryItem(id: string, restaurantId: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined> {
+    // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
+    const { restaurantId: _, ...safeData } = item;
     const updateData = Object.fromEntries(
-      Object.entries(item).filter(([_, value]) => value !== undefined)
+      Object.entries(safeData).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getInventoryItem(id);
+      return this.getInventoryItem(id, restaurantId);
     }
-    const [updated] = await db.update(inventoryItems).set(updateData).where(eq(inventoryItems.id, id)).returning();
+    const [updated] = await db.update(inventoryItems).set(updateData)
+      .where(and(eq(inventoryItems.id, id), eq(inventoryItems.restaurantId, restaurantId)))
+      .returning();
     return updated;
   }
 
-  async updateInventoryItemsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void> {
+  async updateInventoryItemsSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void> {
     for (const update of updates) {
-      await db.update(inventoryItems).set({ sortOrder: update.sortOrder }).where(eq(inventoryItems.id, update.id));
+      await db.update(inventoryItems).set({ sortOrder: update.sortOrder })
+        .where(and(eq(inventoryItems.id, update.id), eq(inventoryItems.restaurantId, restaurantId)));
     }
   }
 
-  async deleteInventoryItem(id: string): Promise<boolean> {
-    const result = await db.delete(inventoryItems).where(eq(inventoryItems.id, id));
+  async deleteInventoryItem(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(inventoryItems)
+      .where(and(eq(inventoryItems.id, id), eq(inventoryItems.restaurantId, restaurantId)));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
-  // Menu (MULTI-TENANT: filters by restaurantId)
+  // Menu (MULTI-TENANT: SQL-level restaurantId filtering)
   async getMenuItems(restaurantId: string): Promise<MenuItem[]> {
     return await db.select().from(menuItems).where(eq(menuItems.restaurantId, restaurantId));
   }
 
-  async getMenuItem(id: string): Promise<MenuItem | undefined> {
-    const [item] = await db.select().from(menuItems).where(eq(menuItems.id, id));
+  async getMenuItem(id: string, restaurantId: string): Promise<MenuItem | undefined> {
+    const [item] = await db.select().from(menuItems)
+      .where(and(eq(menuItems.id, id), eq(menuItems.restaurantId, restaurantId)));
     return item;
   }
 
@@ -380,19 +394,24 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateMenuItem(id: string, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined> {
+  async updateMenuItem(id: string, restaurantId: string, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined> {
+    // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
+    const { restaurantId: _, ...safeData } = item;
     const updateData = Object.fromEntries(
-      Object.entries(item).filter(([_, value]) => value !== undefined)
+      Object.entries(safeData).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getMenuItem(id);
+      return this.getMenuItem(id, restaurantId);
     }
-    const [updated] = await db.update(menuItems).set(updateData).where(eq(menuItems.id, id)).returning();
+    const [updated] = await db.update(menuItems).set(updateData)
+      .where(and(eq(menuItems.id, id), eq(menuItems.restaurantId, restaurantId)))
+      .returning();
     return updated;
   }
 
-  async deleteMenuItem(id: string): Promise<boolean> {
-    const result = await db.delete(menuItems).where(eq(menuItems.id, id));
+  async deleteMenuItem(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(menuItems)
+      .where(and(eq(menuItems.id, id), eq(menuItems.restaurantId, restaurantId)));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
@@ -447,7 +466,7 @@ export class DatabaseStorage implements IStorage {
     return stock;
   }
 
-  // Add-ons (MULTI-TENANT: filters by restaurantId)
+  // Add-ons (MULTI-TENANT: SQL-level restaurantId filtering)
   async getAddons(restaurantId: string, menuItemId?: string): Promise<Addon[]> {
     if (menuItemId) {
       // Return add-ons where menuItemIds is null (available for all items)
@@ -466,8 +485,9 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(addons).where(eq(addons.restaurantId, restaurantId));
   }
 
-  async getAddon(id: string): Promise<Addon | undefined> {
-    const [addon] = await db.select().from(addons).where(eq(addons.id, id));
+  async getAddon(id: string, restaurantId: string): Promise<Addon | undefined> {
+    const [addon] = await db.select().from(addons)
+      .where(and(eq(addons.id, id), eq(addons.restaurantId, restaurantId)));
     return addon;
   }
 
@@ -476,25 +496,31 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateAddon(id: string, addon: Partial<InsertAddon>): Promise<Addon | undefined> {
+  async updateAddon(id: string, restaurantId: string, addon: Partial<InsertAddon>): Promise<Addon | undefined> {
+    // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
+    const { restaurantId: _, ...safeData } = addon;
     const updateData = Object.fromEntries(
-      Object.entries(addon).filter(([_, value]) => value !== undefined)
+      Object.entries(safeData).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getAddon(id);
+      return this.getAddon(id, restaurantId);
     }
-    const [updated] = await db.update(addons).set(updateData).where(eq(addons.id, id)).returning();
+    const [updated] = await db.update(addons).set(updateData)
+      .where(and(eq(addons.id, id), eq(addons.restaurantId, restaurantId)))
+      .returning();
     return updated;
   }
 
-  async deleteAddon(id: string): Promise<boolean> {
-    const result = await db.delete(addons).where(eq(addons.id, id));
+  async deleteAddon(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(addons)
+      .where(and(eq(addons.id, id), eq(addons.restaurantId, restaurantId)));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
-  async updateAddonsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void> {
+  async updateAddonsSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void> {
     for (const update of updates) {
-      await db.update(addons).set({ sortOrder: update.sortOrder }).where(eq(addons.id, update.id));
+      await db.update(addons).set({ sortOrder: update.sortOrder })
+        .where(and(eq(addons.id, update.id), eq(addons.restaurantId, restaurantId)));
     }
   }
 
