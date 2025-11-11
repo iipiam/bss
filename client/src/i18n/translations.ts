@@ -215,6 +215,46 @@ export interface Translations {
   deviceLayoutNote: string;
   devicePreferenceUpdated: string;
   
+  // Menu Item Management
+  menuItemCreated: string;
+  menuItemCreatedDesc: string;
+  menuItemUpdated: string;
+  menuItemUpdatedDesc: string;
+  menuItemDeleted: string;
+  menuItemDeletedDesc: string;
+  failedToCreateMenuItem: string;
+  failedToUpdateMenuItem: string;
+  failedToDeleteMenuItem: string;
+  deleteMenuItemTitle: string;
+  deleteMenuItemConfirm: string;
+  itemNameRequired: string;
+  categoryRequired: string;
+  priceRequired: string;
+  descriptionRequired: string;
+  discountRange: string;
+  stockNoRequired: string;
+  itemDescription: string;
+  itemImage: string;
+  itemImageHelper: string;
+  selectRecipe: string;
+  noRecipe: string;
+  portionSize: string;
+  selectPortionSize: string;
+  wholePortion: string;
+  threeQuarterPortion: string;
+  halfPortion: string;
+  quarterPortion: string;
+  stockNumber: string;
+  priceInclVAT: string;
+  discountPercent: string;
+  availabilityStatus: string;
+  editMenuItem: string;
+  addMenuItem: string;
+  updateMenuItemDesc: string;
+  createMenuItemDesc: string;
+  updateMenuItem: string;
+  createMenuItem: string;
+  
   // Placeholders
   enterRestaurantName: string;
   enterVatNumber: string;
@@ -899,6 +939,46 @@ export const translations: Record<Language, Translations> = {
     deviceLayoutNote: 'The app layout will automatically adjust to match your selected device for the best experience.',
     devicePreferenceUpdated: 'Device preference updated to',
     
+    // Menu Item Management
+    menuItemCreated: 'Menu Item Created',
+    menuItemCreatedDesc: 'The menu item has been added successfully',
+    menuItemUpdated: 'Menu Item Updated',
+    menuItemUpdatedDesc: 'The menu item has been updated successfully',
+    menuItemDeleted: 'Menu Item Deleted',
+    menuItemDeletedDesc: 'The menu item has been removed successfully',
+    failedToCreateMenuItem: 'Failed to create menu item',
+    failedToUpdateMenuItem: 'Failed to update menu item',
+    failedToDeleteMenuItem: 'Failed to delete menu item',
+    deleteMenuItemTitle: 'Delete Menu Item',
+    deleteMenuItemConfirm: 'Are you sure you want to delete this item? This action cannot be undone.',
+    itemNameRequired: 'Item name is required',
+    categoryRequired: 'Category is required',
+    priceRequired: 'Price is required',
+    descriptionRequired: 'Description is required',
+    discountRange: 'Discount must be between 0 and 100',
+    stockNoRequired: 'Stock number is required when no recipe is selected',
+    itemDescription: 'Item Description',
+    itemImage: 'Item Image (Optional)',
+    itemImageHelper: 'Upload an image for this menu item (max 5MB)',
+    selectRecipe: 'Select a recipe',
+    noRecipe: 'No Recipe',
+    portionSize: 'Portion Size',
+    selectPortionSize: 'Select portion size',
+    wholePortion: 'Whole (1x)',
+    threeQuarterPortion: '3/4 Portion (0.75x)',
+    halfPortion: '1/2 Portion (0.5x)',
+    quarterPortion: '1/4 Portion (0.25x)',
+    stockNumber: 'Stock Number',
+    priceInclVAT: 'Price (SAR, incl. VAT)',
+    discountPercent: 'Discount %',
+    availabilityStatus: 'Availability status has been changed',
+    editMenuItem: 'Edit Menu Item',
+    addMenuItem: 'Add Menu Item',
+    updateMenuItemDesc: 'Update the menu item details',
+    createMenuItemDesc: 'Create a new item for your menu with VAT-inclusive pricing',
+    updateMenuItem: 'Update Menu Item',
+    createMenuItem: 'Create Menu Item',
+    
     // Placeholders
     enterRestaurantName: 'Enter restaurant name',
     enterVatNumber: 'Enter VAT number',
@@ -1581,6 +1661,46 @@ export const translations: Record<Language, Translations> = {
     iphoneDesc: 'تخطيط محمول مدمج للهواتف الذكية',
     deviceLayoutNote: 'سيتم ضبط تخطيط التطبيق تلقائيًا ليتناسب مع جهازك المحدد للحصول على أفضل تجربة.',
     devicePreferenceUpdated: 'تم تحديث تفضيل الجهاز إلى',
+    
+    // Menu Item Management
+    menuItemCreated: 'تم إنشاء عنصر القائمة',
+    menuItemCreatedDesc: 'تمت إضافة عنصر القائمة بنجاح',
+    menuItemUpdated: 'تم تحديث عنصر القائمة',
+    menuItemUpdatedDesc: 'تم تحديث عنصر القائمة بنجاح',
+    menuItemDeleted: 'تم حذف عنصر القائمة',
+    menuItemDeletedDesc: 'تمت إزالة عنصر القائمة بنجاح',
+    failedToCreateMenuItem: 'فشل إنشاء عنصر القائمة',
+    failedToUpdateMenuItem: 'فشل تحديث عنصر القائمة',
+    failedToDeleteMenuItem: 'فشل حذف عنصر القائمة',
+    deleteMenuItemTitle: 'حذف عنصر القائمة',
+    deleteMenuItemConfirm: 'هل أنت متأكد أنك تريد حذف هذا العنصر؟ لا يمكن التراجع عن هذا الإجراء.',
+    itemNameRequired: 'اسم العنصر مطلوب',
+    categoryRequired: 'الفئة مطلوبة',
+    priceRequired: 'السعر مطلوب',
+    descriptionRequired: 'الوصف مطلوب',
+    discountRange: 'يجب أن يكون الخصم بين 0 و 100',
+    stockNoRequired: 'رقم المخزون مطلوب عندما لا يتم تحديد وصفة',
+    itemDescription: 'وصف العنصر',
+    itemImage: 'صورة العنصر (اختياري)',
+    itemImageHelper: 'قم بتحميل صورة لعنصر القائمة هذا (الحد الأقصى 5 ميجابايت)',
+    selectRecipe: 'حدد وصفة',
+    noRecipe: 'لا توجد وصفة',
+    portionSize: 'حجم الحصة',
+    selectPortionSize: 'حدد حجم الحصة',
+    wholePortion: 'كامل (1x)',
+    threeQuarterPortion: '3/4 حصة (0.75x)',
+    halfPortion: '1/2 حصة (0.5x)',
+    quarterPortion: '1/4 حصة (0.25x)',
+    stockNumber: 'رقم المخزون',
+    priceInclVAT: 'السعر (ريال سعودي، شامل ضريبة القيمة المضافة)',
+    discountPercent: 'نسبة الخصم %',
+    availabilityStatus: 'تم تغيير حالة التوفر',
+    editMenuItem: 'تحرير عنصر القائمة',
+    addMenuItem: 'إضافة عنصر القائمة',
+    updateMenuItemDesc: 'تحديث تفاصيل عنصر القائمة',
+    createMenuItemDesc: 'إنشاء عنصر جديد للقائمة بأسعار شاملة لضريبة القيمة المضافة',
+    updateMenuItem: 'تحديث عنصر القائمة',
+    createMenuItem: 'إنشاء عنصر القائمة',
     
     // Placeholders
     enterRestaurantName: 'أدخل اسم المطعم',
@@ -2265,6 +2385,46 @@ export const translations: Record<Language, Translations> = {
     deviceLayoutNote: '应用程序布局将自动调整以匹配您选择的设备，以获得最佳体验。',
     devicePreferenceUpdated: '设备偏好已更新为',
     
+    // Menu Item Management
+    menuItemCreated: '菜单项已创建',
+    menuItemCreatedDesc: '菜单项已成功添加',
+    menuItemUpdated: '菜单项已更新',
+    menuItemUpdatedDesc: '菜单项已成功更新',
+    menuItemDeleted: '菜单项已删除',
+    menuItemDeletedDesc: '菜单项已成功移除',
+    failedToCreateMenuItem: '创建菜单项失败',
+    failedToUpdateMenuItem: '更新菜单项失败',
+    failedToDeleteMenuItem: '删除菜单项失败',
+    deleteMenuItemTitle: '删除菜单项',
+    deleteMenuItemConfirm: '您确定要删除此项吗？此操作无法撤消。',
+    itemNameRequired: '项目名称为必填项',
+    categoryRequired: '类别为必填项',
+    priceRequired: '价格为必填项',
+    descriptionRequired: '描述为必填项',
+    discountRange: '折扣必须在 0 到 100 之间',
+    stockNoRequired: '未选择配方时，库存编号为必填项',
+    itemDescription: '项目描述',
+    itemImage: '项目图片（可选）',
+    itemImageHelper: '为此菜单项上传图片（最大 5MB）',
+    selectRecipe: '选择配方',
+    noRecipe: '无配方',
+    portionSize: '份量大小',
+    selectPortionSize: '选择份量大小',
+    wholePortion: '全份 (1x)',
+    threeQuarterPortion: '3/4 份 (0.75x)',
+    halfPortion: '1/2 份 (0.5x)',
+    quarterPortion: '1/4 份 (0.25x)',
+    stockNumber: '库存编号',
+    priceInclVAT: '价格（SAR，含增值税）',
+    discountPercent: '折扣 %',
+    availabilityStatus: '可用性状态已更改',
+    editMenuItem: '编辑菜单项',
+    addMenuItem: '添加菜单项',
+    updateMenuItemDesc: '更新菜单项详情',
+    createMenuItemDesc: '为您的菜单创建新项目，含增值税定价',
+    updateMenuItem: '更新菜单项',
+    createMenuItem: '创建菜单项',
+    
     // Placeholders
     enterRestaurantName: '输入餐厅名称',
     enterVatNumber: '输入税号',
@@ -2933,6 +3093,46 @@ export const translations: Record<Language, Translations> = {
     iphoneDesc: 'Kompaktes mobiles Layout für Smartphones',
     deviceLayoutNote: 'Das App-Layout wird automatisch an Ihr ausgewähltes Gerät angepasst, um die beste Erfahrung zu bieten.',
     devicePreferenceUpdated: 'Gerätepräferenz aktualisiert auf',
+    
+    // Menu Item Management
+    menuItemCreated: 'Menüelement erstellt',
+    menuItemCreatedDesc: 'Das Menüelement wurde erfolgreich hinzugefügt',
+    menuItemUpdated: 'Menüelement aktualisiert',
+    menuItemUpdatedDesc: 'Das Menüelement wurde erfolgreich aktualisiert',
+    menuItemDeleted: 'Menüelement gelöscht',
+    menuItemDeletedDesc: 'Das Menüelement wurde erfolgreich entfernt',
+    failedToCreateMenuItem: 'Menüelement konnte nicht erstellt werden',
+    failedToUpdateMenuItem: 'Menüelement konnte nicht aktualisiert werden',
+    failedToDeleteMenuItem: 'Menüelement konnte nicht gelöscht werden',
+    deleteMenuItemTitle: 'Menüelement löschen',
+    deleteMenuItemConfirm: 'Sind Sie sicher, dass Sie dieses Element löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
+    itemNameRequired: 'Elementname ist erforderlich',
+    categoryRequired: 'Kategorie ist erforderlich',
+    priceRequired: 'Preis ist erforderlich',
+    descriptionRequired: 'Beschreibung ist erforderlich',
+    discountRange: 'Rabatt muss zwischen 0 und 100 liegen',
+    stockNoRequired: 'Bestandsnummer ist erforderlich, wenn kein Rezept ausgewählt ist',
+    itemDescription: 'Elementbeschreibung',
+    itemImage: 'Elementbild (Optional)',
+    itemImageHelper: 'Laden Sie ein Bild für dieses Menüelement hoch (max. 5MB)',
+    selectRecipe: 'Rezept auswählen',
+    noRecipe: 'Kein Rezept',
+    portionSize: 'Portionsgröße',
+    selectPortionSize: 'Portionsgröße auswählen',
+    wholePortion: 'Ganz (1x)',
+    threeQuarterPortion: '3/4 Portion (0,75x)',
+    halfPortion: '1/2 Portion (0,5x)',
+    quarterPortion: '1/4 Portion (0,25x)',
+    stockNumber: 'Bestandsnummer',
+    priceInclVAT: 'Preis (SAR, inkl. MwSt.)',
+    discountPercent: 'Rabatt %',
+    availabilityStatus: 'Verfügbarkeitsstatus wurde geändert',
+    editMenuItem: 'Menüelement bearbeiten',
+    addMenuItem: 'Menüelement hinzufügen',
+    updateMenuItemDesc: 'Menüelementdetails aktualisieren',
+    createMenuItemDesc: 'Erstellen Sie ein neues Element für Ihr Menü mit MwSt.-inklusiver Preisgestaltung',
+    updateMenuItem: 'Menüelement aktualisieren',
+    createMenuItem: 'Menüelement erstellen',
     
     // Placeholders
     enterRestaurantName: 'Restaurantname eingeben',
@@ -3603,6 +3803,46 @@ export const translations: Record<Language, Translations> = {
     deviceLayoutNote: 'ऐप लेआउट स्वचालित रूप से आपके चयनित डिवाइस से मेल खाने के लिए समायोजित होगा ताकि सर्वोत्तम अनुभव मिल सके।',
     devicePreferenceUpdated: 'डिवाइस वरीयता अपडेट की गई',
     
+    // Menu Item Management
+    menuItemCreated: 'मेनू आइटम बनाया गया',
+    menuItemCreatedDesc: 'मेनू आइटम सफलतापूर्वक जोड़ा गया है',
+    menuItemUpdated: 'मेनू आइटम अपडेट किया गया',
+    menuItemUpdatedDesc: 'मेनू आइटम सफलतापूर्वक अपडेट किया गया है',
+    menuItemDeleted: 'मेनू आइटम हटाया गया',
+    menuItemDeletedDesc: 'मेनू आइटम सफलतापूर्वक हटाया गया है',
+    failedToCreateMenuItem: 'मेनू आइटम बनाने में विफल',
+    failedToUpdateMenuItem: 'मेनू आइटम अपडेट करने में विफल',
+    failedToDeleteMenuItem: 'मेनू आइटम हटाने में विफल',
+    deleteMenuItemTitle: 'मेनू आइटम हटाएं',
+    deleteMenuItemConfirm: 'क्या आप सुनिश्चित हैं कि आप इस आइटम को हटाना चाहते हैं? इस क्रिया को पूर्ववत नहीं किया जा सकता।',
+    itemNameRequired: 'आइटम का नाम आवश्यक है',
+    categoryRequired: 'श्रेणी आवश्यक है',
+    priceRequired: 'कीमत आवश्यक है',
+    descriptionRequired: 'विवरण आवश्यक है',
+    discountRange: 'छूट 0 से 100 के बीच होनी चाहिए',
+    stockNoRequired: 'जब कोई रेसिपी चयनित नहीं है तो स्टॉक नंबर आवश्यक है',
+    itemDescription: 'आइटम विवरण',
+    itemImage: 'आइटम छवि (वैकल्पिक)',
+    itemImageHelper: 'इस मेनू आइटम के लिए एक छवि अपलोड करें (अधिकतम 5MB)',
+    selectRecipe: 'रेसिपी चुनें',
+    noRecipe: 'कोई रेसिपी नहीं',
+    portionSize: 'भाग का आकार',
+    selectPortionSize: 'भाग का आकार चुनें',
+    wholePortion: 'पूर्ण (1x)',
+    threeQuarterPortion: '3/4 भाग (0.75x)',
+    halfPortion: '1/2 भाग (0.5x)',
+    quarterPortion: '1/4 भाग (0.25x)',
+    stockNumber: 'स्टॉक नंबर',
+    priceInclVAT: 'कीमत (SAR, VAT सहित)',
+    discountPercent: 'छूट %',
+    availabilityStatus: 'उपलब्धता स्थिति बदल दी गई है',
+    editMenuItem: 'मेनू आइटम संपादित करें',
+    addMenuItem: 'मेनू आइटम जोड़ें',
+    updateMenuItemDesc: 'मेनू आइटम विवरण अपडेट करें',
+    createMenuItemDesc: 'VAT-सम्मिलित मूल्य निर्धारण के साथ अपने मेनू के लिए एक नया आइटम बनाएं',
+    updateMenuItem: 'मेनू आइटम अपडेट करें',
+    createMenuItem: 'मेनू आइटम बनाएं',
+    
     // Placeholders
     enterRestaurantName: 'रेस्तरां का नाम दर्ज करें',
     enterVatNumber: 'वैट नंबर दर्ज करें',
@@ -4272,6 +4512,46 @@ export const translations: Record<Language, Translations> = {
     deviceLayoutNote: 'بہترین تجربے کے لیے ایپ لے آؤٹ خودکار طور پر آپ کی منتخب کردہ ڈیوائس سے مماثل ہو جائے گا۔',
     devicePreferenceUpdated: 'ڈیوائس کی ترجیح اپ ڈیٹ کی گئی',
     
+    // Menu Item Management
+    menuItemCreated: 'مینو آئٹم بنایا گیا',
+    menuItemCreatedDesc: 'مینو آئٹم کامیابی سے شامل کیا گیا',
+    menuItemUpdated: 'مینو آئٹم اپ ڈیٹ ہو گیا',
+    menuItemUpdatedDesc: 'مینو آئٹم کامیابی سے اپ ڈیٹ ہو گیا',
+    menuItemDeleted: 'مینو آئٹم حذف ہو گیا',
+    menuItemDeletedDesc: 'مینو آئٹم کامیابی سے ہٹا دیا گیا',
+    failedToCreateMenuItem: 'مینو آئٹم بنانے میں ناکام',
+    failedToUpdateMenuItem: 'مینو آئٹم اپ ڈیٹ کرنے میں ناکام',
+    failedToDeleteMenuItem: 'مینو آئٹم حذف کرنے میں ناکام',
+    deleteMenuItemTitle: 'مینو آئٹم حذف کریں',
+    deleteMenuItemConfirm: 'کیا آپ واقعی یہ آئٹم حذف کرنا چاہتے ہیں؟ اس عمل کو کالعدم نہیں کیا جا سکتا۔',
+    itemNameRequired: 'آئٹم کا نام ضروری ہے',
+    categoryRequired: 'زمرہ ضروری ہے',
+    priceRequired: 'قیمت ضروری ہے',
+    descriptionRequired: 'تفصیل ضروری ہے',
+    discountRange: 'رعایت 0 سے 100 کے درمیان ہونی چاہیے',
+    stockNoRequired: 'جب کوئی ترکیب منتخب نہیں ہو تو اسٹاک نمبر ضروری ہے',
+    itemDescription: 'آئٹم کی تفصیل',
+    itemImage: 'آئٹم کی تصویر (اختیاری)',
+    itemImageHelper: 'اس مینو آئٹم کے لیے تصویر اپ لوڈ کریں (زیادہ سے زیادہ 5MB)',
+    selectRecipe: 'ترکیب منتخب کریں',
+    noRecipe: 'کوئی ترکیب نہیں',
+    portionSize: 'حصے کا سائز',
+    selectPortionSize: 'حصے کا سائز منتخب کریں',
+    wholePortion: 'مکمل (1x)',
+    threeQuarterPortion: '3/4 حصہ (0.75x)',
+    halfPortion: '1/2 حصہ (0.5x)',
+    quarterPortion: '1/4 حصہ (0.25x)',
+    stockNumber: 'اسٹاک نمبر',
+    priceInclVAT: 'قیمت (SAR، VAT شامل)',
+    discountPercent: 'رعایت %',
+    availabilityStatus: 'دستیابی کی حیثیت تبدیل ہو گئی',
+    editMenuItem: 'مینو آئٹم میں ترمیم کریں',
+    addMenuItem: 'مینو آئٹم شامل کریں',
+    updateMenuItemDesc: 'مینو آئٹم کی تفصیلات اپ ڈیٹ کریں',
+    createMenuItemDesc: 'VAT شامل قیمت کے ساتھ اپنے مینو کے لیے نیا آئٹم بنائیں',
+    updateMenuItem: 'مینو آئٹم اپ ڈیٹ کریں',
+    createMenuItem: 'مینو آئٹم بنائیں',
+    
     // Placeholders
     enterRestaurantName: 'ریستوراں کا نام درج کریں',
     enterVatNumber: 'ویٹ نمبر درج کریں',
@@ -4940,6 +5220,46 @@ export const translations: Record<Language, Translations> = {
     iphoneDesc: 'স্মার্টফোনের জন্য কমপ্যাক্ট মোবাইল লেআউট',
     deviceLayoutNote: 'সর্বোত্তম অভিজ্ঞতার জন্য অ্যাপ লেআউট স্বয়ংক্রিয়ভাবে আপনার নির্বাচিত ডিভাইসের সাথে মিলবে।',
     devicePreferenceUpdated: 'ডিভাইস পছন্দ আপডেট করা হয়েছে',
+    
+    // Menu Item Management
+    menuItemCreated: 'মেনু আইটেম তৈরি করা হয়েছে',
+    menuItemCreatedDesc: 'মেনু আইটেম সফলভাবে যোগ করা হয়েছে',
+    menuItemUpdated: 'মেনু আইটেম আপডেট করা হয়েছে',
+    menuItemUpdatedDesc: 'মেনু আইটেম সফলভাবে আপডেট করা হয়েছে',
+    menuItemDeleted: 'মেনু আইটেম মুছে ফেলা হয়েছে',
+    menuItemDeletedDesc: 'মেনু আইটেম সফলভাবে সরানো হয়েছে',
+    failedToCreateMenuItem: 'মেনু আইটেম তৈরি করতে ব্যর্থ',
+    failedToUpdateMenuItem: 'মেনু আইটেম আপডেট করতে ব্যর্থ',
+    failedToDeleteMenuItem: 'মেনু আইটেম মুছতে ব্যর্থ',
+    deleteMenuItemTitle: 'মেনু আইটেম মুছুন',
+    deleteMenuItemConfirm: 'আপনি কি নিশ্চিত যে আপনি এই আইটেমটি মুছতে চান? এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না।',
+    itemNameRequired: 'আইটেমের নাম প্রয়োজন',
+    categoryRequired: 'বিভাগ প্রয়োজন',
+    priceRequired: 'মূল্য প্রয়োজন',
+    descriptionRequired: 'বিবরণ প্রয়োজন',
+    discountRange: 'ছাড় 0 থেকে 100 এর মধ্যে হতে হবে',
+    stockNoRequired: 'কোনো রেসিপি নির্বাচিত না হলে স্টক নম্বর প্রয়োজন',
+    itemDescription: 'আইটেম বিবরণ',
+    itemImage: 'আইটেম চিত্র (ঐচ্ছিক)',
+    itemImageHelper: 'এই মেনু আইটেমের জন্য একটি চিত্র আপলোড করুন (সর্বোচ্চ 5MB)',
+    selectRecipe: 'রেসিপি নির্বাচন করুন',
+    noRecipe: 'কোনো রেসিপি নেই',
+    portionSize: 'অংশের আকার',
+    selectPortionSize: 'অংশের আকার নির্বাচন করুন',
+    wholePortion: 'সম্পূর্ণ (1x)',
+    threeQuarterPortion: '3/4 অংশ (0.75x)',
+    halfPortion: '1/2 অংশ (0.5x)',
+    quarterPortion: '1/4 অংশ (0.25x)',
+    stockNumber: 'স্টক নম্বর',
+    priceInclVAT: 'মূল্য (SAR, VAT সহ)',
+    discountPercent: 'ছাড় %',
+    availabilityStatus: 'প্রাপ্যতা স্থিতি পরিবর্তিত হয়েছে',
+    editMenuItem: 'মেনু আইটেম সম্পাদনা করুন',
+    addMenuItem: 'মেনু আইটেম যোগ করুন',
+    updateMenuItemDesc: 'মেনু আইটেম বিবরণ আপডেট করুন',
+    createMenuItemDesc: 'VAT-অন্তর্ভুক্ত মূল্য নির্ধারণ সহ আপনার মেনুর জন্য একটি নতুন আইটেম তৈরি করুন',
+    updateMenuItem: 'মেনু আইটেম আপডেট করুন',
+    createMenuItem: 'মেনু আইটেম তৈরি করুন',
     
     // Placeholders
     enterRestaurantName: 'রেস্তোরাঁর নাম লিখুন',

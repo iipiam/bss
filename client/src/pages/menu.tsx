@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -18,23 +18,24 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { insertMenuItemSchema, type MenuItem, type Recipe, type InventoryItem } from "@shared/schema";
 import { useDeviceLayout } from "@/lib/mobileLayout";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-// Form schema for UI - collect VAT-inclusive price and discount, calculate base price and VAT on submit
-const menuFormSchema = z.object({
-  name: z.string().min(1, "Item name is required"),
-  category: z.string().min(1, "Category is required"),
+// Factory function for creating localized form schema
+const createMenuFormSchema = (t: any) => z.object({
+  name: z.string().min(1, t.itemNameRequired || "Item name is required"),
+  category: z.string().min(1, t.categoryRequired || "Category is required"),
   recipeId: z.string().optional(),
   portionSize: z.string().default("1.00"),
   stockNo: z.string().optional(),
-  price: z.string().min(1, "Price is required"),
+  price: z.string().min(1, t.priceRequired || "Price is required"),
   discount: z.string().default("0").refine(
     (val) => {
       const num = parseFloat(val || "0");
       return num >= 0 && num <= 100;
     },
-    { message: "Discount must be between 0 and 100" }
+    { message: t.discountRange || "Discount must be between 0 and 100" }
   ),
-  description: z.string().min(1, "Description is required"),
+  description: z.string().min(1, t.descriptionRequired || "Description is required"),
 }).refine(
   (data) => {
     // If no recipe, stockNo is required
@@ -43,13 +44,14 @@ const menuFormSchema = z.object({
     }
     return true;
   },
-  { message: "Stock number is required when no recipe is selected", path: ["stockNo"] }
+  { message: t.stockNoRequired || "Stock number is required when no recipe is selected", path: ["stockNo"] }
 );
 
-type MenuFormValues = z.infer<typeof menuFormSchema>;
+type MenuFormValues = z.infer<ReturnType<typeof createMenuFormSchema>>;
 
 export default function Menu() {
   const layout = useDeviceLayout();
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
@@ -72,6 +74,9 @@ export default function Menu() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Create localized schema
+  const menuFormSchema = useMemo(() => createMenuFormSchema(t), [t]);
 
   const form = useForm<MenuFormValues>({
     resolver: zodResolver(menuFormSchema),
@@ -163,13 +168,13 @@ export default function Menu() {
       setImageFile(null);
       setImagePreview(null);
       toast({
-        title: "Menu item created",
-        description: "The menu item has been added successfully.",
+        title: t.menuItemCreated || "Menu item created",
+        description: t.menuItemCreatedDesc || "The menu item has been added successfully.",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to create menu item",
+        title: t.failedToCreateMenuItem || "Failed to create menu item",
         description: error.message || "Could not create menu item",
         variant: "destructive",
       });
@@ -214,13 +219,13 @@ export default function Menu() {
       setEditingItem(null);
       form.reset();
       toast({
-        title: "Menu item updated",
-        description: "The menu item has been updated successfully.",
+        title: t.menuItemUpdated || "Menu item updated",
+        description: t.menuItemUpdatedDesc || "The menu item has been updated successfully.",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to update menu item",
+        title: t.failedToUpdateMenuItem || "Failed to update menu item",
         description: error.message || "Could not update menu item",
         variant: "destructive",
       });
@@ -236,13 +241,13 @@ export default function Menu() {
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       setDeletingItem(null);
       toast({
-        title: "Menu item deleted",
-        description: "The menu item has been removed successfully.",
+        title: t.menuItemDeleted || "Menu item deleted",
+        description: t.menuItemDeletedDesc || "The menu item has been removed successfully.",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to delete menu item",
+        title: t.failedToDeleteMenuItem || "Failed to delete menu item",
         description: error.message || "Could not delete menu item",
         variant: "destructive",
       });
@@ -257,8 +262,8 @@ export default function Menu() {
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
-        title: "Menu item updated",
-        description: "Availability status has been changed",
+        title: t.menuItemUpdated || "Menu item updated",
+        description: t.availabilityStatus || "Availability status has been changed",
       });
     },
   });
@@ -607,9 +612,9 @@ export default function Menu() {
             </DialogTrigger>
           <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingItem ? "Edit Menu Item" : "Add New Menu Item"}</DialogTitle>
+              <DialogTitle>{editingItem ? (t.editMenuItem || "Edit Menu Item") : (t.addMenuItem || "Add New Menu Item")}</DialogTitle>
               <DialogDescription>
-                {editingItem ? "Update the menu item details" : "Create a new item for your menu with VAT-inclusive pricing"}
+                {editingItem ? (t.updateMenuItemDesc || "Update the menu item details") : (t.createMenuItemDesc || "Create a new item for your menu with VAT-inclusive pricing")}
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -1092,9 +1097,9 @@ export default function Menu() {
       <AlertDialog open={!!deletingItem} onOpenChange={(open) => !open && setDeletingItem(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Menu Item</AlertDialogTitle>
+            <AlertDialogTitle>{t.deleteMenuItemTitle || "Delete Menu Item"}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deletingItem?.name}"? This action cannot be undone.
+              {t.deleteMenuItemConfirm || "Are you sure you want to delete this item? This action cannot be undone."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
