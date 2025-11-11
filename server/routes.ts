@@ -357,8 +357,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/customers/:id", requireAuth, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
-    const customer = await storage.getCustomer(req.params.id);
-    if (!customer || customer.restaurantId !== restaurantId) {
+    const customer = await storage.getCustomer(req.params.id, restaurantId);
+    if (!customer) {
       return res.status(404).json({ error: "Customer not found" });
     }
     res.json(customer);
@@ -378,12 +378,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/customers/:id", requireAuth, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
-      const existing = await storage.getCustomer(req.params.id);
-      if (!existing || existing.restaurantId !== restaurantId) {
+      const data = sanitizePatchBody(req.body, insertCustomerSchema.partial());
+      // SECURITY: Strip restaurantId from request body to prevent cross-tenant reassignment
+      const { restaurantId: _, ...safeData } = data;
+      const customer = await storage.updateCustomer(req.params.id, restaurantId, safeData);
+      if (!customer) {
         return res.status(404).json({ error: "Customer not found" });
       }
-      const data = sanitizePatchBody(req.body, insertCustomerSchema.partial());
-      const customer = await storage.updateCustomer(req.params.id, data);
       res.json(customer);
     } catch (error) {
       res.status(400).json({ error: "Invalid customer data" });
@@ -392,11 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/customers/:id", requireAuth, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
-    const existing = await storage.getCustomer(req.params.id);
-    if (!existing || existing.restaurantId !== restaurantId) {
-      return res.status(404).json({ error: "Customer not found" });
-    }
-    const success = await storage.deleteCustomer(req.params.id);
+    const success = await storage.deleteCustomer(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Customer not found" });
     }
@@ -890,7 +887,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const data = sanitizePatchBody(req.body, insertOrderSchema.partial());
-      const order = await storage.updateOrder(req.params.id, restaurantId, data);
+      // SECURITY: Strip restaurantId from request body to prevent cross-tenant reassignment
+      const { restaurantId: _, ...safeData } = data;
+      const order = await storage.updateOrder(req.params.id, restaurantId, safeData);
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
@@ -1167,19 +1166,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Procurement
-  app.get("/api/procurement", async (req, res) => {
+  // Procurement (MULTI-TENANT: require auth + restaurantId filtering)
+  app.get("/api/procurement", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
     const { type, status, branchId } = req.query;
-    const procurements = await storage.getProcurements(
-      type as string | undefined,
-      status as string | undefined,
-      branchId as string | undefined
-    );
+    const procurements = await storage.getProcurements({
+      restaurantId,
+      type: type as string | undefined,
+      status: status as string | undefined,
+      branchId: branchId as string | undefined
+    });
     res.json(procurements);
   });
 
-  app.get("/api/procurement/:id", async (req, res) => {
-    const procurement = await storage.getProcurement(req.params.id);
+  app.get("/api/procurement/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const procurement = await storage.getProcurement(req.params.id, restaurantId);
     if (!procurement) {
       return res.status(404).json({ error: "Procurement not found" });
     }
@@ -1196,10 +1198,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/procurement/:id", async (req, res) => {
+  app.patch("/api/procurement/:id", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const data = sanitizePatchBody(req.body, insertProcurementSchema.partial());
-      const procurement = await storage.updateProcurement(req.params.id, data);
+      // SECURITY: Strip restaurantId from request body to prevent cross-tenant reassignment
+      const { restaurantId: _, ...safeData } = data;
+      const procurement = await storage.updateProcurement(req.params.id, restaurantId, safeData);
       if (!procurement) {
         return res.status(404).json({ error: "Procurement not found" });
       }
@@ -1209,8 +1214,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/procurement/:id", async (req, res) => {
-    const success = await storage.deleteProcurement(req.params.id);
+  app.delete("/api/procurement/:id", requireAuth, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId;
+    const success = await storage.deleteProcurement(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Procurement not found" });
     }
@@ -2662,12 +2668,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export Procurement to Excel
-  app.get("/api/export/procurement", async (req, res) => {
+  app.get("/api/export/procurement", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const type = req.query.type as string | undefined;
       const status = req.query.status as string | undefined;
       const branchId = req.query.branchId as string | undefined;
-      const procurements = await storage.getProcurements(type, status, branchId);
+      const procurements = await storage.getProcurements({
+        restaurantId,
+        type,
+        status,
+        branchId
+      });
       
       const worksheet = XLSX.utils.json_to_sheet(procurements);
       const workbook = XLSX.utils.book_new();
@@ -3261,7 +3273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalSalesVat = totalSales - totalSalesBaseAmount;
 
       // Calculate total purchases (from procurement)
-      const procurements = await storage.getProcurements(undefined, undefined, undefined);
+      const procurements = await storage.getProcurements({ restaurantId: user.restaurantId });
       const monthProcurements = procurements.filter(p => {
         if (!p.orderDate) return false;
         const procDate = new Date(p.orderDate);

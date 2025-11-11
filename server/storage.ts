@@ -146,12 +146,17 @@ export interface IStorage {
   getSettings(): Promise<Settings | undefined>;
   updateSettings(settings: Partial<InsertSettings>): Promise<Settings>;
 
-  // Procurement
-  getProcurements(type?: string, status?: string, branchId?: string): Promise<Procurement[]>;
-  getProcurement(id: string): Promise<Procurement | undefined>;
+  // Procurement (MULTI-TENANT: requires restaurantId for all operations)
+  getProcurements(filter: {
+    restaurantId: string;
+    type?: string;
+    status?: string;
+    branchId?: string;
+  }): Promise<Procurement[]>;
+  getProcurement(id: string, restaurantId: string): Promise<Procurement | undefined>;
   createProcurement(procurement: InsertProcurement): Promise<Procurement>;
-  updateProcurement(id: string, procurement: Partial<InsertProcurement>): Promise<Procurement | undefined>;
-  deleteProcurement(id: string): Promise<boolean>;
+  updateProcurement(id: string, restaurantId: string, procurement: Partial<InsertProcurement>): Promise<Procurement | undefined>;
+  deleteProcurement(id: string, restaurantId: string): Promise<boolean>;
 
   // Users
   getUsers(): Promise<User[]>;
@@ -184,12 +189,12 @@ export interface IStorage {
   createInvoice(invoice: InsertInvoice): Promise<Invoice>;
   updateInvoice(id: string, restaurantId: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined>;
 
-  // Customers (MULTI-TENANT: requires restaurantId)
+  // Customers (MULTI-TENANT: requires restaurantId for all operations)
   getCustomers(restaurantId: string): Promise<Customer[]>;
-  getCustomer(id: string): Promise<Customer | undefined>;
+  getCustomer(id: string, restaurantId: string): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
-  updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
-  deleteCustomer(id: string): Promise<boolean>;
+  updateCustomer(id: string, restaurantId: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
+  deleteCustomer(id: string, restaurantId: string): Promise<boolean>;
 
   // Shop Salaries (MULTI-TENANT: requires restaurantId)
   getSalaries(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date): Promise<Salary[]>;
@@ -557,9 +562,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateOrder(id: string, restaurantId: string, order: Partial<InsertOrder>): Promise<Order | undefined> {
+    // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
+    const { restaurantId: _, ...safeData } = order;
     // Filter out undefined values to avoid "No values to set" error
     const updateData = Object.fromEntries(
-      Object.entries(order).filter(([_, value]) => value !== undefined)
+      Object.entries(safeData).filter(([_, value]) => value !== undefined)
     );
     
     if (Object.keys(updateData).length === 0) {
@@ -631,20 +638,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Procurement
-  async getProcurements(type?: string, status?: string, branchId?: string): Promise<Procurement[]> {
-    const conditions = [];
-    if (type) conditions.push(eq(procurement.type, type));
-    if (status) conditions.push(eq(procurement.status, status));
-    if (branchId) conditions.push(eq(procurement.branchId, branchId));
+  async getProcurements(filter: {
+    restaurantId: string;
+    type?: string;
+    status?: string;
+    branchId?: string;
+  }): Promise<Procurement[]> {
+    const conditions = [eq(procurement.restaurantId, filter.restaurantId)];
+    if (filter.type) conditions.push(eq(procurement.type, filter.type));
+    if (filter.status) conditions.push(eq(procurement.status, filter.status));
+    if (filter.branchId) conditions.push(eq(procurement.branchId, filter.branchId));
     
-    if (conditions.length > 0) {
-      return await db.select().from(procurement).where(and(...conditions));
-    }
-    return await db.select().from(procurement);
+    return await db.select().from(procurement).where(and(...conditions));
   }
 
-  async getProcurement(id: string): Promise<Procurement | undefined> {
-    const [item] = await db.select().from(procurement).where(eq(procurement.id, id));
+  async getProcurement(id: string, restaurantId: string): Promise<Procurement | undefined> {
+    const [item] = await db.select().from(procurement)
+      .where(and(eq(procurement.id, id), eq(procurement.restaurantId, restaurantId)));
     return item;
   }
 
@@ -653,22 +663,25 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateProcurement(id: string, procurementData: Partial<InsertProcurement>): Promise<Procurement | undefined> {
+  async updateProcurement(id: string, restaurantId: string, procurementData: Partial<InsertProcurement>): Promise<Procurement | undefined> {
+    // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
+    const { restaurantId: _, ...safeData } = procurementData;
     const updateData = Object.fromEntries(
-      Object.entries(procurementData).filter(([_, value]) => value !== undefined)
+      Object.entries(safeData).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getProcurement(id);
+      return this.getProcurement(id, restaurantId);
     }
     const [updated] = await db.update(procurement)
       .set({ ...updateData, updatedAt: new Date() })
-      .where(eq(procurement.id, id))
+      .where(and(eq(procurement.id, id), eq(procurement.restaurantId, restaurantId)))
       .returning();
     return updated;
   }
 
-  async deleteProcurement(id: string): Promise<boolean> {
-    const result = await db.delete(procurement).where(eq(procurement.id, id));
+  async deleteProcurement(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(procurement)
+      .where(and(eq(procurement.id, id), eq(procurement.restaurantId, restaurantId)));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
@@ -847,8 +860,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateInvoice(id: string, restaurantId: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined> {
+    // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
+    const { restaurantId: _, ...safeData } = invoice;
     const updateData = Object.fromEntries(
-      Object.entries(invoice).filter(([_, value]) => value !== undefined)
+      Object.entries(safeData).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
       return this.getInvoice(id, restaurantId);
@@ -865,8 +880,9 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(customers).where(eq(customers.restaurantId, restaurantId));
   }
 
-  async getCustomer(id: string): Promise<Customer | undefined> {
-    const [customer] = await db.select().from(customers).where(eq(customers.id, id));
+  async getCustomer(id: string, restaurantId: string): Promise<Customer | undefined> {
+    const [customer] = await db.select().from(customers)
+      .where(and(eq(customers.id, id), eq(customers.restaurantId, restaurantId)));
     return customer;
   }
 
@@ -875,22 +891,25 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined> {
+  async updateCustomer(id: string, restaurantId: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined> {
+    // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
+    const { restaurantId: _, ...safeData } = customer;
     const updateData = Object.fromEntries(
-      Object.entries(customer).filter(([_, value]) => value !== undefined)
+      Object.entries(safeData).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
-      return this.getCustomer(id);
+      return this.getCustomer(id, restaurantId);
     }
     const [updated] = await db.update(customers)
       .set(updateData)
-      .where(eq(customers.id, id))
+      .where(and(eq(customers.id, id), eq(customers.restaurantId, restaurantId)))
       .returning();
     return updated;
   }
 
-  async deleteCustomer(id: string): Promise<boolean> {
-    const result = await db.delete(customers).where(eq(customers.id, id));
+  async deleteCustomer(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(customers)
+      .where(and(eq(customers.id, id), eq(customers.restaurantId, restaurantId)));
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
