@@ -2,15 +2,10 @@ import 'express-session';
 
 export interface AuthUser {
   id: string;
+  restaurantId: string; // CRITICAL: Multi-tenant isolation - all queries must filter by this
   email: string;
   fullName: string;
-  restaurantName: string;
-  nationalId: string;
-  taxNumber: string;
-  commercialRegistration: string;
-  subscriptionPlan: string;
   branchId: string;
-  branchesCount: number;
   userRole: string;
   isMainAccount: boolean;
   devicePreference: 'laptop' | 'ipad' | 'iphone';

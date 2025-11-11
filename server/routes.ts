@@ -1168,10 +1168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "All fields are required including Restaurant Name, National ID, Tax Number, Restaurant Type, Commercial Registration, subscription plan, and number of branches" });
       }
 
-      // Validate restaurant type
-      if (!['Cloud Kitchen', 'Restaurant'].includes(restaurantType)) {
-        return res.status(400).json({ error: "Invalid restaurant type. Must be 'Cloud Kitchen' or 'Restaurant'" });
-      }
+      // NO restaurant type validation - allow any type
 
       // Validate subscription plan
       if (!['weekly', 'monthly', 'yearly'].includes(subscriptionPlan)) {
@@ -1190,20 +1187,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Username already exists" });
       }
 
-      // Create admin user with full permissions (each signup = restaurant owner)
+      // Step 1: Create restaurant record first (multi-tenancy isolation)
+      const restaurantData = {
+        name: restaurantName,
+        nationalId,
+        taxNumber,
+        commercialRegistration,
+        type: restaurantType, // No validation - any type allowed
+        subscriptionPlan,
+        branchesCount: branches,
+        subscriptionStatus: "inactive" as const, // Will be activated after payment
+      };
+
+      const restaurant = await storage.createRestaurant(restaurantData);
+
+      // Step 2: Create admin user linked to restaurant
       const userData = {
+        restaurantId: restaurant.id, // Link to restaurant for multi-tenant isolation
         username,
         password, // Will be hashed in storage
         fullName: name,
         email,
-        commercialRegistration,
-        restaurantName,
-        nationalId,
-        taxNumber,
-        restaurantType,
-        subscriptionPlan,
-        branchesCount: branches,
-        subscriptionStatus: "inactive" as const, // Will be activated after payment
         role: "admin" as const,
         active: true,
         permissions: {
@@ -1253,12 +1257,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           serialNumber,
           userFullName: user.fullName,
           userEmail: user.email ?? "",
-          restaurantName: user.restaurantName!,
-          nationalId: user.nationalId!,
-          taxNumber: user.taxNumber!,
-          commercialRegistration: user.commercialRegistration ?? "",
-          subscriptionPlan: user.subscriptionPlan ?? "",
-          branchesCount: user.branchesCount,
+          restaurantName: restaurant.name,
+          nationalId: restaurant.nationalId,
+          taxNumber: restaurant.taxNumber,
+          commercialRegistration: restaurant.commercialRegistration,
+          subscriptionPlan: restaurant.subscriptionPlan,
+          branchesCount: restaurant.branchesCount,
           basePlanPrice,
           additionalBranchesPrice,
           subtotal,
