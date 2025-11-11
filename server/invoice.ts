@@ -67,30 +67,59 @@ function getChromiumPath(): string | undefined {
 
 // Shared browser instance for better performance
 let browserInstance: Browser | null = null;
+let browserLaunchPromise: Promise<Browser> | null = null;
 
 async function getBrowser(): Promise<Browser> {
-  if (!browserInstance || !browserInstance.isConnected()) {
-    const chromiumPath = getChromiumPath();
-    
-    if (!chromiumPath) {
-      throw new Error('Chromium executable not found. Please install Chromium or set CHROMIUM_PATH environment variable.');
+  // If browser is connected and working, return it
+  if (browserInstance && browserInstance.isConnected()) {
+    try {
+      // Quick connection test
+      const pages = await browserInstance.pages();
+      return browserInstance;
+    } catch (e) {
+      console.log('[Invoice] Browser connection test failed, will recreate');
+      browserInstance = null;
     }
-
-    browserInstance = await puppeteer.launch({
-      headless: true,
-      executablePath: chromiumPath,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--disable-software-rasterizer',
-        '--single-process',
-        '--no-zygote'
-      ]
-    });
   }
-  return browserInstance;
+
+  // If already launching, wait for that promise
+  if (browserLaunchPromise) {
+    return browserLaunchPromise;
+  }
+
+  // Launch new browser
+  browserLaunchPromise = (async () => {
+    try {
+      const chromiumPath = getChromiumPath();
+      
+      if (!chromiumPath) {
+        throw new Error('Chromium executable not found. Please install Chromium or set CHROMIUM_PATH environment variable.');
+      }
+
+      console.log('[Invoice] Launching new browser instance');
+      const browser = await puppeteer.launch({
+        headless: true,
+        executablePath: chromiumPath,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--disable-software-rasterizer',
+          '--single-process',
+          '--no-zygote'
+        ]
+      });
+
+      browserInstance = browser;
+      console.log('[Invoice] Browser launched successfully');
+      return browser;
+    } finally {
+      browserLaunchPromise = null;
+    }
+  })();
+
+  return browserLaunchPromise;
 }
 
 function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string): string {
@@ -550,27 +579,52 @@ export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuff
 
   const html = generateBilingualInvoiceHTML(data, qrCodeDataURL);
 
-  const browser = await getBrowser();
-  const page = await browser.newPage();
+  // Retry logic for transient browser connection issues
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const browser = await getBrowser();
+      const page = await browser.newPage();
 
-  try {
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '8mm',
-        right: '8mm',
-        bottom: '8mm',
-        left: '8mm'
+      try {
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        
+        const pdfBuffer = await page.pdf({
+          format: 'A4',
+          printBackground: true,
+          margin: {
+            top: '8mm',
+            right: '8mm',
+            bottom: '8mm',
+            left: '8mm'
+          }
+        });
+
+        return { pdfBuffer: Buffer.from(pdfBuffer), qrCode: invoiceUrl };
+      } finally {
+        await page.close().catch(e => console.log('[Invoice] Page close error:', e.message));
       }
-    });
-
-    return { pdfBuffer: Buffer.from(pdfBuffer), qrCode: invoiceUrl };
-  } finally {
-    await page.close();
+    } catch (error: any) {
+      lastError = error;
+      const isConnectionError = error.message?.includes('Connection closed') || 
+                                error.message?.includes('Target closed') ||
+                                error.message?.includes('Session closed');
+      
+      if (isConnectionError && attempt < 3) {
+        console.log(`[Invoice] Attempt ${attempt} failed with connection error, retrying... Error: ${error.message}`);
+        // Force browser recreation on next attempt
+        browserInstance = null;
+        // Wait a bit before retrying
+        await new Promise(resolve => setTimeout(resolve, 500));
+        continue;
+      }
+      
+      console.error(`[Invoice] Error generating PDF (attempt ${attempt}):`, error);
+      throw error;
+    }
   }
+
+  throw lastError || new Error('Failed to generate invoice after 3 attempts');
 }
 
 interface FinancialStatementData {
