@@ -205,9 +205,6 @@ export interface Translations {
   accountAndDevicePreferenceDesc: string;
   account: string;
   roleAndStatus: string;
-  status: string;
-  active: string;
-  inactive: string;
   devicePreference: string;
   laptop: string;
   ipad: string;
@@ -892,9 +889,6 @@ export const translations: Record<Language, Translations> = {
     accountAndDevicePreferenceDesc: 'Choose your device type to optimize the interface layout',
     account: 'Account',
     roleAndStatus: 'Role & Status',
-    status: 'Status',
-    active: 'Active',
-    inactive: 'Inactive',
     devicePreference: 'Device Preference',
     laptop: 'Laptop',
     ipad: 'iPad',
@@ -1578,9 +1572,6 @@ export const translations: Record<Language, Translations> = {
     accountAndDevicePreferenceDesc: 'اختر نوع جهازك لتحسين تخطيط الواجهة',
     account: 'الحساب',
     roleAndStatus: 'الدور والحالة',
-    status: 'الحالة',
-    active: 'نشط',
-    inactive: 'غير نشط',
     devicePreference: 'تفضيل الجهاز',
     laptop: 'حاسوب محمول',
     ipad: 'آيباد',
@@ -2264,9 +2255,6 @@ export const translations: Record<Language, Translations> = {
     accountAndDevicePreferenceDesc: '选择您的设备类型以优化界面布局',
     account: '账户',
     roleAndStatus: '角色和状态',
-    status: '状态',
-    active: '活跃',
-    inactive: '非活跃',
     devicePreference: '设备偏好',
     laptop: '笔记本电脑',
     ipad: 'iPad',
@@ -2936,9 +2924,6 @@ export const translations: Record<Language, Translations> = {
     accountAndDevicePreferenceDesc: 'Wählen Sie Ihren Gerätetyp, um das Interface-Layout zu optimieren',
     account: 'Konto',
     roleAndStatus: 'Rolle & Status',
-    status: 'Status',
-    active: 'Aktiv',
-    inactive: 'Inaktiv',
     devicePreference: 'Gerätepräferenz',
     laptop: 'Laptop',
     ipad: 'iPad',
@@ -3608,9 +3593,6 @@ export const translations: Record<Language, Translations> = {
     accountAndDevicePreferenceDesc: 'इंटरफेस लेआउट को अनुकूलित करने के लिए अपनी डिवाइस प्रकार चुनें',
     account: 'खाता',
     roleAndStatus: 'भूमिका और स्थिति',
-    status: 'स्थिति',
-    active: 'सक्रिय',
-    inactive: 'निष्क्रिय',
     devicePreference: 'डिवाइस वरीयता',
     laptop: 'लैपटॉप',
     ipad: 'आईपैड',
@@ -4280,9 +4262,6 @@ export const translations: Record<Language, Translations> = {
     accountAndDevicePreferenceDesc: 'انٹرفیس لے آؤٹ کو بہتر بنانے کے لیے اپنی ڈیوائس کی قسم منتخب کریں',
     account: 'اکاؤنٹ',
     roleAndStatus: 'کردار اور حیثیت',
-    status: 'حیثیت',
-    active: 'فعال',
-    inactive: 'غیر فعال',
     devicePreference: 'ڈیوائس کی ترجیح',
     laptop: 'لیپ ٹاپ',
     ipad: 'آئی پیڈ',
@@ -4952,9 +4931,6 @@ export const translations: Record<Language, Translations> = {
     accountAndDevicePreferenceDesc: 'ইন্টারফেস লেআউট অপ্টিমাইজ করতে আপনার ডিভাইসের ধরন চয়ন করুন',
     account: 'অ্যাকাউন্ট',
     roleAndStatus: 'ভূমিকা এবং স্ট্যাটাস',
-    status: 'স্ট্যাটাস',
-    active: 'সক্রিয়',
-    inactive: 'নিষ্ক্রিয়',
     devicePreference: 'ডিভাইস পছন্দ',
     laptop: 'ল্যাপটপ',
     ipad: 'আইপ্যাড',

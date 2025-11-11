@@ -219,13 +219,14 @@ function DevicePreferenceSection() {
   const handleDeviceChange = async (newDevice: 'laptop' | 'ipad' | 'iphone') => {
     try {
       await setDevice(newDevice);
+      const deviceLabel = newDevice === 'laptop' ? t.laptop : newDevice === 'ipad' ? t.ipad : t.iphone;
       toast({
-        title: "Success",
-        description: `Device preference updated to ${newDevice === 'laptop' ? 'Laptop' : newDevice === 'ipad' ? 'iPad' : 'iPhone'}`,
+        title: t.success,
+        description: `${t.devicePreferenceUpdated} ${deviceLabel}`,
       });
     } catch (error) {
       toast({
-        title: "Error",
+        title: t.error,
         description: t.failedToUpdateDevicePreference,
         variant: "destructive",
       });
@@ -233,24 +234,24 @@ function DevicePreferenceSection() {
   };
 
   const deviceOptions = [
-    { value: 'laptop' as const, label: 'Laptop', icon: Laptop, description: 'Full desktop experience with all features' },
-    { value: 'ipad' as const, label: 'iPad', icon: Tablet, description: 'Tablet-optimized layout with touch-friendly controls' },
-    { value: 'iphone' as const, label: 'iPhone', icon: Smartphone, description: 'Compact mobile layout for smartphones' },
+    { value: 'laptop' as const, label: t.laptop, icon: Laptop, description: t.laptopDesc },
+    { value: 'ipad' as const, label: t.ipad, icon: Tablet, description: t.ipadDesc },
+    { value: 'iphone' as const, label: t.iphone, icon: Smartphone, description: t.iphoneDesc },
   ];
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Account & Device Preference</CardTitle>
+        <CardTitle>{t.accountAndDevicePreference}</CardTitle>
         <CardDescription>
-          Choose your device type to optimize the interface layout
+          {t.accountAndDevicePreferenceDesc}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Account</Label>
+              <Label>{t.account}</Label>
               <div className="flex items-center gap-3 p-3 bg-muted rounded-md">
                 <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
                   {user?.fullName?.charAt(0).toUpperCase() || 'U'}
@@ -263,16 +264,16 @@ function DevicePreferenceSection() {
             </div>
 
             <div className="space-y-2">
-              <Label>Role & Status</Label>
+              <Label>{t.roleAndStatus}</Label>
               <div className="p-3 bg-muted rounded-md space-y-1">
-                <p className="text-sm"><span className="font-medium">Role:</span> {user?.role}</p>
-                <p className="text-sm"><span className="font-medium">Status:</span> {user?.active ? 'Active' : 'Inactive'}</p>
+                <p className="text-sm"><span className="font-medium">{t.role}:</span> {user?.role}</p>
+                <p className="text-sm"><span className="font-medium">{t.status}:</span> {user?.active ? t.active : t.inactive}</p>
               </div>
             </div>
           </div>
 
           <div className="space-y-3 pt-4 border-t">
-            <Label>Device Preference</Label>
+            <Label>{t.devicePreference}</Label>
             <div className="grid gap-3">
               {deviceOptions.map((option) => {
                 const Icon = option.icon;
@@ -300,7 +301,7 @@ function DevicePreferenceSection() {
                         <h3 className="font-semibold">{option.label}</h3>
                         {isSelected && (
                           <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                            Active
+                            {t.active}
                           </span>
                         )}
                       </div>
@@ -313,7 +314,7 @@ function DevicePreferenceSection() {
               })}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              The app layout will automatically adjust to match your selected device for the best experience.
+              {t.deviceLayoutNote}
             </p>
           </div>
         </div>
