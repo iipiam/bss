@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { User, Mail, Phone, CreditCard, Calendar, AlertTriangle, CheckCircle2, XCircle, Shield } from "lucide-react";
-import type { User as UserType } from "@shared/schema";
+import type { User as UserType, Restaurant } from "@shared/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +25,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
+type ProfileResponse = {
+  user: UserType;
+  restaurant: Restaurant;
+};
 
 const profileSchema = z.object({
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
@@ -38,9 +43,12 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
 
   // Fetch user profile
-  const { data: profile, isLoading } = useQuery<UserType>({
+  const { data: profileData, isLoading } = useQuery<ProfileResponse>({
     queryKey: ["/api/profile"],
   });
+
+  const profile = profileData?.user;
+  const restaurant = profileData?.restaurant;
 
   // Profile update mutation
   const updateProfileMutation = useMutation({
@@ -169,7 +177,7 @@ export default function Profile() {
     );
   }
 
-  const isSubscriptionCancelled = profile.subscriptionStatus === "cancelled" || profile.subscriptionStatus === "expired";
+  const isSubscriptionCancelled = restaurant?.subscriptionStatus === "cancelled" || restaurant?.subscriptionStatus === "expired";
 
   return (
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
@@ -323,7 +331,7 @@ export default function Profile() {
             <div className="space-y-2">
               <Label className="text-sm font-medium text-muted-foreground">Commercial Registration</Label>
               <p className="text-base font-medium" data-testid="text-commercial-registration">
-                {profile.commercialRegistration || "Not set"}
+                {restaurant?.commercialRegistration || "Not set"}
               </p>
             </div>
 
@@ -332,7 +340,7 @@ export default function Profile() {
             <div className="space-y-2">
               <Label className="text-sm font-medium text-muted-foreground">Subscription Plan</Label>
               <p className="text-base font-medium capitalize" data-testid="text-subscription-plan">
-                {profile.subscriptionPlan || "None"}
+                {restaurant?.subscriptionPlan || "None"}
               </p>
             </div>
 
@@ -340,7 +348,7 @@ export default function Profile() {
 
             <div className="space-y-2">
               <Label className="text-sm font-medium text-muted-foreground">Status</Label>
-              <div>{getSubscriptionStatusBadge(profile.subscriptionStatus)}</div>
+              <div>{getSubscriptionStatusBadge(restaurant?.subscriptionStatus)}</div>
             </div>
 
             <Separator />
@@ -351,7 +359,7 @@ export default function Profile() {
                 Start Date
               </Label>
               <p className="text-base font-medium" data-testid="text-subscription-start">
-                {formatDate(profile.subscriptionStartDate)}
+                {formatDate(restaurant?.subscriptionStartDate)}
               </p>
             </div>
 
@@ -363,11 +371,11 @@ export default function Profile() {
                 End Date
               </Label>
               <p className="text-base font-medium" data-testid="text-subscription-end">
-                {formatDate(profile.subscriptionEndDate)}
+                {formatDate(restaurant?.subscriptionEndDate)}
               </p>
             </div>
 
-            {profile.subscriptionCancelledAt && (
+            {restaurant?.subscriptionCancelledAt && (
               <>
                 <Separator />
                 <div className="space-y-2">
@@ -376,13 +384,13 @@ export default function Profile() {
                     Cancelled On
                   </Label>
                   <p className="text-base font-medium text-red-600 dark:text-red-400" data-testid="text-subscription-cancelled">
-                    {formatDate(profile.subscriptionCancelledAt)}
+                    {formatDate(restaurant?.subscriptionCancelledAt)}
                   </p>
                 </div>
               </>
             )}
 
-            {profile.subscriptionStatus === "active" && (
+            {restaurant?.subscriptionStatus === "active" && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -399,7 +407,7 @@ export default function Profile() {
                     <AlertDialogDescription>
                       This will cancel your subscription. Your account will be restricted until you renew your subscription.
                       You can continue using the service until your current subscription period ends on{" "}
-                      <strong>{formatDate(profile.subscriptionEndDate)}</strong>.
+                      <strong>{formatDate(restaurant?.subscriptionEndDate)}</strong>.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

@@ -1924,16 +1924,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // User Profile Management
   app.get("/api/profile", requireAuth, async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+    const restaurantId = req.session.user!.restaurantId!;
     
     try {
-      const user = await storage.getUserProfile(req.session.userId, restaurantId);
-      if (!user) {
+      const user = await storage.getUserProfile(req.session.userId!, restaurantId);
+      if (!user || !user.active) {
         return res.status(404).json({ error: "User not found" });
       }
 
+      const restaurant = await storage.getRestaurant(user.restaurantId);
+      if (!restaurant) {
+        return res.status(404).json({ error: "Restaurant not found" });
+      }
+
       const { password: _, passwordResetToken, passwordResetExpiry, ...userProfile } = user;
-      res.json(userProfile);
+      res.json({ user: userProfile, restaurant });
     } catch (error) {
       console.error("Get profile error:", error);
       res.status(500).json({ error: "Failed to get profile" });
