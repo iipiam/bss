@@ -251,6 +251,85 @@ export default function Login() {
       </div>
 
       <div className="flex flex-col items-center gap-6 w-full max-w-md mx-4 mt-16">
+        {/* IT Staff Login Badge */}
+        <Card className="relative w-full border-2 border-blue-500/50 dark:border-blue-400/50 shadow-lg backdrop-blur-sm bg-gradient-to-r from-blue-50/80 to-cyan-50/80 dark:from-blue-950/30 dark:to-cyan-950/30">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-500 dark:bg-blue-600 p-2 rounded-lg">
+                  <HelpCircle className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                    {t.itStaffLogin || 'IT Staff Login'}
+                  </CardTitle>
+                  <CardDescription className="text-xs text-blue-700 dark:text-blue-300">
+                    {t.itStaffOnly || 'For technical support team only'}
+                  </CardDescription>
+                </div>
+              </div>
+              <Badge variant="outline" className="border-blue-500 text-blue-700 dark:text-blue-300">
+                IT
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="pb-4">
+            <form onSubmit={handleLogin} className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="it-username" className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  {t.username}
+                </Label>
+                <Input
+                  id="it-username"
+                  type="text"
+                  placeholder="admin"
+                  value={loginUsername}
+                  onChange={(e) => setLoginUsername(e.target.value)}
+                  disabled={isLoggingIn}
+                  required
+                  className="border-blue-200 dark:border-blue-800 focus:border-blue-500"
+                  data-testid="input-it-username"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="it-password" className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  {t.password}
+                </Label>
+                <Input
+                  id="it-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  disabled={isLoggingIn}
+                  required
+                  className="border-blue-200 dark:border-blue-800 focus:border-blue-500"
+                  data-testid="input-it-password"
+                />
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800" 
+                disabled={isLoggingIn}
+                data-testid="button-it-login"
+              >
+                {isLoggingIn ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    {t.loggingIn}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <LogIn className="h-4 w-4" />
+                    {t.login}
+                  </div>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Regular User Login/Signup */}
         <Card className="relative w-full border-none shadow-2xl backdrop-blur-sm bg-card">
         <CardHeader className="space-y-6 text-center pb-6">
           <div className="mx-auto relative">

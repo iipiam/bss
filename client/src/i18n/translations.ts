@@ -34,6 +34,8 @@ export interface Translations {
   help: string;
   supportAndHelp: string;
   technicalSupport: string;
+  itStaffLogin: string;
+  itStaffOnly: string;
   contactSupport: string;
   contactInformation: string;
   whatsapp: string;
@@ -777,6 +779,8 @@ export const translations: Record<Language, Translations> = {
     help: 'Help',
     supportAndHelp: 'Support & Help',
     technicalSupport: 'Technical Support',
+    itStaffLogin: 'IT Staff Login',
+    itStaffOnly: 'For technical support team only',
     contactSupport: 'Contact Support',
     contactInformation: 'Contact Information',
     whatsapp: 'WhatsApp',
