@@ -1,4 +1,6 @@
 import {
+  type Restaurant,
+  type InsertRestaurant,
   type Branch,
   type InsertBranch,
   type InventoryItem,
@@ -41,6 +43,7 @@ import {
   type InsertTicketMessage,
   type EmployeeActivityLog,
   type InsertEmployeeActivityLog,
+  restaurants,
   branches,
   inventoryItems,
   menuItems,
@@ -74,6 +77,11 @@ import { eq, and, gte, lte, sql, or, isNull } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export interface IStorage {
+  // Restaurants (Multi-tenant isolation)
+  createRestaurant(restaurant: InsertRestaurant): Promise<Restaurant>;
+  getRestaurant(id: string): Promise<Restaurant | undefined>;
+  updateRestaurant(id: string, restaurant: Partial<InsertRestaurant>): Promise<Restaurant | undefined>;
+
   // Branches
   getBranches(): Promise<Branch[]>;
   getBranch(id: string): Promise<Branch | undefined>;
@@ -239,6 +247,28 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Restaurants (Multi-tenant isolation)
+  async createRestaurant(restaurant: InsertRestaurant): Promise<Restaurant> {
+    const [created] = await db.insert(restaurants).values(restaurant).returning();
+    return created;
+  }
+
+  async getRestaurant(id: string): Promise<Restaurant | undefined> {
+    const [restaurant] = await db.select().from(restaurants).where(eq(restaurants.id, id));
+    return restaurant;
+  }
+
+  async updateRestaurant(id: string, restaurant: Partial<InsertRestaurant>): Promise<Restaurant | undefined> {
+    const updateData = Object.fromEntries(
+      Object.entries(restaurant).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getRestaurant(id);
+    }
+    const [updated] = await db.update(restaurants).set(updateData).where(eq(restaurants.id, id)).returning();
+    return updated;
+  }
+
   // Branches
   async getBranches(): Promise<Branch[]> {
     return await db.select().from(branches);
@@ -735,14 +765,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async cancelSubscription(userId: string): Promise<User | undefined> {
-    const [updated] = await db.update(users)
+    // Get user to find their restaurantId
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+
+    // Update restaurant subscription status
+    await db.update(restaurants)
       .set({
         subscriptionStatus: 'cancelled',
         subscriptionCancelledAt: new Date()
       })
-      .where(eq(users.id, userId))
-      .returning();
-    return updated;
+      .where(eq(restaurants.id, user.restaurantId));
+
+    // Return updated user
+    return user;
   }
 
   // Invoices
@@ -1492,17 +1528,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateMoyasarPayment(id: string, payment: Partial<InsertMoyasarPayment>): Promise<MoyasarPayment | undefined> {
-    const updateData = Object.fromEntries(
+    const updateData: any = Object.fromEntries(
       Object.entries(payment).filter(([_, value]) => value !== undefined)
     );
     updateData.updatedAt = new Date();
     
-    if (Object.keys(updateData).length === 0) {
+    if (Object.keys(updateData).length === 1 && updateData.updatedAt) {
       return this.getMoyasarPayment(id);
     }
     
     const [updated] = await db.update(moyasarPayments)
-      .set(updateData as any)
+      .set(updateData)
       .where(eq(moyasarPayments.id, id))
       .returning();
     return updated;
