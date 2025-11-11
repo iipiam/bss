@@ -482,9 +482,9 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <LanguageProvider>
-          <TooltipProvider>
-            <AuthProvider>
+        <TooltipProvider>
+          <AuthProvider>
+            <LanguageProvider>
               <BranchProvider>
                 <DeviceProvider>
                   <NotificationProvider>
@@ -492,10 +492,10 @@ export default function App() {
                   </NotificationProvider>
                 </DeviceProvider>
               </BranchProvider>
-            </AuthProvider>
-            <Toaster />
-          </TooltipProvider>
-        </LanguageProvider>
+            </LanguageProvider>
+          </AuthProvider>
+          <Toaster />
+        </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
