@@ -940,6 +940,12 @@ export async function generateSubscriptionInvoice(data: {
 
   const planName = planNames[data.subscriptionPlan] || { en: data.subscriptionPlan, ar: data.subscriptionPlan };
 
+  // Security and Confidentiality Agreement Clause
+  const securityClause = {
+    en: "I acknowledge that all the information, data and numbers entered by me are correct, as they will appear in my tax invoices and subscription invoice, and I take full responsibility if there is anything to the contrary, and the company owning the application has the right to dispose of the account to preserve its legal right before the authorities considered competent in fraud, tax evasion, forgery and forgery.",
+    ar: "أقر بأن جميع المعلومات والبيانات والأرقام التي أدخلتها صحيحة، حيث ستظهر في فواتيري الضريبية وفاتورة الاشتراك، وأتحمل كامل المسؤولية في حالة وجود أي شيء مخالف، ويحق للشركة المالكة للتطبيق التصرف في الحساب للحفاظ على حقها القانوني أمام الجهات المختصة المعنية بالاحتيال والتهرب الضريبي والتزوير والتزييف."
+  };
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -1141,6 +1147,38 @@ export async function generateSubscriptionInvoice(data: {
       font-family: 'Noto Naskh Arabic', serif;
       direction: rtl;
     }
+
+    .security-clause {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 30px;
+      page-break-inside: avoid;
+    }
+
+    .security-clause h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e40af;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .security-clause-content {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .security-clause-content .en,
+    .security-clause-content .ar {
+      flex: 1;
+      font-size: 10px;
+      line-height: 1.6;
+      color: #374151;
+    }
   </style>
 </head>
 <body>
@@ -1237,6 +1275,18 @@ export async function generateSubscriptionInvoice(data: {
       <div class="qr-section">
         <p style="color: #6b7280; margin-bottom: 10px;">Scan for ZATCA Verification / امسح للتحقق من هيئة الزكاة</p>
         <img src="${qrCodeDataURL}" class="qr-code" alt="QR Code"/>
+      </div>
+
+      <div class="security-clause">
+        <h3 style="text-align: center;">Security & Confidentiality Agreement / اتفاقية الأمان والسرية</h3>
+        <div class="security-clause-content">
+          <div class="en">
+            ${escapeHtml(securityClause.en)}
+          </div>
+          <div class="ar">
+            ${escapeHtml(securityClause.ar)}
+          </div>
+        </div>
       </div>
 
       <div class="footer">
