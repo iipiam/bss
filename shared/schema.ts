@@ -88,15 +88,6 @@ export const insertMenuItemSchema = createInsertSchema(menuItems)
   )
   .refine(
     (data) => {
-      // Must have either recipeId OR inventoryItemId
-      const hasRecipe = data.recipeId && data.recipeId !== "none";
-      const hasInventoryItem = data.inventoryItemId && data.inventoryItemId !== "none";
-      return hasRecipe || hasInventoryItem;
-    },
-    { message: "Menu item must have either a recipe or be linked to an inventory item" }
-  )
-  .refine(
-    (data) => {
       // If linked to inventory item (not recipe), stockNo is required
       const hasInventoryItem = data.inventoryItemId && data.inventoryItemId !== "none";
       const hasRecipe = data.recipeId && data.recipeId !== "none";

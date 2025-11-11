@@ -195,7 +195,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const item = await storage.createMenuItem(data);
       res.status(201).json(item);
     } catch (error) {
-      res.status(400).json({ error: "Invalid menu data" });
+      console.error("Menu creation validation error:", error);
+      res.status(400).json({ error: "Invalid menu data", details: error instanceof Error ? error.message : String(error) });
     }
   });
 

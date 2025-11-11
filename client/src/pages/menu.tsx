@@ -139,10 +139,10 @@ export default function Menu() {
         name: data.name,
         description: data.description,
         category: data.category,
-        price: parseFloat(finalPrice.toFixed(2)), // Final price after discount and VAT
-        basePrice: parseFloat(basePrice.toFixed(2)), // Original base price (before discount)
-        vatAmount: parseFloat(discountedVAT.toFixed(2)), // VAT on discounted base
-        discount: parseFloat(discountNum.toFixed(2)),
+        price: finalPrice.toFixed(2), // Final price after discount and VAT
+        basePrice: basePrice.toFixed(2), // Original base price (before discount)
+        vatAmount: discountedVAT.toFixed(2), // VAT on discounted base
+        discount: discountNum.toFixed(2),
         available: true,
         imageUrl: data.imageUrl || null,
       };
@@ -203,10 +203,10 @@ export default function Menu() {
         recipeId: (data.recipeId && data.recipeId !== "none") ? data.recipeId : null, // Send null to clear recipe or actual ID
         portionSize: (data.recipeId && data.recipeId !== "none") ? (data.portionSize || "1.00") : null,
         stockNo: data.stockNo || null, // Include stockNo (null if empty)
-        price: parseFloat(finalPrice.toFixed(2)), // Final price after discount and VAT
-        basePrice: parseFloat(basePrice.toFixed(2)), // Original base price (before discount)
-        vatAmount: parseFloat(discountedVAT.toFixed(2)), // VAT on discounted base
-        discount: parseFloat(discountNum.toFixed(2)),
+        price: finalPrice.toFixed(2), // Final price after discount and VAT
+        basePrice: basePrice.toFixed(2), // Original base price (before discount)
+        vatAmount: discountedVAT.toFixed(2), // VAT on discounted base
+        discount: discountNum.toFixed(2),
         imageUrl: data.imageUrl !== undefined ? data.imageUrl : undefined,
       };
 
