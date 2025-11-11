@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { WelcomeVideo } from "@/components/WelcomeVideo";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const languages: Language[] = ['English', 'Arabic', 'Chinese', 'German', 'Hindi', 'Urdu', 'Bengali'];
 
@@ -227,16 +228,21 @@ export default function Login() {
   };
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80">
+    <div className="relative flex items-center justify-center min-h-screen overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80 dark:from-primary/30 dark:via-primary/20 dark:to-primary/10">
       {/* Animated Background Shapes */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-1/2 -left-40 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute -bottom-32 right-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-white/10 dark:bg-primary/30 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-1/2 -left-40 w-80 h-80 bg-white/5 dark:bg-primary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute -bottom-32 right-1/3 w-72 h-72 bg-white/10 dark:bg-primary/25 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      <div className="flex flex-col items-center gap-6 w-full max-w-md mx-4">
-        <Card className="relative w-full border-none shadow-2xl backdrop-blur-sm bg-white/95 dark:bg-background/95">
+      {/* Header with Theme Toggle */}
+      <div className="absolute top-0 left-0 right-0 flex justify-end p-4 z-10">
+        <ThemeToggle />
+      </div>
+
+      <div className="flex flex-col items-center gap-6 w-full max-w-md mx-4 mt-16">
+        <Card className="relative w-full border-none shadow-2xl backdrop-blur-sm bg-card">
         <CardHeader className="space-y-6 text-center pb-6">
           <div className="mx-auto relative">
             <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/60 rounded-full blur-xl opacity-50"></div>
@@ -245,7 +251,7 @@ export default function Login() {
             </div>
           </div>
           <div className="space-y-2">
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            <CardTitle className="text-3xl font-bold text-foreground">
               RestoPOS
             </CardTitle>
             <CardDescription className="text-base">{t.restaurantManagementSystem}</CardDescription>
@@ -275,31 +281,29 @@ export default function Login() {
         <CardContent>
           {/* Video Preview Card - Watch before signing up */}
           <div className="mb-6">
-            <button
+            <Button
               onClick={() => setShowWelcomeVideo(true)}
-              className="w-full group relative overflow-hidden rounded-xl bg-gradient-to-r from-primary to-primary/80 p-6 hover-elevate active-elevate-2 transition-all"
+              variant="default"
+              className="w-full group relative overflow-hidden rounded-xl h-auto p-6 text-left justify-start"
               data-testid="button-watch-intro-video"
             >
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center justify-between gap-4 w-full">
                 <div className="flex items-center gap-4">
-                  <div className="flex-shrink-0 bg-white/20 backdrop-blur-sm rounded-full p-3 group-hover:bg-white/30 transition-colors">
-                    <Play className="h-8 w-8 text-white fill-white" />
+                  <div className="flex-shrink-0 bg-primary-foreground/20 rounded-full p-3 group-hover:bg-primary-foreground/30 transition-colors">
+                    <Play className="h-8 w-8 text-primary-foreground fill-primary-foreground" />
                   </div>
                   <div className="text-left">
-                    <h3 className="text-lg font-bold text-white mb-1">
+                    <h3 className="text-lg font-bold text-primary-foreground mb-1">
                       Watch Our Success Story
                     </h3>
-                    <p className="text-sm text-white/90">
+                    <p className="text-sm text-primary-foreground/90">
                       See how RestoPOS transforms businesses • 30 sec
                     </p>
                   </div>
                 </div>
-                <Video className="h-8 w-8 text-white/80 group-hover:text-white transition-colors" />
+                <Video className="h-8 w-8 text-primary-foreground/80 group-hover:text-primary-foreground transition-colors" />
               </div>
-              
-              {/* Animated shimmer effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-            </button>
+            </Button>
           </div>
 
           <Tabs defaultValue="login" className="w-full">
