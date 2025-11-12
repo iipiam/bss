@@ -4,6 +4,7 @@ import { useLanguage } from './LanguageContext';
 import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { playNotificationTone, type ToneId } from '@/lib/notificationTones';
+import { queryClient } from '@/lib/queryClient';
 
 interface OrderNotification {
   type: 'order:created' | 'order:statusUpdated';
@@ -14,6 +15,21 @@ interface OrderNotification {
   branchName?: string;
   itemsSummary?: string;
 }
+
+interface ChatNotification {
+  type: 'chat:message';
+  conversationId: string;
+  message: {
+    id: string;
+    conversationId: string;
+    senderId: string;
+    senderName: string;
+    content: string;
+    createdAt: string;
+  };
+}
+
+type Notification = OrderNotification | ChatNotification;
 
 interface NotificationContextType {
   isConnected: boolean;
@@ -78,29 +94,57 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
       wsRef.current.onmessage = (event) => {
         try {
-          const notification: OrderNotification = JSON.parse(event.data);
+          const notification: Notification = JSON.parse(event.data);
           
           if (!notificationsEnabled) return;
 
-          // Play notification tone using Web Audio API - use ref for latest value
-          playNotificationTone(currentToneRef.current);
+          // Handle different notification types
+          if (notification.type === 'chat:message') {
+            // NOTE: Server currently broadcasts to all restaurant users. Frontend must filter.
+            // Invalidate conversation list (will refresh only user's conversations via API filtering)
+            queryClient.invalidateQueries({ queryKey: ['/api/chat/conversations'] });
+            
+            // Only invalidate messages if user has this conversation in their query cache
+            // This prevents unnecessary fetches for conversations user isn't part of
+            const cachedConversations = queryClient.getQueryData(['/api/chat/conversations']) as any[];
+            const userIsInConversation = cachedConversations?.some(
+              (conv: any) => conv.id === notification.conversationId
+            );
+            
+            if (userIsInConversation) {
+              queryClient.invalidateQueries({ 
+                queryKey: ['/api/chat/conversations', notification.conversationId, 'messages'] 
+              });
+              
+              // Only show toast if user is not the sender AND is in this conversation
+              if (notification.message.senderId !== user?.id) {
+                toast({
+                  title: "New Message",
+                  description: `${notification.message.senderName}: ${notification.message.content.slice(0, 50)}${notification.message.content.length > 50 ? '...' : ''}`,
+                  duration: 3000,
+                });
+              }
+            }
+          } else {
+            // Handle order notifications
+            playNotificationTone(currentToneRef.current);
 
-          // Show toast notification
-          const title = notification.type === 'order:created' 
-            ? `${t.newOrder || 'New Order'} - ${notification.orderNumber}`
-            : `${t.orderUpdated || 'Order Updated'} - ${notification.orderNumber}`;
-          
-          const description = [
-            notification.status && `${t.status || 'Status'}: ${notification.status}`,
-            notification.branchName && `${t.branch || 'Branch'}: ${notification.branchName}`,
-            notification.itemsSummary && `${t.items || 'Items'}: ${notification.itemsSummary}`,
-          ].filter(Boolean).join('\n');
+            const title = notification.type === 'order:created' 
+              ? `${t.newOrder || 'New Order'} - ${notification.orderNumber}`
+              : `${t.orderUpdated || 'Order Updated'} - ${notification.orderNumber}`;
+            
+            const description = [
+              notification.status && `${t.status || 'Status'}: ${notification.status}`,
+              notification.branchName && `${t.branch || 'Branch'}: ${notification.branchName}`,
+              notification.itemsSummary && `${t.items || 'Items'}: ${notification.itemsSummary}`,
+            ].filter(Boolean).join('\n');
 
-          toast({
-            title,
-            description,
-            duration: 5000,
-          });
+            toast({
+              title,
+              description,
+              duration: 5000,
+            });
+          }
         } catch (err) {
           console.error('[Notifications] Failed to parse message:', err);
         }

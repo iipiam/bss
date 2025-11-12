@@ -35,6 +35,7 @@ interface WSClient {
   socket: WebSocket;
   restaurantId: string;
   userId: string;
+  conversationIds: Set<string>; // Conversations this user is a member of
 }
 let wsClients: Set<WSClient> | null = null;
 
@@ -67,10 +68,19 @@ export function broadcastNotification(event: {
   
   wsClients.forEach((client) => {
     // Filter by restaurant for multi-tenant isolation
-    if (client.restaurantId === event.restaurantId && client.socket.readyState === WebSocket.OPEN) {
-      client.socket.send(message);
-      sentCount++;
+    if (client.restaurantId !== event.restaurantId || client.socket.readyState !== WebSocket.OPEN) {
+      return;
     }
+    
+    // For chat messages, additionally filter by conversation membership
+    if (event.type === 'chat:message' && event.conversationId) {
+      if (!client.conversationIds.has(event.conversationId)) {
+        return; // Skip clients not in this conversation
+      }
+    }
+    
+    client.socket.send(message);
+    sentCount++;
   });
   
   console.log(`[WebSocket] Broadcast ${event.type} to ${sentCount} clients in restaurant ${event.restaurantId}`);
@@ -3350,7 +3360,20 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         content: content.trim(),
       });
       
-      // TODO: Broadcast via WebSocket to all conversation members
+      // Broadcast new message via WebSocket to all restaurant members
+      broadcastNotification({
+        type: 'chat:message',
+        restaurantId,
+        conversationId,
+        message: {
+          id: message.id!,
+          conversationId: message.conversationId!,
+          senderId: message.senderId!,
+          senderName: message.senderName!,
+          content: message.content!,
+          createdAt: message.createdAt!.toISOString(),
+        },
+      });
       
       res.status(201).json(message);
     } catch (error) {
@@ -4237,14 +4260,24 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         
         const { restaurantId, id: userId } = session.user;
         
-        wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.handleUpgrade(request, socket, head, async (ws) => {
+          // Fetch user's conversations to enable participant-only message delivery
+          let conversationIds = new Set<string>();
+          try {
+            const conversations = await storage.getUserConversations(userId, restaurantId);
+            conversationIds = new Set(conversations.map(c => c.id));
+          } catch (error) {
+            console.error('[WebSocket] Failed to load conversations:', error);
+          }
+          
           const client: WSClient = {
             socket: ws,
             restaurantId,
             userId,
+            conversationIds,
           };
           
-          console.log(`[WebSocket] Client connected: user=${userId}, restaurant=${restaurantId}`);
+          console.log(`[WebSocket] Client connected: user=${userId}, restaurant=${restaurantId}, conversations=${conversationIds.size}`);
           wsClients!.add(client);
           
           ws.on('close', () => {
