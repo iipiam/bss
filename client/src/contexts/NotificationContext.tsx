@@ -111,7 +111,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
           // Handle different notification types
           if (notification.type === 'chat:message') {
-            // NOTE: Server currently broadcasts to all restaurant users. Frontend must filter.
+            // Check if chat notifications are enabled FIRST (admin setting applies to all users)
+            const chatNotificationsEnabled = chatSettings?.notificationsEnabled ?? true;
+            const chatSoundEnabled = chatSettings?.soundEnabled ?? true;
+            const chatToneId = chatSettings?.toneId || 'tone1';
+            
             // Invalidate conversation list (will refresh only user's conversations via API filtering)
             queryClient.invalidateQueries({ queryKey: ['/api/chat/conversations'] });
             
@@ -126,26 +130,22 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               queryClient.invalidateQueries({ 
                 queryKey: ['/api/chat/conversations', notification.conversationId, 'messages'] 
               });
-              
-              // Check if chat notifications are enabled (admin setting applies to all users)
-              const chatNotificationsEnabled = chatSettings?.notificationsEnabled ?? true;
-              const chatSoundEnabled = chatSettings?.soundEnabled ?? true;
-              const chatToneId = chatSettings?.toneId || 'tone1';
-              
-              // Only show toast/sound if user is not the sender, is in conversation, and notifications are enabled
-              if (notification.message.senderId !== user?.id && chatNotificationsEnabled) {
-                // Play sound if enabled
-                if (chatSoundEnabled) {
-                  playNotificationTone(chatToneId as ToneId);
-                }
-                
-                // Show toast notification
-                toast({
-                  title: "New Message",
-                  description: `${notification.message.senderName}: ${notification.message.content.slice(0, 50)}${notification.message.content.length > 50 ? '...' : ''}`,
-                  duration: 3000,
-                });
+            }
+            
+            // Show toast/sound if user is not the sender AND notifications are enabled
+            // NOTE: Server-side filtering ensures user is a conversation participant
+            if (notification.message.senderId !== user?.id && chatNotificationsEnabled) {
+              // Play sound if enabled
+              if (chatSoundEnabled) {
+                playNotificationTone(chatToneId as ToneId);
               }
+              
+              // Show toast notification
+              toast({
+                title: "New Message",
+                description: `${notification.message.senderName}: ${notification.message.content.slice(0, 50)}${notification.message.content.length > 50 ? '...' : ''}`,
+                duration: 3000,
+              });
             }
           } else {
             // Handle order notifications
