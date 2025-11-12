@@ -1881,6 +1881,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // SECURITY: Mark setup as complete ONLY after all side-effects succeed
       // This prevents onboarding lockout if salary creation fails
       if (isSetupMode && user.role === 'admin') {
+        // Create default chat channels (#general, #kitchen, #front-desk, #it-support)
+        await storage.createDefaultChannels(restaurantId, user.id);
+        console.log(`[SETUP] Created default chat channels for restaurant ${restaurantId}`);
+        
         await storage.updateRestaurant(restaurantId, { setupComplete: true });
         console.log(`[SETUP] Restaurant ${restaurantId} setup completed with admin user ${user.username}`);
       }

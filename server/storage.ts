@@ -2074,6 +2074,7 @@ export class DatabaseStorage implements IStorage {
       { name: "#general", scope: "restaurant" as const, branchId: null },
       { name: "#kitchen", scope: "restaurant" as const, branchId: null },
       { name: "#front-desk", scope: "restaurant" as const, branchId: null },
+      { name: "#it-support", scope: "restaurant" as const, branchId: null },
     ];
 
     for (const channel of defaultChannels) {
