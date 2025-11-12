@@ -305,6 +305,16 @@ export interface IStorage {
   
   // Team Chat - Default Channels
   createDefaultChannels(restaurantId: string, createdBy: string): Promise<void>;
+  
+  // Team Chat - Notification Settings (MULTI-TENANT: SQL-level restaurantId filtering)
+  getChatNotificationDefaults(restaurantId: string): Promise<any | undefined>; // Get restaurant default settings
+  updateChatNotificationDefaults(restaurantId: string, defaults: any): Promise<any>; // Admin only - update restaurant defaults
+  getUserChatNotificationSettings(userId: string, restaurantId: string): Promise<any | undefined>; // Get user's override settings
+  updateUserChatNotificationSettings(userId: string, restaurantId: string, settings: any): Promise<any>; // Update user's override settings
+  getEffectiveChatNotificationSettings(userId: string, restaurantId: string): Promise<any>; // Merge defaults with user overrides
+  getChatConversationPreference(conversationId: string, userId: string, restaurantId: string): Promise<any | undefined>; // Get per-conversation mute preference
+  updateChatConversationPreference(conversationId: string, userId: string, restaurantId: string, isMuted: boolean): Promise<any>; // Toggle mute for conversation
+  getMutedConversations(userId: string, restaurantId: string): Promise<string[]>; // Get list of muted conversation IDs
 }
 
 export class DatabaseStorage implements IStorage {
