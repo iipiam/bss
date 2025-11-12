@@ -3141,6 +3141,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to download invoice' });
     }
   });
+
+  // Get user's subscription invoices (list)
+  // NOTE: This route MUST come after the /:filename route to avoid routing conflicts
+  app.get("/api/subscription-invoices", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user!.id;
+      const invoices = await storage.getSubscriptionInvoices(userId);
+      res.json(invoices);
+    } catch (error) {
+      console.error("Get subscription invoices error:", error);
+      res.status(500).json({ error: "Failed to fetch subscription invoices" });
+    }
+  });
   
   // TODO: Authenticated endpoint to download VAT reports
   // Will be implemented when VAT report management is added

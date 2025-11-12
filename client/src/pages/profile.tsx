@@ -12,8 +12,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { User, Mail, Phone, CreditCard, Calendar, AlertTriangle, CheckCircle2, XCircle, Shield } from "lucide-react";
-import type { User as UserType, Restaurant } from "@shared/schema";
+import { User, Mail, Phone, CreditCard, Calendar, AlertTriangle, CheckCircle2, XCircle, Shield, FileText, Download } from "lucide-react";
+import type { User as UserType, Restaurant, SubscriptionInvoice } from "@shared/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +49,11 @@ export default function Profile() {
 
   const profile = profileData?.user;
   const restaurant = profileData?.restaurant;
+
+  // Fetch subscription invoices
+  const { data: invoices = [], isLoading: invoicesLoading } = useQuery<SubscriptionInvoice[]>({
+    queryKey: ["/api/subscription-invoices"],
+  });
 
   // Profile update mutation
   const updateProfileMutation = useMutation({
@@ -111,6 +116,40 @@ export default function Profile() {
     cancelSubscriptionMutation.mutate();
   };
 
+  const handleDownloadInvoice = async (invoice: SubscriptionInvoice) => {
+    try {
+      const filename = `subscription-${invoice.serialNumber}.pdf`;
+      const response = await fetch(`/api/subscription-invoices/${filename}`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download invoice');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Download Started",
+        description: "Your invoice is being downloaded.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Failed to download invoice. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const formatDate = (date: Date | string | null | undefined) => {
     if (!date) return "N/A";
     return new Date(date).toLocaleDateString("en-US", {
@@ -118,6 +157,11 @@ export default function Profile() {
       month: "long",
       day: "numeric",
     });
+  };
+
+  const formatCurrency = (amount: string | number) => {
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+    return `${num.toFixed(2)} SAR`;
   };
 
   const getSubscriptionStatusBadge = (status: string | null | undefined) => {
@@ -422,6 +466,60 @@ export default function Profile() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Subscription Invoices Card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <div>
+              <CardTitle className="text-xl">Subscription Invoices</CardTitle>
+              <CardDescription>View and download your subscription invoices</CardDescription>
+            </div>
+            <FileText className="h-8 w-8 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {invoicesLoading ? (
+              <p className="text-sm text-muted-foreground">Loading invoices...</p>
+            ) : invoices.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No invoices available</p>
+            ) : (
+              <div className="space-y-3">
+                {invoices.map((invoice) => (
+                  <div
+                    key={invoice.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover-elevate"
+                    data-testid={`card-invoice-${invoice.serialNumber}`}
+                  >
+                    <div className="space-y-1 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium" data-testid={`text-invoice-number-${invoice.serialNumber}`}>
+                          Invoice #{invoice.serialNumber}
+                        </p>
+                        <Badge variant="outline" className="capitalize" data-testid={`badge-invoice-plan-${invoice.serialNumber}`}>
+                          {invoice.subscriptionPlan}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground" data-testid={`text-invoice-date-${invoice.serialNumber}`}>
+                        {formatDate(invoice.invoiceDate)}
+                      </p>
+                      <p className="text-sm font-semibold text-primary" data-testid={`text-invoice-total-${invoice.serialNumber}`}>
+                        {formatCurrency(invoice.total)}
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => handleDownloadInvoice(invoice)}
+                      variant="outline"
+                      size="sm"
+                      data-testid={`button-download-invoice-${invoice.serialNumber}`}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
