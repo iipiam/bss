@@ -257,8 +257,8 @@ export interface IStorage {
   getNextVatReportSerialNumber(year: number, month: number): Promise<string>;
 
   // Support Tickets (MULTI-TENANT: SQL-level restaurantId filtering, nullable for IT staff)
-  getSupportTickets(restaurantId: string | null, userId?: string, status?: string, isITStaff?: boolean): Promise<SupportTicket[]>;
-  getSupportTicket(id: string, restaurantId: string | null, isITStaff?: boolean): Promise<SupportTicket | undefined>;
+  getSupportTickets(restaurantId: string | null, userId?: string, status?: string): Promise<SupportTicket[]>;
+  getSupportTicket(id: string, restaurantId: string | null): Promise<SupportTicket | undefined>;
   createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket>;
   updateSupportTicket(id: string, restaurantId: string | null, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined>;
   getNextTicketNumber(): Promise<string>;
@@ -1444,18 +1444,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Support Tickets
-  async getSupportTickets(restaurantId: string | null, userId?: string, status?: string, isITStaff: boolean = false): Promise<SupportTicket[]> {
+  async getSupportTickets(restaurantId: string | null, userId?: string, status?: string): Promise<SupportTicket[]> {
     let query = db.select().from(supportTickets);
     
     const conditions = [];
     
-    // IT staff should ONLY see tickets from restaurant users (restaurantId IS NOT NULL)
-    // Restaurant users should see only their own tickets (filter by restaurantId)
-    if (isITStaff) {
-      // IT staff: show only tickets from restaurant users (exclude internal IT tickets)
-      conditions.push(sql`${supportTickets.restaurantId} IS NOT NULL`);
-    } else if (restaurantId !== null) {
-      // Restaurant users: show only their restaurant's tickets
+    // If restaurantId is null, return all tickets (admin view)
+    // Otherwise, filter by restaurantId (restaurant user view)
+    if (restaurantId !== null) {
       conditions.push(eq(supportTickets.restaurantId, restaurantId));
     }
     
@@ -1473,14 +1469,12 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(sql`${supportTickets.createdAt} DESC`);
   }
 
-  async getSupportTicket(id: string, restaurantId: string | null, isITStaff: boolean = false): Promise<SupportTicket | undefined> {
+  async getSupportTicket(id: string, restaurantId: string | null): Promise<SupportTicket | undefined> {
     const conditions = [eq(supportTickets.id, id)];
     
-    // IT staff: can access any ticket from restaurant users (restaurantId IS NOT NULL)
-    // Restaurant users: can only access their restaurant's tickets
-    if (isITStaff) {
-      conditions.push(sql`${supportTickets.restaurantId} IS NOT NULL`);
-    } else if (restaurantId !== null) {
+    // If restaurantId is null (admin), get ticket by ID only
+    // Otherwise, filter by both ID and restaurantId (multi-tenant isolation)
+    if (restaurantId !== null) {
       conditions.push(eq(supportTickets.restaurantId, restaurantId));
     }
     

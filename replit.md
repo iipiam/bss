@@ -35,47 +35,14 @@ Preferred communication style: Simple, everyday language.
 - **ORM**: Drizzle ORM for type-safe queries.
 - **Schema Design**: Multi-tenant architecture with complete data isolation using `restaurantId` foreign keys across 22 domain tables. Exception: Support tickets can have `restaurantId = null` for IT staff internal tickets.
 - **Migration Strategy**: Drizzle Kit.
-- **Security**: All API endpoints MUST filter by `req.session.user.restaurantId` to prevent cross-tenant data leakage. Exception: Ticket-related endpoints branch on `userType` (IT staff vs restaurant user) to allow IT staff full access while maintaining tenant isolation for restaurant users. The `requireRestaurantUser` middleware blocks IT staff (`userType === 'it_staff'`) from accessing restaurant-specific endpoints.
+- **Security**: All API endpoints MUST filter by `req.session.user.restaurantId` to prevent cross-tenant data leakage. Exception: Ticket-related endpoints branch on user role (admin vs restaurant user) to allow IT staff full access while maintaining tenant isolation for restaurant users.
 
-### Dual-Login System (IT Staff vs Restaurant Users)
-
-**User Type Architecture:**
-- `userType` field distinguishes between three user types:
-  - `'it_staff'`: IT support personnel with `restaurantId = null`
-  - `'restaurant_admin'`: Restaurant administrators with non-null `restaurantId`
-  - `'restaurant_employee'`: Restaurant employees with non-null `restaurantId`
-- The `role` field is preserved for restaurant-specific permissions ('admin' or 'employee')
-
-**Authentication Flows:**
-1. **IT Staff Login** (`/it-login`):
-   - Dedicated login page for IT support team
-   - Endpoint: `POST /api/auth/it-login`
-   - Validates `userType === 'it_staff'`
-   - Default credentials: username="admin@test.com", password="admin123"
-   - Redirects to `/support` after successful login
-   
-2. **Restaurant Login** (`/login`):
-   - Standard login for restaurant admins and employees
-   - Endpoint: `POST /api/auth/login`
-   - Validates `userType` is 'restaurant_admin' or 'restaurant_employee'
-   - Redirects to dashboard or first available page based on permissions
-
-**Access Control:**
-- **IT Staff Access**:
-  - ✅ Can access: Support system (`/support`, `/support/:id`)
-  - ❌ Cannot access: All restaurant endpoints (POS, inventory, menu, analytics, etc.)
-  - Middleware `requireRestaurantUser` returns 403 for IT staff on ~110 restaurant endpoints
-  - Frontend hides all restaurant navigation items for IT staff
-  
-- **Restaurant User Access**:
-  - ✅ Can access: All restaurant features based on permissions
-  - ✅ Can access: Support system to create tickets
-  - Frontend shows full sidebar with permission-based filtering
-
-**IT Staff Onboarding:**
-1. IT users must be manually created in the database during deployment
-2. Example SQL: `INSERT INTO users (username, email, password, user_type, restaurant_id) VALUES ('admin@test.com', 'admin@restopos.com', <bcrypt_hash>, 'it_staff', NULL);`
-3. IT staff can create internal tickets with `restaurantId = null` for tracking internal issues
+### Admin/IT Staff Onboarding
+IT staff users have `role = 'admin'` and `restaurantId = null`. To create an admin user:
+1. Admin users must be manually created in the database during deployment
+2. Example SQL: `INSERT INTO users (email, password, role, restaurant_id) VALUES ('admin@restopos.com', <bcrypt_hash>, 'admin', NULL);`
+3. Default credentials for development: email="admin@restopos.com", password="admin123"
+4. Admin users can access all support tickets and create internal tickets, but cannot access restaurant-specific endpoints (POS, inventory, analytics, etc.)
 
 ### Core Features & Implementations
 - **Analytics & Reporting**: Dashboard with DoD, WoW, MoM, YoY performance metrics; Daily Demand Forecasting; Peak Hours Analysis.

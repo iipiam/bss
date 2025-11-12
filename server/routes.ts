@@ -62,9 +62,9 @@ const requireAuth = (req: any, res: any, next: any) => {
   next();
 };
 
-// Role-based access middleware - IT staff can ONLY access support endpoints
+// Role-based access middleware - IT staff (admin) can ONLY access support endpoints
 const requireRestaurantUser = (req: any, res: any, next: any) => {
-  if (req.session?.user?.userType === 'it_staff') {
+  if (req.session?.user?.role === 'admin') {
     return res.status(403).json({ 
       error: "Access denied. IT staff can only access support endpoints." 
     });
@@ -1401,7 +1401,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password, // Will be hashed in storage
         fullName: name,
         email,
-        userType: "restaurant_admin" as const, // Set userType for dual-login system
         role: "admin" as const,
         active: true,
         permissions: {
@@ -1596,76 +1595,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // IT Staff Login
-  app.post("/api/auth/it-login", async (req, res) => {
-    try {
-      const { username, password } = req.body;
-      
-      console.log("[IT-AUTH] IT Staff login attempt for username:", username);
-      
-      if (!username || !password) {
-        console.log("[IT-AUTH] Missing username or password");
-        return res.status(400).json({ error: "Username and password required" });
-      }
-
-      const user = await storage.getUserByUsername(username);
-      
-      console.log("[IT-AUTH] User found:", user ? `Yes (id: ${user.id}, userType: ${user.userType})` : "No");
-      
-      if (!user) {
-        console.log("[IT-AUTH] User not found in database");
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-      
-      // Validate that this is an IT staff user
-      if (user.userType !== 'it_staff') {
-        console.log("[IT-AUTH] User is not IT staff, userType:", user.userType);
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-      
-      if (!user.active) {
-        console.log("[IT-AUTH] User is inactive");
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-
-      console.log("[IT-AUTH] Comparing password hash");
-      const passwordMatch = await bcrypt.compare(password, user.password);
-      console.log("[IT-AUTH] Password match:", passwordMatch);
-      
-      if (!passwordMatch) {
-        console.log("[IT-AUTH] Password mismatch");
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-
-      // Store IT staff user in session (restaurantId should be null)
-      if (req.session) {
-        req.session.userId = user.id;
-        req.session.role = user.role;
-        req.session.user = {
-          id: user.id,
-          username: user.username,
-          restaurantId: null, // IT staff have no restaurant
-          role: user.role,
-          userType: user.userType,
-          email: user.email || '',
-          fullName: user.fullName,
-          branchId: null,
-          isMainAccount: false,
-          devicePreference: (user.devicePreference as 'laptop' | 'ipad' | 'iphone') || 'laptop'
-        };
-        console.log("[IT-AUTH] Session created for IT staff:", user.id);
-      }
-
-      // IT staff have no restaurant data
-      const { password: _, ...userWithoutPassword } = user;
-      console.log("[IT-AUTH] IT Staff login successful");
-      res.json({ user: userWithoutPassword, restaurant: null });
-    } catch (error) {
-      console.error("IT Staff login error:", error);
-      res.status(500).json({ error: "Login failed" });
-    }
-  });
-
   app.post("/api/auth/logout", async (req, res) => {
     req.session?.destroy((err) => {
       if (err) {
@@ -1804,10 +1733,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/me", requireAuth, async (req, res) => {
-    const isITStaff = req.session.user!.userType === 'it_staff';
+    const isAdmin = req.session.user!.role === 'admin';
     
-    if (isITStaff) {
-      // IT staff don't have restaurantId - fetch user directly by session userId
+    if (isAdmin) {
+      // Admin users don't have restaurantId - fetch user directly by session userId
       const user = await storage.getUserByUsername(req.session.user!.username!);
       
       if (!user || !user.active) {
@@ -1892,7 +1821,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const restaurantId = req.session.user!.restaurantId;
     
     // SECURITY: Check admin role from session (no redundant DB query)
-    if (req.session.user!.userType !== "it_staff") {
+    if (req.session.user!.role !== "admin") {
       return res.status(403).json({ error: "Admin access required" });
     }
 
@@ -3733,15 +3662,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Support Tickets
   app.get("/api/tickets", requireAuth, async (req, res) => {
     try {
-      const isITStaff = req.session.user!.userType === 'it_staff';
+      const isAdmin = req.session.user!.role === 'admin';
       const userId = req.query.userId as string | undefined;
       const status = req.query.status as string | undefined;
       
-      // IT staff see only tickets from restaurant users (restaurantId IS NOT NULL)
+      // Admin users see all tickets (restaurantId = null)
       // Restaurant users see only their tickets (filter by restaurantId)
-      const restaurantId = isITStaff ? null : req.session.user!.restaurantId!;
+      const restaurantId = isAdmin ? null : req.session.user!.restaurantId!;
       
-      const tickets = await storage.getSupportTickets(restaurantId, userId, status, isITStaff);
+      const tickets = await storage.getSupportTickets(restaurantId, userId, status);
       res.json(tickets);
     } catch (error) {
       console.error("Error fetching tickets:", error);
@@ -3751,10 +3680,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/tickets/:id", requireAuth, async (req, res) => {
     try {
-      const isITStaff = req.session.user!.userType === 'it_staff';
-      const restaurantId = isITStaff ? null : req.session.user!.restaurantId!;
+      const isAdmin = req.session.user!.role === 'admin';
+      const restaurantId = isAdmin ? null : req.session.user!.restaurantId!;
       
-      const ticket = await storage.getSupportTicket(req.params.id, restaurantId, isITStaff);
+      const ticket = await storage.getSupportTicket(req.params.id, restaurantId);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
@@ -3769,12 +3698,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/tickets", requireAuth, async (req, res) => {
     try {
-      const isITStaff = req.session.user!.userType === 'it_staff';
+      const isAdmin = req.session.user!.role === 'admin';
       const userId = req.session.userId!;
       
-      // IT staff create tickets with null restaurantId
+      // Admin users create tickets with null restaurantId
       // Restaurant users create tickets with their restaurantId
-      const restaurantId = isITStaff ? null : req.session.user!.restaurantId!;
+      const restaurantId = isAdmin ? null : req.session.user!.restaurantId!;
       
       const ticket = await storage.createSupportTicket({
         restaurantId,
@@ -3786,8 +3715,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'open',
       });
 
-      // Send email notification to IT support (only for non-IT-staff tickets)
-      if (!isITStaff) {
+      // Send email notification to IT support (only for non-admin tickets)
+      if (!isAdmin) {
         const { sendTicketNotificationEmail } = await import('./emailService');
         sendTicketNotificationEmail({
           ticketNumber: ticket.ticketNumber,
@@ -3813,8 +3742,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/tickets/:id", requireAuth, async (req, res) => {
     try {
-      const isITStaff = req.session.user!.userType === 'it_staff';
-      const restaurantId = isITStaff ? null : req.session.user!.restaurantId!;
+      const isAdmin = req.session.user!.role === 'admin';
+      const restaurantId = isAdmin ? null : req.session.user!.restaurantId!;
       
       // SECURITY: Strip restaurantId from request body to prevent cross-tenant reassignment
       const { restaurantId: _, userId: __, ...safeData } = req.body;
@@ -3834,10 +3763,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Ticket Messages
   app.get("/api/tickets/:ticketId/messages", requireAuth, async (req, res) => {
     try {
-      const isITStaff = req.session.user!.userType === 'it_staff';
-      const restaurantId = isITStaff ? null : req.session.user!.restaurantId!;
+      const isAdmin = req.session.user!.role === 'admin';
+      const restaurantId = isAdmin ? null : req.session.user!.restaurantId!;
       
-      const ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId, isITStaff);
+      const ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
@@ -3853,18 +3782,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/tickets/:ticketId/messages", requireAuth, async (req, res) => {
     try {
-      const isITStaff = req.session.user!.userType === 'it_staff';
-      const restaurantId = isITStaff ? null : req.session.user!.restaurantId!;
+      const isAdmin = req.session.user!.role === 'admin';
+      const restaurantId = isAdmin ? null : req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       
-      const ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId, isITStaff);
+      const ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
       }
 
       const message = await storage.createTicketMessage({
-        restaurantId: ticket.restaurantId, // Use ticket's restaurantId (might be null for IT staff tickets)
+        restaurantId: ticket.restaurantId, // Use ticket's restaurantId (might be null for admin tickets)
         ticketId: req.params.ticketId,
         senderId: userId,
         senderName: req.body.senderName || 'User',
@@ -3895,8 +3824,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // IT Support: Get count of all tickets with unread messages from users
   app.get("/api/support/tickets/unread-count", requireAuth, async (req, res) => {
     try {
-      // Only IT staff can access this endpoint
-      if (req.session.user!.userType !== "it_staff") {
+      // Only admins (IT staff) can access this endpoint
+      if (req.session.user!.role !== "admin") {
         return res.status(403).json({ error: "Admin access required" });
       }
 
@@ -3912,7 +3841,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/support/tickets/notifications", requireAuth, async (req, res) => {
     try {
       // Only admins (IT staff) can access this endpoint
-      if (req.session.user!.userType !== "it_staff") {
+      if (req.session.user!.role !== "admin") {
         return res.status(403).json({ error: "Admin access required" });
       }
 

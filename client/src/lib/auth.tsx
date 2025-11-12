@@ -29,15 +29,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await apiRequest("POST", "/api/auth/login", { username, password });
       return await res.json();
     },
-    onSuccess: async (data) => {
-      // Cancel any in-flight /api/auth/me queries to prevent stale data from overwriting cache
-      await queryClient.cancelQueries({ queryKey: ["/api/auth/me"] });
-      
-      // Set the new user data
+    onSuccess: (data) => {
       queryClient.setQueryData(["/api/auth/me"], data);
-      
-      // Invalidate to refetch with the new session cookie
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
     },
   });
 

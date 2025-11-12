@@ -351,14 +351,13 @@ export type Customer = typeof customers.$inferSelect;
 // Users
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  restaurantId: varchar("restaurant_id").references(() => restaurants.id), // Links user to their restaurant (null for IT staff)
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(), // Links user to their restaurant
   username: text("username").notNull().unique(),
   password: text("password").notNull(), // hashed password
   fullName: text("full_name").notNull(),
   email: text("email"),
   phone: text("phone"),
-  userType: text("user_type").notNull().default("restaurant_employee"), // "restaurant_admin", "restaurant_employee", or "it_staff"
-  role: text("role").notNull().default("employee"), // "admin" or "employee" (for restaurant users only)
+  role: text("role").notNull().default("employee"), // "admin" or "employee"
   permissions: jsonb("permissions").notNull().$type<{
     dashboard: boolean;
     inventory: boolean;
