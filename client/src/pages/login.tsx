@@ -125,31 +125,45 @@ export default function Login() {
         description: t.accountCreatedDesc,
       });
       
-      // Auto-download subscription invoice PDF if available
-      if (data.invoicePath) {
-        try {
-          const link = document.createElement('a');
-          link.href = data.invoicePath;
-          link.download = data.invoicePath.split('/').pop() || 'subscription-invoice.pdf';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-          toast({
-            title: "Invoice Downloaded",
-            description: "Your subscription invoice has been downloaded automatically.",
-          });
-        } catch (error) {
-          console.error('Failed to download invoice:', error);
-        }
-      }
-      
       // Reset legal acknowledgement checkbox
       setLegalAcknowledgementChecked(false);
       
       // Auto-login after signup
       try {
         await login(signupUsername, signupPassword);
+        
+        // SECURITY: Download subscription invoice AFTER successful authentication
+        // This ensures the download goes through the authenticated endpoint
+        if (data.invoiceFilename) {
+          try {
+            const response = await fetch(`/api/subscription-invoices/${data.invoiceFilename}`);
+            if (!response.ok) {
+              throw new Error('Failed to download invoice');
+            }
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = data.invoiceFilename;
+            document.body.appendChild(link);
+            link.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(link);
+            
+            toast({
+              title: "Invoice Downloaded",
+              description: "Your subscription invoice has been downloaded automatically.",
+            });
+          } catch (error) {
+            console.error('Failed to download invoice:', error);
+            toast({
+              title: "Invoice Download Failed",
+              description: "You can download your invoice later from the Invoices page.",
+              variant: "destructive",
+            });
+          }
+        }
       } catch (error: any) {
         toast({
           title: t.loginFailed,

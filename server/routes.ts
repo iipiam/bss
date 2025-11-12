@@ -1488,14 +1488,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         console.log(`[SIGNUP] Subscription invoice generated: ${serialNumber}`);
         
-        // Return invoice path for auto-download
+        // SECURITY: Return invoice filename (not path) for authenticated download after login
         res.status(201).json({ 
           id: user.id, 
           username: user.username, 
           fullName: user.fullName,
           role: user.role,
           restaurantId: user.restaurantId,
-          invoicePath: `/subscription-invoices/${pdfFilename}`
+          invoiceFilename: pdfFilename  // Frontend will download via authenticated endpoint after auto-login
         });
       } catch (invoiceError) {
         console.error("[SIGNUP] Failed to generate subscription invoice:", invoiceError);
@@ -3103,6 +3103,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
   app.use('/uploads/menu-images', (await import('express')).static(path.join(process.cwd(), 'uploads', 'menu-images')));
+
+  // Authenticated endpoint to download subscription invoices
+  // SECURITY: Requires authentication and verifies restaurant ownership via database join
+  app.get('/api/subscription-invoices/:filename', requireAuth, async (req, res) => {
+    try {
+      const filename = req.params.filename;
+      const restaurantId = req.session.user!.restaurantId;
+      
+      // Validate filename format (e.g., subscription-0061-20251112-025947.pdf)
+      const match = filename.match(/^subscription-(\d{4}-\d{8}-\d{6})\.pdf$/);
+      if (!match) {
+        return res.status(400).json({ error: 'Invalid filename format' });
+      }
+      
+      const serialNumber = match[1]; // Extract serial number (e.g., "0061-20251112-025947")
+      
+      // SECURITY: Verify invoice ownership by checking restaurantId in database
+      const invoice = await storage.getSubscriptionInvoiceBySerialNumber(serialNumber, restaurantId);
+      if (!invoice) {
+        return res.status(403).json({ error: 'Access denied - invoice does not belong to your restaurant' });
+      }
+      
+      const filePath = path.join(process.cwd(), 'public', 'subscription-invoices', filename);
+      
+      // Verify file exists on disk
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Invoice PDF file not found' });
+      }
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error('Subscription invoice download error:', error);
+      res.status(500).json({ error: 'Failed to download invoice' });
+    }
+  });
+  
+  // TODO: Authenticated endpoint to download VAT reports
+  // Will be implemented when VAT report management is added
 
   // Import Inventory from Excel
   app.post("/api/import/inventory", upload.single('file'), async (req, res) => {

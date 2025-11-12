@@ -231,6 +231,7 @@ export interface IStorage {
   // Subscription Invoices
   getSubscriptionInvoices(userId?: string): Promise<SubscriptionInvoice[]>;
   getSubscriptionInvoice(id: string): Promise<SubscriptionInvoice | undefined>;
+  getSubscriptionInvoiceBySerialNumber(serialNumber: string, restaurantId: string): Promise<SubscriptionInvoice | undefined>;
   createSubscriptionInvoice(invoice: InsertSubscriptionInvoice): Promise<SubscriptionInvoice>;
   getNextSubscriptionInvoiceSerialNumber(): Promise<string>;
 
@@ -433,7 +434,7 @@ export class DatabaseStorage implements IStorage {
       }
       
       // Get the recipe for this menu item
-      const recipe = await this.getRecipe(menuItem.recipeId);
+      const recipe = await this.getRecipe(menuItem.recipeId, restaurantId);
       if (!recipe) {
         stock[menuItem.id] = 999999; // No recipe found, treat as infinite
         continue;
@@ -1356,6 +1357,33 @@ export class DatabaseStorage implements IStorage {
 
   async getSubscriptionInvoice(id: string): Promise<SubscriptionInvoice | undefined> {
     const [invoice] = await db.select().from(subscriptionInvoices).where(eq(subscriptionInvoices.id, id));
+    return invoice;
+  }
+
+  async getSubscriptionInvoiceBySerialNumber(serialNumber: string, restaurantId: string): Promise<SubscriptionInvoice | undefined> {
+    // SECURITY: Join with users table to verify restaurantId ownership
+    const [invoice] = await db
+      .select({
+        id: subscriptionInvoices.id,
+        userId: subscriptionInvoices.userId,
+        serialNumber: subscriptionInvoices.serialNumber,
+        subscriptionPlan: subscriptionInvoices.subscriptionPlan,
+        branchesCount: subscriptionInvoices.branchesCount,
+        basePlanPrice: subscriptionInvoices.basePlanPrice,
+        additionalBranchesPrice: subscriptionInvoices.additionalBranchesPrice,
+        subtotal: subscriptionInvoices.subtotal,
+        vatAmount: subscriptionInvoices.vatAmount,
+        total: subscriptionInvoices.total,
+        invoiceDate: subscriptionInvoices.invoiceDate,
+        pdfPath: subscriptionInvoices.pdfPath,
+        qrCode: subscriptionInvoices.qrCode,
+      })
+      .from(subscriptionInvoices)
+      .innerJoin(users, eq(subscriptionInvoices.userId, users.id))
+      .where(and(
+        eq(subscriptionInvoices.serialNumber, serialNumber),
+        eq(users.restaurantId, restaurantId)
+      ));
     return invoice;
   }
 
