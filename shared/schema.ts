@@ -617,7 +617,7 @@ export type MonthlyVatReport = typeof monthlyVatReports.$inferSelect;
 // Support Tickets (IT Help System)
 export const supportTickets = pgTable("support_tickets", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  restaurantId: varchar("restaurant_id").references(() => restaurants.id), // Nullable for IT staff tickets
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   userId: varchar("user_id").notNull().references(() => users.id),
   ticketNumber: text("ticket_number").notNull().unique(), // Format: TKT-YYYYMMDD-XXXX
   subject: text("subject").notNull(),
@@ -646,7 +646,7 @@ export type SupportTicket = typeof supportTickets.$inferSelect;
 // Ticket Messages (Chat between user and IT)
 export const ticketMessages = pgTable("ticket_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  restaurantId: varchar("restaurant_id").references(() => restaurants.id), // Nullable for IT staff tickets
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   ticketId: varchar("ticket_id").notNull().references(() => supportTickets.id, { onDelete: 'cascade' }),
   senderId: varchar("sender_id").notNull().references(() => users.id),
   senderName: text("sender_name").notNull(), // Store name for display
