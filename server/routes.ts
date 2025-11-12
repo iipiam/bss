@@ -3158,6 +3158,313 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // TODO: Authenticated endpoint to download VAT reports
   // Will be implemented when VAT report management is added
 
+  // ===== TEAM CHAT API =====
+  
+  // Get all conversations for authenticated user
+  app.get("/api/chat/conversations", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      const branchId = req.query.branchId as string | undefined;
+      
+      const conversations = await storage.getConversations(restaurantId, userId, branchId);
+      res.json(conversations);
+    } catch (error) {
+      console.error("Get conversations error:", error);
+      res.status(500).json({ error: "Failed to fetch conversations" });
+    }
+  });
+
+  // Get single conversation by ID
+  app.get("/api/chat/conversations/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      const conversationId = req.params.id;
+      
+      // Verify user is a member of this conversation
+      const isMember = await storage.isUserInConversation(conversationId, userId, restaurantId);
+      if (!isMember) {
+        return res.status(403).json({ error: "Not a member of this conversation" });
+      }
+      
+      const conversation = await storage.getConversation(conversationId, restaurantId);
+      if (!conversation) {
+        return res.status(404).json({ error: "Conversation not found" });
+      }
+      
+      res.json(conversation);
+    } catch (error) {
+      console.error("Get conversation error:", error);
+      res.status(500).json({ error: "Failed to fetch conversation" });
+    }
+  });
+
+  // Create a new channel
+  app.post("/api/chat/channels", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      const { name, scope, branchId } = req.body;
+      
+      // Validate input
+      if (!name || !scope) {
+        return res.status(400).json({ error: "Name and scope are required" });
+      }
+      
+      if (scope === "branch" && !branchId) {
+        return res.status(400).json({ error: "Branch ID required for branch-scoped channels" });
+      }
+      
+      const conversation = await storage.createConversation({
+        restaurantId,
+        type: "channel",
+        name,
+        scope,
+        branchId: scope === "branch" ? branchId : null,
+        createdBy: userId,
+      });
+      
+      // Add creator as member
+      await storage.addConversationMember({
+        restaurantId,
+        conversationId: conversation.id,
+        userId,
+      });
+      
+      res.status(201).json(conversation);
+    } catch (error) {
+      console.error("Create channel error:", error);
+      res.status(500).json({ error: "Failed to create channel" });
+    }
+  });
+
+  // Get or create direct conversation between two users
+  app.post("/api/chat/direct", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      const { otherUserId } = req.body;
+      
+      if (!otherUserId) {
+        return res.status(400).json({ error: "Other user ID is required" });
+      }
+      
+      if (otherUserId === userId) {
+        return res.status(400).json({ error: "Cannot create DM with yourself" });
+      }
+      
+      // Verify other user exists and is in same restaurant
+      const otherUser = await storage.getUser(otherUserId, restaurantId);
+      if (!otherUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const conversation = await storage.getOrCreateDirectConversation(restaurantId, userId, otherUserId);
+      res.json(conversation);
+    } catch (error) {
+      console.error("Get/create DM error:", error);
+      res.status(500).json({ error: "Failed to get or create direct conversation" });
+    }
+  });
+
+  // Get messages in a conversation
+  app.get("/api/chat/conversations/:id/messages", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      const conversationId = req.params.id;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      
+      // Verify user is a member
+      const isMember = await storage.isUserInConversation(conversationId, userId, restaurantId);
+      if (!isMember) {
+        return res.status(403).json({ error: "Not a member of this conversation" });
+      }
+      
+      const messages = await storage.getChatMessages(conversationId, restaurantId, limit);
+      res.json(messages.reverse()); // Reverse to get oldest first
+    } catch (error) {
+      console.error("Get messages error:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  // Send a message to a conversation
+  app.post("/api/chat/conversations/:id/messages", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      const conversationId = req.params.id;
+      const { content } = req.body;
+      
+      if (!content || content.trim() === "") {
+        return res.status(400).json({ error: "Message content is required" });
+      }
+      
+      // Verify user is a member
+      const isMember = await storage.isUserInConversation(conversationId, userId, restaurantId);
+      if (!isMember) {
+        return res.status(403).json({ error: "Not a member of this conversation" });
+      }
+      
+      // Get user info for sender name
+      const user = await storage.getUser(userId, restaurantId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const message = await storage.createChatMessage({
+        restaurantId,
+        conversationId,
+        senderId: userId,
+        senderName: user.fullName,
+        content: content.trim(),
+      });
+      
+      // TODO: Broadcast via WebSocket to all conversation members
+      
+      res.status(201).json(message);
+    } catch (error) {
+      console.error("Send message error:", error);
+      res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+
+  // Get conversation members
+  app.get("/api/chat/conversations/:id/members", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      const conversationId = req.params.id;
+      
+      // Verify user is a member
+      const isMember = await storage.isUserInConversation(conversationId, userId, restaurantId);
+      if (!isMember) {
+        return res.status(403).json({ error: "Not a member of this conversation" });
+      }
+      
+      const members = await storage.getConversationMembers(conversationId, restaurantId);
+      res.json(members);
+    } catch (error) {
+      console.error("Get members error:", error);
+      res.status(500).json({ error: "Failed to fetch members" });
+    }
+  });
+
+  // Add member to conversation (channels only)
+  app.post("/api/chat/conversations/:id/members", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      const conversationId = req.params.id;
+      const { userId: newUserId } = req.body;
+      
+      if (!newUserId) {
+        return res.status(400).json({ error: "User ID is required" });
+      }
+      
+      // Verify current user is a member
+      const isMember = await storage.isUserInConversation(conversationId, userId, restaurantId);
+      if (!isMember) {
+        return res.status(403).json({ error: "Not a member of this conversation" });
+      }
+      
+      // Verify conversation is a channel (not DM)
+      const conversation = await storage.getConversation(conversationId, restaurantId);
+      if (!conversation || conversation.type !== "channel") {
+        return res.status(400).json({ error: "Can only add members to channels" });
+      }
+      
+      // Verify new user exists and is in same restaurant
+      const newUser = await storage.getUser(newUserId, restaurantId);
+      if (!newUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Check if already a member
+      const alreadyMember = await storage.isUserInConversation(conversationId, newUserId, restaurantId);
+      if (alreadyMember) {
+        return res.status(400).json({ error: "User is already a member" });
+      }
+      
+      const member = await storage.addConversationMember({
+        restaurantId,
+        conversationId,
+        userId: newUserId,
+      });
+      
+      res.status(201).json(member);
+    } catch (error) {
+      console.error("Add member error:", error);
+      res.status(500).json({ error: "Failed to add member" });
+    }
+  });
+
+  // Mark conversation as read
+  app.post("/api/chat/conversations/:id/read", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      const conversationId = req.params.id;
+      const { lastReadMessageId } = req.body;
+      
+      // Verify user is a member
+      const isMember = await storage.isUserInConversation(conversationId, userId, restaurantId);
+      if (!isMember) {
+        return res.status(403).json({ error: "Not a member of this conversation" });
+      }
+      
+      await storage.updateMessageRead({
+        restaurantId,
+        conversationId,
+        userId,
+        lastReadMessageId: lastReadMessageId || null,
+        lastReadAt: new Date(),
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Mark as read error:", error);
+      res.status(500).json({ error: "Failed to mark as read" });
+    }
+  });
+
+  // Get unread count for all conversations
+  app.get("/api/chat/unread-count", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      
+      const count = await storage.getUnreadChatCount(restaurantId, userId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Get unread count error:", error);
+      res.status(500).json({ error: "Failed to fetch unread count" });
+    }
+  });
+
+  // Get all users in restaurant for DM selection
+  app.get("/api/chat/users", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const users = await storage.getUsers(restaurantId);
+      
+      // Return users without sensitive data
+      const safeUsers = users.map(u => ({
+        id: u.id,
+        name: u.fullName,
+        email: u.email,
+        role: u.role,
+      }));
+      
+      res.json(safeUsers);
+    } catch (error) {
+      console.error("Get users error:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
   // Import Inventory from Excel
   app.post("/api/import/inventory", upload.single('file'), async (req, res) => {
     try {

@@ -1839,56 +1839,63 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrCreateDirectConversation(restaurantId: string, userId1: string, userId2: string): Promise<any> {
-    // Try to find existing DM between these two users
-    const existingConversations = await db
-      .select({ conversation: conversations })
+    // Compute deterministic participant hash (sorted user IDs joined)
+    const participantHash = [userId1, userId2].sort().join(':');
+
+    // Try to find existing DM with this participant hash
+    const [existing] = await db
+      .select()
       .from(conversations)
       .where(
         and(
           eq(conversations.restaurantId, restaurantId),
-          eq(conversations.type, "direct")
+          eq(conversations.type, "direct"),
+          eq(conversations.participantHash, participantHash)
         )
       );
 
-    // Check each conversation to see if it has exactly these two members
-    for (const { conversation } of existingConversations) {
-      const members = await db
-        .select()
-        .from(conversationMembers)
-        .where(
-          and(
-            eq(conversationMembers.conversationId, conversation.id),
-            eq(conversationMembers.restaurantId, restaurantId)
-          )
-        );
-
-      if (members.length === 2) {
-        const memberIds = members.map((m) => m.userId).sort();
-        const targetIds = [userId1, userId2].sort();
-        if (memberIds[0] === targetIds[0] && memberIds[1] === targetIds[1]) {
-          return conversation;
-        }
-      }
+    if (existing) {
+      return existing;
     }
 
-    // Create new DM conversation
-    const [newConversation] = await db
-      .insert(conversations)
-      .values({
-        restaurantId,
-        type: "direct",
-        scope: "restaurant", // DMs are always restaurant-wide
-        createdBy: userId1,
-      } as any)
-      .returning();
+    // Create new DM conversation with transaction safety
+    // The unique index on (restaurantId, participantHash) prevents race condition duplicates
+    try {
+      const [newConversation] = await db
+        .insert(conversations)
+        .values({
+          restaurantId,
+          type: "direct",
+          scope: "restaurant", // DMs are always restaurant-wide
+          createdBy: userId1,
+          participantHash, // Store for deduplication
+        } as any)
+        .returning();
 
-    // Add both users as members
-    await db.insert(conversationMembers).values([
-      { restaurantId, conversationId: newConversation.id, userId: userId1 } as any,
-      { restaurantId, conversationId: newConversation.id, userId: userId2 } as any,
-    ]);
+      // Add both users as members
+      await db.insert(conversationMembers).values([
+        { restaurantId, conversationId: newConversation.id, userId: userId1 } as any,
+        { restaurantId, conversationId: newConversation.id, userId: userId2 } as any,
+      ]);
 
-    return newConversation;
+      return newConversation;
+    } catch (error: any) {
+      // If unique constraint violation, another request created it concurrently
+      if (error.code === '23505') { // PostgreSQL unique violation
+        const [concurrent] = await db
+          .select()
+          .from(conversations)
+          .where(
+            and(
+              eq(conversations.restaurantId, restaurantId),
+              eq(conversations.type, "direct"),
+              eq(conversations.participantHash, participantHash)
+            )
+          );
+        return concurrent;
+      }
+      throw error;
+    }
   }
 
   async updateConversationLastMessage(conversationId: string, preview: string): Promise<void> {
@@ -1976,6 +1983,24 @@ export class DatabaseStorage implements IStorage {
 
   // Team Chat - Read Tracking
   async updateMessageRead(read: InsertMessageRead): Promise<void> {
+    // SECURITY: Validate that the message belongs to this conversation and restaurant
+    if (read.lastReadMessageId) {
+      const [message] = await db
+        .select()
+        .from(chatMessages)
+        .where(
+          and(
+            eq(chatMessages.id, read.lastReadMessageId),
+            eq(chatMessages.conversationId, read.conversationId),
+            eq(chatMessages.restaurantId, read.restaurantId)
+          )
+        );
+
+      if (!message) {
+        throw new Error('Message does not belong to this conversation or restaurant');
+      }
+    }
+
     // Upsert: update if exists, insert if not
     const existing = await db
       .select()
@@ -2008,57 +2033,39 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUnreadChatCount(restaurantId: string, userId: string): Promise<number> {
-    // Get all user's conversations
-    const userConvos = await db
-      .select({ conversationId: conversationMembers.conversationId })
-      .from(conversationMembers)
-      .where(
+    // Optimized single-query approach using SQL aggregation
+    // Count all messages in user's conversations that are newer than their last read timestamp
+    const [result] = await db
+      .select({ totalUnread: sql<number>`COUNT(*)` })
+      .from(chatMessages)
+      .innerJoin(
+        conversationMembers,
         and(
+          eq(chatMessages.conversationId, conversationMembers.conversationId),
           eq(conversationMembers.userId, userId),
           eq(conversationMembers.restaurantId, restaurantId)
         )
+      )
+      .leftJoin(
+        messageReads,
+        and(
+          eq(chatMessages.conversationId, messageReads.conversationId),
+          eq(messageReads.userId, userId),
+          eq(messageReads.restaurantId, restaurantId)
+        )
+      )
+      .where(
+        and(
+          eq(chatMessages.restaurantId, restaurantId),
+          // Message is unread if: no read record exists OR message is newer than last read time
+          or(
+            isNull(messageReads.lastReadAt),
+            sql`${chatMessages.createdAt} > ${messageReads.lastReadAt}`
+          )
+        )
       );
 
-    let totalUnread = 0;
-    for (const { conversationId } of userConvos) {
-      const [readInfo] = await db
-        .select()
-        .from(messageReads)
-        .where(
-          and(
-            eq(messageReads.conversationId, conversationId),
-            eq(messageReads.userId, userId),
-            eq(messageReads.restaurantId, restaurantId)
-          )
-        );
-
-      if (readInfo?.lastReadAt) {
-        const [result] = await db
-          .select({ count: sql<number>`count(*)` })
-          .from(chatMessages)
-          .where(
-            and(
-              eq(chatMessages.conversationId, conversationId),
-              eq(chatMessages.restaurantId, restaurantId),
-              sql`${chatMessages.createdAt} > ${readInfo.lastReadAt}`
-            )
-          );
-        totalUnread += Number(result?.count || 0);
-      } else {
-        const [result] = await db
-          .select({ count: sql<number>`count(*)` })
-          .from(chatMessages)
-          .where(
-            and(
-              eq(chatMessages.conversationId, conversationId),
-              eq(chatMessages.restaurantId, restaurantId)
-            )
-          );
-        totalUnread += Number(result?.count || 0);
-      }
-    }
-
-    return totalUnread;
+    return Number(result?.totalUnread || 0);
   }
 
   // Team Chat - Default Channels

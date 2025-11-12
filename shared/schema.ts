@@ -718,13 +718,14 @@ export const conversations = pgTable("conversations", {
   scope: text("scope").notNull(), // "branch" | "restaurant"
   branchId: varchar("branch_id").references(() => branches.id, { onDelete: "cascade" }), // null if scope="restaurant"
   createdBy: varchar("created_by").references(() => users.id, { onDelete: "set null" }),
+  participantHash: text("participant_hash"), // Computed hash of sorted participant IDs for DM deduplication (null for channels)
   lastMessageAt: timestamp("last_message_at"), // Denormalized for fast sorting
   lastMessagePreview: text("last_message_preview"), // Denormalized for quick display
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const insertConversationSchema = createInsertSchema(conversations)
-  .omit({ id: true, createdAt: true, lastMessageAt: true, lastMessagePreview: true })
+  .omit({ id: true, createdAt: true, lastMessageAt: true, lastMessagePreview: true, participantHash: true })
   .extend({
     type: z.enum(["direct", "channel"]),
     scope: z.enum(["branch", "restaurant"]),
