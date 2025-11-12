@@ -301,6 +301,18 @@ export const settings = pgTable("settings", {
   openingTime: text("opening_time"),
   closingTime: text("closing_time"),
   notificationTone: text("notification_tone").notNull().default("tone1"), // Admin-selected notification tone (tone1-tone15)
+  chatNotificationDefaults: jsonb("chat_notification_defaults").$type<{
+    notificationsEnabled: boolean;
+    soundEnabled: boolean;
+    toneId: string;
+    notifyScope: 'all' | 'mentions' | 'direct'; // all messages, @mentions only, or direct messages only
+    quietHours?: {
+      enabled: boolean;
+      start: string; // "22:00" format
+      end: string; // "08:00" format
+      timezone: string; // "Asia/Riyadh"
+    };
+  }>(),
 });
 
 export const insertSettingsSchema = createInsertSchema(settings).omit({ id: true });
@@ -420,6 +432,20 @@ export const users = pgTable("users", {
   }>>(),
   certifications: text("certifications").array(),
   trainingCompleted: text("training_completed").array(),
+  
+  // Chat notification settings (user-level overrides for restaurant defaults)
+  chatNotificationSettings: jsonb("chat_notification_settings").$type<{
+    notificationsEnabled?: boolean; // Override restaurant default
+    soundEnabled?: boolean; // Override restaurant default
+    toneId?: string; // Override restaurant default
+    notifyScope?: 'all' | 'mentions' | 'direct'; // Override restaurant default
+    quietHours?: {
+      enabled: boolean;
+      start: string;
+      end: string;
+      timezone: string;
+    };
+  }>(),
   
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -759,6 +785,26 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
 });
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
+
+// Chat conversation preferences (per-user, per-conversation settings)
+export const chatConversationPreferences = pgTable("chat_conversation_preferences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  conversationId: varchar("conversation_id").references(() => conversations.id, { onDelete: "cascade" }).notNull(),
+  isMuted: boolean("is_muted").notNull().default(false), // Mute notifications for this conversation
+  priority: text("priority").default("normal"), // "high", "normal", "low" - future use for smart notifications
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertChatConversationPreferenceSchema = createInsertSchema(chatConversationPreferences).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+export type InsertChatConversationPreference = z.infer<typeof insertChatConversationPreferenceSchema>;
+export type ChatConversationPreference = typeof chatConversationPreferences.$inferSelect;
 
 // Team Chat - Conversation Members (Junction table)
 export const conversationMembers = pgTable("conversation_members", {
