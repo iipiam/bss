@@ -1804,27 +1804,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users", async (req, res) => {
     try {
-      // Check if this is the first user (setup mode)
-      const allUsers = await storage.getAllUsers();
-      const isFirstUser = allUsers.length === 0;
-
-      // If not first user, require admin authentication
-      if (!isFirstUser) {
-        if (!req.session?.userId || !req.session?.user) {
-          return res.status(401).json({ error: "Not authenticated" });
-        }
-
-        // SECURITY: Check admin role from session (no redundant DB query)
+      const { monthlySalary, ...userData } = req.body;
+      
+      // SECURITY: Two-phase creation flow with setupComplete flag
+      let restaurantId: string;
+      let isSetupMode = false;
+      
+      if (req.session?.userId && req.session?.user) {
+        // Authenticated request - must be admin creating employee
         if (req.session.user.role !== "admin") {
           return res.status(403).json({ error: "Admin access required" });
         }
+        restaurantId = req.session.user.restaurantId;
+      } else {
+        // Unauthenticated request - only allowed during initial setup
+        if (!userData.restaurantId) {
+          return res.status(400).json({ error: "Restaurant ID required for setup" });
+        }
+        
+        // Check if restaurant setup is already complete
+        const restaurant = await storage.getRestaurant(userData.restaurantId);
+        if (!restaurant) {
+          return res.status(400).json({ error: "Invalid restaurant ID" });
+        }
+        
+        if (restaurant.setupComplete) {
+          return res.status(403).json({ error: "Restaurant setup already complete. Please log in to create users." });
+        }
+        
+        restaurantId = userData.restaurantId;
+        isSetupMode = true;
       }
-
-      const { monthlySalary, ...userData } = req.body;
       
-      // SECURITY: Inject restaurantId from session for authenticated requests
-      // For first-user setup, restaurantId comes from request body
-      const restaurantId = isFirstUser ? userData.restaurantId : req.session.user!.restaurantId;
       const data = insertUserSchema.parse({ ...userData, restaurantId });
       
       // Validate monthlySalary if provided
@@ -1851,7 +1862,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
           
           await storage.createSalary({
-            restaurantId: req.session.user!.restaurantId,
+            restaurantId: restaurantId,
             employeeName: user.fullName,
             position: user.role,
             amount: monthlySalary,
@@ -1862,9 +1873,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (salaryError) {
           console.error("Failed to create salary entry:", salaryError);
           // Delete the user if salary creation fails to maintain consistency
-          await storage.deleteUser(user.id, req.session.user!.restaurantId);
+          await storage.deleteUser(user.id, restaurantId);
           return res.status(400).json({ error: "Failed to create employee salary entry" });
         }
+      }
+      
+      // SECURITY: Mark setup as complete ONLY after all side-effects succeed
+      // This prevents onboarding lockout if salary creation fails
+      if (isSetupMode && user.role === 'admin') {
+        await storage.updateRestaurant(restaurantId, { setupComplete: true });
+        console.log(`[SETUP] Restaurant ${restaurantId} setup completed with admin user ${user.username}`);
       }
       
       const { password: _, ...userWithoutPassword } = user;
