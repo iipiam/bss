@@ -67,6 +67,7 @@ import SalesComparison from "@/pages/sales-comparison";
 import Investors from "@/pages/investors";
 import Support from "@/pages/support";
 import SupportDetail from "@/pages/support-detail";
+import Chat from "@/pages/chat";
 import PaymentTest from "@/pages/payment-test";
 import PasswordManager from "@/pages/password-manager";
 import Login from "@/pages/login";
@@ -112,6 +113,7 @@ function Router() {
       <Route path="/investors" component={Investors} />
       <Route path="/support" component={Support} />
       <Route path="/support/:id" component={SupportDetail} />
+      <Route path="/chat" component={Chat} />
       <Route path="/payment-test" component={PaymentTest} />
       <Route component={NotFound} />
     </Switch>
