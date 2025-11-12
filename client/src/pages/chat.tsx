@@ -639,7 +639,7 @@ export default function Chat() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Select User</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-user">
                           <SelectValue placeholder="Choose a user..." />
