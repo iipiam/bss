@@ -708,3 +708,85 @@ export const insertBootstrapResetTokenSchema = createInsertSchema(bootstrapReset
 });
 export type InsertBootstrapResetToken = z.infer<typeof insertBootstrapResetTokenSchema>;
 export type BootstrapResetToken = typeof bootstrapResetTokens.$inferSelect;
+
+// Team Chat - Conversations
+export const conversations = pgTable("conversations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id, { onDelete: "cascade" }).notNull(),
+  type: text("type").notNull(), // "direct" | "channel"
+  name: text("name"), // null for DMs, required for channels (e.g., "#general", "#kitchen")
+  scope: text("scope").notNull(), // "branch" | "restaurant"
+  branchId: varchar("branch_id").references(() => branches.id, { onDelete: "cascade" }), // null if scope="restaurant"
+  createdBy: varchar("created_by").references(() => users.id, { onDelete: "set null" }),
+  lastMessageAt: timestamp("last_message_at"), // Denormalized for fast sorting
+  lastMessagePreview: text("last_message_preview"), // Denormalized for quick display
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertConversationSchema = createInsertSchema(conversations)
+  .omit({ id: true, createdAt: true, lastMessageAt: true, lastMessagePreview: true })
+  .extend({
+    type: z.enum(["direct", "channel"]),
+    scope: z.enum(["branch", "restaurant"]),
+  })
+  .refine(
+    (data) => data.type === "channel" ? !!data.name : true,
+    { message: "Channel conversations must have a name" }
+  )
+  .refine(
+    (data) => data.scope === "branch" ? !!data.branchId : true,
+    { message: "Branch-scoped conversations must have a branchId" }
+  );
+
+export type InsertConversation = z.infer<typeof insertConversationSchema>;
+export type Conversation = typeof conversations.$inferSelect;
+
+// Team Chat - Messages
+export const chatMessages = pgTable("chat_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id, { onDelete: "cascade" }).notNull(),
+  conversationId: varchar("conversation_id").references(() => conversations.id, { onDelete: "cascade" }).notNull(),
+  senderId: varchar("sender_id").references(() => users.id, { onDelete: "set null" }),
+  senderName: text("sender_name").notNull(), // Denormalized for display even if user deleted
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+export type ChatMessage = typeof chatMessages.$inferSelect;
+
+// Team Chat - Conversation Members (Junction table)
+export const conversationMembers = pgTable("conversation_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id, { onDelete: "cascade" }).notNull(),
+  conversationId: varchar("conversation_id").references(() => conversations.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  joinedAt: timestamp("joined_at").notNull().defaultNow(),
+});
+
+export const insertConversationMemberSchema = createInsertSchema(conversationMembers).omit({ 
+  id: true, 
+  joinedAt: true 
+});
+export type InsertConversationMember = z.infer<typeof insertConversationMemberSchema>;
+export type ConversationMember = typeof conversationMembers.$inferSelect;
+
+// Team Chat - Message Reads (Track what each user has read)
+export const messageReads = pgTable("message_reads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id, { onDelete: "cascade" }).notNull(),
+  conversationId: varchar("conversation_id").references(() => conversations.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  lastReadMessageId: varchar("last_read_message_id").references(() => chatMessages.id, { onDelete: "set null" }),
+  lastReadAt: timestamp("last_read_at").notNull().defaultNow(),
+});
+
+export const insertMessageReadSchema = createInsertSchema(messageReads).omit({ 
+  id: true 
+});
+export type InsertMessageRead = z.infer<typeof insertMessageReadSchema>;
+export type MessageRead = typeof messageReads.$inferSelect;

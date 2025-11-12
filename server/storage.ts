@@ -43,6 +43,14 @@ import {
   type InsertTicketMessage,
   type EmployeeActivityLog,
   type InsertEmployeeActivityLog,
+  type Conversation,
+  type InsertConversation,
+  type ChatMessage,
+  type InsertChatMessage,
+  type ConversationMember,
+  type InsertConversationMember,
+  type MessageRead,
+  type InsertMessageRead,
   restaurants,
   branches,
   inventoryItems,
@@ -65,6 +73,10 @@ import {
   supportTickets,
   ticketMessages,
   employeeActivityLog,
+  conversations,
+  chatMessages,
+  conversationMembers,
+  messageReads,
   moyasarPayments,
   type MoyasarPayment,
   type InsertMoyasarPayment,
@@ -269,6 +281,30 @@ export interface IStorage {
 
   // Analytics (MULTI-TENANT: requires restaurantId)
   getSalesComparison(restaurantId: string): Promise<any>;
+
+  // Team Chat - Conversations (MULTI-TENANT: SQL-level restaurantId filtering)
+  getConversations(restaurantId: string, userId: string, branchId?: string): Promise<any[]>; // Returns conversations with unread count
+  getConversation(id: string, restaurantId: string): Promise<any | undefined>;
+  createConversation(conversation: any): Promise<any>; // Uses InsertConversation
+  getOrCreateDirectConversation(restaurantId: string, userId1: string, userId2: string): Promise<any>;
+  updateConversationLastMessage(conversationId: string, preview: string): Promise<void>;
+
+  // Team Chat - Messages (MULTI-TENANT: SQL-level restaurantId filtering)
+  getChatMessages(conversationId: string, restaurantId: string, limit?: number): Promise<any[]>;
+  createChatMessage(message: any): Promise<any>; // Uses InsertChatMessage
+  
+  // Team Chat - Members (MULTI-TENANT: SQL-level restaurantId filtering)
+  getConversationMembers(conversationId: string, restaurantId: string): Promise<any[]>;
+  addConversationMember(member: any): Promise<any>; // Uses InsertConversationMember
+  removeConversationMember(conversationId: string, userId: string, restaurantId: string): Promise<boolean>;
+  isUserInConversation(conversationId: string, userId: string, restaurantId: string): Promise<boolean>;
+
+  // Team Chat - Read Tracking (MULTI-TENANT: SQL-level restaurantId filtering)
+  updateMessageRead(read: any): Promise<void>; // Uses InsertMessageRead (upsert)
+  getUnreadChatCount(restaurantId: string, userId: string): Promise<number>;
+  
+  // Team Chat - Default Channels
+  createDefaultChannels(restaurantId: string, createdBy: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1696,6 +1732,377 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(moyasarPayments.id, id), eq(moyasarPayments.restaurantId, restaurantId)))
       .returning();
     return updated;
+  }
+
+  // Team Chat - Conversations
+  async getConversations(restaurantId: string, userId: string, branchId?: string): Promise<any[]> {
+    // Get all conversations where user is a member
+    const userConversations = await db
+      .select({
+        conversation: conversations,
+        member: conversationMembers,
+      })
+      .from(conversationMembers)
+      .innerJoin(conversations, eq(conversationMembers.conversationId, conversations.id))
+      .where(
+        and(
+          eq(conversationMembers.userId, userId),
+          eq(conversationMembers.restaurantId, restaurantId)
+        )
+      )
+      .orderBy(sql`${conversations.lastMessageAt} DESC NULLS LAST`);
+
+    // For each conversation, get unread count
+    const conversationsWithUnread = await Promise.all(
+      userConversations.map(async ({ conversation }) => {
+        // Get user's last read info
+        const [readInfo] = await db
+          .select()
+          .from(messageReads)
+          .where(
+            and(
+              eq(messageReads.conversationId, conversation.id),
+              eq(messageReads.userId, userId),
+              eq(messageReads.restaurantId, restaurantId)
+            )
+          );
+
+        // Count unread messages
+        let unreadCount = 0;
+        if (readInfo?.lastReadAt) {
+          const [result] = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(chatMessages)
+            .where(
+              and(
+                eq(chatMessages.conversationId, conversation.id),
+                eq(chatMessages.restaurantId, restaurantId),
+                sql`${chatMessages.createdAt} > ${readInfo.lastReadAt}`
+              )
+            );
+          unreadCount = Number(result?.count || 0);
+        } else {
+          // User never read, count all messages
+          const [result] = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(chatMessages)
+            .where(
+              and(
+                eq(chatMessages.conversationId, conversation.id),
+                eq(chatMessages.restaurantId, restaurantId)
+              )
+            );
+          unreadCount = Number(result?.count || 0);
+        }
+
+        // Get member count for channels
+        const [memberCountResult] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(conversationMembers)
+          .where(
+            and(
+              eq(conversationMembers.conversationId, conversation.id),
+              eq(conversationMembers.restaurantId, restaurantId)
+            )
+          );
+        const memberCount = Number(memberCountResult?.count || 0);
+
+        return {
+          ...conversation,
+          unreadCount,
+          memberCount,
+        };
+      })
+    );
+
+    // Filter by branch if provided
+    if (branchId) {
+      return conversationsWithUnread.filter(
+        (c) => c.scope === "restaurant" || c.branchId === branchId
+      );
+    }
+
+    return conversationsWithUnread;
+  }
+
+  async getConversation(id: string, restaurantId: string): Promise<any | undefined> {
+    const [conversation] = await db
+      .select()
+      .from(conversations)
+      .where(and(eq(conversations.id, id), eq(conversations.restaurantId, restaurantId)));
+    return conversation;
+  }
+
+  async createConversation(conversation: InsertConversation): Promise<Conversation> {
+    const [created] = await db.insert(conversations).values(conversation as any).returning();
+    return created;
+  }
+
+  async getOrCreateDirectConversation(restaurantId: string, userId1: string, userId2: string): Promise<any> {
+    // Try to find existing DM between these two users
+    const existingConversations = await db
+      .select({ conversation: conversations })
+      .from(conversations)
+      .where(
+        and(
+          eq(conversations.restaurantId, restaurantId),
+          eq(conversations.type, "direct")
+        )
+      );
+
+    // Check each conversation to see if it has exactly these two members
+    for (const { conversation } of existingConversations) {
+      const members = await db
+        .select()
+        .from(conversationMembers)
+        .where(
+          and(
+            eq(conversationMembers.conversationId, conversation.id),
+            eq(conversationMembers.restaurantId, restaurantId)
+          )
+        );
+
+      if (members.length === 2) {
+        const memberIds = members.map((m) => m.userId).sort();
+        const targetIds = [userId1, userId2].sort();
+        if (memberIds[0] === targetIds[0] && memberIds[1] === targetIds[1]) {
+          return conversation;
+        }
+      }
+    }
+
+    // Create new DM conversation
+    const [newConversation] = await db
+      .insert(conversations)
+      .values({
+        restaurantId,
+        type: "direct",
+        scope: "restaurant", // DMs are always restaurant-wide
+        createdBy: userId1,
+      } as any)
+      .returning();
+
+    // Add both users as members
+    await db.insert(conversationMembers).values([
+      { restaurantId, conversationId: newConversation.id, userId: userId1 } as any,
+      { restaurantId, conversationId: newConversation.id, userId: userId2 } as any,
+    ]);
+
+    return newConversation;
+  }
+
+  async updateConversationLastMessage(conversationId: string, preview: string): Promise<void> {
+    await db
+      .update(conversations)
+      .set({
+        lastMessageAt: new Date(),
+        lastMessagePreview: preview.substring(0, 100),
+      })
+      .where(eq(conversations.id, conversationId));
+  }
+
+  // Team Chat - Messages
+  async getChatMessages(conversationId: string, restaurantId: string, limit: number = 50): Promise<ChatMessage[]> {
+    return await db
+      .select()
+      .from(chatMessages)
+      .where(
+        and(
+          eq(chatMessages.conversationId, conversationId),
+          eq(chatMessages.restaurantId, restaurantId)
+        )
+      )
+      .orderBy(sql`${chatMessages.createdAt} DESC`)
+      .limit(limit);
+  }
+
+  async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    const [created] = await db.insert(chatMessages).values(message as any).returning();
+    
+    // Update conversation's last message
+    await this.updateConversationLastMessage(message.conversationId, message.content);
+    
+    return created;
+  }
+
+  // Team Chat - Members
+  async getConversationMembers(conversationId: string, restaurantId: string): Promise<any[]> {
+    return await db
+      .select({
+        member: conversationMembers,
+        user: users,
+      })
+      .from(conversationMembers)
+      .leftJoin(users, eq(conversationMembers.userId, users.id))
+      .where(
+        and(
+          eq(conversationMembers.conversationId, conversationId),
+          eq(conversationMembers.restaurantId, restaurantId)
+        )
+      );
+  }
+
+  async addConversationMember(member: InsertConversationMember): Promise<ConversationMember> {
+    const [created] = await db.insert(conversationMembers).values(member as any).returning();
+    return created;
+  }
+
+  async removeConversationMember(conversationId: string, userId: string, restaurantId: string): Promise<boolean> {
+    const result = await db
+      .delete(conversationMembers)
+      .where(
+        and(
+          eq(conversationMembers.conversationId, conversationId),
+          eq(conversationMembers.userId, userId),
+          eq(conversationMembers.restaurantId, restaurantId)
+        )
+      );
+    return true;
+  }
+
+  async isUserInConversation(conversationId: string, userId: string, restaurantId: string): Promise<boolean> {
+    const [member] = await db
+      .select()
+      .from(conversationMembers)
+      .where(
+        and(
+          eq(conversationMembers.conversationId, conversationId),
+          eq(conversationMembers.userId, userId),
+          eq(conversationMembers.restaurantId, restaurantId)
+        )
+      );
+    return !!member;
+  }
+
+  // Team Chat - Read Tracking
+  async updateMessageRead(read: InsertMessageRead): Promise<void> {
+    // Upsert: update if exists, insert if not
+    const existing = await db
+      .select()
+      .from(messageReads)
+      .where(
+        and(
+          eq(messageReads.conversationId, read.conversationId),
+          eq(messageReads.userId, read.userId),
+          eq(messageReads.restaurantId, read.restaurantId)
+        )
+      );
+
+    if (existing.length > 0) {
+      await db
+        .update(messageReads)
+        .set({
+          lastReadMessageId: read.lastReadMessageId,
+          lastReadAt: new Date(),
+        })
+        .where(
+          and(
+            eq(messageReads.conversationId, read.conversationId),
+            eq(messageReads.userId, read.userId),
+            eq(messageReads.restaurantId, read.restaurantId)
+          )
+        );
+    } else {
+      await db.insert(messageReads).values(read as any);
+    }
+  }
+
+  async getUnreadChatCount(restaurantId: string, userId: string): Promise<number> {
+    // Get all user's conversations
+    const userConvos = await db
+      .select({ conversationId: conversationMembers.conversationId })
+      .from(conversationMembers)
+      .where(
+        and(
+          eq(conversationMembers.userId, userId),
+          eq(conversationMembers.restaurantId, restaurantId)
+        )
+      );
+
+    let totalUnread = 0;
+    for (const { conversationId } of userConvos) {
+      const [readInfo] = await db
+        .select()
+        .from(messageReads)
+        .where(
+          and(
+            eq(messageReads.conversationId, conversationId),
+            eq(messageReads.userId, userId),
+            eq(messageReads.restaurantId, restaurantId)
+          )
+        );
+
+      if (readInfo?.lastReadAt) {
+        const [result] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(chatMessages)
+          .where(
+            and(
+              eq(chatMessages.conversationId, conversationId),
+              eq(chatMessages.restaurantId, restaurantId),
+              sql`${chatMessages.createdAt} > ${readInfo.lastReadAt}`
+            )
+          );
+        totalUnread += Number(result?.count || 0);
+      } else {
+        const [result] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(chatMessages)
+          .where(
+            and(
+              eq(chatMessages.conversationId, conversationId),
+              eq(chatMessages.restaurantId, restaurantId)
+            )
+          );
+        totalUnread += Number(result?.count || 0);
+      }
+    }
+
+    return totalUnread;
+  }
+
+  // Team Chat - Default Channels
+  async createDefaultChannels(restaurantId: string, createdBy: string): Promise<void> {
+    const defaultChannels = [
+      { name: "#general", scope: "restaurant" as const, branchId: null },
+      { name: "#kitchen", scope: "restaurant" as const, branchId: null },
+      { name: "#front-desk", scope: "restaurant" as const, branchId: null },
+    ];
+
+    for (const channel of defaultChannels) {
+      // Check if channel already exists
+      const [existing] = await db
+        .select()
+        .from(conversations)
+        .where(
+          and(
+            eq(conversations.restaurantId, restaurantId),
+            eq(conversations.type, "channel"),
+            eq(conversations.name, channel.name)
+          )
+        );
+
+      if (!existing) {
+        const [newChannel] = await db
+          .insert(conversations)
+          .values({
+            restaurantId,
+            type: "channel",
+            name: channel.name,
+            scope: channel.scope,
+            branchId: channel.branchId,
+            createdBy,
+          } as any)
+          .returning();
+
+        // Add creator as member
+        await db.insert(conversationMembers).values({
+          restaurantId,
+          conversationId: newChannel.id,
+          userId: createdBy,
+        } as any);
+      }
+    }
   }
 }
 
