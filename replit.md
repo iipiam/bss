@@ -1,18 +1,10 @@
 # RestoPOS - Restaurant Management System
 
 ## Overview
-
 RestoPOS is a comprehensive, ZATCA-compliant restaurant management system for Saudi Arabian restaurants. It integrates Point of Sale (POS), inventory, menu/recipe management, multi-branch operations, order processing, kitchen display, and advanced analytics. The system aims to enhance operational efficiency, ensure regulatory compliance, optimize profitability, and support strategic decision-making through features like sales analytics, business reporting, and demand forecasting.
 
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
-
-## Branding
-
-- **Logo**: Saudi Kinzhal eagle with blue ethereal design (`IMG_8731_1762870212105.jpeg`)
-- **Logo Usage**: Displayed in app footer (App.tsx), login page, and setup page
-- **Logo Dimensions**: 8x8 (footer), 10x10 (login/setup pages)
 
 ## System Architecture
 
@@ -22,102 +14,42 @@ Preferred communication style: Simple, everyday language.
 - **State Management**: TanStack Query for server state; local React state for UI.
 - **Form Handling**: React Hook Form with Zod validation.
 - **Styling**: Tailwind CSS with custom design tokens, responsive layouts.
+- **Branding**: Saudi Kinzhal eagle logo displayed in app footer, login, and setup pages.
+- **UI/UX**: Modern gradient designs, smooth animations, creative sidebar navigation, responsive hover interactions.
+- **Multi-Language Support**: Comprehensive support for 7 languages including RTL for Arabic/Urdu, with persistent settings.
+- **Device-Specific Responsive Design**: User-configurable device preference (Laptop, iPad, iPhone) adjusting layout, typography, and components. Includes mobile optimization toolkit, production-ready `TableList` component, and iPhone-optimized interfaces with WCAG AAA touch target compliance (h-[44px] minimum for interactive elements).
 
 ### Backend
 - **Runtime**: Node.js with Express.js.
 - **API Design**: RESTful API, domain-organized.
 - **Data Validation**: Zod schemas (shared with frontend).
 - **Authentication**: Bcrypt for hashing, session-based authentication.
+- **Multi-tenant architecture**: Complete data isolation between restaurant accounts using `restaurantId`. Critical security mandates all API endpoints filter by `req.session.user.restaurantId`.
+- **User Management**: `setupComplete` flag prevents cross-tenant user creation post-initial setup; two-phase user creation for initial admin.
+- **Real-Time Employee Notification System**: WebSocket-based system for order lifecycle events with audio alerts, toast notifications, and multi-language support.
 
 ### Data Storage
 - **Database**: PostgreSQL via Neon serverless driver.
 - **ORM**: Drizzle ORM for type-safe queries.
-- **Schema Design**: **Multi-tenant architecture** with complete data isolation between restaurant accounts. Central `restaurants` table with `restaurantId` foreign key propagated to all domain tables (22 tables total). Supports multi-branch operations, inventory, menu, recipes, orders, transactions, procurement, users (role-based), ZATCA-compliant invoices, customers, and system settings.
+- **Schema Design**: Central `restaurants` table with `restaurantId` foreign key propagated across 22 domain tables covering multi-branch, inventory, menu, recipes, orders, transactions, procurement, users, ZATCA invoices, customers, and settings.
 - **Migration Strategy**: Drizzle Kit.
-- **⚠️ CRITICAL SECURITY**: Every API endpoint MUST filter by `req.session.user.restaurantId` to prevent cross-tenant data leakage. Restaurant type validation removed - ANY restaurant type allowed during signup.
 
-### Core Features & Implementations
-- **Analytics & Reporting**: Dashboard with DoD, WoW, MoM, YoY performance metrics; Daily Demand Forecasting per menu item; Peak Hours Analysis with customer drill-down.
-- **ZATCA Compliance**: Bilingual (Arabic/English) PDF invoice generation using Puppeteer, QR code generation, and professional HTML templates.
-- **Invoice Management**: Dedicated page for ZATCA-compliant invoices with search and download.
-- **Delivery App Cost Formula**: Commission = (Price - Subsidy) × Commission%; Banking Fees = Price × Banking%; VAT = (Commission + Subsidy + Banking Fees) × 0.15; POS Fees have no VAT. Total Cost = Commission + Subsidy + Banking Fees + VAT + POS Fees. Net Income = Item Price - Total Cost. All costs are deducted from restaurant revenue.
-- **Multi-Language Support**: Comprehensive support for 7 languages including RTL for Arabic/Urdu, with persistent settings.
-- **UI/UX**: Modern gradient designs, smooth animations, creative sidebar navigation, and responsive hover interactions.
-- **Management Modules**: Full CRUD for Customer, Menu Item (with discount system), Inventory (with Excel import/export), and Recipe (inventory-linked costing).
+### Core Features
+- **Analytics & Reporting**: Dashboard with DoD, WoW, MoM, YoY metrics, daily demand forecasting, peak hours analysis.
+- **ZATCA Compliance**: Bilingual PDF invoice generation (Arabic/English) with QR codes using Puppeteer, dedicated invoice management page.
+- **Delivery App Cost Calculation**: Formula for calculating commission, banking fees, VAT, and POS fees to determine net income.
+- **Management Modules**: Full CRUD for Customer, Menu Item (with discount system), Inventory (Excel import/export), and Recipe (inventory-linked costing).
 - **Daily Stock Management**: Real-time stock calculation for menu items based on inventory and recipes, displayed on POS.
-- **Real-Time Inventory Deduction**: Automatic inventory deduction when orders are placed through POS with validation, rollback on failure, branch consistency enforcement, and complete audit trail via inventory_transactions table. Supports both recipe-based items (deducts ingredients) and simple items (uses inventoryItemId + stockNo). Returns 409 error with detailed message if insufficient stock.
-- **Financial Features**: PDF export for financial statements, Excel export/import for various data tables.
-- **Strategic Decision-Making**: Profitability analysis with tabs for Strategic Overview, Pricing Analysis (including Price Coverage Analysis by margin), Scaling Viability, and Cost Management.
-- **Authentication**: Subscription-based, with Commercial Registration field and password recovery. Secure logout flow prevents data loss by cancelling all pending queries/mutations and clearing cache before redirect.
-- **Shop & Bills Management**: Manual configuration of shop working hours; comprehensive expense tracking for employee salaries and shop bills with summary analytics and integration into financial and profitability views.
-- **Tutorial System**: Interactive tutorial page with 12 comprehensive step-by-step text guides, each featuring:
-  - Practical demonstration screenshots of actual application interfaces
-  - Detailed step-by-step instructions (4-8 steps per tutorial)
-  - Estimated completion time (5-8 minutes per tutorial)
-  - Pro tips and best practices for each step
-  - Topics: POS System, Inventory Management, Menu Management, Recipe Creation, Customer Management, Order Processing, Analytics Dashboard, Sales Analytics, Profitability Analysis, Demand Forecasting, Invoice Management, Financial Reports
-  - Click-to-open modal dialogs with scrollable content
-  - "Getting Started" section with quick overview
-  - Full multilingual support for all UI elements across all 7 languages
-- **Subscription Management**: Full subscription control accessible from user account dropdown:
-  - Interactive dialog with upgrade/downgrade/cancel options
-  - Dynamic pricing calculator showing real-time costs based on selected plan and branches
-  - Visual plan comparison with highlighting for current selection
-  - Supports Weekly (66.33 SAR base + 15 SAR per additional branch), Monthly (199 SAR base + 42.85 SAR per additional branch), and Yearly (1990 SAR base + 398.63 SAR per additional branch) plans
-  - Display of current subscription status, plan, and branches
-  - All pricing includes 15% VAT in compliance with Saudi regulations
-  - Branch count selector with minimum 1 branch (first included in base price)
-- **Branch Management**: Dynamic branch selection system with BranchContext for multi-branch operations:
-  - Fetches branches from `/api/branches` endpoint
-  - Current branch stored in localStorage with key `currentBranchId` for persistence across sessions
-  - Automatically initializes to user's default branchId or first available branch
-  - BranchSelector component in header displays current branch with name and location
-  - Loading state while fetching branches, empty state when no branches available
-  - Seamless branch switching with context-based state management
-  - Provider hierarchy: QueryClient > Theme > Language > Tooltip > Auth > Branch > Device > AppContent
-- **Device-Specific Responsive Design**: User-configurable device preference (Laptop, iPad, iPhone) stored in database, adjusting layout, typography, and specific components.
-  - **Mobile Optimization Toolkit**: Centralized `mobileLayout.ts` utility providing responsive classes for grid columns, text sizes, spacing, and padding across all device types.
-  - **TableList Component**: Production-ready mobile list component with swipeable actions for compact data display.
-  - **Comprehensive iPhone-Optimized Interfaces**: All major application pages have been systematically optimized for iPhone with:
-    - Responsive grid layouts using `layout.gridCols()` that adapt from desktop (3-4 cols) to tablet (2 cols) to mobile (1 col)
-    - Dynamic typography using `layout.text3Xl`, `layout.textLg` for consistent scaling
-    - Smart spacing with `layout.padding`, `layout.spaceY`, `layout.gap` that adjusts based on screen size
-    - Conditional layouts with `layout.isMobile` for stacking elements vertically on small screens
-    - **Optimized Pages**: Dashboard, Menu, Inventory, Customers, Recipes, Branches, Orders, Delivery Apps, POS
-    - **WCAG AAA Touch Target Compliance**: ALL interactive elements now explicitly set to h-[44px] minimum (no min-h usage):
-      - **POS System**: Search input, tab toggles (Menu/Cart, Categories), all icon buttons (remove, +/-), payment select, table input, customer button, clear/checkout buttons
-      - **Inventory**: Table edit/delete buttons, card action buttons
-      - **Orders**: All status change buttons with mobile stacking
-      - **Navigation**: Sidebar auto-collapses on iPhone via `defaultOpen={device !== 'iphone'}`
-    - **Critical Pattern**: Use explicit `h-[44px]` and `w-[44px]` classes (NOT min-h) to properly override component defaults like `size="icon"`
-    - **Form Optimization**: All dialogs, inputs, selects, tabs, and buttons meet 44px requirement
-  - **Accessibility Compliance**: 100% of interactive elements meet WCAG 2.1 Level AAA touch target requirements (verified by architect review).
-- **Ticketing System & IT Support**: Comprehensive support ticket management with real-time chat interface:
-  - **Support Tickets** (supportTickets table): Full ticket lifecycle management with status tracking (open, in-progress, resolved, closed), priority levels (low, medium, high, urgent), and automatic ticket numbering (TKT-YYYYMMDD-XXXX format)
-  - **Chat Interface** (ticketMessages table): Real-time messaging between users and IT support with message threading, read status tracking, and sender identification (name, role)
-  - **Activity Logging** (employeeActivityLog table): Comprehensive audit trail tracking all employee actions (create, update, delete) across all system entities with JSON change tracking, categorization, and timestamp tracking
-  - **Authorization**: Role-based access control - regular users can only view/manage their own tickets, admins can view all tickets and update status
-  - **Auto-Refresh**: Ticket messages auto-refresh every 5 seconds for near real-time chat experience
-  - **Status Management**: Admins can progress tickets through statuses with automatic timestamp tracking (resolvedAt, closedAt)
-  - **Frontend Pages**: `/support` for ticket list/creation, `/support/:id` for individual ticket chat view
-  - **API Endpoints**: Full REST API for tickets (GET/POST/PATCH), messages (GET/POST), activity logs (GET), and unread count tracking
-  - **Activity Logger Utility** (server/activityLogger.ts): Helper functions for logging employee actions throughout the application
-  - **Note**: Translation keys defined but need to be populated in all 7 languages
-- **WhatsApp Invoice Delivery**: Automatic deep-link integration for sending ZATCA-compliant invoices via WhatsApp after POS checkout:
-  - **Phone Number Formatting** (client/src/lib/whatsapp.ts): Intelligent normalization supporting all Saudi formats (00966, 966, 0-prefixed, local 9-10 digit numbers) to international format
-  - **Bilingual Message Templates**: ZATCA-compliant Arabic/English invoice messages with order details, total, VAT breakdown, and public invoice URL
-  - **Deep-Link Integration**: Opens WhatsApp web/app via wa.me links with pre-filled message on same device after invoice generation
-  - **POS Integration**: Automatically triggers after successful checkout with graceful handling of popup blockers via toast notifications
-  - **No API Required**: Uses standard WhatsApp deep-linking (no Business API account needed)
-- **Real-Time Employee Notification System**: WebSocket-based notification system for order lifecycle events with audio alerts:
-  - **WebSocket Server** (server/routes.ts): Dedicated WebSocket server on `/ws/notifications` path (avoids Vite HMR conflicts) with client connection tracking and broadcast infrastructure
-  - **Order Event Emissions**: Automatic notifications on order creation (POST /api/orders) and status updates (PATCH /api/orders/:id) with full order details
-  - **NotificationContext** (client/src/contexts/NotificationContext.tsx): Frontend notification manager with WebSocket connection, auto-reconnect (5-second backoff), audio playback (embedded beep), and localStorage preferences
-  - **Toast Notifications**: Localized toast messages showing order number, status, branch name, and first 3 items summary
-  - **Audio Alerts**: Embedded 200ms beep tone plays on each notification (browser permission required)
-  - **Multi-Language Support**: Fully localized across all 7 languages (newOrder, orderUpdated, branch, items translation keys)
-  - **User Preferences**: Enable/disable notifications via localStorage (UI toggle pending)
-  - **Provider Integration**: NotificationProvider in App.tsx provider hierarchy after DeviceProvider
+- **Real-Time Inventory Deduction**: Automatic inventory deduction on POS orders with validation, rollback, branch consistency, and audit trail.
+- **Financial Features**: PDF export for financial statements, Excel export/import.
+- **Strategic Decision-Making**: Profitability analysis covering strategic overview, pricing analysis, scaling viability, and cost management.
+- **Authentication**: Subscription-based, with Commercial Registration field and password recovery, secure logout.
+- **Shop & Bills Management**: Manual working hours, expense tracking for salaries and bills, integrated into financial views.
+- **Tutorial System**: Interactive tutorial page with 12 step-by-step guides, screenshots, and multilingual support.
+- **Subscription Management**: Interactive dialog for upgrade/downgrade/cancel, dynamic pricing calculator, plan comparison, displaying current status. Supports Weekly, Monthly, Yearly plans with VAT included.
+- **Branch Management**: Dynamic selection system with `BranchContext`, persistent `currentBranchId` in localStorage, seamless switching.
+- **Ticketing System & IT Support**: Comprehensive ticket management with status, priority, real-time chat interface, and activity logging. Role-based access control and auto-refresh for messages.
+- **WhatsApp Invoice Delivery**: Automatic deep-link integration for sending ZATCA-compliant invoices via WhatsApp after POS checkout, supporting various phone number formats and bilingual templates.
 
 ## External Dependencies
 
