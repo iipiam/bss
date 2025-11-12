@@ -11,7 +11,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useDevice } from "@/contexts/DeviceContext";
 import { useAuth } from "@/lib/auth";
 import type { Settings } from "@shared/schema";
-import { Save, Laptop, Tablet, Smartphone, Volume2, Bell } from "lucide-react";
+import { Save, Laptop, Tablet, Smartphone, Volume2, Bell, MessageSquare } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { notificationTones, toneIds, playNotificationTone, getToneName, type ToneId } from "@/lib/notificationTones";
 
 export default function SettingsPage() {
@@ -208,6 +209,7 @@ export default function SettingsPage() {
 
       <DevicePreferenceSection />
       <NotificationToneSection />
+      <ChatNotificationSection />
     </div>
   );
 }
@@ -440,6 +442,197 @@ function NotificationToneSection() {
         {updateToneMutation.isPending && (
           <p className="text-sm text-muted-foreground">
             {t.updatingTone || "Updating tone for all accounts..."}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ChatNotificationSection() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { t } = useLanguage();
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [selectedChatTone, setSelectedChatTone] = useState<ToneId>('tone1');
+
+  const { data: chatSettings, isLoading } = useQuery<{
+    notificationsEnabled: boolean;
+    soundEnabled: boolean;
+    toneId: string;
+  }>({
+    queryKey: ["/api/chat/notification-settings"],
+  });
+
+  useEffect(() => {
+    if (chatSettings) {
+      setNotificationsEnabled(chatSettings.notificationsEnabled);
+      setSoundEnabled(chatSettings.soundEnabled);
+      setSelectedChatTone(chatSettings.toneId as ToneId);
+    }
+  }, [chatSettings]);
+
+  const updateChatSettingsMutation = useMutation({
+    mutationFn: async (data: {
+      notificationsEnabled?: boolean;
+      soundEnabled?: boolean;
+      toneId?: string;
+    }) => {
+      await apiRequest("PATCH", "/api/chat/notification-settings", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/chat/notification-settings"] });
+      toast({
+        title: t.success,
+        description: t.chatNotificationSettingsUpdated || "Chat notification settings updated successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: t.error,
+        description: t.failedToUpdateChatSettings || "Failed to update chat notification settings",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleNotificationsToggle = (enabled: boolean) => {
+    setNotificationsEnabled(enabled);
+    updateChatSettingsMutation.mutate({ notificationsEnabled: enabled });
+  };
+
+  const handleSoundToggle = (enabled: boolean) => {
+    setSoundEnabled(enabled);
+    updateChatSettingsMutation.mutate({ soundEnabled: enabled });
+  };
+
+  const handleChatToneChange = (toneId: ToneId) => {
+    setSelectedChatTone(toneId);
+    updateChatSettingsMutation.mutate({ toneId });
+  };
+
+  const handleTestChatTone = (toneId: ToneId) => {
+    playNotificationTone(toneId);
+  };
+
+  if (user?.role !== 'admin') {
+    return null;
+  }
+
+  if (isLoading) {
+    return null;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-5 w-5" />
+          <CardTitle>{t.chatNotifications || "Team Chat Notifications"}</CardTitle>
+        </div>
+        <CardDescription>
+          {t.chatNotificationsDesc || "Configure notification settings for Team Chat (applies to all users)"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4" />
+              <Label htmlFor="chat-notifications" className="font-medium">
+                {t.enableChatNotifications || "Enable Chat Notifications"}
+              </Label>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {t.enableChatNotificationsDesc || "Show notifications when new chat messages arrive"}
+            </p>
+          </div>
+          <Switch
+            id="chat-notifications"
+            checked={notificationsEnabled}
+            onCheckedChange={handleNotificationsToggle}
+            disabled={updateChatSettingsMutation.isPending}
+            data-testid="switch-chat-notifications"
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Volume2 className="h-4 w-4" />
+              <Label htmlFor="chat-sound" className="font-medium">
+                {t.enableChatSound || "Enable Notification Sound"}
+              </Label>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {t.enableChatSoundDesc || "Play a sound when chat notifications appear"}
+            </p>
+          </div>
+          <Switch
+            id="chat-sound"
+            checked={soundEnabled}
+            onCheckedChange={handleSoundToggle}
+            disabled={updateChatSettingsMutation.isPending || !notificationsEnabled}
+            data-testid="switch-chat-sound"
+          />
+        </div>
+
+        {soundEnabled && notificationsEnabled && (
+          <div className="space-y-3">
+            <Label>{t.chatNotificationTone || "Notification Tone"}</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {toneIds.map((toneId) => (
+                <button
+                  key={toneId}
+                  type="button"
+                  onClick={() => handleChatToneChange(toneId)}
+                  disabled={updateChatSettingsMutation.isPending}
+                  className={`
+                    relative p-4 border-2 rounded-lg transition-all
+                    hover-elevate active-elevate-2
+                    ${selectedChatTone === toneId 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-border'
+                    }
+                  `}
+                  data-testid={`button-chat-tone-${toneId}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium text-sm">
+                      {getToneName(toneId)}
+                    </h4>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTestChatTone(toneId);
+                      }}
+                      data-testid={`button-test-chat-${toneId}`}
+                    >
+                      <Volume2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{notificationTones[toneId].frequency}Hz</span>
+                    <span>•</span>
+                    <span>{notificationTones[toneId].duration}ms</span>
+                  </div>
+                  {selectedChatTone === toneId && (
+                    <div className="absolute top-2 right-2 h-3 w-3 rounded-full bg-primary" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {updateChatSettingsMutation.isPending && (
+          <p className="text-sm text-muted-foreground">
+            {t.updatingSettings || "Updating settings..."}
           </p>
         )}
       </CardContent>

@@ -62,6 +62,17 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     refetchInterval: 5000, // Refresh every 5 seconds so sub-accounts get admin's tone updates immediately
   });
 
+  // Fetch chat notification settings (refetches every 5s to get admin updates)
+  const { data: chatSettings } = useQuery<{
+    notificationsEnabled: boolean;
+    soundEnabled: boolean;
+    toneId: string;
+  }>({
+    queryKey: ['/api/chat/notification-settings'],
+    enabled: !!user,
+    refetchInterval: 5000, // Refresh every 5 seconds so all users get admin's updates immediately
+  });
+
   // Update tone ref whenever settings change
   useEffect(() => {
     if (settings?.notificationTone) {
@@ -116,8 +127,19 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 queryKey: ['/api/chat/conversations', notification.conversationId, 'messages'] 
               });
               
-              // Only show toast if user is not the sender AND is in this conversation
-              if (notification.message.senderId !== user?.id) {
+              // Check if chat notifications are enabled (admin setting applies to all users)
+              const chatNotificationsEnabled = chatSettings?.notificationsEnabled ?? true;
+              const chatSoundEnabled = chatSettings?.soundEnabled ?? true;
+              const chatToneId = chatSettings?.toneId || 'tone1';
+              
+              // Only show toast/sound if user is not the sender, is in conversation, and notifications are enabled
+              if (notification.message.senderId !== user?.id && chatNotificationsEnabled) {
+                // Play sound if enabled
+                if (chatSoundEnabled) {
+                  playNotificationTone(chatToneId as ToneId);
+                }
+                
+                // Show toast notification
                 toast({
                   title: "New Message",
                   description: `${notification.message.senderName}: ${notification.message.content.slice(0, 50)}${notification.message.content.length > 50 ? '...' : ''}`,
