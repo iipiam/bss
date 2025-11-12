@@ -1401,6 +1401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password, // Will be hashed in storage
         fullName: name,
         email,
+        userType: "restaurant_admin" as const, // Set userType for dual-login system
         role: "admin" as const,
         active: true,
         permissions: {
@@ -3736,11 +3737,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.query.userId as string | undefined;
       const status = req.query.status as string | undefined;
       
-      // IT staff see all tickets (restaurantId = null)
+      // IT staff see only tickets from restaurant users (restaurantId IS NOT NULL)
       // Restaurant users see only their tickets (filter by restaurantId)
       const restaurantId = isITStaff ? null : req.session.user!.restaurantId!;
       
-      const tickets = await storage.getSupportTickets(restaurantId, userId, status);
+      const tickets = await storage.getSupportTickets(restaurantId, userId, status, isITStaff);
       res.json(tickets);
     } catch (error) {
       console.error("Error fetching tickets:", error);
@@ -3753,7 +3754,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isITStaff = req.session.user!.userType === 'it_staff';
       const restaurantId = isITStaff ? null : req.session.user!.restaurantId!;
       
-      const ticket = await storage.getSupportTicket(req.params.id, restaurantId);
+      const ticket = await storage.getSupportTicket(req.params.id, restaurantId, isITStaff);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
@@ -3836,7 +3837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isITStaff = req.session.user!.userType === 'it_staff';
       const restaurantId = isITStaff ? null : req.session.user!.restaurantId!;
       
-      const ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId);
+      const ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId, isITStaff);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
@@ -3856,7 +3857,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const restaurantId = isITStaff ? null : req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       
-      const ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId);
+      const ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId, isITStaff);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
