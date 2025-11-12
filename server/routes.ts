@@ -30,28 +30,50 @@ import {
   updateInvestorSchema,
 } from "@shared/schema";
 
-// WebSocket clients for notifications
-let wsClients: Set<WebSocket> | null = null;
+// WebSocket clients with session context for multi-tenant filtering
+interface WSClient {
+  socket: WebSocket;
+  restaurantId: string;
+  userId: string;
+}
+let wsClients: Set<WSClient> | null = null;
 
-// Broadcast notification to all connected clients
+// Unified broadcast function with restaurant filtering
 export function broadcastNotification(event: {
-  type: 'order:created' | 'order:statusUpdated';
-  orderId: string;
-  orderNumber: string;
-  status: string;
+  type: 'order:created' | 'order:statusUpdated' | 'chat:message';
+  restaurantId: string;
+  // Order fields
+  orderId?: string;
+  orderNumber?: string;
+  status?: string;
   branchId?: string;
   branchName?: string;
   itemsSummary?: string;
+  // Chat fields
+  conversationId?: string;
+  message?: {
+    id: string;
+    conversationId: string;
+    senderId: string;
+    senderName: string;
+    content: string;
+    createdAt: string;
+  };
 }) {
   if (!wsClients) return;
   
   const message = JSON.stringify(event);
+  let sentCount = 0;
+  
   wsClients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
+    // Filter by restaurant for multi-tenant isolation
+    if (client.restaurantId === event.restaurantId && client.socket.readyState === WebSocket.OPEN) {
+      client.socket.send(message);
+      sentCount++;
     }
   });
-  console.log(`[WebSocket] Broadcast: ${event.type} - ${event.orderNumber}`);
+  
+  console.log(`[WebSocket] Broadcast ${event.type} to ${sentCount} clients in restaurant ${event.restaurantId}`);
 }
 
 // Authentication middleware - CRITICAL for multi-tenant isolation
@@ -62,7 +84,7 @@ const requireAuth = (req: any, res: any, next: any) => {
   next();
 };
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express, sessionParser: any): Promise<Server> {
   // Rate limiter for emergency bootstrap reset endpoint
   const bootstrapResetLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -864,6 +886,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         broadcastNotification({
           type: 'order:created',
+          restaurantId: data.restaurantId,
           orderId: order.id,
           orderNumber: order.orderNumber,
           status: order.status,
@@ -912,6 +935,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       broadcastNotification({
         type: 'order:statusUpdated',
+        restaurantId,
         orderId: order.id,
         orderNumber: order.orderNumber,
         status: order.status,
@@ -4191,24 +4215,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Setup WebSocket server for real-time notifications on specific path to avoid conflicts with Vite HMR
   const wss = new WebSocketServer({ 
-    server: httpServer,
-    path: '/ws/notifications'
+    noServer: true // We'll handle the upgrade ourselves to access session
   });
-  wsClients = new Set<WebSocket>();
+  wsClients = new Set<WSClient>();
   
-  wss.on('connection', (ws: WebSocket) => {
-    console.log('[WebSocket] Client connected to notifications');
-    wsClients!.add(ws);
+  // Handle HTTP upgrade to WebSocket with session authentication
+  httpServer.on('upgrade', (request, socket, head) => {
+    const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
     
-    ws.on('close', () => {
-      console.log('[WebSocket] Client disconnected from notifications');
-      wsClients?.delete(ws);
-    });
-    
-    ws.on('error', (error) => {
-      console.error('[WebSocket] Error:', error);
-      wsClients?.delete(ws);
-    });
+    if (pathname === '/ws/notifications') {
+      // Parse session from upgrade request
+      sessionParser(request, {} as any, () => {
+        const session = (request as any).session;
+        
+        if (!session || !session.user) {
+          console.log('[WebSocket] Upgrade rejected: No valid session');
+          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+        
+        const { restaurantId, id: userId } = session.user;
+        
+        wss.handleUpgrade(request, socket, head, (ws) => {
+          const client: WSClient = {
+            socket: ws,
+            restaurantId,
+            userId,
+          };
+          
+          console.log(`[WebSocket] Client connected: user=${userId}, restaurant=${restaurantId}`);
+          wsClients!.add(client);
+          
+          ws.on('close', () => {
+            console.log('[WebSocket] Client disconnected from notifications');
+            wsClients?.delete(client);
+          });
+          
+          ws.on('error', (error) => {
+            console.error('[WebSocket] Error:', error);
+            wsClients?.delete(client);
+          });
+          
+          wss.emit('connection', ws, request);
+        });
+      });
+    } else {
+      socket.destroy();
+    }
   });
 
   return httpServer;
