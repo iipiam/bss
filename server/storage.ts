@@ -262,6 +262,7 @@ export interface IStorage {
   getMoyasarPayments(restaurantId: string, branchId?: string): Promise<MoyasarPayment[]>;
   getMoyasarPayment(id: string): Promise<MoyasarPayment | undefined>;
   getMoyasarPaymentByMoyasarId(moyasarId: string, restaurantId: string): Promise<MoyasarPayment | undefined>;
+  getMoyasarPaymentByMoyasarIdAnyTenant(moyasarId: string): Promise<MoyasarPayment | undefined>; // Webhook use only
   createMoyasarPayment(payment: InsertMoyasarPayment): Promise<MoyasarPayment>;
   updateMoyasarPayment(id: string, restaurantId: string, payment: Partial<InsertMoyasarPayment>): Promise<MoyasarPayment | undefined>;
 
@@ -1639,6 +1640,15 @@ export class DatabaseStorage implements IStorage {
   async createMoyasarPayment(payment: InsertMoyasarPayment): Promise<MoyasarPayment> {
     const [created] = await db.insert(moyasarPayments).values(payment as any).returning();
     return created;
+  }
+
+  async getMoyasarPaymentByMoyasarIdAnyTenant(moyasarId: string): Promise<MoyasarPayment | undefined> {
+    // ⚠️  WARNING: WEBHOOK USE ONLY - This method bypasses tenant scoping!
+    // This should ONLY be called from authenticated webhook handlers that verify request signatures
+    // DO NOT use this method in regular API routes - use getMoyasarPaymentByMoyasarId instead
+    const [payment] = await db.select().from(moyasarPayments)
+      .where(eq(moyasarPayments.moyasarId, moyasarId));
+    return payment;
   }
 
   async updateMoyasarPayment(id: string, restaurantId: string, payment: Partial<InsertMoyasarPayment>): Promise<MoyasarPayment | undefined> {

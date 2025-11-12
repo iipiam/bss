@@ -816,9 +816,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(order);
   });
 
-  app.post("/api/orders", async (req, res) => {
+  app.post("/api/orders", requireAuth, async (req, res) => {
     try {
-      const data = insertOrderSchema.parse(req.body);
+      // Inject restaurantId from session
+      const restaurantId = req.session.user!.restaurantId;
+      const data = insertOrderSchema.parse({ ...req.body, restaurantId });
       
       const { orderProcessingService } = await import("./orderProcessingService");
       const orderItems = Array.isArray(data.items) ? data.items.map((item: any) => ({
@@ -1316,7 +1318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fs.writeFileSync(pdfPath, pdfBuffer);
 
       // Update invoice record with QR code and PDF path
-      await storage.updateInvoice(createdInvoice.id, {
+      await storage.updateInvoice(createdInvoice.id, restaurantId, {
         qrCode,
         pdfPath: `/invoices/${pdfFilename}`,
       });
@@ -1819,7 +1821,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { monthlySalary, ...userData } = req.body;
-      const data = insertUserSchema.parse(userData);
+      
+      // SECURITY: Inject restaurantId from session for authenticated requests
+      // For first-user setup, restaurantId comes from request body
+      const restaurantId = isFirstUser ? userData.restaurantId : req.session.user!.restaurantId;
+      const data = insertUserSchema.parse({ ...userData, restaurantId });
       
       // Validate monthlySalary if provided
       if (monthlySalary) {
@@ -1955,7 +1961,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (email !== undefined) profileUpdate.email = email;
       if (phone !== undefined) profileUpdate.phone = phone;
 
-      const updatedUser = await storage.updateUserProfile(req.session.userId, restaurantId, profileUpdate);
+      const updatedUser = await storage.updateUserProfile(req.session.user!.id, restaurantId, profileUpdate);
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -1973,7 +1979,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const restaurantId = req.session.user!.restaurantId;
     
     try {
-      const user = await storage.getUser(req.session.userId, restaurantId);
+      const user = await storage.getUser(req.session.user!.id, restaurantId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -1983,7 +1989,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No active subscription to cancel" });
       }
 
-      const updatedUser = await storage.cancelSubscription(req.session.userId, restaurantId);
+      const updatedUser = await storage.cancelSubscription(req.session.user!.id, restaurantId);
       if (!updatedUser) {
         return res.status(500).json({ error: "Failed to cancel subscription" });
       }
@@ -2449,7 +2455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fs.writeFileSync(pdfPath, pdfBuffer);
 
       // Update invoice record with QR code and PDF path
-      await storage.updateInvoice(createdInvoice.id, {
+      await storage.updateInvoice(createdInvoice.id, restaurantId, {
         qrCode,
         pdfPath: `/invoices/${pdfFilename}`,
       });
@@ -3564,32 +3570,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id: paymentId, status, amount, source } = req.body;
 
+      // TODO: CRITICAL SECURITY - Implement Moyasar webhook signature verification (HMAC)
+      // Without signature verification, this endpoint is vulnerable to forged payment confirmations
+      // Reference: https://moyasar.com/docs/api/#webhooks-security
+      
       // Verify payment with Moyasar
       const { fetchPayment } = require('./moyasarService');
       const payment = await fetchPayment(paymentId);
 
-      // Update payment in database
-      const moyasarPayment = await storage.getMoyasarPaymentByMoyasarId(paymentId);
-      if (moyasarPayment) {
-        await storage.updateMoyasarPayment(moyasarPayment.id, {
-          status: payment.status,
-          paymentMethod: payment.source?.type || moyasarPayment.paymentMethod,
-          cardBrand: payment.source?.company || moyasarPayment.cardBrand,
-          cardLast4: payment.source?.number ? payment.source.number.slice(-4) : moyasarPayment.cardLast4,
-          fee: payment.fee ? (payment.fee / 100).toString() : moyasarPayment.fee,
-          refundedAmount: payment.refunded ? (payment.refunded / 100).toString() : moyasarPayment.refundedAmount,
-          errorMessage: payment.source?.message || moyasarPayment.errorMessage,
-        });
-
-        // If payment is successful and linked to an order, update order status
-        if (payment.status === 'paid' && moyasarPayment.orderId) {
-          await storage.updateOrder(moyasarPayment.orderId, moyasarPayment.restaurantId, {
-            status: 'paid',
-            paymentMethod: 'Moyasar - ' + (payment.source?.company || payment.source?.type || 'Online'),
-          });
-        }
+      // Fetch payment from database (bypasses tenant scoping for webhook)
+      const moyasarPayment = await storage.getMoyasarPaymentByMoyasarIdAnyTenant(paymentId);
+      if (!moyasarPayment) {
+        console.warn(`[Moyasar Webhook] Payment not found: ${paymentId}`);
+        return res.status(404).json({ error: "Payment not found" });
       }
 
+      // Update payment in database using the payment's restaurantId for tenant isolation
+      await storage.updateMoyasarPayment(moyasarPayment.id, moyasarPayment.restaurantId, {
+        status: payment.status,
+        paymentMethod: payment.source?.type || moyasarPayment.paymentMethod,
+        cardBrand: payment.source?.company || moyasarPayment.cardBrand,
+        cardLast4: payment.source?.number ? payment.source.number.slice(-4) : moyasarPayment.cardLast4,
+        fee: payment.fee ? (payment.fee / 100).toString() : moyasarPayment.fee,
+        refundedAmount: payment.refunded ? (payment.refunded / 100).toString() : moyasarPayment.refundedAmount,
+        errorMessage: payment.source?.message || moyasarPayment.errorMessage,
+      });
+
+      // If payment is successful and linked to an order, update order status
+      if (payment.status === 'paid' && moyasarPayment.orderId) {
+        await storage.updateOrder(moyasarPayment.orderId, moyasarPayment.restaurantId, {
+          status: 'paid',
+          paymentMethod: 'Moyasar - ' + (payment.source?.company || payment.source?.type || 'Online'),
+        });
+      }
+
+      console.log(`[Moyasar Webhook] Payment ${paymentId} updated successfully (restaurant: ${moyasarPayment.restaurantId})`);
       res.json({ success: true });
     } catch (error: any) {
       console.error("Error processing Moyasar callback:", error);

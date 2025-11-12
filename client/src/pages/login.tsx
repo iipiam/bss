@@ -482,7 +482,7 @@ export default function Login() {
                     data-testid="input-signup-branches"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Additional branches: +{7} {t.sar}/week, +{20} {t.sar}/month per branch
+                    Additional branches: +{15} {t.sar}/week, +{42.85} {t.sar}/month per branch
                   </p>
                 </div>
                 <div className="space-y-2">

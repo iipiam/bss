@@ -63,7 +63,7 @@ Preferred communication style: Simple, everyday language.
   - Interactive dialog with upgrade/downgrade/cancel options
   - Dynamic pricing calculator showing real-time costs based on selected plan and branches
   - Visual plan comparison with highlighting for current selection
-  - Supports Weekly (39.90 SAR + 7 SAR per additional branch), Monthly (119.75 SAR + 20 SAR per additional branch), and Yearly (1,197.50 SAR + 240 SAR per additional branch with 17% savings) plans
+  - Supports Weekly (66.33 SAR base + 15 SAR per additional branch), Monthly (199 SAR base + 42.85 SAR per additional branch), and Yearly (1990 SAR base + 398.63 SAR per additional branch) plans
   - Display of current subscription status, plan, and branches
   - All pricing includes 15% VAT in compliance with Saudi regulations
   - Branch count selector with minimum 1 branch (first included in base price)
