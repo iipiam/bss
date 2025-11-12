@@ -1417,10 +1417,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate subscription invoice
       try {
-        // Calculate subscription prices based on plan
+        // Calculate subscription prices based on plan (prices BEFORE VAT)
         const planPrices: Record<string, { base: number; perBranch: number }> = {
-          weekly: { base: 66.33, perBranch: 11.63 },
-          monthly: { base: 199, perBranch: 33.23 },
+          weekly: { base: 66.33, perBranch: 15 },
+          monthly: { base: 199, perBranch: 42.85 },
           yearly: { base: 1990, perBranch: 398.63 },
         };
 
