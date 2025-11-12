@@ -45,6 +45,7 @@ Preferred communication style: Simple, everyday language.
 - **Strategic Decision-Making**: Profitability analysis covering strategic overview, pricing analysis, scaling viability, and cost management.
 - **Authentication**: Subscription-based, with Commercial Registration field and password recovery, secure logout.
 - **Subscription Invoice Security**: Authenticated download endpoint with multi-tenant ownership verification via restaurantId join, preventing cross-tenant data leakage. Invoices download after successful auto-login using secure authenticated endpoint.
+- **Subscription Invoice Management**: Profile page displays all user subscription invoices with serial number, plan type, date, and total amount. Each invoice can be securely downloaded via authenticated endpoint with proper routing to prevent conflicts.
 - **Shop & Bills Management**: Manual working hours, expense tracking for salaries and bills, integrated into financial views.
 - **Tutorial System**: Interactive tutorial page with 12 step-by-step guides, screenshots, and multilingual support.
 - **Subscription Management**: Interactive dialog for upgrade/downgrade/cancel, dynamic pricing calculator, plan comparison, displaying current status. Supports Weekly, Monthly, Yearly plans with VAT included.
