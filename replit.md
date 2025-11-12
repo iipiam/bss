@@ -52,6 +52,7 @@ Preferred communication style: Simple, everyday language.
 - **Branch Management**: Dynamic selection system with `BranchContext`, persistent `currentBranchId` in localStorage, seamless switching.
 - **Ticketing System & IT Support**: Comprehensive ticket management with status, priority, real-time chat interface, and activity logging. Role-based access control and auto-refresh for messages.
 - **WhatsApp Invoice Delivery**: Automatic deep-link integration for sending ZATCA-compliant invoices via WhatsApp after POS checkout, supporting various phone number formats and bilingual templates.
+- **Team Chat System**: Full-featured internal messaging with direct messages and channels. Supports branch-level and restaurant-wide conversations, unread badges, message history, real-time mark-as-read, and multi-participant messaging. Default channels (#general, #kitchen, #front-desk, #it-support) auto-created on setup. Uses participantHash for race-safe DM deduplication and conversation membership verification for security.
 
 ## External Dependencies
 
