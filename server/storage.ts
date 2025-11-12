@@ -307,14 +307,16 @@ export interface IStorage {
   createDefaultChannels(restaurantId: string, createdBy: string): Promise<void>;
   
   // Team Chat - Notification Settings (MULTI-TENANT: SQL-level restaurantId filtering)
-  getChatNotificationDefaults(restaurantId: string): Promise<any | undefined>; // Get restaurant default settings
-  updateChatNotificationDefaults(restaurantId: string, defaults: any): Promise<any>; // Admin only - update restaurant defaults
-  getUserChatNotificationSettings(userId: string, restaurantId: string): Promise<any | undefined>; // Get user's override settings
-  updateUserChatNotificationSettings(userId: string, restaurantId: string, settings: any): Promise<any>; // Update user's override settings
-  getEffectiveChatNotificationSettings(userId: string, restaurantId: string): Promise<any>; // Merge defaults with user overrides
-  getChatConversationPreference(conversationId: string, userId: string, restaurantId: string): Promise<any | undefined>; // Get per-conversation mute preference
-  updateChatConversationPreference(conversationId: string, userId: string, restaurantId: string, isMuted: boolean): Promise<any>; // Toggle mute for conversation
-  getMutedConversations(userId: string, restaurantId: string): Promise<string[]>; // Get list of muted conversation IDs
+  getChatNotificationDefaults(restaurantId: string): Promise<{
+    notificationsEnabled: boolean;
+    soundEnabled: boolean;
+    toneId: string;
+  } | undefined>; // Get restaurant default chat notification settings
+  updateChatNotificationDefaults(restaurantId: string, defaults: {
+    notificationsEnabled?: boolean;
+    soundEnabled?: boolean;
+    toneId?: string;
+  }): Promise<void>; // Admin only - update restaurant chat notification defaults
 }
 
 export class DatabaseStorage implements IStorage {
@@ -709,14 +711,14 @@ export class DatabaseStorage implements IStorage {
     
     if (existing) {
       const [updated] = await db.update(settings)
-        .set(safeData)
+        .set(safeData as any)
         .where(and(eq(settings.id, existing.id), eq(settings.restaurantId, restaurantId)))
         .returning();
       return updated;
     } else {
       // Create new settings for this restaurant
       const [created] = await db.insert(settings)
-        .values({ ...safeData, restaurantId } as InsertSettings)
+        .values([{ ...safeData, restaurantId } as any])
         .returning();
       return created;
     }
@@ -2121,6 +2123,67 @@ export class DatabaseStorage implements IStorage {
         } as any);
       }
     }
+  }
+
+  // Team Chat - Notification Settings
+  async getChatNotificationDefaults(restaurantId: string): Promise<{
+    notificationsEnabled: boolean;
+    soundEnabled: boolean;
+    toneId: string;
+  } | undefined> {
+    const [result] = await db
+      .select({
+        chatNotificationDefaults: settings.chatNotificationDefaults,
+      })
+      .from(settings)
+      .where(eq(settings.restaurantId, restaurantId));
+    
+    if (!result?.chatNotificationDefaults) {
+      // Return defaults if not configured
+      return {
+        notificationsEnabled: true,
+        soundEnabled: true,
+        toneId: 'tone1',
+      };
+    }
+    
+    return {
+      notificationsEnabled: result.chatNotificationDefaults.notificationsEnabled,
+      soundEnabled: result.chatNotificationDefaults.soundEnabled,
+      toneId: result.chatNotificationDefaults.toneId,
+    };
+  }
+
+  async updateChatNotificationDefaults(restaurantId: string, defaults: {
+    notificationsEnabled?: boolean;
+    soundEnabled?: boolean;
+    toneId?: string;
+  }): Promise<void> {
+    // Get existing settings
+    const [existing] = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.restaurantId, restaurantId));
+    
+    const currentDefaults = existing?.chatNotificationDefaults || {
+      notificationsEnabled: true,
+      soundEnabled: true,
+      toneId: 'tone1',
+      notifyScope: 'all' as const,
+    };
+    
+    // Merge with new values
+    const updated = {
+      ...currentDefaults,
+      ...defaults,
+    };
+    
+    await db
+      .update(settings)
+      .set({
+        chatNotificationDefaults: updated,
+      })
+      .where(eq(settings.restaurantId, restaurantId));
   }
 }
 

@@ -9,6 +9,7 @@ import QRCode from "qrcode";
 import rateLimit from "express-rate-limit";
 import * as fs from "fs";
 import * as path from "path";
+import { z } from "zod";
 import {
   insertBranchSchema,
   insertInventoryItemSchema,
@@ -3403,6 +3404,51 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Get chat notification settings (restaurant defaults)
+  app.get("/api/chat/notification-settings", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const settings = await storage.getChatNotificationDefaults(restaurantId);
+      res.json(settings);
+    } catch (error) {
+      console.error("Get chat notification settings error:", error);
+      res.status(500).json({ error: "Failed to fetch notification settings" });
+    }
+  });
+
+  // Update chat notification settings (admin only)
+  app.patch("/api/chat/notification-settings", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const userRole = req.session.user!.role;
+      
+      // Only admins can update restaurant-wide notification defaults
+      if (userRole !== 'admin') {
+        return res.status(403).json({ error: "Only administrators can update notification settings" });
+      }
+      
+      // Validate request body
+      const schema = z.object({
+        notificationsEnabled: z.boolean().optional(),
+        soundEnabled: z.boolean().optional(),
+        toneId: z.string().optional(),
+      });
+      
+      const data = schema.parse(req.body);
+      await storage.updateChatNotificationDefaults(restaurantId, data);
+      
+      // Return updated settings
+      const updated = await storage.getChatNotificationDefaults(restaurantId);
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid notification settings data", details: error.errors });
+      }
+      console.error("Update chat notification settings error:", error);
+      res.status(500).json({ error: "Failed to update notification settings" });
+    }
+  });
+
   // Add member to conversation (channels only)
   app.post("/api/chat/conversations/:id/members", requireAuth, async (req, res) => {
     try {
@@ -4264,8 +4310,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           // Fetch user's conversations to enable participant-only message delivery
           let conversationIds = new Set<string>();
           try {
-            const conversations = await storage.getUserConversations(userId, restaurantId);
-            conversationIds = new Set(conversations.map(c => c.id));
+            const conversations = await storage.getConversations(restaurantId, userId);
+            conversationIds = new Set(conversations.map((c: any) => c.id));
           } catch (error) {
             console.error('[WebSocket] Failed to load conversations:', error);
           }
