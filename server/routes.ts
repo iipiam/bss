@@ -3448,16 +3448,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all users in restaurant for DM selection
+  // Get all employee users in restaurant for DM selection
   app.get("/api/chat/users", requireAuth, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const users = await storage.getUsers(restaurantId);
       
+      // Filter to only show employees (exclude admins) and active users
+      const employees = users.filter(u => u.role === 'employee' && u.active);
+      
       // Return users without sensitive data
-      const safeUsers = users.map(u => ({
+      const safeUsers = employees.map(u => ({
         id: u.id,
-        name: u.fullName,
+        fullName: u.fullName,
+        username: u.username,
         email: u.email,
         role: u.role,
       }));
