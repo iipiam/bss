@@ -319,7 +319,8 @@ export default function Chat() {
 
   // Filter conversations based on search and branch
   const filteredConversations = conversations?.filter(conv => {
-    const matchesSearch = conv.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const displayName = getConversationDisplayName(conv);
+    const matchesSearch = displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ?? true;
     const matchesBranch = currentBranch?.id
       ? (conv.scope === 'restaurant' || conv.branchId === currentBranch.id)
       : true;
