@@ -1950,6 +1950,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       
       // SECURITY: Strip restaurantId and role to prevent cross-tenant reassignment and privilege escalation
       
+      console.log("[USER UPDATE] Updating user:", req.params.id);
+      console.log("[USER UPDATE] Update data received:", JSON.stringify(updateData, null, 2));
+      
       // If password is being updated, hash it
       if (password) {
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -1958,9 +1961,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       const user = await storage.updateUser(req.params.id, restaurantId, updateData);
       if (!user) {
+        console.log("[USER UPDATE] User not found after update");
         return res.status(404).json({ error: "User not found" });
       }
 
+      console.log("[USER UPDATE] User updated successfully. New permissions:", JSON.stringify(user.permissions, null, 2));
+      
       const { password: _p, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
     } catch (error) {
