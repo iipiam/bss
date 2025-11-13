@@ -31,6 +31,7 @@ import {
   insertInvestorSchema,
   updateInvestorSchema,
 } from "@shared/schema";
+import { getPlanPricing, type SubscriptionPlan } from "@shared/subscriptionPricing";
 
 // WebSocket clients with session context for multi-tenant filtering
 interface WSClient {
@@ -1455,20 +1456,22 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       // Generate subscription invoice
       try {
-        // Calculate subscription prices based on plan (prices BEFORE VAT)
-        const planPrices: Record<string, { base: number; perBranch: number }> = {
-          weekly: { base: 66.33, perBranch: 15 },
-          monthly: { base: 199, perBranch: 42.85 },
-          yearly: { base: 1990, perBranch: 398.63 },
-        };
-
-        const prices = planPrices[subscriptionPlan];
-        const basePlanPrice = prices.base;
+        // Calculate subscription prices using shared pricing module
+        const pricing = getPlanPricing(subscriptionPlan as SubscriptionPlan, branches);
+        
+        // For invoice line-item breakdown, calculate base plan and additional branches separately
+        const basePlanPricing = getPlanPricing(subscriptionPlan as SubscriptionPlan, 1);
+        const basePlanPrice = basePlanPricing.netAmount; // Net price for base plan (1 branch)
+        
         const additionalBranchesCount = Math.max(0, branches - 1);
-        const additionalBranchesPrice = additionalBranchesCount * prices.perBranch;
-        const subtotal = basePlanPrice + additionalBranchesPrice;
-        const vatAmount = subtotal * 0.15; // 15% VAT
-        const total = subtotal + vatAmount;
+        const additionalBranchesPrice = additionalBranchesCount > 0 
+          ? pricing.netAmount - basePlanPrice // Total net minus base = additional branches net
+          : 0;
+        
+        // Use total amounts from pricing breakdown
+        const subtotal = pricing.netAmount;      // Total NET before VAT
+        const vatAmount = pricing.vatAmount;     // 15% VAT on subtotal
+        const total = pricing.grossAmount;       // Total including VAT
 
         // Generate serial number
         const serialNumber = await storage.getNextSubscriptionInvoiceSerialNumber();

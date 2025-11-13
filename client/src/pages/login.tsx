@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { WelcomeVideo } from "@/components/WelcomeVideo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { getPlanPricing, type SubscriptionPlan } from "@shared/subscriptionPricing";
 
 const languages: Language[] = ['English', 'Arabic', 'Chinese', 'German', 'Hindi', 'Urdu', 'Bengali'];
 
@@ -50,25 +51,15 @@ export default function Login() {
   const { toast } = useToast();
   const { language, setLanguage, t } = useLanguage();
 
-  // Calculate total price with branches
+  // Calculate total price with branches (VAT-inclusive)
   const calculateTotalPrice = () => {
-    const basePrices = {
-      weekly: 66.33,
-      monthly: 199,
-      yearly: 1990
-    };
-    
-    const perBranchPrices = {
-      weekly: 11.63,
-      monthly: 33.23,
-      yearly: 398.63
-    };
-    
-    const basePrice = basePrices[subscriptionPlan as keyof typeof basePrices];
-    const branchPrice = perBranchPrices[subscriptionPlan as keyof typeof perBranchPrices];
-    const additionalBranches = Math.max(0, branchesCount - 1); // First branch is included
-    
-    return (basePrice + (branchPrice * additionalBranches)).toFixed(2);
+    const pricing = getPlanPricing(subscriptionPlan as SubscriptionPlan, branchesCount);
+    return pricing.grossAmount.toFixed(2);
+  };
+  
+  // Get pricing breakdown for display
+  const getPricingBreakdown = () => {
+    return getPlanPricing(subscriptionPlan as SubscriptionPlan, branchesCount);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -496,7 +487,7 @@ export default function Login() {
                     data-testid="input-signup-branches"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Additional branches: +{15} {t.sar}/week, +{42.85} {t.sar}/month per branch
+                    Additional branches: +{(getPlanPricing('weekly', 2).grossAmount - getPlanPricing('weekly', 1).grossAmount).toFixed(2)} {t.sar}/week, +{(getPlanPricing('monthly', 2).grossAmount - getPlanPricing('monthly', 1).grossAmount).toFixed(2)} {t.sar}/month per branch (VAT included)
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -544,8 +535,8 @@ export default function Login() {
                             )}
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold">{(66.33 + (branchesCount - 1) * 11.63).toFixed(2)} {t.sar}</p>
-                            <p className="text-xs text-muted-foreground">per week</p>
+                            <p className="text-xl font-bold">{getPlanPricing('weekly', branchesCount).grossAmount.toFixed(2)} {t.sar}</p>
+                            <p className="text-xs text-muted-foreground">per week (VAT included)</p>
                           </div>
                         </div>
                       </Label>
@@ -567,8 +558,8 @@ export default function Login() {
                             )}
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold">{(199 + (branchesCount - 1) * 33.23).toFixed(2)} {t.sar}</p>
-                            <p className="text-xs text-muted-foreground">{t.perMonth}</p>
+                            <p className="text-xl font-bold">{getPlanPricing('monthly', branchesCount).grossAmount.toFixed(2)} {t.sar}</p>
+                            <p className="text-xs text-muted-foreground">{t.perMonth} (VAT included)</p>
                           </div>
                         </div>
                       </Label>
@@ -595,8 +586,8 @@ export default function Login() {
                             </Badge>
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold">{(1990 + (branchesCount - 1) * 398.63).toFixed(2)} {t.sar}</p>
-                            <p className="text-xs text-muted-foreground">{t.perYear}</p>
+                            <p className="text-xl font-bold">{getPlanPricing('yearly', branchesCount).grossAmount.toFixed(2)} {t.sar}</p>
+                            <p className="text-xs text-muted-foreground">{t.perYear} (VAT included)</p>
                           </div>
                         </div>
                       </Label>
