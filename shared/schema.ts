@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { pgTable, text, varchar, integer, decimal, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import type { PermissionSet } from "./permissions";
 
 // Restaurants (Multi-tenant isolation)
 export const restaurants = pgTable("restaurants", {
@@ -371,24 +372,7 @@ export const users = pgTable("users", {
   email: text("email"),
   phone: text("phone"),
   role: text("role").notNull().default("employee"), // "admin" or "employee"
-  permissions: jsonb("permissions").notNull().$type<{
-    dashboard: boolean;
-    inventory: boolean;
-    menu: boolean;
-    recipes: boolean;
-    branches: boolean;
-    procurement: boolean;
-    pos: boolean;
-    orders: boolean;
-    kitchen: boolean;
-    sales: boolean;
-    reports: boolean;
-    forecasting: boolean;
-    analysis: boolean;
-    settings: boolean;
-    financial: boolean;
-    employees: boolean;
-  }>(),
+  permissions: jsonb("permissions").notNull().$type<PermissionSet>(),
   branchId: varchar("branch_id").references(() => branches.id), // Default branch for this user
   passwordResetToken: text("password_reset_token"),
   passwordResetExpiry: timestamp("password_reset_expiry"),
