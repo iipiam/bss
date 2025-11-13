@@ -181,7 +181,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/inventory/sort", requireAuth, async (req, res) => {
+  app.patch("/api/inventory/sort", requireAuth, requirePermission('inventory'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const { updates } = req.body;
@@ -303,14 +303,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Add-ons
-  app.get("/api/addons", requireAuth, async (req, res) => {
+  app.get("/api/addons", requireAuth, requirePermission('menu'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const menuItemId = req.query.menuItemId as string | undefined;
     const addons = await storage.getAddons(restaurantId, menuItemId);
     res.json(addons);
   });
 
-  app.get("/api/addons/:id", requireAuth, async (req, res) => {
+  app.get("/api/addons/:id", requireAuth, requirePermission('menu'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const addon = await storage.getAddon(req.params.id, restaurantId);
     if (!addon) {
@@ -319,7 +319,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(addon);
   });
 
-  app.post("/api/addons", requireAuth, async (req, res) => {
+  app.post("/api/addons", requireAuth, requirePermission('menu'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const data = insertAddonSchema.parse({ ...req.body, restaurantId });
@@ -330,7 +330,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/addons/:id", requireAuth, async (req, res) => {
+  app.patch("/api/addons/:id", requireAuth, requirePermission('menu'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const data = sanitizePatchBody(req.body, insertAddonSchema.partial());
@@ -346,7 +346,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/addons/:id", requireAuth, async (req, res) => {
+  app.delete("/api/addons/:id", requireAuth, requirePermission('menu'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const success = await storage.deleteAddon(req.params.id, restaurantId);
     if (!success) {
@@ -355,7 +355,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.status(204).send();
   });
 
-  app.patch("/api/addons/sort-order", requireAuth, async (req, res) => {
+  app.patch("/api/addons/sort-order", requireAuth, requirePermission('menu'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       if (!Array.isArray(req.body)) {
@@ -433,7 +433,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Shop Salaries
-  app.get("/api/shop/salaries", requireAuth, async (req, res) => {
+  app.get("/api/shop/salaries", requireAuth, requirePermission('bills'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const branchId = req.query.branchId as string | undefined;
     const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
@@ -442,7 +442,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(salaries);
   });
 
-  app.get("/api/shop/salaries/:id", requireAuth, async (req, res) => {
+  app.get("/api/shop/salaries/:id", requireAuth, requirePermission('bills'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const salary = await storage.getSalary(req.params.id);
     if (!salary || salary.restaurantId !== restaurantId) {
@@ -451,7 +451,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(salary);
   });
 
-  app.post("/api/shop/salaries", requireAuth, async (req, res) => {
+  app.post("/api/shop/salaries", requireAuth, requirePermission('bills'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       console.log("[SALARY] Request body:", JSON.stringify(req.body, null, 2));
@@ -474,7 +474,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/shop/salaries/:id", requireAuth, async (req, res) => {
+  app.patch("/api/shop/salaries/:id", requireAuth, requirePermission('bills'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const existing = await storage.getSalary(req.params.id);
@@ -489,7 +489,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/shop/salaries/:id", requireAuth, async (req, res) => {
+  app.delete("/api/shop/salaries/:id", requireAuth, requirePermission('bills'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const existing = await storage.getSalary(req.params.id);
     if (!existing || existing.restaurantId !== restaurantId) {
@@ -503,7 +503,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Shop Bills
-  app.get("/api/shop/bills", requireAuth, async (req, res) => {
+  app.get("/api/shop/bills", requireAuth, requirePermission('bills'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const branchId = req.query.branchId as string | undefined;
     const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
@@ -512,7 +512,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(bills);
   });
 
-  app.get("/api/shop/bills/:id", requireAuth, async (req, res) => {
+  app.get("/api/shop/bills/:id", requireAuth, requirePermission('bills'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const bill = await storage.getShopBill(req.params.id);
     if (!bill || bill.restaurantId !== restaurantId) {
@@ -521,7 +521,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(bill);
   });
 
-  app.post("/api/shop/bills", requireAuth, async (req, res) => {
+  app.post("/api/shop/bills", requireAuth, requirePermission('bills'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       // Convert ISO date string to Date object
@@ -539,7 +539,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/shop/bills/:id", requireAuth, async (req, res) => {
+  app.patch("/api/shop/bills/:id", requireAuth, requirePermission('bills'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const existing = await storage.getShopBill(req.params.id);
@@ -554,7 +554,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/shop/bills/:id", requireAuth, async (req, res) => {
+  app.delete("/api/shop/bills/:id", requireAuth, requirePermission('bills'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const existing = await storage.getShopBill(req.params.id);
     if (!existing || existing.restaurantId !== restaurantId) {
@@ -567,7 +567,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.status(204).send();
   });
 
-  app.patch("/api/shop/bills/:id/archive", requireAuth, async (req, res) => {
+  app.patch("/api/shop/bills/:id/archive", requireAuth, requirePermission('bills'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const existing = await storage.getShopBill(req.params.id);
