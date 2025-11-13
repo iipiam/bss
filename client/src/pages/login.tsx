@@ -10,11 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn, UserPlus, UtensilsCrossed, Check, Languages, Play, Video, Mail, HelpCircle } from "lucide-react";
+import { LogIn, UserPlus, Check, Languages, Play, Video, Mail, HelpCircle } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
+import kinzhalLogo from "@assets/IMG_8731_1763039543270.jpeg";
 import { Language } from "@/i18n/translations";
 import {
   Select,
@@ -251,7 +252,7 @@ export default function Login() {
           <div className="mx-auto relative">
             <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/60 rounded-full blur-xl opacity-50"></div>
             <div className="relative bg-gradient-to-br from-primary to-primary/80 p-5 rounded-2xl shadow-lg">
-              <UtensilsCrossed className="h-14 w-14 text-white" strokeWidth={1.5} />
+              <img src={kinzhalLogo} alt="Saudi Kinzhal" className="h-14 w-14 object-contain" />
             </div>
           </div>
           <div className="space-y-2">
@@ -682,9 +683,7 @@ export default function Login() {
         <div className="text-center branding-slide" data-testid="branding-footer">
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-3">
-              <div className="bg-white/10 p-2 rounded-lg">
-                <UtensilsCrossed className="h-6 w-6 text-white" />
-              </div>
+              <img src={kinzhalLogo} alt="Saudi Kinzhal Logo" className="h-12 w-auto object-contain" />
               <p className="text-sm text-white/80">
                 Made By <span className="font-semibold text-white">Saudi Kinzhal</span>
               </p>

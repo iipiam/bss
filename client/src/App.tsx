@@ -467,8 +467,8 @@ function AppContent() {
             </main>
             <footer className="border-t py-3 px-4 flex-shrink-0 branding-slide" data-testid="branding-footer">
               <div className="flex items-center justify-center gap-3">
-                <img src={kinzhalLogo} alt="Saudi Kinzhal Logo" className="h-8 w-8 object-contain" />
-                <p className="text-xs text-muted-foreground">
+                <img src={kinzhalLogo} alt="Saudi Kinzhal Logo" className="h-12 w-auto object-contain" />
+                <p className="text-sm text-muted-foreground">
                   Made By <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Saudi Kinzhal</span>
                 </p>
               </div>
