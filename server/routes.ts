@@ -32,7 +32,7 @@ import {
   updateInvestorSchema,
 } from "@shared/schema";
 import { getPlanPricing, type SubscriptionPlan } from "@shared/subscriptionPricing";
-import { ADMIN_PERMISSIONS } from "@shared/permissions";
+import { ADMIN_PERMISSIONS, type PermissionSet } from "@shared/permissions";
 
 // WebSocket clients with session context for multi-tenant filtering
 interface WSClient {

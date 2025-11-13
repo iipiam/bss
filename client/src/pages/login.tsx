@@ -16,7 +16,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Language } from "@/i18n/translations";
-import kinzhalLogo from "@assets/IMG_8731_1762870212105.jpeg";
 import {
   Select,
   SelectContent,
@@ -683,7 +682,9 @@ export default function Login() {
         <div className="text-center branding-slide" data-testid="branding-footer">
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-3">
-              <img src={kinzhalLogo} alt="Saudi Kinzhal Logo" className="h-10 w-10 object-contain" />
+              <div className="bg-white/10 p-2 rounded-lg">
+                <UtensilsCrossed className="h-6 w-6 text-white" />
+              </div>
               <p className="text-sm text-white/80">
                 Made By <span className="font-semibold text-white">Saudi Kinzhal</span>
               </p>
