@@ -11,6 +11,16 @@ export interface ActivityLogData {
   description?: string;
 }
 
+function safeStringify(value: any): string | null {
+  if (!value) return null;
+  try {
+    return JSON.stringify(value);
+  } catch (error) {
+    console.error("Failed to stringify value:", error);
+    return "[Unstringifiable Value]";
+  }
+}
+
 export async function logActivity(data: ActivityLogData): Promise<void> {
   try {
     await storage.createEmployeeActivity({
@@ -19,8 +29,8 @@ export async function logActivity(data: ActivityLogData): Promise<void> {
       actionCategory: data.actionCategory,
       entityType: data.entityType,
       entityId: data.entityId,
-      oldValue: data.oldValue ? JSON.stringify(data.oldValue) : null,
-      newValue: data.newValue ? JSON.stringify(data.newValue) : null,
+      oldValue: safeStringify(data.oldValue),
+      newValue: safeStringify(data.newValue),
       description: data.description || null,
     });
   } catch (error) {
