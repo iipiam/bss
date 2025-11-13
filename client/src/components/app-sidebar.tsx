@@ -127,14 +127,14 @@ export function AppSidebar() {
   ];
 
   // Filter menu items based on permissions
-  const filteredOperations = operations.filter(item => !item.permission || isAdmin || hasPermission(item.permission));
-  const filteredManagement = management.filter(item => !item.permission || isAdmin || hasPermission(item.permission));
-  const filteredAnalytics = analytics.filter(item => !item.permission || isAdmin || hasPermission(item.permission));
+  const filteredOperations = operations.filter(item => !item.permission || isAdmin() || hasPermission(item.permission));
+  const filteredManagement = management.filter(item => !item.permission || isAdmin() || hasPermission(item.permission));
+  const filteredAnalytics = analytics.filter(item => !item.permission || isAdmin() || hasPermission(item.permission));
   const filteredSystem = system.filter(item => {
     // Settings is admin-only
-    if (item.testId === 'settings') return isAdmin;
+    if (item.testId === 'settings') return isAdmin();
     // Other items either require no permission or check the permission
-    return !item.permission || isAdmin || hasPermission(item.permission);
+    return !item.permission || isAdmin() || hasPermission(item.permission);
   });
 
   const renderMenuItems = (items: typeof operations) => (
