@@ -228,6 +228,18 @@ export interface Translations {
   notificationToneDescription: string;
   updatingTone: string;
   
+  // Chat Notification Settings
+  chatNotifications: string;
+  chatNotificationsDesc: string;
+  enableChatNotifications: string;
+  enableChatNotificationsDesc: string;
+  enableChatSound: string;
+  enableChatSoundDesc: string;
+  chatNotificationTone: string;
+  chatNotificationSettingsUpdated: string;
+  failedToUpdateChatSettings: string;
+  updatingSettings: string;
+  
   // Menu Item Management
   menuItemCreated: string;
   menuItemCreatedDesc: string;
@@ -974,6 +986,18 @@ export const translations: Record<Language, Translations> = {
     notificationToneDescription: 'Select a notification tone for order alerts. This applies to all sub-accounts immediately.',
     updatingTone: 'Updating tone for all accounts...',
     
+    // Chat Notification Settings
+    chatNotifications: 'Team Chat Notifications',
+    chatNotificationsDesc: 'Configure notification preferences for team chat messages',
+    enableChatNotifications: 'Enable Chat Notifications',
+    enableChatNotificationsDesc: 'Show desktop notifications when you receive new chat messages',
+    enableChatSound: 'Enable Chat Sound',
+    enableChatSoundDesc: 'Play a sound when you receive new chat messages',
+    chatNotificationTone: 'Chat Notification Tone',
+    chatNotificationSettingsUpdated: 'Chat notification settings updated successfully',
+    failedToUpdateChatSettings: 'Failed to update chat notification settings',
+    updatingSettings: 'Updating settings...',
+    
     // Menu Item Management
     menuItemCreated: 'Menu Item Created',
     menuItemCreatedDesc: 'The menu item has been added successfully',
@@ -1583,6 +1607,7 @@ export const translations: Record<Language, Translations> = {
     submit: 'إرسال',
     loading: 'جاري التحميل...',
     noData: 'لا توجد بيانات',
+    actionCannotBeUndone: 'لا يمكن التراجع عن هذا الإجراء',
     
     // Delivery Apps
     deliveryApps: 'تطبيقات التوصيل',
@@ -1717,6 +1742,18 @@ export const translations: Record<Language, Translations> = {
     notificationTone: 'نغمة الإشعار',
     notificationToneDescription: 'اختر نغمة الإشعار لتنبيهات الطلبات. ينطبق هذا على جميع الحسابات الفرعية على الفور.',
     updatingTone: 'جاري تحديث النغمة لجميع الحسابات...',
+    
+    // Chat Notification Settings
+    chatNotifications: 'إشعارات دردشة الفريق',
+    chatNotificationsDesc: 'تكوين تفضيلات الإشعارات لرسائل دردشة الفريق',
+    enableChatNotifications: 'تفعيل إشعارات الدردشة',
+    enableChatNotificationsDesc: 'إظهار إشعارات سطح المكتب عند استلام رسائل دردشة جديدة',
+    enableChatSound: 'تفعيل صوت الدردشة',
+    enableChatSoundDesc: 'تشغيل صوت عند استلام رسائل دردشة جديدة',
+    chatNotificationTone: 'نغمة إشعار الدردشة',
+    chatNotificationSettingsUpdated: 'تم تحديث إعدادات إشعارات الدردشة بنجاح',
+    failedToUpdateChatSettings: 'فشل تحديث إعدادات إشعارات الدردشة',
+    updatingSettings: 'جاري تحديث الإعدادات...',
     
     // Menu Item Management
     menuItemCreated: 'تم إنشاء عنصر القائمة',
@@ -2327,6 +2364,7 @@ export const translations: Record<Language, Translations> = {
     submit: '提交',
     loading: '加载中...',
     noData: '无数据',
+    actionCannotBeUndone: '此操作无法撤销',
     
     // Delivery Apps
     deliveryApps: 'Delivery Apps',
@@ -2461,6 +2499,18 @@ export const translations: Record<Language, Translations> = {
     notificationTone: '通知铃声',
     notificationToneDescription: '选择订单提醒的通知铃声。这将立即应用于所有子账户。',
     updatingTone: '正在为所有账户更新铃声...',
+    
+    // Chat Notification Settings
+    chatNotifications: '团队聊天通知',
+    chatNotificationsDesc: '配置团队聊天消息的通知偏好',
+    enableChatNotifications: '启用聊天通知',
+    enableChatNotificationsDesc: '收到新聊天消息时显示桌面通知',
+    enableChatSound: '启用聊天声音',
+    enableChatSoundDesc: '收到新聊天消息时播放声音',
+    chatNotificationTone: '聊天通知铃声',
+    chatNotificationSettingsUpdated: '聊天通知设置更新成功',
+    failedToUpdateChatSettings: '更新聊天通知设置失败',
+    updatingSettings: '正在更新设置...',
     
     // Menu Item Management
     menuItemCreated: '菜单项已创建',
@@ -3193,6 +3243,18 @@ export const translations: Record<Language, Translations> = {
     notificationToneDescription: 'Wählen Sie einen Benachrichtigungston für Bestellbenachrichtigungen. Dies gilt sofort für alle Unterkonten.',
     updatingTone: 'Ton für alle Konten wird aktualisiert...',
     
+    // Chat Notification Settings
+    chatNotifications: 'Team-Chat-Benachrichtigungen',
+    chatNotificationsDesc: 'Benachrichtigungseinstellungen für Team-Chat-Nachrichten konfigurieren',
+    enableChatNotifications: 'Chat-Benachrichtigungen aktivieren',
+    enableChatNotificationsDesc: 'Desktop-Benachrichtigungen anzeigen, wenn Sie neue Chat-Nachrichten erhalten',
+    enableChatSound: 'Chat-Ton aktivieren',
+    enableChatSoundDesc: 'Einen Ton abspielen, wenn Sie neue Chat-Nachrichten erhalten',
+    chatNotificationTone: 'Chat-Benachrichtigungston',
+    chatNotificationSettingsUpdated: 'Chat-Benachrichtigungseinstellungen erfolgreich aktualisiert',
+    failedToUpdateChatSettings: 'Aktualisierung der Chat-Benachrichtigungseinstellungen fehlgeschlagen',
+    updatingSettings: 'Einstellungen werden aktualisiert...',
+    
     // Menu Item Management
     menuItemCreated: 'Menüelement erstellt',
     menuItemCreatedDesc: 'Das Menüelement wurde erfolgreich hinzugefügt',
@@ -3923,6 +3985,18 @@ export const translations: Record<Language, Translations> = {
     notificationTone: 'सूचना स्वर',
     notificationToneDescription: 'ऑर्डर अलर्ट के लिए सूचना स्वर चुनें। यह तुरंत सभी उप-खातों पर लागू होता है।',
     updatingTone: 'सभी खातों के लिए स्वर अपडेट हो रहा है...',
+    
+    // Chat Notification Settings
+    chatNotifications: 'टीम चैट सूचनाएं',
+    chatNotificationsDesc: 'टीम चैट संदेशों के लिए सूचना प्राथमिकताएं कॉन्फ़िगर करें',
+    enableChatNotifications: 'चैट सूचनाएं सक्षम करें',
+    enableChatNotificationsDesc: 'जब आपको नए चैट संदेश मिलते हैं तो डेस्कटॉप सूचनाएं दिखाएं',
+    enableChatSound: 'चैट ध्वनि सक्षम करें',
+    enableChatSoundDesc: 'जब आपको नए चैट संदेश मिलते हैं तो ध्वनि चलाएं',
+    chatNotificationTone: 'चैट सूचना स्वर',
+    chatNotificationSettingsUpdated: 'चैट सूचना सेटिंग्स सफलतापूर्वक अपडेट की गई',
+    failedToUpdateChatSettings: 'चैट सूचना सेटिंग्स अपडेट करने में विफल',
+    updatingSettings: 'सेटिंग्स अपडेट हो रही हैं...',
     
     // Menu Item Management
     menuItemCreated: 'मेनू आइटम बनाया गया',
@@ -4655,6 +4729,18 @@ export const translations: Record<Language, Translations> = {
     notificationToneDescription: 'آرڈر الرٹس کے لیے اطلاع کی آواز منتخب کریں۔ یہ فوری طور پر تمام ذیلی اکاؤنٹس پر لاگو ہوتا ہے۔',
     updatingTone: 'تمام اکاؤنٹس کے لیے آواز اپ ڈیٹ ہو رہی ہے...',
     
+    // Chat Notification Settings
+    chatNotifications: 'ٹیم چیٹ اطلاعات',
+    chatNotificationsDesc: 'ٹیم چیٹ پیغامات کے لیے اطلاع کی ترجیحات کو ترتیب دیں',
+    enableChatNotifications: 'چیٹ اطلاعات فعال کریں',
+    enableChatNotificationsDesc: 'جب آپ کو نئے چیٹ پیغامات ملیں تو ڈیسک ٹاپ اطلاعات دکھائیں',
+    enableChatSound: 'چیٹ آواز فعال کریں',
+    enableChatSoundDesc: 'جب آپ کو نئے چیٹ پیغامات ملیں تو آواز چلائیں',
+    chatNotificationTone: 'چیٹ اطلاع کی آواز',
+    chatNotificationSettingsUpdated: 'چیٹ اطلاع کی ترتیبات کامیابی سے اپ ڈیٹ ہوگئیں',
+    failedToUpdateChatSettings: 'چیٹ اطلاع کی ترتیبات کو اپ ڈیٹ کرنے میں ناکام',
+    updatingSettings: 'ترتیبات اپ ڈیٹ ہو رہی ہیں...',
+    
     // Menu Item Management
     menuItemCreated: 'مینو آئٹم بنایا گیا',
     menuItemCreatedDesc: 'مینو آئٹم کامیابی سے شامل کیا گیا',
@@ -5385,6 +5471,18 @@ export const translations: Record<Language, Translations> = {
     notificationTone: 'বিজ্ঞপ্তি টোন',
     notificationToneDescription: 'অর্ডার সতর্কতার জন্য একটি বিজ্ঞপ্তি টোন নির্বাচন করুন। এটি অবিলম্বে সমস্ত উপ-অ্যাকাউন্টে প্রযোজ্য।',
     updatingTone: 'সমস্ত অ্যাকাউন্টের জন্য টোন আপডেট হচ্ছে...',
+    
+    // Chat Notification Settings
+    chatNotifications: 'টিম চ্যাট বিজ্ঞপ্তি',
+    chatNotificationsDesc: 'টিম চ্যাট বার্তাগুলির জন্য বিজ্ঞপ্তি পছন্দগুলি কনফিগার করুন',
+    enableChatNotifications: 'চ্যাট বিজ্ঞপ্তি সক্ষম করুন',
+    enableChatNotificationsDesc: 'আপনি নতুন চ্যাট বার্তা পেলে ডেস্কটপ বিজ্ঞপ্তি দেখান',
+    enableChatSound: 'চ্যাট শব্দ সক্ষম করুন',
+    enableChatSoundDesc: 'আপনি নতুন চ্যাট বার্তা পেলে একটি শব্দ বাজান',
+    chatNotificationTone: 'চ্যাট বিজ্ঞপ্তি টোন',
+    chatNotificationSettingsUpdated: 'চ্যাট বিজ্ঞপ্তি সেটিংস সফলভাবে আপডেট করা হয়েছে',
+    failedToUpdateChatSettings: 'চ্যাট বিজ্ঞপ্তি সেটিংস আপডেট করতে ব্যর্থ',
+    updatingSettings: 'সেটিংস আপডেট হচ্ছে...',
     
     // Menu Item Management
     menuItemCreated: 'মেনু আইটেম তৈরি করা হয়েছে',
