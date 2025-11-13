@@ -1,122 +1,142 @@
 import { storage } from "./storage";
+import type { InsertEmployeeActivityLog } from "@shared/schema";
 
 export interface ActivityLogData {
+  restaurantId: string;
   employeeId: string;
-  actionType: 'create' | 'update' | 'delete';
+  employeeName: string;
+  action: string;
   actionCategory: string;
-  entityType: string;
-  entityId: string;
-  oldValue?: any;
-  newValue?: any;
-  description?: string;
-}
-
-function safeStringify(value: any): string | null {
-  if (!value) return null;
-  try {
-    return JSON.stringify(value);
-  } catch (error) {
-    console.error("Failed to stringify value:", error);
-    return "[Unstringifiable Value]";
-  }
+  description: string;
+  entityType?: string;
+  entityId?: string;
+  previousData?: Record<string, any>;
+  newData?: Record<string, any>;
+  branchId?: string;
+  ipAddress?: string;
 }
 
 export async function logActivity(data: ActivityLogData): Promise<void> {
   try {
-    await storage.createEmployeeActivity({
+    const activityData: InsertEmployeeActivityLog = {
+      restaurantId: data.restaurantId,
       employeeId: data.employeeId,
-      actionType: data.actionType,
+      employeeName: data.employeeName,
+      action: data.action,
       actionCategory: data.actionCategory,
-      entityType: data.entityType,
-      entityId: data.entityId,
-      oldValue: safeStringify(data.oldValue),
-      newValue: safeStringify(data.newValue),
-      description: data.description || null,
-    });
+      description: data.description,
+      entityType: data.entityType || null,
+      entityId: data.entityId || null,
+      previousData: data.previousData || null,
+      newData: data.newData || null,
+      branchId: data.branchId || null,
+      ipAddress: data.ipAddress || null,
+    };
+    
+    await storage.createEmployeeActivity(activityData);
   } catch (error) {
     // Log error but don't throw to prevent disrupting main operations
     console.error("Failed to log activity:", error);
   }
 }
 
-export function createActivityLogger(userId: string) {
+export function createActivityLogger(
+  restaurantId: string,
+  userId: string,
+  userName: string,
+  branchId?: string
+) {
   return {
     log: async (
-      actionType: 'create' | 'update' | 'delete',
+      action: string,
       actionCategory: string,
-      entityType: string,
-      entityId: string,
+      description: string,
       options?: {
-        oldValue?: any;
-        newValue?: any;
-        description?: string;
+        entityType?: string;
+        entityId?: string;
+        previousData?: Record<string, any>;
+        newData?: Record<string, any>;
+        ipAddress?: string;
       }
     ) => {
       await logActivity({
+        restaurantId,
         employeeId: userId,
-        actionType,
+        employeeName: userName,
+        action,
         actionCategory,
-        entityType,
-        entityId,
-        oldValue: options?.oldValue,
-        newValue: options?.newValue,
-        description: options?.description,
+        description,
+        entityType: options?.entityType,
+        entityId: options?.entityId,
+        previousData: options?.previousData,
+        newData: options?.newData,
+        branchId,
+        ipAddress: options?.ipAddress,
       });
     },
 
     logCreate: async (
       category: string,
+      description: string,
       entityType: string,
       entityId: string,
-      newValue: any,
-      description?: string
+      newData: Record<string, any>
     ) => {
       await logActivity({
+        restaurantId,
         employeeId: userId,
-        actionType: 'create',
+        employeeName: userName,
+        action: 'create',
         actionCategory: category,
+        description,
         entityType,
         entityId,
-        newValue,
-        description,
+        newData,
+        branchId,
       });
     },
 
     logUpdate: async (
       category: string,
+      description: string,
       entityType: string,
       entityId: string,
-      oldValue: any,
-      newValue: any,
-      description?: string
+      previousData: Record<string, any>,
+      newData: Record<string, any>
     ) => {
       await logActivity({
+        restaurantId,
         employeeId: userId,
-        actionType: 'update',
+        employeeName: userName,
+        action: 'update',
         actionCategory: category,
+        description,
         entityType,
         entityId,
-        oldValue,
-        newValue,
-        description,
+        previousData,
+        newData,
+        branchId,
       });
     },
 
     logDelete: async (
       category: string,
+      description: string,
       entityType: string,
       entityId: string,
-      oldValue: any,
-      description?: string
+      previousData: Record<string, any>
     ) => {
       await logActivity({
+        restaurantId,
         employeeId: userId,
-        actionType: 'delete',
+        employeeName: userName,
+        action: 'delete',
         actionCategory: category,
+        description,
         entityType,
         entityId,
-        oldValue,
-        description,
+        previousData,
+        branchId,
       });
     },
   };
