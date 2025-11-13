@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, UserCheck, UserX, Calendar, FileText, Plane, Award, Shield, Briefcase, Clock, Info, Key, LogIn } from "lucide-react";
 import type { User } from "@shared/schema";
+import { DEFAULT_EMPLOYEE_PERMISSIONS } from "@shared/permissions";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeviceLayout } from "@/lib/mobileLayout";
 
@@ -31,24 +32,7 @@ export default function Employees() {
     email: "",
     phone: "",
     role: "employee",
-    permissions: {
-      dashboard: true,
-      inventory: false,
-      menu: false,
-      recipes: false,
-      branches: false,
-      procurement: false,
-      pos: true,
-      orders: true,
-      kitchen: false,
-      sales: false,
-      reports: false,
-      forecasting: false,
-      analysis: false,
-      settings: false,
-      financial: false,
-      employees: false,
-    },
+    permissions: { ...DEFAULT_EMPLOYEE_PERMISSIONS },
     branchId: null,
     active: true,
     // Recruitment Data
@@ -138,24 +122,7 @@ export default function Employees() {
       email: "",
       phone: "",
       role: "employee",
-      permissions: {
-        dashboard: true,
-        inventory: false,
-        menu: false,
-        recipes: false,
-        branches: false,
-        procurement: false,
-        pos: true,
-        orders: true,
-        kitchen: false,
-        sales: false,
-        reports: false,
-        forecasting: false,
-        analysis: false,
-        settings: false,
-        financial: false,
-        employees: false,
-      },
+      permissions: { ...DEFAULT_EMPLOYEE_PERMISSIONS },
       branchId: null,
       active: true,
       employeeNumber: "",
