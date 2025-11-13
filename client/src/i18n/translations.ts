@@ -80,6 +80,7 @@ export interface Translations {
   add: string;
   edit: string;
   delete: string;
+  deleting: string;
   save: string;
   cancel: string;
   search: string;
@@ -91,6 +92,7 @@ export interface Translations {
   submit: string;
   loading: string;
   noData: string;
+  actionCannotBeUndone: string;
   
   // Delivery Apps
   deliveryApps: string;
@@ -339,6 +341,9 @@ export interface Translations {
   savingSettings: string;
   employeeCreated: string;
   employeeUpdated: string;
+  employeeDeleted: string;
+  deleteEmployee: string;
+  deleteEmployeeConfirm: string;
   branchCreated: string;
   branchUpdated: string;
   customerCreated: string;
@@ -349,6 +354,7 @@ export interface Translations {
   recipeDeleted: string;
   employeeCreatedDesc: string;
   employeeUpdatedDesc: string;
+  employeeDeletedDesc: string;
   branchCreatedDesc: string;
   branchUpdatedDesc: string;
   customerCreatedDesc: string;
@@ -692,6 +698,7 @@ export interface Translations {
   failedToUpdateOrder: string;
   failedToCreateEmployee: string;
   failedToUpdateEmployee: string;
+  failedToDeleteEmployee: string;
   failedToExportFinancial: string;
   exportFailed: string;
   failedToResetPassword: string;
@@ -819,6 +826,7 @@ export const translations: Record<Language, Translations> = {
     add: 'Add',
     edit: 'Edit',
     delete: 'Delete',
+    deleting: 'Deleting...',
     save: 'Save',
     cancel: 'Cancel',
     search: 'Search',
@@ -830,6 +838,7 @@ export const translations: Record<Language, Translations> = {
     submit: 'Submit',
     loading: 'Loading...',
     noData: 'No data available',
+    actionCannotBeUndone: 'This action cannot be undone',
     
     // Delivery Apps
     deliveryApps: 'Delivery Apps',
@@ -1078,6 +1087,9 @@ export const translations: Record<Language, Translations> = {
     savingSettings: 'Saving...',
     employeeCreated: 'Employee created',
     employeeUpdated: 'Employee updated',
+    employeeDeleted: 'Employee deleted',
+    deleteEmployee: 'Delete Employee',
+    deleteEmployeeConfirm: 'Are you sure you want to delete',
     branchCreated: 'Branch created',
     branchUpdated: 'Branch updated',
     customerCreated: 'Customer created',
@@ -1088,6 +1100,7 @@ export const translations: Record<Language, Translations> = {
     recipeDeleted: 'Recipe deleted',
     employeeCreatedDesc: 'The employee has been created successfully',
     employeeUpdatedDesc: 'The employee has been updated successfully',
+    employeeDeletedDesc: 'The employee has been deleted successfully',
     branchCreatedDesc: 'The branch has been created successfully',
     branchUpdatedDesc: 'The branch has been updated successfully',
     customerCreatedDesc: 'The customer has been created successfully',
@@ -1431,6 +1444,7 @@ export const translations: Record<Language, Translations> = {
     failedToUpdateOrder: 'Failed to update order',
     failedToCreateEmployee: 'Failed to create employee',
     failedToUpdateEmployee: 'Failed to update employee',
+    failedToDeleteEmployee: 'Failed to delete employee',
     failedToExportFinancial: 'Failed to export financial data',
     exportFailed: 'Export failed',
     failedToResetPassword: 'Failed to reset password',
@@ -1555,6 +1569,7 @@ export const translations: Record<Language, Translations> = {
     
     // Common
     add: 'إضافة',
+    deleting: 'جاري الحذف...',
     edit: 'تعديل',
     delete: 'حذف',
     save: 'حفظ',
@@ -1816,6 +1831,9 @@ export const translations: Record<Language, Translations> = {
     savingSettings: 'جاري الحفظ...',
     employeeCreated: 'تم إنشاء الموظف',
     employeeUpdated: 'تم تحديث الموظف',
+    employeeDeleted: 'تم حذف الموظف',
+    deleteEmployee: 'حذف الموظف',
+    deleteEmployeeConfirm: 'هل أنت متأكد من الحذف',
     branchCreated: 'تم إنشاء الفرع',
     branchUpdated: 'تم تحديث الفرع',
     customerCreated: 'تم إنشاء العميل',
@@ -1826,6 +1844,7 @@ export const translations: Record<Language, Translations> = {
     recipeDeleted: 'تم حذف الوصفة',
     employeeCreatedDesc: 'تم إنشاء الموظف بنجاح',
     employeeUpdatedDesc: 'تم تحديث الموظف بنجاح',
+    employeeDeletedDesc: 'تم حذف الموظف بنجاح',
     branchCreatedDesc: 'تم إنشاء الفرع بنجاح',
     branchUpdatedDesc: 'تم تحديث الفرع بنجاح',
     customerCreatedDesc: 'تم إنشاء العميل بنجاح',
@@ -2295,6 +2314,7 @@ export const translations: Record<Language, Translations> = {
     add: '添加',
     edit: '编辑',
     delete: '删除',
+    deleting: '删除中...',
     save: '保存',
     cancel: '取消',
     search: '搜索',

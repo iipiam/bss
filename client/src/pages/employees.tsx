@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -12,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, UserCheck, UserX, Calendar, FileText, Plane, Award, Shield, Briefcase, Clock, Info, Key, LogIn } from "lucide-react";
+import { Plus, Edit, UserCheck, UserX, Calendar, FileText, Plane, Award, Shield, Briefcase, Clock, Info, Key, LogIn, Trash2 } from "lucide-react";
 import type { User } from "@shared/schema";
 import { DEFAULT_EMPLOYEE_PERMISSIONS } from "@shared/permissions";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -24,6 +25,7 @@ export default function Employees() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState<any>({
     username: "",
@@ -109,6 +111,27 @@ export default function Employees() {
       toast({
         title: t.error || "Error",
         description: error.message || t.failedToUpdateEmployee || "Failed to update employee",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest("DELETE", `/api/users/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      setUserToDelete(null);
+      toast({
+        title: t.employeeDeleted || "Employee Deleted",
+        description: t.employeeDeletedDesc || "Employee has been deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message || t.failedToDeleteEmployee || "Failed to delete employee",
         variant: "destructive",
       });
     },
@@ -784,15 +807,25 @@ export default function Employees() {
                   )}
                 </div>
                 
-                <Button
-                  variant="outline"
-                  className="w-full h-[44px]"
-                  onClick={() => handleEdit(user)}
-                  data-testid={`button-edit-${user.id}`}
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  {t.editEmployee || "Edit Employee"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 h-[44px]"
+                    onClick={() => handleEdit(user)}
+                    data-testid={`button-edit-${user.id}`}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    {t.editEmployee || "Edit"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-[44px]"
+                    onClick={() => setUserToDelete(user)}
+                    data-testid={`button-delete-${user.id}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           );
@@ -1191,6 +1224,32 @@ export default function Employees() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.deleteEmployee || "Delete Employee"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t.deleteEmployeeConfirm || "Are you sure you want to delete"} <strong>{userToDelete?.fullName}</strong>?
+              {" "}{t.actionCannotBeUndone || "This action cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-[44px]" data-testid="button-cancel-delete">
+              {t.cancel || "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="h-[44px]"
+              onClick={() => userToDelete && deleteMutation.mutate(userToDelete.id)}
+              disabled={deleteMutation.isPending}
+              data-testid="button-confirm-delete"
+            >
+              {deleteMutation.isPending ? (t.deleting || "Deleting...") : (t.delete || "Delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
