@@ -1,7 +1,6 @@
 import {
   LayoutDashboard,
   Package,
-  UtensilsCrossed,
   ChefHat,
   DollarSign,
   FileText,
@@ -27,7 +26,9 @@ import {
   LogOut,
   Truck,
   Key,
+  UtensilsCrossed,
 } from "lucide-react";
+import logoImage from "@assets/IMG_8801_1763031500933.png";
 import {
   Sidebar,
   SidebarContent,
@@ -170,12 +171,14 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="border-b border-border">
         <div className="flex items-center gap-3 px-3 py-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-            <UtensilsCrossed className="h-6 w-6 text-primary-foreground" />
-          </div>
+          <img 
+            src={logoImage} 
+            alt="Saudi Kinzhal Logo" 
+            className="h-12 w-12 object-contain"
+          />
           <div className="flex flex-col">
             <span className="text-sm font-bold text-foreground">
-              RestoPOS
+              Saudi Kinzhal
             </span>
             <span className="text-xs text-muted-foreground">
               {t.restaurantManagementSystem || "Restaurant Management"}
