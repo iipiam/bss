@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UtensilsCrossed, User } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import kinzhalLogo from "@assets/IMG_8731_1762870212105.jpeg";
+import kinzhalLogo from "@assets/IMG_8801_1763031870185.png";
 
 export default function Setup() {
   const [formData, setFormData] = useState({
@@ -110,7 +110,7 @@ export default function Setup() {
             <UtensilsCrossed className="h-12 w-12 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-3xl">Welcome to RestoPOS</CardTitle>
+            <CardTitle className="text-3xl">Welcome to Saudi Kinzhal</CardTitle>
             <CardDescription>Create your administrator account to get started</CardDescription>
           </div>
         </CardHeader>

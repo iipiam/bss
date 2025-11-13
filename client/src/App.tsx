@@ -77,7 +77,7 @@ import ResetPassword from "@/pages/reset-password";
 import EmergencyReset from "@/pages/emergency-reset";
 import NotFound from "@/pages/not-found";
 import type { User } from "@shared/schema";
-import kinzhalLogo from "@assets/IMG_8731_1762870212105.jpeg";
+import kinzhalLogo from "@assets/IMG_8801_1763031870185.png";
 
 function Router() {
   return (
@@ -441,8 +441,8 @@ function AppContent() {
                           </h3>
                           <p className="text-sm">
                             {isRTL 
-                              ? `ينتهي اشتراكك في ${endDate.toLocaleDateString('ar-SA')} (${daysRemaining} ${daysRemaining === 1 ? 'يوم' : 'أيام'} متبقية). يرجى التجديد لمواصلة استخدام RestoPOS.`
-                              : `Your subscription expires on ${endDate.toLocaleDateString('en-GB')} (${daysRemaining} ${daysRemaining === 1 ? 'day' : 'days'} remaining). Please renew to continue using RestoPOS.`
+                              ? `ينتهي اشتراكك في ${endDate.toLocaleDateString('ar-SA')} (${daysRemaining} ${daysRemaining === 1 ? 'يوم' : 'أيام'} متبقية). يرجى التجديد لمواصلة استخدام Saudi Kinzhal.`
+                              : `Your subscription expires on ${endDate.toLocaleDateString('en-GB')} (${daysRemaining} ${daysRemaining === 1 ? 'day' : 'days'} remaining). Please renew to continue using Saudi Kinzhal.`
                             }
                           </p>
                         </div>

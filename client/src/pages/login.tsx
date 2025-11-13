@@ -256,7 +256,7 @@ export default function Login() {
           </div>
           <div className="space-y-2">
             <CardTitle className="text-3xl font-bold text-foreground">
-              RestoPOS
+              Saudi Kinzhal
             </CardTitle>
             <CardDescription className="text-base">{t.restaurantManagementSystem}</CardDescription>
           </div>
@@ -301,7 +301,7 @@ export default function Login() {
                       Watch Our Success Story
                     </h3>
                     <p className="text-sm text-primary-foreground/90">
-                      See how RestoPOS transforms businesses • 30 sec
+                      See how Saudi Kinzhal transforms businesses • 30 sec
                     </p>
                   </div>
                 </div>

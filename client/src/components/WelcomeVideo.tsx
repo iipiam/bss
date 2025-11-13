@@ -143,7 +143,7 @@ export function WelcomeVideo({ open, onClose }: WelcomeVideoProps) {
         <VisuallyHidden>
           <DialogTitle>Welcome Video - Restaurant Success Story</DialogTitle>
           <DialogDescription>
-            Watch our inspiring success story showcasing how RestoPOS transformed Ahmad's restaurant business
+            Watch our inspiring success story showcasing how Saudi Kinzhal transformed Ahmad's restaurant business
           </DialogDescription>
         </VisuallyHidden>
         <div className="relative w-full h-full" data-testid="welcome-video-container">

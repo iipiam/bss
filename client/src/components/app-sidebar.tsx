@@ -28,7 +28,7 @@ import {
   Key,
   UtensilsCrossed,
 } from "lucide-react";
-import logoImage from "@assets/IMG_8801_1763031500933.png";
+import logoImage from "@assets/IMG_8801_1763031870185.png";
 import {
   Sidebar,
   SidebarContent,
