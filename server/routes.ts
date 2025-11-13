@@ -671,7 +671,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/analytics/sales-comparison", requireAuth, async (req, res) => {
+  app.get("/api/analytics/sales-comparison", requireAuth, requirePermission('sales'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const comparison = await storage.getSalesComparison(restaurantId);
@@ -997,7 +997,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Analytics Endpoints
-  app.get("/api/analytics/dashboard", requireAuth, async (req, res) => {
+  app.get("/api/analytics/dashboard", requireAuth, requirePermission('dashboard'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const branchId = req.query.branchId as string | undefined;
     const orders = await storage.getOrders({ restaurantId, branchId });
@@ -1134,7 +1134,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     });
   });
 
-  app.get("/api/analytics/peak-hours/:hour", requireAuth, async (req, res) => {
+  app.get("/api/analytics/peak-hours/:hour", requireAuth, requirePermission('sales'), async (req, res) => {
     const hour = parseInt(req.params.hour);
     if (isNaN(hour) || hour < 0 || hour > 23) {
       return res.status(400).json({ error: "Invalid hour parameter (must be 0-23)" });
@@ -1169,7 +1169,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(results);
   });
 
-  app.get("/api/analytics/sales", requireAuth, async (req, res) => {
+  app.get("/api/analytics/sales", requireAuth, requirePermission('sales'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const branchId = req.query.branchId as string | undefined;
     const transactions = await storage.getTransactions({ restaurantId, branchId });
@@ -2062,7 +2062,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Financial Analytics
-  app.get("/api/analytics/financial", requireAuth, async (req, res) => {
+  app.get("/api/analytics/financial", requireAuth, requirePermission('reports'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const { period, year } = req.query;
     
@@ -2913,7 +2913,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Export Financial Data to Excel
-  app.get("/api/export/financial", requireAuth, async (req, res) => {
+  app.get("/api/export/financial", requireAuth, requirePermission('reports'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const year = req.query.year as string || new Date().getFullYear().toString();
@@ -2991,7 +2991,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Export Financial Statement as PDF
-  app.get("/api/export/financial-pdf", requireAuth, async (req, res) => {
+  app.get("/api/export/financial-pdf", requireAuth, requirePermission('reports'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const year = req.query.year as string || new Date().getFullYear().toString();
@@ -3735,12 +3735,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // ==================== Monthly VAT Reports ====================
 
   // Get all VAT reports for the logged-in user
-  app.get("/api/vat-reports", async (req, res) => {
+  app.get("/api/vat-reports", requireAuth, requirePermission('reports'), async (req, res) => {
     try {
-      const authUser = req.session?.user;
-      if (!authUser) {
-        return res.status(401).json({ error: "Not authenticated" });
-      }
+      const authUser = req.session.user!;
       const userId = authUser.id;
       const reports = await storage.getMonthlyVatReports(userId);
       res.json(reports);
@@ -3751,7 +3748,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Generate monthly VAT report
-  app.post("/api/vat-reports/generate", requireAuth, async (req, res) => {
+  app.post("/api/vat-reports/generate", requireAuth, requirePermission('reports'), async (req, res) => {
     try {
       const authUser = req.session.user!;
       const userId = authUser.id;
@@ -3869,12 +3866,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Download VAT report PDF
-  app.get("/api/vat-reports/:id/download", async (req, res) => {
+  app.get("/api/vat-reports/:id/download", requireAuth, requirePermission('reports'), async (req, res) => {
     try {
-      const authUser = req.session?.user;
-      if (!authUser) {
-        return res.status(401).json({ error: "Not authenticated" });
-      }
+      const authUser = req.session.user!;
       const userId = authUser.id;
       const reportId = req.params.id;
 
