@@ -52,6 +52,8 @@ import { useAuth } from "@/lib/auth";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { usePermissions } from "@/hooks/usePermissions";
+import type { Permission } from "@shared/permissions";
 
 export function AppSidebar() {
   const [location] = useLocation();
@@ -59,6 +61,7 @@ export function AppSidebar() {
   const { logout } = useAuth();
   const { toast } = useToast();
   const [helpDialogOpen, setHelpDialogOpen] = useState(false);
+  const { hasPermission, isAdmin } = usePermissions();
 
   const handleLogout = async () => {
     try {
@@ -83,45 +86,56 @@ export function AppSidebar() {
   };
 
   const operations = [
-    { title: t.pos, url: "/pos", icon: ShoppingCart, testId: "pos", gradient: "from-emerald-500 to-teal-500" },
-    { title: t.orders, url: "/orders", icon: ClipboardList, testId: "orders", gradient: "from-blue-500 to-cyan-500" },
-    { title: t.kitchen, url: "/kitchen", icon: Flame, testId: "kitchen", gradient: "from-orange-500 to-red-500" },
-    { title: t.deliveryApps, url: "/delivery-apps", icon: Truck, testId: "delivery-apps", gradient: "from-violet-500 to-purple-500" },
+    { title: t.pos, url: "/pos", icon: ShoppingCart, testId: "pos", gradient: "from-emerald-500 to-teal-500", permission: 'pos' as Permission },
+    { title: t.orders, url: "/orders", icon: ClipboardList, testId: "orders", gradient: "from-blue-500 to-cyan-500", permission: 'orders' as Permission },
+    { title: t.kitchen, url: "/kitchen", icon: Flame, testId: "kitchen", gradient: "from-orange-500 to-red-500", permission: 'kitchen' as Permission },
+    { title: t.deliveryApps, url: "/delivery-apps", icon: Truck, testId: "delivery-apps", gradient: "from-violet-500 to-purple-500", permission: 'deliveryApps' as Permission },
   ];
 
   const management = [
-    { title: t.dashboard, url: "/", icon: LayoutDashboard, testId: "dashboard", gradient: "from-purple-500 to-pink-500" },
-    { title: t.inventory, url: "/inventory", icon: Package, testId: "inventory", gradient: "from-blue-500 to-indigo-500" },
-    { title: t.menu, url: "/menu", icon: UtensilsCrossed, testId: "menu", gradient: "from-green-500 to-emerald-500" },
-    { title: t.recipes, url: "/recipes", icon: ChefHat, testId: "recipes", gradient: "from-yellow-500 to-orange-500" },
-    { title: t.customers, url: "/customers", icon: UserCircle, testId: "customers", gradient: "from-cyan-500 to-blue-500" },
-    { title: t.investors, url: "/investors", icon: TrendingUp, testId: "investors", gradient: "from-emerald-500 to-green-500" },
-    { title: t.branches, url: "/branches", icon: Building2, testId: "branches", gradient: "from-indigo-500 to-purple-500" },
-    { title: t.procurement, url: "/procurement", icon: ShoppingBag, testId: "procurement", gradient: "from-pink-500 to-rose-500" },
+    { title: t.dashboard, url: "/", icon: LayoutDashboard, testId: "dashboard", gradient: "from-purple-500 to-pink-500", permission: 'dashboard' as Permission },
+    { title: t.inventory, url: "/inventory", icon: Package, testId: "inventory", gradient: "from-blue-500 to-indigo-500", permission: 'inventory' as Permission },
+    { title: t.menu, url: "/menu", icon: UtensilsCrossed, testId: "menu", gradient: "from-green-500 to-emerald-500", permission: 'menu' as Permission },
+    { title: t.recipes, url: "/recipes", icon: ChefHat, testId: "recipes", gradient: "from-yellow-500 to-orange-500", permission: 'recipes' as Permission },
+    { title: t.customers, url: "/customers", icon: UserCircle, testId: "customers", gradient: "from-cyan-500 to-blue-500", permission: 'customers' as Permission },
+    { title: t.investors, url: "/investors", icon: TrendingUp, testId: "investors", gradient: "from-emerald-500 to-green-500", permission: 'reports' as Permission },
+    { title: t.branches, url: "/branches", icon: Building2, testId: "branches", gradient: "from-indigo-500 to-purple-500", permission: 'branches' as Permission },
+    { title: t.procurement, url: "/procurement", icon: ShoppingBag, testId: "procurement", gradient: "from-pink-500 to-rose-500", permission: 'procurement' as Permission },
   ];
 
   const analytics = [
-    { title: t.sales, url: "/sales", icon: DollarSign, testId: "sales", gradient: "from-green-500 to-teal-500" },
-    { title: t.financial, url: "/financial", icon: Receipt, testId: "financial", gradient: "from-blue-500 to-purple-500" },
-    { title: t.profitability, url: "/profitability", icon: Calculator, testId: "profitability", gradient: "from-amber-500 to-orange-500" },
-    { title: t.deliveryProfitability, url: "/delivery-app-profitability", icon: Truck, testId: "delivery-profitability", gradient: "from-green-500 to-emerald-500" },
-    { title: t.salesComparison, url: "/sales-comparison", icon: BarChart3, testId: "sales-comparison", gradient: "from-purple-500 to-pink-500" },
-    { title: t.forecasting, url: "/forecasting", icon: TrendingUp, testId: "forecasting", gradient: "from-cyan-500 to-sky-500" },
-    { title: t.invoices, url: "/invoices", icon: FileCheck, testId: "invoices", gradient: "from-violet-500 to-purple-500" },
-    { title: t.vatReports, url: "/vat-reports", icon: FileBarChart2, testId: "vat-reports", gradient: "from-indigo-500 to-blue-500" },
-    { title: t.bills, url: "/bills", icon: FileText, testId: "bills", gradient: "from-rose-500 to-pink-500" },
+    { title: t.sales, url: "/sales", icon: DollarSign, testId: "sales", gradient: "from-green-500 to-teal-500", permission: 'sales' as Permission },
+    { title: t.financial, url: "/financial", icon: Receipt, testId: "financial", gradient: "from-blue-500 to-purple-500", permission: 'reports' as Permission },
+    { title: t.profitability, url: "/profitability", icon: Calculator, testId: "profitability", gradient: "from-amber-500 to-orange-500", permission: 'reports' as Permission },
+    { title: t.deliveryProfitability, url: "/delivery-app-profitability", icon: Truck, testId: "delivery-profitability", gradient: "from-green-500 to-emerald-500", permission: 'reports' as Permission },
+    { title: t.salesComparison, url: "/sales-comparison", icon: BarChart3, testId: "sales-comparison", gradient: "from-purple-500 to-pink-500", permission: 'reports' as Permission },
+    { title: t.forecasting, url: "/forecasting", icon: TrendingUp, testId: "forecasting", gradient: "from-cyan-500 to-sky-500", permission: 'reports' as Permission },
+    { title: t.invoices, url: "/invoices", icon: FileCheck, testId: "invoices", gradient: "from-violet-500 to-purple-500", permission: 'reports' as Permission },
+    { title: t.vatReports, url: "/vat-reports", icon: FileBarChart2, testId: "vat-reports", gradient: "from-indigo-500 to-blue-500", permission: 'reports' as Permission },
+    { title: t.bills, url: "/bills", icon: FileText, testId: "bills", gradient: "from-rose-500 to-pink-500", permission: 'bills' as Permission },
   ];
 
   const system = [
-    { title: t.tutorial, url: "/tutorial", icon: BookOpen, testId: "tutorial", gradient: "from-purple-500 to-violet-500" },
-    { title: t.shop, url: "/shop", icon: Store, testId: "shop", gradient: "from-pink-500 to-fuchsia-500" },
-    { title: "Profile", url: "/profile", icon: UserCircle, testId: "profile", gradient: "from-indigo-500 to-purple-500" },
-    { title: "Team Chat", url: "/chat", icon: MessageCircle, testId: "chat", gradient: "from-blue-500 to-cyan-500" },
-    { title: t.support || "Support", url: "/support", icon: HeadphonesIcon, testId: "support", gradient: "from-emerald-500 to-teal-500" },
-    { title: t.settings, url: "/settings", icon: Settings, testId: "settings", gradient: "from-slate-500 to-gray-500" },
-    { title: t.employees, url: "/employees", icon: Users, testId: "employees", gradient: "from-sky-500 to-blue-500" },
-    { title: "Password Manager", url: "/password-manager", icon: Key, testId: "password-manager", gradient: "from-red-500 to-rose-500" },
+    { title: t.tutorial, url: "/tutorial", icon: BookOpen, testId: "tutorial", gradient: "from-purple-500 to-violet-500" }, // No permission required
+    { title: t.shop, url: "/shop", icon: Store, testId: "shop", gradient: "from-pink-500 to-fuchsia-500", permission: 'workingHours' as Permission },
+    { title: "Profile", url: "/profile", icon: UserCircle, testId: "profile", gradient: "from-indigo-500 to-purple-500" }, // No permission required
+    { title: "Team Chat", url: "/chat", icon: MessageCircle, testId: "chat", gradient: "from-blue-500 to-cyan-500" }, // No permission required
+    { title: t.support || "Support", url: "/support", icon: HeadphonesIcon, testId: "support", gradient: "from-emerald-500 to-teal-500" }, // No permission required
+    { title: t.settings, url: "/settings", icon: Settings, testId: "settings", gradient: "from-slate-500 to-gray-500" }, // Admin only (handled separately)
+    { title: t.employees, url: "/employees", icon: Users, testId: "employees", gradient: "from-sky-500 to-blue-500", permission: 'users' as Permission },
+    { title: "Password Manager", url: "/password-manager", icon: Key, testId: "password-manager", gradient: "from-red-500 to-rose-500" }, // No permission required
   ];
+
+  // Filter menu items based on permissions
+  const filteredOperations = operations.filter(item => !item.permission || isAdmin || hasPermission(item.permission));
+  const filteredManagement = management.filter(item => !item.permission || isAdmin || hasPermission(item.permission));
+  const filteredAnalytics = analytics.filter(item => !item.permission || isAdmin || hasPermission(item.permission));
+  const filteredSystem = system.filter(item => {
+    // Settings is admin-only
+    if (item.testId === 'settings') return isAdmin;
+    // Other items either require no permission or check the permission
+    return !item.permission || isAdmin || hasPermission(item.permission);
+  });
 
   const renderMenuItems = (items: typeof operations) => (
     items.map((item) => {
@@ -149,49 +163,57 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-bold tracking-wider bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            {t.operations}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {renderMenuItems(operations)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {filteredOperations.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs font-bold tracking-wider bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              {t.operations}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {renderMenuItems(filteredOperations)}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-bold tracking-wider bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            {t.management}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {renderMenuItems(management)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {filteredManagement.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs font-bold tracking-wider bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              {t.management}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {renderMenuItems(filteredManagement)}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-bold tracking-wider bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            {t.analytics}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {renderMenuItems(analytics)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {filteredAnalytics.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs font-bold tracking-wider bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              {t.analytics}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {renderMenuItems(filteredAnalytics)}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-bold tracking-wider bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            {t.system}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {renderMenuItems(system)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {filteredSystem.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs font-bold tracking-wider bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              {t.system}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {renderMenuItems(filteredSystem)}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs font-bold tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
