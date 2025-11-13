@@ -32,6 +32,7 @@ import {
   updateInvestorSchema,
 } from "@shared/schema";
 import { getPlanPricing, type SubscriptionPlan } from "@shared/subscriptionPricing";
+import { ADMIN_PERMISSIONS } from "@shared/permissions";
 
 // WebSocket clients with session context for multi-tenant filtering
 interface WSClient {
@@ -1432,24 +1433,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         email,
         role: "admin" as const,
         active: true,
-        permissions: {
-          dashboard: true,
-          inventory: true,
-          menu: true,
-          recipes: true,
-          branches: true,
-          procurement: true,
-          pos: true,
-          orders: true,
-          kitchen: true,
-          sales: true,
-          reports: true,
-          forecasting: true,
-          analysis: true,
-          settings: true,
-          financial: true,
-          employees: true,
-        },
+        permissions: ADMIN_PERMISSIONS,
       };
 
       const user = await storage.createUser(userData);
