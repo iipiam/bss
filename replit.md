@@ -48,7 +48,8 @@ Preferred communication style: Simple, everyday language.
 - **Subscription Invoice Management**: Profile page displays all user subscription invoices with serial number, plan type, date, and total amount. Each invoice can be securely downloaded via authenticated endpoint with proper routing to prevent conflicts.
 - **Shop & Bills Management**: Manual working hours, expense tracking for salaries and bills, integrated into financial views.
 - **Tutorial System**: Interactive tutorial page with 12 step-by-step guides, screenshots, and multilingual support.
-- **Subscription Management**: Interactive dialog for upgrade/downgrade/cancel, dynamic pricing calculator, plan comparison, displaying current status. Supports Weekly, Monthly, Yearly plans with VAT included.
+- **Subscription Pricing System**: Centralized VAT-inclusive pricing module (`shared/subscriptionPricing.ts`) with 15% Saudi VAT calculations. All displayed prices are gross (VAT-inclusive) amounts, with invoices showing proper net/VAT/gross breakdown. Supports Weekly (76.28 SAR), Monthly (228.85 SAR), and Yearly (2,288.50 SAR) plans with per-branch pricing.
+- **Subscription Management**: Interactive dialog for upgrade/downgrade/cancel, dynamic pricing calculator, plan comparison, displaying current status. All prices shown include 15% VAT as mandated by Saudi law.
 - **Branch Management**: Dynamic selection system with `BranchContext`, persistent `currentBranchId` in localStorage, seamless switching.
 - **Ticketing System & IT Support**: Comprehensive ticket management with status, priority, real-time chat interface, and activity logging. Role-based access control and auto-refresh for messages.
 - **WhatsApp Invoice Delivery**: Automatic deep-link integration for sending ZATCA-compliant invoices via WhatsApp after POS checkout, supporting various phone number formats and bilingual templates.
