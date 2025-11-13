@@ -583,13 +583,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Delivery Apps
-  app.get("/api/delivery-apps", requireAuth, async (req, res) => {
+  app.get("/api/delivery-apps", requireAuth, requirePermission('deliveryApps'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const apps = await storage.getDeliveryApps(restaurantId);
     res.json(apps);
   });
 
-  app.patch("/api/delivery-apps/sort", requireAuth, async (req, res) => {
+  app.patch("/api/delivery-apps/sort", requireAuth, requirePermission('deliveryApps'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const { updates } = req.body;
@@ -610,7 +610,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/delivery-apps/:id", requireAuth, async (req, res) => {
+  app.get("/api/delivery-apps/:id", requireAuth, requirePermission('deliveryApps'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const app = await storage.getDeliveryApp(req.params.id);
     if (!app || app.restaurantId !== restaurantId) {
@@ -619,7 +619,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(app);
   });
 
-  app.post("/api/delivery-apps", requireAuth, async (req, res) => {
+  app.post("/api/delivery-apps", requireAuth, requirePermission('deliveryApps'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const data = insertDeliveryAppSchema.parse({ ...req.body, restaurantId });
@@ -631,7 +631,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/delivery-apps/:id", requireAuth, async (req, res) => {
+  app.patch("/api/delivery-apps/:id", requireAuth, requirePermission('deliveryApps'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const existing = await storage.getDeliveryApp(req.params.id);
@@ -647,7 +647,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/delivery-apps/:id", requireAuth, async (req, res) => {
+  app.delete("/api/delivery-apps/:id", requireAuth, requirePermission('deliveryApps'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;
     const existing = await storage.getDeliveryApp(req.params.id);
     if (!existing || existing.restaurantId !== restaurantId) {
@@ -660,7 +660,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.status(204).send();
   });
 
-  app.get("/api/delivery-apps/analytics/profitability", requireAuth, async (req, res) => {
+  app.get("/api/delivery-apps/analytics/profitability", requireAuth, requirePermission('deliveryApps'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const profitability = await storage.getDeliveryAppProfitability(restaurantId);
@@ -683,7 +683,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Investors
-  app.get("/api/investors", requireAuth, async (req, res) => {
+  app.get("/api/investors", requireAuth, requirePermission('reports'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const investors = await storage.getInvestors(restaurantId);
@@ -694,7 +694,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/investors/:id", requireAuth, async (req, res) => {
+  app.get("/api/investors/:id", requireAuth, requirePermission('reports'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const investor = await storage.getInvestor(req.params.id);
@@ -708,7 +708,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/investors", requireAuth, async (req, res) => {
+  app.post("/api/investors", requireAuth, requirePermission('reports'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const data = insertInvestorSchema.parse({ ...req.body, restaurantId });
@@ -720,7 +720,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/investors/:id", requireAuth, async (req, res) => {
+  app.patch("/api/investors/:id", requireAuth, requirePermission('reports'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const existing = await storage.getInvestor(req.params.id);
@@ -736,7 +736,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/investors/:id", requireAuth, async (req, res) => {
+  app.delete("/api/investors/:id", requireAuth, requirePermission('reports'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const existing = await storage.getInvestor(req.params.id);
@@ -1599,24 +1599,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           branchId: user.branchId || '',
           isMainAccount: user.role === 'admin',
           devicePreference: (user.devicePreference as 'laptop' | 'ipad' | 'iphone') || 'laptop',
-          permissions: user.permissions as {
-            dashboard: boolean;
-            inventory: boolean;
-            menu: boolean;
-            recipes: boolean;
-            branches: boolean;
-            procurement: boolean;
-            pos: boolean;
-            orders: boolean;
-            kitchen: boolean;
-            sales: boolean;
-            reports: boolean;
-            customers: boolean;
-            settings: boolean;
-            users: boolean;
-            workingHours: boolean;
-            bills: boolean;
-          }
+          permissions: user.permissions as PermissionSet
         };
         console.log("[AUTH] Session created for user:", user.id, "restaurant:", user.restaurantId);
       }

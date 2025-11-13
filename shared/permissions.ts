@@ -14,7 +14,8 @@ export type Permission =
   | 'settings'
   | 'users'
   | 'workingHours'
-  | 'bills';
+  | 'bills'
+  | 'deliveryApps';
 
 export const ALL_PERMISSIONS: Permission[] = [
   'dashboard',
@@ -33,6 +34,7 @@ export const ALL_PERMISSIONS: Permission[] = [
   'users',
   'workingHours',
   'bills',
+  'deliveryApps',
 ];
 
 export type PermissionSet = Record<Permission, boolean>;
@@ -54,6 +56,7 @@ export const ADMIN_PERMISSIONS: PermissionSet = {
   users: true,
   workingHours: true,
   bills: true,
+  deliveryApps: true,
 };
 
 export const DEFAULT_EMPLOYEE_PERMISSIONS: PermissionSet = {
@@ -73,6 +76,7 @@ export const DEFAULT_EMPLOYEE_PERMISSIONS: PermissionSet = {
   users: false,
   workingHours: false,
   bills: false,
+  deliveryApps: false,
 };
 
 export type PermissionMode = 'any' | 'all';

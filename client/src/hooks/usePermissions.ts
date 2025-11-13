@@ -1,22 +1,5 @@
 import { useAuth } from '@/lib/auth';
-
-export type Permission = 
-  | 'dashboard'
-  | 'inventory'
-  | 'menu'
-  | 'recipes'
-  | 'branches'
-  | 'procurement'
-  | 'pos'
-  | 'orders'
-  | 'kitchen'
-  | 'sales'
-  | 'reports'
-  | 'customers'
-  | 'settings'
-  | 'users'
-  | 'workingHours'
-  | 'bills';
+import type { Permission } from '@shared/permissions';
 
 export function usePermissions() {
   const { user } = useAuth();

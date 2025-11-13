@@ -1,4 +1,5 @@
 import 'express-session';
+import type { PermissionSet } from '@shared/permissions';
 
 export interface AuthUser {
   id: string;
@@ -10,24 +11,7 @@ export interface AuthUser {
   branchId: string;
   isMainAccount: boolean;
   devicePreference: 'laptop' | 'ipad' | 'iphone';
-  permissions: {
-    dashboard: boolean;
-    inventory: boolean;
-    menu: boolean;
-    recipes: boolean;
-    branches: boolean;
-    procurement: boolean;
-    pos: boolean;
-    orders: boolean;
-    kitchen: boolean;
-    sales: boolean;
-    reports: boolean;
-    customers: boolean;
-    settings: boolean;
-    users: boolean;
-    workingHours: boolean;
-    bills: boolean;
-  };
+  permissions: PermissionSet;
 }
 
 declare module 'express-session' {
