@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useBusinessType } from "@/hooks/useBusinessType";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ const billFormSchema = z.object({
 
 export default function Shop() {
   const { t } = useLanguage();
+  const { labels } = useBusinessType();
   const { toast } = useToast();
   const [salaryDialogOpen, setSalaryDialogOpen] = useState(false);
   const [billDialogOpen, setBillDialogOpen] = useState(false);
@@ -282,7 +284,7 @@ export default function Shop() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold" data-testid="heading-shop">{t.shopTitle}</h1>
+          <h1 className="text-3xl font-bold" data-testid="heading-shop">{labels.shop}</h1>
           <p className="text-muted-foreground" data-testid="text-shop-description">{t.shopDescription}</p>
         </div>
       </div>

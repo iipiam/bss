@@ -19,6 +19,7 @@ import { z } from "zod";
 import { insertMenuItemSchema, type MenuItem, type Recipe, type InventoryItem } from "@shared/schema";
 import { useDeviceLayout } from "@/lib/mobileLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useBusinessType } from "@/hooks/useBusinessType";
 
 // Factory function for creating localized form schema
 const createMenuFormSchema = (t: any) => z.object({
@@ -53,6 +54,7 @@ type MenuFormValues = z.infer<ReturnType<typeof createMenuFormSchema>>;
 export default function Menu() {
   const layout = useDeviceLayout();
   const { t } = useLanguage();
+  const { labels } = useBusinessType();
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
@@ -171,15 +173,15 @@ export default function Menu() {
       setImageFile(null);
       setImagePreview(null);
       toast({
-        title: t.menuItemCreated || "Menu item created",
-        description: t.menuItemCreatedDesc || "The menu item has been added successfully.",
+        title: `${labels.menuItem} created`,
+        description: t.itemAdded || "The item has been added successfully",
       });
     },
     onError: (error: any) => {
       console.error("[Menu Creation Error]", error);
-      const errorMessage = error.message || error.details || "Could not create menu item";
+      const errorMessage = error.message || error.details || `Could not create ${labels.menuItem.toLowerCase()}`;
       toast({
-        title: t.failedToCreateMenuItem || "Failed to create menu item",
+        title: `Failed to create ${labels.menuItem.toLowerCase()}`,
         description: errorMessage,
         variant: "destructive",
       });
@@ -224,14 +226,14 @@ export default function Menu() {
       setEditingItem(null);
       form.reset();
       toast({
-        title: t.menuItemUpdated || "Menu item updated",
-        description: t.menuItemUpdatedDesc || "The menu item has been updated successfully.",
+        title: `${labels.menuItem} updated`,
+        description: t.itemUpdated || "The item has been updated successfully",
       });
     },
     onError: (error: any) => {
       toast({
-        title: t.failedToUpdateMenuItem || "Failed to update menu item",
-        description: error.message || "Could not update menu item",
+        title: `Failed to update ${labels.menuItem.toLowerCase()}`,
+        description: error.message || `Could not update ${labels.menuItem.toLowerCase()}`,
         variant: "destructive",
       });
     },
@@ -246,14 +248,14 @@ export default function Menu() {
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       setDeletingItem(null);
       toast({
-        title: t.menuItemDeleted || "Menu item deleted",
-        description: t.menuItemDeletedDesc || "The menu item has been removed successfully.",
+        title: `${labels.menuItem} deleted`,
+        description: t.itemDeleted || "The item has been removed successfully",
       });
     },
     onError: (error: any) => {
       toast({
-        title: t.failedToDeleteMenuItem || "Failed to delete menu item",
-        description: error.message || "Could not delete menu item",
+        title: `Failed to delete ${labels.menuItem.toLowerCase()}`,
+        description: error.message || `Could not delete ${labels.menuItem.toLowerCase()}`,
         variant: "destructive",
       });
     },
@@ -267,8 +269,8 @@ export default function Menu() {
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
-        title: t.menuItemUpdated || "Menu item updated",
-        description: t.availabilityStatus || "Availability status has been changed",
+        title: `${labels.menuItem} updated`,
+        description: t.itemUpdated || "Availability has been updated successfully",
       });
     },
   });
@@ -612,14 +614,14 @@ export default function Menu() {
                 data-testid="button-add-menu-item"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Menu Item
+                Add {labels.menuItem}
               </Button>
             </DialogTrigger>
           <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingItem ? (t.editMenuItem || "Edit Menu Item") : (t.addMenuItem || "Add New Menu Item")}</DialogTitle>
+              <DialogTitle>{editingItem ? `Edit ${labels.menuItem}` : `Add New ${labels.menuItem}`}</DialogTitle>
               <DialogDescription>
-                {editingItem ? (t.updateMenuItemDesc || "Update the menu item details") : (t.createMenuItemDesc || "Create a new item for your menu with VAT-inclusive pricing")}
+                {editingItem ? `Update the ${labels.menuItem.toLowerCase()} details` : `Create a new item for your ${labels.menu.toLowerCase()} with VAT-inclusive pricing`}
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -650,7 +652,7 @@ export default function Menu() {
                       <FormControl>
                         <Textarea
                           {...field}
-                          placeholder="Describe the menu item..."
+                          placeholder={`Describe the ${labels.menuItem.toLowerCase()}...`}
                           rows={3}
                           data-testid="input-menu-description"
                         />
@@ -695,7 +697,7 @@ export default function Menu() {
                         data-testid="input-menu-image"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Upload an image for this menu item (max 5MB)
+                        Upload an image for this {labels.menuItem.toLowerCase()} (max 5MB)
                       </p>
                     </div>
                   </div>
@@ -901,8 +903,8 @@ export default function Menu() {
                     data-testid="button-save-menu"
                   >
                     {editingItem 
-                      ? (updateMenuItemMutation.isPending ? "Updating..." : "Update Menu Item")
-                      : (createMenuItemMutation.isPending ? "Creating..." : "Create Menu Item")
+                      ? (updateMenuItemMutation.isPending ? "Updating..." : `Update ${labels.menuItem}`)
+                      : (createMenuItemMutation.isPending ? "Creating..." : `Create ${labels.menuItem}`)
                     }
                   </Button>
                 </div>
@@ -916,7 +918,7 @@ export default function Menu() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search menu items..."
+          placeholder={`Search ${labels.menuItems.toLowerCase()}...`}
           className="pl-10 max-w-md"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -1102,9 +1104,9 @@ export default function Menu() {
       <AlertDialog open={!!deletingItem} onOpenChange={(open) => !open && setDeletingItem(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t.deleteMenuItemTitle || "Delete Menu Item"}</AlertDialogTitle>
+            <AlertDialogTitle>Delete {labels.menuItem}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t.deleteMenuItemConfirm || "Are you sure you want to delete this item? This action cannot be undone."}
+              Are you sure you want to delete this {labels.menuItem.toLowerCase()}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

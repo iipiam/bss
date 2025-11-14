@@ -26,9 +26,9 @@ export function useBusinessType() {
     // Shop / Factory
     shop: isFactory ? t.factory : t.shop,
     
-    // Additional derived labels
+    // Additional derived labels (singular and plural forms)
     menuItem: isFactory ? t.product : t.menuItem,
-    menuItems: isFactory ? t.products : (t.menu + ' Items'),
+    menuItems: isFactory ? t.products : t.menuItems,  // Proper plural forms for both modes
   }), [isFactory, t]);
 
   return {

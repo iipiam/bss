@@ -29,7 +29,8 @@ export interface Translations {
   shop: string;  // Restaurant terminology
   factory: string;  // Factory business type: replaces "shop"
   product: string;  // Factory terminology: singular "Product" (replaces "Menu Item")
-  menuItem: string;  // Restaurant terminology: "Menu Item"
+  menuItem: string;  // Restaurant terminology: "Menu Item" (singular)
+  menuItems: string;  // Restaurant terminology: "Menu Items" (plural)
   
   // Navigation Groups
   operations: string;
@@ -1432,6 +1433,7 @@ export const translations: Record<Language, Translations> = {
     factory: 'Factory',
     product: 'Product',
     menuItem: 'Menu Item',
+    menuItems: 'Menu Items',
     shopTitle: 'Shop',
     shopDescription: 'Manage employee salaries and shop expenses',
     shopExpenses: 'Shop Expenses',
@@ -2226,6 +2228,7 @@ export const translations: Record<Language, Translations> = {
     factory: 'المصنع',
     product: 'منتج',
     menuItem: 'عنصر القائمة',
+    menuItems: 'عناصر القائمة',
     shopExpenses: 'مصاريف المتجر',
     salaries: 'الرواتب',
     salary: 'راتب',
@@ -3006,6 +3009,7 @@ export const translations: Record<Language, Translations> = {
     factory: '工厂',
     product: '产品',
     menuItem: '菜单项',
+    menuItems: '菜单项',
     shopExpenses: '商店费用',
     salaries: '薪资',
     salary: '工资',
@@ -3786,6 +3790,7 @@ export const translations: Record<Language, Translations> = {
     factory: 'Fabrik',
     product: 'Produkt',
     menuItem: 'Menüpunkt',
+    menuItems: 'Menüpunkte',
     shopExpenses: 'Geschäftsausgaben',
     salaries: 'Gehälter',
     salary: 'Gehalt',
@@ -4566,6 +4571,7 @@ export const translations: Record<Language, Translations> = {
     factory: 'फैक्ट्री',
     product: 'उत्पाद',
     menuItem: 'मेनू आइटम',
+    menuItems: 'मेनू आइटम',
     shopExpenses: 'दुकान व्यय',
     salaries: 'वेतन',
     salary: 'वेतन',
@@ -5346,6 +5352,7 @@ export const translations: Record<Language, Translations> = {
     factory: 'فیکٹری',
     product: 'پروڈکٹ',
     menuItem: 'مینو آئٹم',
+    menuItems: 'مینو آئٹمز',
     shopExpenses: 'دکان کے اخراجات',
     salaries: 'تنخواہیں',
     salary: 'تنخواہ',
@@ -6126,6 +6133,7 @@ export const translations: Record<Language, Translations> = {
     factory: 'কারখানা',
     product: 'পণ্য',
     menuItem: 'মেনু আইটেম',
+    menuItems: 'মেনু আইটেম',
     shopExpenses: 'দোকান খরচ',
     salaries: 'বেতন',
     salary: 'বেতন',
@@ -6847,6 +6855,7 @@ export const translations: Record<Language, Translations> = {
     factory: "Fabbrica",
     product: "Prodotto",
     menuItem: "Voce di Menu",
+    menuItems: "Voci di Menu",
     shopTitle: "Shop",
     shopDescription: "Manage employee salaries and shop expenses",
     shopExpenses: "Shop Expenses",
@@ -7558,6 +7567,7 @@ export const translations: Record<Language, Translations> = {
     factory: "Fábrica",
     product: "Producto",
     menuItem: "Artículo de Menú",
+    menuItems: "Artículos de Menú",
     shopTitle: "Shop",
     shopDescription: "Manage employee salaries and shop expenses",
     shopExpenses: "Shop Expenses",
@@ -8269,6 +8279,7 @@ export const translations: Record<Language, Translations> = {
     factory: "Pabrika",
     product: "Produkto",
     menuItem: "Menu Item",
+    menuItems: "Menu Items",
     shopTitle: "Shop",
     shopDescription: "Manage employee salaries and shop expenses",
     shopExpenses: "Shop Expenses",
