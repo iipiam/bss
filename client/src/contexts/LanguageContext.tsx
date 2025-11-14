@@ -21,7 +21,10 @@ const languageToLocaleCode: Record<Language, string> = {
   German: 'de',
   Hindi: 'hi',
   Urdu: 'ur',
-  Bengali: 'bn'
+  Bengali: 'bn',
+  Italian: 'it',
+  Spanish: 'es',
+  Tagalog: 'tl'
 };
 
 const LANGUAGE_STORAGE_KEY = 'bss-language';

@@ -6739,7 +6739,6 @@ export const translations: Record<Language, Translations> = {
     updatedBy: 'Aggiornato da',
     
     // Additional features
-    analytics: 'Analitiche',
     insights: 'Approfondimenti',
     trends: 'Tendenze',
     forecast: 'Previsioni',
@@ -6777,6 +6776,9 @@ export const translations: Record<Language, Translations> = {
     passwordsDontMatchDesc: 'Assicurati che entrambe le password siano uguali.',
     pleaseTryAgainLater: 'Riprova più tardi.',
     pleaseTryAgainOrRequestNew: 'Riprova o richiedi un nuovo link di ripristino.',
+    
+    // Legal
+    legalAcknowledgement: 'Dichiaro che tutte le informazioni, i dati e i numeri da me inseriti sono corretti, in quanto appariranno nelle mie fatture fiscali e nella fattura di abbonamento, e mi assumo la piena responsabilità in caso di qualsiasi cosa contraria, e la società proprietaria dell\'applicazione ha il diritto di disporre dell\'account per preservare il suo diritto legale davanti alle autorità competenti in materia di frode, evasione fiscale, falsificazione e contraffazione.',
     
     // Toast Messages
     procurementCreated: 'Articolo approvvigionamento creato con successo',
@@ -7380,6 +7382,9 @@ export const translations: Record<Language, Translations> = {
     pleaseTryAgainLater: 'Por favor, inténtalo de nuevo más tarde.',
     pleaseTryAgainOrRequestNew: 'Por favor, inténtalo de nuevo o solicita un nuevo enlace de restablecimiento.',
     
+    // Legal
+    legalAcknowledgement: 'Reconozco que toda la información, datos y números ingresados por mí son correctos, ya que aparecerán en mis facturas fiscales y factura de suscripción, y asumo la responsabilidad total si hay algo contrario, y la empresa propietaria de la aplicación tiene el derecho de disponer de la cuenta para preservar su derecho legal ante las autoridades competentes en fraude, evasión fiscal, falsificación y falsificación.',
+    
     // Toast Messages
     procurementCreated: 'Artículo de adquisición creado exitosamente',
     procurementUpdated: 'Artículo de adquisición actualizado exitosamente',
@@ -7981,6 +7986,9 @@ export const translations: Record<Language, Translations> = {
     passwordsDontMatchDesc: 'Siguraduhing pareho ang dalawang password.',
     pleaseTryAgainLater: 'Pakisubukan muli mamaya.',
     pleaseTryAgainOrRequestNew: 'Pakisubukan muli o humiling ng bagong reset link.',
+    
+    // Legal
+    legalAcknowledgement: 'Kinikilala ko na ang lahat ng impormasyon, datos at mga numero na inilagay ko ay tama, dahil lalabas ang mga ito sa aking mga tax invoice at subscription invoice, at ako ay may ganap na responsibilidad kung may anumang kabaligtaran, at ang kumpanyang nag-aari ng aplikasyon ay may karapatang magdesisyon sa account upang mapanatili ang legal na karapatan nito sa harap ng mga awtoridad na itinuturing na may kapangyarihan sa pandaraya, pag-iwas sa buwis, pagpepeke at pag-imbento.',
     
     // Toast Messages
     procurementCreated: 'Matagumpay na nagawa ang item sa pagbili',
