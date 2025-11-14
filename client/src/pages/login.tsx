@@ -743,11 +743,11 @@ export default function Login() {
             <div className="flex items-center gap-3">
               <img src={kinzhalLogo} alt="BSS Logo" className="h-12 w-auto object-contain" />
               <p className="text-sm text-white/80">
-                Made By <span className="font-semibold text-white">Kinzha LTD Co.</span>
+                {t.madeBy} <span className="font-semibold text-white">{t.companyName}</span>
               </p>
             </div>
-            <p className="text-xs text-white/60">© 2025 BlindSpot System (BSS). All rights reserved.</p>
-            <p className="text-xs text-white/50">Empowering businesses with smart management solutions</p>
+            <p className="text-xs text-white/60">{t.copyright}</p>
+            <p className="text-xs text-white/50">{t.tagline}</p>
           </div>
         </div>
       </div>

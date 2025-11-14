@@ -213,7 +213,7 @@ export default function Setup() {
           <div className="flex items-center justify-center gap-3">
             <img src={kinzhalLogo} alt="BSS Logo" className="h-10 w-10 object-contain" />
             <p className="text-sm text-muted-foreground">
-              Made By <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Kinzha LTD Co.</span>
+              {t.madeBy} <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{t.companyName}</span>
             </p>
           </div>
         </div>
