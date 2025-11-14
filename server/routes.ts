@@ -13,6 +13,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { z } from "zod";
 import {
+  insertRestaurantSchema,
   insertBranchSchema,
   insertInventoryItemSchema,
   insertMenuItemSchema,
@@ -1392,16 +1393,6 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "All fields are required including Restaurant Name, National ID, Tax Number, Business Type, Restaurant Type, Commercial Registration, subscription plan, and number of branches" });
       }
 
-      // Validate business type
-      if (!['restaurant', 'factory'].includes(businessType)) {
-        return res.status(400).json({ error: "Invalid business type. Must be 'restaurant' or 'factory'" });
-      }
-
-      // Validate subscription plan
-      if (!['weekly', 'monthly', 'yearly'].includes(subscriptionPlan)) {
-        return res.status(400).json({ error: "Invalid subscription plan" });
-      }
-
       // Validate subscription plan based on business type
       // Factory businesses can only have monthly or yearly plans (no weekly)
       if (businessType === 'factory' && subscriptionPlan === 'weekly') {
@@ -1421,17 +1412,18 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
 
       // Step 1: Create restaurant record first (multi-tenancy isolation)
-      const restaurantData = {
+      // Use Zod schema validation for runtime type safety and normalization
+      const restaurantData = insertRestaurantSchema.parse({
         name: restaurantName,
         nationalId,
         taxNumber,
         commercialRegistration,
-        businessType, // "restaurant" or "factory"
+        businessType, // Will be validated by z.enum(["restaurant", "factory"])
         type: restaurantType, // Specific subtype (e.g., "Cloud Kitchen", "Manufacturing")
         subscriptionPlan,
         branchesCount: branches,
         subscriptionStatus: "inactive" as const, // Will be activated after payment
-      };
+      });
 
       const restaurant = await storage.createRestaurant(restaurantData);
 

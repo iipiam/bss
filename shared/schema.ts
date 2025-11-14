@@ -23,7 +23,13 @@ export const restaurants = pgTable("restaurants", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const insertRestaurantSchema = createInsertSchema(restaurants).omit({ id: true, createdAt: true });
+// Explicit enum validation for businessType and subscriptionPlan to ensure type safety
+export const insertRestaurantSchema = createInsertSchema(restaurants)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    businessType: z.enum(["restaurant", "factory"]),
+    subscriptionPlan: z.enum(["weekly", "monthly", "yearly"]),
+  });
 export type InsertRestaurant = z.infer<typeof insertRestaurantSchema>;
 export type Restaurant = typeof restaurants.$inferSelect;
 

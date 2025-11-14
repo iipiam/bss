@@ -77,7 +77,7 @@ export function AppSidebar() {
   const { hasPermission, isAdmin } = usePermissions();
   
   // Get businessType from restaurant data (defaults to 'restaurant' for existing accounts)
-  const businessType = restaurant?.businessType || 'restaurant';
+  const businessType: 'restaurant' | 'factory' = restaurant?.businessType || 'restaurant';
 
   const handleLogout = async () => {
     try {
@@ -114,7 +114,7 @@ export function AppSidebar() {
     { title: t.inventory, url: "/inventory", icon: Package, testId: "inventory", gradient: "from-blue-500 to-indigo-500", permission: 'inventory' },
     { title: t.menu, url: "/menu", icon: UtensilsCrossed, testId: "menu", gradient: "from-green-500 to-emerald-500", permission: 'menu' },
     { title: t.recipes, url: "/recipes", icon: ChefHat, testId: "recipes", gradient: "from-yellow-500 to-orange-500", permission: 'recipes', businessTypes: ['restaurant'] },
-    { title: "Licenses", url: "/licenses", icon: FileKey, testId: "licenses", gradient: "from-amber-500 to-yellow-500", permission: 'menu', businessTypes: ['factory'] },
+    { title: t.licenses || "Licenses", url: "/licenses", icon: FileKey, testId: "licenses", gradient: "from-amber-500 to-yellow-500", permission: 'licenses', businessTypes: ['factory'] },
     { title: t.customers, url: "/customers", icon: UserCircle, testId: "customers", gradient: "from-cyan-500 to-blue-500", permission: 'customers' },
     { title: t.investors, url: "/investors", icon: TrendingUp, testId: "investors", gradient: "from-emerald-500 to-green-500", permission: 'reports' },
     { title: t.branches, url: "/branches", icon: Building2, testId: "branches", gradient: "from-indigo-500 to-purple-500", permission: 'branches' },

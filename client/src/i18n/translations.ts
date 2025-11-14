@@ -1,5 +1,6 @@
-// Translation system for multi-language support
+// Translation system for multi-language support  
 // Supported languages: Arabic, English, Chinese, German, Hindi, Urdu, Bengali
+// TODO: Add Italian, Spanish, and Tagalog language objects with professional translations
 
 export type Language = 'English' | 'Arabic' | 'Chinese' | 'German' | 'Hindi' | 'Urdu' | 'Bengali';
 
@@ -10,6 +11,7 @@ export interface Translations {
   inventory: string;
   menu: string;
   recipes: string;
+  licenses: string;  // Factory business type only
   customers: string;
   orders: string;
   kitchen: string;
@@ -769,6 +771,7 @@ export const translations: Record<Language, Translations> = {
     inventory: 'Inventory',
     menu: 'Menu',
     recipes: 'Recipes',
+    licenses: 'Licenses',  // Factory business type only
     customers: 'Customers',
     orders: 'Orders',
     kitchen: 'Kitchen',
@@ -1527,6 +1530,7 @@ export const translations: Record<Language, Translations> = {
     inventory: 'المخزون',
     menu: 'القائمة',
     recipes: 'الوصفات',
+    licenses: 'التراخيص',  // Factory business type only  
     customers: 'العملاء',
     orders: 'الطلبات',
     kitchen: 'المطبخ',
@@ -2285,6 +2289,7 @@ export const translations: Record<Language, Translations> = {
     inventory: '库存',
     menu: '菜单',
     recipes: '食谱',
+    licenses: '许可证',  // Factory business type only
     customers: '客户',
     orders: '订单',
     kitchen: '厨房',
@@ -3029,6 +3034,7 @@ export const translations: Record<Language, Translations> = {
     inventory: 'Inventar',
     menu: 'Menü',
     recipes: 'Rezepte',
+    licenses: 'Lizenzen',  // Factory business type only
     customers: 'Kunden',
     orders: 'Bestellungen',
     kitchen: 'Küche',
@@ -3773,6 +3779,7 @@ export const translations: Record<Language, Translations> = {
     inventory: 'इन्वेंटरी',
     menu: 'मेनू',
     recipes: 'व्यंजन विधि',
+    licenses: 'लाइसेंस',  // Factory business type only
     customers: 'ग्राहक',
     orders: 'ऑर्डर',
     kitchen: 'रसोई',
@@ -4517,6 +4524,7 @@ export const translations: Record<Language, Translations> = {
     inventory: 'انوینٹری',
     menu: 'مینو',
     recipes: 'ترکیبیں',
+    licenses: 'لائسنس',  // Factory business type only
     customers: 'گاہک',
     orders: 'آرڈرز',
     kitchen: 'باورچی خانہ',
@@ -5261,6 +5269,7 @@ export const translations: Record<Language, Translations> = {
     inventory: 'ইনভেন্টরি',
     menu: 'মেনু',
     recipes: 'রেসিপি',
+    licenses: 'লাইসেন্স',  // Factory business type only
     customers: 'গ্রাহক',
     orders: 'অর্ডার',
     kitchen: 'রান্নাঘর',

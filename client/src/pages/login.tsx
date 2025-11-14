@@ -28,6 +28,7 @@ import { WelcomeVideo } from "@/components/WelcomeVideo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getPlanPricing, type SubscriptionPlan, type BusinessType } from "@shared/subscriptionPricing";
 
+// TODO: Add Italian, Spanish, and Tagalog once translation objects are complete
 const languages: Language[] = ['English', 'Arabic', 'Chinese', 'German', 'Hindi', 'Urdu', 'Bengali'];
 
 export default function Login() {
