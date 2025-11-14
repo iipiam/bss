@@ -7342,7 +7342,6 @@ export const translations: Record<Language, Translations> = {
     updatedBy: 'Actualizado por',
     
     // Additional features
-    analytics: 'Análisis',
     insights: 'Perspectivas',
     trends: 'Tendencias',
     forecast: 'Pronóstico',
@@ -7945,7 +7944,6 @@ export const translations: Record<Language, Translations> = {
     updatedBy: 'Na-update ni',
     
     // Additional features
-    analytics: 'Analytics',
     insights: 'Mga Insight',
     trends: 'Mga Trend',
     forecast: 'Hula',

@@ -16,7 +16,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import kinzhalLogo from "@assets/kinzhal-eagle-logo.jpeg";
-import { Language } from "@/i18n/translations";
+import { Language, supportedLanguages } from "@/i18n/translations";
 import {
   Select,
   SelectContent,
@@ -28,8 +28,8 @@ import { WelcomeVideo } from "@/components/WelcomeVideo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getPlanPricing, type SubscriptionPlan, type BusinessType } from "@shared/subscriptionPricing";
 
-// TODO: Add Italian, Spanish, and Tagalog once translation objects are complete
-const languages: Language[] = ['English', 'Arabic', 'Chinese', 'German', 'Hindi', 'Urdu', 'Bengali'];
+// Use the authoritative supportedLanguages array from translations
+const languages: Language[] = supportedLanguages;
 
 export default function Login() {
   const [loginUsername, setLoginUsername] = useState("");
