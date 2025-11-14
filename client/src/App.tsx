@@ -469,7 +469,7 @@ function AppContent() {
               <div className="flex items-center justify-center gap-3">
                 <img src={kinzhalLogo} alt="BSS Logo" className="h-12 w-auto object-contain" />
                 <p className="text-sm text-muted-foreground">
-                  Made By <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">BlindSpot System (BSS)</span>
+                  Made By <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Saudi Kinzhal</span>
                 </p>
               </div>
             </footer>
