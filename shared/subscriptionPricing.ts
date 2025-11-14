@@ -34,11 +34,11 @@ const GROSS_BASE_PRICES_FACTORY: Record<SubscriptionPlan, number> = {
 };
 
 // GROSS prices (VAT-inclusive) per additional branch - FACTORY
-const FACTORY_MONTHLY_PER_BRANCH = 28800; // Base monthly rate per additional branch
+const FACTORY_MONTHLY_PER_BRANCH = 2400; // Base monthly rate per additional branch
 const GROSS_PER_BRANCH_PRICES_FACTORY: Record<SubscriptionPlan, number> = {
   weekly: 0,       // Not available for factory - must be blocked in signup validation
-  monthly: FACTORY_MONTHLY_PER_BRANCH,  // +28800 SAR/month per branch (VAT included)
-  yearly: FACTORY_MONTHLY_PER_BRANCH * 12   // Auto-calculated: 28,800 × 12 = 345,600 SAR/year per branch
+  monthly: FACTORY_MONTHLY_PER_BRANCH,  // +2,400 SAR/month per branch (VAT included)
+  yearly: FACTORY_MONTHLY_PER_BRANCH * 12   // Auto-calculated: 2,400 × 12 = 28,800 SAR/year per branch
 };
 
 export function getPlanPricing(plan: SubscriptionPlan, branchesCount: number = 1, businessType: BusinessType = 'restaurant'): PricingBreakdown {
