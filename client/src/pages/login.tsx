@@ -44,7 +44,8 @@ export default function Login() {
   const [signupBusinessType, setSignupBusinessType] = useState<BusinessType>("restaurant"); // "restaurant" or "factory"
   const [signupRestaurantType, setSignupRestaurantType] = useState(""); // Specific subtype (e.g., "Cloud Kitchen", "Restaurant", etc.)
   const [branchesCount, setBranchesCount] = useState(1);
-  const [subscriptionPlan, setSubscriptionPlan] = useState("weekly");
+  // Default to monthly for all business types (factory can only use monthly/yearly anyway)
+  const [subscriptionPlan, setSubscriptionPlan] = useState("monthly");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showWelcomeVideo, setShowWelcomeVideo] = useState(false);
   const [legalAcknowledgementChecked, setLegalAcknowledgementChecked] = useState(false);

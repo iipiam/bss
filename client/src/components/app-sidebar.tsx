@@ -27,6 +27,7 @@ import {
   Truck,
   Key,
   UtensilsCrossed,
+  FileKey,
 } from "lucide-react";
 import logoImage from "@assets/IMG_8801_1763031870185.png";
 import {
@@ -64,15 +65,19 @@ interface MenuItem {
   testId: string;
   gradient: string;
   permission?: Permission;
+  businessTypes?: ('restaurant' | 'factory')[]; // If specified, only show for these business types
 }
 
 export function AppSidebar() {
   const [location] = useLocation();
   const { t } = useLanguage();
-  const { logout } = useAuth();
+  const { logout, restaurant } = useAuth();
   const { toast } = useToast();
   const [helpDialogOpen, setHelpDialogOpen] = useState(false);
   const { hasPermission, isAdmin } = usePermissions();
+  
+  // Get businessType from restaurant data (defaults to 'restaurant' for existing accounts)
+  const businessType = restaurant?.businessType || 'restaurant';
 
   const handleLogout = async () => {
     try {
@@ -96,29 +101,31 @@ export function AppSidebar() {
     }
   };
 
-  const operations: MenuItem[] = [
+  // Declarative menu configuration with business type guards
+  const allOperations: MenuItem[] = [
     { title: t.pos, url: "/pos", icon: ShoppingCart, testId: "pos", gradient: "from-emerald-500 to-teal-500", permission: 'pos' },
     { title: t.orders, url: "/orders", icon: ClipboardList, testId: "orders", gradient: "from-blue-500 to-cyan-500", permission: 'orders' },
     { title: t.kitchen, url: "/kitchen", icon: Flame, testId: "kitchen", gradient: "from-orange-500 to-red-500", permission: 'kitchen' },
-    { title: t.deliveryApps, url: "/delivery-apps", icon: Truck, testId: "delivery-apps", gradient: "from-violet-500 to-purple-500", permission: 'deliveryApps' },
+    { title: t.deliveryApps, url: "/delivery-apps", icon: Truck, testId: "delivery-apps", gradient: "from-violet-500 to-purple-500", permission: 'deliveryApps', businessTypes: ['restaurant'] },
   ];
 
-  const management: MenuItem[] = [
+  const allManagement: MenuItem[] = [
     { title: t.dashboard, url: "/", icon: LayoutDashboard, testId: "dashboard", gradient: "from-purple-500 to-pink-500", permission: 'dashboard' },
     { title: t.inventory, url: "/inventory", icon: Package, testId: "inventory", gradient: "from-blue-500 to-indigo-500", permission: 'inventory' },
     { title: t.menu, url: "/menu", icon: UtensilsCrossed, testId: "menu", gradient: "from-green-500 to-emerald-500", permission: 'menu' },
-    { title: t.recipes, url: "/recipes", icon: ChefHat, testId: "recipes", gradient: "from-yellow-500 to-orange-500", permission: 'recipes' },
+    { title: t.recipes, url: "/recipes", icon: ChefHat, testId: "recipes", gradient: "from-yellow-500 to-orange-500", permission: 'recipes', businessTypes: ['restaurant'] },
+    { title: "Licenses", url: "/licenses", icon: FileKey, testId: "licenses", gradient: "from-amber-500 to-yellow-500", permission: 'menu', businessTypes: ['factory'] },
     { title: t.customers, url: "/customers", icon: UserCircle, testId: "customers", gradient: "from-cyan-500 to-blue-500", permission: 'customers' },
     { title: t.investors, url: "/investors", icon: TrendingUp, testId: "investors", gradient: "from-emerald-500 to-green-500", permission: 'reports' },
     { title: t.branches, url: "/branches", icon: Building2, testId: "branches", gradient: "from-indigo-500 to-purple-500", permission: 'branches' },
     { title: t.procurement, url: "/procurement", icon: ShoppingBag, testId: "procurement", gradient: "from-pink-500 to-rose-500", permission: 'procurement' },
   ];
 
-  const analytics: MenuItem[] = [
+  const allAnalytics: MenuItem[] = [
     { title: t.sales, url: "/sales", icon: DollarSign, testId: "sales", gradient: "from-green-500 to-teal-500", permission: 'sales' },
     { title: t.financial, url: "/financial", icon: Receipt, testId: "financial", gradient: "from-blue-500 to-purple-500", permission: 'reports' },
     { title: t.profitability, url: "/profitability", icon: Calculator, testId: "profitability", gradient: "from-amber-500 to-orange-500", permission: 'reports' },
-    { title: t.deliveryProfitability, url: "/delivery-app-profitability", icon: Truck, testId: "delivery-profitability", gradient: "from-green-500 to-emerald-500", permission: 'reports' },
+    { title: t.deliveryProfitability, url: "/delivery-app-profitability", icon: Truck, testId: "delivery-profitability", gradient: "from-green-500 to-emerald-500", permission: 'reports', businessTypes: ['restaurant'] },
     { title: t.salesComparison, url: "/sales-comparison", icon: BarChart3, testId: "sales-comparison", gradient: "from-purple-500 to-pink-500", permission: 'reports' },
     { title: t.forecasting, url: "/forecasting", icon: TrendingUp, testId: "forecasting", gradient: "from-cyan-500 to-sky-500", permission: 'reports' },
     { title: t.invoices, url: "/invoices", icon: FileCheck, testId: "invoices", gradient: "from-violet-500 to-purple-500", permission: 'reports' },
@@ -126,27 +133,36 @@ export function AppSidebar() {
     { title: t.bills, url: "/bills", icon: FileText, testId: "bills", gradient: "from-rose-500 to-pink-500", permission: 'bills' },
   ];
 
-  const system: MenuItem[] = [
+  const allSystem: MenuItem[] = [
     { title: t.tutorial, url: "/tutorial", icon: BookOpen, testId: "tutorial", gradient: "from-purple-500 to-violet-500" },
     { title: t.shop, url: "/shop", icon: Store, testId: "shop", gradient: "from-pink-500 to-fuchsia-500", permission: 'workingHours' },
     { title: "Profile", url: "/profile", icon: UserCircle, testId: "profile", gradient: "from-indigo-500 to-purple-500" },
     { title: "Team Chat", url: "/chat", icon: MessageCircle, testId: "chat", gradient: "from-blue-500 to-cyan-500" },
     { title: t.support || "Support", url: "/support", icon: HeadphonesIcon, testId: "support", gradient: "from-emerald-500 to-teal-500" },
-    { title: t.settings, url: "/settings", icon: Settings, testId: "settings", gradient: "from-slate-500 to-gray-500" },
+    { title: t.settings, url: "/settings", icon: Settings, testId: "settings", gradient: "from-slate-500 to-gray-500" },  // Admin-only via permission check in auth
     { title: t.employees, url: "/employees", icon: Users, testId: "employees", gradient: "from-sky-500 to-blue-500", permission: 'users' },
     { title: "Password Manager", url: "/password-manager", icon: Key, testId: "password-manager", gradient: "from-red-500 to-rose-500" },
   ];
 
-  // Filter menu items based on permissions
-  const filteredOperations = operations.filter(item => !item.permission || isAdmin() || hasPermission(item.permission));
-  const filteredManagement = management.filter(item => !item.permission || isAdmin() || hasPermission(item.permission));
-  const filteredAnalytics = analytics.filter(item => !item.permission || isAdmin() || hasPermission(item.permission));
-  const filteredSystem = system.filter(item => {
-    // Settings is admin-only
-    if (item.testId === 'settings') return isAdmin();
-    // Other items either require no permission or check the permission
-    return !item.permission || isAdmin() || hasPermission(item.permission);
-  });
+  // Filter menu items based on both permissions and business type
+  const filterMenuItems = (items: MenuItem[]) => 
+    items.filter(item => {
+      // Check business type restriction (if specified)
+      if (item.businessTypes && !item.businessTypes.includes(businessType)) {
+        return false;
+      }
+      // Settings is admin-only (special case)
+      if (item.testId === 'settings') {
+        return isAdmin();
+      }
+      // Check permission (admin bypasses all checks, otherwise check specific permission)
+      return !item.permission || isAdmin() || hasPermission(item.permission);
+    });
+  
+  const filteredOperations = filterMenuItems(allOperations);
+  const filteredManagement = filterMenuItems(allManagement);
+  const filteredAnalytics = filterMenuItems(allAnalytics);
+  const filteredSystem = filterMenuItems(allSystem);
 
   const renderMenuItems = (items: MenuItem[]) => (
     items.map((item) => {
