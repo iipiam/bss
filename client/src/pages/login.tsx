@@ -147,14 +147,14 @@ export default function Login() {
             document.body.removeChild(link);
             
             toast({
-              title: "Invoice Downloaded",
-              description: "Your subscription invoice has been downloaded automatically.",
+              title: t.invoiceDownloaded,
+              description: t.invoiceDownloadedDesc,
             });
           } catch (error) {
             console.error('Failed to download invoice:', error);
             toast({
-              title: "Invoice Download Failed",
-              description: "You can download your invoice later from the Invoices page.",
+              title: t.invoiceDownloadFailed,
+              description: t.invoiceDownloadFailedDesc,
               variant: "destructive",
             });
           }
@@ -192,8 +192,8 @@ export default function Login() {
     // Validate required fields
     if (!signupRestaurantName || !signupNationalId || !signupTaxNumber || !signupRestaurantType) {
       toast({
-        title: "Missing Required Fields",
-        description: "Please fill in all required fields: Restaurant Name, National ID, Tax Number, and Restaurant Type",
+        title: t.missingRequiredFields,
+        description: t.fillAllRequiredFields,
         variant: "destructive",
       });
       return;
@@ -203,8 +203,8 @@ export default function Login() {
     const nationalIdDigits = signupNationalId.replace(/\D/g, ''); // Remove non-digits
     if (nationalIdDigits.length !== 10) {
       toast({
-        title: "Invalid National ID",
-        description: "National ID must be exactly 10 digits",
+        title: t.invalidNationalId,
+        description: t.nationalIdMustBe10Digits,
         variant: "destructive",
       });
       return;
@@ -214,8 +214,8 @@ export default function Login() {
     const commercialRegDigits = signupCommercialReg.replace(/\D/g, ''); // Remove non-digits
     if (commercialRegDigits.length !== 10) {
       toast({
-        title: "Invalid Commercial Registration",
-        description: "Commercial Registration must be exactly 10 digits",
+        title: t.invalidCommercialReg,
+        description: t.commercialRegMustBe10Digits,
         variant: "destructive",
       });
       return;
@@ -407,11 +407,11 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-restaurant-name">Restaurant Name *</Label>
+                  <Label htmlFor="signup-restaurant-name">{t.businessNameLabel} *</Label>
                   <Input
                     id="signup-restaurant-name"
                     type="text"
-                    placeholder="Enter your restaurant name"
+                    placeholder={t.enterRestaurantName}
                     value={signupRestaurantName}
                     onChange={(e) => setSignupRestaurantName(e.target.value)}
                     required
@@ -419,11 +419,11 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-national-id">National ID / Company Name *</Label>
+                  <Label htmlFor="signup-national-id">{t.nationalIdLabel} *</Label>
                   <Input
                     id="signup-national-id"
                     type="text"
-                    placeholder="Enter 10-digit National ID or Company Name"
+                    placeholder={t.enterNationalIdPlaceholder}
                     value={signupNationalId}
                     onChange={(e) => setSignupNationalId(e.target.value)}
                     required
@@ -431,14 +431,14 @@ export default function Login() {
                     pattern="\d{10}"
                     data-testid="input-signup-national-id"
                   />
-                  <p className="text-xs text-muted-foreground">Must be exactly 10 digits</p>
+                  <p className="text-xs text-muted-foreground">{t.nationalIdMustBe10Digits}</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-tax-number">Unified Tax Number *</Label>
+                  <Label htmlFor="signup-tax-number">{t.taxNumberLabel} *</Label>
                   <Input
                     id="signup-tax-number"
                     type="text"
-                    placeholder="Enter Unified Tax Number"
+                    placeholder={t.enterTaxNumberPlaceholder}
                     value={signupTaxNumber}
                     onChange={(e) => setSignupTaxNumber(e.target.value)}
                     required
@@ -446,7 +446,7 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-business-type">Business Type *</Label>
+                  <Label htmlFor="signup-business-type">{t.businessTypeLabel} *</Label>
                   <Select
                     value={signupBusinessType}
                     onValueChange={(value: BusinessType) => {
@@ -459,7 +459,7 @@ export default function Login() {
                     }}
                   >
                     <SelectTrigger id="signup-business-type" data-testid="select-signup-business-type">
-                      <SelectValue placeholder="Select Business Type" />
+                      <SelectValue placeholder={t.selectBusinessTypePlaceholder} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="restaurant">Restaurant / Food Service</SelectItem>
@@ -471,14 +471,14 @@ export default function Login() {
                 {signupBusinessType && (
                   <div className="space-y-2">
                     <Label htmlFor="signup-restaurant-type">
-                      {signupBusinessType === "factory" ? "Factory Type *" : "Restaurant Type *"}
+                      {signupBusinessType === "factory" ? `${t.factoryTypeLabel} *` : `${t.restaurantTypeLabel} *`}
                     </Label>
                     <Select
                       value={signupRestaurantType}
                       onValueChange={setSignupRestaurantType}
                     >
                       <SelectTrigger id="signup-restaurant-type" data-testid="select-signup-restaurant-type">
-                        <SelectValue placeholder={signupBusinessType === "factory" ? "Select Factory Type" : "Select Restaurant Type"} />
+                        <SelectValue placeholder={signupBusinessType === "factory" ? t.selectFactoryTypePlaceholder : t.selectRestaurantTypePlaceholder} />
                       </SelectTrigger>
                       <SelectContent>
                         {signupBusinessType === "restaurant" ? (
@@ -507,7 +507,7 @@ export default function Login() {
                   <Input
                     id="signup-commercial-reg"
                     type="text"
-                    placeholder="Enter 10-digit Commercial Registration"
+                    placeholder={t.commercialRegistrationPlaceholder}
                     value={signupCommercialReg}
                     onChange={(e) => setSignupCommercialReg(e.target.value)}
                     required
@@ -515,15 +515,15 @@ export default function Login() {
                     pattern="\d{10}"
                     data-testid="input-signup-commercial-reg"
                   />
-                  <p className="text-xs text-muted-foreground">Must be exactly 10 digits</p>
+                  <p className="text-xs text-muted-foreground">{t.commercialRegMustBe10Digits}</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-branches">Number of Branches *</Label>
+                  <Label htmlFor="signup-branches">{t.numberOfBranchesLabel} *</Label>
                   <Input
                     id="signup-branches"
                     type="number"
                     min="1"
-                    placeholder="Enter number of branches"
+                    placeholder={t.enterBranchesPlaceholder}
                     value={branchesCount}
                     onChange={(e) => setBranchesCount(Math.max(1, parseInt(e.target.value) || 1))}
                     required

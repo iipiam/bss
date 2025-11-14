@@ -199,6 +199,7 @@ export interface Translations {
   
   // Settings
   restaurantName: string;
+  businessNameLabel: string;  // "Business Name According to Commercial Registration"
   vatNumber: string;
   email: string;
   phone: string;
@@ -311,6 +312,29 @@ export interface Translations {
   commercialRegistration: string;
   commercialRegistrationPlaceholder: string;
   commercialRegistrationNote: string;
+  nationalIdLabel: string;
+  taxNumberLabel: string;
+  businessTypeLabel: string;
+  numberOfBranchesLabel: string;
+  restaurantTypeLabel: string;
+  factoryTypeLabel: string;
+  enterNationalIdPlaceholder: string;
+  enterTaxNumberPlaceholder: string;
+  selectBusinessTypePlaceholder: string;
+  selectRestaurantTypePlaceholder: string;
+  selectFactoryTypePlaceholder: string;
+  enterBranchesPlaceholder: string;
+  missingRequiredFields: string;
+  fillAllRequiredFields: string;
+  invalidNationalId: string;
+  nationalIdMustBe10Digits: string;
+  invalidCommercialReg: string;
+  commercialRegMustBe10Digits: string;
+  failedToCreateAccount: string;
+  invoiceDownloaded: string;
+  invoiceDownloadedDesc: string;
+  invoiceDownloadFailed: string;
+  invoiceDownloadFailedDesc: string;
   subscriptionPlan: string;
   billedMonthly: string;
   billedYearly: string;
@@ -959,6 +983,7 @@ export const translations: Record<Language, Translations> = {
     
     // Settings
     restaurantName: 'Restaurant Name',
+    businessNameLabel: 'Business Name According to Commercial Registration',
     vatNumber: 'VAT Number',
     email: 'Email',
     phone: 'Phone',
@@ -1069,8 +1094,31 @@ export const translations: Record<Language, Translations> = {
     enterPassword: 'Enter your password',
     choosePassword: 'Choose a password',
     commercialRegistration: 'Commercial Registration',
-    commercialRegistrationPlaceholder: 'Saudi Commercial Registration number',
+    commercialRegistrationPlaceholder: 'Enter 10-digit Commercial Registration',
     commercialRegistrationNote: 'Required for all restaurant businesses in Saudi Arabia',
+    nationalIdLabel: 'National ID / Company Name',
+    taxNumberLabel: 'Unified Tax Number',
+    businessTypeLabel: 'Business Type',
+    numberOfBranchesLabel: 'Number of Branches',
+    restaurantTypeLabel: 'Restaurant Type',
+    factoryTypeLabel: 'Factory Type',
+    enterNationalIdPlaceholder: 'Enter 10-digit National ID or Company Name',
+    enterTaxNumberPlaceholder: 'Enter Unified Tax Number',
+    selectBusinessTypePlaceholder: 'Select Business Type',
+    selectRestaurantTypePlaceholder: 'Select Restaurant Type',
+    selectFactoryTypePlaceholder: 'Select Factory Type',
+    enterBranchesPlaceholder: 'Enter number of branches',
+    missingRequiredFields: 'Missing Required Fields',
+    fillAllRequiredFields: 'Please fill in all required fields: Business Name, National ID, Tax Number, and specific Restaurant or Factory Type',
+    invalidNationalId: 'Invalid National ID',
+    nationalIdMustBe10Digits: 'National ID must be exactly 10 digits',
+    invalidCommercialReg: 'Invalid Commercial Registration',
+    commercialRegMustBe10Digits: 'Commercial Registration must be exactly 10 digits',
+    failedToCreateAccount: 'Failed to create account',
+    invoiceDownloaded: 'Invoice Downloaded',
+    invoiceDownloadedDesc: 'Your subscription invoice has been downloaded automatically.',
+    invoiceDownloadFailed: 'Invoice Download Failed',
+    invoiceDownloadFailedDesc: 'You can download your invoice later from the Invoices page.',
     subscriptionPlan: 'Subscription Plan',
     billedMonthly: 'Billed monthly',
     billedYearly: 'Billed yearly',
@@ -1718,6 +1766,7 @@ export const translations: Record<Language, Translations> = {
     
     // Settings
     restaurantName: 'اسم المطعم',
+    businessNameLabel: 'اسم العمل وفقاً للسجل التجاري',
     vatNumber: 'الرقم الضريبي',
     email: 'البريد الإلكتروني',
     phone: 'الهاتف',
@@ -1828,8 +1877,31 @@ export const translations: Record<Language, Translations> = {
     enterPassword: 'أدخل كلمة المرور',
     choosePassword: 'اختر كلمة مرور',
     commercialRegistration: 'السجل التجاري',
-    commercialRegistrationPlaceholder: 'رقم السجل التجاري السعودي',
+    commercialRegistrationPlaceholder: 'أدخل السجل التجاري المكون من 10 أرقام',
     commercialRegistrationNote: 'مطلوب لجميع الأعمال التجارية للمطاعم في المملكة العربية السعودية',
+    nationalIdLabel: 'الهوية الوطنية / اسم الشركة',
+    taxNumberLabel: 'الرقم الضريبي الموحد',
+    businessTypeLabel: 'نوع العمل',
+    numberOfBranchesLabel: 'عدد الفروع',
+    restaurantTypeLabel: 'نوع المطعم',
+    factoryTypeLabel: 'نوع المصنع',
+    enterNationalIdPlaceholder: 'أدخل الهوية الوطنية المكونة من 10 أرقام أو اسم الشركة',
+    enterTaxNumberPlaceholder: 'أدخل الرقم الضريبي الموحد',
+    selectBusinessTypePlaceholder: 'اختر نوع العمل',
+    selectRestaurantTypePlaceholder: 'اختر نوع المطعم',
+    selectFactoryTypePlaceholder: 'اختر نوع المصنع',
+    enterBranchesPlaceholder: 'أدخل عدد الفروع',
+    missingRequiredFields: 'حقول مطلوبة مفقودة',
+    fillAllRequiredFields: 'يرجى ملء جميع الحقول المطلوبة: اسم العمل، الهوية الوطنية، الرقم الضريبي، ونوع المطعم أو المصنع المحدد',
+    invalidNationalId: 'الهوية الوطنية غير صحيحة',
+    nationalIdMustBe10Digits: 'يجب أن تكون الهوية الوطنية 10 أرقام بالضبط',
+    invalidCommercialReg: 'السجل التجاري غير صحيح',
+    commercialRegMustBe10Digits: 'يجب أن يكون السجل التجاري 10 أرقام بالضبط',
+    failedToCreateAccount: 'فشل في إنشاء الحساب',
+    invoiceDownloaded: 'تم تنزيل الفاتورة',
+    invoiceDownloadedDesc: 'تم تنزيل فاتورة الاشتراك الخاصة بك تلقائياً.',
+    invoiceDownloadFailed: 'فشل تنزيل الفاتورة',
+    invoiceDownloadFailedDesc: 'يمكنك تنزيل فاتورتك لاحقاً من صفحة الفواتير.',
     subscriptionPlan: 'خطة الاشتراك',
     billedMonthly: 'يتم الدفع شهرياً',
     billedYearly: 'يتم الدفع سنوياً',
@@ -2477,6 +2549,7 @@ export const translations: Record<Language, Translations> = {
     
     // Settings
     restaurantName: '餐厅名称',
+    businessNameLabel: '根据商业登记的企业名称',
     vatNumber: '税号',
     email: '邮箱',
     phone: '电话',
@@ -2587,8 +2660,31 @@ export const translations: Record<Language, Translations> = {
     enterPassword: '输入您的密码',
     choosePassword: '选择密码',
     commercialRegistration: '商业登记',
-    commercialRegistrationPlaceholder: '沙特商业登记号',
+    commercialRegistrationPlaceholder: '输入10位商业登记号',
     commercialRegistrationNote: '沙特阿拉伯所有餐厅企业都需要',
+    nationalIdLabel: '国民身份证/公司名称',
+    taxNumberLabel: '统一税号',
+    businessTypeLabel: '业务类型',
+    numberOfBranchesLabel: '分支机构数量',
+    restaurantTypeLabel: '餐厅类型',
+    factoryTypeLabel: '工厂类型',
+    enterNationalIdPlaceholder: '输入10位国民身份证号或公司名称',
+    enterTaxNumberPlaceholder: '输入统一税号',
+    selectBusinessTypePlaceholder: '选择业务类型',
+    selectRestaurantTypePlaceholder: '选择餐厅类型',
+    selectFactoryTypePlaceholder: '选择工厂类型',
+    enterBranchesPlaceholder: '输入分支机构数量',
+    missingRequiredFields: '缺少必填字段',
+    fillAllRequiredFields: '请填写所有必填字段：企业名称、国民身份证、税号和具体的餐厅或工厂类型',
+    invalidNationalId: '国民身份证无效',
+    nationalIdMustBe10Digits: '国民身份证必须正好为10位数字',
+    invalidCommercialReg: '商业登记号无效',
+    commercialRegMustBe10Digits: '商业登记号必须正好为10位数字',
+    failedToCreateAccount: '创建账户失败',
+    invoiceDownloaded: '发票已下载',
+    invoiceDownloadedDesc: '您的订阅发票已自动下载。',
+    invoiceDownloadFailed: '发票下载失败',
+    invoiceDownloadFailedDesc: '您可以稍后从发票页面下载您的发票。',
     subscriptionPlan: '订阅计划',
     billedMonthly: '按月计费',
     billedYearly: '按年计费',
@@ -3222,6 +3318,7 @@ export const translations: Record<Language, Translations> = {
     
     // Settings
     restaurantName: 'Restaurantname',
+    businessNameLabel: 'Geschäftsname gemäß Handelsregistereintrag',
     vatNumber: 'Umsatzsteuer-ID',
     email: 'E-Mail',
     phone: 'Telefon',
@@ -3332,8 +3429,31 @@ export const translations: Record<Language, Translations> = {
     enterPassword: 'Geben Sie Ihr Passwort ein',
     choosePassword: 'Wählen Sie ein Passwort',
     commercialRegistration: 'Handelsregister',
-    commercialRegistrationPlaceholder: 'Saudische Handelsregisternummer',
+    commercialRegistrationPlaceholder: 'Geben Sie die 10-stellige Handelsregisternummer ein',
     commercialRegistrationNote: 'Erforderlich für alle Restaurantunternehmen in Saudi-Arabien',
+    nationalIdLabel: 'Nationale ID / Firmenname',
+    taxNumberLabel: 'Einheitliche Steuernummer',
+    businessTypeLabel: 'Geschäftstyp',
+    numberOfBranchesLabel: 'Anzahl der Filialen',
+    restaurantTypeLabel: 'Restauranttyp',
+    factoryTypeLabel: 'Fabriktyp',
+    enterNationalIdPlaceholder: 'Geben Sie die 10-stellige nationale ID oder den Firmennamen ein',
+    enterTaxNumberPlaceholder: 'Geben Sie die einheitliche Steuernummer ein',
+    selectBusinessTypePlaceholder: 'Geschäftstyp auswählen',
+    selectRestaurantTypePlaceholder: 'Restauranttyp auswählen',
+    selectFactoryTypePlaceholder: 'Fabriktyp auswählen',
+    enterBranchesPlaceholder: 'Geben Sie die Anzahl der Filialen ein',
+    missingRequiredFields: 'Erforderliche Felder fehlen',
+    fillAllRequiredFields: 'Bitte füllen Sie alle erforderlichen Felder aus: Geschäftsname, Nationale ID, Steuernummer und spezifischer Restaurant- oder Fabriktyp',
+    invalidNationalId: 'Ungültige nationale ID',
+    nationalIdMustBe10Digits: 'Nationale ID muss genau 10 Ziffern sein',
+    invalidCommercialReg: 'Ungültige Handelsregisternummer',
+    commercialRegMustBe10Digits: 'Handelsregisternummer muss genau 10 Ziffern sein',
+    failedToCreateAccount: 'Konto konnte nicht erstellt werden',
+    invoiceDownloaded: 'Rechnung heruntergeladen',
+    invoiceDownloadedDesc: 'Ihre Abonnementrechnung wurde automatisch heruntergeladen.',
+    invoiceDownloadFailed: 'Rechnung-Download fehlgeschlagen',
+    invoiceDownloadFailedDesc: 'Sie können Ihre Rechnung später von der Rechnungsseite herunterladen.',
     subscriptionPlan: 'Abonnementplan',
     billedMonthly: 'Monatlich abgerechnet',
     billedYearly: 'Jährlich abgerechnet',
@@ -3967,6 +4087,7 @@ export const translations: Record<Language, Translations> = {
     
     // Settings
     restaurantName: 'रेस्तरां का नाम',
+    businessNameLabel: 'व्यावसायिक पंजीकरण के अनुसार व्यवसाय का नाम',
     vatNumber: 'वैट नंबर',
     email: 'ईमेल',
     phone: 'फोन',
@@ -4077,8 +4198,31 @@ export const translations: Record<Language, Translations> = {
     enterPassword: 'अपना पासवर्ड दर्ज करें',
     choosePassword: 'पासवर्ड चुनें',
     commercialRegistration: 'व्यावसायिक पंजीकरण',
-    commercialRegistrationPlaceholder: 'सऊदी व्यावसायिक पंजीकरण संख्या',
+    commercialRegistrationPlaceholder: '10 अंकों का व्यावसायिक पंजीकरण दर्ज करें',
     commercialRegistrationNote: 'सऊदी अरब में सभी रेस्तरां व्यवसायों के लिए आवश्यक',
+    nationalIdLabel: 'राष्ट्रीय पहचान पत्र / कंपनी का नाम',
+    taxNumberLabel: 'एकीकृत कर संख्या',
+    businessTypeLabel: 'व्यवसाय का प्रकार',
+    numberOfBranchesLabel: 'शाखाओं की संख्या',
+    restaurantTypeLabel: 'रेस्तरां का प्रकार',
+    factoryTypeLabel: 'कारखाने का प्रकार',
+    enterNationalIdPlaceholder: '10 अंकों का राष्ट्रीय पहचान पत्र या कंपनी का नाम दर्ज करें',
+    enterTaxNumberPlaceholder: 'एकीकृत कर संख्या दर्ज करें',
+    selectBusinessTypePlaceholder: 'व्यवसाय का प्रकार चुनें',
+    selectRestaurantTypePlaceholder: 'रेस्तरां का प्रकार चुनें',
+    selectFactoryTypePlaceholder: 'कारखाने का प्रकार चुनें',
+    enterBranchesPlaceholder: 'शाखाओं की संख्या दर्ज करें',
+    missingRequiredFields: 'आवश्यक फ़ील्ड गायब हैं',
+    fillAllRequiredFields: 'कृपया सभी आवश्यक फ़ील्ड भरें: व्यवसाय का नाम, राष्ट्रीय पहचान पत्र, कर संख्या, और विशिष्ट रेस्तरां या कारखाने का प्रकार',
+    invalidNationalId: 'अमान्य राष्ट्रीय पहचान पत्र',
+    nationalIdMustBe10Digits: 'राष्ट्रीय पहचान पत्र वास्तव में 10 अंकों का होना चाहिए',
+    invalidCommercialReg: 'अमान्य व्यावसायिक पंजीकरण',
+    commercialRegMustBe10Digits: 'व्यावसायिक पंजीकरण वास्तव में 10 अंकों का होना चाहिए',
+    failedToCreateAccount: 'खाता बनाने में विफल',
+    invoiceDownloaded: 'चालान डाउनलोड किया गया',
+    invoiceDownloadedDesc: 'आपका सदस्यता चालान स्वचालित रूप से डाउनलोड किया गया है।',
+    invoiceDownloadFailed: 'चालान डाउनलोड विफल',
+    invoiceDownloadFailedDesc: 'आप अपने चालान को बाद में चालान पृष्ठ से डाउनलोड कर सकते हैं।',
     subscriptionPlan: 'सदस्यता योजना',
     billedMonthly: 'मासिक बिल',
     billedYearly: 'वार्षिक बिल',
@@ -4712,6 +4856,7 @@ export const translations: Record<Language, Translations> = {
     
     // Settings
     restaurantName: 'ریستوراں کا نام',
+    businessNameLabel: 'تجارتی رجسٹریشن کے مطابق کاروبار کا نام',
     vatNumber: 'ویٹ نمبر',
     email: 'ای میل',
     phone: 'فون',
@@ -4822,8 +4967,31 @@ export const translations: Record<Language, Translations> = {
     enterPassword: 'اپنا پاس ورڈ درج کریں',
     choosePassword: 'پاس ورڈ منتخب کریں',
     commercialRegistration: 'تجارتی رجسٹریشن',
-    commercialRegistrationPlaceholder: 'سعودی تجارتی رجسٹریشن نمبر',
+    commercialRegistrationPlaceholder: '10 ہندسوں کا تجارتی رجسٹریشن درج کریں',
     commercialRegistrationNote: 'سعودی عرب میں تمام ریستوراں کاروباروں کے لیے ضروری',
+    nationalIdLabel: 'قومی شناختی کارڈ / کمپنی کا نام',
+    taxNumberLabel: 'متحدہ ٹیکس نمبر',
+    businessTypeLabel: 'کاروبار کی قسم',
+    numberOfBranchesLabel: 'شاخوں کی تعداد',
+    restaurantTypeLabel: 'ریستوراں کی قسم',
+    factoryTypeLabel: 'فیکٹری کی قسم',
+    enterNationalIdPlaceholder: '10 ہندسوں کا قومی شناختی کارڈ یا کمپنی کا نام درج کریں',
+    enterTaxNumberPlaceholder: 'متحدہ ٹیکس نمبر درج کریں',
+    selectBusinessTypePlaceholder: 'کاروبار کی قسم منتخب کریں',
+    selectRestaurantTypePlaceholder: 'ریستوراں کی قسم منتخب کریں',
+    selectFactoryTypePlaceholder: 'فیکٹری کی قسم منتخب کریں',
+    enterBranchesPlaceholder: 'شاخوں کی تعداد درج کریں',
+    missingRequiredFields: 'ضروری فیلڈز غائب ہیں',
+    fillAllRequiredFields: 'براہ کرم تمام ضروری فیلڈز بھریں: کاروبار کا نام، قومی شناختی کارڈ، ٹیکس نمبر، اور مخصوص ریستوراں یا فیکٹری کی قسم',
+    invalidNationalId: 'غلط قومی شناختی کارڈ',
+    nationalIdMustBe10Digits: 'قومی شناختی کارڈ بالکل 10 ہندسوں کا ہونا چاہیے',
+    invalidCommercialReg: 'غلط تجارتی رجسٹریشن',
+    commercialRegMustBe10Digits: 'تجارتی رجسٹریشن بالکل 10 ہندسوں کا ہونا چاہیے',
+    failedToCreateAccount: 'اکاؤنٹ بنانے میں ناکام',
+    invoiceDownloaded: 'انوائس ڈاؤن لوڈ کی گئی',
+    invoiceDownloadedDesc: 'آپ کا سبسکرپشن انوائس خودکار طور پر ڈاؤن لوڈ کیا گیا ہے۔',
+    invoiceDownloadFailed: 'انوائس ڈاؤن لوڈ ناکام',
+    invoiceDownloadFailedDesc: 'آپ اپنا انوائس بعد میں انوائس صفحہ سے ڈاؤن لوڈ کر سکتے ہیں۔',
     subscriptionPlan: 'سبسکرپشن منصوبہ',
     billedMonthly: 'ماہانہ بل',
     billedYearly: 'سالانہ بل',
@@ -5457,6 +5625,7 @@ export const translations: Record<Language, Translations> = {
     
     // Settings
     restaurantName: 'রেস্তোরাঁর নাম',
+    businessNameLabel: 'বাণিজ্যিক নিবন্ধন অনুযায়ী ব্যবসার নাম',
     vatNumber: 'ভ্যাট নম্বর',
     email: 'ইমেইল',
     phone: 'ফোন',
@@ -5567,8 +5736,31 @@ export const translations: Record<Language, Translations> = {
     enterPassword: 'আপনার পাসওয়ার্ড লিখুন',
     choosePassword: 'পাসওয়ার্ড নির্বাচন করুন',
     commercialRegistration: 'বাণিজ্যিক নিবন্ধন',
-    commercialRegistrationPlaceholder: 'সৌদি বাণিজ্যিক নিবন্ধন নম্বর',
+    commercialRegistrationPlaceholder: '10 সংখ্যার বাণিজ্যিক নিবন্ধন লিখুন',
     commercialRegistrationNote: 'সৌদি আরবের সমস্ত রেস্তোরাঁ ব্যবসার জন্য প্রয়োজনীয়',
+    nationalIdLabel: 'জাতীয় পরিচয়পত্র / কোম্পানির নাম',
+    taxNumberLabel: 'একীভূত কর নম্বর',
+    businessTypeLabel: 'ব্যবসার ধরন',
+    numberOfBranchesLabel: 'শাখার সংখ্যা',
+    restaurantTypeLabel: 'রেস্তোরাঁর ধরন',
+    factoryTypeLabel: 'কারখানার ধরন',
+    enterNationalIdPlaceholder: '10 সংখ্যার জাতীয় পরিচয়পত্র বা কোম্পানির নাম লিখুন',
+    enterTaxNumberPlaceholder: 'একীভূত কর নম্বর লিখুন',
+    selectBusinessTypePlaceholder: 'ব্যবসার ধরন নির্বাচন করুন',
+    selectRestaurantTypePlaceholder: 'রেস্তোরাঁর ধরন নির্বাচন করুন',
+    selectFactoryTypePlaceholder: 'কারখানার ধরন নির্বাচন করুন',
+    enterBranchesPlaceholder: 'শাখার সংখ্যা লিখুন',
+    missingRequiredFields: 'প্রয়োজনীয় ক্ষেত্রগুলি অনুপস্থিত',
+    fillAllRequiredFields: 'অনুগ্রহ করে সমস্ত প্রয়োজনীয় ক্ষেত্রগুলি পূরণ করুন: ব্যবসার নাম, জাতীয় পরিচয়পত্র, কর নম্বর, এবং নির্দিষ্ট রেস্তোরাঁ বা কারখানার ধরন',
+    invalidNationalId: 'অবৈধ জাতীয় পরিচয়পত্র',
+    nationalIdMustBe10Digits: 'জাতীয় পরিচয়পত্র অবশ্যই ঠিক 10 সংখ্যার হতে হবে',
+    invalidCommercialReg: 'অবৈধ বাণিজ্যিক নিবন্ধন',
+    commercialRegMustBe10Digits: 'বাণিজ্যিক নিবন্ধন অবশ্যই ঠিক 10 সংখ্যার হতে হবে',
+    failedToCreateAccount: 'অ্যাকাউন্ট তৈরি করতে ব্যর্থ',
+    invoiceDownloaded: 'ইনভয়েস ডাউনলোড করা হয়েছে',
+    invoiceDownloadedDesc: 'আপনার সাবস্ক্রিপশন ইনভয়েস স্বয়ংক্রিয়ভাবে ডাউনলোড করা হয়েছে।',
+    invoiceDownloadFailed: 'ইনভয়েস ডাউনলোড ব্যর্থ',
+    invoiceDownloadFailedDesc: 'আপনি পরে ইনভয়েস পৃষ্ঠা থেকে আপনার ইনভয়েস ডাউনলোড করতে পারেন।',
     subscriptionPlan: 'সাবস্ক্রিপশন প্ল্যান',
     billedMonthly: 'মাসিক বিল',
     billedYearly: 'বার্ষিক বিল',
