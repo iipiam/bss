@@ -29,7 +29,7 @@ import {
   UtensilsCrossed,
   FileKey,
 } from "lucide-react";
-import logoImage from "@assets/IMG_8801_1763031870185.png";
+import logoImage from "@assets/kinzhal-eagle-logo.jpeg";
 import {
   Sidebar,
   SidebarContent,
