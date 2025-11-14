@@ -105,7 +105,7 @@ const baseMenuItemSchema = createInsertSchema(menuItems)
     recipeId: z.string().nullable().optional(), // Allow null to clear recipe
     inventoryItemId: z.string().nullable().optional(), // Allow null, for simple items
     portionSize: z.string().optional(), // Portion multiplier (1.0, 0.5, 0.25)
-    stockNo: z.string().optional(), // Stock quantity per item
+    stockNo: z.string().nullable().optional(), // Stock quantity per item (nullable)
   });
 
 // Insert schema with full validations
@@ -119,14 +119,14 @@ export const insertMenuItemSchema = baseMenuItemSchema
   )
   .refine(
     (data) => {
-      // If no recipe is provided, stockNo is required
-      const hasRecipe = data.recipeId && data.recipeId !== "none" && data.recipeId.trim() !== "";
-      if (!hasRecipe) {
-        return !!data.stockNo && data.stockNo.trim() !== "" && parseFloat(data.stockNo) > 0;
+      // If stockNo is provided, it must be a valid positive number
+      if (data.stockNo && data.stockNo.trim() !== "") {
+        const stockNum = parseFloat(data.stockNo);
+        return !isNaN(stockNum) && stockNum > 0;
       }
       return true;
     },
-    { message: "Stock quantity is required for non-recipe items", path: ["stockNo"] }
+    { message: "Stock quantity must be a positive number", path: ["stockNo"] }
   );
 
 // Update schema - partial with update-safe validations

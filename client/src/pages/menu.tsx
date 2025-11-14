@@ -38,13 +38,14 @@ const createMenuFormSchema = (t: any) => z.object({
   description: z.string().min(1, t.descriptionRequired || "Description is required"),
 }).refine(
   (data) => {
-    // If no recipe, stockNo is required
-    if (!data.recipeId || data.recipeId === "none" || data.recipeId.trim() === "") {
-      return !!data.stockNo && data.stockNo.trim() !== "" && parseFloat(data.stockNo) > 0;
+    // If stockNo is provided, it must be a valid positive number
+    if (data.stockNo && data.stockNo.trim() !== "") {
+      const stockNum = parseFloat(data.stockNo);
+      return !isNaN(stockNum) && stockNum > 0;
     }
     return true;
   },
-  { message: t.stockNoRequired || "Stock number is required when no recipe is selected", path: ["stockNo"] }
+  { message: t.stockNoPositive || "Stock quantity must be a positive number", path: ["stockNo"] }
 );
 
 type MenuFormValues = z.infer<ReturnType<typeof createMenuFormSchema>>;
