@@ -14,7 +14,7 @@ Preferred communication style: Simple, everyday language.
 - **State Management**: TanStack Query for server state; local React state for UI.
 - **Form Handling**: React Hook Form with Zod validation.
 - **Styling**: Tailwind CSS with custom design tokens, responsive layouts.
-- **Branding**: BSS eagle logo displayed in app sidebar header, footer, login, and setup pages. Sidebar header includes logo and "Business Management System" subtitle using semantic color tokens. Footer displays "Made By Kinzha LTD Co." across all pages. Tagline: "Empowering businesses with smart management solutions".
+- **Branding**: BSS eagle logo displayed in app sidebar header, footer, login, and setup pages. Sidebar header includes logo and "Business Management System" subtitle using semantic color tokens. Footer displays "Made By Kinzhal LTD Co." across all pages. Tagline: "Empowering businesses with smart management solutions".
 - **UI/UX**: Modern gradient designs, smooth animations, creative sidebar navigation, responsive hover interactions.
 - **Multi-Language Support**: Comprehensive support for 10 languages (English, Arabic, Chinese, German, Hindi, Urdu, Bengali, Italian, Spanish, Tagalog) including RTL for Arabic/Urdu, with persistent settings and fully translated interface.
 - **Device-Specific Responsive Design**: User-configurable device preference (Laptop, iPad, iPhone) adjusting layout, typography, and components. Includes mobile optimization toolkit, production-ready `TableList` component, and iPhone-optimized interfaces with WCAG AAA touch target compliance (h-[44px] minimum for interactive elements).

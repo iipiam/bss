@@ -1602,7 +1602,7 @@ export const translations: Record<Language, Translations> = {
     
     // Branding
     madeBy: 'Made By',
-    companyName: 'Kinzha LTD Co.',
+    companyName: 'Kinzhal LTD Co.',
     copyright: '© 2025 BlindSpot System (BSS). All rights reserved.',
     tagline: 'Empowering businesses with smart management solutions',
   },
@@ -2403,7 +2403,7 @@ export const translations: Record<Language, Translations> = {
     
     // Branding
     madeBy: 'صنع بواسطة',
-    companyName: 'Kinzha LTD Co.',
+    companyName: 'Kinzhal LTD Co.',
     copyright: '© 2025 نظام النقطة العمياء (BSS). جميع الحقوق محفوظة.',
     tagline: 'تمكين الأعمال بحلول إدارة ذكية',
   },
@@ -3190,7 +3190,7 @@ export const translations: Record<Language, Translations> = {
     
     // Branding
     madeBy: '制造商',
-    companyName: 'Kinzha LTD Co.',
+    companyName: 'Kinzhal LTD Co.',
     copyright: '© 2025 盲点系统 (BSS)。保留所有权利。',
     tagline: '用智能管理解决方案赋能企业',
   },
@@ -3977,7 +3977,7 @@ export const translations: Record<Language, Translations> = {
     
     // Branding
     madeBy: 'Hergestellt von',
-    companyName: 'Kinzha LTD Co.',
+    companyName: 'Kinzhal LTD Co.',
     copyright: '© 2025 BlindSpot System (BSS). Alle Rechte vorbehalten.',
     tagline: 'Unternehmen mit intelligenten Managementlösungen stärken',
   },
@@ -4764,7 +4764,7 @@ export const translations: Record<Language, Translations> = {
     
     // Branding
     madeBy: 'द्वारा निर्मित',
-    companyName: 'Kinzha LTD Co.',
+    companyName: 'Kinzhal LTD Co.',
     copyright: '© 2025 ब्लाइंडस्पॉट सिस्टम (BSS)। सर्वाधिकार सुरक्षित।',
     tagline: 'स्मार्ट प्रबंधन समाधानों से व्यवसायों को सशक्त बनाना',
   },
@@ -5551,7 +5551,7 @@ export const translations: Record<Language, Translations> = {
     
     // Branding
     madeBy: 'بنایا گیا',
-    companyName: 'Kinzha LTD Co.',
+    companyName: 'Kinzhal LTD Co.',
     copyright: '© 2025 بلائنڈ اسپاٹ سسٹم (BSS)۔ تمام حقوق محفوظ ہیں۔',
     tagline: 'سمارٹ مینجمنٹ حل کے ساتھ کاروبار کو بااختیار بنانا',
   },
@@ -6338,7 +6338,7 @@ export const translations: Record<Language, Translations> = {
     
     // Branding
     madeBy: 'তৈরি করেছেন',
-    companyName: 'Kinzha LTD Co.',
+    companyName: 'Kinzhal LTD Co.',
     copyright: '© 2025 ব্লাইন্ডস্পট সিস্টেম (BSS)। সর্বস্বত্ব সংরক্ষিত।',
     tagline: 'স্মার্ট ম্যানেজমেন্ট সমাধান দিয়ে ব্যবসাকে ক্ষমতায়ন করা',
   },
@@ -7056,7 +7056,7 @@ export const translations: Record<Language, Translations> = {
     videoSlide6Title: "Storia di Successo di Ahmad",
     videoSlide6Subtitle: "Crescita fatturato 300% • 5 nuove filiali • Unisciti a migliaia di ristoranti prosperi",
     madeBy: "Realizzato da",
-    companyName: "Kinzha LTD Co.",
+    companyName: "Kinzhal LTD Co.",
     copyright: "© 2025 BlindSpot System (BSS). Tutti i diritti riservati.",
     tagline: "Potenziamo le aziende con soluzioni di gestione intelligenti",
   },
@@ -7774,7 +7774,7 @@ export const translations: Record<Language, Translations> = {
     videoSlide6Title: "Historia de Éxito de Ahmad",
     videoSlide6Subtitle: "Crecimiento de ingresos del 300% • 5 nuevas sucursales • Únete a miles de restaurantes prósperos",
     madeBy: "Hecho por",
-    companyName: "Kinzha LTD Co.",
+    companyName: "Kinzhal LTD Co.",
     copyright: "© 2025 BlindSpot System (BSS). Todos los derechos reservados.",
     tagline: "Empoderamos a las empresas con soluciones de gestión inteligentes",
   },
@@ -8492,7 +8492,7 @@ export const translations: Record<Language, Translations> = {
     videoSlide6Title: "Kwento ng Tagumpay ni Ahmad",
     videoSlide6Subtitle: "300% pagtaas ng kita • 5 bagong sangay • Sumali sa libu-libong umuunlad na restaurant",
     madeBy: "Ginawa ni",
-    companyName: "Kinzha LTD Co.",
+    companyName: "Kinzhal LTD Co.",
     copyright: "© 2025 BlindSpot System (BSS). Lahat ng karapatan ay nakalaan.",
     tagline: "Binibigyang kapangyarihan ang mga negosyo gamit ang matalinong solusyon sa pamamahala",
   },
