@@ -10,11 +10,13 @@ export interface Translations {
   branches: string;
   inventory: string;
   menu: string;
+  products: string;  // Factory business type: replaces "menu"
   recipes: string;
   licenses: string;  // Factory business type only
   customers: string;
   orders: string;
   kitchen: string;
+  workshop: string;  // Factory business type: replaces "kitchen"
   procurement: string;
   sales: string;
   financial: string;
@@ -800,11 +802,13 @@ export const translations: Record<Language, Translations> = {
     branches: 'Branches',
     inventory: 'Inventory',
     menu: 'Menu',
+    products: 'Products',  // Factory business type: replaces "menu"
     recipes: 'Recipes',
     licenses: 'Licenses',  // Factory business type only
     customers: 'Customers',
     orders: 'Orders',
     kitchen: 'Kitchen',
+    workshop: 'Workshop',  // Factory business type: replaces "kitchen"
     procurement: 'Procurement',
     sales: 'Sales',
     financial: 'Financial',
@@ -1589,11 +1593,13 @@ export const translations: Record<Language, Translations> = {
     branches: 'الفروع',
     inventory: 'المخزون',
     menu: 'القائمة',
+    products: 'المنتجات',  // Factory business type: replaces "menu"
     recipes: 'الوصفات',
     licenses: 'التراخيص',  // Factory business type only  
     customers: 'العملاء',
     orders: 'الطلبات',
     kitchen: 'المطبخ',
+    workshop: 'ورشة العمل',  // Factory business type: replaces "kitchen"
     procurement: 'المشتريات',
     sales: 'المبيعات',
     financial: 'المالية',
@@ -2378,11 +2384,13 @@ export const translations: Record<Language, Translations> = {
     branches: '分店',
     inventory: '库存',
     menu: '菜单',
+    products: '产品',  // Factory business type: replaces "menu"
     recipes: '食谱',
     licenses: '许可证',  // Factory business type only
     customers: '客户',
     orders: '订单',
     kitchen: '厨房',
+    workshop: '车间',  // Factory business type: replaces "kitchen"
     procurement: '采购',
     sales: '销售',
     financial: '财务',
@@ -3153,11 +3161,13 @@ export const translations: Record<Language, Translations> = {
     branches: 'Filialen',
     inventory: 'Inventar',
     menu: 'Menü',
+    products: 'Produkte',  // Factory business type: replaces "menu"
     recipes: 'Rezepte',
     licenses: 'Lizenzen',  // Factory business type only
     customers: 'Kunden',
     orders: 'Bestellungen',
     kitchen: 'Küche',
+    workshop: 'Werkstatt',  // Factory business type: replaces "kitchen"
     procurement: 'Beschaffung',
     sales: 'Verkäufe',
     financial: 'Finanzen',
@@ -3928,11 +3938,13 @@ export const translations: Record<Language, Translations> = {
     branches: 'शाखाएं',
     inventory: 'इन्वेंटरी',
     menu: 'मेनू',
+    products: 'उत्पाद',  // Factory business type: replaces "menu"
     recipes: 'व्यंजन विधि',
     licenses: 'लाइसेंस',  // Factory business type only
     customers: 'ग्राहक',
     orders: 'ऑर्डर',
     kitchen: 'रसोई',
+    workshop: 'कार्यशाला',  // Factory business type: replaces "kitchen"
     procurement: 'खरीद',
     sales: 'बिक्री',
     financial: 'वित्तीय',
@@ -4703,11 +4715,13 @@ export const translations: Record<Language, Translations> = {
     branches: 'شاخیں',
     inventory: 'انوینٹری',
     menu: 'مینو',
+    products: 'مصنوعات',  // Factory business type: replaces "menu"
     recipes: 'ترکیبیں',
     licenses: 'لائسنس',  // Factory business type only
     customers: 'گاہک',
     orders: 'آرڈرز',
     kitchen: 'باورچی خانہ',
+    workshop: 'ورکشاپ',  // Factory business type: replaces "kitchen"
     procurement: 'خریداری',
     sales: 'فروخت',
     financial: 'مالیاتی',
@@ -5478,11 +5492,13 @@ export const translations: Record<Language, Translations> = {
     branches: 'শাখা',
     inventory: 'ইনভেন্টরি',
     menu: 'মেনু',
+    products: 'পণ্য',  // Factory business type: replaces "menu"
     recipes: 'রেসিপি',
     licenses: 'লাইসেন্স',  // Factory business type only
     customers: 'গ্রাহক',
     orders: 'অর্ডার',
     kitchen: 'রান্নাঘর',
+    workshop: 'কর্মশালা',  // Factory business type: replaces "kitchen"
     procurement: 'ক্রয়',
     sales: 'বিক্রয়',
     financial: 'আর্থিক',
@@ -6252,11 +6268,13 @@ export const translations: Record<Language, Translations> = {
     branches: "Filiali",
     inventory: "Inventario",
     menu: "Menu",
+    products: "Prodotti",  // Factory business type: replaces "menu"
     recipes: "Ricette",
     licenses: "Licenze",
     customers: "Clienti",
     orders: "Ordini",
     kitchen: "Cucina",
+    workshop: "Officina",  // Factory business type: replaces "kitchen"
     procurement: "Approvvigionamento",
     sales: "Vendite",
     financial: "Finanziario",
@@ -6958,11 +6976,13 @@ export const translations: Record<Language, Translations> = {
     branches: "Sucursales",
     inventory: "Inventario",
     menu: "Menú",
+    products: "Productos",  // Factory business type: replaces "menu"
     recipes: "Recetas",
     licenses: "Licencias",
     customers: "Clientes",
     orders: "Pedidos",
     kitchen: "Cocina",
+    workshop: "Taller",  // Factory business type: replaces "kitchen"
     procurement: "Adquisiciones",
     sales: "Ventas",
     financial: "Financiero",
@@ -7664,11 +7684,13 @@ export const translations: Record<Language, Translations> = {
     branches: "Mga Sangay",
     inventory: "Imbentaryo",
     menu: "Menu",
+    products: "Mga Produkto",  // Factory business type: replaces "menu"
     recipes: "Mga Resipe",
     licenses: "Mga Lisensya",
     customers: "Mga Customer",
     orders: "Mga Order",
     kitchen: "Kusina",
+    workshop: "Workshop",  // Factory business type: replaces "kitchen"
     procurement: "Pagbili",
     sales: "Benta",
     financial: "Pinansyal",
