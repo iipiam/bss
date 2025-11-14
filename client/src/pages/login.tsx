@@ -540,7 +540,7 @@ export default function Login() {
                   />
                   <p className="text-xs text-muted-foreground">
                     {signupBusinessType === "factory" ? (
-                      `Additional branches: +${(getPlanPricing('monthly', 2, 'factory').grossAmount - getPlanPricing('monthly', 1, 'factory').grossAmount).toFixed(2)} ${t.sar}/month per branch (VAT included)`
+                      `Additional branches: +2,400.00 ${t.sar}/month per branch, +28,800.00 ${t.sar}/year per branch (VAT included)`
                     ) : (
                       `Additional branches: +${(getPlanPricing('weekly', 2, 'restaurant').grossAmount - getPlanPricing('weekly', 1, 'restaurant').grossAmount).toFixed(2)} ${t.sar}/week, +${(getPlanPricing('monthly', 2, 'restaurant').grossAmount - getPlanPricing('monthly', 1, 'restaurant').grossAmount).toFixed(2)} ${t.sar}/month per branch (VAT included)`
                     )}
