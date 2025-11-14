@@ -1,7 +1,7 @@
 # BlindSpot System (BSS) - Business Management System
 
 ## Overview
-BlindSpot System (BSS) is a comprehensive, ZATCA-compliant business management system designed for Saudi Arabian businesses. It integrates Point of Sale (POS), inventory, menu/recipe management, multi-branch operations, order processing, kitchen display, and advanced analytics. The system aims to enhance operational efficiency, ensure regulatory compliance, optimize profitability, and support strategic decision-making through features like sales analytics, business reporting, and demand forecasting. Empowering businesses with smart management solutions.
+BlindSpot System (BSS) is a comprehensive, ZATCA-compliant business management system designed for Saudi Arabian businesses serving both **Restaurant** and **Factory** business types. It integrates Point of Sale (POS), inventory, menu/recipe management (or product/license management for factories), multi-branch operations, order processing, kitchen/workshop display, and advanced analytics. The system aims to enhance operational efficiency, ensure regulatory compliance, optimize profitability, and support strategic decision-making through features like sales analytics, business reporting, and demand forecasting. Empowering businesses with smart management solutions.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -24,7 +24,8 @@ Preferred communication style: Simple, everyday language.
 - **API Design**: RESTful API, domain-organized.
 - **Data Validation**: Zod schemas (shared with frontend).
 - **Authentication**: Bcrypt for hashing, session-based authentication.
-- **Multi-tenant architecture**: Complete data isolation between restaurant accounts using `restaurantId`. Critical security mandates all API endpoints filter by `req.session.user.restaurantId`.
+- **Multi-tenant architecture**: Complete data isolation between business accounts using `restaurantId` (applies to both restaurant and factory types). Critical security mandates all API endpoints filter by `req.session.user.restaurantId`.
+- **Business Type Support (Nov 2025)**: Dual business type architecture supporting Restaurant and Factory operations with type-specific features, pricing, and UI. businessType field in restaurants table with runtime Zod validation (z.enum(["restaurant", "factory"])). Factory businesses use distinct terminology (Products→Menu, WorkShop→Kitchen, Licenses feature), have unique pricing (Monthly 15000 SAR, Yearly 150000 SAR, +28800 SAR/month per branch, no weekly option), and feature-set restrictions (no Recipes, Delivery Apps, or Delivery Profitability). Signup flow validates Factory cannot select weekly plans. Permission system includes 'licenses' permission (factory-only) with automatic backfill to existing admins. Sidebar navigation uses declarative businessTypes filtering. All 18 existing admin users migrated with 'licenses' permission. E2E tested and production-ready.
 - **User Management**: `setupComplete` flag prevents cross-tenant user creation post-initial setup; two-phase user creation for initial admin.
 - **Real-Time Employee Notification System**: WebSocket-based system for order lifecycle events with audio alerts, toast notifications, and multi-language support.
 
