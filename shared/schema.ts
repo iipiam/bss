@@ -119,11 +119,10 @@ export const insertMenuItemSchema = baseMenuItemSchema
   )
   .refine(
     (data) => {
-      // If linked to inventory item (not recipe), stockNo is required
-      const hasInventoryItem = data.inventoryItemId && data.inventoryItemId !== "none";
-      const hasRecipe = data.recipeId && data.recipeId !== "none";
-      if (hasInventoryItem && !hasRecipe) {
-        return !!data.stockNo && data.stockNo.trim() !== "";
+      // If no recipe is provided, stockNo is required
+      const hasRecipe = data.recipeId && data.recipeId !== "none" && data.recipeId.trim() !== "";
+      if (!hasRecipe) {
+        return !!data.stockNo && data.stockNo.trim() !== "" && parseFloat(data.stockNo) > 0;
       }
       return true;
     },

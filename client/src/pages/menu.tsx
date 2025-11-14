@@ -39,8 +39,8 @@ const createMenuFormSchema = (t: any) => z.object({
 }).refine(
   (data) => {
     // If no recipe, stockNo is required
-    if (!data.recipeId || data.recipeId === "none") {
-      return !!data.stockNo && data.stockNo.trim() !== "";
+    if (!data.recipeId || data.recipeId === "none" || data.recipeId.trim() === "") {
+      return !!data.stockNo && data.stockNo.trim() !== "" && parseFloat(data.stockNo) > 0;
     }
     return true;
   },
@@ -175,9 +175,11 @@ export default function Menu() {
       });
     },
     onError: (error: any) => {
+      console.error("[Menu Creation Error]", error);
+      const errorMessage = error.message || error.details || "Could not create menu item";
       toast({
         title: t.failedToCreateMenuItem || "Failed to create menu item",
-        description: error.message || "Could not create menu item",
+        description: errorMessage,
         variant: "destructive",
       });
     },

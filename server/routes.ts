@@ -3066,8 +3066,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       
       // If pdfPath exists, serve the file
       if (invoice.pdfPath) {
-        // pdfPath is stored as /invoices/filename.pdf, need to prepend 'public' directory
-        const filePath = path.join(process.cwd(), 'public', invoice.pdfPath);
+        // pdfPath is stored as /invoices/filename.pdf, strip leading slash and join with public directory
+        const relativePath = invoice.pdfPath.replace(/^\/+/, '');
+        const filePath = path.normalize(path.join(process.cwd(), 'public', relativePath));
         console.log('[Invoice Download] Looking for file at:', filePath);
         
         if (fs.existsSync(filePath)) {
@@ -3881,9 +3882,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(404).json({ error: "PDF not available" });
       }
 
-      const pdfFullPath = path.join(process.cwd(), 'public', report.pdfPath);
+      // pdfPath is stored as /vat-reports/filename.pdf, strip leading slash and join with public directory
+      const relativePath = report.pdfPath.replace(/^\/+/, '');
+      const pdfFullPath = path.normalize(path.join(process.cwd(), 'public', relativePath));
       
       if (!fs.existsSync(pdfFullPath)) {
+        console.error('[VAT Report Download] PDF file not found at:', pdfFullPath);
         return res.status(404).json({ error: "PDF file not found" });
       }
 
