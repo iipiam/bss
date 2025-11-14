@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { WelcomeVideo } from "@/components/WelcomeVideo";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { getPlanPricing, type SubscriptionPlan } from "@shared/subscriptionPricing";
+import { getPlanPricing, type SubscriptionPlan, type BusinessType } from "@shared/subscriptionPricing";
 
 const languages: Language[] = ['English', 'Arabic', 'Chinese', 'German', 'Hindi', 'Urdu', 'Bengali'];
 
@@ -41,7 +41,8 @@ export default function Login() {
   const [signupRestaurantName, setSignupRestaurantName] = useState("");
   const [signupNationalId, setSignupNationalId] = useState("");
   const [signupTaxNumber, setSignupTaxNumber] = useState("");
-  const [signupRestaurantType, setSignupRestaurantType] = useState("");
+  const [signupBusinessType, setSignupBusinessType] = useState<BusinessType>("restaurant"); // "restaurant" or "factory"
+  const [signupRestaurantType, setSignupRestaurantType] = useState(""); // Specific subtype (e.g., "Cloud Kitchen", "Restaurant", etc.)
   const [branchesCount, setBranchesCount] = useState(1);
   const [subscriptionPlan, setSubscriptionPlan] = useState("weekly");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -53,13 +54,13 @@ export default function Login() {
 
   // Calculate total price with branches (VAT-inclusive)
   const calculateTotalPrice = () => {
-    const pricing = getPlanPricing(subscriptionPlan as SubscriptionPlan, branchesCount);
+    const pricing = getPlanPricing(subscriptionPlan as SubscriptionPlan, branchesCount, signupBusinessType);
     return pricing.grossAmount.toFixed(2);
   };
   
   // Get pricing breakdown for display
   const getPricingBreakdown = () => {
-    return getPlanPricing(subscriptionPlan as SubscriptionPlan, branchesCount);
+    return getPlanPricing(subscriptionPlan as SubscriptionPlan, branchesCount, signupBusinessType);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -93,6 +94,7 @@ export default function Login() {
       restaurantName: string;
       nationalId: string;
       taxNumber: string;
+      businessType: string;
       restaurantType: string;
       subscriptionPlan: string;
       branchesCount: number;
@@ -226,6 +228,7 @@ export default function Login() {
       restaurantName: signupRestaurantName,
       nationalId: signupNationalId,
       taxNumber: signupTaxNumber,
+      businessType: signupBusinessType,
       restaurantType: signupRestaurantType,
       subscriptionPlan: subscriptionPlan,
       branchesCount: branchesCount,
@@ -441,24 +444,62 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-restaurant-type">Restaurant Type *</Label>
+                  <Label htmlFor="signup-business-type">Business Type *</Label>
                   <Select
-                    value={signupRestaurantType}
-                    onValueChange={setSignupRestaurantType}
+                    value={signupBusinessType}
+                    onValueChange={(value: BusinessType) => {
+                      setSignupBusinessType(value);
+                      setSignupRestaurantType(""); // Reset subtype when business type changes
+                      // Reset to monthly for factory (no weekly option)
+                      if (value === "factory" && subscriptionPlan === "weekly") {
+                        setSubscriptionPlan("monthly");
+                      }
+                    }}
                   >
-                    <SelectTrigger id="signup-restaurant-type" data-testid="select-signup-restaurant-type">
-                      <SelectValue placeholder="Select Restaurant Type" />
+                    <SelectTrigger id="signup-business-type" data-testid="select-signup-business-type">
+                      <SelectValue placeholder="Select Business Type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Cloud Kitchen">Cloud Kitchen</SelectItem>
-                      <SelectItem value="Restaurant">Restaurant</SelectItem>
-                      <SelectItem value="Coffee Shop">Coffee Shop</SelectItem>
-                      <SelectItem value="Tea Shop">Tea Shop</SelectItem>
-                      <SelectItem value="Sweets">Sweets</SelectItem>
-                      <SelectItem value="Bakery">Bakery</SelectItem>
+                      <SelectItem value="restaurant">Restaurant / Food Service</SelectItem>
+                      <SelectItem value="factory">Factory / Manufacturing</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+                
+                {signupBusinessType && (
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-restaurant-type">
+                      {signupBusinessType === "factory" ? "Factory Type *" : "Restaurant Type *"}
+                    </Label>
+                    <Select
+                      value={signupRestaurantType}
+                      onValueChange={setSignupRestaurantType}
+                    >
+                      <SelectTrigger id="signup-restaurant-type" data-testid="select-signup-restaurant-type">
+                        <SelectValue placeholder={signupBusinessType === "factory" ? "Select Factory Type" : "Select Restaurant Type"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {signupBusinessType === "restaurant" ? (
+                          <>
+                            <SelectItem value="Cloud Kitchen">Cloud Kitchen</SelectItem>
+                            <SelectItem value="Restaurant">Restaurant</SelectItem>
+                            <SelectItem value="Coffee Shop">Coffee Shop</SelectItem>
+                            <SelectItem value="Tea Shop">Tea Shop</SelectItem>
+                            <SelectItem value="Sweets">Sweets</SelectItem>
+                            <SelectItem value="Bakery">Bakery</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                            <SelectItem value="Production">Production</SelectItem>
+                            <SelectItem value="Assembly">Assembly</SelectItem>
+                            <SelectItem value="Processing">Processing</SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="signup-commercial-reg">{t.commercialRegistration} *</Label>
                   <Input
@@ -487,7 +528,11 @@ export default function Login() {
                     data-testid="input-signup-branches"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Additional branches: +{(getPlanPricing('weekly', 2).grossAmount - getPlanPricing('weekly', 1).grossAmount).toFixed(2)} {t.sar}/week, +{(getPlanPricing('monthly', 2).grossAmount - getPlanPricing('monthly', 1).grossAmount).toFixed(2)} {t.sar}/month per branch (VAT included)
+                    {signupBusinessType === "factory" ? (
+                      `Additional branches: +${(getPlanPricing('monthly', 2, 'factory').grossAmount - getPlanPricing('monthly', 1, 'factory').grossAmount).toFixed(2)} ${t.sar}/month per branch (VAT included)`
+                    ) : (
+                      `Additional branches: +${(getPlanPricing('weekly', 2, 'restaurant').grossAmount - getPlanPricing('weekly', 1, 'restaurant').grossAmount).toFixed(2)} ${t.sar}/week, +${(getPlanPricing('monthly', 2, 'restaurant').grossAmount - getPlanPricing('monthly', 1, 'restaurant').grossAmount).toFixed(2)} ${t.sar}/month per branch (VAT included)`
+                    )}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -519,28 +564,30 @@ export default function Login() {
                 <div className="space-y-3">
                   <Label>{t.subscriptionPlan}</Label>
                   <RadioGroup value={subscriptionPlan} onValueChange={setSubscriptionPlan} data-testid="radiogroup-subscription">
-                    <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors ${
-                      subscriptionPlan === 'weekly' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-                    }`}>
-                      <RadioGroupItem value="weekly" id="weekly" data-testid="radio-weekly" />
-                      <Label htmlFor="weekly" className="flex-1 cursor-pointer">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-semibold">Weekly</p>
-                            <p className="text-sm text-muted-foreground">Billed weekly</p>
-                            {branchesCount > 1 && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {branchesCount} branches
-                              </p>
-                            )}
+                    {signupBusinessType === "restaurant" && (
+                      <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors ${
+                        subscriptionPlan === 'weekly' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                      }`}>
+                        <RadioGroupItem value="weekly" id="weekly" data-testid="radio-weekly" />
+                        <Label htmlFor="weekly" className="flex-1 cursor-pointer">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-semibold">Weekly</p>
+                              <p className="text-sm text-muted-foreground">Billed weekly</p>
+                              {branchesCount > 1 && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {branchesCount} branches
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xl font-bold">{getPlanPricing('weekly', branchesCount, signupBusinessType).grossAmount.toFixed(2)} {t.sar}</p>
+                              <p className="text-xs text-muted-foreground">per week (VAT included)</p>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-xl font-bold">{getPlanPricing('weekly', branchesCount).grossAmount.toFixed(2)} {t.sar}</p>
-                            <p className="text-xs text-muted-foreground">per week (VAT included)</p>
-                          </div>
-                        </div>
-                      </Label>
-                    </div>
+                        </Label>
+                      </div>
+                    )}
 
                     <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors ${
                       subscriptionPlan === 'monthly' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
@@ -558,7 +605,7 @@ export default function Login() {
                             )}
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold">{getPlanPricing('monthly', branchesCount).grossAmount.toFixed(2)} {t.sar}</p>
+                            <p className="text-xl font-bold">{getPlanPricing('monthly', branchesCount, signupBusinessType).grossAmount.toFixed(2)} {t.sar}</p>
                             <p className="text-xs text-muted-foreground">{t.perMonth} (VAT included)</p>
                           </div>
                         </div>
@@ -586,7 +633,7 @@ export default function Login() {
                             </Badge>
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold">{getPlanPricing('yearly', branchesCount).grossAmount.toFixed(2)} {t.sar}</p>
+                            <p className="text-xl font-bold">{getPlanPricing('yearly', branchesCount, signupBusinessType).grossAmount.toFixed(2)} {t.sar}</p>
                             <p className="text-xs text-muted-foreground">{t.perYear} (VAT included)</p>
                           </div>
                         </div>

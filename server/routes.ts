@@ -32,7 +32,7 @@ import {
   insertInvestorSchema,
   updateInvestorSchema,
 } from "@shared/schema";
-import { getPlanPricing, type SubscriptionPlan } from "@shared/subscriptionPricing";
+import { getPlanPricing, type SubscriptionPlan, type BusinessType } from "@shared/subscriptionPricing";
 import { ADMIN_PERMISSIONS, type PermissionSet } from "@shared/permissions";
 
 // WebSocket clients with session context for multi-tenant filtering
@@ -1386,17 +1386,26 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // Public endpoint for user signup
   app.post("/api/auth/signup", async (req, res) => {
     try {
-      const { username, password, name, email, commercialRegistration, restaurantName, nationalId, taxNumber, restaurantType, subscriptionPlan, branchesCount } = req.body;
+      const { username, password, name, email, commercialRegistration, restaurantName, nationalId, taxNumber, businessType, restaurantType, subscriptionPlan, branchesCount } = req.body;
       
-      if (!username || !password || !name || !email || !commercialRegistration || !restaurantName || !nationalId || !taxNumber || !restaurantType || !subscriptionPlan || !branchesCount) {
-        return res.status(400).json({ error: "All fields are required including Restaurant Name, National ID, Tax Number, Restaurant Type, Commercial Registration, subscription plan, and number of branches" });
+      if (!username || !password || !name || !email || !commercialRegistration || !restaurantName || !nationalId || !taxNumber || !businessType || !restaurantType || !subscriptionPlan || !branchesCount) {
+        return res.status(400).json({ error: "All fields are required including Restaurant Name, National ID, Tax Number, Business Type, Restaurant Type, Commercial Registration, subscription plan, and number of branches" });
       }
 
-      // NO restaurant type validation - allow any type
+      // Validate business type
+      if (!['restaurant', 'factory'].includes(businessType)) {
+        return res.status(400).json({ error: "Invalid business type. Must be 'restaurant' or 'factory'" });
+      }
 
       // Validate subscription plan
       if (!['weekly', 'monthly', 'yearly'].includes(subscriptionPlan)) {
         return res.status(400).json({ error: "Invalid subscription plan" });
+      }
+
+      // Validate subscription plan based on business type
+      // Factory businesses can only have monthly or yearly plans (no weekly)
+      if (businessType === 'factory' && subscriptionPlan === 'weekly') {
+        return res.status(400).json({ error: "Factory businesses can only have monthly or yearly subscription plans" });
       }
 
       // Validate branches count
@@ -1417,7 +1426,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         nationalId,
         taxNumber,
         commercialRegistration,
-        type: restaurantType, // No validation - any type allowed
+        businessType, // "restaurant" or "factory"
+        type: restaurantType, // Specific subtype (e.g., "Cloud Kitchen", "Manufacturing")
         subscriptionPlan,
         branchesCount: branches,
         subscriptionStatus: "inactive" as const, // Will be activated after payment
@@ -1442,10 +1452,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Generate subscription invoice
       try {
         // Calculate subscription prices using shared pricing module
-        const pricing = getPlanPricing(subscriptionPlan as SubscriptionPlan, branches);
+        const pricing = getPlanPricing(subscriptionPlan as SubscriptionPlan, branches, businessType as BusinessType);
         
         // For invoice line-item breakdown, calculate base plan and additional branches separately
-        const basePlanPricing = getPlanPricing(subscriptionPlan as SubscriptionPlan, 1);
+        const basePlanPricing = getPlanPricing(subscriptionPlan as SubscriptionPlan, 1, businessType as BusinessType);
         const basePlanPrice = basePlanPricing.netAmount; // Net price for base plan (1 branch)
         
         const additionalBranchesCount = Math.max(0, branches - 1);

@@ -80,6 +80,30 @@ export const insertRecipeSchema = createInsertSchema(recipes).omit({ id: true })
 export type InsertRecipe = z.infer<typeof insertRecipeSchema>;
 export type Recipe = typeof recipes.$inferSelect;
 
+// Factory Products (for factory business type only)
+export const factoryProducts = pgTable("factory_products", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  name: text("name").notNull(),
+  category: text("category").notNull(),
+  weight: text("weight"), // e.g., "10kg", "500g"
+  length: text("length"), // e.g., "100cm", "5m"
+  productType: text("product_type"), // Type of product (e.g., "Steel", "Wood", "Plastic")
+  colour: text("colour"),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull().default("0"),
+  thickness: text("thickness"), // e.g., "2mm", "5cm"
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(), // VAT-inclusive price (15% Saudi VAT)
+  basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(), // Price before VAT
+  vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).notNull(), // VAT amount (15%)
+  description: text("description"),
+  available: boolean("available").notNull().default(true),
+  imageUrl: text("image_url"),
+});
+
+export const insertFactoryProductSchema = createInsertSchema(factoryProducts).omit({ id: true });
+export type InsertFactoryProduct = z.infer<typeof insertFactoryProductSchema>;
+export type FactoryProduct = typeof factoryProducts.$inferSelect;
+
 // Menu Items
 export const menuItems = pgTable("menu_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
