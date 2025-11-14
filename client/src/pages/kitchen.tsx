@@ -7,6 +7,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Order } from "@shared/schema";
 import { useDeviceLayout } from "@/lib/mobileLayout";
+import { useBusinessType } from "@/hooks/useBusinessType";
 import { useEffect } from "react";
 
 function KitchenOrderCard({ 
@@ -103,6 +104,7 @@ function KitchenOrderCard({
 export default function Kitchen() {
   const { toast } = useToast();
   const layout = useDeviceLayout();
+  const { labels } = useBusinessType();
   
   const { data: orders = [], isLoading, isError, error, refetch } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
@@ -151,7 +153,7 @@ export default function Kitchen() {
   if (isLoading) {
     return (
       <div className={layout.padding}>
-        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Kitchen Display</h1>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>{labels.kitchen} Display</h1>
         <p className="text-muted-foreground">Loading orders...</p>
       </div>
     );
@@ -160,7 +162,7 @@ export default function Kitchen() {
   if (isError) {
     return (
       <div className={layout.padding}>
-        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Kitchen Display</h1>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>{labels.kitchen} Display</h1>
         <Card>
           <CardContent className="py-8 text-center">
             <p className="text-destructive mb-4">
@@ -178,7 +180,7 @@ export default function Kitchen() {
   return (
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div>
-        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Kitchen Display</h1>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>{labels.kitchen} Display</h1>
         <p className="text-muted-foreground">Real-time order tracking and preparation guidance</p>
       </div>
 

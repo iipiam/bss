@@ -26,6 +26,10 @@ export interface Translations {
   settings: string;
   pos: string;
   logout: string;
+  shop: string;  // Restaurant terminology
+  factory: string;  // Factory business type: replaces "shop"
+  product: string;  // Factory terminology: singular "Product" (replaces "Menu Item")
+  menuItem: string;  // Restaurant terminology: "Menu Item"
   
   // Navigation Groups
   operations: string;
@@ -1425,6 +1429,9 @@ export const translations: Record<Language, Translations> = {
     
     // Shop
     shop: 'Shop',
+    factory: 'Factory',
+    product: 'Product',
+    menuItem: 'Menu Item',
     shopTitle: 'Shop',
     shopDescription: 'Manage employee salaries and shop expenses',
     shopExpenses: 'Shop Expenses',
@@ -2216,6 +2223,9 @@ export const translations: Record<Language, Translations> = {
     createTicketDialogDesc: 'صف مشكلتك وسيساعدك فريق الدعم لدينا',
 // Shop
     shop: 'المتجر',
+    factory: 'المصنع',
+    product: 'منتج',
+    menuItem: 'عنصر القائمة',
     shopExpenses: 'مصاريف المتجر',
     salaries: 'الرواتب',
     salary: 'راتب',
@@ -2993,6 +3003,9 @@ export const translations: Record<Language, Translations> = {
     createTicketDialogDesc: '描述您的问题，我们的支持团队将帮助您',
 // Shop
     shop: '商店',
+    factory: '工厂',
+    product: '产品',
+    menuItem: '菜单项',
     shopExpenses: '商店费用',
     salaries: '薪资',
     salary: '工资',
@@ -3770,6 +3783,9 @@ export const translations: Record<Language, Translations> = {
     createTicketDialogDesc: 'Beschreiben Sie Ihr Problem und unser Support-Team wird Ihnen helfen',
 // Shop
     shop: 'Geschäft',
+    factory: 'Fabrik',
+    product: 'Produkt',
+    menuItem: 'Menüpunkt',
     shopExpenses: 'Geschäftsausgaben',
     salaries: 'Gehälter',
     salary: 'Gehalt',
@@ -4547,6 +4563,9 @@ export const translations: Record<Language, Translations> = {
     createTicketDialogDesc: 'अपनी समस्या का वर्णन करें और हमारी समर्थन टीम आपकी मदद करेगी',
 // Shop
     shop: 'दुकान',
+    factory: 'फैक्ट्री',
+    product: 'उत्पाद',
+    menuItem: 'मेनू आइटम',
     shopExpenses: 'दुकान व्यय',
     salaries: 'वेतन',
     salary: 'वेतन',
@@ -5324,6 +5343,9 @@ export const translations: Record<Language, Translations> = {
     createTicketDialogDesc: 'اپنے مسئلے کی وضاحت کریں اور ہماری سپورٹ ٹیم آپ کی مدد کرے گی',
 // Shop
     shop: 'دکان',
+    factory: 'فیکٹری',
+    product: 'پروڈکٹ',
+    menuItem: 'مینو آئٹم',
     shopExpenses: 'دکان کے اخراجات',
     salaries: 'تنخواہیں',
     salary: 'تنخواہ',
@@ -6101,6 +6123,9 @@ export const translations: Record<Language, Translations> = {
     createTicketDialogDesc: 'আপনার সমস্যা বর্ণনা করুন এবং আমাদের সাপোর্ট টিম আপনাকে সাহায্য করবে',
 // Shop
     shop: 'দোকান',
+    factory: 'কারখানা',
+    product: 'পণ্য',
+    menuItem: 'মেনু আইটেম',
     shopExpenses: 'দোকান খরচ',
     salaries: 'বেতন',
     salary: 'বেতন',
@@ -6819,6 +6844,9 @@ export const translations: Record<Language, Translations> = {
     noTicketsWithStatus: "No tickets found with this status",
     createTicketDialogDesc: "Describe your issue and our support team will help you",
     shop: "Shop",
+    factory: "Fabbrica",
+    product: "Prodotto",
+    menuItem: "Voce di Menu",
     shopTitle: "Shop",
     shopDescription: "Manage employee salaries and shop expenses",
     shopExpenses: "Shop Expenses",
@@ -7527,6 +7555,9 @@ export const translations: Record<Language, Translations> = {
     noTicketsWithStatus: "No tickets found with this status",
     createTicketDialogDesc: "Describe your issue and our support team will help you",
     shop: "Shop",
+    factory: "Fábrica",
+    product: "Producto",
+    menuItem: "Artículo de Menú",
     shopTitle: "Shop",
     shopDescription: "Manage employee salaries and shop expenses",
     shopExpenses: "Shop Expenses",
@@ -8235,6 +8266,9 @@ export const translations: Record<Language, Translations> = {
     noTicketsWithStatus: "No tickets found with this status",
     createTicketDialogDesc: "Describe your issue and our support team will help you",
     shop: "Shop",
+    factory: "Pabrika",
+    product: "Produkto",
+    menuItem: "Menu Item",
     shopTitle: "Shop",
     shopDescription: "Manage employee salaries and shop expenses",
     shopExpenses: "Shop Expenses",
