@@ -153,11 +153,20 @@ export default function Recipes() {
   const [prepTime, setPrepTime] = useState("");
   const [cookTime, setCookTime] = useState("");
   const [servings, setServings] = useState("");
-  const [cost, setCost] = useState("");
   const [ingredients, setIngredients] = useState([{ inventoryItemId: "", name: "", quantity: "", unit: "", unitPrice: 0 }]);
   const [steps, setSteps] = useState([""]);
   const { toast } = useToast();
   const { t } = useLanguage();
+  
+  // Calculate total cost using useMemo to avoid infinite loops
+  const cost = useMemo(() => {
+    const totalCost = ingredients.reduce((sum, ingredient) => {
+      const quantity = parseFloat(ingredient.quantity) || 0;
+      const price = ingredient.unitPrice || 0;
+      return sum + (quantity * price);
+    }, 0);
+    return totalCost.toFixed(2);
+  }, [ingredients]);
 
   const { data: recipesData = [], isLoading } = useQuery<Recipe[]>({
     queryKey: ["/api/recipes"],
@@ -311,7 +320,7 @@ export default function Recipes() {
     setPrepTime(recipe.prepTime);
     setCookTime(recipe.cookTime);
     setServings(recipe.servings.toString());
-    setCost(recipe.cost);
+    // Note: cost is now auto-calculated from ingredients
     setIngredients(recipe.ingredients.map(ing => ({
       inventoryItemId: ing.inventoryItemId,
       name: ing.name,
@@ -339,7 +348,7 @@ export default function Recipes() {
     setPrepTime("");
     setCookTime("");
     setServings("");
-    setCost("");
+    // Note: cost is auto-calculated, no need to reset
     setIngredients([{ inventoryItemId: "", name: "", quantity: "", unit: "", unitPrice: 0 }]);
     setSteps([""]);
     setEditingRecipe(null);
@@ -374,18 +383,6 @@ export default function Recipes() {
     }
   };
 
-  // Calculate total cost automatically when ingredients change
-  useEffect(() => {
-    const totalCost = ingredients.reduce((sum, ingredient) => {
-      const quantity = parseFloat(ingredient.quantity) || 0;
-      const price = ingredient.unitPrice || 0;
-      return sum + (quantity * price);
-    }, 0);
-    
-    const newCost = totalCost.toFixed(2);
-    // Only update if cost actually changed to prevent infinite loop
-    setCost(prevCost => prevCost === newCost ? prevCost : newCost);
-  }, [ingredients]);
 
   const addStep = () => {
     setSteps([...steps, ""]);
@@ -653,12 +650,11 @@ export default function Recipes() {
                   <Label htmlFor="cost">Total Cost (SAR)</Label>
                   <Input
                     id="cost"
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={cost}
-                    onChange={(e) => setCost(e.target.value)}
                     placeholder="Auto-calculated"
                     disabled
+                    readOnly
                     data-testid="input-cost"
                     className="bg-muted"
                   />
