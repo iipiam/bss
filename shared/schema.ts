@@ -143,18 +143,15 @@ export const updateMenuItemSchema = baseMenuItemSchema.partial().superRefine((da
     }
   }
   
-  // Only validate stockNo if inventory/recipe fields are being updated
-  if (data.inventoryItemId !== undefined || data.recipeId !== undefined || data.stockNo !== undefined) {
-    const hasInventoryItem = data.inventoryItemId && data.inventoryItemId !== "none";
-    const hasRecipe = data.recipeId && data.recipeId !== "none";
-    if (hasInventoryItem && !hasRecipe) {
-      if (!data.stockNo || data.stockNo.trim() === "") {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Stock quantity is required for non-recipe items",
-          path: ["stockNo"],
-        });
-      }
+  // If stockNo is provided during update, validate it's a positive number
+  if (data.stockNo !== undefined && data.stockNo !== null && data.stockNo.trim() !== "") {
+    const stockNum = parseFloat(data.stockNo);
+    if (isNaN(stockNum) || stockNum <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Stock quantity must be a positive number",
+        path: ["stockNo"],
+      });
     }
   }
 });

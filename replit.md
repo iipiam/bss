@@ -36,9 +36,9 @@ Preferred communication style: Simple, everyday language.
 
 ### Core Features
 - **Analytics & Reporting**: Dashboard with DoD, WoW, MoM, YoY metrics, daily demand forecasting, peak hours analysis.
-- **ZATCA Compliance**: Bilingual PDF invoice generation (Arabic/English) with QR codes using Puppeteer, dedicated invoice management page.
+- **ZATCA Compliance**: Bilingual PDF invoice generation (Arabic/English) with QR codes using Puppeteer, dedicated invoice management page. **PDF Download Security (Nov 2025)**: All PDF download endpoints (invoices, VAT reports) normalize stored paths by stripping leading slashes before joining with public directory, preventing path traversal vulnerabilities while correctly resolving database paths like `/invoices/file.pdf` to `public/invoices/file.pdf`.
 - **Delivery App Cost Calculation**: Formula for calculating commission, banking fees, VAT, and POS fees to determine net income.
-- **Management Modules**: Full CRUD for Customer, Menu Item (with discount system), Inventory (Excel import/export), and Recipe (inventory-linked costing).
+- **Management Modules**: Full CRUD for Customer, Menu Item (with discount system), Inventory (Excel import/export), and Recipe (inventory-linked costing). **Menu Item Validation (Nov 2025)**: Stock quantity (stockNo) is optional for all menu items. When provided, validated as positive number. Both insert and update schemas aligned. Current UI supports two workflows: (1) Recipe-based items with optional stock, (2) Non-recipe items with optional manual stock entry. Inventory-linked items (inventoryItemId) not currently supported in UI but schema allows for future implementation.
 - **Daily Stock Management**: Real-time stock calculation for menu items based on inventory and recipes, displayed on POS.
 - **Real-Time Inventory Deduction**: Automatic inventory deduction on POS orders with validation, rollback, branch consistency, and audit trail.
 - **Financial Features**: PDF export for financial statements, Excel export/import.
