@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport } from "./invoice";
+import { PasswordResetMailer } from "./email";
 import { sanitizePatchBody } from "./utils";
 import { requirePermission, requireAnyPermission, requireAllPermissions } from "./middleware/requirePermission";
 import bcrypt from "bcrypt";
@@ -1642,13 +1643,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Save reset token to database
       await storage.setPasswordResetToken(user.id, resetToken, resetExpiry);
 
-      // TODO: In production, send email with reset link
-      // For development only, log the token (in production this would be sent via email)
+      // Send password reset email
+      const mailer = new PasswordResetMailer();
+      const baseUrl = req.headers.origin || `${req.protocol}://${req.get('host')}`;
+      const emailResult = await mailer.sendPasswordResetEmail(email, resetToken, baseUrl);
+
+      // Log for development (fallback if email fails)
       if (process.env.NODE_ENV === 'development') {
-        console.log(`[DEV ONLY] Password reset token for ${email}: ${resetToken}`);
-        console.log(`[DEV ONLY] Reset link: ${req.headers.origin}/reset-password?token=${resetToken}`);
+        console.log(`[DEV] Password reset token for ${email}: ${resetToken}`);
+        console.log(`[DEV] Reset link: ${baseUrl}/reset-password?token=${resetToken}`);
+        if (!emailResult.success) {
+          console.log(`[DEV] Email failed: ${emailResult.error} - Token logged above for testing`);
+        }
       }
 
+      // Always return success message (don't reveal if email was sent)
       res.json({ message: "If an account with that email exists, we've sent a password reset link" });
     } catch (error) {
       console.error("Forgot password error:", error);
