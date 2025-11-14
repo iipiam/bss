@@ -145,18 +145,20 @@ export default function Menu() {
         discount: discountNum.toFixed(2),
         available: true,
         imageUrl: data.imageUrl || null,
+        inventoryItemId: null, // Set to null for menu items (handled via recipes or stockNo)
       };
 
       // Only include recipeId if it's set and not "none"
       if (data.recipeId && data.recipeId !== "none") {
         menuItemData.recipeId = data.recipeId;
         menuItemData.portionSize = data.portionSize || "1.00";
+      } else {
+        menuItemData.recipeId = null;
+        menuItemData.portionSize = null;
       }
 
-      // Include stockNo if provided
-      if (data.stockNo) {
-        menuItemData.stockNo = data.stockNo;
-      }
+      // Include stockNo if provided, otherwise set to null
+      menuItemData.stockNo = data.stockNo && data.stockNo.trim() !== "" ? data.stockNo : null;
 
       return await apiRequest("POST", "/api/menu", menuItemData);
     },

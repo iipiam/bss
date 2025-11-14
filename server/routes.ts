@@ -3066,11 +3066,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       
       // If pdfPath exists, serve the file
       if (invoice.pdfPath) {
-        const filePath = path.join(process.cwd(), invoice.pdfPath);
+        // pdfPath is stored as /invoices/filename.pdf, need to prepend 'public' directory
+        const filePath = path.join(process.cwd(), 'public', invoice.pdfPath);
+        console.log('[Invoice Download] Looking for file at:', filePath);
+        
         if (fs.existsSync(filePath)) {
           res.setHeader('Content-Type', 'application/pdf');
           res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`);
           return res.sendFile(filePath);
+        } else {
+          console.error('[Invoice Download] PDF file not found at:', filePath);
         }
       }
       
