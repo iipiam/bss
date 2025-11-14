@@ -51,6 +51,13 @@ const createMenuFormSchema = (t: any) => z.object({
 
 type MenuFormValues = z.infer<ReturnType<typeof createMenuFormSchema>>;
 
+// Helper function to format toast messages with business-type-aware labels
+const formatToast = (template: string | undefined, label: string | undefined): string => {
+  if (!template && !label) return '';
+  if (!template) return label ?? '';
+  return template.includes('%s') ? template.replace('%s', label ?? '') : template;
+};
+
 export default function Menu() {
   const layout = useDeviceLayout();
   const { t } = useLanguage();
@@ -173,7 +180,7 @@ export default function Menu() {
       setImageFile(null);
       setImagePreview(null);
       toast({
-        title: `${labels.menuItem} created`,
+        title: formatToast(t.itemCreatedTitle, labels.menuItem),
         description: t.itemAdded || "The item has been added successfully",
       });
     },
@@ -181,7 +188,7 @@ export default function Menu() {
       console.error("[Menu Creation Error]", error);
       const errorMessage = error.message || error.details || `Could not create ${labels.menuItem.toLowerCase()}`;
       toast({
-        title: `Failed to create ${labels.menuItem.toLowerCase()}`,
+        title: formatToast(t.itemCreateFailedTitle, labels.menuItem),
         description: errorMessage,
         variant: "destructive",
       });
@@ -226,13 +233,13 @@ export default function Menu() {
       setEditingItem(null);
       form.reset();
       toast({
-        title: `${labels.menuItem} updated`,
+        title: formatToast(t.itemUpdatedTitle, labels.menuItem),
         description: t.itemUpdated || "The item has been updated successfully",
       });
     },
     onError: (error: any) => {
       toast({
-        title: `Failed to update ${labels.menuItem.toLowerCase()}`,
+        title: formatToast(t.itemUpdateFailedTitle, labels.menuItem),
         description: error.message || `Could not update ${labels.menuItem.toLowerCase()}`,
         variant: "destructive",
       });
@@ -248,13 +255,13 @@ export default function Menu() {
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       setDeletingItem(null);
       toast({
-        title: `${labels.menuItem} deleted`,
+        title: formatToast(t.itemDeletedTitle, labels.menuItem),
         description: t.itemDeleted || "The item has been removed successfully",
       });
     },
     onError: (error: any) => {
       toast({
-        title: `Failed to delete ${labels.menuItem.toLowerCase()}`,
+        title: formatToast(t.itemDeleteFailedTitle, labels.menuItem),
         description: error.message || `Could not delete ${labels.menuItem.toLowerCase()}`,
         variant: "destructive",
       });
@@ -269,7 +276,7 @@ export default function Menu() {
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
-        title: `${labels.menuItem} updated`,
+        title: formatToast(t.itemUpdatedTitle, labels.menuItem),
         description: t.itemUpdated || "Availability has been updated successfully",
       });
     },

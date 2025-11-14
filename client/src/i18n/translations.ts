@@ -383,6 +383,12 @@ export interface Translations {
   itemAdded: string;
   itemUpdated: string;
   itemDeleted: string;
+  itemCreatedTitle: string;  // Toast title with %s placeholder for item type
+  itemUpdatedTitle: string;  // Toast title with %s placeholder for item type
+  itemDeletedTitle: string;  // Toast title with %s placeholder for item type
+  itemCreateFailedTitle: string;  // Toast error title with %s placeholder
+  itemUpdateFailedTitle: string;  // Toast error title with %s placeholder
+  itemDeleteFailedTitle: string;  // Toast error title with %s placeholder
   settingsUpdated: string;
   savingSettings: string;
   employeeCreated: string;
@@ -637,7 +643,6 @@ export interface Translations {
   createTicketDialogDesc: string;
   
   // Shop
-  shop: string;
   shopTitle: string;
   shopDescription: string;
   shopExpenses: string;
@@ -1175,6 +1180,12 @@ export const translations: Record<Language, Translations> = {
     itemAdded: 'Item added successfully',
     itemUpdated: 'Item updated successfully',
     itemDeleted: 'Item deleted successfully',
+    itemCreatedTitle: '%s created',
+    itemUpdatedTitle: '%s updated',
+    itemDeletedTitle: '%s deleted',
+    itemCreateFailedTitle: 'Failed to create %s',
+    itemUpdateFailedTitle: 'Failed to update %s',
+    itemDeleteFailedTitle: 'Failed to delete %s',
     settingsUpdated: 'Settings updated successfully',
     savingSettings: 'Saving...',
     employeeCreated: 'Employee created',
@@ -1970,6 +1981,12 @@ export const translations: Record<Language, Translations> = {
     itemAdded: 'تمت إضافة العنصر بنجاح',
     itemUpdated: 'تم تحديث العنصر بنجاح',
     itemDeleted: 'تم حذف العنصر بنجاح',
+    itemCreatedTitle: 'تم إنشاء %s',
+    itemUpdatedTitle: 'تم تحديث %s',
+    itemDeletedTitle: 'تم حذف %s',
+    itemCreateFailedTitle: 'فشل في إنشاء %s',
+    itemUpdateFailedTitle: 'فشل في تحديث %s',
+    itemDeleteFailedTitle: 'فشل في حذف %s',
     settingsUpdated: 'تم تحديث الإعدادات بنجاح',
     savingSettings: 'جاري الحفظ...',
     employeeCreated: 'تم إنشاء الموظف',
@@ -2765,6 +2782,12 @@ export const translations: Record<Language, Translations> = {
     itemAdded: '项目添加成功',
     itemUpdated: '项目更新成功',
     itemDeleted: '项目删除成功',
+    itemCreatedTitle: '%s已创建',
+    itemUpdatedTitle: '%s已更新',
+    itemDeletedTitle: '%s已删除',
+    itemCreateFailedTitle: '无法创建%s',
+    itemUpdateFailedTitle: '无法更新%s',
+    itemDeleteFailedTitle: '无法删除%s',
     settingsUpdated: '设置更新成功',
     savingSettings: '保存中...',
     employeeCreated: '员工已创建',
@@ -3546,6 +3569,12 @@ export const translations: Record<Language, Translations> = {
     itemAdded: 'Element erfolgreich hinzugefügt',
     itemUpdated: 'Element erfolgreich aktualisiert',
     itemDeleted: 'Element erfolgreich gelöscht',
+    itemCreatedTitle: '%s erstellt',
+    itemUpdatedTitle: '%s aktualisiert',
+    itemDeletedTitle: '%s gelöscht',
+    itemCreateFailedTitle: '%s konnte nicht erstellt werden',
+    itemUpdateFailedTitle: '%s konnte nicht aktualisiert werden',
+    itemDeleteFailedTitle: '%s konnte nicht gelöscht werden',
     settingsUpdated: 'Einstellungen erfolgreich aktualisiert',
     savingSettings: 'Speichern...',
     employeeCreated: 'Mitarbeiter erstellt',
@@ -4327,6 +4356,12 @@ export const translations: Record<Language, Translations> = {
     itemAdded: 'आइटम सफलतापूर्वक जोड़ा गया',
     itemUpdated: 'आइटम सफलतापूर्वक अपडेट किया गया',
     itemDeleted: 'आइटम सफलतापूर्वक हटाया गया',
+    itemCreatedTitle: '%s बनाया गया',
+    itemUpdatedTitle: '%s अपडेट किया गया',
+    itemDeletedTitle: '%s हटाया गया',
+    itemCreateFailedTitle: '%s बनाने में विफल',
+    itemUpdateFailedTitle: '%s अपडेट करने में विफल',
+    itemDeleteFailedTitle: '%s हटाने में विफल',
     settingsUpdated: 'सेटिंग्स सफलतापूर्वक अपडेट की गईं',
     savingSettings: 'सहेजा जा रहा है...',
     employeeCreated: 'कर्मचारी बनाया गया',
@@ -5108,6 +5143,12 @@ export const translations: Record<Language, Translations> = {
     itemAdded: 'آئٹم کامیابی سے شامل کیا گیا',
     itemUpdated: 'آئٹم کامیابی سے اپ ڈیٹ کیا گیا',
     itemDeleted: 'آئٹم کامیابی سے حذف کیا گیا',
+    itemCreatedTitle: '%s تخلیق کیا گیا',
+    itemUpdatedTitle: '%s اپ ڈیٹ کیا گیا',
+    itemDeletedTitle: '%s حذف کیا گیا',
+    itemCreateFailedTitle: '%s بنانے میں ناکام',
+    itemUpdateFailedTitle: '%s اپ ڈیٹ کرنے میں ناکام',
+    itemDeleteFailedTitle: '%s حذف کرنے میں ناکام',
     settingsUpdated: 'ترتیبات کامیابی سے اپ ڈیٹ ہو گئیں',
     savingSettings: 'محفوظ ہو رہا ہے...',
     employeeCreated: 'ملازم بنایا گیا',
@@ -5889,6 +5930,12 @@ export const translations: Record<Language, Translations> = {
     itemAdded: 'আইটেম সফলভাবে যোগ করা হয়েছে',
     itemUpdated: 'আইটেম সফলভাবে আপডেট করা হয়েছে',
     itemDeleted: 'আইটেম সফলভাবে মুছে ফেলা হয়েছে',
+    itemCreatedTitle: '%s তৈরি করা হয়েছে',
+    itemUpdatedTitle: '%s আপডেট করা হয়েছে',
+    itemDeletedTitle: '%s মুছে ফেলা হয়েছে',
+    itemCreateFailedTitle: '%s তৈরি করতে ব্যর্থ',
+    itemUpdateFailedTitle: '%s আপডেট করতে ব্যর্থ',
+    itemDeleteFailedTitle: '%s মুছে ফেলতে ব্যর্থ',
     settingsUpdated: 'সেটিংস সফলভাবে আপডেট হয়েছে',
     savingSettings: 'সংরক্ষণ করা হচ্ছে...',
     employeeCreated: 'কর্মচারী তৈরি করা হয়েছে',
@@ -6623,6 +6670,12 @@ export const translations: Record<Language, Translations> = {
     itemAdded: "Item added successfully",
     itemUpdated: "Item updated successfully",
     itemDeleted: "Item deleted successfully",
+    itemCreatedTitle: '%s creato',
+    itemUpdatedTitle: '%s aggiornato',
+    itemDeletedTitle: '%s eliminato',
+    itemCreateFailedTitle: 'Impossibile creare %s',
+    itemUpdateFailedTitle: 'Impossibile aggiornare %s',
+    itemDeleteFailedTitle: 'Impossibile eliminare %s',
     settingsUpdated: "Settings updated successfully",
     savingSettings: "Saving...",
     employeeCreated: "Employee created",
@@ -7335,6 +7388,12 @@ export const translations: Record<Language, Translations> = {
     itemAdded: "Item added successfully",
     itemUpdated: "Item updated successfully",
     itemDeleted: "Item deleted successfully",
+    itemCreatedTitle: '%s creado',
+    itemUpdatedTitle: '%s actualizado',
+    itemDeletedTitle: '%s eliminado',
+    itemCreateFailedTitle: 'Error al crear %s',
+    itemUpdateFailedTitle: 'Error al actualizar %s',
+    itemDeleteFailedTitle: 'Error al eliminar %s',
     settingsUpdated: "Settings updated successfully",
     savingSettings: "Saving...",
     employeeCreated: "Employee created",
@@ -8047,6 +8106,12 @@ export const translations: Record<Language, Translations> = {
     itemAdded: "Item added successfully",
     itemUpdated: "Item updated successfully",
     itemDeleted: "Item deleted successfully",
+    itemCreatedTitle: '%s nilikha',
+    itemUpdatedTitle: '%s na-update',
+    itemDeletedTitle: '%s tinanggal',
+    itemCreateFailedTitle: 'Nabigong lumikha ng %s',
+    itemUpdateFailedTitle: 'Nabigong i-update ang %s',
+    itemDeleteFailedTitle: 'Nabigong tanggalin ang %s',
     settingsUpdated: "Settings updated successfully",
     savingSettings: "Saving...",
     employeeCreated: "Employee created",
