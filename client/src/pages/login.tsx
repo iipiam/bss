@@ -108,8 +108,17 @@ export default function Login() {
       });
       
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create account");
+        // Safely parse JSON response, fallback to empty object if response is not JSON
+        let error;
+        try {
+          error = await response.json();
+        } catch {
+          // Non-JSON response (500 errors, plain text, HTML, etc.)
+          error = { error: undefined };
+        }
+        // TODO: Implement backend error code system (e.g., USERNAME_TAKEN, INVALID_TAX_NUMBER)
+        // to map to translation keys for precise localized error messages
+        throw error; // Throw the entire error object to be handled by onError
       }
       
       return response.json();
@@ -170,7 +179,7 @@ export default function Login() {
     onError: (error: any) => {
       toast({
         title: t.signUpFailed,
-        description: error.message || t.signUpFailedDesc,
+        description: error.error || error.message || t.signUpFailedDesc,
         variant: "destructive",
       });
     },
