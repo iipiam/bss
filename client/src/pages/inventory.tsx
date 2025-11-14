@@ -94,6 +94,14 @@ import { insertInventoryItemSchema, insertAddonSchema } from "@shared/schema";
 import type { InventoryItem, Addon, MenuItem } from "@shared/schema";
 import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useBusinessType } from "@/hooks/useBusinessType";
+
+// Helper function to format toast messages with business-type-aware labels
+const formatToast = (template: string | undefined, label: string | undefined): string => {
+  if (!template && !label) return '';
+  if (!template) return label ?? '';
+  return template.includes('%s') ? template.replace('%s', label ?? '') : template;
+};
 
 const formSchema = insertInventoryItemSchema.extend({
   quantity: z.coerce.number().positive("Quantity must be a positive number"),
@@ -372,6 +380,7 @@ function SortableAddonCard({ addon, menuItemNames, onEdit, onDelete }: SortableA
 export default function Inventory() {
   const layout = useDeviceLayout();
   const { t } = useLanguage();
+  const { labels } = useBusinessType();
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -502,8 +511,8 @@ export default function Inventory() {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
-        title: "Item created",
-        description: "Inventory item has been added",
+        title: t.itemCreatedTitle || "Item created",
+        description: t.itemAdded || "Inventory item has been added",
       });
       handleCloseDialog();
     },
@@ -528,8 +537,8 @@ export default function Inventory() {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
-        title: "Item updated",
-        description: "Inventory item has been updated",
+        title: t.itemUpdatedTitle || "Item updated",
+        description: t.itemUpdated || "Inventory item has been updated",
       });
       handleCloseDialog();
     },
@@ -550,8 +559,8 @@ export default function Inventory() {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
-        title: "Item deleted",
-        description: "Inventory item has been removed",
+        title: t.itemDeletedTitle || "Item deleted",
+        description: t.itemDeleted || "Inventory item has been removed",
       });
       setDeleteDialogOpen(false);
       setItemToDelete(null);
@@ -566,8 +575,8 @@ export default function Inventory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/addons"] });
       toast({
-        title: t.addonAdded,
-        description: t.addonAdded,
+        title: "Add-on created",
+        description: t.addonAdded || "Add-on has been added successfully",
       });
       handleCloseAddonDialog();
     },
@@ -587,8 +596,8 @@ export default function Inventory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/addons"] });
       toast({
-        title: t.addonUpdated,
-        description: t.addonUpdated,
+        title: "Add-on updated",
+        description: t.addonUpdated || "Add-on has been updated successfully",
       });
       handleCloseAddonDialog();
     },
@@ -608,8 +617,8 @@ export default function Inventory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/addons"] });
       toast({
-        title: t.addonDeleted,
-        description: t.addonDeleted,
+        title: "Add-on deleted",
+        description: t.addonDeleted || "Add-on has been removed successfully",
       });
       setAddonDeleteDialogOpen(false);
       setAddonToDelete(null);
