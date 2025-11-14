@@ -252,14 +252,14 @@ export default function Login() {
           <div className="mx-auto relative">
             <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/60 rounded-full blur-xl opacity-50"></div>
             <div className="relative bg-gradient-to-br from-primary to-primary/80 p-5 rounded-2xl shadow-lg">
-              <img src={kinzhalLogo} alt="Saudi Kinzhal" className="h-14 w-14 object-contain" />
+              <img src={kinzhalLogo} alt="BlindSpot System" className="h-14 w-14 object-contain" />
             </div>
           </div>
           <div className="space-y-2">
             <CardTitle className="text-3xl font-bold text-foreground">
-              Saudi Kinzhal
+              BlindSpot System (BSS)
             </CardTitle>
-            <CardDescription className="text-base">{t.restaurantManagementSystem}</CardDescription>
+            <CardDescription className="text-base">{t.businessManagementSystem}</CardDescription>
           </div>
           <div className="flex items-center justify-center gap-2 pt-2">
             <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg">
@@ -302,7 +302,7 @@ export default function Login() {
                       Watch Our Success Story
                     </h3>
                     <p className="text-sm text-primary-foreground/90">
-                      See how Saudi Kinzhal transforms businesses • 30 sec
+                      See how BSS transforms businesses • 30 sec
                     </p>
                   </div>
                 </div>
@@ -519,9 +519,9 @@ export default function Login() {
                 <div className="space-y-3">
                   <Label>{t.subscriptionPlan}</Label>
                   <RadioGroup value={subscriptionPlan} onValueChange={setSubscriptionPlan} data-testid="radiogroup-subscription">
-                    <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors cursor-pointer ${
+                    <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors ${
                       subscriptionPlan === 'weekly' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-                    }`} onClick={() => setSubscriptionPlan('weekly')}>
+                    }`}>
                       <RadioGroupItem value="weekly" id="weekly" data-testid="radio-weekly" />
                       <Label htmlFor="weekly" className="flex-1 cursor-pointer">
                         <div className="flex items-center justify-between">
@@ -542,9 +542,9 @@ export default function Login() {
                       </Label>
                     </div>
 
-                    <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors cursor-pointer ${
+                    <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors ${
                       subscriptionPlan === 'monthly' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-                    }`} onClick={() => setSubscriptionPlan('monthly')}>
+                    }`}>
                       <RadioGroupItem value="monthly" id="monthly" data-testid="radio-monthly" />
                       <Label htmlFor="monthly" className="flex-1 cursor-pointer">
                         <div className="flex items-center justify-between">
@@ -565,9 +565,9 @@ export default function Login() {
                       </Label>
                     </div>
                     
-                    <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors cursor-pointer ${
+                    <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors ${
                       subscriptionPlan === 'yearly' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-                    }`} onClick={() => setSubscriptionPlan('yearly')}>
+                    }`}>
                       <RadioGroupItem value="yearly" id="yearly" data-testid="radio-yearly" />
                       <Label htmlFor="yearly" className="flex-1 cursor-pointer">
                         <div className="flex items-center justify-between">
@@ -683,13 +683,13 @@ export default function Login() {
         <div className="text-center branding-slide" data-testid="branding-footer">
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-3">
-              <img src={kinzhalLogo} alt="Saudi Kinzhal Logo" className="h-12 w-auto object-contain" />
+              <img src={kinzhalLogo} alt="BSS Logo" className="h-12 w-auto object-contain" />
               <p className="text-sm text-white/80">
-                Made By <span className="font-semibold text-white">Saudi Kinzhal</span>
+                Made By <span className="font-semibold text-white">BlindSpot System</span>
               </p>
             </div>
-            <p className="text-xs text-white/60">© 2025 Saudi Kinzhal. All rights reserved.</p>
-            <p className="text-xs text-white/50">Empowering restaurants with innovative POS solutions</p>
+            <p className="text-xs text-white/60">© 2025 BlindSpot System (BSS). All rights reserved.</p>
+            <p className="text-xs text-white/50">Empowering businesses with innovative management solutions</p>
           </div>
         </div>
       </div>

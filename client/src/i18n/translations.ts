@@ -340,6 +340,7 @@ export interface Translations {
   legalAcknowledgementRequired: string;
   selectLanguage: string;
   restaurantManagementSystem: string;
+  businessManagementSystem: string;
   vatDisclaimer: string;
   
   // Messages
@@ -1098,6 +1099,7 @@ export const translations: Record<Language, Translations> = {
     legalAcknowledgementRequired: 'You must acknowledge the legal agreement to proceed',
     selectLanguage: 'Select language',
     restaurantManagementSystem: 'Restaurant management system',
+    businessManagementSystem: 'Business Management System',
     vatDisclaimer: 'All prices include 15% VAT as required by Saudi law',
     
     // Messages
@@ -1855,6 +1857,7 @@ export const translations: Record<Language, Translations> = {
     legalAcknowledgementRequired: 'يجب الموافقة على الاتفاقية القانونية للمتابعة',
     selectLanguage: 'اختر اللغة',
     restaurantManagementSystem: 'نظام إدارة المطاعم',
+    businessManagementSystem: 'نظام إدارة الأعمال',
     vatDisclaimer: 'جميع الأسعار تشمل ضريبة القيمة المضافة 15٪ كما يتطلب القانون السعودي',
     
     // Messages
@@ -2612,6 +2615,7 @@ export const translations: Record<Language, Translations> = {
     legalAcknowledgementRequired: '您必须确认法律协议才能继续',
     selectLanguage: '选择语言',
     restaurantManagementSystem: '餐厅管理系统',
+    businessManagementSystem: '商业管理系统',
     vatDisclaimer: '所有价格均包含沙特法律要求的15%增值税',
     
     // Messages
@@ -3355,6 +3359,7 @@ export const translations: Record<Language, Translations> = {
     legalAcknowledgementRequired: 'Sie müssen die rechtliche Vereinbarung bestätigen, um fortzufahren',
     selectLanguage: 'Sprache wählen',
     restaurantManagementSystem: 'Restaurant-Managementsystem',
+    businessManagementSystem: 'Geschäftsverwaltungssystem',
     vatDisclaimer: 'Alle Preise beinhalten 15% MwSt. gemäß saudi-arabischem Recht',
     
     // Messages
@@ -4098,6 +4103,7 @@ export const translations: Record<Language, Translations> = {
     legalAcknowledgementRequired: 'जारी रखने के लिए आपको कानूनी समझौते को स्वीकार करना होगा',
     selectLanguage: 'भाषा चुनें',
     restaurantManagementSystem: 'रेस्तरां प्रबंधन प्रणाली',
+    businessManagementSystem: 'व्यवसाय प्रबंधन प्रणाली',
     vatDisclaimer: 'सभी कीमतों में सऊदी कानून के अनुसार 15% वैट शामिल है',
     
     // Messages
@@ -4841,6 +4847,7 @@ export const translations: Record<Language, Translations> = {
     legalAcknowledgementRequired: 'جاری رکھنے کے لیے آپ کو قانونی معاہدے کی تصدیق کرنی ہوگی',
     selectLanguage: 'زبان منتخب کریں',
     restaurantManagementSystem: 'ریستوراں مینجمنٹ سسٹم',
+    businessManagementSystem: 'کاروباری انتظامی نظام',
     vatDisclaimer: 'تمام قیمتوں میں سعودی قانون کے مطابق 15% VAT شامل ہے',
     
     // Messages
@@ -5584,6 +5591,7 @@ export const translations: Record<Language, Translations> = {
     legalAcknowledgementRequired: 'চালিয়ে যেতে আপনাকে অবশ্যই আইনি চুক্তি স্বীকার করতে হবে',
     selectLanguage: 'ভাষা নির্বাচন করুন',
     restaurantManagementSystem: 'রেস্তোরাঁ ব্যবস্থাপনা সিস্টেম',
+    businessManagementSystem: 'ব্যবসা ব্যবস্থাপনা সিস্টেম',
     vatDisclaimer: 'সমস্ত মূল্য সৌদি আইন অনুযায়ী 15% ভ্যাট অন্তর্ভুক্ত',
     
     // Messages

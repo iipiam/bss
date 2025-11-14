@@ -110,7 +110,7 @@ export default function Setup() {
             <UtensilsCrossed className="h-12 w-12 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-3xl">Welcome to Saudi Kinzhal</CardTitle>
+            <CardTitle className="text-3xl">Welcome to BlindSpot System</CardTitle>
             <CardDescription>Create your administrator account to get started</CardDescription>
           </div>
         </CardHeader>
@@ -211,9 +211,9 @@ export default function Setup() {
         {/* Branding Footer */}
         <div className="text-center branding-slide" data-testid="branding-footer">
           <div className="flex items-center justify-center gap-3">
-            <img src={kinzhalLogo} alt="Saudi Kinzhal Logo" className="h-10 w-10 object-contain" />
+            <img src={kinzhalLogo} alt="BSS Logo" className="h-10 w-10 object-contain" />
             <p className="text-sm text-muted-foreground">
-              Made By <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Saudi Kinzhal</span>
+              Made By <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">BlindSpot System</span>
             </p>
           </div>
         </div>
