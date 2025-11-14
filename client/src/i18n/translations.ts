@@ -6602,6 +6602,7 @@ export const translations: Record<Language, Translations> = {
     createSuccess: 'Creato con successo',
     
     // Error Messages
+    loginFailed: 'Accesso fallito',
     loginError: 'Errore di accesso',
     saveError: 'Errore di salvataggio',
     deleteError: 'Errore di eliminazione',
@@ -7207,6 +7208,7 @@ export const translations: Record<Language, Translations> = {
     createSuccess: 'Creado exitoso',
     
     // Error Messages
+    loginFailed: 'Inicio de sesión fallido',
     loginError: 'Error de inicio de sesión',
     saveError: 'Error al guardar',
     deleteError: 'Error al eliminar',
@@ -7812,6 +7814,7 @@ export const translations: Record<Language, Translations> = {
     createSuccess: 'Matagumpay na nagawa',
     
     // Error Messages
+    loginFailed: 'Nabigong mag-login',
     loginError: 'May error sa pag-login',
     saveError: 'May error sa pag-save',
     deleteError: 'May error sa pagtanggal',
