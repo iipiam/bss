@@ -880,7 +880,7 @@ export async function generateFinancialStatementPDF(data: FinancialStatementData
   ` : ''}
   
   <div class="footer">
-    <div>RestoPOS Financial Statement</div>
+    <div>BlindSpot System (BSS) Financial Statement</div>
     <div>VAT Compliant - Saudi Arabia</div>
   </div>
 </body>
@@ -1184,7 +1184,7 @@ export async function generateSubscriptionInvoice(data: {
 <body>
   <div class="invoice-container">
     <div class="header">
-      <div class="company-name">RestoPOS</div>
+      <div class="company-name">BlindSpot System (BSS)</div>
       <div class="bilingual">
         <div class="en invoice-title">Subscription Invoice</div>
         <div class="ar invoice-title">فاتورة الاشتراك</div>
@@ -1217,9 +1217,10 @@ export async function generateSubscriptionInvoice(data: {
         </div>
         <div class="info-block">
           <h3>From / من</h3>
-          <p><strong>Saudi Kinzhal</strong></p>
-          <p>RestoPOS Platform</p>
+          <p><strong>BlindSpot System (BSS)</strong></p>
+          <p>Business Management Platform</p>
           <p>IT@SaudiKinzhal.org</p>
+          <!-- TODO: Update sender email domain when new domain is available -->
           <p>Saudi Arabia</p>
         </div>
       </div>
@@ -1576,7 +1577,7 @@ export async function generateMonthlyVatReport(data: {
 <body>
   <div class="invoice-container">
     <div class="header">
-      <div class="company-name">RestoPOS</div>
+      <div class="company-name">BlindSpot System (BSS)</div>
       <div class="bilingual">
         <div class="en invoice-title">Monthly VAT Report</div>
         <div class="ar invoice-title">تقرير ضريبة القيمة المضافة الشهري</div>

@@ -173,15 +173,15 @@ export function AppSidebar() {
         <div className="flex items-center gap-3 px-3 py-4">
           <img 
             src={logoImage} 
-            alt="Saudi Kinzhal Logo" 
+            alt="BSS Logo" 
             className="h-12 w-12 object-contain"
           />
           <div className="flex flex-col">
             <span className="text-sm font-bold text-foreground">
-              Saudi Kinzhal
+              BlindSpot System
             </span>
             <span className="text-xs text-muted-foreground">
-              {t.restaurantManagementSystem || "Restaurant Management"}
+              {t.businessManagementSystem || "Business Management"}
             </span>
           </div>
         </div>

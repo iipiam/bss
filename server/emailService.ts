@@ -63,7 +63,7 @@ export async function sendTicketNotificationEmail(ticketData: TicketEmailData): 
     <body>
       <div class="container">
         <div class="header">
-          <h1>🎫 New Support Ticket Created</h1>
+          <h1>New Support Ticket Created</h1>
           <p style="margin: 0; opacity: 0.9;">Ticket #${ticketData.ticketNumber}</p>
         </div>
         <div class="content">
@@ -103,12 +103,12 @@ export async function sendTicketNotificationEmail(ticketData: TicketEmailData): 
           </div>
           
           <div style="text-align: center; margin-top: 30px;">
-            <p style="color: #6b7280; margin-bottom: 15px;">Please log in to the RestoPOS system to respond to this ticket.</p>
+            <p style="color: #6b7280; margin-bottom: 15px;">Please log in to the BlindSpot System (BSS) to respond to this ticket.</p>
           </div>
         </div>
         <div class="footer">
-          <p>This is an automated notification from RestoPOS Support System</p>
-          <p>© ${new Date().getFullYear()} Saudi Kinzhal Restaurant Management</p>
+          <p>This is an automated notification from BlindSpot System (BSS) Support</p>
+          <p>© ${new Date().getFullYear()} BlindSpot System - Business Management Platform</p>
         </div>
       </div>
     </body>
@@ -116,7 +116,7 @@ export async function sendTicketNotificationEmail(ticketData: TicketEmailData): 
   `;
 
   const mailOptions = {
-    from: `"RestoPOS Support" <${emailFrom}>`,
+    from: `"BSS Support" <${emailFrom}>`,
     to: itEmail,
     subject: `[New Ticket] ${ticketData.ticketNumber} - ${ticketData.subject}`,
     html: emailHtml,
@@ -133,7 +133,7 @@ Created At: ${new Date(ticketData.createdAt).toLocaleString()}
 Description:
 ${ticketData.description}
 
-Please log in to the RestoPOS system to respond to this ticket.
+Please log in to the BlindSpot System (BSS) to respond to this ticket.
     `,
   };
 

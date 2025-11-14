@@ -141,9 +141,9 @@ export function WelcomeVideo({ open, onClose }: WelcomeVideoProps) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[80vh] p-0 overflow-hidden border-0 bg-black" data-testid="welcome-video-dialog">
         <VisuallyHidden>
-          <DialogTitle>Welcome Video - Restaurant Success Story</DialogTitle>
+          <DialogTitle>Welcome Video - Business Success Story</DialogTitle>
           <DialogDescription>
-            Watch our inspiring success story showcasing how Saudi Kinzhal transformed Ahmad's restaurant business
+            Watch our inspiring success story showcasing how BlindSpot System (BSS) transformed Ahmad's business
           </DialogDescription>
         </VisuallyHidden>
         <div className="relative w-full h-full" data-testid="welcome-video-container">

@@ -1,8 +1,8 @@
-# Design Guidelines: Restaurant Management System
+# Design Guidelines: Business Management System
 
 ## Design Approach
 
-**Selected Approach:** Design System - Material Design inspired, customized for enterprise restaurant management
+**Selected Approach:** Design System - Material Design inspired, customized for enterprise business management
 
 **Rationale:** This is a complex, data-intensive application requiring consistency, efficiency, and clarity across multiple modules. Drawing inspiration from modern SaaS platforms like Linear, Notion, and enterprise POS systems while maintaining Material Design principles for familiar patterns and strong visual feedback.
 

@@ -24,7 +24,7 @@ const languageToLocaleCode: Record<Language, string> = {
   Bengali: 'bn'
 };
 
-const LANGUAGE_STORAGE_KEY = 'restopos-language';
+const LANGUAGE_STORAGE_KEY = 'bss-language';
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 

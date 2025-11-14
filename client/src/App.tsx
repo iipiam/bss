@@ -441,8 +441,8 @@ function AppContent() {
                           </h3>
                           <p className="text-sm">
                             {isRTL 
-                              ? `ينتهي اشتراكك في ${endDate.toLocaleDateString('ar-SA')} (${daysRemaining} ${daysRemaining === 1 ? 'يوم' : 'أيام'} متبقية). يرجى التجديد لمواصلة استخدام Saudi Kinzhal.`
-                              : `Your subscription expires on ${endDate.toLocaleDateString('en-GB')} (${daysRemaining} ${daysRemaining === 1 ? 'day' : 'days'} remaining). Please renew to continue using Saudi Kinzhal.`
+                              ? `ينتهي اشتراكك في ${endDate.toLocaleDateString('ar-SA')} (${daysRemaining} ${daysRemaining === 1 ? 'يوم' : 'أيام'} متبقية). يرجى التجديد لمواصلة استخدام نظام BlindSpot System (BSS).`
+                              : `Your subscription expires on ${endDate.toLocaleDateString('en-GB')} (${daysRemaining} ${daysRemaining === 1 ? 'day' : 'days'} remaining). Please renew to continue using BlindSpot System (BSS).`
                             }
                           </p>
                         </div>
@@ -467,9 +467,9 @@ function AppContent() {
             </main>
             <footer className="border-t py-3 px-4 flex-shrink-0 branding-slide" data-testid="branding-footer">
               <div className="flex items-center justify-center gap-3">
-                <img src={kinzhalLogo} alt="Saudi Kinzhal Logo" className="h-12 w-auto object-contain" />
+                <img src={kinzhalLogo} alt="BSS Logo" className="h-12 w-auto object-contain" />
                 <p className="text-sm text-muted-foreground">
-                  Made By <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Saudi Kinzhal</span>
+                  Made By <span className="font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">BlindSpot System (BSS)</span>
                 </p>
               </div>
             </footer>

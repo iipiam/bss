@@ -270,15 +270,15 @@ export function generatePasswordResetEmail(data: PasswordResetTemplateData): { h
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <div class="logo">Saudi Kinzhal</div>
-      <div class="subtitle">Restaurant Management System</div>
+      <div class="logo">BlindSpot System (BSS)</div>
+      <div class="subtitle">Business Management System</div>
     </div>
 
     <!-- English Section -->
     <div class="content">
       <div class="section">
         <div class="section-title">Password Reset Request</div>
-        <p>We received a request to reset your password for your RestoPOS account.</p>
+        <p>We received a request to reset your password for your BSS account.</p>
         <p>Click the button below to reset your password:</p>
         <div style="text-align: center;">
           <a href="${resetLink}" class="button">Reset Password</a>
@@ -302,7 +302,7 @@ export function generatePasswordResetEmail(data: PasswordResetTemplateData): { h
     <div class="content arabic">
       <div class="section">
         <div class="section-title">طلب إعادة تعيين كلمة المرور</div>
-        <p>تلقينا طلبًا لإعادة تعيين كلمة المرور لحساب RestoPOS الخاص بك.</p>
+        <p>تلقينا طلبًا لإعادة تعيين كلمة المرور لحساب BSS الخاص بك.</p>
         <p>انقر على الزر أدناه لإعادة تعيين كلمة المرور:</p>
         <div style="text-align: center;">
           <a href="${resetLink}" class="button">إعادة تعيين كلمة المرور</a>
@@ -324,8 +324,9 @@ export function generatePasswordResetEmail(data: PasswordResetTemplateData): { h
 
     <!-- Footer -->
     <div class="footer">
-      <p>Saudi Kinzhal - RestoPOS Platform</p>
+      <p>BlindSpot System (BSS) - Business Management Platform</p>
       <p>IT@SaudiKinzhal.org</p>
+      <!-- TODO: Update sender email domain when new domain is available -->
       <p>This is an automated email, please do not reply / هذا بريد إلكتروني تلقائي، يرجى عدم الرد</p>
     </div>
   </div>
@@ -336,10 +337,10 @@ export function generatePasswordResetEmail(data: PasswordResetTemplateData): { h
   const text = `
 Password Reset Request / طلب إعادة تعيين كلمة المرور
 
-Saudi Kinzhal - Restaurant Management System
+BlindSpot System (BSS) - Business Management System
 
 ENGLISH:
-We received a request to reset your password for your RestoPOS account.
+We received a request to reset your password for your BSS account.
 
 Reset your password by visiting this link:
 ${resetLink}
@@ -353,7 +354,7 @@ IMPORTANT SECURITY INFORMATION:
 ---
 
 العربية:
-تلقينا طلبًا لإعادة تعيين كلمة المرور لحساب RestoPOS الخاص بك.
+تلقينا طلبًا لإعادة تعيين كلمة المرور لحساب BSS الخاص بك.
 
 أعد تعيين كلمة المرور بزيارة هذا الرابط:
 ${resetLink}
@@ -366,7 +367,7 @@ ${resetLink}
 
 ---
 
-Saudi Kinzhal - RestoPOS Platform
+BlindSpot System (BSS) - Business Management Platform
 IT@SaudiKinzhal.org
 
 This is an automated email, please do not reply.
@@ -386,6 +387,7 @@ export class PasswordResetMailer {
 
   constructor() {
     this.provider = createEmailProvider();
+    // TODO: Update sender email domain when new domain is available
     this.fromEmail = process.env.EMAIL_FROM || process.env.IT_EMAIL || 'IT@SaudiKinzhal.org';
   }
 
@@ -412,7 +414,7 @@ export class PasswordResetMailer {
     const result = await this.provider.sendEmail({
       to: toEmail,
       from: this.fromEmail,
-      subject: 'Password Reset Request / طلب إعادة تعيين كلمة المرور - RestoPOS',
+      subject: 'Password Reset Request / طلب إعادة تعيين كلمة المرور - BSS',
       html,
       text,
     });

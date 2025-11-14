@@ -3047,7 +3047,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const { generateFinancialStatementPDF } = await import('./invoice.js');
       
       const pdfBuffer = await generateFinancialStatementPDF({
-        companyName: settings?.restaurantName || "RestoPOS",
+        companyName: settings?.restaurantName || "BlindSpot System (BSS)",
         companyVAT: settings?.vatNumber || "",
         year,
         period,
