@@ -11,7 +11,8 @@ export const restaurants = pgTable("restaurants", {
   nationalId: text("national_id").notNull(), // National ID or Company Name (10 digits)
   taxNumber: text("tax_number").notNull(), // Unified Tax Number
   commercialRegistration: text("commercial_registration").notNull(), // Commercial Registration (10 digits)
-  type: text("type").notNull(), // Restaurant type - NO validation, any type allowed
+  businessType: text("business_type").notNull().default("restaurant"), // "restaurant" or "factory"
+  type: text("type").notNull(), // Business subtype (e.g., "Cloud Kitchen", "Restaurant", "Coffee Shop" for restaurant; "Manufacturing", "Production" for factory)
   subscriptionPlan: text("subscription_plan").notNull(), // "weekly", "monthly", "yearly"
   branchesCount: integer("branches_count").notNull().default(1),
   subscriptionStatus: text("subscription_status").notNull().default("inactive"), // "inactive", "active", "cancelled", "expired"
