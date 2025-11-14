@@ -382,7 +382,9 @@ export default function Recipes() {
       return sum + (quantity * price);
     }, 0);
     
-    setCost(totalCost.toFixed(2));
+    const newCost = totalCost.toFixed(2);
+    // Only update if cost actually changed to prevent infinite loop
+    setCost(prevCost => prevCost === newCost ? prevCost : newCost);
   }, [ingredients]);
 
   const addStep = () => {
