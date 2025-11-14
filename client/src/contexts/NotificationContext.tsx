@@ -176,10 +176,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         console.log('[Notifications] WebSocket disconnected');
         setIsConnected(false);
         
-        // Attempt to reconnect after 5 seconds
+        // Schedule reconnect - will be canceled by cleanup if component unmounts
         reconnectTimeoutRef.current = setTimeout(() => {
-          console.log('[Notifications] Attempting to reconnect...');
-          connect();
+          if (notificationsEnabled) {
+            console.log('[Notifications] Attempting to reconnect...');
+            connect();
+          }
         }, 5000);
       };
 
@@ -197,11 +199,20 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
 
     return () => {
+      // Clear reconnection timeout to prevent reconnection attempts after unmount
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
       }
+      
+      // Close WebSocket connection
       if (wsRef.current) {
+        // Remove event handlers before closing to prevent triggering reconnection
+        wsRef.current.onclose = null;
+        wsRef.current.onerror = null;
+        wsRef.current.onmessage = null;
         wsRef.current.close();
+        wsRef.current = null;
       }
     };
   }, [notificationsEnabled]);

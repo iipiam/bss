@@ -4059,11 +4059,48 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const { id: paymentId, status, amount, source } = req.body;
 
-      // TODO: CRITICAL SECURITY - Implement Moyasar webhook signature verification (HMAC)
-      // Without signature verification, this endpoint is vulnerable to forged payment confirmations
-      // Reference: https://moyasar.com/docs/api/#webhooks-security
+      // SECURITY: Verify Moyasar webhook signature (HMAC-SHA256)
+      // This prevents forged payment confirmations
+      const signature = req.headers['x-moyasar-signature'] as string;
+      const webhookSecret = process.env.MOYASAR_WEBHOOK_SECRET;
       
-      // Verify payment with Moyasar
+      if (webhookSecret) {
+        if (!signature) {
+          console.warn('[Moyasar Webhook] Missing signature header');
+          return res.status(401).json({ error: 'Unauthorized: Missing signature' });
+        }
+
+        // Verify HMAC signature against raw request body
+        // CRITICAL: Must use raw body bytes (captured by express.json verify callback)
+        // because Moyasar signs the exact payload, not the parsed JSON
+        const crypto = require('crypto');
+        const rawBody = (req as any).rawBody;
+        
+        if (!rawBody) {
+          console.error('[Moyasar Webhook] Raw body not available for signature verification');
+          return res.status(500).json({ error: 'Server configuration error' });
+        }
+        
+        const expectedSignature = crypto
+          .createHmac('sha256', webhookSecret)
+          .update(rawBody)
+          .digest('hex');
+
+        // Use constant-time comparison to prevent timing attacks
+        const signatureBuffer = Buffer.from(signature);
+        const expectedBuffer = Buffer.from(expectedSignature);
+        
+        if (signatureBuffer.length !== expectedBuffer.length || 
+            !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
+          console.warn('[Moyasar Webhook] Invalid signature');
+          return res.status(401).json({ error: 'Unauthorized: Invalid signature' });
+        }
+      } else {
+        // Log warning if webhook secret is not configured (development mode)
+        console.warn('[Moyasar Webhook] MOYASAR_WEBHOOK_SECRET not configured - signature verification disabled');
+      }
+      
+      // Verify payment with Moyasar as additional security layer
       const { fetchPayment } = require('./moyasarService');
       const payment = await fetchPayment(paymentId);
 

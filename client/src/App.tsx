@@ -37,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User as UserIcon, CreditCard, Edit, XCircle, X } from "lucide-react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
 import Menu from "@/pages/menu";
@@ -482,23 +483,25 @@ function AppContent() {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <AuthProvider>
-            <LanguageProvider>
-              <BranchProvider>
-                <DeviceProvider>
-                  <NotificationProvider>
-                    <AppContent />
-                  </NotificationProvider>
-                </DeviceProvider>
-              </BranchProvider>
-            </LanguageProvider>
-          </AuthProvider>
-          <Toaster />
-        </TooltipProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <TooltipProvider>
+            <AuthProvider>
+              <LanguageProvider>
+                <BranchProvider>
+                  <DeviceProvider>
+                    <NotificationProvider>
+                      <AppContent />
+                    </NotificationProvider>
+                  </DeviceProvider>
+                </BranchProvider>
+              </LanguageProvider>
+            </AuthProvider>
+            <Toaster />
+          </TooltipProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

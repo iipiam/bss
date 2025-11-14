@@ -820,17 +820,7 @@ export class DatabaseStorage implements IStorage {
       updateData.password = await bcrypt.hash(updateData.password as string, 10);
     }
     
-    // Log permissions update for debugging
-    if (updateData.permissions) {
-      console.log("[STORAGE] Updating user permissions:", JSON.stringify(updateData.permissions, null, 2));
-    }
-    
     const [updated] = await db.update(users).set(updateData).where(and(eq(users.id, id), eq(users.restaurantId, restaurantId))).returning();
-    
-    // Log the result
-    if (updated && updateData.permissions) {
-      console.log("[STORAGE] User permissions after update:", JSON.stringify(updated.permissions, null, 2));
-    }
     
     return updated;
   }

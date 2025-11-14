@@ -39,9 +39,12 @@ export function MoyasarPayment({
   const moyasarInstanceRef = useRef<any>(null);
 
   useEffect(() => {
+    let isMounted = true;
+    let initTimeout: NodeJS.Timeout | null = null;
+    
     // Set a timeout for initialization
-    const initTimeout = setTimeout(() => {
-      if (isLoading) {
+    initTimeout = setTimeout(() => {
+      if (isMounted && isLoading) {
         setError('Payment form initialization timed out. Please check your internet connection and try again.');
         setIsLoading(false);
       }
@@ -49,9 +52,11 @@ export function MoyasarPayment({
 
     const loadMoyasarScript = async () => {
       try {
+        if (!isMounted) return;
+        
         if (window.Moyasar) {
           await initializeMoyasar();
-          clearTimeout(initTimeout);
+          if (initTimeout) clearTimeout(initTimeout);
           return;
         }
 
@@ -59,37 +64,42 @@ export function MoyasarPayment({
         script.src = 'https://cdn.moyasar.com/mpf/1.14.0/moyasar.js';
         script.async = true;
         script.onload = async () => {
+          if (!isMounted) return;
+          
           const link = document.createElement('link');
           link.rel = 'stylesheet';
           link.href = 'https://cdn.moyasar.com/mpf/1.14.0/moyasar.css';
           document.head.appendChild(link);
           
           await initializeMoyasar();
-          clearTimeout(initTimeout);
+          if (initTimeout) clearTimeout(initTimeout);
         };
         script.onerror = () => {
-          clearTimeout(initTimeout);
+          if (!isMounted) return;
+          
+          if (initTimeout) clearTimeout(initTimeout);
           setError('Failed to load payment gateway scripts. Please check your internet connection.');
           setIsLoading(false);
         };
         document.head.appendChild(script);
       } catch (err) {
-        clearTimeout(initTimeout);
+        if (!isMounted) return;
+        
+        if (initTimeout) clearTimeout(initTimeout);
         setError('Unexpected error loading payment form');
         setIsLoading(false);
       }
     };
 
     const initializeMoyasar = async () => {
+      if (!isMounted) return;
       try {
-        console.log('[Moyasar] Fetching settings...');
         const response = await fetch('/api/settings');
         const settings = await response.json();
         const publishableKey = settings.moyasarPublishableKey;
 
-        console.log('[Moyasar] Publishable key present:', !!publishableKey);
-        console.log('[Moyasar] Key starts with:', publishableKey?.substring(0, 10));
-
+        if (!isMounted) return;
+        
         if (!publishableKey || publishableKey === 'null' || publishableKey === 'undefined') {
           setError('Payment gateway not configured. Please contact support to set up Moyasar API keys.');
           setIsLoading(false);
@@ -98,27 +108,26 @@ export function MoyasarPayment({
 
         // Wait for form ref to be available (with retries)
         let retries = 0;
-        while (!formRef.current && retries < 20) {
-          console.log('[Moyasar] Waiting for form container...', retries);
+        while (!formRef.current && retries < 20 && isMounted) {
           await new Promise(resolve => setTimeout(resolve, 100));
           retries++;
         }
 
+        if (!isMounted) return;
+        
         if (!formRef.current) {
-          console.log('[Moyasar] Form ref not available after retries');
           setError('Payment form container not ready. Please refresh the page and try again.');
           setIsLoading(false);
           return;
         }
 
         if (!window.Moyasar) {
-          console.log('[Moyasar] SDK not loaded');
           setError('Moyasar SDK not loaded');
           setIsLoading(false);
           return;
         }
 
-        console.log('[Moyasar] Initializing form with amount:', amount);
+        if (!isMounted) return;
         moyasarInstanceRef.current = window.Moyasar.init({
           element: formRef.current,
           amount: Math.round(amount * 100),
@@ -133,7 +142,6 @@ export function MoyasarPayment({
             customerPhone: customerPhone || '',
           },
           on_completed: async (payment: any) => {
-            console.log('[Moyasar] Payment completed:', payment.id);
             setPaymentStatus('processing');
             try {
               const verifyResponse = await apiRequest('POST', '/api/payments/verify', {
@@ -161,7 +169,6 @@ export function MoyasarPayment({
           },
         });
 
-        console.log('[Moyasar] Form initialized successfully');
         setIsLoading(false);
       } catch (err) {
         console.error('[Moyasar] Initialization error:', err);
@@ -173,9 +180,16 @@ export function MoyasarPayment({
     loadMoyasarScript();
 
     return () => {
-      clearTimeout(initTimeout);
+      isMounted = false;
+      
+      if (initTimeout) {
+        clearTimeout(initTimeout);
+        initTimeout = null;
+      }
+      
       if (moyasarInstanceRef.current && moyasarInstanceRef.current.teardown) {
         moyasarInstanceRef.current.teardown();
+        moyasarInstanceRef.current = null;
       }
     };
   }, [amount, description, orderId, customerName, customerPhone, onSuccess, onError]);
