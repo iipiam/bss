@@ -135,7 +135,7 @@ const baseMenuItemSchema = createInsertSchema(menuItems)
   .extend({
     recipeId: z.string().nullable().optional(), // Allow null to clear recipe
     inventoryItemId: z.string().nullable().optional(), // Allow null, for simple items
-    portionSize: z.string().optional(), // Portion multiplier (1.0, 0.5, 0.25)
+    portionSize: z.string().nullable().optional(), // Portion multiplier (1.0, 0.5, 0.25) - nullable when no recipe
     stockNo: z.string().nullable().optional(), // Stock quantity per item (nullable)
   });
 
