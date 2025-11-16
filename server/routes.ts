@@ -4326,6 +4326,131 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // IT Management Routes
+  app.get("/api/it/analytics", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const analytics = await storage.getITAnalytics(restaurantId);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching IT analytics:", error);
+      res.status(500).json({ error: "Failed to fetch IT analytics" });
+    }
+  });
+
+  app.get("/api/it/staff", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const staff = await storage.getITStaff(restaurantId);
+      res.json(staff);
+    } catch (error) {
+      console.error("Error fetching IT staff:", error);
+      res.status(500).json({ error: "Failed to fetch IT staff" });
+    }
+  });
+
+  app.get("/api/it/workload", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const staff = await storage.getWorkloadDistribution(restaurantId);
+      res.json({ staff }); // Wrap in object to match frontend expectations
+    } catch (error) {
+      console.error("Error fetching workload distribution:", error);
+      res.status(500).json({ error: "Failed to fetch workload distribution" });
+    }
+  });
+
+  app.get("/api/it/category-breakdown", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const breakdown = await storage.getCategoryBreakdown(restaurantId);
+      res.json(breakdown);
+    } catch (error) {
+      console.error("Error fetching category breakdown:", error);
+      res.status(500).json({ error: "Failed to fetch category breakdown" });
+    }
+  });
+
+  app.get("/api/it/trends", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const trends = await storage.getTicketTrends(restaurantId);
+      res.json(trends);
+    } catch (error) {
+      console.error("Error fetching ticket trends:", error);
+      res.status(500).json({ error: "Failed to fetch ticket trends" });
+    }
+  });
+
+  app.post("/api/it/assign", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      const { ticketId, assignedTo } = req.body;
+
+      if (!ticketId) {
+        return res.status(400).json({ error: "ticketId is required" });
+      }
+
+      const ticket = await storage.assignTicket(ticketId, restaurantId, assignedTo, userId);
+      
+      if (!ticket) {
+        return res.status(404).json({ error: "Ticket not found" });
+      }
+
+      res.json(ticket);
+    } catch (error) {
+      console.error("Error assigning ticket:", error);
+      res.status(500).json({ error: "Failed to assign ticket" });
+    }
+  });
+
+  app.get("/api/it/active-tickets", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      
+      // Fetch open tickets (not resolved/closed)
+      const tickets = await storage.getSupportTickets(
+        restaurantId,
+        undefined, // No specific branchId filter
+        undefined, // No specific status filter - will filter in SQL
+        undefined, // No priority filter
+        undefined, // No category filter
+        undefined  // No assignedTo filter
+      );
+
+      // Filter for active tickets (open, in-progress, pending)
+      const activeTickets = tickets.filter(t => 
+        t.status === 'open' || t.status === 'in-progress' || t.status === 'pending'
+      );
+
+      res.json(activeTickets);
+    } catch (error) {
+      console.error("Error fetching active tickets:", error);
+      res.status(500).json({ error: "Failed to fetch active tickets" });
+    }
+  });
+
+  app.patch("/api/it/tickets/:id/assign", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      const ticketId = req.params.id; // Keep as string for storage layer
+      const { staffId } = req.body; // Frontend sends staffId
+
+      const ticket = await storage.assignTicket(ticketId, restaurantId, staffId, userId);
+      
+      if (!ticket) {
+        return res.status(404).json({ error: "Ticket not found" });
+      }
+
+      res.json(ticket);
+    } catch (error) {
+      console.error("Error assigning ticket:", error);
+      res.status(500).json({ error: "Failed to assign ticket" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Setup WebSocket server for real-time notifications on specific path to avoid conflicts with Vite HMR

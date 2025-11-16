@@ -266,6 +266,14 @@ export interface IStorage {
   markMessagesAsRead(ticketId: string, restaurantId: string, userId: string): Promise<void>;
   getUnreadMessageCount(restaurantId: string, userId: string): Promise<number>;
 
+  // IT Management (MULTI-TENANT: SQL-level restaurantId filtering)
+  getITAnalytics(restaurantId: string): Promise<any>;
+  getITStaff(restaurantId: string): Promise<User[]>;
+  getWorkloadDistribution(restaurantId: string): Promise<any[]>;
+  getCategoryBreakdown(restaurantId: string): Promise<any[]>;
+  getTicketTrends(restaurantId: string): Promise<any[]>;
+  assignTicket(ticketId: string, restaurantId: string, assignedTo: string | null, assignedBy: string): Promise<SupportTicket | undefined>;
+
   // Employee Activity Log (MULTI-TENANT: SQL-level restaurantId filtering)
   getEmployeeActivities(restaurantId: string, employeeId?: string, category?: string, startDate?: Date, endDate?: Date): Promise<EmployeeActivityLog[]>;
   createEmployeeActivity(activity: InsertEmployeeActivityLog): Promise<EmployeeActivityLog>;
@@ -1621,6 +1629,238 @@ export class DatabaseStorage implements IStorage {
       );
     
     return result?.count || 0;
+  }
+
+  // IT Management Functions
+  async assignTicket(ticketId: string, restaurantId: string, assignedTo: string | null, assignedBy: string): Promise<SupportTicket | undefined> {
+    const updateData: any = {
+      assignedTo,
+      assignedBy,
+      assignedAt: assignedTo ? new Date() : null,
+      updatedAt: new Date()
+    };
+
+    const [updated] = await db.update(supportTickets)
+      .set(updateData)
+      .where(and(eq(supportTickets.id, ticketId), eq(supportTickets.restaurantId, restaurantId)))
+      .returning();
+    
+    return updated;
+  }
+
+  async getITStaff(restaurantId: string): Promise<any[]> {
+    // Get all users with IT support permissions (checking permissions array)
+    const itStaff = await db.select({
+      id: users.id,
+      name: users.fullName,
+      email: users.email,
+      role: users.role
+    })
+    .from(users)
+    .where(
+      and(
+        eq(users.restaurantId, restaurantId),
+        or(
+          eq(users.role, 'admin'),
+          sql`${users.permissions} @> ARRAY['support']::text[]`
+        )
+      )
+    );
+    
+    return itStaff;
+  }
+
+  async getITAnalytics(restaurantId: string): Promise<{
+    totalOpen: number;
+    totalInProgress: number;
+    totalResolved: number;
+    totalClosed: number;
+    urgentCount: number;
+    highPriorityCount: number;
+    avgResponseTimeHours: number;
+    avgResolutionTimeHours: number;
+    ticketsClosedToday: number;
+    ticketsClosedThisWeek: number;
+    ticketsClosedThisMonth: number;
+  }> {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - 7);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Get all tickets for this restaurant
+    const tickets = await db.select().from(supportTickets)
+      .where(eq(supportTickets.restaurantId, restaurantId));
+
+    // Calculate metrics
+    const totalOpen = tickets.filter(t => t.status === 'open').length;
+    const totalInProgress = tickets.filter(t => t.status === 'in-progress').length;
+    const totalResolved = tickets.filter(t => t.status === 'resolved').length;
+    const totalClosed = tickets.filter(t => t.status === 'closed').length;
+    const urgentCount = tickets.filter(t => t.priority === 'urgent' && t.status !== 'closed').length;
+    const highPriorityCount = tickets.filter(t => t.priority === 'high' && t.status !== 'closed').length;
+
+    // Calculate response time (time from creation to first message by IT)
+    const messagesData = await db.select({
+      ticketId: ticketMessages.ticketId,
+      createdAt: ticketMessages.createdAt,
+      senderRole: ticketMessages.senderRole
+    })
+    .from(ticketMessages)
+    .where(eq(ticketMessages.restaurantId, restaurantId))
+    .orderBy(ticketMessages.createdAt);
+
+    const responseTimesMs: number[] = [];
+    const ticketsWithResponse = new Set<string>();
+
+    for (const msg of messagesData) {
+      if (msg.senderRole === 'it_support' && !ticketsWithResponse.has(msg.ticketId)) {
+        const ticket = tickets.find(t => t.id === msg.ticketId);
+        if (ticket) {
+          const responseTime = new Date(msg.createdAt).getTime() - new Date(ticket.createdAt).getTime();
+          responseTimesMs.push(responseTime);
+          ticketsWithResponse.add(msg.ticketId);
+        }
+      }
+    }
+
+    const avgResponseTimeHours = responseTimesMs.length > 0
+      ? responseTimesMs.reduce((a, b) => a + b, 0) / responseTimesMs.length / (1000 * 60 * 60)
+      : 0;
+
+    // Calculate resolution time
+    const resolvedTickets = tickets.filter(t => t.resolvedAt);
+    const resolutionTimesMs = resolvedTickets.map(t => 
+      new Date(t.resolvedAt!).getTime() - new Date(t.createdAt).getTime()
+    );
+    const avgResolutionTimeHours = resolutionTimesMs.length > 0
+      ? resolutionTimesMs.reduce((a, b) => a + b, 0) / resolutionTimesMs.length / (1000 * 60 * 60)
+      : 0;
+
+    // Count tickets closed in different periods
+    const ticketsClosedToday = tickets.filter(t => 
+      t.closedAt && new Date(t.closedAt) >= todayStart
+    ).length;
+
+    const ticketsClosedThisWeek = tickets.filter(t => 
+      t.closedAt && new Date(t.closedAt) >= weekStart
+    ).length;
+
+    const ticketsClosedThisMonth = tickets.filter(t => 
+      t.closedAt && new Date(t.closedAt) >= monthStart
+    ).length;
+
+    return {
+      totalOpen,
+      totalInProgress,
+      totalResolved,
+      totalClosed,
+      urgentCount,
+      highPriorityCount,
+      avgResponseTimeHours: Math.round(avgResponseTimeHours * 10) / 10,
+      avgResolutionTimeHours: Math.round(avgResolutionTimeHours * 10) / 10,
+      ticketsClosedToday,
+      ticketsClosedThisWeek,
+      ticketsClosedThisMonth
+    };
+  }
+
+  async getWorkloadDistribution(restaurantId: string): Promise<any[]> {
+    const itStaff = await this.getITStaff(restaurantId);
+    
+    const workload = await Promise.all(itStaff.map(async (staff) => {
+      const activeTickets = await db.select({ count: sql<number>`count(*)` })
+        .from(supportTickets)
+        .where(
+          and(
+            eq(supportTickets.restaurantId, restaurantId),
+            eq(supportTickets.assignedTo, staff.id),
+            sql`${supportTickets.status} != 'closed'`
+          )
+        );
+
+      const resolvedTickets = await db.select({ count: sql<number>`count(*)` })
+        .from(supportTickets)
+        .where(
+          and(
+            eq(supportTickets.restaurantId, restaurantId),
+            eq(supportTickets.assignedTo, staff.id),
+            eq(supportTickets.status, 'resolved')
+          )
+        );
+
+      return {
+        ...staff,
+        activeTickets: activeTickets[0]?.count || 0,
+        resolvedTickets: resolvedTickets[0]?.count || 0
+      };
+    }));
+
+    return workload;
+  }
+
+  async getCategoryBreakdown(restaurantId: string): Promise<{ category: string; count: number }[]> {
+    const result = await db.select({
+      category: supportTickets.category,
+      count: sql<number>`count(*)`
+    })
+    .from(supportTickets)
+    .where(
+      and(
+        eq(supportTickets.restaurantId, restaurantId),
+        sql`${supportTickets.status} != 'closed'`
+      )
+    )
+    .groupBy(supportTickets.category);
+
+    return result.map(r => ({ category: r.category, count: r.count || 0 }));
+  }
+
+  async getTicketTrends(restaurantId: string, days: number = 30): Promise<{
+    date: string;
+    created: number;
+    resolved: number;
+  }[]> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const tickets = await db.select()
+      .from(supportTickets)
+      .where(
+        and(
+          eq(supportTickets.restaurantId, restaurantId),
+          gte(supportTickets.createdAt, startDate)
+        )
+      );
+
+    // Group by date
+    const trendMap = new Map<string, { created: number; resolved: number }>();
+    
+    for (let i = 0; i < days; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      trendMap.set(dateStr, { created: 0, resolved: 0 });
+    }
+
+    tickets.forEach(ticket => {
+      const createdDate = new Date(ticket.createdAt).toISOString().split('T')[0];
+      if (trendMap.has(createdDate)) {
+        trendMap.get(createdDate)!.created++;
+      }
+
+      if (ticket.resolvedAt) {
+        const resolvedDate = new Date(ticket.resolvedAt).toISOString().split('T')[0];
+        if (trendMap.has(resolvedDate)) {
+          trendMap.get(resolvedDate)!.resolved++;
+        }
+      }
+    });
+
+    return Array.from(trendMap.entries())
+      .map(([date, data]) => ({ date, ...data }))
+      .sort((a, b) => a.date.localeCompare(b.date));
   }
 
   // Employee Activity Log

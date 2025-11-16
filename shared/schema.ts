@@ -668,6 +668,9 @@ export const supportTickets = pgTable("support_tickets", {
   resolvedAt: timestamp("resolved_at"),
   closedAt: timestamp("closed_at"),
   assignedToIt: boolean("assigned_to_it").notNull().default(true), // Always assign to IT by default
+  assignedTo: varchar("assigned_to").references(() => users.id), // IT staff member assigned to this ticket
+  assignedBy: varchar("assigned_by").references(() => users.id), // Who made the assignment
+  assignedAt: timestamp("assigned_at"), // When the ticket was assigned
 });
 
 export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit({ 
@@ -676,7 +679,8 @@ export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit
   createdAt: true, 
   updatedAt: true, 
   resolvedAt: true, 
-  closedAt: true 
+  closedAt: true,
+  assignedAt: true
 });
 export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
 export type SupportTicket = typeof supportTickets.$inferSelect;
