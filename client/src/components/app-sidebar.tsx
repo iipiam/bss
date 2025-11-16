@@ -71,7 +71,7 @@ interface MenuItem {
 export function AppSidebar() {
   const [location] = useLocation();
   const { t } = useLanguage();
-  const { logout, restaurant } = useAuth();
+  const { logout, restaurant, accountType } = useAuth();
   const { toast } = useToast();
   const [helpDialogOpen, setHelpDialogOpen] = useState(false);
   const { hasPermission, isAdmin } = usePermissions();
@@ -151,6 +151,10 @@ export function AppSidebar() {
       // Check business type restriction (if specified)
       if (item.businessTypes && !item.businessTypes.includes(businessType)) {
         return false;
+      }
+      // IT Dashboard is only visible for IT account type
+      if (item.testId === 'it-dashboard') {
+        return accountType === 'it' && (!item.permission || isAdmin() || hasPermission(item.permission));
       }
       // Settings is admin-only (special case)
       if (item.testId === 'settings') {
