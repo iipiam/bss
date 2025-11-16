@@ -149,7 +149,7 @@ export default function Branches() {
       <div className={`flex ${layout.isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
         <div>
           <h1 className={`${layout.text3Xl} font-bold mb-2`}>Branch Management</h1>
-          <p className="text-muted-foreground">Manage your {labels.shop.toLowerCase()} locations</p>
+          <p className="text-muted-foreground">Manage your {labels.locationType} locations</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -166,7 +166,7 @@ export default function Branches() {
             <DialogHeader>
               <DialogTitle>{editingBranch ? "Edit Branch" : "Add New Branch"}</DialogTitle>
               <DialogDescription>
-                {editingBranch ? "Update branch information" : `Create a new ${labels.shop.toLowerCase()} branch`}
+                {editingBranch ? "Update branch information" : `Create a new ${labels.locationType} branch`}
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>

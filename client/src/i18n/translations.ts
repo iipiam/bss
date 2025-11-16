@@ -31,6 +31,8 @@ export interface Translations {
   product: string;  // Factory terminology: singular "Product" (replaces "Menu Item")
   menuItem: string;  // Restaurant terminology: "Menu Item" (singular)
   menuItems: string;  // Restaurant terminology: "Menu Items" (plural)
+  restaurant: string;  // Restaurant business type noun (lowercase: "restaurant")
+  factoryLowercase: string;  // Factory business type noun (lowercase: "factory")
   
   // Navigation Groups
   operations: string;
@@ -1445,6 +1447,8 @@ export const translations: Record<Language, Translations> = {
     product: 'Product',
     menuItem: 'Menu Item',
     menuItems: 'Menu Items',
+    restaurant: 'restaurant',
+    factoryLowercase: 'factory',
     shopTitle: 'Shop',
     shopDescription: 'Manage employee salaries and shop expenses',
     shopExpenses: 'Shop Expenses',
@@ -2246,6 +2250,8 @@ export const translations: Record<Language, Translations> = {
     product: 'منتج',
     menuItem: 'عنصر القائمة',
     menuItems: 'عناصر القائمة',
+    restaurant: 'مطعم',
+    factoryLowercase: 'مصنع',
     shopExpenses: 'مصاريف المتجر',
     salaries: 'الرواتب',
     salary: 'راتب',
@@ -3033,6 +3039,8 @@ export const translations: Record<Language, Translations> = {
     product: '产品',
     menuItem: '菜单项',
     menuItems: '菜单项',
+    restaurant: '餐厅',
+    factoryLowercase: '工厂',
     shopExpenses: '商店费用',
     salaries: '薪资',
     salary: '工资',
@@ -3820,6 +3828,8 @@ export const translations: Record<Language, Translations> = {
     product: 'Produkt',
     menuItem: 'Menüpunkt',
     menuItems: 'Menüpunkte',
+    restaurant: 'restaurant',
+    factoryLowercase: 'fabrik',
     shopExpenses: 'Geschäftsausgaben',
     salaries: 'Gehälter',
     salary: 'Gehalt',
@@ -4607,6 +4617,8 @@ export const translations: Record<Language, Translations> = {
     product: 'उत्पाद',
     menuItem: 'मेनू आइटम',
     menuItems: 'मेनू आइटम',
+    restaurant: 'रेस्तरां',
+    factoryLowercase: 'फैक्ट्री',
     shopExpenses: 'दुकान व्यय',
     salaries: 'वेतन',
     salary: 'वेतन',
@@ -5394,6 +5406,8 @@ export const translations: Record<Language, Translations> = {
     product: 'پروڈکٹ',
     menuItem: 'مینو آئٹم',
     menuItems: 'مینو آئٹمز',
+    restaurant: 'ریستوراں',
+    factoryLowercase: 'فیکٹری',
     shopExpenses: 'دکان کے اخراجات',
     salaries: 'تنخواہیں',
     salary: 'تنخواہ',
@@ -6181,6 +6195,8 @@ export const translations: Record<Language, Translations> = {
     product: 'পণ্য',
     menuItem: 'মেনু আইটেম',
     menuItems: 'মেনু আইটেম',
+    restaurant: 'রেস্তোরাঁ',
+    factoryLowercase: 'কারখানা',
     shopExpenses: 'দোকান খরচ',
     salaries: 'বেতন',
     salary: 'বেতন',
@@ -6909,6 +6925,8 @@ export const translations: Record<Language, Translations> = {
     product: "Prodotto",
     menuItem: "Voce di Menu",
     menuItems: "Voci di Menu",
+    restaurant: "ristorante",
+    factoryLowercase: "fabbrica",
     shopTitle: "Shop",
     shopDescription: "Manage employee salaries and shop expenses",
     shopExpenses: "Shop Expenses",
@@ -7627,6 +7645,8 @@ export const translations: Record<Language, Translations> = {
     product: "Producto",
     menuItem: "Artículo de Menú",
     menuItems: "Artículos de Menú",
+    restaurant: "restaurante",
+    factoryLowercase: "fábrica",
     shopTitle: "Shop",
     shopDescription: "Manage employee salaries and shop expenses",
     shopExpenses: "Shop Expenses",
@@ -8345,6 +8365,8 @@ export const translations: Record<Language, Translations> = {
     product: "Produkto",
     menuItem: "Menu Item",
     menuItems: "Menu Items",
+    restaurant: "restaurant",
+    factoryLowercase: "pabrika",
     shopTitle: "Shop",
     shopDescription: "Manage employee salaries and shop expenses",
     shopExpenses: "Shop Expenses",

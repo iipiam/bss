@@ -26,6 +26,10 @@ export function useBusinessType() {
     // Shop / Factory
     shop: isFactory ? t.factory : t.shop,
     
+    // Location Type (for descriptions like "restaurant locations" or "factory locations")
+    // Uses dedicated lowercase translations for "restaurant" and "factory"
+    locationType: isFactory ? t.factoryLowercase : t.restaurant,
+    
     // Additional derived labels (singular and plural forms)
     menuItem: isFactory ? t.product : t.menuItem,
     menuItems: isFactory ? t.products : t.menuItems,  // Proper plural forms for both modes
