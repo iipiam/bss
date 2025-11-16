@@ -6,8 +6,9 @@ import type { User, Restaurant } from "@shared/schema";
 interface AuthContextType {
   user: User | null | undefined;
   restaurant: Restaurant | null | undefined;
+  accountType: "client" | "it" | null;
   isLoading: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string, accountType?: "client" | "it") => Promise<void>;
   logout: () => Promise<void>;
   refetchUser: () => Promise<void>;
 }
@@ -15,22 +16,36 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { data, isLoading, refetch } = useQuery<{ user: User; restaurant: Restaurant } | null>({
+  const [accountType, setAccountType] = useState<"client" | "it" | null>(null);
+  
+  const { data, isLoading, refetch } = useQuery<{ user: User; restaurant: Restaurant; accountType?: "client" | "it" } | null>({
     queryKey: ["/api/auth/me"],
     retry: false,
   });
 
-  // Extract user and restaurant from the response
+  // Extract user, restaurant, and accountType from the response
   const user = data?.user;
   const restaurant = data?.restaurant;
+  
+  // Update accountType when data changes
+  useEffect(() => {
+    if (data?.accountType) {
+      setAccountType(data.accountType);
+    } else if (data === null) {
+      setAccountType(null);
+    }
+  }, [data]);
 
   const loginMutation = useMutation({
-    mutationFn: async ({ username, password }: { username: string; password: string }) => {
-      const res = await apiRequest("POST", "/api/auth/login", { username, password });
+    mutationFn: async ({ username, password, accountType }: { username: string; password: string; accountType?: "client" | "it" }) => {
+      const res = await apiRequest("POST", "/api/auth/login", { username, password, accountType: accountType || "client" });
       return await res.json();
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/auth/me"], data);
+      if (data?.accountType) {
+        setAccountType(data.accountType);
+      }
     },
   });
 
@@ -40,11 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/auth/me"], null);
+      setAccountType(null);
     },
   });
 
-  const login = async (username: string, password: string) => {
-    await loginMutation.mutateAsync({ username, password });
+  const login = async (username: string, password: string, accountType?: "client" | "it") => {
+    await loginMutation.mutateAsync({ username, password, accountType });
   };
 
   const logout = async () => {
@@ -56,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, restaurant, isLoading, login, logout, refetchUser }}>
+    <AuthContext.Provider value={{ user, restaurant, accountType, isLoading, login, logout, refetchUser }}>
       {children}
     </AuthContext.Provider>
   );

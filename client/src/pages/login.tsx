@@ -34,6 +34,7 @@ const languages: Language[] = supportedLanguages;
 export default function Login() {
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [accountType, setAccountType] = useState<"client" | "it">("client");
   const [signupUsername, setSignupUsername] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupName, setSignupName] = useState("");
@@ -70,7 +71,7 @@ export default function Login() {
     setIsLoggingIn(true);
 
     try {
-      await login(loginUsername, loginPassword);
+      await login(loginUsername, loginPassword, accountType);
       toast({
         title: t.welcomeBack,
         description: t.loginSuccessDesc,
@@ -358,6 +359,28 @@ export default function Login() {
                     className="h-[44px]"
                     data-testid="input-login-password"
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Account Type</Label>
+                  <RadioGroup
+                    value={accountType}
+                    onValueChange={(value: "client" | "it") => setAccountType(value)}
+                    className="flex gap-4"
+                    data-testid="radio-account-type"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="client" id="account-client" data-testid="radio-account-client" />
+                      <Label htmlFor="account-client" className="font-normal cursor-pointer">
+                        Client Account
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="it" id="account-it" data-testid="radio-account-it" />
+                      <Label htmlFor="account-it" className="font-normal cursor-pointer">
+                        IT Account
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 <div className="flex justify-end">
                   <Link 
