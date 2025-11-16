@@ -4343,11 +4343,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // IT Management Routes
+  // IT Management Routes - Cross-tenant access for IT accounts
   app.get("/api/it/analytics", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
-      const analytics = await storage.getITAnalytics(restaurantId);
+      // IT accounts can see analytics across all restaurants
+      const analytics = await storage.getITAnalytics();
       res.json(analytics);
     } catch (error) {
       console.error("Error fetching IT analytics:", error);
@@ -4357,8 +4357,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.get("/api/it/staff", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
-      const staff = await storage.getITStaff(restaurantId);
+      // IT accounts can see all IT staff across all restaurants
+      const staff = await storage.getITStaff();
       res.json(staff);
     } catch (error) {
       console.error("Error fetching IT staff:", error);
@@ -4368,8 +4368,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.get("/api/it/workload", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
-      const staff = await storage.getWorkloadDistribution(restaurantId);
+      // IT accounts can see workload across all restaurants
+      const staff = await storage.getWorkloadDistribution();
       res.json({ staff }); // Wrap in object to match frontend expectations
     } catch (error) {
       console.error("Error fetching workload distribution:", error);
@@ -4379,8 +4379,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.get("/api/it/category-breakdown", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
-      const breakdown = await storage.getCategoryBreakdown(restaurantId);
+      // IT accounts can see category breakdown across all restaurants
+      const breakdown = await storage.getCategoryBreakdown();
       res.json(breakdown);
     } catch (error) {
       console.error("Error fetching category breakdown:", error);
@@ -4390,8 +4390,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.get("/api/it/trends", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
-      const trends = await storage.getTicketTrends(restaurantId);
+      // IT accounts can see ticket trends across all restaurants
+      const trends = await storage.getTicketTrends();
       res.json(trends);
     } catch (error) {
       console.error("Error fetching ticket trends:", error);
@@ -4401,7 +4401,6 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.post("/api/it/assign", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
       const userId = req.session.user!.id;
       const { ticketId, assignedTo } = req.body;
 
@@ -4409,7 +4408,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "ticketId is required" });
       }
 
-      const ticket = await storage.assignTicket(ticketId, restaurantId, assignedTo, userId);
+      // IT accounts can assign tickets across all restaurants (pass null for restaurantId)
+      const ticket = await storage.assignTicket(ticketId, null, assignedTo, userId);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
@@ -4424,22 +4424,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.get("/api/it/active-tickets", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
-      
-      // Fetch open tickets (not resolved/closed)
-      const tickets = await storage.getSupportTickets(
-        restaurantId,
-        undefined, // No specific branchId filter
-        undefined, // No specific status filter - will filter in SQL
-        undefined, // No priority filter
-        undefined, // No category filter
-        undefined  // No assignedTo filter
-      );
-
-      // Filter for active tickets (open, in-progress, pending)
-      const activeTickets = tickets.filter(t => 
-        t.status === 'open' || t.status === 'in-progress' || t.status === 'pending'
-      );
+      // IT accounts can see active tickets across all restaurants
+      const activeTickets = await storage.getAllActiveTicketsForIT();
 
       res.json(activeTickets);
     } catch (error) {
@@ -4450,12 +4436,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.patch("/api/it/tickets/:id/assign", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
       const userId = req.session.user!.id;
       const ticketId = req.params.id; // Keep as string for storage layer
       const { staffId } = req.body; // Frontend sends staffId
 
-      const ticket = await storage.assignTicket(ticketId, restaurantId, staffId, userId);
+      // IT accounts can assign tickets across all restaurants (pass null for restaurantId)
+      const ticket = await storage.assignTicket(ticketId, null, staffId, userId);
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });

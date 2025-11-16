@@ -266,13 +266,14 @@ export interface IStorage {
   markMessagesAsRead(ticketId: string, restaurantId: string, userId: string): Promise<void>;
   getUnreadMessageCount(restaurantId: string, userId: string): Promise<number>;
 
-  // IT Management (MULTI-TENANT: SQL-level restaurantId filtering)
-  getITAnalytics(restaurantId: string): Promise<any>;
-  getITStaff(restaurantId: string): Promise<User[]>;
-  getWorkloadDistribution(restaurantId: string): Promise<any[]>;
-  getCategoryBreakdown(restaurantId: string): Promise<any[]>;
-  getTicketTrends(restaurantId: string): Promise<any[]>;
-  assignTicket(ticketId: string, restaurantId: string, assignedTo: string | null, assignedBy: string): Promise<SupportTicket | undefined>;
+  // IT Management (CROSS-TENANT for IT accounts: restaurantId optional)
+  getITAnalytics(restaurantId?: string): Promise<any>;
+  getITStaff(restaurantId?: string): Promise<User[]>;
+  getWorkloadDistribution(restaurantId?: string): Promise<any[]>;
+  getCategoryBreakdown(restaurantId?: string): Promise<any[]>;
+  getTicketTrends(restaurantId?: string): Promise<any[]>;
+  assignTicket(ticketId: string, restaurantId: string | null, assignedTo: string | null, assignedBy: string): Promise<SupportTicket | undefined>;
+  getAllActiveTicketsForIT(): Promise<SupportTicket[]>;
 
   // Employee Activity Log (MULTI-TENANT: SQL-level restaurantId filtering)
   getEmployeeActivities(restaurantId: string, employeeId?: string, category?: string, startDate?: Date, endDate?: Date): Promise<EmployeeActivityLog[]>;
@@ -1632,7 +1633,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // IT Management Functions
-  async assignTicket(ticketId: string, restaurantId: string, assignedTo: string | null, assignedBy: string): Promise<SupportTicket | undefined> {
+  async assignTicket(ticketId: string, restaurantId: string | null, assignedTo: string | null, assignedBy: string): Promise<SupportTicket | undefined> {
     const updateData: any = {
       assignedTo,
       assignedBy,
@@ -1640,16 +1641,33 @@ export class DatabaseStorage implements IStorage {
       updatedAt: new Date()
     };
 
+    const conditions = [eq(supportTickets.id, ticketId)];
+    if (restaurantId) {
+      conditions.push(eq(supportTickets.restaurantId, restaurantId));
+    }
+
     const [updated] = await db.update(supportTickets)
       .set(updateData)
-      .where(and(eq(supportTickets.id, ticketId), eq(supportTickets.restaurantId, restaurantId)))
+      .where(and(...conditions))
       .returning();
     
     return updated;
   }
 
-  async getITStaff(restaurantId: string): Promise<any[]> {
+  async getITStaff(restaurantId?: string): Promise<any[]> {
     // Get all users with IT support permissions (checking permissions array)
+    const conditions = [
+      or(
+        eq(users.role, 'admin'),
+        sql`${users.permissions} ? 'support'`
+      )
+    ];
+    
+    // If restaurantId provided, filter by it; otherwise get all IT staff
+    if (restaurantId) {
+      conditions.push(eq(users.restaurantId, restaurantId));
+    }
+    
     const itStaff = await db.select({
       id: users.id,
       name: users.fullName,
@@ -1657,20 +1675,12 @@ export class DatabaseStorage implements IStorage {
       role: users.role
     })
     .from(users)
-    .where(
-      and(
-        eq(users.restaurantId, restaurantId),
-        or(
-          eq(users.role, 'admin'),
-          sql`${users.permissions} ? 'support'`
-        )
-      )
-    );
+    .where(and(...conditions));
     
     return itStaff;
   }
 
-  async getITAnalytics(restaurantId: string): Promise<{
+  async getITAnalytics(restaurantId?: string): Promise<{
     totalOpen: number;
     totalInProgress: number;
     totalResolved: number;
@@ -1689,9 +1699,10 @@ export class DatabaseStorage implements IStorage {
     weekStart.setDate(now.getDate() - 7);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Get all tickets for this restaurant
-    const tickets = await db.select().from(supportTickets)
-      .where(eq(supportTickets.restaurantId, restaurantId));
+    // Get all tickets (for this restaurant if provided, or all restaurants)
+    const tickets = restaurantId 
+      ? await db.select().from(supportTickets).where(eq(supportTickets.restaurantId, restaurantId))
+      : await db.select().from(supportTickets);
 
     // Calculate metrics
     const totalOpen = tickets.filter(t => t.status === 'open').length;
@@ -1702,14 +1713,22 @@ export class DatabaseStorage implements IStorage {
     const highPriorityCount = tickets.filter(t => t.priority === 'high' && t.status !== 'closed').length;
 
     // Calculate response time (time from creation to first message by IT)
-    const messagesData = await db.select({
-      ticketId: ticketMessages.ticketId,
-      createdAt: ticketMessages.createdAt,
-      senderRole: ticketMessages.senderRole
-    })
-    .from(ticketMessages)
-    .where(eq(ticketMessages.restaurantId, restaurantId))
-    .orderBy(ticketMessages.createdAt);
+    const messagesData = restaurantId
+      ? await db.select({
+          ticketId: ticketMessages.ticketId,
+          createdAt: ticketMessages.createdAt,
+          senderRole: ticketMessages.senderRole
+        })
+        .from(ticketMessages)
+        .where(eq(ticketMessages.restaurantId, restaurantId))
+        .orderBy(ticketMessages.createdAt)
+      : await db.select({
+          ticketId: ticketMessages.ticketId,
+          createdAt: ticketMessages.createdAt,
+          senderRole: ticketMessages.senderRole
+        })
+        .from(ticketMessages)
+        .orderBy(ticketMessages.createdAt);
 
     const responseTimesMs: number[] = [];
     const ticketsWithResponse = new Set<string>();
@@ -1766,29 +1785,33 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getWorkloadDistribution(restaurantId: string): Promise<any[]> {
+  async getWorkloadDistribution(restaurantId?: string): Promise<any[]> {
     const itStaff = await this.getITStaff(restaurantId);
     
     const workload = await Promise.all(itStaff.map(async (staff) => {
+      const activeConditions = [
+        eq(supportTickets.assignedTo, staff.id),
+        sql`${supportTickets.status} != 'closed'`
+      ];
+      if (restaurantId) {
+        activeConditions.push(eq(supportTickets.restaurantId, restaurantId));
+      }
+      
       const activeTickets = await db.select({ count: sql<number>`count(*)` })
         .from(supportTickets)
-        .where(
-          and(
-            eq(supportTickets.restaurantId, restaurantId),
-            eq(supportTickets.assignedTo, staff.id),
-            sql`${supportTickets.status} != 'closed'`
-          )
-        );
+        .where(and(...activeConditions));
 
+      const resolvedConditions = [
+        eq(supportTickets.assignedTo, staff.id),
+        eq(supportTickets.status, 'resolved')
+      ];
+      if (restaurantId) {
+        resolvedConditions.push(eq(supportTickets.restaurantId, restaurantId));
+      }
+      
       const resolvedTickets = await db.select({ count: sql<number>`count(*)` })
         .from(supportTickets)
-        .where(
-          and(
-            eq(supportTickets.restaurantId, restaurantId),
-            eq(supportTickets.assignedTo, staff.id),
-            eq(supportTickets.status, 'resolved')
-          )
-        );
+        .where(and(...resolvedConditions));
 
       return {
         ...staff,
@@ -1800,24 +1823,24 @@ export class DatabaseStorage implements IStorage {
     return workload;
   }
 
-  async getCategoryBreakdown(restaurantId: string): Promise<{ category: string; count: number }[]> {
+  async getCategoryBreakdown(restaurantId?: string): Promise<{ category: string; count: number }[]> {
+    const conditions = [sql`${supportTickets.status} != 'closed'`];
+    if (restaurantId) {
+      conditions.push(eq(supportTickets.restaurantId, restaurantId));
+    }
+    
     const result = await db.select({
       category: supportTickets.category,
       count: sql<number>`count(*)`
     })
     .from(supportTickets)
-    .where(
-      and(
-        eq(supportTickets.restaurantId, restaurantId),
-        sql`${supportTickets.status} != 'closed'`
-      )
-    )
+    .where(and(...conditions))
     .groupBy(supportTickets.category);
 
     return result.map(r => ({ category: r.category, count: r.count || 0 }));
   }
 
-  async getTicketTrends(restaurantId: string, days: number = 30): Promise<{
+  async getTicketTrends(restaurantId?: string, days: number = 30): Promise<{
     date: string;
     created: number;
     resolved: number;
@@ -1825,14 +1848,14 @@ export class DatabaseStorage implements IStorage {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
+    const conditions = [gte(supportTickets.createdAt, startDate)];
+    if (restaurantId) {
+      conditions.push(eq(supportTickets.restaurantId, restaurantId));
+    }
+
     const tickets = await db.select()
       .from(supportTickets)
-      .where(
-        and(
-          eq(supportTickets.restaurantId, restaurantId),
-          gte(supportTickets.createdAt, startDate)
-        )
-      );
+      .where(and(...conditions));
 
     // Group by date
     const trendMap = new Map<string, { created: number; resolved: number }>();
@@ -1861,6 +1884,22 @@ export class DatabaseStorage implements IStorage {
     return Array.from(trendMap.entries())
       .map(([date, data]) => ({ date, ...data }))
       .sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  async getAllActiveTicketsForIT(): Promise<SupportTicket[]> {
+    // Get all active tickets across all restaurants for IT accounts
+    const tickets = await db.select()
+      .from(supportTickets)
+      .where(
+        or(
+          eq(supportTickets.status, 'open'),
+          eq(supportTickets.status, 'in-progress'),
+          eq(supportTickets.status, 'pending')
+        )
+      )
+      .orderBy(sql`${supportTickets.createdAt} DESC`);
+    
+    return tickets;
   }
 
   // Employee Activity Log
