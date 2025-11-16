@@ -14,6 +14,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDevice } from "@/contexts/DeviceContext";
+import { useBusinessType } from "@/hooks/useBusinessType";
 import { MoyasarPayment } from "@/components/MoyasarPayment";
 import type { MenuItem, DeliveryApp, Addon } from "@shared/schema";
 
@@ -69,6 +70,7 @@ export default function POS() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const { device } = useDevice();
+  const { isFactory } = useBusinessType();
 
   const { data: menuItems = [], isLoading } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu"],
@@ -746,10 +748,10 @@ export default function POS() {
 
               <div className="grid grid-cols-2 gap-2 mb-2">
                 <div>
-                  <Label htmlFor="table-number-mobile" className="text-xs mb-1">Table #</Label>
+                  <Label htmlFor="table-number-mobile" className="text-xs mb-1">{isFactory ? 'Truck' : 'Table #'}</Label>
                   <Input
                     id="table-number-mobile"
-                    placeholder="Table number"
+                    placeholder={isFactory ? "Truck number" : "Table number"}
                     value={tableNumber}
                     onChange={(e) => setTableNumber(e.target.value)}
                     data-testid="input-table-number"
@@ -1193,10 +1195,10 @@ export default function POS() {
 
           <div className="grid grid-cols-2 gap-2 mb-2">
             <div>
-              <Label htmlFor="table-number-desktop" className="text-sm mb-1">Table #</Label>
+              <Label htmlFor="table-number-desktop" className="text-sm mb-1">{isFactory ? 'Truck' : 'Table #'}</Label>
               <Input
                 id="table-number-desktop"
-                placeholder="Table number"
+                placeholder={isFactory ? "Truck number" : "Table number"}
                 value={tableNumber}
                 onChange={(e) => setTableNumber(e.target.value)}
                 data-testid="input-table-number-desktop"

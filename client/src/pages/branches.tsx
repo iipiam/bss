@@ -16,6 +16,7 @@ import { z } from "zod";
 import { insertBranchSchema, type Branch } from "@shared/schema";
 import { useDeviceLayout } from "@/lib/mobileLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useBusinessType } from "@/hooks/useBusinessType";
 
 const branchFormSchema = insertBranchSchema.extend({
   staff: z.string().min(1, "Staff count is required"),
@@ -29,6 +30,7 @@ export default function Branches() {
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { labels } = useBusinessType();
 
   const form = useForm<BranchFormValues>({
     resolver: zodResolver(branchFormSchema),
@@ -147,7 +149,7 @@ export default function Branches() {
       <div className={`flex ${layout.isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
         <div>
           <h1 className={`${layout.text3Xl} font-bold mb-2`}>Branch Management</h1>
-          <p className="text-muted-foreground">Manage your restaurant locations</p>
+          <p className="text-muted-foreground">Manage your {labels.shop.toLowerCase()} locations</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -164,7 +166,7 @@ export default function Branches() {
             <DialogHeader>
               <DialogTitle>{editingBranch ? "Edit Branch" : "Add New Branch"}</DialogTitle>
               <DialogDescription>
-                {editingBranch ? "Update branch information" : "Create a new restaurant branch"}
+                {editingBranch ? "Update branch information" : `Create a new ${labels.shop.toLowerCase()} branch`}
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>

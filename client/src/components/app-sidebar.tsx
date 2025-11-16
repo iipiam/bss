@@ -77,7 +77,7 @@ export function AppSidebar() {
   const { hasPermission, isAdmin } = usePermissions();
   
   // Get businessType from restaurant data (defaults to 'restaurant' for existing accounts)
-  const businessType: 'restaurant' | 'factory' = restaurant?.businessType || 'restaurant';
+  const businessType: 'restaurant' | 'factory' = (restaurant?.businessType as 'restaurant' | 'factory') || 'restaurant';
 
   const handleLogout = async () => {
     try {

@@ -492,7 +492,7 @@ export default function Menu() {
   if (isLoading) {
     return (
       <div className={layout.padding}>
-        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Menu Management</h1>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>{labels.menu} Management</h1>
         <p className="text-muted-foreground">Loading...</p>
       </div>
     );
@@ -502,8 +502,8 @@ export default function Menu() {
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div className={layout.isMobile ? 'space-y-4' : 'flex items-center justify-between'}>
         <div>
-          <h1 className={`${layout.text3Xl} font-bold mb-2`}>Menu Management</h1>
-          <p className="text-muted-foreground text-sm">Manage your menu items and pricing</p>
+          <h1 className={`${layout.text3Xl} font-bold mb-2`}>{labels.menu} Management</h1>
+          <p className="text-muted-foreground text-sm">Manage your {labels.menuItems.toLowerCase()} and pricing</p>
         </div>
         <div className={`flex gap-2 ${layout.isMobile ? 'flex-col' : ''}`}>
           <Button 
@@ -715,20 +715,19 @@ export default function Menu() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Category</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-menu-category">
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              {category}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          list="category-suggestions"
+                          placeholder="Enter or select category"
+                          data-testid="input-menu-category"
+                        />
+                      </FormControl>
+                      <datalist id="category-suggestions">
+                        {categories.map((category) => (
+                          <option key={category} value={category} />
+                        ))}
+                      </datalist>
                       <FormMessage />
                     </FormItem>
                   )}
