@@ -1662,7 +1662,7 @@ export class DatabaseStorage implements IStorage {
         eq(users.restaurantId, restaurantId),
         or(
           eq(users.role, 'admin'),
-          sql`${users.permissions} @> ARRAY['support']::text[]`
+          sql`${users.permissions} ? 'support'`
         )
       )
     );
