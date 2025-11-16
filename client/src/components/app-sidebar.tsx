@@ -139,7 +139,7 @@ export function AppSidebar() {
     { title: "Profile", url: "/profile", icon: UserCircle, testId: "profile", gradient: "from-indigo-500 to-purple-500" },
     { title: "Team Chat", url: "/chat", icon: MessageCircle, testId: "chat", gradient: "from-blue-500 to-cyan-500" },
     { title: t.support || "Support", url: "/support", icon: HeadphonesIcon, testId: "support", gradient: "from-emerald-500 to-teal-500" },
-    { title: t.itDashboard || "IT Dashboard", url: "/it-dashboard", icon: BarChart3, testId: "it-dashboard", gradient: "from-violet-500 to-purple-500", permission: 'support' },
+    { title: t.itDashboard || "IT Dashboard", url: "/it-dashboard", icon: BarChart3, testId: "it-dashboard", gradient: "from-violet-500 to-purple-500" },
     { title: t.settings, url: "/settings", icon: Settings, testId: "settings", gradient: "from-slate-500 to-gray-500" },  // Admin-only via permission check in auth
     { title: t.employees, url: "/employees", icon: Users, testId: "employees", gradient: "from-sky-500 to-blue-500", permission: 'users' },
     { title: "Password Manager", url: "/password-manager", icon: Key, testId: "password-manager", gradient: "from-red-500 to-rose-500" },

@@ -100,6 +100,17 @@ const requireAuth = (req: any, res: any, next: any) => {
   next();
 };
 
+// Middleware to require IT account type for IT-specific routes
+const requireITAccount = (req: any, res: any, next: any) => {
+  if (!req.session?.user) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  if (req.session.accountType !== 'it') {
+    return res.status(403).json({ error: "Access denied. IT account required." });
+  }
+  next();
+};
+
 export async function registerRoutes(app: Express, sessionParser: any): Promise<Server> {
   // Rate limiter for emergency bootstrap reset endpoint
   const bootstrapResetLimiter = rateLimit({
@@ -4333,7 +4344,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // IT Management Routes
-  app.get("/api/it/analytics", requireAuth, async (req, res) => {
+  app.get("/api/it/analytics", requireAuth, requireITAccount, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const analytics = await storage.getITAnalytics(restaurantId);
@@ -4344,7 +4355,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/it/staff", requireAuth, async (req, res) => {
+  app.get("/api/it/staff", requireAuth, requireITAccount, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const staff = await storage.getITStaff(restaurantId);
@@ -4355,7 +4366,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/it/workload", requireAuth, async (req, res) => {
+  app.get("/api/it/workload", requireAuth, requireITAccount, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const staff = await storage.getWorkloadDistribution(restaurantId);
@@ -4366,7 +4377,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/it/category-breakdown", requireAuth, async (req, res) => {
+  app.get("/api/it/category-breakdown", requireAuth, requireITAccount, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const breakdown = await storage.getCategoryBreakdown(restaurantId);
@@ -4377,7 +4388,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/it/trends", requireAuth, async (req, res) => {
+  app.get("/api/it/trends", requireAuth, requireITAccount, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const trends = await storage.getTicketTrends(restaurantId);
@@ -4388,7 +4399,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/it/assign", requireAuth, async (req, res) => {
+  app.post("/api/it/assign", requireAuth, requireITAccount, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const userId = req.session.user!.id;
@@ -4411,7 +4422,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/it/active-tickets", requireAuth, async (req, res) => {
+  app.get("/api/it/active-tickets", requireAuth, requireITAccount, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       
@@ -4437,7 +4448,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/it/tickets/:id/assign", requireAuth, async (req, res) => {
+  app.patch("/api/it/tickets/:id/assign", requireAuth, requireITAccount, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
       const userId = req.session.user!.id;
