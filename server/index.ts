@@ -9,6 +9,7 @@ declare module 'express-session' {
   interface SessionData {
     userId?: string;
     role?: string;
+    accountType?: "client" | "it";
   }
 }
 

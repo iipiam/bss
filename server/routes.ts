@@ -1543,14 +1543,18 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // Authentication
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { username, password } = req.body;
+      const { username, password, accountType } = req.body;
       
-      console.log("[AUTH] Login attempt for username:", username);
+      console.log("[AUTH] Login attempt for username:", username, "accountType:", accountType);
       
       if (!username || !password) {
         console.log("[AUTH] Missing username or password");
         return res.status(400).json({ error: "Username and password required" });
       }
+      
+      // Validate accountType - default to "client" if not provided
+      const validAccountType: "client" | "it" = accountType === "it" ? "it" : "client";
+      console.log("[AUTH] Validated accountType:", validAccountType);
 
       const user = await storage.getUserByUsername(username);
       
@@ -1579,6 +1583,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (req.session) {
         req.session.userId = user.id;
         req.session.role = user.role;
+        req.session.accountType = validAccountType; // Store account type in session
         req.session.user = {
           id: user.id,
           username: user.username,
@@ -1591,7 +1596,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           devicePreference: (user.devicePreference as 'laptop' | 'ipad' | 'iphone') || 'laptop',
           permissions: user.permissions as PermissionSet
         };
-        console.log("[AUTH] Session created for user:", user.id, "restaurant:", user.restaurantId);
+        console.log("[AUTH] Session created for user:", user.id, "restaurant:", user.restaurantId, "accountType:", validAccountType);
       }
 
       // Fetch restaurant data to include subscription information
@@ -1601,10 +1606,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(500).json({ error: "Restaurant not found" });
       }
 
-      // Return user without password and include restaurant data
+      // Return user without password and include restaurant data and accountType
       const { password: _, ...userWithoutPassword } = user;
       console.log("[AUTH] Login successful");
-      res.json({ user: userWithoutPassword, restaurant });
+      res.json({ user: userWithoutPassword, restaurant, accountType: validAccountType });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ error: "Login failed" });
@@ -1772,7 +1777,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
 
     const { password: _, ...userWithoutPassword } = user;
-    res.json({ user: userWithoutPassword, restaurant });
+    const accountType = req.session.accountType || "client"; // Get from session or default to "client"
+    res.json({ user: userWithoutPassword, restaurant, accountType });
   });
 
   app.patch("/api/auth/me", requireAuth, async (req, res) => {
