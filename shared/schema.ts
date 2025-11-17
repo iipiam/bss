@@ -458,6 +458,10 @@ export const users = pgTable("users", {
     };
   }>(),
   
+  // Activity Tracking (for IT Dashboard real-time monitoring)
+  lastActivityAt: timestamp("last_activity_at"), // Last API request timestamp
+  lastLoginAt: timestamp("last_login_at"), // Last successful login timestamp
+  
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
