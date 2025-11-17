@@ -348,14 +348,13 @@ export default function ITDashboard() {
                   {t.devicePreference || "Device Layout"}
                 </Label>
                 <div className="grid gap-2">
-                  <button
-                    onClick={() => handleDeviceChange('laptop')}
-                    disabled={isDeviceUpdating}
-                    className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${
+                  <div
+                    onClick={() => !isDeviceUpdating && handleDeviceChange('laptop')}
+                    className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all cursor-pointer ${
                       device === 'laptop'
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover-elevate active-elevate-2'
-                    }`}
+                    } ${isDeviceUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
                     data-testid="button-device-laptop"
                   >
                     <div className={`h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
@@ -372,16 +371,15 @@ export default function ITDashboard() {
                       </div>
                       <p className="text-xs text-muted-foreground">{t.laptopDesc || "Full desktop experience"}</p>
                     </div>
-                  </button>
+                  </div>
 
-                  <button
-                    onClick={() => handleDeviceChange('ipad')}
-                    disabled={isDeviceUpdating}
-                    className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${
+                  <div
+                    onClick={() => !isDeviceUpdating && handleDeviceChange('ipad')}
+                    className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all cursor-pointer ${
                       device === 'ipad'
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover-elevate active-elevate-2'
-                    }`}
+                    } ${isDeviceUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
                     data-testid="button-device-ipad"
                   >
                     <div className={`h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
@@ -398,16 +396,15 @@ export default function ITDashboard() {
                       </div>
                       <p className="text-xs text-muted-foreground">{t.ipadDesc || "Tablet-optimized layout"}</p>
                     </div>
-                  </button>
+                  </div>
 
-                  <button
-                    onClick={() => handleDeviceChange('iphone')}
-                    disabled={isDeviceUpdating}
-                    className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${
+                  <div
+                    onClick={() => !isDeviceUpdating && handleDeviceChange('iphone')}
+                    className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all cursor-pointer ${
                       device === 'iphone'
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover-elevate active-elevate-2'
-                    }`}
+                    } ${isDeviceUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
                     data-testid="button-device-iphone"
                   >
                     <div className={`h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
@@ -424,7 +421,7 @@ export default function ITDashboard() {
                       </div>
                       <p className="text-xs text-muted-foreground">{t.iphoneDesc || "Mobile-optimized layout"}</p>
                     </div>
-                  </button>
+                  </div>
                 </div>
               </div>
 

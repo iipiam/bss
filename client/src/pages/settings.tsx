@@ -395,18 +395,17 @@ function NotificationToneSection() {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {toneIds.map((toneId) => (
-            <button
+            <div
               key={toneId}
-              type="button"
-              onClick={() => handleToneChange(toneId)}
-              disabled={updateToneMutation.isPending}
+              onClick={() => !updateToneMutation.isPending && handleToneChange(toneId)}
               className={`
-                relative p-4 border-2 rounded-lg transition-all
+                relative p-4 border-2 rounded-lg transition-all cursor-pointer
                 hover-elevate active-elevate-2
                 ${selectedTone === toneId 
                   ? 'border-primary bg-primary/5' 
                   : 'border-border'
                 }
+                ${updateToneMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}
               `}
               data-testid={`button-tone-${toneId}`}
             >
