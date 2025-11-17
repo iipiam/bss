@@ -292,7 +292,7 @@ export default function ITDashboard() {
               <div className="flex-1">
                 <p className="text-sm text-muted-foreground mb-2">{t.totalOpen}</p>
                 <p className={`${layout.text3Xl} font-bold font-mono`}>{analytics?.totalOpen || 0}</p>
-                {analytics && analytics.openTrend !== 0 && (
+                {analytics && analytics.openTrend !== undefined && analytics.openTrend !== 0 && !isNaN(analytics.openTrend) && (
                   <div className="flex items-center gap-1 mt-2">
                     {analytics.openTrend > 0 ? (
                       <TrendingUp className="h-4 w-4 text-red-600 dark:text-red-400" />
@@ -304,7 +304,7 @@ export default function ITDashboard() {
                         analytics.openTrend > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
                       }`}
                     >
-                      {Math.abs(analytics.openTrend)}%
+                      {Math.abs(analytics.openTrend).toFixed(0)}%
                     </span>
                   </div>
                 )}

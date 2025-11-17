@@ -1842,18 +1842,43 @@ export class DatabaseStorage implements IStorage {
       t.closedAt && new Date(t.closedAt) >= monthStart
     ).length;
 
+    // Calculate openTrend (percentage change from yesterday)
+    const yesterdayEnd = todayStart; // Today at 00:00:00
+
+    // Count tickets that were open at yesterday's end (today at 00:00:00)
+    const totalOpenYesterday = tickets.filter(t => {
+      const createdAt = new Date(t.createdAt);
+      const closedAt = t.closedAt ? new Date(t.closedAt) : null;
+      
+      // Ticket was created before yesterday end AND was NOT closed before yesterday end
+      return createdAt < yesterdayEnd && (!closedAt || closedAt >= yesterdayEnd);
+    }).length;
+
+    const openTrend = totalOpenYesterday > 0 
+      ? Math.round(((totalOpen - totalOpenYesterday) / totalOpenYesterday) * 100)
+      : 0;
+
     return {
       totalOpen,
       totalInProgress,
       totalResolved,
       totalClosed,
-      urgentCount,
-      highPriorityCount,
-      avgResponseTimeHours: Math.round(avgResponseTimeHours * 10) / 10,
-      avgResolutionTimeHours: Math.round(avgResolutionTimeHours * 10) / 10,
+      urgentTickets: urgentCount,
+      avgResponseTime: Math.round(avgResponseTimeHours * 10) / 10,
       ticketsClosedToday,
-      ticketsClosedThisWeek,
-      ticketsClosedThisMonth
+      openTrend,
+      statusDistribution: [
+        { name: 'Open', value: totalOpen },
+        { name: 'In Progress', value: totalInProgress },
+        { name: 'Resolved', value: totalResolved },
+        { name: 'Closed', value: totalClosed }
+      ],
+      priorityBreakdown: [
+        { name: 'Urgent', value: urgentCount },
+        { name: 'High', value: highPriorityCount },
+        { name: 'Normal', value: tickets.filter(t => t.priority === 'normal' && t.status !== 'closed').length },
+        { name: 'Low', value: tickets.filter(t => t.priority === 'low' && t.status !== 'closed').length }
+      ]
     };
   }
 
