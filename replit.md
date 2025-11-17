@@ -24,7 +24,12 @@ Preferred communication style: Simple, everyday language.
   - **Security**: 148 authenticated endpoints with 134 restaurantId extractions (~91% coverage)
   - **Data Isolation**: All new accounts start with ZERO data, no cross-tenant data leakage
   - **Recent Security Fixes (Nov 2025)**: Patched 7 critical vulnerabilities in procurement, invoices, image uploads, and import endpoints
-  - **Recent Bug Fixes (Nov 17, 2025)**: Fixed invoice download workflow (PDF path mismatch), WebSocket connection spam when not authenticated, transaction creation validation, and POS mutation JSON parsing
+  - **Recent Bug Fixes (Nov 17, 2025)**: 
+    - Fixed invoice download workflow (PDF path mismatch: changed save location to `public/invoices/`)
+    - Fixed WebSocket connection spam when not authenticated (added user check before connecting)
+    - Fixed transaction creation validation (validates without requiring restaurantId in body, adds from session)
+    - Fixed POS mutation JSON parsing (parse Response object with `.json()` to get order data)
+    - Fixed IT Dashboard NaN% display (added `openTrend` calculation comparing today's open tickets vs yesterday's)
 - **Business Type Support**: Dual architecture for Restaurant and Factory operations, with type-specific features, terminology (e.g., Products for Factories), pricing, and UI restrictions (e.g., no Recipes for Factories). Includes 'licenses' permission for factories.
 - **Real-Time Communication**: WebSocket-based system for employee notifications (order lifecycle) and real-time support ticket updates.
 - **Data Storage**: PostgreSQL via Neon serverless driver, Drizzle ORM for type-safe queries.
