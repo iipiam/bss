@@ -124,7 +124,7 @@ function Router() {
 }
 
 function AppContent() {
-  const { user, restaurant, isLoading, logout } = useAuth();
+  const { user, restaurant, isLoading, logout, accountType } = useAuth();
   const { t, isRTL } = useLanguage();
   const { device } = useDevice();
   const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
@@ -216,6 +216,22 @@ function AppContent() {
   // Show login page if not authenticated
   if (!user) {
     return <Login />;
+  }
+
+  // CRITICAL: IT accounts can ONLY access IT Dashboard - redirect if on wrong route
+  if (accountType === 'it') {
+    const currentPath = window.location.pathname;
+    if (currentPath !== '/it-dashboard') {
+      window.location.href = '/it-dashboard';
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Redirecting to IT Dashboard...</p>
+          </div>
+        </div>
+      );
+    }
   }
 
   // Show main app if authenticated with device-responsive layout

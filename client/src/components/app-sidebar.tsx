@@ -148,18 +148,26 @@ export function AppSidebar() {
   // Filter menu items based on both permissions and business type
   const filterMenuItems = (items: MenuItem[]) => 
     items.filter(item => {
+      // CRITICAL: IT accounts can ONLY see IT Dashboard - nothing else
+      if (accountType === 'it') {
+        return item.testId === 'it-dashboard';
+      }
+      
+      // Client accounts cannot see IT Dashboard
+      if (item.testId === 'it-dashboard') {
+        return false;
+      }
+      
       // Check business type restriction (if specified)
       if (item.businessTypes && !item.businessTypes.includes(businessType)) {
         return false;
       }
-      // IT Dashboard is only visible for IT account type
-      if (item.testId === 'it-dashboard') {
-        return accountType === 'it' && (!item.permission || isAdmin() || hasPermission(item.permission));
-      }
+      
       // Settings is admin-only (special case)
       if (item.testId === 'settings') {
         return isAdmin();
       }
+      
       // Check permission (admin bypasses all checks, otherwise check specific permission)
       return !item.permission || isAdmin() || hasPermission(item.permission);
     });
