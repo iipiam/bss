@@ -418,8 +418,8 @@ function NotificationToneSection() {
                 <h4 className="font-medium text-sm">
                   {getToneName(toneId)}
                 </h4>
-                <span
-                  className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                <div
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleTestTone(toneId);
@@ -436,7 +436,7 @@ function NotificationToneSection() {
                   }}
                 >
                   <Volume2 className="h-4 w-4" />
-                </span>
+                </div>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span>{notificationTones[toneId].frequency}Hz</span>
@@ -612,19 +612,25 @@ function ChatNotificationSection() {
                     <h4 className="font-medium text-sm">
                       {getToneName(toneId)}
                     </h4>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8"
+                    <div
+                      className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleTestChatTone(toneId);
                       }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleTestChatTone(toneId);
+                        }
+                      }}
                       data-testid={`button-test-chat-${toneId}`}
                     >
                       <Volume2 className="h-4 w-4" />
-                    </Button>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{notificationTones[toneId].frequency}Hz</span>
