@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Ticket, AlertCircle, Clock, CheckCircle, TrendingUp, TrendingDown } from "lucide-react";
+import { Ticket, AlertCircle, Clock, CheckCircle, TrendingUp, TrendingDown, Circle, Users } from "lucide-react";
 import { PieChart, Pie, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from "recharts";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
@@ -81,6 +81,17 @@ interface ActiveTicket {
   category: string;
 }
 
+interface ClientAccount {
+  userId: string;
+  username: string;
+  fullName: string;
+  restaurantId: string;
+  restaurantName: string;
+  lastActivityAt: string | null;
+  lastLoginAt: string | null;
+  isOnline: boolean;
+}
+
 const COLORS = {
   primary: "hsl(var(--chart-1))",
   secondary: "hsl(var(--chart-2))",
@@ -136,6 +147,12 @@ export default function ITDashboard() {
   const { data: activeTickets = [], isLoading: ticketsLoading } = useQuery<ActiveTicket[]>({
     queryKey: ["/api/it/active-tickets"],
     refetchInterval: 30000,
+  });
+
+  // Fetch client accounts activity (real-time tracking with 10-second refetch)
+  const { data: clientAccounts = [], isLoading: clientAccountsLoading } = useQuery<ClientAccount[]>({
+    queryKey: ["/api/it/client-accounts"],
+    refetchInterval: 10000, // Refresh every 10 seconds for real-time tracking
   });
 
   // Assignment mutation
@@ -520,6 +537,80 @@ export default function ITDashboard() {
                     {t.noData || "No staff data available"}
                   </TableCell>
                 </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Client Account Tracking (Real-Time) */}
+      <Card className="hover-elevate transition-all" data-testid="card-client-accounts">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            {t.clientAccounts || "Client Accounts"}
+          </CardTitle>
+          <CardDescription>{t.clientAccountTracking || "Real-time tracking of client account activity and online status"}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t.status || "Status"}</TableHead>
+                <TableHead>{t.username || "Username"}</TableHead>
+                <TableHead>{t.fullName || "Full Name"}</TableHead>
+                <TableHead>{t.restaurant || "Business"}</TableHead>
+                <TableHead>{t.lastActivity || "Last Activity"}</TableHead>
+                <TableHead>{t.lastLogin || "Last Login"}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {clientAccountsLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    {t.loading}...
+                  </TableCell>
+                </TableRow>
+              ) : clientAccounts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    {t.noData || "No client accounts found"}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                clientAccounts.map((account) => (
+                  <TableRow key={account.userId} data-testid={`row-client-${account.userId}`}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Circle
+                          className={`h-3 w-3 ${
+                            account.isOnline
+                              ? "fill-green-500 text-green-500"
+                              : "fill-gray-400 text-gray-400"
+                          }`}
+                        />
+                        <span className={`text-sm font-medium ${
+                          account.isOnline ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+                        }`}>
+                          {account.isOnline ? (t.online || "Online") : (t.offline || "Offline")}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium font-mono">{account.username}</TableCell>
+                    <TableCell>{account.fullName}</TableCell>
+                    <TableCell className="text-muted-foreground">{account.restaurantName}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {account.lastActivityAt
+                        ? new Date(account.lastActivityAt).toLocaleString()
+                        : (t.never || "Never")}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {account.lastLoginAt
+                        ? new Date(account.lastLoginAt).toLocaleString()
+                        : (t.never || "Never")}
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
