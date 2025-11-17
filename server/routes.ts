@@ -1028,10 +1028,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.post("/api/transactions", requireAuth, async (req, res) => {
     try {
-      const data = insertTransactionSchema.parse(req.body);
-      const transaction = await storage.createTransaction(data);
+      const restaurantId = req.session.user!.restaurantId;
+      // Validate request body without restaurantId (will be added from session)
+      const bodySchema = insertTransactionSchema.omit({ restaurantId: true });
+      const data = bodySchema.parse(req.body);
+      // Add restaurantId from session for security
+      const transaction = await storage.createTransaction({ ...data, restaurantId });
       res.status(201).json(transaction);
     } catch (error) {
+      console.error("[Transactions] Creation error:", error);
       res.status(400).json({ error: "Invalid transaction data" });
     }
   });
@@ -2495,11 +2500,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.post("/api/invoices/create-and-generate", requireAuth, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
+      console.log("[Invoice Generate] Request body:", JSON.stringify(req.body));
       const { orderId } = req.body;
       
       if (!orderId) {
+        console.error("[Invoice Generate] Missing orderId in request body");
         return res.status(400).json({ error: "Order ID required" });
       }
+      console.log("[Invoice Generate] Processing orderId:", orderId);
 
       const order = await storage.getOrder(orderId, restaurantId);
       if (!order) {
