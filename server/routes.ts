@@ -1277,10 +1277,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(procurement);
   });
 
-  app.post("/api/procurement", async (req, res) => {
+  app.post("/api/procurement", requireAuth, requirePermission('procurement'), async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const data = insertProcurementSchema.parse(req.body);
-      const procurement = await storage.createProcurement(data);
+      // SECURITY: Strip restaurantId from request body and use session restaurantId
+      const { restaurantId: _, ...safeData } = data;
+      const procurement = await storage.createProcurement({ ...safeData, restaurantId });
       res.status(201).json(procurement);
     } catch (error) {
       res.status(400).json({ error: "Invalid procurement data" });
@@ -2182,10 +2185,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(invoice);
   });
 
-  app.post("/api/invoices", async (req, res) => {
+  app.post("/api/invoices", requireAuth, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId;
       const data = insertInvoiceSchema.parse(req.body);
-      const invoice = await storage.createInvoice(data);
+      // SECURITY: Strip restaurantId from request body and use session restaurantId
+      const { restaurantId: _, ...safeData } = data;
+      const invoice = await storage.createInvoice({ ...safeData, restaurantId });
       res.status(201).json(invoice);
     } catch (error) {
       res.status(400).json({ error: "Invalid invoice data" });
@@ -3183,7 +3189,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Upload menu item image
-  app.post("/api/menu/upload-image", uploadMenuImage.single('image'), async (req, res) => {
+  app.post("/api/menu/upload-image", requireAuth, requirePermission('menu'), uploadMenuImage.single('image'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No image uploaded" });
@@ -3628,7 +3634,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Import Inventory from Excel
-  app.post("/api/import/inventory", upload.single('file'), async (req, res) => {
+  app.post("/api/import/inventory", requireAuth, requirePermission('inventory'), upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -3669,7 +3675,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Import Menu from Excel
-  app.post("/api/import/menu", upload.single('file'), async (req, res) => {
+  app.post("/api/import/menu", requireAuth, requirePermission('menu'), upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -3711,7 +3717,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Import Recipes from Excel
-  app.post("/api/import/recipes", upload.single('file'), async (req, res) => {
+  app.post("/api/import/recipes", requireAuth, requirePermission('recipes'), upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -3752,7 +3758,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Import Branches from Excel
-  app.post("/api/import/branches", upload.single('file'), async (req, res) => {
+  app.post("/api/import/branches", requireAuth, requirePermission('branches'), upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
