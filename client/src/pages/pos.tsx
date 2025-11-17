@@ -134,6 +134,7 @@ export default function POS() {
         const response = await fetch("/api/invoices/create-and-generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include", // Include session cookie
           body: JSON.stringify({ orderId: order.id }),
         });
         
