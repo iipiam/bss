@@ -30,6 +30,8 @@ Preferred communication style: Simple, everyday language.
     - Fixed transaction creation validation (validates without requiring restaurantId in body, adds from session)
     - Fixed POS mutation JSON parsing (parse Response object with `.json()` to get order data)
     - Fixed IT Dashboard NaN% display (added `openTrend` calculation comparing today's open tickets vs yesterday's)
+    - Fixed IT Dashboard stuck loading state (added `enabled: !!user` auth guards to all queries preventing 401 errors and perpetual loading)
+  - **Device Preference System**: Users can select iPhone/iPad/Laptop layouts with persistent settings. Device class (`device-iphone`, `device-ipad`, `device-laptop`) applied to `document.documentElement` for CSS targeting. IT accounts access settings via IT Dashboard header (comprehensive dialog with language, device, and theme preferences).
 - **Business Type Support**: Dual architecture for Restaurant and Factory operations, with type-specific features, terminology (e.g., Products for Factories), pricing, and UI restrictions (e.g., no Recipes for Factories). Includes 'licenses' permission for factories.
 - **Real-Time Communication**: WebSocket-based system for employee notifications (order lifecycle) and real-time support ticket updates.
 - **Data Storage**: PostgreSQL via Neon serverless driver, Drizzle ORM for type-safe queries.
