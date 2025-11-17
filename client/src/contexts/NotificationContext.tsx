@@ -252,9 +252,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         console.log('[Notifications] WebSocket disconnected');
         setIsConnected(false);
         
-        // Schedule reconnect - will be canceled by cleanup if component unmounts
+        // Schedule reconnect only if user is authenticated - will be canceled by cleanup if component unmounts
         reconnectTimeoutRef.current = setTimeout(() => {
-          if (notificationsEnabled) {
+          if (notificationsEnabled && user) {
             console.log('[Notifications] Attempting to reconnect...');
             connect();
           }
@@ -270,7 +270,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    if (notificationsEnabled) {
+    // Only connect if user is authenticated AND notifications are enabled
+    if (notificationsEnabled && user) {
       connect();
     }
 
@@ -291,7 +292,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         wsRef.current = null;
       }
     };
-  }, [notificationsEnabled]);
+  }, [notificationsEnabled, user]);
 
   return (
     <NotificationContext.Provider value={{ isConnected, notificationsEnabled, setNotificationsEnabled }}>

@@ -1385,8 +1385,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       const { pdfBuffer, qrCode } = await generateZATCAInvoice(pdfData);
 
-      // Ensure invoices directory exists
-      const invoicesDir = path.join(process.cwd(), "invoices");
+      // Ensure invoices directory exists in public folder
+      const invoicesDir = path.join(process.cwd(), "public", "invoices");
       if (!fs.existsSync(invoicesDir)) {
         fs.mkdirSync(invoicesDir, { recursive: true });
       }
@@ -2561,8 +2561,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       const { pdfBuffer, qrCode } = await generateZATCAInvoice(pdfData);
 
-      // Ensure invoices directory exists
-      const invoicesDir = path.join(process.cwd(), "invoices");
+      // Ensure invoices directory exists in public folder
+      const invoicesDir = path.join(process.cwd(), "public", "invoices");
       if (!fs.existsSync(invoicesDir)) {
         fs.mkdirSync(invoicesDir, { recursive: true });
       }
