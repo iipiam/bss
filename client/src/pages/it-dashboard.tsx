@@ -16,16 +16,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Ticket, AlertCircle, Clock, CheckCircle, TrendingUp, TrendingDown, Circle, Users } from "lucide-react";
+import { Ticket, AlertCircle, Clock, CheckCircle, TrendingUp, TrendingDown, Circle, Users, Languages, Laptop, Tablet, Smartphone, Moon, Sun, Settings } from "lucide-react";
 import { PieChart, Pie, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from "recharts";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLanguage, type Language } from "@/contexts/LanguageContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeviceLayout, useCompactChartConfig } from "@/lib/mobileLayout";
+import { useDevice } from "@/contexts/DeviceContext";
+import { useTheme } from "@/components/theme-provider";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Languages } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 interface ITAnalytics {
   totalOpen: number;
@@ -110,6 +120,8 @@ const CHART_COLORS = [
 
 export default function ITDashboard() {
   const { t, language, setLanguage } = useLanguage();
+  const { device, setDevice, isUpdating: isDeviceUpdating } = useDevice();
+  const { theme, setTheme } = useTheme();
   const layout = useDeviceLayout();
   const chartConfig = useCompactChartConfig();
   const [, navigate] = useLocation();
@@ -118,6 +130,25 @@ export default function ITDashboard() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Handle device change
+  const handleDeviceChange = async (newDevice: 'laptop' | 'ipad' | 'iphone') => {
+    try {
+      await setDevice(newDevice);
+      const deviceLabel = newDevice === 'laptop' ? t.laptop : newDevice === 'ipad' ? t.ipad : t.iphone;
+      toast({
+        title: t.success,
+        description: `${t.devicePreferenceUpdated || "Device preference updated to"} ${deviceLabel}`,
+      });
+    } catch (error) {
+      toast({
+        title: t.error,
+        description: t.failedToUpdateDevicePreference || "Failed to update device preference",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Fetch analytics data with 30-second refetch
   const { data: analytics, isLoading: analyticsLoading } = useQuery<ITAnalytics>({
@@ -258,30 +289,169 @@ export default function ITDashboard() {
           <p className="text-muted-foreground">{t.itAnalytics || "IT support analytics and ticket management"}</p>
         </div>
         
-        {/* Language Selector for IT Users */}
-        <div className="flex items-center gap-2">
-          <Languages className="h-4 w-4 text-muted-foreground" />
-          <Select
-            value={language}
-            onValueChange={(value: string) => setLanguage(value as Language)}
-          >
-            <SelectTrigger className="w-[180px]" data-testid="select-language">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="English">English</SelectItem>
-              <SelectItem value="Arabic">العربية (Arabic)</SelectItem>
-              <SelectItem value="Chinese">中文 (Chinese)</SelectItem>
-              <SelectItem value="German">Deutsch (German)</SelectItem>
-              <SelectItem value="Hindi">हिन्दी (Hindi)</SelectItem>
-              <SelectItem value="Urdu">اردو (Urdu)</SelectItem>
-              <SelectItem value="Bengali">বাংলা (Bengali)</SelectItem>
-              <SelectItem value="Italian">Italiano (Italian)</SelectItem>
-              <SelectItem value="Spanish">Español (Spanish)</SelectItem>
-              <SelectItem value="Tagalog">Tagalog</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Settings Dialog for IT Users */}
+        <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="default" data-testid="button-it-settings">
+              <Settings className="h-4 w-4 mr-2" />
+              {t.settings || "Settings"}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>{t.itPreferences || "IT Dashboard Preferences"}</DialogTitle>
+              <DialogDescription>
+                {t.customizeYourExperience || "Customize your IT dashboard experience"}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6 py-4">
+              {/* Language Preference */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Languages className="h-4 w-4" />
+                  {t.language || "Language"}
+                </Label>
+                <Select
+                  value={language}
+                  onValueChange={(value: string) => setLanguage(value as any)}
+                >
+                  <SelectTrigger data-testid="select-language">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="English">English</SelectItem>
+                    <SelectItem value="Arabic">العربية (Arabic)</SelectItem>
+                    <SelectItem value="Chinese">中文 (Chinese)</SelectItem>
+                    <SelectItem value="German">Deutsch (German)</SelectItem>
+                    <SelectItem value="Hindi">हिन्दी (Hindi)</SelectItem>
+                    <SelectItem value="Urdu">اردو (Urdu)</SelectItem>
+                    <SelectItem value="Bengali">বাংলা (Bengali)</SelectItem>
+                    <SelectItem value="Italian">Italiano (Italian)</SelectItem>
+                    <SelectItem value="Spanish">Español (Spanish)</SelectItem>
+                    <SelectItem value="Tagalog">Tagalog</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Device Preference */}
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <Laptop className="h-4 w-4" />
+                  {t.devicePreference || "Device Layout"}
+                </Label>
+                <div className="grid gap-2">
+                  <button
+                    onClick={() => handleDeviceChange('laptop')}
+                    disabled={isDeviceUpdating}
+                    className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${
+                      device === 'laptop'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover-elevate active-elevate-2'
+                    }`}
+                    data-testid="button-device-laptop"
+                  >
+                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      device === 'laptop' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                    }`}>
+                      <Laptop className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{t.laptop || "Laptop"}</span>
+                        {device === 'laptop' && (
+                          <Badge variant="default" className="text-xs">{t.active || "Active"}</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{t.laptopDesc || "Full desktop experience"}</p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handleDeviceChange('ipad')}
+                    disabled={isDeviceUpdating}
+                    className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${
+                      device === 'ipad'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover-elevate active-elevate-2'
+                    }`}
+                    data-testid="button-device-ipad"
+                  >
+                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      device === 'ipad' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                    }`}>
+                      <Tablet className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{t.ipad || "iPad"}</span>
+                        {device === 'ipad' && (
+                          <Badge variant="default" className="text-xs">{t.active || "Active"}</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{t.ipadDesc || "Tablet-optimized layout"}</p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handleDeviceChange('iphone')}
+                    disabled={isDeviceUpdating}
+                    className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${
+                      device === 'iphone'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover-elevate active-elevate-2'
+                    }`}
+                    data-testid="button-device-iphone"
+                  >
+                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      device === 'iphone' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                    }`}>
+                      <Smartphone className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{t.iphone || "iPhone"}</span>
+                        {device === 'iphone' && (
+                          <Badge variant="default" className="text-xs">{t.active || "Active"}</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{t.iphoneDesc || "Mobile-optimized layout"}</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Theme Preference */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  {theme === "light" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  {t.theme || "Theme"}
+                </Label>
+                <div className="flex gap-2">
+                  <Button
+                    variant={theme === "light" ? "default" : "outline"}
+                    size="default"
+                    onClick={() => setTheme("light")}
+                    className="flex-1"
+                    data-testid="button-theme-light"
+                  >
+                    <Sun className="h-4 w-4 mr-2" />
+                    {t.light || "Light"}
+                  </Button>
+                  <Button
+                    variant={theme === "dark" ? "default" : "outline"}
+                    size="default"
+                    onClick={() => setTheme("dark")}
+                    className="flex-1"
+                    data-testid="button-theme-dark"
+                  >
+                    <Moon className="h-4 w-4 mr-2" />
+                    {t.dark || "Dark"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Real-Time Metrics Cards */}
