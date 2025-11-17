@@ -85,7 +85,7 @@ import {
   type InsertBootstrapResetToken,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, sql, or, isNull } from "drizzle-orm";
+import { eq, and, gte, lte, sql, or, isNull, desc } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export interface IStorage {
@@ -186,6 +186,20 @@ export interface IStorage {
   getUserProfile(userId: string, restaurantId: string): Promise<User | undefined>;
   updateUserProfile(userId: string, restaurantId: string, profile: { email?: string; phone?: string }): Promise<User | undefined>;
   cancelSubscription(userId: string, restaurantId: string): Promise<User | undefined>;
+  
+  // Activity Tracking (for IT Dashboard monitoring)
+  updateUserActivity(userId: string): Promise<void>; // Update lastActivityAt timestamp
+  updateUserLogin(userId: string): Promise<void>; // Update lastLoginAt timestamp
+  getClientAccountsActivity(): Promise<Array<{ 
+    userId: string; 
+    username: string; 
+    fullName: string; 
+    restaurantId: string; 
+    restaurantName: string;
+    lastActivityAt: Date | null; 
+    lastLoginAt: Date | null;
+    isOnline: boolean;
+  }>>; // SPECIAL: IT-only, returns activity data across all restaurants
   
   // Bootstrap Reset Tokens
   getValidBootstrapToken(plainToken: string): Promise<{ id: string; tokenHash: string } | undefined>;
@@ -931,6 +945,64 @@ export class DatabaseStorage implements IStorage {
 
     // Return updated user
     return user;
+  }
+
+  // Activity Tracking (for IT Dashboard monitoring)
+  async updateUserActivity(userId: string): Promise<void> {
+    await db.update(users)
+      .set({ lastActivityAt: new Date() })
+      .where(eq(users.id, userId));
+  }
+
+  async updateUserLogin(userId: string): Promise<void> {
+    const now = new Date();
+    await db.update(users)
+      .set({ 
+        lastLoginAt: now,
+        lastActivityAt: now
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async getClientAccountsActivity(): Promise<Array<{ 
+    userId: string; 
+    username: string; 
+    fullName: string; 
+    restaurantId: string; 
+    restaurantName: string;
+    lastActivityAt: Date | null; 
+    lastLoginAt: Date | null;
+    isOnline: boolean;
+  }>> {
+    // Get all users with their restaurant information
+    const result = await db
+      .select({
+        userId: users.id,
+        username: users.username,
+        fullName: users.fullName,
+        restaurantId: users.restaurantId,
+        restaurantName: restaurants.name,
+        lastActivityAt: users.lastActivityAt,
+        lastLoginAt: users.lastLoginAt,
+      })
+      .from(users)
+      .leftJoin(restaurants, eq(users.restaurantId, restaurants.id))
+      .orderBy(desc(users.lastActivityAt));
+
+    // Calculate isOnline based on lastActivityAt (online if activity within last 5 minutes)
+    const now = new Date();
+    const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+
+    return result.map(row => ({
+      userId: row.userId,
+      username: row.username,
+      fullName: row.fullName,
+      restaurantId: row.restaurantId,
+      restaurantName: row.restaurantName || 'Unknown',
+      lastActivityAt: row.lastActivityAt,
+      lastLoginAt: row.lastLoginAt,
+      isOnline: row.lastActivityAt ? row.lastActivityAt >= fiveMinutesAgo : false,
+    }));
   }
 
   // Invoices

@@ -116,6 +116,22 @@ const requireAuth = (req: any, res: any, next: any) => {
   next();
 };
 
+// Activity tracking middleware - updates lastActivityAt for authenticated users
+const trackActivity = async (req: any, res: any, next: any) => {
+  if (req.session?.user?.userId) {
+    try {
+      // Update lastActivityAt in background (don't wait for it to complete)
+      storage.updateUserActivity(req.session.user.userId).catch((error: Error) => {
+        console.error('[Activity Tracking] Failed to update activity:', error);
+      });
+    } catch (error) {
+      // Silently fail - don't block the request
+      console.error('[Activity Tracking] Error:', error);
+    }
+  }
+  next();
+};
+
 // Middleware to require IT account type for IT-specific routes
 const requireITAccount = (req: any, res: any, next: any) => {
   if (!req.session?.user) {
