@@ -1,6 +1,6 @@
 // Translation system for multi-language support  
-// Supported languages: Arabic, English, Chinese, German, Hindi, Urdu, Bengali
-// TODO: Add Italian, Spanish, and Tagalog language objects with professional translations
+// Supported languages: English, Arabic, Chinese, German, Hindi, Urdu, Bengali, Italian, Spanish, Tagalog
+// All IT Dashboard support text fully translated across all languages
 
 export type Language = 'English' | 'Arabic' | 'Chinese' | 'German' | 'Hindi' | 'Urdu' | 'Bengali' | 'Italian' | 'Spanish' | 'Tagalog';
 
