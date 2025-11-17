@@ -18,10 +18,12 @@ import { notificationTones, toneIds, playNotificationTone, getToneName, type Ton
 export default function SettingsPage() {
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<Partial<Settings>>({});
 
   const { data: settings, isLoading } = useQuery<Settings>({
     queryKey: ["/api/settings"],
+    enabled: !!user,
   });
 
   useEffect(() => {
@@ -335,6 +337,7 @@ function NotificationToneSection() {
 
   const { data: settings, isLoading } = useQuery<Settings>({
     queryKey: ["/api/settings"],
+    enabled: !!user,
   });
 
   useEffect(() => {
