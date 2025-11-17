@@ -178,6 +178,11 @@ export default function Login() {
       }
     },
     onError: (error: any) => {
+      // Log detailed error for debugging
+      console.error('[SIGNUP ERROR] Full error object:', error);
+      console.error('[SIGNUP ERROR] error.error:', error.error);
+      console.error('[SIGNUP ERROR] error.message:', error.message);
+      
       toast({
         title: t.signUpFailed,
         description: error.error || error.message || t.signUpFailedDesc,

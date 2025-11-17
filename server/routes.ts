@@ -1425,7 +1425,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const { username, password, name, email, commercialRegistration, restaurantName, nationalId, taxNumber, businessType, restaurantType, subscriptionPlan, branchesCount } = req.body;
       
+      console.log("[SIGNUP] Received signup request for username:", username);
+      console.log("[SIGNUP] Request body:", { username, name, email, restaurantName, nationalId, taxNumber, businessType, restaurantType, subscriptionPlan, branchesCount });
+      
       if (!username || !password || !name || !email || !commercialRegistration || !restaurantName || !nationalId || !taxNumber || !businessType || !restaurantType || !subscriptionPlan || !branchesCount) {
+        console.log("[SIGNUP] Missing required fields");
         return res.status(400).json({ error: "All fields are required including Restaurant Name, National ID, Tax Number, Business Type, Restaurant Type, Commercial Registration, subscription plan, and number of branches" });
       }
 
