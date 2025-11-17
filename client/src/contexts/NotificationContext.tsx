@@ -29,7 +29,26 @@ interface ChatNotification {
   };
 }
 
-type Notification = OrderNotification | ChatNotification;
+interface TicketNotification {
+  type: 'ticket:created' | 'ticket:updated' | 'ticket:message';
+  ticketId?: string;
+  ticketNumber?: string;
+  subject?: string;
+  category?: string;
+  priority?: string;
+  ticketStatus?: string;
+  ticketMessage?: {
+    id: string;
+    ticketId: string;
+    senderId: string;
+    senderName: string;
+    senderRole: string;
+    message: string;
+    createdAt: string;
+  };
+}
+
+type Notification = OrderNotification | ChatNotification | TicketNotification;
 
 interface NotificationContextType {
   isConnected: boolean;
@@ -147,7 +166,64 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 duration: 3000,
               });
             }
-          } else {
+          } else if (notification.type === 'ticket:created' || notification.type === 'ticket:updated') {
+            // Handle ticket creation and updates
+            playNotificationTone(currentToneRef.current);
+            
+            // Invalidate ticket list to show new/updated tickets
+            queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
+            
+            // If viewing specific ticket, invalidate its details
+            if (notification.ticketId) {
+              queryClient.invalidateQueries({ queryKey: ['/api/tickets', notification.ticketId] });
+            }
+            
+            // For IT Dashboard - invalidate IT-specific queries
+            queryClient.invalidateQueries({ queryKey: ['/api/it/tickets'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/it/analytics'] });
+            
+            const title = notification.type === 'ticket:created'
+              ? `New Ticket - ${notification.ticketNumber}`
+              : `Ticket Updated - ${notification.ticketNumber}`;
+            
+            const description = [
+              notification.subject && `${notification.subject}`,
+              notification.category && `${t.category || 'Category'}: ${notification.category}`,
+              notification.priority && `Priority: ${notification.priority}`,
+              notification.ticketStatus && `${t.status || 'Status'}: ${notification.ticketStatus}`,
+            ].filter(Boolean).join('\n');
+            
+            toast({
+              title,
+              description,
+              duration: 5000,
+            });
+          } else if (notification.type === 'ticket:message') {
+            // Handle new ticket messages
+            const ticketMessage = notification.ticketMessage;
+            
+            // Invalidate ticket messages to show new message
+            if (notification.ticketId) {
+              queryClient.invalidateQueries({ 
+                queryKey: ['/api/tickets', notification.ticketId, 'messages'] 
+              });
+              queryClient.invalidateQueries({ queryKey: ['/api/tickets', notification.ticketId] });
+            }
+            
+            // Invalidate ticket list to update "last message" info
+            queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
+            
+            // Show toast/sound if user is not the sender
+            if (ticketMessage && ticketMessage.senderId !== user?.id) {
+              playNotificationTone(currentToneRef.current);
+              
+              toast({
+                title: `New Message - ${notification.ticketNumber}`,
+                description: `${ticketMessage.senderName}: ${ticketMessage.message.slice(0, 50)}${ticketMessage.message.length > 50 ? '...' : ''}`,
+                duration: 4000,
+              });
+            }
+          } else if (notification.type === 'order:created' || notification.type === 'order:statusUpdated') {
             // Handle order notifications
             playNotificationTone(currentToneRef.current);
 

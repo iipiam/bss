@@ -47,7 +47,7 @@ let wsClients: Set<WSClient> | null = null;
 
 // Unified broadcast function with restaurant filtering
 export function broadcastNotification(event: {
-  type: 'order:created' | 'order:statusUpdated' | 'chat:message';
+  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message';
   restaurantId: string;
   // Order fields
   orderId?: string;
@@ -64,6 +64,22 @@ export function broadcastNotification(event: {
     senderId: string;
     senderName: string;
     content: string;
+    createdAt: string;
+  };
+  // Ticket fields
+  ticketId?: string;
+  ticketNumber?: string;
+  subject?: string;
+  category?: string;
+  priority?: string;
+  ticketStatus?: string;
+  ticketMessage?: {
+    id: string;
+    ticketId: string;
+    senderId: string;
+    senderName: string;
+    senderRole: string;
+    message: string;
     createdAt: string;
   };
 }) {
@@ -4232,6 +4248,18 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         // Don't fail the request if email fails
       });
 
+      // Broadcast real-time notification for new ticket
+      broadcastNotification({
+        type: 'ticket:created',
+        restaurantId,
+        ticketId: ticket.id,
+        ticketNumber: ticket.ticketNumber,
+        subject: ticket.subject,
+        category: ticket.category,
+        priority: ticket.priority,
+        ticketStatus: ticket.status,
+      });
+
       res.status(201).json(ticket);
     } catch (error) {
       console.error("Error creating ticket:", error);
@@ -4249,6 +4277,18 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (!updated) {
         return res.status(404).json({ error: "Ticket not found" });
       }
+      
+      // Broadcast real-time notification for ticket update
+      broadcastNotification({
+        type: 'ticket:updated',
+        restaurantId,
+        ticketId: updated.id,
+        ticketNumber: updated.ticketNumber,
+        subject: updated.subject,
+        category: updated.category,
+        priority: updated.priority,
+        ticketStatus: updated.status,
+      });
       
       res.json(updated);
     } catch (error) {
@@ -4294,6 +4334,23 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         senderRole: req.body.senderRole || 'employee',
         message: req.body.message,
         isRead: false,
+      });
+
+      // Broadcast real-time notification for new ticket message
+      broadcastNotification({
+        type: 'ticket:message',
+        restaurantId,
+        ticketId: req.params.ticketId,
+        ticketNumber: ticket.ticketNumber,
+        ticketMessage: {
+          id: message.id,
+          ticketId: message.ticketId,
+          senderId: message.senderId,
+          senderName: message.senderName,
+          senderRole: message.senderRole,
+          message: message.message,
+          createdAt: message.createdAt.toISOString(),
+        },
       });
 
       res.status(201).json(message);
@@ -4446,6 +4503,18 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
       }
+
+      // Broadcast real-time notification for ticket assignment
+      broadcastNotification({
+        type: 'ticket:updated',
+        restaurantId: ticket.restaurantId,
+        ticketId: ticket.id,
+        ticketNumber: ticket.ticketNumber,
+        subject: ticket.subject,
+        category: ticket.category,
+        priority: ticket.priority,
+        ticketStatus: ticket.status,
+      });
 
       res.json(ticket);
     } catch (error) {
