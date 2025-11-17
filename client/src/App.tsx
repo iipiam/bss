@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -127,6 +127,7 @@ function AppContent() {
   const { user, restaurant, isLoading, logout, accountType } = useAuth();
   const { t, isRTL } = useLanguage();
   const { device } = useDevice();
+  const [location] = useLocation();
   const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(restaurant?.subscriptionPlan || 'monthly');
   const [branchesCount, setBranchesCount] = useState(restaurant?.branchesCount || 1);
@@ -185,14 +186,13 @@ function AppContent() {
   const containerMaxWidth = device === 'iphone' ? '430px' : device === 'ipad' ? '820px' : '100%';
 
   // Handle public routes (forgot-password, reset-password, emergency-reset) before checking authentication
-  const currentPath = window.location.pathname;
-  if (currentPath === "/forgot-password") {
+  if (location === "/forgot-password") {
     return <ForgotPassword />;
   }
-  if (currentPath === "/reset-password") {
+  if (location === "/reset-password") {
     return <ResetPassword />;
   }
-  if (currentPath === "/emergency-reset") {
+  if (location === "/emergency-reset") {
     return <EmergencyReset />;
   }
 
@@ -220,8 +220,7 @@ function AppContent() {
 
   // CRITICAL: IT accounts can ONLY access IT Dashboard - redirect if on wrong route
   if (accountType === 'it') {
-    const currentPath = window.location.pathname;
-    if (currentPath !== '/it-dashboard') {
+    if (location !== '/it-dashboard') {
       window.location.href = '/it-dashboard';
       return (
         <div className="flex items-center justify-center min-h-screen">
