@@ -435,7 +435,7 @@ function NotificationToneSection() {
               {selectedTone === toneId && (
                 <div className="absolute top-2 right-2 h-3 w-3 rounded-full bg-primary" />
               )}
-            </button>
+            </div>
           ))}
         </div>
         {updateToneMutation.isPending && (

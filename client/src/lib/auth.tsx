@@ -21,6 +21,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data, isLoading, refetch } = useQuery<{ user: User; restaurant: Restaurant; accountType?: "client" | "it" } | null>({
     queryKey: ["/api/auth/me"],
     retry: false,
+    queryFn: async () => {
+      const res = await fetch("/api/auth/me", {
+        credentials: "include",
+      });
+      
+      // Return null if not authenticated (instead of throwing)
+      if (res.status === 401) {
+        return null;
+      }
+      
+      if (!res.ok) {
+        throw new Error(`${res.status}: ${res.statusText}`);
+      }
+      
+      return await res.json();
+    },
   });
 
   // Extract user, restaurant, and accountType from the response
