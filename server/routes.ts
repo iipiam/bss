@@ -4270,8 +4270,20 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.patch("/api/tickets/:id", requireAuth, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
+      const accountType = req.session.accountType;
+      
       // SECURITY: Strip restaurantId from request body to prevent cross-tenant reassignment
       const { restaurantId: _, userId: __, ...safeData } = req.body;
+      
+      // SECURITY: Only IT accounts can set status to 'in-progress', 'resolved', or 'closed'
+      const restrictedStatuses = ['in-progress', 'resolved', 'closed'];
+      if (safeData.status && restrictedStatuses.includes(safeData.status)) {
+        if (accountType !== 'it') {
+          return res.status(403).json({ 
+            error: "Only IT support can set ticket status to In Progress, Resolved, or Closed" 
+          });
+        }
+      }
       
       const updated = await storage.updateSupportTicket(req.params.id, restaurantId, safeData);
       if (!updated) {

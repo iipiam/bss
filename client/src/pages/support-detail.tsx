@@ -190,7 +190,8 @@ export default function SupportDetail() {
     }
   };
 
-  const isAdmin = user?.role === 'admin';
+  const { accountType } = useAuth();
+  const isITAccount = accountType === 'it';
 
   if (ticketLoading) {
     return (
@@ -246,7 +247,7 @@ export default function SupportDetail() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           {t.backToTickets}
         </Button>
-        {isAdmin && ticket.status !== 'closed' && (
+        {isITAccount && ticket.status !== 'closed' && (
           <div className="flex gap-2">
             {ticket.status === 'open' && (
               <Button
