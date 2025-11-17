@@ -17,11 +17,21 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [device, setDeviceState] = useState<DeviceType>('laptop');
 
+  // Apply device preference from user profile
   useEffect(() => {
     if (user?.devicePreference) {
       setDeviceState(user.devicePreference as DeviceType);
     }
   }, [user]);
+
+  // Apply device class to document element for CSS targeting
+  useEffect(() => {
+    const root = document.documentElement;
+    // Remove all device classes
+    root.classList.remove('device-laptop', 'device-ipad', 'device-iphone');
+    // Add current device class
+    root.classList.add(`device-${device}`);
+  }, [device]);
 
   const updateDeviceMutation = useMutation({
     mutationFn: async (devicePreference: DeviceType) => {
