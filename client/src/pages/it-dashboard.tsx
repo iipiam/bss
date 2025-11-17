@@ -23,6 +23,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeviceLayout, useCompactChartConfig } from "@/lib/mobileLayout";
 import { useDevice } from "@/contexts/DeviceContext";
 import { useTheme } from "@/components/theme-provider";
+import { useAuth } from "@/lib/auth";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -122,6 +123,7 @@ export default function ITDashboard() {
   const { t, language, setLanguage } = useLanguage();
   const { device, setDevice, isUpdating: isDeviceUpdating } = useDevice();
   const { theme, setTheme } = useTheme();
+  const { user } = useAuth();
   const layout = useDeviceLayout();
   const chartConfig = useCompactChartConfig();
   const [, navigate] = useLocation();
@@ -150,40 +152,46 @@ export default function ITDashboard() {
     }
   };
 
-  // Fetch analytics data with 30-second refetch
+  // Fetch analytics data with 30-second refetch (only when authenticated)
   const { data: analytics, isLoading: analyticsLoading } = useQuery<ITAnalytics>({
     queryKey: ["/api/it/analytics"],
     refetchInterval: 30000,
+    enabled: !!user,
   });
 
   // Fetch workload data
   const { data: workload, isLoading: workloadLoading } = useQuery<WorkloadData>({
     queryKey: ["/api/it/workload"],
     refetchInterval: 30000,
+    enabled: !!user,
   });
 
   // Fetch trends data
   const { data: trendsData, isLoading: trendsLoading } = useQuery<ITTrends>({
     queryKey: ["/api/it/trends"],
     refetchInterval: 30000,
+    enabled: !!user,
   });
 
   // Fetch category breakdown
   const { data: categoryData, isLoading: categoryLoading } = useQuery<CategoryBreakdown>({
     queryKey: ["/api/it/category-breakdown"],
     refetchInterval: 30000,
+    enabled: !!user,
   });
 
   // Fetch active tickets
   const { data: activeTickets = [], isLoading: ticketsLoading } = useQuery<ActiveTicket[]>({
     queryKey: ["/api/it/active-tickets"],
     refetchInterval: 30000,
+    enabled: !!user,
   });
 
   // Fetch client accounts activity (real-time tracking with 10-second refetch)
   const { data: clientAccounts = [], isLoading: clientAccountsLoading } = useQuery<ClientAccount[]>({
     queryKey: ["/api/it/client-accounts"],
     refetchInterval: 10000, // Refresh every 10 seconds for real-time tracking
+    enabled: !!user,
   });
 
   // Assignment mutation
