@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 // ============================================================================
 // EMAIL PROVIDER INTERFACE
@@ -23,7 +24,100 @@ export interface EmailResult {
 }
 
 // ============================================================================
-// RESEND ADAPTER (PRIMARY)
+// RESEND INTEGRATION ADAPTER (VIA REPLIT CONNECTOR)
+// ============================================================================
+
+async function getResendCredentials() {
+  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+  const xReplitToken = process.env.REPL_IDENTITY 
+    ? 'repl ' + process.env.REPL_IDENTITY 
+    : process.env.WEB_REPL_RENEWAL 
+    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
+    : null;
+
+  if (!xReplitToken || !hostname) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
+      {
+        headers: {
+          'Accept': 'application/json',
+          'X_REPLIT_TOKEN': xReplitToken
+        }
+      }
+    );
+
+    const data = await response.json();
+    const connectionSettings = data.items?.[0];
+
+    if (!connectionSettings || !connectionSettings.settings?.api_key) {
+      return null;
+    }
+
+    return {
+      apiKey: connectionSettings.settings.api_key,
+      fromEmail: connectionSettings.settings.from_email
+    };
+  } catch (error) {
+    console.error('[Resend Integration] Failed to fetch credentials:', error);
+    return null;
+  }
+}
+
+export class ResendIntegrationAdapter implements EmailProvider {
+  async sendEmail(params: EmailParams): Promise<EmailResult> {
+    try {
+      const credentials = await getResendCredentials();
+      
+      if (!credentials) {
+        return {
+          success: false,
+          error: 'Resend integration not configured',
+        };
+      }
+
+      const resend = new Resend(credentials.apiKey);
+      
+      const data = await resend.emails.send({
+        from: credentials.fromEmail || params.from,
+        to: params.to,
+        subject: params.subject,
+        html: params.html,
+        text: params.text,
+      });
+
+      if (data.error) {
+        console.error('[Resend Integration] Failed to send email:', data.error);
+        return {
+          success: false,
+          error: data.error.message,
+        };
+      }
+
+      return {
+        success: true,
+        messageId: data.data?.id,
+      };
+    } catch (error: any) {
+      console.error('[Resend Integration] Exception:', error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  async getFromEmail(): Promise<string | null> {
+    const credentials = await getResendCredentials();
+    return credentials?.fromEmail || null;
+  }
+}
+
+// ============================================================================
+// RESEND ADAPTER (MANUAL API KEY)
 // ============================================================================
 
 export class ResendAdapter implements EmailProvider {
@@ -122,16 +216,24 @@ export class SMTPAdapter implements EmailProvider {
 // EMAIL CONFIGURATION
 // ============================================================================
 
-export function createEmailProvider(): EmailProvider | null {
+export async function createEmailProvider(): Promise<EmailProvider | null> {
+  // First, try to use Resend integration if available
+  const credentials = await getResendCredentials();
+  if (credentials) {
+    console.log('[Email] Using Resend integration provider');
+    return new ResendIntegrationAdapter();
+  }
+
+  // Fall back to manual configuration
   const provider = process.env.EMAIL_PROVIDER || 'resend';
 
   if (provider === 'resend') {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
-      console.warn('[Email] RESEND_API_KEY not configured');
+      console.warn('[Email] RESEND_API_KEY not configured and no Resend integration found');
       return null;
     }
-    console.log('[Email] Using Resend provider');
+    console.log('[Email] Using Resend provider with manual API key');
     return new ResendAdapter(apiKey);
   }
 
@@ -382,13 +484,18 @@ This is an automated email, please do not reply.
 // ============================================================================
 
 export class PasswordResetMailer {
-  private provider: EmailProvider | null;
-  private fromEmail: string;
+  private async getProvider(): Promise<EmailProvider | null> {
+    return await createEmailProvider();
+  }
 
-  constructor() {
-    this.provider = createEmailProvider();
-    // TODO: Update sender email domain when new domain is available
-    this.fromEmail = process.env.EMAIL_FROM || process.env.IT_EMAIL || 'IT@SaudiKinzhal.org';
+  private async getFromEmail(): Promise<string> {
+    // Try to get from email from Resend integration first
+    const credentials = await getResendCredentials();
+    if (credentials?.fromEmail) {
+      return credentials.fromEmail;
+    }
+    // Fall back to environment variables
+    return process.env.EMAIL_FROM || process.env.IT_EMAIL || 'IT@SaudiKinzhal.org';
   }
 
   async sendPasswordResetEmail(
@@ -396,7 +503,9 @@ export class PasswordResetMailer {
     resetToken: string,
     baseUrl: string
   ): Promise<EmailResult> {
-    if (!this.provider) {
+    const provider = await this.getProvider();
+    
+    if (!provider) {
       console.error('[PasswordResetMailer] No email provider configured');
       return {
         success: false,
@@ -404,6 +513,7 @@ export class PasswordResetMailer {
       };
     }
 
+    const fromEmail = await this.getFromEmail();
     const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
     const { html, text } = generatePasswordResetEmail({
       userEmail: toEmail,
@@ -411,9 +521,9 @@ export class PasswordResetMailer {
       expiryHours: 1,
     });
 
-    const result = await this.provider.sendEmail({
+    const result = await provider.sendEmail({
       to: toEmail,
-      from: this.fromEmail,
+      from: fromEmail,
       subject: 'Password Reset Request / طلب إعادة تعيين كلمة المرور - BSS',
       html,
       text,
