@@ -113,7 +113,8 @@ export default function POS() {
 
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
-      return await apiRequest("POST", "/api/orders", orderData);
+      const response = await apiRequest("POST", "/api/orders", orderData);
+      return await response.json(); // Parse JSON to get the actual order object
     },
     onSuccess: async (order: any) => {
       // Create transaction record
@@ -131,12 +132,18 @@ export default function POS() {
       
       // Create invoice record and generate PDF
       try {
+        console.log("[POS] Creating invoice for order:", order.id);
+        const requestBody = { orderId: order.id };
+        console.log("[POS] Request body:", requestBody);
+        
         const response = await fetch("/api/invoices/create-and-generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include", // Include session cookie
-          body: JSON.stringify({ orderId: order.id }),
+          body: JSON.stringify(requestBody),
         });
+        
+        console.log("[POS] Invoice response status:", response.status);
         
         if (response.ok) {
           const blob = await response.blob();
@@ -148,6 +155,9 @@ export default function POS() {
           a.click();
           window.URL.revokeObjectURL(url);
           document.body.removeChild(a);
+        } else {
+          const errorData = await response.json();
+          console.error("[POS] Invoice generation failed:", errorData);
         }
       } catch (error) {
         console.error("Invoice creation failed:", error);
