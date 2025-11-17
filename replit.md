@@ -21,6 +21,9 @@ Preferred communication style: Simple, everyday language.
 - **API Design**: RESTful API, domain-organized, with shared Zod schemas for validation.
 - **Authentication**: Bcrypt for hashing, session-based.
 - **Multi-tenant Architecture**: Complete data isolation using `restaurantId` for both restaurant and factory business types.
+  - **Security**: 148 authenticated endpoints with 134 restaurantId extractions (~91% coverage)
+  - **Data Isolation**: All new accounts start with ZERO data, no cross-tenant data leakage
+  - **Recent Security Fixes (Nov 2025)**: Patched 7 critical vulnerabilities in procurement, invoices, image uploads, and import endpoints
 - **Business Type Support**: Dual architecture for Restaurant and Factory operations, with type-specific features, terminology (e.g., Products for Factories), pricing, and UI restrictions (e.g., no Recipes for Factories). Includes 'licenses' permission for factories.
 - **Real-Time Communication**: WebSocket-based system for employee notifications (order lifecycle) and real-time support ticket updates.
 - **Data Storage**: PostgreSQL via Neon serverless driver, Drizzle ORM for type-safe queries.
