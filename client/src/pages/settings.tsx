@@ -398,11 +398,12 @@ function NotificationToneSection() {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {toneIds.map((toneId) => (
-            <div
+            <button
               key={toneId}
+              type="button"
               onClick={() => !updateToneMutation.isPending && handleToneChange(toneId)}
               className={`
-                relative p-4 border-2 rounded-lg transition-all cursor-pointer
+                relative p-4 border-2 rounded-lg transition-all text-left
                 hover-elevate active-elevate-2
                 ${selectedTone === toneId 
                   ? 'border-primary bg-primary/5' 
@@ -411,24 +412,31 @@ function NotificationToneSection() {
                 ${updateToneMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}
               `}
               data-testid={`button-tone-${toneId}`}
+              disabled={updateToneMutation.isPending}
             >
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-medium text-sm">
                   {getToneName(toneId)}
                 </h4>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8"
+                <span
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleTestTone(toneId);
                   }}
                   data-testid={`button-test-${toneId}`}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleTestTone(toneId);
+                    }
+                  }}
                 >
                   <Volume2 className="h-4 w-4" />
-                </Button>
+                </span>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span>{notificationTones[toneId].frequency}Hz</span>
@@ -438,7 +446,7 @@ function NotificationToneSection() {
               {selectedTone === toneId && (
                 <div className="absolute top-2 right-2 h-3 w-3 rounded-full bg-primary" />
               )}
-            </div>
+            </button>
           ))}
         </div>
         {updateToneMutation.isPending && (
