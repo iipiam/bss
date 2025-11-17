@@ -1642,6 +1642,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         console.log("[AUTH] Session created for user:", user.id, "restaurant:", user.restaurantId, "accountType:", validAccountType);
       }
 
+      // Track login activity for IT Dashboard monitoring
+      await storage.updateUserLogin(user.id);
+
       // Fetch restaurant data to include subscription information
       const restaurant = await storage.getRestaurant(user.restaurantId);
       
