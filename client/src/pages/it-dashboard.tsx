@@ -19,12 +19,13 @@ import {
 import { Ticket, AlertCircle, Clock, CheckCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { PieChart, Pie, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from "recharts";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { useDeviceLayout, useCompactChartConfig } from "@/lib/mobileLayout";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Languages } from "lucide-react";
 
 interface ITAnalytics {
   totalOpen: number;
@@ -97,7 +98,7 @@ const CHART_COLORS = [
 ];
 
 export default function ITDashboard() {
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const layout = useDeviceLayout();
   const chartConfig = useCompactChartConfig();
   const [, navigate] = useLocation();
@@ -232,11 +233,38 @@ export default function ITDashboard() {
   return (
     <div className={`${layout.padding} ${layout.spaceY}`}>
       {/* Header */}
-      <div>
-        <h1 className={`${layout.text3Xl} font-bold mb-2`} data-testid="text-page-title">
-          {t.itDashboard}
-        </h1>
-        <p className="text-muted-foreground">{t.itAnalytics || "IT support analytics and ticket management"}</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex-1 min-w-[200px]">
+          <h1 className={`${layout.text3Xl} font-bold mb-2`} data-testid="text-page-title">
+            {t.itDashboard}
+          </h1>
+          <p className="text-muted-foreground">{t.itAnalytics || "IT support analytics and ticket management"}</p>
+        </div>
+        
+        {/* Language Selector for IT Users */}
+        <div className="flex items-center gap-2">
+          <Languages className="h-4 w-4 text-muted-foreground" />
+          <Select
+            value={language}
+            onValueChange={(value: string) => setLanguage(value as Language)}
+          >
+            <SelectTrigger className="w-[180px]" data-testid="select-language">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="English">English</SelectItem>
+              <SelectItem value="Arabic">العربية (Arabic)</SelectItem>
+              <SelectItem value="Chinese">中文 (Chinese)</SelectItem>
+              <SelectItem value="German">Deutsch (German)</SelectItem>
+              <SelectItem value="Hindi">हिन्दी (Hindi)</SelectItem>
+              <SelectItem value="Urdu">اردو (Urdu)</SelectItem>
+              <SelectItem value="Bengali">বাংলা (Bengali)</SelectItem>
+              <SelectItem value="Italian">Italiano (Italian)</SelectItem>
+              <SelectItem value="Spanish">Español (Spanish)</SelectItem>
+              <SelectItem value="Tagalog">Tagalog</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Real-Time Metrics Cards */}
