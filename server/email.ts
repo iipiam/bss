@@ -122,7 +122,6 @@ export class ResendIntegrationAdapter implements EmailProvider {
 
 export class ResendAdapter implements EmailProvider {
   private apiKey: string;
-  private baseUrl = 'https://api.resend.com/emails';
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
@@ -130,34 +129,27 @@ export class ResendAdapter implements EmailProvider {
 
   async sendEmail(params: EmailParams): Promise<EmailResult> {
     try {
-      const response = await fetch(this.baseUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: params.from,
-          to: params.to,
-          subject: params.subject,
-          html: params.html,
-          text: params.text,
-        }),
+      const resend = new Resend(this.apiKey);
+      
+      const data = await resend.emails.send({
+        from: params.from,
+        to: params.to,
+        subject: params.subject,
+        html: params.html,
+        text: params.text,
       });
 
-      if (!response.ok) {
-        const error = await response.text();
-        console.error('[Resend] Failed to send email:', error);
+      if (data.error) {
+        console.error('[Resend] Failed to send email:', data.error);
         return {
           success: false,
-          error: `Resend API error: ${response.status}`,
+          error: data.error.message,
         };
       }
 
-      const data = await response.json();
       return {
         success: true,
-        messageId: data.id,
+        messageId: data.data?.id,
       };
     } catch (error: any) {
       console.error('[Resend] Exception:', error);
