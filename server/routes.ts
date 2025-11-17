@@ -109,26 +109,19 @@ export function broadcastNotification(event: {
 }
 
 // Authentication middleware - CRITICAL for multi-tenant isolation
+// Also tracks user activity for IT Dashboard monitoring
 const requireAuth = (req: any, res: any, next: any) => {
   if (!req.session?.user) {
     return res.status(401).json({ error: "Not authenticated" });
   }
-  next();
-};
-
-// Activity tracking middleware - updates lastActivityAt for authenticated users
-const trackActivity = async (req: any, res: any, next: any) => {
-  if (req.session?.user?.userId) {
-    try {
-      // Update lastActivityAt in background (don't wait for it to complete)
-      storage.updateUserActivity(req.session.user.userId).catch((error: Error) => {
-        console.error('[Activity Tracking] Failed to update activity:', error);
-      });
-    } catch (error) {
-      // Silently fail - don't block the request
-      console.error('[Activity Tracking] Error:', error);
-    }
+  
+  // Track activity in background (don't wait for it to complete)
+  if (req.session.user.id) {
+    storage.updateUserActivity(req.session.user.id).catch((error: Error) => {
+      console.error('[Activity Tracking] Failed to update activity:', error);
+    });
   }
+  
   next();
 };
 
@@ -4551,6 +4544,18 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("Error assigning ticket:", error);
       res.status(500).json({ error: "Failed to assign ticket" });
+    }
+  });
+
+  // Client Account Activity Tracking (IT-only)
+  app.get("/api/it/client-accounts", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      // IT accounts can see activity data for all client accounts across all restaurants
+      const clientAccounts = await storage.getClientAccountsActivity();
+      res.json(clientAccounts);
+    } catch (error) {
+      console.error("Error fetching client accounts activity:", error);
+      res.status(500).json({ error: "Failed to fetch client accounts activity" });
     }
   });
 
