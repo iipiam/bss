@@ -24,13 +24,14 @@ Preferred communication style: Simple, everyday language.
   - **Security**: 148 authenticated endpoints with 134 restaurantId extractions (~91% coverage)
   - **Data Isolation**: All new accounts start with ZERO data, no cross-tenant data leakage
   - **Recent Security Fixes (Nov 2025)**: Patched 7 critical vulnerabilities in procurement, invoices, image uploads, and import endpoints
-  - **Recent Bug Fixes (Nov 17, 2025)**: 
+  - **Recent Bug Fixes (Nov 17-18, 2025)**: 
     - Fixed invoice download workflow (PDF path mismatch: changed save location to `public/invoices/`)
     - Fixed WebSocket connection spam when not authenticated (added user check before connecting)
     - Fixed transaction creation validation (validates without requiring restaurantId in body, adds from session)
     - Fixed POS mutation JSON parsing (parse Response object with `.json()` to get order data)
     - Fixed IT Dashboard NaN% display (added `openTrend` calculation comparing today's open tickets vs yesterday's)
     - Fixed IT Dashboard stuck loading state (added `enabled: !!user` auth guards to all queries preventing 401 errors and perpetual loading)
+    - **Fixed IT account authentication** (Nov 18): Resolved critical bugs where IT accounts (null restaurantId) caused errors in /api/auth/me GET and PATCH endpoints. Added getUserById() and updateUserById() storage methods to handle IT accounts without restaurant context while preserving multi-tenant isolation for client accounts.
   - **Device Preference System**: Users can select iPhone/iPad/Laptop layouts with persistent settings. Device class (`device-iphone`, `device-ipad`, `device-laptop`) applied to `document.documentElement` for CSS targeting. IT accounts access settings via IT Dashboard header (comprehensive dialog with language, device, and theme preferences).
 - **Business Type Support**: Dual architecture for Restaurant and Factory operations, with type-specific features, terminology (e.g., Products for Factories), pricing, and UI restrictions (e.g., no Recipes for Factories). Includes 'licenses' permission for factories.
 - **Real-Time Communication**: WebSocket-based system for employee notifications (order lifecycle) and real-time support ticket updates.
