@@ -32,6 +32,7 @@ import {
   insertDeliveryAppSchema,
   insertInvestorSchema,
   updateInvestorSchema,
+  insertLicenseSchema,
 } from "@shared/schema";
 import { getPlanPricing, type SubscriptionPlan, type BusinessType } from "@shared/subscriptionPricing";
 import { ADMIN_PERMISSIONS, type PermissionSet } from "@shared/permissions";

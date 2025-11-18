@@ -856,3 +856,34 @@ export const insertMessageReadSchema = createInsertSchema(messageReads).omit({
 });
 export type InsertMessageRead = z.infer<typeof insertMessageReadSchema>;
 export type MessageRead = typeof messageReads.$inferSelect;
+
+// Licenses (for both restaurant and factory accounts)
+export const licenses = pgTable("licenses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  licenseType: text("license_type").notNull(), // trade, health, fire_safety, municipal, vat, custom
+  licenseNumber: text("license_number").notNull(),
+  licenseName: text("license_name").notNull(),
+  issuingAuthority: text("issuing_authority").notNull(),
+  issueDate: timestamp("issue_date").notNull(),
+  expiryDate: timestamp("expiry_date").notNull(),
+  status: text("status").default("active"), // active, expired, pending_renewal, suspended
+  renewalReminderDays: integer("renewal_reminder_days").default(30),
+  documentUrl: text("document_url"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdBy: varchar("created_by").references(() => users.id),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  updatedBy: varchar("updated_by").references(() => users.id),
+});
+
+export const insertLicenseSchema = createInsertSchema(licenses)
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({
+    licenseType: z.enum(["trade", "health", "fire_safety", "municipal", "vat", "food_safety", "environmental", "labor", "custom"]),
+    status: z.enum(["active", "expired", "pending_renewal", "suspended"]),
+    issueDate: z.string().transform(val => new Date(val)),
+    expiryDate: z.string().transform(val => new Date(val)),
+  });
+export type InsertLicense = z.infer<typeof insertLicenseSchema>;
+export type License = typeof licenses.$inferSelect;

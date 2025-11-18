@@ -51,6 +51,8 @@ import {
   type InsertConversationMember,
   type MessageRead,
   type InsertMessageRead,
+  type License,
+  type InsertLicense,
   restaurants,
   branches,
   inventoryItems,
@@ -83,6 +85,7 @@ import {
   bootstrapResetTokens,
   type BootstrapResetToken,
   type InsertBootstrapResetToken,
+  licenses,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, or, isNull, desc } from "drizzle-orm";
@@ -340,6 +343,14 @@ export interface IStorage {
     soundEnabled?: boolean;
     toneId?: string;
   }): Promise<void>; // Admin only - update restaurant chat notification defaults
+
+  // Licenses (MULTI-TENANT: requires restaurantId for all operations)
+  getLicenses(restaurantId: string): Promise<License[]>;
+  getLicense(id: string, restaurantId: string): Promise<License | undefined>;
+  createLicense(license: InsertLicense): Promise<License>;
+  updateLicense(id: string, restaurantId: string, license: Partial<InsertLicense>): Promise<License | undefined>;
+  deleteLicense(id: string, restaurantId: string): Promise<boolean>;
+  getExpiringLicenses(restaurantId: string, daysAhead: number): Promise<License[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2562,6 +2573,85 @@ export class DatabaseStorage implements IStorage {
         chatNotificationDefaults: updated,
       })
       .where(eq(settings.restaurantId, restaurantId));
+  }
+
+  // Licenses implementation
+  async getLicenses(restaurantId: string): Promise<License[]> {
+    return await db
+      .select()
+      .from(licenses)
+      .where(eq(licenses.restaurantId, restaurantId))
+      .orderBy(desc(licenses.expiryDate));
+  }
+
+  async getLicense(id: string, restaurantId: string): Promise<License | undefined> {
+    const [license] = await db
+      .select()
+      .from(licenses)
+      .where(
+        and(
+          eq(licenses.id, id),
+          eq(licenses.restaurantId, restaurantId)
+        )
+      );
+    return license;
+  }
+
+  async createLicense(license: InsertLicense): Promise<License> {
+    const [created] = await db.insert(licenses).values(license).returning();
+    return created;
+  }
+
+  async updateLicense(id: string, restaurantId: string, license: Partial<InsertLicense>): Promise<License | undefined> {
+    const updateData = Object.fromEntries(
+      Object.entries(license).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getLicense(id, restaurantId);
+    }
+    const [updated] = await db
+      .update(licenses)
+      .set({
+        ...updateData,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(licenses.id, id),
+          eq(licenses.restaurantId, restaurantId)
+        )
+      )
+      .returning();
+    return updated;
+  }
+
+  async deleteLicense(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db
+      .delete(licenses)
+      .where(
+        and(
+          eq(licenses.id, id),
+          eq(licenses.restaurantId, restaurantId)
+        )
+      );
+    return !!result;
+  }
+
+  async getExpiringLicenses(restaurantId: string, daysAhead: number): Promise<License[]> {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + daysAhead);
+    
+    return await db
+      .select()
+      .from(licenses)
+      .where(
+        and(
+          eq(licenses.restaurantId, restaurantId),
+          lte(licenses.expiryDate, futureDate),
+          gte(licenses.expiryDate, new Date())
+        )
+      )
+      .orderBy(licenses.expiryDate);
   }
 }
 
