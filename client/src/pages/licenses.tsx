@@ -62,7 +62,7 @@ export default function Licenses() {
   const businessType = restaurant?.businessType || 'restaurant';
 
   // Fetch licenses
-  const { data: licenses = [], isLoading } = useQuery({
+  const { data: licenses = [], isLoading } = useQuery<License[]>({
     queryKey: ["/api/licenses"],
   });
 
@@ -220,11 +220,11 @@ export default function Licenses() {
     if (daysUntilExpiry < 0) {
       return { status: "Expired", variant: "destructive" as const, daysUntilExpiry };
     } else if (daysUntilExpiry <= 30) {
-      return { status: "Expiring Soon", variant: "warning" as const, daysUntilExpiry };
+      return { status: "Expiring Soon", variant: "destructive" as const, daysUntilExpiry };
     } else if (daysUntilExpiry <= 90) {
       return { status: "Due for Renewal", variant: "secondary" as const, daysUntilExpiry };
     } else {
-      return { status: "Active", variant: "success" as const, daysUntilExpiry };
+      return { status: "Active", variant: "default" as const, daysUntilExpiry };
     }
   };
 
