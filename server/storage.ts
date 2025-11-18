@@ -177,10 +177,12 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>; // SPECIAL: For first-run check only, returns ALL users across ALL restaurants
   getUsers(restaurantId: string): Promise<User[]>;
   getUser(id: string, restaurantId: string): Promise<User | undefined>;
+  getUserById(id: string): Promise<User | undefined>; // SPECIAL: Used for IT accounts, no restaurantId filter
   getUserByUsername(username: string): Promise<User | undefined>; // SPECIAL: Used for login, no restaurantId filter
   getUserByEmail(email: string): Promise<User | undefined>; // SPECIAL: Used for password reset, no restaurantId filter
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, restaurantId: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  updateUserById(id: string, user: Partial<InsertUser>): Promise<User | undefined>; // SPECIAL: Used for IT accounts, no restaurantId filter
   deleteUser(id: string, restaurantId: string): Promise<boolean>;
   setPasswordResetToken(userId: string, token: string, expiry: Date): Promise<void>;
   getUserByResetToken(token: string): Promise<User | undefined>; // SPECIAL: Password reset flow, no restaurantId filter
@@ -826,6 +828,11 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserById(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
@@ -855,6 +862,25 @@ export class DatabaseStorage implements IStorage {
     }
     
     const [updated] = await db.update(users).set(updateData).where(and(eq(users.id, id), eq(users.restaurantId, restaurantId))).returning();
+    
+    return updated;
+  }
+
+  async updateUserById(id: string, user: Partial<InsertUser>): Promise<User | undefined> {
+    // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
+    const { restaurantId: _, ...safeData } = user;
+    const updateData = Object.fromEntries(
+      Object.entries(safeData).filter(([_, value]) => value !== undefined && value !== null)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getUserById(id);
+    }
+    // Hash password if it's being updated
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password as string, 10);
+    }
+    
+    const [updated] = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
     
     return updated;
   }

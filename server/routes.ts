@@ -1929,28 +1929,38 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   app.get("/api/auth/me", requireAuth, async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId!;
-    const user = await storage.getUser(req.session.userId!, restaurantId);
+    const accountType = req.session.accountType || "client";
+    const restaurantId = req.session.user!.restaurantId;
+    
+    // For IT accounts, fetch user without restaurantId
+    // For client accounts, fetch user with restaurantId for multi-tenant isolation
+    const user = restaurantId 
+      ? await storage.getUser(req.session.userId!, restaurantId)
+      : await storage.getUserById(req.session.userId!);
     
     if (!user || !user.active) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
-    // Fetch restaurant data to include subscription information
-    const restaurant = await storage.getRestaurant(restaurantId);
-    
-    if (!restaurant) {
-      return res.status(500).json({ error: "Restaurant not found" });
+    // Fetch restaurant data for client accounts only
+    // IT accounts don't have restaurantId and don't need restaurant data
+    let restaurant = null;
+    if (accountType === 'client' && restaurantId) {
+      restaurant = await storage.getRestaurant(restaurantId);
+      
+      if (!restaurant) {
+        return res.status(500).json({ error: "Restaurant not found" });
+      }
     }
 
     const { password: _, ...userWithoutPassword } = user;
-    const accountType = req.session.accountType || "client"; // Get from session or default to "client"
     res.json({ user: userWithoutPassword, restaurant, accountType });
   });
 
   app.patch("/api/auth/me", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const accountType = req.session.accountType || "client";
+      const restaurantId = req.session.user!.restaurantId;
       const { devicePreference } = req.body;
       
       // Validate device preference
@@ -1958,17 +1968,25 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "Invalid device preference. Must be 'laptop', 'ipad', or 'iphone'" });
       }
 
-      const updatedUser = await storage.updateUser(req.session.userId!, restaurantId, { devicePreference });
+      // For IT accounts, update user without restaurantId
+      // For client accounts, update user with restaurantId for multi-tenant isolation
+      const updatedUser = restaurantId 
+        ? await storage.updateUser(req.session.userId!, restaurantId, { devicePreference })
+        : await storage.updateUserById(req.session.userId!, { devicePreference });
       
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      // Fetch restaurant data to include subscription information
-      const restaurant = await storage.getRestaurant(restaurantId);
-      
-      if (!restaurant) {
-        return res.status(500).json({ error: "Restaurant not found" });
+      // Fetch restaurant data for client accounts only
+      // IT accounts don't have restaurantId and don't need restaurant data
+      let restaurant = null;
+      if (accountType === 'client' && restaurantId) {
+        restaurant = await storage.getRestaurant(restaurantId);
+        
+        if (!restaurant) {
+          return res.status(500).json({ error: "Restaurant not found" });
+        }
       }
 
       const { password: _, ...userWithoutPassword } = updatedUser;
