@@ -218,6 +218,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const item = await storage.createInventoryItem(data);
       res.status(201).json(item);
     } catch (error) {
+      console.error("Failed to create inventory item:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid inventory data", details: error.errors });
+      }
       res.status(400).json({ error: "Invalid inventory data" });
     }
   });
@@ -542,19 +546,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId;
       const userId = req.session.user!.id;
       
-      // Transform date strings to Date objects if present
-      const processedBody = { ...req.body };
-      if (processedBody.issueDate) {
-        processedBody.issueDate = processedBody.issueDate;
-      }
-      if (processedBody.expiryDate) {
-        processedBody.expiryDate = processedBody.expiryDate;
-      }
-      processedBody.updatedBy = userId;
+      // Add updatedBy to request body
+      const processedBody = { ...req.body, updatedBy: userId };
       
       const data = sanitizePatchBody(processedBody, insertLicenseSchema.partial());
       // SECURITY: Strip restaurantId from request body to prevent cross-tenant reassignment
-      const { restaurantId: _, createdBy: __, ...safeData } = data;
+      const { restaurantId: _, createdBy: __, issueDate, expiryDate, ...rest } = data;
+      
+      // Transform date strings to Date objects if present (after sanitization)
+      const safeData: any = { ...rest };
+      if (issueDate) {
+        safeData.issueDate = new Date(issueDate);
+      }
+      if (expiryDate) {
+        safeData.expiryDate = new Date(expiryDate);
+      }
       
       const license = await storage.updateLicense(req.params.id, restaurantId, safeData);
       if (!license) {

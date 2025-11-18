@@ -1900,22 +1900,13 @@ export class DatabaseStorage implements IStorage {
       totalInProgress,
       totalResolved,
       totalClosed,
-      urgentTickets: urgentCount,
-      avgResponseTime: Math.round(avgResponseTimeHours * 10) / 10,
+      urgentCount,
+      highPriorityCount,
+      avgResponseTimeHours: Math.round(avgResponseTimeHours * 10) / 10,
+      avgResolutionTimeHours: Math.round(avgResolutionTimeHours * 10) / 10,
       ticketsClosedToday,
-      openTrend,
-      statusDistribution: [
-        { name: 'Open', value: totalOpen },
-        { name: 'In Progress', value: totalInProgress },
-        { name: 'Resolved', value: totalResolved },
-        { name: 'Closed', value: totalClosed }
-      ],
-      priorityBreakdown: [
-        { name: 'Urgent', value: urgentCount },
-        { name: 'High', value: highPriorityCount },
-        { name: 'Normal', value: tickets.filter(t => t.priority === 'normal' && t.status !== 'closed').length },
-        { name: 'Low', value: tickets.filter(t => t.priority === 'low' && t.status !== 'closed').length }
-      ]
+      ticketsClosedThisWeek,
+      ticketsClosedThisMonth,
     };
   }
 

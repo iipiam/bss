@@ -502,9 +502,15 @@ export default function Inventory() {
   const createMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
       return await apiRequest("POST", "/api/inventory", {
-        ...data,
-        quantity: data.quantity.toFixed(2),
-        price: data.price.toFixed(2),
+        name: data.name,
+        category: data.category,
+        quantity: data.quantity.toString(),
+        unit: data.unit,
+        price: data.price.toString(),
+        supplier: data.supplier,
+        status: data.status,
+        branchId: data.branchId || null,
+        sortOrder: data.sortOrder || 0,
       });
     },
     onSuccess: () => {

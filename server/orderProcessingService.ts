@@ -146,6 +146,7 @@ export class OrderProcessingService {
         .where(eq(inventoryItems.id, inventoryItemId));
 
       const transactionRecord: InsertInventoryTransaction = {
+        restaurantId: currentItem[0].restaurantId,
         inventoryItemId,
         orderId,
         type: "sale",
@@ -319,6 +320,7 @@ export class OrderProcessingService {
           .where(eq(inventoryItems.id, inventoryItemId));
 
         const transactionRecord: InsertInventoryTransaction = {
+          restaurantId: currentItem[0].restaurantId,
           inventoryItemId,
           orderId,
           type: "sale",
