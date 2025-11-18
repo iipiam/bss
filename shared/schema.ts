@@ -881,9 +881,15 @@ export const insertLicenseSchema = createInsertSchema(licenses)
   .omit({ id: true, createdAt: true, updatedAt: true })
   .extend({
     licenseType: z.enum(["trade", "health", "fire_safety", "municipal", "vat", "food_safety", "environmental", "labor", "custom"]),
-    status: z.enum(["active", "expired", "pending_renewal", "suspended"]),
-    issueDate: z.string().transform(val => new Date(val)),
-    expiryDate: z.string().transform(val => new Date(val)),
+    status: z.enum(["active", "expired", "pending_renewal", "suspended"]).optional().default("active"),
+    issueDate: z.union([
+      z.string().transform(val => new Date(val)),
+      z.date(),
+    ]),
+    expiryDate: z.union([
+      z.string().transform(val => new Date(val)),
+      z.date(),
+    ]),
   });
 export type InsertLicense = z.infer<typeof insertLicenseSchema>;
 export type License = typeof licenses.$inferSelect;

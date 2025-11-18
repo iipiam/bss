@@ -473,6 +473,117 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.status(204).send();
   });
 
+  // Licenses (for both restaurant and factory accounts)
+  app.get("/api/licenses", requireAuth, requirePermission('licenses'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const licenses = await storage.getLicenses(restaurantId);
+      res.json(licenses);
+    } catch (error) {
+      console.error("Failed to get licenses:", error);
+      res.status(500).json({ error: "Failed to get licenses" });
+    }
+  });
+
+  app.get("/api/licenses/expiring", requireAuth, requirePermission('licenses'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const daysAhead = parseInt(req.query.daysAhead as string) || 30;
+      const licenses = await storage.getExpiringLicenses(restaurantId, daysAhead);
+      res.json(licenses);
+    } catch (error) {
+      console.error("Failed to get expiring licenses:", error);
+      res.status(500).json({ error: "Failed to get expiring licenses" });
+    }
+  });
+
+  app.get("/api/licenses/:id", requireAuth, requirePermission('licenses'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const license = await storage.getLicense(req.params.id, restaurantId);
+      if (!license) {
+        return res.status(404).json({ error: "License not found" });
+      }
+      res.json(license);
+    } catch (error) {
+      console.error("Failed to get license:", error);
+      res.status(500).json({ error: "Failed to get license" });
+    }
+  });
+
+  app.post("/api/licenses", requireAuth, requirePermission('licenses'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      
+      // Transform date strings to Date objects before validation
+      const bodyWithDates = {
+        ...req.body,
+        restaurantId,
+        createdBy: userId,
+        issueDate: req.body.issueDate,
+        expiryDate: req.body.expiryDate,
+      };
+      
+      const data = insertLicenseSchema.parse(bodyWithDates);
+      const license = await storage.createLicense(data);
+      res.status(201).json(license);
+    } catch (error) {
+      console.error("Failed to create license:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid license data", details: error.errors });
+      }
+      res.status(400).json({ error: "Invalid license data" });
+    }
+  });
+
+  app.patch("/api/licenses/:id", requireAuth, requirePermission('licenses'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const userId = req.session.user!.id;
+      
+      // Transform date strings to Date objects if present
+      const processedBody = { ...req.body };
+      if (processedBody.issueDate) {
+        processedBody.issueDate = processedBody.issueDate;
+      }
+      if (processedBody.expiryDate) {
+        processedBody.expiryDate = processedBody.expiryDate;
+      }
+      processedBody.updatedBy = userId;
+      
+      const data = sanitizePatchBody(processedBody, insertLicenseSchema.partial());
+      // SECURITY: Strip restaurantId from request body to prevent cross-tenant reassignment
+      const { restaurantId: _, createdBy: __, ...safeData } = data;
+      
+      const license = await storage.updateLicense(req.params.id, restaurantId, safeData);
+      if (!license) {
+        return res.status(404).json({ error: "License not found" });
+      }
+      res.json(license);
+    } catch (error) {
+      console.error("Failed to update license:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid license data", details: error.errors });
+      }
+      res.status(400).json({ error: "Invalid license data" });
+    }
+  });
+
+  app.delete("/api/licenses/:id", requireAuth, requirePermission('licenses'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      const success = await storage.deleteLicense(req.params.id, restaurantId);
+      if (!success) {
+        return res.status(404).json({ error: "License not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Failed to delete license:", error);
+      res.status(500).json({ error: "Failed to delete license" });
+    }
+  });
+
   // Shop Salaries
   app.get("/api/shop/salaries", requireAuth, requirePermission('bills'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId;

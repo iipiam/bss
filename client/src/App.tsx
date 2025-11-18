@@ -72,6 +72,7 @@ import ITDashboard from "@/pages/it-dashboard";
 import Chat from "@/pages/chat";
 import PaymentTest from "@/pages/payment-test";
 import PasswordManager from "@/pages/password-manager";
+import Licenses from "@/pages/licenses";
 import Login from "@/pages/login";
 import Setup from "@/pages/setup";
 import ForgotPassword from "@/pages/forgot-password";
@@ -88,6 +89,7 @@ function Router() {
       <Route path="/inventory" component={Inventory} />
       <Route path="/menu" component={Menu} />
       <Route path="/recipes" component={Recipes} />
+      <Route path="/licenses" component={Licenses} />
       <Route path="/customers" component={Customers} />
       <Route path="/sales" component={Sales} />
       <Route path="/reports" component={Reports} />
