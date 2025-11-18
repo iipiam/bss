@@ -1762,11 +1762,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Track login activity for IT Dashboard monitoring
       await storage.updateUserLogin(user.id);
 
-      // Fetch restaurant data to include subscription information
-      const restaurant = await storage.getRestaurant(user.restaurantId);
-      
-      if (!restaurant) {
-        return res.status(500).json({ error: "Restaurant not found" });
+      // Fetch restaurant data for client accounts only
+      // IT accounts don't have restaurantId and don't need restaurant data
+      let restaurant = null;
+      if (validAccountType === 'client' && user.restaurantId) {
+        restaurant = await storage.getRestaurant(user.restaurantId);
+        
+        if (!restaurant) {
+          return res.status(500).json({ error: "Restaurant not found" });
+        }
       }
 
       // Return user without password and include restaurant data and accountType
