@@ -1,7 +1,6 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 import * as schema from "@shared/schema";
-import { readFileSync } from 'fs';
 
 const { Pool } = pg;
 
@@ -11,15 +10,10 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Configure connection pool for AWS RDS PostgreSQL with SSL certificate
-const url = process.env.DATABASE_URL;
-
+// Configure connection pool for AWS RDS PostgreSQL
+// Connection string includes sslmode=disable parameter
 export const pool = new Pool({ 
-  connectionString: url,
-  ssl: {
-    rejectUnauthorized: true, // Enable proper SSL validation
-    ca: readFileSync('/tmp/global-bundle.pem').toString() // AWS RDS certificate bundle
-  }
+  connectionString: process.env.DATABASE_URL
 });
 
 export const db = drizzle(pool, { schema });
