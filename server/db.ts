@@ -41,11 +41,10 @@ if (colonIndex === -1) {
 let user = credentials.substring(0, colonIndex);
 let password = credentials.substring(colonIndex + 1);
 
-// WORKAROUND: Due to Replit secrets caching, the old credentials may still be in the environment
-// Fix both username and password here until cache clears
+// WORKAROUND: Due to Replit secrets caching, fix credentials if they're wrong
+// TODO: Remove this workaround once Replit secrets cache clears
 // Correct credentials: user=postgres, password=Admin123456
 if (user === 'bss-database' || password.includes('@') || password === 'KinzhalLTDCo1990') {
-  console.warn('⚠️  Detected old cached credentials - applying fix');
   user = 'postgres';
   password = 'Admin123456';
 }
