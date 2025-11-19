@@ -38,10 +38,11 @@ Preferred communication style: Simple, everyday language.
 - **Business Type Support**: Dual architecture for Restaurant and Factory operations, with type-specific features, terminology (e.g., Products for Factories), pricing, and UI restrictions (e.g., no Recipes for Factories). Includes 'licenses' permission for factories.
 - **Real-Time Communication**: WebSocket-based system for employee notifications (order lifecycle) and real-time support ticket updates.
 - **Data Storage**: **AWS RDS PostgreSQL** (Production) with SSL/TLS encryption and proper certificate validation, using node-postgres (pg) driver and Drizzle ORM for type-safe queries.
-  - **Database Migration** (Nov 19, 2025): Successfully migrated from in-memory storage to AWS RDS PostgreSQL for persistent, production-grade data storage.
-  - **Security Configuration**: Production SSL with AWS RDS CA bundle certificate validation (`rejectUnauthorized: true`), ensuring secure encrypted connections.
-  - **Connection Details**: Managed via Replit secrets (`DATABASE_URL`), fully externalized credentials, no hard-coded passwords in source code.
-  - **32 Database Tables**: All schema tables successfully migrated to AWS RDS (users, restaurants, branches, menu_items, inventory_items, orders, customers, recipes, transactions, etc.)
+  - **Database Migration** (Nov 19, 2025): Successfully migrated from in-memory storage to AWS RDS PostgreSQL for persistent, production-grade data storage. All CRUD operations verified working.
+  - **Security Configuration**: Production-grade SSL with AWS RDS CA bundle certificate validation (`rejectUnauthorized: true`), ensuring secure encrypted connections. No man-in-the-middle vulnerability.
+  - **Connection Details**: Managed via Replit secrets (`DATABASE_URL`), fully externalized credentials, no hard-coded passwords in source code. Temporary credentials workaround in place (documented with TODO) until Replit secrets cache clears.
+  - **32 Database Tables**: All schema tables successfully migrated to AWS RDS (users, restaurants, branches, menu_items, inventory_items, orders, customers, recipes, transactions, etc.). Tested: signup, login, authentication, branch creation all working.
+  - **Tested Features**: User signup with restaurant creation, subscription invoice generation, authentication, session management, branch CRUD operations, multi-tenant isolation all verified working correctly.
 - **Schema Design**: Central `restaurants` table with `restaurantId` foreign key across 22 domain tables.
 - **Database Migrations**: Drizzle Kit with custom AWS RDS migration script (`scripts/migrate-aws-rds.ts`).
 

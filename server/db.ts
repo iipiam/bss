@@ -18,19 +18,16 @@ let sslConfig;
 
 try {
   const ca = fs.readFileSync(caPath, 'utf8');
-  // AWS RDS SSL configuration with CA bundle
-  // Note: Using rejectUnauthorized: false because AWS RDS uses certificates that may
-  // not be fully trusted by Node.js's built-in certificate store. The CA bundle
-  // is still provided for reference and validation by the RDS server.
-  // For stricter validation in production, consider using AWS-signed certificates.
+  // AWS RDS SSL configuration with CA bundle for production-grade security
+  // Using rejectUnauthorized: true with AWS RDS CA bundle ensures proper certificate validation
   sslConfig = {
-    rejectUnauthorized: false,
+    rejectUnauthorized: true,
     ca: ca
   };
-  console.log('✅ AWS RDS SSL enabled with CA bundle');
+  console.log('✅ AWS RDS SSL enabled with CA bundle (production mode)');
 } catch (error) {
   console.warn('⚠️  AWS RDS CA bundle not found, using basic SSL');
-  // Fallback for development/testing - still use SSL but without CA validation
+  // Fallback for development/testing - still use SSL but without strict validation
   sslConfig = {
     rejectUnauthorized: false
   };
