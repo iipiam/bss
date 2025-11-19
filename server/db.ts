@@ -39,7 +39,15 @@ if (colonIndex === -1) {
 }
 
 const user = credentials.substring(0, colonIndex);
-const password = credentials.substring(colonIndex + 1);
+let password = credentials.substring(colonIndex + 1);
+
+// WORKAROUND: Due to Replit secrets caching, the old password with @ symbol
+// may still be in the environment. Fix it here until cache clears.
+// The correct password is KinzhalLTDCo1990 (without @ symbol)
+if (password === 'KinzhalLTDCo@1990') {
+  console.warn('⚠️  Detected old cached password with @ symbol - applying fix');
+  password = 'KinzhalLTDCo1990';
+}
 
 // Configure connection pool for AWS RDS PostgreSQL with SSL
 // SSL encryption is enabled but certificate validation is disabled
