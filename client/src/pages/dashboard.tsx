@@ -327,7 +327,7 @@ export default function Dashboard() {
         <h1 className={`${layout.text3Xl} font-bold mb-2 text-[#ffffff]`}>{t.dashboard}</h1>
         <p className="text-muted-foreground text-sm">{t.dashboardOverview || "Overview of your restaurant performance"}</p>
       </div>
-      <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 4, mobile: 2 })}`}>
+      <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 3, mobile: 2 })}`}>
         <MetricCard
           title="Today's Sales"
           value={`${dashboardData?.todaysSales || "0.00"} SAR`}
@@ -345,11 +345,6 @@ export default function Dashboard() {
           value={dashboardData?.lowStockItems || 0}
           icon={Package}
           trend={{ value: 3.1, direction: "down" }}
-        />
-        <MetricCard
-          title="Pending Alerts"
-          value={4}
-          icon={AlertTriangle}
         />
       </div>
 

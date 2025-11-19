@@ -13,7 +13,7 @@ export function BranchSelector() {
   const { currentBranch, branches, setCurrentBranch, isLoading } = useBranch();
   const { t } = useLanguage();
 
-  if (isLoading || !currentBranch) {
+  if (isLoading) {
     return (
       <div className="flex items-center gap-2 w-64 h-10 px-3 border rounded-md bg-background">
         <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -28,6 +28,15 @@ export function BranchSelector() {
       <div className="flex items-center gap-2 w-64 h-10 px-3 border rounded-md bg-background">
         <Building2 className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm text-muted-foreground">{t.noBranchesAvailable || "No branches available"}</span>
+      </div>
+    );
+  }
+
+  if (!currentBranch) {
+    return (
+      <div className="flex items-center gap-2 w-64 h-10 px-3 border rounded-md bg-background">
+        <Building2 className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">Select a branch</span>
       </div>
     );
   }

@@ -1403,10 +1403,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.post("/api/procurement", requireAuth, requirePermission('procurement'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId;
-      const data = insertProcurementSchema.parse(req.body);
-      // SECURITY: Strip restaurantId from request body and use session restaurantId
-      const { restaurantId: _, ...safeData } = data;
-      const procurement = await storage.createProcurement({ ...safeData, restaurantId });
+      const data = insertProcurementSchema.omit({ restaurantId: true }).parse(req.body);
+      const procurement = await storage.createProcurement({ ...data, restaurantId });
       res.status(201).json(procurement);
     } catch (error) {
       res.status(400).json({ error: "Invalid procurement data" });
