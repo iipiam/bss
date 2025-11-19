@@ -29,7 +29,6 @@ async function resetPassword(username: string, newPassword: string) {
       .where(eq(users.username, username));
     
     console.log(`✅ Password successfully reset for '${username}'`);
-    console.log(`New password: ${newPassword}`);
     process.exit(0);
   } catch (error) {
     console.error("Error resetting password:", error);

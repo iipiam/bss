@@ -70,7 +70,6 @@ async function seedITAccounts() {
       });
 
       console.log(`✅ Created IT account: ${account.username}`);
-      console.log(`   Password: ${account.password}`);
     }
 
     console.log("\n✅ IT accounts seeded successfully!");
