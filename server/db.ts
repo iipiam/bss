@@ -1,6 +1,8 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 import * as schema from "@shared/schema";
+import fs from 'fs';
+import path from 'path';
 
 const { Pool } = pg;
 
@@ -10,57 +12,31 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Manual parsing to handle passwords with special characters like @ symbol
-// Format: postgresql://username:password@host:port/database?params
-const dbUrl = process.env.DATABASE_URL;
+// Load AWS RDS CA certificate for proper SSL validation
+const caPath = path.join(process.cwd(), 'aws-rds-ca-bundle.pem');
+let sslConfig;
 
-// Extract components - parse from right to left to handle @ in password
-// First extract the host/port/database part
-const hostMatch = dbUrl.match(/@([^:@]+):(\d+)\/([^?]+)/);
-if (!hostMatch) {
-  throw new Error('Invalid DATABASE_URL format - cannot parse host/port/database');
-}
-
-const host = hostMatch[1];
-const port = hostMatch[2];
-const database = hostMatch[3];
-
-// Then extract username and password from the beginning
-// Everything between :// and the LAST @ is "username:password"
-const credMatch = dbUrl.match(/^postgresql:\/\/(.+)@[^@]+:\d+\//);
-if (!credMatch) {
-  throw new Error('Invalid DATABASE_URL format - cannot parse credentials');
-}
-
-const credentials = credMatch[1];
-const colonIndex = credentials.indexOf(':');
-if (colonIndex === -1) {
-  throw new Error('Invalid DATABASE_URL format - no password separator found');
-}
-
-let user = credentials.substring(0, colonIndex);
-let password = credentials.substring(colonIndex + 1);
-
-// WORKAROUND: Due to Replit secrets caching, fix credentials if they're wrong
-// TODO: Remove this workaround once Replit secrets cache clears
-// Correct credentials: user=postgres, password=Admin123456
-if (user === 'bss-database' || password.includes('@') || password === 'KinzhalLTDCo1990') {
-  user = 'postgres';
-  password = 'Admin123456';
+try {
+  const ca = fs.readFileSync(caPath, 'utf8');
+  // Production-ready SSL configuration with proper certificate validation
+  sslConfig = {
+    rejectUnauthorized: true,
+    ca: ca
+  };
+} catch (error) {
+  console.warn('⚠️  AWS RDS CA bundle not found, falling back to basic SSL');
+  // Fallback for development/testing - still use SSL but without CA validation
+  sslConfig = {
+    rejectUnauthorized: false
+  };
 }
 
 // Configure connection pool for AWS RDS PostgreSQL with SSL
-// SSL encryption is enabled but certificate validation is disabled
-// This is required for AWS RDS which uses self-signed certificates
+// The pg library automatically parses DATABASE_URL connection string
+// Format: postgresql://username:password@host:port/database
 export const pool = new Pool({ 
-  user,
-  password,
-  host,
-  port: parseInt(port),
-  database,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  connectionString: process.env.DATABASE_URL,
+  ssl: sslConfig
 });
 
 export const db = drizzle(pool, { schema });
