@@ -37,22 +37,49 @@ try {
 }
 
 // Configure connection pool for AWS RDS PostgreSQL with SSL
-// The pg library automatically parses DATABASE_URL connection string
+// Parse DATABASE_URL and extract connection parameters
 // Format: postgresql://username:password@host:port/database
-// Note: Remove any sslmode query parameter as it would override our ssl config object
-let connectionString = process.env.DATABASE_URL.split('?')[0];
+const dbUrl = process.env.DATABASE_URL.split('?')[0]; // Remove query params like ?sslmode=require
+
+// Parse from right to left to handle passwords containing @ symbol
+// First extract host:port/database
+const hostMatch = dbUrl.match(/@([^@]+):(\d+)\/(.+)$/);
+if (!hostMatch) {
+  throw new Error('Invalid DATABASE_URL format - cannot parse host/port/database');
+}
+const [, host, port, database] = hostMatch;
+
+// Then extract credentials (everything between postgresql:// and the LAST @)
+const credMatch = dbUrl.match(/^postgresql:\/\/(.+)@[^@]+:\d+\/.+$/);
+if (!credMatch) {
+  throw new Error('Invalid DATABASE_URL format - cannot parse credentials');
+}
+const credentials = credMatch[1];
+
+// Split credentials into username and password (first : is the separator)
+const colonIndex = credentials.indexOf(':');
+if (colonIndex === -1) {
+  throw new Error('Invalid DATABASE_URL format - no password separator');
+}
+let user = credentials.substring(0, colonIndex);
+let password = credentials.substring(colonIndex + 1);
 
 // WORKAROUND: Fix incorrect credentials from cached Replit secrets
 // TODO: Remove once Replit secrets cache clears with correct credentials
-// Correct: postgresql://postgres:Admin123456@...
-if (connectionString.includes('bss-database') || connectionString.includes('KinzhalLTDCo1990')) {
-  connectionString = connectionString
-    .replace('bss-database:', 'postgres:')
-    .replace(/:[^:@]+@/, ':Admin123456@');
+if (user === 'bss-database' || password.includes('Kinzh')) {
+  console.log('⚠️  Applying credentials workaround for cached Replit secrets');
+  console.log('Original username:', user);
+  user = 'postgres';
+  password = 'Admin123456';
+  console.log('✅ Credentials corrected to postgres:Admin123456');
 }
 
 export const pool = new Pool({ 
-  connectionString,
+  user,
+  password,
+  host,
+  port: parseInt(port),
+  database,
   ssl: sslConfig
 });
 
