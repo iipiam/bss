@@ -137,6 +137,14 @@ const requireITAccount = (req: any, res: any, next: any) => {
   next();
 };
 
+// Middleware to ensure user has a restaurantId (not IT account)
+const requireRestaurant = (req: any, res: any, next: any) => {
+  if (!req.session.user?.restaurantId) {
+    return res.status(403).json({ error: "This endpoint requires a restaurant account" });
+  }
+  next();
+};
+
 export async function registerRoutes(app: Express, sessionParser: any): Promise<Server> {
   // Rate limiter for emergency bootstrap reset endpoint
   const bootstrapResetLimiter = rateLimit({
@@ -152,14 +160,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Branches (Multi-tenant isolated)
-  app.get("/api/branches", requireAuth, requirePermission('branches'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/branches", requireAuth, requireRestaurant, requirePermission('branches'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const branches = await storage.getBranches(restaurantId);
     res.json(branches);
   });
 
-  app.get("/api/branches/:id", requireAuth, requirePermission('branches'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/branches/:id", requireAuth, requireRestaurant, requirePermission('branches'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const branch = await storage.getBranch(req.params.id, restaurantId);
     if (!branch) {
       return res.status(404).json({ error: "Branch not found" });
@@ -167,9 +175,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(branch);
   });
 
-  app.post("/api/branches", requireAuth, requirePermission('branches'), async (req, res) => {
+  app.post("/api/branches", requireAuth, requireRestaurant, requirePermission('branches'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = insertBranchSchema.parse({ ...req.body, restaurantId });
       const branch = await storage.createBranch(data);
       res.status(201).json(branch);
@@ -178,9 +186,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/branches/:id", requireAuth, requirePermission('branches'), async (req, res) => {
+  app.patch("/api/branches/:id", requireAuth, requireRestaurant, requirePermission('branches'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = sanitizePatchBody(req.body, insertBranchSchema.partial());
       // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
       const { restaurantId: _, ...safeData } = data;
@@ -194,8 +202,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/branches/:id", requireAuth, requirePermission('branches'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.delete("/api/branches/:id", requireAuth, requireRestaurant, requirePermission('branches'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const success = await storage.deleteBranch(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Branch not found" });
@@ -204,16 +212,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Inventory
-  app.get("/api/inventory", requireAuth, requirePermission('inventory'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/inventory", requireAuth, requireRestaurant, requirePermission('inventory'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const branchId = req.query.branchId as string | undefined;
     const items = await storage.getInventoryItems(restaurantId, branchId);
     res.json(items);
   });
 
-  app.post("/api/inventory", requireAuth, requirePermission('inventory'), async (req, res) => {
+  app.post("/api/inventory", requireAuth, requireRestaurant, requirePermission('inventory'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = insertInventoryItemSchema.parse({ ...req.body, restaurantId });
       const item = await storage.createInventoryItem(data);
       res.status(201).json(item);
@@ -226,9 +234,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/inventory/sort", requireAuth, requirePermission('inventory'), async (req, res) => {
+  app.patch("/api/inventory/sort", requireAuth, requireRestaurant, requirePermission('inventory'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const { updates } = req.body;
       if (!Array.isArray(updates)) {
         return res.status(400).json({ error: "Invalid updates format" });
@@ -252,8 +260,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/inventory/:id", requireAuth, requirePermission('inventory'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/inventory/:id", requireAuth, requireRestaurant, requirePermission('inventory'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const item = await storage.getInventoryItem(req.params.id, restaurantId);
     if (!item) {
       return res.status(404).json({ error: "Item not found" });
@@ -261,9 +269,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(item);
   });
 
-  app.patch("/api/inventory/:id", requireAuth, requirePermission('inventory'), async (req, res) => {
+  app.patch("/api/inventory/:id", requireAuth, requireRestaurant, requirePermission('inventory'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = sanitizePatchBody(req.body, insertInventoryItemSchema.partial());
       // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
       const { restaurantId: _, ...safeData } = data;
@@ -277,8 +285,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/inventory/:id", requireAuth, requirePermission('inventory'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.delete("/api/inventory/:id", requireAuth, requireRestaurant, requirePermission('inventory'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const success = await storage.deleteInventoryItem(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Item not found" });
@@ -287,22 +295,22 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Menu
-  app.get("/api/menu", requireAuth, requirePermission('menu'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/menu", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const items = await storage.getMenuItems(restaurantId);
     res.json(items);
   });
 
   // Menu Stock (based on inventory and recipes) - MUST be before /:id route
-  app.get("/api/menu/stock", requireAuth, requirePermission('menu'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/menu/stock", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const branchId = req.query.branchId as string | undefined;
     const stock = await storage.getMenuItemsStock(restaurantId, branchId);
     res.json(stock);
   });
 
-  app.get("/api/menu/:id", requireAuth, requirePermission('menu'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/menu/:id", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const item = await storage.getMenuItem(req.params.id, restaurantId);
     if (!item) {
       return res.status(404).json({ error: "Menu item not found" });
@@ -310,9 +318,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(item);
   });
 
-  app.post("/api/menu", requireAuth, requirePermission('menu'), async (req, res) => {
+  app.post("/api/menu", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = insertMenuItemSchema.parse({ ...req.body, restaurantId });
       const item = await storage.createMenuItem(data);
       res.status(201).json(item);
@@ -322,9 +330,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/menu/:id", requireAuth, requirePermission('menu'), async (req, res) => {
+  app.patch("/api/menu/:id", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = sanitizePatchBody(req.body, updateMenuItemSchema);
       // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
       const { restaurantId: _, ...safeData } = data;
@@ -338,8 +346,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/menu/:id", requireAuth, requirePermission('menu'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.delete("/api/menu/:id", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const success = await storage.deleteMenuItem(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Menu item not found" });
@@ -348,15 +356,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Add-ons
-  app.get("/api/addons", requireAuth, requirePermission('menu'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/addons", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const menuItemId = req.query.menuItemId as string | undefined;
     const addons = await storage.getAddons(restaurantId, menuItemId);
     res.json(addons);
   });
 
-  app.get("/api/addons/:id", requireAuth, requirePermission('menu'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/addons/:id", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const addon = await storage.getAddon(req.params.id, restaurantId);
     if (!addon) {
       return res.status(404).json({ error: "Add-on not found" });
@@ -364,9 +372,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(addon);
   });
 
-  app.post("/api/addons", requireAuth, requirePermission('menu'), async (req, res) => {
+  app.post("/api/addons", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = insertAddonSchema.parse({ ...req.body, restaurantId });
       const addon = await storage.createAddon(data);
       res.status(201).json(addon);
@@ -375,9 +383,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/addons/:id", requireAuth, requirePermission('menu'), async (req, res) => {
+  app.patch("/api/addons/:id", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = sanitizePatchBody(req.body, insertAddonSchema.partial());
       // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
       const { restaurantId: _, ...safeData } = data;
@@ -391,8 +399,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/addons/:id", requireAuth, requirePermission('menu'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.delete("/api/addons/:id", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const success = await storage.deleteAddon(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Add-on not found" });
@@ -400,9 +408,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.status(204).send();
   });
 
-  app.patch("/api/addons/sort-order", requireAuth, requirePermission('menu'), async (req, res) => {
+  app.patch("/api/addons/sort-order", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       if (!Array.isArray(req.body)) {
         return res.status(400).json({ error: "Invalid updates format" });
       }
@@ -426,14 +434,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Customers
-  app.get("/api/customers", requireAuth, requirePermission('customers'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/customers", requireAuth, requireRestaurant, requirePermission('customers'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const customers = await storage.getCustomers(restaurantId);
     res.json(customers);
   });
 
-  app.get("/api/customers/:id", requireAuth, requirePermission('customers'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/customers/:id", requireAuth, requireRestaurant, requirePermission('customers'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const customer = await storage.getCustomer(req.params.id, restaurantId);
     if (!customer) {
       return res.status(404).json({ error: "Customer not found" });
@@ -441,9 +449,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(customer);
   });
 
-  app.post("/api/customers", requireAuth, requirePermission('customers'), async (req, res) => {
+  app.post("/api/customers", requireAuth, requireRestaurant, requirePermission('customers'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = insertCustomerSchema.parse({ ...req.body, restaurantId });
       const customer = await storage.createCustomer(data);
       res.status(201).json(customer);
@@ -452,9 +460,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/customers/:id", requireAuth, requirePermission('customers'), async (req, res) => {
+  app.patch("/api/customers/:id", requireAuth, requireRestaurant, requirePermission('customers'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = sanitizePatchBody(req.body, insertCustomerSchema.partial());
       // SECURITY: Strip restaurantId from request body to prevent cross-tenant reassignment
       const { restaurantId: _, ...safeData } = data;
@@ -468,8 +476,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/customers/:id", requireAuth, requirePermission('customers'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.delete("/api/customers/:id", requireAuth, requireRestaurant, requirePermission('customers'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const success = await storage.deleteCustomer(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Customer not found" });
@@ -478,9 +486,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Licenses (for both restaurant and factory accounts)
-  app.get("/api/licenses", requireAuth, requirePermission('licenses'), async (req, res) => {
+  app.get("/api/licenses", requireAuth, requireRestaurant, requirePermission('licenses'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const licenses = await storage.getLicenses(restaurantId);
       res.json(licenses);
     } catch (error) {
@@ -489,9 +497,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/licenses/expiring", requireAuth, requirePermission('licenses'), async (req, res) => {
+  app.get("/api/licenses/expiring", requireAuth, requireRestaurant, requirePermission('licenses'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const daysAhead = parseInt(req.query.daysAhead as string) || 30;
       const licenses = await storage.getExpiringLicenses(restaurantId, daysAhead);
       res.json(licenses);
@@ -501,9 +509,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/licenses/:id", requireAuth, requirePermission('licenses'), async (req, res) => {
+  app.get("/api/licenses/:id", requireAuth, requireRestaurant, requirePermission('licenses'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const license = await storage.getLicense(req.params.id, restaurantId);
       if (!license) {
         return res.status(404).json({ error: "License not found" });
@@ -515,9 +523,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/licenses", requireAuth, requirePermission('licenses'), async (req, res) => {
+  app.post("/api/licenses", requireAuth, requireRestaurant, requirePermission('licenses'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       
       // Transform date strings to Date objects before validation
@@ -541,9 +549,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/licenses/:id", requireAuth, requirePermission('licenses'), async (req, res) => {
+  app.patch("/api/licenses/:id", requireAuth, requireRestaurant, requirePermission('licenses'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       
       // Add updatedBy to request body
@@ -576,9 +584,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/licenses/:id", requireAuth, requirePermission('licenses'), async (req, res) => {
+  app.delete("/api/licenses/:id", requireAuth, requireRestaurant, requirePermission('licenses'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const success = await storage.deleteLicense(req.params.id, restaurantId);
       if (!success) {
         return res.status(404).json({ error: "License not found" });
@@ -591,8 +599,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Shop Salaries
-  app.get("/api/shop/salaries", requireAuth, requirePermission('bills'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/shop/salaries", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const branchId = req.query.branchId as string | undefined;
     const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
     const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
@@ -600,8 +608,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(salaries);
   });
 
-  app.get("/api/shop/salaries/:id", requireAuth, requirePermission('bills'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/shop/salaries/:id", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const salary = await storage.getSalary(req.params.id);
     if (!salary || salary.restaurantId !== restaurantId) {
       return res.status(404).json({ error: "Salary not found" });
@@ -609,9 +617,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(salary);
   });
 
-  app.post("/api/shop/salaries", requireAuth, requirePermission('bills'), async (req, res) => {
+  app.post("/api/shop/salaries", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       console.log("[SALARY] Request body:", JSON.stringify(req.body, null, 2));
       // Convert ISO date string to Date object
       const bodyWithDate = {
@@ -632,9 +640,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/shop/salaries/:id", requireAuth, requirePermission('bills'), async (req, res) => {
+  app.patch("/api/shop/salaries/:id", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const existing = await storage.getSalary(req.params.id);
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Salary not found" });
@@ -647,8 +655,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/shop/salaries/:id", requireAuth, requirePermission('bills'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.delete("/api/shop/salaries/:id", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const existing = await storage.getSalary(req.params.id);
     if (!existing || existing.restaurantId !== restaurantId) {
       return res.status(404).json({ error: "Salary not found" });
@@ -661,8 +669,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Shop Bills
-  app.get("/api/shop/bills", requireAuth, requirePermission('bills'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/shop/bills", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const branchId = req.query.branchId as string | undefined;
     const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
     const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
@@ -670,8 +678,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(bills);
   });
 
-  app.get("/api/shop/bills/:id", requireAuth, requirePermission('bills'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/shop/bills/:id", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const bill = await storage.getShopBill(req.params.id);
     if (!bill || bill.restaurantId !== restaurantId) {
       return res.status(404).json({ error: "Bill not found" });
@@ -679,9 +687,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(bill);
   });
 
-  app.post("/api/shop/bills", requireAuth, requirePermission('bills'), async (req, res) => {
+  app.post("/api/shop/bills", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       // Convert ISO date string to Date object
       const bodyWithDate = {
         ...req.body,
@@ -697,9 +705,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/shop/bills/:id", requireAuth, requirePermission('bills'), async (req, res) => {
+  app.patch("/api/shop/bills/:id", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const existing = await storage.getShopBill(req.params.id);
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Bill not found" });
@@ -712,8 +720,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/shop/bills/:id", requireAuth, requirePermission('bills'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.delete("/api/shop/bills/:id", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const existing = await storage.getShopBill(req.params.id);
     if (!existing || existing.restaurantId !== restaurantId) {
       return res.status(404).json({ error: "Bill not found" });
@@ -725,9 +733,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.status(204).send();
   });
 
-  app.patch("/api/shop/bills/:id/archive", requireAuth, requirePermission('bills'), async (req, res) => {
+  app.patch("/api/shop/bills/:id/archive", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const existing = await storage.getShopBill(req.params.id);
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Bill not found" });
@@ -741,15 +749,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Delivery Apps
-  app.get("/api/delivery-apps", requireAuth, requirePermission('deliveryApps'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/delivery-apps", requireAuth, requireRestaurant, requirePermission('deliveryApps'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const apps = await storage.getDeliveryApps(restaurantId);
     res.json(apps);
   });
 
-  app.patch("/api/delivery-apps/sort", requireAuth, requirePermission('deliveryApps'), async (req, res) => {
+  app.patch("/api/delivery-apps/sort", requireAuth, requireRestaurant, requirePermission('deliveryApps'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const { updates } = req.body;
       if (!Array.isArray(updates)) {
         return res.status(400).json({ error: "Invalid updates format" });
@@ -768,8 +776,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/delivery-apps/:id", requireAuth, requirePermission('deliveryApps'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/delivery-apps/:id", requireAuth, requireRestaurant, requirePermission('deliveryApps'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const app = await storage.getDeliveryApp(req.params.id);
     if (!app || app.restaurantId !== restaurantId) {
       return res.status(404).json({ error: "Delivery app not found" });
@@ -777,9 +785,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(app);
   });
 
-  app.post("/api/delivery-apps", requireAuth, requirePermission('deliveryApps'), async (req, res) => {
+  app.post("/api/delivery-apps", requireAuth, requireRestaurant, requirePermission('deliveryApps'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = insertDeliveryAppSchema.parse({ ...req.body, restaurantId });
       const deliveryApp = await storage.createDeliveryApp(data);
       res.status(201).json(deliveryApp);
@@ -789,9 +797,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/delivery-apps/:id", requireAuth, requirePermission('deliveryApps'), async (req, res) => {
+  app.patch("/api/delivery-apps/:id", requireAuth, requireRestaurant, requirePermission('deliveryApps'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const existing = await storage.getDeliveryApp(req.params.id);
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Delivery app not found" });
@@ -805,8 +813,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/delivery-apps/:id", requireAuth, requirePermission('deliveryApps'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.delete("/api/delivery-apps/:id", requireAuth, requireRestaurant, requirePermission('deliveryApps'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const existing = await storage.getDeliveryApp(req.params.id);
     if (!existing || existing.restaurantId !== restaurantId) {
       return res.status(404).json({ error: "Delivery app not found" });
@@ -818,9 +826,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.status(204).send();
   });
 
-  app.get("/api/delivery-apps/analytics/profitability", requireAuth, requirePermission('deliveryApps'), async (req, res) => {
+  app.get("/api/delivery-apps/analytics/profitability", requireAuth, requireRestaurant, requirePermission('deliveryApps'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const profitability = await storage.getDeliveryAppProfitability(restaurantId);
       res.json(profitability);
     } catch (error) {
@@ -829,9 +837,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/analytics/sales-comparison", requireAuth, requirePermission('sales'), async (req, res) => {
+  app.get("/api/analytics/sales-comparison", requireAuth, requireRestaurant, requirePermission('sales'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const comparison = await storage.getSalesComparison(restaurantId);
       res.json(comparison);
     } catch (error) {
@@ -841,9 +849,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Investors
-  app.get("/api/investors", requireAuth, requirePermission('reports'), async (req, res) => {
+  app.get("/api/investors", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const investors = await storage.getInvestors(restaurantId);
       res.json(investors);
     } catch (error) {
@@ -852,9 +860,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/investors/:id", requireAuth, requirePermission('reports'), async (req, res) => {
+  app.get("/api/investors/:id", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const investor = await storage.getInvestor(req.params.id);
       if (!investor || investor.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Investor not found" });
@@ -866,9 +874,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/investors", requireAuth, requirePermission('reports'), async (req, res) => {
+  app.post("/api/investors", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = insertInvestorSchema.parse({ ...req.body, restaurantId });
       const investor = await storage.createInvestor(data);
       res.status(201).json(investor);
@@ -878,9 +886,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/investors/:id", requireAuth, requirePermission('reports'), async (req, res) => {
+  app.patch("/api/investors/:id", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const existing = await storage.getInvestor(req.params.id);
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Investor not found" });
@@ -894,9 +902,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/investors/:id", requireAuth, requirePermission('reports'), async (req, res) => {
+  app.delete("/api/investors/:id", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const existing = await storage.getInvestor(req.params.id);
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Investor not found" });
@@ -913,14 +921,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Recipes (MULTI-TENANT: require auth + restaurantId filtering)
-  app.get("/api/recipes", requireAuth, requirePermission('recipes'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/recipes", requireAuth, requireRestaurant, requirePermission('recipes'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const recipes = await storage.getRecipes(restaurantId);
     res.json(recipes);
   });
 
-  app.get("/api/recipes/:id", requireAuth, requirePermission('recipes'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/recipes/:id", requireAuth, requireRestaurant, requirePermission('recipes'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const recipe = await storage.getRecipe(req.params.id, restaurantId);
     if (!recipe) {
       return res.status(404).json({ error: "Recipe not found" });
@@ -928,9 +936,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(recipe);
   });
 
-  app.post("/api/recipes", requireAuth, requirePermission('recipes'), async (req, res) => {
+  app.post("/api/recipes", requireAuth, requireRestaurant, requirePermission('recipes'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = insertRecipeSchema.parse({ ...req.body, restaurantId });
       const recipe = await storage.createRecipe(data);
       res.status(201).json(recipe);
@@ -939,9 +947,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/recipes/:id", requireAuth, requirePermission('recipes'), async (req, res) => {
+  app.patch("/api/recipes/:id", requireAuth, requireRestaurant, requirePermission('recipes'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = sanitizePatchBody(req.body, insertRecipeSchema.partial());
       // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
       const { restaurantId: _, ...safeData } = data;
@@ -955,9 +963,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/recipes/sort", requireAuth, requirePermission('recipes'), async (req, res) => {
+  app.patch("/api/recipes/sort", requireAuth, requireRestaurant, requirePermission('recipes'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const { updates } = req.body;
       if (!Array.isArray(updates)) {
         return res.status(400).json({ error: "Invalid updates format" });
@@ -981,8 +989,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/recipes/:id", requireAuth, requirePermission('recipes'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.delete("/api/recipes/:id", requireAuth, requireRestaurant, requirePermission('recipes'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const success = await storage.deleteRecipe(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Recipe not found" });
@@ -991,16 +999,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Orders (MULTI-TENANT: require auth + restaurantId filtering)
-  app.get("/api/orders", requireAuth, requirePermission('orders'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/orders", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const branchId = req.query.branchId as string | undefined;
     const status = req.query.status as string | undefined;
     const orders = await storage.getOrders({ restaurantId, branchId, status });
     res.json(orders);
   });
 
-  app.get("/api/orders/:id", requireAuth, requirePermission('orders'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/orders/:id", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const order = await storage.getOrder(req.params.id, restaurantId);
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
@@ -1008,10 +1016,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(order);
   });
 
-  app.post("/api/orders", requireAuth, requirePermission('orders'), async (req, res) => {
+  app.post("/api/orders", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
     try {
       // Inject restaurantId from session
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = insertOrderSchema.parse({ ...req.body, restaurantId });
       
       const { orderProcessingService } = await import("./orderProcessingService");
@@ -1085,9 +1093,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/orders/:id", requireAuth, requirePermission('orders'), async (req, res) => {
+  app.patch("/api/orders/:id", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = sanitizePatchBody(req.body, insertOrderSchema.partial());
       // SECURITY: Strip restaurantId from request body to prevent cross-tenant reassignment
       const { restaurantId: _, ...safeData } = data;
@@ -1125,8 +1133,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Transactions (Sales) (MULTI-TENANT: require auth + restaurantId filtering)
-  app.get("/api/transactions", requireAuth, async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/transactions", requireAuth, requireRestaurant, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const branchId = req.query.branchId as string | undefined;
     const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
     const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
@@ -1135,8 +1143,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(transactions);
   });
 
-  app.get("/api/transactions/:id", requireAuth, async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/transactions/:id", requireAuth, requireRestaurant, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const transaction = await storage.getTransaction(req.params.id, restaurantId);
     if (!transaction) {
       return res.status(404).json({ error: "Transaction not found" });
@@ -1144,9 +1152,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(transaction);
   });
 
-  app.post("/api/transactions", requireAuth, async (req, res) => {
+  app.post("/api/transactions", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       // Validate request body without restaurantId (will be added from session)
       const bodySchema = insertTransactionSchema.omit({ restaurantId: true });
       const data = bodySchema.parse(req.body);
@@ -1160,8 +1168,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Analytics Endpoints
-  app.get("/api/analytics/dashboard", requireAuth, requirePermission('dashboard'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/analytics/dashboard", requireAuth, requireRestaurant, requirePermission('dashboard'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const branchId = req.query.branchId as string | undefined;
     const orders = await storage.getOrders({ restaurantId, branchId });
     const transactions = await storage.getTransactions({ restaurantId, branchId });
@@ -1297,13 +1305,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     });
   });
 
-  app.get("/api/analytics/peak-hours/:hour", requireAuth, requirePermission('sales'), async (req, res) => {
+  app.get("/api/analytics/peak-hours/:hour", requireAuth, requireRestaurant, requirePermission('sales'), async (req, res) => {
     const hour = parseInt(req.params.hour);
     if (isNaN(hour) || hour < 0 || hour > 23) {
       return res.status(400).json({ error: "Invalid hour parameter (must be 0-23)" });
     }
 
-    const restaurantId = req.session.user!.restaurantId;
+    const restaurantId = req.session.user!.restaurantId!;
     const branchId = req.query.branchId as string | undefined;
     const transactions = await storage.getTransactions({ restaurantId, branchId });
     const orders = await storage.getOrders({ restaurantId, branchId });
@@ -1332,8 +1340,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(results);
   });
 
-  app.get("/api/analytics/sales", requireAuth, requirePermission('sales'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/analytics/sales", requireAuth, requireRestaurant, requirePermission('sales'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const branchId = req.query.branchId as string | undefined;
     const transactions = await storage.getTransactions({ restaurantId, branchId });
 
@@ -1355,8 +1363,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Settings (MULTI-TENANT: require auth + restaurantId filtering)
-  app.get("/api/settings", requireAuth, async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/settings", requireAuth, requireRestaurant, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const settings = await storage.getSettings(restaurantId);
     const settingsWithKeys = {
       ...settings,
@@ -1365,9 +1373,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(settingsWithKeys);
   });
 
-  app.patch("/api/settings", requireAuth, async (req, res) => {
+  app.patch("/api/settings", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = insertSettingsSchema.partial().parse(req.body);
       // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
       const { restaurantId: _, ...safeData } = data;
@@ -1379,8 +1387,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Procurement (MULTI-TENANT: require auth + restaurantId filtering)
-  app.get("/api/procurement", requireAuth, requirePermission('procurement'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/procurement", requireAuth, requireRestaurant, requirePermission('procurement'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const { type, status, branchId } = req.query;
     const procurements = await storage.getProcurements({
       restaurantId,
@@ -1391,8 +1399,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(procurements);
   });
 
-  app.get("/api/procurement/:id", requireAuth, requirePermission('procurement'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/procurement/:id", requireAuth, requireRestaurant, requirePermission('procurement'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const procurement = await storage.getProcurement(req.params.id, restaurantId);
     if (!procurement) {
       return res.status(404).json({ error: "Procurement not found" });
@@ -1400,9 +1408,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(procurement);
   });
 
-  app.post("/api/procurement", requireAuth, requirePermission('procurement'), async (req, res) => {
+  app.post("/api/procurement", requireAuth, requireRestaurant, requirePermission('procurement'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = insertProcurementSchema.omit({ restaurantId: true }).parse(req.body);
       const procurement = await storage.createProcurement({ ...data, restaurantId });
       res.status(201).json(procurement);
@@ -1411,9 +1419,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/procurement/:id", requireAuth, requirePermission('procurement'), async (req, res) => {
+  app.patch("/api/procurement/:id", requireAuth, requireRestaurant, requirePermission('procurement'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = sanitizePatchBody(req.body, insertProcurementSchema.partial());
       // SECURITY: Strip restaurantId from request body to prevent cross-tenant reassignment
       const { restaurantId: _, ...safeData } = data;
@@ -1427,8 +1435,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/procurement/:id", requireAuth, requirePermission('procurement'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.delete("/api/procurement/:id", requireAuth, requireRestaurant, requirePermission('procurement'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const success = await storage.deleteProcurement(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Procurement not found" });
@@ -1437,11 +1445,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // POS - Generate Invoice (redirects to main invoice creation endpoint)
-  app.post("/api/pos/generate-invoice", requireAuth, requirePermission('pos'), async (req, res) => {
+  app.post("/api/pos/generate-invoice", requireAuth, requireRestaurant, requirePermission('pos'), async (req, res) => {
     // This endpoint now redirects to the main invoice creation endpoint
     // which properly saves the invoice and generates QR code with URL
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const { orderId } = req.body;
       
       if (!orderId) {
@@ -1934,7 +1942,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.get("/api/auth/me", requireAuth, async (req, res) => {
     const accountType = req.session.accountType || "client";
-    const restaurantId = req.session.user!.restaurantId;
+    const restaurantId = req.session.user!.restaurantId!;
     
     // For IT accounts, fetch user without restaurantId
     // For client accounts, fetch user with restaurantId for multi-tenant isolation
@@ -1964,7 +1972,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.patch("/api/auth/me", requireAuth, async (req, res) => {
     try {
       const accountType = req.session.accountType || "client";
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const { devicePreference } = req.body;
       
       // Validate device preference
@@ -2002,8 +2010,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Users Management (Admin only)
-  app.get("/api/users", requireAuth, requirePermission('users'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/users", requireAuth, requireRestaurant, requirePermission('users'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     
     // SECURITY: Check admin role from session (no redundant DB query)
     if (req.session.user!.role !== "admin") {
@@ -2015,8 +2023,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(usersWithoutPasswords);
   });
 
-  app.get("/api/users/:id", requireAuth, requirePermission('users'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/users/:id", requireAuth, requireRestaurant, requirePermission('users'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     
     // SECURITY: Check admin role from session (no redundant DB query)
     if (req.session.user!.role !== "admin") {
@@ -2127,9 +2135,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/users/:id", requireAuth, requirePermission('users'), async (req, res) => {
+  app.patch("/api/users/:id", requireAuth, requireRestaurant, requirePermission('users'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       
       // SECURITY: Check admin role from session (no redundant DB query)
       if (req.session.user!.role !== "admin") {
@@ -2165,8 +2173,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/users/:id", requireAuth, requirePermission('users'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.delete("/api/users/:id", requireAuth, requireRestaurant, requirePermission('users'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     
     // SECURITY: Check admin role from session (no redundant DB query)
     if (req.session.user!.role !== "admin") {
@@ -2187,7 +2195,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // User Profile Management
-  app.get("/api/profile", requireAuth, async (req, res) => {
+  app.get("/api/profile", requireAuth, requireRestaurant, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     
     try {
@@ -2196,7 +2204,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(404).json({ error: "User not found" });
       }
 
-      const restaurant = await storage.getRestaurant(user.restaurantId);
+      const restaurant = await storage.getRestaurant(user.restaurantId!);
       if (!restaurant) {
         return res.status(404).json({ error: "Restaurant not found" });
       }
@@ -2209,8 +2217,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.put("/api/profile", requireAuth, async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.put("/api/profile", requireAuth, requireRestaurant, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     
     try {
       const { email, phone } = req.body;
@@ -2233,8 +2241,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Subscription Management
-  app.post("/api/subscription/cancel", requireAuth, async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.post("/api/subscription/cancel", requireAuth, requireRestaurant, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     
     try {
       const user = await storage.getUser(req.session.user!.id, restaurantId);
@@ -2242,7 +2250,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(404).json({ error: "User not found" });
       }
 
-      const restaurant = await storage.getRestaurant(user.restaurantId);
+      const restaurant = await storage.getRestaurant(user.restaurantId!);
       if (!restaurant || restaurant.subscriptionStatus !== 'active') {
         return res.status(400).json({ error: "No active subscription to cancel" });
       }
@@ -2261,8 +2269,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Financial Analytics
-  app.get("/api/analytics/financial", requireAuth, requirePermission('reports'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/analytics/financial", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const { period, year } = req.query;
     
     const transactions = await storage.getTransactions({ restaurantId });
@@ -2303,8 +2311,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Invoices (MULTI-TENANT: require auth + restaurantId filtering)
-  app.get("/api/invoices", requireAuth, async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/invoices", requireAuth, requireRestaurant, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const { branchId, startDate, endDate } = req.query;
     
     const start = startDate ? new Date(startDate as string) : undefined;
@@ -2319,8 +2327,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(invoices);
   });
 
-  app.get("/api/invoices/:id", requireAuth, async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId;
+  app.get("/api/invoices/:id", requireAuth, requireRestaurant, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
     const invoice = await storage.getInvoice(req.params.id, restaurantId);
     if (!invoice) {
       return res.status(404).json({ error: "Invoice not found" });
@@ -2328,9 +2336,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(invoice);
   });
 
-  app.post("/api/invoices", requireAuth, async (req, res) => {
+  app.post("/api/invoices", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const data = insertInvoiceSchema.parse(req.body);
       // SECURITY: Strip restaurantId from request body and use session restaurantId
       const { restaurantId: _, ...safeData } = data;
@@ -2635,9 +2643,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Create invoice record and generate PDF
-  app.post("/api/invoices/create-and-generate", requireAuth, async (req, res) => {
+  app.post("/api/invoices/create-and-generate", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       console.log("[Invoice Generate] Request body:", JSON.stringify(req.body));
       const { orderId } = req.body;
       
@@ -2828,9 +2836,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Export Inventory to Excel
-  app.get("/api/export/inventory", requireAuth, async (req, res) => {
+  app.get("/api/export/inventory", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const branchId = req.query.branchId as string | undefined;
       const items = await storage.getInventoryItems(restaurantId, branchId);
       
@@ -2850,9 +2858,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Export Menu to Excel
-  app.get("/api/export/menu", requireAuth, async (req, res) => {
+  app.get("/api/export/menu", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const items = await storage.getMenuItems(restaurantId);
       
       const worksheet = XLSX.utils.json_to_sheet(items);
@@ -2871,9 +2879,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Export Recipes to Excel
-  app.get("/api/export/recipes", requireAuth, async (req, res) => {
+  app.get("/api/export/recipes", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const recipes = await storage.getRecipes(restaurantId);
       
       // Flatten recipe data for Excel
@@ -2904,9 +2912,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Export Orders to Excel
-  app.get("/api/export/orders", requireAuth, async (req, res) => {
+  app.get("/api/export/orders", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const branchId = req.query.branchId as string | undefined;
       const status = req.query.status as string | undefined;
       const orders = await storage.getOrders({ restaurantId, branchId, status });
@@ -2944,9 +2952,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Export Transactions to Excel
-  app.get("/api/export/transactions", requireAuth, async (req, res) => {
+  app.get("/api/export/transactions", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const branchId = req.query.branchId as string | undefined;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
@@ -2969,9 +2977,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Export Procurement to Excel
-  app.get("/api/export/procurement", requireAuth, async (req, res) => {
+  app.get("/api/export/procurement", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const type = req.query.type as string | undefined;
       const status = req.query.status as string | undefined;
       const branchId = req.query.branchId as string | undefined;
@@ -2998,9 +3006,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Export Customers to Excel
-  app.get("/api/export/customers", requireAuth, async (req, res) => {
+  app.get("/api/export/customers", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const customers = await storage.getCustomers(restaurantId);
       
       const worksheet = XLSX.utils.json_to_sheet(customers);
@@ -3019,9 +3027,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Export Branches to Excel
-  app.get("/api/export/branches", requireAuth, async (req, res) => {
+  app.get("/api/export/branches", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const branches = await storage.getBranches(restaurantId);
       
       const worksheet = XLSX.utils.json_to_sheet(branches);
@@ -3040,9 +3048,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Export Profitability Data to Excel
-  app.get("/api/export/profitability", requireAuth, async (req, res) => {
+  app.get("/api/export/profitability", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const period = req.query.period as string || 'month';
       
       // Get menu items, recipes, and orders
@@ -3118,9 +3126,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Export Financial Data to Excel
-  app.get("/api/export/financial", requireAuth, requirePermission('reports'), async (req, res) => {
+  app.get("/api/export/financial", requireAuth, requireRestaurant, requireRestaurant, requirePermission('reports'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const year = req.query.year as string || new Date().getFullYear().toString();
       const period = req.query.period as string || 'monthly';
       
@@ -3196,9 +3204,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Export Financial Statement as PDF
-  app.get("/api/export/financial-pdf", requireAuth, requirePermission('reports'), async (req, res) => {
+  app.get("/api/export/financial-pdf", requireAuth, requireRestaurant, requireRestaurant, requirePermission('reports'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const year = req.query.year as string || new Date().getFullYear().toString();
       const period = (req.query.period as "monthly" | "yearly") || 'monthly';
       
@@ -3268,9 +3276,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Download individual invoice PDF
-  app.get("/api/invoices/:id/download", requireAuth, async (req, res) => {
+  app.get("/api/invoices/:id/download", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const invoice = await storage.getInvoice(req.params.id, restaurantId);
       if (!invoice) {
         return res.status(404).json({ error: "Invoice not found" });
@@ -3335,7 +3343,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Upload menu item image
-  app.post("/api/menu/upload-image", requireAuth, requirePermission('menu'), uploadMenuImage.single('image'), async (req, res) => {
+  app.post("/api/menu/upload-image", requireAuth, requireRestaurant, requirePermission('menu'), uploadMenuImage.single('image'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No image uploaded" });
@@ -3358,10 +3366,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   // Authenticated endpoint to download subscription invoices
   // SECURITY: Requires authentication and verifies restaurant ownership via database join
-  app.get('/api/subscription-invoices/:filename', requireAuth, async (req, res) => {
+  app.get('/api/subscription-invoices/:filename', requireAuth, requireRestaurant, async (req, res) => {
     try {
       const filename = req.params.filename;
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       
       // Validate filename format (e.g., subscription-0061-20251112-025947.pdf)
       const match = filename.match(/^subscription-(\d{4}-\d{8}-\d{6})\.pdf$/);
@@ -3396,7 +3404,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   // Get user's subscription invoices (list)
   // NOTE: This route MUST come after the /:filename route to avoid routing conflicts
-  app.get("/api/subscription-invoices", requireAuth, async (req, res) => {
+  app.get("/api/subscription-invoices", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const userId = req.session.user!.id;
       const invoices = await storage.getSubscriptionInvoices(userId);
@@ -3413,9 +3421,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // ===== TEAM CHAT API =====
   
   // Get all conversations for authenticated user
-  app.get("/api/chat/conversations", requireAuth, async (req, res) => {
+  app.get("/api/chat/conversations", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       const branchId = req.query.branchId as string | undefined;
       
@@ -3428,9 +3436,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Get single conversation by ID
-  app.get("/api/chat/conversations/:id", requireAuth, async (req, res) => {
+  app.get("/api/chat/conversations/:id", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       const conversationId = req.params.id;
       
@@ -3453,9 +3461,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Create a new channel
-  app.post("/api/chat/channels", requireAuth, async (req, res) => {
+  app.post("/api/chat/channels", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       const { name, scope, branchId } = req.body;
       
@@ -3492,9 +3500,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Get or create direct conversation between two users
-  app.post("/api/chat/direct", requireAuth, async (req, res) => {
+  app.post("/api/chat/direct", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       const { otherUserId } = req.body;
       
@@ -3521,9 +3529,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Get messages in a conversation
-  app.get("/api/chat/conversations/:id/messages", requireAuth, async (req, res) => {
+  app.get("/api/chat/conversations/:id/messages", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       const conversationId = req.params.id;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
@@ -3543,9 +3551,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Send a message to a conversation
-  app.post("/api/chat/conversations/:id/messages", requireAuth, async (req, res) => {
+  app.post("/api/chat/conversations/:id/messages", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       const conversationId = req.params.id;
       const { content } = req.body;
@@ -3597,9 +3605,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Get conversation members
-  app.get("/api/chat/conversations/:id/members", requireAuth, async (req, res) => {
+  app.get("/api/chat/conversations/:id/members", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       const conversationId = req.params.id;
       
@@ -3618,9 +3626,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Get chat notification settings (restaurant defaults)
-  app.get("/api/chat/notification-settings", requireAuth, async (req, res) => {
+  app.get("/api/chat/notification-settings", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const settings = await storage.getChatNotificationDefaults(restaurantId);
       res.json(settings);
     } catch (error) {
@@ -3630,9 +3638,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Update chat notification settings (admin only)
-  app.patch("/api/chat/notification-settings", requireAuth, async (req, res) => {
+  app.patch("/api/chat/notification-settings", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userRole = req.session.user!.role;
       
       // Only admins can update restaurant-wide notification defaults
@@ -3663,9 +3671,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Add member to conversation (channels only)
-  app.post("/api/chat/conversations/:id/members", requireAuth, async (req, res) => {
+  app.post("/api/chat/conversations/:id/members", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       const conversationId = req.params.id;
       const { userId: newUserId } = req.body;
@@ -3712,9 +3720,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Mark conversation as read
-  app.post("/api/chat/conversations/:id/read", requireAuth, async (req, res) => {
+  app.post("/api/chat/conversations/:id/read", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       const conversationId = req.params.id;
       const { lastReadMessageId } = req.body;
@@ -3741,9 +3749,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Get unread count for all conversations
-  app.get("/api/chat/unread-count", requireAuth, async (req, res) => {
+  app.get("/api/chat/unread-count", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       
       const count = await storage.getUnreadChatCount(restaurantId, userId);
@@ -3755,9 +3763,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Get all employee users in restaurant for DM selection
-  app.get("/api/chat/users", requireAuth, async (req, res) => {
+  app.get("/api/chat/users", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const users = await storage.getUsers(restaurantId);
       
       // Filter to only show employees (exclude admins) and active users
@@ -3780,7 +3788,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Import Inventory from Excel
-  app.post("/api/import/inventory", requireAuth, requirePermission('inventory'), upload.single('file'), async (req, res) => {
+  app.post("/api/import/inventory", requireAuth, requireRestaurant, requirePermission('inventory'), upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -3821,7 +3829,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Import Menu from Excel
-  app.post("/api/import/menu", requireAuth, requirePermission('menu'), upload.single('file'), async (req, res) => {
+  app.post("/api/import/menu", requireAuth, requireRestaurant, requirePermission('menu'), upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -3863,7 +3871,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Import Recipes from Excel
-  app.post("/api/import/recipes", requireAuth, requirePermission('recipes'), upload.single('file'), async (req, res) => {
+  app.post("/api/import/recipes", requireAuth, requireRestaurant, requirePermission('recipes'), upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -3904,7 +3912,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Import Branches from Excel
-  app.post("/api/import/branches", requireAuth, requirePermission('branches'), upload.single('file'), async (req, res) => {
+  app.post("/api/import/branches", requireAuth, requireRestaurant, requirePermission('branches'), upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -3946,7 +3954,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // ==================== Monthly VAT Reports ====================
 
   // Get all VAT reports for the logged-in user
-  app.get("/api/vat-reports", requireAuth, requirePermission('reports'), async (req, res) => {
+  app.get("/api/vat-reports", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
     try {
       const authUser = req.session.user!;
       const userId = authUser.id;
@@ -3959,7 +3967,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Generate monthly VAT report
-  app.post("/api/vat-reports/generate", requireAuth, requirePermission('reports'), async (req, res) => {
+  app.post("/api/vat-reports/generate", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
     try {
       const authUser = req.session.user!;
       const userId = authUser.id;
@@ -3988,7 +3996,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const endDate = new Date(year, month, 0, 23, 59, 59);
 
       const transactions = await storage.getTransactions({ 
-        restaurantId: user.restaurantId, 
+        restaurantId: user.restaurantId!, 
         dateRange: { start: startDate, end: endDate }
       });
       
@@ -3998,7 +4006,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const totalSalesVat = totalSales - totalSalesBaseAmount;
 
       // Calculate total purchases (from procurement)
-      const procurements = await storage.getProcurements({ restaurantId: user.restaurantId });
+      const procurements = await storage.getProcurements({ restaurantId: user.restaurantId! });
       const monthProcurements = procurements.filter(p => {
         if (!p.orderDate) return false;
         const procDate = new Date(p.orderDate);
@@ -4019,7 +4027,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const serialNumber = await storage.getNextVatReportSerialNumber(year, month);
 
       // Fetch restaurant for company details
-      const restaurant = await storage.getRestaurant(user.restaurantId);
+      const restaurant = await storage.getRestaurant(user.restaurantId!);
 
       // Generate PDF invoice
       const pdfBuffer = await generateMonthlyVatReport({
@@ -4077,7 +4085,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Download VAT report PDF
-  app.get("/api/vat-reports/:id/download", requireAuth, requirePermission('reports'), async (req, res) => {
+  app.get("/api/vat-reports/:id/download", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
     try {
       const authUser = req.session.user!;
       const userId = authUser.id;
@@ -4126,7 +4134,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.post("/api/moyasar/create-payment", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const { orderId, amount, description, token, customerName, customerEmail, customerPhone } = req.body;
       
       if (!amount || amount <= 0) {
@@ -4193,9 +4201,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/moyasar/payment/:paymentId", requireAuth, async (req, res) => {
+  app.get("/api/moyasar/payment/:paymentId", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const { fetchPayment } = require('./moyasarService');
       const payment = await fetchPayment(req.params.paymentId);
 
@@ -4225,7 +4233,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.post("/api/moyasar/refund/:paymentId", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const { amount } = req.body;
       const { refundPayment } = require('./moyasarService');
       
@@ -4342,9 +4350,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/moyasar/payments", requireAuth, async (req, res) => {
+  app.get("/api/moyasar/payments", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const branchId = req.query.branchId as string | undefined;
       const payments = await storage.getMoyasarPayments(restaurantId, branchId);
       res.json(payments);
@@ -4355,9 +4363,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Support Tickets
-  app.get("/api/tickets", requireAuth, async (req, res) => {
+  app.get("/api/tickets", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userId = req.query.userId as string | undefined;
       const status = req.query.status as string | undefined;
       
@@ -4369,9 +4377,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/tickets/:id", requireAuth, async (req, res) => {
+  app.get("/api/tickets/:id", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const ticket = await storage.getSupportTicket(req.params.id, restaurantId);
       
       if (!ticket) {
@@ -4385,9 +4393,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/tickets", requireAuth, async (req, res) => {
+  app.post("/api/tickets", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       
       const ticket = await storage.createSupportTicket({
@@ -4437,7 +4445,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.patch("/api/tickets/:id", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const accountType = req.session.accountType;
       
       // SECURITY: Strip restaurantId from request body to prevent cross-tenant reassignment
@@ -4478,9 +4486,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Ticket Messages
-  app.get("/api/tickets/:ticketId/messages", requireAuth, async (req, res) => {
+  app.get("/api/tickets/:ticketId/messages", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId);
       
       if (!ticket) {
@@ -4497,7 +4505,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.post("/api/tickets/:ticketId/messages", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       
       const ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId);
@@ -4540,9 +4548,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/tickets/unread/count", requireAuth, async (req, res) => {
+  app.get("/api/tickets/unread/count", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       const count = await storage.getUnreadMessageCount(restaurantId, userId);
       res.json({ count });
@@ -4553,9 +4561,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Employee Activity Log
-  app.get("/api/employee-activities", requireAuth, async (req, res) => {
+  app.get("/api/employee-activities", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const employeeId = req.query.employeeId as string | undefined;
       const category = req.query.category as string | undefined;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
@@ -4569,9 +4577,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/employee-activities/stats/:employeeId", requireAuth, async (req, res) => {
+  app.get("/api/employee-activities/stats/:employeeId", requireAuth, requireRestaurant, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
+      const restaurantId = req.session.user!.restaurantId!;
       const stats = await storage.getEmployeeActivityStats(req.params.employeeId, restaurantId);
       res.json(stats);
     } catch (error) {

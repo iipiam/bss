@@ -392,7 +392,7 @@ export type Customer = typeof customers.$inferSelect;
 // Users
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(), // Links user to their restaurant
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id), // Links user to their restaurant (null for IT accounts)
   username: text("username").notNull().unique(),
   password: text("password").notNull(), // hashed password
   fullName: text("full_name").notNull(),

@@ -19,10 +19,14 @@ Preferred communication style: Simple, everyday language.
 ### Technical Implementation
 - **Backend Runtime**: Node.js with Express.js.
 - **API Design**: RESTful API, domain-organized, with shared Zod schemas for validation.
-- **Authentication**: Bcrypt for hashing, session-based.
+- **Authentication**: Bcrypt for hashing, session-based. Dual account types: client (restaurantId required) and IT (restaurantId=null).
 - **Multi-tenant Architecture**: Complete data isolation using `restaurantId` for both restaurant and factory business types.
-  - **Security**: 148 authenticated endpoints with 134 restaurantId extractions (~91% coverage)
+  - **Security**: 139 client endpoints protected with `requireRestaurant` middleware, enforcing restaurant context
   - **Data Isolation**: All new accounts start with ZERO data, no cross-tenant data leakage
+  - **IT Account System** (Nov 19, 2025): Dedicated IT support accounts with null restaurantId for cross-tenant support operations
+    - IT accounts use separate `/api/it/*` endpoints with `requireITAccount` middleware
+    - IT accounts blocked from all client endpoints via `requireRestaurant` middleware
+    - Seeded IT accounts: `it_support`, `it@saudikinzhal.org` (credentials in secure storage)
   - **Recent Security Fixes (Nov 2025)**: Patched 7 critical vulnerabilities in procurement, invoices, image uploads, and import endpoints
   - **Recent Bug Fixes (Nov 17-19, 2025)**: 
     - Fixed invoice download workflow (PDF path mismatch: changed save location to `public/invoices/`)
