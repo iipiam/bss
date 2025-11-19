@@ -27,7 +27,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -129,7 +129,7 @@ function AppContent() {
   const { user, restaurant, isLoading, logout, accountType } = useAuth();
   const { t, isRTL } = useLanguage();
   const { device } = useDevice();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(restaurant?.subscriptionPlan || 'monthly');
   const [branchesCount, setBranchesCount] = useState(restaurant?.branchesCount || 1);
@@ -140,6 +140,13 @@ function AppContent() {
     queryKey: ["/api/auth/check-first-run"],
     retry: false,
   });
+
+  // Handle IT account redirects using useEffect to avoid render issues
+  useEffect(() => {
+    if (accountType === 'it' && location !== '/it-dashboard') {
+      setLocation('/it-dashboard');
+    }
+  }, [accountType, location, setLocation]);
 
   const handleLogout = async () => {
     try {
@@ -218,21 +225,6 @@ function AppContent() {
   // Show login page if not authenticated
   if (!user) {
     return <Login />;
-  }
-
-  // CRITICAL: IT accounts can ONLY access IT Dashboard - redirect if on wrong route
-  if (accountType === 'it') {
-    if (location !== '/it-dashboard') {
-      window.location.href = '/it-dashboard';
-      return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Redirecting to IT Dashboard...</p>
-          </div>
-        </div>
-      );
-    }
   }
 
   // Show main app if authenticated with device-responsive layout

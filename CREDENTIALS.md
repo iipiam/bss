@@ -23,14 +23,21 @@
 - **Role**: Admin
 - **Use Case**: Default admin account
 
-## IT Support Account
+## IT Support Accounts
 
 ### IT Support Account
 - **Username**: `it_support`
-- **Password**: `itsupport123`
+- **Password**: `IT@Support2024!`
 - **Account Type**: **IT Account** (select "IT Account" radio button)
 - **Role**: IT Staff
 - **Use Case**: Access IT Dashboard with cross-tenant visibility
+
+### IT Administrator Account
+- **Username**: `it@saudikinzhal.org`
+- **Password**: `IT@Admin2024!`
+- **Account Type**: **IT Account** (select "IT Account" radio button)
+- **Role**: IT Staff
+- **Use Case**: Alternative IT account with admin privileges
 
 ## Important Notes
 
