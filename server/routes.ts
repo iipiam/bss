@@ -4377,10 +4377,22 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/tickets/:id", requireAuth, requireRestaurant, async (req, res) => {
+  app.get("/api/tickets/:id", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
-      const ticket = await storage.getSupportTicket(req.params.id, restaurantId);
+      const accountType = req.session.accountType;
+      let ticket;
+      
+      if (accountType === 'it') {
+        // IT accounts have cross-tenant access
+        ticket = await storage.getSupportTicketForIT(req.params.id);
+      } else {
+        // Restaurant accounts can only access their own tickets
+        const restaurantId = req.session.user!.restaurantId;
+        if (!restaurantId) {
+          return res.status(403).json({ error: "This endpoint requires a restaurant account" });
+        }
+        ticket = await storage.getSupportTicket(req.params.id, restaurantId);
+      }
       
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
@@ -4445,7 +4457,6 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.patch("/api/tickets/:id", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
       const accountType = req.session.accountType;
       
       // SECURITY: Strip restaurantId from request body to prevent cross-tenant reassignment
@@ -4461,7 +4472,19 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         }
       }
       
-      const updated = await storage.updateSupportTicket(req.params.id, restaurantId, safeData);
+      let updated;
+      if (accountType === 'it') {
+        // IT accounts have cross-tenant access
+        updated = await storage.updateSupportTicketForIT(req.params.id, safeData);
+      } else {
+        // Restaurant accounts can only update their own tickets
+        const restaurantId = req.session.user!.restaurantId;
+        if (!restaurantId) {
+          return res.status(403).json({ error: "This endpoint requires a restaurant account" });
+        }
+        updated = await storage.updateSupportTicket(req.params.id, restaurantId, safeData);
+      }
+      
       if (!updated) {
         return res.status(404).json({ error: "Ticket not found" });
       }
@@ -4469,7 +4492,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Broadcast real-time notification for ticket update
       broadcastNotification({
         type: 'ticket:updated',
-        restaurantId,
+        restaurantId: updated.restaurantId,
         ticketId: updated.id,
         ticketNumber: updated.ticketNumber,
         subject: updated.subject,
@@ -4486,16 +4509,32 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Ticket Messages
-  app.get("/api/tickets/:ticketId/messages", requireAuth, requireRestaurant, async (req, res) => {
+  app.get("/api/tickets/:ticketId/messages", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
-      const ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId);
+      const accountType = req.session.accountType;
+      let ticket;
+      let messages;
       
-      if (!ticket) {
-        return res.status(404).json({ error: "Ticket not found" });
+      if (accountType === 'it') {
+        // IT accounts have cross-tenant access
+        ticket = await storage.getSupportTicketForIT(req.params.ticketId);
+        if (!ticket) {
+          return res.status(404).json({ error: "Ticket not found" });
+        }
+        messages = await storage.getTicketMessagesForIT(req.params.ticketId);
+      } else {
+        // Restaurant accounts can only access their own tickets
+        const restaurantId = req.session.user!.restaurantId;
+        if (!restaurantId) {
+          return res.status(403).json({ error: "This endpoint requires a restaurant account" });
+        }
+        ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId);
+        if (!ticket) {
+          return res.status(404).json({ error: "Ticket not found" });
+        }
+        messages = await storage.getTicketMessages(req.params.ticketId, restaurantId);
       }
 
-      const messages = await storage.getTicketMessages(req.params.ticketId, restaurantId);
       res.json(messages);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -4505,13 +4544,29 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.post("/api/tickets/:ticketId/messages", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const accountType = req.session.accountType;
       const userId = req.session.user!.id;
+      let ticket;
+      let restaurantId: string;
       
-      const ticket = await storage.getSupportTicket(req.params.ticketId, restaurantId);
-      
-      if (!ticket) {
-        return res.status(404).json({ error: "Ticket not found" });
+      if (accountType === 'it') {
+        // IT accounts have cross-tenant access
+        ticket = await storage.getSupportTicketForIT(req.params.ticketId);
+        if (!ticket) {
+          return res.status(404).json({ error: "Ticket not found" });
+        }
+        restaurantId = ticket.restaurantId;
+      } else {
+        // Restaurant accounts can only access their own tickets
+        const userRestaurantId = req.session.user!.restaurantId;
+        if (!userRestaurantId) {
+          return res.status(403).json({ error: "This endpoint requires a restaurant account" });
+        }
+        ticket = await storage.getSupportTicket(req.params.ticketId, userRestaurantId);
+        if (!ticket) {
+          return res.status(404).json({ error: "Ticket not found" });
+        }
+        restaurantId = userRestaurantId;
       }
 
       const message = await storage.createTicketMessage({

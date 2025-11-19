@@ -293,6 +293,9 @@ export interface IStorage {
   getTicketTrends(restaurantId?: string): Promise<any[]>;
   assignTicket(ticketId: string, restaurantId: string | null, assignedTo: string | null, assignedBy: string): Promise<SupportTicket | undefined>;
   getAllActiveTicketsForIT(): Promise<SupportTicket[]>;
+  getSupportTicketForIT(id: string): Promise<SupportTicket | undefined>;
+  getTicketMessagesForIT(ticketId: string): Promise<TicketMessage[]>;
+  updateSupportTicketForIT(id: string, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined>;
 
   // Employee Activity Log (MULTI-TENANT: SQL-level restaurantId filtering)
   getEmployeeActivities(restaurantId: string, employeeId?: string, category?: string, startDate?: Date, endDate?: Date): Promise<EmployeeActivityLog[]>;
@@ -2025,6 +2028,42 @@ export class DatabaseStorage implements IStorage {
       .orderBy(sql`${supportTickets.createdAt} DESC`);
     
     return tickets;
+  }
+
+  async getSupportTicketForIT(id: string): Promise<SupportTicket | undefined> {
+    // Get a single ticket without restaurantId filtering (for IT cross-tenant access)
+    const [ticket] = await db.select().from(supportTickets)
+      .where(eq(supportTickets.id, id));
+    return ticket;
+  }
+
+  async getTicketMessagesForIT(ticketId: string): Promise<TicketMessage[]> {
+    // Get ticket messages without restaurantId filtering (for IT cross-tenant access)
+    // SECURITY: First verify the ticket exists to prevent orphaned message access
+    const ticket = await this.getSupportTicketForIT(ticketId);
+    if (!ticket) {
+      return [];
+    }
+    
+    // Fetch messages only for existing tickets, filtered by ticket's restaurantId to prevent orphans
+    return await db.select().from(ticketMessages)
+      .where(and(eq(ticketMessages.ticketId, ticketId), eq(ticketMessages.restaurantId, ticket.restaurantId)))
+      .orderBy(sql`${ticketMessages.createdAt} ASC`);
+  }
+
+  async updateSupportTicketForIT(id: string, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined> {
+    // Update a ticket without restaurantId filtering (for IT cross-tenant access)
+    // SECURITY: Strip restaurantId to prevent cross-tenant reassignment
+    const { restaurantId: _, userId: __, ...safeData } = ticket;
+    
+    const updateData = Object.fromEntries(
+      Object.entries(safeData).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getSupportTicketForIT(id);
+    }
+    const [updated] = await db.update(supportTickets).set(updateData).where(eq(supportTickets.id, id)).returning();
+    return updated;
   }
 
   // Employee Activity Log
