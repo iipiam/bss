@@ -40,7 +40,7 @@ Preferred communication style: Simple, everyday language.
 - **Data Storage**: **AWS RDS PostgreSQL** (Production) with SSL/TLS encryption and proper certificate validation, using node-postgres (pg) driver and Drizzle ORM for type-safe queries.
   - **Database Migration** (Nov 19, 2025): Successfully migrated from in-memory storage to AWS RDS PostgreSQL for persistent, production-grade data storage. All CRUD operations verified working.
   - **Security Configuration**: Production-grade SSL with AWS RDS CA bundle certificate validation (`rejectUnauthorized: true`), ensuring secure encrypted connections. No man-in-the-middle vulnerability.
-  - **Connection Details**: Managed via Replit secrets (`DATABASE_URL`), fully externalized credentials, no hard-coded passwords in source code. Temporary credentials workaround in place (documented with TODO) until Replit secrets cache clears.
+  - **Connection Details**: Managed via Replit secrets (`DATABASE_URL`), fully externalized credentials, no hard-coded passwords in source code. All credentials securely stored in environment variables.
   - **32 Database Tables**: All schema tables successfully migrated to AWS RDS (users, restaurants, branches, menu_items, inventory_items, orders, customers, recipes, transactions, etc.). Tested: signup, login, authentication, branch creation all working.
   - **Tested Features**: User signup with restaurant creation, subscription invoice generation, authentication, session management, branch CRUD operations, multi-tenant isolation all verified working correctly.
 - **Schema Design**: Central `restaurants` table with `restaurantId` foreign key across 22 domain tables.

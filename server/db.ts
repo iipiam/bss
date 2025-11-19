@@ -58,18 +58,8 @@ const colonIndex = credentials.indexOf(':');
 if (colonIndex === -1) {
   throw new Error('Invalid DATABASE_URL format - no password separator');
 }
-let user = credentials.substring(0, colonIndex);
-let password = credentials.substring(colonIndex + 1);
-
-// WORKAROUND: Fix incorrect credentials from cached Replit secrets
-// TODO: Remove once Replit secrets cache clears with correct credentials
-if (user === 'bss-database' || password.includes('Kinzh')) {
-  console.log('⚠️  Applying credentials workaround for cached Replit secrets');
-  console.log('Original username:', user);
-  user = 'postgres';
-  password = 'Admin123456';
-  console.log('✅ Credentials corrected to postgres:Admin123456');
-}
+const user = credentials.substring(0, colonIndex);
+const password = credentials.substring(colonIndex + 1);
 
 export const pool = new Pool({ 
   user,
