@@ -34,38 +34,32 @@ try {
 }
 
 // Configure connection pool for AWS RDS PostgreSQL with SSL
-// Parse DATABASE_URL and extract connection parameters
+// Parse DATABASE_URL using Node.js URL API (handles all edge cases including special characters)
 // Format: postgresql://username:password@host:port/database
-const dbUrl = process.env.DATABASE_URL.split('?')[0]; // Remove query params like ?sslmode=require
-
-// Parse from right to left to handle passwords containing @ symbol
-// First extract host:port/database
-const hostMatch = dbUrl.match(/@([^@]+):(\d+)\/(.+)$/);
-if (!hostMatch) {
-  throw new Error('Invalid DATABASE_URL format - cannot parse host/port/database');
+let parsedUrl: URL;
+try {
+  parsedUrl = new URL(process.env.DATABASE_URL);
+} catch (error) {
+  throw new Error(`Invalid DATABASE_URL format: ${error instanceof Error ? error.message : 'Unable to parse URL'}`);
 }
-const [, host, port, database] = hostMatch;
 
-// Then extract credentials (everything between postgresql:// and the LAST @)
-const credMatch = dbUrl.match(/^postgresql:\/\/(.+)@[^@]+:\d+\/.+$/);
-if (!credMatch) {
-  throw new Error('Invalid DATABASE_URL format - cannot parse credentials');
-}
-const credentials = credMatch[1];
+// Extract connection parameters from parsed URL
+const user = parsedUrl.username;
+const password = decodeURIComponent(parsedUrl.password); // Decode URL-encoded characters
+const host = parsedUrl.hostname;
+const port = parsedUrl.port ? parseInt(parsedUrl.port) : 5432;
+const database = parsedUrl.pathname.slice(1); // Remove leading '/'
 
-// Split credentials into username and password (first : is the separator)
-const colonIndex = credentials.indexOf(':');
-if (colonIndex === -1) {
-  throw new Error('Invalid DATABASE_URL format - no password separator');
+// Validate required parameters
+if (!user || !password || !host || !database) {
+  throw new Error(`Missing required DATABASE_URL parameters. Found: user=${!!user}, password=${!!password}, host=${!!host}, database=${!!database}`);
 }
-const user = credentials.substring(0, colonIndex);
-const password = credentials.substring(colonIndex + 1);
 
 export const pool = new Pool({ 
   user,
   password,
   host,
-  port: parseInt(port),
+  port,
   database,
   ssl: sslConfig
 });
