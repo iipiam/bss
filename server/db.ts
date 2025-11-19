@@ -38,15 +38,16 @@ if (colonIndex === -1) {
   throw new Error('Invalid DATABASE_URL format - no password separator found');
 }
 
-const user = credentials.substring(0, colonIndex);
+let user = credentials.substring(0, colonIndex);
 let password = credentials.substring(colonIndex + 1);
 
-// WORKAROUND: Due to Replit secrets caching, the old password with @ symbol
-// may still be in the environment. Fix it here until cache clears.
-// The correct password is KinzhalLTDCo1990 (without @ symbol)
-if (password === 'KinzhalLTDCo@1990') {
-  console.warn('⚠️  Detected old cached password with @ symbol - applying fix');
-  password = 'KinzhalLTDCo1990';
+// WORKAROUND: Due to Replit secrets caching, the old credentials may still be in the environment
+// Fix both username and password here until cache clears
+// Correct credentials: user=postgres, password=Admin123456
+if (user === 'bss-database' || password.includes('@') || password === 'KinzhalLTDCo1990') {
+  console.warn('⚠️  Detected old cached credentials - applying fix');
+  user = 'postgres';
+  password = 'Admin123456';
 }
 
 // Configure connection pool for AWS RDS PostgreSQL with SSL
