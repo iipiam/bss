@@ -504,9 +504,9 @@ export default function Inventory() {
       return await apiRequest("POST", "/api/inventory", {
         name: data.name,
         category: data.category,
-        quantity: data.quantity.toString(),
+        quantity: data.quantity.toFixed(2),
         unit: data.unit,
-        price: data.price.toString(),
+        price: data.price.toFixed(2),
         supplier: data.supplier,
         status: data.status,
         branchId: data.branchId || null,
@@ -534,9 +534,14 @@ export default function Inventory() {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: z.infer<typeof formSchema> }) => {
       return await apiRequest("PATCH", `/api/inventory/${id}`, {
-        ...data,
+        name: data.name,
+        category: data.category,
         quantity: data.quantity.toFixed(2),
+        unit: data.unit,
         price: data.price.toFixed(2),
+        supplier: data.supplier,
+        status: data.status,
+        branchId: data.branchId || null,
       });
     },
     onSuccess: () => {

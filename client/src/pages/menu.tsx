@@ -27,6 +27,7 @@ const createMenuFormSchema = (t: any) => z.object({
   category: z.string().min(1, t.categoryRequired || "Category is required"),
   recipeId: z.string().optional(),
   portionSize: z.string().default("1.00"),
+  inventoryItemId: z.string().optional(),
   stockNo: z.string().optional(),
   price: z.string().min(1, t.priceRequired || "Price is required"),
   discount: z.string().default("0").refine(
@@ -47,6 +48,15 @@ const createMenuFormSchema = (t: any) => z.object({
     return true;
   },
   { message: t.stockNoPositive || "Stock quantity must be a positive number", path: ["stockNo"] }
+).refine(
+  (data) => {
+    // If stockNo is provided without a recipe, inventoryItemId must be selected
+    if (data.stockNo && data.stockNo.trim() !== "" && (!data.recipeId || data.recipeId === "none")) {
+      return data.inventoryItemId && data.inventoryItemId.trim() !== "";
+    }
+    return true;
+  },
+  { message: t.inventoryItemRequired || "Please select an inventory item when using stock tracking without a recipe", path: ["inventoryItemId"] }
 );
 
 type MenuFormValues = z.infer<ReturnType<typeof createMenuFormSchema>>;
@@ -96,6 +106,7 @@ export default function Menu() {
       category: "",
       recipeId: "",
       portionSize: "1.00",
+      inventoryItemId: "",
       stockNo: "",
       price: "",
       discount: "0",
@@ -155,20 +166,21 @@ export default function Menu() {
         discount: discountNum.toFixed(2),
         available: true,
         imageUrl: data.imageUrl || null,
-        inventoryItemId: null, // Set to null for menu items (handled via recipes or stockNo)
       };
 
       // Only include recipeId if it's set and not "none"
       if (data.recipeId && data.recipeId !== "none") {
         menuItemData.recipeId = data.recipeId;
         menuItemData.portionSize = data.portionSize || "1.00";
+        menuItemData.inventoryItemId = null; // Recipe-based items don't use direct inventory link
+        menuItemData.stockNo = null; // Recipe-based items use recipe ingredients
       } else {
         menuItemData.recipeId = null;
         menuItemData.portionSize = null;
+        // For non-recipe items, set inventoryItemId and stockNo
+        menuItemData.inventoryItemId = (data.inventoryItemId && data.inventoryItemId.trim() !== "") ? data.inventoryItemId : null;
+        menuItemData.stockNo = (data.stockNo && data.stockNo.trim() !== "") ? data.stockNo : null;
       }
-
-      // Include stockNo if provided, otherwise set to null
-      menuItemData.stockNo = data.stockNo && data.stockNo.trim() !== "" ? data.stockNo : null;
 
       return await apiRequest("POST", "/api/menu", menuItemData);
     },
@@ -214,15 +226,25 @@ export default function Menu() {
         name: data.name,
         description: data.description,
         category: data.category,
-        recipeId: (data.recipeId && data.recipeId !== "none") ? data.recipeId : null, // Send null to clear recipe or actual ID
-        portionSize: (data.recipeId && data.recipeId !== "none") ? (data.portionSize || "1.00") : null,
-        stockNo: data.stockNo || null, // Include stockNo (null if empty)
         price: finalPrice.toFixed(2), // Final price after discount and VAT
         basePrice: basePrice.toFixed(2), // Original base price (before discount)
         vatAmount: discountedVAT.toFixed(2), // VAT on discounted base
         discount: discountNum.toFixed(2),
         imageUrl: data.imageUrl !== undefined ? data.imageUrl : undefined,
       };
+
+      // Handle recipe vs non-recipe items - ensure both stockNo and inventoryItemId are cleared together
+      if (data.recipeId && data.recipeId !== "none") {
+        menuItemData.recipeId = data.recipeId;
+        menuItemData.portionSize = data.portionSize || "1.00";
+        menuItemData.inventoryItemId = null; // Clear inventory link when using recipe
+        menuItemData.stockNo = null; // Clear stock tracking when using recipe
+      } else {
+        menuItemData.recipeId = null; // Clear recipe when not using it
+        menuItemData.portionSize = null; // Clear portion size when not using recipe
+        menuItemData.inventoryItemId = (data.inventoryItemId && data.inventoryItemId.trim() !== "") ? data.inventoryItemId : null;
+        menuItemData.stockNo = (data.stockNo && data.stockNo.trim() !== "") ? data.stockNo : null;
+      }
 
       return await apiRequest("PATCH", `/api/menu/${data.id}`, menuItemData);
     },
@@ -362,6 +384,7 @@ export default function Menu() {
       category: item.category,
       recipeId: item.recipeId || "none",
       portionSize: item.portionSize || "1.00",
+      inventoryItemId: item.inventoryItemId || "",
       stockNo: item.stockNo || "",
       price: originalPrice.toFixed(2), // Original VAT-inclusive price
       discount: item.discount || "0",
@@ -820,25 +843,55 @@ export default function Menu() {
                   </div>
                 )}
                 {(!selectedRecipeId || selectedRecipeId === "none") && (
-                  <FormField
-                    control={form.control}
-                    name="stockNo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Stock Number *</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="number"
-                            step="0.01"
-                            placeholder="e.g., 50"
-                            data-testid="input-menu-stockno"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="inventoryItemId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Link to Inventory Item (Optional)</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger data-testid="select-menu-inventory">
+                                <SelectValue placeholder="Select inventory item for stock tracking" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="">None</SelectItem>
+                              {inventoryItems.map((item) => (
+                                <SelectItem key={item.id} value={item.id}>
+                                  {item.name} ({item.quantity} {item.unit})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="stockNo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Stock Quantity Per Item (Optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="number"
+                              step="0.01"
+                              placeholder="e.g., 1.5 (amount deducted per sale)"
+                              data-testid="input-menu-stockno"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
                 )}
                 <FormField
                   control={form.control}
