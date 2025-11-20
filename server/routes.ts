@@ -1085,9 +1085,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.post("/api/orders", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
     try {
-      // Inject restaurantId from session
+      // Inject restaurantId and createdBy from session
       const restaurantId = req.session.user!.restaurantId!;
-      const data = insertOrderSchema.parse({ ...req.body, restaurantId });
+      const createdBy = req.session.user!.id;
+      const data = insertOrderSchema.parse({ ...req.body, restaurantId, createdBy });
       
       const { orderProcessingService } = await import("./orderProcessingService");
       const orderItems = Array.isArray(data.items) ? data.items.map((item: any) => ({
