@@ -149,10 +149,9 @@ export function AppSidebar() {
   // Filter menu items based on both permissions and business type
   const filterMenuItems = (items: MenuItem[]) => 
     items.filter(item => {
-      // IT accounts can access IT Dashboard, Kitchen Display, Performance, and Settings
+      // IT accounts can access IT Dashboard, Performance, and Settings (but NOT Kitchen)
       if (accountType === 'it') {
         return item.testId === 'it-dashboard' || 
-               item.testId === 'kitchen' || 
                item.testId === 'performance' ||
                item.testId === 'settings';
       }

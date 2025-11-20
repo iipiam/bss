@@ -1307,7 +1307,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
     // Calculate percentage changes
     const calculateChange = (current: number, previous: number) => {
-      if (previous === 0) return current > 0 ? 100 : 0;
+      // For new accounts with no previous data, return 0 (neutral state)
+      if (previous === 0) return 0;
       return ((current - previous) / previous) * 100;
     };
 

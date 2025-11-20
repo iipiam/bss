@@ -65,7 +65,8 @@ const PerformanceCard = ({
 }) => {
   const { t } = useLanguage();
   const layout = useDeviceLayout();
-  const isPositive = metric.change >= 0;
+  const hasNoChange = metric.change === 0;
+  const isPositive = metric.change > 0;
   const TrendIcon = isPositive ? TrendingUp : TrendingDown;
   
   return (
@@ -78,14 +79,20 @@ const PerformanceCard = ({
             </div>
             <h3 className={`font-semibold ${layout.isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>{title}</h3>
           </div>
-          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-            isPositive 
-              ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
-              : 'bg-red-500/10 text-red-600 dark:text-red-400'
-          }`}>
-            <TrendIcon className="w-3 h-3" />
-            <span>{Math.abs(metric.change).toFixed(1)}%</span>
-          </div>
+          {hasNoChange ? (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-muted/50 text-muted-foreground">
+              <span>No data</span>
+            </div>
+          ) : (
+            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
+              isPositive 
+                ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
+                : 'bg-red-500/10 text-red-600 dark:text-red-400'
+            }`}>
+              <TrendIcon className="w-3 h-3" />
+              <span>{Math.abs(metric.change).toFixed(1)}%</span>
+            </div>
+          )}
         </div>
         <div className="space-y-2">
           <div>
