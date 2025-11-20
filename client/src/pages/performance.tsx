@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, Search, Calendar } from "lucide-react";
+import { TrendingUp, Search, Calendar, Building2, Factory } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeviceLayout } from "@/lib/mobileLayout";
@@ -25,11 +25,10 @@ import { useState } from "react";
 import { format } from "date-fns";
 
 interface PerformanceData {
-  userId: string;
-  username: string;
-  fullName: string;
   restaurantId: string;
   restaurantName: string;
+  businessType: string;
+  activeUsersCount: number;
   totalSales: string;
   totalOrders: number;
   avgOrderValue: string;
@@ -59,14 +58,10 @@ export default function Performance() {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  // Filter data based on search query
+  // Filter data based on search query (restaurant name only)
   const filteredData = performanceData.filter((item) => {
     const query = searchQuery.toLowerCase();
-    return (
-      item.username.toLowerCase().includes(query) ||
-      item.fullName.toLowerCase().includes(query) ||
-      item.restaurantName.toLowerCase().includes(query)
-    );
+    return item.restaurantName.toLowerCase().includes(query);
   });
 
   const formatCurrency = (amount: string) => {
@@ -74,34 +69,12 @@ export default function Performance() {
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return "Never";
+    if (!dateString) return "No activity";
     try {
       return format(new Date(dateString), "MMM dd, yyyy HH:mm");
     } catch {
       return "Invalid Date";
     }
-  };
-
-  const getActivityBadgeVariant = (lastActivityAt: string | null) => {
-    if (!lastActivityAt) return "outline";
-    const lastActivity = new Date(lastActivityAt);
-    const now = new Date();
-    const diffMinutes = (now.getTime() - lastActivity.getTime()) / (1000 * 60);
-    
-    if (diffMinutes < 5) return "default"; // Active now
-    if (diffMinutes < 60) return "secondary"; // Active recently
-    return "outline"; // Inactive
-  };
-
-  const getActivityStatus = (lastActivityAt: string | null) => {
-    if (!lastActivityAt) return "Inactive";
-    const lastActivity = new Date(lastActivityAt);
-    const now = new Date();
-    const diffMinutes = (now.getTime() - lastActivity.getTime()) / (1000 * 60);
-    
-    if (diffMinutes < 5) return "Active";
-    if (diffMinutes < 60) return "Recent";
-    return "Inactive";
   };
 
   return (
@@ -112,7 +85,7 @@ export default function Performance() {
           <h1 className={`${layout.text3Xl} font-bold mb-2`} data-testid="text-page-title">
             Performance Tracking
           </h1>
-          <p className="text-muted-foreground">Monitor sales performance across all user accounts</p>
+          <p className="text-muted-foreground">Monitor sales performance across all client accounts</p>
         </div>
         <Badge variant="outline" className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4" />
@@ -155,7 +128,7 @@ export default function Performance() {
                 Search
               </label>
               <Input
-                placeholder="Search by username or restaurant..."
+                placeholder="Search by restaurant name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 data-testid="input-search"
@@ -170,7 +143,7 @@ export default function Performance() {
         <CardHeader>
           <CardTitle>Sales Performance</CardTitle>
           <CardDescription>
-            Showing {filteredData.length} of {performanceData.length} user accounts
+            Showing {filteredData.length} of {performanceData.length} client accounts
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -195,44 +168,50 @@ export default function Performance() {
               <Table data-testid="table-performance">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Username</TableHead>
-                    <TableHead>Full Name</TableHead>
-                    <TableHead>Restaurant</TableHead>
-                    <TableHead className="text-right">Total Sales</TableHead>
-                    <TableHead className="text-right">Orders</TableHead>
-                    <TableHead className="text-right">Avg Order Value</TableHead>
+                    <TableHead>Restaurant Name</TableHead>
+                    <TableHead>Business Type</TableHead>
+                    <TableHead className="text-right">Total Sales (SAR)</TableHead>
+                    <TableHead className="text-right">Total Orders</TableHead>
+                    <TableHead className="text-right">Avg Order Value (SAR)</TableHead>
+                    <TableHead className="text-right">Active Users</TableHead>
                     <TableHead>Last Activity</TableHead>
-                    <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredData.map((item) => (
-                    <TableRow key={item.userId} data-testid={`row-performance-${item.userId}`}>
-                      <TableCell className="font-medium" data-testid={`text-username-${item.userId}`}>
-                        {item.username}
-                      </TableCell>
-                      <TableCell data-testid={`text-fullname-${item.userId}`}>
-                        {item.fullName}
-                      </TableCell>
-                      <TableCell data-testid={`text-restaurant-${item.userId}`}>
+                    <TableRow key={item.restaurantId} data-testid={`row-performance-${item.restaurantId}`}>
+                      <TableCell className="font-medium" data-testid={`text-restaurant-${item.restaurantId}`}>
                         {item.restaurantName}
                       </TableCell>
-                      <TableCell className="text-right font-semibold" data-testid={`text-total-sales-${item.userId}`}>
+                      <TableCell data-testid={`badge-business-type-${item.restaurantId}`}>
+                        <Badge variant={item.businessType === "factory" ? "secondary" : "outline"} className="flex items-center gap-1 w-fit">
+                          {item.businessType === "factory" ? (
+                            <>
+                              <Factory className="h-3 w-3" />
+                              Factory
+                            </>
+                          ) : (
+                            <>
+                              <Building2 className="h-3 w-3" />
+                              Restaurant
+                            </>
+                          )}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold" data-testid={`text-total-sales-${item.restaurantId}`}>
                         {formatCurrency(item.totalSales)}
                       </TableCell>
-                      <TableCell className="text-right" data-testid={`text-total-orders-${item.userId}`}>
+                      <TableCell className="text-right" data-testid={`text-total-orders-${item.restaurantId}`}>
                         {item.totalOrders}
                       </TableCell>
-                      <TableCell className="text-right" data-testid={`text-avg-order-${item.userId}`}>
+                      <TableCell className="text-right" data-testid={`text-avg-order-${item.restaurantId}`}>
                         {formatCurrency(item.avgOrderValue)}
                       </TableCell>
-                      <TableCell data-testid={`text-last-activity-${item.userId}`}>
-                        {formatDate(item.lastActivityAt)}
+                      <TableCell className="text-right" data-testid={`text-active-users-${item.restaurantId}`}>
+                        {item.activeUsersCount}
                       </TableCell>
-                      <TableCell data-testid={`badge-status-${item.userId}`}>
-                        <Badge variant={getActivityBadgeVariant(item.lastActivityAt)}>
-                          {getActivityStatus(item.lastActivityAt)}
-                        </Badge>
+                      <TableCell data-testid={`text-last-activity-${item.restaurantId}`}>
+                        {formatDate(item.lastActivityAt)}
                       </TableCell>
                     </TableRow>
                   ))}

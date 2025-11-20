@@ -4930,7 +4930,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Performance Tracking (IT-only) - Sales per user across all restaurants
+  // Performance Tracking (IT-only) - Sales per restaurant/client account across all restaurants
   app.get("/api/it/performance", requireAuth, requireITAccount, async (req, res) => {
     try {
       // Parse date range from query parameters (default: last 30 days)
@@ -4948,37 +4948,36 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         startDate.setDate(startDate.getDate() - 30);
       }
 
-      // Query performance data across all restaurants
-      // Join users, restaurants, and orders to calculate sales metrics per user
+      // Query performance data grouped by restaurant
+      // Join restaurants directly to orders to avoid fan-out from users table
+      // Use scalar subquery for activeUsersCount to prevent double-counting
       const performanceData = await db
         .select({
-          userId: users.id,
-          username: users.username,
-          fullName: users.fullName,
           restaurantId: restaurants.id,
           restaurantName: restaurants.name,
-          totalSales: sql<string>`COALESCE(SUM(CASE WHEN ${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate} THEN ${orders.total} ELSE 0 END), 0)`,
+          businessType: restaurants.businessType,
+          activeUsersCount: sql<string>`(SELECT COUNT(*) FROM ${users} WHERE ${users.restaurantId} = ${restaurants.id} AND ${users.active} = true)`,
+          totalSales: sql<string>`COALESCE(SUM(CASE WHEN ${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate} THEN CAST(${orders.total} AS NUMERIC) ELSE 0 END), 0)`,
           totalOrders: sql<string>`COUNT(CASE WHEN ${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate} THEN ${orders.id} ELSE NULL END)`,
-          lastActivityAt: users.lastActivityAt,
+          lastActivityAt: sql<Date>`MAX(${orders.createdAt})`,
         })
-        .from(users)
-        .innerJoin(restaurants, eq(users.restaurantId, restaurants.id))
-        .leftJoin(orders, eq(orders.restaurantId, users.restaurantId))
-        .groupBy(users.id, users.username, users.fullName, restaurants.id, restaurants.name, users.lastActivityAt)
-        .orderBy(desc(sql<string>`COALESCE(SUM(CASE WHEN ${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate} THEN ${orders.total} ELSE 0 END), 0)`));
+        .from(restaurants)
+        .leftJoin(orders, eq(orders.restaurantId, restaurants.id))
+        .groupBy(restaurants.id, restaurants.name, restaurants.businessType)
+        .orderBy(desc(sql<string>`COALESCE(SUM(CASE WHEN ${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate} THEN CAST(${orders.total} AS NUMERIC) ELSE 0 END), 0)`));
 
       // Calculate avgOrderValue on the fly (can't do in SQL SELECT with aggregate)
       const results = performanceData.map((row) => {
         const totalSales = parseFloat(row.totalSales || "0");
         const totalOrders = parseInt(row.totalOrders || "0", 10);
         const avgOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
+        const activeUsersCount = parseInt(row.activeUsersCount || "0", 10);
 
         return {
-          userId: row.userId,
-          username: row.username,
-          fullName: row.fullName,
           restaurantId: row.restaurantId || "",
           restaurantName: row.restaurantName || "N/A",
+          businessType: row.businessType || "restaurant",
+          activeUsersCount,
           totalSales: totalSales.toFixed(2),
           totalOrders,
           avgOrderValue: avgOrderValue.toFixed(2),
