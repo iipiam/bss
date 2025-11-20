@@ -235,6 +235,7 @@ export const orders = pgTable("orders", {
   paymentStatus: text("payment_status").default("Unpaid"), // Track payment status separately: Unpaid, Paid, Refunded
   moyasarPaymentId: text("moyasar_payment_id"), // Link to Moyasar payment if applicable
   status: text("status").notNull().default("Pending"),
+  createdBy: varchar("created_by").references(() => users.id, { onDelete: "set null" }), // Nullable: tracks which user created the order
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
