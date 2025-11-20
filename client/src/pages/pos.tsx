@@ -177,13 +177,14 @@ export default function POS() {
             // Construct public invoice URL (matches invoice generation pattern)
             const invoiceUrl = `${window.location.origin}/public/invoice/${order.id}`;
             
-            // Create bilingual ZATCA-compliant message with invoice URL
+            // Create bilingual ZATCA-compliant message with invoice URL and customer name
             const message = createWhatsAppInvoiceMessage({
               invoiceNumber: order.orderNumber,
               total: total.toFixed(2),
               paymentMethod: paymentMethod,
               invoiceUrl,
               restaurantName,
+              customerName: order.customerName || undefined,
             });
             
             const success = openWhatsAppWithMessage(order.customerPhone, message);

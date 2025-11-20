@@ -45,12 +45,20 @@ export function createWhatsAppInvoiceMessage(params: {
   paymentMethod: string;
   invoiceUrl: string;
   restaurantName?: string;
+  customerName?: string;
 }): string {
-  const { invoiceNumber, total, paymentMethod, invoiceUrl, restaurantName = "Restaurant" } = params;
+  const { invoiceNumber, total, paymentMethod, invoiceUrl, restaurantName = "Restaurant", customerName } = params;
+  
+  // Personalized greeting with customer name (bilingual)
+  const greeting = customerName 
+    ? `Hello ${customerName}, here is your invoice. Thank you! | مرحباً ${customerName}، إليك فاتورتك. شكراً لك!`
+    : `Thank you for your business! | شكراً لتعاملكم معنا`;
   
   const message = `
 *${restaurantName}*
 Invoice | فاتورة
+
+${greeting}
 
 *Invoice Number | رقم الفاتورة:*
 ${invoiceNumber}
@@ -66,8 +74,6 @@ ${invoiceUrl}
 
 ZATCA Compliant E-Invoice
 فاتورة إلكترونية متوافقة مع هيئة الزكاة والضريبة والجمارك
-
-Thank you for your business! | شكراً لتعاملكم معنا
 `.trim();
   
   return message;
