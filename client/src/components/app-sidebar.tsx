@@ -156,8 +156,8 @@ export function AppSidebar() {
                item.testId === 'settings';
       }
       
-      // Client accounts cannot see IT Dashboard
-      if (item.testId === 'it-dashboard') {
+      // Client accounts cannot see IT Dashboard or Performance (IT-only pages)
+      if (item.testId === 'it-dashboard' || item.testId === 'performance') {
         return false;
       }
       
