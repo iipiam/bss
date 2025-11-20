@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import type { Procurement, InsertProcurement } from "@shared/schema";
 import { insertProcurementSchema } from "@shared/schema";
@@ -86,6 +87,7 @@ export default function ProcurementPage() {
       orderDate: insertProcurementSchema.shape.orderDate.optional(),
       expectedDelivery: insertProcurementSchema.shape.expectedDelivery.optional(),
       actualDelivery: insertProcurementSchema.shape.actualDelivery.optional(),
+      totalCost: z.string().min(1, "Total cost is required"),
     })),
     defaultValues: {
       type: "inventory",
@@ -93,7 +95,7 @@ export default function ProcurementPage() {
       description: "",
       supplier: "",
       category: "",
-      quantity: 0,
+      quantity: undefined,
       unitPrice: "",
       totalCost: "",
       status: "pending",
@@ -141,15 +143,16 @@ export default function ProcurementPage() {
   });
 
   const handleSubmit = (data: InsertProcurement) => {
-    // Convert numeric fields and handle optional fields
-    const processedData: any = {
+    const trimmedUnitPrice = data.unitPrice?.trim();
+    const trimmedBranchId = data.branchId?.trim();
+    const trimmedTotalCost = data.totalCost.trim();
+    const processedData: InsertProcurement = {
       ...data,
-      quantity: data.quantity ? parseInt(data.quantity.toString()) : null,
-      unitPrice: data.unitPrice && data.unitPrice.trim() !== "" ? data.unitPrice : null,
-      totalCost: data.totalCost && data.totalCost.trim() !== "" ? data.totalCost : "0",
-      branchId: data.branchId && data.branchId.trim() !== "" ? data.branchId : null,
+      quantity: typeof data.quantity === "number" && Number.isFinite(data.quantity) ? data.quantity : null,
+      unitPrice: trimmedUnitPrice ? trimmedUnitPrice : null,
+      totalCost: trimmedTotalCost,
+      branchId: trimmedBranchId ? trimmedBranchId : null,
     };
-    
     if (editingItem) {
       updateMutation.mutate({ id: editingItem.id, data: processedData });
     } else {

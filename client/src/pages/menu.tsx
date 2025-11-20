@@ -29,7 +29,7 @@ const createMenuFormSchema = (t: any) => z.object({
   portionSize: z.string().default("1.00"),
   inventoryItemId: z.string().optional(),
   stockNo: z.string().optional(),
-  price: z.string().min(1, t.priceRequired || "Price is required"),
+  price: z.coerce.number().positive({ message: t.pricePositive || "Price must be a positive number" }),
   discount: z.string().default("0").refine(
     (val) => {
       const num = parseFloat(val || "0");
@@ -108,7 +108,7 @@ export default function Menu() {
       portionSize: "1.00",
       inventoryItemId: "",
       stockNo: "",
-      price: "",
+      price: 0,
       discount: "0",
     },
   });
@@ -144,7 +144,7 @@ export default function Menu() {
   const createMenuItemMutation = useMutation({
     mutationFn: async (data: MenuFormValues & { imageUrl?: string | null }) => {
       // Price is VAT-inclusive, calculate base price and VAT from ORIGINAL price
-      const priceNum = parseFloat(data.price); // Original VAT-inclusive price
+      const priceNum = data.price; // Original VAT-inclusive price (already a number from z.coerce.number())
       const discountNum = parseFloat(data.discount || "0");
       
       // Calculate base price and VAT from original VAT-inclusive price (before discount)
@@ -210,7 +210,7 @@ export default function Menu() {
   const updateMenuItemMutation = useMutation({
     mutationFn: async (data: MenuFormValues & { id: string; imageUrl?: string | null }) => {
       // Price is VAT-inclusive, calculate base price and VAT from ORIGINAL price
-      const priceNum = parseFloat(data.price); // Original VAT-inclusive price
+      const priceNum = data.price; // Original VAT-inclusive price (already a number from z.coerce.number())
       const discountNum = parseFloat(data.discount || "0");
       
       // Calculate base price and VAT from original VAT-inclusive price (before discount)
@@ -386,7 +386,7 @@ export default function Menu() {
       portionSize: item.portionSize || "1.00",
       inventoryItemId: item.inventoryItemId || "",
       stockNo: item.stockNo || "",
-      price: originalPrice.toFixed(2), // Original VAT-inclusive price
+      price: originalPrice, // Original VAT-inclusive price
       discount: item.discount || "0",
     });
     setOpen(true);
@@ -910,8 +910,8 @@ export default function Menu() {
                       </FormControl>
                       {field.value && (
                         <p className="text-xs text-muted-foreground mt-1 font-mono">
-                          Base: {(parseFloat(field.value) / 1.15).toFixed(2)} SAR | 
-                          VAT (15%): {(parseFloat(field.value) - parseFloat(field.value) / 1.15).toFixed(2)} SAR
+                          Base: {(field.value / 1.15).toFixed(2)} SAR | 
+                          VAT (15%): {(field.value - field.value / 1.15).toFixed(2)} SAR
                         </p>
                       )}
                       <FormMessage />
@@ -937,8 +937,8 @@ export default function Menu() {
                       </FormControl>
                       {field.value && parseFloat(field.value) > 0 && form.watch("price") && (
                         <p className="text-xs text-muted-foreground mt-1 font-mono">
-                          Discounted Price: {(parseFloat(form.watch("price")) * (1 - parseFloat(field.value) / 100)).toFixed(2)} SAR | 
-                          Base (after discount): {((parseFloat(form.watch("price")) * (1 - parseFloat(field.value) / 100)) / 1.15).toFixed(2)} SAR
+                          Discounted Price: {(form.watch("price") * (1 - parseFloat(field.value) / 100)).toFixed(2)} SAR | 
+                          Base (after discount): {((form.watch("price") * (1 - parseFloat(field.value) / 100)) / 1.15).toFixed(2)} SAR
                         </p>
                       )}
                       <FormMessage />
