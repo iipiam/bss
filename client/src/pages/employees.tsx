@@ -181,7 +181,31 @@ export default function Employees() {
       });
       return;
     }
-    createMutation.mutate(formData);
+    
+    // Convert numeric fields to proper types before sending
+    const createData: any = {
+      ...formData,
+      vacationDaysTotal: formData.vacationDaysTotal ? parseInt(formData.vacationDaysTotal.toString()) : 0,
+      vacationDaysUsed: formData.vacationDaysUsed ? parseInt(formData.vacationDaysUsed.toString()) : 0,
+      visaFees: formData.visaFees ? parseFloat(formData.visaFees.toString()).toFixed(2) : null,
+      ticketAmount: formData.ticketAmount ? parseFloat(formData.ticketAmount.toString()).toFixed(2) : null,
+      performanceRating: formData.performanceRating ? parseFloat(formData.performanceRating.toString()).toFixed(2) : null,
+      employeeNumber: formData.employeeNumber || null,
+      hireDate: formData.hireDate || null,
+      recruitmentSource: formData.recruitmentSource || null,
+      probationEndDate: formData.probationEndDate || null,
+      contractType: formData.contractType || null,
+      visaNumber: formData.visaNumber || null,
+      visaExpiryDate: formData.visaExpiryDate || null,
+      visaStatus: formData.visaStatus || null,
+      ticketDestination: formData.ticketDestination || null,
+      ticketDate: formData.ticketDate || null,
+      ticketStatus: formData.ticketStatus || null,
+      lastReviewDate: formData.lastReviewDate || null,
+      performanceNotes: formData.performanceNotes || null,
+    };
+    
+    createMutation.mutate(createData);
   };
 
   const handleEdit = (user: User) => {
@@ -237,17 +261,17 @@ export default function Employees() {
       recruitmentSource: formData.recruitmentSource || null,
       probationEndDate: formData.probationEndDate || null,
       contractType: formData.contractType || null,
-      vacationDaysTotal: parseInt(formData.vacationDaysTotal) || 0,
-      vacationDaysUsed: parseInt(formData.vacationDaysUsed) || 0,
+      vacationDaysTotal: formData.vacationDaysTotal ? parseInt(formData.vacationDaysTotal.toString()) : 0,
+      vacationDaysUsed: formData.vacationDaysUsed ? parseInt(formData.vacationDaysUsed.toString()) : 0,
       visaNumber: formData.visaNumber || null,
-      visaFees: formData.visaFees || null,
+      visaFees: formData.visaFees ? parseFloat(formData.visaFees.toString()).toFixed(2) : null,
       visaExpiryDate: formData.visaExpiryDate || null,
       visaStatus: formData.visaStatus || null,
-      ticketAmount: formData.ticketAmount || null,
+      ticketAmount: formData.ticketAmount ? parseFloat(formData.ticketAmount.toString()).toFixed(2) : null,
       ticketDestination: formData.ticketDestination || null,
       ticketDate: formData.ticketDate || null,
       ticketStatus: formData.ticketStatus || null,
-      performanceRating: formData.performanceRating || null,
+      performanceRating: formData.performanceRating ? parseFloat(formData.performanceRating.toString()).toFixed(2) : null,
       lastReviewDate: formData.lastReviewDate || null,
       performanceNotes: formData.performanceNotes || null,
       documents: formData.documents,
