@@ -134,7 +134,13 @@ export default function Investors() {
 
   const createInvestorMutation = useMutation({
     mutationFn: async (data: InvestorFormValues) => {
-      return await apiRequest("POST", "/api/investors", data);
+      const payload = {
+        name: data.name,
+        amountInvested: parseFloat(data.amountInvested).toFixed(2),
+        interestPercentage: parseFloat(data.interestPercentage).toFixed(2),
+        notes: data.notes,
+      };
+      return await apiRequest("POST", "/api/investors", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/investors"] });
@@ -158,8 +164,8 @@ export default function Investors() {
     mutationFn: async (data: InvestorFormValues & { id: string }) => {
       return await apiRequest("PATCH", `/api/investors/${data.id}`, {
         name: data.name,
-        amountInvested: data.amountInvested,
-        interestPercentage: data.interestPercentage,
+        amountInvested: parseFloat(data.amountInvested).toFixed(2),
+        interestPercentage: parseFloat(data.interestPercentage).toFixed(2),
         notes: data.notes,
       });
     },
