@@ -697,6 +697,13 @@ export interface Translations {
   noTicketsWithStatus: string;
   createTicketDialogDesc: string;
   
+  // IT Preferences (Theme & Customization)
+  itPreferences: string;
+  customizeYourExperience: string;
+  theme: string;
+  light: string;
+  dark: string;
+  
   // Shop
   shopTitle: string;
   shopDescription: string;
@@ -1547,6 +1554,13 @@ export const translations: Record<Language, Translations> = {
     createFirstTicket: 'Create Your First Ticket',
     noTicketsWithStatus: 'No tickets found with this status',
     createTicketDialogDesc: 'Describe your issue and our support team will help you',
+    
+    // IT Preferences (Theme & Customization)
+    itPreferences: 'IT Preferences',
+    customizeYourExperience: 'Customize your experience',
+    theme: 'Theme',
+    light: 'Light',
+    dark: 'Dark',
     
     // Shop
     shop: 'Shop',
@@ -2405,7 +2419,15 @@ export const translations: Record<Language, Translations> = {
     createFirstTicket: 'أنشئ تذكرتك الأولى',
     noTicketsWithStatus: 'لم يتم العثور على تذاكر بهذه الحالة',
     createTicketDialogDesc: 'صف مشكلتك وسيساعدك فريق الدعم لدينا',
-// Shop
+    
+    // IT Preferences (Theme & Customization)
+    itPreferences: 'تفضيلات تكنولوجيا المعلومات',
+    customizeYourExperience: 'خصص تجربتك',
+    theme: 'المظهر',
+    light: 'فاتح',
+    dark: 'داكن',
+    
+    // Shop
     shop: 'المتجر',
     factory: 'المصنع',
     product: 'منتج',
@@ -3248,7 +3270,15 @@ export const translations: Record<Language, Translations> = {
     createFirstTicket: '创建您的第一张工单',
     noTicketsWithStatus: '未找到此状态的工单',
     createTicketDialogDesc: '描述您的问题，我们的支持团队将帮助您',
-// Shop
+    
+    // IT Preferences (Theme & Customization)
+    itPreferences: 'IT偏好设置',
+    customizeYourExperience: '自定义您的体验',
+    theme: '主题',
+    light: '浅色',
+    dark: '深色',
+    
+    // Shop
     shop: '商店',
     factory: '工厂',
     product: '产品',
@@ -4090,7 +4120,15 @@ export const translations: Record<Language, Translations> = {
     createFirstTicket: 'Erstellen Sie Ihr erstes Ticket',
     noTicketsWithStatus: 'Keine Tickets mit diesem Status gefunden',
     createTicketDialogDesc: 'Beschreiben Sie Ihr Problem und unser Support-Team wird Ihnen helfen',
-// Shop
+    
+    // IT Preferences (Theme & Customization)
+    itPreferences: 'IT-Einstellungen',
+    customizeYourExperience: 'Passen Sie Ihre Erfahrung an',
+    theme: 'Design',
+    light: 'Hell',
+    dark: 'Dunkel',
+    
+    // Shop
     shop: 'Geschäft',
     factory: 'Fabrik',
     product: 'Produkt',
@@ -4933,7 +4971,15 @@ export const translations: Record<Language, Translations> = {
     createFirstTicket: 'अपना पहला टिकट बनाएं',
     noTicketsWithStatus: 'इस स्थिति के साथ कोई टिकट नहीं मिला',
     createTicketDialogDesc: 'अपनी समस्या का वर्णन करें और हमारी समर्थन टीम आपकी मदद करेगी',
-// Shop
+    
+    // IT Preferences (Theme & Customization)
+    itPreferences: 'आईटी प्राथमिकताएं',
+    customizeYourExperience: 'अपने अनुभव को अनुकूलित करें',
+    theme: 'थीम',
+    light: 'हल्का',
+    dark: 'गहरा',
+    
+    // Shop
     shop: 'दुकान',
     factory: 'फैक्ट्री',
     product: 'उत्पाद',
@@ -5776,7 +5822,15 @@ export const translations: Record<Language, Translations> = {
     createFirstTicket: 'اپنی پہلی ٹکٹ بنائیں',
     noTicketsWithStatus: 'اس حیثیت کے ساتھ کوئی ٹکٹ نہیں ملی',
     createTicketDialogDesc: 'اپنے مسئلے کی وضاحت کریں اور ہماری سپورٹ ٹیم آپ کی مدد کرے گی',
-// Shop
+    
+    // IT Preferences (Theme & Customization)
+    itPreferences: 'آئی ٹی ترجیحات',
+    customizeYourExperience: 'اپنے تجربے کو اپنی مرضی کے مطابق بنائیں',
+    theme: 'تھیم',
+    light: 'ہلکا',
+    dark: 'گہرا',
+    
+    // Shop
     shop: 'دکان',
     factory: 'فیکٹری',
     product: 'پروڈکٹ',
@@ -6619,7 +6673,15 @@ export const translations: Record<Language, Translations> = {
     createFirstTicket: 'আপনার প্রথম টিকিট তৈরি করুন',
     noTicketsWithStatus: 'এই স্ট্যাটাস সহ কোনো টিকিট পাওয়া যায়নি',
     createTicketDialogDesc: 'আপনার সমস্যা বর্ণনা করুন এবং আমাদের সাপোর্ট টিম আপনাকে সাহায্য করবে',
-// Shop
+    
+    // IT Preferences (Theme & Customization)
+    itPreferences: 'আইটি পছন্দ',
+    customizeYourExperience: 'আপনার অভিজ্ঞতা কাস্টমাইজ করুন',
+    theme: 'থিম',
+    light: 'হালকা',
+    dark: 'গাঢ়',
+    
+    // Shop
     shop: 'দোকান',
     factory: 'কারখানা',
     product: 'পণ্য',
@@ -7404,6 +7466,14 @@ export const translations: Record<Language, Translations> = {
     createFirstTicket: "Create Your First Ticket",
     noTicketsWithStatus: "No tickets found with this status",
     createTicketDialogDesc: "Describe your issue and our support team will help you",
+    
+    // IT Preferences (Theme & Customization)
+    itPreferences: 'Preferenze IT',
+    customizeYourExperience: 'Personalizza la tua esperienza',
+    theme: 'Tema',
+    light: 'Chiaro',
+    dark: 'Scuro',
+    
     shop: "Shop",
     factory: "Fabbrica",
     product: "Prodotto",
@@ -8177,6 +8247,14 @@ export const translations: Record<Language, Translations> = {
     createFirstTicket: "Create Your First Ticket",
     noTicketsWithStatus: "No tickets found with this status",
     createTicketDialogDesc: "Describe your issue and our support team will help you",
+    
+    // IT Preferences (Theme & Customization)
+    itPreferences: 'Preferencias de TI',
+    customizeYourExperience: 'Personaliza tu experiencia',
+    theme: 'Tema',
+    light: 'Claro',
+    dark: 'Oscuro',
+    
     shop: "Shop",
     factory: "Fábrica",
     product: "Producto",
@@ -8951,6 +9029,14 @@ export const translations: Record<Language, Translations> = {
     createFirstTicket: "Create Your First Ticket",
     noTicketsWithStatus: "No tickets found with this status",
     createTicketDialogDesc: "Describe your issue and our support team will help you",
+    
+    // IT Preferences (Theme & Customization)
+    itPreferences: 'IT na mga Kagustuhan',
+    customizeYourExperience: 'I-customize ang iyong karanasan',
+    theme: 'Tema',
+    light: 'Maliwanag',
+    dark: 'Madilim',
+    
     shop: "Shop",
     factory: "Pabrika",
     product: "Produkto",
