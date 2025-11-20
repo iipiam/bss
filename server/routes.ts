@@ -1759,7 +1759,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         req.session.user = {
           id: user.id,
           username: user.username,
-          restaurantId: user.restaurantId, // CRITICAL: Multi-tenant isolation
+          restaurantId: user.restaurantId ?? undefined, // CRITICAL: Multi-tenant isolation
           role: user.role,
           email: user.email || '',
           fullName: user.fullName,
