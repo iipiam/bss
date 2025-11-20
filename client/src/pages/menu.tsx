@@ -178,7 +178,7 @@ export default function Menu() {
         menuItemData.recipeId = null;
         menuItemData.portionSize = null;
         // For non-recipe items, set inventoryItemId and stockNo
-        menuItemData.inventoryItemId = (data.inventoryItemId && data.inventoryItemId.trim() !== "") ? data.inventoryItemId : null;
+        menuItemData.inventoryItemId = (data.inventoryItemId && data.inventoryItemId.trim() !== "" && data.inventoryItemId !== "none") ? data.inventoryItemId : null;
         menuItemData.stockNo = (data.stockNo && data.stockNo.trim() !== "") ? data.stockNo : null;
       }
 
@@ -242,7 +242,7 @@ export default function Menu() {
       } else {
         menuItemData.recipeId = null; // Clear recipe when not using it
         menuItemData.portionSize = null; // Clear portion size when not using recipe
-        menuItemData.inventoryItemId = (data.inventoryItemId && data.inventoryItemId.trim() !== "") ? data.inventoryItemId : null;
+        menuItemData.inventoryItemId = (data.inventoryItemId && data.inventoryItemId.trim() !== "" && data.inventoryItemId !== "none") ? data.inventoryItemId : null;
         menuItemData.stockNo = (data.stockNo && data.stockNo.trim() !== "") ? data.stockNo : null;
       }
 
@@ -860,7 +860,7 @@ export default function Menu() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">None</SelectItem>
+                              <SelectItem value="none">None</SelectItem>
                               {inventoryItems.map((item) => (
                                 <SelectItem key={item.id} value={item.id}>
                                   {item.name} ({item.quantity} {item.unit})

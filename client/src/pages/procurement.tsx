@@ -93,7 +93,7 @@ export default function ProcurementPage() {
       description: "",
       supplier: "",
       category: "",
-      quantity: undefined,
+      quantity: 0,
       unitPrice: "",
       totalCost: "",
       status: "pending",
@@ -141,10 +141,19 @@ export default function ProcurementPage() {
   });
 
   const handleSubmit = (data: InsertProcurement) => {
+    // Convert numeric fields and handle optional fields
+    const processedData: any = {
+      ...data,
+      quantity: data.quantity ? parseInt(data.quantity.toString()) : null,
+      unitPrice: data.unitPrice && data.unitPrice.trim() !== "" ? data.unitPrice : null,
+      totalCost: data.totalCost && data.totalCost.trim() !== "" ? data.totalCost : "0",
+      branchId: data.branchId && data.branchId.trim() !== "" ? data.branchId : null,
+    };
+    
     if (editingItem) {
-      updateMutation.mutate({ id: editingItem.id, data });
+      updateMutation.mutate({ id: editingItem.id, data: processedData });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(processedData);
     }
   };
 

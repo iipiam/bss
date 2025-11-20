@@ -22,7 +22,7 @@ import { format } from "date-fns";
 const salaryFormSchema = z.object({
   employeeName: z.string().min(1, "Employee name is required"),
   position: z.string().min(1, "Position is required"),
-  amount: z.string().min(1, "Amount is required"),
+  amount: z.coerce.number().min(0.01, "Amount must be greater than 0"),
   paymentDate: z.string().min(1, "Payment date is required"),
   status: z.enum(["pending", "paid"]).default("pending"),
   notes: z.string().optional(),
@@ -31,7 +31,7 @@ const salaryFormSchema = z.object({
 
 const billFormSchema = z.object({
   billType: z.string().min(1, "Bill type is required"),
-  amount: z.string().min(1, "Amount is required"),
+  amount: z.coerce.number().min(0.01, "Amount must be greater than 0"),
   paymentDate: z.string().min(1, "Payment date is required"),
   paymentPeriod: z.enum(["oneTime", "weekly", "monthly", "quarterly", "semi-annually", "yearly"]).default("monthly"),
   status: z.enum(["pending", "paid", "overdue"]).default("pending"),
@@ -63,7 +63,7 @@ export default function Shop() {
     defaultValues: {
       employeeName: "",
       position: "",
-      amount: "",
+      amount: 0,
       paymentDate: new Date().toISOString().split("T")[0],
       status: "pending",
       notes: "",
@@ -74,7 +74,7 @@ export default function Shop() {
     resolver: zodResolver(billFormSchema),
     defaultValues: {
       billType: "rent",
-      amount: "",
+      amount: 0,
       paymentDate: new Date().toISOString().split("T")[0],
       paymentPeriod: "monthly",
       status: "pending",
@@ -87,14 +87,14 @@ export default function Shop() {
       const payload: any = {
         employeeName: data.employeeName,
         position: data.position,
-        amount: data.amount,
+        amount: typeof data.amount === 'number' ? data.amount.toFixed(2) : parseFloat(data.amount).toFixed(2),
         paymentDate: new Date(data.paymentDate).toISOString(),
         status: data.status,
       };
       if (data.notes && data.notes.trim()) {
         payload.notes = data.notes;
       }
-      if (data.branchId) {
+      if (data.branchId && data.branchId.trim() !== "") {
         payload.branchId = data.branchId;
       }
       return await apiRequest("POST", "/api/shop/salaries", payload);
@@ -146,7 +146,7 @@ export default function Shop() {
     mutationFn: async (data: z.infer<typeof billFormSchema>) => {
       const payload: any = {
         billType: data.billType,
-        amount: data.amount,
+        amount: typeof data.amount === 'number' ? data.amount.toFixed(2) : parseFloat(data.amount).toFixed(2),
         paymentDate: new Date(data.paymentDate).toISOString(),
         paymentPeriod: data.paymentPeriod,
         status: data.status,
@@ -154,7 +154,7 @@ export default function Shop() {
       if (data.description && data.description.trim()) {
         payload.description = data.description;
       }
-      if (data.branchId) {
+      if (data.branchId && data.branchId.trim() !== "") {
         payload.branchId = data.branchId;
       }
       return await apiRequest("POST", "/api/shop/bills", payload);
@@ -223,7 +223,7 @@ export default function Shop() {
     salaryForm.reset({
       employeeName: salary.employeeName,
       position: salary.position,
-      amount: salary.amount,
+      amount: parseFloat(salary.amount),
       paymentDate: salary.paymentDate ? new Date(salary.paymentDate).toISOString().split("T")[0] : "",
       status: salary.status as "pending" | "paid",
       notes: salary.notes || "",
@@ -235,7 +235,7 @@ export default function Shop() {
     setEditingBill(bill);
     billForm.reset({
       billType: bill.billType,
-      amount: bill.amount,
+      amount: parseFloat(bill.amount),
       paymentDate: bill.paymentDate ? new Date(bill.paymentDate).toISOString().split("T")[0] : "",
       paymentPeriod: bill.paymentPeriod as "weekly" | "monthly" | "quarterly" | "semi-annually" | "yearly",
       status: bill.status as "pending" | "paid" | "overdue",

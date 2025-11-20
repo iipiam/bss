@@ -42,7 +42,7 @@ const licenseFormSchema = z.object({
   issuingAuthority: z.string().min(1, "Issuing authority is required"),
   issueDate: z.string().min(1, "Issue date is required"),
   expiryDate: z.string().min(1, "Expiry date is required"),
-  renewalReminderDays: z.number().min(1).max(365).default(30),
+  renewalReminderDays: z.coerce.number().min(1).max(365).default(30),
   documentUrl: z.string().optional(),
   notes: z.string().optional(),
 });
