@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
+import { db } from "./db";
 import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport } from "./invoice";
 import { PasswordResetMailer } from "./email";
 import { sanitizePatchBody } from "./utils";
@@ -12,6 +13,7 @@ import rateLimit from "express-rate-limit";
 import * as fs from "fs";
 import * as path from "path";
 import { z } from "zod";
+import { sql, eq, and, gte, lte, isNull, isNotNull, desc } from "drizzle-orm";
 import {
   insertRestaurantSchema,
   insertBranchSchema,
@@ -33,6 +35,9 @@ import {
   insertInvestorSchema,
   updateInvestorSchema,
   insertLicenseSchema,
+  users,
+  restaurants,
+  orders,
 } from "@shared/schema";
 import { getPlanPricing, type SubscriptionPlan, type BusinessType } from "@shared/subscriptionPricing";
 import { ADMIN_PERMISSIONS, type PermissionSet } from "@shared/permissions";
@@ -4922,6 +4927,69 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("Error fetching client accounts activity:", error);
       res.status(500).json({ error: "Failed to fetch client accounts activity" });
+    }
+  });
+
+  // Performance Tracking (IT-only) - Sales per user across all restaurants
+  app.get("/api/it/performance", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      // Parse date range from query parameters (default: last 30 days)
+      const dateRange = req.query.dateRange as string | undefined;
+      let startDate: Date;
+      let endDate: Date = new Date();
+      
+      if (dateRange) {
+        const daysAgo = parseInt(dateRange, 10);
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - daysAgo);
+      } else {
+        // Default: last 30 days
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - 30);
+      }
+
+      // Query performance data across all restaurants
+      // Join users, restaurants, and orders to calculate sales metrics per user
+      const performanceData = await db
+        .select({
+          userId: users.id,
+          username: users.username,
+          fullName: users.fullName,
+          restaurantId: restaurants.id,
+          restaurantName: restaurants.name,
+          totalSales: sql<string>`COALESCE(SUM(CASE WHEN ${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate} THEN ${orders.total} ELSE 0 END), 0)`,
+          totalOrders: sql<string>`COUNT(CASE WHEN ${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate} THEN ${orders.id} ELSE NULL END)`,
+          lastActivityAt: users.lastActivityAt,
+        })
+        .from(users)
+        .innerJoin(restaurants, eq(users.restaurantId, restaurants.id))
+        .leftJoin(orders, eq(orders.restaurantId, users.restaurantId))
+        .groupBy(users.id, users.username, users.fullName, restaurants.id, restaurants.name, users.lastActivityAt)
+        .orderBy(desc(sql<string>`COALESCE(SUM(CASE WHEN ${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate} THEN ${orders.total} ELSE 0 END), 0)`));
+
+      // Calculate avgOrderValue on the fly (can't do in SQL SELECT with aggregate)
+      const results = performanceData.map((row) => {
+        const totalSales = parseFloat(row.totalSales || "0");
+        const totalOrders = parseInt(row.totalOrders || "0", 10);
+        const avgOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
+
+        return {
+          userId: row.userId,
+          username: row.username,
+          fullName: row.fullName,
+          restaurantId: row.restaurantId || "",
+          restaurantName: row.restaurantName || "N/A",
+          totalSales: totalSales.toFixed(2),
+          totalOrders,
+          avgOrderValue: avgOrderValue.toFixed(2),
+          lastActivityAt: row.lastActivityAt ? row.lastActivityAt.toISOString() : null,
+        };
+      });
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error fetching IT performance data:", error);
+      res.status(500).json({ error: "Failed to fetch performance data" });
     }
   });
 

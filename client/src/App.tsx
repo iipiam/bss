@@ -69,6 +69,7 @@ import Investors from "@/pages/investors";
 import Support from "@/pages/support";
 import SupportDetail from "@/pages/support-detail";
 import ITDashboard from "@/pages/it-dashboard";
+import Performance from "@/pages/performance";
 import Chat from "@/pages/chat";
 import PaymentTest from "@/pages/payment-test";
 import PasswordManager from "@/pages/password-manager";
@@ -118,6 +119,7 @@ function Router() {
       <Route path="/support" component={Support} />
       <Route path="/support/:id" component={SupportDetail} />
       <Route path="/it-dashboard" component={ITDashboard} />
+      <Route path="/performance" component={Performance} />
       <Route path="/chat" component={Chat} />
       <Route path="/payment-test" component={PaymentTest} />
       <Route component={NotFound} />
