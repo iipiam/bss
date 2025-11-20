@@ -140,6 +140,7 @@ export function AppSidebar() {
     { title: "Team Chat", url: "/chat", icon: MessageCircle, testId: "chat", gradient: "from-blue-500 to-cyan-500" },
     { title: t.support || "Support", url: "/support", icon: HeadphonesIcon, testId: "support", gradient: "from-emerald-500 to-teal-500" },
     { title: t.itDashboard || "IT Dashboard", url: "/it-dashboard", icon: BarChart3, testId: "it-dashboard", gradient: "from-violet-500 to-purple-500" },
+    { title: "Performance", url: "/performance", icon: TrendingUp, testId: "performance", gradient: "from-cyan-500 to-blue-500" },
     { title: t.settings, url: "/settings", icon: Settings, testId: "settings", gradient: "from-slate-500 to-gray-500" },  // Admin-only via permission check in auth
     { title: t.employees, url: "/employees", icon: Users, testId: "employees", gradient: "from-sky-500 to-blue-500", permission: 'users' },
     { title: "Password Manager", url: "/password-manager", icon: Key, testId: "password-manager", gradient: "from-red-500 to-rose-500" },
@@ -148,10 +149,11 @@ export function AppSidebar() {
   // Filter menu items based on both permissions and business type
   const filterMenuItems = (items: MenuItem[]) => 
     items.filter(item => {
-      // IT accounts can access IT Dashboard, Kitchen Display, and Settings
+      // IT accounts can access IT Dashboard, Kitchen Display, Performance, and Settings
       if (accountType === 'it') {
         return item.testId === 'it-dashboard' || 
                item.testId === 'kitchen' || 
+               item.testId === 'performance' ||
                item.testId === 'settings';
       }
       
