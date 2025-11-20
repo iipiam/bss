@@ -1877,14 +1877,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         console.log("[AUTH] Missing username or password");
         return res.status(400).json({ error: "Username and password required" });
       }
-      
-      // Validate accountType - default to "client" if not provided
-      const validAccountType: "client" | "it" = accountType === "it" ? "it" : "client";
-      console.log("[AUTH] Validated accountType:", validAccountType);
 
       const user = await storage.getUserByUsername(username);
       
-      console.log("[AUTH] User found:", user ? `Yes (id: ${user.id}, active: ${user.active})` : "No");
+      console.log("[AUTH] User found:", user ? `Yes (id: ${user.id}, active: ${user.active}, restaurantId: ${user.restaurantId})` : "No");
       
       if (!user) {
         console.log("[AUTH] User not found in database");
@@ -1904,6 +1900,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         console.log("[AUTH] Password mismatch");
         return res.status(401).json({ error: "Invalid credentials" });
       }
+      
+      // Auto-detect account type based on restaurantId (null = IT account)
+      const validAccountType: "client" | "it" = user.restaurantId === null ? "it" : "client";
+      console.log("[AUTH] Auto-detected accountType:", validAccountType, "(based on restaurantId:", user.restaurantId, ")");
 
       // Store user in session with restaurantId for multi-tenant isolation
       if (req.session) {
