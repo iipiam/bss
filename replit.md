@@ -28,7 +28,7 @@ Preferred communication style: Simple, everyday language.
     - IT accounts blocked from all client endpoints via `requireRestaurant` middleware
     - Seeded IT accounts: `it_support`, `it@saudikinzhal.org` (credentials in secure storage)
   - **Recent Security Fixes (Nov 2025)**: Patched 7 critical vulnerabilities in procurement, invoices, image uploads, and import endpoints
-  - **Recent Bug Fixes (Nov 17-19, 2025)**: 
+  - **Recent Bug Fixes (Nov 17-20, 2025)**: 
     - Fixed invoice download workflow (PDF path mismatch: changed save location to `public/invoices/`)
     - Fixed WebSocket connection spam when not authenticated (added user check before connecting)
     - Fixed transaction creation validation (validates without requiring restaurantId in body, adds from session)
@@ -38,6 +38,8 @@ Preferred communication style: Simple, everyday language.
     - **Fixed IT account authentication** (Nov 18): Resolved critical bugs where IT accounts (null restaurantId) caused errors in /api/auth/me GET and PATCH endpoints. Added getUserById() and updateUserById() storage methods to handle IT accounts without restaurant context while preserving multi-tenant isolation for client accounts.
     - **Fixed menu item stock tracking** (Nov 19): Menu items using stock tracking (stockNo + inventoryItemId) now properly maintain inventory links. Both create and update mutations correctly clear stockNo and inventoryItemId together when switching to recipe mode, preventing stale data.
     - **Fixed inventory decimal precision** (Nov 19): Inventory create and update mutations now consistently use .toFixed(2) for quantity and price fields, ensuring proper decimal formatting and preventing type mismatches with backend schema.
+    - **Fixed investor creation** (Nov 20): Investor mutations now convert string form values to proper decimal format before sending to backend, ensuring amountInvested and interestPercentage are correctly formatted as decimals.
+    - **Verified IT Dashboard sidebar** (Nov 20): Confirmed via e2e testing that IT accounts correctly see IT Dashboard, Kitchen, Settings, Support, Help, and Logout in the sidebar as expected.
   - **Device Preference System**: Users can select iPhone/iPad/Laptop layouts with persistent settings. Device class (`device-iphone`, `device-ipad`, `device-laptop`) applied to `document.documentElement` for CSS targeting. IT accounts access settings via IT Dashboard header (comprehensive dialog with language, device, and theme preferences).
 - **Business Type Support**: Dual architecture for Restaurant and Factory operations, with type-specific features, terminology (e.g., Products for Factories), pricing, and UI restrictions (e.g., no Recipes for Factories). Includes 'licenses' permission for factories.
 - **Real-Time Communication**: WebSocket-based system for employee notifications (order lifecycle) and real-time support ticket updates.
