@@ -26,10 +26,13 @@ import { useState } from "react";
 import { format } from "date-fns";
 
 interface PerformanceData {
+  userId: string;
+  username: string;
+  fullName: string;
+  role: string;
   restaurantId: string;
   restaurantName: string;
   businessType: string;
-  activeUsersCount: number;
   totalSales: string;
   totalOrders: number;
   avgOrderValue: string;
@@ -59,10 +62,14 @@ export default function Performance() {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  // Filter data based on search query (restaurant name only)
+  // Filter data based on search query (username, full name, or restaurant name)
   const filteredData = performanceData.filter((item) => {
     const query = searchQuery.toLowerCase();
-    return item.restaurantName.toLowerCase().includes(query);
+    return (
+      item.username.toLowerCase().includes(query) ||
+      item.fullName.toLowerCase().includes(query) ||
+      item.restaurantName.toLowerCase().includes(query)
+    );
   });
 
   const formatCurrency = (amount: string) => {
@@ -86,11 +93,11 @@ export default function Performance() {
           <h1 className={`${layout.text3Xl} font-bold mb-2`} data-testid="text-page-title">
             Performance Tracking
           </h1>
-          <p className="text-muted-foreground">Monitor sales performance across all client accounts</p>
+          <p className="text-muted-foreground">Monitor sales performance by user across all accounts</p>
         </div>
         <Badge variant="outline" className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4" />
-          {filteredData.length} {filteredData.length === 1 ? "Account" : "Accounts"}
+          {filteredData.length} {filteredData.length === 1 ? "User" : "Users"}
         </Badge>
       </div>
 
@@ -129,7 +136,7 @@ export default function Performance() {
                 Search
               </label>
               <Input
-                placeholder="Search by restaurant name..."
+                placeholder="Search by username, name, or restaurant..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 data-testid="input-search"
@@ -142,9 +149,9 @@ export default function Performance() {
       {/* Performance Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Sales Performance</CardTitle>
+          <CardTitle>Sales Performance by User</CardTitle>
           <CardDescription>
-            Showing {filteredData.length} of {performanceData.length} client accounts
+            Showing {filteredData.length} of {performanceData.length} active users with sales
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -160,8 +167,8 @@ export default function Performance() {
               <h3 className="text-lg font-semibold mb-2">No Performance Data</h3>
               <p className="text-muted-foreground">
                 {searchQuery
-                  ? "No accounts match your search criteria"
-                  : "No sales data available for the selected date range"}
+                  ? "No users match your search criteria"
+                  : "No users with sales data for the selected date range"}
               </p>
             </div>
           ) : (
@@ -169,38 +176,35 @@ export default function Performance() {
               <Table data-testid="table-performance">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Restaurant Name</TableHead>
-                    <TableHead>Business Type</TableHead>
+                    <TableHead>Username</TableHead>
+                    <TableHead>Full Name</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Restaurant</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead className="text-right">Total Sales (SAR)</TableHead>
                     <TableHead className="text-right">Total Orders</TableHead>
-                    <TableHead className="text-right">Avg Order Value (SAR)</TableHead>
-                    <TableHead className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        Active Staff (current)
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Info className="h-3 w-3 text-muted-foreground cursor-help" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="max-w-xs text-xs">
-                                Current number of active employees (not filtered by date range)
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    </TableHead>
+                    <TableHead className="text-right">Avg Order (SAR)</TableHead>
                     <TableHead>Last Activity</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredData.map((item) => (
-                    <TableRow key={item.restaurantId} data-testid={`row-performance-${item.restaurantId}`}>
-                      <TableCell className="font-medium" data-testid={`text-restaurant-${item.restaurantId}`}>
+                    <TableRow key={item.userId} data-testid={`row-performance-${item.userId}`}>
+                      <TableCell className="font-medium" data-testid={`text-username-${item.userId}`}>
+                        {item.username}
+                      </TableCell>
+                      <TableCell data-testid={`text-fullname-${item.userId}`}>
+                        {item.fullName}
+                      </TableCell>
+                      <TableCell data-testid={`badge-role-${item.userId}`}>
+                        <Badge variant="outline" className="capitalize">
+                          {item.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell data-testid={`text-restaurant-${item.userId}`}>
                         {item.restaurantName}
                       </TableCell>
-                      <TableCell data-testid={`badge-business-type-${item.restaurantId}`}>
+                      <TableCell data-testid={`badge-business-type-${item.userId}`}>
                         <Badge variant={item.businessType === "factory" ? "secondary" : "outline"} className="flex items-center gap-1 w-fit">
                           {item.businessType === "factory" ? (
                             <>
@@ -215,19 +219,16 @@ export default function Performance() {
                           )}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right font-semibold" data-testid={`text-total-sales-${item.restaurantId}`}>
+                      <TableCell className="text-right font-semibold" data-testid={`text-total-sales-${item.userId}`}>
                         {formatCurrency(item.totalSales)}
                       </TableCell>
-                      <TableCell className="text-right" data-testid={`text-total-orders-${item.restaurantId}`}>
+                      <TableCell className="text-right" data-testid={`text-total-orders-${item.userId}`}>
                         {item.totalOrders}
                       </TableCell>
-                      <TableCell className="text-right" data-testid={`text-avg-order-${item.restaurantId}`}>
+                      <TableCell className="text-right" data-testid={`text-avg-order-${item.userId}`}>
                         {formatCurrency(item.avgOrderValue)}
                       </TableCell>
-                      <TableCell className="text-right" data-testid={`text-active-users-${item.restaurantId}`}>
-                        {item.activeUsersCount}
-                      </TableCell>
-                      <TableCell data-testid={`text-last-activity-${item.restaurantId}`}>
+                      <TableCell data-testid={`text-last-activity-${item.userId}`}>
                         {formatDate(item.lastActivityAt)}
                       </TableCell>
                     </TableRow>

@@ -144,9 +144,12 @@ function AppContent() {
   });
 
   // Handle IT account redirects using useEffect to avoid render issues
-  // Allow IT accounts to access /it-dashboard and /support pages
+  // Allow IT accounts to access /it-dashboard, /performance, /settings, and /support pages
   useEffect(() => {
-    if (accountType === 'it' && location !== '/it-dashboard' && !location.startsWith('/support')) {
+    const allowedITRoutes = ['/it-dashboard', '/performance', '/settings'];
+    const isAllowedRoute = allowedITRoutes.includes(location) || location.startsWith('/support');
+    
+    if (accountType === 'it' && !isAllowedRoute) {
       setLocation('/it-dashboard');
     }
   }, [accountType, location, setLocation]);

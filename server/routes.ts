@@ -4932,7 +4932,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Performance Tracking (IT-only) - Sales per restaurant/client account across all restaurants
+  // Performance Tracking (IT-only) - Sales per user across all restaurants
   app.get("/api/it/performance", requireAuth, requireITAccount, async (req, res) => {
     try {
       // Parse date range from query parameters (default: last 30 days)
@@ -4950,40 +4950,62 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         startDate.setDate(startDate.getDate() - 30);
       }
 
-      // Query performance data grouped by restaurant
-      // Join restaurants directly to orders to avoid fan-out from users table
-      // Use scalar subquery for activeUsersCount to prevent double-counting
+      // Query performance data grouped by user
+      // Join users with orders via createdBy field, then join restaurants for context
+      // Filter orders by date range and only include active users
       const performanceData = await db
         .select({
+          userId: users.id,
+          username: users.username,
+          fullName: users.fullName,
+          role: users.role,
           restaurantId: restaurants.id,
           restaurantName: restaurants.name,
           businessType: restaurants.businessType,
-          activeUsersCount: sql<string>`(SELECT COUNT(*) FROM ${users} WHERE ${users.restaurantId} = ${restaurants.id} AND ${users.active} = true)`,
-          totalSales: sql<string>`COALESCE(SUM(CASE WHEN ${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate} THEN CAST(${orders.total} AS NUMERIC) ELSE 0 END), 0)`,
-          totalOrders: sql<string>`COUNT(CASE WHEN ${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate} THEN ${orders.id} ELSE NULL END)`,
+          totalSales: sql<string>`COALESCE(SUM(CAST(${orders.total} AS NUMERIC)), 0)`,
+          totalOrders: sql<string>`COUNT(${orders.id})`,
           lastActivityAt: sql<Date>`MAX(${orders.createdAt})`,
         })
-        .from(restaurants)
-        .leftJoin(orders, eq(orders.restaurantId, restaurants.id))
-        .groupBy(restaurants.id, restaurants.name, restaurants.businessType)
-        .orderBy(desc(sql<string>`COALESCE(SUM(CASE WHEN ${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate} THEN CAST(${orders.total} AS NUMERIC) ELSE 0 END), 0)`));
+        .from(users)
+        .innerJoin(orders, eq(orders.createdBy, users.id))
+        .innerJoin(restaurants, eq(restaurants.id, users.restaurantId))
+        .where(and(
+          eq(users.active, true),
+          gte(orders.createdAt, startDate),
+          lte(orders.createdAt, endDate)
+        ))
+        .groupBy(users.id, users.username, users.fullName, users.role, restaurants.id, restaurants.name, restaurants.businessType)
+        .orderBy(desc(sql<string>`COALESCE(SUM(CAST(${orders.total} AS NUMERIC)), 0)`));
 
       // Calculate avgOrderValue on the fly (can't do in SQL SELECT with aggregate)
       const results = performanceData.map((row) => {
         const totalSales = parseFloat(row.totalSales || "0");
         const totalOrders = parseInt(row.totalOrders || "0", 10);
         const avgOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
-        const activeUsersCount = parseInt(row.activeUsersCount || "0", 10);
+
+        // Safely convert lastActivityAt to ISO string
+        let lastActivityAtISO: string | null = null;
+        if (row.lastActivityAt) {
+          if (row.lastActivityAt instanceof Date) {
+            lastActivityAtISO = row.lastActivityAt.toISOString();
+          } else {
+            // It's already a string (from database)
+            lastActivityAtISO = new Date(row.lastActivityAt).toISOString();
+          }
+        }
 
         return {
+          userId: row.userId || "",
+          username: row.username || "N/A",
+          fullName: row.fullName || "N/A",
+          role: row.role || "employee",
           restaurantId: row.restaurantId || "",
           restaurantName: row.restaurantName || "N/A",
           businessType: row.businessType || "restaurant",
-          activeUsersCount,
           totalSales: totalSales.toFixed(2),
           totalOrders,
           avgOrderValue: avgOrderValue.toFixed(2),
-          lastActivityAt: row.lastActivityAt ? row.lastActivityAt.toISOString() : null,
+          lastActivityAt: lastActivityAtISO,
         };
       });
 
