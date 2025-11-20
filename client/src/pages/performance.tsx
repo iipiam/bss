@@ -17,7 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, Search, Calendar, Building2, Factory } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TrendingUp, Search, Calendar, Building2, Factory, Info } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeviceLayout } from "@/lib/mobileLayout";
@@ -173,7 +174,23 @@ export default function Performance() {
                     <TableHead className="text-right">Total Sales (SAR)</TableHead>
                     <TableHead className="text-right">Total Orders</TableHead>
                     <TableHead className="text-right">Avg Order Value (SAR)</TableHead>
-                    <TableHead className="text-right">Active Users</TableHead>
+                    <TableHead className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        Active Staff (current)
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs text-xs">
+                                Current number of active employees (not filtered by date range)
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </TableHead>
                     <TableHead>Last Activity</TableHead>
                   </TableRow>
                 </TableHeader>
