@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Order } from "@shared/schema";
 import { useDeviceLayout } from "@/lib/mobileLayout";
 import { useBusinessType } from "@/hooks/useBusinessType";
+import { useAuth } from "@/lib/auth";
 import { useEffect } from "react";
 
 function KitchenOrderCard({ 
@@ -105,9 +106,13 @@ export default function Kitchen() {
   const { toast } = useToast();
   const layout = useDeviceLayout();
   const { labels } = useBusinessType();
+  const { accountType } = useAuth();
+  
+  // Use IT-specific endpoint for IT accounts, regular endpoint for client accounts
+  const ordersEndpoint = accountType === 'it' ? '/api/it/orders' : '/api/orders';
   
   const { data: orders = [], isLoading, isError, error, refetch } = useQuery<Order[]>({
-    queryKey: ["/api/orders"],
+    queryKey: [ordersEndpoint],
   });
 
   // Show toast on error
@@ -123,10 +128,12 @@ export default function Kitchen() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      await apiRequest("PATCH", `/api/orders/${id}`, { status });
+      // Use IT-specific endpoint for IT accounts
+      const endpoint = accountType === 'it' ? `/api/it/orders/${id}` : `/api/orders/${id}`;
+      await apiRequest("PATCH", endpoint, { status });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: [ordersEndpoint] });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
       toast({
         title: "Order status updated",

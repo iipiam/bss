@@ -51,6 +51,14 @@ export default function Login() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showWelcomeVideo, setShowWelcomeVideo] = useState(false);
   const [legalAcknowledgementChecked, setLegalAcknowledgementChecked] = useState(false);
+  
+  // IT Signup fields
+  const [itSignupUsername, setItSignupUsername] = useState("");
+  const [itSignupPassword, setItSignupPassword] = useState("");
+  const [itSignupFullName, setItSignupFullName] = useState("");
+  const [itSignupEmail, setItSignupEmail] = useState("");
+  const [itSignupSecretKey, setItSignupSecretKey] = useState("");
+  
   const { login } = useAuth();
   const { toast } = useToast();
   const { language, setLanguage, t } = useLanguage();
@@ -191,6 +199,55 @@ export default function Login() {
     },
   });
 
+  // IT Signup handler
+  const handleITSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!itSignupUsername || !itSignupPassword || !itSignupFullName || !itSignupEmail || !itSignupSecretKey) {
+      toast({
+        title: "Missing Required Fields",
+        description: "Please fill in all fields including the secret key",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const response = await fetch("/api/auth/it-signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: itSignupUsername,
+          password: itSignupPassword,
+          fullName: itSignupFullName,
+          email: itSignupEmail,
+          secretKey: itSignupSecretKey,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create IT account");
+      }
+      
+      toast({
+        title: "IT Account Created",
+        description: "Your IT account has been created successfully. Please login with your credentials.",
+      });
+      
+      // Auto-login after IT signup
+      await login(itSignupUsername, itSignupPassword, "it");
+      
+    } catch (error: any) {
+      toast({
+        title: "IT Signup Failed",
+        description: error.message || "Failed to create IT account",
+        variant: "destructive",
+      });
+    }
+  };
+  
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -332,9 +389,10 @@ export default function Login() {
           </div>
 
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="login" data-testid="tab-login">{t.login}</TabsTrigger>
               <TabsTrigger value="signup" data-testid="tab-signup">{t.signup}</TabsTrigger>
+              <TabsTrigger value="it-signup" data-testid="tab-it-signup">IT Signup</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login" className="space-y-5 pt-2">
@@ -733,6 +791,83 @@ export default function Login() {
                       {t.signup}
                     </>
                   )}
+                </Button>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="it-signup" className="space-y-4 pt-2">
+              <form onSubmit={handleITSignup} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="it-signup-fullname">Full Name *</Label>
+                  <Input
+                    id="it-signup-fullname"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={itSignupFullName}
+                    onChange={(e) => setItSignupFullName(e.target.value)}
+                    required
+                    data-testid="input-it-signup-fullname"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="it-signup-email">Email *</Label>
+                  <Input
+                    id="it-signup-email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={itSignupEmail}
+                    onChange={(e) => setItSignupEmail(e.target.value)}
+                    required
+                    data-testid="input-it-signup-email"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="it-signup-username">Username *</Label>
+                  <Input
+                    id="it-signup-username"
+                    type="text"
+                    placeholder="Choose a username"
+                    value={itSignupUsername}
+                    onChange={(e) => setItSignupUsername(e.target.value)}
+                    required
+                    data-testid="input-it-signup-username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="it-signup-password">Password *</Label>
+                  <Input
+                    id="it-signup-password"
+                    type="password"
+                    placeholder="Choose a strong password"
+                    value={itSignupPassword}
+                    onChange={(e) => setItSignupPassword(e.target.value)}
+                    required
+                    data-testid="input-it-signup-password"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="it-signup-secret">Secret Key *</Label>
+                  <Input
+                    id="it-signup-secret"
+                    type="password"
+                    placeholder="Enter the IT secret key"
+                    value={itSignupSecretKey}
+                    onChange={(e) => setItSignupSecretKey(e.target.value)}
+                    required
+                    data-testid="input-it-signup-secret"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Contact your IT administrator for the secret key
+                  </p>
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full h-[44px] bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 shadow-lg shadow-violet-600/20 transition-all" 
+                  data-testid="button-it-signup"
+                >
+                  <UserPlus className="mr-2 h-5 w-5" />
+                  Create IT Account
                 </Button>
               </form>
             </TabsContent>

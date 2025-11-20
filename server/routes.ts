@@ -999,12 +999,74 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Orders (MULTI-TENANT: require auth + restaurantId filtering)
+  // IT accounts use a different endpoint below for cross-restaurant access
   app.get("/api/orders", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const branchId = req.query.branchId as string | undefined;
     const status = req.query.status as string | undefined;
     const orders = await storage.getOrders({ restaurantId, branchId, status });
     res.json(orders);
+  });
+
+  // IT Account endpoint for viewing all orders across restaurants
+  app.get("/api/it/orders", requireAuth, async (req, res) => {
+    // Check if this is an IT account
+    if (req.session.accountType !== 'it') {
+      return res.status(403).json({ error: 'IT account required' });
+    }
+    
+    const restaurantId = req.query.restaurantId as string | undefined;
+    const branchId = req.query.branchId as string | undefined;
+    const status = req.query.status as string | undefined;
+    
+    // IT accounts can view orders from all restaurants or filter by specific restaurant
+    // If no restaurantId is specified, pass empty string to get all orders
+    const orders = await storage.getOrders({ restaurantId: restaurantId || '', branchId, status });
+    res.json(orders);
+  });
+  
+  // IT Account endpoint for updating order status across restaurants
+  app.patch("/api/it/orders/:id", requireAuth, async (req, res) => {
+    // Check if this is an IT account
+    if (req.session.accountType !== 'it') {
+      return res.status(403).json({ error: 'IT account required' });
+    }
+    
+    try {
+      const { status } = req.body;
+      
+      // Get the order first to find its restaurantId
+      // Pass empty string to get all orders across all restaurants
+      const allOrders = await storage.getOrders({ restaurantId: '' });
+      const order = allOrders.find(o => o.id === req.params.id);
+      
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+      
+      // Update the order status
+      const updatedOrder = await storage.updateOrder(req.params.id, order.restaurantId, { status });
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+      
+      // Broadcast status update notification
+      const branch = order.branchId ? await storage.getBranch(order.branchId, order.restaurantId) : null;
+      broadcastNotification({
+        type: 'order:statusUpdated',
+        restaurantId: order.restaurantId,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        status: updatedOrder.status,
+        branchId: order.branchId ?? undefined,
+        branchName: branch?.name,
+      });
+      
+      res.json(updatedOrder);
+    } catch (error) {
+      res.status(400).json({ error: "Failed to update order status" });
+    }
   });
 
   app.get("/api/orders/:id", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
@@ -1709,6 +1771,91 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("Signup error:", error);
       res.status(500).json({ error: "Failed to create account" });
+    }
+  });
+
+  // IT Account Signup with Secret Key Validation
+  app.post("/api/auth/it-signup", async (req, res) => {
+    try {
+      const { username, password, fullName, email, secretKey } = req.body;
+      
+      console.log("[IT-SIGNUP] Received IT signup request for username:", username);
+      
+      // Validate required fields
+      if (!username || !password || !fullName || !email || !secretKey) {
+        console.log("[IT-SIGNUP] Missing required fields");
+        return res.status(400).json({ error: "All fields are required including secret key" });
+      }
+      
+      // Validate secret key
+      const VALID_SECRET_KEY = "KinzhalLTDCo@1990";
+      if (secretKey !== VALID_SECRET_KEY) {
+        console.log("[IT-SIGNUP] Invalid secret key provided");
+        return res.status(403).json({ error: "Invalid secret key" });
+      }
+      
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        console.log("[IT-SIGNUP] Username already exists");
+        return res.status(400).json({ error: "Username already exists" });
+      }
+      
+      // Create IT account with full permissions
+      const IT_PERMISSIONS = {
+        pos: true,
+        menu: true,
+        bills: true,
+        sales: true,
+        users: true,
+        orders: true,
+        kitchen: true,
+        recipes: true,
+        reports: true,
+        branches: true,
+        licenses: true,
+        settings: true,
+        customers: true,
+        dashboard: true,
+        inventory: true,
+        procurement: true,
+        deliveryApps: true,
+        workingHours: true,
+      };
+      
+      // Create the IT user (no restaurantId for IT accounts)
+      // Note: storage.createUser will hash the password internally
+      const userData = {
+        restaurantId: null, // IT accounts don't belong to any restaurant
+        username,
+        password, // Pass plain password - storage.createUser will hash it
+        fullName,
+        email,
+        role: "admin" as const,
+        active: true,
+        permissions: IT_PERMISSIONS,
+        devicePreference: "laptop" as const,
+      };
+      
+      const user = await storage.createUser(userData);
+      
+      console.log("[IT-SIGNUP] IT account created successfully for username:", username);
+      
+      res.status(201).json({ 
+        success: true,
+        message: "IT account created successfully",
+        user: {
+          id: user.id,
+          username: user.username,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role
+        }
+      });
+      
+    } catch (error) {
+      console.error("[IT-SIGNUP] Error creating IT account:", error);
+      res.status(500).json({ error: "Failed to create IT account" });
     }
   });
 

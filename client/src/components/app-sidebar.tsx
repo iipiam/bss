@@ -148,9 +148,11 @@ export function AppSidebar() {
   // Filter menu items based on both permissions and business type
   const filterMenuItems = (items: MenuItem[]) => 
     items.filter(item => {
-      // CRITICAL: IT accounts can ONLY see IT Dashboard - nothing else
+      // IT accounts can access IT Dashboard, Kitchen Display, and Settings
       if (accountType === 'it') {
-        return item.testId === 'it-dashboard';
+        return item.testId === 'it-dashboard' || 
+               item.testId === 'kitchen' || 
+               item.testId === 'settings';
       }
       
       // Client accounts cannot see IT Dashboard
