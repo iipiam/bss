@@ -4,7 +4,7 @@ import type { PermissionSet } from '@shared/permissions';
 export interface AuthUser {
   id: string;
   username: string;
-  restaurantId: string; // CRITICAL: Multi-tenant isolation - all queries must filter by this
+  restaurantId?: string; // CRITICAL: Multi-tenant isolation - undefined for IT accounts (null in DB), string for client accounts
   role: string; // User role (admin, employee, etc.)
   email: string;
   fullName: string;
