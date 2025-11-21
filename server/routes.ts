@@ -1551,7 +1551,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       // Create invoice record first to get the ID
       const invoiceData = {
-        restaurantId: req.session.user!.restaurantId,
+        restaurantId: req.session.user!.restaurantId!,
         invoiceNumber,
         orderId: order.id,
         branchId: order.branchId,
@@ -2207,7 +2207,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         if (req.session.user.role !== "admin") {
           return res.status(403).json({ error: "Admin access required" });
         }
-        restaurantId = req.session.user.restaurantId;
+        restaurantId = req.session.user.restaurantId!;
       } else {
         // Unauthenticated request - only allowed during initial setup
         if (!userData.restaurantId) {
@@ -2835,7 +2835,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       // Create invoice record first to get the ID (without QR code and PDF path yet)
       const invoiceData = {
-        restaurantId: req.session.user!.restaurantId,
+        restaurantId: req.session.user!.restaurantId!,
         invoiceNumber,
         orderId: order.id,
         branchId: order.branchId,
@@ -3959,7 +3959,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       for (const row of data as any[]) {
         try {
           await storage.createInventoryItem({
-            restaurantId: req.session.user!.restaurantId,
+            restaurantId: req.session.user!.restaurantId!,
             name: row.name,
             category: row.category,
             quantity: String(row.quantity),
@@ -4000,7 +4000,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       for (const row of data as any[]) {
         try {
           await storage.createMenuItem({
-            restaurantId: req.session.user!.restaurantId,
+            restaurantId: req.session.user!.restaurantId!,
             name: row.name,
             category: row.category,
             basePrice: String(row.basePrice),
@@ -4042,7 +4042,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       for (const row of data as any[]) {
         try {
           await storage.createRecipe({
-            restaurantId: req.session.user!.restaurantId,
+            restaurantId: req.session.user!.restaurantId!,
             name: row.name,
             prepTime: row.prepTime,
             cookTime: row.cookTime,
@@ -4083,7 +4083,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       for (const row of data as any[]) {
         try {
           await storage.createBranch({
-            restaurantId: req.session.user!.restaurantId,
+            restaurantId: req.session.user!.restaurantId!,
             name: row.name,
             location: row.location || row.address,
             phone: row.phone,
@@ -4125,7 +4125,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const authUser = req.session.user!;
       const userId = authUser.id;
-      const restaurantId = authUser.restaurantId;
+      const restaurantId = authUser.restaurantId!;
       const { month, year } = req.body;
 
       // Validate input
