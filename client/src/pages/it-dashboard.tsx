@@ -24,7 +24,7 @@ import { useDeviceLayout, useCompactChartConfig } from "@/lib/mobileLayout";
 import { useDevice } from "@/contexts/DeviceContext";
 import { useTheme } from "@/components/theme-provider";
 import { useAuth } from "@/lib/auth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -123,7 +123,7 @@ export default function ITDashboard() {
   const { t, language, setLanguage } = useLanguage();
   const { device, setDevice, isUpdating: isDeviceUpdating } = useDevice();
   const { theme, setTheme } = useTheme();
-  const { user } = useAuth();
+  const { user, accountType } = useAuth();
   const layout = useDeviceLayout();
   const chartConfig = useCompactChartConfig();
   const [, navigate] = useLocation();
@@ -133,6 +133,18 @@ export default function ITDashboard() {
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // SECURITY: Redirect non-IT accounts immediately
+  useEffect(() => {
+    if (accountType && accountType !== 'it') {
+      navigate('/');
+    }
+  }, [accountType, navigate]);
+
+  // SECURITY: Early return if not IT account (prevents flash of content)
+  if (accountType !== 'it') {
+    return null;
+  }
 
   // Handle device change
   const handleDeviceChange = async (newDevice: 'laptop' | 'ipad' | 'iphone') => {
@@ -152,46 +164,46 @@ export default function ITDashboard() {
     }
   };
 
-  // Fetch analytics data with 30-second refetch (only when authenticated)
+  // Fetch analytics data with 30-second refetch (only when authenticated as IT)
   const { data: analytics, isLoading: analyticsLoading } = useQuery<ITAnalytics>({
     queryKey: ["/api/it/analytics"],
     refetchInterval: 30000,
-    enabled: !!user,
+    enabled: !!user && accountType === 'it',
   });
 
   // Fetch workload data
   const { data: workload, isLoading: workloadLoading } = useQuery<WorkloadData>({
     queryKey: ["/api/it/workload"],
     refetchInterval: 30000,
-    enabled: !!user,
+    enabled: !!user && accountType === 'it',
   });
 
   // Fetch trends data
   const { data: trendsData, isLoading: trendsLoading } = useQuery<ITTrends>({
     queryKey: ["/api/it/trends"],
     refetchInterval: 30000,
-    enabled: !!user,
+    enabled: !!user && accountType === 'it',
   });
 
   // Fetch category breakdown
   const { data: categoryData, isLoading: categoryLoading } = useQuery<CategoryBreakdown>({
     queryKey: ["/api/it/category-breakdown"],
     refetchInterval: 30000,
-    enabled: !!user,
+    enabled: !!user && accountType === 'it',
   });
 
   // Fetch active tickets
   const { data: activeTickets = [], isLoading: ticketsLoading } = useQuery<ActiveTicket[]>({
     queryKey: ["/api/it/active-tickets"],
     refetchInterval: 30000,
-    enabled: !!user,
+    enabled: !!user && accountType === 'it',
   });
 
   // Fetch client accounts activity (real-time tracking with 10-second refetch)
   const { data: clientAccounts = [], isLoading: clientAccountsLoading } = useQuery<ClientAccount[]>({
     queryKey: ["/api/it/client-accounts"],
     refetchInterval: 10000, // Refresh every 10 seconds for real-time tracking
-    enabled: !!user,
+    enabled: !!user && accountType === 'it',
   });
 
   // Assignment mutation

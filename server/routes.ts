@@ -1014,12 +1014,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // IT Account endpoint for viewing all orders across restaurants
-  app.get("/api/it/orders", requireAuth, async (req, res) => {
-    // Check if this is an IT account
-    if (req.session.accountType !== 'it') {
-      return res.status(403).json({ error: 'IT account required' });
-    }
-    
+  app.get("/api/it/orders", requireAuth, requireITAccount, async (req, res) => {
     const restaurantId = req.query.restaurantId as string | undefined;
     const branchId = req.query.branchId as string | undefined;
     const status = req.query.status as string | undefined;
@@ -1031,12 +1026,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
   
   // IT Account endpoint for updating order status across restaurants
-  app.patch("/api/it/orders/:id", requireAuth, async (req, res) => {
-    // Check if this is an IT account
-    if (req.session.accountType !== 'it') {
-      return res.status(403).json({ error: 'IT account required' });
-    }
-    
+  app.patch("/api/it/orders/:id", requireAuth, requireITAccount, async (req, res) => {
     try {
       const { status } = req.body;
       

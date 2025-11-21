@@ -22,8 +22,10 @@ import { TrendingUp, Search, Calendar, Building2, Factory, Info } from "lucide-r
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeviceLayout } from "@/lib/mobileLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import { useAuth } from "@/lib/auth";
+import { useLocation } from "wouter";
 
 interface PerformanceData {
   userId: string;
@@ -42,8 +44,22 @@ interface PerformanceData {
 export default function Performance() {
   const { t } = useLanguage();
   const layout = useDeviceLayout();
+  const { user, accountType } = useAuth();
+  const [, navigate] = useLocation();
   const [dateRange, setDateRange] = useState<string>("30");
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // SECURITY: Redirect non-IT accounts immediately
+  useEffect(() => {
+    if (accountType && accountType !== 'it') {
+      navigate('/');
+    }
+  }, [accountType, navigate]);
+
+  // SECURITY: Early return if not IT account (prevents flash of content)
+  if (accountType !== 'it') {
+    return null;
+  }
 
   // Fetch performance data with date range filter
   const { data: performanceData = [], isLoading } = useQuery<PerformanceData[]>({
@@ -60,6 +76,7 @@ export default function Performance() {
       return response.json();
     },
     refetchInterval: 30000, // Refresh every 30 seconds
+    enabled: !!user && accountType === 'it',
   });
 
   // Filter data based on search query (username, full name, or restaurant name)
