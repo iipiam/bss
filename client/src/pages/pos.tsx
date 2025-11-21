@@ -34,8 +34,6 @@ interface CartItem {
   addons?: CartItemAddon[];
 }
 
-const categories = ["All", "Pizza", "Burgers", "Sandwiches", "Salads", "Drinks"];
-
 interface Branch {
   id: string;
   name: string;
@@ -48,8 +46,16 @@ interface Customer {
 }
 
 export default function POS() {
+  const { toast } = useToast();
+  const { t } = useLanguage();
+  const { device } = useDevice();
+  const { isFactory } = useBusinessType();
+
+  // Create categories dynamically with translations
+  const categories = [t.all, t.categoryPizza, t.categoryBurgers, t.categorySandwiches, t.categorySalads, t.categoryDrinks];
+
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState(t.all);
   const [orderType, setOrderType] = useState("Dine-In");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
@@ -67,10 +73,6 @@ export default function POS() {
   const [itemQuantity, setItemQuantity] = useState(1);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [pendingOrderData, setPendingOrderData] = useState<any>(null);
-  const { toast } = useToast();
-  const { t } = useLanguage();
-  const { device } = useDevice();
-  const { isFactory } = useBusinessType();
 
   const { data: menuItems = [], isLoading } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu"],
@@ -172,7 +174,7 @@ export default function POS() {
             // Get restaurant name from settings
             const settingsResponse = await fetch('/api/settings');
             const settings = settingsResponse.ok ? await settingsResponse.json() : null;
-            const restaurantName = settings?.restaurantName || "Restaurant";
+            const restaurantName = settings?.restaurantName || t.restaurant;
             
             // Construct public invoice URL (matches invoice generation pattern)
             const invoiceUrl = `${window.location.origin}/public/invoice/${order.id}`;
@@ -191,8 +193,8 @@ export default function POS() {
             
             if (!success) {
               toast({
-                title: "WhatsApp",
-                description: "Could not open WhatsApp. Please check your popup blocker settings.",
+                title: t.whatsapp,
+                description: t.whatsappPopupBlockedDesc,
                 variant: "default",
               });
             }
@@ -204,7 +206,7 @@ export default function POS() {
       
       // Auto-save customer information to customers table (silent background save)
       if ((order.customerName && order.customerName.trim()) || (order.customerPhone && order.customerPhone.trim())) {
-        const name = order.customerName?.trim() || "Unknown";
+        const name = order.customerName?.trim() || t.unknown;
         const phone = order.customerPhone?.trim();
         
         if (phone) {
@@ -242,8 +244,8 @@ export default function POS() {
     },
     onError: (error: any) => {
       toast({
-        title: t.error || "Error",
-        description: error.message || "Failed to create order. Please check inventory levels.",
+        title: t.error,
+        description: error.message || t.failedToCreateOrder,
         variant: "destructive",
       });
     },
@@ -374,7 +376,7 @@ export default function POS() {
   const total = subtotal + tax;
 
   const availableMenuItems = menuItems.filter(item => item.available);
-  const filteredItems = selectedCategory === "All"
+  const filteredItems = selectedCategory === t.all
     ? availableMenuItems
     : availableMenuItems.filter(item => item.category === selectedCategory);
 
@@ -398,7 +400,7 @@ export default function POS() {
     if (cartItems.length === 0) {
       toast({
         title: t.error,
-        description: "Cart is empty",
+        description: t.cartIsEmptyDesc,
         variant: "destructive",
       });
       return;
@@ -430,7 +432,7 @@ export default function POS() {
       tax: tax.toFixed(2),
       total: total.toFixed(2),
       paymentMethod: paymentMethod,
-      status: "Pending",
+      status: t.pending,
     };
 
     // If online payment is selected, show payment dialog
@@ -450,8 +452,8 @@ export default function POS() {
     const orderDataWithPayment = {
       ...pendingOrderData,
       moyasarPaymentId: paymentId,
-      status: "Completed", // Mark order as completed since payment is successful
-      paymentStatus: "Paid", // Add explicit payment status
+      status: t.completed, // Mark order as completed since payment is successful
+      paymentStatus: t.paid, // Add explicit payment status
     };
 
     // Create the order
@@ -462,7 +464,7 @@ export default function POS() {
 
   const handlePaymentError = (error: string) => {
     toast({
-      title: "Payment Failed",
+      title: t.paymentFailed,
       description: error,
       variant: "destructive",
     });
@@ -472,15 +474,15 @@ export default function POS() {
     setPaymentDialogOpen(false);
     setPendingOrderData(null);
     toast({
-      title: "Payment Cancelled",
-      description: "Order was not placed",
+      title: t.paymentCancelled,
+      description: t.orderNotPlaced,
     });
   };
 
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading menu...</p>
+        <p className="text-muted-foreground">{t.loadingMenu}</p>
       </div>
     );
   }
@@ -493,16 +495,16 @@ export default function POS() {
     return (
       <div className="h-full flex flex-col">
         <div className="flex-shrink-0 p-4 border-b">
-          <h1 className="text-2xl font-bold mb-3">Point of Sale</h1>
+          <h1 className="text-2xl font-bold mb-3">{t.pointOfSale}</h1>
           <Tabs value={mobileView} onValueChange={(v) => setMobileView(v as "menu" | "cart")}>
             <TabsList className="w-full grid grid-cols-2 h-[44px]">
               <TabsTrigger value="menu" data-testid="tab-mobile-menu" className="h-[44px]">
                 <UtensilsCrossed className="h-4 w-4 mr-2" />
-                Menu
+                {t.menu}
               </TabsTrigger>
               <TabsTrigger value="cart" data-testid="tab-mobile-cart" className="h-[44px]">
                 <ShoppingCart className="h-4 w-4 mr-2" />
-                Cart {itemCount > 0 && `(${itemCount})`}
+                {t.cart} {itemCount > 0 && `(${itemCount})`}
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -514,7 +516,7 @@ export default function POS() {
               <div className="relative mb-3">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search items..."
+                  placeholder={t.searchItems}
                   className="pl-10 h-[44px]"
                   data-testid="input-search-pos"
                 />
@@ -599,7 +601,7 @@ export default function POS() {
                   data-testid="button-view-cart"
                 >
                   <ShoppingCart className="h-5 w-5 mr-2" />
-                  View Cart ({itemCount} items) - {total.toFixed(2)} SAR
+                  {t.viewCart} ({itemCount} {t.items}) - {total.toFixed(2)} {t.sar}
                 </Button>
               </div>
             )}
@@ -609,9 +611,9 @@ export default function POS() {
             <div className="p-4 border-b">
               <Tabs value={orderType} onValueChange={setOrderType}>
                 <TabsList className="w-full grid grid-cols-3">
-                  <TabsTrigger value="Dine-In" className="text-xs">Dine-In</TabsTrigger>
-                  <TabsTrigger value="Takeout" className="text-xs">Takeout</TabsTrigger>
-                  <TabsTrigger value="Delivery" className="text-xs">Delivery</TabsTrigger>
+                  <TabsTrigger value="Dine-In" className="text-xs">{t.dineIn}</TabsTrigger>
+                  <TabsTrigger value="Takeout" className="text-xs">{t.takeout}</TabsTrigger>
+                  <TabsTrigger value="Delivery" className="text-xs">{t.deliveryOrder}</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -620,13 +622,13 @@ export default function POS() {
               {cartItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
                   <Receipt className="h-16 w-16 mb-4 opacity-20" />
-                  <p>No items in cart</p>
+                  <p>{t.noItemsInCart}</p>
                   <Button
                     variant="outline"
                     className="mt-4"
                     onClick={() => setMobileView("menu")}
                   >
-                    Browse Menu
+                    {t.browseMenu}
                   </Button>
                 </div>
               ) : (
@@ -644,7 +646,7 @@ export default function POS() {
                                 <span className="text-xs bg-green-600 text-white px-1 py-0.5 rounded">{item.discount.toFixed(0)}%</span>
                               </div>
                             ) : (
-                              <p className="text-xs text-muted-foreground font-mono">{item.price.toFixed(2)} SAR</p>
+                              <p className="text-xs text-muted-foreground font-mono">{item.price.toFixed(2)} {t.sar}</p>
                             )}
                             {item.addons && item.addons.length > 0 && (
                               <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-muted">
@@ -686,7 +688,7 @@ export default function POS() {
                               <Plus className="h-4 w-4" />
                             </Button>
                           </div>
-                          <p className="font-mono font-bold text-sm">{calculateItemTotal(item).toFixed(2)} SAR</p>
+                          <p className="font-mono font-bold text-sm">{calculateItemTotal(item).toFixed(2)} {t.sar}</p>
                         </div>
                       </CardContent>
                     </Card>
@@ -699,28 +701,28 @@ export default function POS() {
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Items Subtotal</span>
-                  <span className="font-mono">{baseSubtotal.toFixed(2)} SAR</span>
+                  <span className="font-mono">{baseSubtotal.toFixed(2)} {t.sar}</span>
                 </div>
                 {selectedDeliveryApp && deliveryCommission > 0 && (
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Delivery Commission ({selectedDeliveryApp.name})</span>
-                    <span className="font-mono">+{deliveryCommission.toFixed(2)} SAR</span>
+                    <span className="font-mono">+{deliveryCommission.toFixed(2)} {t.sar}</span>
                   </div>
                 )}
                 {selectedDeliveryApp && deliveryCommission > 0 && (
                   <div className="flex justify-between text-sm font-medium">
                     <span>Subtotal</span>
-                    <span className="font-mono">{subtotal.toFixed(2)} SAR</span>
+                    <span className="font-mono">{subtotal.toFixed(2)} {t.sar}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Tax (15%)</span>
-                  <span className="font-mono">{tax.toFixed(2)} SAR</span>
+                  <span className="font-mono">{tax.toFixed(2)} {t.sar}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total</span>
-                  <span className="font-mono">{total.toFixed(2)} SAR</span>
+                  <span className="font-mono">{total.toFixed(2)} {t.sar}</span>
                 </div>
               </div>
 
@@ -746,7 +748,7 @@ export default function POS() {
                     <SelectItem value="Online" data-testid="option-online">
                       <div className="flex items-center gap-2">
                         <Globe className="h-4 w-4" />
-                        Online Payment
+                        {t.onlinePayment}
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -754,13 +756,13 @@ export default function POS() {
               </div>
 
               <div className="mb-3">
-                <Label className="text-xs font-medium mb-1 block">Delivery App (Optional)</Label>
+                <Label className="text-xs font-medium mb-1 block">{t.deliveryAppOptional}</Label>
                 <Select value={selectedDeliveryAppId || "none"} onValueChange={(value) => setSelectedDeliveryAppId(value === "none" ? null : value)}>
                   <SelectTrigger data-testid="select-delivery-app" className="w-full h-[44px]">
-                    <SelectValue placeholder="Select delivery app" />
+                    <SelectValue placeholder={t.selectDeliveryApp} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="none">{t.none}</SelectItem>
                     {deliveryApps.filter(app => app.active).map(app => (
                       <SelectItem key={app.id} value={app.id}>
                         {app.name} ({parseFloat(app.commission).toFixed(0)}%)
@@ -783,7 +785,7 @@ export default function POS() {
                     htmlFor="earnings-decrease-mobile"
                     className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    Decrease earnings by 2 SAR
+                    {t.decreaseEarnings}
                   </Label>
                 </div>
               )}
@@ -815,10 +817,10 @@ export default function POS() {
 
               <div className="grid grid-cols-2 gap-2 mb-2">
                 <div>
-                  <Label htmlFor="table-number-mobile" className="text-xs mb-1">{isFactory ? 'Truck' : 'Table #'}</Label>
+                  <Label htmlFor="table-number-mobile" className="text-xs mb-1">{isFactory ? t.truck : t.tableHash}</Label>
                   <Input
                     id="table-number-mobile"
-                    placeholder={isFactory ? "Truck number" : "Table number"}
+                    placeholder={isFactory ? t.truckNumber : t.tableNumberPlaceholder}
                     value={tableNumber}
                     onChange={(e) => setTableNumber(e.target.value)}
                     data-testid="input-table-number"
@@ -826,7 +828,7 @@ export default function POS() {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <Label className="text-xs mb-1 invisible">Customer</Label>
+                  <Label className="text-xs mb-1 invisible">{t.customer}</Label>
                   <Dialog open={customerDialogOpen} onOpenChange={setCustomerDialogOpen}>
                     <DialogTrigger asChild>
                       <Button
@@ -835,14 +837,14 @@ export default function POS() {
                         data-testid="button-add-customer"
                       >
                         <UserCircle className="h-4 w-4 mr-2" />
-                        {customerName ? "Edit" : "Customer"}
+                        {customerName ? t.edit : t.customer}
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-md">
                       <DialogHeader>
-                        <DialogTitle>Customer Information</DialogTitle>
+                        <DialogTitle>{t.customerInformation}</DialogTitle>
                         <DialogDescription>
-                          Add customer details for this order (optional)
+                          {t.addCustomerDetails}
                         </DialogDescription>
                       </DialogHeader>
                       <Tabs value={customerTab} onValueChange={setCustomerTab} className="w-full">
@@ -855,7 +857,7 @@ export default function POS() {
                             <Label htmlFor="customer-name">{t.customerName}</Label>
                             <Input
                               id="customer-name"
-                              placeholder="Enter customer name"
+                              placeholder={t.enterCustomerName}
                               value={customerName}
                               onChange={(e) => setCustomerName(e.target.value)}
                               data-testid="input-pos-customer-name"
@@ -963,7 +965,7 @@ export default function POS() {
                   disabled={cartItems.length === 0}
                   data-testid="button-clear-cart"
                 >
-                  Clear
+                  {t.clear}
                 </Button>
                 <Button
                   className="flex-1 h-[44px]"
@@ -971,7 +973,7 @@ export default function POS() {
                   disabled={cartItems.length === 0 || createOrderMutation.isPending}
                   data-testid="button-checkout"
                 >
-                  {createOrderMutation.isPending ? "Processing..." : "Checkout"}
+                  {createOrderMutation.isPending ? t.processing : t.checkout}
                 </Button>
               </div>
             </div>
@@ -985,13 +987,13 @@ export default function POS() {
   return (
     <div className="h-screen flex">
       <div className="flex-1 p-6 overflow-auto">
-        <h1 className="text-3xl font-bold mb-6">Point of Sale</h1>
+        <h1 className="text-3xl font-bold mb-6">{t.pointOfSale}</h1>
 
         <div className="mb-6">
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search items..."
+              placeholder={t.searchItems}
               className="pl-10"
               data-testid="input-search-pos"
             />
@@ -1033,12 +1035,12 @@ export default function POS() {
               >
                 {hasDiscount && !isOutOfStock && (
                   <div className="absolute top-2 right-2 z-10 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded">
-                    {parseFloat(item.discount).toFixed(0)}% OFF
+                    {parseFloat(item.discount).toFixed(0)}% {t.off}
                   </div>
                 )}
                 {isOutOfStock && (
                   <div className="absolute top-2 right-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
-                    OUT OF STOCK
+                    {t.outOfStock}
                   </div>
                 )}
                 <CardHeader className="p-4 pb-2">
@@ -1050,11 +1052,11 @@ export default function POS() {
                   <p className="font-semibold mb-1 line-clamp-2">{item.name}</p>
                   {hasDiscount ? (
                     <div className="space-y-1">
-                      <p className="text-xl font-bold font-mono text-primary">{finalPrice.toFixed(2)} SAR</p>
-                      <p className="text-sm font-mono text-muted-foreground line-through">{originalPrice.toFixed(2)} SAR</p>
+                      <p className="text-xl font-bold font-mono text-primary">{finalPrice.toFixed(2)} {t.sar}</p>
+                      <p className="text-sm font-mono text-muted-foreground line-through">{originalPrice.toFixed(2)} {t.sar}</p>
                     </div>
                   ) : (
-                    <p className="text-xl font-bold font-mono text-primary">{originalPrice.toFixed(2)} SAR</p>
+                    <p className="text-xl font-bold font-mono text-primary">{originalPrice.toFixed(2)} {t.sar}</p>
                   )}
                   <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
                     <Package className="h-3 w-3" />
@@ -1069,12 +1071,12 @@ export default function POS() {
 
       <div className="w-96 bg-card border-l flex flex-col">
         <div className="p-6 border-b">
-          <h2 className="text-2xl font-bold mb-4">Current Order</h2>
+          <h2 className="text-2xl font-bold mb-4">{t.currentOrder}</h2>
           <Tabs value={orderType} onValueChange={setOrderType}>
             <TabsList className="w-full">
-              <TabsTrigger value="Dine-In" className="flex-1">Dine-In</TabsTrigger>
-              <TabsTrigger value="Takeout" className="flex-1">Takeout</TabsTrigger>
-              <TabsTrigger value="Delivery" className="flex-1">Delivery</TabsTrigger>
+              <TabsTrigger value="Dine-In" className="flex-1">{t.dineIn}</TabsTrigger>
+              <TabsTrigger value="Takeout" className="flex-1">{t.takeout}</TabsTrigger>
+              <TabsTrigger value="Delivery" className="flex-1">{t.deliveryOrder}</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -1083,7 +1085,7 @@ export default function POS() {
           {cartItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
               <Receipt className="h-16 w-16 mb-4 opacity-20" />
-              <p>No items in cart</p>
+              <p>{t.noItemsInCart}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -1095,19 +1097,19 @@ export default function POS() {
                         <p className="font-semibold">{item.name}</p>
                         {item.discount > 0 ? (
                           <div className="flex items-baseline gap-2">
-                            <p className="text-sm font-mono text-primary">{item.price.toFixed(2)} SAR (base)</p>
+                            <p className="text-sm font-mono text-primary">{item.price.toFixed(2)} {t.sar} ({t.base})</p>
                             <p className="text-xs font-mono text-muted-foreground line-through">{item.originalPrice.toFixed(2)}</p>
-                            <span className="text-xs bg-green-600 text-white px-1.5 py-0.5 rounded">{item.discount.toFixed(0)}% OFF</span>
+                            <span className="text-xs bg-green-600 text-white px-1.5 py-0.5 rounded">{item.discount.toFixed(0)}% {t.off}</span>
                           </div>
                         ) : (
-                          <p className="text-sm text-muted-foreground font-mono">{item.price.toFixed(2)} SAR (base)</p>
+                          <p className="text-sm text-muted-foreground font-mono">{item.price.toFixed(2)} {t.sar} ({t.base})</p>
                         )}
                         {item.addons && item.addons.length > 0 && (
                           <div className="mt-2 space-y-1 pl-3 border-l-2 border-muted">
                             {item.addons.map(addon => (
                               <div key={addon.id} className="flex items-center justify-between text-sm text-muted-foreground">
                                 <span>+ {addon.name}</span>
-                                <span className="font-mono">+{addon.price.toFixed(2)} SAR</span>
+                                <span className="font-mono">+{addon.price.toFixed(2)} {t.sar}</span>
                               </div>
                             ))}
                           </div>
@@ -1145,7 +1147,7 @@ export default function POS() {
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
-                      <p className="font-mono font-bold">{calculateItemTotal(item).toFixed(2)} SAR</p>
+                      <p className="font-mono font-bold">{calculateItemTotal(item).toFixed(2)} {t.sar}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -1157,29 +1159,29 @@ export default function POS() {
         <div className="border-t p-6">
           <div className="space-y-3 mb-6">
             <div className="flex justify-between text-muted-foreground">
-              <span>Items Subtotal</span>
-              <span className="font-mono">{baseSubtotal.toFixed(2)} SAR</span>
+              <span>{t.itemsSubtotal}</span>
+              <span className="font-mono">{baseSubtotal.toFixed(2)} {t.sar}</span>
             </div>
             {selectedDeliveryApp && deliveryCommission > 0 && (
               <div className="flex justify-between text-muted-foreground">
-                <span>Delivery Commission ({selectedDeliveryApp.name})</span>
-                <span className="font-mono">+{deliveryCommission.toFixed(2)} SAR</span>
+                <span>{t.deliveryCommissionLabel} ({selectedDeliveryApp.name})</span>
+                <span className="font-mono">+{deliveryCommission.toFixed(2)} {t.sar}</span>
               </div>
             )}
             {selectedDeliveryApp && deliveryCommission > 0 && (
               <div className="flex justify-between font-medium">
-                <span>Subtotal</span>
-                <span className="font-mono">{subtotal.toFixed(2)} SAR</span>
+                <span>{t.subtotal}</span>
+                <span className="font-mono">{subtotal.toFixed(2)} {t.sar}</span>
               </div>
             )}
             <div className="flex justify-between text-muted-foreground">
-              <span>Tax (15%)</span>
-              <span className="font-mono">{tax.toFixed(2)} SAR</span>
+              <span>{t.tax}</span>
+              <span className="font-mono">{tax.toFixed(2)} {t.sar}</span>
             </div>
             <Separator />
             <div className="flex justify-between text-xl font-bold">
-              <span>Total</span>
-              <span className="font-mono">{total.toFixed(2)} SAR</span>
+              <span>{t.total}</span>
+              <span className="font-mono">{total.toFixed(2)} {t.sar}</span>
             </div>
           </div>
 
@@ -1241,7 +1243,7 @@ export default function POS() {
                 htmlFor="earnings-decrease-desktop"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                Decrease earnings by 2 SAR
+                Decrease earnings by 2 {t.sar}
               </Label>
             </div>
           )}
@@ -1274,17 +1276,17 @@ export default function POS() {
 
           <div className="grid grid-cols-2 gap-2 mb-2">
             <div>
-              <Label htmlFor="table-number-desktop" className="text-sm mb-1">{isFactory ? 'Truck' : 'Table #'}</Label>
+              <Label htmlFor="table-number-desktop" className="text-sm mb-1">{isFactory ? t.truck : t.tableHash}</Label>
               <Input
                 id="table-number-desktop"
-                placeholder={isFactory ? "Truck number" : "Table number"}
+                placeholder={isFactory ? t.truckNumber : t.tableNumberPlaceholder}
                 value={tableNumber}
                 onChange={(e) => setTableNumber(e.target.value)}
                 data-testid="input-table-number-desktop"
               />
             </div>
             <div className="flex flex-col">
-              <Label className="text-sm mb-1 invisible">Customer</Label>
+              <Label className="text-sm mb-1 invisible">{t.customer}</Label>
               <Dialog open={customerDialogOpen} onOpenChange={setCustomerDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
@@ -1292,14 +1294,14 @@ export default function POS() {
                     data-testid="button-add-customer"
                   >
                     <UserCircle className="h-4 w-4 mr-2" />
-                    {customerName ? "Edit" : "Customer"}
+                    {customerName ? t.edit : t.customer}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md">
                   <DialogHeader>
-                    <DialogTitle>Customer Information</DialogTitle>
+                    <DialogTitle>{t.customerInformation}</DialogTitle>
                     <DialogDescription>
-                      Add customer details for this order (optional)
+                      {t.addCustomerDetails}
                     </DialogDescription>
                   </DialogHeader>
                   <Tabs value={customerTab} onValueChange={setCustomerTab} className="w-full">
@@ -1312,7 +1314,7 @@ export default function POS() {
                         <Label htmlFor="customer-name">{t.customerName}</Label>
                         <Input
                           id="customer-name"
-                          placeholder="Enter customer name"
+                          placeholder={t.enterCustomerName}
                           value={customerName}
                           onChange={(e) => setCustomerName(e.target.value)}
                           data-testid="input-pos-customer-name"
@@ -1420,7 +1422,7 @@ export default function POS() {
               disabled={cartItems.length === 0}
               data-testid="button-clear-cart"
             >
-              Clear
+              {t.clear}
             </Button>
             <Button
               className="flex-1"
@@ -1428,7 +1430,7 @@ export default function POS() {
               disabled={cartItems.length === 0 || createOrderMutation.isPending}
               data-testid="button-checkout"
             >
-              {createOrderMutation.isPending ? "Processing..." : "Checkout"}
+              {createOrderMutation.isPending ? t.processing : t.checkout}
             </Button>
           </div>
         </div>
@@ -1440,7 +1442,7 @@ export default function POS() {
           <DialogHeader>
             <DialogTitle>{t.selectAddons}</DialogTitle>
             <DialogDescription>
-              {selectedMenuItem?.name} - {selectedMenuItem ? (parseFloat(selectedMenuItem.basePrice) * 1.15).toFixed(2) : '0.00'} SAR
+              {selectedMenuItem?.name} - {selectedMenuItem ? (parseFloat(selectedMenuItem.basePrice) * 1.15).toFixed(2) : '0.00'} {t.sar}
             </DialogDescription>
           </DialogHeader>
 
@@ -1466,7 +1468,7 @@ export default function POS() {
                         <div className="flex-1">
                           <div className="flex items-baseline justify-between">
                             <span className="font-medium text-sm">{addon.name}</span>
-                            <span className="font-mono text-sm text-primary">+{parseFloat(addon.basePrice).toFixed(2)} SAR</span>
+                            <span className="font-mono text-sm text-primary">+{parseFloat(addon.basePrice).toFixed(2)} {t.sar}</span>
                           </div>
                           <p className="text-xs text-muted-foreground">{addon.category}</p>
                         </div>
@@ -1510,7 +1512,7 @@ export default function POS() {
                 <span className="font-mono text-sm">
                   {selectedMenuItem ? (
                     (parseFloat(selectedMenuItem.basePrice) * (1 - parseFloat(selectedMenuItem.discount || "0") / 100) * itemQuantity).toFixed(2)
-                  ) : '0.00'} SAR
+                  ) : '0.00'} {t.sar}
                 </span>
               </div>
               {selectedAddons.length > 0 && (
@@ -1520,7 +1522,7 @@ export default function POS() {
                     +{allAddons
                       .filter(a => selectedAddons.includes(a.id))
                       .reduce((sum, a) => sum + parseFloat(a.basePrice), 0)
-                      .toFixed(2)} SAR × {itemQuantity}
+                      .toFixed(2)} {t.sar} × {itemQuantity}
                   </span>
                 </div>
               )}
@@ -1537,7 +1539,7 @@ export default function POS() {
                       itemQuantity *
                       1.15
                     ).toFixed(2)
-                  ) : '0.00'} SAR
+                  ) : '0.00'} {t.sar}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">{t.tax} (15%) included</p>
@@ -1568,9 +1570,9 @@ export default function POS() {
       <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Complete Payment</DialogTitle>
+            <DialogTitle>{t.completePayment}</DialogTitle>
             <DialogDescription>
-              Complete your payment to process the order
+              {t.completePaymentDesc}
             </DialogDescription>
           </DialogHeader>
           {pendingOrderData && (

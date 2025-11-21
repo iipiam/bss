@@ -7,6 +7,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Order } from "@shared/schema";
 import { useDeviceLayout } from "@/lib/mobileLayout";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; color: string }> = {
   "Pending": { variant: "secondary", color: "text-orange-600" },
@@ -20,6 +21,19 @@ const statusConfig: Record<string, { variant: "default" | "secondary" | "destruc
 export default function Orders() {
   const { toast } = useToast();
   const layout = useDeviceLayout();
+  const { t } = useLanguage();
+  
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "Pending": return t.pending;
+      case "Preparing": return t.preparing;
+      case "Ready": return t.ready;
+      case "Completed": return t.completed;
+      case "Delivered": return t.delivered;
+      case "Out for Delivery": return t.outForDelivery;
+      default: return status;
+    }
+  };
   
   const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
@@ -33,8 +47,8 @@ export default function Orders() {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
       toast({
-        title: "Order status updated",
-        description: "The order status has been changed",
+        title: t.orderStatusUpdated,
+        description: t.theOrderStatusChanged,
       });
     },
   });
@@ -49,8 +63,8 @@ export default function Orders() {
   if (isLoading) {
     return (
       <div className={layout.padding}>
-        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Orders Tracking</h1>
-        <p className="text-muted-foreground">Loading...</p>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>{t.ordersTracking}</h1>
+        <p className="text-muted-foreground">{t.loading}</p>
       </div>
     );
   }
@@ -58,14 +72,14 @@ export default function Orders() {
   return (
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div>
-        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Orders Tracking</h1>
-        <p className="text-muted-foreground">Monitor and manage all orders in real-time</p>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>{t.ordersTracking}</h1>
+        <p className="text-muted-foreground">{t.monitorOrdersRealtime}</p>
       </div>
 
       <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 4, tablet: 2, mobile: 1 })}`}>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pending</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t.pending}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold font-mono">{statusCounts.pending}</p>
@@ -73,7 +87,7 @@ export default function Orders() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Preparing</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t.preparing}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold font-mono">{statusCounts.preparing}</p>
@@ -81,7 +95,7 @@ export default function Orders() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Ready</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t.ready}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold font-mono">{statusCounts.ready}</p>
@@ -89,7 +103,7 @@ export default function Orders() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Completed Today</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t.completedToday}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold font-mono">{statusCounts.completed}</p>
@@ -106,7 +120,7 @@ export default function Orders() {
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-2xl font-bold font-mono">#{order.orderNumber}</h3>
                     <Badge variant={statusConfig[order.status]?.variant || "secondary"}>
-                      {order.status}
+                      {getStatusLabel(order.status)}
                     </Badge>
                   </div>
                   <div className="flex gap-4 text-sm text-muted-foreground">
@@ -127,14 +141,14 @@ export default function Orders() {
                 </div>
                 <div className="text-right">
                   <p className="text-3xl font-bold font-mono">{parseFloat(order.total).toFixed(2)} SAR</p>
-                  <p className="text-sm text-muted-foreground">{order.items.length} items</p>
+                  <p className="text-sm text-muted-foreground">{order.items.length} {t.items}</p>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="mb-4">
                 {order.table && (
-                  <p className="text-sm text-muted-foreground mb-1">Table: {order.table}</p>
+                  <p className="text-sm text-muted-foreground mb-1">{t.table}: {order.table}</p>
                 )}
                 {order.address && (
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
@@ -159,7 +173,7 @@ export default function Orders() {
                     onClick={() => updateStatusMutation.mutate({ id: order.id, status: "Preparing" })}
                     data-testid={`button-start-${order.id}`}
                   >
-                    Start Preparing
+                    {t.startPreparing}
                   </Button>
                 )}
                 {order.status === "Preparing" && (
@@ -169,7 +183,7 @@ export default function Orders() {
                     onClick={() => updateStatusMutation.mutate({ id: order.id, status: "Ready" })}
                     data-testid={`button-ready-${order.id}`}
                   >
-                    Mark as Ready
+                    {t.markAsReady}
                   </Button>
                 )}
                 {order.status === "Ready" && (
@@ -179,7 +193,7 @@ export default function Orders() {
                     onClick={() => updateStatusMutation.mutate({ id: order.id, status: order.orderType === "Delivery" ? "Out for Delivery" : "Completed" })}
                     data-testid={`button-complete-${order.id}`}
                   >
-                    {order.orderType === "Delivery" ? "Out for Delivery" : "Complete Order"}
+                    {order.orderType === "Delivery" ? t.outForDelivery : t.completeOrder}
                   </Button>
                 )}
                 {order.status === "Out for Delivery" && (
@@ -189,7 +203,7 @@ export default function Orders() {
                     onClick={() => updateStatusMutation.mutate({ id: order.id, status: "Delivered" })}
                     data-testid={`button-delivered-${order.id}`}
                   >
-                    Mark as Delivered
+                    {t.markAsDelivered}
                   </Button>
                 )}
               </div>

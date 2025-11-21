@@ -219,7 +219,7 @@ const PeakHoursCard = ({
               <p className="text-center text-muted-foreground">{t.loading}...</p>
             ) : isError ? (
               <p className="text-center text-red-600 dark:text-red-400 py-8" data-testid="text-error">
-                {t.error || "Error loading customer orders"}
+                {t.errorLoadingCustomerOrders}
               </p>
             ) : customerOrders && customerOrders.length > 0 ? (
               <div className="space-y-3">
@@ -292,7 +292,7 @@ export default function Dashboard() {
     queryKey: ["/api/shop/bills"],
     queryFn: async () => {
       const response = await fetch("/api/shop/bills?includeArchived=false");
-      if (!response.ok) throw new Error("Failed to fetch bills");
+      if (!response.ok) throw new Error(t.failedToFetchBills);
       return response.json();
     },
   });
@@ -340,19 +340,19 @@ export default function Dashboard() {
       </div>
       <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 3, mobile: 2 })}`}>
         <MetricCard
-          title="Today's Sales"
+          title={t.todaysSales}
           value={`${dashboardData?.todaysSales || "0.00"} SAR`}
           icon={DollarSign}
           trend={{ value: 12.5, direction: "up" }}
         />
         <MetricCard
-          title="Active Orders"
+          title={t.activeOrders}
           value={dashboardData?.activeOrders || 0}
           icon={ShoppingCart}
           trend={{ value: 8.2, direction: "up" }}
         />
         <MetricCard
-          title="Low Stock Items"
+          title={t.lowStockItems}
           value={dashboardData?.lowStockItems || 0}
           icon={Package}
           trend={{ value: 3.1, direction: "down" }}
@@ -405,14 +405,14 @@ export default function Dashboard() {
                 <Wallet className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <CardTitle className={layout.isMobile ? "text-base" : ""}>Operating Expenses</CardTitle>
-                <CardDescription className="text-xs">Monthly expense trends and summary</CardDescription>
+                <CardTitle className={layout.isMobile ? "text-base" : ""}>{t.operatingExpenses}</CardTitle>
+                <CardDescription className="text-xs">{t.expenseTrendsAndSummary}</CardDescription>
               </div>
             </div>
             <div className={layout.isMobile ? "text-center w-full" : "text-right"}>
               <p className={`${layout.text2Xl} font-bold font-mono text-orange-600`}>{totalExpenses.toFixed(2)} SAR</p>
               <p className="text-xs text-muted-foreground">
-                Pending: <span className="font-mono">{pendingExpenses.toFixed(2)} SAR</span>
+                {t.pending}: <span className="font-mono">{pendingExpenses.toFixed(2)} SAR</span>
               </p>
             </div>
           </div>
@@ -432,13 +432,13 @@ export default function Dashboard() {
                   tick={{ fontSize: chartConfig.fontSize }}
                 />
                 <Tooltip formatter={(value: number) => `${value.toFixed(2)} SAR`} />
-                <Bar dataKey="expenses" fill="hsl(var(--destructive))" name="Expenses" />
+                <Bar dataKey="expenses" fill="hsl(var(--destructive))" name={t.expenses} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <Wallet className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No expense data available</p>
+              <p>{t.noExpenseData}</p>
             </div>
           )}
         </CardContent>
@@ -447,7 +447,7 @@ export default function Dashboard() {
       <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 2, mobile: 1 })}`}>
         <Card>
           <CardHeader className={layout.cardHeaderPadding}>
-            <CardTitle className={layout.isMobile ? "text-base" : ""}>Sales This Week</CardTitle>
+            <CardTitle className={layout.isMobile ? "text-base" : ""}>{t.salesThisWeek}</CardTitle>
           </CardHeader>
           <CardContent className={layout.cardPadding}>
             <ResponsiveContainer width="100%" height={layout.chartHeight}>
@@ -471,7 +471,7 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader className={layout.cardHeaderPadding}>
-            <CardTitle className={layout.isMobile ? "text-base" : ""}>Recent Orders</CardTitle>
+            <CardTitle className={layout.isMobile ? "text-base" : ""}>{t.recentOrders}</CardTitle>
           </CardHeader>
           <CardContent className={layout.cardPadding}>
             <div className={layout.isMobile ? "space-y-2" : "space-y-4"}>
@@ -480,7 +480,7 @@ export default function Dashboard() {
                   <div className="flex-1">
                     <p className={`font-mono font-semibold ${layout.isMobile ? 'text-sm' : ''}`}>#{order.orderNumber}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(order.createdAt).toLocaleTimeString()} • {order.items.length} items
+                      {new Date(order.createdAt).toLocaleTimeString()} • {order.items.length} {t.items}
                     </p>
                   </div>
                   <div className={`text-right ${layout.isMobile ? 'mr-2' : 'mr-4'}`}>

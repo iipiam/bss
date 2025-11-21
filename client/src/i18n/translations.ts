@@ -137,6 +137,14 @@ export interface Translations {
   salesOverview: string;
   topSellingItems: string;
   recentOrders: string;
+  todaysSales: string;
+  activeOrders: string;
+  lowStockItems: string;
+  operatingExpenses: string;
+  expenseTrendsAndSummary: string;
+  noExpenseData: string;
+  salesThisWeek: string;
+  errorLoadingCustomerOrders: string;
   
   // Inventory
   itemName: string;
@@ -194,6 +202,7 @@ export interface Translations {
   preparing: string;
   ready: string;
   completed: string;
+  delivered: string;
   cancelled: string;
   
   // Financial
@@ -767,6 +776,24 @@ export interface Translations {
   currency: string;
   saving: string;
   
+  // Shop Validation & Generate Salaries
+  employeeNameRequired: string;
+  positionRequired: string;
+  amountMustBeGreaterThanZero: string;
+  paymentDateRequired: string;
+  billTypeRequired: string;
+  generateSalaries: string;
+  generateMonthlySalaryBills: string;
+  generateSalariesDescription: string;
+  paymentMonth: string;
+  selectMonthForSalaryBills: string;
+  generating: string;
+  generateBills: string;
+  salaryBillsGenerated: string;
+  employeesSkipped: string;
+  failedToGenerateSalaryBills: string;
+  anErrorOccurred: string;
+  
   // Bills Page
   bills: string;
   sar: string;
@@ -864,6 +891,13 @@ export interface Translations {
   theOrderStatusChanged: string;
   failedToUpdateOrderStatus: string;
   retry: string;
+  ordersTracking: string;
+  monitorOrdersRealtime: string;
+  completedToday: string;
+  startPreparing: string;
+  completeOrder: string;
+  markAsDelivered: string;
+  orderStatusUpdated: string;
   
   // POS & Payment Toast Messages
   cartIsEmpty: string;
@@ -975,6 +1009,54 @@ export interface Translations {
   videoSlide5Subtitle: string;
   videoSlide6Title: string;
   videoSlide6Subtitle: string;
+  
+  // POS Page
+  pointOfSale: string;
+  cart: string;
+  searchItems: string;
+  dineIn: string;
+  takeout: string;
+  deliveryOrder: string;
+  noItemsInCart: string;
+  browseMenu: string;
+  itemsSubtotal: string;
+  deliveryCommissionLabel: string;
+  onlinePayment: string;
+  deliveryAppOptional: string;
+  selectDeliveryApp: string;
+  none: string;
+  decreaseEarnings: string;
+  truck: string;
+  tableHash: string;
+  truckNumber: string;
+  tableNumberPlaceholder: string;
+  customer: string;
+  customerInformation: string;
+  addCustomerDetails: string;
+  addCustomerDetailsOptional: string;
+  enterCustomerName: string;
+  searchByNameOrPhone: string;
+  clear: string;
+  checkout: string;
+  processing: string;
+  currentOrder: string;
+  off: string;
+  out: string;
+  base: string;
+  isRequired: string;
+  failedToCreateOrder: string;
+  loadingMenu: string;
+  viewCart: string;
+  whatsappPopupBlockedDesc: string;
+  unknown: string;
+  addToCart: string;
+  completePayment: string;
+  completePaymentDesc: string;
+  categoryPizza: string;
+  categoryBurgers: string;
+  categorySandwiches: string;
+  categorySalads: string;
+  categoryDrinks: string;
   
   // Branding
   madeBy: string;
@@ -1110,6 +1192,14 @@ export const translations: Record<Language, Translations> = {
     salesOverview: 'Sales Overview',
     topSellingItems: 'Top Selling Items',
     recentOrders: 'Recent Orders',
+    todaysSales: "Today's Sales",
+    activeOrders: 'Active Orders',
+    lowStockItems: 'Low Stock Items',
+    operatingExpenses: 'Operating Expenses',
+    expenseTrendsAndSummary: 'Monthly expense trends and summary',
+    noExpenseData: 'No expense data available',
+    salesThisWeek: 'Sales This Week',
+    errorLoadingCustomerOrders: 'Error loading customer orders',
     
     // Inventory
     itemName: 'Item Name',
@@ -1167,6 +1257,7 @@ export const translations: Record<Language, Translations> = {
     preparing: 'Preparing',
     ready: 'Ready',
     completed: 'Completed',
+    delivered: 'Delivered',
     cancelled: 'Cancelled',
     
     // Financial
@@ -1845,6 +1936,13 @@ export const translations: Record<Language, Translations> = {
     theOrderStatusChanged: 'The order status has been changed',
     failedToUpdateOrderStatus: 'Failed to update order status',
     retry: 'Retry',
+    ordersTracking: 'Orders Tracking',
+    monitorOrdersRealtime: 'Monitor and manage all orders in real-time',
+    completedToday: 'Completed Today',
+    startPreparing: 'Start Preparing',
+    completeOrder: 'Complete Order',
+    markAsDelivered: 'Mark as Delivered',
+    orderStatusUpdated: 'Order status updated',
     
     // POS & Payment Toast Messages
     cartIsEmpty: 'Cart is Empty',
@@ -1956,6 +2054,54 @@ export const translations: Record<Language, Translations> = {
     videoSlide5Subtitle: 'Real-time profitability analysis • Demand forecasting • Multi-branch reporting',
     videoSlide6Title: 'Secure & Scalable Platform',
     videoSlide6Subtitle: 'Multi-tenant security • Grow from 1 to unlimited branches • Join thousands of successful businesses',
+    
+    // POS Page
+    pointOfSale: 'Point of Sale',
+    cart: 'Cart',
+    searchItems: 'Search items...',
+    dineIn: 'Dine-In',
+    takeout: 'Takeout',
+    deliveryOrder: 'Delivery',
+    noItemsInCart: 'No items in cart',
+    browseMenu: 'Browse Menu',
+    itemsSubtotal: 'Items Subtotal',
+    deliveryCommissionLabel: 'Delivery Commission',
+    onlinePayment: 'Online Payment',
+    deliveryAppOptional: 'Delivery App (Optional)',
+    selectDeliveryApp: 'Select delivery app',
+    none: 'None',
+    decreaseEarnings: 'Decrease earnings by 2 SAR',
+    truck: 'Truck',
+    tableHash: 'Table #',
+    truckNumber: 'Truck number',
+    tableNumberPlaceholder: 'Table number',
+    customer: 'Customer',
+    customerInformation: 'Customer Information',
+    addCustomerDetails: 'Add customer details for this order (optional)',
+    addCustomerDetailsOptional: 'Add customer details for this order (optional)',
+    enterCustomerName: 'Enter customer name',
+    searchByNameOrPhone: 'Search by name or phone...',
+    clear: 'Clear',
+    checkout: 'Checkout',
+    processing: 'Processing...',
+    currentOrder: 'Current Order',
+    off: 'OFF',
+    out: 'OUT',
+    base: 'base',
+    isRequired: 'is required',
+    failedToCreateOrder: 'Failed to create order. Please check inventory levels.',
+    loadingMenu: 'Loading menu...',
+    viewCart: 'View Cart',
+    whatsappPopupBlockedDesc: 'Could not open WhatsApp. Please check your popup blocker settings.',
+    unknown: 'Unknown',
+    addToCart: 'Add to Cart',
+    completePayment: 'Complete Payment',
+    completePaymentDesc: 'Complete your payment to process the order',
+    categoryPizza: 'Pizza',
+    categoryBurgers: 'Burgers',
+    categorySandwiches: 'Sandwiches',
+    categorySalads: 'Salads',
+    categoryDrinks: 'Drinks',
     
     // Branding
     madeBy: 'Made By',
@@ -2090,6 +2236,14 @@ export const translations: Record<Language, Translations> = {
     salesOverview: 'نظرة عامة على المبيعات',
     topSellingItems: 'المنتجات الأكثر مبيعاً',
     recentOrders: 'الطلبات الأخيرة',
+    todaysSales: 'مبيعات اليوم',
+    activeOrders: 'الطلبات النشطة',
+    lowStockItems: 'الأصناف منخفضة المخزون',
+    operatingExpenses: 'المصروفات التشغيلية',
+    expenseTrendsAndSummary: 'اتجاهات المصروفات الشهرية والملخص',
+    noExpenseData: 'لا توجد بيانات مصروفات',
+    salesThisWeek: 'مبيعات هذا الأسبوع',
+    errorLoadingCustomerOrders: 'خطأ في تحميل طلبات العملاء',
     
     // Inventory
     itemName: 'اسم الصنف',
@@ -2147,6 +2301,7 @@ export const translations: Record<Language, Translations> = {
     preparing: 'قيد التحضير',
     ready: 'جاهز',
     completed: 'مكتمل',
+    delivered: 'تم التوصيل',
     cancelled: 'ملغي',
     
     // Financial
@@ -2826,6 +2981,13 @@ export const translations: Record<Language, Translations> = {
     theOrderStatusChanged: 'تم تغيير حالة الطلب',
     failedToUpdateOrderStatus: 'فشل تحديث حالة الطلب',
     retry: 'إعادة المحاولة',
+    ordersTracking: 'تتبع الطلبات',
+    monitorOrdersRealtime: 'مراقبة وإدارة جميع الطلبات في الوقت الفعلي',
+    completedToday: 'مكتمل اليوم',
+    startPreparing: 'بدء التحضير',
+    completeOrder: 'إكمال الطلب',
+    markAsDelivered: 'تم التوصيل',
+    orderStatusUpdated: 'تم تحديث حالة الطلب',
     
     // POS & Payment Toast Messages
     cartIsEmpty: 'السلة فارغة',
@@ -2937,6 +3099,54 @@ export const translations: Record<Language, Translations> = {
     videoSlide5Subtitle: 'تحليل الربحية في الوقت الفعلي • توقع الطلب • تقارير متعددة الفروع',
     videoSlide6Title: 'منصة آمنة وقابلة للتوسع',
     videoSlide6Subtitle: 'أمان متعدد المستأجرين • النمو من فرع واحد إلى عدد غير محدود • انضم لآلاف الأعمال الناجحة',
+    
+    // POS Page
+    pointOfSale: 'نقطة البيع',
+    cart: 'السلة',
+    searchItems: 'ابحث عن منتج...',
+    dineIn: 'تناول في المطعم',
+    takeout: 'طلب خارجي',
+    deliveryOrder: 'توصيل',
+    noItemsInCart: 'لا توجد منتجات في السلة',
+    browseMenu: 'تصفح القائمة',
+    itemsSubtotal: 'المجموع الفرعي للمنتجات',
+    deliveryCommissionLabel: 'عمولة التوصيل',
+    onlinePayment: 'الدفع الإلكتروني',
+    deliveryAppOptional: 'تطبيق التوصيل (اختياري)',
+    selectDeliveryApp: 'اختر تطبيق التوصيل',
+    none: 'بدون',
+    decreaseEarnings: 'تخفيض الأرباح بمقدار 2 ريال',
+    truck: 'شاحنة',
+    tableHash: 'رقم الطاولة',
+    truckNumber: 'رقم الشاحنة',
+    tableNumberPlaceholder: 'رقم الطاولة',
+    customer: 'العميل',
+    customerInformation: 'معلومات العميل',
+    addCustomerDetails: 'أضف تفاصيل العميل لهذا الطلب (اختياري)',
+    enterCustomerName: 'أدخل اسم العميل',
+    searchByNameOrPhone: 'ابحث بالاسم أو الهاتف...',
+    clear: 'مسح',
+    checkout: 'إتمام الطلب',
+    processing: 'جارٍ المعالجة...',
+    currentOrder: 'الطلب الحالي',
+    off: 'خصم',
+    base: 'السعر الأساسي',
+    isRequired: 'مطلوب',
+    failedToCreateOrder: 'فشل إنشاء الطلب. يرجى التحقق من مستويات المخزون.',
+    loadingMenu: 'جارٍ تحميل القائمة...',
+    viewCart: 'عرض السلة',
+    whatsappPopupBlockedDesc: 'تعذر فتح واتساب. يرجى التحقق من إعدادات حظر النوافذ المنبثقة.',
+    addCustomerDetailsOptional: 'أضف تفاصيل العميل (اختياري)',
+    out: 'غير متوفر',
+    unknown: 'غير معروف',
+    addToCart: 'أضف إلى السلة',
+    completePayment: 'إكمال الدفع',
+    completePaymentDesc: 'أكمل دفعتك لمعالجة الطلب',
+    categoryPizza: 'بيتزا',
+    categoryBurgers: 'برغر',
+    categorySandwiches: 'ساندويتشات',
+    categorySalads: 'سلطات',
+    categoryDrinks: 'مشروبات',
     
     // Branding
     madeBy: 'صنع بواسطة',
@@ -3071,6 +3281,14 @@ export const translations: Record<Language, Translations> = {
     salesOverview: '销售概览',
     topSellingItems: '热销商品',
     recentOrders: '最近订单',
+    todaysSales: '今日销售',
+    activeOrders: '活跃订单',
+    lowStockItems: '库存不足的商品',
+    operatingExpenses: '运营费用',
+    expenseTrendsAndSummary: '每月费用趋势和摘要',
+    noExpenseData: '无费用数据',
+    salesThisWeek: '本周销售',
+    errorLoadingCustomerOrders: '加载客户订单时出错',
     
     // Inventory
     itemName: '商品名称',
@@ -3128,6 +3346,7 @@ export const translations: Record<Language, Translations> = {
     preparing: '准备中',
     ready: '已完成',
     completed: '已完成',
+    delivered: '已送达',
     cancelled: '已取消',
     
     // Financial
@@ -3793,6 +4012,13 @@ export const translations: Record<Language, Translations> = {
     theOrderStatusChanged: '订单状态已更改',
     failedToUpdateOrderStatus: '更新订单状态失败',
     retry: '重试',
+    ordersTracking: '订单跟踪',
+    monitorOrdersRealtime: '实时监控和管理所有订单',
+    completedToday: '今日完成',
+    startPreparing: '开始准备',
+    completeOrder: '完成订单',
+    markAsDelivered: '标记为已送达',
+    orderStatusUpdated: '订单状态已更新',
     
     // POS & Payment Toast Messages
     cartIsEmpty: '购物车为空',
@@ -3904,6 +4130,54 @@ export const translations: Record<Language, Translations> = {
     videoSlide5Subtitle: '实时盈利能力分析 • 需求预测 • 多分店报告',
     videoSlide6Title: '安全可扩展的平台',
     videoSlide6Subtitle: '多租户安全 • 从1家增长到无限分店 • 加入数千家成功企业',
+    
+    // POS Page
+    pointOfSale: '收银系统',
+    cart: '购物车',
+    searchItems: '搜索商品...',
+    dineIn: '堂食',
+    takeout: '外带',
+    deliveryOrder: '外送',
+    noItemsInCart: '购物车中没有商品',
+    browseMenu: '浏览菜单',
+    itemsSubtotal: '商品小计',
+    deliveryCommissionLabel: '配送佣金',
+    onlinePayment: '在线支付',
+    deliveryAppOptional: '配送应用（可选）',
+    selectDeliveryApp: '选择配送应用',
+    none: '无',
+    decreaseEarnings: '收入减少2里亚尔',
+    truck: '货车',
+    tableHash: '桌号',
+    truckNumber: '货车号',
+    tableNumberPlaceholder: '桌号',
+    customer: '顾客',
+    customerInformation: '顾客信息',
+    addCustomerDetails: '为此订单添加顾客详情（可选）',
+    enterCustomerName: '输入顾客姓名',
+    searchByNameOrPhone: '按姓名或电话搜索...',
+    clear: '清除',
+    checkout: '结账',
+    processing: '处理中...',
+    currentOrder: '当前订单',
+    off: '折扣',
+    base: '基价',
+    isRequired: '必填',
+    failedToCreateOrder: '创建订单失败。请检查库存水平。',
+    loadingMenu: '正在加载菜单...',
+    viewCart: '查看购物车',
+    whatsappPopupBlockedDesc: '无法打开WhatsApp。请检查您的弹出窗口拦截设置。',
+    addCustomerDetailsOptional: '添加客户详细信息（可选）',
+    out: '缺货',
+    unknown: '未知',
+    addToCart: '添加到购物车',
+    completePayment: '完成付款',
+    completePaymentDesc: '扫描下面的二维码以通过Moyasar完成付款',
+    categoryPizza: '披萨',
+    categoryBurgers: '汉堡',
+    categorySandwiches: '三明治',
+    categorySalads: '沙拉',
+    categoryDrinks: '饮料',
     
     // Branding
     madeBy: '制造商',
@@ -4038,6 +4312,14 @@ export const translations: Record<Language, Translations> = {
     salesOverview: 'Verkaufsübersicht',
     topSellingItems: 'Meistverkaufte Artikel',
     recentOrders: 'Letzte Bestellungen',
+    todaysSales: 'Heutige Verkäufe',
+    activeOrders: 'Aktive Bestellungen',
+    lowStockItems: 'Artikel mit niedrigem Lagerbestand',
+    operatingExpenses: 'Betriebskosten',
+    expenseTrendsAndSummary: 'Monatliche Kostentrends und Zusammenfassung',
+    noExpenseData: 'Keine Kostendaten verfügbar',
+    salesThisWeek: 'Verkäufe dieser Woche',
+    errorLoadingCustomerOrders: 'Fehler beim Laden der Kundenbestellungen',
     
     // Inventory
     itemName: 'Artikelname',
@@ -4095,6 +4377,7 @@ export const translations: Record<Language, Translations> = {
     preparing: 'In Vorbereitung',
     ready: 'Bereit',
     completed: 'Abgeschlossen',
+    delivered: 'Geliefert',
     cancelled: 'Storniert',
     
     // Financial
@@ -4724,20 +5007,6 @@ export const translations: Record<Language, Translations> = {
     failedToFetchBills: 'Rechnungen konnten nicht abgerufen werden',
     invalidResetLink: 'Ungültiger Reset-Link',
     invalidResetLinkDesc: 'Der Passwort-Reset-Link ist ungültig oder abgelaufen.',
-    
-    // Welcome Video Slides
-    videoSlide1Title: 'Willkommen bei BlindSpot System',
-    videoSlide1Subtitle: 'Komplette Geschäftsverwaltungsplattform • 10-Sprachen-Unterstützung • 24/7 IT-Support-System',
-    videoSlide2Title: 'Intelligentes POS & Kundenverwaltung',
-    videoSlide2Subtitle: 'Bestellungen sofort bearbeiten • Kunden vom POS verwalten • Loyalität und Präferenzen verfolgen',
-    videoSlide3Title: 'Erweiterte Finanztools',
-    videoSlide3Subtitle: 'WhatsApp-Rechnungslieferung • Lieferapp-Provisionsverfolgung • Automatisierte MwSt-Konformität',
-    videoSlide4Title: 'Einfache Mitarbeiterverwaltung',
-    videoSlide4Subtitle: 'Automatische Gehaltsberechnung • Urlaubsverfolgung • Leistungsmanagementsystem',
-    videoSlide5Title: 'Leistungsstarke Analysen & Prognosen',
-    videoSlide5Subtitle: 'Echtzeit-Rentabilitätsanalyse • Nachfrageprognose • Multi-Filial-Berichterstattung',
-    videoSlide6Title: 'Sichere & Skalierbare Plattform',
-    videoSlide6Subtitle: 'Multi-Tenant-Sicherheit • Wachstum von 1 auf unbegrenzte Filialen • Schließen Sie sich Tausenden erfolgreichen Unternehmen an',
     passwordsDontMatch: 'Passwörter stimmen nicht überein',
     passwordsDontMatchDesc: 'Bitte stellen Sie sicher, dass beide Passwörter gleich sind.',
     passwordTooShort: 'Passwort zu kurz',
@@ -4773,6 +5042,13 @@ export const translations: Record<Language, Translations> = {
     theOrderStatusChanged: 'Der Bestellstatus wurde geändert',
     failedToUpdateOrderStatus: 'Bestellstatus konnte nicht aktualisiert werden',
     retry: 'Erneut versuchen',
+    ordersTracking: 'Bestellverfolgung',
+    monitorOrdersRealtime: 'Alle Bestellungen in Echtzeit überwachen und verwalten',
+    completedToday: 'Heute abgeschlossen',
+    startPreparing: 'Vorbereitung beginnen',
+    completeOrder: 'Bestellung abschließen',
+    markAsDelivered: 'Als geliefert markieren',
+    orderStatusUpdated: 'Bestellstatus aktualisiert',
     
     // POS & Payment Toast Messages
     cartIsEmpty: 'Warenkorb ist leer',
@@ -4870,6 +5146,68 @@ export const translations: Record<Language, Translations> = {
     // Additional Pages
     deliveryProfitability: 'Lieferrentabilität',
     salesComparison: 'Verkaufsvergleich',
+    
+    // Welcome Video Slides
+    videoSlide1Title: 'Willkommen beim BlindSpot-System',
+    videoSlide1Subtitle: 'Vollständige Geschäftsverwaltungsplattform • Unterstützung für 10 Sprachen • 24/7-IT-Support-System',
+    videoSlide2Title: 'Intelligente POS & Kundenverwaltung',
+    videoSlide2Subtitle: 'Bestellungen sofort bearbeiten • Kunden vom POS aus verwalten • Treue und Präferenzen verfolgen',
+    videoSlide3Title: 'Erweiterte Finanztools',
+    videoSlide3Subtitle: 'WhatsApp-Rechnungszustellung • Tracking der Lieferapp-Provision • Automatisierte MwSt-Konformität',
+    videoSlide4Title: 'Mitarbeiterverwaltung leicht gemacht',
+    videoSlide4Subtitle: 'Automatisierte Gehaltsabrechnungen • Urlaubsverfolgung • Leistungsmanagementsystem',
+    videoSlide5Title: 'Leistungsstarke Analysen und Prognosen',
+    videoSlide5Subtitle: 'Echtzeit-Rentabilitätsanalyse • Bedarfsprognose • Multi-Filial-Berichterstattung',
+    videoSlide6Title: 'Sichere und skalierbare Plattform',
+    videoSlide6Subtitle: 'Mehrmandantensicherheit • Wachstum von 1 auf unbegrenzte Filialen • Schließen Sie sich Tausenden erfolgreicher Unternehmen an',
+    
+    // POS Page
+    pointOfSale: 'Kassensystem',
+    cart: 'Warenkorb',
+    searchItems: 'Artikel suchen...',
+    dineIn: 'Im Restaurant',
+    takeout: 'Zum Mitnehmen',
+    deliveryOrder: 'Lieferung',
+    noItemsInCart: 'Keine Artikel im Warenkorb',
+    browseMenu: 'Menü durchsuchen',
+    itemsSubtotal: 'Zwischensumme Artikel',
+    deliveryCommissionLabel: 'Lieferprovision',
+    onlinePayment: 'Online-Zahlung',
+    deliveryAppOptional: 'Liefer-App (Optional)',
+    selectDeliveryApp: 'Liefer-App auswählen',
+    none: 'Keine',
+    decreaseEarnings: 'Einnahmen um 2 SAR reduzieren',
+    truck: 'LKW',
+    tableHash: 'Tisch #',
+    truckNumber: 'LKW-Nummer',
+    tableNumberPlaceholder: 'Tischnummer',
+    customer: 'Kunde',
+    customerInformation: 'Kundeninformationen',
+    addCustomerDetails: 'Kundendetails für diese Bestellung hinzufügen (optional)',
+    enterCustomerName: 'Kundennamen eingeben',
+    searchByNameOrPhone: 'Nach Name oder Telefon suchen...',
+    clear: 'Löschen',
+    checkout: 'Zur Kasse',
+    processing: 'Wird verarbeitet...',
+    currentOrder: 'Aktuelle Bestellung',
+    off: 'RABATT',
+    base: 'Basis',
+    isRequired: 'ist erforderlich',
+    failedToCreateOrder: 'Bestellung konnte nicht erstellt werden. Bitte überprüfen Sie die Lagerbestände.',
+    loadingMenu: 'Menü wird geladen...',
+    viewCart: 'Warenkorb anzeigen',
+    whatsappPopupBlockedDesc: 'WhatsApp konnte nicht geöffnet werden. Bitte überprüfen Sie Ihre Popup-Blocker-Einstellungen.',
+    addCustomerDetailsOptional: 'Kundendetails hinzufügen (optional)',
+    out: 'Ausverkauft',
+    unknown: 'Unbekannt',
+    addToCart: 'In den Warenkorb',
+    completePayment: 'Zahlung abschließen',
+    completePaymentDesc: 'Scannen Sie den QR-Code unten, um die Zahlung mit Moyasar abzuschließen',
+    categoryPizza: 'Pizza',
+    categoryBurgers: 'Burger',
+    categorySandwiches: 'Sandwiches',
+    categorySalads: 'Salate',
+    categoryDrinks: 'Getränke',
     
     // Branding
     madeBy: 'Hergestellt von',
@@ -5004,6 +5342,14 @@ export const translations: Record<Language, Translations> = {
     salesOverview: 'बिक्री अवलोकन',
     topSellingItems: 'सबसे ज्यादा बिकने वाले आइटम',
     recentOrders: 'हाल के ऑर्डर',
+    todaysSales: 'आज की बिक्री',
+    activeOrders: 'सक्रिय ऑर्डर',
+    lowStockItems: 'कम स्टॉक वाले आइटम',
+    operatingExpenses: 'परिचालन खर्च',
+    expenseTrendsAndSummary: 'मासिक खर्च के रुझान और सारांश',
+    noExpenseData: 'कोई खर्च डेटा उपलब्ध नहीं',
+    salesThisWeek: 'इस सप्ताह की बिक्री',
+    errorLoadingCustomerOrders: 'ग्राहक ऑर्डर लोड करने में त्रुटि',
     
     // Inventory
     itemName: 'आइटम का नाम',
@@ -5061,6 +5407,7 @@ export const translations: Record<Language, Translations> = {
     preparing: 'तैयारी में',
     ready: 'तैयार',
     completed: 'पूर्ण',
+    delivered: 'वितरित',
     cancelled: 'रद्द',
     
     // Financial
@@ -5740,6 +6087,13 @@ export const translations: Record<Language, Translations> = {
     theOrderStatusChanged: 'ऑर्डर स्थिति बदल गई है',
     failedToUpdateOrderStatus: 'ऑर्डर स्थिति अपडेट करने में विफल',
     retry: 'पुनः प्रयास करें',
+    ordersTracking: 'ऑर्डर ट्रैकिंग',
+    monitorOrdersRealtime: 'सभी ऑर्डरों की निगरानी करें और वास्तविक समय में प्रबंधित करें',
+    completedToday: 'आज पूर्ण',
+    startPreparing: 'तैयारी शुरू करें',
+    completeOrder: 'ऑर्डर पूर्ण करें',
+    markAsDelivered: 'डिलीवर के रूप में चिह्नित करें',
+    orderStatusUpdated: 'ऑर्डर स्थिति अपडेट की गई',
     
     // POS & Payment Toast Messages
     cartIsEmpty: 'कार्ट खाली है',
@@ -5837,6 +6191,54 @@ export const translations: Record<Language, Translations> = {
     // Additional Pages
     deliveryProfitability: 'डिलीवरी लाभप्रदता',
     salesComparison: 'बिक्री तुलना',
+    
+    // POS Page
+    pointOfSale: 'बिक्री केंद्र',
+    cart: 'कार्ट',
+    searchItems: 'आइटम खोजें...',
+    dineIn: 'रेस्तरां में भोजन',
+    takeout: 'टेकआउट',
+    deliveryOrder: 'डिलीवरी',
+    noItemsInCart: 'कार्ट में कोई आइटम नहीं',
+    browseMenu: 'मेनू ब्राउज़ करें',
+    itemsSubtotal: 'आइटम उपयोग',
+    deliveryCommissionLabel: 'डिलीवरी कमीशन',
+    onlinePayment: 'ऑनलाइन भुगतान',
+    deliveryAppOptional: 'डिलीवरी ऐप (वैकल्पिक)',
+    selectDeliveryApp: 'डिलीवरी ऐप चुनें',
+    none: 'कोई नहीं',
+    decreaseEarnings: 'कमाई में 2 रियाल की कमी',
+    truck: 'ट्रक',
+    tableHash: 'टेबल नंबर',
+    truckNumber: 'ट्रक नंबर',
+    tableNumberPlaceholder: 'टेबल नंबर',
+    customer: 'ग्राहक',
+    customerInformation: 'ग्राहक जानकारी',
+    addCustomerDetails: 'इस ऑर्डर के लिए ग्राहक विवरण जोड़ें (वैकल्पिक)',
+    enterCustomerName: 'ग्राहक का नाम दर्ज करें',
+    searchByNameOrPhone: 'नाम या फोन द्वारा खोजें...',
+    clear: 'साफ करें',
+    checkout: 'चेकआउट',
+    processing: 'प्रसंस्करण...',
+    currentOrder: 'वर्तमान ऑर्डर',
+    off: 'छूट',
+    base: 'आधार मूल्य',
+    isRequired: 'आवश्यक है',
+    failedToCreateOrder: 'ऑर्डर बनाने में विफल। कृपया इन्वेंटरी स्तर जांचें।',
+    loadingMenu: 'मेनू लोड हो रहा है...',
+    viewCart: 'कार्ट देखें',
+    whatsappPopupBlockedDesc: 'व्हाट्सएप नहीं खोल सका। कृपया अपनी पॉपअप ब्लॉकर सेटिंग्स जांचें।',
+    addCustomerDetailsOptional: 'ग्राहक विवरण जोड़ें (वैकल्पिक)',
+    out: 'स्टॉक में नहीं',
+    unknown: 'अज्ञात',
+    addToCart: 'कार्ट में जोड़ें',
+    completePayment: 'भुगतान पूर्ण करें',
+    completePaymentDesc: 'Moyasar के साथ भुगतान पूर्ण करने के लिए नीचे दिए गए QR कोड को स्कैन करें',
+    categoryPizza: 'पिज्जा',
+    categoryBurgers: 'बर्गर',
+    categorySandwiches: 'सैंडविच',
+    categorySalads: 'सलाद',
+    categoryDrinks: 'पेय',
     
     // Branding
     madeBy: 'द्वारा निर्मित',
@@ -5971,6 +6373,14 @@ export const translations: Record<Language, Translations> = {
     salesOverview: 'فروخت کا جائزہ',
     topSellingItems: 'سب سے زیادہ فروخت',
     recentOrders: 'حالیہ آرڈرز',
+    todaysSales: 'آج کی فروخت',
+    activeOrders: 'فعال آرڈرز',
+    lowStockItems: 'کم اسٹاک آئٹمز',
+    operatingExpenses: 'آپریٹنگ اخراجات',
+    expenseTrendsAndSummary: 'ماہانہ اخراجات کے رجحانات اور خلاصہ',
+    noExpenseData: 'کوئی اخراجات کا ڈیٹا دستیاب نہیں',
+    salesThisWeek: 'اس ہفتے کی فروخت',
+    errorLoadingCustomerOrders: 'کسٹمر آرڈرز لوڈ کرنے میں خرابی',
     
     // Inventory
     itemName: 'آئٹم کا نام',
@@ -6028,6 +6438,7 @@ export const translations: Record<Language, Translations> = {
     preparing: 'تیاری میں',
     ready: 'تیار',
     completed: 'مکمل',
+    delivered: 'ڈیلیور ہو گیا',
     cancelled: 'منسوخ',
     
     // Financial
@@ -6707,6 +7118,13 @@ export const translations: Record<Language, Translations> = {
     theOrderStatusChanged: 'آرڈر کی حیثیت تبدیل ہو گئی ہے',
     failedToUpdateOrderStatus: 'آرڈر کی حیثیت اپ ڈیٹ کرنے میں ناکام',
     retry: 'دوبارہ کوشش کریں',
+    ordersTracking: 'آرڈر ٹریکنگ',
+    monitorOrdersRealtime: 'حقیقی وقت میں تمام آرڈرز کی نگرانی اور انتظام کریں',
+    completedToday: 'آج مکمل',
+    startPreparing: 'تیاری شروع کریں',
+    completeOrder: 'آرڈر مکمل کریں',
+    markAsDelivered: 'ڈیلیور کے طور پر نشان لگائیں',
+    orderStatusUpdated: 'آرڈر کی حیثیت اپ ڈیٹ ہو گئی',
     
     // POS & Payment Toast Messages
     cartIsEmpty: 'کارٹ خالی ہے',
@@ -6804,6 +7222,54 @@ export const translations: Record<Language, Translations> = {
     // Additional Pages
     deliveryProfitability: 'ڈیلیوری منافع',
     salesComparison: 'فروخت کا موازنہ',
+    
+    // POS Page
+    pointOfSale: 'فروخت کا مقام',
+    cart: 'کارٹ',
+    searchItems: 'اشیاء تلاش کریں...',
+    dineIn: 'ریسٹورنٹ میں کھانا',
+    takeout: 'ٹیک آؤٹ',
+    deliveryOrder: 'ڈیلیوری',
+    noItemsInCart: 'کارٹ میں کوئی اشیاء نہیں',
+    browseMenu: 'مینو براؤز کریں',
+    itemsSubtotal: 'اشیاء کا ذیلی کل',
+    deliveryCommissionLabel: 'ڈیلیوری کمیشن',
+    onlinePayment: 'آن لائن ادائیگی',
+    deliveryAppOptional: 'ڈیلیوری ایپ (اختیاری)',
+    selectDeliveryApp: 'ڈیلیوری ایپ منتخب کریں',
+    none: 'کوئی نہیں',
+    decreaseEarnings: 'آمدنی میں 2 ریال کی کمی',
+    truck: 'ٹرک',
+    tableHash: 'میز نمبر',
+    truckNumber: 'ٹرک نمبر',
+    tableNumberPlaceholder: 'میز نمبر',
+    customer: 'گاہک',
+    customerInformation: 'گاہک کی معلومات',
+    addCustomerDetails: 'اس آرڈر کے لیے گاہک کی تفصیلات شامل کریں (اختیاری)',
+    enterCustomerName: 'گاہک کا نام درج کریں',
+    searchByNameOrPhone: 'نام یا فون سے تلاش کریں...',
+    clear: 'صاف کریں',
+    checkout: 'چیک آؤٹ',
+    processing: 'پروسیسنگ...',
+    currentOrder: 'موجودہ آرڈر',
+    off: 'رعایت',
+    base: 'بنیادی قیمت',
+    isRequired: 'ضروری ہے',
+    failedToCreateOrder: 'آرڈر بنانے میں ناکامی۔ براہ کرم انوینٹری کی سطح چیک کریں۔',
+    loadingMenu: 'مینو لوڈ ہو رہا ہے...',
+    viewCart: 'کارٹ دیکھیں',
+    whatsappPopupBlockedDesc: 'واٹس ایپ نہیں کھل سکا۔ براہ کرم اپنی پاپ اپ بلاکر سیٹنگز چیک کریں۔',
+    addCustomerDetailsOptional: 'صارف کی تفصیلات شامل کریں (اختیاری)',
+    out: 'اسٹاک میں نہیں',
+    unknown: 'نامعلوم',
+    addToCart: 'ٹوکری میں شامل کریں',
+    completePayment: 'ادائیگی مکمل کریں',
+    completePaymentDesc: 'Moyasar کے ساتھ ادائیگی مکمل کرنے کے لیے نیچے QR کوڈ اسکین کریں',
+    categoryPizza: 'پیزا',
+    categoryBurgers: 'برگر',
+    categorySandwiches: 'سینڈوچ',
+    categorySalads: 'سلاد',
+    categoryDrinks: 'مشروبات',
     
     // Branding
     madeBy: 'بنایا گیا',
@@ -6938,6 +7404,14 @@ export const translations: Record<Language, Translations> = {
     salesOverview: 'বিক্রয় সংক্ষিপ্ত বিবরণ',
     topSellingItems: 'সর্বাধিক বিক্রিত আইটেম',
     recentOrders: 'সাম্প্রতিক অর্ডার',
+    todaysSales: 'আজকের বিক্রয়',
+    activeOrders: 'সক্রিয় অর্ডার',
+    lowStockItems: 'কম স্টক আইটেম',
+    operatingExpenses: 'পরিচালনা খরচ',
+    expenseTrendsAndSummary: 'মাসিক খরচ প্রবণতা এবং সারসংক্ষেপ',
+    noExpenseData: 'কোনো খরচ ডেটা নেই',
+    salesThisWeek: 'এই সপ্তাহের বিক্রয়',
+    errorLoadingCustomerOrders: 'গ্রাহক অর্ডার লোড করতে ত্রুটি',
     
     // Inventory
     itemName: 'আইটেমের নাম',
@@ -6995,6 +7469,7 @@ export const translations: Record<Language, Translations> = {
     preparing: 'প্রস্তুতি চলছে',
     ready: 'প্রস্তুত',
     completed: 'সম্পন্ন',
+    delivered: 'বিতরণ করা হয়েছে',
     cancelled: 'বাতিল',
     
     // Financial
@@ -7674,6 +8149,14 @@ export const translations: Record<Language, Translations> = {
     theOrderStatusChanged: 'অর্ডারের স্থিতি পরিবর্তিত হয়েছে',
     failedToUpdateOrderStatus: 'অর্ডার স্থিতি আপডেট করতে ব্যর্থ',
     retry: 'পুনরায় চেষ্টা করুন',
+    ordersTracking: 'অর্ডার ট্র্যাকিং',
+    monitorOrdersRealtime: 'রিয়েল-টাইমে সমস্ত অর্ডার নিরীক্ষণ এবং পরিচালনা করুন',
+    completedToday: 'আজ সম্পন্ন',
+    startPreparing: 'প্রস্তুতি শুরু করুন',
+    completeOrder: 'অর্ডার সম্পূর্ণ করুন',
+    markAsDelivered: 'ডেলিভার হিসাবে চিহ্নিত করুন',
+    orderStatusUpdated: 'অর্ডার স্থিতি আপডেট হয়েছে',
+    retry: 'পুনরায় চেষ্টা করুন',
     
     // POS & Payment Toast Messages
     cartIsEmpty: 'কার্ট খালি',
@@ -7771,6 +8254,54 @@ export const translations: Record<Language, Translations> = {
     // Additional Pages
     deliveryProfitability: 'ডেলিভারি লাভজনকতা',
     salesComparison: 'বিক্রয় তুলনা',
+    
+    // POS Page
+    pointOfSale: 'বিক্রয় কেন্দ্র',
+    cart: 'কার্ট',
+    searchItems: 'আইটেম খুঁজুন...',
+    dineIn: 'রেস্তোরাঁয় খাবার',
+    takeout: 'টেকআউট',
+    deliveryOrder: 'ডেলিভারি',
+    noItemsInCart: 'কার্টে কোনো আইটেম নেই',
+    browseMenu: 'মেনু ব্রাউজ করুন',
+    itemsSubtotal: 'আইটেম সাবটোটাল',
+    deliveryCommissionLabel: 'ডেলিভারি কমিশন',
+    onlinePayment: 'অনলাইন পেমেন্ট',
+    deliveryAppOptional: 'ডেলিভারি অ্যাপ (ঐচ্ছিক)',
+    selectDeliveryApp: 'ডেলিভারি অ্যাপ নির্বাচন করুন',
+    none: 'কোনোটি নয়',
+    decreaseEarnings: 'আয় ২ রিয়াল কমান',
+    truck: 'ট্রাক',
+    tableHash: 'টেবিল নম্বর',
+    truckNumber: 'ট্রাক নম্বর',
+    tableNumberPlaceholder: 'টেবিল নম্বর',
+    customer: 'গ্রাহক',
+    customerInformation: 'গ্রাহক তথ্য',
+    addCustomerDetails: 'এই অর্ডারের জন্য গ্রাহক বিবরণ যোগ করুন (ঐচ্ছিক)',
+    enterCustomerName: 'গ্রাহকের নাম লিখুন',
+    searchByNameOrPhone: 'নাম বা ফোন দ্বারা খুঁজুন...',
+    clear: 'পরিষ্কার করুন',
+    checkout: 'চেকআউট',
+    processing: 'প্রক্রিয়াকরণ...',
+    currentOrder: 'বর্তমান অর্ডার',
+    off: 'ছাড়',
+    base: 'মূল মূল্য',
+    isRequired: 'প্রয়োজন',
+    failedToCreateOrder: 'অর্ডার তৈরি করতে ব্যর্থ। অনুগ্রহ করে ইনভেন্টরি স্তর পরীক্ষা করুন।',
+    loadingMenu: 'মেনু লোড হচ্ছে...',
+    viewCart: 'কার্ট দেখুন',
+    whatsappPopupBlockedDesc: 'হোয়াটসঅ্যাপ খুলতে পারেনি। অনুগ্রহ করে আপনার পপআপ ব্লকার সেটিংস পরীক্ষা করুন।',
+    addCustomerDetailsOptional: 'গ্রাহক বিবরণ যোগ করুন (ঐচ্ছিক)',
+    out: 'স্টক শেষ',
+    unknown: 'অজানা',
+    addToCart: 'কার্টে যোগ করুন',
+    completePayment: 'পেমেন্ট সম্পূর্ণ করুন',
+    completePaymentDesc: 'Moyasar দিয়ে পেমেন্ট সম্পূর্ণ করতে নীচের QR কোড স্ক্যান করুন',
+    categoryPizza: 'পিজা',
+    categoryBurgers: 'বার্গার',
+    categorySandwiches: 'স্যান্ডউইচ',
+    categorySalads: 'সালাদ',
+    categoryDrinks: 'পানীয়',
     
     // Branding
     madeBy: 'তৈরি করেছেন',
@@ -7886,6 +8417,14 @@ export const translations: Record<Language, Translations> = {
     salesOverview: "Sales Overview",
     topSellingItems: "Articoli Più Venduti",
     recentOrders: "Ordini Recenti",
+    todaysSales: 'Vendite di Oggi',
+    activeOrders: 'Ordini Attivi',
+    lowStockItems: 'Articoli con Scorte Basse',
+    operatingExpenses: 'Spese Operative',
+    expenseTrendsAndSummary: 'Tendenze delle spese mensili e riepilogo',
+    noExpenseData: 'Nessun dato di spesa disponibile',
+    salesThisWeek: 'Vendite di Questa Settimana',
+    errorLoadingCustomerOrders: 'Errore nel caricamento degli ordini dei clienti',
     itemName: "Nome Articolo",
     category: "Category",
     quantity: "Quantity",
@@ -7933,6 +8472,7 @@ export const translations: Record<Language, Translations> = {
     preparing: "Preparing",
     ready: "Pronto",
     completed: "Completed",
+    delivered: "Consegnato",
     cancelled: "Cancelled",
     revenue: "Ricavi",
     expenses: "Expenses",
@@ -8564,6 +9104,14 @@ export const translations: Record<Language, Translations> = {
     theOrderStatusChanged: "Lo stato dell'ordine è cambiato",
     failedToUpdateOrderStatus: "Aggiornamento stato ordine fallito",
     retry: "Riprova",
+    ordersTracking: "Tracciamento Ordini",
+    monitorOrdersRealtime: "Monitora e gestisci tutti gli ordini in tempo reale",
+    completedToday: "Completati Oggi",
+    startPreparing: "Inizia Preparazione",
+    completeOrder: "Completa Ordine",
+    markAsDelivered: "Segna come Consegnato",
+    orderStatusUpdated: "Stato ordine aggiornato",
+    retry: "Riprova",
     
     // POS & Payment Toast Messages
     cartIsEmpty: "Carrello Vuoto",
@@ -8675,6 +9223,54 @@ export const translations: Record<Language, Translations> = {
     videoSlide5Subtitle: "Analisi redditività in tempo reale • Previsione domanda • Reportistica multi-filiale",
     videoSlide6Title: "Piattaforma Sicura e Scalabile",
     videoSlide6Subtitle: "Sicurezza multi-tenant • Crescita da 1 a filiali illimitate • Unisciti a migliaia di aziende di successo",
+    
+    // POS Page
+    pointOfSale: "Punto Vendita",
+    cart: "Carrello",
+    searchItems: "Cerca articoli...",
+    dineIn: "Sul Posto",
+    takeout: "Da Asporto",
+    deliveryOrder: "Consegna",
+    noItemsInCart: "Nessun articolo nel carrello",
+    browseMenu: "Sfoglia Menu",
+    itemsSubtotal: "Subtotale Articoli",
+    deliveryCommissionLabel: "Commissione Consegna",
+    onlinePayment: "Pagamento Online",
+    deliveryAppOptional: "App di Consegna (Opzionale)",
+    selectDeliveryApp: "Seleziona app di consegna",
+    none: "Nessuno",
+    decreaseEarnings: "Diminuisci guadagni di 2 SAR",
+    truck: "Camion",
+    tableHash: "Tavolo #",
+    truckNumber: "Numero camion",
+    tableNumberPlaceholder: "Numero tavolo",
+    customer: "Cliente",
+    customerInformation: "Informazioni Cliente",
+    addCustomerDetails: "Aggiungi dettagli cliente per questo ordine (opzionale)",
+    enterCustomerName: "Inserisci nome cliente",
+    searchByNameOrPhone: "Cerca per nome o telefono...",
+    clear: "Cancella",
+    checkout: "Checkout",
+    processing: "Elaborazione...",
+    currentOrder: "Ordine Corrente",
+    off: "SCONTO",
+    base: "base",
+    isRequired: "è richiesto",
+    failedToCreateOrder: "Creazione ordine fallita. Controlla i livelli di inventario.",
+    loadingMenu: "Caricamento menu...",
+    viewCart: "Visualizza Carrello",
+    whatsappPopupBlockedDesc: "Impossibile aprire WhatsApp. Controlla le impostazioni del blocco popup.",
+    addCustomerDetailsOptional: "Aggiungi dettagli cliente (facoltativo)",
+    out: "Esaurito",
+    unknown: "Sconosciuto",
+    addToCart: "Aggiungi al carrello",
+    completePayment: "Completa pagamento",
+    completePaymentDesc: "Scansiona il codice QR qui sotto per completare il pagamento con Moyasar",
+    categoryPizza: "Pizza",
+    categoryBurgers: "Hamburger",
+    categorySandwiches: "Panini",
+    categorySalads: "Insalate",
+    categoryDrinks: "Bevande",
     
     // Branding
     madeBy: "Realizzato da",
@@ -8790,6 +9386,14 @@ export const translations: Record<Language, Translations> = {
     salesOverview: "Sales Overview",
     topSellingItems: "Artículos Más Vendidos",
     recentOrders: "Pedidos Recientes",
+    todaysSales: 'Ventas de Hoy',
+    activeOrders: 'Pedidos Activos',
+    lowStockItems: 'Artículos con Stock Bajo',
+    operatingExpenses: 'Gastos Operativos',
+    expenseTrendsAndSummary: 'Tendencias de gastos mensuales y resumen',
+    noExpenseData: 'No hay datos de gastos disponibles',
+    salesThisWeek: 'Ventas de Esta Semana',
+    errorLoadingCustomerOrders: 'Error al cargar pedidos de clientes',
     itemName: "Nombre del Artículo",
     category: "Categoría",
     quantity: "Cantidad",
@@ -8837,6 +9441,7 @@ export const translations: Record<Language, Translations> = {
     preparing: "Preparing",
     ready: "Listo",
     completed: "Completado",
+    delivered: "Entregado",
     cancelled: "Cancelado",
     revenue: "Ingresos",
     expenses: "Expenses",
@@ -9467,6 +10072,14 @@ export const translations: Record<Language, Translations> = {
     theOrderStatusChanged: "El estado del pedido ha cambiado",
     failedToUpdateOrderStatus: "Fallo al actualizar estado del pedido",
     retry: "Reintentar",
+    ordersTracking: "Seguimiento de Pedidos",
+    monitorOrdersRealtime: "Monitorear y gestionar todos los pedidos en tiempo real",
+    completedToday: "Completados Hoy",
+    startPreparing: "Iniciar Preparación",
+    completeOrder: "Completar Pedido",
+    markAsDelivered: "Marcar como Entregado",
+    orderStatusUpdated: "Estado del pedido actualizado",
+    retry: "Reintentar",
     
     // POS & Payment Toast Messages
     cartIsEmpty: "Carrito Vacío",
@@ -9578,6 +10191,54 @@ export const translations: Record<Language, Translations> = {
     videoSlide5Subtitle: "Análisis de rentabilidad en tiempo real • Previsión de demanda • Informes multi-sucursal",
     videoSlide6Title: "Plataforma Segura y Escalable",
     videoSlide6Subtitle: "Seguridad multi-inquilino • Crecimiento de 1 a sucursales ilimitadas • Únete a miles de negocios exitosos",
+    
+    // POS Page
+    pointOfSale: "Punto de Venta",
+    cart: "Carrito",
+    searchItems: "Buscar artículos...",
+    dineIn: "Para Comer Aquí",
+    takeout: "Para Llevar",
+    deliveryOrder: "Entrega",
+    noItemsInCart: "No hay artículos en el carrito",
+    browseMenu: "Explorar Menú",
+    itemsSubtotal: "Subtotal de Artículos",
+    deliveryCommissionLabel: "Comisión de Entrega",
+    onlinePayment: "Pago en Línea",
+    deliveryAppOptional: "App de Entrega (Opcional)",
+    selectDeliveryApp: "Seleccionar app de entrega",
+    none: "Ninguno",
+    decreaseEarnings: "Disminuir ganancias en 2 SAR",
+    truck: "Camión",
+    tableHash: "Mesa #",
+    truckNumber: "Número de camión",
+    tableNumberPlaceholder: "Número de mesa",
+    customer: "Cliente",
+    customerInformation: "Información del Cliente",
+    addCustomerDetails: "Agregar detalles del cliente para este pedido (opcional)",
+    enterCustomerName: "Ingresar nombre del cliente",
+    searchByNameOrPhone: "Buscar por nombre o teléfono...",
+    clear: "Limpiar",
+    checkout: "Pagar",
+    processing: "Procesando...",
+    currentOrder: "Pedido Actual",
+    off: "DESCUENTO",
+    base: "base",
+    isRequired: "es requerido",
+    failedToCreateOrder: "Error al crear pedido. Verifica los niveles de inventario.",
+    loadingMenu: "Cargando menú...",
+    viewCart: "Ver Carrito",
+    whatsappPopupBlockedDesc: "No se pudo abrir WhatsApp. Verifica la configuración del bloqueador de ventanas emergentes.",
+    addCustomerDetailsOptional: "Agregar detalles del cliente (opcional)",
+    out: "Agotado",
+    unknown: "Desconocido",
+    addToCart: "Agregar al carrito",
+    completePayment: "Completar pago",
+    completePaymentDesc: "Escanee el código QR a continuación para completar el pago con Moyasar",
+    categoryPizza: "Pizza",
+    categoryBurgers: "Hamburguesas",
+    categorySandwiches: "Sándwiches",
+    categorySalads: "Ensaladas",
+    categoryDrinks: "Bebidas",
     
     // Branding
     madeBy: "Hecho por",
@@ -9693,6 +10354,14 @@ export const translations: Record<Language, Translations> = {
     salesOverview: "Sales Overview",
     topSellingItems: "Pinakamabentang Produkto",
     recentOrders: "Kamakailang Mga Order",
+    todaysSales: 'Benta Ngayong Araw',
+    activeOrders: 'Mga Aktibong Order',
+    lowStockItems: 'Mga Item na Mababa ang Stock',
+    operatingExpenses: 'Mga Gastos sa Operasyon',
+    expenseTrendsAndSummary: 'Mga uso ng gastos buwanang at buod',
+    noExpenseData: 'Walang available na datos ng gastos',
+    salesThisWeek: 'Benta sa Linggong Ito',
+    errorLoadingCustomerOrders: 'May error sa paglo-load ng mga order ng customer',
     itemName: "Pangalan ng Item",
     category: "Kategorya",
     quantity: "Dami",
@@ -9740,6 +10409,7 @@ export const translations: Record<Language, Translations> = {
     preparing: "Preparing",
     ready: "Handa Na",
     completed: "Nakumpleto",
+    delivered: "Naideliver",
     cancelled: "Kinansela",
     revenue: "Kita",
     expenses: "Expenses",
@@ -10371,6 +11041,14 @@ export const translations: Record<Language, Translations> = {
     theOrderStatusChanged: "Nabago ang katayuan ng order",
     failedToUpdateOrderStatus: "Nabigo ang pag-update ng katayuan ng order",
     retry: "Subukan Muli",
+    ordersTracking: "Order Tracking",
+    monitorOrdersRealtime: "Subaybayan at pamahalaan ang lahat ng order sa real-time",
+    completedToday: "Natapos Ngayong Araw",
+    startPreparing: "Simulan ang Paghahanda",
+    completeOrder: "Kumpletuhin ang Order",
+    markAsDelivered: "Markahan bilang Naideliver",
+    orderStatusUpdated: "Na-update ang katayuan ng order",
+    retry: "Subukan Muli",
     
     // POS & Payment Toast Messages
     cartIsEmpty: "Walang Laman ang Cart",
@@ -10482,6 +11160,54 @@ export const translations: Record<Language, Translations> = {
     videoSlide5Subtitle: "Real-time profitability analysis • Demand forecasting • Multi-branch reporting",
     videoSlide6Title: "Secure at Scalable Platform",
     videoSlide6Subtitle: "Multi-tenant security • Lumalaki mula 1 hanggang walang hangganan sangay • Sumali sa libu-libong matagumpay na negosyo",
+    
+    // POS Page
+    pointOfSale: "Punto ng Benta",
+    cart: "Cart",
+    searchItems: "Maghanap ng mga item...",
+    dineIn: "Kain Dito",
+    takeout: "Takeout",
+    deliveryOrder: "Delivery",
+    noItemsInCart: "Walang mga item sa cart",
+    browseMenu: "Tingnan ang Menu",
+    itemsSubtotal: "Kabuuan ng Mga Item",
+    deliveryCommissionLabel: "Komisyon ng Delivery",
+    onlinePayment: "Online Payment",
+    deliveryAppOptional: "Delivery App (Opsyonal)",
+    selectDeliveryApp: "Pumili ng delivery app",
+    none: "Wala",
+    decreaseEarnings: "Bawasan ang kita ng 2 SAR",
+    truck: "Truck",
+    tableHash: "Mesa #",
+    truckNumber: "Numero ng truck",
+    tableNumberPlaceholder: "Numero ng mesa",
+    customer: "Customer",
+    customerInformation: "Impormasyon ng Customer",
+    addCustomerDetails: "Magdagdag ng detalye ng customer para sa order na ito (opsyonal)",
+    enterCustomerName: "Ilagay ang pangalan ng customer",
+    searchByNameOrPhone: "Maghanap gamit ang pangalan o telepono...",
+    clear: "I-clear",
+    checkout: "Checkout",
+    processing: "Pinoproseso...",
+    currentOrder: "Kasalukuyang Order",
+    off: "DISKWENTO",
+    base: "base",
+    isRequired: "ay kailangan",
+    failedToCreateOrder: "Nabigo ang paggawa ng order. Pakisuri ang inventory levels.",
+    loadingMenu: "Naglo-load ang menu...",
+    viewCart: "Tingnan ang Cart",
+    whatsappPopupBlockedDesc: "Hindi mabuksan ang WhatsApp. Pakisuri ang iyong popup blocker settings.",
+    addCustomerDetailsOptional: "Magdagdag ng detalye ng customer (opsyonal)",
+    out: "Ubos na",
+    unknown: "Hindi kilala",
+    addToCart: "Idagdag sa cart",
+    completePayment: "Kumpletuhin ang pagbabayad",
+    completePaymentDesc: "I-scan ang QR code sa ibaba upang makumpleto ang pagbabayad gamit ang Moyasar",
+    categoryPizza: "Pizza",
+    categoryBurgers: "Mga Burger",
+    categorySandwiches: "Mga Sandwich",
+    categorySalads: "Mga Salad",
+    categoryDrinks: "Mga Inumin",
     
     // Branding
     madeBy: "Ginawa ni",
