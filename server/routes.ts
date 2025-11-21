@@ -1913,7 +1913,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         req.session.user = {
           id: user.id,
           username: user.username,
-          restaurantId: user.restaurantId || '', // CRITICAL: Multi-tenant isolation (empty string for IT accounts)
+          restaurantId: user.restaurantId || undefined, // CRITICAL: Keep null/undefined for IT accounts, not empty string
           role: user.role,
           email: user.email || '',
           fullName: user.fullName,
