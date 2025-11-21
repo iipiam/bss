@@ -15,9 +15,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertSalarySchema, insertShopBillSchema, type Salary, type ShopBill } from "@shared/schema";
 import { z } from "zod";
-import { Plus, Pencil, Trash2, DollarSign, FileText, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, DollarSign, FileText, Search, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 const salaryFormSchema = z.object({
   employeeName: z.string().min(1, "Employee name is required"),
@@ -49,6 +50,11 @@ export default function Shop() {
   const [editingBill, setEditingBill] = useState<ShopBill | null>(null);
   const [salarySearch, setSalarySearch] = useState("");
   const [billSearch, setBillSearch] = useState("");
+  const [generateSalariesDialogOpen, setGenerateSalariesDialogOpen] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
 
   const { data: salaries, isLoading: salariesLoading } = useQuery<Salary[]>({
     queryKey: ["/api/shop/salaries"],
@@ -199,6 +205,28 @@ export default function Shop() {
     },
     onError: () => {
       toast({ title: t.billError, variant: "destructive" });
+    },
+  });
+
+  const generateSalariesMutation = useMutation<{ created: number; skipped: number }, Error, string>({
+    mutationFn: async (paymentMonth: string) => {
+      const response = await apiRequest("POST", "/api/shop/bills/generate-salaries", { paymentMonth });
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/bills"] });
+      setGenerateSalariesDialogOpen(false);
+      toast({ 
+        title: `Successfully generated ${data.created} salary bill${data.created !== 1 ? 's' : ''}`,
+        description: data.skipped > 0 ? `${data.skipped} employee${data.skipped !== 1 ? 's' : ''} skipped (already have bills or no salary set)` : undefined,
+      });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Failed to generate salary bills",
+        description: error.message || "An error occurred",
+        variant: "destructive" 
+      });
     },
   });
 
@@ -547,13 +575,60 @@ export default function Shop() {
                   <CardTitle>{t.shopBills}</CardTitle>
                   <CardDescription>{t.manageBills}</CardDescription>
                 </div>
-                <Dialog open={billDialogOpen} onOpenChange={setBillDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button onClick={() => setEditingBill(null)} data-testid="button-add-bill">
-                      <Plus className="w-4 h-4 mr-2" />
-                      {t.addBill}
-                    </Button>
-                  </DialogTrigger>
+                <div className="flex gap-2">
+                  <Dialog open={generateSalariesDialogOpen} onOpenChange={setGenerateSalariesDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" data-testid="button-generate-salaries">
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Generate Salaries
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Generate Monthly Salary Bills</DialogTitle>
+                        <DialogDescription>
+                          This will create salary bills for all active employees with a salary amount set.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Payment Month</label>
+                          <Input
+                            type="month"
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(e.target.value)}
+                            data-testid="input-salary-month"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Select the month for which to generate salary bills
+                          </p>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => setGenerateSalariesDialogOpen(false)}
+                            data-testid="button-cancel-generate"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={() => generateSalariesMutation.mutate(selectedMonth)}
+                            disabled={generateSalariesMutation.isPending}
+                            data-testid="button-confirm-generate"
+                          >
+                            {generateSalariesMutation.isPending ? "Generating..." : "Generate Bills"}
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  <Dialog open={billDialogOpen} onOpenChange={setBillDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => setEditingBill(null)} data-testid="button-add-bill">
+                        <Plus className="w-4 h-4 mr-2" />
+                        {t.addBill}
+                      </Button>
+                    </DialogTrigger>
                   <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>{editingBill ? t.editBill : t.addBill}</DialogTitle>
@@ -687,6 +762,7 @@ export default function Shop() {
                   </DialogContent>
                 </Dialog>
               </div>
+            </div>
             </CardHeader>
             <CardContent>
               <div className="mb-4">

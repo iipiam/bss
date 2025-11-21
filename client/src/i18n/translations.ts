@@ -842,6 +842,122 @@ export interface Translations {
   pleaseTryAgainOrRequestNew: string;
   pleaseTryAgainLater: string;
   
+  // Kitchen & Orders Display
+  justNow: string;
+  minAgo: string;
+  hourAgo: string;
+  hoursAgo: string;
+  urgent: string;
+  orderNotes: string;
+  startCooking: string;
+  markAsReady: string;
+  outForDelivery: string;
+  serveComplete: string;
+  displaySuffix: string;
+  loadingOrders: string;
+  realTimeTracking: string;
+  noPendingOrders: string;
+  inProgressOrders: string;
+  noOrdersInProgress: string;
+  noOrdersReady: string;
+  errorLoadingOrders: string;
+  theOrderStatusChanged: string;
+  failedToUpdateOrderStatus: string;
+  retry: string;
+  
+  // POS & Payment Toast Messages
+  cartIsEmpty: string;
+  cartIsEmptyDesc: string;
+  whatsappPopupBlocked: string;
+  paymentFailed: string;
+  paymentFailedDesc: string;
+  paymentCancelled: string;
+  paymentCancelledDesc: string;
+  paymentSuccessful: string;
+  paymentSuccessfulDesc: string;
+  orderNotPlaced: string;
+  
+  // Export & Download Toast Messages
+  pdfExportSuccessful: string;
+  excelExportSuccessful: string;
+  customerDataExported: string;
+  profitabilityPdfExported: string;
+  profitabilityExcelExported: string;
+  financialDataExported: string;
+  financialPdfExported: string;
+  menuDataExported: string;
+  inventoryDataExported: string;
+  templateDownloaded: string;
+  templateDownloadedDesc: string;
+  reportDownloaded: string;
+  
+  // Profile & Settings Toast Messages
+  profileUpdated: string;
+  profileUpdatedDesc: string;
+  updateFailed: string;
+  subscriptionCancelledDesc: string;
+  cancellationFailed: string;
+  cancellationFailedDesc: string;
+  downloadStarted: string;
+  downloadStartedDesc: string;
+  downloadFailedDesc: string;
+  notificationToneUpdated: string;
+  failedToUpdateNotificationTone: string;
+  
+  // Auth & Account Toast Messages
+  missingFields: string;
+  missingFieldsDesc: string;
+  itAccountCreated: string;
+  itAccountCreatedDesc: string;
+  itSignupFailed: string;
+  invalidPassword: string;
+  invalidPasswordDesc: string;
+  
+  // Menu & Inventory Toast Messages
+  imageUploadFailed: string;
+  imageUploadFailedDesc: string;
+  categoryAdded: string;
+  categoryRemoved: string;
+  failedToCreateItem: string;
+  failedToUpdateItem: string;
+  failedToCreateAddon: string;
+  failedToUpdateAddon: string;
+  invalidData: string;
+  invalidDataDesc: string;
+  
+  // License Toast Messages
+  licenseCreated: string;
+  licenseCreatedDesc: string;
+  licenseUpdated: string;
+  licenseUpdatedDesc: string;
+  licenseDeleted: string;
+  licenseDeletedDesc: string;
+  
+  // VAT & Reports Toast Messages
+  vatReportGenerated: string;
+  vatReportGeneratedDesc: string;
+  generationFailed: string;
+  invalidInput: string;
+  invalidInputDesc: string;
+  noInvoicesAvailable: string;
+  
+  // Chat Toast Messages
+  channelCreated: string;
+  channelCreatedDesc: string;
+  failedToCreateChannel: string;
+  directMessageStarted: string;
+  directMessageStartedDesc: string;
+  failedToStartDirectMessage: string;
+  
+  // Setup Toast Messages
+  setupComplete: string;
+  setupCompleteDesc: string;
+  setupFailed: string;
+  
+  // Recipe Toast Messages
+  invalidIngredients: string;
+  invalidIngredientsDesc: string;
+  
   // Additional Pages
   deliveryProfitability: string;
   salesComparison: string;
@@ -1707,23 +1823,139 @@ export const translations: Record<Language, Translations> = {
     pleaseTryAgainOrRequestNew: 'Please try again or request a new reset link.',
     pleaseTryAgainLater: 'Please try again later.',
     
+    // Kitchen & Orders Display
+    justNow: 'Just now',
+    minAgo: 'min ago',
+    hourAgo: 'hour ago',
+    hoursAgo: 'hours ago',
+    urgent: 'Urgent',
+    orderNotes: 'Order Notes:',
+    startCooking: 'Start Cooking',
+    markAsReady: 'Mark as Ready',
+    outForDelivery: 'Out for Delivery',
+    serveComplete: 'Serve / Complete',
+    displaySuffix: ' Display',
+    loadingOrders: 'Loading orders...',
+    realTimeTracking: 'Real-time order tracking and preparation guidance',
+    noPendingOrders: 'No pending orders',
+    inProgressOrders: 'In Progress',
+    noOrdersInProgress: 'No orders in progress',
+    noOrdersReady: 'No orders ready',
+    errorLoadingOrders: 'Error loading orders',
+    theOrderStatusChanged: 'The order status has been changed',
+    failedToUpdateOrderStatus: 'Failed to update order status',
+    retry: 'Retry',
+    
+    // POS & Payment Toast Messages
+    cartIsEmpty: 'Cart is Empty',
+    cartIsEmptyDesc: 'Please add items to cart before placing order',
+    whatsappPopupBlocked: 'Could not open WhatsApp. Please check your popup blocker settings.',
+    paymentFailed: 'Payment Failed',
+    paymentFailedDesc: 'Payment could not be processed',
+    paymentCancelled: 'Payment Cancelled',
+    paymentCancelledDesc: 'Payment process was cancelled',
+    paymentSuccessful: 'Payment Successful',
+    paymentSuccessfulDesc: 'Payment completed successfully',
+    orderNotPlaced: 'Order was not placed',
+    
+    // Export & Download Toast Messages
+    pdfExportSuccessful: 'PDF exported successfully',
+    excelExportSuccessful: 'Excel exported successfully',
+    customerDataExported: 'Customer data exported to Excel',
+    profitabilityPdfExported: 'Profitability report exported to PDF',
+    profitabilityExcelExported: 'Profitability data exported to Excel',
+    financialDataExported: 'Financial data exported to Excel',
+    financialPdfExported: 'Financial statement exported to PDF',
+    menuDataExported: 'Menu data exported to Excel',
+    inventoryDataExported: 'Inventory data exported to Excel',
+    templateDownloaded: 'Template downloaded',
+    templateDownloadedDesc: 'Fill in the template and import it',
+    reportDownloaded: 'Report Downloaded',
+    
+    // Profile & Settings Toast Messages
+    profileUpdated: 'Profile Updated',
+    profileUpdatedDesc: 'Your profile has been updated successfully.',
+    updateFailed: 'Update Failed',
+    subscriptionCancelledDesc: 'Your subscription has been cancelled. Please repay to continue using the service.',
+    cancellationFailed: 'Cancellation Failed',
+    cancellationFailedDesc: 'Failed to cancel subscription. Please try again.',
+    downloadStarted: 'Download Started',
+    downloadStartedDesc: 'Your invoice is being downloaded.',
+    downloadFailedDesc: 'Failed to download invoice. Please try again.',
+    notificationToneUpdated: 'Notification tone updated for all accounts',
+    failedToUpdateNotificationTone: 'Failed to update notification tone',
+    
+    // Auth & Account Toast Messages
+    missingFields: 'Missing fields',
+    missingFieldsDesc: 'Please fill in username, password, and full name',
+    itAccountCreated: 'IT Account Created',
+    itAccountCreatedDesc: 'Your IT account has been created successfully. Please login with your credentials.',
+    itSignupFailed: 'IT Signup Failed',
+    invalidPassword: 'Invalid Password',
+    invalidPasswordDesc: 'Password must be at least 6 characters long',
+    
+    // Menu & Inventory Toast Messages
+    imageUploadFailed: 'Image upload failed',
+    imageUploadFailedDesc: 'Could not upload image. Please try again.',
+    categoryAdded: 'Category added',
+    categoryRemoved: 'Category removed',
+    failedToCreateItem: 'Failed to create item',
+    failedToUpdateItem: 'Failed to update item',
+    failedToCreateAddon: 'Failed to create add-on',
+    failedToUpdateAddon: 'Failed to update add-on',
+    invalidData: 'Invalid data',
+    invalidDataDesc: 'Unable to process - invalid data value',
+    
+    // License Toast Messages
+    licenseCreated: 'Success',
+    licenseCreatedDesc: 'License created successfully',
+    licenseUpdated: 'Success',
+    licenseUpdatedDesc: 'License updated successfully',
+    licenseDeleted: 'Success',
+    licenseDeletedDesc: 'License deleted successfully',
+    
+    // VAT & Reports Toast Messages
+    vatReportGenerated: 'VAT Report Generated',
+    vatReportGeneratedDesc: 'Monthly VAT report has been successfully generated',
+    generationFailed: 'Generation Failed',
+    invalidInput: 'Invalid Input',
+    invalidInputDesc: 'Please select both month and year',
+    noInvoicesAvailable: 'No invoices available to export',
+    
+    // Chat Toast Messages
+    channelCreated: 'Channel created',
+    channelCreatedDesc: 'Channel created successfully',
+    failedToCreateChannel: 'Failed to create channel',
+    directMessageStarted: 'Direct message started',
+    directMessageStartedDesc: 'Direct message started',
+    failedToStartDirectMessage: 'Failed to start direct message',
+    
+    // Setup Toast Messages
+    setupComplete: 'Setup complete!',
+    setupCompleteDesc: 'Your admin account has been created successfully',
+    setupFailed: 'Setup failed',
+    
+    // Recipe Toast Messages
+    invalidIngredients: 'Invalid ingredients',
+    invalidIngredientsDesc: 'Please enter quantities for all selected ingredients',
+    
     // Additional Pages
     deliveryProfitability: 'Delivery Profitability',
     salesComparison: 'Sales Comparison',
     
     // Welcome Video Slides
-    videoSlide1Title: 'Meet Ahmad - Restaurant Owner',
-    videoSlide1Subtitle: 'Struggling with manual inventory, lost orders, and declining profits',
-    videoSlide2Title: 'Real-Time POS System',
-    videoSlide2Subtitle: 'Process orders instantly • Track sales live • Accept multiple payment methods',
-    videoSlide3Title: 'Smart Inventory Management',
-    videoSlide3Subtitle: 'Automatic stock deduction • Low stock alerts • Never run out of ingredients',
-    videoSlide4Title: 'ZATCA-Compliant Invoices',
-    videoSlide4Subtitle: 'Generate bilingual invoices instantly • QR codes • Full tax compliance',
-    videoSlide5Title: 'Powerful Analytics Dashboard',
-    videoSlide5Subtitle: 'Track profitability • Forecast demand • Make data-driven decisions',
-    videoSlide6Title: 'Ahmad\'s Success Story',
-    videoSlide6Subtitle: '300% revenue growth • 5 new branches • Join thousands of thriving restaurants',
+    videoSlide1Title: 'Welcome to BlindSpot System',
+    videoSlide1Subtitle: 'Complete business management platform • 10-language support • 24/7 IT support system',
+    videoSlide2Title: 'Smart POS & Customer Management',
+    videoSlide2Subtitle: 'Process orders instantly • Manage customers from POS • Track loyalty and preferences',
+    videoSlide3Title: 'Advanced Financial Tools',
+    videoSlide3Subtitle: 'WhatsApp invoice delivery • Delivery app commission tracking • Automated VAT compliance',
+    videoSlide4Title: 'Employee Management Made Easy',
+    videoSlide4Subtitle: 'Automated salary calculations • Vacation tracking • Performance management system',
+    videoSlide5Title: 'Powerful Analytics & Forecasting',
+    videoSlide5Subtitle: 'Real-time profitability analysis • Demand forecasting • Multi-branch reporting',
+    videoSlide6Title: 'Secure & Scalable Platform',
+    videoSlide6Subtitle: 'Multi-tenant security • Grow from 1 to unlimited branches • Join thousands of successful businesses',
     
     // Branding
     madeBy: 'Made By',
@@ -2572,23 +2804,139 @@ export const translations: Record<Language, Translations> = {
     pleaseTryAgainOrRequestNew: 'يرجى المحاولة مرة أخرى أو طلب رابط إعادة تعيين جديد.',
     pleaseTryAgainLater: 'يرجى المحاولة مرة أخرى لاحقاً.',
     
+    // Kitchen & Orders Display
+    justNow: 'الآن',
+    minAgo: 'دقيقة مضت',
+    hourAgo: 'ساعة مضت',
+    hoursAgo: 'ساعات مضت',
+    urgent: 'عاجل',
+    orderNotes: 'ملاحظات الطلب:',
+    startCooking: 'بدء الطهي',
+    markAsReady: 'جاهز',
+    outForDelivery: 'خارج للتوصيل',
+    serveComplete: 'تقديم / إكمال',
+    displaySuffix: ' عرض',
+    loadingOrders: 'جار تحميل الطلبات...',
+    realTimeTracking: 'تتبع الطلبات في الوقت الفعلي وإرشادات التحضير',
+    noPendingOrders: 'لا توجد طلبات معلقة',
+    inProgressOrders: 'قيد التنفيذ',
+    noOrdersInProgress: 'لا توجد طلبات قيد التنفيذ',
+    noOrdersReady: 'لا توجد طلبات جاهزة',
+    errorLoadingOrders: 'خطأ في تحميل الطلبات',
+    theOrderStatusChanged: 'تم تغيير حالة الطلب',
+    failedToUpdateOrderStatus: 'فشل تحديث حالة الطلب',
+    retry: 'إعادة المحاولة',
+    
+    // POS & Payment Toast Messages
+    cartIsEmpty: 'السلة فارغة',
+    cartIsEmptyDesc: 'يرجى إضافة عناصر إلى السلة قبل تقديم الطلب',
+    whatsappPopupBlocked: 'تعذر فتح واتساب. يرجى التحقق من إعدادات حظر النوافذ المنبثقة.',
+    paymentFailed: 'فشل الدفع',
+    paymentFailedDesc: 'تعذرت معالجة الدفع',
+    paymentCancelled: 'تم إلغاء الدفع',
+    paymentCancelledDesc: 'تم إلغاء عملية الدفع',
+    paymentSuccessful: 'تم الدفع بنجاح',
+    paymentSuccessfulDesc: 'اكتملت عملية الدفع بنجاح',
+    orderNotPlaced: 'لم يتم تقديم الطلب',
+    
+    // Export & Download Toast Messages
+    pdfExportSuccessful: 'تم تصدير PDF بنجاح',
+    excelExportSuccessful: 'تم تصدير Excel بنجاح',
+    customerDataExported: 'تم تصدير بيانات العملاء إلى Excel',
+    profitabilityPdfExported: 'تم تصدير تقرير الربحية إلى PDF',
+    profitabilityExcelExported: 'تم تصدير بيانات الربحية إلى Excel',
+    financialDataExported: 'تم تصدير البيانات المالية إلى Excel',
+    financialPdfExported: 'تم تصدير البيان المالي إلى PDF',
+    menuDataExported: 'تم تصدير بيانات القائمة إلى Excel',
+    inventoryDataExported: 'تم تصدير بيانات المخزون إلى Excel',
+    templateDownloaded: 'تم تنزيل النموذج',
+    templateDownloadedDesc: 'املأ النموذج واستورده',
+    reportDownloaded: 'تم تنزيل التقرير',
+    
+    // Profile & Settings Toast Messages
+    profileUpdated: 'تم تحديث الملف الشخصي',
+    profileUpdatedDesc: 'تم تحديث ملفك الشخصي بنجاح.',
+    updateFailed: 'فشل التحديث',
+    subscriptionCancelledDesc: 'تم إلغاء اشتراكك. يرجى إعادة الدفع لمواصلة استخدام الخدمة.',
+    cancellationFailed: 'فشل الإلغاء',
+    cancellationFailedDesc: 'فشل إلغاء الاشتراك. يرجى المحاولة مرة أخرى.',
+    downloadStarted: 'بدأ التنزيل',
+    downloadStartedDesc: 'جارٍ تنزيل فاتورتك.',
+    downloadFailedDesc: 'فشل تنزيل الفاتورة. يرجى المحاولة مرة أخرى.',
+    notificationToneUpdated: 'تم تحديث نغمة الإشعار لجميع الحسابات',
+    failedToUpdateNotificationTone: 'فشل تحديث نغمة الإشعار',
+    
+    // Auth & Account Toast Messages
+    missingFields: 'حقول مفقودة',
+    missingFieldsDesc: 'يرجى ملء اسم المستخدم وكلمة المرور والاسم الكامل',
+    itAccountCreated: 'تم إنشاء حساب IT',
+    itAccountCreatedDesc: 'تم إنشاء حساب IT الخاص بك بنجاح. يرجى تسجيل الدخول ببيانات اعتمادك.',
+    itSignupFailed: 'فشل تسجيل IT',
+    invalidPassword: 'كلمة مرور غير صالحة',
+    invalidPasswordDesc: 'يجب أن تكون كلمة المرور 6 أحرف على الأقل',
+    
+    // Menu & Inventory Toast Messages
+    imageUploadFailed: 'فشل تحميل الصورة',
+    imageUploadFailedDesc: 'تعذر تحميل الصورة. يرجى المحاولة مرة أخرى.',
+    categoryAdded: 'تمت إضافة الفئة',
+    categoryRemoved: 'تمت إزالة الفئة',
+    failedToCreateItem: 'فشل إنشاء العنصر',
+    failedToUpdateItem: 'فشل تحديث العنصر',
+    failedToCreateAddon: 'فشل إنشاء الإضافة',
+    failedToUpdateAddon: 'فشل تحديث الإضافة',
+    invalidData: 'بيانات غير صالحة',
+    invalidDataDesc: 'تعذرت المعالجة - قيمة بيانات غير صالحة',
+    
+    // License Toast Messages
+    licenseCreated: 'نجاح',
+    licenseCreatedDesc: 'تم إنشاء الترخيص بنجاح',
+    licenseUpdated: 'نجاح',
+    licenseUpdatedDesc: 'تم تحديث الترخيص بنجاح',
+    licenseDeleted: 'نجاح',
+    licenseDeletedDesc: 'تم حذف الترخيص بنجاح',
+    
+    // VAT & Reports Toast Messages
+    vatReportGenerated: 'تم إنشاء تقرير الضريبة',
+    vatReportGeneratedDesc: 'تم إنشاء تقرير الضريبة الشهري بنجاح',
+    generationFailed: 'فشل الإنشاء',
+    invalidInput: 'إدخال غير صالح',
+    invalidInputDesc: 'يرجى تحديد الشهر والسنة',
+    noInvoicesAvailable: 'لا توجد فواتير متاحة للتصدير',
+    
+    // Chat Toast Messages
+    channelCreated: 'تم إنشاء القناة',
+    channelCreatedDesc: 'تم إنشاء القناة بنجاح',
+    failedToCreateChannel: 'فشل إنشاء القناة',
+    directMessageStarted: 'بدأت الرسالة المباشرة',
+    directMessageStartedDesc: 'بدأت الرسالة المباشرة',
+    failedToStartDirectMessage: 'فشل بدء الرسالة المباشرة',
+    
+    // Setup Toast Messages
+    setupComplete: 'اكتمل الإعداد!',
+    setupCompleteDesc: 'تم إنشاء حساب المسؤول الخاص بك بنجاح',
+    setupFailed: 'فشل الإعداد',
+    
+    // Recipe Toast Messages
+    invalidIngredients: 'مكونات غير صالحة',
+    invalidIngredientsDesc: 'يرجى إدخال كميات لجميع المكونات المحددة',
+    
     // Additional Pages
     deliveryProfitability: 'ربحية التوصيل',
     salesComparison: 'مقارنة المبيعات',
     
     // Welcome Video Slides
-    videoSlide1Title: 'تعرف على أحمد - صاحب مطعم',
-    videoSlide1Subtitle: 'يعاني من المخزون اليدوي، الطلبات المفقودة، وانخفاض الأرباح',
-    videoSlide2Title: 'نظام نقطة بيع فوري',
-    videoSlide2Subtitle: 'معالجة الطلبات فورياً • تتبع المبيعات مباشرة • قبول طرق دفع متعددة',
-    videoSlide3Title: 'إدارة مخزون ذكية',
-    videoSlide3Subtitle: 'خصم تلقائي للمخزون • تنبيهات المخزون المنخفض • لن تنفد المكونات أبداً',
-    videoSlide4Title: 'فواتير متوافقة مع الزكاة',
-    videoSlide4Subtitle: 'إنشاء فواتير ثنائية اللغة فورياً • رموز QR • امتثال كامل للضرائب',
-    videoSlide5Title: 'لوحة تحليلات قوية',
-    videoSlide5Subtitle: 'تتبع الربحية • توقع الطلب • اتخاذ قرارات مدعومة بالبيانات',
-    videoSlide6Title: 'قصة نجاح أحمد',
-    videoSlide6Subtitle: '300% نمو في الإيرادات • 5 فروع جديدة • انضم لآلاف المطاعم المزدهرة',
+    videoSlide1Title: 'مرحباً بك في نظام بلايند سبوت',
+    videoSlide1Subtitle: 'منصة إدارة أعمال شاملة • دعم 10 لغات • نظام دعم تقني على مدار الساعة',
+    videoSlide2Title: 'نقاط البيع الذكية وإدارة العملاء',
+    videoSlide2Subtitle: 'معالجة الطلبات فورياً • إدارة العملاء من نقاط البيع • تتبع الولاء والتفضيلات',
+    videoSlide3Title: 'أدوات مالية متقدمة',
+    videoSlide3Subtitle: 'توصيل الفواتير عبر واتساب • تتبع عمولات تطبيقات التوصيل • امتثال ضريبي تلقائي',
+    videoSlide4Title: 'إدارة الموظفين بسهولة',
+    videoSlide4Subtitle: 'حساب الرواتب تلقائياً • تتبع الإجازات • نظام إدارة الأداء',
+    videoSlide5Title: 'تحليلات وتوقعات قوية',
+    videoSlide5Subtitle: 'تحليل الربحية في الوقت الفعلي • توقع الطلب • تقارير متعددة الفروع',
+    videoSlide6Title: 'منصة آمنة وقابلة للتوسع',
+    videoSlide6Subtitle: 'أمان متعدد المستأجرين • النمو من فرع واحد إلى عدد غير محدود • انضم لآلاف الأعمال الناجحة',
     
     // Branding
     madeBy: 'صنع بواسطة',
@@ -3423,23 +3771,139 @@ export const translations: Record<Language, Translations> = {
     pleaseTryAgainOrRequestNew: '请重试或请求新的重置链接。',
     pleaseTryAgainLater: '请稍后重试。',
     
-    // Additional Pages
+    // Kitchen & Orders Display
+    justNow: '刚刚',
+    minAgo: '分钟前',
+    hourAgo: '小时前',
+    hoursAgo: '小时前',
+    urgent: '紧急',
+    orderNotes: '订单备注：',
+    startCooking: '开始烹饪',
+    markAsReady: '标记为就绪',
+    outForDelivery: '配送中',
+    serveComplete: '服务/完成',
+    displaySuffix: ' 显示',
+    loadingOrders: '正在加载订单...',
+    realTimeTracking: '实时订单跟踪和准备指导',
+    noPendingOrders: '无待处理订单',
+    inProgressOrders: '进行中',
+    noOrdersInProgress: '无正在进行的订单',
+    noOrdersReady: '无就绪订单',
+    errorLoadingOrders: '加载订单时出错',
+    theOrderStatusChanged: '订单状态已更改',
+    failedToUpdateOrderStatus: '更新订单状态失败',
+    retry: '重试',
     
-    // Welcome Video Slides
-    videoSlide1Title: '认识艾哈迈德 - 餐厅老板',
-    videoSlide1Subtitle: '手动库存管理困难、订单丢失、利润下降',
-    videoSlide2Title: '实时收银系统',
-    videoSlide2Subtitle: '即时处理订单 • 实时跟踪销售 • 接受多种支付方式',
-    videoSlide3Title: '智能库存管理',
-    videoSlide3Subtitle: '自动扣除库存 • 低库存警报 • 永不缺货',
-    videoSlide4Title: '符合ZATCA的发票',
-    videoSlide4Subtitle: '即时生成双语发票 • 二维码 • 完全符合税务',
-    videoSlide5Title: '强大的分析仪表板',
-    videoSlide5Subtitle: '跟踪盈利能力 • 预测需求 • 数据驱动决策',
-    videoSlide6Title: '艾哈迈德的成功故事',
-    videoSlide6Subtitle: '收入增长300% • 5家新分店 • 加入数千家繁荣的餐厅',
+    // POS & Payment Toast Messages
+    cartIsEmpty: '购物车为空',
+    cartIsEmptyDesc: '下单前请向购物车添加商品',
+    whatsappPopupBlocked: '无法打开WhatsApp。请检查您的弹出窗口阻止程序设置。',
+    paymentFailed: '支付失败',
+    paymentFailedDesc: '无法处理支付',
+    paymentCancelled: '支付已取消',
+    paymentCancelledDesc: '支付过程已取消',
+    paymentSuccessful: '支付成功',
+    paymentSuccessfulDesc: '支付已成功完成',
+    orderNotPlaced: '未下订单',
+    
+    // Export & Download Toast Messages
+    pdfExportSuccessful: 'PDF导出成功',
+    excelExportSuccessful: 'Excel导出成功',
+    customerDataExported: '客户数据已导出到Excel',
+    profitabilityPdfExported: '盈利报告已导出到PDF',
+    profitabilityExcelExported: '盈利数据已导出到Excel',
+    financialDataExported: '财务数据已导出到Excel',
+    financialPdfExported: '财务报表已导出到PDF',
+    menuDataExported: '菜单数据已导出到Excel',
+    inventoryDataExported: '库存数据已导出到Excel',
+    templateDownloaded: '模板已下载',
+    templateDownloadedDesc: '填写模板并导入',
+    reportDownloaded: '报告已下载',
+    
+    // Profile & Settings Toast Messages
+    profileUpdated: '个人资料已更新',
+    profileUpdatedDesc: '您的个人资料已成功更新。',
+    updateFailed: '更新失败',
+    subscriptionCancelledDesc: '您的订阅已取消。请重新付款以继续使用服务。',
+    cancellationFailed: '取消失败',
+    cancellationFailedDesc: '取消订阅失败。请重试。',
+    downloadStarted: '下载已开始',
+    downloadStartedDesc: '正在下载您的发票。',
+    downloadFailedDesc: '下载发票失败。请重试。',
+    notificationToneUpdated: '所有账户的通知铃声已更新',
+    failedToUpdateNotificationTone: '更新通知铃声失败',
+    
+    // Auth & Account Toast Messages
+    missingFields: '缺少字段',
+    missingFieldsDesc: '请填写用户名、密码和全名',
+    itAccountCreated: 'IT账户已创建',
+    itAccountCreatedDesc: '您的IT账户已成功创建。请使用您的凭据登录。',
+    itSignupFailed: 'IT注册失败',
+    invalidPassword: '密码无效',
+    invalidPasswordDesc: '密码必须至少6个字符',
+    
+    // Menu & Inventory Toast Messages
+    imageUploadFailed: '图片上传失败',
+    imageUploadFailedDesc: '无法上传图片。请重试。',
+    categoryAdded: '类别已添加',
+    categoryRemoved: '类别已移除',
+    failedToCreateItem: '创建项目失败',
+    failedToUpdateItem: '更新项目失败',
+    failedToCreateAddon: '创建附加项失败',
+    failedToUpdateAddon: '更新附加项失败',
+    invalidData: '数据无效',
+    invalidDataDesc: '无法处理 - 数据值无效',
+    
+    // License Toast Messages
+    licenseCreated: '成功',
+    licenseCreatedDesc: '许可证创建成功',
+    licenseUpdated: '成功',
+    licenseUpdatedDesc: '许可证更新成功',
+    licenseDeleted: '成功',
+    licenseDeletedDesc: '许可证删除成功',
+    
+    // VAT & Reports Toast Messages
+    vatReportGenerated: '增值税报告已生成',
+    vatReportGeneratedDesc: '月度增值税报告已成功生成',
+    generationFailed: '生成失败',
+    invalidInput: '输入无效',
+    invalidInputDesc: '请选择月份和年份',
+    noInvoicesAvailable: '没有可导出的发票',
+    
+    // Chat Toast Messages
+    channelCreated: '频道已创建',
+    channelCreatedDesc: '频道创建成功',
+    failedToCreateChannel: '创建频道失败',
+    directMessageStarted: '私信已开始',
+    directMessageStartedDesc: '私信已开始',
+    failedToStartDirectMessage: '启动私信失败',
+    
+    // Setup Toast Messages
+    setupComplete: '设置完成！',
+    setupCompleteDesc: '您的管理员账户已成功创建',
+    setupFailed: '设置失败',
+    
+    // Recipe Toast Messages
+    invalidIngredients: '配料无效',
+    invalidIngredientsDesc: '请为所有选定的配料输入数量',
+    
+    // Additional Pages
     deliveryProfitability: '配送盈利能力',
     salesComparison: '销售对比',
+    
+    // Welcome Video Slides
+    videoSlide1Title: '欢迎使用BlindSpot系统',
+    videoSlide1Subtitle: '完整的业务管理平台 • 支持10种语言 • 24/7技术支持系统',
+    videoSlide2Title: '智能POS和客户管理',
+    videoSlide2Subtitle: '即时处理订单 • 从POS管理客户 • 跟踪忠诚度和偏好',
+    videoSlide3Title: '先进的财务工具',
+    videoSlide3Subtitle: 'WhatsApp发票配送 • 配送应用佣金跟踪 • 自动增值税合规',
+    videoSlide4Title: '轻松管理员工',
+    videoSlide4Subtitle: '自动计算工资 • 假期跟踪 • 绩效管理系统',
+    videoSlide5Title: '强大的分析和预测',
+    videoSlide5Subtitle: '实时盈利能力分析 • 需求预测 • 多分店报告',
+    videoSlide6Title: '安全可扩展的平台',
+    videoSlide6Subtitle: '多租户安全 • 从1家增长到无限分店 • 加入数千家成功企业',
     
     // Branding
     madeBy: '制造商',
@@ -4262,18 +4726,18 @@ export const translations: Record<Language, Translations> = {
     invalidResetLinkDesc: 'Der Passwort-Reset-Link ist ungültig oder abgelaufen.',
     
     // Welcome Video Slides
-    videoSlide1Title: 'Lernen Sie Ahmad kennen - Restaurantbesitzer',
-    videoSlide1Subtitle: 'Kämpft mit manueller Bestandsverwaltung, verlorenen Bestellungen und sinkenden Gewinnen',
-    videoSlide2Title: 'Echtzeit-Kassensystem',
-    videoSlide2Subtitle: 'Sofortige Bestellabwicklung • Live-Verkaufsverfolgung • Mehrere Zahlungsmethoden',
-    videoSlide3Title: 'Intelligente Bestandsverwaltung',
-    videoSlide3Subtitle: 'Automatischer Lagerabzug • Warnungen bei niedrigem Bestand • Nie mehr ohne Zutaten',
-    videoSlide4Title: 'ZATCA-konforme Rechnungen',
-    videoSlide4Subtitle: 'Sofortige zweisprachige Rechnungen • QR-Codes • Vollständige Steuerkonformität',
-    videoSlide5Title: 'Leistungsstarkes Analyse-Dashboard',
-    videoSlide5Subtitle: 'Rentabilität verfolgen • Nachfrage prognostizieren • Datengestützte Entscheidungen',
-    videoSlide6Title: 'Ahmads Erfolgsgeschichte',
-    videoSlide6Subtitle: '300% Umsatzwachstum • 5 neue Filialen • Schließen Sie sich Tausenden erfolgreichen Restaurants an',
+    videoSlide1Title: 'Willkommen bei BlindSpot System',
+    videoSlide1Subtitle: 'Komplette Geschäftsverwaltungsplattform • 10-Sprachen-Unterstützung • 24/7 IT-Support-System',
+    videoSlide2Title: 'Intelligentes POS & Kundenverwaltung',
+    videoSlide2Subtitle: 'Bestellungen sofort bearbeiten • Kunden vom POS verwalten • Loyalität und Präferenzen verfolgen',
+    videoSlide3Title: 'Erweiterte Finanztools',
+    videoSlide3Subtitle: 'WhatsApp-Rechnungslieferung • Lieferapp-Provisionsverfolgung • Automatisierte MwSt-Konformität',
+    videoSlide4Title: 'Einfache Mitarbeiterverwaltung',
+    videoSlide4Subtitle: 'Automatische Gehaltsberechnung • Urlaubsverfolgung • Leistungsmanagementsystem',
+    videoSlide5Title: 'Leistungsstarke Analysen & Prognosen',
+    videoSlide5Subtitle: 'Echtzeit-Rentabilitätsanalyse • Nachfrageprognose • Multi-Filial-Berichterstattung',
+    videoSlide6Title: 'Sichere & Skalierbare Plattform',
+    videoSlide6Subtitle: 'Multi-Tenant-Sicherheit • Wachstum von 1 auf unbegrenzte Filialen • Schließen Sie sich Tausenden erfolgreichen Unternehmen an',
     passwordsDontMatch: 'Passwörter stimmen nicht überein',
     passwordsDontMatchDesc: 'Bitte stellen Sie sicher, dass beide Passwörter gleich sind.',
     passwordTooShort: 'Passwort zu kurz',
@@ -4286,6 +4750,122 @@ export const translations: Record<Language, Translations> = {
     forgotPasswordDesc: 'Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen Anweisungen zum Zurücksetzen Ihres Passworts.',
     pleaseTryAgainOrRequestNew: 'Bitte versuchen Sie es erneut oder fordern Sie einen neuen Reset-Link an.',
     pleaseTryAgainLater: 'Bitte versuchen Sie es später erneut.',
+    
+    // Kitchen & Orders Display
+    justNow: 'Gerade eben',
+    minAgo: 'Min. her',
+    hourAgo: 'Std. her',
+    hoursAgo: 'Std. her',
+    urgent: 'Dringend',
+    orderNotes: 'Bestellnotizen:',
+    startCooking: 'Mit Kochen beginnen',
+    markAsReady: 'Als bereit markieren',
+    outForDelivery: 'Zur Lieferung unterwegs',
+    serveComplete: 'Servieren / Abschließen',
+    displaySuffix: ' Anzeige',
+    loadingOrders: 'Bestellungen werden geladen...',
+    realTimeTracking: 'Echtzeit-Bestellverfolgung und Zubereitungsanleitung',
+    noPendingOrders: 'Keine ausstehenden Bestellungen',
+    inProgressOrders: 'In Bearbeitung',
+    noOrdersInProgress: 'Keine Bestellungen in Bearbeitung',
+    noOrdersReady: 'Keine Bestellungen bereit',
+    errorLoadingOrders: 'Fehler beim Laden der Bestellungen',
+    theOrderStatusChanged: 'Der Bestellstatus wurde geändert',
+    failedToUpdateOrderStatus: 'Bestellstatus konnte nicht aktualisiert werden',
+    retry: 'Erneut versuchen',
+    
+    // POS & Payment Toast Messages
+    cartIsEmpty: 'Warenkorb ist leer',
+    cartIsEmptyDesc: 'Bitte fügen Sie Artikel zum Warenkorb hinzu, bevor Sie bestellen',
+    whatsappPopupBlocked: 'WhatsApp konnte nicht geöffnet werden. Bitte überprüfen Sie Ihre Popup-Blocker-Einstellungen.',
+    paymentFailed: 'Zahlung fehlgeschlagen',
+    paymentFailedDesc: 'Zahlung konnte nicht verarbeitet werden',
+    paymentCancelled: 'Zahlung abgebrochen',
+    paymentCancelledDesc: 'Zahlungsvorgang wurde abgebrochen',
+    paymentSuccessful: 'Zahlung erfolgreich',
+    paymentSuccessfulDesc: 'Zahlung erfolgreich abgeschlossen',
+    orderNotPlaced: 'Bestellung wurde nicht aufgegeben',
+    
+    // Export & Download Toast Messages
+    pdfExportSuccessful: 'PDF erfolgreich exportiert',
+    excelExportSuccessful: 'Excel erfolgreich exportiert',
+    customerDataExported: 'Kundendaten nach Excel exportiert',
+    profitabilityPdfExported: 'Rentabilitätsbericht als PDF exportiert',
+    profitabilityExcelExported: 'Rentabilitätsdaten nach Excel exportiert',
+    financialDataExported: 'Finanzdaten nach Excel exportiert',
+    financialPdfExported: 'Finanzberichte als PDF exportiert',
+    menuDataExported: 'Menüdaten nach Excel exportiert',
+    inventoryDataExported: 'Inventardaten nach Excel exportiert',
+    templateDownloaded: 'Vorlage heruntergeladen',
+    templateDownloadedDesc: 'Füllen Sie die Vorlage aus und importieren Sie sie',
+    reportDownloaded: 'Bericht heruntergeladen',
+    
+    // Profile & Settings Toast Messages
+    profileUpdated: 'Profil aktualisiert',
+    profileUpdatedDesc: 'Ihr Profil wurde erfolgreich aktualisiert.',
+    updateFailed: 'Aktualisierung fehlgeschlagen',
+    subscriptionCancelledDesc: 'Ihr Abonnement wurde gekündigt. Bitte zahlen Sie erneut, um den Service weiter nutzen zu können.',
+    cancellationFailed: 'Stornierung fehlgeschlagen',
+    cancellationFailedDesc: 'Abonnement konnte nicht gekündigt werden. Bitte versuchen Sie es erneut.',
+    downloadStarted: 'Download gestartet',
+    downloadStartedDesc: 'Ihre Rechnung wird heruntergeladen.',
+    downloadFailedDesc: 'Rechnung konnte nicht heruntergeladen werden. Bitte versuchen Sie es erneut.',
+    notificationToneUpdated: 'Benachrichtigungston für alle Konten aktualisiert',
+    failedToUpdateNotificationTone: 'Benachrichtigungston konnte nicht aktualisiert werden',
+    
+    // Auth & Account Toast Messages
+    missingFields: 'Fehlende Felder',
+    missingFieldsDesc: 'Bitte füllen Sie Benutzername, Passwort und vollständigen Namen aus',
+    itAccountCreated: 'IT-Konto erstellt',
+    itAccountCreatedDesc: 'Ihr IT-Konto wurde erfolgreich erstellt. Bitte melden Sie sich mit Ihren Zugangsdaten an.',
+    itSignupFailed: 'IT-Registrierung fehlgeschlagen',
+    invalidPassword: 'Ungültiges Passwort',
+    invalidPasswordDesc: 'Passwort muss mindestens 6 Zeichen lang sein',
+    
+    // Menu & Inventory Toast Messages
+    imageUploadFailed: 'Bild-Upload fehlgeschlagen',
+    imageUploadFailedDesc: 'Bild konnte nicht hochgeladen werden. Bitte versuchen Sie es erneut.',
+    categoryAdded: 'Kategorie hinzugefügt',
+    categoryRemoved: 'Kategorie entfernt',
+    failedToCreateItem: 'Artikel konnte nicht erstellt werden',
+    failedToUpdateItem: 'Artikel konnte nicht aktualisiert werden',
+    failedToCreateAddon: 'Add-on konnte nicht erstellt werden',
+    failedToUpdateAddon: 'Add-on konnte nicht aktualisiert werden',
+    invalidData: 'Ungültige Daten',
+    invalidDataDesc: 'Verarbeitung nicht möglich - ungültiger Datenwert',
+    
+    // License Toast Messages
+    licenseCreated: 'Erfolg',
+    licenseCreatedDesc: 'Lizenz erfolgreich erstellt',
+    licenseUpdated: 'Erfolg',
+    licenseUpdatedDesc: 'Lizenz erfolgreich aktualisiert',
+    licenseDeleted: 'Erfolg',
+    licenseDeletedDesc: 'Lizenz erfolgreich gelöscht',
+    
+    // VAT & Reports Toast Messages
+    vatReportGenerated: 'MwSt-Bericht erstellt',
+    vatReportGeneratedDesc: 'Monatlicher MwSt-Bericht wurde erfolgreich erstellt',
+    generationFailed: 'Erstellung fehlgeschlagen',
+    invalidInput: 'Ungültige Eingabe',
+    invalidInputDesc: 'Bitte wählen Sie sowohl Monat als auch Jahr aus',
+    noInvoicesAvailable: 'Keine Rechnungen zum Exportieren verfügbar',
+    
+    // Chat Toast Messages
+    channelCreated: 'Kanal erstellt',
+    channelCreatedDesc: 'Kanal erfolgreich erstellt',
+    failedToCreateChannel: 'Kanal konnte nicht erstellt werden',
+    directMessageStarted: 'Direktnachricht gestartet',
+    directMessageStartedDesc: 'Direktnachricht gestartet',
+    failedToStartDirectMessage: 'Direktnachricht konnte nicht gestartet werden',
+    
+    // Setup Toast Messages
+    setupComplete: 'Einrichtung abgeschlossen!',
+    setupCompleteDesc: 'Ihr Administratorkonto wurde erfolgreich erstellt',
+    setupFailed: 'Einrichtung fehlgeschlagen',
+    
+    // Recipe Toast Messages
+    invalidIngredients: 'Ungültige Zutaten',
+    invalidIngredientsDesc: 'Bitte geben Sie Mengen für alle ausgewählten Zutaten ein',
     
     // Additional Pages
     deliveryProfitability: 'Lieferrentabilität',
@@ -5099,18 +5679,18 @@ export const translations: Record<Language, Translations> = {
     failedToResetPassword: 'पासवर्ड रीसेट करने में विफल',
     
     // Welcome Video Slides
-    videoSlide1Title: 'अहमद से मिलें - रेस्तरां मालिक',
-    videoSlide1Subtitle: 'मैनुअल इन्वेंटरी, खोए ऑर्डर, और गिरते मुनाफे से जूझ रहे हैं',
-    videoSlide2Title: 'रियल-टाइम POS सिस्टम',
-    videoSlide2Subtitle: 'तुरंत ऑर्डर प्रोसेस करें • लाइव सेल्स ट्रैक करें • कई भुगतान विधियां स्वीकार करें',
-    videoSlide3Title: 'स्मार्ट इन्वेंटरी प्रबंधन',
-    videoSlide3Subtitle: 'स्वचालित स्टॉक कटौती • कम स्टॉक अलर्ट • कभी सामग्री खत्म नहीं होगी',
-    videoSlide4Title: 'ZATCA-अनुपालक चालान',
-    videoSlide4Subtitle: 'तुरंत द्विभाषी चालान जेनरेट करें • QR कोड • पूर्ण कर अनुपालन',
-    videoSlide5Title: 'शक्तिशाली विश्लेषण डैशबोर्ड',
-    videoSlide5Subtitle: 'लाभप्रदता ट्रैक करें • मांग का पूर्वानुमान लगाएं • डेटा-आधारित निर्णय लें',
-    videoSlide6Title: 'अहमद की सफलता की कहानी',
-    videoSlide6Subtitle: '300% राजस्व वृद्धि • 5 नई शाखाएं • हजारों समृद्ध रेस्तरां में शामिल हों',
+    videoSlide1Title: 'BlindSpot सिस्टम में आपका स्वागत है',
+    videoSlide1Subtitle: 'संपूर्ण व्यवसाय प्रबंधन प्लेटफ़ॉर्म • 10 भाषाओं का समर्थन • 24/7 IT सहायता प्रणाली',
+    videoSlide2Title: 'स्मार्ट POS और ग्राहक प्रबंधन',
+    videoSlide2Subtitle: 'तुरंत ऑर्डर प्रोसेस करें • POS से ग्राहकों को प्रबंधित करें • वफादारी और प्राथमिकताएं ट्रैक करें',
+    videoSlide3Title: 'उन्नत वित्तीय उपकरण',
+    videoSlide3Subtitle: 'WhatsApp चालान वितरण • डिलीवरी ऐप कमीशन ट्रैकिंग • स्वचालित VAT अनुपालन',
+    videoSlide4Title: 'कर्मचारी प्रबंधन आसान बनाया',
+    videoSlide4Subtitle: 'स्वचालित वेतन गणना • छुट्टी ट्रैकिंग • प्रदर्शन प्रबंधन प्रणाली',
+    videoSlide5Title: 'शक्तिशाली विश्लेषण और पूर्वानुमान',
+    videoSlide5Subtitle: 'रियल-टाइम लाभप्रदता विश्लेषण • मांग पूर्वानुमान • बहु-शाखा रिपोर्टिंग',
+    videoSlide6Title: 'सुरक्षित और स्केलेबल प्लेटफ़ॉर्म',
+    videoSlide6Subtitle: 'बहु-किरायेदार सुरक्षा • 1 से असीमित शाखाओं तक वृद्धि • हजारों सफल व्यवसायों में शामिल हों',
     failedToSendResetEmail: 'रीसेट ईमेल भेजने में विफल',
     failedToUpdateDevicePreference: 'डिवाइस वरीयता अपडेट करने में विफल',
     failedToExportProfitability: 'लाभप्रदता डेटा निर्यात करने में विफल',
@@ -5137,6 +5717,122 @@ export const translations: Record<Language, Translations> = {
     forgotPasswordDesc: 'अपना ईमेल पता दर्ज करें और हम आपको पासवर्ड रीसेट करने के निर्देश भेजेंगे।',
     pleaseTryAgainOrRequestNew: 'कृपया फिर से प्रयास करें या नया रीसेट लिंक का अनुरोध करें।',
     pleaseTryAgainLater: 'कृपया बाद में पुनः प्रयास करें।',
+    
+    // Kitchen & Orders Display
+    justNow: 'अभी',
+    minAgo: 'मिनट पहले',
+    hourAgo: 'घंटे पहले',
+    hoursAgo: 'घंटे पहले',
+    urgent: 'अत्यावश्यक',
+    orderNotes: 'ऑर्डर नोट्स:',
+    startCooking: 'पकाना शुरू करें',
+    markAsReady: 'तैयार के रूप में चिह्नित करें',
+    outForDelivery: 'डिलीवरी के लिए',
+    serveComplete: 'परोसें / पूर्ण करें',
+    displaySuffix: ' प्रदर्शन',
+    loadingOrders: 'ऑर्डर लोड हो रहे हैं...',
+    realTimeTracking: 'वास्तविक समय ऑर्डर ट्रैकिंग और तैयारी मार्गदर्शन',
+    noPendingOrders: 'कोई लंबित ऑर्डर नहीं',
+    inProgressOrders: 'प्रगति में',
+    noOrdersInProgress: 'कोई ऑर्डर प्रगति में नहीं',
+    noOrdersReady: 'कोई ऑर्डर तैयार नहीं',
+    errorLoadingOrders: 'ऑर्डर लोड करने में त्रुटि',
+    theOrderStatusChanged: 'ऑर्डर स्थिति बदल गई है',
+    failedToUpdateOrderStatus: 'ऑर्डर स्थिति अपडेट करने में विफल',
+    retry: 'पुनः प्रयास करें',
+    
+    // POS & Payment Toast Messages
+    cartIsEmpty: 'कार्ट खाली है',
+    cartIsEmptyDesc: 'ऑर्डर देने से पहले कृपया कार्ट में आइटम जोड़ें',
+    whatsappPopupBlocked: 'WhatsApp नहीं खुल सका। कृपया अपनी पॉपअप ब्लॉकर सेटिंग्स जांचें।',
+    paymentFailed: 'भुगतान विफल',
+    paymentFailedDesc: 'भुगतान संसाधित नहीं किया जा सका',
+    paymentCancelled: 'भुगतान रद्द',
+    paymentCancelledDesc: 'भुगतान प्रक्रिया रद्द कर दी गई',
+    paymentSuccessful: 'भुगतान सफल',
+    paymentSuccessfulDesc: 'भुगतान सफलतापूर्वक पूर्ण हुआ',
+    orderNotPlaced: 'ऑर्डर नहीं दिया गया',
+    
+    // Export & Download Toast Messages
+    pdfExportSuccessful: 'PDF सफलतापूर्वक निर्यात',
+    excelExportSuccessful: 'Excel सफलतापूर्वक निर्यात',
+    customerDataExported: 'ग्राहक डेटा Excel में निर्यात किया गया',
+    profitabilityPdfExported: 'लाभप्रदता रिपोर्ट PDF में निर्यात',
+    profitabilityExcelExported: 'लाभप्रदता डेटा Excel में निर्यात',
+    financialDataExported: 'वित्तीय डेटा Excel में निर्यात किया गया',
+    financialPdfExported: 'वित्तीय विवरण PDF में निर्यात',
+    menuDataExported: 'मेनू डेटा Excel में निर्यात किया गया',
+    inventoryDataExported: 'इन्वेंटरी डेटा Excel में निर्यात किया गया',
+    templateDownloaded: 'टेम्पलेट डाउनलोड',
+    templateDownloadedDesc: 'टेम्पलेट भरें और आयात करें',
+    reportDownloaded: 'रिपोर्ट डाउनलोड',
+    
+    // Profile & Settings Toast Messages
+    profileUpdated: 'प्रोफाइल अपडेट',
+    profileUpdatedDesc: 'आपकी प्रोफाइल सफलतापूर्वक अपडेट कर दी गई है।',
+    updateFailed: 'अपडेट विफल',
+    subscriptionCancelledDesc: 'आपकी सदस्यता रद्द कर दी गई है। सेवा जारी रखने के लिए कृपया फिर से भुगतान करें।',
+    cancellationFailed: 'रद्दीकरण विफल',
+    cancellationFailedDesc: 'सदस्यता रद्द करने में विफल। कृपया पुनः प्रयास करें।',
+    downloadStarted: 'डाउनलोड शुरू',
+    downloadStartedDesc: 'आपका चालान डाउनलोड हो रहा है।',
+    downloadFailedDesc: 'चालान डाउनलोड करने में विफल। कृपया पुनः प्रयास करें।',
+    notificationToneUpdated: 'सभी खातों के लिए सूचना टोन अपडेट',
+    failedToUpdateNotificationTone: 'सूचना टोन अपडेट करने में विफल',
+    
+    // Auth & Account Toast Messages
+    missingFields: 'गुम फ़ील्ड',
+    missingFieldsDesc: 'कृपया उपयोगकर्ता नाम, पासवर्ड और पूरा नाम भरें',
+    itAccountCreated: 'IT खाता बनाया गया',
+    itAccountCreatedDesc: 'आपका IT खाता सफलतापूर्वक बनाया गया है। कृपया अपनी साख के साथ लॉगिन करें।',
+    itSignupFailed: 'IT साइनअप विफल',
+    invalidPassword: 'अमान्य पासवर्ड',
+    invalidPasswordDesc: 'पासवर्ड कम से कम 6 अक्षर लंबा होना चाहिए',
+    
+    // Menu & Inventory Toast Messages
+    imageUploadFailed: 'छवि अपलोड विफल',
+    imageUploadFailedDesc: 'छवि अपलोड नहीं की जा सकी। कृपया पुनः प्रयास करें।',
+    categoryAdded: 'श्रेणी जोड़ी गई',
+    categoryRemoved: 'श्रेणी हटाई गई',
+    failedToCreateItem: 'आइटम बनाने में विफल',
+    failedToUpdateItem: 'आइटम अपडेट करने में विफल',
+    failedToCreateAddon: 'ऐड-ऑन बनाने में विफल',
+    failedToUpdateAddon: 'ऐड-ऑन अपडेट करने में विफल',
+    invalidData: 'अमान्य डेटा',
+    invalidDataDesc: 'संसाधित करने में असमर्थ - अमान्य डेटा मान',
+    
+    // License Toast Messages
+    licenseCreated: 'सफल',
+    licenseCreatedDesc: 'लाइसेंस सफलतापूर्वक बनाया गया',
+    licenseUpdated: 'सफल',
+    licenseUpdatedDesc: 'लाइसेंस सफलतापूर्वक अपडेट',
+    licenseDeleted: 'सफल',
+    licenseDeletedDesc: 'लाइसेंस सफलतापूर्वक हटाया गया',
+    
+    // VAT & Reports Toast Messages
+    vatReportGenerated: 'VAT रिपोर्ट जेनरेट',
+    vatReportGeneratedDesc: 'मासिक VAT रिपोर्ट सफलतापूर्वक जेनरेट की गई',
+    generationFailed: 'जेनरेशन विफल',
+    invalidInput: 'अमान्य इनपुट',
+    invalidInputDesc: 'कृपया महीना और वर्ष दोनों चुनें',
+    noInvoicesAvailable: 'निर्यात के लिए कोई चालान उपलब्ध नहीं',
+    
+    // Chat Toast Messages
+    channelCreated: 'चैनल बनाया गया',
+    channelCreatedDesc: 'चैनल सफलतापूर्वक बनाया गया',
+    failedToCreateChannel: 'चैनल बनाने में विफल',
+    directMessageStarted: 'सीधा संदेश शुरू',
+    directMessageStartedDesc: 'सीधा संदेश शुरू किया गया',
+    failedToStartDirectMessage: 'सीधा संदेश शुरू करने में विफल',
+    
+    // Setup Toast Messages
+    setupComplete: 'सेटअप पूर्ण!',
+    setupCompleteDesc: 'आपका व्यवस्थापक खाता सफलतापूर्वक बनाया गया है',
+    setupFailed: 'सेटअप विफल',
+    
+    // Recipe Toast Messages
+    invalidIngredients: 'अमान्य सामग्री',
+    invalidIngredientsDesc: 'कृपया सभी चयनित सामग्री के लिए मात्रा दर्ज करें',
     
     // Additional Pages
     deliveryProfitability: 'डिलीवरी लाभप्रदता',
@@ -5935,18 +6631,18 @@ export const translations: Record<Language, Translations> = {
     failedToCreateCustomer: 'گاہک بنانے میں ناکام',
     
     // Welcome Video Slides
-    videoSlide1Title: 'احمد سے ملیں - ریستوران کے مالک',
-    videoSlide1Subtitle: 'دستی انوینٹری، گمشدہ آرڈرز، اور گرتے ہوئے منافع سے نمٹنا',
-    videoSlide2Title: 'ریئل ٹائم POS سسٹم',
-    videoSlide2Subtitle: 'فوری طور پر آرڈرز کی کارروائی • لائیو سیلز ٹریک کریں • متعدد ادائیگی کے طریقے',
-    videoSlide3Title: 'سمارٹ انوینٹری مینجمنٹ',
-    videoSlide3Subtitle: 'خودکار اسٹاک کی کٹوتی • کم اسٹاک الرٹس • اجزاء کبھی ختم نہیں ہوں گے',
-    videoSlide4Title: 'ZATCA کے مطابق رسیدیں',
-    videoSlide4Subtitle: 'فوری طور پر دو لسانی رسیدیں بنائیں • QR کوڈز • مکمل ٹیکس تعمیل',
-    videoSlide5Title: 'طاقتور تجزیات ڈیش بورڈ',
-    videoSlide5Subtitle: 'منافع کو ٹریک کریں • طلب کی پیش گوئی کریں • ڈیٹا پر مبنی فیصلے کریں',
-    videoSlide6Title: 'احمد کی کامیابی کی کہانی',
-    videoSlide6Subtitle: '300% آمدنی میں اضافہ • 5 نئی شاخیں • ہزاروں خوشحال ریستورانوں میں شامل ہوں',
+    videoSlide1Title: 'BlindSpot سسٹم میں خوش آمدید',
+    videoSlide1Subtitle: 'مکمل کاروباری انتظامی پلیٹ فارم • 10 زبانوں کی معاونت • 24/7 IT سپورٹ سسٹم',
+    videoSlide2Title: 'سمارٹ POS اور کسٹمر مینجمنٹ',
+    videoSlide2Subtitle: 'فوری طور پر آرڈرز کی کارروائی • POS سے کسٹمرز کا انتظام • وفاداری اور ترجیحات کو ٹریک کریں',
+    videoSlide3Title: 'جدید مالیاتی ٹولز',
+    videoSlide3Subtitle: 'WhatsApp رسید کی فراہمی • ڈیلیوری ایپ کمیشن ٹریکنگ • خودکار VAT تعمیل',
+    videoSlide4Title: 'ملازمین کا انتظام آسان بنایا',
+    videoSlide4Subtitle: 'خودکار تنخواہ کا حساب • چھٹیوں کی ٹریکنگ • کارکردگی کے انتظام کا نظام',
+    videoSlide5Title: 'طاقتور تجزیات اور پیش گوئی',
+    videoSlide5Subtitle: 'ریئل ٹائم منافع کا تجزیہ • طلب کی پیش گوئی • کثیر شاخہ رپورٹنگ',
+    videoSlide6Title: 'محفوظ اور قابل توسیع پلیٹ فارم',
+    videoSlide6Subtitle: 'کثیر کرایہ دار سیکیورٹی • 1 سے لامحدود شاخوں تک ترقی • ہزاروں کامیاب کاروباروں میں شامل ہوں',
     failedToUpdateCustomer: 'گاہک کو اپ ڈیٹ کرنے میں ناکام',
     failedToDeleteCustomer: 'گاہک کو حذف کرنے میں ناکام',
     failedToExportCustomers: 'گاہک ڈیٹا برآمد کرنے میں ناکام',
@@ -5988,6 +6684,122 @@ export const translations: Record<Language, Translations> = {
     forgotPasswordDesc: 'اپنا ای میل ایڈریس درج کریں اور ہم آپ کو پاس ورڈ ری سیٹ کرنے کی ہدایات بھیجیں گے۔',
     pleaseTryAgainOrRequestNew: 'براہ کرم دوبارہ کوشش کریں یا نیا ری سیٹ لنک کی درخواست کریں۔',
     pleaseTryAgainLater: 'براہ کرم بعد میں دوبارہ کوشش کریں۔',
+    
+    // Kitchen & Orders Display
+    justNow: 'ابھی',
+    minAgo: 'منٹ پہلے',
+    hourAgo: 'گھنٹہ پہلے',
+    hoursAgo: 'گھنٹے پہلے',
+    urgent: 'فوری',
+    orderNotes: 'آرڈر نوٹس:',
+    startCooking: 'پکانا شروع کریں',
+    markAsReady: 'تیار کے طور پر نشان لگائیں',
+    outForDelivery: 'ڈیلیوری کے لیے',
+    serveComplete: 'پیش کریں / مکمل کریں',
+    displaySuffix: ' ڈسپلے',
+    loadingOrders: 'آرڈرز لوڈ ہو رہے ہیں...',
+    realTimeTracking: 'حقیقی وقت آرڈر ٹریکنگ اور تیاری رہنمائی',
+    noPendingOrders: 'کوئی زیر التواء آرڈر نہیں',
+    inProgressOrders: 'پیش رفت میں',
+    noOrdersInProgress: 'کوئی آرڈر پیش رفت میں نہیں',
+    noOrdersReady: 'کوئی آرڈر تیار نہیں',
+    errorLoadingOrders: 'آرڈرز لوڈ کرنے میں خرابی',
+    theOrderStatusChanged: 'آرڈر کی حیثیت تبدیل ہو گئی ہے',
+    failedToUpdateOrderStatus: 'آرڈر کی حیثیت اپ ڈیٹ کرنے میں ناکام',
+    retry: 'دوبارہ کوشش کریں',
+    
+    // POS & Payment Toast Messages
+    cartIsEmpty: 'کارٹ خالی ہے',
+    cartIsEmptyDesc: 'آرڈر دینے سے پہلے براہ کرم کارٹ میں آئٹمز شامل کریں',
+    whatsappPopupBlocked: 'WhatsApp نہیں کھل سکا۔ براہ کرم اپنی پاپ اپ بلاکر سیٹنگز جانچیں۔',
+    paymentFailed: 'ادائیگی ناکام',
+    paymentFailedDesc: 'ادائیگی پر کارروائی نہیں ہو سکی',
+    paymentCancelled: 'ادائیگی منسوخ',
+    paymentCancelledDesc: 'ادائیگی کا عمل منسوخ کر دیا گیا',
+    paymentSuccessful: 'ادائیگی کامیاب',
+    paymentSuccessfulDesc: 'ادائیگی کامیابی سے مکمل ہوئی',
+    orderNotPlaced: 'آرڈر نہیں دیا گیا',
+    
+    // Export & Download Toast Messages
+    pdfExportSuccessful: 'PDF کامیابی سے برآمد',
+    excelExportSuccessful: 'Excel کامیابی سے برآمد',
+    customerDataExported: 'گاہک ڈیٹا Excel میں برآمد کیا گیا',
+    profitabilityPdfExported: 'منافع کی رپورٹ PDF میں برآمد',
+    profitabilityExcelExported: 'منافع ڈیٹا Excel میں برآمد',
+    financialDataExported: 'مالیاتی ڈیٹا Excel میں برآمد کیا گیا',
+    financialPdfExported: 'مالیاتی بیان PDF میں برآمد',
+    menuDataExported: 'مینو ڈیٹا Excel میں برآمد کیا گیا',
+    inventoryDataExported: 'انوینٹری ڈیٹا Excel میں برآمد کیا گیا',
+    templateDownloaded: 'ٹیمپلیٹ ڈاؤن لوڈ',
+    templateDownloadedDesc: 'ٹیمپلیٹ بھریں اور درآمد کریں',
+    reportDownloaded: 'رپورٹ ڈاؤن لوڈ',
+    
+    // Profile & Settings Toast Messages
+    profileUpdated: 'پروفائل اپ ڈیٹ',
+    profileUpdatedDesc: 'آپ کی پروفائل کامیابی سے اپ ڈیٹ ہو گئی ہے۔',
+    updateFailed: 'اپ ڈیٹ ناکام',
+    subscriptionCancelledDesc: 'آپ کی سبسکرپشن منسوخ کر دی گئی ہے۔ سروس جاری رکھنے کے لیے براہ کرم دوبارہ ادائیگی کریں۔',
+    cancellationFailed: 'منسوخی ناکام',
+    cancellationFailedDesc: 'سبسکرپشن منسوخ کرنے میں ناکام۔ براہ کرم دوبارہ کوشش کریں۔',
+    downloadStarted: 'ڈاؤن لوڈ شروع',
+    downloadStartedDesc: 'آپ کی رسید ڈاؤن لوڈ ہو رہی ہے۔',
+    downloadFailedDesc: 'رسید ڈاؤن لوڈ کرنے میں ناکام۔ براہ کرم دوبارہ کوشش کریں۔',
+    notificationToneUpdated: 'تمام اکاؤنٹس کے لیے اطلاع کی آواز اپ ڈیٹ',
+    failedToUpdateNotificationTone: 'اطلاع کی آواز اپ ڈیٹ کرنے میں ناکام',
+    
+    // Auth & Account Toast Messages
+    missingFields: 'گمشدہ فیلڈز',
+    missingFieldsDesc: 'براہ کرم صارف نام، پاس ورڈ اور پورا نام بھریں',
+    itAccountCreated: 'IT اکاؤنٹ بنایا گیا',
+    itAccountCreatedDesc: 'آپ کا IT اکاؤنٹ کامیابی سے بنایا گیا ہے۔ براہ کرم اپنی اسناد کے ساتھ لاگ ان کریں۔',
+    itSignupFailed: 'IT سائن اپ ناکام',
+    invalidPassword: 'غلط پاس ورڈ',
+    invalidPasswordDesc: 'پاس ورڈ کم از کم 6 حروف لمبا ہونا چاہیے',
+    
+    // Menu & Inventory Toast Messages
+    imageUploadFailed: 'تصویر اپ لوڈ ناکام',
+    imageUploadFailedDesc: 'تصویر اپ لوڈ نہیں ہو سکی۔ براہ کرم دوبارہ کوشش کریں۔',
+    categoryAdded: 'زمرہ شامل کیا گیا',
+    categoryRemoved: 'زمرہ ہٹایا گیا',
+    failedToCreateItem: 'آئٹم بنانے میں ناکام',
+    failedToUpdateItem: 'آئٹم اپ ڈیٹ کرنے میں ناکام',
+    failedToCreateAddon: 'ایڈ آن بنانے میں ناکام',
+    failedToUpdateAddon: 'ایڈ آن اپ ڈیٹ کرنے میں ناکام',
+    invalidData: 'غلط ڈیٹا',
+    invalidDataDesc: 'کارروائی نہیں ہو سکی - غلط ڈیٹا ویلیو',
+    
+    // License Toast Messages
+    licenseCreated: 'کامیابی',
+    licenseCreatedDesc: 'لائسنس کامیابی سے بنایا گیا',
+    licenseUpdated: 'کامیابی',
+    licenseUpdatedDesc: 'لائسنس کامیابی سے اپ ڈیٹ',
+    licenseDeleted: 'کامیابی',
+    licenseDeletedDesc: 'لائسنس کامیابی سے حذف کیا گیا',
+    
+    // VAT & Reports Toast Messages
+    vatReportGenerated: 'VAT رپورٹ تیار',
+    vatReportGeneratedDesc: 'ماہانہ VAT رپورٹ کامیابی سے تیار کی گئی',
+    generationFailed: 'تیاری ناکام',
+    invalidInput: 'غلط ان پٹ',
+    invalidInputDesc: 'براہ کرم مہینہ اور سال دونوں منتخب کریں',
+    noInvoicesAvailable: 'برآمد کے لیے کوئی رسید دستیاب نہیں',
+    
+    // Chat Toast Messages
+    channelCreated: 'چینل بنایا گیا',
+    channelCreatedDesc: 'چینل کامیابی سے بنایا گیا',
+    failedToCreateChannel: 'چینل بنانے میں ناکام',
+    directMessageStarted: 'براہ راست پیغام شروع',
+    directMessageStartedDesc: 'براہ راست پیغام شروع کیا گیا',
+    failedToStartDirectMessage: 'براہ راست پیغام شروع کرنے میں ناکام',
+    
+    // Setup Toast Messages
+    setupComplete: 'سیٹ اپ مکمل!',
+    setupCompleteDesc: 'آپ کا ایڈمن اکاؤنٹ کامیابی سے بنایا گیا ہے',
+    setupFailed: 'سیٹ اپ ناکام',
+    
+    // Recipe Toast Messages
+    invalidIngredients: 'غلط اجزاء',
+    invalidIngredientsDesc: 'براہ کرم تمام منتخب اجزاء کے لیے مقدار درج کریں',
     
     // Additional Pages
     deliveryProfitability: 'ڈیلیوری منافع',
@@ -6772,18 +7584,18 @@ export const translations: Record<Language, Translations> = {
     actions: 'কর্ম',
     
     // Welcome Video Slides
-    videoSlide1Title: 'আহমাদের সাথে দেখা করুন - রেস্তোরাঁ মালিক',
-    videoSlide1Subtitle: 'ম্যানুয়াল ইনভেন্টরি, হারানো অর্ডার, এবং কমতে থাকা লাভের সাথে লড়াই',
-    videoSlide2Title: 'রিয়েল-টাইম POS সিস্টেম',
-    videoSlide2Subtitle: 'তাৎক্ষণিক অর্ডার প্রসেস করুন • লাইভ বিক্রয় ট্র্যাক করুন • একাধিক পেমেন্ট পদ্ধতি',
-    videoSlide3Title: 'স্মার্ট ইনভেন্টরি ম্যানেজমেন্ট',
-    videoSlide3Subtitle: 'স্বয়ংক্রিয় স্টক কর্তন • কম স্টক সতর্কতা • উপাদান কখনও শেষ হবে না',
-    videoSlide4Title: 'ZATCA-সম্মত চালান',
-    videoSlide4Subtitle: 'তাৎক্ষণিক দ্বিভাষিক চালান তৈরি করুন • QR কোড • সম্পূর্ণ কর সম্মতি',
-    videoSlide5Title: 'শক্তিশালী বিশ্লেষণ ড্যাশবোর্ড',
-    videoSlide5Subtitle: 'লাভজনকতা ট্র্যাক করুন • চাহিদার পূর্বাভাস দিন • ডেটা-চালিত সিদ্ধান্ত নিন',
-    videoSlide6Title: 'আহমাদের সাফল্যের গল্প',
-    videoSlide6Subtitle: '300% রাজস্ব বৃদ্ধি • 5টি নতুন শাখা • হাজার হাজার সমৃদ্ধ রেস্তোরাঁয় যোগ দিন',
+    videoSlide1Title: 'BlindSpot সিস্টেমে স্বাগতম',
+    videoSlide1Subtitle: 'সম্পূর্ণ ব্যবসা পরিচালনা প্ল্যাটফর্ম • 10টি ভাষা সমর্থন • 24/7 IT সাপোর্ট সিস্টেম',
+    videoSlide2Title: 'স্মার্ট POS এবং গ্রাহক ব্যবস্থাপনা',
+    videoSlide2Subtitle: 'তাৎক্ষণিক অর্ডার প্রসেস করুন • POS থেকে গ্রাহক পরিচালনা করুন • আনুগত্য এবং পছন্দ ট্র্যাক করুন',
+    videoSlide3Title: 'উন্নত আর্থিক সরঞ্জাম',
+    videoSlide3Subtitle: 'WhatsApp চালান বিতরণ • ডেলিভারি অ্যাপ কমিশন ট্র্যাকিং • স্বয়ংক্রিয় VAT সম্মতি',
+    videoSlide4Title: 'কর্মচারী ব্যবস্থাপনা সহজ করা',
+    videoSlide4Subtitle: 'স্বয়ংক্রিয় বেতন গণনা • ছুটি ট্র্যাকিং • কর্মক্ষমতা ব্যবস্থাপনা সিস্টেম',
+    videoSlide5Title: 'শক্তিশালী বিশ্লেষণ এবং পূর্বাভাস',
+    videoSlide5Subtitle: 'রিয়েল-টাইম লাভজনকতা বিশ্লেষণ • চাহিদা পূর্বাভাস • মাল্টি-শাখা রিপোর্টিং',
+    videoSlide6Title: 'নিরাপদ এবং স্কেলেবল প্ল্যাটফর্ম',
+    videoSlide6Subtitle: 'মাল্টি-টেন্যান্ট নিরাপত্তা • 1 থেকে সীমাহীন শাখায় বৃদ্ধি • হাজার হাজার সফল ব্যবসায় যোগ দিন',
     unarchive: 'সংরক্ষণাগার থেকে বের করুন',
     archive: 'সংরক্ষণাগারভুক্ত করুন',
     somethingWentWrong: 'কিছু ভুল হয়েছে',
@@ -6839,6 +7651,122 @@ export const translations: Record<Language, Translations> = {
     forgotPasswordDesc: 'আপনার ইমেল ঠিকানা লিখুন এবং আমরা আপনাকে পাসওয়ার্ড রিসেট করার নির্দেশাবলী পাঠাব।',
     pleaseTryAgainOrRequestNew: 'অনুগ্রহ করে আবার চেষ্টা করুন বা নতুন রিসেট লিঙ্কের অনুরোধ করুন।',
     pleaseTryAgainLater: 'অনুগ্রহ করে পরে আবার চেষ্টা করুন।',
+    
+    // Kitchen & Orders Display
+    justNow: 'এইমাত্র',
+    minAgo: 'মিনিট আগে',
+    hourAgo: 'ঘণ্টা আগে',
+    hoursAgo: 'ঘণ্টা আগে',
+    urgent: 'জরুরি',
+    orderNotes: 'অর্ডার নোট:',
+    startCooking: 'রান্না শুরু করুন',
+    markAsReady: 'প্রস্তুত হিসাবে চিহ্নিত করুন',
+    outForDelivery: 'ডেলিভারির জন্য',
+    serveComplete: 'পরিবেশন / সম্পূর্ণ',
+    displaySuffix: ' প্রদর্শন',
+    loadingOrders: 'অর্ডার লোড হচ্ছে...',
+    realTimeTracking: 'রিয়েল-টাইম অর্ডার ট্র্যাকিং এবং প্রস্তুতি নির্দেশনা',
+    noPendingOrders: 'কোনো মুলতুবি অর্ডার নেই',
+    inProgressOrders: 'চলমান',
+    noOrdersInProgress: 'কোনো অর্ডার চলমান নেই',
+    noOrdersReady: 'কোনো অর্ডার প্রস্তুত নেই',
+    errorLoadingOrders: 'অর্ডার লোড করতে ত্রুটি',
+    theOrderStatusChanged: 'অর্ডারের স্থিতি পরিবর্তিত হয়েছে',
+    failedToUpdateOrderStatus: 'অর্ডার স্থিতি আপডেট করতে ব্যর্থ',
+    retry: 'পুনরায় চেষ্টা করুন',
+    
+    // POS & Payment Toast Messages
+    cartIsEmpty: 'কার্ট খালি',
+    cartIsEmptyDesc: 'অর্ডার দেওয়ার আগে অনুগ্রহ করে কার্টে আইটেম যোগ করুন',
+    whatsappPopupBlocked: 'WhatsApp খুলতে পারেনি। অনুগ্রহ করে আপনার পপআপ ব্লকার সেটিংস পরীক্ষা করুন।',
+    paymentFailed: 'পেমেন্ট ব্যর্থ',
+    paymentFailedDesc: 'পেমেন্ট প্রক্রিয়া করা যায়নি',
+    paymentCancelled: 'পেমেন্ট বাতিল',
+    paymentCancelledDesc: 'পেমেন্ট প্রক্রিয়া বাতিল করা হয়েছে',
+    paymentSuccessful: 'পেমেন্ট সফল',
+    paymentSuccessfulDesc: 'পেমেন্ট সফলভাবে সম্পন্ন হয়েছে',
+    orderNotPlaced: 'অর্ডার দেওয়া হয়নি',
+    
+    // Export & Download Toast Messages
+    pdfExportSuccessful: 'PDF সফলভাবে রপ্তানি',
+    excelExportSuccessful: 'Excel সফলভাবে রপ্তানি',
+    customerDataExported: 'গ্রাহক ডেটা Excel এ রপ্তানি করা হয়েছে',
+    profitabilityPdfExported: 'লাভজনকতা রিপোর্ট PDF এ রপ্তানি',
+    profitabilityExcelExported: 'লাভজনকতা ডেটা Excel এ রপ্তানি',
+    financialDataExported: 'আর্থিক ডেটা Excel এ রপ্তানি করা হয়েছে',
+    financialPdfExported: 'আর্থিক বিবৃতি PDF এ রপ্তানি',
+    menuDataExported: 'মেনু ডেটা Excel এ রপ্তানি করা হয়েছে',
+    inventoryDataExported: 'ইনভেন্টরি ডেটা Excel এ রপ্তানি করা হয়েছে',
+    templateDownloaded: 'টেমপ্লেট ডাউনলোড',
+    templateDownloadedDesc: 'টেমপ্লেট পূরণ করুন এবং আমদানি করুন',
+    reportDownloaded: 'রিপোর্ট ডাউনলোড',
+    
+    // Profile & Settings Toast Messages
+    profileUpdated: 'প্রোফাইল আপডেট',
+    profileUpdatedDesc: 'আপনার প্রোফাইল সফলভাবে আপডেট করা হয়েছে।',
+    updateFailed: 'আপডেট ব্যর্থ',
+    subscriptionCancelledDesc: 'আপনার সাবস্ক্রিপশন বাতিল করা হয়েছে। সেবা চালিয়ে যেতে অনুগ্রহ করে পুনরায় পেমেন্ট করুন।',
+    cancellationFailed: 'বাতিল ব্যর্থ',
+    cancellationFailedDesc: 'সাবস্ক্রিপশন বাতিল করতে ব্যর্থ। অনুগ্রহ করে আবার চেষ্টা করুন।',
+    downloadStarted: 'ডাউনলোড শুরু',
+    downloadStartedDesc: 'আপনার চালান ডাউনলোড হচ্ছে।',
+    downloadFailedDesc: 'চালান ডাউনলোড করতে ব্যর্থ। অনুগ্রহ করে আবার চেষ্টা করুন।',
+    notificationToneUpdated: 'সকল অ্যাকাউন্টের জন্য বিজ্ঞপ্তি টোন আপডেট',
+    failedToUpdateNotificationTone: 'বিজ্ঞপ্তি টোন আপডেট করতে ব্যর্থ',
+    
+    // Auth & Account Toast Messages
+    missingFields: 'অনুপস্থিত ক্ষেত্র',
+    missingFieldsDesc: 'অনুগ্রহ করে ব্যবহারকারীর নাম, পাসওয়ার্ড এবং পূর্ণ নাম পূরণ করুন',
+    itAccountCreated: 'IT অ্যাকাউন্ট তৈরি',
+    itAccountCreatedDesc: 'আপনার IT অ্যাকাউন্ট সফলভাবে তৈরি করা হয়েছে। অনুগ্রহ করে আপনার শংসাপত্র দিয়ে লগইন করুন।',
+    itSignupFailed: 'IT সাইনআপ ব্যর্থ',
+    invalidPassword: 'অবৈধ পাসওয়ার্ড',
+    invalidPasswordDesc: 'পাসওয়ার্ড কমপক্ষে 6 অক্ষরের হতে হবে',
+    
+    // Menu & Inventory Toast Messages
+    imageUploadFailed: 'ছবি আপলোড ব্যর্থ',
+    imageUploadFailedDesc: 'ছবি আপলোড করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।',
+    categoryAdded: 'বিভাগ যোগ করা হয়েছে',
+    categoryRemoved: 'বিভাগ সরানো হয়েছে',
+    failedToCreateItem: 'আইটেম তৈরি করতে ব্যর্থ',
+    failedToUpdateItem: 'আইটেম আপডেট করতে ব্যর্থ',
+    failedToCreateAddon: 'অ্যাড-অন তৈরি করতে ব্যর্থ',
+    failedToUpdateAddon: 'অ্যাড-অন আপডেট করতে ব্যর্থ',
+    invalidData: 'অবৈধ ডেটা',
+    invalidDataDesc: 'প্রক্রিয়া করতে অক্ষম - অবৈধ ডেটা মান',
+    
+    // License Toast Messages
+    licenseCreated: 'সফল',
+    licenseCreatedDesc: 'লাইসেন্স সফলভাবে তৈরি',
+    licenseUpdated: 'সফল',
+    licenseUpdatedDesc: 'লাইসেন্স সফলভাবে আপডেট',
+    licenseDeleted: 'সফল',
+    licenseDeletedDesc: 'লাইসেন্স সফলভাবে মুছে ফেলা হয়েছে',
+    
+    // VAT & Reports Toast Messages
+    vatReportGenerated: 'VAT রিপোর্ট তৈরি',
+    vatReportGeneratedDesc: 'মাসিক VAT রিপোর্ট সফলভাবে তৈরি হয়েছে',
+    generationFailed: 'তৈরি ব্যর্থ',
+    invalidInput: 'অবৈধ ইনপুট',
+    invalidInputDesc: 'অনুগ্রহ করে মাস এবং বছর উভয়ই নির্বাচন করুন',
+    noInvoicesAvailable: 'রপ্তানির জন্য কোনো চালান উপলব্ধ নেই',
+    
+    // Chat Toast Messages
+    channelCreated: 'চ্যানেল তৈরি',
+    channelCreatedDesc: 'চ্যানেল সফলভাবে তৈরি হয়েছে',
+    failedToCreateChannel: 'চ্যানেল তৈরি করতে ব্যর্থ',
+    directMessageStarted: 'সরাসরি বার্তা শুরু',
+    directMessageStartedDesc: 'সরাসরি বার্তা শুরু করা হয়েছে',
+    failedToStartDirectMessage: 'সরাসরি বার্তা শুরু করতে ব্যর্থ',
+    
+    // Setup Toast Messages
+    setupComplete: 'সেটআপ সম্পূর্ণ!',
+    setupCompleteDesc: 'আপনার অ্যাডমিন অ্যাকাউন্ট সফলভাবে তৈরি করা হয়েছে',
+    setupFailed: 'সেটআপ ব্যর্থ',
+    
+    // Recipe Toast Messages
+    invalidIngredients: 'অবৈধ উপাদান',
+    invalidIngredientsDesc: 'অনুগ্রহ করে সকল নির্বাচিত উপাদানের জন্য পরিমাণ লিখুন',
     
     // Additional Pages
     deliveryProfitability: 'ডেলিভারি লাভজনকতা',
@@ -7613,20 +8541,142 @@ export const translations: Record<Language, Translations> = {
     forgotPasswordDesc: "Inserisci il tuo indirizzo email e ti invieremo le istruzioni per reimpostare la password.",
     pleaseTryAgainOrRequestNew: "Riprova o richiedi un nuovo link di ripristino.",
     pleaseTryAgainLater: "Riprova più tardi.",
+    
+    // Kitchen & Orders Display
+    justNow: "Proprio ora",
+    minAgo: "min fa",
+    hourAgo: "ora fa",
+    hoursAgo: "ore fa",
+    urgent: "Urgente",
+    orderNotes: "Note Ordine:",
+    startCooking: "Inizia a Cucinare",
+    markAsReady: "Segna come Pronto",
+    outForDelivery: "In Consegna",
+    serveComplete: "Servi / Completa",
+    displaySuffix: " Display",
+    loadingOrders: "Caricamento ordini...",
+    realTimeTracking: "Tracciamento ordini in tempo reale e guida alla preparazione",
+    noPendingOrders: "Nessun ordine in sospeso",
+    inProgressOrders: "In Corso",
+    noOrdersInProgress: "Nessun ordine in corso",
+    noOrdersReady: "Nessun ordine pronto",
+    errorLoadingOrders: "Errore nel caricamento ordini",
+    theOrderStatusChanged: "Lo stato dell'ordine è cambiato",
+    failedToUpdateOrderStatus: "Aggiornamento stato ordine fallito",
+    retry: "Riprova",
+    
+    // POS & Payment Toast Messages
+    cartIsEmpty: "Carrello Vuoto",
+    cartIsEmptyDesc: "Aggiungi articoli al carrello prima di effettuare l'ordine",
+    whatsappPopupBlocked: "Impossibile aprire WhatsApp. Controlla le impostazioni del blocco popup.",
+    paymentFailed: "Pagamento Fallito",
+    paymentFailedDesc: "Il pagamento non può essere elaborato",
+    paymentCancelled: "Pagamento Annullato",
+    paymentCancelledDesc: "Il processo di pagamento è stato annullato",
+    paymentSuccessful: "Pagamento Riuscito",
+    paymentSuccessfulDesc: "Pagamento completato con successo",
+    orderNotPlaced: "Ordine non effettuato",
+    
+    // Export & Download Toast Messages
+    pdfExportSuccessful: "PDF esportato con successo",
+    excelExportSuccessful: "Excel esportato con successo",
+    customerDataExported: "Dati clienti esportati in Excel",
+    profitabilityPdfExported: "Report redditività esportato in PDF",
+    profitabilityExcelExported: "Dati redditività esportati in Excel",
+    financialDataExported: "Dati finanziari esportati in Excel",
+    financialPdfExported: "Rendiconto finanziario esportato in PDF",
+    menuDataExported: "Dati menu esportati in Excel",
+    inventoryDataExported: "Dati inventario esportati in Excel",
+    templateDownloaded: "Modello scaricato",
+    templateDownloadedDesc: "Compila il modello e importalo",
+    reportDownloaded: "Report scaricato",
+    
+    // Profile & Settings Toast Messages
+    profileUpdated: "Profilo Aggiornato",
+    profileUpdatedDesc: "Il tuo profilo è stato aggiornato con successo.",
+    updateFailed: "Aggiornamento Fallito",
+    subscriptionCancelledDesc: "Il tuo abbonamento è stato annullato. Rieffettua il pagamento per continuare a utilizzare il servizio.",
+    cancellationFailed: "Annullamento Fallito",
+    cancellationFailedDesc: "Annullamento abbonamento fallito. Riprova.",
+    downloadStarted: "Download Iniziato",
+    downloadStartedDesc: "La tua fattura è in fase di download.",
+    downloadFailedDesc: "Download fattura fallito. Riprova.",
+    notificationToneUpdated: "Tono notifica aggiornato per tutti gli account",
+    failedToUpdateNotificationTone: "Aggiornamento tono notifica fallito",
+    
+    // Auth & Account Toast Messages
+    missingFields: "Campi Mancanti",
+    missingFieldsDesc: "Compila username, password e nome completo",
+    itAccountCreated: "Account IT Creato",
+    itAccountCreatedDesc: "Il tuo account IT è stato creato con successo. Accedi con le tue credenziali.",
+    itSignupFailed: "Registrazione IT Fallita",
+    invalidPassword: "Password Non Valida",
+    invalidPasswordDesc: "La password deve essere lunga almeno 6 caratteri",
+    
+    // Menu & Inventory Toast Messages
+    imageUploadFailed: "Caricamento immagine fallito",
+    imageUploadFailedDesc: "Impossibile caricare l'immagine. Riprova.",
+    categoryAdded: "Categoria aggiunta",
+    categoryRemoved: "Categoria rimossa",
+    failedToCreateItem: "Creazione articolo fallita",
+    failedToUpdateItem: "Aggiornamento articolo fallito",
+    failedToCreateAddon: "Creazione add-on fallita",
+    failedToUpdateAddon: "Aggiornamento add-on fallito",
+    invalidData: "Dati non validi",
+    invalidDataDesc: "Impossibile elaborare - valore dati non valido",
+    
+    // License Toast Messages
+    licenseCreated: "Successo",
+    licenseCreatedDesc: "Licenza creata con successo",
+    licenseUpdated: "Successo",
+    licenseUpdatedDesc: "Licenza aggiornata con successo",
+    licenseDeleted: "Successo",
+    licenseDeletedDesc: "Licenza eliminata con successo",
+    
+    // VAT & Reports Toast Messages
+    vatReportGenerated: "Report IVA Generato",
+    vatReportGeneratedDesc: "Report IVA mensile generato con successo",
+    generationFailed: "Generazione Fallita",
+    invalidInput: "Input Non Valido",
+    invalidInputDesc: "Seleziona sia il mese che l'anno",
+    noInvoicesAvailable: "Nessuna fattura disponibile per l'esportazione",
+    
+    // Chat Toast Messages
+    channelCreated: "Canale creato",
+    channelCreatedDesc: "Canale creato con successo",
+    failedToCreateChannel: "Creazione canale fallita",
+    directMessageStarted: "Messaggio diretto avviato",
+    directMessageStartedDesc: "Messaggio diretto avviato",
+    failedToStartDirectMessage: "Avvio messaggio diretto fallito",
+    
+    // Setup Toast Messages
+    setupComplete: "Configurazione completata!",
+    setupCompleteDesc: "Il tuo account admin è stato creato con successo",
+    setupFailed: "Configurazione fallita",
+    
+    // Recipe Toast Messages
+    invalidIngredients: "Ingredienti non validi",
+    invalidIngredientsDesc: "Inserisci le quantità per tutti gli ingredienti selezionati",
+    
+    // Additional Pages
     deliveryProfitability: "Redditività Consegna",
     salesComparison: "Confronto Vendite",
-    videoSlide1Title: "Incontra Ahmad - Proprietario di Ristorante",
-    videoSlide1Subtitle: "Lotta con inventario manuale, ordini persi e profitti in calo",
-    videoSlide2Title: "Sistema POS in Tempo Reale",
-    videoSlide2Subtitle: "Elabora ordini istantaneamente • Traccia vendite dal vivo • Accetta pagamenti multipli",
-    videoSlide3Title: "Gestione Inventario Intelligente",
-    videoSlide3Subtitle: "Deduzione automatica scorte • Avvisi scorte basse • Mai più senza ingredienti",
-    videoSlide4Title: "Fatture Conformi ZATCA",
-    videoSlide4Subtitle: "Genera fatture bilingui istantanee • Codici QR • Completa conformità fiscale",
-    videoSlide5Title: "Dashboard Analitiche Potente",
-    videoSlide5Subtitle: "Traccia redditività • Prevedi domanda • Prendi decisioni basate sui dati",
-    videoSlide6Title: "Storia di Successo di Ahmad",
-    videoSlide6Subtitle: "Crescita fatturato 300% • 5 nuove filiali • Unisciti a migliaia di ristoranti prosperi",
+    
+    // Welcome Video Slides
+    videoSlide1Title: "Benvenuto in BlindSpot System",
+    videoSlide1Subtitle: "Piattaforma completa di gestione aziendale • Supporto 10 lingue • Sistema di supporto IT 24/7",
+    videoSlide2Title: "POS Intelligente e Gestione Clienti",
+    videoSlide2Subtitle: "Elabora ordini istantaneamente • Gestisci clienti dal POS • Traccia fedeltà e preferenze",
+    videoSlide3Title: "Strumenti Finanziari Avanzati",
+    videoSlide3Subtitle: "Consegna fatture WhatsApp • Tracciamento commissioni app di consegna • Conformità IVA automatizzata",
+    videoSlide4Title: "Gestione Dipendenti Semplificata",
+    videoSlide4Subtitle: "Calcolo automatico stipendi • Tracciamento ferie • Sistema di gestione delle prestazioni",
+    videoSlide5Title: "Potenti Analisi e Previsioni",
+    videoSlide5Subtitle: "Analisi redditività in tempo reale • Previsione domanda • Reportistica multi-filiale",
+    videoSlide6Title: "Piattaforma Sicura e Scalabile",
+    videoSlide6Subtitle: "Sicurezza multi-tenant • Crescita da 1 a filiali illimitate • Unisciti a migliaia di aziende di successo",
+    
+    // Branding
     madeBy: "Realizzato da",
     companyName: "Kinzhal LTD Co.",
     copyright: "© 2025 BlindSpot System (BSS). Tutti i diritti riservati.",
@@ -8394,20 +9444,142 @@ export const translations: Record<Language, Translations> = {
     forgotPasswordDesc: "Ingresa tu dirección de correo y te enviaremos las instrucciones para restablecer tu contraseña.",
     pleaseTryAgainOrRequestNew: "Por favor, inténtalo de nuevo o solicita un nuevo enlace de restablecimiento.",
     pleaseTryAgainLater: "Por favor, inténtalo de nuevo más tarde.",
+    
+    // Kitchen & Orders Display
+    justNow: "Justo ahora",
+    minAgo: "min atrás",
+    hourAgo: "hora atrás",
+    hoursAgo: "horas atrás",
+    urgent: "Urgente",
+    orderNotes: "Notas del Pedido:",
+    startCooking: "Iniciar Cocina",
+    markAsReady: "Marcar como Listo",
+    outForDelivery: "En Entrega",
+    serveComplete: "Servir / Completar",
+    displaySuffix: " Pantalla",
+    loadingOrders: "Cargando pedidos...",
+    realTimeTracking: "Seguimiento de pedidos en tiempo real y guía de preparación",
+    noPendingOrders: "No hay pedidos pendientes",
+    inProgressOrders: "En Progreso",
+    noOrdersInProgress: "No hay pedidos en progreso",
+    noOrdersReady: "No hay pedidos listos",
+    errorLoadingOrders: "Error al cargar pedidos",
+    theOrderStatusChanged: "El estado del pedido ha cambiado",
+    failedToUpdateOrderStatus: "Fallo al actualizar estado del pedido",
+    retry: "Reintentar",
+    
+    // POS & Payment Toast Messages
+    cartIsEmpty: "Carrito Vacío",
+    cartIsEmptyDesc: "Agrega artículos al carrito antes de realizar el pedido",
+    whatsappPopupBlocked: "No se puede abrir WhatsApp. Verifica la configuración de bloqueo de ventanas emergentes.",
+    paymentFailed: "Pago Fallido",
+    paymentFailedDesc: "El pago no pudo ser procesado",
+    paymentCancelled: "Pago Cancelado",
+    paymentCancelledDesc: "El proceso de pago fue cancelado",
+    paymentSuccessful: "Pago Exitoso",
+    paymentSuccessfulDesc: "Pago completado exitosamente",
+    orderNotPlaced: "Pedido no realizado",
+    
+    // Export & Download Toast Messages
+    pdfExportSuccessful: "PDF exportado exitosamente",
+    excelExportSuccessful: "Excel exportado exitosamente",
+    customerDataExported: "Datos de clientes exportados a Excel",
+    profitabilityPdfExported: "Informe de rentabilidad exportado a PDF",
+    profitabilityExcelExported: "Datos de rentabilidad exportados a Excel",
+    financialDataExported: "Datos financieros exportados a Excel",
+    financialPdfExported: "Estado financiero exportado a PDF",
+    menuDataExported: "Datos del menú exportados a Excel",
+    inventoryDataExported: "Datos de inventario exportados a Excel",
+    templateDownloaded: "Plantilla descargada",
+    templateDownloadedDesc: "Completa la plantilla e impórtala",
+    reportDownloaded: "Informe descargado",
+    
+    // Profile & Settings Toast Messages
+    profileUpdated: "Perfil Actualizado",
+    profileUpdatedDesc: "Tu perfil ha sido actualizado exitosamente.",
+    updateFailed: "Actualización Fallida",
+    subscriptionCancelledDesc: "Tu suscripción ha sido cancelada. Realiza el pago nuevamente para continuar usando el servicio.",
+    cancellationFailed: "Cancelación Fallida",
+    cancellationFailedDesc: "Fallo al cancelar la suscripción. Por favor, inténtalo de nuevo.",
+    downloadStarted: "Descarga Iniciada",
+    downloadStartedDesc: "Tu factura se está descargando.",
+    downloadFailedDesc: "Fallo al descargar la factura. Por favor, inténtalo de nuevo.",
+    notificationToneUpdated: "Tono de notificación actualizado para todas las cuentas",
+    failedToUpdateNotificationTone: "Fallo al actualizar el tono de notificación",
+    
+    // Auth & Account Toast Messages
+    missingFields: "Campos Faltantes",
+    missingFieldsDesc: "Completa el nombre de usuario, contraseña y nombre completo",
+    itAccountCreated: "Cuenta IT Creada",
+    itAccountCreatedDesc: "Tu cuenta IT ha sido creada exitosamente. Inicia sesión con tus credenciales.",
+    itSignupFailed: "Registro IT Fallido",
+    invalidPassword: "Contraseña Inválida",
+    invalidPasswordDesc: "La contraseña debe tener al menos 6 caracteres",
+    
+    // Menu & Inventory Toast Messages
+    imageUploadFailed: "Fallo al cargar imagen",
+    imageUploadFailedDesc: "No se pudo cargar la imagen. Por favor, inténtalo de nuevo.",
+    categoryAdded: "Categoría agregada",
+    categoryRemoved: "Categoría eliminada",
+    failedToCreateItem: "Fallo al crear artículo",
+    failedToUpdateItem: "Fallo al actualizar artículo",
+    failedToCreateAddon: "Fallo al crear complemento",
+    failedToUpdateAddon: "Fallo al actualizar complemento",
+    invalidData: "Datos inválidos",
+    invalidDataDesc: "No se pudo procesar - valor de datos inválido",
+    
+    // License Toast Messages
+    licenseCreated: "Éxito",
+    licenseCreatedDesc: "Licencia creada exitosamente",
+    licenseUpdated: "Éxito",
+    licenseUpdatedDesc: "Licencia actualizada exitosamente",
+    licenseDeleted: "Éxito",
+    licenseDeletedDesc: "Licencia eliminada exitosamente",
+    
+    // VAT & Reports Toast Messages
+    vatReportGenerated: "Informe IVA Generado",
+    vatReportGeneratedDesc: "Informe IVA mensual generado exitosamente",
+    generationFailed: "Generación Fallida",
+    invalidInput: "Entrada Inválida",
+    invalidInputDesc: "Selecciona tanto el mes como el año",
+    noInvoicesAvailable: "No hay facturas disponibles para exportar",
+    
+    // Chat Toast Messages
+    channelCreated: "Canal creado",
+    channelCreatedDesc: "Canal creado exitosamente",
+    failedToCreateChannel: "Fallo al crear canal",
+    directMessageStarted: "Mensaje directo iniciado",
+    directMessageStartedDesc: "Mensaje directo iniciado",
+    failedToStartDirectMessage: "Fallo al iniciar mensaje directo",
+    
+    // Setup Toast Messages
+    setupComplete: "¡Configuración completada!",
+    setupCompleteDesc: "Tu cuenta de administrador ha sido creada exitosamente",
+    setupFailed: "Configuración fallida",
+    
+    // Recipe Toast Messages
+    invalidIngredients: "Ingredientes inválidos",
+    invalidIngredientsDesc: "Ingresa las cantidades para todos los ingredientes seleccionados",
+    
+    // Additional Pages
     deliveryProfitability: "Rentabilidad de Entrega",
     salesComparison: "Comparación de Ventas",
-    videoSlide1Title: "Conoce a Ahmad - Propietario de Restaurante",
-    videoSlide1Subtitle: "Lucha con inventario manual, pedidos perdidos y ganancias decrecientes",
-    videoSlide2Title: "Sistema TPV en Tiempo Real",
-    videoSlide2Subtitle: "Procesa pedidos al instante • Rastrea ventas en vivo • Acepta múltiples pagos",
-    videoSlide3Title: "Gestión de Inventario Inteligente",
-    videoSlide3Subtitle: "Deducción automática de stock • Alertas de stock bajo • Nunca te quedes sin ingredientes",
-    videoSlide4Title: "Facturas Conformes a ZATCA",
-    videoSlide4Subtitle: "Genera facturas bilingües al instante • Códigos QR • Total cumplimiento fiscal",
-    videoSlide5Title: "Panel de Análisis Potente",
-    videoSlide5Subtitle: "Rastrea rentabilidad • Predice demanda • Toma decisiones basadas en datos",
-    videoSlide6Title: "Historia de Éxito de Ahmad",
-    videoSlide6Subtitle: "Crecimiento de ingresos del 300% • 5 nuevas sucursales • Únete a miles de restaurantes prósperos",
+    
+    // Welcome Video Slides
+    videoSlide1Title: "Bienvenido a BlindSpot System",
+    videoSlide1Subtitle: "Plataforma completa de gestión empresarial • Soporte de 10 idiomas • Sistema de soporte IT 24/7",
+    videoSlide2Title: "TPV Inteligente y Gestión de Clientes",
+    videoSlide2Subtitle: "Procesa pedidos al instante • Gestiona clientes desde TPV • Rastrea lealtad y preferencias",
+    videoSlide3Title: "Herramientas Financieras Avanzadas",
+    videoSlide3Subtitle: "Entrega de facturas por WhatsApp • Seguimiento de comisiones de apps de entrega • Cumplimiento IVA automatizado",
+    videoSlide4Title: "Gestión de Empleados Simplificada",
+    videoSlide4Subtitle: "Cálculo automático de salarios • Seguimiento de vacaciones • Sistema de gestión del rendimiento",
+    videoSlide5Title: "Potentes Análisis y Pronósticos",
+    videoSlide5Subtitle: "Análisis de rentabilidad en tiempo real • Previsión de demanda • Informes multi-sucursal",
+    videoSlide6Title: "Plataforma Segura y Escalable",
+    videoSlide6Subtitle: "Seguridad multi-inquilino • Crecimiento de 1 a sucursales ilimitadas • Únete a miles de negocios exitosos",
+    
+    // Branding
     madeBy: "Hecho por",
     companyName: "Kinzhal LTD Co.",
     copyright: "© 2025 BlindSpot System (BSS). Todos los derechos reservados.",
@@ -9176,20 +10348,142 @@ export const translations: Record<Language, Translations> = {
     forgotPasswordDesc: "Ilagay ang iyong email address at padalhan ka namin ng mga tagubilin para i-reset ang password.",
     pleaseTryAgainOrRequestNew: "Pakisubukan muli o humiling ng bagong reset link.",
     pleaseTryAgainLater: "Pakisubukan muli mamaya.",
+    
+    // Kitchen & Orders Display
+    justNow: "Ngayon lang",
+    minAgo: "min nakaraan",
+    hourAgo: "oras nakaraan",
+    hoursAgo: "oras nakaraan",
+    urgent: "Agarang",
+    orderNotes: "Mga Tala ng Order:",
+    startCooking: "Simulan ang Pagluluto",
+    markAsReady: "Markahan bilang Handa",
+    outForDelivery: "Para sa Delivery",
+    serveComplete: "Ihain / Kumpletuhin",
+    displaySuffix: " Display",
+    loadingOrders: "Nilo-load ang mga order...",
+    realTimeTracking: "Real-time order tracking at gabay sa paghahanda",
+    noPendingOrders: "Walang nakabinbing order",
+    inProgressOrders: "Isinasagawa",
+    noOrdersInProgress: "Walang order na isinasagawa",
+    noOrdersReady: "Walang handang order",
+    errorLoadingOrders: "Error sa pag-load ng mga order",
+    theOrderStatusChanged: "Nabago ang katayuan ng order",
+    failedToUpdateOrderStatus: "Nabigo ang pag-update ng katayuan ng order",
+    retry: "Subukan Muli",
+    
+    // POS & Payment Toast Messages
+    cartIsEmpty: "Walang Laman ang Cart",
+    cartIsEmptyDesc: "Magdagdag ng mga item sa cart bago mag-order",
+    whatsappPopupBlocked: "Hindi mabuksan ang WhatsApp. Pakisuri ang iyong popup blocker settings.",
+    paymentFailed: "Nabigong Bayad",
+    paymentFailedDesc: "Hindi maproseso ang bayad",
+    paymentCancelled: "Kinansela ang Bayad",
+    paymentCancelledDesc: "Kinansela ang proseso ng bayad",
+    paymentSuccessful: "Matagumpay na Bayad",
+    paymentSuccessfulDesc: "Matagumpay na nakumpleto ang bayad",
+    orderNotPlaced: "Hindi nailagay ang order",
+    
+    // Export & Download Toast Messages
+    pdfExportSuccessful: "Matagumpay na na-export ang PDF",
+    excelExportSuccessful: "Matagumpay na na-export ang Excel",
+    customerDataExported: "Na-export ang datos ng customer sa Excel",
+    profitabilityPdfExported: "Na-export ang ulat ng kita sa PDF",
+    profitabilityExcelExported: "Na-export ang datos ng kita sa Excel",
+    financialDataExported: "Na-export ang pinansyal na datos sa Excel",
+    financialPdfExported: "Na-export ang pinansyal na pahayag sa PDF",
+    menuDataExported: "Na-export ang datos ng menu sa Excel",
+    inventoryDataExported: "Na-export ang datos ng imbentaryo sa Excel",
+    templateDownloaded: "Na-download ang template",
+    templateDownloadedDesc: "Punan ang template at i-import",
+    reportDownloaded: "Na-download ang ulat",
+    
+    // Profile & Settings Toast Messages
+    profileUpdated: "Na-update ang Profile",
+    profileUpdatedDesc: "Matagumpay na na-update ang iyong profile.",
+    updateFailed: "Nabigong Pag-update",
+    subscriptionCancelledDesc: "Kinansela ang iyong subscription. Mangyaring magbayad muli upang magpatuloy na gumamit ng serbisyo.",
+    cancellationFailed: "Nabigong Pagkansela",
+    cancellationFailedDesc: "Nabigo ang pagkansela ng subscription. Pakisubukan muli.",
+    downloadStarted: "Nagsimula ang Download",
+    downloadStartedDesc: "Dina-download ang iyong resibo.",
+    downloadFailedDesc: "Nabigo ang pag-download ng resibo. Pakisubukan muli.",
+    notificationToneUpdated: "Na-update ang notification tone para sa lahat ng accounts",
+    failedToUpdateNotificationTone: "Nabigo ang pag-update ng notification tone",
+    
+    // Auth & Account Toast Messages
+    missingFields: "Kulang ang mga Field",
+    missingFieldsDesc: "Pakipunan ang username, password at buong pangalan",
+    itAccountCreated: "Nagawa ang IT Account",
+    itAccountCreatedDesc: "Matagumpay na nagawa ang iyong IT account. Mag-login gamit ang iyong credentials.",
+    itSignupFailed: "Nabigong IT Signup",
+    invalidPassword: "Hindi Wastong Password",
+    invalidPasswordDesc: "Ang password ay dapat hindi bababa sa 6 characters",
+    
+    // Menu & Inventory Toast Messages
+    imageUploadFailed: "Nabigo ang pag-upload ng larawan",
+    imageUploadFailedDesc: "Hindi ma-upload ang larawan. Pakisubukan muli.",
+    categoryAdded: "Idinagdag ang kategorya",
+    categoryRemoved: "Tinanggal ang kategorya",
+    failedToCreateItem: "Nabigo ang paggawa ng item",
+    failedToUpdateItem: "Nabigo ang pag-update ng item",
+    failedToCreateAddon: "Nabigo ang paggawa ng add-on",
+    failedToUpdateAddon: "Nabigo ang pag-update ng add-on",
+    invalidData: "Hindi wastong datos",
+    invalidDataDesc: "Hindi maproseso - hindi wastong halaga ng datos",
+    
+    // License Toast Messages
+    licenseCreated: "Tagumpay",
+    licenseCreatedDesc: "Matagumpay na nagawa ang lisensya",
+    licenseUpdated: "Tagumpay",
+    licenseUpdatedDesc: "Matagumpay na na-update ang lisensya",
+    licenseDeleted: "Tagumpay",
+    licenseDeletedDesc: "Matagumpay na tinanggal ang lisensya",
+    
+    // VAT & Reports Toast Messages
+    vatReportGenerated: "Nabuo ang VAT Report",
+    vatReportGeneratedDesc: "Matagumpay na nabuo ang buwan-buwan na VAT report",
+    generationFailed: "Nabigong Pagbuo",
+    invalidInput: "Hindi Wastong Input",
+    invalidInputDesc: "Pakipili ang buwan at taon",
+    noInvoicesAvailable: "Walang available na mga resibo para sa pag-export",
+    
+    // Chat Toast Messages
+    channelCreated: "Nagawa ang channel",
+    channelCreatedDesc: "Matagumpay na nagawa ang channel",
+    failedToCreateChannel: "Nabigo ang paggawa ng channel",
+    directMessageStarted: "Nagsimula ang direktang mensahe",
+    directMessageStartedDesc: "Nagsimula ang direktang mensahe",
+    failedToStartDirectMessage: "Nabigo ang pagsisimula ng direktang mensahe",
+    
+    // Setup Toast Messages
+    setupComplete: "Kumpleto ang setup!",
+    setupCompleteDesc: "Matagumpay na nagawa ang iyong admin account",
+    setupFailed: "Nabigong setup",
+    
+    // Recipe Toast Messages
+    invalidIngredients: "Hindi wastong mga sangkap",
+    invalidIngredientsDesc: "Pakiipasok ang mga dami para sa lahat ng napiling sangkap",
+    
+    // Additional Pages
     deliveryProfitability: "Kita sa Delivery",
     salesComparison: "Paghahambing ng Benta",
-    videoSlide1Title: "Kilalanin si Ahmad - May-ari ng Restaurant",
-    videoSlide1Subtitle: "Nahihirapan sa manual na imbentaryo, nawawalang mga order, at bumababang kita",
-    videoSlide2Title: "Real-time na Sistema ng POS",
-    videoSlide2Subtitle: "Proseso ng order nang mabilis • Live na tracking ng benta • Tanggapin ang maraming paraan ng bayad",
-    videoSlide3Title: "Matalinong Pamamahala ng Imbentaryo",
-    videoSlide3Subtitle: "Awtomatikong pagbawas ng stock • Babala sa mababang stock • Hindi na mauubusan ng sangkap",
-    videoSlide4Title: "Mga Resibong Sumusunod sa ZATCA",
-    videoSlide4Subtitle: "Gumawa ng dalawang wika na resibo nang mabilis • QR codes • Kumpletong pagsunod sa buwis",
-    videoSlide5Title: "Makapangyarihang Dashboard ng Analytics",
-    videoSlide5Subtitle: "Subaybayan ang kita • Hulaan ang demand • Gumawa ng desisyon base sa datos",
-    videoSlide6Title: "Kwento ng Tagumpay ni Ahmad",
-    videoSlide6Subtitle: "300% pagtaas ng kita • 5 bagong sangay • Sumali sa libu-libong umuunlad na restaurant",
+    
+    // Welcome Video Slides
+    videoSlide1Title: "Maligayang Pagdating sa BlindSpot System",
+    videoSlide1Subtitle: "Kumpletong platform ng pamamahala ng negosyo • Suporta sa 10 wika • 24/7 IT support system",
+    videoSlide2Title: "Matalinong POS at Pamamahala ng Customer",
+    videoSlide2Subtitle: "Proseso ng order nang mabilis • Pamahalaan ang customers mula sa POS • Subaybayan ang loyalty at preferences",
+    videoSlide3Title: "Advanced na Mga Kagamitan Pinansyal",
+    videoSlide3Subtitle: "WhatsApp invoice delivery • Tracking ng delivery app commission • Automated VAT compliance",
+    videoSlide4Title: "Simplified Employee Management",
+    videoSlide4Subtitle: "Automated salary calculations • Vacation tracking • Performance management system",
+    videoSlide5Title: "Makapangyarihang Analytics at Forecasting",
+    videoSlide5Subtitle: "Real-time profitability analysis • Demand forecasting • Multi-branch reporting",
+    videoSlide6Title: "Secure at Scalable Platform",
+    videoSlide6Subtitle: "Multi-tenant security • Lumalaki mula 1 hanggang walang hangganan sangay • Sumali sa libu-libong matagumpay na negosyo",
+    
+    // Branding
     madeBy: "Ginawa ni",
     companyName: "Kinzhal LTD Co.",
     copyright: "© 2025 BlindSpot System (BSS). Lahat ng karapatan ay nakalaan.",

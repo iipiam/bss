@@ -10,6 +10,7 @@ import { useDeviceLayout } from "@/lib/mobileLayout";
 import { useBusinessType } from "@/hooks/useBusinessType";
 import { useAuth } from "@/lib/auth";
 import { useEffect } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 function KitchenOrderCard({ 
   order, 
@@ -23,14 +24,15 @@ function KitchenOrderCard({
   isPending: boolean;
 }) {
   const layout = useDeviceLayout();
+  const { t } = useLanguage();
   
   const getTimeAgo = (date: Date | string) => {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
     const minutes = Math.floor((Date.now() - dateObj.getTime()) / 60000);
-    if (minutes < 1) return "Just now";
-    if (minutes < 60) return `${minutes} min ago`;
+    if (minutes < 1) return t.justNow;
+    if (minutes < 60) return `${minutes} ${t.minAgo}`;
     const hours = Math.floor(minutes / 60);
-    return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    return `${hours} ${hours > 1 ? t.hoursAgo : t.hourAgo}`;
   };
   
   const isUrgent = (date: Date | string) => {
@@ -49,12 +51,12 @@ function KitchenOrderCard({
           {urgent && (
             <Badge variant="destructive" className="flex items-center gap-1">
               <AlertCircle className="h-3 w-3" />
-              Urgent
+              {t.urgent}
             </Badge>
           )}
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="font-semibold">{order.table || order.orderType || "Order"}</span>
+          <span className="font-semibold">{order.table || order.orderType || t.orderType}</span>
           <div className="flex items-center gap-1 text-muted-foreground">
             <Clock className="h-3 w-3" />
             <span>{getTimeAgo(order.createdAt)}</span>
@@ -74,7 +76,7 @@ function KitchenOrderCard({
         ))}
         {(order as any).notes && (
           <div className="p-3 rounded-md bg-orange-100 dark:bg-orange-950 border border-orange-200 dark:border-orange-900">
-            <p className="text-sm font-semibold mb-1 text-orange-900 dark:text-orange-100">Order Notes:</p>
+            <p className="text-sm font-semibold mb-1 text-orange-900 dark:text-orange-100">{t.orderNotes}</p>
             <p className="text-sm text-orange-800 dark:text-orange-200">{(order as any).notes}</p>
           </div>
         )}
@@ -93,9 +95,9 @@ function KitchenOrderCard({
           }}
           disabled={isPending}
         >
-          {status === "pending" ? "Start Cooking" :
-           status === "inProgress" ? "Mark as Ready" :
-           order.orderType === "Delivery" ? "Out for Delivery" : "Serve / Complete"}
+          {status === "pending" ? t.startCooking :
+           status === "inProgress" ? t.markAsReady :
+           order.orderType === "Delivery" ? t.outForDelivery : t.serveComplete}
         </Button>
       </CardContent>
     </Card>
@@ -107,6 +109,7 @@ export default function Kitchen() {
   const layout = useDeviceLayout();
   const { labels } = useBusinessType();
   const { accountType } = useAuth();
+  const { t } = useLanguage();
   
   // Use IT-specific endpoint for IT accounts, regular endpoint for client accounts
   const ordersEndpoint = accountType === 'it' ? '/api/it/orders' : '/api/orders';
@@ -119,12 +122,12 @@ export default function Kitchen() {
   useEffect(() => {
     if (isError && error) {
       toast({
-        title: "Error loading orders",
-        description: error instanceof Error ? error.message : "Failed to load orders",
+        title: t.errorLoadingOrders,
+        description: error instanceof Error ? error.message : t.errorLoadingOrders,
         variant: "destructive",
       });
     }
-  }, [isError, error, toast]);
+  }, [isError, error, toast, t]);
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -136,14 +139,14 @@ export default function Kitchen() {
       queryClient.invalidateQueries({ queryKey: [ordersEndpoint] });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
       toast({
-        title: "Order status updated",
-        description: "The order status has been changed",
+        title: t.orderUpdated,
+        description: t.theOrderStatusChanged,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update order status",
+        title: t.error,
+        description: error.message || t.failedToUpdateOrderStatus,
         variant: "destructive",
       });
     },
@@ -160,8 +163,8 @@ export default function Kitchen() {
   if (isLoading) {
     return (
       <div className={layout.padding}>
-        <h1 className={`${layout.text3Xl} font-bold mb-2`}>{labels.kitchen} Display</h1>
-        <p className="text-muted-foreground">Loading orders...</p>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>{labels.kitchen}{t.displaySuffix}</h1>
+        <p className="text-muted-foreground">{t.loadingOrders}</p>
       </div>
     );
   }
@@ -169,14 +172,14 @@ export default function Kitchen() {
   if (isError) {
     return (
       <div className={layout.padding}>
-        <h1 className={`${layout.text3Xl} font-bold mb-2`}>{labels.kitchen} Display</h1>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>{labels.kitchen}{t.displaySuffix}</h1>
         <Card>
           <CardContent className="py-8 text-center">
             <p className="text-destructive mb-4">
-              {error instanceof Error ? error.message : "Failed to load orders"}
+              {error instanceof Error ? error.message : t.errorLoadingOrders}
             </p>
             <Button onClick={() => refetch()}>
-              Retry
+              {t.retry}
             </Button>
           </CardContent>
         </Card>
@@ -187,20 +190,20 @@ export default function Kitchen() {
   return (
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div>
-        <h1 className={`${layout.text3Xl} font-bold mb-2`}>{labels.kitchen} Display</h1>
-        <p className="text-muted-foreground">Real-time order tracking and preparation guidance</p>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>{labels.kitchen}{t.displaySuffix}</h1>
+        <p className="text-muted-foreground">{t.realTimeTracking}</p>
       </div>
 
       <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 3, tablet: 2, mobile: 1 })}`}>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Pending</h2>
+            <h2 className="text-xl font-semibold">{t.pending}</h2>
             <Badge variant="secondary">{pendingOrders.length}</Badge>
           </div>
           {pendingOrders.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
-                No pending orders
+                {t.noPendingOrders}
               </CardContent>
             </Card>
           ) : (
@@ -218,13 +221,13 @@ export default function Kitchen() {
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">In Progress</h2>
+            <h2 className="text-xl font-semibold">{t.inProgressOrders}</h2>
             <Badge variant="default">{inProgressOrders.length}</Badge>
           </div>
           {inProgressOrders.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
-                No orders in progress
+                {t.noOrdersInProgress}
               </CardContent>
             </Card>
           ) : (
@@ -242,13 +245,13 @@ export default function Kitchen() {
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Ready</h2>
+            <h2 className="text-xl font-semibold">{t.ready}</h2>
             <Badge variant="default" className="bg-green-600">{readyOrders.length}</Badge>
           </div>
           {readyOrders.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
-                No orders ready
+                {t.noOrdersReady}
               </CardContent>
             </Card>
           ) : (

@@ -457,10 +457,25 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.post("/api/customers", requireAuth, requireRestaurant, requirePermission('customers'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
+      const upsert = req.query.upsert === 'true';
+      
+      // If upsert mode is enabled, use upsertCustomer method
+      if (upsert) {
+        const { name, phone } = req.body;
+        if (!name || !phone) {
+          return res.status(400).json({ error: "Name and phone are required for upsert" });
+        }
+        const customer = await storage.upsertCustomer(restaurantId, { name, phone });
+        console.log(`[POS Customer Auto-Save] Upserted customer: ${customer.id}, name: ${customer.name}, phone: ${customer.phone}`);
+        return res.status(200).json(customer);
+      }
+      
+      // Normal create mode
       const data = insertCustomerSchema.parse({ ...req.body, restaurantId });
       const customer = await storage.createCustomer(data);
       res.status(201).json(customer);
     } catch (error) {
+      console.error("[Customer API] Error:", error);
       res.status(400).json({ error: "Invalid customer data" });
     }
   });
@@ -750,6 +765,28 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       res.json(bill);
     } catch (error) {
       res.status(400).json({ error: "Failed to archive bill" });
+    }
+  });
+
+  app.post("/api/shop/bills/generate-salaries", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { paymentMonth } = req.body;
+      
+      if (!paymentMonth) {
+        return res.status(400).json({ error: "Payment month is required (format: YYYY-MM)" });
+      }
+      
+      // Validate month format (YYYY-MM)
+      if (!/^\d{4}-\d{2}$/.test(paymentMonth)) {
+        return res.status(400).json({ error: "Invalid month format. Use YYYY-MM" });
+      }
+      
+      const result = await storage.generateSalaryBills(restaurantId, paymentMonth);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Failed to generate salary bills:", error);
+      res.status(500).json({ error: "Failed to generate salary bills" });
     }
   });
 

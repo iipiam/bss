@@ -202,6 +202,29 @@ export default function POS() {
         }
       }
       
+      // Auto-save customer information to customers table (silent background save)
+      if ((order.customerName && order.customerName.trim()) || (order.customerPhone && order.customerPhone.trim())) {
+        const name = order.customerName?.trim() || "Unknown";
+        const phone = order.customerPhone?.trim();
+        
+        if (phone) {
+          try {
+            console.log("[POS Customer Auto-Save] Saving customer:", { name, phone });
+            const response = await apiRequest("POST", "/api/customers?upsert=true", { name, phone });
+            const savedCustomer = await response.json();
+            console.log("[POS Customer Auto-Save] Customer saved successfully:", savedCustomer);
+            
+            // Invalidate customers cache to refresh the list
+            queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+          } catch (error) {
+            // Silent failure - don't block order flow
+            console.error("[POS Customer Auto-Save] Failed to save customer (non-blocking):", error);
+          }
+        } else {
+          console.log("[POS Customer Auto-Save] Skipped - no phone number provided");
+        }
+      }
+      
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
@@ -329,8 +352,25 @@ export default function POS() {
     return (item.price + addonTotal) * item.quantity;
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
+  // Calculate base subtotal (items only)
+  const baseSubtotal = cartItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
+
+  // Calculate delivery commission if app is selected
+  const selectedDeliveryApp = selectedDeliveryAppId 
+    ? deliveryApps.find(app => app.id === selectedDeliveryAppId) 
+    : null;
+
+  const deliveryCommission = selectedDeliveryApp 
+    ? baseSubtotal * (parseFloat(selectedDeliveryApp.commission) / 100) 
+    : 0;
+
+  // Calculate final subtotal (base + commission)
+  const subtotal = baseSubtotal + deliveryCommission;
+
+  // Calculate tax on final subtotal
   const tax = subtotal * 0.15;
+
+  // Calculate total
   const total = subtotal + tax;
 
   const availableMenuItems = menuItems.filter(item => item.available);
@@ -383,6 +423,9 @@ export default function POS() {
         price: item.price,
         addons: item.addons,
       })),
+      baseSubtotal: baseSubtotal.toFixed(2),
+      deliveryCommission: deliveryCommission > 0 ? deliveryCommission.toFixed(2) : undefined,
+      deliveryCommissionRate: selectedDeliveryApp ? parseFloat(selectedDeliveryApp.commission).toFixed(2) : undefined,
       subtotal: subtotal.toFixed(2),
       tax: tax.toFixed(2),
       total: total.toFixed(2),
@@ -655,9 +698,21 @@ export default function POS() {
             <div className="border-t p-4">
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Subtotal</span>
-                  <span className="font-mono">{subtotal.toFixed(2)} SAR</span>
+                  <span>Items Subtotal</span>
+                  <span className="font-mono">{baseSubtotal.toFixed(2)} SAR</span>
                 </div>
+                {selectedDeliveryApp && deliveryCommission > 0 && (
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Delivery Commission ({selectedDeliveryApp.name})</span>
+                    <span className="font-mono">+{deliveryCommission.toFixed(2)} SAR</span>
+                  </div>
+                )}
+                {selectedDeliveryApp && deliveryCommission > 0 && (
+                  <div className="flex justify-between text-sm font-medium">
+                    <span>Subtotal</span>
+                    <span className="font-mono">{subtotal.toFixed(2)} SAR</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Tax (15%)</span>
                   <span className="font-mono">{tax.toFixed(2)} SAR</span>
@@ -1102,9 +1157,21 @@ export default function POS() {
         <div className="border-t p-6">
           <div className="space-y-3 mb-6">
             <div className="flex justify-between text-muted-foreground">
-              <span>Subtotal</span>
-              <span className="font-mono">{subtotal.toFixed(2)} SAR</span>
+              <span>Items Subtotal</span>
+              <span className="font-mono">{baseSubtotal.toFixed(2)} SAR</span>
             </div>
+            {selectedDeliveryApp && deliveryCommission > 0 && (
+              <div className="flex justify-between text-muted-foreground">
+                <span>Delivery Commission ({selectedDeliveryApp.name})</span>
+                <span className="font-mono">+{deliveryCommission.toFixed(2)} SAR</span>
+              </div>
+            )}
+            {selectedDeliveryApp && deliveryCommission > 0 && (
+              <div className="flex justify-between font-medium">
+                <span>Subtotal</span>
+                <span className="font-mono">{subtotal.toFixed(2)} SAR</span>
+              </div>
+            )}
             <div className="flex justify-between text-muted-foreground">
               <span>Tax (15%)</span>
               <span className="font-mono">{tax.toFixed(2)} SAR</span>

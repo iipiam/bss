@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { TrendingUp, TrendingDown, DollarSign, Percent, Package, Calculator, AlertTriangle, Target, Scale, Scissors, Download } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Percent, Package, Calculator, AlertTriangle, Target, Scale, Scissors, Download, FileText } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import type { MenuItem, Recipe, Order, ShopBill } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { exportToPDF } from "@/lib/exportUtils";
 
 const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
@@ -144,6 +145,55 @@ export default function Profitability() {
     return acc;
   }, [] as Array<{ category: string; revenue: number; profit: number }>);
 
+  const handleExportPDF = () => {
+    const periodLabel = period === "week" ? "This Week" : period === "month" ? "This Month" : period === "quarter" ? "This Quarter" : "This Year";
+    
+    const exportData = profitabilityData
+      .sort((a, b) => b.totalProfit - a.totalProfit)
+      .map((item) => ({
+        "Item": item.name,
+        "Category": item.category,
+        "Price (SAR)": item.basePrice.toFixed(2),
+        "Cost (SAR)": item.cost.toFixed(2),
+        "Profit/Unit (SAR)": item.profit.toFixed(2),
+        "Margin %": item.margin.toFixed(1) + "%",
+        "Sales Vol.": item.salesVolume,
+        "Total Profit (SAR)": item.totalProfit.toFixed(2),
+      }));
+
+    const columns = [
+      { header: "Item", accessor: "Item", width: 35 },
+      { header: "Category", accessor: "Category", width: 25 },
+      { header: "Price", accessor: "Price (SAR)", width: 20 },
+      { header: "Cost", accessor: "Cost (SAR)", width: 20 },
+      { header: "Profit/Unit", accessor: "Profit/Unit (SAR)", width: 22 },
+      { header: "Margin %", accessor: "Margin %", width: 18 },
+      { header: "Sales Vol.", accessor: "Sales Vol.", width: 18 },
+      { header: "Total Profit", accessor: "Total Profit (SAR)", width: 22 },
+    ];
+
+    const totalSalesVolume = profitabilityData.reduce((sum, i) => sum + i.salesVolume, 0);
+    const subtitle = `Period: ${periodLabel} | Total Revenue: ${totalRevenue.toFixed(2)} SAR | Total Profit: ${totalProfit.toFixed(2)} SAR | Avg Margin: ${avgMargin.toFixed(1)}% | Items Sold: ${totalSalesVolume}`;
+
+    const result = exportToPDF("Profitability Analysis Report", exportData, columns, {
+      subtitle,
+      orientation: "landscape",
+    });
+
+    if (result.success) {
+      toast({
+        title: "Export successful",
+        description: "Profitability report exported to PDF",
+      });
+    } else {
+      toast({
+        title: "Export failed",
+        description: "Failed to export profitability report to PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleExport = async () => {
     try {
       const response = await fetch(`/api/export/profitability?period=${period}`);
@@ -183,9 +233,13 @@ export default function Profitability() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport} data-testid="button-export-profitability">
+          <Button variant="outline" onClick={handleExportPDF} data-testid="button-export-pdf">
+            <FileText className="h-4 w-4 mr-2" />
+            Export PDF
+          </Button>
+          <Button variant="outline" onClick={handleExport} data-testid="button-export-excel">
             <Download className="h-4 w-4 mr-2" />
-            Export
+            Export Excel
           </Button>
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-40" data-testid="select-period">

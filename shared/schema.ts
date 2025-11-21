@@ -435,6 +435,10 @@ export const users = pgTable("users", {
   lastReviewDate: timestamp("last_review_date"),
   performanceNotes: text("performance_notes"),
   
+  // Salary Information
+  salary: decimal("salary", { precision: 10, scale: 2 }), // Monthly salary amount
+  position: text("position"), // Job position/title
+  
   // Compliance
   documents: jsonb("documents").$type<Array<{
     name: string;
@@ -477,6 +481,7 @@ export const insertUserSchema = createInsertSchema(users).omit({ id: true, creat
   visaFees: z.union([z.string().transform((val) => val ? parseFloat(val) : null), z.number(), z.null()]).optional(),
   ticketAmount: z.union([z.string().transform((val) => val ? parseFloat(val) : null), z.number(), z.null()]).optional(),
   performanceRating: z.union([z.string().transform((val) => val ? parseFloat(val) : null), z.number(), z.null()]).optional(),
+  salary: z.union([z.string().transform((val) => val ? parseFloat(val) : null), z.number(), z.null()]).optional(),
   vacationDaysTotal: z.union([z.string().transform((val) => val ? parseInt(val) : 0), z.number()]).optional(),
   vacationDaysUsed: z.union([z.string().transform((val) => val ? parseInt(val) : 0), z.number()]).optional(),
 });
@@ -527,12 +532,15 @@ export type Salary = typeof salaries.$inferSelect;
 export const shopBills = pgTable("shop_bills", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
-  billType: text("bill_type").notNull(), // "rent", "electricity", "water", "gas", "internet", "maintenance", "foundational", "other"
+  billType: text("bill_type").notNull(), // "rent", "electricity", "water", "gas", "internet", "maintenance", "foundational", "salary", "other"
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   paymentDate: timestamp("payment_date").notNull(),
   paymentPeriod: text("payment_period").notNull().default("monthly"), // "one-time", "weekly", "monthly", "quarterly", "semi-annually", "yearly"
   status: text("status").notNull().default("pending"), // "pending", "paid", "overdue"
   description: text("description"),
+  employeeId: varchar("employee_id").references(() => users.id), // Links bill to employee for salary bills
+  employeeName: text("employee_name"), // Cached employee name for salary bills
+  paymentMonth: text("payment_month"), // Format: "YYYY-MM" for tracking salary payment months
   archived: boolean("archived").notNull().default(false), // For archiving old bills
   branchId: varchar("branch_id").references(() => branches.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),

@@ -88,7 +88,7 @@ import {
   licenses,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, sql, or, isNull, desc } from "drizzle-orm";
+import { eq, and, gte, lte, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export interface IStorage {
@@ -224,9 +224,11 @@ export interface IStorage {
   // Customers (MULTI-TENANT: requires restaurantId for all operations)
   getCustomers(restaurantId: string): Promise<Customer[]>;
   getCustomer(id: string, restaurantId: string): Promise<Customer | undefined>;
+  findCustomerByPhone(restaurantId: string, phone: string): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: string, restaurantId: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
   deleteCustomer(id: string, restaurantId: string): Promise<boolean>;
+  upsertCustomer(restaurantId: string, data: { name: string; phone: string }): Promise<Customer>;
 
   // Shop Salaries (MULTI-TENANT: requires restaurantId)
   getSalaries(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date): Promise<Salary[]>;
@@ -242,6 +244,7 @@ export interface IStorage {
   updateShopBill(id: string, bill: Partial<InsertShopBill>): Promise<ShopBill | undefined>;
   deleteShopBill(id: string): Promise<boolean>;
   archiveShopBill(id: string, archived: boolean): Promise<ShopBill | undefined>;
+  generateSalaryBills(restaurantId: string, paymentMonth: string): Promise<{ created: number; skipped: number; bills: ShopBill[] }>;
 
   // Delivery Apps (MULTI-TENANT: requires restaurantId)
   getDeliveryApps(restaurantId: string): Promise<DeliveryApp[]>;
@@ -973,7 +976,7 @@ export class DatabaseStorage implements IStorage {
   async cancelSubscription(userId: string, restaurantId: string): Promise<User | undefined> {
     // Get user to find their restaurantId
     const user = await this.getUser(userId, restaurantId);
-    if (!user) return undefined;
+    if (!user || !user.restaurantId) return undefined;
 
     // Update restaurant subscription status
     await db.update(restaurants)
@@ -1014,7 +1017,7 @@ export class DatabaseStorage implements IStorage {
     lastLoginAt: Date | null;
     isOnline: boolean;
   }>> {
-    // Get all users with their restaurant information
+    // Get all users with their restaurant information (filter out IT accounts)
     const result = await db
       .select({
         userId: users.id,
@@ -1027,6 +1030,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(users)
       .leftJoin(restaurants, eq(users.restaurantId, restaurants.id))
+      .where(isNotNull(users.restaurantId)) // Filter out IT accounts (restaurantId = null)
       .orderBy(desc(users.lastActivityAt));
 
     // Calculate isOnline based on lastActivityAt (online if activity within last 5 minutes)
@@ -1037,7 +1041,7 @@ export class DatabaseStorage implements IStorage {
       userId: row.userId,
       username: row.username,
       fullName: row.fullName,
-      restaurantId: row.restaurantId,
+      restaurantId: row.restaurantId!, // Safe after isNotNull filter
       restaurantName: row.restaurantName || 'Unknown',
       lastActivityAt: row.lastActivityAt,
       lastLoginAt: row.lastLoginAt,
@@ -1130,6 +1134,32 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
+  async findCustomerByPhone(restaurantId: string, phone: string): Promise<Customer | undefined> {
+    const [customer] = await db.select().from(customers)
+      .where(and(eq(customers.restaurantId, restaurantId), eq(customers.phone, phone)));
+    return customer;
+  }
+
+  async upsertCustomer(restaurantId: string, data: { name: string; phone: string }): Promise<Customer> {
+    // Find existing customer by phone
+    const existing = await this.findCustomerByPhone(restaurantId, data.phone);
+    
+    if (existing) {
+      // Update existing customer
+      const [updated] = await db.update(customers)
+        .set({ name: data.name })
+        .where(and(eq(customers.id, existing.id), eq(customers.restaurantId, restaurantId)))
+        .returning();
+      return updated;
+    } else {
+      // Create new customer
+      const [created] = await db.insert(customers)
+        .values({ restaurantId, name: data.name, phone: data.phone })
+        .returning();
+      return created;
+    }
+  }
+
   // Shop Salaries (MULTI-TENANT: filters by restaurantId)
   async getSalaries(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date): Promise<Salary[]> {
     const conditions = [eq(salaries.restaurantId, restaurantId)];
@@ -1215,6 +1245,70 @@ export class DatabaseStorage implements IStorage {
       .where(eq(shopBills.id, id))
       .returning();
     return updated;
+  }
+
+  async generateSalaryBills(restaurantId: string, paymentMonth: string): Promise<{ created: number; skipped: number; bills: ShopBill[] }> {
+    // Get all active employees with a salary for this restaurant
+    const employees = await db.select().from(users).where(
+      and(
+        eq(users.restaurantId, restaurantId),
+        eq(users.active, true),
+        isNotNull(users.salary)
+      )
+    );
+
+    // Check for existing salary bills for this month
+    const existingBills = await db.select().from(shopBills).where(
+      and(
+        eq(shopBills.restaurantId, restaurantId),
+        eq(shopBills.billType, "salary"),
+        eq(shopBills.paymentMonth, paymentMonth)
+      )
+    );
+
+    const existingEmployeeIds = new Set(existingBills.map(bill => bill.employeeId).filter(Boolean));
+
+    let created = 0;
+    let skipped = 0;
+    const createdBills: ShopBill[] = [];
+
+    // Create salary bills for employees who don't have one yet
+    for (const employee of employees) {
+      if (existingEmployeeIds.has(employee.id)) {
+        skipped++;
+        continue;
+      }
+
+      if (!employee.salary || parseFloat(employee.salary) <= 0) {
+        skipped++;
+        continue;
+      }
+
+      // Create first day of the month as payment date
+      const [year, month] = paymentMonth.split('-');
+      const paymentDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+
+      const billData: InsertShopBill = {
+        restaurantId,
+        billType: "salary",
+        amount: employee.salary,
+        paymentDate,
+        paymentPeriod: "monthly",
+        status: "pending",
+        employeeId: employee.id,
+        employeeName: employee.fullName,
+        paymentMonth,
+        description: `Monthly salary for ${employee.fullName}${employee.position ? ` (${employee.position})` : ''}`,
+        branchId: employee.branchId || null,
+        archived: false,
+      };
+
+      const [bill] = await db.insert(shopBills).values(billData).returning();
+      createdBills.push(bill);
+      created++;
+    }
+
+    return { created, skipped, bills: createdBills };
   }
 
   // Delivery Apps (MULTI-TENANT: filters by restaurantId)
