@@ -1085,10 +1085,15 @@ export class DatabaseStorage implements IStorage {
     return invoice;
   }
 
-  async getInvoicePublic(id: string): Promise<Invoice | undefined> {
-    // PUBLIC: For QR code access only, bypasses restaurantId check
-    const [invoice] = await db.select().from(invoices).where(eq(invoices.id, id));
-    return invoice;
+  async getInvoicePublic(orderIdOrInvoiceId: string): Promise<Invoice | undefined> {
+    // PUBLIC: For QR code and WhatsApp links, bypasses restaurantId check
+    // Try to find by orderId first (for WhatsApp links), then by invoice id (for QR codes)
+    const [invoiceByOrderId] = await db.select().from(invoices).where(eq(invoices.orderId, orderIdOrInvoiceId));
+    if (invoiceByOrderId) {
+      return invoiceByOrderId;
+    }
+    const [invoiceById] = await db.select().from(invoices).where(eq(invoices.id, orderIdOrInvoiceId));
+    return invoiceById;
   }
 
   async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
