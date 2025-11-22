@@ -165,39 +165,33 @@ export default function POS() {
         console.error("Invoice creation failed:", error);
       }
       
-      // Semi-automated WhatsApp flow: PDF downloads -> delay -> WhatsApp opens with message
+      // Send bilingual ZATCA invoice via WhatsApp if customer phone is provided
       if (order.customerPhone && order.customerPhone.trim()) {
-        const { isValidWhatsAppPhone, openWhatsAppWithMessage, createWhatsAppAttachmentMessage } = await import('@/lib/whatsapp');
+        const { isValidWhatsAppPhone, openWhatsAppWithMessage, createWhatsAppInvoiceMessage } = await import('@/lib/whatsapp');
         
         if (isValidWhatsAppPhone(order.customerPhone)) {
           try {
-            // Wait 1 second for PDF download to complete
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
             // Get restaurant name from settings
             const settingsResponse = await fetch('/api/settings');
             const settings = settingsResponse.ok ? await settingsResponse.json() : null;
             const restaurantName = settings?.restaurantName || t.restaurant;
             
-            // Create simplified bilingual message (no URL - user will attach PDF manually)
-            const message = createWhatsAppAttachmentMessage({
+            // Construct public invoice URL (matches invoice generation pattern)
+            const invoiceUrl = `${window.location.origin}/public/invoice/${order.id}`;
+            
+            // Create bilingual ZATCA-compliant message with invoice URL and customer name
+            const message = createWhatsAppInvoiceMessage({
               invoiceNumber: order.orderNumber,
               total: total.toFixed(2),
               paymentMethod: paymentMethod,
+              invoiceUrl,
               restaurantName,
               customerName: order.customerName || undefined,
             });
             
             const success = openWhatsAppWithMessage(order.customerPhone, message);
             
-            if (success) {
-              // Show toast instructing user to attach the downloaded PDF
-              toast({
-                title: t.whatsappOpened,
-                description: t.attachDownloadedPdf,
-                variant: "default",
-              });
-            } else {
+            if (!success) {
               toast({
                 title: t.whatsapp,
                 description: t.whatsappPopupBlockedDesc,
