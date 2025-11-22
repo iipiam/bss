@@ -48,6 +48,8 @@ export interface Translations {
   contactSupport: string;
   contactInformation: string;
   whatsapp: string;
+  whatsappOpened: string;
+  attachDownloadedPdf: string;
   getInTouch: string;
   
   // Payment Methods
@@ -1112,6 +1114,8 @@ export const translations: Record<Language, Translations> = {
     contactSupport: 'Contact Support',
     contactInformation: 'Contact Information',
     whatsapp: 'WhatsApp',
+    whatsappOpened: 'WhatsApp Opened',
+    attachDownloadedPdf: 'Please attach the downloaded PDF invoice to the WhatsApp message and send it to your customer.',
     getInTouch: 'Get in touch with our support team',
     
     // Payment Methods
@@ -2183,6 +2187,8 @@ export const translations: Record<Language, Translations> = {
     contactSupport: 'اتصل بالدعم',
     contactInformation: 'معلومات الاتصال',
     whatsapp: 'واتساب',
+    whatsappOpened: 'تم فتح واتساب',
+    attachDownloadedPdf: 'يرجى إرفاق فاتورة PDF المحملة برسالة واتساب وإرسالها إلى عميلك.',
     getInTouch: 'تواصل مع فريق الدعم لدينا',
     
     // Payment Methods
@@ -3255,6 +3261,8 @@ export const translations: Record<Language, Translations> = {
     contactSupport: '联系支持',
     contactInformation: '联系信息',
     whatsapp: 'WhatsApp',
+    whatsappOpened: 'WhatsApp已打开',
+    attachDownloadedPdf: '请将下载的PDF发票附加到WhatsApp消息中并发送给您的客户。',
     getInTouch: '与我们的支持团队联系',
     
     // Payment Methods
@@ -4313,6 +4321,8 @@ export const translations: Record<Language, Translations> = {
     contactSupport: 'Support kontaktieren',
     contactInformation: 'Kontaktinformationen',
     whatsapp: 'WhatsApp',
+    whatsappOpened: 'WhatsApp geöffnet',
+    attachDownloadedPdf: 'Bitte hängen Sie die heruntergeladene PDF-Rechnung an die WhatsApp-Nachricht an und senden Sie sie an Ihren Kunden.',
     getInTouch: 'Kontaktieren Sie unser Support-Team',
     
     // Payment Methods
@@ -5370,6 +5380,8 @@ export const translations: Record<Language, Translations> = {
     contactSupport: 'सहायता से संपर्क करें',
     contactInformation: 'संपर्क जानकारी',
     whatsapp: 'व्हाट्सएप',
+    whatsappOpened: 'व्हाट्सएप खोला गया',
+    attachDownloadedPdf: 'कृपया डाउनलोड किए गए पीडीएफ चालान को व्हाट्सएप संदेश में संलग्न करें और इसे अपने ग्राहक को भेजें।',
     getInTouch: 'हमारी सहायता टीम से संपर्क करें',
     
     // Payment Methods
@@ -6428,6 +6440,8 @@ export const translations: Record<Language, Translations> = {
     contactSupport: 'سپورٹ سے رابطہ کریں',
     contactInformation: 'رابطے کی معلومات',
     whatsapp: 'واٹس ایپ',
+    whatsappOpened: 'واٹس ایپ کھل گیا',
+    attachDownloadedPdf: 'براہ کرم ڈاؤن لوڈ شدہ پی ڈی ایف رسید واٹس ایپ پیغام میں منسلک کریں اور اسے اپنے صارف کو بھیجیں۔',
     getInTouch: 'ہماری سپورٹ ٹیم سے رابطہ کریں',
     
     // Payment Methods
@@ -7486,6 +7500,8 @@ export const translations: Record<Language, Translations> = {
     contactSupport: 'সহায়তার সাথে যোগাযোগ করুন',
     contactInformation: 'যোগাযোগের তথ্য',
     whatsapp: 'হোয়াটসঅ্যাপ',
+    whatsappOpened: 'হোয়াটসঅ্যাপ খোলা হয়েছে',
+    attachDownloadedPdf: 'অনুগ্রহ করে ডাউনলোড করা পিডিএফ চালান হোয়াটসঅ্যাপ বার্তায় সংযুক্ত করুন এবং আপনার গ্রাহকের কাছে পাঠান।',
     getInTouch: 'আমাদের সহায়তা দলের সাথে যোগাযোগ করুন',
     
     // Payment Methods
@@ -8539,6 +8555,8 @@ export const translations: Record<Language, Translations> = {
     contactSupport: "Contatta il Supporto",
     contactInformation: "Informazioni di Contatto",
     whatsapp: "WhatsApp",
+    whatsappOpened: "WhatsApp Aperto",
+    attachDownloadedPdf: "Si prega di allegare la fattura PDF scaricata al messaggio WhatsApp e inviarla al cliente.",
     getInTouch: "Mettiti in contatto con il nostro team di supporto",
     paymentMethod: "Metodo di Pagamento",
     cash: "Contanti",
@@ -9535,6 +9553,8 @@ export const translations: Record<Language, Translations> = {
     contactSupport: "Contactar Soporte",
     contactInformation: "Información de Contacto",
     whatsapp: "WhatsApp",
+    whatsappOpened: "WhatsApp Abierto",
+    attachDownloadedPdf: "Por favor, adjunte la factura PDF descargada al mensaje de WhatsApp y envíela a su cliente.",
     getInTouch: "Ponte en contacto con nuestro equipo de soporte",
     paymentMethod: "Método de Pago",
     cash: "Efectivo",
@@ -10530,6 +10550,8 @@ export const translations: Record<Language, Translations> = {
     contactSupport: "Makipag-ugnayan sa Suporta",
     contactInformation: "Impormasyon sa Pakikipag-ugnayan",
     whatsapp: "WhatsApp",
+    whatsappOpened: "Binuksan ang WhatsApp",
+    attachDownloadedPdf: "Mangyaring ilakip ang na-download na PDF invoice sa WhatsApp message at ipadala ito sa iyong customer.",
     getInTouch: "Makipag-ugnayan sa aming koponan ng suporta",
     paymentMethod: "Paraan ng Bayad",
     cash: "Cash",
