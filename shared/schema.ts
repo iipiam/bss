@@ -329,6 +329,7 @@ export const settings = pgTable("settings", {
   language: text("language").notNull().default("English"),
   openingTime: text("opening_time"),
   closingTime: text("closing_time"),
+  logoPath: text("logo_path"), // Path to uploaded logo for invoices (e.g., "uploads/logos/abc123.png")
   notificationTone: text("notification_tone").notNull().default("tone1"), // Admin-selected notification tone (tone1-tone15)
   chatNotificationDefaults: jsonb("chat_notification_defaults").$type<{
     notificationsEnabled: boolean;

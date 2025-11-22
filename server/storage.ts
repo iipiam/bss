@@ -160,6 +160,7 @@ export interface IStorage {
   // Settings
   getSettings(restaurantId: string): Promise<Settings | undefined>;
   updateSettings(restaurantId: string, settings: Partial<InsertSettings>): Promise<Settings>;
+  updateSettingsLogoPath(restaurantId: string, logoPath: string | null): Promise<void>;
 
   // Procurement (MULTI-TENANT: requires restaurantId for all operations)
   getProcurements(filter: {
@@ -763,6 +764,21 @@ export class DatabaseStorage implements IStorage {
         .values([{ ...safeData, restaurantId } as any])
         .returning();
       return created;
+    }
+  }
+
+  async updateSettingsLogoPath(restaurantId: string, logoPath: string | null): Promise<void> {
+    // Get existing settings for this restaurant
+    const existing = await this.getSettings(restaurantId);
+    
+    if (existing) {
+      await db.update(settings)
+        .set({ logoPath })
+        .where(and(eq(settings.id, existing.id), eq(settings.restaurantId, restaurantId)));
+    } else {
+      // Create new settings with logo path
+      await db.insert(settings)
+        .values({ restaurantId, logoPath } as any);
     }
   }
 

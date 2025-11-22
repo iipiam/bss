@@ -140,7 +140,7 @@ export default function Orders() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-3xl font-bold font-mono">{parseFloat(order.total).toFixed(2)} SAR</p>
+                  <p className="text-3xl font-bold font-mono">{parseFloat(order.total).toFixed(2)} {t.sar}</p>
                   <p className="text-sm text-muted-foreground">{order.items.length} {t.items}</p>
                 </div>
               </div>
@@ -161,7 +161,7 @@ export default function Orders() {
                 {order.items.map((item, idx) => (
                   <div key={idx} className="text-sm flex justify-between">
                     <span>{item.name} x{item.quantity}</span>
-                    <span className="font-mono">{(item.price * item.quantity).toFixed(2)} SAR</span>
+                    <span className="font-mono">{(item.price * item.quantity).toFixed(2)} {t.sar}</span>
                   </div>
                 ))}
               </div>

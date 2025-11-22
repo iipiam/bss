@@ -2,7 +2,8 @@ import puppeteer, { Browser } from "puppeteer";
 import QRCode from "qrcode";
 import type { Order } from "@shared/schema";
 import { execSync } from "child_process";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
+import * as path from "path";
 
 interface InvoiceData {
   order: Order;
@@ -15,6 +16,7 @@ interface InvoiceData {
   invoiceDate: Date;
   invoiceId: string;
   baseUrl: string;
+  logoPath?: string; // Optional logo path
 }
 
 // HTML escaping function to prevent injection
@@ -138,6 +140,30 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
   const subtotal = parseFloat(order.subtotal);
   const tax = parseFloat(order.tax);
   const total = parseFloat(order.total);
+
+  // Handle logo embedding if logoPath is provided
+  let logoHTML = '';
+  if (data.logoPath) {
+    try {
+      const logoFullPath = path.join(process.cwd(), data.logoPath);
+      if (existsSync(logoFullPath)) {
+        const logoBuffer = readFileSync(logoFullPath);
+        const logoExt = path.extname(data.logoPath).substring(1);
+        const logoMimeType = logoExt === 'svg' ? 'svg+xml' : logoExt;
+        const logoBase64 = logoBuffer.toString('base64');
+        const logoDataURL = `data:image/${logoMimeType};base64,${logoBase64}`;
+        
+        logoHTML = `
+        <div style="text-align: center; margin-bottom: 20px;">
+          <img src="${logoDataURL}" alt="Business Logo" style="max-width: 150px; max-height: 80px; object-fit: contain;" />
+        </div>
+      `;
+      }
+    } catch (error) {
+      console.error('[Invoice] Failed to load logo:', error);
+      // Gracefully continue without logo
+    }
+  }
 
   return `
 <!DOCTYPE html>
@@ -401,6 +427,7 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
   <div class="invoice-container">
     <!-- Header -->
     <div class="header">
+      ${logoHTML}
       <div class="company-name english">${escapedCompanyName}</div>
       <div class="invoice-badge">TAX INVOICE | فاتورة ضريبية</div>
     </div>

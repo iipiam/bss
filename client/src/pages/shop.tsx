@@ -20,20 +20,20 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
-const salaryFormSchema = z.object({
-  employeeName: z.string().min(1, "Employee name is required"),
-  position: z.string().min(1, "Position is required"),
-  amount: z.coerce.number().min(0.01, "Amount must be greater than 0"),
-  paymentDate: z.string().min(1, "Payment date is required"),
+const createSalaryFormSchema = (t: any) => z.object({
+  employeeName: z.string().min(1, t.employeeNameRequired),
+  position: z.string().min(1, t.positionRequired),
+  amount: z.coerce.number().min(0.01, t.amountMustBeGreaterThanZero),
+  paymentDate: z.string().min(1, t.paymentDateRequired),
   status: z.enum(["pending", "paid"]).default("pending"),
   notes: z.string().optional(),
   branchId: z.string().optional(),
 });
 
-const billFormSchema = z.object({
-  billType: z.string().min(1, "Bill type is required"),
-  amount: z.coerce.number().min(0.01, "Amount must be greater than 0"),
-  paymentDate: z.string().min(1, "Payment date is required"),
+const createBillFormSchema = (t: any) => z.object({
+  billType: z.string().min(1, t.billTypeRequired),
+  amount: z.coerce.number().min(0.01, t.amountMustBeGreaterThanZero),
+  paymentDate: z.string().min(1, t.paymentDateRequired),
   paymentPeriod: z.enum(["oneTime", "weekly", "monthly", "quarterly", "semi-annually", "yearly"]).default("monthly"),
   status: z.enum(["pending", "paid", "overdue"]).default("pending"),
   description: z.string().optional(),
@@ -63,6 +63,9 @@ export default function Shop() {
   const { data: bills, isLoading: billsLoading } = useQuery<ShopBill[]>({
     queryKey: ["/api/shop/bills"],
   });
+
+  const salaryFormSchema = createSalaryFormSchema(t);
+  const billFormSchema = createBillFormSchema(t);
 
   const salaryForm = useForm<z.infer<typeof salaryFormSchema>>({
     resolver: zodResolver(salaryFormSchema),
@@ -217,14 +220,14 @@ export default function Shop() {
       queryClient.invalidateQueries({ queryKey: ["/api/shop/bills"] });
       setGenerateSalariesDialogOpen(false);
       toast({ 
-        title: `Successfully generated ${data.created} salary bill${data.created !== 1 ? 's' : ''}`,
-        description: data.skipped > 0 ? `${data.skipped} employee${data.skipped !== 1 ? 's' : ''} skipped (already have bills or no salary set)` : undefined,
+        title: t.salaryBillsGenerated,
+        description: data.skipped > 0 ? `${data.skipped} ${t.employeesSkipped}` : undefined,
       });
     },
     onError: (error: any) => {
       toast({ 
-        title: "Failed to generate salary bills",
-        description: error.message || "An error occurred",
+        title: t.failedToGenerateSalaryBills,
+        description: error.message || t.anErrorOccurred,
         variant: "destructive" 
       });
     },
@@ -580,19 +583,19 @@ export default function Shop() {
                     <DialogTrigger asChild>
                       <Button variant="outline" data-testid="button-generate-salaries">
                         <Sparkles className="w-4 h-4 mr-2" />
-                        Generate Salaries
+                        {t.generateSalaries}
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Generate Monthly Salary Bills</DialogTitle>
+                        <DialogTitle>{t.generateMonthlySalaryBills}</DialogTitle>
                         <DialogDescription>
-                          This will create salary bills for all active employees with a salary amount set.
+                          {t.generateSalariesDescription}
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Payment Month</label>
+                          <label className="text-sm font-medium">{t.paymentMonth}</label>
                           <Input
                             type="month"
                             value={selectedMonth}
@@ -600,7 +603,7 @@ export default function Shop() {
                             data-testid="input-salary-month"
                           />
                           <p className="text-sm text-muted-foreground">
-                            Select the month for which to generate salary bills
+                            {t.selectMonthForSalaryBills}
                           </p>
                         </div>
                         <div className="flex justify-end gap-2">
@@ -609,14 +612,14 @@ export default function Shop() {
                             onClick={() => setGenerateSalariesDialogOpen(false)}
                             data-testid="button-cancel-generate"
                           >
-                            Cancel
+                            {t.cancel}
                           </Button>
                           <Button
                             onClick={() => generateSalariesMutation.mutate(selectedMonth)}
                             disabled={generateSalariesMutation.isPending}
                             data-testid="button-confirm-generate"
                           >
-                            {generateSalariesMutation.isPending ? "Generating..." : "Generate Bills"}
+                            {generateSalariesMutation.isPending ? t.generating : t.generateBills}
                           </Button>
                         </div>
                       </div>
@@ -694,7 +697,7 @@ export default function Shop() {
                           name="paymentPeriod"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t.paymentPeriod || "Payment Period"}</FormLabel>
+                              <FormLabel>{t.paymentPeriod}</FormLabel>
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger data-testid="select-payment-period">
@@ -702,12 +705,12 @@ export default function Shop() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="oneTime">{t.oneTime || "One Time Payment"}</SelectItem>
-                                  <SelectItem value="weekly">{t.weekly || "Weekly"}</SelectItem>
-                                  <SelectItem value="monthly">{t.monthly || "Monthly"}</SelectItem>
-                                  <SelectItem value="quarterly">{t.quarterly || "Quarterly (1/4 Year)"}</SelectItem>
-                                  <SelectItem value="semi-annually">{t.semiAnnually || "Semi-Annually (1/2 Year)"}</SelectItem>
-                                  <SelectItem value="yearly">{t.yearly || "Yearly"}</SelectItem>
+                                  <SelectItem value="oneTime">{t.oneTime}</SelectItem>
+                                  <SelectItem value="weekly">{t.weekly}</SelectItem>
+                                  <SelectItem value="monthly">{t.monthly}</SelectItem>
+                                  <SelectItem value="quarterly">{t.quarterly}</SelectItem>
+                                  <SelectItem value="semi-annually">{t.semiAnnually}</SelectItem>
+                                  <SelectItem value="yearly">{t.yearly}</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />

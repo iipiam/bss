@@ -10,6 +10,7 @@ import { requirePermission, requireAnyPermission, requireAllPermissions } from "
 import bcrypt from "bcrypt";
 import QRCode from "qrcode";
 import rateLimit from "express-rate-limit";
+import multer from "multer";
 import * as fs from "fs";
 import * as path from "path";
 import { z } from "zod";
@@ -162,6 +163,36 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       console.log(`[BOOTSTRAP] Rate limit exceeded from IP: ${req.ip || req.socket.remoteAddress}`);
       res.status(429).json({ error: "Too many reset attempts. Please try again in 15 minutes." });
     },
+  });
+
+  // Logo upload configuration
+  const logoStorage = multer.diskStorage({
+    destination: (req: any, file: any, cb: any) => {
+      const dir = 'public/uploads/logos';
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      cb(null, dir);
+    },
+    filename: (req: any, file: any, cb: any) => {
+      const restaurantId = req.session?.user?.restaurantId;
+      const ext = path.extname(file.originalname);
+      cb(null, `logo-${restaurantId}-${Date.now()}${ext}`);
+    }
+  });
+
+  const uploadLogo = multer({
+    storage: logoStorage,
+    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+    fileFilter: (req: any, file: any, cb: any) => {
+      const allowed = ['.png', '.jpg', '.jpeg', '.svg'];
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (allowed.includes(ext)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid file type. Only PNG, JPG, and SVG allowed.'));
+      }
+    }
   });
 
   // Branches (Multi-tenant isolated)
@@ -1482,6 +1513,67 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Logo upload endpoint
+  app.post("/api/settings/logo", requireAuth, requireRestaurant, uploadLogo.single('logo'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      // Get existing settings to delete old logo if exists
+      const existingSettings = await storage.getSettings(restaurantId);
+      if (existingSettings?.logoPath) {
+        const oldLogoPath = path.join(process.cwd(), existingSettings.logoPath);
+        if (fs.existsSync(oldLogoPath)) {
+          fs.unlinkSync(oldLogoPath);
+        }
+      }
+
+      // Store relative path in database
+      const logoPath = `/uploads/logos/${req.file.filename}`;
+      await storage.updateSettingsLogoPath(restaurantId, logoPath);
+
+      res.json({ success: true, logoPath });
+    } catch (error: any) {
+      // Clean up uploaded file if database update fails
+      if (req.file) {
+        const filePath = req.file.path;
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
+      res.status(400).json({ error: error.message || "Failed to upload logo" });
+    }
+  });
+
+  // Logo delete endpoint
+  app.delete("/api/settings/logo", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      
+      // Get existing settings to find logo path
+      const existingSettings = await storage.getSettings(restaurantId);
+      if (!existingSettings?.logoPath) {
+        return res.status(404).json({ error: "No logo found" });
+      }
+
+      // Delete physical file
+      const logoPath = path.join(process.cwd(), 'public', existingSettings.logoPath);
+      if (fs.existsSync(logoPath)) {
+        fs.unlinkSync(logoPath);
+      }
+
+      // Update database to remove logo path
+      await storage.updateSettingsLogoPath(restaurantId, null);
+
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to remove logo" });
+    }
+  });
+
   // Procurement (MULTI-TENANT: require auth + restaurantId filtering)
   app.get("/api/procurement", requireAuth, requireRestaurant, requirePermission('procurement'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
@@ -1606,6 +1698,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         invoiceDate: new Date(),
         invoiceId: createdInvoice.id,
         baseUrl,
+        logoPath: settings?.logoPath || undefined,
       };
 
       const { pdfBuffer, qrCode } = await generateZATCAInvoice(pdfData);
@@ -2892,6 +2985,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         invoiceDate: new Date(),
         invoiceId: createdInvoice.id,
         baseUrl,
+        logoPath: settings?.logoPath || undefined,
       };
 
       const { pdfBuffer, qrCode } = await generateZATCAInvoice(pdfData);
@@ -3489,12 +3583,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Import routes with file upload
-  const multer = await import('multer');
-  const upload = multer.default({ storage: multer.default.memoryStorage() });
+  // Import routes with file upload (using static multer import from top of file)
+  const upload = multer({ storage: multer.memoryStorage() });
 
   // Configure multer for menu image uploads (disk storage)
-  const menuImageStorage = multer.default.diskStorage({
+  const menuImageStorage = multer.diskStorage({
     destination: function (req, file, cb) {
       const uploadPath = path.join(process.cwd(), 'uploads', 'menu-images');
       if (!fs.existsSync(uploadPath)) {
@@ -3509,7 +3602,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  const uploadMenuImage = multer.default({
+  const uploadMenuImage = multer({
     storage: menuImageStorage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: function (req, file, cb) {

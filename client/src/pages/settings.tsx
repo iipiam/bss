@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useDevice } from "@/contexts/DeviceContext";
 import { useAuth } from "@/lib/auth";
 import type { Settings } from "@shared/schema";
-import { Save, Laptop, Tablet, Smartphone, Volume2, Bell, MessageSquare } from "lucide-react";
+import { Save, Laptop, Tablet, Smartphone, Volume2, Bell, MessageSquare, Upload, Trash2, Image } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { notificationTones, toneIds, playNotificationTone, getToneName, type ToneId } from "@/lib/notificationTones";
 
@@ -20,6 +20,7 @@ export default function SettingsPage() {
   const { t } = useLanguage();
   const { user } = useAuth();
   const [formData, setFormData] = useState<Partial<Settings>>({});
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: settings, isLoading } = useQuery<Settings>({
     queryKey: ["/api/settings"],
@@ -45,6 +46,59 @@ export default function SettingsPage() {
     },
   });
 
+  const uploadLogoMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('logo', file);
+      
+      const response = await fetch('/api/settings/logo', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload logo');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      toast({
+        title: t.success,
+        description: t.logoUploaded,
+      });
+    },
+    onError: () => {
+      toast({
+        title: t.error,
+        description: t.failedToUploadLogo,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const removeLogoMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", "/api/settings/logo");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      toast({
+        title: t.success,
+        description: t.logoRemoved,
+      });
+    },
+    onError: () => {
+      toast({
+        title: t.error,
+        description: t.failedToRemoveLogo,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateMutation.mutate(formData);
@@ -52,6 +106,38 @@ export default function SettingsPage() {
 
   const handleChange = (field: keyof Settings, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: t.error,
+          description: t.failedToUploadLogo,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: t.error,
+          description: t.failedToUploadLogo,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      uploadLogoMutation.mutate(file);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    removeLogoMutation.mutate();
   };
 
   if (isLoading) {
@@ -181,6 +267,66 @@ export default function SettingsPage() {
                   placeholder="22:00"
                   data-testid="input-closing-time"
                 />
+              </div>
+            </div>
+
+            {/* Logo Upload Section */}
+            <div className="pt-6 border-t">
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-base font-semibold">{t.businessLogo}</Label>
+                  <p className="text-sm text-muted-foreground mt-1">{t.logoForInvoices}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t.supportedFormats}</p>
+                </div>
+
+                {settings?.logoPath && (
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-32 h-32 border rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                      <img 
+                        src={settings.logoPath} 
+                        alt="Business Logo" 
+                        className="max-w-full max-h-full object-contain"
+                        data-testid="img-logo-preview"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    accept=".png,.jpg,.jpeg,.svg"
+                    className="hidden"
+                    data-testid="input-logo-file"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      fileInputRef.current?.click();
+                    }}
+                    disabled={uploadLogoMutation.isPending}
+                    data-testid="button-upload-logo"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {uploadLogoMutation.isPending ? t.uploading : t.uploadLogo}
+                  </Button>
+
+                  {settings?.logoPath && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleRemoveLogo}
+                      disabled={removeLogoMutation.isPending}
+                      data-testid="button-remove-logo"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {removeLogoMutation.isPending ? t.removing : t.removeLogo}
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 
