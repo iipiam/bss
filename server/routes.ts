@@ -2866,6 +2866,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
                 </div>
               </div>
 
+              ${invoice.qrCode ? `
+                <div style="text-align: center; margin: 30px 0;">
+                  <h3 style="color: #7f8c8d; font-size: 14px; margin-bottom: 10px;">ZATCA QR Code</h3>
+                  <img src="${invoice.qrCode}" alt="ZATCA QR Code" style="width: 200px; height: 200px; border: 2px solid #ecf0f1; padding: 10px; border-radius: 6px;" />
+                </div>
+              ` : ''}
+
               ${invoice.pdfPath ? `
                 <div style="text-align: center;">
                   <a href="${invoice.pdfPath}" class="download-btn" download>Download PDF</a>
