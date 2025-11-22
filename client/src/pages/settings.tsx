@@ -280,14 +280,87 @@ export default function SettingsPage() {
                 </div>
 
                 {settings?.logoPath && (
-                  <div className="flex items-center gap-4">
-                    <div className="relative w-32 h-32 border rounded-md overflow-hidden bg-muted flex items-center justify-center">
-                      <img 
-                        src={settings.logoPath} 
-                        alt="Business Logo" 
-                        className="max-w-full max-h-full object-contain"
-                        data-testid="img-logo-preview"
-                      />
+                  <div className="space-y-4">
+                    {/* Current Logo Preview */}
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">{t.currentLogo}</Label>
+                      <div className="flex items-center gap-4">
+                        <div className="relative w-32 h-32 border rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                          <img 
+                            src={settings.logoPath} 
+                            alt="Business Logo" 
+                            className="max-w-full max-h-full object-contain"
+                            data-testid="img-logo-preview"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Invoice Preview */}
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">{t.invoicePreview}</Label>
+                      <div 
+                        className="max-w-md overflow-hidden"
+                        data-testid="invoice-preview"
+                      >
+                        {/* Mock Invoice Header with exact styling from invoice.ts */}
+                        <div 
+                          style={{
+                            background: 'linear-gradient(135deg, #2962ff 0%, #1e40af 100%)',
+                            color: 'white',
+                            padding: '15px 20px',
+                            textAlign: 'center',
+                            borderRadius: '6px 6px 0 0',
+                          }}
+                        >
+                          {/* Logo Preview - Exact same styling as invoice */}
+                          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                            <img 
+                              src={settings.logoPath} 
+                              alt="Business Logo" 
+                              style={{ 
+                                maxWidth: '150px', 
+                                maxHeight: '80px', 
+                                objectFit: 'contain',
+                                margin: '0 auto',
+                                display: 'block'
+                              }}
+                              data-testid="img-invoice-logo-preview"
+                            />
+                          </div>
+                          
+                          {/* Company Name */}
+                          <div style={{
+                            fontSize: '22px',
+                            fontWeight: 700,
+                            marginBottom: '6px',
+                            letterSpacing: '0.3px'
+                          }}>
+                            {settings.restaurantName || t.restaurantName}
+                          </div>
+                          
+                          {/* Invoice Badge */}
+                          <div style={{
+                            display: 'inline-block',
+                            background: 'white',
+                            color: '#2962ff',
+                            padding: '4px 16px',
+                            borderRadius: '12px',
+                            fontWeight: 700,
+                            fontSize: '10px',
+                            marginTop: '4px'
+                          }}>
+                            TAX INVOICE | فاتورة ضريبية
+                          </div>
+                        </div>
+                        
+                        {/* Mock content to show context */}
+                        <div className="p-4 bg-muted/30">
+                          <p className="text-xs text-muted-foreground text-center">
+                            {t.invoicePreviewDescription}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -311,7 +384,7 @@ export default function SettingsPage() {
                     data-testid="button-upload-logo"
                   >
                     <Upload className="h-4 w-4 mr-2" />
-                    {uploadLogoMutation.isPending ? t.uploading : t.uploadLogo}
+                    {uploadLogoMutation.isPending ? t.loading : t.uploadLogo}
                   </Button>
 
                   {settings?.logoPath && (
@@ -323,7 +396,7 @@ export default function SettingsPage() {
                       data-testid="button-remove-logo"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      {removeLogoMutation.isPending ? t.removing : t.removeLogo}
+                      {removeLogoMutation.isPending ? t.loading : t.removeLogo}
                     </Button>
                   )}
                 </div>

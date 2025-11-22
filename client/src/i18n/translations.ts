@@ -239,6 +239,9 @@ export interface Translations {
   failedToRemoveLogo: string;
   logoForInvoices: string;
   supportedFormats: string;
+  currentLogo: string;
+  invoicePreview: string;
+  invoicePreviewDescription: string;
   
   // Account & Device Preference
   accountAndDevicePreference: string;
@@ -1305,6 +1308,9 @@ export const translations: Record<Language, Translations> = {
     failedToRemoveLogo: 'Failed to remove logo',
     logoForInvoices: 'Upload your business logo to appear on invoices',
     supportedFormats: 'PNG, JPG, SVG (Max 2MB)',
+    currentLogo: 'Current Logo',
+    invoicePreview: 'Invoice Preview',
+    invoicePreviewDescription: 'This is how your logo will appear on invoice headers',
     
     // Account & Device Preference
     accountAndDevicePreference: 'Account & Device Preference',
@@ -2378,6 +2384,9 @@ export const translations: Record<Language, Translations> = {
     failedToRemoveLogo: 'فشل إزالة الشعار',
     logoForInvoices: 'قم برفع شعار عملك ليظهر على الفواتير',
     supportedFormats: 'PNG, JPG, SVG (الحد الأقصى 2 ميجابايت)',
+    currentLogo: 'الشعار الحالي',
+    invoicePreview: 'معاينة الفاتورة',
+    invoicePreviewDescription: 'هكذا سيظهر شعارك في رأس الفاتورة',
     
     // Account & Device Preference
     accountAndDevicePreference: 'الحساب وتفضيل الجهاز',
@@ -3452,6 +3461,9 @@ export const translations: Record<Language, Translations> = {
     failedToRemoveLogo: '标志删除失败',
     logoForInvoices: '上传您的企业标志以显示在发票上',
     supportedFormats: 'PNG, JPG, SVG（最大 2MB）',
+    currentLogo: '当前标志',
+    invoicePreview: '发票预览',
+    invoicePreviewDescription: '这是您的标志在发票标题上的显示方式',
     
     // Account & Device Preference
     accountAndDevicePreference: '账户和设备偏好',
@@ -4512,6 +4524,9 @@ export const translations: Record<Language, Translations> = {
     failedToRemoveLogo: 'Logo-Entfernung fehlgeschlagen',
     logoForInvoices: 'Laden Sie Ihr Unternehmenslogo hoch, um es auf Rechnungen anzuzeigen',
     supportedFormats: 'PNG, JPG, SVG (Max. 2MB)',
+    currentLogo: 'Aktuelles Logo',
+    invoicePreview: 'Rechnungsvorschau',
+    invoicePreviewDescription: 'So wird Ihr Logo in den Rechnungsköpfen angezeigt',
     
     // Account & Device Preference
     accountAndDevicePreference: 'Konto & Gerätepräferenz',
@@ -5571,6 +5586,9 @@ export const translations: Record<Language, Translations> = {
     failedToRemoveLogo: 'लोगो हटाने में विफल',
     logoForInvoices: 'चालान पर दिखाने के लिए अपने व्यवसाय का लोगो अपलोड करें',
     supportedFormats: 'PNG, JPG, SVG (अधिकतम 2MB)',
+    currentLogo: 'वर्तमान लोगो',
+    invoicePreview: 'चालान पूर्वावलोकन',
+    invoicePreviewDescription: 'आपका लोगो चालान हेडर पर इस तरह दिखाई देगा',
     
     // Account & Device Preference
     accountAndDevicePreference: 'खाता और डिवाइस वरीयता',
@@ -6631,6 +6649,9 @@ export const translations: Record<Language, Translations> = {
     failedToRemoveLogo: 'لوگو ہٹانے میں ناکامی',
     logoForInvoices: 'انوائسز پر ظاہر ہونے کے لیے اپنا کاروباری لوگو اپ لوڈ کریں',
     supportedFormats: 'PNG, JPG, SVG (زیادہ سے زیادہ 2MB)',
+    currentLogo: 'موجودہ لوگو',
+    invoicePreview: 'انوائس پیش منظر',
+    invoicePreviewDescription: 'آپ کا لوگو انوائس ہیڈر پر اس طرح ظاہر ہوگا',
     
     // Account & Device Preference
     accountAndDevicePreference: 'اکاؤنٹ اور ڈیوائس کی ترجیح',
@@ -7691,6 +7712,9 @@ export const translations: Record<Language, Translations> = {
     failedToRemoveLogo: 'লোগো সরাতে ব্যর্থ',
     logoForInvoices: 'চালানে প্রদর্শিত হতে আপনার ব্যবসার লোগো আপলোড করুন',
     supportedFormats: 'PNG, JPG, SVG (সর্বোচ্চ 2MB)',
+    currentLogo: 'বর্তমান লোগো',
+    invoicePreview: 'চালান পূর্বরূপ',
+    invoicePreviewDescription: 'আপনার লোগো চালান হেডারে এইভাবে প্রদর্শিত হবে',
     
     // Account & Device Preference
     accountAndDevicePreference: 'অ্যাকাউন্ট এবং ডিভাইস পছন্দ',
@@ -8718,6 +8742,9 @@ export const translations: Record<Language, Translations> = {
     failedToRemoveLogo: 'Rimozione logo fallita',
     logoForInvoices: 'Carica il logo aziendale da visualizzare sulle fatture',
     supportedFormats: 'PNG, JPG, SVG (Max 2MB)',
+    currentLogo: 'Logo Attuale',
+    invoicePreview: 'Anteprima Fattura',
+    invoicePreviewDescription: 'Ecco come apparirà il tuo logo nelle intestazioni delle fatture',
     accountAndDevicePreference: "Account & Device Preference",
     accountAndDevicePreferenceDesc: "Choose your device type to optimize the interface layout",
     account: "Account",
@@ -9716,6 +9743,9 @@ export const translations: Record<Language, Translations> = {
     failedToRemoveLogo: 'Error al eliminar logo',
     logoForInvoices: 'Sube tu logo empresarial para mostrarlo en las facturas',
     supportedFormats: 'PNG, JPG, SVG (Máx 2MB)',
+    currentLogo: 'Logo Actual',
+    invoicePreview: 'Vista Previa de Factura',
+    invoicePreviewDescription: 'Así aparecerá tu logo en los encabezados de las facturas',
     accountAndDevicePreference: "Account & Device Preference",
     accountAndDevicePreferenceDesc: "Choose your device type to optimize the interface layout",
     account: "Cuenta",
@@ -10713,6 +10743,9 @@ export const translations: Record<Language, Translations> = {
     failedToRemoveLogo: 'Nabigo ang pag-alis ng logo',
     logoForInvoices: 'Mag-upload ng logo ng iyong negosyo upang lumabas sa mga resibo',
     supportedFormats: 'PNG, JPG, SVG (Max 2MB)',
+    currentLogo: 'Kasalukuyang Logo',
+    invoicePreview: 'Preview ng Resibo',
+    invoicePreviewDescription: 'Ganito ang hitsura ng iyong logo sa mga header ng resibo',
     accountAndDevicePreference: "Account & Device Preference",
     accountAndDevicePreferenceDesc: "Choose your device type to optimize the interface layout",
     account: "Account",
