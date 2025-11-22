@@ -37,7 +37,7 @@ export function formatPhoneForWhatsApp(phone: string): string {
 }
 
 /**
- * Creates bilingual WhatsApp message for invoice delivery
+ * Creates bilingual WhatsApp message for invoice delivery (with URL)
  */
 export function createWhatsAppInvoiceMessage(params: {
   invoiceNumber: string;
@@ -71,6 +71,45 @@ ${paymentMethod}
 
 *Download Invoice | تحميل الفاتورة:*
 ${invoiceUrl}
+
+ZATCA Compliant E-Invoice
+فاتورة إلكترونية متوافقة مع هيئة الزكاة والضريبة والجمارك
+`.trim();
+  
+  return message;
+}
+
+/**
+ * Creates simplified bilingual WhatsApp message for manual PDF attachment
+ */
+export function createWhatsAppAttachmentMessage(params: {
+  invoiceNumber: string;
+  total: string;
+  paymentMethod: string;
+  restaurantName?: string;
+  customerName?: string;
+}): string {
+  const { invoiceNumber, total, paymentMethod, restaurantName = "Restaurant", customerName } = params;
+  
+  // Personalized greeting with customer name (bilingual)
+  const greeting = customerName 
+    ? `Hello ${customerName}, here is your invoice. Thank you! | مرحباً ${customerName}، إليك فاتورتك. شكراً لك!`
+    : `Thank you for your business! | شكراً لتعاملكم معنا`;
+  
+  const message = `
+*${restaurantName}*
+Invoice | فاتورة
+
+${greeting}
+
+*Invoice Number | رقم الفاتورة:*
+${invoiceNumber}
+
+*Total | الإجمالي:*
+${total} SAR (including 15% VAT | شامل ضريبة القيمة المضافة 15%)
+
+*Payment | الدفع:*
+${paymentMethod}
 
 ZATCA Compliant E-Invoice
 فاتورة إلكترونية متوافقة مع هيئة الزكاة والضريبة والجمارك
