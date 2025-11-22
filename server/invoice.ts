@@ -627,7 +627,7 @@ export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuff
           }
         });
 
-        return { pdfBuffer: Buffer.from(pdfBuffer), qrCode: invoiceUrl };
+        return { pdfBuffer: Buffer.from(pdfBuffer), qrCode: qrCodeDataURL };
       } finally {
         await page.close().catch(e => console.log('[Invoice] Page close error:', e.message));
       }

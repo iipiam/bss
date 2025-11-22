@@ -28,7 +28,7 @@ Preferred communication style: Simple, everyday language.
     - IT accounts blocked from all client endpoints via `requireRestaurant` middleware
     - Seeded IT accounts: `it_support`, `it@saudikinzhal.org` (credentials in secure storage)
   - **Recent Security Fixes (Nov 2025)**: Patched 7 critical vulnerabilities in procurement, invoices, image uploads, and import endpoints
-  - **Recent Bug Fixes (Nov 17-20, 2025)**: 
+  - **Recent Bug Fixes (Nov 17-22, 2025)**: 
     - Fixed invoice download workflow (PDF path mismatch: changed save location to `public/invoices/`)
     - Fixed WebSocket connection spam when not authenticated (added user check before connecting)
     - Fixed transaction creation validation (validates without requiring restaurantId in body, adds from session)
@@ -46,6 +46,9 @@ Preferred communication style: Simple, everyday language.
     - **Added Performance tracking for IT accounts** (Nov 20): New Performance tab in System section for IT accounts tracks sales **per user** across all client accounts. Shows username, full name, role, restaurant context, business type, total sales, total orders, average order value, and last activity. Includes date range filtering (7/30/60/90 days) and search by username/full name/restaurant. Backend uses `orders.createdBy` field to track which user created each order, with proper WHERE clause date filtering for accurate metrics.
     - **Fixed dashboard performance comparison rates for new accounts** (Nov 20): Updated PerformanceCard component to correctly distinguish between "no historical data" (new accounts with previous=0) and "legitimate zero change" (stable performance where current=previous). New accounts now show gray "No data" badge, while stable periods show blue "0.0%" badge. Backend calculateChange function simplified to return 0 when previous=0.
     - **Removed Kitchen from IT account sidebar** (Nov 20): IT accounts no longer see Kitchen in Operations section. IT accounts now only have access to: IT Dashboard, Performance, Settings (in System section) plus Help and Logout in Support section.
+    - **Fixed "Invoice Not Found" bug for WhatsApp invoice links** (Nov 22): Updated storage.getInvoicePublic() to look up invoices by orderId first (for WhatsApp links using order.id), then fall back to invoice.id (for QR code access). This fixes the 404 error when clicking WhatsApp invoice links.
+    - **Fixed QR code display on public invoice page** (Nov 22): Added QR code rendering section to public invoice HTML template. QR code now displays correctly when accessing invoices via public link.
+    - **Fixed QR code data storage bug** (Nov 22): Corrected generateZATCAInvoice() to return base64 QR code data URI instead of invoice URL, ensuring proper ZATCA-compliant QR codes are stored in database and displayed on invoices.
   - **Device Preference System**: Users can select iPhone/iPad/Laptop layouts with persistent settings. Device class (`device-iphone`, `device-ipad`, `device-laptop`) applied to `document.documentElement` for CSS targeting. IT accounts access settings via IT Dashboard header (comprehensive dialog with language, device, and theme preferences).
 - **Business Type Support**: Dual architecture for Restaurant and Factory operations, with type-specific features, terminology (e.g., Products for Factories), pricing, and UI restrictions (e.g., no Recipes for Factories). Includes 'licenses' permission for factories.
 - **Real-Time Communication**: WebSocket-based system for employee notifications (order lifecycle) and real-time support ticket updates.
