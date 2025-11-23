@@ -4,8 +4,8 @@
 
 ### 1. Infrastructure Preparation
 
-#### Alibaba Cloud Account Setup
-- [ ] Create Alibaba Cloud account
+#### Cloud Provider Account Setup
+- [ ] Create cloud provider account
 - [ ] Set up billing alerts
 - [ ] Enable MFA (Multi-Factor Authentication)
 - [ ] Create IAM users for team members
@@ -22,8 +22,8 @@
   - [ ] HTTPS (443) from anywhere
   - [ ] PostgreSQL (5432) from VPC only
 
-#### ECS Instance
-- [ ] Launch ECS instance (ecs.c6.large recommended)
+#### Cloud Server Instance
+- [ ] Launch cloud server instance (2 vCPU, 4GB RAM recommended)
 - [ ] Select Ubuntu 20.04 LTS
 - [ ] Attach Elastic IP
 - [ ] Create 40GB system disk
@@ -32,22 +32,22 @@
 - [ ] Add tags: `Environment=Production`, `Project=BSS`
 
 #### Database Setup
-**Option A: ApsaraDB RDS (Recommended)**
-- [ ] Create RDS PostgreSQL 14 instance
-- [ ] Instance type: pg.n2.medium.2c
+**Option A: Managed Database (Recommended)**
+- [ ] Create managed PostgreSQL 14 instance
+- [ ] Instance type: 2 vCPU, 4GB RAM
 - [ ] Enable multi-zone deployment
 - [ ] Configure 100GB SSD storage
 - [ ] Set up automatic backups (30-day retention)
-- [ ] Whitelist ECS security group
+- [ ] Whitelist server security group
 - [ ] Enable SSL connection
 - [ ] Note down connection endpoint
 
 **Option B: Self-Managed PostgreSQL**
-- [ ] Skip RDS setup
-- [ ] Will install PostgreSQL on ECS during setup
+- [ ] Skip managed database setup
+- [ ] Will install PostgreSQL on cloud server during setup
 
-#### Object Storage (OSS)
-- [ ] Create OSS bucket: `bss-production`
+#### Object Storage
+- [ ] Create object storage bucket: `bss-production`
 - [ ] Set bucket to private access
 - [ ] Configure lifecycle rules:
   - [ ] Move to IA storage after 30 days
@@ -67,14 +67,14 @@
 
 #### Initial Access
 ```bash
-# Generate SSH key pair in Alibaba Cloud Console
+# Generate SSH key pair in cloud provider console
 # Download private key file (e.g., bss-key.pem)
 
 # Set correct permissions
 chmod 400 bss-key.pem
 
 # SSH into server
-ssh -i bss-key.pem root@YOUR_ECS_IP
+ssh -i bss-key.pem root@YOUR_SERVER_IP
 ```
 
 #### System Update
@@ -105,7 +105,7 @@ sudo systemctl enable nginx
 sudo systemctl status nginx
 ```
 
-#### Install PostgreSQL Client (if using RDS)
+#### Install PostgreSQL Client (if using managed database)
 ```bash
 sudo apt install -y postgresql-client
 ```
@@ -315,8 +315,8 @@ ls -lh /home/backups/app/
 
 ### 7. Monitoring Setup
 
-#### Configure Alibaba Cloud Monitor
-- [ ] Enable CloudMonitor for ECS instance
+#### Configure Cloud Monitoring
+- [ ] Enable monitoring service for cloud server instance
 - [ ] Set up CPU usage alert (> 80%)
 - [ ] Set up memory usage alert (> 90%)
 - [ ] Set up disk usage alert (> 85%)
@@ -371,29 +371,29 @@ pm2 monit
 
 ### 1. Right-Sizing Resources
 
-#### ECS Instance Optimization
-**Current:** ecs.c6.large (2 vCPU, 4GB RAM) - ~$50/month
+#### Cloud Server Instance Optimization
+**Current:** 2 vCPU, 4GB RAM - ~$50/month
 
 **Optimization Options:**
-- **Light Traffic (<100 users/day):** Use ecs.t6-c1m2.large (1 vCPU, 2GB) - Save $25/month
+- **Light Traffic (<100 users/day):** Use 1 vCPU, 2GB - Save $25/month
 - **Heavy Traffic (>1000 users/day):** Use Reserved Instance - Save 30-50%
 - **Variable Traffic:** Use auto-scaling + pay-as-you-go
 
 #### Database Optimization
-**Current:** RDS pg.n2.medium.2c - ~$30/month
+**Current:** Managed database (2 vCPU, 4GB RAM) - ~$30/month
 
 **Optimization Options:**
-- **Small Scale:** Self-managed PostgreSQL on ECS - Save $30/month
+- **Small Scale:** Self-managed PostgreSQL on cloud server - Save $30/month
 - **Predictable Load:** Purchase Reserved Instance - Save 30%
 - **Read-Heavy Workload:** Add read replicas instead of larger instance
 
 ### 2. Storage Optimization
 
-#### OSS Best Practices
-- Enable lifecycle rules to move old backups to IA storage
+#### Object Storage Best Practices
+- Enable lifecycle rules to move old backups to infrequent access storage
 - Delete unnecessary logs after 30 days
 - Compress backups before uploading
-- Use OSS Select for querying data without downloading
+- Use storage query services for querying data without downloading
 
 **Estimated Savings:** $5-10/month
 
@@ -402,7 +402,7 @@ pm2 monit
 #### Current Cost:** ~$10/month for 100GB
 
 **Optimization Options:**
-- Enable Alibaba CDN for static assets - Reduce origin bandwidth
+- Enable CDN for static assets - Reduce origin bandwidth
 - Optimize images (compression, WebP format)
 - Enable Gzip/Brotli compression in Nginx
 - Implement client-side caching
@@ -412,7 +412,7 @@ pm2 monit
 ### 4. Monitoring & Alerts
 
 **Free Tier Usage:**
-- Use CloudMonitor free tier (sufficient for single instance)
+- Use monitoring service free tier (sufficient for single instance)
 - Implement custom monitoring with cron scripts
 - Use open-source tools (Grafana + Prometheus)
 
@@ -422,11 +422,11 @@ pm2 monit
 
 #### Current Strategy
 - Local backups: Free (using server storage)
-- OSS backups: ~$3/month
+- Object storage backups: ~$3/month
 
 **Optimization:**
 - Keep only last 7 days locally
-- Use OSS IA storage for older backups
+- Use infrequent access storage for older backups
 - Delete backups older than 90 days
 
 **Estimated Savings:** $2-3/month
@@ -435,15 +435,15 @@ pm2 monit
 
 For predictable workloads, purchase Reserved Instances:
 
-| Period | Discount | Monthly Savings (ECS c6.large) |
-|--------|----------|--------------------------------|
+| Period | Discount | Monthly Savings (2 vCPU, 4GB RAM) |
+|--------|----------|-----------------------------------|
 | 1 Year | 30% | $15/month |
 | 3 Years | 50% | $25/month |
 
 ### 7. Development vs Production
 
 **Run separate dev/staging on smaller instances:**
-- Dev: ecs.t6-c1m1.large (1 vCPU, 1GB) - $12/month
+- Dev: 1 vCPU, 1GB RAM - $12/month
 - Only run during business hours - Save 60%
 - Use snapshots instead of running instance
 
@@ -461,9 +461,9 @@ Set up budget alerts:
 
 | Component | Standard | Optimized | Savings |
 |-----------|----------|-----------|---------|
-| ECS Instance | $50 | $35 (Reserved) | $15 |
-| RDS Database | $30 | $20 (Reserved) | $10 |
-| OSS Storage | $3 | $2 (IA + cleanup) | $1 |
+| Cloud Server | $50 | $35 (Reserved) | $15 |
+| Managed Database | $30 | $20 (Reserved) | $10 |
+| Object Storage | $3 | $2 (IA + cleanup) | $1 |
 | Bandwidth | $10 | $7 (CDN + optimization) | $3 |
 | Monitoring | $15 | $0 (Free tier) | $15 |
 | **Total** | **$108** | **$64** | **$44/month** |
@@ -528,7 +528,7 @@ curl http://localhost:5000/api/health
 - **Annually:** Infrastructure audit, capacity planning
 
 ### Getting Help
-- Alibaba Cloud Support: https://www.alibabacloud.com/support
+- Cloud Provider Support: Contact your cloud provider's support
 - BSS Documentation: /home/bss-app/deployment/docs/
 - Emergency Contacts: See disaster-recovery.md
 
@@ -546,4 +546,4 @@ When all items are checked:
 - [ ] Documentation is updated
 - [ ] Go-live communication sent
 
-**Congratulations! BlindSpot System is now deployed on Alibaba Cloud! 🎉**
+**Congratulations! BlindSpot System is now deployed on your cloud infrastructure! 🎉**

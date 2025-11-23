@@ -17,10 +17,10 @@ DATE=$(date +%Y%m%d)
 DB_RETENTION=30
 APP_RETENTION=7
 
-# Alibaba OSS configuration (optional)
-OSS_ENABLED=false
-OSS_BUCKET="bss-backups"
-OSS_REGION="oss-cn-hangzhou"
+# Object storage configuration (optional)
+STORAGE_ENABLED=false
+STORAGE_BUCKET="bss-backups"
+STORAGE_REGION="your-region"
 
 # Email alerts
 ALERT_EMAIL="admin@yourdomain.com"
@@ -141,28 +141,28 @@ backup_uploads() {
     fi
 }
 
-# Upload to Alibaba OSS
-upload_to_oss() {
-    if [ "$OSS_ENABLED" = true ]; then
-        log "Uploading backups to Alibaba OSS..." $YELLOW
+# Upload to object storage
+upload_to_storage() {
+    if [ "$STORAGE_ENABLED" = true ]; then
+        log "Uploading backups to object storage..." $YELLOW
         
-        # Install ossutil if not present
-        if ! command -v ossutil &> /dev/null; then
-            log "ossutil not installed, skipping OSS upload" $YELLOW
+        # Install storage CLI tool if not present
+        if ! command -v storage-cli &> /dev/null; then
+            log "storage-cli not installed, skipping storage upload" $YELLOW
             return
         fi
         
         # Upload database backup
-        ossutil cp $DB_BACKUP_DIR/bss_db_$DATE.sql.gz \
-            oss://$OSS_BUCKET/db/ \
-            --region $OSS_REGION
+        storage-cli cp $DB_BACKUP_DIR/bss_db_$DATE.sql.gz \
+            storage://$STORAGE_BUCKET/db/ \
+            --region $STORAGE_REGION
         
         # Upload application backup
-        ossutil cp $APP_BACKUP_DIR/bss_app_$DATE.tar.gz \
-            oss://$OSS_BUCKET/app/ \
-            --region $OSS_REGION
+        storage-cli cp $APP_BACKUP_DIR/bss_app_$DATE.tar.gz \
+            storage://$STORAGE_BUCKET/app/ \
+            --region $STORAGE_REGION
         
-        log "OSS upload completed" $GREEN
+        log "Storage upload completed" $GREEN
     fi
 }
 
@@ -244,7 +244,7 @@ main() {
     backup_database
     backup_application
     backup_uploads
-    upload_to_oss
+    upload_to_storage
     cleanup_old_backups
     verify_backups
     send_report

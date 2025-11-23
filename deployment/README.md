@@ -1,6 +1,6 @@
-# BlindSpot System - Deployment Package for Alibaba Cloud
+# BlindSpot System - Deployment Package for Cloud Infrastructure
 
-This directory contains all the necessary scripts, configurations, and documentation needed to deploy the BlindSpot System (BSS) on Alibaba Cloud ECS infrastructure.
+This directory contains all the necessary scripts, configurations, and documentation needed to deploy the BlindSpot System (BSS) on cloud server infrastructure.
 
 ## 📁 Directory Structure
 
@@ -12,12 +12,12 @@ deployment/
 │   └── nginx-bss.conf         # Nginx reverse proxy configuration
 ├── scripts/                    # Deployment and maintenance scripts
 │   ├── deploy.sh              # Main deployment script
-│   ├── migrate-database.sh    # Database migration from Neon to Alibaba
+│   ├── migrate-database.sh    # Database migration from Neon to cloud provider
 │   ├── backup.sh              # Automated backup script
 │   ├── monitor.sh             # Health monitoring script
 │   └── security-setup.sh      # Security hardening script
 ├── docs/                       # Documentation
-│   ├── infrastructure-setup.md    # ECS and infrastructure guide
+│   ├── infrastructure-setup.md    # Cloud server and infrastructure guide
 │   ├── disaster-recovery.md       # Disaster recovery procedures
 │   └── deployment-checklist.md    # Step-by-step deployment guide
 └── README.md                   # This file
@@ -28,10 +28,10 @@ deployment/
 ### 1. Prerequisites
 
 Before starting, ensure you have:
-- Alibaba Cloud account with billing enabled
+- Cloud provider account with billing enabled
 - Domain name (optional but recommended)
 - Access to current Neon database (for migration)
-- SSH access to Alibaba Cloud ECS instance
+- SSH access to cloud server instance
 
 ### 2. Infrastructure Setup
 
@@ -41,14 +41,14 @@ cat docs/infrastructure-setup.md
 ```
 
 Key steps:
-1. Create ECS instance (Ubuntu 20.04, 2GB RAM minimum)
-2. Set up RDS PostgreSQL or install PostgreSQL locally
+1. Create cloud server instance (Ubuntu 20.04, 2GB RAM minimum)
+2. Set up managed database or install PostgreSQL locally
 3. Configure security groups and firewall
 4. Allocate Elastic IP and configure DNS
 
 ### 3. Database Migration
 
-If migrating from Neon to Alibaba Cloud:
+If migrating from Neon to cloud provider:
 
 ```bash
 # Make script executable
@@ -59,7 +59,7 @@ chmod +x scripts/migrate-database.sh
 
 # Follow the interactive prompts to:
 # - Enter source database (Neon) credentials
-# - Enter target database (Alibaba) credentials
+# - Enter target database (cloud provider) credentials
 # - Export and import data
 # - Verify migration
 ```
@@ -144,7 +144,7 @@ nano /home/bss-app/.env
 ```
 
 Required updates:
-- `DATABASE_URL` - Your Alibaba RDS or local PostgreSQL connection
+- `DATABASE_URL` - Your managed database or local PostgreSQL connection
 - `SESSION_SECRET` - Generate with: `openssl rand -base64 32`
 - `MOYASAR_API_KEY` - Your Moyasar payment gateway key
 - `RESEND_API_KEY` - Your Resend email service key
@@ -185,7 +185,7 @@ cd /home/bss-app
 
 Backups are stored in:
 - Local: `/home/backups/`
-- Remote: Alibaba OSS bucket (if configured)
+- Remote: Object storage bucket (if configured)
 
 ### Health Check
 
@@ -227,18 +227,18 @@ Covers:
 ### Estimated Monthly Costs
 
 **Standard Setup:**
-- ECS Instance (c6.large): $50
-- RDS PostgreSQL: $30
-- OSS Storage: $3
+- Cloud server instance (2 vCPU, 4GB RAM): $50
+- Managed PostgreSQL database: $30
+- Object storage: $3
 - Bandwidth: $10
 - **Total: ~$93/month**
 
 **Optimized Setup:**
-- ECS Reserved Instance: $35 (save $15)
-- RDS Reserved Instance: $20 (save $10)
+- Reserved cloud server instance: $35 (save $15)
+- Reserved database instance: $20 (save $10)
 - Optimized Storage: $2 (save $1)
 - CDN + Compression: $7 (save $3)
-- Free CloudMonitor: $0 (save $15)
+- Free monitoring tools: $0 (save $15)
 - **Total: ~$64/month (Save $44/month = $528/year)**
 
 See `docs/deployment-checklist.md` for detailed cost optimization strategies.
@@ -277,11 +277,11 @@ df -h
 free -m
 ```
 
-### Alibaba CloudMonitor
+### Cloud Provider Monitoring
 
-Access via Alibaba Cloud Console:
-1. Navigate to CloudMonitor
-2. Select ECS instance
+Access via cloud provider console:
+1. Navigate to monitoring service
+2. Select server instance
 3. View CPU, Memory, Disk, Network metrics
 4. Configure alerts for thresholds
 
@@ -289,7 +289,7 @@ Access via Alibaba Cloud Console:
 
 1. **Keep secrets secure:**
    - Never commit `.env` to version control
-   - Use Alibaba KMS for sensitive keys
+   - Use key management service for sensitive keys
    - Rotate API keys regularly
 
 2. **Regular updates:**
@@ -299,7 +299,7 @@ Access via Alibaba Cloud Console:
 
 3. **Access control:**
    - Use SSH keys (disable password auth)
-   - Enable MFA for Alibaba Cloud console
+   - Enable MFA for cloud provider console
    - Restrict firewall rules to known IPs
 
 4. **Monitoring:**
@@ -314,10 +314,10 @@ Access via Alibaba Cloud Console:
 - Deployment Checklist: `docs/deployment-checklist.md`
 - Disaster Recovery: `docs/disaster-recovery.md`
 
-### Alibaba Cloud Resources
-- Documentation: https://www.alibabacloud.com/help
-- Support Portal: https://www.alibabacloud.com/support
-- Community Forums: https://www.alibabacloud.com/community
+### Cloud Provider Resources
+- Consult your cloud provider's documentation
+- Use your cloud provider's support portal
+- Check cloud provider community forums
 
 ### Emergency Procedures
 

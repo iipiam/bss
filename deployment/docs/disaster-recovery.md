@@ -1,7 +1,7 @@
 # BlindSpot System - Disaster Recovery Plan
 
 ## Overview
-This document outlines the disaster recovery procedures for the BlindSpot System deployed on Alibaba Cloud. It covers various failure scenarios and provides step-by-step recovery instructions.
+This document outlines the disaster recovery procedures for the BlindSpot System deployed on cloud infrastructure. It covers various failure scenarios and provides step-by-step recovery instructions.
 
 ## Recovery Time Objectives (RTO) & Recovery Point Objectives (RPO)
 
@@ -19,7 +19,7 @@ This document outlines the disaster recovery procedures for the BlindSpot System
 - **Database**: Daily at 2:00 AM (retained for 30 days)
 - **Application**: Weekly on Sunday at 3:00 AM (retained for 7 days)
 - **Files**: Daily at 2:30 AM (retained for 7 days)
-- **Location**: Local `/home/backups` + Alibaba OSS
+- **Location**: Local `/home/backups` + object storage
 
 ### Manual Backup (Before Major Changes)
 ```bash
@@ -117,19 +117,19 @@ pm2 restart bss-production
 
 ---
 
-### 3. Server Failure (ECS Instance Down)
+### 3. Server Failure (Cloud Instance Down)
 
 **Symptoms:**
 - Cannot SSH to server
 - Application completely unreachable
-- Alibaba Cloud console shows instance stopped
+- Cloud provider console shows instance stopped
 
 **Recovery Steps:**
 
 **A. Instance Restart**
 ```bash
-# Via Alibaba Cloud Console:
-1. Navigate to ECS Console
+# Via Cloud Provider Console:
+1. Navigate to Instance/Server Console
 2. Select the failed instance
 3. Click "Restart"
 4. Wait for instance to be "Running"
@@ -139,7 +139,7 @@ pm2 restart bss-production
 
 **B. Instance Replacement (if hardware failure)**
 ```bash
-# 1. Launch new ECS instance (same specs)
+# 1. Launch new cloud instance (same specs)
 # 2. Attach existing data disk (if separate)
 # 3. Install dependencies:
 sudo apt update && sudo apt upgrade -y
@@ -154,7 +154,7 @@ cd /home/bss-app
 # 5. Restore application from backup
 tar -xzf /home/backups/app/bss_app_latest.tar.gz -C /home/bss-app
 
-# 6. Restore database (if not using RDS)
+# 6. Restore database (if not using managed database)
 # Follow database restoration steps above
 
 # 7. Configure environment
@@ -165,7 +165,7 @@ cp deployment/configs/.env.production .env
 pm2 start ecosystem.config.js
 sudo systemctl start nginx
 
-# 9. Update DNS to point to new EIP
+# 9. Update DNS to point to new IP address
 ```
 
 **Verification:**
@@ -179,16 +179,17 @@ sudo systemctl start nginx
 
 **Symptoms:**
 - Both primary and local backups lost
-- Only OSS backups remain
+- Only object storage backups remain
 
 **Recovery Steps:**
 
 ```bash
 # 1. Set up new server (follow Server Failure steps 1-3)
 
-# 2. Download backups from Alibaba OSS
-ossutil cp oss://bss-backups/db/bss_db_latest.sql.gz /home/backups/db/
-ossutil cp oss://bss-backups/app/bss_app_latest.tar.gz /home/backups/app/
+# 2. Download backups from object storage
+# Replace with your cloud provider's CLI tool
+# aws s3 cp s3://bss-backups/db/bss_db_latest.sql.gz /home/backups/db/
+# gsutil cp gs://bss-backups/app/bss_app_latest.tar.gz /home/backups/app/
 
 # 3. Restore database
 gunzip < /home/backups/db/bss_db_latest.sql.gz | sudo -u postgres psql bss_production
@@ -197,7 +198,9 @@ gunzip < /home/backups/db/bss_db_latest.sql.gz | sudo -u postgres psql bss_produ
 tar -xzf /home/backups/app/bss_app_latest.tar.gz -C /home/bss-app
 
 # 5. Restore files
-ossutil cp oss://bss-backups/files/ /var/bss/ --recursive
+# Replace with your cloud provider's CLI tool
+# aws s3 cp s3://bss-backups/files/ /var/bss/ --recursive
+# gsutil -m cp -r gs://bss-backups/files/* /var/bss/
 
 # 6. Configure and start
 cd /home/bss-app

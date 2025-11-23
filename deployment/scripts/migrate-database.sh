@@ -1,6 +1,6 @@
 #!/bin/bash
 # BlindSpot System - Database Migration Script
-# Migrates from Neon PostgreSQL to Alibaba Cloud PostgreSQL
+# Migrates from Neon PostgreSQL to cloud managed PostgreSQL
 
 set -e
 
@@ -83,9 +83,9 @@ get_source_credentials() {
     fi
 }
 
-# Get target database credentials (Alibaba)
+# Get target database credentials (Cloud)
 get_target_credentials() {
-    log "${YELLOW}Enter TARGET database credentials (Alibaba Cloud):${NC}"
+    log "${YELLOW}Enter TARGET database credentials (Cloud Provider):${NC}"
     read -p "Host: " TARGET_HOST
     read -p "Port [5432]: " TARGET_PORT
     TARGET_PORT=${TARGET_PORT:-5432}
@@ -134,9 +134,9 @@ export_database() {
     fi
 }
 
-# Import database to Alibaba Cloud
+# Import database to Cloud Provider
 import_database() {
-    log "${YELLOW}Starting database import to Alibaba Cloud...${NC}"
+    log "${YELLOW}Starting database import to cloud database...${NC}"
     
     # Ask for confirmation
     echo -e "${YELLOW}WARNING: This will replace all data in the target database!${NC}"

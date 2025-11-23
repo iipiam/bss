@@ -1,6 +1,6 @@
 #!/bin/bash
 # BlindSpot System - Main Deployment Script
-# This script handles the full deployment process on Alibaba Cloud ECS
+# This script handles the full deployment process on cloud server infrastructure
 
 set -e
 
@@ -254,12 +254,12 @@ send_notification() {
     local status=$1
     local message=$2
     
-    # You can integrate with Alibaba Cloud SMS or Email service here
+    # You can integrate with cloud provider SMS or Email service here
     # For now, just log the notification
     log "NOTIFICATION: $status - $message" $BLUE
     
-    # Optional: Send to CloudMonitor custom event
-    # aliyun cms PutCustomEvent --EventInfo "[{\"name\":\"deployment\",\"status\":\"$status\",\"message\":\"$message\"}]"
+    # Optional: Send to monitoring service custom event
+    # cloud-cli monitoring put-custom-event --event-info "[{\"name\":\"deployment\",\"status\":\"$status\",\"message\":\"$message\"}]"
 }
 
 # Main deployment process
