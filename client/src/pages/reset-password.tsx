@@ -112,22 +112,22 @@ export default function ResetPassword() {
                 </div>
               </div>
               <p className="text-center text-muted-foreground">
-                Redirecting to login page...
+                {t.redirectingToLogin}
               </p>
               <Link href="/login" className="block">
                 <Button className="w-full" data-testid="button-go-to-login">
-                  Go to Login
+                  {t.goToLogin}
                 </Button>
               </Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="password">New Password</Label>
+                <Label htmlFor="password">{t.newPassword}</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter new password"
+                  placeholder={t.enterNewPasswordPlaceholder}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -136,11 +136,11 @@ export default function ResetPassword() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Label htmlFor="confirm-password">{t.confirmNewPassword}</Label>
                 <Input
                   id="confirm-password"
                   type="password"
-                  placeholder="Confirm new password"
+                  placeholder={t.enterConfirmPasswordPlaceholder}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
@@ -155,11 +155,11 @@ export default function ResetPassword() {
                 data-testid="button-submit"
               >
                 {isSubmitting ? (
-                  "Resetting..."
+                  t.resetting
                 ) : (
                   <>
                     <Lock className="mr-2 h-4 w-4" />
-                    Reset Password
+                    {t.resetPassword}
                   </>
                 )}
               </Button>

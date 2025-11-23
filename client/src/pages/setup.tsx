@@ -87,12 +87,12 @@ export default function Setup() {
       await refetchUser();
 
       toast({
-        title: "Setup complete!",
-        description: "Your admin account has been created successfully",
+        title: t.setupComplete,
+        description: t.setupCompleteDesc,
       });
     } catch (error: any) {
       toast({
-        title: "Setup failed",
+        title: t.setupFailed,
         description: error.message || t.failedToCreateAdminAccount,
         variant: "destructive",
       });
@@ -110,8 +110,8 @@ export default function Setup() {
             <UtensilsCrossed className="h-12 w-12 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-3xl">Welcome to BlindSpot System</CardTitle>
-            <CardDescription>Create your administrator account to get started</CardDescription>
+            <CardTitle className="text-3xl">{t.welcomeToBlindSpot}</CardTitle>
+            <CardDescription>{t.createAdminAccountDesc}</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -119,11 +119,11 @@ export default function Setup() {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <User className="h-5 w-5" />
-                Account Information
+                {t.accountInformation}
               </h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name *</Label>
+                  <Label htmlFor="fullName">{t.fullName} *</Label>
                   <Input
                     id="fullName"
                     type="text"
@@ -135,7 +135,7 @@ export default function Setup() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username *</Label>
+                  <Label htmlFor="username">{t.username} *</Label>
                   <Input
                     id="username"
                     type="text"
@@ -150,7 +150,7 @@ export default function Setup() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t.email}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -161,7 +161,7 @@ export default function Setup() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone">{t.phone}</Label>
                   <Input
                     id="phone"
                     type="tel"
@@ -175,11 +175,11 @@ export default function Setup() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password *</Label>
+                  <Label htmlFor="password">{t.password} *</Label>
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Min. 6 characters"
+                    placeholder={t.minCharacters}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
@@ -187,11 +187,11 @@ export default function Setup() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                  <Label htmlFor="confirmPassword">{t.confirmPassword} *</Label>
                   <Input
                     id="confirmPassword"
                     type="password"
-                    placeholder="Re-enter password"
+                    placeholder={t.reEnterPassword}
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     required
@@ -202,7 +202,7 @@ export default function Setup() {
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading} data-testid="button-setup">
-              {isLoading ? "Creating account..." : "Create Admin Account"}
+              {isLoading ? t.creatingAccount : t.createAdminAccount}
             </Button>
           </form>
         </CardContent>

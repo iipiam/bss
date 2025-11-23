@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type ProfileResponse = {
   user: UserType;
@@ -39,6 +40,7 @@ const profileSchema = z.object({
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 export default function Profile() {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
 
@@ -64,15 +66,15 @@ export default function Profile() {
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       toast({
-        title: "Profile Updated",
-        description: "Your profile has been updated successfully.",
+        title: t.profileUpdated,
+        description: t.profileUpdatedDesc,
       });
       setIsEditing(false);
     },
     onError: (error: any) => {
       toast({
-        title: "Update Failed",
-        description: error.message || "Failed to update profile. Please try again.",
+        title: t.updateFailed,
+        description: error.message || t.updateProfileError,
         variant: "destructive",
       });
     },
@@ -86,15 +88,15 @@ export default function Profile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
       toast({
-        title: "Subscription Cancelled",
-        description: "Your subscription has been cancelled. Please repay to continue using the service.",
+        title: t.subscriptionCanceled,
+        description: t.subscriptionCancelledDesc,
         variant: "destructive",
       });
     },
     onError: () => {
       toast({
-        title: "Cancellation Failed",
-        description: "Failed to cancel subscription. Please try again.",
+        title: t.cancellationFailed,
+        description: t.cancelSubscriptionError,
         variant: "destructive",
       });
     },
@@ -138,13 +140,13 @@ export default function Profile() {
       document.body.removeChild(a);
 
       toast({
-        title: "Download Started",
-        description: "Your invoice is being downloaded.",
+        title: t.downloadStarted,
+        description: t.downloadingInvoice,
       });
     } catch (error) {
       toast({
-        title: "Download Failed",
-        description: "Failed to download invoice. Please try again.",
+        title: t.downloadFailed,
+        description: t.downloadInvoiceError,
         variant: "destructive",
       });
     }
@@ -170,27 +172,27 @@ export default function Profile() {
         return (
           <Badge className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20" data-testid="badge-subscription-active">
             <CheckCircle2 className="mr-1 h-3 w-3" />
-            Active
+            {t.active}
           </Badge>
         );
       case "cancelled":
         return (
           <Badge className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20" data-testid="badge-subscription-cancelled">
             <XCircle className="mr-1 h-3 w-3" />
-            Cancelled
+            {t.cancelled}
           </Badge>
         );
       case "expired":
         return (
           <Badge className="bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20" data-testid="badge-subscription-expired">
             <AlertTriangle className="mr-1 h-3 w-3" />
-            Expired
+            {t.expired}
           </Badge>
         );
       default:
         return (
           <Badge variant="secondary" data-testid="badge-subscription-inactive">
-            Inactive
+            {t.inactive}
           </Badge>
         );
     }
@@ -215,7 +217,7 @@ export default function Profile() {
       <div className="container mx-auto p-6 max-w-4xl">
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>Failed to load profile information.</AlertDescription>
+          <AlertDescription>{t.failedToLoadProfile}</AlertDescription>
         </Alert>
       </div>
     );
@@ -226,15 +228,15 @@ export default function Profile() {
   return (
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
       <div>
-        <h1 className="text-3xl font-bold" data-testid="text-profile-title">User Profile</h1>
-        <p className="text-muted-foreground">Manage your account information and subscription</p>
+        <h1 className="text-3xl font-bold" data-testid="text-profile-title">{t.userProfile}</h1>
+        <p className="text-muted-foreground">{t.userProfileDesc}</p>
       </div>
 
       {isSubscriptionCancelled && (
         <Alert variant="destructive" data-testid="alert-subscription-restricted">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Your account access is restricted because your subscription has been cancelled. Please renew your subscription to regain full access.
+            {t.accountRestrictedDesc}
           </AlertDescription>
         </Alert>
       )}
@@ -244,21 +246,21 @@ export default function Profile() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <div>
-              <CardTitle className="text-xl">Profile Information</CardTitle>
-              <CardDescription>Your personal details</CardDescription>
+              <CardTitle className="text-xl">{t.profileInformation}</CardTitle>
+              <CardDescription>{t.yourPersonalDetails}</CardDescription>
             </div>
             <User className="h-8 w-8 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-muted-foreground">Full Name</Label>
+              <Label className="text-sm font-medium text-muted-foreground">{t.fullName}</Label>
               <p className="text-base font-medium" data-testid="text-fullname">{profile.fullName}</p>
             </div>
 
             <Separator />
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-muted-foreground">Username</Label>
+              <Label className="text-sm font-medium text-muted-foreground">{t.username}</Label>
               <p className="text-base font-medium" data-testid="text-username">{profile.username}</p>
             </div>
 
@@ -269,7 +271,7 @@ export default function Profile() {
                 <div className="space-y-2">
                   <Label htmlFor="email">
                     <Mail className="inline-block mr-2 h-4 w-4" />
-                    Email
+                    {t.email}
                   </Label>
                   <Input
                     id="email"
@@ -286,7 +288,7 @@ export default function Profile() {
                 <div className="space-y-2">
                   <Label htmlFor="phone">
                     <Phone className="inline-block mr-2 h-4 w-4" />
-                    Phone Number
+                    {t.phoneNumber}
                   </Label>
                   <Input
                     id="phone"
@@ -304,7 +306,7 @@ export default function Profile() {
                     className="flex-1"
                     data-testid="button-save-profile"
                   >
-                    {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+                    {updateProfileMutation.isPending ? t.saving : t.saveChanges}
                   </Button>
                   <Button
                     type="button"
@@ -315,7 +317,7 @@ export default function Profile() {
                     }}
                     data-testid="button-cancel-edit"
                   >
-                    Cancel
+                    {t.cancel}
                   </Button>
                 </div>
               </form>
@@ -324,9 +326,9 @@ export default function Profile() {
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-muted-foreground">
                     <Mail className="inline-block mr-2 h-4 w-4" />
-                    Email
+                    {t.email}
                   </Label>
-                  <p className="text-base font-medium" data-testid="text-email">{profile.email || "Not set"}</p>
+                  <p className="text-base font-medium" data-testid="text-email">{profile.email || t.notSet}</p>
                 </div>
 
                 <Separator />
@@ -334,9 +336,9 @@ export default function Profile() {
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-muted-foreground">
                     <Phone className="inline-block mr-2 h-4 w-4" />
-                    Phone Number
+                    {t.phoneNumber}
                   </Label>
-                  <p className="text-base font-medium" data-testid="text-phone">{profile.phone || "Not set"}</p>
+                  <p className="text-base font-medium" data-testid="text-phone">{profile.phone || t.notSet}</p>
                 </div>
 
                 <Separator />
@@ -344,9 +346,9 @@ export default function Profile() {
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-muted-foreground">
                     <Shield className="inline-block mr-2 h-4 w-4" />
-                    Role
+                    {t.role}
                   </Label>
-                  <p className="text-base font-medium capitalize" data-testid="text-role">{profile.role || "Employee"}</p>
+                  <p className="text-base font-medium capitalize" data-testid="text-role">{profile.role || t.employee}</p>
                 </div>
 
                 <Button
@@ -355,7 +357,7 @@ export default function Profile() {
                   variant="outline"
                   data-testid="button-edit-profile"
                 >
-                  Edit Profile
+                  {t.editProfile}
                 </Button>
               </>
             )}
@@ -366,32 +368,32 @@ export default function Profile() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <div>
-              <CardTitle className="text-xl">Subscription Details</CardTitle>
-              <CardDescription>Your subscription information</CardDescription>
+              <CardTitle className="text-xl">{t.subscriptionDetails}</CardTitle>
+              <CardDescription>{t.subscriptionInformationDesc}</CardDescription>
             </div>
             <CreditCard className="h-8 w-8 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-muted-foreground">Commercial Registration</Label>
+              <Label className="text-sm font-medium text-muted-foreground">{t.commercialRegistration}</Label>
               <p className="text-base font-medium" data-testid="text-commercial-registration">
-                {restaurant?.commercialRegistration || "Not set"}
+                {restaurant?.commercialRegistration || t.notSet}
               </p>
             </div>
 
             <Separator />
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-muted-foreground">Subscription Plan</Label>
+              <Label className="text-sm font-medium text-muted-foreground">{t.subscriptionPlan}</Label>
               <p className="text-base font-medium capitalize" data-testid="text-subscription-plan">
-                {restaurant?.subscriptionPlan || "None"}
+                {restaurant?.subscriptionPlan || t.none}
               </p>
             </div>
 
             <Separator />
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-muted-foreground">Status</Label>
+              <Label className="text-sm font-medium text-muted-foreground">{t.status}</Label>
               <div>{getSubscriptionStatusBadge(restaurant?.subscriptionStatus)}</div>
             </div>
 
@@ -400,7 +402,7 @@ export default function Profile() {
             <div className="space-y-2">
               <Label className="text-sm font-medium text-muted-foreground">
                 <Calendar className="inline-block mr-2 h-4 w-4" />
-                Start Date
+                {t.startDate}
               </Label>
               <p className="text-base font-medium" data-testid="text-subscription-start">
                 {formatDate(restaurant?.subscriptionStartDate)}
@@ -412,7 +414,7 @@ export default function Profile() {
             <div className="space-y-2">
               <Label className="text-sm font-medium text-muted-foreground">
                 <Calendar className="inline-block mr-2 h-4 w-4" />
-                End Date
+                {t.endDate}
               </Label>
               <p className="text-base font-medium" data-testid="text-subscription-end">
                 {formatDate(restaurant?.subscriptionEndDate)}
@@ -425,7 +427,7 @@ export default function Profile() {
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-muted-foreground">
                     <Calendar className="inline-block mr-2 h-4 w-4" />
-                    Cancelled On
+                    {t.cancelledOn}
                   </Label>
                   <p className="text-base font-medium text-red-600 dark:text-red-400" data-testid="text-subscription-cancelled">
                     {formatDate(restaurant?.subscriptionCancelledAt)}
@@ -442,26 +444,25 @@ export default function Profile() {
                     className="w-full"
                     data-testid="button-cancel-subscription"
                   >
-                    Cancel Subscription
+                    {t.cancelSubscription}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogTitle>{t.areYouSure}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will cancel your subscription. Your account will be restricted until you renew your subscription.
-                      You can continue using the service until your current subscription period ends on{" "}
+                      {t.cancelSubscriptionWarning}{" "}
                       <strong>{formatDate(restaurant?.subscriptionEndDate)}</strong>.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel data-testid="button-cancel-dialog">No, Keep Subscription</AlertDialogCancel>
+                    <AlertDialogCancel data-testid="button-cancel-dialog">{t.keepSubscription}</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleCancelSubscription}
                       className="bg-red-600 hover:bg-red-700"
                       data-testid="button-confirm-cancel"
                     >
-                      Yes, Cancel Subscription
+                      {t.yesCancelSubscription}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -474,16 +475,16 @@ export default function Profile() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <div>
-              <CardTitle className="text-xl">Subscription Invoices</CardTitle>
-              <CardDescription>View and download your subscription invoices</CardDescription>
+              <CardTitle className="text-xl">{t.subscriptionInvoices}</CardTitle>
+              <CardDescription>{t.viewAndDownload}</CardDescription>
             </div>
             <FileText className="h-8 w-8 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             {invoicesLoading ? (
-              <p className="text-sm text-muted-foreground">Loading invoices...</p>
+              <p className="text-sm text-muted-foreground">{t.loadingInvoices}</p>
             ) : invoices.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No invoices available</p>
+              <p className="text-sm text-muted-foreground">{t.noInvoices}</p>
             ) : (
               <div className="space-y-3">
                 {invoices.map((invoice) => (
@@ -495,7 +496,7 @@ export default function Profile() {
                     <div className="space-y-1 flex-1">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium" data-testid={`text-invoice-number-${invoice.serialNumber}`}>
-                          Invoice #{invoice.serialNumber}
+                          {t.invoice} #{invoice.serialNumber}
                         </p>
                         <Badge variant="outline" className="capitalize" data-testid={`badge-invoice-plan-${invoice.serialNumber}`}>
                           {invoice.subscriptionPlan}
@@ -515,7 +516,7 @@ export default function Profile() {
                       data-testid={`button-download-invoice-${invoice.serialNumber}`}
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      Download
+                      {t.download}
                     </Button>
                   </div>
                 ))}

@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MoyasarPayment } from "@/components/MoyasarPayment";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function PaymentTest() {
+  const { t } = useLanguage();
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [amount, setAmount] = useState("100.00");
   const [description, setDescription] = useState("Test Order Payment");
@@ -16,15 +18,15 @@ export default function PaymentTest() {
 
   const handlePaymentSuccess = (paymentId: string) => {
     toast({
-      title: "Payment Successful",
-      description: `Payment ID: ${paymentId}`,
+      title: t.paymentSuccessful,
+      description: `${t.paymentId}: ${paymentId}`,
     });
     setShowPaymentForm(false);
   };
 
   const handlePaymentError = (error: string) => {
     toast({
-      title: "Payment Failed",
+      title: t.paymentFailed,
       description: error,
       variant: "destructive",
     });
@@ -33,8 +35,8 @@ export default function PaymentTest() {
   const handleCancel = () => {
     setShowPaymentForm(false);
     toast({
-      title: "Payment Cancelled",
-      description: "Payment process was cancelled",
+      title: t.paymentCancelled,
+      description: t.paymentCancelledDesc,
     });
   };
 
@@ -59,11 +61,11 @@ export default function PaymentTest() {
     <div className="max-w-2xl mx-auto p-6">
       <Card>
         <CardHeader>
-          <CardTitle>Moyasar Payment Test</CardTitle>
+          <CardTitle>{t.moyasarPaymentTest}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="amount">Amount (SAR)</Label>
+            <Label htmlFor="amount">{t.amount}</Label>
             <Input
               id="amount"
               type="number"
@@ -75,7 +77,7 @@ export default function PaymentTest() {
           </div>
 
           <div>
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">{t.description}</Label>
             <Input
               id="description"
               value={description}
@@ -85,7 +87,7 @@ export default function PaymentTest() {
           </div>
 
           <div>
-            <Label htmlFor="customerName">Customer Name</Label>
+            <Label htmlFor="customerName">{t.customerName}</Label>
             <Input
               id="customerName"
               value={customerName}
@@ -95,7 +97,7 @@ export default function PaymentTest() {
           </div>
 
           <div>
-            <Label htmlFor="customerPhone">Customer Phone</Label>
+            <Label htmlFor="customerPhone">{t.customerPhone}</Label>
             <Input
               id="customerPhone"
               value={customerPhone}
@@ -110,18 +112,18 @@ export default function PaymentTest() {
               className="w-full"
               data-testid="button-show-payment-form"
             >
-              Proceed to Payment
+              {t.proceedToPayment}
             </Button>
           </div>
 
           <div className="mt-6 p-4 bg-muted rounded-lg">
-            <h3 className="font-semibold mb-2">Test Card Details</h3>
+            <h3 className="font-semibold mb-2">{t.testCardDetails}</h3>
             <div className="text-sm space-y-1">
-              <p><strong>Card Number:</strong> 4111 1111 1111 1111 (Visa)</p>
-              <p><strong>Card Number:</strong> 5200 0000 0000 0000 (Mastercard)</p>
-              <p><strong>Expiry:</strong> Any future date (e.g., 12/25)</p>
-              <p><strong>CVV:</strong> 123</p>
-              <p><strong>Name:</strong> Any name</p>
+              <p><strong>{t.cardNumber}:</strong> 4111 1111 1111 1111 (Visa)</p>
+              <p><strong>{t.cardNumber}:</strong> 5200 0000 0000 0000 (Mastercard)</p>
+              <p><strong>{t.expiry}:</strong> {t.anyFutureDate}</p>
+              <p><strong>{t.cvv}:</strong> 123</p>
+              <p><strong>{t.name}:</strong> {t.anyName}</p>
             </div>
           </div>
         </CardContent>

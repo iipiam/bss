@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Shield, Key, CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function EmergencyReset() {
+  const { t } = useLanguage();
   const [, setLocation] = useLocation();
   const [formData, setFormData] = useState({
     token: "",
@@ -24,8 +26,8 @@ export default function EmergencyReset() {
 
     if (formData.password !== formData.confirmPassword) {
       toast({
-        title: "Passwords Don't Match",
-        description: "Please make sure both passwords match",
+        title: t.passwordsDontMatch,
+        description: t.passwordsMatchError,
         variant: "destructive",
       });
       return;
@@ -33,8 +35,8 @@ export default function EmergencyReset() {
 
     if (formData.password.length < 6) {
       toast({
-        title: "Password Too Short",
-        description: "Password must be at least 6 characters long",
+        title: t.passwordTooShort,
+        description: t.passwordMinLengthError,
         variant: "destructive",
       });
       return;
@@ -55,13 +57,13 @@ export default function EmergencyReset() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to reset password");
+        throw new Error(error.error || t.failedToResetPassword);
       }
 
       setIsSuccess(true);
       toast({
-        title: "Password Reset Successful!",
-        description: "You can now log in with your new password",
+        title: t.passwordResetSuccess,
+        description: t.passwordResetSuccessDesc,
       });
 
       setTimeout(() => {
@@ -69,8 +71,8 @@ export default function EmergencyReset() {
       }, 3000);
     } catch (error: any) {
       toast({
-        title: "Password Reset Failed",
-        description: error.message || "An error occurred during password reset",
+        title: t.passwordResetFailed,
+        description: error.message || t.resetPasswordError,
         variant: "destructive",
       });
     } finally {
@@ -87,11 +89,11 @@ export default function EmergencyReset() {
               <Shield className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Emergency Admin Reset</CardTitle>
+          <CardTitle className="text-2xl text-center">{t.emergencyAdminReset}</CardTitle>
           <CardDescription className="text-center">
             {isSuccess
-              ? "Password has been reset successfully"
-              : "Reset admin account password using your bootstrap token"}
+              ? t.passwordResetSuccess
+              : t.resetPasswordBootstrapDesc}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -103,36 +105,36 @@ export default function EmergencyReset() {
                 </div>
               </div>
               <p className="text-center text-muted-foreground">
-                Your admin password has been reset successfully.
+                {t.yourAdminPasswordReset}
               </p>
               <p className="text-center text-sm text-muted-foreground">
-                Redirecting to login page...
+                {t.redirectingToLogin}
               </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="token">Bootstrap Reset Token</Label>
+                <Label htmlFor="token">{t.bootstrapResetToken}</Label>
                 <Input
                   id="token"
                   type="password"
-                  placeholder="Enter your bootstrap reset token"
+                  placeholder={t.enterBootstrapToken}
                   value={formData.token}
                   onChange={(e) => setFormData({ ...formData, token: e.target.value })}
                   required
                   data-testid="input-token"
                 />
                 <p className="text-xs text-muted-foreground">
-                  This is a one-time use token provided by your system administrator
+                  {t.bootstrapTokenDescription}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="username">Admin Username</Label>
+                <Label htmlFor="username">{t.adminUsername}</Label>
                 <Input
                   id="username"
                   type="text"
-                  placeholder="Enter admin username"
+                  placeholder={t.enterAdminUsername}
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   required
@@ -141,11 +143,11 @@ export default function EmergencyReset() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">New Password</Label>
+                <Label htmlFor="password">{t.newPassword}</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter new password (min 6 characters)"
+                  placeholder={t.enterNewPasswordPlaceholder}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   minLength={6}
@@ -155,11 +157,11 @@ export default function EmergencyReset() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirm New Password</Label>
+                <Label htmlFor="confirm-password">{t.confirmNewPassword}</Label>
                 <Input
                   id="confirm-password"
                   type="password"
-                  placeholder="Confirm new password"
+                  placeholder={t.enterConfirmPasswordPlaceholder}
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   minLength={6}
@@ -175,21 +177,21 @@ export default function EmergencyReset() {
                 data-testid="button-submit"
               >
                 {isSubmitting ? (
-                  "Resetting Password..."
+                  t.resetting
                 ) : (
                   <>
                     <Key className="mr-2 h-4 w-4" />
-                    Reset Admin Password
+                    {t.resetAdminPassword}
                   </>
                 )}
               </Button>
 
               <div className="bg-muted p-4 rounded-lg space-y-2 text-sm">
-                <p className="font-semibold">Important Notes:</p>
+                <p className="font-semibold">{t.importantNotes}</p>
                 <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                  <li>Bootstrap tokens can only be used once</li>
-                  <li>Only admin accounts can be reset via this method</li>
-                  <li>Contact your system administrator if you don't have a token</li>
+                  <li>{t.bootstrapTokenOnceUse}</li>
+                  <li>{t.onlyAdminReset}</li>
+                  <li>{t.contactAdministrator}</li>
                 </ul>
               </div>
             </form>

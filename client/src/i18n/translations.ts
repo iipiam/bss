@@ -1130,6 +1130,13 @@ export interface Translations {
   description: string;
   customerName: string;
   customerPhone: string;
+  paymentId: string;
+  moyasarPaymentTest: string;
+  cardNumber: string;
+  expiry: string;
+  anyFutureDate: string;
+  cvv: string;
+  anyName: string;
   
   // License Management
   loadingLicenses: string;
@@ -1144,6 +1151,54 @@ export interface Translations {
   passwordResetSuccessDesc: string;
   yourAdminPasswordReset: string;
   createEmployeeAccount: string;
+  passwordsMatchError: string;
+  passwordMinLengthError: string;
+  passwordResetFailed: string;
+  resetPasswordError: string;
+  resetPasswordBootstrapDesc: string;
+  bootstrapTokenDescription: string;
+  resetAdminPassword: string;
+  bootstrapTokenOnceUse: string;
+  onlyAdminReset: string;
+  contactAdministrator: string;
+  minCharacters: string;
+  reEnterPassword: string;
+  creatingAccount: string;
+  
+  // Profile & Subscription
+  updateProfileError: string;
+  cancelSubscriptionError: string;
+  downloadingInvoice: string;
+  downloadFailed: string;
+  downloadInvoiceError: string;
+  failedToLoadProfile: string;
+  userProfile: string;
+  userProfileDesc: string;
+  accountRestrictedDesc: string;
+  profileInformation: string;
+  yourPersonalDetails: string;
+  phoneNumber: string;
+  saveChanges: string;
+  notSet: string;
+  editProfile: string;
+  subscriptionDetails: string;
+  subscriptionInformationDesc: string;
+  cancelledOn: string;
+  areYouSure: string;
+  cancelSubscriptionWarning: string;
+  keepSubscription: string;
+  yesCancelSubscription: string;
+  subscriptionInvoices: string;
+  noInvoices: string;
+  invoice: string;
+  
+  // Invoice specific
+  hasBeenDownloaded: string;
+  searchByInvoice: string;
+  date: string;
+  vat: string;
+  noInvoicesFound: string;
+  noPDF: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -2274,6 +2329,13 @@ export const translations: Record<Language, Translations> = {
     description: 'Description',
     customerName: 'Customer Name',
     customerPhone: 'Customer Phone',
+    paymentId: 'Payment ID',
+    moyasarPaymentTest: 'Moyasar Payment Test',
+    cardNumber: 'Card Number',
+    expiry: 'Expiry',
+    anyFutureDate: 'Any future date (e.g., 12/25)',
+    cvv: 'CVV',
+    anyName: 'Any name',
     
     // License Management
     loadingLicenses: 'Loading licenses...',
@@ -2288,6 +2350,54 @@ export const translations: Record<Language, Translations> = {
     passwordResetSuccessDesc: 'Your password reset was successful',
     yourAdminPasswordReset: 'Your admin password has been reset successfully.',
     createEmployeeAccount: 'Create Employee Account',
+    passwordsMatchError: "Passwords Don't Match",
+    passwordMinLengthError: 'Password Too Short',
+    passwordResetFailed: 'Password Reset Failed',
+    resetPasswordError: 'An error occurred during password reset',
+    resetPasswordBootstrapDesc: 'Reset admin account password using your bootstrap token',
+    bootstrapTokenDescription: 'This is a one-time use token provided by your system administrator',
+    resetAdminPassword: 'Reset Admin Password',
+    bootstrapTokenOnceUse: 'Bootstrap tokens can only be used once',
+    onlyAdminReset: 'Only admin accounts can be reset via this method',
+    contactAdministrator: "Contact your system administrator if you don't have a token",
+    minCharacters: 'Min. 6 characters',
+    reEnterPassword: 'Re-enter password',
+    creatingAccount: 'Creating account...',
+    
+    // Profile & Subscription
+    updateProfileError: 'Failed to update profile',
+    cancelSubscriptionError: 'Failed to cancel subscription',
+    downloadingInvoice: 'Downloading invoice...',
+    downloadFailed: 'Download Failed',
+    downloadInvoiceError: 'Failed to download invoice',
+    failedToLoadProfile: 'Failed to load profile',
+    userProfile: 'User Profile',
+    userProfileDesc: 'Manage your personal information and subscription',
+    accountRestrictedDesc: 'You can only view your profile. Contact your administrator to make changes.',
+    profileInformation: 'Profile Information',
+    yourPersonalDetails: 'Your personal details',
+    phoneNumber: 'Phone Number',
+    saveChanges: 'Save Changes',
+    notSet: 'Not set',
+    editProfile: 'Edit Profile',
+    subscriptionDetails: 'Subscription Details',
+    subscriptionInformationDesc: 'Your subscription information',
+    cancelledOn: 'Cancelled on',
+    areYouSure: 'Are you sure?',
+    cancelSubscriptionWarning: 'This action cannot be undone. You will lose access to all features when your current period ends.',
+    keepSubscription: 'Keep Subscription',
+    yesCancelSubscription: 'Yes, Cancel Subscription',
+    subscriptionInvoices: 'Subscription Invoices',
+    noInvoices: 'No invoices available',
+    invoice: 'Invoice',
+    
+    // Invoice specific
+    hasBeenDownloaded: 'has been downloaded',
+    searchByInvoice: 'Search by invoice number or order',
+    date: 'Date',
+    vat: 'VAT',
+    noInvoicesFound: 'No invoices found',
+    noPDF: 'No PDF',
   },
   
   Arabic: {

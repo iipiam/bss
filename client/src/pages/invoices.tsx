@@ -9,8 +9,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import type { Invoice } from "@shared/schema";
 import { format } from "date-fns";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Invoices() {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
@@ -36,13 +38,13 @@ export default function Invoices() {
       document.body.removeChild(a);
 
       toast({
-        title: "Invoice downloaded",
-        description: `Invoice ${invoice.invoiceNumber} has been downloaded`,
+        title: t.invoiceDownloaded,
+        description: `${t.invoice} ${invoice.invoiceNumber} ${t.hasBeenDownloaded}`,
       });
     } catch (error) {
       toast({
-        title: "Download failed",
-        description: error instanceof Error ? error.message : "Failed to download invoice",
+        title: t.downloadFailed,
+        description: error instanceof Error ? error.message : t.downloadInvoiceError,
         variant: "destructive",
       });
     }
@@ -59,8 +61,8 @@ export default function Invoices() {
   if (isLoading) {
     return (
       <div className="p-8">
-        <h1 className="text-3xl font-bold mb-2">Invoices</h1>
-        <p className="text-muted-foreground">Loading...</p>
+        <h1 className="text-3xl font-bold mb-2">{t.invoices}</h1>
+        <p className="text-muted-foreground">{t.loadingInvoices}</p>
       </div>
     );
   }
@@ -68,8 +70,8 @@ export default function Invoices() {
   return (
     <div className="p-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Invoices</h1>
-        <p className="text-muted-foreground">View and download ZATCA-compliant invoices</p>
+        <h1 className="text-3xl font-bold mb-2">{t.invoices}</h1>
+        <p className="text-muted-foreground">{t.viewAndDownload}</p>
       </div>
 
       <Card className="p-6">
@@ -77,7 +79,7 @@ export default function Invoices() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by invoice number or customer..."
+              placeholder={t.searchByInvoice}
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -89,20 +91,20 @@ export default function Invoices() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Invoice Number</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Subtotal</TableHead>
-              <TableHead>VAT</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t.invoiceNumber}</TableHead>
+              <TableHead>{t.customer}</TableHead>
+              <TableHead>{t.date}</TableHead>
+              <TableHead>{t.subtotal}</TableHead>
+              <TableHead>{t.vat}</TableHead>
+              <TableHead>{t.total}</TableHead>
+              <TableHead className="text-right">{t.actions}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredInvoices.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  {searchQuery ? "No invoices found matching your search" : "No invoices yet"}
+                  {searchQuery ? t.noInvoicesFound : t.noInvoices}
                 </TableCell>
               </TableRow>
             ) : (
@@ -114,7 +116,7 @@ export default function Invoices() {
                       {invoice.invoiceNumber}
                     </div>
                   </TableCell>
-                  <TableCell>{invoice.customerName || "Walk-in Customer"}</TableCell>
+                  <TableCell>{invoice.customerName || t.walkInCustomer}</TableCell>
                   <TableCell>{format(new Date(invoice.createdAt), "MMM dd, yyyy HH:mm")}</TableCell>
                   <TableCell className="font-mono">{parseFloat(invoice.subtotal).toFixed(2)} SAR</TableCell>
                   <TableCell className="font-mono">{parseFloat(invoice.vatAmount).toFixed(2)} SAR</TableCell>
@@ -129,10 +131,10 @@ export default function Invoices() {
                           data-testid={`button-download-${invoice.id}`}
                         >
                           <Download className="h-4 w-4 mr-1" />
-                          Download
+                          {t.download}
                         </Button>
                       ) : (
-                        <Badge variant="outline">No PDF</Badge>
+                        <Badge variant="outline">{t.noPDF}</Badge>
                       )}
                     </div>
                   </TableCell>

@@ -72,18 +72,18 @@ export default function ForgotPassword() {
               <Link href="/login" className="block">
                 <Button variant="outline" className="w-full" data-testid="button-back-to-login">
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Login
+                  {t.backToLogin}
                 </Button>
               </Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">{t.emailAddress}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder={t.enterYourEmail}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -97,18 +97,18 @@ export default function ForgotPassword() {
                 data-testid="button-submit"
               >
                 {isSubmitting ? (
-                  "Sending..."
+                  t.sending
                 ) : (
                   <>
                     <Mail className="mr-2 h-4 w-4" />
-                    Send Reset Link
+                    {t.sendResetLink}
                   </>
                 )}
               </Button>
               <Link href="/login" className="block">
                 <Button variant="ghost" className="w-full" data-testid="button-back">
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Login
+                  {t.backToLogin}
                 </Button>
               </Link>
             </form>
