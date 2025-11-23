@@ -6652,7 +6652,6 @@ export const translations: Record<Language, Translations> = {
     failedToUpdateEmployee: 'कर्मचारी अपडेट करने में विफल',
     failedToDeleteEmployee: 'कर्मचारी हटाने में विफल',
     failedToExportFinancial: 'वित्तीय डेटा निर्यात करने में विफल',
-    exportFailed: 'निर्यात विफल',
     failedToResetPassword: 'पासवर्ड रीसेट करने में विफल',
     
     // Welcome Video Slides
@@ -7867,7 +7866,6 @@ export const translations: Record<Language, Translations> = {
     failedToUpdateEmployee: 'ملازم کو اپ ڈیٹ کرنے میں ناکام',
     failedToDeleteEmployee: 'ملازم کو حذف کرنے میں ناکام',
     failedToExportFinancial: 'مالیاتی ڈیٹا برآمد کرنے میں ناکام',
-    exportFailed: 'برآمد ناکام',
     failedToResetPassword: 'پاس ورڈ ری سیٹ کرنے میں ناکام',
     failedToSendResetEmail: 'ری سیٹ ای میل بھیجنے میں ناکام',
     failedToUpdateDevicePreference: 'ڈیوائس ترجیح اپ ڈیٹ کرنے میں ناکام',
