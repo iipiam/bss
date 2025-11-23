@@ -13,7 +13,7 @@ Preferred communication style: Simple, everyday language.
 - **UI Library**: Shadcn UI (New York style) based on Radix UI and Tailwind CSS, adhering to Material Design principles.
 - **Styling**: Tailwind CSS with custom design tokens, responsive layouts, modern gradient designs, and smooth animations.
 - **Branding**: BSS eagle logo, "Business Management System" subtitle, and "Made By Kinzhal LTD Co." in the footer. Tagline: "Empowering businesses with smart management solutions".
-- **Internationalization**: Comprehensive multi-language support for 8 languages (English, Arabic, Hindi, Urdu, Spanish, Tagalog, French, Indonesian) with full RTL support. Translation system uses `LanguageContext` and persists preferences. Language validation ensures fallback to English.
+- **Internationalization**: Comprehensive multi-language support for 6 languages (English, Arabic, Hindi, Urdu, Spanish, Tagalog) with full RTL support for Arabic/Urdu. Translation system uses `LanguageContext` and persists preferences. Language validation ensures fallback to English for invalid stored languages. **French and Indonesian removed Nov 23, 2025** per user request.
 - **Responsive Design**: Device-specific layouts (Laptop, iPad, iPhone) with WCAG AAA compliance.
 
 ### Technical Implementation

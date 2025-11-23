@@ -20,9 +20,7 @@ const languageToLocaleCode: Record<Language, string> = {
   Hindi: 'hi',
   Urdu: 'ur',
   Spanish: 'es',
-  Tagalog: 'tl',
-  French: 'fr',
-  Indonesian: 'id'
+  Tagalog: 'tl'
 };
 
 const LANGUAGE_STORAGE_KEY = 'bss-language';
