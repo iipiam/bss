@@ -12196,7 +12196,6 @@ export const translations: Record<Language, Translations> = {
     failedToUpdateEmployee: "Nabigo ang pag-update ng empleyado",
     failedToDeleteEmployee: "Nabigo ang pagtanggal ng empleyado",
     failedToExportFinancial: "Nabigo ang pag-export ng pinansyal na datos",
-    exportFailed: "Nabigo ang pag-export",
     failedToResetPassword: "Nabigo ang pag-reset ng password",
     failedToSendResetEmail: "Nabigo ang pagpadala ng reset email",
     failedToUpdateDevicePreference: "Nabigo ang pag-update ng kagustuhan ng device",
