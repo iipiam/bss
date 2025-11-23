@@ -1,8 +1,8 @@
 // Translation system for multi-language support  
-// Supported languages: English, Arabic, Chinese, German, Hindi, Urdu, Bengali, Italian, Spanish, Tagalog
+// Supported languages: English, Arabic, Urdu, Hindi, French, Spanish, Tagalog, Indonesian, Turkish, Swahili
 // All IT Dashboard support text fully translated across all languages
 
-export type Language = 'English' | 'Arabic' | 'Chinese' | 'German' | 'Hindi' | 'Urdu' | 'Bengali' | 'Italian' | 'Spanish' | 'Tagalog';
+export type Language = 'English' | 'Arabic' | 'Urdu' | 'Hindi' | 'French' | 'Spanish' | 'Tagalog' | 'Indonesian' | 'Turkish' | 'Swahili';
 
 export interface Translations {
   // Navigation
@@ -1108,12 +1108,9 @@ export interface Translations {
   // Invoices & Financial
   loadingInvoices: string;
   viewAndDownload: string;
-  totalRevenue: string;
   totalExpenses: string;
-  totalOrders: string;
   totalCosts: string;
   totalSalesLabel: string;
-  total: string;
   loadingFinancialData: string;
   totalByExpenseCategory: string;
   
@@ -1126,9 +1123,6 @@ export interface Translations {
   proceedToPayment: string;
   testCardDetails: string;
   paymentDetails: string;
-  amount: string;
-  description: string;
-  customerName: string;
   customerPhone: string;
   paymentId: string;
   moyasarPaymentTest: string;
@@ -1144,7 +1138,6 @@ export interface Translations {
   
   // General Loading States
   loadingData: string;
-  filters: string;
   
   // Setup & Emergency
   passwordResetSuccess: string;
@@ -2307,12 +2300,9 @@ export const translations: Record<Language, Translations> = {
     // Invoices & Financial
     loadingInvoices: 'Loading invoices...',
     viewAndDownload: 'View and download your subscription invoices',
-    totalRevenue: 'Total Revenue',
     totalExpenses: 'Total Expenses',
-    totalOrders: 'Total Orders',
     totalCosts: 'Total Costs',
     totalSalesLabel: 'Total Sales',
-    total: 'Total',
     loadingFinancialData: 'Loading financial data...',
     totalByExpenseCategory: 'Total by expense category',
     
@@ -2325,9 +2315,6 @@ export const translations: Record<Language, Translations> = {
     proceedToPayment: 'Proceed to Payment',
     testCardDetails: 'Test Card Details',
     paymentDetails: 'Payment Details',
-    amount: 'Amount',
-    description: 'Description',
-    customerName: 'Customer Name',
     customerPhone: 'Customer Phone',
     paymentId: 'Payment ID',
     moyasarPaymentTest: 'Moyasar Payment Test',
@@ -2343,7 +2330,6 @@ export const translations: Record<Language, Translations> = {
     
     // General Loading States
     loadingData: 'Loading...',
-    filters: 'Filters',
     
     // Setup & Emergency
     passwordResetSuccess: 'Password has been reset successfully',
@@ -3475,6 +3461,99 @@ export const translations: Record<Language, Translations> = {
     companyName: 'Kinzhal LTD Co.',
     copyright: '© 2025 نظام النقطة العمياء (BSS). جميع الحقوق محفوظة.',
     tagline: 'تمكين الأعمال بحلول إدارة ذكية',
+    
+    // Chat & Messaging
+    selectUser: 'اختر المستخدم',
+    createChannel: 'إنشاء قناة',
+    selectConversation: 'اختر محادثة لبدء الدردشة',
+    
+    // Invoices & Financial
+    loadingInvoices: 'جارٍ تحميل الفواتير...',
+    viewAndDownload: 'عرض وتحميل فواتير الاشتراك الخاصة بك',
+    totalExpenses: 'إجمالي المصروفات',
+    totalCosts: 'إجمالي التكاليف',
+    totalSalesLabel: 'إجمالي المبيعات',
+    loadingFinancialData: 'جارٍ تحميل البيانات المالية...',
+    totalByExpenseCategory: 'الإجمالي حسب فئة المصروفات',
+    
+    // 404 & Errors
+    returnToDashboard: 'العودة إلى لوحة التحكم',
+    pageNotFound: '404 الصفحة غير موجودة',
+    pageNotFoundDesc: 'الصفحة التي تبحث عنها غير موجودة أو تم نقلها.',
+    
+    // Payment & Testing
+    proceedToPayment: 'المتابعة للدفع',
+    testCardDetails: 'تفاصيل البطاقة التجريبية',
+    paymentDetails: 'تفاصيل الدفع',
+    customerPhone: 'هاتف العميل',
+    paymentId: 'معرف الدفع',
+    moyasarPaymentTest: 'اختبار دفع ميسر',
+    cardNumber: 'رقم البطاقة',
+    expiry: 'تاريخ الانتهاء',
+    anyFutureDate: 'أي تاريخ مستقبلي (مثل 12/25)',
+    cvv: 'رمز CVV',
+    anyName: 'أي اسم',
+    
+    // License Management
+    loadingLicenses: 'جارٍ تحميل التراخيص...',
+    deleteLicense: 'حذف الترخيص',
+    
+    // General Loading States
+    loadingData: 'جارٍ التحميل...',
+    
+    // Setup & Emergency
+    passwordResetSuccess: 'تم إعادة تعيين كلمة المرور بنجاح',
+    passwordResetSuccessDesc: 'تمت إعادة تعيين كلمة المرور بنجاح',
+    yourAdminPasswordReset: 'تم إعادة تعيين كلمة مرور المسؤول بنجاح.',
+    createEmployeeAccount: 'إنشاء حساب موظف',
+    passwordsMatchError: 'كلمات المرور غير متطابقة',
+    passwordMinLengthError: 'كلمة المرور قصيرة جداً',
+    passwordResetFailed: 'فشل إعادة تعيين كلمة المرور',
+    resetPasswordError: 'حدث خطأ أثناء إعادة تعيين كلمة المرور',
+    resetPasswordBootstrapDesc: 'إعادة تعيين كلمة مرور حساب المسؤول باستخدام رمز التمهيد الخاص بك',
+    bootstrapTokenDescription: 'هذا رمز للاستخدام مرة واحدة يوفره مسؤول النظام',
+    resetAdminPassword: 'إعادة تعيين كلمة مرور المسؤول',
+    bootstrapTokenOnceUse: 'يمكن استخدام رموز التمهيد مرة واحدة فقط',
+    onlyAdminReset: 'يمكن إعادة تعيين حسابات المسؤولين فقط عبر هذه الطريقة',
+    contactAdministrator: 'اتصل بمسؤول النظام إذا لم يكن لديك رمز',
+    minCharacters: 'الحد الأدنى 6 أحرف',
+    reEnterPassword: 'أعد إدخال كلمة المرور',
+    creatingAccount: 'جارٍ إنشاء الحساب...',
+    
+    // Profile & Subscription
+    updateProfileError: 'فشل تحديث الملف الشخصي',
+    cancelSubscriptionError: 'فشل إلغاء الاشتراك',
+    downloadingInvoice: 'جارٍ تحميل الفاتورة...',
+    downloadFailed: 'فشل التحميل',
+    downloadInvoiceError: 'فشل تحميل الفاتورة',
+    failedToLoadProfile: 'فشل تحميل الملف الشخصي',
+    userProfile: 'الملف الشخصي للمستخدم',
+    userProfileDesc: 'إدارة معلوماتك الشخصية والاشتراك',
+    accountRestrictedDesc: 'يمكنك عرض ملفك الشخصي فقط. اتصل بالمسؤول لإجراء تغييرات.',
+    profileInformation: 'معلومات الملف الشخصي',
+    yourPersonalDetails: 'تفاصيلك الشخصية',
+    phoneNumber: 'رقم الهاتف',
+    saveChanges: 'حفظ التغييرات',
+    notSet: 'غير محدد',
+    editProfile: 'تعديل الملف الشخصي',
+    subscriptionDetails: 'تفاصيل الاشتراك',
+    subscriptionInformationDesc: 'معلومات اشتراكك',
+    cancelledOn: 'تم الإلغاء في',
+    areYouSure: 'هل أنت متأكد؟',
+    cancelSubscriptionWarning: 'لا يمكن التراجع عن هذا الإجراء. ستفقد الوصول إلى جميع الميزات عند انتهاء فترتك الحالية.',
+    keepSubscription: 'الاحتفاظ بالاشتراك',
+    yesCancelSubscription: 'نعم، إلغاء الاشتراك',
+    subscriptionInvoices: 'فواتير الاشتراك',
+    noInvoices: 'لا توجد فواتير متاحة',
+    invoice: 'الفاتورة',
+    
+    // Invoice specific
+    hasBeenDownloaded: 'تم تحميله',
+    searchByInvoice: 'البحث برقم الفاتورة أو الطلب',
+    date: 'التاريخ',
+    vat: 'ضريبة القيمة المضافة',
+    noInvoicesFound: 'لم يتم العثور على فواتير',
+    noPDF: 'لا يوجد ملف PDF',
   },
   
   Chinese: {
@@ -6663,6 +6742,99 @@ export const translations: Record<Language, Translations> = {
     companyName: 'Kinzhal LTD Co.',
     copyright: '© 2025 ब्लाइंडस्पॉट सिस्टम (BSS)। सर्वाधिकार सुरक्षित।',
     tagline: 'स्मार्ट प्रबंधन समाधानों से व्यवसायों को सशक्त बनाना',
+    
+    // Chat & Messaging
+    selectUser: 'उपयोगकर्ता चुनें',
+    createChannel: 'चैनल बनाएं',
+    selectConversation: 'चैटिंग शुरू करने के लिए एक बातचीत चुनें',
+    
+    // Invoices & Financial
+    loadingInvoices: 'चालान लोड हो रहे हैं...',
+    viewAndDownload: 'अपने सदस्यता चालान देखें और डाउनलोड करें',
+    totalExpenses: 'कुल खर्च',
+    totalCosts: 'कुल लागत',
+    totalSalesLabel: 'कुल बिक्री',
+    loadingFinancialData: 'वित्तीय डेटा लोड हो रहा है...',
+    totalByExpenseCategory: 'खर्च श्रेणी द्वारा कुल',
+    
+    // 404 & Errors
+    returnToDashboard: 'डैशबोर्ड पर वापस जाएं',
+    pageNotFound: '404 पृष्ठ नहीं मिला',
+    pageNotFoundDesc: 'आप जो पृष्ठ ढूंढ रहे हैं वह मौजूद नहीं है या स्थानांतरित कर दिया गया है।',
+    
+    // Payment & Testing
+    proceedToPayment: 'भुगतान के लिए आगे बढ़ें',
+    testCardDetails: 'परीक्षण कार्ड विवरण',
+    paymentDetails: 'भुगतान विवरण',
+    customerPhone: 'ग्राहक फोन',
+    paymentId: 'भुगतान आईडी',
+    moyasarPaymentTest: 'Moyasar भुगतान परीक्षण',
+    cardNumber: 'कार्ड नंबर',
+    expiry: 'समाप्ति',
+    anyFutureDate: 'कोई भी भविष्य की तारीख (जैसे, 12/25)',
+    cvv: 'सीवीवी',
+    anyName: 'कोई भी नाम',
+    
+    // License Management
+    loadingLicenses: 'लाइसेंस लोड हो रहे हैं...',
+    deleteLicense: 'लाइसेंस हटाएं',
+    
+    // General Loading States
+    loadingData: 'लोड हो रहा है...',
+    
+    // Setup & Emergency
+    passwordResetSuccess: 'पासवर्ड सफलतापूर्वक रीसेट किया गया',
+    passwordResetSuccessDesc: 'आपका पासवर्ड रीसेट सफल रहा',
+    yourAdminPasswordReset: 'आपका व्यवस्थापक पासवर्ड सफलतापूर्वक रीसेट किया गया है।',
+    createEmployeeAccount: 'कर्मचारी खाता बनाएं',
+    passwordsMatchError: 'पासवर्ड मेल नहीं खाते',
+    passwordMinLengthError: 'पासवर्ड बहुत छोटा है',
+    passwordResetFailed: 'पासवर्ड रीसेट विफल',
+    resetPasswordError: 'पासवर्ड रीसेट के दौरान एक त्रुटि हुई',
+    resetPasswordBootstrapDesc: 'अपने बूटस्ट्रैप टोकन का उपयोग करके व्यवस्थापक खाता पासवर्ड रीसेट करें',
+    bootstrapTokenDescription: 'यह आपके सिस्टम प्रशासक द्वारा प्रदान किया गया एक बार उपयोग टोकन है',
+    resetAdminPassword: 'व्यवस्थापक पासवर्ड रीसेट करें',
+    bootstrapTokenOnceUse: 'बूटस्ट्रैप टोकन का उपयोग केवल एक बार किया जा सकता है',
+    onlyAdminReset: 'केवल व्यवस्थापक खातों को इस विधि के माध्यम से रीसेट किया जा सकता है',
+    contactAdministrator: 'यदि आपके पास टोकन नहीं है तो अपने सिस्टम प्रशासक से संपर्क करें',
+    minCharacters: 'न्यूनतम 6 वर्ण',
+    reEnterPassword: 'पासवर्ड फिर से दर्ज करें',
+    creatingAccount: 'खाता बनाया जा रहा है...',
+    
+    // Profile & Subscription
+    updateProfileError: 'प्रोफ़ाइल अपडेट करने में विफल',
+    cancelSubscriptionError: 'सदस्यता रद्द करने में विफल',
+    downloadingInvoice: 'चालान डाउनलोड हो रहा है...',
+    downloadFailed: 'डाउनलोड विफल',
+    downloadInvoiceError: 'चालान डाउनलोड करने में विफल',
+    failedToLoadProfile: 'प्रोफ़ाइल लोड करने में विफल',
+    userProfile: 'उपयोगकर्ता प्रोफ़ाइल',
+    userProfileDesc: 'अपनी व्यक्तिगत जानकारी और सदस्यता प्रबंधित करें',
+    accountRestrictedDesc: 'आप केवल अपनी प्रोफ़ाइल देख सकते हैं। परिवर्तन करने के लिए अपने प्रशासक से संपर्क करें।',
+    profileInformation: 'प्रोफ़ाइल जानकारी',
+    yourPersonalDetails: 'आपकी व्यक्तिगत जानकारी',
+    phoneNumber: 'फोन नंबर',
+    saveChanges: 'परिवर्तन सहेजें',
+    notSet: 'सेट नहीं किया गया',
+    editProfile: 'प्रोफ़ाइल संपादित करें',
+    subscriptionDetails: 'सदस्यता विवरण',
+    subscriptionInformationDesc: 'आपकी सदस्यता जानकारी',
+    cancelledOn: 'रद्द किया गया',
+    areYouSure: 'क्या आप सुनिश्चित हैं?',
+    cancelSubscriptionWarning: 'इस क्रिया को पूर्ववत नहीं किया जा सकता। आपकी वर्तमान अवधि समाप्त होने पर आप सभी सुविधाओं तक पहुंच खो देंगे।',
+    keepSubscription: 'सदस्यता रखें',
+    yesCancelSubscription: 'हां, सदस्यता रद्द करें',
+    subscriptionInvoices: 'सदस्यता चालान',
+    noInvoices: 'कोई चालान उपलब्ध नहीं',
+    invoice: 'चालान',
+    
+    // Invoice specific
+    hasBeenDownloaded: 'डाउनलोड किया गया है',
+    searchByInvoice: 'चालान नंबर या ऑर्डर द्वारा खोजें',
+    date: 'तारीख',
+    vat: 'वैट',
+    noInvoicesFound: 'कोई चालान नहीं मिला',
+    noPDF: 'कोई पीडीएफ नहीं',
   },
   
   Urdu: {
@@ -7726,6 +7898,99 @@ export const translations: Record<Language, Translations> = {
     companyName: 'Kinzhal LTD Co.',
     copyright: '© 2025 بلائنڈ اسپاٹ سسٹم (BSS)۔ تمام حقوق محفوظ ہیں۔',
     tagline: 'سمارٹ مینجمنٹ حل کے ساتھ کاروبار کو بااختیار بنانا',
+    
+    // Chat & Messaging
+    selectUser: 'صارف منتخب کریں',
+    createChannel: 'چینل بنائیں',
+    selectConversation: 'چیٹنگ شروع کرنے کے لیے گفتگو منتخب کریں',
+    
+    // Invoices & Financial
+    loadingInvoices: 'رسیدیں لوڈ ہو رہی ہیں...',
+    viewAndDownload: 'اپنی سبسکرپشن رسیدیں دیکھیں اور ڈاؤن لوڈ کریں',
+    totalExpenses: 'کل اخراجات',
+    totalCosts: 'کل لاگت',
+    totalSalesLabel: 'کل فروخت',
+    loadingFinancialData: 'مالیاتی ڈیٹا لوڈ ہو رہا ہے...',
+    totalByExpenseCategory: 'اخراجات کی قسم کے مطابق کل',
+    
+    // 404 & Errors
+    returnToDashboard: 'ڈیش بورڈ پر واپس جائیں',
+    pageNotFound: '404 صفحہ نہیں ملا',
+    pageNotFoundDesc: 'جو صفحہ آپ تلاش کر رہے ہیں وہ موجود نہیں ہے یا منتقل کر دیا گیا ہے۔',
+    
+    // Payment & Testing
+    proceedToPayment: 'ادائیگی کے لیے آگے بڑھیں',
+    testCardDetails: 'ٹیسٹ کارڈ کی تفصیلات',
+    paymentDetails: 'ادائیگی کی تفصیلات',
+    customerPhone: 'گاہک کا فون',
+    paymentId: 'ادائیگی کی شناخت',
+    moyasarPaymentTest: 'Moyasar ادائیگی ٹیسٹ',
+    cardNumber: 'کارڈ نمبر',
+    expiry: 'میعاد ختم',
+    anyFutureDate: 'کوئی بھی مستقبل کی تاریخ (مثلاً، 12/25)',
+    cvv: 'سی وی وی',
+    anyName: 'کوئی بھی نام',
+    
+    // License Management
+    loadingLicenses: 'لائسنس لوڈ ہو رہے ہیں...',
+    deleteLicense: 'لائسنس حذف کریں',
+    
+    // General Loading States
+    loadingData: 'لوڈ ہو رہا ہے...',
+    
+    // Setup & Emergency
+    passwordResetSuccess: 'پاس ورڈ کامیابی سے ری سیٹ ہو گیا',
+    passwordResetSuccessDesc: 'آپ کا پاس ورڈ ری سیٹ کامیاب رہا',
+    yourAdminPasswordReset: 'آپ کا ایڈمن پاس ورڈ کامیابی سے ری سیٹ ہو گیا ہے۔',
+    createEmployeeAccount: 'ملازم اکاؤنٹ بنائیں',
+    passwordsMatchError: 'پاس ورڈ مماثل نہیں ہیں',
+    passwordMinLengthError: 'پاس ورڈ بہت چھوٹا ہے',
+    passwordResetFailed: 'پاس ورڈ ری سیٹ ناکام',
+    resetPasswordError: 'پاس ورڈ ری سیٹ کے دوران ایک خرابی پیش آئی',
+    resetPasswordBootstrapDesc: 'اپنے بوٹ اسٹریپ ٹوکن کا استعمال کرتے ہوئے ایڈمن اکاؤنٹ پاس ورڈ ری سیٹ کریں',
+    bootstrapTokenDescription: 'یہ آپ کے سسٹم ایڈمنسٹریٹر کی طرف سے فراہم کردہ ایک بار استعمال ٹوکن ہے',
+    resetAdminPassword: 'ایڈمن پاس ورڈ ری سیٹ کریں',
+    bootstrapTokenOnceUse: 'بوٹ اسٹریپ ٹوکن صرف ایک بار استعمال کیے جا سکتے ہیں',
+    onlyAdminReset: 'صرف ایڈمن اکاؤنٹس کو اس طریقہ کے ذریعے ری سیٹ کیا جا سکتا ہے',
+    contactAdministrator: 'اگر آپ کے پاس ٹوکن نہیں ہے تو اپنے سسٹم ایڈمنسٹریٹر سے رابطہ کریں',
+    minCharacters: 'کم از کم 6 حروف',
+    reEnterPassword: 'پاس ورڈ دوبارہ درج کریں',
+    creatingAccount: 'اکاؤنٹ بنایا جا رہا ہے...',
+    
+    // Profile & Subscription
+    updateProfileError: 'پروفائل اپ ڈیٹ کرنے میں ناکام',
+    cancelSubscriptionError: 'سبسکرپشن منسوخ کرنے میں ناکام',
+    downloadingInvoice: 'رسید ڈاؤن لوڈ ہو رہی ہے...',
+    downloadFailed: 'ڈاؤن لوڈ ناکام',
+    downloadInvoiceError: 'رسید ڈاؤن لوڈ کرنے میں ناکام',
+    failedToLoadProfile: 'پروفائل لوڈ کرنے میں ناکام',
+    userProfile: 'صارف کی پروفائل',
+    userProfileDesc: 'اپنی ذاتی معلومات اور سبسکرپشن کا نظم کریں',
+    accountRestrictedDesc: 'آپ صرف اپنی پروفائل دیکھ سکتے ہیں۔ تبدیلیاں کرنے کے لیے اپنے ایڈمنسٹریٹر سے رابطہ کریں۔',
+    profileInformation: 'پروفائل کی معلومات',
+    yourPersonalDetails: 'آپ کی ذاتی تفصیلات',
+    phoneNumber: 'فون نمبر',
+    saveChanges: 'تبدیلیاں محفوظ کریں',
+    notSet: 'سیٹ نہیں کیا گیا',
+    editProfile: 'پروفائل میں ترمیم کریں',
+    subscriptionDetails: 'سبسکرپشن کی تفصیلات',
+    subscriptionInformationDesc: 'آپ کی سبسکرپشن کی معلومات',
+    cancelledOn: 'منسوخ کر دیا گیا',
+    areYouSure: 'کیا آپ کو یقین ہے؟',
+    cancelSubscriptionWarning: 'اس عمل کو واپس نہیں کیا جا سکتا۔ آپ اپنی موجودہ مدت ختم ہونے پر تمام خصوصیات تک رسائی کھو دیں گے۔',
+    keepSubscription: 'سبسکرپشن رکھیں',
+    yesCancelSubscription: 'ہاں، سبسکرپشن منسوخ کریں',
+    subscriptionInvoices: 'سبسکرپشن رسیدیں',
+    noInvoices: 'کوئی رسیدیں دستیاب نہیں',
+    invoice: 'رسید',
+    
+    // Invoice specific
+    hasBeenDownloaded: 'ڈاؤن لوڈ ہو گیا ہے',
+    searchByInvoice: 'رسید نمبر یا آرڈر کے ذریعے تلاش کریں',
+    date: 'تاریخ',
+    vat: 'ویٹ',
+    noInvoicesFound: 'کوئی رسیدیں نہیں ملیں',
+    noPDF: 'کوئی پی ڈی ایف نہیں',
   },
   
   Bengali: {
@@ -10790,6 +11055,99 @@ export const translations: Record<Language, Translations> = {
     companyName: "Kinzhal LTD Co.",
     copyright: "© 2025 BlindSpot System (BSS). Todos los derechos reservados.",
     tagline: "Empoderamos a las empresas con soluciones de gestión inteligentes",
+    
+    // Chat & Messaging
+    selectUser: "Seleccionar usuario",
+    createChannel: "Crear canal",
+    selectConversation: "Selecciona una conversación para comenzar a chatear",
+    
+    // Invoices & Financial
+    loadingInvoices: "Cargando facturas...",
+    viewAndDownload: "Ver y descargar tus facturas de suscripción",
+    totalExpenses: "Gastos totales",
+    totalCosts: "Costos totales",
+    totalSalesLabel: "Ventas totales",
+    loadingFinancialData: "Cargando datos financieros...",
+    totalByExpenseCategory: "Total por categoría de gastos",
+    
+    // 404 & Errors
+    returnToDashboard: "Volver al panel",
+    pageNotFound: "404 Página no encontrada",
+    pageNotFoundDesc: "La página que buscas no existe o ha sido movida.",
+    
+    // Payment & Testing
+    proceedToPayment: "Proceder al pago",
+    testCardDetails: "Detalles de tarjeta de prueba",
+    paymentDetails: "Detalles de pago",
+    customerPhone: "Teléfono del cliente",
+    paymentId: "ID de pago",
+    moyasarPaymentTest: "Prueba de pago Moyasar",
+    cardNumber: "Número de tarjeta",
+    expiry: "Vencimiento",
+    anyFutureDate: "Cualquier fecha futura (ej., 12/25)",
+    cvv: "CVV",
+    anyName: "Cualquier nombre",
+    
+    // License Management
+    loadingLicenses: "Cargando licencias...",
+    deleteLicense: "Eliminar licencia",
+    
+    // General Loading States
+    loadingData: "Cargando...",
+    
+    // Setup & Emergency
+    passwordResetSuccess: "Contraseña restablecida con éxito",
+    passwordResetSuccessDesc: "Tu restablecimiento de contraseña fue exitoso",
+    yourAdminPasswordReset: "Tu contraseña de administrador ha sido restablecida con éxito.",
+    createEmployeeAccount: "Crear cuenta de empleado",
+    passwordsMatchError: "Las contraseñas no coinciden",
+    passwordMinLengthError: "La contraseña es demasiado corta",
+    passwordResetFailed: "Error al restablecer contraseña",
+    resetPasswordError: "Ocurrió un error al restablecer la contraseña",
+    resetPasswordBootstrapDesc: "Restablece la contraseña de la cuenta de administrador usando tu token bootstrap",
+    bootstrapTokenDescription: "Este es un token de un solo uso proporcionado por el administrador del sistema",
+    resetAdminPassword: "Restablecer contraseña de administrador",
+    bootstrapTokenOnceUse: "Los tokens bootstrap solo se pueden usar una vez",
+    onlyAdminReset: "Solo las cuentas de administrador se pueden restablecer mediante este método",
+    contactAdministrator: "Contacta a tu administrador del sistema si no tienes un token",
+    minCharacters: "Mínimo 6 caracteres",
+    reEnterPassword: "Vuelve a ingresar la contraseña",
+    creatingAccount: "Creando cuenta...",
+    
+    // Profile & Subscription
+    updateProfileError: "Error al actualizar perfil",
+    cancelSubscriptionError: "Error al cancelar suscripción",
+    downloadingInvoice: "Descargando factura...",
+    downloadFailed: "Error en la descarga",
+    downloadInvoiceError: "Error al descargar factura",
+    failedToLoadProfile: "Error al cargar perfil",
+    userProfile: "Perfil de usuario",
+    userProfileDesc: "Gestiona tu información personal y suscripción",
+    accountRestrictedDesc: "Solo puedes ver tu perfil. Contacta a tu administrador para realizar cambios.",
+    profileInformation: "Información del perfil",
+    yourPersonalDetails: "Tus datos personales",
+    phoneNumber: "Número de teléfono",
+    saveChanges: "Guardar cambios",
+    notSet: "No establecido",
+    editProfile: "Editar perfil",
+    subscriptionDetails: "Detalles de suscripción",
+    subscriptionInformationDesc: "Tu información de suscripción",
+    cancelledOn: "Cancelado en",
+    areYouSure: "¿Estás seguro?",
+    cancelSubscriptionWarning: "Esta acción no se puede deshacer. Perderás el acceso a todas las funciones cuando termine tu período actual.",
+    keepSubscription: "Mantener suscripción",
+    yesCancelSubscription: "Sí, cancelar suscripción",
+    subscriptionInvoices: "Facturas de suscripción",
+    noInvoices: "No hay facturas disponibles",
+    invoice: "Factura",
+    
+    // Invoice specific
+    hasBeenDownloaded: "Ha sido descargado",
+    searchByInvoice: "Buscar por número de factura o pedido",
+    date: "Fecha",
+    vat: "IVA",
+    noInvoicesFound: "No se encontraron facturas",
+    noPDF: "Sin PDF",
   },
 
   Tagalog: {
@@ -11791,18 +12149,675 @@ export const translations: Record<Language, Translations> = {
     companyName: "Kinzhal LTD Co.",
     copyright: "© 2025 BlindSpot System (BSS). Lahat ng karapatan ay nakalaan.",
     tagline: "Binibigyang kapangyarihan ang mga negosyo gamit ang matalinong solusyon sa pamamahala",
+    
+    // Chat & Messaging
+    selectUser: "Pumili ng user",
+    createChannel: "Gumawa ng channel",
+    selectConversation: "Pumili ng pag-uusap upang magsimulang mag-chat",
+    
+    // Invoices & Financial
+    loadingInvoices: "Naglo-load ng mga invoice...",
+    viewAndDownload: "Tingnan at i-download ang iyong mga subscription invoice",
+    totalExpenses: "Kabuuang gastos",
+    totalCosts: "Kabuuang halaga",
+    totalSalesLabel: "Kabuuang benta",
+    loadingFinancialData: "Naglo-load ng financial data...",
+    totalByExpenseCategory: "Kabuuan ayon sa kategorya ng gastos",
+    
+    // 404 & Errors
+    returnToDashboard: "Bumalik sa dashboard",
+    pageNotFound: "404 Hindi nahanap ang pahina",
+    pageNotFoundDesc: "Ang pahina na iyong hinahanap ay hindi umiiral o inilipat na.",
+    
+    // Payment & Testing
+    proceedToPayment: "Magpatuloy sa pagbabayad",
+    testCardDetails: "Mga detalye ng test card",
+    paymentDetails: "Mga detalye ng pagbabayad",
+    customerPhone: "Telepono ng customer",
+    paymentId: "Payment ID",
+    moyasarPaymentTest: "Moyasar payment test",
+    cardNumber: "Numero ng card",
+    expiry: "Pagtatapos",
+    anyFutureDate: "Anumang petsa sa hinaharap (hal., 12/25)",
+    cvv: "CVV",
+    anyName: "Anumang pangalan",
+    
+    // License Management
+    loadingLicenses: "Naglo-load ng mga lisensya...",
+    deleteLicense: "Tanggalin ang lisensya",
+    
+    // General Loading States
+    loadingData: "Naglo-load...",
+    
+    // Setup & Emergency
+    passwordResetSuccess: "Matagumpay na na-reset ang password",
+    passwordResetSuccessDesc: "Ang iyong pag-reset ng password ay matagumpay",
+    yourAdminPasswordReset: "Ang iyong admin password ay matagumpay nang na-reset.",
+    createEmployeeAccount: "Lumikha ng account ng empleyado",
+    passwordsMatchError: "Ang mga password ay hindi tumutugma",
+    passwordMinLengthError: "Ang password ay masyadong maikli",
+    passwordResetFailed: "Nabigo ang pag-reset ng password",
+    resetPasswordError: "May naganap na error sa pag-reset ng password",
+    resetPasswordBootstrapDesc: "I-reset ang password ng admin account gamit ang iyong bootstrap token",
+    bootstrapTokenDescription: "Ito ay isang one-time use token na ibinigay ng iyong system administrator",
+    resetAdminPassword: "I-reset ang admin password",
+    bootstrapTokenOnceUse: "Ang mga bootstrap token ay maaari lamang gamitin nang isang beses",
+    onlyAdminReset: "Ang mga admin account lamang ay maaaring i-reset sa pamamaraang ito",
+    contactAdministrator: "Makipag-ugnayan sa iyong system administrator kung wala kang token",
+    minCharacters: "Minimum 6 characters",
+    reEnterPassword: "Muling ipasok ang password",
+    creatingAccount: "Lumilikha ng account...",
+    
+    // Profile & Subscription
+    updateProfileError: "Nabigo ang pag-update ng profile",
+    cancelSubscriptionError: "Nabigo ang pagkansela ng subscription",
+    downloadingInvoice: "Nag-da-download ng invoice...",
+    downloadFailed: "Nabigo ang pag-download",
+    downloadInvoiceError: "Nabigo ang pag-download ng invoice",
+    failedToLoadProfile: "Nabigo ang pag-load ng profile",
+    userProfile: "Profile ng user",
+    userProfileDesc: "Pamahalaan ang iyong personal na impormasyon at subscription",
+    accountRestrictedDesc: "Maaari mo lamang tingnan ang iyong profile. Makipag-ugnayan sa iyong administrator upang gumawa ng mga pagbabago.",
+    profileInformation: "Impormasyon ng profile",
+    yourPersonalDetails: "Ang iyong mga personal na detalye",
+    phoneNumber: "Numero ng telepono",
+    saveChanges: "I-save ang mga pagbabago",
+    notSet: "Hindi nakatakda",
+    editProfile: "I-edit ang profile",
+    subscriptionDetails: "Mga detalye ng subscription",
+    subscriptionInformationDesc: "Ang iyong impormasyon ng subscription",
+    cancelledOn: "Kinansela noong",
+    areYouSure: "Sigurado ka ba?",
+    cancelSubscriptionWarning: "Ang aksyong ito ay hindi maaaring bawiin. Mawawalan ka ng access sa lahat ng features kapag natapos ang iyong kasalukuyang periodo.",
+    keepSubscription: "Panatilihin ang subscription",
+    yesCancelSubscription: "Oo, kanselahin ang subscription",
+    subscriptionInvoices: "Mga invoice ng subscription",
+    noInvoices: "Walang available na mga invoice",
+    invoice: "Invoice",
+    
+    // Invoice specific
+    hasBeenDownloaded: "Na-download na",
+    searchByInvoice: "Maghanap ayon sa numero ng invoice o order",
+    date: "Petsa",
+    vat: "VAT",
+    noInvoicesFound: "Walang nahanap na mga invoice",
+    noPDF: "Walang PDF",
+  },
+  
+  French: {
+    // Navigation
+    dashboard: "Tableau de bord",
+    branches: "Succursales",
+    inventory: "Inventaire",
+    menu: "Menu",
+    products: "Produits",  // Factory business type: replaces "menu"
+    recipes: "Recettes",
+    licenses: "Licences",  // Factory business type only
+    customers: "Clients",
+    orders: "Commandes",
+    kitchen: "Cuisine",
+    workshop: "Atelier",  // Factory business type: replaces "kitchen"
+    procurement: "Approvisionnement",
+    sales: "Ventes",
+    financial: "Financier",
+    profitability: "Rentabilité",
+    invoices: "Factures",
+    employees: "Employés",
+    settings: "Paramètres",
+    pos: "POS",
+    logout: "Déconnexion",
+    
+    // Navigation Groups
+    operations: "Opérations",
+    management: "Gestion",
+    analytics: "Analytique",
+    system: "Système",
+    support: "Support",
+    
+    // Support
+    help: "Aide",
+    supportAndHelp: "Support et aide",
+    technicalSupport: "Support technique",
+    contactSupport: "Contacter le support",
+    contactInformation: "Informations de contact",
+    whatsapp: "WhatsApp",
+    whatsappOpened: "WhatsApp ouvert",
+    attachDownloadedPdf: "Veuillez joindre le PDF de facture téléchargé au message WhatsApp et l'envoyer à votre client.",
+    getInTouch: "Contactez notre équipe de support",
+    
+    // Branding
+    madeBy: "Fait par",
+    companyName: "Kinzhal LTD Co.",
+    copyright: "© 2025 BlindSpot System (BSS). Tous droits réservés.",
+    tagline: "Autonomiser les entreprises avec des solutions de gestion intelligentes",
+    
+    // Chat & Messaging
+    selectUser: "Sélectionner un utilisateur",
+    createChannel: "Créer un canal",
+    selectConversation: "Sélectionnez une conversation pour commencer à discuter",
+    
+    // Invoices & Financial
+    loadingInvoices: "Chargement des factures...",
+    viewAndDownload: "Voir et télécharger vos factures d'abonnement",
+    totalExpenses: "Dépenses totales",
+    totalCosts: "Coûts totaux",
+    totalSalesLabel: "Ventes totales",
+    loadingFinancialData: "Chargement des données financières...",
+    totalByExpenseCategory: "Total par catégorie de dépenses",
+    
+    // 404 & Errors
+    returnToDashboard: "Retour au tableau de bord",
+    pageNotFound: "404 Page non trouvée",
+    pageNotFoundDesc: "La page que vous recherchez n'existe pas ou a été déplacée.",
+    
+    // Payment & Testing
+    proceedToPayment: "Procéder au paiement",
+    testCardDetails: "Détails de la carte de test",
+    paymentDetails: "Détails du paiement",
+    customerPhone: "Téléphone du client",
+    paymentId: "ID de paiement",
+    moyasarPaymentTest: "Test de paiement Moyasar",
+    cardNumber: "Numéro de carte",
+    expiry: "Expiration",
+    anyFutureDate: "N'importe quelle date future (par ex., 12/25)",
+    cvv: "CVV",
+    anyName: "N'importe quel nom",
+    
+    // License Management
+    loadingLicenses: "Chargement des licences...",
+    deleteLicense: "Supprimer la licence",
+    
+    // General Loading States
+    loadingData: "Chargement...",
+    
+    // Setup & Emergency
+    passwordResetSuccess: "Mot de passe réinitialisé avec succès",
+    passwordResetSuccessDesc: "Votre réinitialisation de mot de passe a réussi",
+    yourAdminPasswordReset: "Votre mot de passe administrateur a été réinitialisé avec succès.",
+    createEmployeeAccount: "Créer un compte employé",
+    passwordsMatchError: "Les mots de passe ne correspondent pas",
+    passwordMinLengthError: "Le mot de passe est trop court",
+    passwordResetFailed: "Échec de la réinitialisation du mot de passe",
+    resetPasswordError: "Une erreur s'est produite lors de la réinitialisation du mot de passe",
+    resetPasswordBootstrapDesc: "Réinitialisez le mot de passe du compte administrateur en utilisant votre jeton bootstrap",
+    bootstrapTokenDescription: "Ceci est un jeton à usage unique fourni par votre administrateur système",
+    resetAdminPassword: "Réinitialiser le mot de passe administrateur",
+    bootstrapTokenOnceUse: "Les jetons bootstrap ne peuvent être utilisés qu'une seule fois",
+    onlyAdminReset: "Seuls les comptes administrateur peuvent être réinitialisés via cette méthode",
+    contactAdministrator: "Contactez votre administrateur système si vous n'avez pas de jeton",
+    minCharacters: "Minimum 6 caractères",
+    reEnterPassword: "Ressaisir le mot de passe",
+    creatingAccount: "Création du compte...",
+    
+    // Profile & Subscription
+    updateProfileError: "Échec de la mise à jour du profil",
+    cancelSubscriptionError: "Échec de l'annulation de l'abonnement",
+    downloadingInvoice: "Téléchargement de la facture...",
+    downloadFailed: "Échec du téléchargement",
+    downloadInvoiceError: "Échec du téléchargement de la facture",
+    failedToLoadProfile: "Échec du chargement du profil",
+    userProfile: "Profil utilisateur",
+    userProfileDesc: "Gérez vos informations personnelles et votre abonnement",
+    accountRestrictedDesc: "Vous ne pouvez que consulter votre profil. Contactez votre administrateur pour effectuer des modifications.",
+    profileInformation: "Informations du profil",
+    yourPersonalDetails: "Vos informations personnelles",
+    phoneNumber: "Numéro de téléphone",
+    saveChanges: "Enregistrer les modifications",
+    notSet: "Non défini",
+    editProfile: "Modifier le profil",
+    subscriptionDetails: "Détails de l'abonnement",
+    subscriptionInformationDesc: "Vos informations d'abonnement",
+    cancelledOn: "Annulé le",
+    areYouSure: "Êtes-vous sûr?",
+    cancelSubscriptionWarning: "Cette action ne peut pas être annulée. Vous perdrez l'accès à toutes les fonctionnalités lorsque votre période actuelle se terminera.",
+    keepSubscription: "Conserver l'abonnement",
+    yesCancelSubscription: "Oui, annuler l'abonnement",
+    subscriptionInvoices: "Factures d'abonnement",
+    noInvoices: "Aucune facture disponible",
+    invoice: "Facture",
+    
+    // Invoice specific
+    hasBeenDownloaded: "A été téléchargé",
+    searchByInvoice: "Rechercher par numéro de facture ou commande",
+    date: "Date",
+    vat: "TVA",
+    noInvoicesFound: "Aucune facture trouvée",
+    noPDF: "Aucun PDF",
+  },
+  
+  Indonesian: {
+    // Navigation
+    dashboard: "Dasbor",
+    branches: "Cabang",
+    inventory: "Inventaris",
+    menu: "Menu",
+    products: "Produk",  // Factory business type: replaces "menu"
+    recipes: "Resep",
+    licenses: "Lisensi",  // Factory business type only
+    customers: "Pelanggan",
+    orders: "Pesanan",
+    kitchen: "Dapur",
+    workshop: "Bengkel",  // Factory business type: replaces "kitchen"
+    procurement: "Pengadaan",
+    sales: "Penjualan",
+    financial: "Keuangan",
+    profitability: "Profitabilitas",
+    invoices: "Faktur",
+    employees: "Karyawan",
+    settings: "Pengaturan",
+    pos: "POS",
+    logout: "Keluar",
+    
+    // Navigation Groups
+    operations: "Operasi",
+    management: "Manajemen",
+    analytics: "Analitik",
+    system: "Sistem",
+    support: "Dukungan",
+    
+    // Support
+    help: "Bantuan",
+    supportAndHelp: "Dukungan dan bantuan",
+    technicalSupport: "Dukungan teknis",
+    contactSupport: "Hubungi dukungan",
+    contactInformation: "Informasi kontak",
+    whatsapp: "WhatsApp",
+    whatsappOpened: "WhatsApp dibuka",
+    attachDownloadedPdf: "Silakan lampirkan PDF faktur yang diunduh ke pesan WhatsApp dan kirim ke pelanggan Anda.",
+    getInTouch: "Hubungi tim dukungan kami",
+    
+    // Branding
+    madeBy: "Dibuat oleh",
+    companyName: "Kinzhal LTD Co.",
+    copyright: "© 2025 BlindSpot System (BSS). Hak cipta dilindungi.",
+    tagline: "Memberdayakan bisnis dengan solusi manajemen cerdas",
+    
+    // Chat & Messaging
+    selectUser: "Pilih pengguna",
+    createChannel: "Buat saluran",
+    selectConversation: "Pilih percakapan untuk mulai mengobrol",
+    
+    // Invoices & Financial
+    loadingInvoices: "Memuat faktur...",
+    viewAndDownload: "Lihat dan unduh faktur langganan Anda",
+    totalExpenses: "Total pengeluaran",
+    totalCosts: "Total biaya",
+    totalSalesLabel: "Total penjualan",
+    loadingFinancialData: "Memuat data keuangan...",
+    totalByExpenseCategory: "Total berdasarkan kategori pengeluaran",
+    
+    // 404 & Errors
+    returnToDashboard: "Kembali ke dasbor",
+    pageNotFound: "404 Halaman tidak ditemukan",
+    pageNotFoundDesc: "Halaman yang Anda cari tidak ada atau telah dipindahkan.",
+    
+    // Payment & Testing
+    proceedToPayment: "Lanjutkan ke pembayaran",
+    testCardDetails: "Detail kartu uji",
+    paymentDetails: "Detail pembayaran",
+    customerPhone: "Telepon pelanggan",
+    paymentId: "ID pembayaran",
+    moyasarPaymentTest: "Uji pembayaran Moyasar",
+    cardNumber: "Nomor kartu",
+    expiry: "Kedaluwarsa",
+    anyFutureDate: "Tanggal masa depan apa pun (mis., 12/25)",
+    cvv: "CVV",
+    anyName: "Nama apa pun",
+    
+    // License Management
+    loadingLicenses: "Memuat lisensi...",
+    deleteLicense: "Hapus lisensi",
+    
+    // General Loading States
+    loadingData: "Memuat...",
+    
+    // Setup & Emergency
+    passwordResetSuccess: "Kata sandi berhasil direset",
+    passwordResetSuccessDesc: "Reset kata sandi Anda berhasil",
+    yourAdminPasswordReset: "Kata sandi admin Anda telah berhasil direset.",
+    createEmployeeAccount: "Buat akun karyawan",
+    passwordsMatchError: "Kata sandi tidak cocok",
+    passwordMinLengthError: "Kata sandi terlalu pendek",
+    passwordResetFailed: "Reset kata sandi gagal",
+    resetPasswordError: "Terjadi kesalahan saat mereset kata sandi",
+    resetPasswordBootstrapDesc: "Reset kata sandi akun admin menggunakan token bootstrap Anda",
+    bootstrapTokenDescription: "Ini adalah token sekali pakai yang disediakan oleh administrator sistem Anda",
+    resetAdminPassword: "Reset kata sandi admin",
+    bootstrapTokenOnceUse: "Token bootstrap hanya dapat digunakan sekali",
+    onlyAdminReset: "Hanya akun admin yang dapat direset melalui metode ini",
+    contactAdministrator: "Hubungi administrator sistem Anda jika Anda tidak memiliki token",
+    minCharacters: "Minimal 6 karakter",
+    reEnterPassword: "Masukkan kembali kata sandi",
+    creatingAccount: "Membuat akun...",
+    
+    // Profile & Subscription
+    updateProfileError: "Gagal memperbarui profil",
+    cancelSubscriptionError: "Gagal membatalkan langganan",
+    downloadingInvoice: "Mengunduh faktur...",
+    downloadFailed: "Unduhan gagal",
+    downloadInvoiceError: "Gagal mengunduh faktur",
+    failedToLoadProfile: "Gagal memuat profil",
+    userProfile: "Profil pengguna",
+    userProfileDesc: "Kelola informasi pribadi dan langganan Anda",
+    accountRestrictedDesc: "Anda hanya dapat melihat profil Anda. Hubungi administrator Anda untuk melakukan perubahan.",
+    profileInformation: "Informasi profil",
+    yourPersonalDetails: "Detail pribadi Anda",
+    phoneNumber: "Nomor telepon",
+    saveChanges: "Simpan perubahan",
+    notSet: "Tidak diatur",
+    editProfile: "Edit profil",
+    subscriptionDetails: "Detail langganan",
+    subscriptionInformationDesc: "Informasi langganan Anda",
+    cancelledOn: "Dibatalkan pada",
+    areYouSure: "Apakah Anda yakin?",
+    cancelSubscriptionWarning: "Tindakan ini tidak dapat dibatalkan. Anda akan kehilangan akses ke semua fitur saat periode Anda saat ini berakhir.",
+    keepSubscription: "Pertahankan langganan",
+    yesCancelSubscription: "Ya, batalkan langganan",
+    subscriptionInvoices: "Faktur langganan",
+    noInvoices: "Tidak ada faktur tersedia",
+    invoice: "Faktur",
+    
+    // Invoice specific
+    hasBeenDownloaded: "Telah diunduh",
+    searchByInvoice: "Cari berdasarkan nomor faktur atau pesanan",
+    date: "Tanggal",
+    vat: "PPN",
+    noInvoicesFound: "Tidak ada faktur ditemukan",
+    noPDF: "Tidak ada PDF",
+  },
+  
+  Turkish: {
+    // Navigation
+    dashboard: "Gösterge Paneli",
+    branches: "Şubeler",
+    inventory: "Envanter",
+    menu: "Menü",
+    products: "Ürünler",  // Factory business type: replaces "menu"
+    recipes: "Tarifler",
+    licenses: "Lisanslar",  // Factory business type only
+    customers: "Müşteriler",
+    orders: "Siparişler",
+    kitchen: "Mutfak",
+    workshop: "Atölye",  // Factory business type: replaces "kitchen"
+    procurement: "Tedarik",
+    sales: "Satışlar",
+    financial: "Finansal",
+    profitability: "Karlılık",
+    invoices: "Faturalar",
+    employees: "Çalışanlar",
+    settings: "Ayarlar",
+    pos: "POS",
+    logout: "Çıkış",
+    
+    // Navigation Groups
+    operations: "Operasyonlar",
+    management: "Yönetim",
+    analytics: "Analitik",
+    system: "Sistem",
+    support: "Destek",
+    
+    // Support
+    help: "Yardım",
+    supportAndHelp: "Destek ve yardım",
+    technicalSupport: "Teknik destek",
+    contactSupport: "Desteğe ulaşın",
+    contactInformation: "İletişim bilgileri",
+    whatsapp: "WhatsApp",
+    whatsappOpened: "WhatsApp açıldı",
+    attachDownloadedPdf: "Lütfen indirilen fatura PDF'ini WhatsApp mesajına ekleyin ve müşterinize gönderin.",
+    getInTouch: "Destek ekibimizle iletişime geçin",
+    
+    // Branding
+    madeBy: "Yapan",
+    companyName: "Kinzhal LTD Co.",
+    copyright: "© 2025 BlindSpot System (BSS). Tüm hakları saklıdır.",
+    tagline: "Akıllı yönetim çözümleriyle işletmeleri güçlendirme",
+    
+    // Chat & Messaging
+    selectUser: "Kullanıcı seç",
+    createChannel: "Kanal oluştur",
+    selectConversation: "Sohbet etmeye başlamak için bir konuşma seçin",
+    
+    // Invoices & Financial
+    loadingInvoices: "Faturalar yükleniyor...",
+    viewAndDownload: "Abonelik faturalarınızı görüntüleyin ve indirin",
+    totalExpenses: "Toplam giderler",
+    totalCosts: "Toplam maliyetler",
+    totalSalesLabel: "Toplam satışlar",
+    loadingFinancialData: "Finansal veriler yükleniyor...",
+    totalByExpenseCategory: "Gider kategorisine göre toplam",
+    
+    // 404 & Errors
+    returnToDashboard: "Gösterge paneline dön",
+    pageNotFound: "404 Sayfa bulunamadı",
+    pageNotFoundDesc: "Aradığınız sayfa mevcut değil veya taşınmış.",
+    
+    // Payment & Testing
+    proceedToPayment: "Ödemeye devam et",
+    testCardDetails: "Test kartı detayları",
+    paymentDetails: "Ödeme detayları",
+    customerPhone: "Müşteri telefonu",
+    paymentId: "Ödeme kimliği",
+    moyasarPaymentTest: "Moyasar ödeme testi",
+    cardNumber: "Kart numarası",
+    expiry: "Son kullanma",
+    anyFutureDate: "Gelecekteki herhangi bir tarih (örn., 12/25)",
+    cvv: "CVV",
+    anyName: "Herhangi bir isim",
+    
+    // License Management
+    loadingLicenses: "Lisanslar yükleniyor...",
+    deleteLicense: "Lisansı sil",
+    
+    // General Loading States
+    loadingData: "Yükleniyor...",
+    
+    // Setup & Emergency
+    passwordResetSuccess: "Şifre başarıyla sıfırlandı",
+    passwordResetSuccessDesc: "Şifre sıfırlama işleminiz başarılı",
+    yourAdminPasswordReset: "Yönetici şifreniz başarıyla sıfırlandı.",
+    createEmployeeAccount: "Çalışan hesabı oluştur",
+    passwordsMatchError: "Şifreler eşleşmiyor",
+    passwordMinLengthError: "Şifre çok kısa",
+    passwordResetFailed: "Şifre sıfırlama başarısız",
+    resetPasswordError: "Şifre sıfırlanırken bir hata oluştu",
+    resetPasswordBootstrapDesc: "Bootstrap token'ınızı kullanarak yönetici hesabı şifresini sıfırlayın",
+    bootstrapTokenDescription: "Bu, sistem yöneticiniz tarafından sağlanan tek kullanımlık bir token'dır",
+    resetAdminPassword: "Yönetici şifresini sıfırla",
+    bootstrapTokenOnceUse: "Bootstrap token'ları yalnızca bir kez kullanılabilir",
+    onlyAdminReset: "Bu yöntemle yalnızca yönetici hesapları sıfırlanabilir",
+    contactAdministrator: "Token'ınız yoksa sistem yöneticinizle iletişime geçin",
+    minCharacters: "Minimum 6 karakter",
+    reEnterPassword: "Şifreyi tekrar girin",
+    creatingAccount: "Hesap oluşturuluyor...",
+    
+    // Profile & Subscription
+    updateProfileError: "Profil güncelleme başarısız",
+    cancelSubscriptionError: "Abonelik iptali başarısız",
+    downloadingInvoice: "Fatura indiriliyor...",
+    downloadFailed: "İndirme başarısız",
+    downloadInvoiceError: "Fatura indirme başarısız",
+    failedToLoadProfile: "Profil yükleme başarısız",
+    userProfile: "Kullanıcı profili",
+    userProfileDesc: "Kişisel bilgilerinizi ve aboneliğinizi yönetin",
+    accountRestrictedDesc: "Yalnızca profilinizi görüntüleyebilirsiniz. Değişiklik yapmak için yöneticinizle iletişime geçin.",
+    profileInformation: "Profil bilgileri",
+    yourPersonalDetails: "Kişisel detaylarınız",
+    phoneNumber: "Telefon numarası",
+    saveChanges: "Değişiklikleri kaydet",
+    notSet: "Ayarlanmadı",
+    editProfile: "Profili düzenle",
+    subscriptionDetails: "Abonelik detayları",
+    subscriptionInformationDesc: "Abonelik bilgileriniz",
+    cancelledOn: "İptal edildi",
+    areYouSure: "Emin misiniz?",
+    cancelSubscriptionWarning: "Bu işlem geri alınamaz. Mevcut dönem sona erdiğinde tüm özelliklere erişimi kaybedeceksiniz.",
+    keepSubscription: "Aboneliği koru",
+    yesCancelSubscription: "Evet, aboneliği iptal et",
+    subscriptionInvoices: "Abonelik faturaları",
+    noInvoices: "Kullanılabilir fatura yok",
+    invoice: "Fatura",
+    
+    // Invoice specific
+    hasBeenDownloaded: "İndirildi",
+    searchByInvoice: "Fatura numarasına veya siparişe göre ara",
+    date: "Tarih",
+    vat: "KDV",
+    noInvoicesFound: "Fatura bulunamadı",
+    noPDF: "PDF yok",
+  },
+  
+  Swahili: {
+    // Navigation
+    dashboard: "Dashibodi",
+    branches: "Matawi",
+    inventory: "Hesabu ya mali",
+    menu: "Menyu",
+    products: "Bidhaa",  // Factory business type: replaces "menu"
+    recipes: "Mapishi",
+    licenses: "Leseni",  // Factory business type only
+    customers: "Wateja",
+    orders: "Maagizo",
+    kitchen: "Jiko",
+    workshop: "Warsha",  // Factory business type: replaces "kitchen"
+    procurement: "Ununuzi",
+    sales: "Mauzo",
+    financial: "Kifedha",
+    profitability: "Ufaulu",
+    invoices: "Ankara",
+    employees: "Wafanyakazi",
+    settings: "Mipangilio",
+    pos: "POS",
+    logout: "Toka",
+    
+    // Navigation Groups
+    operations: "Uendeshaji",
+    management: "Usimamizi",
+    analytics: "Uchanganuzi",
+    system: "Mfumo",
+    support: "Msaada",
+    
+    // Support
+    help: "Msaada",
+    supportAndHelp: "Usaidizi na msaada",
+    technicalSupport: "Msaada wa kiufundi",
+    contactSupport: "Wasiliana na msaada",
+    contactInformation: "Maelezo ya mawasiliano",
+    whatsapp: "WhatsApp",
+    whatsappOpened: "WhatsApp imefunguliwa",
+    attachDownloadedPdf: "Tafadhali ambatanisha ankara ya PDF iliyopakuliwa kwa ujumbe wa WhatsApp na uitume kwa mteja wako.",
+    getInTouch: "Wasiliana na timu yetu ya usaidizi",
+    
+    // Branding
+    madeBy: "Imetengenezwa na",
+    companyName: "Kinzhal LTD Co.",
+    copyright: "© 2025 BlindSpot System (BSS). Haki zote zimehifadhiwa.",
+    tagline: "Kuwezesha biashara kwa suluhisho za usimamizi mahiri",
+    
+    // Chat & Messaging
+    selectUser: "Chagua mtumiaji",
+    createChannel: "Unda kituo",
+    selectConversation: "Chagua mazungumzo ili kuanza kupiga gumzo",
+    
+    // Invoices & Financial
+    loadingInvoices: "Inapakia ankara...",
+    viewAndDownload: "Angalia na pakua ankara zako za usajili",
+    totalExpenses: "Matumizi ya jumla",
+    totalCosts: "Gharama za jumla",
+    totalSalesLabel: "Mauzo ya jumla",
+    loadingFinancialData: "Inapakia data ya fedha...",
+    totalByExpenseCategory: "Jumla kwa jamii ya matumizi",
+    
+    // 404 & Errors
+    returnToDashboard: "Rudi kwenye dashibodi",
+    pageNotFound: "404 Ukurasa haujapatikana",
+    pageNotFoundDesc: "Ukurasa unaoutafuta haupo au umehamishwa.",
+    
+    // Payment & Testing
+    proceedToPayment: "Endelea na malipo",
+    testCardDetails: "Maelezo ya kadi ya jaribio",
+    paymentDetails: "Maelezo ya malipo",
+    customerPhone: "Simu ya mteja",
+    paymentId: "Kitambulisho cha malipo",
+    moyasarPaymentTest: "Jaribio la malipo ya Moyasar",
+    cardNumber: "Nambari ya kadi",
+    expiry: "Kumalizika",
+    anyFutureDate: "Tarehe yoyote ya baadaye (mfano, 12/25)",
+    cvv: "CVV",
+    anyName: "Jina lolote",
+    
+    // License Management
+    loadingLicenses: "Inapakia leseni...",
+    deleteLicense: "Futa leseni",
+    
+    // General Loading States
+    loadingData: "Inapakia...",
+    
+    // Setup & Emergency
+    passwordResetSuccess: "Nenosiri limewekwa upya kwa mafanikio",
+    passwordResetSuccessDesc: "Kuweka upya nenosiri lako kumefanikiwa",
+    yourAdminPasswordReset: "Nenosiri lako la msimamizi limewekwa upya kwa mafanikio.",
+    createEmployeeAccount: "Unda akaunti ya mfanyakazi",
+    passwordsMatchError: "Nenosiri hazilingani",
+    passwordMinLengthError: "Nenosiri ni fupi sana",
+    passwordResetFailed: "Kuweka upya nenosiri kumeshindwa",
+    resetPasswordError: "Hitilafu imetokea wakati wa kuweka upya nenosiri",
+    resetPasswordBootstrapDesc: "Weka upya nenosiri la akaunti ya msimamizi kwa kutumia tokeni yako ya bootstrap",
+    bootstrapTokenDescription: "Hii ni tokeni ya matumizi moja iliyotolewa na msimamizi wa mfumo wako",
+    resetAdminPassword: "Weka upya nenosiri la msimamizi",
+    bootstrapTokenOnceUse: "Tokeni za bootstrap zinaweza kutumiwa mara moja tu",
+    onlyAdminReset: "Akaunti za msimamizi tu zinaweza kuwekwa upya kupitia njia hii",
+    contactAdministrator: "Wasiliana na msimamizi wa mfumo wako ikiwa huna tokeni",
+    minCharacters: "Angalau herufi 6",
+    reEnterPassword: "Weka tena nenosiri",
+    creatingAccount: "Inaunda akaunti...",
+    
+    // Profile & Subscription
+    updateProfileError: "Kusasisha wasifu kumeshindwa",
+    cancelSubscriptionError: "Kufuta usajili kumeshindwa",
+    downloadingInvoice: "Inapakua ankara...",
+    downloadFailed: "Kupakua kumeshindwa",
+    downloadInvoiceError: "Kupakua ankara kumeshindwa",
+    failedToLoadProfile: "Kupakia wasifu kumeshindwa",
+    userProfile: "Wasifu wa mtumiaji",
+    userProfileDesc: "Dhibiti maelezo yako binafsi na usajili",
+    accountRestrictedDesc: "Unaweza kuangalia wasifu wako tu. Wasiliana na msimamizi wako ili kufanya mabadiliko.",
+    profileInformation: "Maelezo ya wasifu",
+    yourPersonalDetails: "Maelezo yako binafsi",
+    phoneNumber: "Nambari ya simu",
+    saveChanges: "Hifadhi mabadiliko",
+    notSet: "Haijawekwa",
+    editProfile: "Hariri wasifu",
+    subscriptionDetails: "Maelezo ya usajili",
+    subscriptionInformationDesc: "Maelezo yako ya usajili",
+    cancelledOn: "Imefutwa tarehe",
+    areYouSure: "Una uhakika?",
+    cancelSubscriptionWarning: "Kitendo hiki hakiwezi kutendeka nyuma. Utapoteza ufikiaji wa vipengele vyote wakati kipindi chako cha sasa kitakapoisha.",
+    keepSubscription: "Weka usajili",
+    yesCancelSubscription: "Ndiyo, futa usajili",
+    subscriptionInvoices: "Ankara za usajili",
+    noInvoices: "Hakuna ankara zinazopatikana",
+    invoice: "Ankara",
+    
+    // Invoice specific
+    hasBeenDownloaded: "Imepakuliwa",
+    searchByInvoice: "Tafuta kwa nambari ya ankara au agizo",
+    date: "Tarehe",
+    vat: "VAT",
+    noInvoicesFound: "Hakuna ankara zilizopatikana",
+    noPDF: "Hakuna PDF",
   },
 };
 
 export const supportedLanguages: Language[] = [
   'English',
   'Arabic',
-  'Chinese',
-  'German',
   'Hindi',
   'Urdu',
-  'Bengali',
-  'Italian',
+  'French',
   'Spanish',
   'Tagalog',
+  'Indonesian',
+  'Turkish',
+  'Swahili',
 ];
