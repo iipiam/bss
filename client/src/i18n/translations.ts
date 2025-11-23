@@ -1,8 +1,8 @@
 // Translation system for multi-language support  
-// Supported languages: English, Arabic, Urdu, Hindi, French, Spanish, Tagalog, Indonesian, Turkish, Swahili
+// Supported languages: English, Arabic, Urdu, Hindi, French, Spanish, Tagalog, Indonesian
 // All IT Dashboard support text fully translated across all languages
 
-export type Language = 'English' | 'Arabic' | 'Urdu' | 'Hindi' | 'French' | 'Spanish' | 'Tagalog' | 'Indonesian' | 'Turkish' | 'Swahili';
+export type Language = 'English' | 'Arabic' | 'Urdu' | 'Hindi' | 'French' | 'Spanish' | 'Tagalog' | 'Indonesian';
 
 export interface Translations {
   // Navigation
@@ -9616,7 +9616,7 @@ export const translations: Record<Language, Translations> = {
     signUpFailed: "Sign up failed",
     signUpFailedDesc: "Could not create account",
     legalAcknowledgement: "Dichiaro che tutte le informazioni, i dati e i numeri da me inseriti sono corretti, in quanto appariranno nelle mie fatture fiscali e nella fattura di abbonamento, e mi assumo la piena responsabilità in caso di qualsiasi cosa contraria, e la società proprietaria dell'applicazione ha il diritto di disporre dell'account per preservare il suo diritto legale davanti alle autorità competenti in materia di frode, evasione fiscale, falsificazione e contraffazione.",
-    legalAcknowledgementRequired: "You must acknowledge the legal agreement to proceed",
+    legalAcknowledgementRequired: "Devi accettare l'accordo legale per procedere",
     selectLanguage: "Select language",
     restaurantManagementSystem: "Restaurant management system",
     businessManagementSystem: "Business Management System",
@@ -10617,7 +10617,7 @@ export const translations: Record<Language, Translations> = {
     signUpFailed: "Sign up failed",
     signUpFailedDesc: "Could not create account",
     legalAcknowledgement: "Reconozco que toda la información, datos y números ingresados por mí son correctos, ya que aparecerán en mis facturas fiscales y factura de suscripción, y asumo la responsabilidad total si hay algo contrario, y la empresa propietaria de la aplicación tiene el derecho de disponer de la cuenta para preservar su derecho legal ante las autoridades competentes en fraude, evasión fiscal, falsificación y falsificación.",
-    legalAcknowledgementRequired: "You must acknowledge the legal agreement to proceed",
+    legalAcknowledgementRequired: "Debes aceptar el acuerdo legal para continuar",
     selectLanguage: "Select language",
     restaurantManagementSystem: "Restaurant management system",
     businessManagementSystem: "Business Management System",
@@ -11754,7 +11754,7 @@ export const translations: Record<Language, Translations> = {
     signUpFailed: "Sign up failed",
     signUpFailedDesc: "Could not create account",
     legalAcknowledgement: "Kinikilala ko na ang lahat ng impormasyon, datos at mga numero na inilagay ko ay tama, dahil lalabas ang mga ito sa aking mga tax invoice at subscription invoice, at ako ay may ganap na responsibilidad kung may anumang kabaligtaran, at ang kumpanyang nag-aari ng aplikasyon ay may karapatang magdesisyon sa account upang mapanatili ang legal na karapatan nito sa harap ng mga awtoridad na itinuturing na may kapangyarihan sa pandaraya, pag-iwas sa buwis, pagpepeke at pag-imbento.",
-    legalAcknowledgementRequired: "You must acknowledge the legal agreement to proceed",
+    legalAcknowledgementRequired: "Dapat mong tanggapin ang legal na kasunduan upang magpatuloy",
     selectLanguage: "Select language",
     restaurantManagementSystem: "Restaurant management system",
     businessManagementSystem: "Business Management System",
@@ -12600,6 +12600,11 @@ export const translations: Record<Language, Translations> = {
     copyright: "© 2025 BlindSpot System (BSS). Tous droits réservés.",
     tagline: "Autonomiser les entreprises avec des solutions de gestion intelligentes",
     
+    // Authentication - added missing section
+    signUpFailedDesc: "Impossible de créer le compte",
+    legalAcknowledgement: "Je reconnais que toutes les informations, données et numéros saisis par moi sont corrects, car ils apparaîtront dans mes factures fiscales et factures d'abonnement, et j'assume l'entière responsabilité s'il y a quoi que ce soit de contraire, et la société propriétaire de l'application a le droit de disposer du compte pour préserver son droit légal devant les autorités compétentes en matière de fraude, évasion fiscale, falsification et contrefaçon.",
+    legalAcknowledgementRequired: "Vous devez accepter l'accord légal pour continuer",
+    
     // Chat & Messaging
     selectUser: "Sélectionner un utilisateur",
     createChannel: "Créer un canal",
@@ -12786,6 +12791,11 @@ export const translations: Record<Language, Translations> = {
     copyright: "© 2025 BlindSpot System (BSS). Hak cipta dilindungi.",
     tagline: "Memberdayakan bisnis dengan solusi manajemen cerdas",
     
+    // Authentication - added missing section
+    signUpFailedDesc: "Tidak dapat membuat akun",
+    legalAcknowledgement: "Saya mengakui bahwa semua informasi, data, dan angka yang saya masukkan adalah benar, karena akan muncul dalam faktur pajak dan faktur berlangganan saya, dan saya bertanggung jawab penuh jika ada yang bertentangan, dan perusahaan pemilik aplikasi memiliki hak untuk membuang akun untuk menjaga hak hukumnya di hadapan otoritas yang dianggap kompeten dalam penipuan, penggelapan pajak, pemalsuan dan pemalsuan.",
+    legalAcknowledgementRequired: "Anda harus menyetujui perjanjian hukum untuk melanjutkan",
+    
     // Chat & Messaging
     selectUser: "Pilih pengguna",
     createChannel: "Buat saluran",
@@ -12924,378 +12934,6 @@ export const translations: Record<Language, Translations> = {
     salesTrackingReport: "Laporan pelacakan penjualan",
     salesReportSubtitle: "Total penjualan: %s SAR | Transaksi: %s | Pesanan rata-rata: %s SAR",
   },
-  
-  Turkish: {
-    // Navigation
-    dashboard: "Gösterge Paneli",
-    branches: "Şubeler",
-    inventory: "Envanter",
-    menu: "Menü",
-    products: "Ürünler",  // Factory business type: replaces "menu"
-    recipes: "Tarifler",
-    licenses: "Lisanslar",  // Factory business type only
-    customers: "Müşteriler",
-    orders: "Siparişler",
-    kitchen: "Mutfak",
-    workshop: "Atölye",  // Factory business type: replaces "kitchen"
-    procurement: "Tedarik",
-    sales: "Satışlar",
-    financial: "Finansal",
-    profitability: "Karlılık",
-    invoices: "Faturalar",
-    employees: "Çalışanlar",
-    settings: "Ayarlar",
-    pos: "POS",
-    logout: "Çıkış",
-    
-    // Navigation Groups
-    operations: "Operasyonlar",
-    management: "Yönetim",
-    analytics: "Analitik",
-    system: "Sistem",
-    support: "Destek",
-    
-    // Support
-    help: "Yardım",
-    supportAndHelp: "Destek ve yardım",
-    technicalSupport: "Teknik destek",
-    contactSupport: "Desteğe ulaşın",
-    contactInformation: "İletişim bilgileri",
-    whatsapp: "WhatsApp",
-    whatsappOpened: "WhatsApp açıldı",
-    attachDownloadedPdf: "Lütfen indirilen fatura PDF'ini WhatsApp mesajına ekleyin ve müşterinize gönderin.",
-    getInTouch: "Destek ekibimizle iletişime geçin",
-    
-    // Branding
-    madeBy: "Yapan",
-    companyName: "Kinzhal LTD Co.",
-    copyright: "© 2025 BlindSpot System (BSS). Tüm hakları saklıdır.",
-    tagline: "Akıllı yönetim çözümleriyle işletmeleri güçlendirme",
-    
-    // Chat & Messaging
-    selectUser: "Kullanıcı seç",
-    createChannel: "Kanal oluştur",
-    selectConversation: "Sohbet etmeye başlamak için bir konuşma seçin",
-    
-    // Invoices & Financial
-    loadingInvoices: "Faturalar yükleniyor...",
-    viewAndDownload: "Abonelik faturalarınızı görüntüleyin ve indirin",
-    totalExpenses: "Toplam giderler",
-    totalCosts: "Toplam maliyetler",
-    totalSalesLabel: "Toplam satışlar",
-    loadingFinancialData: "Finansal veriler yükleniyor...",
-    totalByExpenseCategory: "Gider kategorisine göre toplam",
-    
-    // 404 & Errors
-    returnToDashboard: "Gösterge paneline dön",
-    pageNotFound: "404 Sayfa bulunamadı",
-    pageNotFoundDesc: "Aradığınız sayfa mevcut değil veya taşınmış.",
-    
-    // Payment & Testing
-    proceedToPayment: "Ödemeye devam et",
-    testCardDetails: "Test kartı detayları",
-    paymentDetails: "Ödeme detayları",
-    customerPhone: "Müşteri telefonu",
-    paymentId: "Ödeme kimliği",
-    moyasarPaymentTest: "Moyasar ödeme testi",
-    cardNumber: "Kart numarası",
-    expiry: "Son kullanma",
-    anyFutureDate: "Gelecekteki herhangi bir tarih (örn., 12/25)",
-    cvv: "CVV",
-    anyName: "Herhangi bir isim",
-    testPaymentAmount: '100.00',
-    testPaymentDescription: 'Test Ödemesi',
-    testCustomerName: 'Test Müşterisi',
-    testCustomerPhone: '+966500000000',
-    
-    // License Management
-    loadingLicenses: "Lisanslar yükleniyor...",
-    deleteLicense: "Lisansı sil",
-    
-    // General Loading States
-    loadingData: "Yükleniyor...",
-    
-    // Setup & Emergency
-    passwordResetSuccess: "Şifre başarıyla sıfırlandı",
-    passwordResetSuccessDesc: "Şifre sıfırlama işleminiz başarılı",
-    yourAdminPasswordReset: "Yönetici şifreniz başarıyla sıfırlandı.",
-    createEmployeeAccount: "Çalışan hesabı oluştur",
-    passwordsMatchError: "Şifreler eşleşmiyor",
-    passwordMinLengthError: "Şifre çok kısa",
-    passwordResetFailed: "Şifre sıfırlama başarısız",
-    resetPasswordError: "Şifre sıfırlanırken bir hata oluştu",
-    resetPasswordBootstrapDesc: "Bootstrap token'ınızı kullanarak yönetici hesabı şifresini sıfırlayın",
-    bootstrapTokenDescription: "Bu, sistem yöneticiniz tarafından sağlanan tek kullanımlık bir token'dır",
-    resetAdminPassword: "Yönetici şifresini sıfırla",
-    bootstrapTokenOnceUse: "Bootstrap token'ları yalnızca bir kez kullanılabilir",
-    onlyAdminReset: "Bu yöntemle yalnızca yönetici hesapları sıfırlanabilir",
-    contactAdministrator: "Token'ınız yoksa sistem yöneticinizle iletişime geçin",
-    minCharacters: "Minimum 6 karakter",
-    reEnterPassword: "Şifreyi tekrar girin",
-    creatingAccount: "Hesap oluşturuluyor...",
-    
-    // Profile & Subscription
-    updateProfileError: "Profil güncelleme başarısız",
-    cancelSubscriptionError: "Abonelik iptali başarısız",
-    downloadingInvoice: "Fatura indiriliyor...",
-    downloadFailed: "İndirme başarısız",
-    downloadInvoiceError: "Fatura indirme başarısız",
-    failedToLoadProfile: "Profil yükleme başarısız",
-    userProfile: "Kullanıcı profili",
-    userProfileDesc: "Kişisel bilgilerinizi ve aboneliğinizi yönetin",
-    accountRestrictedDesc: "Yalnızca profilinizi görüntüleyebilirsiniz. Değişiklik yapmak için yöneticinizle iletişime geçin.",
-    profileInformation: "Profil bilgileri",
-    yourPersonalDetails: "Kişisel detaylarınız",
-    phoneNumber: "Telefon numarası",
-    saveChanges: "Değişiklikleri kaydet",
-    notSet: "Ayarlanmadı",
-    editProfile: "Profili düzenle",
-    subscriptionDetails: "Abonelik detayları",
-    subscriptionInformationDesc: "Abonelik bilgileriniz",
-    cancelledOn: "İptal edildi",
-    areYouSure: "Emin misiniz?",
-    cancelSubscriptionWarning: "Bu işlem geri alınamaz. Mevcut dönem sona erdiğinde tüm özelliklere erişimi kaybedeceksiniz.",
-    keepSubscription: "Aboneliği koru",
-    yesCancelSubscription: "Evet, aboneliği iptal et",
-    subscriptionInvoices: "Abonelik faturaları",
-    noInvoices: "Kullanılabilir fatura yok",
-    invoice: "Fatura",
-    
-    // Invoice specific
-    hasBeenDownloaded: "İndirildi",
-    searchByInvoice: "Fatura numarasına veya siparişe göre ara",
-    date: "Tarih",
-    vat: "KDV",
-    noInvoicesFound: "Fatura bulunamadı",
-    noPDF: "PDF yok",
-    
-    // Validation Messages
-    staffCountRequired: "Personel sayısı gereklidir",
-    pleaseSelectUser: "Lütfen bir kullanıcı seçin",
-    customerNameRequired: "Müşteri adı gereklidir",
-    phoneNumberRequired: "Telefon numarası gereklidir",
-    deliveryAppNameRequired: "Teslimat uygulaması adı gereklidir",
-    nameRequired: "İsim gereklidir",
-    investorNameRequired: "Yatırımcı adı gereklidir",
-    investmentAmountRequired: "Yatırım tutarı gereklidir",
-    interestPercentageRequired: "Faiz yüzdesi gereklidir",
-    licenseNumberRequired: "Lisans numarası gereklidir",
-    licenseNameRequired: "Lisans adı gereklidir",
-    issuingAuthorityRequired: "Veren kurum gereklidir",
-    issueDateRequired: "Veriliş tarihi gereklidir",
-    expiryDateRequired: "Son kullanma tarihi gereklidir",
-    totalCostRequired: "Toplam maliyet gereklidir",
-    channelNameInvalidFormat: "Kanal adı # ile başlamalı ve yalnızca küçük harfler, sayılar ve tireler içermelidir",
-    branchRequiredForBranchScope: "Şube kapsamlı kanallar için şube gereklidir",
-    minAmountMustBeZeroOrHigher: "Minimum tutar 0 veya daha yüksek olmalıdır",
-    maxAmountMustBeGreaterThanMin: "Maksimum tutar minimum tutardan büyük olmalıdır",
-    investmentAmountMustBePositive: "Yatırım tutarı pozitif bir sayı olmalıdır",
-    interestRateMustBeBetween0And100: "Faiz oranı 0 ile 100 arasında olmalıdır",
-    
-    // Export/Import strings
-    transactionId: "İşlem kimliği",
-    exportSuccessful: "Dışa aktarma başarılı",
-    exportFailed: "Dışa aktarma başarısız",
-    downloadSuccessful: "İndirme başarılı",
-    importSuccessful: "İçe aktarma başarılı",
-    importFailed: "İçe aktarma başarısız",
-    exportPDF: "PDF olarak dışa aktar",
-    exportExcel: "Excel olarak dışa aktar",
-    dateAndTime: "Tarih ve saat",
-    itemsLabel: "Öğeler",
-    subtotalLabel: "Ara toplam",
-    taxLabel: "Vergi (15%)",
-    totalLabel: "Toplam",
-    paymentLabel: "Ödeme",
-    salesTrackingReport: "Satış takip raporu",
-    salesReportSubtitle: "Toplam satış: %s SAR | İşlemler: %s | Ortalama sipariş: %s SAR",
-  },
-  
-  Swahili: {
-    // Navigation
-    dashboard: "Dashibodi",
-    branches: "Matawi",
-    inventory: "Hesabu ya mali",
-    menu: "Menyu",
-    products: "Bidhaa",  // Factory business type: replaces "menu"
-    recipes: "Mapishi",
-    licenses: "Leseni",  // Factory business type only
-    customers: "Wateja",
-    orders: "Maagizo",
-    kitchen: "Jiko",
-    workshop: "Warsha",  // Factory business type: replaces "kitchen"
-    procurement: "Ununuzi",
-    sales: "Mauzo",
-    financial: "Kifedha",
-    profitability: "Ufaulu",
-    invoices: "Ankara",
-    employees: "Wafanyakazi",
-    settings: "Mipangilio",
-    pos: "POS",
-    logout: "Toka",
-    
-    // Navigation Groups
-    operations: "Uendeshaji",
-    management: "Usimamizi",
-    analytics: "Uchanganuzi",
-    system: "Mfumo",
-    support: "Msaada",
-    
-    // Support
-    help: "Msaada",
-    supportAndHelp: "Usaidizi na msaada",
-    technicalSupport: "Msaada wa kiufundi",
-    contactSupport: "Wasiliana na msaada",
-    contactInformation: "Maelezo ya mawasiliano",
-    whatsapp: "WhatsApp",
-    whatsappOpened: "WhatsApp imefunguliwa",
-    attachDownloadedPdf: "Tafadhali ambatanisha ankara ya PDF iliyopakuliwa kwa ujumbe wa WhatsApp na uitume kwa mteja wako.",
-    getInTouch: "Wasiliana na timu yetu ya usaidizi",
-    
-    // Branding
-    madeBy: "Imetengenezwa na",
-    companyName: "Kinzhal LTD Co.",
-    copyright: "© 2025 BlindSpot System (BSS). Haki zote zimehifadhiwa.",
-    tagline: "Kuwezesha biashara kwa suluhisho za usimamizi mahiri",
-    
-    // Chat & Messaging
-    selectUser: "Chagua mtumiaji",
-    createChannel: "Unda kituo",
-    selectConversation: "Chagua mazungumzo ili kuanza kupiga gumzo",
-    
-    // Invoices & Financial
-    loadingInvoices: "Inapakia ankara...",
-    viewAndDownload: "Angalia na pakua ankara zako za usajili",
-    totalExpenses: "Matumizi ya jumla",
-    totalCosts: "Gharama za jumla",
-    totalSalesLabel: "Mauzo ya jumla",
-    loadingFinancialData: "Inapakia data ya fedha...",
-    totalByExpenseCategory: "Jumla kwa jamii ya matumizi",
-    
-    // 404 & Errors
-    returnToDashboard: "Rudi kwenye dashibodi",
-    pageNotFound: "404 Ukurasa haujapatikana",
-    pageNotFoundDesc: "Ukurasa unaoutafuta haupo au umehamishwa.",
-    
-    // Payment & Testing
-    proceedToPayment: "Endelea na malipo",
-    testCardDetails: "Maelezo ya kadi ya jaribio",
-    paymentDetails: "Maelezo ya malipo",
-    customerPhone: "Simu ya mteja",
-    paymentId: "Kitambulisho cha malipo",
-    moyasarPaymentTest: "Jaribio la malipo ya Moyasar",
-    cardNumber: "Nambari ya kadi",
-    expiry: "Kumalizika",
-    anyFutureDate: "Tarehe yoyote ya baadaye (mfano, 12/25)",
-    cvv: "CVV",
-    anyName: "Jina lolote",
-    testPaymentAmount: '100.00',
-    testPaymentDescription: 'Malipo ya Jaribio',
-    testCustomerName: 'Mteja wa Jaribio',
-    testCustomerPhone: '+966500000000',
-    
-    // License Management
-    loadingLicenses: "Inapakia leseni...",
-    deleteLicense: "Futa leseni",
-    
-    // General Loading States
-    loadingData: "Inapakia...",
-    
-    // Setup & Emergency
-    passwordResetSuccess: "Nenosiri limewekwa upya kwa mafanikio",
-    passwordResetSuccessDesc: "Kuweka upya nenosiri lako kumefanikiwa",
-    yourAdminPasswordReset: "Nenosiri lako la msimamizi limewekwa upya kwa mafanikio.",
-    createEmployeeAccount: "Unda akaunti ya mfanyakazi",
-    passwordsMatchError: "Nenosiri hazilingani",
-    passwordMinLengthError: "Nenosiri ni fupi sana",
-    passwordResetFailed: "Kuweka upya nenosiri kumeshindwa",
-    resetPasswordError: "Hitilafu imetokea wakati wa kuweka upya nenosiri",
-    resetPasswordBootstrapDesc: "Weka upya nenosiri la akaunti ya msimamizi kwa kutumia tokeni yako ya bootstrap",
-    bootstrapTokenDescription: "Hii ni tokeni ya matumizi moja iliyotolewa na msimamizi wa mfumo wako",
-    resetAdminPassword: "Weka upya nenosiri la msimamizi",
-    bootstrapTokenOnceUse: "Tokeni za bootstrap zinaweza kutumiwa mara moja tu",
-    onlyAdminReset: "Akaunti za msimamizi tu zinaweza kuwekwa upya kupitia njia hii",
-    contactAdministrator: "Wasiliana na msimamizi wa mfumo wako ikiwa huna tokeni",
-    minCharacters: "Angalau herufi 6",
-    reEnterPassword: "Weka tena nenosiri",
-    creatingAccount: "Inaunda akaunti...",
-    
-    // Profile & Subscription
-    updateProfileError: "Kusasisha wasifu kumeshindwa",
-    cancelSubscriptionError: "Kufuta usajili kumeshindwa",
-    downloadingInvoice: "Inapakua ankara...",
-    downloadFailed: "Kupakua kumeshindwa",
-    downloadInvoiceError: "Kupakua ankara kumeshindwa",
-    failedToLoadProfile: "Kupakia wasifu kumeshindwa",
-    userProfile: "Wasifu wa mtumiaji",
-    userProfileDesc: "Dhibiti maelezo yako binafsi na usajili",
-    accountRestrictedDesc: "Unaweza kuangalia wasifu wako tu. Wasiliana na msimamizi wako ili kufanya mabadiliko.",
-    profileInformation: "Maelezo ya wasifu",
-    yourPersonalDetails: "Maelezo yako binafsi",
-    phoneNumber: "Nambari ya simu",
-    saveChanges: "Hifadhi mabadiliko",
-    notSet: "Haijawekwa",
-    editProfile: "Hariri wasifu",
-    subscriptionDetails: "Maelezo ya usajili",
-    subscriptionInformationDesc: "Maelezo yako ya usajili",
-    cancelledOn: "Imefutwa tarehe",
-    areYouSure: "Una uhakika?",
-    cancelSubscriptionWarning: "Kitendo hiki hakiwezi kutendeka nyuma. Utapoteza ufikiaji wa vipengele vyote wakati kipindi chako cha sasa kitakapoisha.",
-    keepSubscription: "Weka usajili",
-    yesCancelSubscription: "Ndiyo, futa usajili",
-    subscriptionInvoices: "Ankara za usajili",
-    noInvoices: "Hakuna ankara zinazopatikana",
-    invoice: "Ankara",
-    
-    // Invoice specific
-    hasBeenDownloaded: "Imepakuliwa",
-    searchByInvoice: "Tafuta kwa nambari ya ankara au agizo",
-    date: "Tarehe",
-    vat: "VAT",
-    noInvoicesFound: "Hakuna ankara zilizopatikana",
-    noPDF: "Hakuna PDF",
-    
-    // Validation Messages
-    staffCountRequired: "Idadi ya wafanyakazi inahitajika",
-    pleaseSelectUser: "Tafadhali chagua mtumiaji",
-    customerNameRequired: "Jina la mteja linahitajika",
-    phoneNumberRequired: "Nambari ya simu inahitajika",
-    deliveryAppNameRequired: "Jina la programu ya utoaji linahitajika",
-    nameRequired: "Jina linahitajika",
-    investorNameRequired: "Jina la mwekezaji linahitajika",
-    investmentAmountRequired: "Kiasi cha uwekezaji kinahitajika",
-    interestPercentageRequired: "Asilimia ya riba inahitajika",
-    licenseNumberRequired: "Nambari ya leseni inahitajika",
-    licenseNameRequired: "Jina la leseni linahitajika",
-    issuingAuthorityRequired: "Mamlaka inayotoa inahitajika",
-    issueDateRequired: "Tarehe ya utoaji inahitajika",
-    expiryDateRequired: "Tarehe ya mwisho inahitajika",
-    totalCostRequired: "Gharama ya jumla inahitajika",
-    channelNameInvalidFormat: "Jina la kituo lazima lianze na # na kuwa na herufi ndogo, nambari, na alama ya mistari pekee",
-    branchRequiredForBranchScope: "Tawi linahitajika kwa vituo vya upeo wa tawi",
-    minAmountMustBeZeroOrHigher: "Kiasi cha chini lazima kiwe 0 au zaidi",
-    maxAmountMustBeGreaterThanMin: "Kiasi cha juu lazima kiwe kikubwa kuliko kiasi cha chini",
-    investmentAmountMustBePositive: "Kiasi cha uwekezaji lazima kiwe nambari chanya",
-    interestRateMustBeBetween0And100: "Kiwango cha riba lazima kiwe kati ya 0 na 100",
-    
-    // Export/Import strings
-    transactionId: "Kitambulisho cha muamala",
-    exportSuccessful: "Kusafirisha kumefanikiwa",
-    exportFailed: "Kusafirisha kumeshindwa",
-    downloadSuccessful: "Kupakua kumefanikiwa",
-    importSuccessful: "Kuingiza kumefanikiwa",
-    importFailed: "Kuingiza kumeshindwa",
-    exportPDF: "Safirisha PDF",
-    exportExcel: "Safirisha Excel",
-    dateAndTime: "Tarehe na wakati",
-    itemsLabel: "Vitu",
-    subtotalLabel: "Jumla ndogo",
-    taxLabel: "Kodi (15%)",
-    totalLabel: "Jumla",
-    paymentLabel: "Malipo",
-    salesTrackingReport: "Ripoti ya ufuatiliaji wa mauzo",
-    salesReportSubtitle: "Mauzo ya jumla: %s SAR | Miamala: %s | Agizo la wastani: %s SAR",
-  },
 };
 
 export const supportedLanguages: Language[] = [
@@ -13307,6 +12945,4 @@ export const supportedLanguages: Language[] = [
   'Spanish',
   'Tagalog',
   'Indonesian',
-  'Turkish',
-  'Swahili',
 ];
