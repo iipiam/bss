@@ -341,6 +341,28 @@ export interface Translations {
   chooseUsername: string;
   enterPassword: string;
   choosePassword: string;
+  emailAddress: string;
+  enterYourEmail: string;
+  sendResetLink: string;
+  sending: string;
+  resetting: string;
+  redirectingToLogin: string;
+  goToLogin: string;
+  backToLogin: string;
+  confirmNewPassword: string;
+  enterNewPasswordPlaceholder: string;
+  enterConfirmPasswordPlaceholder: string;
+  accountInformation: string;
+  companyInformation: string;
+  welcomeToBlindSpot: string;
+  createAdminAccountDesc: string;
+  createAdminAccount: string;
+  emergencyAdminReset: string;
+  bootstrapResetToken: string;
+  enterBootstrapToken: string;
+  adminUsername: string;
+  enterAdminUsername: string;
+  importantNotes: string;
   commercialRegistration: string;
   commercialRegistrationPlaceholder: string;
   commercialRegistrationNote: string;
@@ -1077,6 +1099,51 @@ export interface Translations {
   companyName: string;
   copyright: string;
   tagline: string;
+  
+  // Chat & Messaging
+  selectUser: string;
+  createChannel: string;
+  selectConversation: string;
+  
+  // Invoices & Financial
+  loadingInvoices: string;
+  viewAndDownload: string;
+  totalRevenue: string;
+  totalExpenses: string;
+  totalOrders: string;
+  totalCosts: string;
+  totalSalesLabel: string;
+  total: string;
+  loadingFinancialData: string;
+  totalByExpenseCategory: string;
+  
+  // 404 & Errors
+  returnToDashboard: string;
+  pageNotFound: string;
+  pageNotFoundDesc: string;
+  
+  // Payment & Testing
+  proceedToPayment: string;
+  testCardDetails: string;
+  paymentDetails: string;
+  amount: string;
+  description: string;
+  customerName: string;
+  customerPhone: string;
+  
+  // License Management
+  loadingLicenses: string;
+  deleteLicense: string;
+  
+  // General Loading States
+  loadingData: string;
+  filters: string;
+  
+  // Setup & Emergency
+  passwordResetSuccess: string;
+  passwordResetSuccessDesc: string;
+  yourAdminPasswordReset: string;
+  createEmployeeAccount: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -1410,6 +1477,28 @@ export const translations: Record<Language, Translations> = {
     chooseUsername: 'Choose a username',
     enterPassword: 'Enter your password',
     choosePassword: 'Choose a password',
+    emailAddress: 'Email Address',
+    enterYourEmail: 'Enter your email',
+    sendResetLink: 'Send Reset Link',
+    sending: 'Sending...',
+    resetting: 'Resetting...',
+    redirectingToLogin: 'Redirecting to login page...',
+    goToLogin: 'Go to Login',
+    backToLogin: 'Back to Login',
+    confirmNewPassword: 'Confirm New Password',
+    enterNewPasswordPlaceholder: 'Enter new password',
+    enterConfirmPasswordPlaceholder: 'Confirm new password',
+    accountInformation: 'Account Information',
+    companyInformation: 'Company Information',
+    welcomeToBlindSpot: 'Welcome to BlindSpot System',
+    createAdminAccountDesc: 'Create your administrator account to get started',
+    createAdminAccount: 'Create Admin Account',
+    emergencyAdminReset: 'Emergency Admin Reset',
+    bootstrapResetToken: 'Bootstrap Reset Token',
+    enterBootstrapToken: 'Enter your bootstrap reset token',
+    adminUsername: 'Admin Username',
+    enterAdminUsername: 'Enter admin username',
+    importantNotes: 'Important Notes:',
     commercialRegistration: 'Commercial Registration',
     commercialRegistrationPlaceholder: 'Enter 10-digit Commercial Registration',
     commercialRegistrationNote: 'Required for all restaurant businesses in Saudi Arabia',
@@ -2154,6 +2243,51 @@ export const translations: Record<Language, Translations> = {
     companyName: 'Kinzhal LTD Co.',
     copyright: '© 2025 BlindSpot System (BSS). All rights reserved.',
     tagline: 'Empowering businesses with smart management solutions',
+    
+    // Chat & Messaging
+    selectUser: 'Select User',
+    createChannel: 'Create Channel',
+    selectConversation: 'Select a conversation to start chatting',
+    
+    // Invoices & Financial
+    loadingInvoices: 'Loading invoices...',
+    viewAndDownload: 'View and download your subscription invoices',
+    totalRevenue: 'Total Revenue',
+    totalExpenses: 'Total Expenses',
+    totalOrders: 'Total Orders',
+    totalCosts: 'Total Costs',
+    totalSalesLabel: 'Total Sales',
+    total: 'Total',
+    loadingFinancialData: 'Loading financial data...',
+    totalByExpenseCategory: 'Total by expense category',
+    
+    // 404 & Errors
+    returnToDashboard: 'Return to Dashboard',
+    pageNotFound: '404 Page Not Found',
+    pageNotFoundDesc: "The page you're looking for doesn't exist or has been moved.",
+    
+    // Payment & Testing
+    proceedToPayment: 'Proceed to Payment',
+    testCardDetails: 'Test Card Details',
+    paymentDetails: 'Payment Details',
+    amount: 'Amount',
+    description: 'Description',
+    customerName: 'Customer Name',
+    customerPhone: 'Customer Phone',
+    
+    // License Management
+    loadingLicenses: 'Loading licenses...',
+    deleteLicense: 'Delete License',
+    
+    // General Loading States
+    loadingData: 'Loading...',
+    filters: 'Filters',
+    
+    // Setup & Emergency
+    passwordResetSuccess: 'Password has been reset successfully',
+    passwordResetSuccessDesc: 'Your password reset was successful',
+    yourAdminPasswordReset: 'Your admin password has been reset successfully.',
+    createEmployeeAccount: 'Create Employee Account',
   },
   
   Arabic: {
