@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Language, translations, Translations } from '@/i18n/translations';
+import { Language, translations, Translations, supportedLanguages } from '@/i18n/translations';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useAuth } from '@/lib/auth';
@@ -22,14 +22,17 @@ const languageToLocaleCode: Record<Language, string> = {
   Spanish: 'es',
   Tagalog: 'tl',
   French: 'fr',
-  Indonesian: 'id',
-  Turkish: 'tr',
-  Swahili: 'sw'
+  Indonesian: 'id'
 };
 
 const LANGUAGE_STORAGE_KEY = 'bss-language';
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+// Helper function to validate language
+function isValidLanguage(lang: string): lang is Language {
+  return supportedLanguages.includes(lang as Language);
+}
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -37,7 +40,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   // Initialize language from localStorage or default to English
   const [language, setLanguageState] = useState<Language>(() => {
     const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    return (stored as Language) || 'English';
+    // Validate stored language - if invalid, fallback to English
+    if (stored && isValidLanguage(stored)) {
+      return stored as Language;
+    }
+    // Clear invalid language from storage
+    if (stored) {
+      localStorage.removeItem(LANGUAGE_STORAGE_KEY);
+    }
+    return 'English';
   });
 
   // Only fetch settings when user is authenticated
