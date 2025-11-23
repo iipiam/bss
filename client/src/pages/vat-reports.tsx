@@ -12,9 +12,11 @@ import { Download, FileText, Plus, Search, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { MonthlyVatReport } from "@shared/schema";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function VatReports() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string>("");
@@ -40,7 +42,7 @@ export default function VatReports() {
     },
     onError: (error) => {
       toast({
-        title: "Generation Failed",
+        title: t.generationFailed,
         description: error instanceof Error ? error.message : "Failed to generate VAT report",
         variant: "destructive",
       });
@@ -85,7 +87,7 @@ export default function VatReports() {
       });
     } catch (error) {
       toast({
-        title: "Download Failed",
+        title: t.downloadFailed,
         description: error instanceof Error ? error.message : "Failed to download VAT report",
         variant: "destructive",
       });

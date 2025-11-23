@@ -37,22 +37,27 @@ export default function Sales() {
   const handleExportPDF = () => {
     try {
       const columns = [
-        { header: "Transaction ID", accessor: "transactionId" },
-        { header: "Date & Time", accessor: (row: Transaction) => new Date(row.createdAt).toLocaleString() },
-        { header: "Items", accessor: (row: Transaction) => row.itemCount.toString() },
-        { header: "Subtotal", accessor: (row: Transaction) => `${parseFloat(row.subtotal).toFixed(2)} SAR` },
-        { header: "Tax (15%)", accessor: (row: Transaction) => `${parseFloat(row.tax).toFixed(2)} SAR` },
-        { header: "Total", accessor: (row: Transaction) => `${parseFloat(row.total).toFixed(2)} SAR` },
-        { header: "Payment", accessor: "paymentMethod" },
+        { header: t.transactionId, accessor: "transactionId" },
+        { header: t.dateAndTime, accessor: (row: Transaction) => new Date(row.createdAt).toLocaleString() },
+        { header: t.itemsLabel, accessor: (row: Transaction) => row.itemCount.toString() },
+        { header: t.subtotalLabel, accessor: (row: Transaction) => `${parseFloat(row.subtotal).toFixed(2)} SAR` },
+        { header: t.taxLabel, accessor: (row: Transaction) => `${parseFloat(row.tax).toFixed(2)} SAR` },
+        { header: t.totalLabel, accessor: (row: Transaction) => `${parseFloat(row.total).toFixed(2)} SAR` },
+        { header: t.paymentLabel, accessor: "paymentMethod" },
       ];
 
-      const result = exportToPDF("Sales Tracking Report", filteredTransactions, columns, {
-        subtitle: `Total Sales: ${todaysSales.toFixed(2)} SAR | Transactions: ${transactions.length} | Avg Order: ${avgOrderValue.toFixed(2)} SAR`,
+      const subtitle = t.salesReportSubtitle
+        .replace('%s', todaysSales.toFixed(2))
+        .replace('%s', transactions.length.toString())
+        .replace('%s', avgOrderValue.toFixed(2));
+
+      const result = exportToPDF(t.salesTrackingReport, filteredTransactions, columns, {
+        subtitle,
       });
 
       if (result.success) {
         toast({
-          title: "Export Successful",
+          title: t.exportSuccessful,
           description: `PDF exported as ${result.fileName}`,
         });
       } else {
@@ -60,7 +65,7 @@ export default function Sales() {
       }
     } catch (error) {
       toast({
-        title: "Export Failed",
+        title: t.exportFailed,
         description: error instanceof Error ? error.message : t.failedToExportPDF,
         variant: "destructive",
       });
@@ -70,20 +75,20 @@ export default function Sales() {
   const handleExportExcel = () => {
     try {
       const exportData = filteredTransactions.map((transaction) => ({
-        "Transaction ID": transaction.transactionId,
-        "Date & Time": new Date(transaction.createdAt).toLocaleString(),
-        "Items": transaction.itemCount,
-        "Subtotal (SAR)": parseFloat(transaction.subtotal).toFixed(2),
-        "Tax (SAR)": parseFloat(transaction.tax).toFixed(2),
-        "Total (SAR)": parseFloat(transaction.total).toFixed(2),
-        "Payment Method": transaction.paymentMethod,
+        [t.transactionId]: transaction.transactionId,
+        [t.dateAndTime]: new Date(transaction.createdAt).toLocaleString(),
+        [t.itemsLabel]: transaction.itemCount,
+        [`${t.subtotalLabel} (SAR)`]: parseFloat(transaction.subtotal).toFixed(2),
+        [`${t.taxLabel.replace(' (15%)', '')} (SAR)`]: parseFloat(transaction.tax).toFixed(2),
+        [`${t.totalLabel} (SAR)`]: parseFloat(transaction.total).toFixed(2),
+        [t.paymentLabel]: transaction.paymentMethod,
       }));
 
-      const result = exportToExcel("Sales Tracking", exportData);
+      const result = exportToExcel(t.salesTrackingReport, exportData);
 
       if (result.success) {
         toast({
-          title: "Export Successful",
+          title: t.exportSuccessful,
           description: `Excel exported as ${result.fileName}`,
         });
       } else {
@@ -91,7 +96,7 @@ export default function Sales() {
       }
     } catch (error) {
       toast({
-        title: "Export Failed",
+        title: t.exportFailed,
         description: error instanceof Error ? error.message : t.failedToExportExcel,
         variant: "destructive",
       });
@@ -117,11 +122,11 @@ export default function Sales() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleExportPDF} data-testid="button-export-pdf">
             <FileDown className="h-4 w-4 mr-2" />
-            Export PDF
+            {t.exportPDF}
           </Button>
           <Button variant="outline" size="sm" onClick={handleExportExcel} data-testid="button-export-excel">
             <FileSpreadsheet className="h-4 w-4 mr-2" />
-            Export Excel
+            {t.exportExcel}
           </Button>
         </div>
       </div>
@@ -173,13 +178,13 @@ export default function Sales() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Transaction ID</TableHead>
-              <TableHead>Date & Time</TableHead>
-              <TableHead>Items</TableHead>
-              <TableHead>Subtotal</TableHead>
-              <TableHead>Tax (15%)</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Payment</TableHead>
+              <TableHead>{t.transactionId}</TableHead>
+              <TableHead>{t.dateAndTime}</TableHead>
+              <TableHead>{t.itemsLabel}</TableHead>
+              <TableHead>{t.subtotalLabel}</TableHead>
+              <TableHead>{t.taxLabel}</TableHead>
+              <TableHead>{t.totalLabel}</TableHead>
+              <TableHead>{t.paymentLabel}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

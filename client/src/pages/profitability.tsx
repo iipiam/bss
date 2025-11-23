@@ -182,12 +182,12 @@ export default function Profitability() {
 
     if (result.success) {
       toast({
-        title: "Export successful",
+        title: t.exportSuccessful,
         description: "Profitability report exported to PDF",
       });
     } else {
       toast({
-        title: "Export failed",
+        title: t.exportFailed,
         description: "Failed to export profitability report to PDF",
         variant: "destructive",
       });
@@ -211,12 +211,12 @@ export default function Profitability() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast({
-        title: "Export successful",
+        title: t.exportSuccessful,
         description: "Profitability data exported to Excel",
       });
     } catch (error) {
       toast({
-        title: "Export failed",
+        title: t.exportFailed,
         description: error instanceof Error ? error.message : t.failedToExportProfitability,
         variant: "destructive",
       });

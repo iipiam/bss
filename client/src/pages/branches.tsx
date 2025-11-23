@@ -18,11 +18,9 @@ import { useDeviceLayout } from "@/lib/mobileLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useBusinessType } from "@/hooks/useBusinessType";
 
-const branchFormSchema = insertBranchSchema.extend({
-  staff: z.string().min(1, "Staff count is required"),
-});
-
-type BranchFormValues = z.infer<typeof branchFormSchema>;
+type BranchFormValues = z.infer<typeof insertBranchSchema> & {
+  staff: string;
+};
 
 export default function Branches() {
   const layout = useDeviceLayout();
@@ -31,6 +29,10 @@ export default function Branches() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const { labels } = useBusinessType();
+
+  const branchFormSchema = insertBranchSchema.extend({
+    staff: z.string().min(1, t.staffCountRequired),
+  });
 
   const form = useForm<BranchFormValues>({
     resolver: zodResolver(branchFormSchema),

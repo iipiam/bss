@@ -241,7 +241,7 @@ export default function Login() {
       
     } catch (error: any) {
       toast({
-        title: "IT Signup Failed",
+        title: t.itSignupFailed,
         description: error.message || "Failed to create IT account",
         variant: "destructive",
       });

@@ -1131,6 +1131,10 @@ export interface Translations {
   anyFutureDate: string;
   cvv: string;
   anyName: string;
+  testPaymentAmount: string;
+  testPaymentDescription: string;
+  testCustomerName: string;
+  testCustomerPhone: string;
   
   // License Management
   loadingLicenses: string;
@@ -1192,6 +1196,47 @@ export interface Translations {
   vat: string;
   noInvoicesFound: string;
   noPDF: string;
+  
+  // Validation Messages
+  staffCountRequired: string;
+  pleaseSelectUser: string;
+  customerNameRequired: string;
+  phoneNumberRequired: string;
+  deliveryAppNameRequired: string;
+  nameRequired: string;
+  investorNameRequired: string;
+  investmentAmountRequired: string;
+  interestPercentageRequired: string;
+  licenseNumberRequired: string;
+  licenseNameRequired: string;
+  issuingAuthorityRequired: string;
+  issueDateRequired: string;
+  expiryDateRequired: string;
+  totalCostRequired: string;
+  channelNameInvalidFormat: string;
+  branchRequiredForBranchScope: string;
+  minAmountMustBeZeroOrHigher: string;
+  maxAmountMustBeGreaterThanMin: string;
+  investmentAmountMustBePositive: string;
+  interestRateMustBeBetween0And100: string;
+  
+  // Export/Import strings
+  transactionId: string;
+  exportSuccessful: string;
+  exportFailed: string;
+  downloadSuccessful: string;
+  importSuccessful: string;
+  importFailed: string;
+  exportPDF: string;
+  exportExcel: string;
+  dateAndTime: string;
+  itemsLabel: string;
+  subtotalLabel: string;
+  taxLabel: string;
+  totalLabel: string;
+  paymentLabel: string;
+  salesTrackingReport: string;
+  salesReportSubtitle: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -2323,6 +2368,10 @@ export const translations: Record<Language, Translations> = {
     anyFutureDate: 'Any future date (e.g., 12/25)',
     cvv: 'CVV',
     anyName: 'Any name',
+    testPaymentAmount: '100.00',
+    testPaymentDescription: 'Test Payment',
+    testCustomerName: 'Test Customer',
+    testCustomerPhone: '+966500000000',
     
     // License Management
     loadingLicenses: 'Loading licenses...',
@@ -2384,6 +2433,47 @@ export const translations: Record<Language, Translations> = {
     vat: 'VAT',
     noInvoicesFound: 'No invoices found',
     noPDF: 'No PDF',
+    
+    // Validation Messages
+    staffCountRequired: 'Staff count is required',
+    pleaseSelectUser: 'Please select a user',
+    customerNameRequired: 'Customer name is required',
+    phoneNumberRequired: 'Phone number is required',
+    deliveryAppNameRequired: 'Delivery app name is required',
+    nameRequired: 'Name is required',
+    investorNameRequired: 'Investor name is required',
+    investmentAmountRequired: 'Investment amount is required',
+    interestPercentageRequired: 'Interest percentage is required',
+    licenseNumberRequired: 'License number is required',
+    licenseNameRequired: 'License name is required',
+    issuingAuthorityRequired: 'Issuing authority is required',
+    issueDateRequired: 'Issue date is required',
+    expiryDateRequired: 'Expiry date is required',
+    totalCostRequired: 'Total cost is required',
+    channelNameInvalidFormat: 'Channel name must start with # and contain only lowercase letters, numbers, and hyphens',
+    branchRequiredForBranchScope: 'Branch is required for branch-scoped channels',
+    minAmountMustBeZeroOrHigher: 'Minimum amount must be 0 or higher',
+    maxAmountMustBeGreaterThanMin: 'Maximum amount must be greater than minimum amount',
+    investmentAmountMustBePositive: 'Investment amount must be a positive number',
+    interestRateMustBeBetween0And100: 'Interest rate must be between 0 and 100',
+    
+    // Export/Import strings
+    transactionId: 'Transaction ID',
+    exportSuccessful: 'Export Successful',
+    exportFailed: 'Export Failed',
+    downloadSuccessful: 'Download Successful',
+    importSuccessful: 'Import Successful',
+    importFailed: 'Import Failed',
+    exportPDF: 'Export PDF',
+    exportExcel: 'Export Excel',
+    dateAndTime: 'Date & Time',
+    itemsLabel: 'Items',
+    subtotalLabel: 'Subtotal',
+    taxLabel: 'Tax (15%)',
+    totalLabel: 'Total',
+    paymentLabel: 'Payment',
+    salesTrackingReport: 'Sales Tracking Report',
+    salesReportSubtitle: 'Total Sales: %s SAR | Transactions: %s | Avg Order: %s SAR',
   },
   
   Arabic: {
@@ -3493,6 +3583,10 @@ export const translations: Record<Language, Translations> = {
     anyFutureDate: 'أي تاريخ مستقبلي (مثل 12/25)',
     cvv: 'رمز CVV',
     anyName: 'أي اسم',
+    testPaymentAmount: '100.00',
+    testPaymentDescription: 'دفعة تجريبية',
+    testCustomerName: 'عميل تجريبي',
+    testCustomerPhone: '+966500000000',
     
     // License Management
     loadingLicenses: 'جارٍ تحميل التراخيص...',
@@ -3554,6 +3648,47 @@ export const translations: Record<Language, Translations> = {
     vat: 'ضريبة القيمة المضافة',
     noInvoicesFound: 'لم يتم العثور على فواتير',
     noPDF: 'لا يوجد ملف PDF',
+    
+    // Validation Messages
+    staffCountRequired: 'عدد الموظفين مطلوب',
+    pleaseSelectUser: 'يرجى تحديد مستخدم',
+    customerNameRequired: 'اسم العميل مطلوب',
+    phoneNumberRequired: 'رقم الهاتف مطلوب',
+    deliveryAppNameRequired: 'اسم تطبيق التوصيل مطلوب',
+    nameRequired: 'الاسم مطلوب',
+    investorNameRequired: 'اسم المستثمر مطلوب',
+    investmentAmountRequired: 'مبلغ الاستثمار مطلوب',
+    interestPercentageRequired: 'نسبة الفائدة مطلوبة',
+    licenseNumberRequired: 'رقم الترخيص مطلوب',
+    licenseNameRequired: 'اسم الترخيص مطلوب',
+    issuingAuthorityRequired: 'الجهة المصدرة مطلوبة',
+    issueDateRequired: 'تاريخ الإصدار مطلوب',
+    expiryDateRequired: 'تاريخ الانتهاء مطلوب',
+    totalCostRequired: 'التكلفة الإجمالية مطلوبة',
+    channelNameInvalidFormat: 'يجب أن يبدأ اسم القناة بـ # ويحتوي فقط على أحرف صغيرة وأرقام وشرطات',
+    branchRequiredForBranchScope: 'الفرع مطلوب للقنوات المخصصة للفرع',
+    minAmountMustBeZeroOrHigher: 'يجب أن يكون الحد الأدنى للمبلغ 0 أو أكثر',
+    maxAmountMustBeGreaterThanMin: 'يجب أن يكون الحد الأقصى للمبلغ أكبر من الحد الأدنى',
+    investmentAmountMustBePositive: 'يجب أن يكون مبلغ الاستثمار رقمًا موجبًا',
+    interestRateMustBeBetween0And100: 'يجب أن يكون معدل الفائدة بين 0 و 100',
+    
+    // Export/Import strings
+    transactionId: 'معرف المعاملة',
+    exportSuccessful: 'تم التصدير بنجاح',
+    exportFailed: 'فشل التصدير',
+    downloadSuccessful: 'تم التحميل بنجاح',
+    importSuccessful: 'تم الاستيراد بنجاح',
+    importFailed: 'فشل الاستيراد',
+    exportPDF: 'تصدير PDF',
+    exportExcel: 'تصدير Excel',
+    dateAndTime: 'التاريخ والوقت',
+    itemsLabel: 'العناصر',
+    subtotalLabel: 'المجموع الفرعي',
+    taxLabel: 'الضريبة (15%)',
+    totalLabel: 'المجموع',
+    paymentLabel: 'الدفع',
+    salesTrackingReport: 'تقرير تتبع المبيعات',
+    salesReportSubtitle: 'إجمالي المبيعات: %s ريال | المعاملات: %s | متوسط الطلب: %s ريال',
   },
   
   Chinese: {
@@ -6774,6 +6909,10 @@ export const translations: Record<Language, Translations> = {
     anyFutureDate: 'कोई भी भविष्य की तारीख (जैसे, 12/25)',
     cvv: 'सीवीवी',
     anyName: 'कोई भी नाम',
+    testPaymentAmount: '100.00',
+    testPaymentDescription: 'परीक्षण भुगतान',
+    testCustomerName: 'परीक्षण ग्राहक',
+    testCustomerPhone: '+966500000000',
     
     // License Management
     loadingLicenses: 'लाइसेंस लोड हो रहे हैं...',
@@ -6835,6 +6974,47 @@ export const translations: Record<Language, Translations> = {
     vat: 'वैट',
     noInvoicesFound: 'कोई चालान नहीं मिला',
     noPDF: 'कोई पीडीएफ नहीं',
+    
+    // Validation Messages
+    staffCountRequired: 'कर्मचारी संख्या आवश्यक है',
+    pleaseSelectUser: 'कृपया एक उपयोगकर्ता चुनें',
+    customerNameRequired: 'ग्राहक का नाम आवश्यक है',
+    phoneNumberRequired: 'फोन नंबर आवश्यक है',
+    deliveryAppNameRequired: 'डिलीवरी ऐप का नाम आवश्यक है',
+    nameRequired: 'नाम आवश्यक है',
+    investorNameRequired: 'निवेशक का नाम आवश्यक है',
+    investmentAmountRequired: 'निवेश राशि आवश्यक है',
+    interestPercentageRequired: 'ब्याज प्रतिशत आवश्यक है',
+    licenseNumberRequired: 'लाइसेंस नंबर आवश्यक है',
+    licenseNameRequired: 'लाइसेंस का नाम आवश्यक है',
+    issuingAuthorityRequired: 'जारी करने वाला प्राधिकरण आवश्यक है',
+    issueDateRequired: 'जारी करने की तारीख आवश्यक है',
+    expiryDateRequired: 'समाप्ति तिथि आवश्यक है',
+    totalCostRequired: 'कुल लागत आवश्यक है',
+    channelNameInvalidFormat: 'चैनल नाम # से शुरू होना चाहिए और केवल छोटे अक्षर, संख्या और हाइफ़न शामिल होने चाहिए',
+    branchRequiredForBranchScope: 'शाखा-दायरे वाले चैनलों के लिए शाखा आवश्यक है',
+    minAmountMustBeZeroOrHigher: 'न्यूनतम राशि 0 या अधिक होनी चाहिए',
+    maxAmountMustBeGreaterThanMin: 'अधिकतम राशि न्यूनतम राशि से अधिक होनी चाहिए',
+    investmentAmountMustBePositive: 'निवेश राशि एक सकारात्मक संख्या होनी चाहिए',
+    interestRateMustBeBetween0And100: 'ब्याज दर 0 और 100 के बीच होनी चाहिए',
+    
+    // Export/Import strings
+    transactionId: 'लेन-देन आईडी',
+    exportSuccessful: 'निर्यात सफल',
+    exportFailed: 'निर्यात विफल',
+    downloadSuccessful: 'डाउनलोड सफल',
+    importSuccessful: 'आयात सफल',
+    importFailed: 'आयात विफल',
+    exportPDF: 'पीडीएफ निर्यात करें',
+    exportExcel: 'एक्सेल निर्यात करें',
+    dateAndTime: 'तारीख और समय',
+    itemsLabel: 'आइटम',
+    subtotalLabel: 'उप-योग',
+    taxLabel: 'कर (15%)',
+    totalLabel: 'कुल',
+    paymentLabel: 'भुगतान',
+    salesTrackingReport: 'बिक्री ट्रैकिंग रिपोर्ट',
+    salesReportSubtitle: 'कुल बिक्री: %s SAR | लेन-देन: %s | औसत ऑर्डर: %s SAR',
   },
   
   Urdu: {
@@ -7930,6 +8110,10 @@ export const translations: Record<Language, Translations> = {
     anyFutureDate: 'کوئی بھی مستقبل کی تاریخ (مثلاً، 12/25)',
     cvv: 'سی وی وی',
     anyName: 'کوئی بھی نام',
+    testPaymentAmount: '100.00',
+    testPaymentDescription: 'ٹیسٹ ادائیگی',
+    testCustomerName: 'ٹیسٹ گاہک',
+    testCustomerPhone: '+966500000000',
     
     // License Management
     loadingLicenses: 'لائسنس لوڈ ہو رہے ہیں...',
@@ -7991,6 +8175,47 @@ export const translations: Record<Language, Translations> = {
     vat: 'ویٹ',
     noInvoicesFound: 'کوئی رسیدیں نہیں ملیں',
     noPDF: 'کوئی پی ڈی ایف نہیں',
+    
+    // Validation Messages
+    staffCountRequired: 'عملے کی تعداد درکار ہے',
+    pleaseSelectUser: 'براہ کرم ایک صارف منتخب کریں',
+    customerNameRequired: 'گاہک کا نام درکار ہے',
+    phoneNumberRequired: 'فون نمبر درکار ہے',
+    deliveryAppNameRequired: 'ڈیلیوری ایپ کا نام درکار ہے',
+    nameRequired: 'نام درکار ہے',
+    investorNameRequired: 'سرمایہ کار کا نام درکار ہے',
+    investmentAmountRequired: 'سرمایہ کاری کی رقم درکار ہے',
+    interestPercentageRequired: 'سود کی شرح درکار ہے',
+    licenseNumberRequired: 'لائسنس نمبر درکار ہے',
+    licenseNameRequired: 'لائسنس کا نام درکار ہے',
+    issuingAuthorityRequired: 'جاری کرنے والا ادارہ درکار ہے',
+    issueDateRequired: 'جاری کرنے کی تاریخ درکار ہے',
+    expiryDateRequired: 'میعاد ختم ہونے کی تاریخ درکار ہے',
+    totalCostRequired: 'کل لاگت درکار ہے',
+    channelNameInvalidFormat: 'چینل کا نام # سے شروع ہونا چاہیے اور صرف چھوٹے حروف، نمبر اور ہائفنز پر مشتمل ہونا چاہیے',
+    branchRequiredForBranchScope: 'برانچ کے دائرہ کار والے چینلز کے لیے برانچ درکار ہے',
+    minAmountMustBeZeroOrHigher: 'کم سے کم رقم 0 یا زیادہ ہونی چاہیے',
+    maxAmountMustBeGreaterThanMin: 'زیادہ سے زیادہ رقم کم سے کم رقم سے زیادہ ہونی چاہیے',
+    investmentAmountMustBePositive: 'سرمایہ کاری کی رقم ایک مثبت نمبر ہونی چاہیے',
+    interestRateMustBeBetween0And100: 'سود کی شرح 0 اور 100 کے درمیان ہونی چاہیے',
+    
+    // Export/Import strings
+    transactionId: 'لین دین کی شناخت',
+    exportSuccessful: 'ایکسپورٹ کامیاب',
+    exportFailed: 'ایکسپورٹ ناکام',
+    downloadSuccessful: 'ڈاؤن لوڈ کامیاب',
+    importSuccessful: 'درآمد کامیاب',
+    importFailed: 'درآمد ناکام',
+    exportPDF: 'پی ڈی ایف ایکسپورٹ کریں',
+    exportExcel: 'ایکسل ایکسپورٹ کریں',
+    dateAndTime: 'تاریخ اور وقت',
+    itemsLabel: 'اشیاء',
+    subtotalLabel: 'ذیلی کل',
+    taxLabel: 'ٹیکس (15%)',
+    totalLabel: 'کل',
+    paymentLabel: 'ادائیگی',
+    salesTrackingReport: 'فروخت سراغ رسانی رپورٹ',
+    salesReportSubtitle: 'کل فروخت: %s ریال | لین دین: %s | اوسط آرڈر: %s ریال',
   },
   
   Bengali: {
@@ -11087,6 +11312,10 @@ export const translations: Record<Language, Translations> = {
     anyFutureDate: "Cualquier fecha futura (ej., 12/25)",
     cvv: "CVV",
     anyName: "Cualquier nombre",
+    testPaymentAmount: '100.00',
+    testPaymentDescription: 'Pago de Prueba',
+    testCustomerName: 'Cliente de Prueba',
+    testCustomerPhone: '+966500000000',
     
     // License Management
     loadingLicenses: "Cargando licencias...",
@@ -11148,6 +11377,47 @@ export const translations: Record<Language, Translations> = {
     vat: "IVA",
     noInvoicesFound: "No se encontraron facturas",
     noPDF: "Sin PDF",
+    
+    // Validation Messages
+    staffCountRequired: "Se requiere el número de personal",
+    pleaseSelectUser: "Por favor selecciona un usuario",
+    customerNameRequired: "Se requiere el nombre del cliente",
+    phoneNumberRequired: "Se requiere el número de teléfono",
+    deliveryAppNameRequired: "Se requiere el nombre de la aplicación de entrega",
+    nameRequired: "Se requiere el nombre",
+    investorNameRequired: "Se requiere el nombre del inversor",
+    investmentAmountRequired: "Se requiere el monto de inversión",
+    interestPercentageRequired: "Se requiere el porcentaje de interés",
+    licenseNumberRequired: "Se requiere el número de licencia",
+    licenseNameRequired: "Se requiere el nombre de la licencia",
+    issuingAuthorityRequired: "Se requiere la autoridad emisora",
+    issueDateRequired: "Se requiere la fecha de emisión",
+    expiryDateRequired: "Se requiere la fecha de vencimiento",
+    totalCostRequired: "Se requiere el costo total",
+    channelNameInvalidFormat: "El nombre del canal debe comenzar con # y contener solo letras minúsculas, números y guiones",
+    branchRequiredForBranchScope: "Se requiere sucursal para canales de ámbito de sucursal",
+    minAmountMustBeZeroOrHigher: "El monto mínimo debe ser 0 o superior",
+    maxAmountMustBeGreaterThanMin: "El monto máximo debe ser mayor que el monto mínimo",
+    investmentAmountMustBePositive: "El monto de inversión debe ser un número positivo",
+    interestRateMustBeBetween0And100: "La tasa de interés debe estar entre 0 y 100",
+    
+    // Export/Import strings
+    transactionId: "ID de transacción",
+    exportSuccessful: "Exportación exitosa",
+    exportFailed: "Exportación fallida",
+    downloadSuccessful: "Descarga exitosa",
+    importSuccessful: "Importación exitosa",
+    importFailed: "Importación fallida",
+    exportPDF: "Exportar PDF",
+    exportExcel: "Exportar Excel",
+    dateAndTime: "Fecha y hora",
+    itemsLabel: "Artículos",
+    subtotalLabel: "Subtotal",
+    taxLabel: "Impuesto (15%)",
+    totalLabel: "Total",
+    paymentLabel: "Pago",
+    salesTrackingReport: "Informe de seguimiento de ventas",
+    salesReportSubtitle: "Ventas totales: %s SAR | Transacciones: %s | Pedido promedio: %s SAR",
   },
 
   Tagalog: {
@@ -12181,6 +12451,10 @@ export const translations: Record<Language, Translations> = {
     anyFutureDate: "Anumang petsa sa hinaharap (hal., 12/25)",
     cvv: "CVV",
     anyName: "Anumang pangalan",
+    testPaymentAmount: '100.00',
+    testPaymentDescription: 'Pagsubok na Bayad',
+    testCustomerName: 'Pagsubok na Customer',
+    testCustomerPhone: '+966500000000',
     
     // License Management
     loadingLicenses: "Naglo-load ng mga lisensya...",
@@ -12242,6 +12516,47 @@ export const translations: Record<Language, Translations> = {
     vat: "VAT",
     noInvoicesFound: "Walang nahanap na mga invoice",
     noPDF: "Walang PDF",
+    
+    // Validation Messages
+    staffCountRequired: "Kinakailangan ang bilang ng staff",
+    pleaseSelectUser: "Mangyaring pumili ng user",
+    customerNameRequired: "Kinakailangan ang pangalan ng customer",
+    phoneNumberRequired: "Kinakailangan ang numero ng telepono",
+    deliveryAppNameRequired: "Kinakailangan ang pangalan ng delivery app",
+    nameRequired: "Kinakailangan ang pangalan",
+    investorNameRequired: "Kinakailangan ang pangalan ng investor",
+    investmentAmountRequired: "Kinakailangan ang halaga ng investment",
+    interestPercentageRequired: "Kinakailangan ang porsyento ng interes",
+    licenseNumberRequired: "Kinakailangan ang numero ng lisensya",
+    licenseNameRequired: "Kinakailangan ang pangalan ng lisensya",
+    issuingAuthorityRequired: "Kinakailangan ang nagbigay na awtoridad",
+    issueDateRequired: "Kinakailangan ang petsa ng pagbibigay",
+    expiryDateRequired: "Kinakailangan ang petsa ng pag-expire",
+    totalCostRequired: "Kinakailangan ang kabuuang gastos",
+    channelNameInvalidFormat: "Ang pangalan ng channel ay dapat magsimula sa # at maglaman lamang ng maliliit na titik, numero, at gitling",
+    branchRequiredForBranchScope: "Kinakailangan ang sangay para sa mga channel na saklaw ng sangay",
+    minAmountMustBeZeroOrHigher: "Ang minimum na halaga ay dapat na 0 o mas mataas",
+    maxAmountMustBeGreaterThanMin: "Ang maximum na halaga ay dapat na mas mataas kaysa sa minimum na halaga",
+    investmentAmountMustBePositive: "Ang halaga ng investment ay dapat na positibong numero",
+    interestRateMustBeBetween0And100: "Ang rate ng interes ay dapat na sa pagitan ng 0 at 100",
+    
+    // Export/Import strings
+    transactionId: "ID ng transaksyon",
+    exportSuccessful: "Matagumpay ang pag-export",
+    exportFailed: "Nabigo ang pag-export",
+    downloadSuccessful: "Matagumpay ang pag-download",
+    importSuccessful: "Matagumpay ang pag-import",
+    importFailed: "Nabigo ang pag-import",
+    exportPDF: "I-export ang PDF",
+    exportExcel: "I-export ang Excel",
+    dateAndTime: "Petsa at oras",
+    itemsLabel: "Mga item",
+    subtotalLabel: "Subtotal",
+    taxLabel: "Buwis (15%)",
+    totalLabel: "Kabuuan",
+    paymentLabel: "Bayad",
+    salesTrackingReport: "Ulat ng pagsubaybay sa benta",
+    salesReportSubtitle: "Kabuuang benta: %s SAR | Mga transaksyon: %s | Average na order: %s SAR",
   },
   
   French: {
@@ -12322,6 +12637,10 @@ export const translations: Record<Language, Translations> = {
     anyFutureDate: "N'importe quelle date future (par ex., 12/25)",
     cvv: "CVV",
     anyName: "N'importe quel nom",
+    testPaymentAmount: '100.00',
+    testPaymentDescription: 'Paiement Test',
+    testCustomerName: 'Client Test',
+    testCustomerPhone: '+966500000000',
     
     // License Management
     loadingLicenses: "Chargement des licences...",
@@ -12383,6 +12702,47 @@ export const translations: Record<Language, Translations> = {
     vat: "TVA",
     noInvoicesFound: "Aucune facture trouvée",
     noPDF: "Aucun PDF",
+    
+    // Validation Messages
+    staffCountRequired: "Le nombre de personnel est requis",
+    pleaseSelectUser: "Veuillez sélectionner un utilisateur",
+    customerNameRequired: "Le nom du client est requis",
+    phoneNumberRequired: "Le numéro de téléphone est requis",
+    deliveryAppNameRequired: "Le nom de l'application de livraison est requis",
+    nameRequired: "Le nom est requis",
+    investorNameRequired: "Le nom de l'investisseur est requis",
+    investmentAmountRequired: "Le montant de l'investissement est requis",
+    interestPercentageRequired: "Le pourcentage d'intérêt est requis",
+    licenseNumberRequired: "Le numéro de licence est requis",
+    licenseNameRequired: "Le nom de la licence est requis",
+    issuingAuthorityRequired: "L'autorité émettrice est requise",
+    issueDateRequired: "La date d'émission est requise",
+    expiryDateRequired: "La date d'expiration est requise",
+    totalCostRequired: "Le coût total est requis",
+    channelNameInvalidFormat: "Le nom du canal doit commencer par # et ne contenir que des lettres minuscules, des chiffres et des traits d'union",
+    branchRequiredForBranchScope: "La succursale est requise pour les canaux à portée de succursale",
+    minAmountMustBeZeroOrHigher: "Le montant minimum doit être de 0 ou plus",
+    maxAmountMustBeGreaterThanMin: "Le montant maximum doit être supérieur au montant minimum",
+    investmentAmountMustBePositive: "Le montant de l'investissement doit être un nombre positif",
+    interestRateMustBeBetween0And100: "Le taux d'intérêt doit être entre 0 et 100",
+    
+    // Export/Import strings
+    transactionId: "ID de transaction",
+    exportSuccessful: "Exportation réussie",
+    exportFailed: "Échec de l'exportation",
+    downloadSuccessful: "Téléchargement réussi",
+    importSuccessful: "Importation réussie",
+    importFailed: "Échec de l'importation",
+    exportPDF: "Exporter en PDF",
+    exportExcel: "Exporter en Excel",
+    dateAndTime: "Date et heure",
+    itemsLabel: "Articles",
+    subtotalLabel: "Sous-total",
+    taxLabel: "Taxe (15%)",
+    totalLabel: "Total",
+    paymentLabel: "Paiement",
+    salesTrackingReport: "Rapport de suivi des ventes",
+    salesReportSubtitle: "Ventes totales: %s SAR | Transactions: %s | Commande moyenne: %s SAR",
   },
   
   Indonesian: {
@@ -12463,6 +12823,10 @@ export const translations: Record<Language, Translations> = {
     anyFutureDate: "Tanggal masa depan apa pun (mis., 12/25)",
     cvv: "CVV",
     anyName: "Nama apa pun",
+    testPaymentAmount: '100.00',
+    testPaymentDescription: 'Pembayaran Uji',
+    testCustomerName: 'Pelanggan Uji',
+    testCustomerPhone: '+966500000000',
     
     // License Management
     loadingLicenses: "Memuat lisensi...",
@@ -12524,6 +12888,47 @@ export const translations: Record<Language, Translations> = {
     vat: "PPN",
     noInvoicesFound: "Tidak ada faktur ditemukan",
     noPDF: "Tidak ada PDF",
+    
+    // Validation Messages
+    staffCountRequired: "Jumlah staf diperlukan",
+    pleaseSelectUser: "Silakan pilih pengguna",
+    customerNameRequired: "Nama pelanggan diperlukan",
+    phoneNumberRequired: "Nomor telepon diperlukan",
+    deliveryAppNameRequired: "Nama aplikasi pengiriman diperlukan",
+    nameRequired: "Nama diperlukan",
+    investorNameRequired: "Nama investor diperlukan",
+    investmentAmountRequired: "Jumlah investasi diperlukan",
+    interestPercentageRequired: "Persentase bunga diperlukan",
+    licenseNumberRequired: "Nomor lisensi diperlukan",
+    licenseNameRequired: "Nama lisensi diperlukan",
+    issuingAuthorityRequired: "Otoritas penerbit diperlukan",
+    issueDateRequired: "Tanggal penerbitan diperlukan",
+    expiryDateRequired: "Tanggal kedaluwarsa diperlukan",
+    totalCostRequired: "Total biaya diperlukan",
+    channelNameInvalidFormat: "Nama saluran harus dimulai dengan # dan hanya berisi huruf kecil, angka, dan tanda hubung",
+    branchRequiredForBranchScope: "Cabang diperlukan untuk saluran cakupan cabang",
+    minAmountMustBeZeroOrHigher: "Jumlah minimum harus 0 atau lebih tinggi",
+    maxAmountMustBeGreaterThanMin: "Jumlah maksimum harus lebih besar dari jumlah minimum",
+    investmentAmountMustBePositive: "Jumlah investasi harus berupa angka positif",
+    interestRateMustBeBetween0And100: "Tingkat bunga harus antara 0 dan 100",
+    
+    // Export/Import strings
+    transactionId: "ID Transaksi",
+    exportSuccessful: "Ekspor berhasil",
+    exportFailed: "Ekspor gagal",
+    downloadSuccessful: "Download berhasil",
+    importSuccessful: "Impor berhasil",
+    importFailed: "Impor gagal",
+    exportPDF: "Ekspor PDF",
+    exportExcel: "Ekspor Excel",
+    dateAndTime: "Tanggal dan waktu",
+    itemsLabel: "Item",
+    subtotalLabel: "Subtotal",
+    taxLabel: "Pajak (15%)",
+    totalLabel: "Total",
+    paymentLabel: "Pembayaran",
+    salesTrackingReport: "Laporan pelacakan penjualan",
+    salesReportSubtitle: "Total penjualan: %s SAR | Transaksi: %s | Pesanan rata-rata: %s SAR",
   },
   
   Turkish: {
@@ -12604,6 +13009,10 @@ export const translations: Record<Language, Translations> = {
     anyFutureDate: "Gelecekteki herhangi bir tarih (örn., 12/25)",
     cvv: "CVV",
     anyName: "Herhangi bir isim",
+    testPaymentAmount: '100.00',
+    testPaymentDescription: 'Test Ödemesi',
+    testCustomerName: 'Test Müşterisi',
+    testCustomerPhone: '+966500000000',
     
     // License Management
     loadingLicenses: "Lisanslar yükleniyor...",
@@ -12665,6 +13074,47 @@ export const translations: Record<Language, Translations> = {
     vat: "KDV",
     noInvoicesFound: "Fatura bulunamadı",
     noPDF: "PDF yok",
+    
+    // Validation Messages
+    staffCountRequired: "Personel sayısı gereklidir",
+    pleaseSelectUser: "Lütfen bir kullanıcı seçin",
+    customerNameRequired: "Müşteri adı gereklidir",
+    phoneNumberRequired: "Telefon numarası gereklidir",
+    deliveryAppNameRequired: "Teslimat uygulaması adı gereklidir",
+    nameRequired: "İsim gereklidir",
+    investorNameRequired: "Yatırımcı adı gereklidir",
+    investmentAmountRequired: "Yatırım tutarı gereklidir",
+    interestPercentageRequired: "Faiz yüzdesi gereklidir",
+    licenseNumberRequired: "Lisans numarası gereklidir",
+    licenseNameRequired: "Lisans adı gereklidir",
+    issuingAuthorityRequired: "Veren kurum gereklidir",
+    issueDateRequired: "Veriliş tarihi gereklidir",
+    expiryDateRequired: "Son kullanma tarihi gereklidir",
+    totalCostRequired: "Toplam maliyet gereklidir",
+    channelNameInvalidFormat: "Kanal adı # ile başlamalı ve yalnızca küçük harfler, sayılar ve tireler içermelidir",
+    branchRequiredForBranchScope: "Şube kapsamlı kanallar için şube gereklidir",
+    minAmountMustBeZeroOrHigher: "Minimum tutar 0 veya daha yüksek olmalıdır",
+    maxAmountMustBeGreaterThanMin: "Maksimum tutar minimum tutardan büyük olmalıdır",
+    investmentAmountMustBePositive: "Yatırım tutarı pozitif bir sayı olmalıdır",
+    interestRateMustBeBetween0And100: "Faiz oranı 0 ile 100 arasında olmalıdır",
+    
+    // Export/Import strings
+    transactionId: "İşlem kimliği",
+    exportSuccessful: "Dışa aktarma başarılı",
+    exportFailed: "Dışa aktarma başarısız",
+    downloadSuccessful: "İndirme başarılı",
+    importSuccessful: "İçe aktarma başarılı",
+    importFailed: "İçe aktarma başarısız",
+    exportPDF: "PDF olarak dışa aktar",
+    exportExcel: "Excel olarak dışa aktar",
+    dateAndTime: "Tarih ve saat",
+    itemsLabel: "Öğeler",
+    subtotalLabel: "Ara toplam",
+    taxLabel: "Vergi (15%)",
+    totalLabel: "Toplam",
+    paymentLabel: "Ödeme",
+    salesTrackingReport: "Satış takip raporu",
+    salesReportSubtitle: "Toplam satış: %s SAR | İşlemler: %s | Ortalama sipariş: %s SAR",
   },
   
   Swahili: {
@@ -12745,6 +13195,10 @@ export const translations: Record<Language, Translations> = {
     anyFutureDate: "Tarehe yoyote ya baadaye (mfano, 12/25)",
     cvv: "CVV",
     anyName: "Jina lolote",
+    testPaymentAmount: '100.00',
+    testPaymentDescription: 'Malipo ya Jaribio',
+    testCustomerName: 'Mteja wa Jaribio',
+    testCustomerPhone: '+966500000000',
     
     // License Management
     loadingLicenses: "Inapakia leseni...",
@@ -12806,6 +13260,47 @@ export const translations: Record<Language, Translations> = {
     vat: "VAT",
     noInvoicesFound: "Hakuna ankara zilizopatikana",
     noPDF: "Hakuna PDF",
+    
+    // Validation Messages
+    staffCountRequired: "Idadi ya wafanyakazi inahitajika",
+    pleaseSelectUser: "Tafadhali chagua mtumiaji",
+    customerNameRequired: "Jina la mteja linahitajika",
+    phoneNumberRequired: "Nambari ya simu inahitajika",
+    deliveryAppNameRequired: "Jina la programu ya utoaji linahitajika",
+    nameRequired: "Jina linahitajika",
+    investorNameRequired: "Jina la mwekezaji linahitajika",
+    investmentAmountRequired: "Kiasi cha uwekezaji kinahitajika",
+    interestPercentageRequired: "Asilimia ya riba inahitajika",
+    licenseNumberRequired: "Nambari ya leseni inahitajika",
+    licenseNameRequired: "Jina la leseni linahitajika",
+    issuingAuthorityRequired: "Mamlaka inayotoa inahitajika",
+    issueDateRequired: "Tarehe ya utoaji inahitajika",
+    expiryDateRequired: "Tarehe ya mwisho inahitajika",
+    totalCostRequired: "Gharama ya jumla inahitajika",
+    channelNameInvalidFormat: "Jina la kituo lazima lianze na # na kuwa na herufi ndogo, nambari, na alama ya mistari pekee",
+    branchRequiredForBranchScope: "Tawi linahitajika kwa vituo vya upeo wa tawi",
+    minAmountMustBeZeroOrHigher: "Kiasi cha chini lazima kiwe 0 au zaidi",
+    maxAmountMustBeGreaterThanMin: "Kiasi cha juu lazima kiwe kikubwa kuliko kiasi cha chini",
+    investmentAmountMustBePositive: "Kiasi cha uwekezaji lazima kiwe nambari chanya",
+    interestRateMustBeBetween0And100: "Kiwango cha riba lazima kiwe kati ya 0 na 100",
+    
+    // Export/Import strings
+    transactionId: "Kitambulisho cha muamala",
+    exportSuccessful: "Kusafirisha kumefanikiwa",
+    exportFailed: "Kusafirisha kumeshindwa",
+    downloadSuccessful: "Kupakua kumefanikiwa",
+    importSuccessful: "Kuingiza kumefanikiwa",
+    importFailed: "Kuingiza kumeshindwa",
+    exportPDF: "Safirisha PDF",
+    exportExcel: "Safirisha Excel",
+    dateAndTime: "Tarehe na wakati",
+    itemsLabel: "Vitu",
+    subtotalLabel: "Jumla ndogo",
+    taxLabel: "Kodi (15%)",
+    totalLabel: "Jumla",
+    paymentLabel: "Malipo",
+    salesTrackingReport: "Ripoti ya ufuatiliaji wa mauzo",
+    salesReportSubtitle: "Mauzo ya jumla: %s SAR | Miamala: %s | Agizo la wastani: %s SAR",
   },
 };
 

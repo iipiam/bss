@@ -17,14 +17,14 @@ interface LanguageContextType {
 const languageToLocaleCode: Record<Language, string> = {
   English: 'en',
   Arabic: 'ar',
-  Chinese: 'zh',
-  German: 'de',
   Hindi: 'hi',
   Urdu: 'ur',
-  Bengali: 'bn',
-  Italian: 'it',
   Spanish: 'es',
-  Tagalog: 'tl'
+  Tagalog: 'tl',
+  French: 'fr',
+  Indonesian: 'id',
+  Turkish: 'tr',
+  Swahili: 'sw'
 };
 
 const LANGUAGE_STORAGE_KEY = 'bss-language';

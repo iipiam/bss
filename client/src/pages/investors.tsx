@@ -61,23 +61,12 @@ interface ShopBill {
   amount: string;
 }
 
-const investorFormSchema = z.object({
-  name: z.string().min(1, "Investor name is required"),
-  amountInvested: z.string().min(1, "Investment amount is required").refine(
-    (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
-    { message: "Investment amount must be a positive number" }
-  ),
-  interestPercentage: z.string().min(1, "Interest percentage is required").refine(
-    (val) => {
-      const num = parseFloat(val);
-      return !isNaN(num) && num >= 0 && num <= 100;
-    },
-    { message: "Interest percentage must be between 0 and 100" }
-  ),
-  notes: z.string().optional(),
-});
-
-type InvestorFormValues = z.infer<typeof investorFormSchema>;
+type InvestorFormValues = {
+  name: string;
+  amountInvested: string;
+  interestPercentage: string;
+  notes?: string;
+};
 
 export default function Investors() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -87,6 +76,22 @@ export default function Investors() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const layout = useDeviceLayout();
+
+  const investorFormSchema = z.object({
+    name: z.string().min(1, t.investorNameRequired),
+    amountInvested: z.string().min(1, t.investmentAmountRequired).refine(
+      (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
+      { message: t.investmentAmountMustBePositive }
+    ),
+    interestPercentage: z.string().min(1, t.interestPercentageRequired).refine(
+      (val) => {
+        const num = parseFloat(val);
+        return !isNaN(num) && num >= 0 && num <= 100;
+      },
+      { message: t.interestRateMustBeBetween0And100 }
+    ),
+    notes: z.string().optional(),
+  });
 
   const form = useForm<InvestorFormValues>({
     resolver: zodResolver(investorFormSchema),

@@ -457,7 +457,7 @@ export default function Recipes() {
       });
     } catch (error) {
       toast({
-        title: "Download failed",
+        title: t.downloadFailed,
         description: error instanceof Error ? error.message : "Failed to download template",
         variant: "destructive",
       });
@@ -481,12 +481,12 @@ export default function Recipes() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast({
-        title: "Export successful",
+        title: t.exportSuccessful,
         description: "Recipes exported to Excel",
       });
     } catch (error) {
       toast({
-        title: "Export failed",
+        title: t.exportFailed,
         description: error instanceof Error ? error.message : "Failed to export recipes",
         variant: "destructive",
       });
@@ -515,12 +515,12 @@ export default function Recipes() {
       queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
-        title: "Import successful",
+        title: t.importSuccessful,
         description: result.message || "Recipes imported from Excel",
       });
     } catch (error) {
       toast({
-        title: "Import failed",
+        title: t.importFailed,
         description: error instanceof Error ? error.message : "Failed to import recipes",
         variant: "destructive",
       });

@@ -82,13 +82,15 @@ export default function ProcurementPage() {
     },
   });
 
+  const procurementFormSchema = insertProcurementSchema.extend({
+    orderDate: insertProcurementSchema.shape.orderDate.optional(),
+    expectedDelivery: insertProcurementSchema.shape.expectedDelivery.optional(),
+    actualDelivery: insertProcurementSchema.shape.actualDelivery.optional(),
+    totalCost: z.string().min(1, t.totalCostRequired),
+  });
+
   const form = useForm<InsertProcurement>({
-    resolver: zodResolver(insertProcurementSchema.extend({
-      orderDate: insertProcurementSchema.shape.orderDate.optional(),
-      expectedDelivery: insertProcurementSchema.shape.expectedDelivery.optional(),
-      actualDelivery: insertProcurementSchema.shape.actualDelivery.optional(),
-      totalCost: z.string().min(1, "Total cost is required"),
-    })),
+    resolver: zodResolver(procurementFormSchema),
     defaultValues: {
       type: "inventory",
       title: "",

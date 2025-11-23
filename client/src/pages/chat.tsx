@@ -90,32 +90,32 @@ type Branch = {
   name: string;
 };
 
-const createChannelSchema = z.object({
-  name: z.string().min(2).max(50).regex(/^#[a-z0-9-]+$/, "Channel name must start with # and contain only lowercase letters, numbers, and hyphens"),
-  scope: z.enum(['branch', 'restaurant']),
-  branchId: z.string().optional(),
-}).refine(
-  (data) => {
-    if (data.scope === 'branch') {
-      return data.branchId !== undefined && data.branchId !== '';
-    }
-    return true;
-  },
-  {
-    message: "Branch is required for branch-scoped channels",
-    path: ["branchId"],
-  }
-);
-
-const createDMSchema = z.object({
-  userId: z.string().min(1, "Please select a user"),
-});
-
 export default function Chat() {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { currentBranch } = useBranch();
   const { toast } = useToast();
+  
+  const createChannelSchema = z.object({
+    name: z.string().min(2).max(50).regex(/^#[a-z0-9-]+$/, t.channelNameInvalidFormat),
+    scope: z.enum(['branch', 'restaurant']),
+    branchId: z.string().optional(),
+  }).refine(
+    (data) => {
+      if (data.scope === 'branch') {
+        return data.branchId !== undefined && data.branchId !== '';
+      }
+      return true;
+    },
+    {
+      message: t.branchRequiredForBranchScope,
+      path: ["branchId"],
+    }
+  );
+  
+  const createDMSchema = z.object({
+    userId: z.string().min(1, t.pleaseSelectUser),
+  });
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messageContent, setMessageContent] = useState("");
   const [searchQuery, setSearchQuery] = useState("");

@@ -45,30 +45,13 @@ interface DeliveryApp {
   createdAt: string;
 }
 
-const subsidyTierSchema = z.object({
-  minAmount: z.coerce.number().min(0, "Minimum amount must be 0 or higher"),
-  maxAmount: z.preprocess(
-    (val) => val === '' || val === null || val === undefined ? null : val,
-    z.coerce.number().nullable()
-  ),
-  subsidy: z.coerce.number().min(0, "Subsidy must be 0 or higher"),
-}).refine(
-  (data) => data.maxAmount === null || data.maxAmount > data.minAmount,
-  {
-    message: "Maximum amount must be greater than minimum amount",
-    path: ["maxAmount"],
-  }
-);
-
-const deliveryAppFormSchema = z.object({
-  name: z.string().min(1, "Delivery app name is required"),
-  commission: z.coerce.number().min(0, "Commission must be 0 or higher").max(100, "Commission cannot exceed 100%"),
-  bankingFees: z.coerce.number().min(0, "Banking fees must be 0 or higher").max(100, "Banking fees cannot exceed 100%"),
-  subsidyTiers: z.array(subsidyTierSchema).max(3, "Maximum 3 subsidy tiers allowed").default([]),
-  posFees: z.coerce.number().min(0, "POS fees must be 0 or higher").default(0),
-});
-
-type DeliveryAppFormValues = z.infer<typeof deliveryAppFormSchema>;
+type DeliveryAppFormValues = {
+  name: string;
+  commission: number;
+  bankingFees: number;
+  subsidyTiers: Array<{ minAmount: number; maxAmount: number | null; subsidy: number }>;
+  posFees: number;
+};
 
 interface SortableDeliveryAppCardProps {
   app: DeliveryApp;
@@ -228,6 +211,29 @@ export default function DeliveryApps() {
   const [testOrderAmount, setTestOrderAmount] = useState(100);
   const { toast } = useToast();
   const { t } = useLanguage();
+
+  const subsidyTierSchema = z.object({
+    minAmount: z.coerce.number().min(0, t.minAmountMustBeZeroOrHigher),
+    maxAmount: z.preprocess(
+      (val) => val === '' || val === null || val === undefined ? null : val,
+      z.coerce.number().nullable()
+    ),
+    subsidy: z.coerce.number().min(0, "Subsidy must be 0 or higher"),
+  }).refine(
+    (data) => data.maxAmount === null || data.maxAmount > data.minAmount,
+    {
+      message: t.maxAmountMustBeGreaterThanMin,
+      path: ["maxAmount"],
+    }
+  );
+
+  const deliveryAppFormSchema = z.object({
+    name: z.string().min(1, t.deliveryAppNameRequired),
+    commission: z.coerce.number().min(0, "Commission must be 0 or higher").max(100, "Commission cannot exceed 100%"),
+    bankingFees: z.coerce.number().min(0, "Banking fees must be 0 or higher").max(100, "Banking fees cannot exceed 100%"),
+    subsidyTiers: z.array(subsidyTierSchema).max(3, "Maximum 3 subsidy tiers allowed").default([]),
+    posFees: z.coerce.number().min(0, "POS fees must be 0 or higher").default(0),
+  });
 
   const form = useForm<DeliveryAppFormValues>({
     resolver: zodResolver(deliveryAppFormSchema),

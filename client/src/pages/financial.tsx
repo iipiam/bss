@@ -107,7 +107,7 @@ export default function Financial() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast({
-        title: "Export successful",
+        title: t.exportSuccessful,
         description: "Financial data exported to Excel",
       });
     } catch (error) {
@@ -136,7 +136,7 @@ export default function Financial() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast({
-        title: "PDF export successful",
+        title: t.pdfExportSuccessful,
         description: "Financial statement exported to PDF",
       });
     } catch (error) {
@@ -165,12 +165,12 @@ export default function Financial() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast({
-        title: "Download successful",
+        title: t.downloadSuccessful,
         description: `Invoice ${invoiceNumber} downloaded`,
       });
     } catch (error) {
       toast({
-        title: "Download failed",
+        title: t.downloadFailed,
         description: error instanceof Error ? error.message : "Failed to download invoice",
         variant: "destructive",
       });

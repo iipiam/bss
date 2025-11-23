@@ -36,12 +36,10 @@ interface Order {
   customerPhone?: string;
 }
 
-const customerFormSchema = z.object({
-  name: z.string().min(1, "Customer name is required"),
-  phone: z.string().min(1, "Phone number is required"),
-});
-
-type CustomerFormValues = z.infer<typeof customerFormSchema>;
+type CustomerFormValues = {
+  name: string;
+  phone: string;
+};
 
 export default function Customers() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -51,6 +49,11 @@ export default function Customers() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const layout = useDeviceLayout();
+
+  const customerFormSchema = z.object({
+    name: z.string().min(1, t.customerNameRequired),
+    phone: z.string().min(1, t.phoneNumberRequired),
+  });
 
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerFormSchema),
@@ -196,7 +199,7 @@ export default function Customers() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast({
-        title: "Export successful",
+        title: t.exportSuccessful,
         description: "Customer data exported to Excel",
       });
     } catch (error) {

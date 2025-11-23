@@ -338,7 +338,7 @@ export default function Menu() {
     } catch (error) {
       console.error('Image upload error:', error);
       toast({
-        title: "Image upload failed",
+        title: t.imageUploadFailed,
         description: "Could not upload image. Please try again.",
         variant: "destructive",
       });
@@ -435,7 +435,7 @@ export default function Menu() {
       });
     } catch (error) {
       toast({
-        title: "Download failed",
+        title: t.downloadFailed,
         description: error instanceof Error ? error.message : "Failed to download template",
         variant: "destructive",
       });
@@ -459,12 +459,12 @@ export default function Menu() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast({
-        title: "Export successful",
+        title: t.exportSuccessful,
         description: "Menu data exported to Excel",
       });
     } catch (error) {
       toast({
-        title: "Export failed",
+        title: t.exportFailed,
         description: error instanceof Error ? error.message : "Failed to export menu data",
         variant: "destructive",
       });
@@ -493,12 +493,12 @@ export default function Menu() {
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
-        title: "Import successful",
+        title: t.importSuccessful,
         description: result.message || "Menu data imported from Excel",
       });
     } catch (error) {
       toast({
-        title: "Import failed",
+        title: t.importFailed,
         description: error instanceof Error ? error.message : "Failed to import menu data",
         variant: "destructive",
       });

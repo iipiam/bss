@@ -108,32 +108,33 @@ const formSchema = insertInventoryItemSchema.extend({
   price: z.coerce.number().min(0, "Price must be zero or positive"),
 });
 
-// Addon form schema (input) - before transformation
-const addonFormSchemaInput = z.object({
-  name: z.string().min(1, "Name is required"),
-  category: z.string().min(1, "Category is required"),
-  price: z.coerce.number().positive("Price must be a positive number"),
-  available: z.boolean().default(true),
-  menuItemIds: z.array(z.string()).nullable().optional(),
-});
+// Helper to create addon form schema with translations
+const createAddonFormSchema = (t: any) => {
+  const addonFormSchemaInput = z.object({
+    name: z.string().min(1, t.nameRequired),
+    category: z.string().min(1, t.categoryRequired),
+    price: z.coerce.number().positive("Price must be a positive number"),
+    available: z.boolean().default(true),
+    menuItemIds: z.array(z.string()).nullable().optional(),
+  });
 
-// Addon form schema with VAT auto-calculation (output) - after transformation
-const addonFormSchema = addonFormSchemaInput.transform((data) => {
-  // Calculate VAT (15% Saudi VAT)
-  const price = data.price;
-  const basePrice = price / 1.15;
-  const vatAmount = price - basePrice;
-  
-  // Convert empty array to null (meaning "All items")
-  const menuItemIds = data.menuItemIds && data.menuItemIds.length > 0 ? data.menuItemIds : null;
-  
-  return {
-    ...data,
-    basePrice: basePrice.toFixed(2),
-    vatAmount: vatAmount.toFixed(2),
-    menuItemIds,
-  };
-});
+  return addonFormSchemaInput.transform((data) => {
+    // Calculate VAT (15% Saudi VAT)
+    const price = data.price;
+    const basePrice = price / 1.15;
+    const vatAmount = price - basePrice;
+    
+    // Convert empty array to null (meaning "All items")
+    const menuItemIds = data.menuItemIds && data.menuItemIds.length > 0 ? data.menuItemIds : null;
+    
+    return {
+      ...data,
+      basePrice: basePrice.toFixed(2),
+      vatAmount: vatAmount.toFixed(2),
+      menuItemIds,
+    };
+  });
+};
 
 interface SortableInventoryRowProps {
   item: InventoryItem;
@@ -413,7 +414,9 @@ export default function Inventory() {
     },
   });
 
-  const addonForm = useForm<z.infer<typeof addonFormSchemaInput>>({
+  const addonFormSchema = createAddonFormSchema(t);
+
+  const addonForm = useForm({
     resolver: zodResolver(addonFormSchema),
     defaultValues: {
       name: "",
@@ -470,7 +473,7 @@ export default function Inventory() {
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to update order",
+        title: t.failedToUpdateOrder,
         description: error.message || "Could not save new order",
         variant: "destructive",
       });
@@ -524,7 +527,7 @@ export default function Inventory() {
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to create item",
+        title: t.failedToCreateItem,
         description: error.message || "An error occurred while creating the inventory item",
         variant: "destructive",
       });
@@ -555,7 +558,7 @@ export default function Inventory() {
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to update item",
+        title: t.failedToUpdateItem,
         description: error.message || "An error occurred while updating the inventory item",
         variant: "destructive",
       });
@@ -593,7 +596,7 @@ export default function Inventory() {
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to create add-on",
+        title: t.failedToCreateAddon,
         description: error.message || "An error occurred while creating the add-on",
         variant: "destructive",
       });
@@ -614,7 +617,7 @@ export default function Inventory() {
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to update add-on",
+        title: t.failedToUpdateAddon,
         description: error.message || "An error occurred while updating the add-on",
         variant: "destructive",
       });
@@ -780,12 +783,12 @@ export default function Inventory() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast({
-        title: "Export successful",
+        title: t.exportSuccessful,
         description: "Inventory data exported to Excel",
       });
     } catch (error) {
       toast({
-        title: "Export failed",
+        title: t.exportFailed,
         description: error instanceof Error ? error.message : "Failed to export inventory data",
         variant: "destructive",
       });
@@ -814,7 +817,7 @@ export default function Inventory() {
       });
     } catch (error) {
       toast({
-        title: "Download failed",
+        title: t.downloadFailed,
         description: error instanceof Error ? error.message : "Failed to download template",
         variant: "destructive",
       });
@@ -843,12 +846,12 @@ export default function Inventory() {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
-        title: "Import successful",
+        title: t.importSuccessful,
         description: result.message || "Inventory data imported from Excel",
       });
     } catch (error) {
       toast({
-        title: "Import failed",
+        title: t.importFailed,
         description: error instanceof Error ? error.message : "Failed to import inventory data",
         variant: "destructive",
       });

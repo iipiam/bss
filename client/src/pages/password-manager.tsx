@@ -38,13 +38,13 @@ export default function PasswordManager() {
       setNewPassword("");
       setConfirmPassword("");
       toast({
-        title: "Password Reset Successful",
+        title: t.passwordResetSuccessful,
         description: `Password has been reset for ${selectedUser?.fullName}`,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Reset Password",
+        title: t.failedToResetPassword,
         description: error.message || "An error occurred while resetting the password",
         variant: "destructive",
       });

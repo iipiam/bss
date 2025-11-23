@@ -6,9 +6,11 @@ import { Store, ShoppingBag, Truck, TrendingUp, DollarSign, Download, FileSpread
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
 import { exportToPDF, exportToExcel } from "@/lib/exportUtils";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function SalesComparison() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const { data, isLoading } = useQuery<any>({
     queryKey: ["/api/analytics/sales-comparison"],
   });
@@ -57,9 +59,9 @@ export default function SalesComparison() {
     });
 
     if (result.success) {
-      toast({ title: "PDF exported successfully" });
+      toast({ title: t.pdfExportSuccessful });
     } else {
-      toast({ title: "Failed to export PDF", variant: "destructive" });
+      toast({ title: t.failedToExportPDF, variant: "destructive" });
     }
   };
 
@@ -96,9 +98,9 @@ export default function SalesComparison() {
     const result = exportToExcel("Sales Comparison Analysis", exportData);
 
     if (result.success) {
-      toast({ title: "Excel exported successfully" });
+      toast({ title: t.excelExportSuccessful });
     } else {
-      toast({ title: "Failed to export Excel", variant: "destructive" });
+      toast({ title: t.failedToExportExcel, variant: "destructive" });
     }
   };
 

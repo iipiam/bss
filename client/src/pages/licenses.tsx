@@ -34,20 +34,17 @@ const licenseTypes = {
   custom: { label: "Other License", icon: FileText },
 };
 
-// Form schema for creating/editing licenses
-const licenseFormSchema = z.object({
-  licenseType: z.enum(["trade", "health", "fire_safety", "municipal", "vat", "food_safety", "environmental", "labor", "custom"]),
-  licenseNumber: z.string().min(1, "License number is required"),
-  licenseName: z.string().min(1, "License name is required"),
-  issuingAuthority: z.string().min(1, "Issuing authority is required"),
-  issueDate: z.string().min(1, "Issue date is required"),
-  expiryDate: z.string().min(1, "Expiry date is required"),
-  renewalReminderDays: z.coerce.number().min(1).max(365).default(30),
-  documentUrl: z.string().optional(),
-  notes: z.string().optional(),
-});
-
-type LicenseFormData = z.infer<typeof licenseFormSchema>;
+type LicenseFormData = {
+  licenseType: "trade" | "health" | "fire_safety" | "municipal" | "vat" | "food_safety" | "environmental" | "labor" | "custom";
+  licenseNumber: string;
+  licenseName: string;
+  issuingAuthority: string;
+  issueDate: string;
+  expiryDate: string;
+  renewalReminderDays: number;
+  documentUrl?: string;
+  notes?: string;
+};
 
 export default function Licenses() {
   const { t } = useLanguage();
@@ -60,6 +57,19 @@ export default function Licenses() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const businessType = restaurant?.businessType || 'restaurant';
+
+  // Form schema for creating/editing licenses
+  const licenseFormSchema = z.object({
+    licenseType: z.enum(["trade", "health", "fire_safety", "municipal", "vat", "food_safety", "environmental", "labor", "custom"]),
+    licenseNumber: z.string().min(1, t.licenseNumberRequired),
+    licenseName: z.string().min(1, t.licenseNameRequired),
+    issuingAuthority: z.string().min(1, t.issuingAuthorityRequired),
+    issueDate: z.string().min(1, t.issueDateRequired),
+    expiryDate: z.string().min(1, t.expiryDateRequired),
+    renewalReminderDays: z.coerce.number().min(1).max(365).default(30),
+    documentUrl: z.string().optional(),
+    notes: z.string().optional(),
+  });
 
   // Fetch licenses
   const { data: licenses = [], isLoading } = useQuery<License[]>({
@@ -102,7 +112,7 @@ export default function Licenses() {
       queryClient.invalidateQueries({ queryKey: ["/api/licenses"] });
       queryClient.invalidateQueries({ queryKey: ["/api/licenses/expiring"] });
       toast({
-        title: "Success",
+        title: t.success,
         description: "License created successfully",
       });
       setIsDialogOpen(false);
@@ -110,7 +120,7 @@ export default function Licenses() {
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
+        title: t.error,
         description: error.message || "Failed to create license",
         variant: "destructive",
       });
@@ -127,7 +137,7 @@ export default function Licenses() {
       queryClient.invalidateQueries({ queryKey: ["/api/licenses"] });
       queryClient.invalidateQueries({ queryKey: ["/api/licenses/expiring"] });
       toast({
-        title: "Success",
+        title: t.success,
         description: "License updated successfully",
       });
       setIsDialogOpen(false);
@@ -136,7 +146,7 @@ export default function Licenses() {
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
+        title: t.error,
         description: error.message || "Failed to update license",
         variant: "destructive",
       });
@@ -153,14 +163,14 @@ export default function Licenses() {
       queryClient.invalidateQueries({ queryKey: ["/api/licenses"] });
       queryClient.invalidateQueries({ queryKey: ["/api/licenses/expiring"] });
       toast({
-        title: "Success",
+        title: t.success,
         description: "License deleted successfully",
       });
       setDeletingLicense(null);
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
+        title: t.error,
         description: error.message || "Failed to delete license",
         variant: "destructive",
       });
