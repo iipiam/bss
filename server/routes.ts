@@ -54,7 +54,7 @@ let wsClients: Set<WSClient> | null = null;
 
 // Unified broadcast function with restaurant filtering
 export function broadcastNotification(event: {
-  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message';
+  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated';
   restaurantId: string;
   // Order fields
   orderId?: string;
@@ -1507,6 +1507,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
       const { restaurantId: _, ...safeData } = data;
       const settings = await storage.updateSettings(restaurantId, safeData);
+      
+      // Broadcast settings update to all connected clients in this restaurant
+      broadcastNotification({
+        type: 'settings:updated',
+        restaurantId,
+      });
+      
       res.json(settings);
     } catch (error) {
       res.status(400).json({ error: "Invalid settings data" });
@@ -3940,6 +3947,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       
       const data = schema.parse(req.body);
       await storage.updateChatNotificationDefaults(restaurantId, data);
+      
+      // Broadcast settings update to all connected clients in this restaurant
+      broadcastNotification({
+        type: 'settings:updated',
+        restaurantId,
+      });
       
       // Return updated settings
       const updated = await storage.getChatNotificationDefaults(restaurantId);

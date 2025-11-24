@@ -18,13 +18,15 @@ import { notificationTones, toneIds, playNotificationTone, getToneName, type Ton
 export default function SettingsPage() {
   const { toast } = useToast();
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { restaurant, isLoading: authLoading } = useAuth();
   const [formData, setFormData] = useState<Partial<Settings>>({});
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: settings, isLoading } = useQuery<Settings>({
     queryKey: ["/api/settings"],
-    enabled: !!user,
+    enabled: !authLoading && !!restaurant, // Only fetch for accounts with restaurant context
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
@@ -139,6 +141,44 @@ export default function SettingsPage() {
   const handleRemoveLogo = () => {
     removeLogoMutation.mutate();
   };
+
+  if (authLoading) {
+    return (
+      <div className="p-8">
+        <h1 className="text-3xl font-bold mb-2">{t.settings}</h1>
+        <p className="text-muted-foreground">{t.loading}</p>
+      </div>
+    );
+  }
+
+  // IT accounts don't have restaurant context, show limited settings
+  if (!restaurant) {
+    return (
+      <div className="p-8 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">{t.settings}</h1>
+          <p className="text-muted-foreground">IT Account Settings</p>
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>IT Account</CardTitle>
+            <CardDescription>
+              IT accounts don't have restaurant-specific settings. These settings are managed per restaurant.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              To configure restaurant settings, please log in with a client account.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Device preference can still be shown for IT accounts */}
+        <DevicePreferenceSection />
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -549,14 +589,16 @@ function DevicePreferenceSection() {
 }
 
 function NotificationToneSection() {
-  const { user } = useAuth();
+  const { user, restaurant, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const { t } = useLanguage();
   const [selectedTone, setSelectedTone] = useState<ToneId>('tone1');
 
   const { data: settings, isLoading } = useQuery<Settings>({
     queryKey: ["/api/settings"],
-    enabled: !!user,
+    enabled: !authLoading && !!restaurant, // Only fetch for accounts with restaurant context
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
@@ -679,7 +721,7 @@ function NotificationToneSection() {
 }
 
 function ChatNotificationSection() {
-  const { user } = useAuth();
+  const { user, restaurant, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const { t } = useLanguage();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -692,6 +734,9 @@ function ChatNotificationSection() {
     toneId: string;
   }>({
     queryKey: ["/api/chat/notification-settings"],
+    enabled: !authLoading && !!restaurant, // Only fetch for accounts with restaurant context
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {

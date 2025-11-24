@@ -48,7 +48,12 @@ interface TicketNotification {
   };
 }
 
-type Notification = OrderNotification | ChatNotification | TicketNotification;
+interface SettingsNotification {
+  type: 'settings:updated';
+  restaurantId: string;
+}
+
+type Notification = OrderNotification | ChatNotification | TicketNotification | SettingsNotification;
 
 interface NotificationContextType {
   isConnected: boolean;
@@ -61,7 +66,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, restaurant, isLoading: authLoading } = useAuth();
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -73,23 +78,30 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   // Store latest tone in ref so WebSocket handler always uses current value
   const currentToneRef = useRef<ToneId>('tone1');
 
-  // Fetch settings to get selected notification tone (refetches every 5s to get admin updates)
-  // Only query when authenticated to prevent 401 errors
+  // Fetch settings to get selected notification tone
+  // Only for client accounts with restaurant context (restaurantId present)
+  // Will be refreshed via WebSocket events when admin updates settings
   const { data: settings } = useQuery<{ notificationTone: ToneId }>({
     queryKey: ['/api/settings'],
-    enabled: notificationsEnabled && !!user,
-    refetchInterval: 5000, // Refresh every 5 seconds so sub-accounts get admin's tone updates immediately
+    enabled: !authLoading && !!restaurant,
+    staleTime: 60000, // Consider fresh for 1 minute
+    refetchOnWindowFocus: false,
+    retry: false,
   });
 
-  // Fetch chat notification settings (refetches every 5s to get admin updates)
+  // Fetch chat notification settings
+  // Only for client accounts with restaurant context (restaurantId present)
+  // Will be refreshed via WebSocket events when admin updates settings
   const { data: chatSettings } = useQuery<{
     notificationsEnabled: boolean;
     soundEnabled: boolean;
     toneId: string;
   }>({
     queryKey: ['/api/chat/notification-settings'],
-    enabled: !!user,
-    refetchInterval: 5000, // Refresh every 5 seconds so all users get admin's updates immediately
+    enabled: !authLoading && !!restaurant,
+    staleTime: 60000, // Consider fresh for 1 minute
+    refetchOnWindowFocus: false,
+    retry: false,
   });
 
   // Update tone ref whenever settings change
@@ -242,6 +254,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               description,
               duration: 5000,
             });
+          } else if (notification.type === 'settings:updated') {
+            // Handle settings updates from admin
+            // Only invalidate for users with restaurant context (skip for IT accounts)
+            if (restaurant) {
+              queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/chat/notification-settings'] });
+              console.log('[Notifications] Settings updated - refreshing from server');
+            }
           }
         } catch (err) {
           console.error('[Notifications] Failed to parse message:', err);
