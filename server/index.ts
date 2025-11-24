@@ -1,9 +1,20 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+import { pool } from "./db";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+const PgStore = connectPgSimple(session);
+
+// Trust proxy for secure cookies behind Replit's HTTPS reverse proxy
+app.set('trust proxy', 1);
+
+// Warn if using default SESSION_SECRET in production
+if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+  console.warn('⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.');
+}
 
 declare module 'express-session' {
   interface SessionData {
@@ -26,8 +37,13 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: false }));
 
-// Session middleware
+// Session middleware with PostgreSQL store
 export const sessionParser = session({
+  store: new PgStore({
+    pool: pool,
+    tableName: 'session',
+    createTableIfMissing: true,
+  }),
   secret: process.env.SESSION_SECRET || 'resto-pos-secret-key-change-in-production',
   resave: false,
   saveUninitialized: false,

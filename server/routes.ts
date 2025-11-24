@@ -2064,7 +2064,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       console.log("[AUTH] Login successful");
       res.json({ user: userWithoutPassword, restaurant, accountType: validAccountType });
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("[AUTH] Login error - Full details:", error);
+      console.error("[AUTH] Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+      console.error("[AUTH] Error message:", error instanceof Error ? error.message : String(error));
       res.status(500).json({ error: "Login failed" });
     }
   });
