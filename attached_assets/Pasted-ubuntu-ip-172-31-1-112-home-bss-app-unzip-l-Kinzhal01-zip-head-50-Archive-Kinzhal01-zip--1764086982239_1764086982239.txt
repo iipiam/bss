@@ -1,0 +1,98 @@
+ubuntu@ip-172-31-1-112:/home/bss-app$ unzip -l Kinzhal01.zip | head -50
+Archive:  Kinzhal01.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2025-11-11 01:44   Kinzhal/.config/
+        0  2025-11-08 04:23   Kinzhal/.config/chromium/
+        0  2025-11-08 04:23   Kinzhal/.config/chromium/Crash Reports/
+        0  2025-11-08 04:23   Kinzhal/.config/chromium/Crash Reports/attachments/
+        0  2025-11-08 04:23   Kinzhal/.config/chromium/Crash Reports/completed/
+        0  2025-11-22 14:04   Kinzhal/.config/chromium/Crash Reports/new/
+        0  2025-11-24 16:52   Kinzhal/.config/chromium/Crash Reports/pending/
+   814112  2025-11-21 12:14   Kinzhal/.config/chromium/Crash Reports/pending/09cfb5e3-8550-45ca-af75-166b3f9e29ce.dmp
+       32  2025-11-21 12:14   Kinzhal/.config/chromium/Crash Reports/pending/09cfb5e3-8550-45ca-af75-166b3f9e29ce.meta
+   758672  2025-11-22 13:42   Kinzhal/.config/chromium/Crash Reports/pending/12dab0d9-8a35-44b3-a560-76950807761c.dmp
+       32  2025-11-22 13:42   Kinzhal/.config/chromium/Crash Reports/pending/12dab0d9-8a35-44b3-a560-76950807761c.meta
+   632960  2025-11-11 00:41   Kinzhal/.config/chromium/Crash Reports/pending/23999614-d81c-40b8-9ea9-e22c5c2695f4.dmp
+       32  2025-11-11 00:41   Kinzhal/.config/chromium/Crash Reports/pending/23999614-d81c-40b8-9ea9-e22c5c2695f4.meta
+   657712  2025-11-22 13:39   Kinzhal/.config/chromium/Crash Reports/pending/6f4feb83-971a-466e-b074-897e360ff502.dmp
+       32  2025-11-22 13:39   Kinzhal/.config/chromium/Crash Reports/pending/6f4feb83-971a-466e-b074-897e360ff502.meta
+   728432  2025-11-22 14:04   Kinzhal/.config/chromium/Crash Reports/pending/783cdca4-e05d-4ddf-897e-d43c053643ea.dmp
+       32  2025-11-22 14:04   Kinzhal/.config/chromium/Crash Reports/pending/783cdca4-e05d-4ddf-897e-d43c053643ea.meta
+   694752  2025-11-21 15:52   Kinzhal/.config/chromium/Crash Reports/pending/8d0536d4-aacd-4e54-a6d7-14d24ea6f6b9.dmp
+       32  2025-11-21 15:52   Kinzhal/.config/chromium/Crash Reports/pending/8d0536d4-aacd-4e54-a6d7-14d24ea6f6b9.meta
+   817120  2025-11-20 14:17   Kinzhal/.config/chromium/Crash Reports/pending/ca690ccd-4da4-4c00-a968-4c350c202fd5.dmp
+       32  2025-11-20 14:17   Kinzhal/.config/chromium/Crash Reports/pending/ca690ccd-4da4-4c00-a968-4c350c202fd5.meta
+       40  2025-11-24 16:42   Kinzhal/.config/chromium/Crash Reports/settings.dat
+        0  2025-11-08 04:23   Kinzhal/.config/glib-2.0/
+        0  2025-11-08 04:23   Kinzhal/.config/glib-2.0/settings/
+        0  2025-11-03 21:19   Kinzhal/.config/google-chrome-for-testing/
+        0  2025-11-03 21:19   Kinzhal/.config/google-chrome-for-testing/Crash Reports/
+        0  2025-11-03 21:19   Kinzhal/.config/google-chrome-for-testing/Crash Reports/attachments/
+        0  2025-11-03 21:19   Kinzhal/.config/google-chrome-for-testing/Crash Reports/completed/
+        0  2025-11-03 21:19   Kinzhal/.config/google-chrome-for-testing/Crash Reports/new/
+        0  2025-11-03 21:19   Kinzhal/.config/google-chrome-for-testing/Crash Reports/pending/
+       40  2025-11-03 23:13   Kinzhal/.config/google-chrome-for-testing/Crash Reports/settings.dat
+        0  2025-11-06 15:42   Kinzhal/.config/npm/
+        0  2025-11-06 15:42   Kinzhal/.config/npm/node_global/
+        0  2025-11-06 15:42   Kinzhal/.config/npm/node_global/lib/
+        0  2025-11-24 16:42   Kinzhal/.config/pulse/
+      256  2025-11-08 04:23   Kinzhal/.config/pulse/cookie
+        0  2025-11-11 01:44   Kinzhal/.config/replit/
+        0  2025-11-11 01:44   Kinzhal/.config/replit/.semgrep/
+  1778390  2025-11-11 01:44   Kinzhal/.config/replit/.semgrep/semgrep_rules.json
+        0  2025-11-25 15:33   Kinzhal/.git/
+      495  2025-11-25 15:32   Kinzhal/.git/COMMIT_EDITMSG
+       21  2025-11-02 03:47   Kinzhal/.git/HEAD
+       41  2025-11-12 02:16   Kinzhal/.git/ORIG_HEAD
+      335  2025-11-25 14:01   Kinzhal/.git/config
+       73  2025-11-02 03:47   Kinzhal/.git/description
+        0  2025-11-02 03:47   Kinzhal/.git/hooks/
+      535  2025-11-02 03:47   Kinzhal/.git/hooks/applypatch-msg.sample
+ubuntu@ip-172-31-1-112:/home/bss-app$ ls -la
+total 456120
+drwxr-xr-x  4 ubuntu ubuntu      4096 Nov 25 15:40 .
+drwxr-xr-x  4 root   root        4096 Nov 25 15:03 ..
+-rw-rw-r--  1 ubuntu ubuntu       696 Nov 25 15:03 .env
+drwxrwxr-x  8 ubuntu ubuntu      4096 Nov 25 15:03 .git
+-rw-rw-r--  1 ubuntu ubuntu        67 Nov 25 15:03 .gitignore
+-rw-rw-r--  1 ubuntu ubuntu      1850 Nov 25 15:03 .replit
+-rw-rw-r--  1 ubuntu ubuntu     19482 Nov 25 15:03 AWS_DEPLOYMENT_GUIDE.md
+-rw-rw-r--  1 ubuntu ubuntu      2572 Nov 25 15:03 CREDENTIALS.md
+-rw-rw-r--  1 ubuntu ubuntu      7385 Nov 25 15:03 EMERGENCY_ADMIN_RESET.md
+drwxrwxrwx 17 ubuntu ubuntu      4096 Nov 25 16:00 Kinzhal
+-rw-rw-r--  1 ubuntu ubuntu 233213262 Nov 25 15:35 Kinzhal01.zip
+-rw-rw-r--  1 ubuntu ubuntu      2749 Nov 25 15:03 PRODUCTION_LOGIN_FIX.md
+-rw-rw-r--  1 ubuntu ubuntu        39 Nov 25 15:03 README.md
+-rw-rw-r--  1 ubuntu ubuntu    155909 Nov 25 15:03 after_login.png
+-rw-rw-r--  1 ubuntu ubuntu    165408 Nov 25 15:03 aws-rds-ca-bundle.pem
+-rw-rw-r--  1 ubuntu ubuntu 231449201 Nov 25 15:10 bss-project.zip
+-rw-rw-r--  1 ubuntu ubuntu       459 Nov 25 15:03 components.json
+-rw-rw-r--  1 ubuntu ubuntu    113325 Nov 25 15:03 dashboard_with_logos.png
+-rw-rw-r--  1 ubuntu ubuntu      7676 Nov 25 15:03 design_guidelines.md
+-rw-rw-r--  1 ubuntu ubuntu       325 Nov 25 15:03 drizzle.config.ts
+-rw-rw-r--  1 ubuntu ubuntu      1588 Nov 25 15:03 execute-migration-sql.ts
+-rw-rw-r--  1 ubuntu ubuntu     21471 Nov 25 15:03 footer.png
+-rw-rw-r--  1 ubuntu ubuntu         0 Nov 25 15:03 legal
+-rw-rw-r--  1 ubuntu ubuntu    496307 Nov 25 15:03 login_full.png
+-rw-rw-r--  1 ubuntu ubuntu    477641 Nov 25 15:03 login_page.png
+-rw-rw-r--  1 ubuntu ubuntu      4254 Nov 25 15:03 login_page_current.png
+-rw-rw-r--  1 ubuntu ubuntu      2180 Nov 25 15:03 manual-migrate.mjs
+-rw-rw-r--  1 ubuntu ubuntu       862 Nov 25 15:03 migrate-aws.ts
+-rw-rw-r--  1 ubuntu ubuntu         0 Nov 25 15:03 nwcdtr
+-rw-rw-r--  1 ubuntu ubuntu    470833 Nov 25 15:03 package-lock.json
+-rw-rw-r--  1 ubuntu ubuntu      4109 Nov 25 15:03 package.json
+-rw-rw-r--  1 ubuntu ubuntu     96075 Nov 25 15:03 performance_page_full.png
+-rw-rw-r--  1 ubuntu ubuntu        80 Nov 25 15:03 postcss.config.js
+-rw-rw-r--  1 ubuntu ubuntu      5084 Nov 25 15:03 replit.md
+-rw-rw-r--  1 ubuntu ubuntu      3380 Nov 25 15:03 reset-admin-password.cjs
+-rw-rw-r--  1 ubuntu ubuntu     92233 Nov 25 15:03 restopos-complete-demo.html
+-rw-rw-r--  1 ubuntu ubuntu     60111 Nov 25 15:03 restopos-demo.html
+-rw-rw-r--  1 ubuntu ubuntu     64939 Nov 25 15:03 setup_page_logos.png
+-rw-rw-r--  1 ubuntu ubuntu      4050 Nov 25 15:03 tailwind.config.ts
+-rw-rw-r--  1 ubuntu ubuntu      1067 Nov 25 15:03 test-aws-connection.ts
+-rw-rw-r--  1 ubuntu ubuntu       666 Nov 25 15:03 test-db-connection.mjs
+-rw-rw-r--  1 ubuntu ubuntu      1150 Nov 25 15:03 test-db-postgres.mjs
+-rw-rw-r--  1 ubuntu ubuntu      1074 Nov 25 15:03 test-db-ssl.mjs
+-rw-rw-r--  1 ubuntu ubuntu       742 Nov 25 15:03 tsconfig.json
+-rw-rw-r--  1 ubuntu ubuntu      1080 Nov 25 15:03 vite.config.ts
