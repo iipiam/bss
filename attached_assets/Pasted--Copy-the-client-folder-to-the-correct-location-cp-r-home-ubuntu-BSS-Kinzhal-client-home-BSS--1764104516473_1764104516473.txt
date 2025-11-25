@@ -1,0 +1,58 @@
+ Copy the client folder to the correct location
+cp -r /home/ubuntu/BSS/Kinzhal/client /home/BSS/
+
+# Verify it's there
+ls -la /home/BSS/client/
+
+# Now build and start
+cd /home/BSS
+npm install --legacy-peer-deps
+npm run build
+pm2 start dist/index.js --name BSS
+pm2 status
+total 24
+drwxrwxr-x 4 ubuntu ubuntu 4096 Nov 25 21:01 .
+drwxr-xr-x 9 ubuntu ubuntu 4096 Nov 25 21:01 ..
+-rw-rw-r-- 1 ubuntu ubuntu  875 Nov 25 21:01 index.html
+drwxrwxr-x 2 ubuntu ubuntu 4096 Nov 25 21:01 public
+drwxrwxr-x 9 ubuntu ubuntu 4096 Nov 25 21:01 src
+-rw-rw-r-- 1 ubuntu ubuntu  185 Nov 25 21:01 vite-env.d.ts
+
+up to date, audited 789 packages in 2s
+
+79 packages are looking for funding
+  run `npm fund` for details
+
+11 vulnerabilities (7 moderate, 2 high, 2 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.2.2 building client environment for production...
+✓ 34 modules transformed.
+✗ Build failed in 1.19s
+error during build:
+[vite:asset] Could not load /home/BSS/attached_assets/kinzhal-eagle-logo.jpeg (imported by client/src/App.tsx): ENOENT: no such file or directory, open '/home/BSS/attached_assets/kinzhal-eagle-logo.jpeg'
+    at async open (node:internal/fs/promises:639:25)
+    at async Object.readFile (node:internal/fs/promises:1246:14)
+    at async fileToBuiltUrl (file:///home/BSS/node_modules/vite/dist/node/chunks/config.js:8992:18)
+    at async Object.handler (file:///home/BSS/node_modules/vite/dist/node/chunks/config.js:8886:17)
+    at async PluginDriver.hookFirstAndGetPlugin (file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:22319:28)
+    at async file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:21319:33
+    at async Queue.work (file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:22547:32)
+[PM2][ERROR] Script not found: /home/BSS/dist/index.js
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+ubuntu@ip-172-31-1-112:/home/BSS$
