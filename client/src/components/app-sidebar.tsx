@@ -149,15 +149,13 @@ export function AppSidebar() {
   // Filter menu items based on both permissions and business type
   const filterMenuItems = (items: MenuItem[]) => 
     items.filter(item => {
-      // IT accounts can access IT Dashboard, Performance, and Settings (but NOT Kitchen)
+      // IT accounts can ONLY access IT Dashboard (restricted access)
       if (accountType === 'it') {
-        return item.testId === 'it-dashboard' || 
-               item.testId === 'performance' ||
-               item.testId === 'settings';
+        return item.testId === 'it-dashboard';
       }
       
-      // Client accounts cannot see IT Dashboard or Performance (IT-only pages)
-      if (item.testId === 'it-dashboard' || item.testId === 'performance') {
+      // Client accounts cannot see IT Dashboard (IT-only page)
+      if (item.testId === 'it-dashboard') {
         return false;
       }
       

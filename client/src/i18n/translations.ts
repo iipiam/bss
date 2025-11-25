@@ -4767,7 +4767,6 @@ export const translations: Record<Language, Translations> = {
     noInvoicesFound: 'No invoices found',
     noPDF: 'No PDF',
   },
-  },
   Chinese: {
     // Navigation
     dashboard: '仪表板',
@@ -5957,7 +5956,6 @@ export const translations: Record<Language, Translations> = {
     vat: 'VAT',
     noInvoicesFound: 'No invoices found',
     noPDF: 'No PDF',
-  },
   },
   Bengali: {
     // Navigation
@@ -7149,7 +7147,6 @@ export const translations: Record<Language, Translations> = {
     noInvoicesFound: 'No invoices found',
     noPDF: 'No PDF',
   },
-  },
   Italian: {
     // Navigation
     dashboard: 'Cruscotto',
@@ -8339,7 +8336,6 @@ export const translations: Record<Language, Translations> = {
     vat: 'VAT',
     noInvoicesFound: 'No invoices found',
     noPDF: 'No PDF',
-  },
   },
 
   Hindi: {
