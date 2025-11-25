@@ -5158,6 +5158,134 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // =====================================================
+  // IT ACCOUNT MANAGEMENT ROUTES (IT-only access)
+  // =====================================================
+
+  // Get all accounts for IT management (with optional password visibility)
+  app.get("/api/it/all-accounts", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      // Get all client accounts (non-IT accounts with restaurantId)
+      const allAccounts = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          fullName: users.fullName,
+          email: users.email,
+          phone: users.phone,
+          role: users.role,
+          active: users.active,
+          restaurantId: users.restaurantId,
+          restaurantName: restaurants.name,
+          businessType: restaurants.businessType,
+          lastLoginAt: users.lastLoginAt,
+          lastActivityAt: users.lastActivityAt,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .leftJoin(restaurants, eq(users.restaurantId, restaurants.id))
+        .where(isNotNull(users.restaurantId)) // Only client accounts (not IT)
+        .orderBy(desc(users.lastActivityAt));
+
+      res.json(allAccounts);
+    } catch (error) {
+      console.error("Error fetching all accounts:", error);
+      res.status(500).json({ error: "Failed to fetch accounts" });
+    }
+  });
+
+  // Get account password (IT-only, for viewing encrypted passwords)
+  app.get("/api/it/accounts/:id/password", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const [account] = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          password: users.password,
+        })
+        .from(users)
+        .where(eq(users.id, id));
+
+      if (!account) {
+        return res.status(404).json({ error: "Account not found" });
+      }
+
+      // Return the hashed password - IT can see it's encrypted
+      res.json({ 
+        id: account.id,
+        username: account.username,
+        hashedPassword: account.password,
+        note: "This is the bcrypt-hashed password. Use the change password feature to set a new password."
+      });
+    } catch (error) {
+      console.error("Error fetching account password:", error);
+      res.status(500).json({ error: "Failed to fetch account password" });
+    }
+  });
+
+  // Change account password (IT-only)
+  app.patch("/api/it/accounts/:id/password", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { newPassword } = req.body;
+
+      if (!newPassword || newPassword.length < 4) {
+        return res.status(400).json({ error: "Password must be at least 4 characters" });
+      }
+
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update the password
+      const [updatedUser] = await db
+        .update(users)
+        .set({ password: hashedPassword })
+        .where(eq(users.id, id))
+        .returning({ id: users.id, username: users.username });
+
+      if (!updatedUser) {
+        return res.status(404).json({ error: "Account not found" });
+      }
+
+      console.log(`[IT] Password changed for user ${updatedUser.username} by IT account`);
+      res.json({ success: true, message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Error changing account password:", error);
+      res.status(500).json({ error: "Failed to change password" });
+    }
+  });
+
+  // Enable/Disable account (IT-only)
+  app.patch("/api/it/accounts/:id/status", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { active } = req.body;
+
+      if (typeof active !== 'boolean') {
+        return res.status(400).json({ error: "Active status must be a boolean" });
+      }
+
+      // Update the active status
+      const [updatedUser] = await db
+        .update(users)
+        .set({ active })
+        .where(eq(users.id, id))
+        .returning({ id: users.id, username: users.username, active: users.active });
+
+      if (!updatedUser) {
+        return res.status(404).json({ error: "Account not found" });
+      }
+
+      console.log(`[IT] Account ${updatedUser.username} ${active ? 'enabled' : 'disabled'} by IT account`);
+      res.json({ success: true, user: updatedUser, message: `Account ${active ? 'enabled' : 'disabled'} successfully` });
+    } catch (error) {
+      console.error("Error updating account status:", error);
+      res.status(500).json({ error: "Failed to update account status" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Setup WebSocket server for real-time notifications on specific path to avoid conflicts with Vite HMR

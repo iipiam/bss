@@ -28,6 +28,7 @@ import {
   Key,
   UtensilsCrossed,
   FileKey,
+  UserCog,
 } from "lucide-react";
 import logoImage from "@assets/kinzhal-eagle-logo.jpeg";
 import {
@@ -141,6 +142,7 @@ export function AppSidebar() {
     { title: t.support || "Support", url: "/support", icon: HeadphonesIcon, testId: "support", gradient: "from-emerald-500 to-teal-500" },
     { title: t.itDashboard || "IT Dashboard", url: "/it-dashboard", icon: BarChart3, testId: "it-dashboard", gradient: "from-violet-500 to-purple-500" },
     { title: "Performance", url: "/performance", icon: TrendingUp, testId: "performance", gradient: "from-cyan-500 to-blue-500" },
+    { title: "Account Management", url: "/it-account-management", icon: UserCog, testId: "it-account-management", gradient: "from-orange-500 to-red-500" },
     { title: t.settings, url: "/settings", icon: Settings, testId: "settings", gradient: "from-slate-500 to-gray-500" },  // Admin-only via permission check in auth
     { title: t.employees, url: "/employees", icon: Users, testId: "employees", gradient: "from-sky-500 to-blue-500", permission: 'users' },
     { title: "Password Manager", url: "/password-manager", icon: Key, testId: "password-manager", gradient: "from-red-500 to-rose-500" },
@@ -149,13 +151,13 @@ export function AppSidebar() {
   // Filter menu items based on both permissions and business type
   const filterMenuItems = (items: MenuItem[]) => 
     items.filter(item => {
-      // IT accounts can access IT Dashboard and Performance only
+      // IT accounts can access IT Dashboard, Performance, and Account Management only
       if (accountType === 'it') {
-        return item.testId === 'it-dashboard' || item.testId === 'performance';
+        return item.testId === 'it-dashboard' || item.testId === 'performance' || item.testId === 'it-account-management';
       }
       
-      // Client accounts cannot see IT Dashboard (IT-only page)
-      if (item.testId === 'it-dashboard') {
+      // Client accounts cannot see IT Dashboard or Account Management (IT-only pages)
+      if (item.testId === 'it-dashboard' || item.testId === 'it-account-management') {
         return false;
       }
       
