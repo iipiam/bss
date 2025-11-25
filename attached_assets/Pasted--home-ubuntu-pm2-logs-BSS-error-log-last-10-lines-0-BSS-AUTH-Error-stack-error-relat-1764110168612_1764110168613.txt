@@ -1,0 +1,29 @@
+
+/home/ubuntu/.pm2/logs/BSS-error.log last 10 lines:
+0|BSS      | [AUTH] Error stack: error: relation "users" does not exist
+0|BSS      |     at /home/BSS/node_modules/pg-pool/index.js:45:11
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      |     at async file:///home/BSS/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|BSS      |     at async DatabaseStorage.getUserByUsername (file:///home/BSS/dist/index.js:3434:21)
+0|BSS      |     at async file:///home/BSS/dist/index.js:6909:21
+0|BSS      | [AUTH] Error message: relation "users" does not exist
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+
+/home/ubuntu/.pm2/logs/BSS-out.log last 10 lines:
+0|BSS      | ✅ Production mode: SSL enabled for AWS RDS
+0|BSS      | 10:32:40 PM [express] serving on port 5000
+0|BSS      | 10:33:48 PM [express] GET /api/auth/me 401 in 2ms :: {"error":"Not authenticated"}
+0|BSS      | 10:33:48 PM [express] GET /api/auth/check-first-run 304 in 71ms :: {"firstRun":true}
+0|BSS      | 10:33:51 PM [express] GET /api/auth/me 401 in 1ms :: {"error":"Not authenticated"}
+0|BSS      | 10:33:51 PM [express] GET /api/auth/check-first-run 304 in 5ms :: {"firstRun":true}
+0|BSS      | ✅ Production mode: SSL enabled for AWS RDS
+0|BSS      | 10:34:32 PM [express] serving on port 5000
+0|BSS      | 10:34:41 PM [express] GET /api/auth/me 401 in 2ms :: {"error":"Not authenticated"}
+0|BSS      | 10:34:41 PM [express] GET /api/auth/check-first-run 304 in 79ms :: {"firstRun":true}
+
+0|BSS  | ✅ Production mode: SSL enabled for AWS RDS
+0|BSS  | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS  | 10:35:54 PM [express] serving on port 5000
+
