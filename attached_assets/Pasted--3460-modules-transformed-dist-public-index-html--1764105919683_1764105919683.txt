@@ -1,0 +1,60 @@
+
+✓ 3460 modules transformed.
+../dist/public/index.html                                                                    0.97 kB │ gzip:   0.53 kB
+../dist/public/assets/kinzhal-eagle-logo-CZZDoCej.jpeg                                     126.52 kB
+../dist/public/assets/successful_restauran_41c16385-CXkB1sjj.jpg                           165.70 kB
+../dist/public/assets/restaurant_staff_tea_ce149ad2-BLK6qNRn.jpg                           168.72 kB
+../dist/public/assets/restaurant_staff_tea_7eaa745e-BesZ0Z2A.jpg                           174.30 kB
+../dist/public/assets/successful_restauran_039f182e-BLFEcIAS.jpg                           194.85 kB
+../dist/public/assets/successful_restauran_585fac32-D-33tk3R.jpg                           270.60 kB
+../dist/public/assets/restaurant_staff_tea_658450c1-DEhhxS1m.jpg                           285.62 kB
+../dist/public/assets/Inventory_management_dashboard_screenshot_918ba2b2-DwmYMsPm.png      552.84 kB
+../dist/public/assets/Recipe_creation_interface_screenshot_e67a7aa1-B0wGdkCX.png           644.53 kB
+../dist/public/assets/Customer_management_database_screenshot_7965bb5e-YCkTvhuX.png        684.92 kB
+../dist/public/assets/Orders_tracking_dashboard_screenshot_f0d2e3a1-DHyd4R4O.png           703.80 kB
+../dist/public/assets/ZATCA_invoice_document_screenshot_54e402f8-Ccpk2fQX.png              749.35 kB
+../dist/public/assets/Analytics_dashboard_screenshot_2b42f16c-CsA4H8dd.png                 815.85 kB
+../dist/public/assets/Delivery_Apps_Analytics_Screenshot_8961352b-BFmi4b_-.png             841.81 kB
+../dist/public/assets/Profitability_analysis_dashboard_screenshot_2a18aab4-i4S3Vmhl.png    848.26 kB
+../dist/public/assets/POS_system_interface_screenshot_7e5ae849-DUqqvLTi.png                850.48 kB
+../dist/public/assets/Demand_forecasting_interface_screenshot_025a6451-CJLcR_dD.png        908.43 kB
+../dist/public/assets/Sales_analytics_page_screenshot_1b3c0414-D52Uz2W7.png                915.37 kB
+../dist/public/assets/Financial_reports_dashboard_screenshot_9884d372-DqTXO6Uy.png         937.09 kB
+../dist/public/assets/Delivery_App_Management_Dashboard_af536108-sz99dwLv.png            1,002.67 kB
+../dist/public/assets/POS_System_Interface_a1bc794e-CI4bSZNr.png                         1,037.88 kB
+../dist/public/assets/Business_Analytics_Dashboard_3301d762-BjpwCIiJ.png                 1,094.62 kB
+../dist/public/assets/Invoice_Documents_37f6d13b-D5nVPHjH.png                            1,179.33 kB
+../dist/public/assets/Order_Management_Display_4049f259-CmLqWA6Y.png                     1,181.66 kB
+../dist/public/assets/Menu_management_interface_screenshot_b8294dd3-BWrQ3Oui.png         1,192.69 kB
+../dist/public/assets/Financial_Reports_Display_af93422d-BIB4yYwk.png                    1,426.26 kB
+../dist/public/assets/Business_Forecasting_Analytics_6bf96b65-BkWhbqoT.png               1,437.62 kB
+../dist/public/assets/Profitability_Analysis_Setup_1bed8640-Y4xk-D8_.png                 1,529.91 kB
+../dist/public/assets/Restaurant_Menu_Display_b812c237-BZjJ_UeF.png                      1,609.05 kB
+../dist/public/assets/Sales_and_Payment_System_5634d834-o9v6Oxyn.png                     1,627.52 kB
+../dist/public/assets/Recipe_Preparation_Kitchen_c2b136e5-C6lWGyIQ.png                   1,678.71 kB
+../dist/public/assets/Happy_Restaurant_Customers_4b909963-DZd4hP6q.png                   1,716.24 kB
+../dist/public/assets/Inventory_Management_System_f84dcc3a-B0xIsFPC.png                  1,977.22 kB
+../dist/public/assets/index-B_LvKQ5q.css                                                   104.22 kB │ gzip:  16.71 kB
+../dist/public/assets/whatsapp-D4dHHM4p.js                                                   1.39 kB │ gzip:   0.85 kB
+../dist/public/assets/purify.es-C65SP4u9.js                                                 22.38 kB │ gzip:   8.63 kB
+../dist/public/assets/index.es-DcXhBogl.js                                                 158.55 kB │ gzip:  52.89 kB
+../dist/public/assets/html2canvas.esm-Ge7aVWlp.js                                          201.40 kB │ gzip:  47.48 kB
+../dist/public/assets/index-CAgWw73q.js                                                  3,151.06 kB │ gzip: 875.37 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 21.15s
+
+  dist/index.js  391.8kb
+
+⚡ Done in 36ms
+[PM2][ERROR] Script already launched, add -f option to force re-execution
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 0    │ online    │ 0%       │ 94.4mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+ubuntu@ip-172-31-1-112:/home/BSS$ ^C
+ubuntu@ip-172-31-1-112:/home/BSS$
