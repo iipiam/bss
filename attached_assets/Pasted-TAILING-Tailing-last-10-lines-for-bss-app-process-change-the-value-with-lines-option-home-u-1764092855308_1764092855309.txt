@@ -1,0 +1,178 @@
+TAILING] Tailing last 10 lines for [bss-app] process (change the value with --lines option)
+/home/ubuntu/.pm2/logs/bss-app-error-0.log last 10 lines:
+0|bss-app  |   where: undefined,
+0|bss-app  |   schema: undefined,
+0|bss-app  |   table: undefined,
+0|bss-app  |   column: undefined,
+0|bss-app  |   dataType: undefined,
+0|bss-app  |   constraint: undefined,
+0|bss-app  |   file: 'postinit.c',
+0|bss-app  |   line: '1073',
+0|bss-app  |   routine: 'InitPostgres'
+0|bss-app  | }
+
+/home/ubuntu/.pm2/logs/bss-app-out-0.log last 10 lines:
+0|bss-app  |   nationalId: '1010101010',
+0|bss-app  |   taxNumber: '1010101010',
+0|bss-app  |   businessType: 'restaurant',
+0|bss-app  |   restaurantType: 'Restaurant',
+0|bss-app  |   subscriptionPlan: 'monthly',
+0|bss-app  |   branchesCount: 1
+0|bss-app  | }
+0|bss-app  | 5:32:12 PM [express] POST /api/auth/signup 500 in 21ms :: {"error":"Failed to create account"}
+0|bss-app  | ✅ Production mode: SSL enabled for AWS RDS
+0|bss-app  | 5:39:51 PM [express] serving on port 5000
+
+ubuntu@ip-172-31-1-112:~$ ^C
+ubuntu@ip-172-31-1-112:~$ pm2 logs bss-app --lines 50 --nostream | grep -A 20 "error:"
+0|bss-app  | [AUTH] Error stack: error: database "bss_production" does not exist
+0|bss-app  |     at /home/bss-app/node_modules/pg-pool/index.js:45:11
+0|bss-app  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|bss-app  |     at async file:///home/bss-app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|bss-app  |     at async DatabaseStorage.getUserByUsername (file:///home/bss-app/dist/index.js:3434:21)
+0|bss-app  |     at async file:///home/bss-app/dist/index.js:6909:21
+0|bss-app  | [AUTH] Error message: database "bss_production" does not exist
+0|bss-app  | Signup error: error: database "bss_production" does not exist
+0|bss-app  |     at /home/bss-app/node_modules/pg-pool/index.js:45:11
+0|bss-app  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|bss-app  |     at async file:///home/bss-app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|bss-app  |     at async DatabaseStorage.getUserByUsername (file:///home/bss-app/dist/index.js:3434:21)
+0|bss-app  |     at async file:///home/bss-app/dist/index.js:6722:28 {
+0|bss-app  |   length: 100,
+0|bss-app  |   severity: 'FATAL',
+0|bss-app  |   code: '3D000',
+0|bss-app  |   detail: undefined,
+0|bss-app  |   hint: undefined,
+0|bss-app  |   position: undefined,
+0|bss-app  |   internalPosition: undefined,
+0|bss-app  |   internalQuery: undefined,
+0|bss-app  |   where: undefined,
+0|bss-app  |   schema: undefined,
+0|bss-app  |   table: undefined,
+0|bss-app  |   column: undefined,
+0|bss-app  |   dataType: undefined,
+0|bss-app  |   constraint: undefined,
+0|bss-app  |   file: 'postinit.c',
+ubuntu@ip-172-31-1-112:~$ pm2 logs bss-app --lines 100 --nostream | grep -B 5 "routine: 'InitPostgres'"
+0|bss-app  |   column: undefined,
+0|bss-app  |   dataType: undefined,
+0|bss-app  |   constraint: undefined,
+0|bss-app  |   file: 'postinit.c',
+0|bss-app  |   line: '1073',
+0|bss-app  |   routine: 'InitPostgres'
+--
+0|bss-app  |   column: undefined,
+0|bss-app  |   dataType: undefined,
+0|bss-app  |   constraint: undefined,
+0|bss-app  |   file: 'postinit.c',
+0|bss-app  |   line: '1073',
+0|bss-app  |   routine: 'InitPostgres'
+--
+0|bss-app  |   column: undefined,
+0|bss-app  |   dataType: undefined,
+0|bss-app  |   constraint: undefined,
+0|bss-app  |   file: 'postinit.c',
+0|bss-app  |   line: '1073',
+0|bss-app  |   routine: 'InitPostgres'
+--
+0|bss-app  |   column: undefined,
+0|bss-app  |   dataType: undefined,
+0|bss-app  |   constraint: undefined,
+0|bss-app  |   file: 'postinit.c',
+0|bss-app  |   line: '1073',
+0|bss-app  |   routine: 'InitPostgres'
+ubuntu@ip-172-31-1-112:~$ pm2 logs bss-app --lines 100 --nostream | grep -i "database"
+0|bss-app  | [AUTH] Login error - Full details: error: database "bss_production" does not exist
+0|bss-app  |     at async DatabaseStorage.getUserByUsername (file:///home/bss-app/dist/index.js:3434:21)
+0|bss-app  | [AUTH] Error stack: error: database "bss_production" does not exist
+0|bss-app  |     at async DatabaseStorage.getUserByUsername (file:///home/bss-app/dist/index.js:3434:21)
+0|bss-app  | [AUTH] Error message: database "bss_production" does not exist
+0|bss-app  | [AUTH] Login error - Full details: error: database "bss_production" does not exist
+0|bss-app  |     at async DatabaseStorage.getUserByUsername (file:///home/bss-app/dist/index.js:3434:21)
+0|bss-app  | [AUTH] Error stack: error: database "bss_production" does not exist
+0|bss-app  |     at async DatabaseStorage.getUserByUsername (file:///home/bss-app/dist/index.js:3434:21)
+0|bss-app  | [AUTH] Error message: database "bss_production" does not exist
+0|bss-app  | Signup error: error: database "bss_production" does not exist
+0|bss-app  |     at async DatabaseStorage.getUserByUsername (file:///home/bss-app/dist/index.js:3434:21)
+ubuntu@ip-172-31-1-112:~$ cd /home/bss-app
+PGPASSWORD='KinzhalLTDCo1990' psql -h bss-production-db.cluster-cvmwgcec6cd9.me-south-1.rds.amazonaws.com -U bssadmin -d postgres -c "\l"
+ERROR:  column d.daticulocale does not exist
+LINE 8:   d.daticulocale as "ICU Locale",
+          ^
+HINT:  Perhaps you meant to reference the column "d.datlocale".
+ubuntu@ip-172-31-1-112:/home/bss-app$ ^C
+ubuntu@ip-172-31-1-112:/home/bss-app$ psql --version
+psql (PostgreSQL) 16.10 (Ubuntu 16.10-0ubuntu0.24.04.1)
+ubuntu@ip-172-31-1-112:/home/bss-app$ sudo apt update && sudo apt install -y postgresql-client
+Hit:1 http://me-south-1.ec2.archive.ubuntu.com/ubuntu noble InRelease
+Hit:2 http://me-south-1.ec2.archive.ubuntu.com/ubuntu noble-updates InRelease
+Hit:3 http://me-south-1.ec2.archive.ubuntu.com/ubuntu noble-backports InRelease
+Hit:4 https://deb.nodesource.com/node_20.x nodistro InRelease
+Hit:5 http://security.ubuntu.com/ubuntu noble-security InRelease
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+2 packages can be upgraded. Run 'apt list --upgradable' to see them.
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+postgresql-client is already the newest version (16+257build1.1).
+0 upgraded, 0 newly installed, 0 to remove and 2 not upgraded.
+ubuntu@ip-172-31-1-112:/home/bss-app$ ^[[200~PGPASSWORD='KinzhalLTDCo1990' psql -h bss-production-db.cluster-cvmwgcec6cd9.me-south-1.rds.amazonaws.com -U bssadmin -d postgres -c "CREATE DATABASE bss_production;"~
+PGPASSWORD=KinzhalLTDCo1990: command not found
+ubuntu@ip-172-31-1-112:/home/bss-app$ PGPASSWORD='KinzhalLTDCo1990' psql -h bss-production-db.cluster-cvmwgcec6cd9.me-south-1.rds.amazonaws.com -U bssadmin -d postgres -c "CREATE DATABASE bss_production;"
+CREATE DATABASE
+ubuntu@ip-172-31-1-112:/home/bss-app$ cd /home/bss-app
+npm run db:push
+
+> rest-express@1.0.0 db:push
+> drizzle-kit push
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/home/bss-app/drizzle.config.ts'
+Using 'pg' driver for database querying
+[⣷] Pulling schema from database...
+Error: getaddrinfo ENOTFOUND bss-production-db...
+    at /home/bss-app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Object.query (/home/bss-app/node_modules/drizzle-kit/bin.cjs:80601:26)
+    at async fromDatabase2 (/home/bss-app/node_modules/drizzle-kit/bin.cjs:19253:25) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'bss-production-db...'
+}
+ubuntu@ip-172-31-1-112:/home/bss-app$ pm2 restart bss-app && sleep 5 && pm2 logs bss-app --lines 10 --nostream
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [bss-app](ids: [ 0 ])
+[PM2] [bss-app](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ bss-app            │ fork     │ 3    │ online    │ 0%       │ 23.8mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[TAILING] Tailing last 10 lines for [bss-app] process (change the value with --lines option)
+/home/ubuntu/.pm2/logs/bss-app-error-0.log last 10 lines:
+0|bss-app  |   where: undefined,
+0|bss-app  |   schema: undefined,
+0|bss-app  |   table: undefined,
+0|bss-app  |   column: undefined,
+0|bss-app  |   dataType: undefined,
+0|bss-app  |   constraint: undefined,
+0|bss-app  |   file: 'postinit.c',
+0|bss-app  |   line: '1073',
+0|bss-app  |   routine: 'InitPostgres'
+0|bss-app  | }
+
+/home/ubuntu/.pm2/logs/bss-app-out-0.log last 10 lines:
+0|bss-app  |   businessType: 'restaurant',
+0|bss-app  |   restaurantType: 'Restaurant',
+0|bss-app  |   subscriptionPlan: 'monthly',
+0|bss-app  |   branchesCount: 1
+0|bss-app  | }
+0|bss-app  | 5:32:12 PM [express] POST /api/auth/signup 500 in 21ms :: {"error":"Failed to create account"}
+0|bss-app  | ✅ Production mode: SSL enabled for AWS RDS
+0|bss-app  | 5:39:51 PM [express] serving on port 5000
+0|bss-app  | ✅ Production mode: SSL enabled for AWS RDS
+0|bss-app  | 5:46:51 PM [express] serving on port 5000
+
