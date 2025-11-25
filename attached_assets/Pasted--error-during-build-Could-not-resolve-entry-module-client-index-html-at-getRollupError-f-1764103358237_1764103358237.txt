@@ -1,0 +1,59 @@
+
+error during build:
+Could not resolve entry module "client/index.html".
+    at getRollupError (file:///home/bss-app/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///home/bss-app/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at ModuleLoader.loadEntryModule (file:///home/bss-app/node_modules/rollup/dist/es/shared/node-entry.js:21597:20)
+    at async Promise.all (index 0)
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [bss-app](ids: [ 0 ])
+[PM2] [bss-app](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ bss-app            │ fork     │ 3    │ online    │ 0%       │ 19.1mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+ubuntu@ip-172-31-1-112:/home/bss-app$ cd /home/bss-app
+npm install --legacy-peer-deps
+npm run build
+pm2 restart bss-app
+
+up to date, audited 789 packages in 2s
+
+79 packages are looking for funding
+  run `npm fund` for details
+
+11 vulnerabilities (7 moderate, 2 high, 2 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.2.2 building client environment for production...
+✓ 0 modules transformed.
+✗ Build failed in 12ms
+error during build:
+Could not resolve entry module "client/index.html".
+    at getRollupError (file:///home/bss-app/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///home/bss-app/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at ModuleLoader.loadEntryModule (file:///home/bss-app/node_modules/rollup/dist/es/shared/node-entry.js:21597:20)
+    at async Promise.all (index 0)
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [bss-app](ids: [ 0 ])
+[PM2] [bss-app](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ bss-app            │ fork     │ 4    │ online    │ 0%       │ 19.5mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+ubuntu@ip-172-31-1-112:/home/bss-app$
