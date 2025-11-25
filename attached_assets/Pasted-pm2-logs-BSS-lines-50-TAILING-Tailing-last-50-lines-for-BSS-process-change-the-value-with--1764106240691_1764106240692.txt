@@ -1,0 +1,22 @@
+pm2 logs BSS --lines 50
+[TAILING] Tailing last 50 lines for [BSS] process (change the value with --lines                                                                                                              option)
+/home/ubuntu/.pm2/logs/BSS-out.log last 50 lines:
+/home/ubuntu/.pm2/logs/BSS-error.log last 50 lines:
+0|BSS      | Error: DATABASE_URL must be set. Did you forget to provision a data                                                                                                             base?
+0|BSS      |     at server/db.ts (file:///home/BSS/dist/index.js:935:13)
+0|BSS      |     at __init (file:///home/BSS/dist/index.js:12:56)
+0|BSS      |     at file:///home/BSS/dist/index.js:3087:1
+0|BSS      |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|BSS      |     at async ModuleLoader.import (node:internal/modules/esm/loader:                                                                                                             606:24)
+0|BSS      | Error: DATABASE_URL must be set. Did you forget to provision a data                                                                                                             base?
+0|BSS      |     at server/db.ts (file:///home/BSS/dist/index.js:935:13)
+0|BSS      |     at __init (file:///home/BSS/dist/index.js:12:56)
+0|BSS      |     at file:///home/BSS/dist/index.js:3087:1
+0|BSS      |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|BSS      |     at async ModuleLoader.import (node:internal/modules/esm/loader:                                                                                                             606:24)
+0|BSS      | Error: DATABASE_URL must be set. Did you forget to provision a data                                                                                                             base?
+0|BSS      |     at server/db.ts (file:///home/BSS/dist/index.js:935:13)
+0|BSS      |     at __init (file:///home/BSS/dist/index.js:12:56)
+0|BSS      |     at file:///home/BSS/dist/index.js:3087:1
+0|BSS      |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|BSS      |     at async ModuleLoader.import (node:internal/modules/esm/loader:    
