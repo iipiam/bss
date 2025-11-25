@@ -38,6 +38,7 @@ Preferred communication style: Simple, everyday language.
 - **Subscription Management**: Interactive dialogs for plan changes, dynamic pricing, and plan comparison.
 - **Branch Management**: Dynamic selection system with `BranchContext`.
 - **Ticketing System & IT Support**: Comprehensive ticket management with status, priority, real-time chat, activity logging, and IT-only dashboard with cross-tenant visibility.
+- **IT Account Management**: IT accounts can manage all client accounts - change passwords (with visibility toggle), enable/disable account access, search/filter accounts, and view account statistics. Access via `/it-account-management` route. **Updated Nov 25, 2025**.
 - **WhatsApp Integration**: Automatic deep-link for sending ZATCA-compliant invoices via WhatsApp.
 - **Team Chat**: Internal messaging system with DMs and channels, supporting branch-level and restaurant-wide conversations.
 - **Granular Permission System**: Role-based access control with 18 granular permissions enforced at backend and frontend.

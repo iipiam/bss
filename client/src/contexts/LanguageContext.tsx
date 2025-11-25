@@ -17,6 +17,10 @@ interface LanguageContextType {
 const languageToLocaleCode: Record<Language, string> = {
   English: 'en',
   Arabic: 'ar',
+  German: 'de',
+  Chinese: 'zh',
+  Bengali: 'bn',
+  Italian: 'it',
   Hindi: 'hi',
   Urdu: 'ur',
   Spanish: 'es',

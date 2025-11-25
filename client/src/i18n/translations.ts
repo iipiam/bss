@@ -742,6 +742,35 @@ export interface Translations {
   noTicketsWithStatus: string;
   createTicketDialogDesc: string;
   
+  // IT Account Management
+  accountManagement: string;
+  accountManagementDescription: string;
+  manageClientAccounts: string;
+  changePassword: string;
+  enableAccount: string;
+  disableAccount: string;
+  accountEnabled: string;
+  accountDisabled: string;
+  passwordChanged: string;
+  passwordChangedDesc: string;
+  newPassword: string;
+  confirmNewPassword: string;
+  passwordsDoNotMatch: string;
+  passwordTooShort: string;
+  searchAccounts: string;
+  filterByStatusAll: string;
+  filterByStatusActive: string;
+  filterByStatusDisabled: string;
+  totalAccounts: string;
+  activeAccounts: string;
+  disabledAccounts: string;
+  accountDetails: string;
+  noAccountsFound: string;
+  refreshAccounts: string;
+  lastActivityTime: string;
+  accountCreated: string;
+  noRestaurant: string;
+  
   // IT Preferences (Theme & Customization)
   itPreferences: string;
   customizeYourExperience: string;
@@ -1926,6 +1955,35 @@ export const translations: Record<Language, Translations> = {
     createFirstTicket: 'Create Your First Ticket',
     noTicketsWithStatus: 'No tickets found with this status',
     createTicketDialogDesc: 'Describe your issue and our support team will help you',
+    
+    // IT Account Management
+    accountManagement: 'Account Management',
+    accountManagementDescription: 'Manage client accounts, passwords, and access control',
+    manageClientAccounts: 'Manage Client Accounts',
+    changePassword: 'Change Password',
+    enableAccount: 'Enable Account',
+    disableAccount: 'Disable Account',
+    accountEnabled: 'Account Enabled',
+    accountDisabled: 'Account Disabled',
+    passwordChanged: 'Password Changed',
+    passwordChangedDesc: 'The account password has been updated successfully',
+    newPassword: 'New Password',
+    confirmNewPassword: 'Confirm New Password',
+    passwordsDoNotMatch: 'Passwords do not match',
+    passwordTooShort: 'Password must be at least 6 characters',
+    searchAccounts: 'Search accounts...',
+    filterByStatusAll: 'All',
+    filterByStatusActive: 'Active',
+    filterByStatusDisabled: 'Disabled',
+    totalAccounts: 'Total Accounts',
+    activeAccounts: 'Active Accounts',
+    disabledAccounts: 'Disabled Accounts',
+    accountDetails: 'Account Details',
+    noAccountsFound: 'No accounts found',
+    refreshAccounts: 'Refresh',
+    lastActivityTime: 'Last Activity',
+    accountCreated: 'Account Created',
+    noRestaurant: 'No Restaurant',
     
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
@@ -3119,6 +3177,35 @@ export const translations: Record<Language, Translations> = {
     noTicketsWithStatus: 'لم يتم العثور على تذاكر بهذه الحالة',
     createTicketDialogDesc: 'صف مشكلتك وسيساعدك فريق الدعم لدينا',
     
+    // IT Account Management
+    accountManagement: 'إدارة الحسابات',
+    accountManagementDescription: 'إدارة حسابات العملاء وكلمات المرور والتحكم في الوصول',
+    manageClientAccounts: 'إدارة حسابات العملاء',
+    changePassword: 'تغيير كلمة المرور',
+    enableAccount: 'تفعيل الحساب',
+    disableAccount: 'تعطيل الحساب',
+    accountEnabled: 'تم تفعيل الحساب',
+    accountDisabled: 'تم تعطيل الحساب',
+    passwordChanged: 'تم تغيير كلمة المرور',
+    passwordChangedDesc: 'تم تحديث كلمة مرور الحساب بنجاح',
+    newPassword: 'كلمة المرور الجديدة',
+    confirmNewPassword: 'تأكيد كلمة المرور الجديدة',
+    passwordsDoNotMatch: 'كلمات المرور غير متطابقة',
+    passwordTooShort: 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل',
+    searchAccounts: 'البحث في الحسابات...',
+    filterByStatusAll: 'الكل',
+    filterByStatusActive: 'نشط',
+    filterByStatusDisabled: 'معطل',
+    totalAccounts: 'إجمالي الحسابات',
+    activeAccounts: 'الحسابات النشطة',
+    disabledAccounts: 'الحسابات المعطلة',
+    accountDetails: 'تفاصيل الحساب',
+    noAccountsFound: 'لم يتم العثور على حسابات',
+    refreshAccounts: 'تحديث',
+    lastActivityTime: 'آخر نشاط',
+    accountCreated: 'تاريخ إنشاء الحساب',
+    noRestaurant: 'بدون مطعم',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'تفضيلات تكنولوجيا المعلومات',
     customizeYourExperience: 'خصص تجربتك',
@@ -4308,6 +4395,35 @@ export const translations: Record<Language, Translations> = {
     createFirstTicket: 'Create Your First Ticket',
     noTicketsWithStatus: 'No tickets found with this status',
     createTicketDialogDesc: 'Describe your issue and our support team will help you',
+    
+    // IT Account Management
+    accountManagement: 'Kontoverwaltung',
+    accountManagementDescription: 'Kundenkonten, Passwörter und Zugriffskontrolle verwalten',
+    manageClientAccounts: 'Kundenkonten verwalten',
+    changePassword: 'Passwort ändern',
+    enableAccount: 'Konto aktivieren',
+    disableAccount: 'Konto deaktivieren',
+    accountEnabled: 'Konto aktiviert',
+    accountDisabled: 'Konto deaktiviert',
+    passwordChanged: 'Passwort geändert',
+    passwordChangedDesc: 'Das Kontopasswort wurde erfolgreich aktualisiert',
+    newPassword: 'Neues Passwort',
+    confirmNewPassword: 'Neues Passwort bestätigen',
+    passwordsDoNotMatch: 'Passwörter stimmen nicht überein',
+    passwordTooShort: 'Passwort muss mindestens 6 Zeichen haben',
+    searchAccounts: 'Konten durchsuchen...',
+    filterByStatusAll: 'Alle',
+    filterByStatusActive: 'Aktiv',
+    filterByStatusDisabled: 'Deaktiviert',
+    totalAccounts: 'Gesamtkonten',
+    activeAccounts: 'Aktive Konten',
+    disabledAccounts: 'Deaktivierte Konten',
+    accountDetails: 'Kontodetails',
+    noAccountsFound: 'Keine Konten gefunden',
+    refreshAccounts: 'Aktualisieren',
+    lastActivityTime: 'Letzte Aktivität',
+    accountCreated: 'Konto erstellt',
+    noRestaurant: 'Kein Restaurant',
     
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
@@ -5499,6 +5615,35 @@ export const translations: Record<Language, Translations> = {
     noTicketsWithStatus: 'No tickets found with this status',
     createTicketDialogDesc: 'Describe your issue and our support team will help you',
     
+    // IT Account Management
+    accountManagement: '账户管理',
+    accountManagementDescription: '管理客户账户、密码和访问控制',
+    manageClientAccounts: '管理客户账户',
+    changePassword: '更改密码',
+    enableAccount: '启用账户',
+    disableAccount: '禁用账户',
+    accountEnabled: '账户已启用',
+    accountDisabled: '账户已禁用',
+    passwordChanged: '密码已更改',
+    passwordChangedDesc: '账户密码已成功更新',
+    newPassword: '新密码',
+    confirmNewPassword: '确认新密码',
+    passwordsDoNotMatch: '密码不匹配',
+    passwordTooShort: '密码必须至少6个字符',
+    searchAccounts: '搜索账户...',
+    filterByStatusAll: '全部',
+    filterByStatusActive: '活跃',
+    filterByStatusDisabled: '已禁用',
+    totalAccounts: '总账户',
+    activeAccounts: '活跃账户',
+    disabledAccounts: '已禁用账户',
+    accountDetails: '账户详情',
+    noAccountsFound: '未找到账户',
+    refreshAccounts: '刷新',
+    lastActivityTime: '最后活动',
+    accountCreated: '账户创建时间',
+    noRestaurant: '无餐厅',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
     customizeYourExperience: 'Customize your experience',
@@ -6688,6 +6833,35 @@ export const translations: Record<Language, Translations> = {
     createFirstTicket: 'Create Your First Ticket',
     noTicketsWithStatus: 'No tickets found with this status',
     createTicketDialogDesc: 'Describe your issue and our support team will help you',
+    
+    // IT Account Management
+    accountManagement: 'অ্যাকাউন্ট ম্যানেজমেন্ট',
+    accountManagementDescription: 'ক্লায়েন্ট অ্যাকাউন্ট, পাসওয়ার্ড এবং অ্যাক্সেস নিয়ন্ত্রণ পরিচালনা করুন',
+    manageClientAccounts: 'ক্লায়েন্ট অ্যাকাউন্ট পরিচালনা করুন',
+    changePassword: 'পাসওয়ার্ড পরিবর্তন করুন',
+    enableAccount: 'অ্যাকাউন্ট সক্রিয় করুন',
+    disableAccount: 'অ্যাকাউন্ট নিষ্ক্রিয় করুন',
+    accountEnabled: 'অ্যাকাউন্ট সক্রিয় হয়েছে',
+    accountDisabled: 'অ্যাকাউন্ট নিষ্ক্রিয় হয়েছে',
+    passwordChanged: 'পাসওয়ার্ড পরিবর্তিত হয়েছে',
+    passwordChangedDesc: 'অ্যাকাউন্টের পাসওয়ার্ড সফলভাবে আপডেট হয়েছে',
+    newPassword: 'নতুন পাসওয়ার্ড',
+    confirmNewPassword: 'নতুন পাসওয়ার্ড নিশ্চিত করুন',
+    passwordsDoNotMatch: 'পাসওয়ার্ড মিলছে না',
+    passwordTooShort: 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে',
+    searchAccounts: 'অ্যাকাউন্ট খুঁজুন...',
+    filterByStatusAll: 'সব',
+    filterByStatusActive: 'সক্রিয়',
+    filterByStatusDisabled: 'নিষ্ক্রিয়',
+    totalAccounts: 'মোট অ্যাকাউন্ট',
+    activeAccounts: 'সক্রিয় অ্যাকাউন্ট',
+    disabledAccounts: 'নিষ্ক্রিয় অ্যাকাউন্ট',
+    accountDetails: 'অ্যাকাউন্টের বিবরণ',
+    noAccountsFound: 'কোনো অ্যাকাউন্ট পাওয়া যায়নি',
+    refreshAccounts: 'রিফ্রেশ',
+    lastActivityTime: 'সর্বশেষ কার্যকলাপ',
+    accountCreated: 'অ্যাকাউন্ট তৈরি হয়েছে',
+    noRestaurant: 'কোনো রেস্তোরাঁ নেই',
     
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
@@ -7879,6 +8053,35 @@ export const translations: Record<Language, Translations> = {
     noTicketsWithStatus: 'No tickets found with this status',
     createTicketDialogDesc: 'Describe your issue and our support team will help you',
     
+    // IT Account Management
+    accountManagement: 'Gestione Account',
+    accountManagementDescription: 'Gestisci account cliente, password e controllo accessi',
+    manageClientAccounts: 'Gestisci Account Cliente',
+    changePassword: 'Cambia Password',
+    enableAccount: 'Attiva Account',
+    disableAccount: 'Disattiva Account',
+    accountEnabled: 'Account Attivato',
+    accountDisabled: 'Account Disattivato',
+    passwordChanged: 'Password Cambiata',
+    passwordChangedDesc: "La password dell'account è stata aggiornata con successo",
+    newPassword: 'Nuova Password',
+    confirmNewPassword: 'Conferma Nuova Password',
+    passwordsDoNotMatch: 'Le password non corrispondono',
+    passwordTooShort: 'La password deve contenere almeno 6 caratteri',
+    searchAccounts: 'Cerca account...',
+    filterByStatusAll: 'Tutti',
+    filterByStatusActive: 'Attivo',
+    filterByStatusDisabled: 'Disattivato',
+    totalAccounts: 'Account Totali',
+    activeAccounts: 'Account Attivi',
+    disabledAccounts: 'Account Disattivati',
+    accountDetails: 'Dettagli Account',
+    noAccountsFound: 'Nessun account trovato',
+    refreshAccounts: 'Aggiorna',
+    lastActivityTime: 'Ultima Attività',
+    accountCreated: 'Account Creato',
+    noRestaurant: 'Nessun Ristorante',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
     customizeYourExperience: 'Customize your experience',
@@ -9056,6 +9259,35 @@ export const translations: Record<Language, Translations> = {
     createFirstTicket: 'अपना पहला टिकट बनाएं',
     noTicketsWithStatus: 'इस स्थिति के साथ कोई टिकट नहीं मिला',
     createTicketDialogDesc: 'अपनी समस्या का वर्णन करें और हमारी समर्थन टीम आपकी मदद करेगी',
+    
+    // IT Account Management
+    accountManagement: 'खाता प्रबंधन',
+    accountManagementDescription: 'ग्राहक खातों, पासवर्ड और पहुंच नियंत्रण का प्रबंधन करें',
+    manageClientAccounts: 'ग्राहक खातों का प्रबंधन करें',
+    changePassword: 'पासवर्ड बदलें',
+    enableAccount: 'खाता सक्रिय करें',
+    disableAccount: 'खाता निष्क्रिय करें',
+    accountEnabled: 'खाता सक्रिय हुआ',
+    accountDisabled: 'खाता निष्क्रिय हुआ',
+    passwordChanged: 'पासवर्ड बदला गया',
+    passwordChangedDesc: 'खाते का पासवर्ड सफलतापूर्वक अपडेट किया गया',
+    newPassword: 'नया पासवर्ड',
+    confirmNewPassword: 'नया पासवर्ड पुष्टि करें',
+    passwordsDoNotMatch: 'पासवर्ड मेल नहीं खाते',
+    passwordTooShort: 'पासवर्ड कम से कम 6 अक्षर का होना चाहिए',
+    searchAccounts: 'खाते खोजें...',
+    filterByStatusAll: 'सभी',
+    filterByStatusActive: 'सक्रिय',
+    filterByStatusDisabled: 'निष्क्रिय',
+    totalAccounts: 'कुल खाते',
+    activeAccounts: 'सक्रिय खाते',
+    disabledAccounts: 'निष्क्रिय खाते',
+    accountDetails: 'खाता विवरण',
+    noAccountsFound: 'कोई खाता नहीं मिला',
+    refreshAccounts: 'रिफ्रेश',
+    lastActivityTime: 'अंतिम गतिविधि',
+    accountCreated: 'खाता बनाया गया',
+    noRestaurant: 'कोई रेस्तरां नहीं',
     
     // IT Preferences (Theme & Customization)
     itPreferences: 'आईटी प्राथमिकताएं',
@@ -10235,6 +10467,35 @@ export const translations: Record<Language, Translations> = {
     noTicketsWithStatus: 'اس حیثیت کے ساتھ کوئی ٹکٹ نہیں ملی',
     createTicketDialogDesc: 'اپنے مسئلے کی وضاحت کریں اور ہماری سپورٹ ٹیم آپ کی مدد کرے گی',
     
+    // IT Account Management
+    accountManagement: 'اکاؤنٹ مینجمنٹ',
+    accountManagementDescription: 'کلائنٹ اکاؤنٹس، پاس ورڈز اور رسائی کنٹرول کا انتظام کریں',
+    manageClientAccounts: 'کلائنٹ اکاؤنٹس کا انتظام کریں',
+    changePassword: 'پاس ورڈ تبدیل کریں',
+    enableAccount: 'اکاؤنٹ فعال کریں',
+    disableAccount: 'اکاؤنٹ غیر فعال کریں',
+    accountEnabled: 'اکاؤنٹ فعال ہو گیا',
+    accountDisabled: 'اکاؤنٹ غیر فعال ہو گیا',
+    passwordChanged: 'پاس ورڈ تبدیل ہو گیا',
+    passwordChangedDesc: 'اکاؤنٹ کا پاس ورڈ کامیابی سے اپ ڈیٹ ہو گیا',
+    newPassword: 'نیا پاس ورڈ',
+    confirmNewPassword: 'نئے پاس ورڈ کی تصدیق کریں',
+    passwordsDoNotMatch: 'پاس ورڈ مماثل نہیں ہیں',
+    passwordTooShort: 'پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے',
+    searchAccounts: 'اکاؤنٹس تلاش کریں...',
+    filterByStatusAll: 'سب',
+    filterByStatusActive: 'فعال',
+    filterByStatusDisabled: 'غیر فعال',
+    totalAccounts: 'کل اکاؤنٹس',
+    activeAccounts: 'فعال اکاؤنٹس',
+    disabledAccounts: 'غیر فعال اکاؤنٹس',
+    accountDetails: 'اکاؤنٹ کی تفصیلات',
+    noAccountsFound: 'کوئی اکاؤنٹ نہیں ملا',
+    refreshAccounts: 'ریفریش',
+    lastActivityTime: 'آخری سرگرمی',
+    accountCreated: 'اکاؤنٹ بنایا گیا',
+    noRestaurant: 'کوئی ریستوراں نہیں',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'آئی ٹی ترجیحات',
     customizeYourExperience: 'اپنے تجربے کو اپنی مرضی کے مطابق بنائیں',
@@ -11355,6 +11616,35 @@ export const translations: Record<Language, Translations> = {
     noTicketsWithStatus: "No tickets found with this status",
     createTicketDialogDesc: "Describe your issue and our support team will help you",
     
+    // IT Account Management
+    accountManagement: 'Gestión de Cuentas',
+    accountManagementDescription: 'Administrar cuentas de clientes, contraseñas y control de acceso',
+    manageClientAccounts: 'Administrar Cuentas de Clientes',
+    changePassword: 'Cambiar Contraseña',
+    enableAccount: 'Habilitar Cuenta',
+    disableAccount: 'Deshabilitar Cuenta',
+    accountEnabled: 'Cuenta Habilitada',
+    accountDisabled: 'Cuenta Deshabilitada',
+    passwordChanged: 'Contraseña Cambiada',
+    passwordChangedDesc: 'La contraseña de la cuenta se ha actualizado correctamente',
+    newPassword: 'Nueva Contraseña',
+    confirmNewPassword: 'Confirmar Nueva Contraseña',
+    passwordsDoNotMatch: 'Las contraseñas no coinciden',
+    passwordTooShort: 'La contraseña debe tener al menos 6 caracteres',
+    searchAccounts: 'Buscar cuentas...',
+    filterByStatusAll: 'Todos',
+    filterByStatusActive: 'Activo',
+    filterByStatusDisabled: 'Deshabilitado',
+    totalAccounts: 'Total de Cuentas',
+    activeAccounts: 'Cuentas Activas',
+    disabledAccounts: 'Cuentas Deshabilitadas',
+    accountDetails: 'Detalles de la Cuenta',
+    noAccountsFound: 'No se encontraron cuentas',
+    refreshAccounts: 'Actualizar',
+    lastActivityTime: 'Última Actividad',
+    accountCreated: 'Cuenta Creada',
+    noRestaurant: 'Sin Restaurante',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'Preferencias de TI',
     customizeYourExperience: 'Personaliza tu experiencia',
@@ -12470,6 +12760,35 @@ export const translations: Record<Language, Translations> = {
     createFirstTicket: "Create Your First Ticket",
     noTicketsWithStatus: "No tickets found with this status",
     createTicketDialogDesc: "Describe your issue and our support team will help you",
+    
+    // IT Account Management
+    accountManagement: 'Pamamahala ng Account',
+    accountManagementDescription: 'Pamahalaan ang mga account ng kliyente, password at kontrol ng access',
+    manageClientAccounts: 'Pamahalaan ang mga Account ng Kliyente',
+    changePassword: 'Palitan ang Password',
+    enableAccount: 'I-enable ang Account',
+    disableAccount: 'I-disable ang Account',
+    accountEnabled: 'Na-enable ang Account',
+    accountDisabled: 'Na-disable ang Account',
+    passwordChanged: 'Nabago ang Password',
+    passwordChangedDesc: 'Matagumpay na na-update ang password ng account',
+    newPassword: 'Bagong Password',
+    confirmNewPassword: 'Kumpirmahin ang Bagong Password',
+    passwordsDoNotMatch: 'Hindi tugma ang mga password',
+    passwordTooShort: 'Ang password ay dapat may kahit 6 na karakter',
+    searchAccounts: 'Maghanap ng mga account...',
+    filterByStatusAll: 'Lahat',
+    filterByStatusActive: 'Aktibo',
+    filterByStatusDisabled: 'Na-disable',
+    totalAccounts: 'Kabuuang Account',
+    activeAccounts: 'Aktibong Account',
+    disabledAccounts: 'Na-disable na Account',
+    accountDetails: 'Detalye ng Account',
+    noAccountsFound: 'Walang nahanap na account',
+    refreshAccounts: 'I-refresh',
+    lastActivityTime: 'Huling Aktibidad',
+    accountCreated: 'Nagawa ang Account',
+    noRestaurant: 'Walang Restaurant',
     
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT na mga Kagustuhan',
