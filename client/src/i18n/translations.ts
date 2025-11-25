@@ -1967,10 +1967,7 @@ export const translations: Record<Language, Translations> = {
     accountDisabled: 'Account Disabled',
     passwordChanged: 'Password Changed',
     passwordChangedDesc: 'The account password has been updated successfully',
-    newPassword: 'New Password',
-    confirmNewPassword: 'Confirm New Password',
     passwordsDoNotMatch: 'Passwords do not match',
-    passwordTooShort: 'Password must be at least 6 characters',
     searchAccounts: 'Search accounts...',
     filterByStatusAll: 'All',
     filterByStatusActive: 'Active',
@@ -1982,7 +1979,6 @@ export const translations: Record<Language, Translations> = {
     noAccountsFound: 'No accounts found',
     refreshAccounts: 'Refresh',
     lastActivityTime: 'Last Activity',
-    accountCreated: 'Account Created',
     noRestaurant: 'No Restaurant',
     
     // IT Preferences (Theme & Customization)
@@ -3188,10 +3184,7 @@ export const translations: Record<Language, Translations> = {
     accountDisabled: 'تم تعطيل الحساب',
     passwordChanged: 'تم تغيير كلمة المرور',
     passwordChangedDesc: 'تم تحديث كلمة مرور الحساب بنجاح',
-    newPassword: 'كلمة المرور الجديدة',
-    confirmNewPassword: 'تأكيد كلمة المرور الجديدة',
     passwordsDoNotMatch: 'كلمات المرور غير متطابقة',
-    passwordTooShort: 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل',
     searchAccounts: 'البحث في الحسابات...',
     filterByStatusAll: 'الكل',
     filterByStatusActive: 'نشط',
@@ -3203,7 +3196,6 @@ export const translations: Record<Language, Translations> = {
     noAccountsFound: 'لم يتم العثور على حسابات',
     refreshAccounts: 'تحديث',
     lastActivityTime: 'آخر نشاط',
-    accountCreated: 'تاريخ إنشاء الحساب',
     noRestaurant: 'بدون مطعم',
     
     // IT Preferences (Theme & Customization)
@@ -4407,10 +4399,7 @@ export const translations: Record<Language, Translations> = {
     accountDisabled: 'Konto deaktiviert',
     passwordChanged: 'Passwort geändert',
     passwordChangedDesc: 'Das Kontopasswort wurde erfolgreich aktualisiert',
-    newPassword: 'Neues Passwort',
-    confirmNewPassword: 'Neues Passwort bestätigen',
     passwordsDoNotMatch: 'Passwörter stimmen nicht überein',
-    passwordTooShort: 'Passwort muss mindestens 6 Zeichen haben',
     searchAccounts: 'Konten durchsuchen...',
     filterByStatusAll: 'Alle',
     filterByStatusActive: 'Aktiv',
@@ -4422,7 +4411,6 @@ export const translations: Record<Language, Translations> = {
     noAccountsFound: 'Keine Konten gefunden',
     refreshAccounts: 'Aktualisieren',
     lastActivityTime: 'Letzte Aktivität',
-    accountCreated: 'Konto erstellt',
     noRestaurant: 'Kein Restaurant',
     
     // IT Preferences (Theme & Customization)
@@ -5626,10 +5614,7 @@ export const translations: Record<Language, Translations> = {
     accountDisabled: '账户已禁用',
     passwordChanged: '密码已更改',
     passwordChangedDesc: '账户密码已成功更新',
-    newPassword: '新密码',
-    confirmNewPassword: '确认新密码',
     passwordsDoNotMatch: '密码不匹配',
-    passwordTooShort: '密码必须至少6个字符',
     searchAccounts: '搜索账户...',
     filterByStatusAll: '全部',
     filterByStatusActive: '活跃',
@@ -5641,7 +5626,6 @@ export const translations: Record<Language, Translations> = {
     noAccountsFound: '未找到账户',
     refreshAccounts: '刷新',
     lastActivityTime: '最后活动',
-    accountCreated: '账户创建时间',
     noRestaurant: '无餐厅',
     
     // IT Preferences (Theme & Customization)
@@ -6845,10 +6829,7 @@ export const translations: Record<Language, Translations> = {
     accountDisabled: 'অ্যাকাউন্ট নিষ্ক্রিয় হয়েছে',
     passwordChanged: 'পাসওয়ার্ড পরিবর্তিত হয়েছে',
     passwordChangedDesc: 'অ্যাকাউন্টের পাসওয়ার্ড সফলভাবে আপডেট হয়েছে',
-    newPassword: 'নতুন পাসওয়ার্ড',
-    confirmNewPassword: 'নতুন পাসওয়ার্ড নিশ্চিত করুন',
     passwordsDoNotMatch: 'পাসওয়ার্ড মিলছে না',
-    passwordTooShort: 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে',
     searchAccounts: 'অ্যাকাউন্ট খুঁজুন...',
     filterByStatusAll: 'সব',
     filterByStatusActive: 'সক্রিয়',
@@ -6860,7 +6841,6 @@ export const translations: Record<Language, Translations> = {
     noAccountsFound: 'কোনো অ্যাকাউন্ট পাওয়া যায়নি',
     refreshAccounts: 'রিফ্রেশ',
     lastActivityTime: 'সর্বশেষ কার্যকলাপ',
-    accountCreated: 'অ্যাকাউন্ট তৈরি হয়েছে',
     noRestaurant: 'কোনো রেস্তোরাঁ নেই',
     
     // IT Preferences (Theme & Customization)
@@ -8064,10 +8044,7 @@ export const translations: Record<Language, Translations> = {
     accountDisabled: 'Account Disattivato',
     passwordChanged: 'Password Cambiata',
     passwordChangedDesc: "La password dell'account è stata aggiornata con successo",
-    newPassword: 'Nuova Password',
-    confirmNewPassword: 'Conferma Nuova Password',
     passwordsDoNotMatch: 'Le password non corrispondono',
-    passwordTooShort: 'La password deve contenere almeno 6 caratteri',
     searchAccounts: 'Cerca account...',
     filterByStatusAll: 'Tutti',
     filterByStatusActive: 'Attivo',
@@ -8079,7 +8056,6 @@ export const translations: Record<Language, Translations> = {
     noAccountsFound: 'Nessun account trovato',
     refreshAccounts: 'Aggiorna',
     lastActivityTime: 'Ultima Attività',
-    accountCreated: 'Account Creato',
     noRestaurant: 'Nessun Ristorante',
     
     // IT Preferences (Theme & Customization)
@@ -9271,10 +9247,7 @@ export const translations: Record<Language, Translations> = {
     accountDisabled: 'खाता निष्क्रिय हुआ',
     passwordChanged: 'पासवर्ड बदला गया',
     passwordChangedDesc: 'खाते का पासवर्ड सफलतापूर्वक अपडेट किया गया',
-    newPassword: 'नया पासवर्ड',
-    confirmNewPassword: 'नया पासवर्ड पुष्टि करें',
     passwordsDoNotMatch: 'पासवर्ड मेल नहीं खाते',
-    passwordTooShort: 'पासवर्ड कम से कम 6 अक्षर का होना चाहिए',
     searchAccounts: 'खाते खोजें...',
     filterByStatusAll: 'सभी',
     filterByStatusActive: 'सक्रिय',
@@ -9286,7 +9259,6 @@ export const translations: Record<Language, Translations> = {
     noAccountsFound: 'कोई खाता नहीं मिला',
     refreshAccounts: 'रिफ्रेश',
     lastActivityTime: 'अंतिम गतिविधि',
-    accountCreated: 'खाता बनाया गया',
     noRestaurant: 'कोई रेस्तरां नहीं',
     
     // IT Preferences (Theme & Customization)
@@ -10478,10 +10450,7 @@ export const translations: Record<Language, Translations> = {
     accountDisabled: 'اکاؤنٹ غیر فعال ہو گیا',
     passwordChanged: 'پاس ورڈ تبدیل ہو گیا',
     passwordChangedDesc: 'اکاؤنٹ کا پاس ورڈ کامیابی سے اپ ڈیٹ ہو گیا',
-    newPassword: 'نیا پاس ورڈ',
-    confirmNewPassword: 'نئے پاس ورڈ کی تصدیق کریں',
     passwordsDoNotMatch: 'پاس ورڈ مماثل نہیں ہیں',
-    passwordTooShort: 'پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے',
     searchAccounts: 'اکاؤنٹس تلاش کریں...',
     filterByStatusAll: 'سب',
     filterByStatusActive: 'فعال',
@@ -10493,7 +10462,6 @@ export const translations: Record<Language, Translations> = {
     noAccountsFound: 'کوئی اکاؤنٹ نہیں ملا',
     refreshAccounts: 'ریفریش',
     lastActivityTime: 'آخری سرگرمی',
-    accountCreated: 'اکاؤنٹ بنایا گیا',
     noRestaurant: 'کوئی ریستوراں نہیں',
     
     // IT Preferences (Theme & Customization)
@@ -11627,10 +11595,7 @@ export const translations: Record<Language, Translations> = {
     accountDisabled: 'Cuenta Deshabilitada',
     passwordChanged: 'Contraseña Cambiada',
     passwordChangedDesc: 'La contraseña de la cuenta se ha actualizado correctamente',
-    newPassword: 'Nueva Contraseña',
-    confirmNewPassword: 'Confirmar Nueva Contraseña',
     passwordsDoNotMatch: 'Las contraseñas no coinciden',
-    passwordTooShort: 'La contraseña debe tener al menos 6 caracteres',
     searchAccounts: 'Buscar cuentas...',
     filterByStatusAll: 'Todos',
     filterByStatusActive: 'Activo',
@@ -11642,7 +11607,6 @@ export const translations: Record<Language, Translations> = {
     noAccountsFound: 'No se encontraron cuentas',
     refreshAccounts: 'Actualizar',
     lastActivityTime: 'Última Actividad',
-    accountCreated: 'Cuenta Creada',
     noRestaurant: 'Sin Restaurante',
     
     // IT Preferences (Theme & Customization)
@@ -12772,10 +12736,7 @@ export const translations: Record<Language, Translations> = {
     accountDisabled: 'Na-disable ang Account',
     passwordChanged: 'Nabago ang Password',
     passwordChangedDesc: 'Matagumpay na na-update ang password ng account',
-    newPassword: 'Bagong Password',
-    confirmNewPassword: 'Kumpirmahin ang Bagong Password',
     passwordsDoNotMatch: 'Hindi tugma ang mga password',
-    passwordTooShort: 'Ang password ay dapat may kahit 6 na karakter',
     searchAccounts: 'Maghanap ng mga account...',
     filterByStatusAll: 'Lahat',
     filterByStatusActive: 'Aktibo',
@@ -12787,7 +12748,6 @@ export const translations: Record<Language, Translations> = {
     noAccountsFound: 'Walang nahanap na account',
     refreshAccounts: 'I-refresh',
     lastActivityTime: 'Huling Aktibidad',
-    accountCreated: 'Nagawa ang Account',
     noRestaurant: 'Walang Restaurant',
     
     // IT Preferences (Theme & Customization)
