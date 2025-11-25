@@ -1,0 +1,36 @@
+[TAILING] Tailing last 15 lines for [BSS] process (change the value with --lines option)
+/home/ubuntu/.pm2/logs/BSS-error.log last 15 lines:
+0|BSS      |   table: undefined,
+0|BSS      |   column: undefined,
+0|BSS      |   dataType: undefined,
+0|BSS      |   constraint: undefined,
+0|BSS      |   file: 'parse_relation.c',
+0|BSS      |   line: '1449',
+0|BSS      |   routine: 'parserOpenTable'
+0|BSS      | }
+0|BSS      | [AUTH] Error stack: error: relation "users" does not exist
+0|BSS      |     at /home/BSS/node_modules/pg-pool/index.js:45:11
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      |     at async file:///home/BSS/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|BSS      |     at async DatabaseStorage.getUserByUsername (file:///home/BSS/dist/index.js:3434:21)
+0|BSS      |     at async file:///home/BSS/dist/index.js:6909:21
+0|BSS      | [AUTH] Error message: relation "users" does not exist
+
+/home/ubuntu/.pm2/logs/BSS-out.log last 15 lines:
+0|BSS      | 9:58:58 PM [express] GET /api/auth/check-first-run 500 in 27ms :: {"error":"Failed to check first-ru…
+0|BSS      | [AUTH] Login attempt for username: f2res accountType: client
+0|BSS      | 9:59:05 PM [express] POST /api/auth/login 500 in 24ms :: {"error":"Login failed"}
+0|BSS      | [AUTH] Login attempt for username: f2res accountType: client
+0|BSS      | 9:59:09 PM [express] POST /api/auth/login 500 in 22ms :: {"error":"Login failed"}
+0|BSS      | [AUTH] Login attempt for username: f2res accountType: client
+0|BSS      | 9:59:51 PM [express] POST /api/auth/login 500 in 24ms :: {"error":"Login failed"}
+0|BSS      | 9:59:52 PM [express] GET /api/auth/me 401 in 1ms :: {"error":"Not authenticated"}
+0|BSS      | 9:59:52 PM [express] GET /api/auth/check-first-run 500 in 22ms :: {"error":"Failed to check first-ru…
+0|BSS      | [AUTH] Login attempt for username: mwcdt accountType: client
+0|BSS      | 9:59:57 PM [express] POST /api/auth/login 500 in 23ms :: {"error":"Login failed"}
+0|BSS      | 10:00:20 PM [express] GET /api/auth/me 401 in 1ms :: {"error":"Not authenticated"}
+0|BSS      | 10:00:21 PM [express] GET /api/auth/check-first-run 500 in 24ms :: {"error":"Failed to check first-ru…
+0|BSS      | [AUTH] Login attempt for username: mwcdt accountType: client
+0|BSS      | 10:00:25 PM [express] POST /api/auth/login 500 in 22ms :: {"error":"Login failed"}
+
+
