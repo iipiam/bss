@@ -144,9 +144,9 @@ function AppContent() {
   });
 
   // Handle IT account redirects using useEffect to avoid render issues
-  // IT accounts can ONLY access /it-dashboard (restricted access)
+  // IT accounts can access /it-dashboard and /performance only
   useEffect(() => {
-    const allowedITRoutes = ['/it-dashboard'];
+    const allowedITRoutes = ['/it-dashboard', '/performance'];
     const isAllowedRoute = allowedITRoutes.includes(location);
     
     if (accountType === 'it' && !isAllowedRoute) {

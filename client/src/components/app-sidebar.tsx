@@ -149,9 +149,9 @@ export function AppSidebar() {
   // Filter menu items based on both permissions and business type
   const filterMenuItems = (items: MenuItem[]) => 
     items.filter(item => {
-      // IT accounts can ONLY access IT Dashboard (restricted access)
+      // IT accounts can access IT Dashboard and Performance only
       if (accountType === 'it') {
-        return item.testId === 'it-dashboard';
+        return item.testId === 'it-dashboard' || item.testId === 'performance';
       }
       
       // Client accounts cannot see IT Dashboard (IT-only page)
