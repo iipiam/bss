@@ -1,0 +1,51 @@
+ubuntu@ip-172-31-1-112:~$ pm2 logs bss-app --lines 50 --nostream | grep -A 20 "error:"
+0|bss-app  | [AUTH] Error stack: error: database "bss_production" does not exist
+0|bss-app  |     at /home/bss-app/node_modules/pg-pool/index.js:45:11
+0|bss-app  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|bss-app  |     at async file:///home/bss-app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|bss-app  |     at async DatabaseStorage.getUserByUsername (file:///home/bss-app/dist/index.js:3434:21)
+0|bss-app  |     at async file:///home/bss-app/dist/index.js:6909:21
+0|bss-app  | [AUTH] Error message: database "bss_production" does not exist
+0|bss-app  | Signup error: error: database "bss_production" does not exist
+0|bss-app  |     at /home/bss-app/node_modules/pg-pool/index.js:45:11
+0|bss-app  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|bss-app  |     at async file:///home/bss-app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|bss-app  |     at async DatabaseStorage.getUserByUsername (file:///home/bss-app/dist/index.js:3434:21)
+0|bss-app  |     at async file:///home/bss-app/dist/index.js:6722:28 {
+0|bss-app  |   length: 100,
+0|bss-app  |   severity: 'FATAL',
+0|bss-app  |   code: '3D000',
+0|bss-app  |   detail: undefined,
+0|bss-app  |   hint: undefined,
+0|bss-app  |   position: undefined,
+0|bss-app  |   internalPosition: undefined,
+0|bss-app  |   internalQuery: undefined,
+0|bss-app  |   where: undefined,
+0|bss-app  |   schema: undefined,
+0|bss-app  |   table: undefined,
+0|bss-app  |   column: undefined,
+0|bss-app  |   dataType: undefined,
+0|bss-app  |   constraint: undefined,
+0|bss-app  |   file: 'postinit.c',
+ubuntu@ip-172-31-1-112:~$ pm2 logs bss-app --lines 100 --nostream | grep -B 5 "routine: 'InitPostgres'"
+0|bss-app  |   column: undefined,
+0|bss-app  |   dataType: undefined,
+0|bss-app  |   constraint: undefined,
+0|bss-app  |   file: 'postinit.c',
+0|bss-app  |   line: '1073',
+0|bss-app  |   routine: 'InitPostgres'
+--
+0|bss-app  |   column: undefined,
+0|bss-app  |   dataType: undefined,
+0|bss-app  |   constraint: undefined,
+0|bss-app  |   file: 'postinit.c',
+0|bss-app  |   line: '1073',
+0|bss-app  |   routine: 'InitPostgres'
+--
+0|bss-app  |   column: undefined,
+0|bss-app  |   dataType: undefined,
+0|bss-app  |   constraint: undefined,
+0|bss-app  |   file: 'postinit.c',
+0|bss-app  |   line: '1073',
+0|bss-app  |   routine: 'InitPostgres'
+--
