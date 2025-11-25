@@ -1,0 +1,42 @@
+/home/ubuntu/.pm2/logs/bss-app-error-0.log last 50 lines:
+0|bss-app  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|bss-app  |     at server/db.ts (file:///home/bss-app/dist/index.js:935:13)
+0|bss-app  |     at __init (file:///home/bss-app/dist/index.js:12:56)
+0|bss-app  |     at file:///home/bss-app/dist/index.js:3087:1
+0|bss-app  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|bss-app  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|bss-app  | First-run check error: Error: connect ETIMEDOUT 172.31.19.208:5432
+0|bss-app  |     at /home/bss-app/node_modules/pg-pool/index.js:45:11
+0|bss-app  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|bss-app  |     at async file:///home/bss-app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|bss-app  |     at async DatabaseStorage.getAllUsers (file:///home/bss-app/dist/index.js:3424:12)
+0|bss-app  |     at async file:///home/bss-app/dist/index.js:6699:22 {
+0|bss-app  |   errno: -110,
+0|bss-app  |   code: 'ETIMEDOUT',
+0|bss-app  |   syscall: 'connect',
+0|bss-app  |   address: '172.31.19.208',
+0|bss-app  |   port: 5432
+0|bss-app  | }
+
+ubuntu@ip-172-31-1-112:~$ pm2 status
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ bss-app            │ fork     │ 0    │ online    │ 0%       │ 124.7mb  │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+ubuntu@ip-172-31-1-112:~$ curl -I http://localhost:5000
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Accept-Ranges: bytes
+Cache-Control: public, max-age=0
+Last-Modified: Tue, 25 Nov 2025 16:16:43 GMT
+ETag: W/"3cd-19abbcd9407"
+Content-Type: text/html; charset=UTF-8
+Content-Length: 973
+Date: Tue, 25 Nov 2025 17:05:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+ubuntu@ip-172-31-1-112:~$ cat ecosystem.config.cjs
+cat: ecosystem.config.cjs: No such file or directory
+ubuntu@ip-172-31-1-112:~$
