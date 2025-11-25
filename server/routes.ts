@@ -1736,18 +1736,6 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Public endpoint to check if any users exist (for first-run setup)
-  // NOTE: This is the ONLY route that should call getAllUsers() - all others must use getUsers(restaurantId)
-  app.get("/api/auth/check-first-run", async (_req, res) => {
-    try {
-      const users = await storage.getAllUsers();
-      res.json({ firstRun: users.length === 0 });
-    } catch (error) {
-      console.error("First-run check error:", error);
-      res.status(500).json({ error: "Failed to check first-run status" });
-    }
-  });
-
   // Public endpoint for user signup
   app.post("/api/auth/signup", async (req, res) => {
     try {

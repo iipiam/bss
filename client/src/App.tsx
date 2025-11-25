@@ -76,7 +76,6 @@ import PaymentTest from "@/pages/payment-test";
 import PasswordManager from "@/pages/password-manager";
 import Licenses from "@/pages/licenses";
 import Login from "@/pages/login";
-import Setup from "@/pages/setup";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
 import EmergencyReset from "@/pages/emergency-reset";
@@ -139,12 +138,6 @@ function AppContent() {
   const [branchesCount, setBranchesCount] = useState(restaurant?.branchesCount || 1);
   const [expiryAlertDismissed, setExpiryAlertDismissed] = useState(false);
   
-  // Check if this is the first run (no users exist)
-  const { data: firstRunCheck, isLoading: isCheckingFirstRun } = useQuery<{ firstRun: boolean }>({
-    queryKey: ["/api/auth/check-first-run"],
-    retry: false,
-  });
-
   // Handle IT account redirects using useEffect to avoid render issues
   // IT accounts can access /it-dashboard, /performance, and /it-account-management only
   useEffect(() => {
@@ -214,7 +207,7 @@ function AppContent() {
   }
 
   // Show loading state
-  if (isLoading || isCheckingFirstRun) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -223,11 +216,6 @@ function AppContent() {
         </div>
       </div>
     );
-  }
-
-  // Show setup page if no users exist (first run)
-  if (firstRunCheck?.firstRun) {
-    return <Setup />;
   }
 
   // Show login page if not authenticated
