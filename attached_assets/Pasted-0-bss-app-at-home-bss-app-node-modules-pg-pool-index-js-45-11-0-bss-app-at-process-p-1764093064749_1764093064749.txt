@@ -1,0 +1,66 @@
+0|bss-app  |     at /home/bss-app/node_modules/pg-pool/index.js:45:11
+0|bss-app  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|bss-app  |     at async file:///home/bss-app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|bss-app  |     at async DatabaseStorage.getUserByUsername (file:///home/bss-app/dist/index.js:3434:21)
+0|bss-app  |     at async file:///home/bss-app/dist/index.js:6909:21 {
+0|bss-app  |   length: 105,
+0|bss-app  |   severity: 'ERROR',
+0|bss-app  |   code: '42P01',
+0|bss-app  |   detail: undefined,
+0|bss-app  |   hint: undefined,
+0|bss-app  |   position: '697',
+0|bss-app  |   internalPosition: undefined,
+0|bss-app  |   internalQuery: undefined,
+0|bss-app  |   where: undefined,
+0|bss-app  |   schema: undefined,
+0|bss-app  |   table: undefined,
+0|bss-app  |   column: undefined,
+0|bss-app  |   dataType: undefined,
+0|bss-app  |   constraint: undefined,
+0|bss-app  |   file: 'parse_relation.c',
+0|bss-app  |   line: '1449',
+0|bss-app  |   routine: 'parserOpenTable'
+0|bss-app  | }
+0|bss-app  | [AUTH] Error stack: error: relation "users" does not exist
+0|bss-app  |     at /home/bss-app/node_modules/pg-pool/index.js:45:11
+0|bss-app  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|bss-app  |     at async file:///home/bss-app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|bss-app  |     at async DatabaseStorage.getUserByUsername (file:///home/bss-app/dist/index.js:3434:21)
+0|bss-app  |     at async file:///home/bss-app/dist/index.js:6909:21
+0|bss-app  | [AUTH] Error message: relation "users" does not exist
+
+/home/ubuntu/.pm2/logs/bss-app-out-0.log last 30 lines:
+0|bss-app  | [SIGNUP] Received signup request for username: mwcdt
+0|bss-app  | [SIGNUP] Request body: {
+0|bss-app  |   username: 'mwcdt',
+0|bss-app  |   name: 'mwcdtr',
+0|bss-app  |   email: 'aa@cc.com',
+0|bss-app  |   restaurantName: '1010101010',
+0|bss-app  |   nationalId: '1010101010',
+0|bss-app  |   taxNumber: '1010101010',
+0|bss-app  |   businessType: 'restaurant',
+0|bss-app  |   restaurantType: 'Restaurant',
+0|bss-app  |   subscriptionPlan: 'monthly',
+0|bss-app  |   branchesCount: 1
+0|bss-app  | }
+0|bss-app  | 5:32:12 PM [express] POST /api/auth/signup 500 in 21ms :: {"error":"Failed to create account"}
+0|bss-app  | ✅ Production mode: SSL enabled for AWS RDS
+0|bss-app  | 5:39:51 PM [express] serving on port 5000
+0|bss-app  | ✅ Production mode: SSL enabled for AWS RDS
+0|bss-app  | 5:46:51 PM [express] serving on port 5000
+0|bss-app  | 5:46:55 PM [express] GET /api/auth/me 401 in 2ms :: {"error":"Not authenticated"}
+0|bss-app  | 5:46:55 PM [express] GET /api/auth/check-first-run/ 500 in 79ms :: {"error":"Failed to check first-r…
+0|bss-app  | [AUTH] Login attempt for username: mwcdt accountType: client
+0|bss-app  | 5:47:03 PM [express] POST /api/auth/login 500 in 28ms :: {"error":"Login failed"}
+0|bss-app  | ✅ Production mode: SSL enabled for AWS RDS
+0|bss-app  | 5:48:28 PM [express] serving on port 5000
+0|bss-app  | 5:48:32 PM [express] GET /api/auth/me 401 in 3ms :: {"error":"Not authenticated"}
+0|bss-app  | 5:48:32 PM [express] GET /api/auth/check-first-run/ 500 in 87ms :: {"error":"Failed to check first-r…
+0|bss-app  | [AUTH] Login attempt for username: mwcdt accountType: client
+0|bss-app  | 5:48:44 PM [express] POST /api/auth/login 500 in 37ms :: {"error":"Login failed"}
+0|bss-app  | [AUTH] Login attempt for username: mwcdt accountType: client
+0|bss-app  | 5:48:59 PM [express] POST /api/auth/login 500 in 65ms :: {"error":"Login failed"}
+
+ubuntu@ip-172-31-1-112:/home/bss-app$ PGPASSWORD='KinzhalLTDCo1990' psql -h bss-production-db.cluster-cvmwgcec6cd9.me-south-1.rds.amazonaws.com -U bssadmin -d bss_production -c "\dt"
+Did not find any relations.
+ubuntu@ip-172-31-1-112:/home/bss-app$
