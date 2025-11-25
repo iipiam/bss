@@ -1,0 +1,61 @@
+
+vite v7.2.2 building client environment for production...
+✓ 0 modules transformed.
+✗ Build failed in 12ms
+error during build:
+Could not resolve entry module "client/index.html".
+    at getRollupError (file:///home/BSS/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///home/BSS/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at ModuleLoader.loadEntryModule (file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:21597:20)
+    at async Promise.all (index 0)
+Use --update-env to update environment variables
+[PM2][ERROR] Process or Namespace bss-app not found
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+ubuntu@ip-172-31-1-112:/home/BSS$ ^C
+ubuntu@ip-172-31-1-112:/home/BSS$ cd /home/BSS
+npm install --legacy-peer-deps
+npm run build
+pm2 start dist/index.js --name BSS
+pm2 save
+pm2 status
+
+up to date, audited 789 packages in 2s
+
+79 packages are looking for funding
+  run `npm fund` for details
+
+11 vulnerabilities (7 moderate, 2 high, 2 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.2.2 building client environment for production...
+✓ 0 modules transformed.
+✗ Build failed in 11ms
+error during build:
+Could not resolve entry module "client/index.html".
+    at getRollupError (file:///home/BSS/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///home/BSS/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at ModuleLoader.loadEntryModule (file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:21597:20)
+    at async Promise.all (index 0)
+[PM2][ERROR] Script not found: /home/BSS/dist/index.js
+[PM2] Saving current process list...
+[PM2][WARN] PM2 is not managing any process, skipping save...
+[PM2][WARN] To force saving use: pm2 save --force
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+ubuntu@ip-172-31-1-112:/home/BSS$
