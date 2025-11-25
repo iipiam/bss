@@ -1,0 +1,370 @@
+ inflating: Kinzhal/.local/state/replit/agent/filesystem/filesystem_state.json                                                                                                              
+  inflating: Kinzhal/.local/state/replit/agent/rapid_build_success
+  inflating: Kinzhal/.local/state/replit/agent/repl_state.bin
+  inflating: Kinzhal/.replit
+  inflating: Kinzhal/AWS_DEPLOYMENT_GUIDE.md
+  inflating: Kinzhal/CREDENTIALS.md
+  inflating: Kinzhal/EMERGENCY_ADMIN_RESET.md
+  inflating: Kinzhal/PRODUCTION_LOGIN_FIX.md
+  inflating: Kinzhal/after_login.png
+  inflating: Kinzhal/attached_assets/IMG_8731_1762870212105.jpeg
+  inflating: Kinzhal/attached_assets/IMG_8731_1763039543270.jpeg
+  inflating: Kinzhal/attached_assets/IMG_8801_1763031500933.png
+  inflating: Kinzhal/attached_assets/IMG_8801_1763031870185.png
+  inflating: Kinzhal/attached_assets/IMG_8801_1763038448247.png
+  inflating: Kinzhal/attached_assets/IMG_8801_1763039543269.png
+  inflating: Kinzhal/attached_assets/IMG_9460_1763635930998.png
+  inflating: Kinzhal/attached_assets/IMG_9719_1763905835390.png
+  inflating: Kinzhal/attached_assets/IMG_9780_1764016921659.png
+  inflating: Kinzhal/attached_assets/IMG_9781_1764016932131.png
+  inflating: Kinzhal/attached_assets/Kangal3_1762537700159.png
+  inflating: Kinzhal/attached_assets/Kangal3_1762537788436.png
+  inflating: Kinzhal/attached_assets/Kangal3_1762537941435.png
+  inflating: Kinzhal/attached_assets/Kanzhal_1762540570017.jpg
+  inflating: Kinzhal/attached_assets/Pasted--total-2360-drwxr-xr-x-4-ubuntu-ubun                                                                                                             tu-4096-Nov-25-14-50-drwxr-xr-x-4-root-root-409-1764082844954_1764082844954.txt                                                                                                              
+  inflating: Kinzhal/attached_assets/Pasted--total-2360-drwxr-xr-x-4-ubuntu-ubun                                                                                                             tu-4096-Nov-25-14-50-drwxr-xr-x-4-root-root-409-1764082857221_1764082857222.txt                                                                                                              
+  inflating: Kinzhal/attached_assets/Pasted--total-2372-drwxrwxrwx-14-ubuntu-ubu                                                                                                             ntu-4096-Nov-25-15-10-drwxr-xr-x-4-ubuntu-ubuntu-4096--1764084667228_17640846672                                                                                                             29.txt
+  inflating: Kinzhal/attached_assets/SKinzhal_1762548409717.jpg
+  inflating: Kinzhal/attached_assets/SKinzhal_1762548840624.jpeg
+  inflating: Kinzhal/attached_assets/SaudiKangal_1762538198513.png
+  inflating: Kinzhal/attached_assets/WhatsApp Image 2025-11-14 at 12.28.43_17631                                                                                                             12611575.jpeg
+  inflating: Kinzhal/attached_assets/WhatsApp Image 2025-11-14 at 12.28.43_17631                                                                                                             12894893.jpeg
+  inflating: Kinzhal/attached_assets/WhatsApp Image 2025-11-14 at 12.28.43_17631                                                                                                             14242297.jpeg
+  inflating: Kinzhal/attached_assets/generated_images/Analytics_dashboard_screen                                                                                                             shot_2b42f16c.png
+  inflating: Kinzhal/attached_assets/generated_images/Business_Analytics_Dashboa                                                                                                             rd_3301d762.png
+  inflating: Kinzhal/attached_assets/generated_images/Business_Forecasting_Analy                                                                                                             tics_6bf96b65.png
+  inflating: Kinzhal/attached_assets/generated_images/Customer_management_databa                                                                                                             se_screenshot_7965bb5e.png
+  inflating: Kinzhal/attached_assets/generated_images/Delivery_App_Management_Da                                                                                                             shboard_af536108.png
+  inflating: Kinzhal/attached_assets/generated_images/Delivery_Apps_Analytics_Sc                                                                                                             reenshot_8961352b.png
+  inflating: Kinzhal/attached_assets/generated_images/Demand_forecasting_interfa                                                                                                             ce_screenshot_025a6451.png
+  inflating: Kinzhal/attached_assets/generated_images/Financial_Reports_Display_                                                                                                             af93422d.png
+  inflating: Kinzhal/attached_assets/generated_images/Financial_reports_dashboar                                                                                                             d_screenshot_9884d372.png
+  inflating: Kinzhal/attached_assets/generated_images/Happy_Restaurant_Customers                                                                                                             _4b909963.png
+  inflating: Kinzhal/attached_assets/generated_images/Inventory_Management_Syste                                                                                                             m_f84dcc3a.png
+  inflating: Kinzhal/attached_assets/generated_images/Inventory_management_dashb                                                                                                             oard_screenshot_918ba2b2.png
+  inflating: Kinzhal/attached_assets/generated_images/Invoice_Documents_37f6d13b                                                                                                             .png
+  inflating: Kinzhal/attached_assets/generated_images/Menu_management_interface_                                                                                                             screenshot_b8294dd3.png
+  inflating: Kinzhal/attached_assets/generated_images/Order_Management_Display_4                                                                                                             049f259.png
+  inflating: Kinzhal/attached_assets/generated_images/Orders_tracking_dashboard_                                                                                                             screenshot_f0d2e3a1.png
+  inflating: Kinzhal/attached_assets/generated_images/POS_System_Interface_a1bc7                                                                                                             94e.png
+  inflating: Kinzhal/attached_assets/generated_images/POS_system_interface_scree                                                                                                             nshot_7e5ae849.png
+  inflating: Kinzhal/attached_assets/generated_images/Profitability_Analysis_Set                                                                                                             up_1bed8640.png
+  inflating: Kinzhal/attached_assets/generated_images/Profitability_analysis_das                                                                                                             hboard_screenshot_2a18aab4.png
+  inflating: Kinzhal/attached_assets/generated_images/Recipe_Preparation_Kitchen                                                                                                             _c2b136e5.png
+  inflating: Kinzhal/attached_assets/generated_images/Recipe_creation_interface_                                                                                                             screenshot_e67a7aa1.png
+  inflating: Kinzhal/attached_assets/generated_images/Restaurant_Menu_Display_b8                                                                                                             12c237.png
+  inflating: Kinzhal/attached_assets/generated_images/Sales_analytics_page_scree                                                                                                             nshot_1b3c0414.png
+  inflating: Kinzhal/attached_assets/generated_images/Sales_and_Payment_System_5                                                                                                             634d834.png
+  inflating: Kinzhal/attached_assets/generated_images/ZATCA_invoice_document_scr                                                                                                             eenshot_54e402f8.png
+  inflating: Kinzhal/attached_assets/image_1762443262162.png
+  inflating: Kinzhal/attached_assets/image_1762838721409.png
+  inflating: Kinzhal/attached_assets/image_1763577508251.png
+  inflating: Kinzhal/attached_assets/image_1763579037629.png
+  inflating: Kinzhal/attached_assets/image_1763639812346.png
+  inflating: Kinzhal/attached_assets/image_1763639863913.png
+  inflating: Kinzhal/attached_assets/image_1763640175337.png
+  inflating: Kinzhal/attached_assets/image_1763901464503.png
+  inflating: Kinzhal/attached_assets/image_1763901981789.png
+  inflating: Kinzhal/attached_assets/image_1763911175366.png
+  inflating: Kinzhal/attached_assets/image_1763911183303.png
+  inflating: Kinzhal/attached_assets/image_1763911209180.png
+  inflating: Kinzhal/attached_assets/image_1764082929880.png
+  inflating: Kinzhal/attached_assets/image_1764084739767.png
+  inflating: Kinzhal/attached_assets/kinzhal-eagle-logo.jpeg
+  inflating: Kinzhal/attached_assets/stock_images/play_button_video_th_12022ed2.                                                                                                             jpg
+  inflating: Kinzhal/attached_assets/stock_images/restaurant_staff_tea_658450c1.                                                                                                             jpg
+  inflating: Kinzhal/attached_assets/stock_images/restaurant_staff_tea_7eaa745e.                                                                                                             jpg
+  inflating: Kinzhal/attached_assets/stock_images/restaurant_staff_tea_ce149ad2.                                                                                                             jpg
+  inflating: Kinzhal/attached_assets/stock_images/successful_restauran_039f182e.                                                                                                             jpg
+  inflating: Kinzhal/attached_assets/stock_images/successful_restauran_41c16385.                                                                                                             jpg
+  inflating: Kinzhal/attached_assets/stock_images/successful_restauran_585fac32.                                                                                                             jpg
+  inflating: Kinzhal/aws-rds-ca-bundle.pem
+   creating: Kinzhal/client/
+  inflating: Kinzhal/client/index.html
+   creating: Kinzhal/client/public/
+  inflating: Kinzhal/client/public/favicon.png
+   creating: Kinzhal/client/src/
+  inflating: Kinzhal/client/src/App.tsx
+   creating: Kinzhal/client/src/assets/
+  inflating: Kinzhal/client/src/assets/IMG_8731_1762870212105.jpeg
+   creating: Kinzhal/client/src/components/
+  inflating: Kinzhal/client/src/components/ErrorBoundary.tsx
+  inflating: Kinzhal/client/src/components/MoyasarPayment.tsx
+  inflating: Kinzhal/client/src/components/TableList.tsx
+  inflating: Kinzhal/client/src/components/WelcomeVideo.tsx
+  inflating: Kinzhal/client/src/components/app-sidebar.tsx
+  inflating: Kinzhal/client/src/components/branch-selector.tsx
+  inflating: Kinzhal/client/src/components/metric-card.tsx
+  inflating: Kinzhal/client/src/components/theme-provider.tsx
+  inflating: Kinzhal/client/src/components/theme-toggle.tsx
+   creating: Kinzhal/client/src/components/ui/
+  inflating: Kinzhal/client/src/components/ui/accordion.tsx
+  inflating: Kinzhal/client/src/components/ui/alert-dialog.tsx
+  inflating: Kinzhal/client/src/components/ui/alert.tsx
+  inflating: Kinzhal/client/src/components/ui/aspect-ratio.tsx
+  inflating: Kinzhal/client/src/components/ui/avatar.tsx
+  inflating: Kinzhal/client/src/components/ui/badge.tsx
+  inflating: Kinzhal/client/src/components/ui/breadcrumb.tsx
+  inflating: Kinzhal/client/src/components/ui/button.tsx
+  inflating: Kinzhal/client/src/components/ui/calendar.tsx
+  inflating: Kinzhal/client/src/components/ui/card.tsx
+  inflating: Kinzhal/client/src/components/ui/carousel.tsx
+  inflating: Kinzhal/client/src/components/ui/chart.tsx
+  inflating: Kinzhal/client/src/components/ui/checkbox.tsx
+  inflating: Kinzhal/client/src/components/ui/collapsible.tsx
+  inflating: Kinzhal/client/src/components/ui/command.tsx
+  inflating: Kinzhal/client/src/components/ui/context-menu.tsx
+  inflating: Kinzhal/client/src/components/ui/dialog.tsx
+  inflating: Kinzhal/client/src/components/ui/drawer.tsx
+  inflating: Kinzhal/client/src/components/ui/dropdown-menu.tsx
+  inflating: Kinzhal/client/src/components/ui/form.tsx
+  inflating: Kinzhal/client/src/components/ui/hover-card.tsx
+  inflating: Kinzhal/client/src/components/ui/input-otp.tsx
+  inflating: Kinzhal/client/src/components/ui/input.tsx
+  inflating: Kinzhal/client/src/components/ui/label.tsx
+  inflating: Kinzhal/client/src/components/ui/menubar.tsx
+  inflating: Kinzhal/client/src/components/ui/navigation-menu.tsx
+  inflating: Kinzhal/client/src/components/ui/pagination.tsx
+  inflating: Kinzhal/client/src/components/ui/popover.tsx
+  inflating: Kinzhal/client/src/components/ui/progress.tsx
+  inflating: Kinzhal/client/src/components/ui/radio-group.tsx
+  inflating: Kinzhal/client/src/components/ui/resizable.tsx
+  inflating: Kinzhal/client/src/components/ui/scroll-area.tsx
+  inflating: Kinzhal/client/src/components/ui/select.tsx
+  inflating: Kinzhal/client/src/components/ui/separator.tsx
+  inflating: Kinzhal/client/src/components/ui/sheet.tsx
+  inflating: Kinzhal/client/src/components/ui/sidebar.tsx
+  inflating: Kinzhal/client/src/components/ui/skeleton.tsx
+  inflating: Kinzhal/client/src/components/ui/slider.tsx
+  inflating: Kinzhal/client/src/components/ui/switch.tsx
+  inflating: Kinzhal/client/src/components/ui/table.tsx
+  inflating: Kinzhal/client/src/components/ui/tabs.tsx
+  inflating: Kinzhal/client/src/components/ui/textarea.tsx
+  inflating: Kinzhal/client/src/components/ui/toast.tsx
+  inflating: Kinzhal/client/src/components/ui/toaster.tsx
+  inflating: Kinzhal/client/src/components/ui/toggle-group.tsx
+  inflating: Kinzhal/client/src/components/ui/toggle.tsx
+  inflating: Kinzhal/client/src/components/ui/tooltip.tsx
+   creating: Kinzhal/client/src/contexts/
+  inflating: Kinzhal/client/src/contexts/BranchContext.tsx
+  inflating: Kinzhal/client/src/contexts/DeviceContext.tsx
+  inflating: Kinzhal/client/src/contexts/LanguageContext.tsx
+  inflating: Kinzhal/client/src/contexts/NotificationContext.tsx
+   creating: Kinzhal/client/src/hooks/
+  inflating: Kinzhal/client/src/hooks/use-mobile.tsx
+  inflating: Kinzhal/client/src/hooks/use-toast.ts
+  inflating: Kinzhal/client/src/hooks/useBusinessType.ts
+  inflating: Kinzhal/client/src/hooks/usePermissions.ts
+   creating: Kinzhal/client/src/i18n/
+  inflating: Kinzhal/client/src/i18n/translations.ts
+  inflating: Kinzhal/client/src/i18n/translations.ts.backup
+  inflating: Kinzhal/client/src/i18n/translations.ts.backup2
+  inflating: Kinzhal/client/src/i18n/translations.ts.bak
+  inflating: Kinzhal/client/src/i18n/tutorialSteps.ts
+  inflating: Kinzhal/client/src/index.css
+   creating: Kinzhal/client/src/lib/
+  inflating: Kinzhal/client/src/lib/auth.tsx
+  inflating: Kinzhal/client/src/lib/exportUtils.ts
+  inflating: Kinzhal/client/src/lib/mobileLayout.ts
+  inflating: Kinzhal/client/src/lib/notificationTones.ts
+  inflating: Kinzhal/client/src/lib/queryClient.ts
+  inflating: Kinzhal/client/src/lib/utils.ts
+  inflating: Kinzhal/client/src/lib/whatsapp.ts
+  inflating: Kinzhal/client/src/main.tsx
+   creating: Kinzhal/client/src/pages/
+  inflating: Kinzhal/client/src/pages/analysis.tsx
+  inflating: Kinzhal/client/src/pages/bills.tsx
+  inflating: Kinzhal/client/src/pages/branches.tsx
+  inflating: Kinzhal/client/src/pages/chat.tsx
+  inflating: Kinzhal/client/src/pages/customers.tsx
+  inflating: Kinzhal/client/src/pages/dashboard.tsx
+  inflating: Kinzhal/client/src/pages/delivery-app-profitability.tsx
+  inflating: Kinzhal/client/src/pages/delivery-apps.tsx
+  inflating: Kinzhal/client/src/pages/emergency-reset.tsx
+  inflating: Kinzhal/client/src/pages/employees.tsx
+  inflating: Kinzhal/client/src/pages/financial.tsx
+  inflating: Kinzhal/client/src/pages/forecasting.tsx
+  inflating: Kinzhal/client/src/pages/forgot-password.tsx
+  inflating: Kinzhal/client/src/pages/inventory.tsx
+  inflating: Kinzhal/client/src/pages/investors.tsx
+  inflating: Kinzhal/client/src/pages/invoices.tsx
+  inflating: Kinzhal/client/src/pages/it-dashboard.tsx
+  inflating: Kinzhal/client/src/pages/kitchen.tsx
+  inflating: Kinzhal/client/src/pages/licenses.tsx
+  inflating: Kinzhal/client/src/pages/login.tsx
+  inflating: Kinzhal/client/src/pages/menu.tsx
+  inflating: Kinzhal/client/src/pages/not-found.tsx
+  inflating: Kinzhal/client/src/pages/orders.tsx
+  inflating: Kinzhal/client/src/pages/password-manager.tsx
+  inflating: Kinzhal/client/src/pages/payment-test.tsx
+  inflating: Kinzhal/client/src/pages/performance.tsx
+  inflating: Kinzhal/client/src/pages/pos.tsx
+  inflating: Kinzhal/client/src/pages/procurement.tsx
+  inflating: Kinzhal/client/src/pages/profile.tsx
+  inflating: Kinzhal/client/src/pages/profitability.tsx
+  inflating: Kinzhal/client/src/pages/recipes.tsx
+  inflating: Kinzhal/client/src/pages/reports.tsx
+  inflating: Kinzhal/client/src/pages/reset-password.tsx
+  inflating: Kinzhal/client/src/pages/sales-comparison.tsx
+  inflating: Kinzhal/client/src/pages/sales.tsx
+  inflating: Kinzhal/client/src/pages/settings.tsx
+  inflating: Kinzhal/client/src/pages/setup.tsx
+  inflating: Kinzhal/client/src/pages/shop.tsx
+  inflating: Kinzhal/client/src/pages/support-detail.tsx
+  inflating: Kinzhal/client/src/pages/support.tsx
+  inflating: Kinzhal/client/src/pages/tutorial.tsx
+  inflating: Kinzhal/client/src/pages/vat-reports.tsx
+  inflating: Kinzhal/client/src/vite-env.d.ts
+  inflating: Kinzhal/client/vite-env.d.ts
+  inflating: Kinzhal/components.json
+  inflating: Kinzhal/dashboard_with_logos.png
+  inflating: Kinzhal/deployment/README.md
+  inflating: Kinzhal/deployment/configs/.env.production
+  inflating: Kinzhal/deployment/configs/ecosystem.config.js
+  inflating: Kinzhal/deployment/configs/nginx-bss.conf
+  inflating: Kinzhal/deployment/docs/deployment-checklist.md
+  inflating: Kinzhal/deployment/docs/disaster-recovery.md
+  inflating: Kinzhal/deployment/docs/infrastructure-setup.md
+  inflating: Kinzhal/deployment/scripts/backup.sh
+  inflating: Kinzhal/deployment/scripts/deploy.sh
+  inflating: Kinzhal/deployment/scripts/migrate-database.sh
+  inflating: Kinzhal/deployment/scripts/monitor.sh
+  inflating: Kinzhal/deployment/scripts/security-setup.sh
+  inflating: Kinzhal/design_guidelines.md
+  inflating: Kinzhal/dist/public/favicon.png
+  inflating: Kinzhal/drizzle.config.ts
+  inflating: Kinzhal/execute-migration-sql.ts
+  inflating: Kinzhal/footer.png
+  inflating: Kinzhal/invoices/INV-ORD-1762066577792.pdf
+  inflating: Kinzhal/invoices/INV-ORD-1762190784144.pdf
+  inflating: Kinzhal/invoices/INV-ORD-1762192378258.pdf
+  inflating: Kinzhal/invoices/INV-ORD-1762195472501.pdf
+  inflating: Kinzhal/invoices/INV-ORD-1762195969714.pdf
+  inflating: Kinzhal/invoices/INV-ORD-1762202141647.pdf
+  inflating: Kinzhal/invoices/INV-ORD-1762204781560.pdf
+  inflating: Kinzhal/invoices/INV-ORD-1762208580785.pdf
+  inflating: Kinzhal/invoices/INV-ORD-1762211599336.pdf
+  inflating: Kinzhal/invoices/INV-ORD-1762575774187.pdf
+  inflating: Kinzhal/invoices/INV-ORD-1762590792145.pdf
+  inflating: Kinzhal/invoices/INV-ORD-1762602208988.pdf
+  inflating: Kinzhal/invoices/INV-ORD-1762605826801.pdf
+  inflating: Kinzhal/invoices/INV-ORD-1762804145327.pdf
+  inflating: Kinzhal/invoices/INV-ORD-1762821591278.pdf
+  inflating: Kinzhal/invoices/INV-ORD-1762826213996.pdf
+  inflating: Kinzhal/invoices/INV-ORD-1762826327864.pdf
+  inflating: Kinzhal/legal
+  inflating: Kinzhal/login_full.png
+  inflating: Kinzhal/login_page.png
+  inflating: Kinzhal/login_page_current.png
+  inflating: Kinzhal/manual-migrate.mjs
+  inflating: Kinzhal/migrate-aws.ts
+  inflating: Kinzhal/migrations/0000_legal_greymalkin.sql
+  inflating: Kinzhal/migrations/0001_curious_corsair.sql
+  inflating: Kinzhal/migrations/meta/0000_snapshot.json
+  inflating: Kinzhal/migrations/meta/0001_snapshot.json
+  inflating: Kinzhal/migrations/meta/_journal.json
+  inflating: Kinzhal/nwcdtr
+  inflating: Kinzhal/package-lock.json
+  inflating: Kinzhal/package.json
+  inflating: Kinzhal/performance_page_full.png
+  inflating: Kinzhal/postcss.config.js
+  inflating: Kinzhal/public/invoices/INV-ORD-1763379360912.pdf
+  inflating: Kinzhal/public/invoices/INV-ORD-1763727137653.pdf
+  inflating: Kinzhal/public/invoices/INV-ORD-1763728131595.pdf
+  inflating: Kinzhal/public/invoices/INV-ORD-1763740277591.pdf
+  inflating: Kinzhal/public/invoices/INV-ORD-1763810241725.pdf
+  inflating: Kinzhal/public/invoices/INV-ORD-1763818820670.pdf
+  inflating: Kinzhal/public/invoices/INV-ORD-1763820207880.pdf
+  inflating: Kinzhal/public/invoices/INV-ORD-1763820635782.pdf
+  inflating: Kinzhal/public/invoices/INV-ORD-1764002574349.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0001-20251110-212                                                                                                             138.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0001-20251119-141                                                                                                             828.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0011-20251110-212                                                                                                             505.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0011-20251119-154                                                                                                             855.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0021-20251111-025                                                                                                             411.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0021-20251119-161                                                                                                             136.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0031-20251111-041                                                                                                             933.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0031-20251120-133                                                                                                             657.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0041-20251112-021                                                                                                             710.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0041-20251120-141                                                                                                             156.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0051-20251112-023                                                                                                             124.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0051-20251120-144                                                                                                             657.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0061-20251112-025                                                                                                             947.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0061-20251120-152                                                                                                             345.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0071-20251112-215                                                                                                             133.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0071-20251121-115                                                                                                             404.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0081-20251113-055                                                                                                             203.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0081-20251122-174                                                                                                             812.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0091-20251114-053                                                                                                             132.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0101-20251114-082                                                                                                             227.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0111-20251114-094                                                                                                             806.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0121-20251114-100                                                                                                             235.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0131-20251114-152                                                                                                             146.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0141-20251114-181                                                                                                             754.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0151-20251114-182                                                                                                             058.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0161-20251115-002                                                                                                             317.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0171-20251117-064                                                                                                             259.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0181-20251117-092                                                                                                             418.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0191-20251117-100                                                                                                             247.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0201-20251117-102                                                                                                             528.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0211-20251117-132                                                                                                             910.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0221-20251117-153                                                                                                             000.pdf
+  inflating: Kinzhal/public/subscription-invoices/subscription-0221-20251118-162                                                                                                             834.pdf
+  inflating: Kinzhal/public/uploads/logos/logo-95a2c64c-0b3f-479a-8f36-6c2531c80                                                                                                             6d2-1763811826673.png
+  inflating: Kinzhal/public/uploads/logos/logo-95a2c64c-0b3f-479a-8f36-6c2531c80                                                                                                             6d2-1763828763921.jpeg
+  inflating: Kinzhal/public/uploads/logos/logo-95a2c64c-0b3f-479a-8f36-6c2531c80                                                                                                             6d2-1763832488838.jpg
+  inflating: Kinzhal/public/vat-reports/VAT-2025-11-VAT-2025-11-0001.pdf
+  inflating: Kinzhal/replit.md
+  inflating: Kinzhal/reset-admin-password.cjs
+  inflating: Kinzhal/restopos-complete-demo.html
+  inflating: Kinzhal/restopos-demo.html
+  inflating: Kinzhal/scripts/analyze-translations.ts
+  inflating: Kinzhal/scripts/complete-translations.ts
+  inflating: Kinzhal/scripts/final-verification.ts
+  inflating: Kinzhal/scripts/find-duplicates.ts
+  inflating: Kinzhal/scripts/find-missing-translations.ts
+  inflating: Kinzhal/scripts/fix-all-missing-keys.ts
+  inflating: Kinzhal/scripts/fix-missing-translations.ts
+  inflating: Kinzhal/scripts/fix-translations-v2.ts
+  inflating: Kinzhal/scripts/fix-translations.ts
+  inflating: Kinzhal/scripts/get-missing-keys.ts
+  inflating: Kinzhal/scripts/migrate-aws-rds.ts
+  inflating: Kinzhal/scripts/migrate-it-accounts.ts
+  inflating: Kinzhal/scripts/migrate-permissions.ts
+  inflating: Kinzhal/scripts/remove-duplicates.ts
+  inflating: Kinzhal/scripts/reset-password.ts
+  inflating: Kinzhal/scripts/seed-it-accounts.ts
+  inflating: Kinzhal/scripts/validate-translations.ts
+   creating: Kinzhal/server/
+  inflating: Kinzhal/server/activityLogger.ts
+  inflating: Kinzhal/server/db.ts
+  inflating: Kinzhal/server/email.ts
+  inflating: Kinzhal/server/emailService.ts
+  inflating: Kinzhal/server/index.ts
+  inflating: Kinzhal/server/invoice.ts
+   creating: Kinzhal/server/middleware/
+  inflating: Kinzhal/server/middleware/requirePermission.ts
+  inflating: Kinzhal/server/moyasarService.ts
+  inflating: Kinzhal/server/orderProcessingService.ts
+  inflating: Kinzhal/server/routes.ts
+  inflating: Kinzhal/server/storage.ts
+  inflating: Kinzhal/server/utils.ts
+  inflating: Kinzhal/server/vite.ts
+  inflating: Kinzhal/setup_page_logos.png
+   creating: Kinzhal/shared/
+  inflating: Kinzhal/shared/permissions.ts
+  inflating: Kinzhal/shared/schema.ts
+  inflating: Kinzhal/shared/subscriptionPricing.ts
+  inflating: Kinzhal/tailwind.config.ts
+  inflating: Kinzhal/test-aws-connection.ts
+  inflating: Kinzhal/test-db-connection.mjs
+  inflating: Kinzhal/test-db-postgres.mjs
+  inflating: Kinzhal/test-db-ssl.mjs
+  inflating: Kinzhal/tsconfig.json
+  inflating: Kinzhal/types/express-session.d.ts
+  inflating: Kinzhal/uploads/menu-images/menu-1762588429115-653538607.jpeg
+  inflating: Kinzhal/vite.config.ts
+ubuntu@ip-172-31-1-112:/home/bss-app$ ls -la | grep -E "client|server|shared"
+ubuntu@ip-172-31-1-112:/home/bss-app$ ls -la | grep -E "client|server|shared"
+ubuntu@ip-172-31-1-112:/home/bss-app$ ls -la | grep -E "client|server|shared"
+ubuntu@ip-172-31-1-112:/home/bss-app$
