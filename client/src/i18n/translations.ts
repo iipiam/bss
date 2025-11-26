@@ -515,6 +515,18 @@ export interface Translations {
   earningsBreakdown: string;
   statementDownloaded: string;
   statementDownloadFailed: string;
+  investorType: string;
+  selectInvestorType: string;
+  moneyInvestor: string;
+  recipeOwner: string;
+  selectRecipe: string;
+  selectRecipePlaceholder: string;
+  recipeOwnerHelp: string;
+  selectRecipeForRecipeInvestor: string;
+  earningsSource: string;
+  recipeSales: string;
+  profitShare: string;
+  unknownRecipe: string;
   
   // Employee Management
   employeeManagement: string;
@@ -1742,6 +1754,17 @@ export const translations: Record<Language, Translations> = {
     earningsBreakdown: 'Earnings Breakdown',
     statementDownloaded: 'Statement downloaded successfully',
     statementDownloadFailed: 'Failed to download statement',
+    investorType: 'Investor Type',
+    selectInvestorType: 'Select investor type',
+    moneyInvestor: 'Money Investor',
+    recipeOwner: 'Recipe Owner',
+    selectRecipePlaceholder: 'Select a recipe',
+    recipeOwnerHelp: 'The investor will receive a percentage of net sales from this recipe',
+    selectRecipeForRecipeInvestor: 'Please select a recipe for recipe investors or enter an amount for money investors',
+    earningsSource: 'Earnings Source',
+    recipeSales: 'Recipe Sales',
+    profitShare: 'Profit Share',
+    unknownRecipe: 'Unknown Recipe',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -2972,6 +2995,17 @@ export const translations: Record<Language, Translations> = {
     earningsBreakdown: 'تفصيل الأرباح',
     statementDownloaded: 'تم تحميل كشف الحساب بنجاح',
     statementDownloadFailed: 'فشل تحميل كشف الحساب',
+    investorType: 'نوع المستثمر',
+    selectInvestorType: 'اختر نوع المستثمر',
+    moneyInvestor: 'مستثمر مالي',
+    recipeOwner: 'مالك الوصفة',
+    selectRecipePlaceholder: 'اختر وصفة',
+    recipeOwnerHelp: 'سيحصل المستثمر على نسبة من صافي مبيعات هذه الوصفة',
+    selectRecipeForRecipeInvestor: 'يرجى اختيار وصفة لمستثمري الوصفات أو إدخال مبلغ للمستثمرين الماليين',
+    earningsSource: 'مصدر الأرباح',
+    recipeSales: 'مبيعات الوصفة',
+    profitShare: 'حصة الربح',
+    unknownRecipe: 'وصفة غير معروفة',
     
     // Employee Management
     employeeManagement: 'إدارة الموظفين',
@@ -4202,6 +4236,17 @@ export const translations: Record<Language, Translations> = {
     earningsBreakdown: 'Earnings Breakdown',
     statementDownloaded: 'Statement downloaded successfully',
     statementDownloadFailed: 'Failed to download statement',
+    investorType: 'Investor Type',
+    selectInvestorType: 'Select investor type',
+    moneyInvestor: 'Money Investor',
+    recipeOwner: 'Recipe Owner',
+    selectRecipePlaceholder: 'Select a recipe',
+    recipeOwnerHelp: 'The investor will receive a percentage of net sales from this recipe',
+    selectRecipeForRecipeInvestor: 'Please select a recipe for recipe investors or enter an amount for money investors',
+    earningsSource: 'Earnings Source',
+    recipeSales: 'Recipe Sales',
+    profitShare: 'Profit Share',
+    unknownRecipe: 'Unknown Recipe',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -5431,6 +5476,17 @@ export const translations: Record<Language, Translations> = {
     earningsBreakdown: 'Earnings Breakdown',
     statementDownloaded: 'Statement downloaded successfully',
     statementDownloadFailed: 'Failed to download statement',
+    investorType: 'Investor Type',
+    selectInvestorType: 'Select investor type',
+    moneyInvestor: 'Money Investor',
+    recipeOwner: 'Recipe Owner',
+    selectRecipePlaceholder: 'Select a recipe',
+    recipeOwnerHelp: 'The investor will receive a percentage of net sales from this recipe',
+    selectRecipeForRecipeInvestor: 'Please select a recipe for recipe investors or enter an amount for money investors',
+    earningsSource: 'Earnings Source',
+    recipeSales: 'Recipe Sales',
+    profitShare: 'Profit Share',
+    unknownRecipe: 'Unknown Recipe',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -6660,6 +6716,17 @@ export const translations: Record<Language, Translations> = {
     earningsBreakdown: 'Earnings Breakdown',
     statementDownloaded: 'Statement downloaded successfully',
     statementDownloadFailed: 'Failed to download statement',
+    investorType: 'Investor Type',
+    selectInvestorType: 'Select investor type',
+    moneyInvestor: 'Money Investor',
+    recipeOwner: 'Recipe Owner',
+    selectRecipePlaceholder: 'Select a recipe',
+    recipeOwnerHelp: 'The investor will receive a percentage of net sales from this recipe',
+    selectRecipeForRecipeInvestor: 'Please select a recipe for recipe investors or enter an amount for money investors',
+    earningsSource: 'Earnings Source',
+    recipeSales: 'Recipe Sales',
+    profitShare: 'Profit Share',
+    unknownRecipe: 'Unknown Recipe',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -7889,6 +7956,17 @@ export const translations: Record<Language, Translations> = {
     earningsBreakdown: 'Earnings Breakdown',
     statementDownloaded: 'Statement downloaded successfully',
     statementDownloadFailed: 'Failed to download statement',
+    investorType: 'Investor Type',
+    selectInvestorType: 'Select investor type',
+    moneyInvestor: 'Money Investor',
+    recipeOwner: 'Recipe Owner',
+    selectRecipePlaceholder: 'Select a recipe',
+    recipeOwnerHelp: 'The investor will receive a percentage of net sales from this recipe',
+    selectRecipeForRecipeInvestor: 'Please select a recipe for recipe investors or enter an amount for money investors',
+    earningsSource: 'Earnings Source',
+    recipeSales: 'Recipe Sales',
+    profitShare: 'Profit Share',
+    unknownRecipe: 'Unknown Recipe',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -9119,6 +9197,17 @@ export const translations: Record<Language, Translations> = {
     earningsBreakdown: 'आय विवरण',
     statementDownloaded: 'विवरण सफलतापूर्वक डाउनलोड किया गया',
     statementDownloadFailed: 'विवरण डाउनलोड करने में विफल',
+    investorType: 'Investor Type',
+    selectInvestorType: 'Select investor type',
+    moneyInvestor: 'Money Investor',
+    recipeOwner: 'Recipe Owner',
+    selectRecipePlaceholder: 'Select a recipe',
+    recipeOwnerHelp: 'The investor will receive a percentage of net sales from this recipe',
+    selectRecipeForRecipeInvestor: 'Please select a recipe for recipe investors or enter an amount for money investors',
+    earningsSource: 'Earnings Source',
+    recipeSales: 'Recipe Sales',
+    profitShare: 'Profit Share',
+    unknownRecipe: 'Unknown Recipe',
     
     // Employee Management
     employeeManagement: 'कर्मचारी प्रबंधन',
@@ -10336,6 +10425,17 @@ export const translations: Record<Language, Translations> = {
     earningsBreakdown: 'آمدنی کی تفصیل',
     statementDownloaded: 'بیان کامیابی سے ڈاؤن لوڈ ہوا',
     statementDownloadFailed: 'بیان ڈاؤن لوڈ کرنے میں ناکام',
+    investorType: 'Investor Type',
+    selectInvestorType: 'Select investor type',
+    moneyInvestor: 'Money Investor',
+    recipeOwner: 'Recipe Owner',
+    selectRecipePlaceholder: 'Select a recipe',
+    recipeOwnerHelp: 'The investor will receive a percentage of net sales from this recipe',
+    selectRecipeForRecipeInvestor: 'Please select a recipe for recipe investors or enter an amount for money investors',
+    earningsSource: 'Earnings Source',
+    recipeSales: 'Recipe Sales',
+    profitShare: 'Profit Share',
+    unknownRecipe: 'Unknown Recipe',
     
     // Employee Management
     employeeManagement: 'ملازمین کی انتظامیہ',
@@ -11503,6 +11603,17 @@ export const translations: Record<Language, Translations> = {
     earningsBreakdown: "Earnings Breakdown",
     statementDownloaded: "Statement downloaded successfully",
     statementDownloadFailed: "Failed to download statement",
+    investorType: "Investor Type",
+    selectInvestorType: "Select investor type",
+    moneyInvestor: "Money Investor",
+    recipeOwner: "Recipe Owner",
+    selectRecipePlaceholder: "Select a recipe",
+    recipeOwnerHelp: "The investor will receive a percentage of net sales from this recipe",
+    selectRecipeForRecipeInvestor: "Please select a recipe for recipe investors or enter an amount for money investors",
+    earningsSource: "Earnings Source",
+    recipeSales: "Recipe Sales",
+    profitShare: "Profit Share",
+    unknownRecipe: "Unknown Recipe",
     employeeManagement: "Employee Management",
     manageEmployees: "Manage employees and their information",
     addEmployee: "Añadir Empleado",
@@ -12657,6 +12768,17 @@ export const translations: Record<Language, Translations> = {
     earningsBreakdown: "Earnings Breakdown",
     statementDownloaded: "Statement downloaded successfully",
     statementDownloadFailed: "Failed to download statement",
+    investorType: "Investor Type",
+    selectInvestorType: "Select investor type",
+    moneyInvestor: "Money Investor",
+    recipeOwner: "Recipe Owner",
+    selectRecipePlaceholder: "Select a recipe",
+    recipeOwnerHelp: "The investor will receive a percentage of net sales from this recipe",
+    selectRecipeForRecipeInvestor: "Please select a recipe for recipe investors or enter an amount for money investors",
+    earningsSource: "Earnings Source",
+    recipeSales: "Recipe Sales",
+    profitShare: "Profit Share",
+    unknownRecipe: "Unknown Recipe",
     employeeManagement: "Employee Management",
     manageEmployees: "Manage employees and their information",
     addEmployee: "Magdagdag ng Empleyado",

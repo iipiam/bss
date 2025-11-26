@@ -653,9 +653,26 @@ export default function Investors() {
                           <UserCircle className="h-6 w-6 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold truncate">{investor.name}</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold truncate">{investor.name}</h3>
+                            <Badge variant="outline" className="shrink-0" data-testid={`badge-investor-type-${investor.id}`}>
+                              {(investor.investorType || "money") === "recipe" ? (
+                                <span className="flex items-center gap-1">
+                                  <ChefHat className="h-3 w-3" />
+                                  {t.recipeOwner || "Recipe"}
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1">
+                                  <Banknote className="h-3 w-3" />
+                                  {t.moneyInvestor || "Money"}
+                                </span>
+                              )}
+                            </Badge>
+                          </div>
                           <p className="text-sm text-muted-foreground">
-                            {new Date(investor.createdAt).toLocaleDateString()}
+                            {investor.investorType === "recipe" && investor.recipeId
+                              ? (recipes.find((r) => r.id === investor.recipeId)?.name || t.unknownRecipe || "Unknown Recipe")
+                              : new Date(investor.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
@@ -693,12 +710,20 @@ export default function Investors() {
                     </div>
 
                     <div className="space-y-2">
+                      {(investor.investorType || "money") === "money" && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">{t.amountInvested || "Amount Invested"}</span>
+                          <span className="font-medium">{parseFloat(investor.amountInvested).toFixed(2)} {t.sar || "SAR"}</span>
+                        </div>
+                      )}
+                      {investor.investorType === "recipe" && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">{t.earningsSource || "Earnings Source"}</span>
+                          <span className="font-medium">{t.recipeSales || "Recipe Sales"}</span>
+                        </div>
+                      )}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">{t.amountInvested || "Amount Invested"}</span>
-                        <span className="font-medium">{parseFloat(investor.amountInvested).toFixed(2)} {t.sar || "SAR"}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">{t.interestPercentage || "Interest %"}</span>
+                        <span className="text-sm text-muted-foreground">{investor.investorType === "recipe" ? (t.profitShare || "Profit Share") : (t.interestPercentage || "Interest %")}</span>
                         <Badge variant="secondary">{parseFloat(investor.interestPercentage).toFixed(2)}%</Badge>
                       </div>
                       <div className="flex items-center justify-between pt-2 border-t">
