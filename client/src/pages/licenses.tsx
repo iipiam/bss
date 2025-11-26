@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Edit, Trash2, AlertCircle, Calendar, Building, FileText, Clock, Bell, Shield } from "lucide-react";
+import { Plus, Edit, Trash2, AlertCircle, Calendar, Building, FileText, Clock, Bell, Shield, Upload, Download, X, File } from "lucide-react";
 import { format, differenceInDays, addDays } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/lib/auth";
@@ -55,6 +55,8 @@ export default function Licenses() {
   const [deletingLicense, setDeletingLicense] = useState<License | null>(null);
   const [filterType, setFilterType] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState<string>("");
 
   const businessType = restaurant?.businessType || 'restaurant';
 
@@ -185,8 +187,81 @@ export default function Licenses() {
     }
   };
 
+  // Handle file upload
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: t.error,
+        description: t.licenseFileTypeError || "Only image files (JPEG, PNG, GIF, WebP) and PDF documents are allowed",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: t.error,
+        description: t.licenseFileSizeError || "File size must be less than 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/licenses/upload-file', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      form.setValue('documentUrl', data.fileUrl);
+      setUploadedFileName(data.originalName || file.name);
+      toast({
+        title: t.success,
+        description: t.licenseFileUploaded || "File uploaded successfully",
+      });
+    } catch (error) {
+      console.error('File upload error:', error);
+      toast({
+        title: t.error,
+        description: t.licenseFileUploadFailed || "Failed to upload file",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Remove uploaded file
+  const handleRemoveFile = () => {
+    form.setValue('documentUrl', '');
+    setUploadedFileName('');
+  };
+
   const handleEdit = (license: License) => {
     setEditingLicense(license);
+    // Extract filename from URL if exists
+    if (license.documentUrl) {
+      const filename = license.documentUrl.split('/').pop() || '';
+      setUploadedFileName(filename);
+    } else {
+      setUploadedFileName('');
+    }
     form.reset({
       licenseType: license.licenseType as any,
       licenseNumber: license.licenseNumber,
@@ -260,6 +335,7 @@ export default function Licenses() {
           setIsDialogOpen(open);
           if (!open) {
             setEditingLicense(null);
+            setUploadedFileName('');
             form.reset();
           }
         }}>
@@ -401,9 +477,80 @@ export default function Licenses() {
                   name="documentUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Document URL (optional)</FormLabel>
+                      <FormLabel>{t.licenseDocument || "License Document"} ({t.optional || "optional"})</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Link to document" data-testid="input-document-url" />
+                        <div className="space-y-3">
+                          {/* Hidden input for form value */}
+                          <input type="hidden" {...field} />
+                          
+                          {/* Show uploaded file or upload button */}
+                          {field.value ? (
+                            <div className="flex items-center gap-2 p-3 border rounded-md bg-muted/50">
+                              <File className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                              <span className="text-sm flex-1 truncate" title={uploadedFileName || field.value}>
+                                {uploadedFileName || field.value.split('/').pop()}
+                              </span>
+                              <div className="flex gap-1 flex-shrink-0">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  asChild
+                                  data-testid="button-view-document"
+                                >
+                                  <a href={field.value} target="_blank" rel="noopener noreferrer" title={t.viewDocument || "View document"}>
+                                    <Download className="h-4 w-4" />
+                                  </a>
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={handleRemoveFile}
+                                  title={t.removeFile || "Remove file"}
+                                  data-testid="button-remove-file"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-center w-full">
+                              <label
+                                htmlFor="license-file-upload"
+                                className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-muted/30 hover:bg-muted/50 transition-colors"
+                              >
+                                <div className="flex flex-col items-center justify-center pt-2 pb-2">
+                                  {isUploading ? (
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                      <div className="h-5 w-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                      <span className="text-sm">{t.uploading || "Uploading..."}</span>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <Upload className="h-6 w-6 mb-2 text-muted-foreground" />
+                                      <p className="text-sm text-muted-foreground">
+                                        {t.clickToUpload || "Click to upload license file"}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        PDF, JPEG, PNG, GIF, WebP ({t.maxSize || "max"} 10MB)
+                                      </p>
+                                    </>
+                                  )}
+                                </div>
+                                <input
+                                  id="license-file-upload"
+                                  type="file"
+                                  className="hidden"
+                                  accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp,application/pdf"
+                                  onChange={handleFileUpload}
+                                  disabled={isUploading}
+                                  data-testid="input-license-file"
+                                />
+                              </label>
+                            </div>
+                          )}
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
