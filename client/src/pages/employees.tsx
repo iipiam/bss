@@ -15,9 +15,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, UserCheck, UserX, Calendar, FileText, Plane, Award, Shield, Briefcase, Clock, Info, Key, LogIn, Trash2 } from "lucide-react";
 import type { User } from "@shared/schema";
-import { DEFAULT_EMPLOYEE_PERMISSIONS, ALL_PERMISSIONS, type Permission } from "@shared/permissions";
+import { 
+  DEFAULT_EMPLOYEE_PERMISSIONS, 
+  ALL_PERMISSIONS, 
+  ALL_PERMISSION_ACTIONS,
+  type Permission,
+  type PermissionAction,
+  type GranularPermission,
+  type PermissionValue,
+  normalizePermission,
+  NO_PERMISSION
+} from "@shared/permissions";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeviceLayout } from "@/lib/mobileLayout";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Permission labels matching sidebar features
 const PERMISSION_LABELS: Record<Permission, string> = {
@@ -39,6 +50,14 @@ const PERMISSION_LABELS: Record<Permission, string> = {
   bills: "Bills",
   deliveryApps: "Delivery Apps",
   licenses: "Licenses",
+};
+
+// Action labels for granular permissions
+const ACTION_LABELS: Record<PermissionAction, string> = {
+  view: "View",
+  add: "Add",
+  edit: "Edit",
+  delete: "Delete",
 };
 
 export default function Employees() {
@@ -308,15 +327,50 @@ export default function Employees() {
     updateMutation.mutate({ id: selectedUser.id, data: updateData });
   };
 
-  const togglePermission = (permission: Permission) => {
-    const currentValue = formData.permissions[permission] || false;
+  // Toggle a specific action for a permission
+  const togglePermissionAction = (permission: Permission, action: PermissionAction) => {
+    const currentPerm = normalizePermission(formData.permissions[permission]);
+    const newPerm: GranularPermission = {
+      ...currentPerm,
+      [action]: !currentPerm[action],
+    };
+    // If view is disabled, disable all other actions too
+    if (action === 'view' && !newPerm.view) {
+      newPerm.add = false;
+      newPerm.edit = false;
+      newPerm.delete = false;
+    }
+    // If any action is enabled, view must be enabled
+    if ((action === 'add' || action === 'edit' || action === 'delete') && newPerm[action]) {
+      newPerm.view = true;
+    }
     setFormData({
       ...formData,
       permissions: {
         ...formData.permissions,
-        [permission]: !currentValue,
+        [permission]: newPerm,
       },
     });
+  };
+
+  // Toggle all actions for a permission at once
+  const toggleAllActions = (permission: Permission, enabled: boolean) => {
+    const newPerm: GranularPermission = enabled 
+      ? { view: true, add: true, edit: true, delete: true }
+      : { view: false, add: false, edit: false, delete: false };
+    setFormData({
+      ...formData,
+      permissions: {
+        ...formData.permissions,
+        [permission]: newPerm,
+      },
+    });
+  };
+
+  // Check if all actions are enabled for a permission
+  const allActionsEnabled = (permission: Permission): boolean => {
+    const perm = normalizePermission(formData.permissions[permission]);
+    return perm.view && perm.add && perm.edit && perm.delete;
   };
 
   const filteredUsers = users?.filter(user => {
@@ -441,18 +495,46 @@ export default function Employees() {
 
                 <div className="space-y-4">
                   <h3 className="font-semibold">{t.permissions || "Permissions"}</h3>
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    {ALL_PERMISSIONS.map((perm) => (
-                      <div key={perm} className="flex items-center justify-between h-[44px]">
-                        <Label htmlFor={perm} className="text-sm">{PERMISSION_LABELS[perm]}</Label>
-                        <Switch
-                          id={perm}
-                          checked={formData.permissions[perm] || false}
-                          onCheckedChange={() => togglePermission(perm)}
-                          data-testid={`switch-permission-${perm}`}
-                        />
-                      </div>
-                    ))}
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Control what actions sub-accounts can perform in each feature
+                  </p>
+                  
+                  {/* Header row */}
+                  <div className="grid grid-cols-[1fr,repeat(4,60px),40px] gap-2 items-center pb-2 border-b text-xs font-medium text-muted-foreground">
+                    <div>Feature</div>
+                    <div className="text-center">View</div>
+                    <div className="text-center">Add</div>
+                    <div className="text-center">Edit</div>
+                    <div className="text-center">Delete</div>
+                    <div className="text-center">All</div>
+                  </div>
+                  
+                  {/* Permission rows */}
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {ALL_PERMISSIONS.map((perm) => {
+                      const permValue = normalizePermission(formData.permissions[perm]);
+                      return (
+                        <div key={perm} className="grid grid-cols-[1fr,repeat(4,60px),40px] gap-2 items-center py-1">
+                          <Label className="text-sm font-medium">{PERMISSION_LABELS[perm]}</Label>
+                          {ALL_PERMISSION_ACTIONS.map((action) => (
+                            <div key={action} className="flex justify-center">
+                              <Checkbox
+                                checked={permValue[action]}
+                                onCheckedChange={() => togglePermissionAction(perm, action)}
+                                data-testid={`checkbox-${perm}-${action}`}
+                              />
+                            </div>
+                          ))}
+                          <div className="flex justify-center">
+                            <Checkbox
+                              checked={allActionsEnabled(perm)}
+                              onCheckedChange={(checked) => toggleAllActions(perm, !!checked)}
+                              data-testid={`checkbox-${perm}-all`}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </TabsContent>
@@ -983,18 +1065,46 @@ export default function Employees() {
 
               <div className="space-y-4">
                 <h3 className="font-semibold">{t.permissions || "Permissions"}</h3>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  {ALL_PERMISSIONS.map((perm) => (
-                    <div key={perm} className="flex items-center justify-between h-[44px]">
-                      <Label htmlFor={`edit-${perm}`} className="text-sm">{PERMISSION_LABELS[perm]}</Label>
-                      <Switch
-                        id={`edit-${perm}`}
-                        checked={formData.permissions[perm] || false}
-                        onCheckedChange={() => togglePermission(perm)}
-                        data-testid={`switch-edit-permission-${perm}`}
-                      />
-                    </div>
-                  ))}
+                <p className="text-sm text-muted-foreground mb-4">
+                  Control what actions sub-accounts can perform in each feature
+                </p>
+                
+                {/* Header row */}
+                <div className="grid grid-cols-[1fr,repeat(4,60px),40px] gap-2 items-center pb-2 border-b text-xs font-medium text-muted-foreground">
+                  <div>Feature</div>
+                  <div className="text-center">View</div>
+                  <div className="text-center">Add</div>
+                  <div className="text-center">Edit</div>
+                  <div className="text-center">Delete</div>
+                  <div className="text-center">All</div>
+                </div>
+                
+                {/* Permission rows */}
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {ALL_PERMISSIONS.map((perm) => {
+                    const permValue = normalizePermission(formData.permissions[perm]);
+                    return (
+                      <div key={perm} className="grid grid-cols-[1fr,repeat(4,60px),40px] gap-2 items-center py-1">
+                        <Label className="text-sm font-medium">{PERMISSION_LABELS[perm]}</Label>
+                        {ALL_PERMISSION_ACTIONS.map((action) => (
+                          <div key={action} className="flex justify-center">
+                            <Checkbox
+                              checked={permValue[action]}
+                              onCheckedChange={() => togglePermissionAction(perm, action)}
+                              data-testid={`checkbox-edit-${perm}-${action}`}
+                            />
+                          </div>
+                        ))}
+                        <div className="flex justify-center">
+                          <Checkbox
+                            checked={allActionsEnabled(perm)}
+                            onCheckedChange={(checked) => toggleAllActions(perm, !!checked)}
+                            data-testid={`checkbox-edit-${perm}-all`}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </TabsContent>
