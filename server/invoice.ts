@@ -1399,6 +1399,11 @@ export async function generateMonthlyVatReport(data: {
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
     
+    @page {
+      size: A4;
+      margin: 0;
+    }
+    
     * {
       margin: 0;
       padding: 0;
@@ -1409,47 +1414,48 @@ export async function generateMonthlyVatReport(data: {
       font-family: 'Inter', sans-serif;
       background: #ffffff;
       color: #1a1a1a;
-      line-height: 1.6;
-      padding: 40px;
+      line-height: 1.3;
+      padding: 15px;
+      font-size: 11px;
     }
 
     .invoice-container {
-      max-width: 800px;
+      max-width: 100%;
       margin: 0 auto;
       background: white;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
       overflow: hidden;
     }
 
     .header {
       background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
       color: white;
-      padding: 40px;
+      padding: 15px 20px;
       text-align: center;
     }
 
     .company-name {
-      font-size: 32px;
+      font-size: 20px;
       font-weight: 700;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
 
     .invoice-title {
-      font-size: 20px;
+      font-size: 13px;
       opacity: 0.95;
-      margin-top: 16px;
+      margin-top: 6px;
     }
 
     .content {
-      padding: 40px;
+      padding: 15px 20px;
     }
 
     .info-section {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 40px;
-      gap: 30px;
+      margin-bottom: 12px;
+      gap: 15px;
     }
 
     .info-block {
@@ -1457,16 +1463,16 @@ export async function generateMonthlyVatReport(data: {
     }
 
     .info-block h3 {
-      font-size: 14px;
+      font-size: 10px;
       color: #6b7280;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
+      letter-spacing: 0.3px;
+      margin-bottom: 6px;
     }
 
     .info-block p {
-      margin: 6px 0;
-      font-size: 14px;
+      margin: 3px 0;
+      font-size: 11px;
       color: #374151;
     }
 
@@ -1476,55 +1482,55 @@ export async function generateMonthlyVatReport(data: {
 
     .invoice-details {
       background: #f0fdf4;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 30px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      margin-bottom: 12px;
       border: 1px solid #bbf7d0;
     }
 
     .invoice-details-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 15px;
+      gap: 8px;
     }
 
     .detail-row {
       display: flex;
       justify-content: space-between;
-      padding: 8px 0;
+      padding: 3px 0;
     }
 
     .detail-label {
       color: #6b7280;
-      font-size: 14px;
+      font-size: 10px;
     }
 
     .detail-value {
       font-weight: 600;
       color: #1f2937;
-      font-size: 14px;
+      font-size: 10px;
     }
 
     .items-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 30px 0;
+      margin: 12px 0;
     }
 
     .items-table th {
       background: #f3f4f6;
-      padding: 12px;
+      padding: 6px 8px;
       text-align: left;
-      font-size: 13px;
+      font-size: 10px;
       font-weight: 600;
       color: #374151;
-      border-bottom: 2px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
     }
 
     .items-table td {
-      padding: 16px 12px;
+      padding: 8px;
       border-bottom: 1px solid #e5e7eb;
-      font-size: 14px;
+      font-size: 10px;
       color: #374151;
     }
 
@@ -1538,65 +1544,69 @@ export async function generateMonthlyVatReport(data: {
 
     .summary {
       background: #f0fdf4;
-      padding: 20px;
-      border-radius: 8px;
-      margin-top: 30px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      margin-top: 12px;
       border: 1px solid #bbf7d0;
     }
 
     .summary-row {
       display: flex;
       justify-content: space-between;
-      padding: 10px 0;
-      font-size: 14px;
+      padding: 5px 0;
+      font-size: 11px;
     }
 
     .summary-row.highlight {
       background: #dcfce7;
-      padding: 12px;
-      border-radius: 6px;
-      margin: 8px 0;
+      padding: 6px 8px;
+      border-radius: 4px;
+      margin: 4px 0;
     }
 
     .summary-row.total {
       border-top: 2px solid #16a34a;
-      margin-top: 15px;
-      padding-top: 15px;
-      font-size: 18px;
+      margin-top: 8px;
+      padding-top: 8px;
+      font-size: 14px;
       font-weight: 700;
       color: #16a34a;
     }
 
     .qr-section {
       text-align: center;
-      margin-top: 40px;
-      padding-top: 30px;
-      border-top: 2px solid #e5e7eb;
+      margin-top: 15px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
     }
 
     .qr-code {
-      width: 150px;
-      height: 150px;
-      margin: 20px auto;
+      width: 80px;
+      height: 80px;
+      margin: 8px auto;
     }
 
     .footer {
       text-align: center;
-      margin-top: 40px;
-      padding-top: 20px;
+      margin-top: 12px;
+      padding-top: 10px;
       border-top: 1px solid #e5e7eb;
-      font-size: 12px;
+      font-size: 9px;
       color: #6b7280;
+    }
+
+    .footer p {
+      margin: 2px 0;
     }
 
     .zatca-notice {
       background: #fffbeb;
       border: 1px solid #fde68a;
-      padding: 15px;
-      border-radius: 6px;
-      margin: 20px 0;
+      padding: 8px 10px;
+      border-radius: 4px;
+      margin: 10px 0;
       text-align: center;
-      font-size: 13px;
+      font-size: 10px;
       color: #92400e;
     }
 

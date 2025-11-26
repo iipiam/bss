@@ -23,14 +23,20 @@ export default function Profitability() {
 
   const { data: menuItems = [], isLoading: isLoadingMenu } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu"],
+    refetchInterval: 30000,
+    staleTime: 10000,
   });
 
   const { data: recipes = [], isLoading: isLoadingRecipes } = useQuery<Recipe[]>({
     queryKey: ["/api/recipes"],
+    refetchInterval: 30000,
+    staleTime: 10000,
   });
 
   const { data: orders = [], isLoading: isLoadingOrders } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
+    refetchInterval: 15000,
+    staleTime: 5000,
   });
 
   const { data: bills = [], isLoading: isLoadingBills } = useQuery<ShopBill[]>({
@@ -40,6 +46,8 @@ export default function Profitability() {
       if (!response.ok) throw new Error(t.failedToFetchBills);
       return response.json();
     },
+    refetchInterval: 30000,
+    staleTime: 10000,
   });
 
   const isLoading = isLoadingMenu || isLoadingRecipes || isLoadingOrders || isLoadingBills;
@@ -70,7 +78,8 @@ export default function Profitability() {
   // Calculate profit metrics using basePrice (pre-VAT)
   const profitabilityData = useMemo(() => {
     const itemProfitability = menuItems.map((item) => {
-      const recipe = recipes.find((r) => r.menuItemId === item.id);
+      // Find recipe linked to this menu item via menuItem.recipeId
+      const recipe = item.recipeId ? recipes.find((r) => r.id === item.recipeId) : null;
       const cost = recipe ? parseFloat(recipe.cost) : 0;
       // Use basePrice (pre-VAT) for accurate profit calculation
       const basePrice = parseFloat(item.basePrice);
@@ -182,7 +191,7 @@ export default function Profitability() {
 
     if (result.success) {
       toast({
-        title: t.exportSuccessful,
+        title: t.pdfExportSuccessful,
         description: "Profitability report exported to PDF",
       });
     } else {
@@ -211,7 +220,7 @@ export default function Profitability() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast({
-        title: t.exportSuccessful,
+        title: t.pdfExportSuccessful,
         description: "Profitability data exported to Excel",
       });
     } catch (error) {

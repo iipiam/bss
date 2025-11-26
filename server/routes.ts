@@ -809,10 +809,20 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Bill not found" });
       }
-      const data = sanitizePatchBody(req.body, insertShopBillSchema.partial());
+      // Convert ISO date string to Date object if present
+      const bodyWithDate = {
+        ...req.body,
+        paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate) : undefined,
+      };
+      // Remove undefined paymentDate to avoid overwriting with undefined
+      if (bodyWithDate.paymentDate === undefined) {
+        delete bodyWithDate.paymentDate;
+      }
+      const data = sanitizePatchBody(bodyWithDate, insertShopBillSchema.partial());
       const bill = await storage.updateShopBill(req.params.id, data);
       res.json(bill);
     } catch (error) {
+      console.error("[SHOP] Bill update error:", error);
       res.status(400).json({ error: "Invalid bill data" });
     }
   });
@@ -1992,6 +2002,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         procurement: true,
         deliveryApps: true,
         workingHours: true,
+        investors: true,
       };
       
       // Create the IT user (no restaurantId for IT accounts)
@@ -2475,6 +2486,18 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (password) {
         const hashedPassword = await bcrypt.hash(password, 10);
         updateData.password = hashedPassword;
+      }
+
+      // Convert date strings to Date objects for timestamp fields
+      const dateFields = ['hireDate', 'probationEndDate', 'visaExpiryDate', 'ticketDate', 'lastReviewDate'];
+      for (const field of dateFields) {
+        if (updateData[field] !== undefined) {
+          if (updateData[field] === null || updateData[field] === '') {
+            updateData[field] = null;
+          } else if (typeof updateData[field] === 'string') {
+            updateData[field] = new Date(updateData[field]);
+          }
+        }
       }
 
       const user = await storage.updateUser(req.params.id, restaurantId, updateData);
@@ -4185,16 +4208,35 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       for (const row of data as any[]) {
         try {
+          // Support multiple column name variations (Excel exports may use different headers)
+          const name = row.name || row.Name || row['Item Name'] || row['item name'];
+          if (!name) {
+            console.error("Error importing row: missing name field", row);
+            errors++;
+            continue;
+          }
+          
+          const category = row.category || row.Category || '';
+          const basePrice = row.basePrice || row.BasePrice || row['Base Price'] || row['base_price'] || '0';
+          const price = row.price || row.Price || row['Price (SAR)'] || '0';
+          const vatAmount = row.vatAmount || row.VatAmount || row['VAT Amount'] || row['vat_amount'] || '0';
+          const description = row.description || row.Description || '';
+          const available = row.available !== undefined ? Boolean(row.available) : 
+                           row.Available !== undefined ? Boolean(row.Available) : true;
+          const imageUrl = row.imageUrl || row.ImageUrl || row['Image URL'] || null;
+          const discount = row.discount || row.Discount || '0';
+          
           await storage.createMenuItem({
             restaurantId: req.session.user!.restaurantId!,
-            name: row.name,
-            category: row.category,
-            basePrice: String(row.basePrice),
-            price: String(row.price),
-            vatAmount: String(row.vatAmount || 0),
-            description: row.description,
-            available: Boolean(row.available),
-            imageUrl: row.imageUrl,
+            name,
+            category,
+            basePrice: String(basePrice),
+            price: String(price),
+            vatAmount: String(vatAmount),
+            description,
+            available,
+            imageUrl,
+            discount: String(discount),
           });
           imported++;
         } catch (error) {
