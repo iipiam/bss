@@ -1,0 +1,65 @@
+ pwd
+/home/ubuntu
+ubuntu@ip-172-31-1-112:~$ ls -la /home/ubuntu/
+total 112
+drwxr-x--- 9 ubuntu ubuntu  4096 Nov 26 23:48 .
+drwxr-xr-x 5 root   root    4096 Nov 25 23:48 ..
+-rw------- 1 ubuntu ubuntu 45994 Nov 26 23:49 .bash_history
+-rw-r--r-- 1 ubuntu ubuntu   220 Mar 31  2024 .bash_logout
+-rw-r--r-- 1 ubuntu ubuntu  3771 Mar 31  2024 .bashrc
+drwx------ 3 ubuntu ubuntu  4096 Nov 25 14:51 .cache
+-rw------- 1 ubuntu ubuntu    20 Nov 25 22:42 .lesshst
+drwxrwxr-x 3 ubuntu ubuntu  4096 Nov 25 14:41 .local
+drwxrwxr-x 4 ubuntu ubuntu  4096 Nov 25 14:47 .npm
+drwxrwxr-x 5 ubuntu ubuntu  4096 Nov 25 18:24 .pm2
+-rw-r--r-- 1 ubuntu ubuntu   807 Mar 31  2024 .profile
+-rw------- 1 ubuntu ubuntu    44 Nov 26 00:55 .psql_history
+drwx------ 2 ubuntu ubuntu  4096 Nov 25 12:58 .ssh
+-rw-r--r-- 1 ubuntu ubuntu     0 Nov 25 13:34 .sudo_as_admin_successful
+drwxrwxr-x 3 ubuntu ubuntu  4096 Nov 26 23:32 bss
+-rw-rw-r-- 1 ubuntu ubuntu    85 Nov 26 23:50 package-lock.json
+drwx------ 3 ubuntu ubuntu  4096 Nov 26 01:48 snap
+ubuntu@ip-172-31-1-112:~$ ls -la
+total 112
+drwxr-x--- 9 ubuntu ubuntu  4096 Nov 26 23:48 .
+drwxr-xr-x 5 root   root    4096 Nov 25 23:48 ..
+-rw------- 1 ubuntu ubuntu 45994 Nov 26 23:49 .bash_history
+-rw-r--r-- 1 ubuntu ubuntu   220 Mar 31  2024 .bash_logout
+-rw-r--r-- 1 ubuntu ubuntu  3771 Mar 31  2024 .bashrc
+drwx------ 3 ubuntu ubuntu  4096 Nov 25 14:51 .cache
+-rw------- 1 ubuntu ubuntu    20 Nov 25 22:42 .lesshst
+drwxrwxr-x 3 ubuntu ubuntu  4096 Nov 25 14:41 .local
+drwxrwxr-x 4 ubuntu ubuntu  4096 Nov 25 14:47 .npm
+drwxrwxr-x 5 ubuntu ubuntu  4096 Nov 25 18:24 .pm2
+-rw-r--r-- 1 ubuntu ubuntu   807 Mar 31  2024 .profile
+-rw------- 1 ubuntu ubuntu    44 Nov 26 00:55 .psql_history
+drwx------ 2 ubuntu ubuntu  4096 Nov 25 12:58 .ssh
+-rw-r--r-- 1 ubuntu ubuntu     0 Nov 25 13:34 .sudo_as_admin_successful
+drwxrwxr-x 3 ubuntu ubuntu  4096 Nov 26 23:32 bss
+-rw-rw-r-- 1 ubuntu ubuntu    85 Nov 26 23:50 package-lock.json
+drwx------ 3 ubuntu ubuntu  4096 Nov 26 01:48 snap
+ubuntu@ip-172-31-1-112:~$ ls -la /var/www/
+ls -la /home/ubuntu/
+total 12
+drwxr-xr-x  3 root root 4096 Nov 25 13:38 .
+drwxr-xr-x 15 root root 4096 Nov 25 14:25 ..
+drwxr-xr-x  2 root root 4096 Nov 25 13:38 html
+total 112
+drwxr-x--- 9 ubuntu ubuntu  4096 Nov 26 23:48 .
+drwxr-xr-x 5 root   root    4096 Nov 25 23:48 ..
+-rw------- 1 ubuntu ubuntu 45994 Nov 26 23:49 .bash_history
+-rw-r--r-- 1 ubuntu ubuntu   220 Mar 31  2024 .bash_logout
+-rw-r--r-- 1 ubuntu ubuntu  3771 Mar 31  2024 .bashrc
+drwx------ 3 ubuntu ubuntu  4096 Nov 25 14:51 .cache
+-rw------- 1 ubuntu ubuntu    20 Nov 25 22:42 .lesshst
+drwxrwxr-x 3 ubuntu ubuntu  4096 Nov 25 14:41 .local
+drwxrwxr-x 4 ubuntu ubuntu  4096 Nov 25 14:47 .npm
+drwxrwxr-x 5 ubuntu ubuntu  4096 Nov 25 18:24 .pm2
+-rw-r--r-- 1 ubuntu ubuntu   807 Mar 31  2024 .profile
+-rw------- 1 ubuntu ubuntu    44 Nov 26 00:55 .psql_history
+drwx------ 2 ubuntu ubuntu  4096 Nov 25 12:58 .ssh
+-rw-r--r-- 1 ubuntu ubuntu     0 Nov 25 13:34 .sudo_as_admin_successful
+drwxrwxr-x 3 ubuntu ubuntu  4096 Nov 26 23:32 bss
+-rw-rw-r-- 1 ubuntu ubuntu    85 Nov 26 23:50 package-lock.json
+drwx------ 3 ubuntu ubuntu  4096 Nov 26 01:48 snap
+ubuntu@ip-172-31-1-112:~$
