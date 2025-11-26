@@ -6,7 +6,7 @@ import { db } from "./db";
 import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport } from "./invoice";
 import { PasswordResetMailer } from "./email";
 import { sanitizePatchBody } from "./utils";
-import { requirePermission, requireAnyPermission, requireAllPermissions } from "./middleware/requirePermission";
+import { requirePermission, requireAnyPermission, requireAllPermissions, requireAction } from "./middleware/requirePermission";
 import bcrypt from "bcrypt";
 import QRCode from "qrcode";
 import rateLimit from "express-rate-limit";
@@ -217,7 +217,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(branch);
   });
 
-  app.post("/api/branches", requireAuth, requireRestaurant, requirePermission('branches'), async (req, res) => {
+  app.post("/api/branches", requireAuth, requireRestaurant, requireAction('branches', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const data = insertBranchSchema.parse({ ...req.body, restaurantId });
@@ -228,7 +228,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/branches/:id", requireAuth, requireRestaurant, requirePermission('branches'), async (req, res) => {
+  app.patch("/api/branches/:id", requireAuth, requireRestaurant, requireAction('branches', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const data = sanitizePatchBody(req.body, insertBranchSchema.partial());
@@ -244,7 +244,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/branches/:id", requireAuth, requireRestaurant, requirePermission('branches'), async (req, res) => {
+  app.delete("/api/branches/:id", requireAuth, requireRestaurant, requireAction('branches', 'delete'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const success = await storage.deleteBranch(req.params.id, restaurantId);
     if (!success) {
@@ -261,7 +261,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(items);
   });
 
-  app.post("/api/inventory", requireAuth, requireRestaurant, requirePermission('inventory'), async (req, res) => {
+  app.post("/api/inventory", requireAuth, requireRestaurant, requireAction('inventory', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const data = insertInventoryItemSchema.parse({ ...req.body, restaurantId });
@@ -311,7 +311,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(item);
   });
 
-  app.patch("/api/inventory/:id", requireAuth, requireRestaurant, requirePermission('inventory'), async (req, res) => {
+  app.patch("/api/inventory/:id", requireAuth, requireRestaurant, requireAction('inventory', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const data = sanitizePatchBody(req.body, insertInventoryItemSchema.partial());
@@ -327,7 +327,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/inventory/:id", requireAuth, requireRestaurant, requirePermission('inventory'), async (req, res) => {
+  app.delete("/api/inventory/:id", requireAuth, requireRestaurant, requireAction('inventory', 'delete'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const success = await storage.deleteInventoryItem(req.params.id, restaurantId);
     if (!success) {
@@ -369,7 +369,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(item);
   });
 
-  app.post("/api/menu", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
+  app.post("/api/menu", requireAuth, requireRestaurant, requireAction('menu', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const data = insertMenuItemSchema.parse({ ...req.body, restaurantId });
@@ -389,7 +389,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/menu/:id", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
+  app.patch("/api/menu/:id", requireAuth, requireRestaurant, requireAction('menu', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const data = sanitizePatchBody(req.body, updateMenuItemSchema);
@@ -413,7 +413,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/menu/:id", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
+  app.delete("/api/menu/:id", requireAuth, requireRestaurant, requireAction('menu', 'delete'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const menuItemId = req.params.id;
     const success = await storage.deleteMenuItem(menuItemId, restaurantId);
@@ -531,7 +531,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(customer);
   });
 
-  app.post("/api/customers", requireAuth, requireRestaurant, requirePermission('customers'), async (req, res) => {
+  app.post("/api/customers", requireAuth, requireRestaurant, requireAction('customers', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const upsert = req.query.upsert === 'true';
@@ -557,7 +557,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/customers/:id", requireAuth, requireRestaurant, requirePermission('customers'), async (req, res) => {
+  app.patch("/api/customers/:id", requireAuth, requireRestaurant, requireAction('customers', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const data = sanitizePatchBody(req.body, insertCustomerSchema.partial());
@@ -573,7 +573,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/customers/:id", requireAuth, requireRestaurant, requirePermission('customers'), async (req, res) => {
+  app.delete("/api/customers/:id", requireAuth, requireRestaurant, requireAction('customers', 'delete'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const success = await storage.deleteCustomer(req.params.id, restaurantId);
     if (!success) {
@@ -1055,7 +1055,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(recipe);
   });
 
-  app.post("/api/recipes", requireAuth, requireRestaurant, requirePermission('recipes'), async (req, res) => {
+  app.post("/api/recipes", requireAuth, requireRestaurant, requireAction('recipes', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const data = insertRecipeSchema.parse({ ...req.body, restaurantId });
@@ -1066,7 +1066,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/recipes/:id", requireAuth, requireRestaurant, requirePermission('recipes'), async (req, res) => {
+  app.patch("/api/recipes/:id", requireAuth, requireRestaurant, requireAction('recipes', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const data = sanitizePatchBody(req.body, insertRecipeSchema.partial());
@@ -1108,7 +1108,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/recipes/:id", requireAuth, requireRestaurant, requirePermission('recipes'), async (req, res) => {
+  app.delete("/api/recipes/:id", requireAuth, requireRestaurant, requireAction('recipes', 'delete'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const success = await storage.deleteRecipe(req.params.id, restaurantId);
     if (!success) {
@@ -1187,7 +1187,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(order);
   });
 
-  app.post("/api/orders", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+  app.post("/api/orders", requireAuth, requireRestaurant, requireAction('orders', 'add'), async (req, res) => {
     try {
       // Inject restaurantId and createdBy from session
       const restaurantId = req.session.user!.restaurantId!;
@@ -1265,7 +1265,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/orders/:id", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+  app.patch("/api/orders/:id", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const data = sanitizePatchBody(req.body, insertOrderSchema.partial());
