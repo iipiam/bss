@@ -15,9 +15,31 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, UserCheck, UserX, Calendar, FileText, Plane, Award, Shield, Briefcase, Clock, Info, Key, LogIn, Trash2 } from "lucide-react";
 import type { User } from "@shared/schema";
-import { DEFAULT_EMPLOYEE_PERMISSIONS } from "@shared/permissions";
+import { DEFAULT_EMPLOYEE_PERMISSIONS, ALL_PERMISSIONS, type Permission } from "@shared/permissions";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeviceLayout } from "@/lib/mobileLayout";
+
+// Permission labels matching sidebar features
+const PERMISSION_LABELS: Record<Permission, string> = {
+  dashboard: "Dashboard",
+  inventory: "Inventory",
+  menu: "Menu / Products",
+  recipes: "Recipes",
+  branches: "Branches",
+  procurement: "Procurement",
+  pos: "POS (Point of Sale)",
+  orders: "Orders",
+  kitchen: "Kitchen / Workshop",
+  sales: "Sales",
+  reports: "Reports & Analytics",
+  customers: "Customers",
+  settings: "Settings",
+  users: "Employees",
+  workingHours: "Shop / Working Hours",
+  bills: "Bills",
+  deliveryApps: "Delivery Apps",
+  licenses: "Licenses",
+};
 
 export default function Employees() {
   const { t } = useLanguage();
@@ -286,12 +308,13 @@ export default function Employees() {
     updateMutation.mutate({ id: selectedUser.id, data: updateData });
   };
 
-  const togglePermission = (permission: keyof typeof formData.permissions) => {
+  const togglePermission = (permission: Permission) => {
+    const currentValue = formData.permissions[permission] || false;
     setFormData({
       ...formData,
       permissions: {
         ...formData.permissions,
-        [permission]: !formData.permissions[permission],
+        [permission]: !currentValue,
       },
     });
   };
@@ -419,13 +442,13 @@ export default function Employees() {
                 <div className="space-y-4">
                   <h3 className="font-semibold">{t.permissions || "Permissions"}</h3>
                   <div className="grid gap-4 sm:grid-cols-3">
-                    {Object.keys(formData.permissions).map((perm) => (
+                    {ALL_PERMISSIONS.map((perm) => (
                       <div key={perm} className="flex items-center justify-between h-[44px]">
-                        <Label htmlFor={perm} className="capitalize">{perm}</Label>
+                        <Label htmlFor={perm} className="text-sm">{PERMISSION_LABELS[perm]}</Label>
                         <Switch
                           id={perm}
-                          checked={formData.permissions[perm as keyof typeof formData.permissions]}
-                          onCheckedChange={() => togglePermission(perm as keyof typeof formData.permissions)}
+                          checked={formData.permissions[perm] || false}
+                          onCheckedChange={() => togglePermission(perm)}
                           data-testid={`switch-permission-${perm}`}
                         />
                       </div>
@@ -961,13 +984,13 @@ export default function Employees() {
               <div className="space-y-4">
                 <h3 className="font-semibold">{t.permissions || "Permissions"}</h3>
                 <div className="grid gap-4 sm:grid-cols-3">
-                  {Object.keys(formData.permissions).map((perm) => (
+                  {ALL_PERMISSIONS.map((perm) => (
                     <div key={perm} className="flex items-center justify-between h-[44px]">
-                      <Label htmlFor={`edit-${perm}`} className="capitalize">{perm}</Label>
+                      <Label htmlFor={`edit-${perm}`} className="text-sm">{PERMISSION_LABELS[perm]}</Label>
                       <Switch
                         id={`edit-${perm}`}
-                        checked={formData.permissions[perm as keyof typeof formData.permissions]}
-                        onCheckedChange={() => togglePermission(perm as keyof typeof formData.permissions)}
+                        checked={formData.permissions[perm] || false}
+                        onCheckedChange={() => togglePermission(perm)}
                         data-testid={`switch-edit-permission-${perm}`}
                       />
                     </div>
