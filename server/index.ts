@@ -1,11 +1,20 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
+import path from "path";
+import fs from "fs";
 import { pool } from "./db";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+
+// Serve uploaded files (logos, etc.) from public/uploads - works in both dev and production
+const uploadsPath = path.resolve(import.meta.dirname, "..", "public", "uploads");
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
+}
+app.use("/uploads", express.static(uploadsPath));
 const PgStore = connectPgSimple(session);
 
 // Trust proxy for secure cookies behind Replit's HTTPS reverse proxy

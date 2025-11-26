@@ -1532,7 +1532,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Get existing settings to delete old logo if exists
       const existingSettings = await storage.getSettings(restaurantId);
       if (existingSettings?.logoPath) {
-        const oldLogoPath = path.join(process.cwd(), existingSettings.logoPath);
+        // logoPath is stored as "/uploads/logos/..." so we strip the leading slash and add "public" prefix
+        const relativePath = existingSettings.logoPath.replace(/^\/+/, '');
+        const oldLogoPath = path.join(process.cwd(), 'public', relativePath);
         if (fs.existsSync(oldLogoPath)) {
           fs.unlinkSync(oldLogoPath);
         }
@@ -1566,8 +1568,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(404).json({ error: "No logo found" });
       }
 
-      // Delete physical file
-      const logoPath = path.join(process.cwd(), 'public', existingSettings.logoPath);
+      // Delete physical file - strip leading slash from stored path
+      const relativePath = existingSettings.logoPath.replace(/^\/+/, '');
+      const logoPath = path.join(process.cwd(), 'public', relativePath);
       if (fs.existsSync(logoPath)) {
         fs.unlinkSync(logoPath);
       }
