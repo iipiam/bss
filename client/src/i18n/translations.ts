@@ -501,6 +501,20 @@ export interface Translations {
   updateInvestor: string;
   confirmDeleteInvestorDesc: string;
   interestPercentageHelp: string;
+  investorNameRequired: string;
+  investmentAmountRequired: string;
+  investmentAmountMustBePositive: string;
+  interestPercentageRequired: string;
+  interestRateMustBeBetween0And100: string;
+  downloadStatement: string;
+  investorStatement: string;
+  investorReceivables: string;
+  totalReceivable: string;
+  statementPeriod: string;
+  investmentSummary: string;
+  earningsBreakdown: string;
+  statementDownloaded: string;
+  statementDownloadFailed: string;
   
   // Employee Management
   employeeManagement: string;
@@ -1714,6 +1728,20 @@ export const translations: Record<Language, Translations> = {
     updateInvestor: 'Update Investor',
     confirmDeleteInvestorDesc: 'Are you sure you want to delete this investor? This action cannot be undone.',
     interestPercentageHelp: 'Percentage of net profit to be earned',
+    investorNameRequired: 'Investor name is required',
+    investmentAmountRequired: 'Investment amount is required',
+    investmentAmountMustBePositive: 'Investment amount must be a positive number',
+    interestPercentageRequired: 'Interest percentage is required',
+    interestRateMustBeBetween0And100: 'Interest rate must be between 0 and 100',
+    downloadStatement: 'Download Statement',
+    investorStatement: 'Investor Statement',
+    investorReceivables: 'Investor Receivables',
+    totalReceivable: 'Total Receivable',
+    statementPeriod: 'Statement Period',
+    investmentSummary: 'Investment Summary',
+    earningsBreakdown: 'Earnings Breakdown',
+    statementDownloaded: 'Statement downloaded successfully',
+    statementDownloadFailed: 'Failed to download statement',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -2930,6 +2958,20 @@ export const translations: Record<Language, Translations> = {
     updateInvestor: 'تحديث المستثمر',
     confirmDeleteInvestorDesc: 'هل أنت متأكد من أنك تريد حذف هذا المستثمر؟ لا يمكن التراجع عن هذا الإجراء.',
     interestPercentageHelp: 'نسبة صافي الربح المراد كسبها',
+    investorNameRequired: 'اسم المستثمر مطلوب',
+    investmentAmountRequired: 'مبلغ الاستثمار مطلوب',
+    investmentAmountMustBePositive: 'يجب أن يكون مبلغ الاستثمار رقمًا موجبًا',
+    interestPercentageRequired: 'نسبة الفائدة مطلوبة',
+    interestRateMustBeBetween0And100: 'يجب أن تكون نسبة الفائدة بين 0 و 100',
+    downloadStatement: 'تحميل كشف الحساب',
+    investorStatement: 'كشف حساب المستثمر',
+    investorReceivables: 'مستحقات المستثمر',
+    totalReceivable: 'إجمالي المستحق',
+    statementPeriod: 'فترة كشف الحساب',
+    investmentSummary: 'ملخص الاستثمار',
+    earningsBreakdown: 'تفصيل الأرباح',
+    statementDownloaded: 'تم تحميل كشف الحساب بنجاح',
+    statementDownloadFailed: 'فشل تحميل كشف الحساب',
     
     // Employee Management
     employeeManagement: 'إدارة الموظفين',
@@ -4146,6 +4188,20 @@ export const translations: Record<Language, Translations> = {
     updateInvestor: 'Update Investor',
     confirmDeleteInvestorDesc: 'Are you sure you want to delete this investor? This action cannot be undone.',
     interestPercentageHelp: 'Percentage of net profit to be earned',
+    investorNameRequired: 'Investor name is required',
+    investmentAmountRequired: 'Investment amount is required',
+    investmentAmountMustBePositive: 'Investment amount must be a positive number',
+    interestPercentageRequired: 'Interest percentage is required',
+    interestRateMustBeBetween0And100: 'Interest rate must be between 0 and 100',
+    downloadStatement: 'Download Statement',
+    investorStatement: 'Investor Statement',
+    investorReceivables: 'Investor Receivables',
+    totalReceivable: 'Total Receivable',
+    statementPeriod: 'Statement Period',
+    investmentSummary: 'Investment Summary',
+    earningsBreakdown: 'Earnings Breakdown',
+    statementDownloaded: 'Statement downloaded successfully',
+    statementDownloadFailed: 'Failed to download statement',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -5361,6 +5417,20 @@ export const translations: Record<Language, Translations> = {
     updateInvestor: 'Update Investor',
     confirmDeleteInvestorDesc: 'Are you sure you want to delete this investor? This action cannot be undone.',
     interestPercentageHelp: 'Percentage of net profit to be earned',
+    investorNameRequired: 'Investor name is required',
+    investmentAmountRequired: 'Investment amount is required',
+    investmentAmountMustBePositive: 'Investment amount must be a positive number',
+    interestPercentageRequired: 'Interest percentage is required',
+    interestRateMustBeBetween0And100: 'Interest rate must be between 0 and 100',
+    downloadStatement: 'Download Statement',
+    investorStatement: 'Investor Statement',
+    investorReceivables: 'Investor Receivables',
+    totalReceivable: 'Total Receivable',
+    statementPeriod: 'Statement Period',
+    investmentSummary: 'Investment Summary',
+    earningsBreakdown: 'Earnings Breakdown',
+    statementDownloaded: 'Statement downloaded successfully',
+    statementDownloadFailed: 'Failed to download statement',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -6576,6 +6646,20 @@ export const translations: Record<Language, Translations> = {
     updateInvestor: 'Update Investor',
     confirmDeleteInvestorDesc: 'Are you sure you want to delete this investor? This action cannot be undone.',
     interestPercentageHelp: 'Percentage of net profit to be earned',
+    investorNameRequired: 'Investor name is required',
+    investmentAmountRequired: 'Investment amount is required',
+    investmentAmountMustBePositive: 'Investment amount must be a positive number',
+    interestPercentageRequired: 'Interest percentage is required',
+    interestRateMustBeBetween0And100: 'Interest rate must be between 0 and 100',
+    downloadStatement: 'Download Statement',
+    investorStatement: 'Investor Statement',
+    investorReceivables: 'Investor Receivables',
+    totalReceivable: 'Total Receivable',
+    statementPeriod: 'Statement Period',
+    investmentSummary: 'Investment Summary',
+    earningsBreakdown: 'Earnings Breakdown',
+    statementDownloaded: 'Statement downloaded successfully',
+    statementDownloadFailed: 'Failed to download statement',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -7791,6 +7875,20 @@ export const translations: Record<Language, Translations> = {
     updateInvestor: 'Update Investor',
     confirmDeleteInvestorDesc: 'Are you sure you want to delete this investor? This action cannot be undone.',
     interestPercentageHelp: 'Percentage of net profit to be earned',
+    investorNameRequired: 'Investor name is required',
+    investmentAmountRequired: 'Investment amount is required',
+    investmentAmountMustBePositive: 'Investment amount must be a positive number',
+    interestPercentageRequired: 'Interest percentage is required',
+    interestRateMustBeBetween0And100: 'Interest rate must be between 0 and 100',
+    downloadStatement: 'Download Statement',
+    investorStatement: 'Investor Statement',
+    investorReceivables: 'Investor Receivables',
+    totalReceivable: 'Total Receivable',
+    statementPeriod: 'Statement Period',
+    investmentSummary: 'Investment Summary',
+    earningsBreakdown: 'Earnings Breakdown',
+    statementDownloaded: 'Statement downloaded successfully',
+    statementDownloadFailed: 'Failed to download statement',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -9007,6 +9105,20 @@ export const translations: Record<Language, Translations> = {
     updateInvestor: 'निवेशक अपडेट करें',
     confirmDeleteInvestorDesc: 'क्या आप वाकई इस निवेशक को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।',
     interestPercentageHelp: 'अर्जित होने वाले शुद्ध लाभ का प्रतिशत',
+    investorNameRequired: 'निवेशक का नाम आवश्यक है',
+    investmentAmountRequired: 'निवेश राशि आवश्यक है',
+    investmentAmountMustBePositive: 'निवेश राशि एक सकारात्मक संख्या होनी चाहिए',
+    interestPercentageRequired: 'ब्याज प्रतिशत आवश्यक है',
+    interestRateMustBeBetween0And100: 'ब्याज दर 0 और 100 के बीच होनी चाहिए',
+    downloadStatement: 'विवरण डाउनलोड करें',
+    investorStatement: 'निवेशक विवरण',
+    investorReceivables: 'निवेशक प्राप्य',
+    totalReceivable: 'कुल प्राप्य',
+    statementPeriod: 'विवरण अवधि',
+    investmentSummary: 'निवेश सारांश',
+    earningsBreakdown: 'आय विवरण',
+    statementDownloaded: 'विवरण सफलतापूर्वक डाउनलोड किया गया',
+    statementDownloadFailed: 'विवरण डाउनलोड करने में विफल',
     
     // Employee Management
     employeeManagement: 'कर्मचारी प्रबंधन',
@@ -10210,6 +10322,20 @@ export const translations: Record<Language, Translations> = {
     updateInvestor: 'سرمایہ کار اپ ڈیٹ کریں',
     confirmDeleteInvestorDesc: 'کیا آپ واقعی اس سرمایہ کار کو حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں کیا جا سکتا۔',
     interestPercentageHelp: 'کمانے کے لیے خالص منافع کی فیصد',
+    investorNameRequired: 'سرمایہ کار کا نام ضروری ہے',
+    investmentAmountRequired: 'سرمایہ کاری کی رقم ضروری ہے',
+    investmentAmountMustBePositive: 'سرمایہ کاری کی رقم مثبت ہونی چاہیے',
+    interestPercentageRequired: 'سود کی شرح ضروری ہے',
+    interestRateMustBeBetween0And100: 'سود کی شرح 0 اور 100 کے درمیان ہونی چاہیے',
+    downloadStatement: 'بیان ڈاؤن لوڈ کریں',
+    investorStatement: 'سرمایہ کار کا بیان',
+    investorReceivables: 'سرمایہ کار کی وصولیاں',
+    totalReceivable: 'کل وصولی',
+    statementPeriod: 'بیان کی مدت',
+    investmentSummary: 'سرمایہ کاری کا خلاصہ',
+    earningsBreakdown: 'آمدنی کی تفصیل',
+    statementDownloaded: 'بیان کامیابی سے ڈاؤن لوڈ ہوا',
+    statementDownloadFailed: 'بیان ڈاؤن لوڈ کرنے میں ناکام',
     
     // Employee Management
     employeeManagement: 'ملازمین کی انتظامیہ',
@@ -11363,6 +11489,20 @@ export const translations: Record<Language, Translations> = {
     updateInvestor: "Update Investor",
     confirmDeleteInvestorDesc: "Are you sure you want to delete this investor? This action cannot be undone.",
     interestPercentageHelp: "Percentage of net profit to be earned",
+    investorNameRequired: "Investor name is required",
+    investmentAmountRequired: "Investment amount is required",
+    investmentAmountMustBePositive: "Investment amount must be a positive number",
+    interestPercentageRequired: "Interest percentage is required",
+    interestRateMustBeBetween0And100: "Interest rate must be between 0 and 100",
+    downloadStatement: "Download Statement",
+    investorStatement: "Investor Statement",
+    investorReceivables: "Investor Receivables",
+    totalReceivable: "Total Receivable",
+    statementPeriod: "Statement Period",
+    investmentSummary: "Investment Summary",
+    earningsBreakdown: "Earnings Breakdown",
+    statementDownloaded: "Statement downloaded successfully",
+    statementDownloadFailed: "Failed to download statement",
     employeeManagement: "Employee Management",
     manageEmployees: "Manage employees and their information",
     addEmployee: "Añadir Empleado",
@@ -12503,6 +12643,20 @@ export const translations: Record<Language, Translations> = {
     updateInvestor: "Update Investor",
     confirmDeleteInvestorDesc: "Are you sure you want to delete this investor? This action cannot be undone.",
     interestPercentageHelp: "Percentage of net profit to be earned",
+    investorNameRequired: "Investor name is required",
+    investmentAmountRequired: "Investment amount is required",
+    investmentAmountMustBePositive: "Investment amount must be a positive number",
+    interestPercentageRequired: "Interest percentage is required",
+    interestRateMustBeBetween0And100: "Interest rate must be between 0 and 100",
+    downloadStatement: "Download Statement",
+    investorStatement: "Investor Statement",
+    investorReceivables: "Investor Receivables",
+    totalReceivable: "Total Receivable",
+    statementPeriod: "Statement Period",
+    investmentSummary: "Investment Summary",
+    earningsBreakdown: "Earnings Breakdown",
+    statementDownloaded: "Statement downloaded successfully",
+    statementDownloadFailed: "Failed to download statement",
     employeeManagement: "Employee Management",
     manageEmployees: "Manage employees and their information",
     addEmployee: "Magdagdag ng Empleyado",

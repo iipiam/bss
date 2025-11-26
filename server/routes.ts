@@ -4269,15 +4269,60 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       for (const row of data as any[]) {
         try {
+          // Support multiple column name variations (Excel exports may use different headers)
+          const name = row.name || row.Name || row['Recipe Name'] || row['recipe name'];
+          if (!name) {
+            console.error("Error importing row: missing name field", row);
+            errors++;
+            continue;
+          }
+          
+          const prepTime = row.prepTime || row.PrepTime || row['Prep Time'] || row['prep_time'] || row['Preparation Time'] || '';
+          const cookTime = row.cookTime || row.CookTime || row['Cook Time'] || row['cook_time'] || row['Cooking Time'] || '';
+          const servings = row.servings || row.Servings || row['Servings'] || row['Number of Servings'] || 1;
+          const cost = row.cost || row.Cost || row['Cost'] || row['Recipe Cost'] || '0';
+          
+          // Handle ingredients - can be JSON string, array, or text
+          let ingredients = [];
+          const rawIngredients = row.ingredients || row.Ingredients || row['Ingredients'];
+          if (rawIngredients) {
+            if (typeof rawIngredients === 'string') {
+              try {
+                ingredients = JSON.parse(rawIngredients);
+              } catch {
+                // If not valid JSON, treat as comma-separated or single ingredient
+                ingredients = rawIngredients.split(',').map((i: string) => i.trim()).filter(Boolean);
+              }
+            } else if (Array.isArray(rawIngredients)) {
+              ingredients = rawIngredients;
+            }
+          }
+          
+          // Handle steps - can be JSON string, array, or text
+          let steps = [];
+          const rawSteps = row.steps || row.Steps || row['Steps'] || row['Instructions'];
+          if (rawSteps) {
+            if (typeof rawSteps === 'string') {
+              try {
+                steps = JSON.parse(rawSteps);
+              } catch {
+                // If not valid JSON, treat as newline or numbered list
+                steps = rawSteps.split(/\n|\d+\.\s*/).map((s: string) => s.trim()).filter(Boolean);
+              }
+            } else if (Array.isArray(rawSteps)) {
+              steps = rawSteps;
+            }
+          }
+          
           await storage.createRecipe({
             restaurantId: req.session.user!.restaurantId!,
-            name: row.name,
-            prepTime: row.prepTime,
-            cookTime: row.cookTime,
-            servings: Number(row.servings),
-            cost: String(row.cost),
-            ingredients: typeof row.ingredients === 'string' ? JSON.parse(row.ingredients) : row.ingredients,
-            steps: typeof row.steps === 'string' ? JSON.parse(row.steps) : row.steps,
+            name,
+            prepTime: String(prepTime),
+            cookTime: String(cookTime),
+            servings: Number(servings),
+            cost: String(cost),
+            ingredients,
+            steps,
           });
           imported++;
         } catch (error) {
