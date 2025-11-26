@@ -1,0 +1,120 @@
+
+^C
+ubuntu@ip-172-31-1-112:~/bss/Kinzhal$ pm2 show BSS
+ Describing process with id 0 - name BSS
+┌───────────────────┬──────────────────────────────────────┐
+│ status            │ online                               │
+│ name              │ BSS                                  │
+│ namespace         │ default                              │
+│ version           │ 1.0.0                                │
+│ restarts          │ 121                                  │
+│ uptime            │ 90s                                  │
+│ script path       │ /home/BSS/dist/index.js              │
+│ script args       │ N/A                                  │
+│ error log path    │ /home/ubuntu/.pm2/logs/BSS-error.log │
+│ out log path      │ /home/ubuntu/.pm2/logs/BSS-out.log   │
+│ pid path          │ /home/ubuntu/.pm2/pids/BSS-0.pid     │
+│ interpreter       │ node                                 │
+│ interpreter args  │ N/A                                  │
+│ script id         │ 0                                    │
+│ exec cwd          │ /home/BSS                            │
+│ exec mode         │ fork_mode                            │
+│ node.js version   │ 20.19.6                              │
+│ node env          │ production                           │
+│ watch & reload    │ ✘                                    │
+│ unstable restarts │ 0                                    │
+│ created at        │ 2025-11-26T23:53:25.807Z             │
+└───────────────────┴──────────────────────────────────────┘
+ Actions available
+┌────────────────────────┐
+│ km:heapdump            │
+│ km:cpu:profiling:start │
+│ km:cpu:profiling:stop  │
+│ km:heap:sampling:start │
+│ km:heap:sampling:stop  │
+└────────────────────────┘
+ Trigger via: pm2 trigger BSS <action_name>
+
+ Code metrics value
+┌────────────────────────┬───────────┐
+│ Used Heap Size         │ 30.18 MiB │
+│ Heap Usage             │ 92.65 %   │
+│ Heap Size              │ 32.57 MiB │
+│ Event Loop Latency p95 │ 1.11 ms   │
+│ Event Loop Latency     │ 0.21 ms   │
+│ Active handles         │ 4         │
+│ Active requests        │ 0         │
+└────────────────────────┴───────────┘
+ Divergent env variables from local env
+┌────────────────┬──────────────────────┐
+│ PWD            │ /home/BSS            │
+│ SSH_CONNECTION │ 5.246.19.163 30220 1 │
+│ XDG_SESSION_ID │ 102                  │
+│ SSH_CLIENT     │ 5.246.19.163 30220 2 │
+│ SSH_TTY        │ /dev/pts/1           │
+│ OLDPWD         │ /home/ubuntu         │
+└────────────────┴──────────────────────┘
+
+ Add your own code metrics: http://bit.ly/code-metrics
+ Use `pm2 logs BSS [--lines 1000]` to display logs
+ Use `pm2 env 0` to display environment variables
+ Use `pm2 monit` to monitor CPU and Memory usage BSS
+ubuntu@ip-172-31-1-112:~/bss/Kinzhal$ ls -la /home/BSS/
+total 17192
+drwxr-xr-x  18 ubuntu ubuntu     4096 Nov 26 01:18 .
+drwxr-xr-x   5 root   root       4096 Nov 25 23:48 ..
+drwx------   8 ubuntu ubuntu     4096 Nov 11 01:44 .config
+drwxr-xr-x   7 ubuntu ubuntu     4096 Nov 26 00:16 .git
+-rw-r--r--   1 ubuntu ubuntu       67 Nov  2 03:47 .gitignore
+drwxr-xr-x   3 ubuntu ubuntu     4096 Nov  2 03:46 .local
+-rw-r--r--   1 ubuntu ubuntu     1850 Nov 17 16:35 .replit
+-rw-r--r--   1 ubuntu ubuntu    19482 Nov 24 21:00 AWS_DEPLOYMENT_GUIDE.md
+-rw-r--r--   1 ubuntu ubuntu     2572 Nov 19 17:13 CREDENTIALS.md
+-rw-r--r--   1 ubuntu ubuntu     7385 Nov 10 22:51 EMERGENCY_ADMIN_RESET.md
+-rw-r--r--   1 ubuntu ubuntu     2749 Nov 10 23:45 PRODUCTION_LOGIN_FIX.md
+-rw-r--r--   1 ubuntu ubuntu   155909 Nov  3 23:47 after_login.png
+drwxr-xr-x   4 ubuntu ubuntu    16384 Nov 25 23:05 attached_assets
+-rw-r--r--   1 ubuntu ubuntu   165408 Nov 19 10:47 aws-rds-ca-bundle.pem
+-rw-r--r--   1 ubuntu ubuntu  1237424 Nov 25 20:56 bss-aws-deploy.tar.gz
+-rw-r--r--   1 ubuntu ubuntu 13881738 Nov 25 19:54 bss-deploy.tar.gz
+drwxr-xr-x   4 ubuntu ubuntu     4096 Nov 14 05:25 client
+-rw-r--r--   1 ubuntu ubuntu      459 Nov  2 03:47 components.json
+-rw-r--r--   1 ubuntu ubuntu   113325 Nov 14 10:03 dashboard_with_logos.png
+drwxr-xr-x   5 ubuntu ubuntu     4096 Nov 23 14:11 deployment
+-rw-r--r--   1 ubuntu ubuntu     7676 Nov 14 05:22 design_guidelines.md
+drwxr-xr-x   3 ubuntu ubuntu     4096 Nov 25 23:27 dist
+-rw-r--r--   1 ubuntu ubuntu      325 Nov  2 03:47 drizzle.config.ts
+-rw-r--r--   1 ubuntu ubuntu     1588 Nov 19 09:53 execute-migration-sql.ts
+-rw-r--r--   1 ubuntu ubuntu    21471 Nov 13 12:56 footer.png
+drwxr-xr-x   2 ubuntu ubuntu     4096 Nov 11 01:58 invoices
+-rw-r--r--   1 ubuntu ubuntu        0 Nov 17 02:49 legal
+-rw-r--r--   1 ubuntu ubuntu   496307 Nov 14 10:01 login_full.png
+-rw-r--r--   1 ubuntu ubuntu   477641 Nov 13 11:08 login_page.png
+-rw-r--r--   1 ubuntu ubuntu     4254 Nov 13 13:27 login_page_current.png
+-rw-r--r--   1 ubuntu ubuntu     2180 Nov 19 10:50 manual-migrate.mjs
+-rw-r--r--   1 ubuntu ubuntu      862 Nov 19 08:06 migrate-aws.ts
+drwxr-xr-x   3 ubuntu ubuntu     4096 Nov 20 14:05 migrations
+drwxrwxr-x 506 ubuntu ubuntu    20480 Nov 26 02:17 node_modules
+-rw-r--r--   1 ubuntu ubuntu   472558 Nov 26 02:17 package-lock.json
+-rw-r--r--   1 ubuntu ubuntu     4109 Nov 17 17:49 package.json
+-rw-r--r--   1 ubuntu ubuntu    96075 Nov 20 15:33 performance_page_full.png
+-rw-r--r--   1 ubuntu ubuntu       80 Nov  2 03:47 postcss.config.js
+drwxr-xr-x   6 ubuntu ubuntu     4096 Nov 22 11:43 public
+-rw-r--r--   1 ubuntu ubuntu     5402 Nov 25 19:53 replit.md
+-rw-r--r--   1 ubuntu ubuntu     3380 Nov 10 23:46 reset-admin-password.cjs
+-rw-r--r--   1 ubuntu ubuntu    92233 Nov 10 20:36 restopos-complete-demo.html
+-rw-r--r--   1 ubuntu ubuntu    60111 Nov 10 19:38 restopos-demo.html
+drwxr-xr-x   2 ubuntu ubuntu     4096 Nov 23 14:43 scripts
+drwxr-xr-x   3 ubuntu ubuntu     4096 Nov 26 16:26 server
+-rw-r--r--   1 ubuntu ubuntu    64939 Nov 14 10:03 setup_page_logos.png
+drwxr-xr-x   2 ubuntu ubuntu     4096 Nov 25 19:35 shared
+-rw-r--r--   1 ubuntu ubuntu     4050 Nov  2 03:47 tailwind.config.ts
+-rw-r--r--   1 ubuntu ubuntu     1067 Nov 19 08:03 test-aws-connection.ts
+-rw-r--r--   1 ubuntu ubuntu      666 Nov 19 10:36 test-db-connection.mjs
+-rw-r--r--   1 ubuntu ubuntu     1150 Nov 19 10:39 test-db-postgres.mjs
+-rw-r--r--   1 ubuntu ubuntu     1074 Nov 19 10:38 test-db-ssl.mjs
+-rw-r--r--   1 ubuntu ubuntu      742 Nov 19 19:23 tsconfig.json
+drwxr-xr-x   2 ubuntu ubuntu     4096 Nov 21 11:37 types
+drwxr-xr-x   3 ubuntu ubuntu     4096 Nov  8 07:27 uploads
+-rw-r--r--   1 ubuntu ubuntu     1080 Nov  2 03:47 vite.config.ts
+ubuntu@ip-172-31-1-112:~/bss/Kinzhal$
