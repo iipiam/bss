@@ -47,6 +47,8 @@ Preferred communication style: Simple, everyday language.
 - **Investor Statement PDF**: Downloadable bilingual (EN/AR) investor statement showing investment details, earnings breakdown (revenue, COGS, salaries, bills, net profit), and receivables calculation with interest percentage. Negative receivables are clamped to 0. **Updated Nov 26, 2025**: Added dual investor type system - Money Investors (traditional cash investment with % of overall net profit) and Recipe Owners (% of net sales from specific recipe only). Recipe investors use VAT-excluded basePrice and portion-scaled COGS calculations.
 - **Recipe Import**: Flexible column mapping supports multiple variations (Name/name/Recipe Name, Prep Time/prepTime, etc.) with JSON/array/text ingredient/step parsing. **Updated Nov 26, 2025**.
 - **License Document Upload**: Secure file upload for license documents (PDF, JPEG, PNG, GIF, WebP) with 10MB limit. Files stored outside public web root and served through authenticated endpoint with permission checks. Drag-and-drop upload UI with file type/size validation. **Updated Nov 26, 2025**.
+- **License Fees**: Optional fee tracking for each license. Displays fee amount in SAR on license cards. **Added Nov 26, 2025**.
+- **Menu Item Portion Sizes**: When linking menu items to recipes, users can select portion sizes (1/4, 1/2, 3/4, Full). Recipe ingredient costs and inventory deductions are automatically scaled by the portion multiplier.
 
 ## External Dependencies
 
