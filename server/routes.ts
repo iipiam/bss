@@ -3866,6 +3866,60 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
   app.use('/uploads/menu-images', (await import('express')).static(path.join(process.cwd(), 'uploads', 'menu-images')));
 
+  // Configure multer for license file uploads (disk storage)
+  const licenseFileStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      const uploadPath = path.join(process.cwd(), 'uploads', 'license-files');
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+      cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, 'license-' + uniqueSuffix + ext);
+    }
+  });
+
+  const uploadLicenseFile = multer({
+    storage: licenseFileStorage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit for license documents
+    fileFilter: function (req, file, cb) {
+      const allowedTypes = /jpeg|jpg|png|gif|webp|pdf/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const allowedMimetypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+      const mimetype = allowedMimetypes.includes(file.mimetype);
+      if (mimetype && extname) {
+        return cb(null, true);
+      }
+      cb(new Error('Only image files (JPEG, PNG, GIF, WebP) and PDF documents are allowed!'));
+    }
+  });
+
+  // Upload license file
+  app.post("/api/licenses/upload-file", requireAuth, requireRestaurant, requireAction('licenses', 'add'), uploadLicenseFile.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      
+      const fileUrl = `/uploads/license-files/${req.file.filename}`;
+      const originalName = req.file.originalname;
+      res.json({ fileUrl, originalName });
+    } catch (error) {
+      console.error("License file upload error:", error);
+      res.status(500).json({ error: "Failed to upload file" });
+    }
+  });
+
+  // Serve uploaded license files
+  app.use('/uploads/license-files', (req, res, next) => {
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+    next();
+  });
+  app.use('/uploads/license-files', (await import('express')).static(path.join(process.cwd(), 'uploads', 'license-files')));
+
   // Authenticated endpoint to download subscription invoices
   // SECURITY: Requires authentication and verifies restaurant ownership via database join
   app.get('/api/subscription-invoices/:filename', requireAuth, requireRestaurant, async (req, res) => {
