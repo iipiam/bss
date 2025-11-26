@@ -42,6 +42,7 @@ type LicenseFormData = {
   issueDate: string;
   expiryDate: string;
   renewalReminderDays: number;
+  fee?: string;
   documentUrl?: string;
   notes?: string;
 };
@@ -69,6 +70,7 @@ export default function Licenses() {
     issueDate: z.string().min(1, t.issueDateRequired),
     expiryDate: z.string().min(1, t.expiryDateRequired),
     renewalReminderDays: z.coerce.number().min(1).max(365).default(30),
+    fee: z.string().optional(),
     documentUrl: z.string().optional(),
     notes: z.string().optional(),
   });
@@ -99,6 +101,7 @@ export default function Licenses() {
       issueDate: "",
       expiryDate: "",
       renewalReminderDays: 30,
+      fee: "",
       documentUrl: "",
       notes: "",
     },
@@ -270,6 +273,7 @@ export default function Licenses() {
       issueDate: format(new Date(license.issueDate), "yyyy-MM-dd"),
       expiryDate: format(new Date(license.expiryDate), "yyyy-MM-dd"),
       renewalReminderDays: license.renewalReminderDays || 30,
+      fee: license.fee || "",
       documentUrl: license.documentUrl || "",
       notes: license.notes || "",
     });
@@ -451,26 +455,48 @@ export default function Licenses() {
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="renewalReminderDays"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Renewal Reminder (days before expiry)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          type="number" 
-                          min="1" 
-                          max="365"
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 30)}
-                          data-testid="input-renewal-reminder" 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="renewalReminderDays"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Renewal Reminder (days before expiry)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            type="number" 
+                            min="1" 
+                            max="365"
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 30)}
+                            data-testid="input-renewal-reminder" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="fee"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t.licenseFee || "License Fee"} ({t.optional || "optional"})</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            type="number" 
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            data-testid="input-license-fee" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
@@ -676,6 +702,12 @@ export default function Licenses() {
                     <span className="text-muted-foreground">Expiry Date:</span>
                     <span className="font-medium">{format(new Date(license.expiryDate), "MMM dd, yyyy")}</span>
                   </div>
+                  {license.fee && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{t.licenseFee || "License Fee"}:</span>
+                      <span className="font-medium">{parseFloat(license.fee).toLocaleString()} SAR</span>
+                    </div>
+                  )}
                   {status.daysUntilExpiry >= 0 && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Days until expiry:</span>

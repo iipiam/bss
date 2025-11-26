@@ -930,6 +930,7 @@ export const licenses = pgTable("licenses", {
   expiryDate: timestamp("expiry_date").notNull(),
   status: text("status").default("active"), // active, expired, pending_renewal, suspended
   renewalReminderDays: integer("renewal_reminder_days").default(30),
+  fee: decimal("fee", { precision: 10, scale: 2 }), // License fee/cost amount
   documentUrl: text("document_url"),
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
