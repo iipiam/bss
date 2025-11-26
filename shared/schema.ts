@@ -590,7 +590,9 @@ export const investors = pgTable("investors", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   name: text("name").notNull(),
-  amountInvested: decimal("amount_invested", { precision: 12, scale: 2 }).notNull(), // Amount invested in SAR
+  investorType: text("investor_type").notNull().default("money"), // "money" for cash investor, "recipe" for recipe owner
+  recipeId: varchar("recipe_id").references(() => recipes.id), // Only used when investorType is "recipe"
+  amountInvested: decimal("amount_invested", { precision: 12, scale: 2 }).notNull(), // Amount invested in SAR (0 for recipe owners)
   interestPercentage: decimal("interest_percentage", { precision: 5, scale: 2 }).notNull(), // Percentage of net profit (e.g., 10.00 for 10%)
   active: boolean("active").notNull().default(true),
   notes: text("notes"),
