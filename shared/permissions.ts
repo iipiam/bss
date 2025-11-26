@@ -39,7 +39,65 @@ export const ALL_PERMISSIONS: Permission[] = [
   'licenses',
 ];
 
-export type PermissionSet = Record<Permission, boolean>;
+// Granular permission actions
+export type PermissionAction = 'view' | 'add' | 'edit' | 'delete';
+
+export const ALL_PERMISSION_ACTIONS: PermissionAction[] = ['view', 'add', 'edit', 'delete'];
+
+// Granular permission object for each feature
+export interface GranularPermission {
+  view: boolean;
+  add: boolean;
+  edit: boolean;
+  delete: boolean;
+}
+
+// Permission can be boolean (legacy) or granular object
+export type PermissionValue = boolean | GranularPermission;
+
+// Full permission set - supports both boolean and granular permissions
+export type PermissionSet = Record<Permission, PermissionValue>;
+
+// Helper to create a full granular permission (all actions enabled)
+export const FULL_GRANULAR_PERMISSION: GranularPermission = {
+  view: true,
+  add: true,
+  edit: true,
+  delete: true,
+};
+
+// Helper to create a view-only permission
+export const VIEW_ONLY_PERMISSION: GranularPermission = {
+  view: true,
+  add: false,
+  edit: false,
+  delete: false,
+};
+
+// Helper to create no permission
+export const NO_PERMISSION: GranularPermission = {
+  view: false,
+  add: false,
+  edit: false,
+  delete: false,
+};
+
+// Normalize permission value - converts boolean to granular or returns granular as-is
+export function normalizePermission(value: PermissionValue | undefined): GranularPermission {
+  if (value === undefined || value === false) {
+    return { ...NO_PERMISSION };
+  }
+  if (value === true) {
+    return { ...FULL_GRANULAR_PERMISSION };
+  }
+  return value;
+}
+
+// Check if a permission value allows a specific action
+export function hasPermissionAction(value: PermissionValue | undefined, action: PermissionAction): boolean {
+  const normalized = normalizePermission(value);
+  return normalized[action] === true;
+}
 
 export const ADMIN_PERMISSIONS: PermissionSet = {
   dashboard: true,
@@ -110,19 +168,39 @@ export const ROUTE_PERMISSIONS: Record<string, PermissionRequirement> = {
   '/api/chat': { mode: 'any', permissions: ['dashboard'] },
 };
 
+// Check if user has permission to view a feature (backwards compatible)
 export function hasPermission(userPermissions: PermissionSet | undefined, userRole: string, permission: Permission): boolean {
   if (userRole === 'admin') return true;
-  return userPermissions?.[permission] === true;
+  if (!userPermissions) return false;
+  const value = userPermissions[permission];
+  // Legacy boolean check
+  if (value === true) return true;
+  if (value === false || value === undefined) return false;
+  // Granular permission - check if view is allowed
+  return value.view === true;
+}
+
+// Check if user can perform a specific action on a feature
+export function canPerformAction(
+  userPermissions: PermissionSet | undefined, 
+  userRole: string, 
+  permission: Permission, 
+  action: PermissionAction
+): boolean {
+  if (userRole === 'admin') return true;
+  if (!userPermissions) return false;
+  const value = userPermissions[permission];
+  return hasPermissionAction(value, action);
 }
 
 export function hasAnyPermission(userPermissions: PermissionSet | undefined, userRole: string, ...permissions: Permission[]): boolean {
   if (userRole === 'admin') return true;
   if (!userPermissions) return false;
-  return permissions.some(p => userPermissions[p] === true);
+  return permissions.some(p => hasPermission(userPermissions, 'employee', p));
 }
 
 export function hasAllPermissions(userPermissions: PermissionSet | undefined, userRole: string, ...permissions: Permission[]): boolean {
   if (userRole === 'admin') return true;
   if (!userPermissions) return false;
-  return permissions.every(p => userPermissions[p] === true);
+  return permissions.every(p => hasPermission(userPermissions, 'employee', p));
 }
