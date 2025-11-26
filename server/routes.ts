@@ -54,7 +54,7 @@ let wsClients: Set<WSClient> | null = null;
 
 // Unified broadcast function with restaurant filtering
 export function broadcastNotification(event: {
-  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated';
+  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated' | 'menu:updated';
   restaurantId: string;
   // Order fields
   orderId?: string;
@@ -88,6 +88,12 @@ export function broadcastNotification(event: {
     senderRole: string;
     message: string;
     createdAt: string;
+  };
+  // Menu update fields
+  data?: {
+    action: 'created' | 'updated' | 'deleted';
+    item?: any;
+    itemId?: string;
   };
 }) {
   if (!wsClients) return;
@@ -359,6 +365,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       const data = insertMenuItemSchema.parse({ ...req.body, restaurantId });
       const item = await storage.createMenuItem(data);
+      
+      // Broadcast menu update to all connected POS clients
+      broadcastNotification({
+        type: 'menu:updated',
+        restaurantId,
+        data: { action: 'created', item }
+      });
+      
       res.status(201).json(item);
     } catch (error) {
       console.error("Menu creation validation error:", error);
@@ -376,6 +390,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (!item) {
         return res.status(404).json({ error: "Menu item not found" });
       }
+      
+      // Broadcast menu update to all connected POS clients
+      broadcastNotification({
+        type: 'menu:updated',
+        restaurantId,
+        data: { action: 'updated', item }
+      });
+      
       res.json(item);
     } catch (error) {
       res.status(400).json({ error: "Invalid menu data" });
@@ -384,10 +406,19 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.delete("/api/menu/:id", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
-    const success = await storage.deleteMenuItem(req.params.id, restaurantId);
+    const menuItemId = req.params.id;
+    const success = await storage.deleteMenuItem(menuItemId, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Menu item not found" });
     }
+    
+    // Broadcast menu update to all connected POS clients
+    broadcastNotification({
+      type: 'menu:updated',
+      restaurantId,
+      data: { action: 'deleted', itemId: menuItemId }
+    });
+    
     res.status(204).send();
   });
 
@@ -3408,7 +3439,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Export Financial Data to Excel
-  app.get("/api/export/financial", requireAuth, requireRestaurant, requireRestaurant, requirePermission('reports'), async (req, res) => {
+  app.get("/api/export/financial", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const year = req.query.year as string || new Date().getFullYear().toString();
@@ -3486,7 +3517,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Export Financial Statement as PDF
-  app.get("/api/export/financial-pdf", requireAuth, requireRestaurant, requireRestaurant, requirePermission('reports'), async (req, res) => {
+  app.get("/api/export/financial-pdf", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const year = req.query.year as string || new Date().getFullYear().toString();
@@ -3702,7 +3733,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // ===== TEAM CHAT API =====
   
   // Get all conversations for authenticated user
-  app.get("/api/chat/conversations", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
+  app.get("/api/chat/conversations", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
@@ -3717,7 +3748,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Get single conversation by ID
-  app.get("/api/chat/conversations/:id", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
+  app.get("/api/chat/conversations/:id", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
@@ -3742,7 +3773,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Create a new channel
-  app.post("/api/chat/channels", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
+  app.post("/api/chat/channels", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
@@ -3781,7 +3812,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Get or create direct conversation between two users
-  app.post("/api/chat/direct", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
+  app.post("/api/chat/direct", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
@@ -3810,7 +3841,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Get messages in a conversation
-  app.get("/api/chat/conversations/:id/messages", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
+  app.get("/api/chat/conversations/:id/messages", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
@@ -3832,7 +3863,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Send a message to a conversation
-  app.post("/api/chat/conversations/:id/messages", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
+  app.post("/api/chat/conversations/:id/messages", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
@@ -3886,7 +3917,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Get conversation members
-  app.get("/api/chat/conversations/:id/members", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
+  app.get("/api/chat/conversations/:id/members", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
@@ -3907,7 +3938,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Get chat notification settings (restaurant defaults)
-  app.get("/api/chat/notification-settings", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
+  app.get("/api/chat/notification-settings", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const settings = await storage.getChatNotificationDefaults(restaurantId);
@@ -3919,7 +3950,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Update chat notification settings (admin only)
-  app.patch("/api/chat/notification-settings", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
+  app.patch("/api/chat/notification-settings", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const userRole = req.session.user!.role;
@@ -3958,7 +3989,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Add member to conversation (channels only)
-  app.post("/api/chat/conversations/:id/members", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
+  app.post("/api/chat/conversations/:id/members", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
@@ -4007,7 +4038,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Mark conversation as read
-  app.post("/api/chat/conversations/:id/read", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
+  app.post("/api/chat/conversations/:id/read", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
@@ -4036,7 +4067,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Get unread count for all conversations
-  app.get("/api/chat/unread-count", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
+  app.get("/api/chat/unread-count", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
@@ -4050,7 +4081,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Get all employee users in restaurant for DM selection
-  app.get("/api/chat/users", requireAuth, requireRestaurant, requireRestaurant, async (req, res) => {
+  app.get("/api/chat/users", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const users = await storage.getUsers(restaurantId);

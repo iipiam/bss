@@ -156,8 +156,8 @@ export function AppSidebar() {
         return item.testId === 'it-dashboard' || item.testId === 'performance' || item.testId === 'it-account-management';
       }
       
-      // Client accounts cannot see IT Dashboard or Account Management (IT-only pages)
-      if (item.testId === 'it-dashboard' || item.testId === 'it-account-management') {
+      // Client accounts cannot see IT Dashboard, Performance, or Account Management (IT-only pages)
+      if (item.testId === 'it-dashboard' || item.testId === 'performance' || item.testId === 'it-account-management') {
         return false;
       }
       

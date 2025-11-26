@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Search, Archive, ArchiveRestore, Download, Filter, Calendar } from "lucide-react";
+import { Search, Archive, ArchiveRestore, Download, Filter, Calendar, Users } from "lucide-react";
 import type { ShopBill } from "@shared/schema";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
@@ -23,6 +24,8 @@ export default function Bills() {
   const [showArchived, setShowArchived] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [salaryDialogOpen, setSalaryDialogOpen] = useState(false);
+  const [salaryMonth, setSalaryMonth] = useState(() => format(new Date(), "yyyy-MM"));
 
   const { data: bills = [], isLoading } = useQuery<ShopBill[]>({
     queryKey: ["/api/shop/bills"],
@@ -43,6 +46,28 @@ export default function Bills() {
       toast({
         title: t.error,
         description: t.somethingWentWrong || "Something went wrong",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateSalariesMutation = useMutation({
+    mutationFn: async (paymentMonth: string): Promise<{ created: number; skipped: number }> => {
+      const response = await apiRequest("/api/shop/bills/generate-salaries", "POST", { paymentMonth });
+      return response as { created: number; skipped: number };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/bills"] });
+      setSalaryDialogOpen(false);
+      toast({
+        title: t.success,
+        description: `${data.created} salary bills created, ${data.skipped} skipped`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: t.error,
+        description: "Failed to generate salary bills",
         variant: "destructive",
       });
     },
@@ -86,7 +111,7 @@ export default function Bills() {
     });
   };
 
-  const billTypes = ["all", "rent", "electricity", "water", "gas", "internet", "maintenance", "foundational", "other"];
+  const billTypes = ["all", "rent", "electricity", "water", "gas", "internet", "maintenance", "foundational", "salary", "other"];
   const statuses = ["all", "pending", "paid", "overdue"];
 
   return (
@@ -98,10 +123,51 @@ export default function Bills() {
             {t.manageBills || "Manage and analyze your shop bills"}
           </p>
         </div>
-        <Button onClick={handleExportToExcel} data-testid="button-export-excel">
-          <Download className="w-4 h-4 mr-2" />
-          {t.exportToExcel || "Export to Excel"}
-        </Button>
+        <div className="flex gap-2">
+          <Dialog open={salaryDialogOpen} onOpenChange={setSalaryDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" data-testid="button-generate-salaries">
+                <Users className="w-4 h-4 mr-2" />
+                {t.generateSalaries || "Generate Salaries"}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{t.generateSalaries || "Generate Salary Bills"}</DialogTitle>
+                <DialogDescription>
+                  {"This will create salary bills for all employees with a monthly salary set for the selected month."}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <label className="text-sm font-medium mb-2 block">
+                  {"Select Month"}
+                </label>
+                <Input
+                  type="month"
+                  value={salaryMonth}
+                  onChange={(e) => setSalaryMonth(e.target.value)}
+                  data-testid="input-salary-month"
+                />
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setSalaryDialogOpen(false)}>
+                  {t.cancel || "Cancel"}
+                </Button>
+                <Button 
+                  onClick={() => generateSalariesMutation.mutate(salaryMonth)}
+                  disabled={generateSalariesMutation.isPending}
+                  data-testid="button-confirm-generate-salaries"
+                >
+                  {generateSalariesMutation.isPending ? "Generating..." : t.confirm || "Generate"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Button onClick={handleExportToExcel} data-testid="button-export-excel">
+            <Download className="w-4 h-4 mr-2" />
+            {t.exportToExcel || "Export to Excel"}
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">

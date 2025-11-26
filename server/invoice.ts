@@ -421,6 +421,19 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
         -webkit-print-color-adjust: exact;
       }
     }
+    
+    @page {
+      size: A4;
+      margin: 8mm;
+    }
+    
+    .header, .totals-section, .qr-footer {
+      page-break-inside: avoid;
+    }
+    
+    .items-table tbody tr {
+      page-break-inside: avoid;
+    }
   </style>
 </head>
 <body>

@@ -217,7 +217,7 @@ export default function Employees() {
       email: user.email || "",
       phone: user.phone || "",
       role: user.role,
-      permissions: user.permissions,
+      permissions: { ...DEFAULT_EMPLOYEE_PERMISSIONS, ...user.permissions },
       branchId: user.branchId || null,
       active: user.active,
       employeeNumber: user.employeeNumber || "",

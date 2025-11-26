@@ -262,6 +262,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               queryClient.invalidateQueries({ queryKey: ['/api/chat/notification-settings'] });
               console.log('[Notifications] Settings updated - refreshing from server');
             }
+          } else if (notification.type === 'menu:updated') {
+            // Handle menu updates - refresh menu data in POS and menu pages
+            queryClient.invalidateQueries({ queryKey: ['/api/menu'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/menu/stock'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/addons'] });
+            console.log('[Notifications] Menu updated - refreshing menu data');
           }
         } catch (err) {
           console.error('[Notifications] Failed to parse message:', err);

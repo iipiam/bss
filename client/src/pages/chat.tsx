@@ -97,7 +97,7 @@ export default function Chat() {
   const { toast } = useToast();
   
   const createChannelSchema = z.object({
-    name: z.string().min(2).max(50).regex(/^#[a-z0-9-]+$/, t.channelNameInvalidFormat),
+    name: z.string().min(2).max(50).regex(/^#[a-z0-9-]+$/, "Channel name must start with # and contain only lowercase letters, numbers, and hyphens"),
     scope: z.enum(['branch', 'restaurant']),
     branchId: z.string().optional(),
   }).refine(
@@ -108,13 +108,13 @@ export default function Chat() {
       return true;
     },
     {
-      message: t.branchRequiredForBranchScope,
+      message: "Branch is required for branch-scoped channels",
       path: ["branchId"],
     }
   );
   
   const createDMSchema = z.object({
-    userId: z.string().min(1, t.pleaseSelectUser),
+    userId: z.string().min(1, "Please select a user"),
   });
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messageContent, setMessageContent] = useState("");
