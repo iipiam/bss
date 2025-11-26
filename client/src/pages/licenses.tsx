@@ -110,7 +110,12 @@ export default function Licenses() {
   // Create license mutation
   const createMutation = useMutation({
     mutationFn: async (data: LicenseFormData) => {
-      const res = await apiRequest("POST", "/api/licenses", data);
+      // Convert empty fee string to undefined to avoid database errors
+      const payload = {
+        ...data,
+        fee: data.fee && data.fee.trim() !== "" ? data.fee : undefined,
+      };
+      const res = await apiRequest("POST", "/api/licenses", payload);
       return res.json();
     },
     onSuccess: () => {
@@ -135,7 +140,12 @@ export default function Licenses() {
   // Update license mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<LicenseFormData> }) => {
-      const res = await apiRequest("PATCH", `/api/licenses/${id}`, data);
+      // Convert empty fee string to undefined to avoid database errors
+      const payload = {
+        ...data,
+        fee: data.fee && data.fee.trim() !== "" ? data.fee : undefined,
+      };
+      const res = await apiRequest("PATCH", `/api/licenses/${id}`, payload);
       return res.json();
     },
     onSuccess: () => {

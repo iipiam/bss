@@ -124,6 +124,7 @@ export interface Translations {
   removeFile: string;
   clickToUpload: string;
   maxSize: string;
+  licenseFee: string;
   
   // Delivery Apps
   deliveryApps: string;
@@ -1383,6 +1384,7 @@ export const translations: Record<Language, Translations> = {
     removeFile: 'Remove file',
     clickToUpload: 'Click to upload license file',
     maxSize: 'max',
+    licenseFee: 'License Fee',
     
     // Delivery Apps
     deliveryApps: 'Delivery Apps',
@@ -2649,6 +2651,7 @@ export const translations: Record<Language, Translations> = {
     removeFile: 'إزالة الملف',
     clickToUpload: 'اضغط لرفع ملف الترخيص',
     maxSize: 'الحد الأقصى',
+    licenseFee: 'رسوم الترخيص',
     
     // Delivery Apps
     deliveryApps: 'تطبيقات التوصيل',
@@ -3915,6 +3918,7 @@ export const translations: Record<Language, Translations> = {
     removeFile: 'Datei entfernen',
     clickToUpload: 'Klicken Sie, um die Lizenzdatei hochzuladen',
     maxSize: 'max',
+    licenseFee: 'Lizenzgebühr',
     
     // Delivery Apps
     deliveryApps: 'Delivery Apps',
@@ -5180,6 +5184,7 @@ export const translations: Record<Language, Translations> = {
     removeFile: '删除文件',
     clickToUpload: '点击上传许可证文件',
     maxSize: '最大',
+    licenseFee: '许可证费用',
     
     // Delivery Apps
     deliveryApps: 'Delivery Apps',
@@ -6445,6 +6450,7 @@ export const translations: Record<Language, Translations> = {
     removeFile: 'ফাইল সরান',
     clickToUpload: 'লাইসেন্স ফাইল আপলোড করতে ক্লিক করুন',
     maxSize: 'সর্বোচ্চ',
+    licenseFee: 'লাইসেন্স ফি',
     
     // Delivery Apps
     deliveryApps: 'Delivery Apps',
@@ -7710,6 +7716,7 @@ export const translations: Record<Language, Translations> = {
     removeFile: 'Rimuovi file',
     clickToUpload: 'Clicca per caricare il file della licenza',
     maxSize: 'max',
+    licenseFee: 'Tassa di Licenza',
     
     // Delivery Apps
     deliveryApps: 'Delivery Apps',
@@ -8976,6 +8983,7 @@ export const translations: Record<Language, Translations> = {
     removeFile: 'फ़ाइल हटाएं',
     clickToUpload: 'लाइसेंस फ़ाइल अपलोड करने के लिए क्लिक करें',
     maxSize: 'अधिकतम',
+    licenseFee: 'लाइसेंस शुल्क',
     
     // Delivery Apps
     deliveryApps: 'Delivery Apps',
@@ -10229,6 +10237,7 @@ export const translations: Record<Language, Translations> = {
     removeFile: 'فائل ہٹائیں',
     clickToUpload: 'لائسنس فائل اپلوڈ کرنے کے لیے کلک کریں',
     maxSize: 'زیادہ سے زیادہ',
+    licenseFee: 'لائسنس فیس',
     
     // Delivery Apps
     deliveryApps: 'Delivery Apps',
@@ -11468,6 +11477,7 @@ export const translations: Record<Language, Translations> = {
     removeFile: "Eliminar archivo",
     clickToUpload: "Haga clic para subir archivo de licencia",
     maxSize: "máx",
+    licenseFee: "Tarifa de Licencia",
     
     // Delivery Apps
     deliveryApps: "Apps de Entrega",
@@ -12660,6 +12670,7 @@ export const translations: Record<Language, Translations> = {
     removeFile: "Alisin ang file",
     clickToUpload: "I-click upang mag-upload ng file ng lisensya",
     maxSize: "max",
+    licenseFee: "Bayad sa Lisensya",
     
     // Delivery Apps
     deliveryApps: "Mga App ng Delivery",
