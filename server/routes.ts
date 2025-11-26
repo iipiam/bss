@@ -978,7 +978,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Investors
-  app.get("/api/investors", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
+  app.get("/api/investors", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const investors = await storage.getInvestors(restaurantId);
@@ -989,7 +989,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/investors/:id", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
+  app.get("/api/investors/:id", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const investor = await storage.getInvestor(req.params.id);
