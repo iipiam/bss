@@ -1074,33 +1074,74 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const salaries = await storage.getSalaries(restaurantId);
       const shopBills = await storage.getShopBills(restaurantId);
       
-      // Calculate total revenue from transactions
-      const totalRevenue = transactions.reduce((sum, t) => sum + parseFloat(t.total || "0"), 0);
-      
-      // Calculate COGS from orders
+      let totalRevenue = 0;
       let totalCOGS = 0;
-      orders.forEach(order => {
-        if (order.items && Array.isArray(order.items)) {
-          order.items.forEach((item: any) => {
-            const menuItem = menuItems.find(m => m.id === item.id);
-            if (menuItem && menuItem.recipeId) {
-              const recipe = recipes.find(r => r.id === menuItem.recipeId);
-              if (recipe) {
-                const recipeCost = parseFloat(recipe.cost || "0");
-                const portionSize = parseFloat(menuItem.portionSize || "1");
-                const itemCost = recipeCost * portionSize;
-                totalCOGS += itemCost * (item.quantity || 1);
+      let totalSalaries = 0;
+      let totalBills = 0;
+      let recipeName = '';
+      
+      // Check if this is a recipe-based investor
+      if (investor.investorType === 'recipe' && investor.recipeId) {
+        // Recipe investor: Calculate profit from specific recipe sales only
+        const investorRecipe = recipes.find(r => r.id === investor.recipeId);
+        recipeName = investorRecipe?.name || '';
+        
+        // Find menu items linked to this recipe
+        const recipeMenuItems = menuItems.filter(m => m.recipeId === investor.recipeId);
+        const recipeMenuItemIds = recipeMenuItems.map(m => m.id);
+        
+        // Calculate revenue and COGS from orders containing this recipe's menu items
+        orders.forEach(order => {
+          if (order.items && Array.isArray(order.items)) {
+            order.items.forEach((item: any) => {
+              if (recipeMenuItemIds.includes(item.id)) {
+                // Revenue from this recipe's items
+                const menuItem = recipeMenuItems.find(m => m.id === item.id);
+                if (menuItem) {
+                  totalRevenue += parseFloat(menuItem.price || "0") * (item.quantity || 1);
+                  
+                  // COGS for this recipe
+                  if (investorRecipe) {
+                    const recipeCost = parseFloat(investorRecipe.cost || "0");
+                    const portionSize = parseFloat(menuItem.portionSize || "1");
+                    const itemCost = recipeCost * portionSize;
+                    totalCOGS += itemCost * (item.quantity || 1);
+                  }
+                }
               }
-            }
-          });
-        }
-      });
-      
-      // Calculate total salaries
-      const totalSalaries = salaries.reduce((sum: number, s) => sum + parseFloat(s.amount || "0"), 0);
-      
-      // Calculate total bills
-      const totalBills = shopBills.reduce((sum: number, b) => sum + parseFloat(b.amount || "0"), 0);
+            });
+          }
+        });
+        
+        // Recipe investors don't share in salaries/bills costs - just recipe net profit
+        totalSalaries = 0;
+        totalBills = 0;
+      } else {
+        // Money investor: Calculate from total business net profit
+        totalRevenue = transactions.reduce((sum, t) => sum + parseFloat(t.total || "0"), 0);
+        
+        // Calculate COGS from all orders
+        orders.forEach(order => {
+          if (order.items && Array.isArray(order.items)) {
+            order.items.forEach((item: any) => {
+              const menuItem = menuItems.find(m => m.id === item.id);
+              if (menuItem && menuItem.recipeId) {
+                const recipe = recipes.find(r => r.id === menuItem.recipeId);
+                if (recipe) {
+                  const recipeCost = parseFloat(recipe.cost || "0");
+                  const portionSize = parseFloat(menuItem.portionSize || "1");
+                  const itemCost = recipeCost * portionSize;
+                  totalCOGS += itemCost * (item.quantity || 1);
+                }
+              }
+            });
+          }
+        });
+        
+        // Calculate total salaries and bills
+        totalSalaries = salaries.reduce((sum: number, s) => sum + parseFloat(s.amount || "0"), 0);
+        totalBills = shopBills.reduce((sum: number, b) => sum + parseFloat(b.amount || "0"), 0);
+      }
       
       // Net profit
       const netProfit = totalRevenue - totalCOGS - totalSalaries - totalBills;
@@ -1125,6 +1166,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           interestPercentage: investor.interestPercentage,
           notes: investor.notes,
           createdAt: investor.createdAt,
+          investorType: investor.investorType || 'money',
+          recipeName: recipeName,
         },
         companyName: settings.restaurantName || 'Company',
         companyVAT: settings.vatNumber || '',

@@ -1765,6 +1765,8 @@ interface InvestorStatementData {
     interestPercentage: string;
     notes?: string | null;
     createdAt: Date;
+    investorType?: string; // "money" or "recipe"
+    recipeName?: string; // Name of the recipe for recipe-type investors
   };
   companyName: string;
   companyVAT: string;
@@ -2127,9 +2129,20 @@ function generateInvestorStatementHTML(data: InvestorStatementData): string {
             <span class="info-value">${escapedInvestorName}</span>
           </div>
           <div class="info-row">
+            <span class="info-label">Investor Type / نوع المستثمر:</span>
+            <span class="info-value">${investor.investorType === 'recipe' ? 'Recipe Owner / صاحب وصفة' : 'Money Investor / مستثمر مالي'}</span>
+          </div>
+          ${investor.investorType === 'recipe' && investor.recipeName ? `
+          <div class="info-row">
+            <span class="info-label">Recipe / الوصفة:</span>
+            <span class="info-value highlight-value">${escapeHtml(investor.recipeName)}</span>
+          </div>
+          ` : `
+          <div class="info-row">
             <span class="info-label">Amount Invested / المبلغ المستثمر:</span>
             <span class="info-value highlight-value">${formatCurrency(parseFloat(investor.amountInvested))} SAR</span>
           </div>
+          `}
         </div>
         <div>
           <div class="info-row">
