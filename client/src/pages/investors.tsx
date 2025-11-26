@@ -7,7 +7,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Edit, UserCircle, Trash2, DollarSign, TrendingUp, FileDown } from "lucide-react";
+import { Plus, Search, Edit, UserCircle, Trash2, DollarSign, TrendingUp, FileDown, Banknote, ChefHat } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,8 @@ import { useDeviceLayout } from "@/lib/mobileLayout";
 interface Investor {
   id: string;
   name: string;
+  investorType: string; // "money" or "recipe"
+  recipeId?: string | null;
   amountInvested: string;
   interestPercentage: string;
   monthlyEarnings?: string; // Calculated field based on net profit
@@ -44,6 +47,7 @@ interface Order {
 
 interface Recipe {
   id: string;
+  name: string;
   cost: string;
 }
 
@@ -63,6 +67,8 @@ interface ShopBill {
 
 type InvestorFormValues = {
   name: string;
+  investorType: string;
+  recipeId?: string;
   amountInvested: string;
   interestPercentage: string;
   notes?: string;
@@ -79,8 +85,13 @@ export default function Investors() {
 
   const investorFormSchema = z.object({
     name: z.string().min(1, t.investorNameRequired),
-    amountInvested: z.string().min(1, t.investmentAmountRequired).refine(
-      (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
+    investorType: z.enum(["money", "recipe"]),
+    recipeId: z.string().optional(),
+    amountInvested: z.string().refine(
+      (val) => {
+        if (!val || val === "" || val === "0" || val === "0.00") return true; // Allow empty/zero for recipe investors
+        return !isNaN(parseFloat(val)) && parseFloat(val) >= 0;
+      },
       { message: t.investmentAmountMustBePositive }
     ),
     interestPercentage: z.string().min(1, t.interestPercentageRequired).refine(
@@ -91,17 +102,38 @@ export default function Investors() {
       { message: t.interestRateMustBeBetween0And100 }
     ),
     notes: z.string().optional(),
-  });
+  }).refine(
+    (data) => {
+      // If recipe type, recipeId is required
+      if (data.investorType === "recipe") {
+        return !!data.recipeId;
+      }
+      // If money type, amountInvested is required and must be > 0
+      if (data.investorType === "money") {
+        const amount = parseFloat(data.amountInvested || "0");
+        return amount > 0;
+      }
+      return true;
+    },
+    {
+      message: t.selectRecipeForRecipeInvestor || "Please select a recipe for recipe investors or enter an amount for money investors",
+      path: ["recipeId"],
+    }
+  );
 
   const form = useForm<InvestorFormValues>({
     resolver: zodResolver(investorFormSchema),
     defaultValues: {
       name: "",
+      investorType: "money",
+      recipeId: "",
       amountInvested: "",
       interestPercentage: "",
       notes: "",
     },
   });
+  
+  const watchedInvestorType = form.watch("investorType");
 
   const { data: investors = [], isLoading } = useQuery<Investor[]>({
     queryKey: ["/api/investors"],
@@ -141,7 +173,9 @@ export default function Investors() {
     mutationFn: async (data: InvestorFormValues) => {
       const payload = {
         name: data.name,
-        amountInvested: parseFloat(data.amountInvested).toFixed(2),
+        investorType: data.investorType,
+        recipeId: data.investorType === "recipe" ? data.recipeId : null,
+        amountInvested: data.investorType === "recipe" ? "0.00" : parseFloat(data.amountInvested || "0").toFixed(2),
         interestPercentage: parseFloat(data.interestPercentage).toFixed(2),
         notes: data.notes,
       };
@@ -169,7 +203,9 @@ export default function Investors() {
     mutationFn: async (data: InvestorFormValues & { id: string }) => {
       return await apiRequest("PATCH", `/api/investors/${data.id}`, {
         name: data.name,
-        amountInvested: parseFloat(data.amountInvested).toFixed(2),
+        investorType: data.investorType,
+        recipeId: data.investorType === "recipe" ? data.recipeId : null,
+        amountInvested: data.investorType === "recipe" ? "0.00" : parseFloat(data.amountInvested || "0").toFixed(2),
         interestPercentage: parseFloat(data.interestPercentage).toFixed(2),
         notes: data.notes,
       });
@@ -226,6 +262,8 @@ export default function Investors() {
     setEditingInvestor(investor);
     form.reset({
       name: investor.name,
+      investorType: investor.investorType || "money",
+      recipeId: investor.recipeId || "",
       amountInvested: investor.amountInvested,
       interestPercentage: investor.interestPercentage,
       notes: investor.notes || "",
@@ -401,24 +439,88 @@ export default function Investors() {
 
                 <FormField
                   control={form.control}
-                  name="amountInvested"
+                  name="investorType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.amountInvested || "Amount Invested (SAR)"}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          {...field}
-                          className="h-[44px]"
-                          data-testid="input-amount-invested"
-                        />
-                      </FormControl>
+                      <FormLabel>{t.investorType || "Investor Type"}</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-[44px]" data-testid="select-investor-type">
+                            <SelectValue placeholder={t.selectInvestorType || "Select investor type"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="money" data-testid="option-money-investor">
+                            <div className="flex items-center gap-2">
+                              <Banknote className="h-4 w-4" />
+                              {t.moneyInvestor || "Money Investor"}
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="recipe" data-testid="option-recipe-owner">
+                            <div className="flex items-center gap-2">
+                              <ChefHat className="h-4 w-4" />
+                              {t.recipeOwner || "Recipe Owner"}
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                {watchedInvestorType === "recipe" && (
+                  <FormField
+                    control={form.control}
+                    name="recipeId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t.selectRecipe || "Select Recipe"}</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-[44px]" data-testid="select-recipe">
+                              <SelectValue placeholder={t.selectRecipePlaceholder || "Select a recipe"} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {recipes.map((recipe) => (
+                              <SelectItem key={recipe.id} value={recipe.id} data-testid={`option-recipe-${recipe.id}`}>
+                                {recipe.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        <p className="text-sm text-muted-foreground">
+                          {t.recipeOwnerHelp || "The investor will receive a percentage of net sales from this recipe"}
+                        </p>
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {watchedInvestorType === "money" && (
+                  <FormField
+                    control={form.control}
+                    name="amountInvested"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t.amountInvested || "Amount Invested (SAR)"}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            {...field}
+                            className="h-[44px]"
+                            data-testid="input-amount-invested"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <FormField
                   control={form.control}
