@@ -336,10 +336,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.status(204).send();
   });
 
-  // Menu
+  // Menu - disable caching for real-time updates to POS
   app.get("/api/menu", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const items = await storage.getMenuItems(restaurantId);
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
     res.json(items);
   });
 
@@ -348,6 +351,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const restaurantId = req.session.user!.restaurantId!;
     const branchId = req.query.branchId as string | undefined;
     const stock = await storage.getMenuItemsStock(restaurantId, branchId);
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
     res.json(stock);
   });
 
@@ -357,6 +363,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     if (!item) {
       return res.status(404).json({ error: "Menu item not found" });
     }
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
     res.json(item);
   });
 
@@ -422,11 +431,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.status(204).send();
   });
 
-  // Add-ons
+  // Add-ons - disable caching for real-time updates to POS
   app.get("/api/addons", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const menuItemId = req.query.menuItemId as string | undefined;
     const addons = await storage.getAddons(restaurantId, menuItemId);
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
     res.json(addons);
   });
 
@@ -436,6 +448,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     if (!addon) {
       return res.status(404).json({ error: "Add-on not found" });
     }
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
     res.json(addon);
   });
 
