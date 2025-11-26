@@ -264,10 +264,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             }
           } else if (notification.type === 'menu:updated') {
             // Handle menu updates - refresh menu data in POS and menu pages
-            queryClient.invalidateQueries({ queryKey: ['/api/menu'] });
-            queryClient.invalidateQueries({ queryKey: ['/api/menu/stock'] });
-            queryClient.invalidateQueries({ queryKey: ['/api/addons'] });
-            console.log('[Notifications] Menu updated - refreshing menu data');
+            // Use refetchType: 'all' to force immediate refetch even with staleTime: Infinity
+            queryClient.invalidateQueries({ queryKey: ['/api/menu'], refetchType: 'all' });
+            queryClient.invalidateQueries({ queryKey: ['/api/menu/stock'], refetchType: 'all' });
+            queryClient.invalidateQueries({ queryKey: ['/api/addons'], refetchType: 'all' });
+            console.log('[Notifications] Menu updated - refreshing menu data with images');
           }
         } catch (err) {
           console.error('[Notifications] Failed to parse message:', err);
