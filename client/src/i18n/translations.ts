@@ -106,6 +106,24 @@ export interface Translations {
   loading: string;
   noData: string;
   actionCannotBeUndone: string;
+  optional: string;
+  uploading: string;
+  
+  // License File Upload
+  licenseDocument: string;
+  licenseNumberRequired: string;
+  licenseNameRequired: string;
+  issuingAuthorityRequired: string;
+  issueDateRequired: string;
+  expiryDateRequired: string;
+  licenseFileTypeError: string;
+  licenseFileSizeError: string;
+  licenseFileUploaded: string;
+  licenseFileUploadFailed: string;
+  viewDocument: string;
+  removeFile: string;
+  clickToUpload: string;
+  maxSize: string;
   
   // Delivery Apps
   deliveryApps: string;
@@ -1347,6 +1365,24 @@ export const translations: Record<Language, Translations> = {
     loading: 'Loading...',
     noData: 'No data available',
     actionCannotBeUndone: 'This action cannot be undone',
+    optional: 'Optional',
+    uploading: 'Uploading...',
+    
+    // License File Upload
+    licenseDocument: 'License Document',
+    licenseNumberRequired: 'License number is required',
+    licenseNameRequired: 'License name is required',
+    issuingAuthorityRequired: 'Issuing authority is required',
+    issueDateRequired: 'Issue date is required',
+    expiryDateRequired: 'Expiry date is required',
+    licenseFileTypeError: 'Only image files (JPEG, PNG, GIF, WebP) and PDF documents are allowed',
+    licenseFileSizeError: 'File size must be less than 10MB',
+    licenseFileUploaded: 'File uploaded successfully',
+    licenseFileUploadFailed: 'Failed to upload file',
+    viewDocument: 'View document',
+    removeFile: 'Remove file',
+    clickToUpload: 'Click to upload license file',
+    maxSize: 'max',
     
     // Delivery Apps
     deliveryApps: 'Delivery Apps',
@@ -2595,6 +2631,24 @@ export const translations: Record<Language, Translations> = {
     loading: 'جاري التحميل...',
     noData: 'لا توجد بيانات',
     actionCannotBeUndone: 'لا يمكن التراجع عن هذا الإجراء',
+    optional: 'اختياري',
+    uploading: 'جاري الرفع...',
+    
+    // License File Upload
+    licenseDocument: 'مستند الترخيص',
+    licenseNumberRequired: 'رقم الترخيص مطلوب',
+    licenseNameRequired: 'اسم الترخيص مطلوب',
+    issuingAuthorityRequired: 'جهة الإصدار مطلوبة',
+    issueDateRequired: 'تاريخ الإصدار مطلوب',
+    expiryDateRequired: 'تاريخ الانتهاء مطلوب',
+    licenseFileTypeError: 'يُسمح فقط بملفات الصور (JPEG, PNG, GIF, WebP) ومستندات PDF',
+    licenseFileSizeError: 'يجب أن يكون حجم الملف أقل من 10 ميجابايت',
+    licenseFileUploaded: 'تم رفع الملف بنجاح',
+    licenseFileUploadFailed: 'فشل رفع الملف',
+    viewDocument: 'عرض المستند',
+    removeFile: 'إزالة الملف',
+    clickToUpload: 'اضغط لرفع ملف الترخيص',
+    maxSize: 'الحد الأقصى',
     
     // Delivery Apps
     deliveryApps: 'تطبيقات التوصيل',
@@ -3843,6 +3897,24 @@ export const translations: Record<Language, Translations> = {
     loading: 'Laden...',
     noData: 'No data available',
     actionCannotBeUndone: 'This action cannot be undone',
+    optional: 'Optional',
+    uploading: 'Wird hochgeladen...',
+    
+    // License File Upload
+    licenseDocument: 'Lizenzdokument',
+    licenseNumberRequired: 'Lizenznummer ist erforderlich',
+    licenseNameRequired: 'Lizenzname ist erforderlich',
+    issuingAuthorityRequired: 'Ausstellungsbehörde ist erforderlich',
+    issueDateRequired: 'Ausstellungsdatum ist erforderlich',
+    expiryDateRequired: 'Ablaufdatum ist erforderlich',
+    licenseFileTypeError: 'Nur Bilddateien (JPEG, PNG, GIF, WebP) und PDF-Dokumente sind erlaubt',
+    licenseFileSizeError: 'Dateigröße muss unter 10MB sein',
+    licenseFileUploaded: 'Datei erfolgreich hochgeladen',
+    licenseFileUploadFailed: 'Datei-Upload fehlgeschlagen',
+    viewDocument: 'Dokument anzeigen',
+    removeFile: 'Datei entfernen',
+    clickToUpload: 'Klicken Sie, um die Lizenzdatei hochzuladen',
+    maxSize: 'max',
     
     // Delivery Apps
     deliveryApps: 'Delivery Apps',
@@ -5090,6 +5162,24 @@ export const translations: Record<Language, Translations> = {
     loading: '加载中...',
     noData: 'No data available',
     actionCannotBeUndone: 'This action cannot be undone',
+    optional: '可选',
+    uploading: '上传中...',
+    
+    // License File Upload
+    licenseDocument: '许可证文件',
+    licenseNumberRequired: '许可证号码必填',
+    licenseNameRequired: '许可证名称必填',
+    issuingAuthorityRequired: '颁发机构必填',
+    issueDateRequired: '颁发日期必填',
+    expiryDateRequired: '到期日期必填',
+    licenseFileTypeError: '仅允许图片文件（JPEG, PNG, GIF, WebP）和PDF文档',
+    licenseFileSizeError: '文件大小必须小于10MB',
+    licenseFileUploaded: '文件上传成功',
+    licenseFileUploadFailed: '文件上传失败',
+    viewDocument: '查看文档',
+    removeFile: '删除文件',
+    clickToUpload: '点击上传许可证文件',
+    maxSize: '最大',
     
     // Delivery Apps
     deliveryApps: 'Delivery Apps',
@@ -6337,6 +6427,24 @@ export const translations: Record<Language, Translations> = {
     loading: 'লোড হচ্ছে...',
     noData: 'No data available',
     actionCannotBeUndone: 'This action cannot be undone',
+    optional: 'ঐচ্ছিক',
+    uploading: 'আপলোড হচ্ছে...',
+    
+    // License File Upload
+    licenseDocument: 'লাইসেন্স ডকুমেন্ট',
+    licenseNumberRequired: 'লাইসেন্স নম্বর প্রয়োজন',
+    licenseNameRequired: 'লাইসেন্সের নাম প্রয়োজন',
+    issuingAuthorityRequired: 'ইস্যুকারী কর্তৃপক্ষ প্রয়োজন',
+    issueDateRequired: 'ইস্যুর তারিখ প্রয়োজন',
+    expiryDateRequired: 'মেয়াদ শেষের তারিখ প্রয়োজন',
+    licenseFileTypeError: 'শুধুমাত্র ইমেজ ফাইল (JPEG, PNG, GIF, WebP) এবং PDF ডকুমেন্ট অনুমোদিত',
+    licenseFileSizeError: 'ফাইলের আকার অবশ্যই 10MB এর কম হতে হবে',
+    licenseFileUploaded: 'ফাইল সফলভাবে আপলোড হয়েছে',
+    licenseFileUploadFailed: 'ফাইল আপলোড ব্যর্থ হয়েছে',
+    viewDocument: 'ডকুমেন্ট দেখুন',
+    removeFile: 'ফাইল সরান',
+    clickToUpload: 'লাইসেন্স ফাইল আপলোড করতে ক্লিক করুন',
+    maxSize: 'সর্বোচ্চ',
     
     // Delivery Apps
     deliveryApps: 'Delivery Apps',
@@ -7584,6 +7692,24 @@ export const translations: Record<Language, Translations> = {
     loading: 'Caricamento...',
     noData: 'No data available',
     actionCannotBeUndone: 'This action cannot be undone',
+    optional: 'Opzionale',
+    uploading: 'Caricamento...',
+    
+    // License File Upload
+    licenseDocument: 'Documento di licenza',
+    licenseNumberRequired: 'Numero di licenza richiesto',
+    licenseNameRequired: 'Nome licenza richiesto',
+    issuingAuthorityRequired: 'Autorità emittente richiesta',
+    issueDateRequired: 'Data di emissione richiesta',
+    expiryDateRequired: 'Data di scadenza richiesta',
+    licenseFileTypeError: 'Sono ammessi solo file immagine (JPEG, PNG, GIF, WebP) e documenti PDF',
+    licenseFileSizeError: 'La dimensione del file deve essere inferiore a 10MB',
+    licenseFileUploaded: 'File caricato con successo',
+    licenseFileUploadFailed: 'Caricamento file fallito',
+    viewDocument: 'Visualizza documento',
+    removeFile: 'Rimuovi file',
+    clickToUpload: 'Clicca per caricare il file della licenza',
+    maxSize: 'max',
     
     // Delivery Apps
     deliveryApps: 'Delivery Apps',
@@ -8832,6 +8958,24 @@ export const translations: Record<Language, Translations> = {
     loading: 'लोड हो रहा है...',
     noData: 'कोई डेटा उपलब्ध नहीं',
     actionCannotBeUndone: 'यह क्रिया पूर्ववत नहीं की जा सकती',
+    optional: 'वैकल्पिक',
+    uploading: 'अपलोड हो रहा है...',
+    
+    // License File Upload
+    licenseDocument: 'लाइसेंस दस्तावेज़',
+    licenseNumberRequired: 'लाइसेंस नंबर आवश्यक है',
+    licenseNameRequired: 'लाइसेंस का नाम आवश्यक है',
+    issuingAuthorityRequired: 'जारीकर्ता प्राधिकरण आवश्यक है',
+    issueDateRequired: 'जारी करने की तारीख आवश्यक है',
+    expiryDateRequired: 'समाप्ति तिथि आवश्यक है',
+    licenseFileTypeError: 'केवल इमेज फाइलें (JPEG, PNG, GIF, WebP) और PDF दस्तावेज़ अनुमत हैं',
+    licenseFileSizeError: 'फ़ाइल का आकार 10MB से कम होना चाहिए',
+    licenseFileUploaded: 'फ़ाइल सफलतापूर्वक अपलोड हुई',
+    licenseFileUploadFailed: 'फ़ाइल अपलोड विफल',
+    viewDocument: 'दस्तावेज़ देखें',
+    removeFile: 'फ़ाइल हटाएं',
+    clickToUpload: 'लाइसेंस फ़ाइल अपलोड करने के लिए क्लिक करें',
+    maxSize: 'अधिकतम',
     
     // Delivery Apps
     deliveryApps: 'Delivery Apps',
@@ -10067,6 +10211,24 @@ export const translations: Record<Language, Translations> = {
     loading: 'لوڈ ہو رہا ہے...',
     noData: 'کوئی ڈیٹا دستیاب نہیں',
     actionCannotBeUndone: 'یہ عمل کالعدم نہیں کیا جا سکتا',
+    optional: 'اختیاری',
+    uploading: 'اپلوڈ ہو رہا ہے...',
+    
+    // License File Upload
+    licenseDocument: 'لائسنس دستاویز',
+    licenseNumberRequired: 'لائسنس نمبر ضروری ہے',
+    licenseNameRequired: 'لائسنس کا نام ضروری ہے',
+    issuingAuthorityRequired: 'جاری کرنے والا ادارہ ضروری ہے',
+    issueDateRequired: 'اجراء کی تاریخ ضروری ہے',
+    expiryDateRequired: 'میعاد ختم ہونے کی تاریخ ضروری ہے',
+    licenseFileTypeError: 'صرف تصویری فائلیں (JPEG, PNG, GIF, WebP) اور PDF دستاویزات کی اجازت ہے',
+    licenseFileSizeError: 'فائل کا سائز 10MB سے کم ہونا چاہیے',
+    licenseFileUploaded: 'فائل کامیابی سے اپلوڈ ہوگئی',
+    licenseFileUploadFailed: 'فائل اپلوڈ ناکام',
+    viewDocument: 'دستاویز دیکھیں',
+    removeFile: 'فائل ہٹائیں',
+    clickToUpload: 'لائسنس فائل اپلوڈ کرنے کے لیے کلک کریں',
+    maxSize: 'زیادہ سے زیادہ',
     
     // Delivery Apps
     deliveryApps: 'Delivery Apps',
@@ -11288,6 +11450,26 @@ export const translations: Record<Language, Translations> = {
     loading: "Cargando...",
     noData: "No data available",
     actionCannotBeUndone: "This action cannot be undone",
+    optional: "Opcional",
+    uploading: "Subiendo...",
+    
+    // License File Upload
+    licenseDocument: "Documento de licencia",
+    licenseNumberRequired: "Número de licencia requerido",
+    licenseNameRequired: "Nombre de licencia requerido",
+    issuingAuthorityRequired: "Autoridad emisora requerida",
+    issueDateRequired: "Fecha de emisión requerida",
+    expiryDateRequired: "Fecha de vencimiento requerida",
+    licenseFileTypeError: "Solo se permiten archivos de imagen (JPEG, PNG, GIF, WebP) y documentos PDF",
+    licenseFileSizeError: "El tamaño del archivo debe ser menor a 10MB",
+    licenseFileUploaded: "Archivo subido exitosamente",
+    licenseFileUploadFailed: "Error al subir archivo",
+    viewDocument: "Ver documento",
+    removeFile: "Eliminar archivo",
+    clickToUpload: "Haga clic para subir archivo de licencia",
+    maxSize: "máx",
+    
+    // Delivery Apps
     deliveryApps: "Apps de Entrega",
     addDeliveryApp: "Añadir App de Entrega",
     editDeliveryApp: "Editar App de Entrega",
@@ -12460,6 +12642,26 @@ export const translations: Record<Language, Translations> = {
     loading: "Naglo-load...",
     noData: "No data available",
     actionCannotBeUndone: "This action cannot be undone",
+    optional: "Opsyonal",
+    uploading: "Ina-upload...",
+    
+    // License File Upload
+    licenseDocument: "Dokumento ng Lisensya",
+    licenseNumberRequired: "Kailangan ang numero ng lisensya",
+    licenseNameRequired: "Kailangan ang pangalan ng lisensya",
+    issuingAuthorityRequired: "Kailangan ang nag-isyu na awtoridad",
+    issueDateRequired: "Kailangan ang petsa ng pag-isyu",
+    expiryDateRequired: "Kailangan ang petsa ng pag-expire",
+    licenseFileTypeError: "Tanging mga image file (JPEG, PNG, GIF, WebP) at PDF na dokumento lamang ang pinapayagan",
+    licenseFileSizeError: "Dapat mas mababa sa 10MB ang laki ng file",
+    licenseFileUploaded: "Matagumpay na na-upload ang file",
+    licenseFileUploadFailed: "Nabigong mag-upload ng file",
+    viewDocument: "Tingnan ang dokumento",
+    removeFile: "Alisin ang file",
+    clickToUpload: "I-click upang mag-upload ng file ng lisensya",
+    maxSize: "max",
+    
+    // Delivery Apps
     deliveryApps: "Mga App ng Delivery",
     addDeliveryApp: "Magdagdag ng App ng Delivery",
     editDeliveryApp: "I-edit ang App ng Delivery",

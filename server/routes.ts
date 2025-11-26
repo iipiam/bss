@@ -3904,7 +3904,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "No file uploaded" });
       }
       
-      const fileUrl = `/uploads/license-files/${req.file.filename}`;
+      // Return authenticated download URL instead of public static URL
+      const fileUrl = `/api/licenses/files/${req.file.filename}`;
       const originalName = req.file.originalname;
       res.json({ fileUrl, originalName });
     } catch (error) {
@@ -3913,12 +3914,46 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Serve uploaded license files
-  app.use('/uploads/license-files', (req, res, next) => {
-    res.setHeader('Cache-Control', 'public, max-age=31536000');
-    next();
+  // Authenticated endpoint to download license files
+  // SECURITY: Requires authentication and checks license permission
+  app.get('/api/licenses/files/:filename', requireAuth, requireRestaurant, requireAction('licenses', 'view'), async (req, res) => {
+    try {
+      const filename = req.params.filename;
+      
+      // Validate filename format to prevent path traversal
+      // Only allow alphanumeric, hyphens, underscores, and single dots
+      if (!/^license-[\w-]+\.(pdf|jpg|jpeg|png|gif|webp)$/i.test(filename)) {
+        return res.status(400).json({ error: 'Invalid filename format' });
+      }
+      
+      const filePath = path.join(process.cwd(), 'uploads', 'license-files', filename);
+      
+      // Verify file exists on disk
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'License file not found' });
+      }
+      
+      // Determine content type based on extension
+      const ext = path.extname(filename).toLowerCase();
+      const contentTypes: Record<string, string> = {
+        '.pdf': 'application/pdf',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+      };
+      
+      const contentType = contentTypes[ext] || 'application/octet-stream';
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error('License file download error:', error);
+      res.status(500).json({ error: 'Failed to download license file' });
+    }
   });
-  app.use('/uploads/license-files', (await import('express')).static(path.join(process.cwd(), 'uploads', 'license-files')));
 
   // Authenticated endpoint to download subscription invoices
   // SECURITY: Requires authentication and verifies restaurant ownership via database join
