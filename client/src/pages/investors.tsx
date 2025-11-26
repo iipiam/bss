@@ -7,7 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Edit, UserCircle, Trash2, DollarSign, TrendingUp } from "lucide-react";
+import { Plus, Search, Edit, UserCircle, Trash2, DollarSign, TrendingUp, FileDown } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -293,6 +293,51 @@ export default function Investors() {
     return monthlyEarnings;
   };
 
+  // Download investor statement PDF
+  const [downloadingStatement, setDownloadingStatement] = useState<string | null>(null);
+  
+  const handleDownloadStatement = async (investor: Investor) => {
+    try {
+      setDownloadingStatement(investor.id);
+      
+      const response = await fetch(`/api/investors/${investor.id}/statement`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate statement');
+      }
+      
+      // Get the PDF blob
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `investor-statement-${investor.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: t.statementDownloaded || "Statement Downloaded",
+        description: `Statement for ${investor.name} has been downloaded.`,
+      });
+    } catch (error) {
+      console.error("Error downloading statement:", error);
+      toast({
+        title: t.statementDownloadFailed || "Download Failed",
+        description: "Could not download the investor statement.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingStatement(null);
+    }
+  };
+
   const netProfit = calculateNetProfit();
 
   if (isLoading) {
@@ -513,6 +558,17 @@ export default function Investors() {
                         </div>
                       </div>
                       <div className="flex gap-2">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleDownloadStatement(investor)}
+                          disabled={downloadingStatement === investor.id}
+                          className="h-[44px] w-[44px] shrink-0 text-primary hover:text-primary"
+                          data-testid={`button-download-statement-${investor.id}`}
+                          title={t.downloadStatement || "Download Statement"}
+                        >
+                          <FileDown className={`h-4 w-4 ${downloadingStatement === investor.id ? 'animate-pulse' : ''}`} />
+                        </Button>
                         <Button
                           size="icon"
                           variant="ghost"

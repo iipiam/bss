@@ -1756,6 +1756,516 @@ export async function generateMonthlyVatReport(data: {
   }
 }
 
+// Investor Statement PDF Generation
+interface InvestorStatementData {
+  investor: {
+    id: string;
+    name: string;
+    amountInvested: string;
+    interestPercentage: string;
+    notes?: string | null;
+    createdAt: Date;
+  };
+  companyName: string;
+  companyVAT: string;
+  companyAddress: string;
+  companyPhone: string;
+  companyEmail: string;
+  netProfit: number;
+  monthlyEarnings: number;
+  totalRevenue: number;
+  totalCOGS: number;
+  totalSalaries: number;
+  totalBills: number;
+  statementDate: Date;
+  periodStart: Date;
+  periodEnd: Date;
+  logoPath?: string;
+}
+
+function generateInvestorStatementHTML(data: InvestorStatementData): string {
+  const {
+    investor,
+    companyName,
+    companyVAT,
+    companyAddress,
+    companyPhone,
+    companyEmail,
+    netProfit,
+    monthlyEarnings,
+    totalRevenue,
+    totalCOGS,
+    totalSalaries,
+    totalBills,
+    statementDate,
+    periodStart,
+    periodEnd,
+  } = data;
+
+  const escapedCompanyName = escapeHtml(companyName);
+  const escapedInvestorName = escapeHtml(investor.name);
+  const escapedCompanyVAT = escapeHtml(companyVAT);
+  const escapedCompanyAddress = escapeHtml(companyAddress);
+  const escapedCompanyPhone = escapeHtml(companyPhone);
+  const escapedCompanyEmail = escapeHtml(companyEmail);
+  
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('en-SA', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+  
+  const formatCurrency = (amount: number) => {
+    return amount.toLocaleString('en-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  // Handle logo embedding if logoPath is provided
+  let logoHTML = '';
+  if (data.logoPath) {
+    try {
+      const logoFullPath = path.join(process.cwd(), data.logoPath);
+      if (existsSync(logoFullPath)) {
+        const logoBuffer = readFileSync(logoFullPath);
+        const logoExt = path.extname(data.logoPath).substring(1);
+        const logoMimeType = logoExt === 'svg' ? 'svg+xml' : logoExt;
+        const logoBase64 = logoBuffer.toString('base64');
+        const logoDataURL = `data:image/${logoMimeType};base64,${logoBase64}`;
+        
+        logoHTML = `
+        <div style="text-align: center; margin-bottom: 15px;">
+          <img src="${logoDataURL}" alt="Business Logo" style="max-width: 120px; max-height: 60px; object-fit: contain;" />
+        </div>
+      `;
+      }
+    } catch (error) {
+      console.error('[InvestorStatement] Failed to load logo:', error);
+    }
+  }
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', 'Noto Naskh Arabic', sans-serif;
+      font-size: 11px;
+      line-height: 1.5;
+      color: #1a1a1a;
+      background: white;
+    }
+    
+    .statement-container {
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 15mm;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: white;
+      padding: 20px 25px;
+      text-align: center;
+      border-radius: 8px 8px 0 0;
+      margin-bottom: 15px;
+    }
+    
+    .company-name {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+    
+    .statement-badge {
+      display: inline-block;
+      background: white;
+      color: #059669;
+      padding: 5px 18px;
+      border-radius: 15px;
+      font-weight: 700;
+      font-size: 11px;
+      margin-top: 5px;
+    }
+    
+    .section {
+      background: #f8f9fa;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .section-title {
+      font-weight: 700;
+      font-size: 12px;
+      color: #059669;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid #059669;
+      padding-bottom: 6px;
+    }
+    
+    .bilingual-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .bilingual-header .ar {
+      direction: rtl;
+      text-align: right;
+      font-family: 'Noto Naskh Arabic', sans-serif;
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    
+    .info-label {
+      font-weight: 600;
+      color: #374151;
+    }
+    
+    .info-value {
+      color: #1a1a1a;
+      font-weight: 500;
+    }
+    
+    .highlight-value {
+      color: #059669;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    
+    .earnings-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    
+    .earnings-table thead {
+      background: #059669;
+      color: white;
+    }
+    
+    .earnings-table th {
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    .earnings-table th.rtl {
+      text-align: right;
+    }
+    
+    .earnings-table th.text-right {
+      text-align: right;
+    }
+    
+    .earnings-table tbody tr:nth-child(even) {
+      background: #f8f9fa;
+    }
+    
+    .earnings-table tbody tr {
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .earnings-table td {
+      padding: 10px 12px;
+      font-size: 10px;
+    }
+    
+    .text-right {
+      text-align: right;
+    }
+    
+    .summary-box {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+    
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .summary-row:last-child {
+      border-bottom: none;
+      padding-top: 12px;
+    }
+    
+    .summary-label {
+      font-weight: 500;
+    }
+    
+    .summary-value {
+      font-weight: 700;
+      font-size: 16px;
+    }
+    
+    .total-row {
+      font-size: 18px;
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 2px solid #e5e7eb;
+      color: #6b7280;
+      font-size: 9px;
+    }
+    
+    .footer p {
+      margin: 3px 0;
+    }
+    
+    .signature-section {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+      padding-top: 20px;
+    }
+    
+    .signature-box {
+      width: 45%;
+      text-align: center;
+    }
+    
+    .signature-line {
+      border-bottom: 2px solid #374151;
+      margin-bottom: 8px;
+      height: 50px;
+    }
+    
+    .signature-label {
+      font-size: 10px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="statement-container">
+    ${logoHTML}
+    <div class="header">
+      <div class="company-name">${escapedCompanyName}</div>
+      <div class="statement-badge">INVESTOR STATEMENT / كشف حساب المستثمر</div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title bilingual-header">
+        <span>Company Information</span>
+        <span class="ar">معلومات الشركة</span>
+      </div>
+      <div class="info-grid">
+        <div>
+          <div class="info-row">
+            <span class="info-label">VAT Number:</span>
+            <span class="info-value">${escapedCompanyVAT}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Phone:</span>
+            <span class="info-value">${escapedCompanyPhone}</span>
+          </div>
+        </div>
+        <div>
+          <div class="info-row">
+            <span class="info-label">Address:</span>
+            <span class="info-value">${escapedCompanyAddress}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Email:</span>
+            <span class="info-value">${escapedCompanyEmail}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title bilingual-header">
+        <span>Investor Details / تفاصيل المستثمر</span>
+      </div>
+      <div class="info-grid">
+        <div>
+          <div class="info-row">
+            <span class="info-label">Investor Name / اسم المستثمر:</span>
+            <span class="info-value">${escapedInvestorName}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Amount Invested / المبلغ المستثمر:</span>
+            <span class="info-value highlight-value">${formatCurrency(parseFloat(investor.amountInvested))} SAR</span>
+          </div>
+        </div>
+        <div>
+          <div class="info-row">
+            <span class="info-label">Interest Percentage / نسبة الفائدة:</span>
+            <span class="info-value">${investor.interestPercentage}%</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Investment Date / تاريخ الاستثمار:</span>
+            <span class="info-value">${formatDate(investor.createdAt)}</span>
+          </div>
+        </div>
+      </div>
+      ${investor.notes ? `
+      <div class="info-row" style="margin-top: 10px;">
+        <span class="info-label">Notes / ملاحظات:</span>
+        <span class="info-value">${escapeHtml(investor.notes)}</span>
+      </div>
+      ` : ''}
+    </div>
+    
+    <div class="section">
+      <div class="section-title bilingual-header">
+        <span>Statement Period / فترة كشف الحساب</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Statement Date / تاريخ الكشف:</span>
+        <span class="info-value">${formatDate(statementDate)}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Period / الفترة:</span>
+        <span class="info-value">${formatDate(periodStart)} - ${formatDate(periodEnd)}</span>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title bilingual-header">
+        <span>Earnings Breakdown / تفصيل الأرباح</span>
+      </div>
+      <table class="earnings-table">
+        <thead>
+          <tr>
+            <th>Description / الوصف</th>
+            <th class="text-right">Amount (SAR) / المبلغ (ريال)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Total Revenue / إجمالي الإيرادات</strong></td>
+            <td class="text-right">${formatCurrency(totalRevenue)}</td>
+          </tr>
+          <tr>
+            <td>Less: Cost of Goods Sold / ناقص: تكلفة البضائع المباعة</td>
+            <td class="text-right" style="color: #dc2626;">(${formatCurrency(totalCOGS)})</td>
+          </tr>
+          <tr>
+            <td>Less: Salaries & Wages / ناقص: الرواتب والأجور</td>
+            <td class="text-right" style="color: #dc2626;">(${formatCurrency(totalSalaries)})</td>
+          </tr>
+          <tr>
+            <td>Less: Operating Expenses / ناقص: المصاريف التشغيلية</td>
+            <td class="text-right" style="color: #dc2626;">(${formatCurrency(totalBills)})</td>
+          </tr>
+          <tr style="background: #ecfdf5;">
+            <td><strong>Net Profit / صافي الربح</strong></td>
+            <td class="text-right" style="color: #059669; font-weight: 700;">${formatCurrency(netProfit)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="summary-box">
+      <div class="summary-row">
+        <span class="summary-label">Net Profit for Period / صافي الربح للفترة</span>
+        <span class="summary-value">${formatCurrency(netProfit)} SAR</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Your Share (${investor.interestPercentage}%) / حصتك</span>
+        <span class="summary-value">${formatCurrency(monthlyEarnings)} SAR</span>
+      </div>
+      <div class="summary-row total-row">
+        <span class="summary-label"><strong>Total Receivable / إجمالي المستحق</strong></span>
+        <span class="summary-value">${formatCurrency(monthlyEarnings)} SAR</span>
+      </div>
+    </div>
+    
+    <div class="signature-section">
+      <div class="signature-box">
+        <div class="signature-line"></div>
+        <div class="signature-label">Authorized Signature / التوقيع المعتمد</div>
+      </div>
+      <div class="signature-box">
+        <div class="signature-line"></div>
+        <div class="signature-label">Investor Signature / توقيع المستثمر</div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>This statement is generated electronically and is valid without signature for informational purposes.</p>
+      <p>هذا الكشف تم إنشاؤه إلكترونياً وهو صالح بدون توقيع لأغراض المعلومات.</p>
+      <p style="margin-top: 8px;">Generated on ${formatDate(new Date())} | ${escapedCompanyName}</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
+export async function generateInvestorStatementPDF(data: InvestorStatementData): Promise<Buffer> {
+  console.log('[InvestorStatement] Generating PDF for investor:', data.investor.name);
+  
+  const html = generateInvestorStatementHTML(data);
+  
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+
+  try {
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '10mm',
+        right: '10mm',
+        bottom: '10mm',
+        left: '10mm'
+      }
+    });
+
+    console.log('[InvestorStatement] PDF generated successfully');
+    return Buffer.from(pdfBuffer);
+  } finally {
+    await page.close();
+  }
+}
+
 // Cleanup function for graceful shutdown
 export async function closeBrowser(): Promise<void> {
   if (browserInstance) {

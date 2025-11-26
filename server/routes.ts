@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { db } from "./db";
-import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport } from "./invoice";
+import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport, generateInvestorStatementPDF } from "./invoice";
 import { PasswordResetMailer } from "./email";
 import { sanitizePatchBody } from "./utils";
 import { requirePermission, requireAnyPermission, requireAllPermissions, requireAction } from "./middleware/requirePermission";
@@ -1046,6 +1046,111 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("[INVESTORS] Delete investor error:", error);
       res.status(500).json({ error: "Failed to delete investor" });
+    }
+  });
+
+  // Investor Statement PDF Generation
+  app.get("/api/investors/:id/statement", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      
+      // Get investor
+      const investor = await storage.getInvestor(req.params.id);
+      if (!investor || investor.restaurantId !== restaurantId) {
+        return res.status(404).json({ error: "Investor not found" });
+      }
+      
+      // Get restaurant settings for company info
+      const settings = await storage.getSettings(restaurantId);
+      if (!settings) {
+        return res.status(400).json({ error: "Restaurant settings not found" });
+      }
+      
+      // Get financial data for calculations
+      const transactions = await storage.getTransactions({ restaurantId });
+      const orders = await storage.getOrders({ restaurantId });
+      const menuItems = await storage.getMenuItems(restaurantId);
+      const recipes = await storage.getRecipes(restaurantId);
+      const salaries = await storage.getSalaries(restaurantId);
+      const shopBills = await storage.getShopBills(restaurantId);
+      
+      // Calculate total revenue from transactions
+      const totalRevenue = transactions.reduce((sum, t) => sum + parseFloat(t.total || "0"), 0);
+      
+      // Calculate COGS from orders
+      let totalCOGS = 0;
+      orders.forEach(order => {
+        if (order.items && Array.isArray(order.items)) {
+          order.items.forEach((item: any) => {
+            const menuItem = menuItems.find(m => m.id === item.id);
+            if (menuItem && menuItem.recipeId) {
+              const recipe = recipes.find(r => r.id === menuItem.recipeId);
+              if (recipe) {
+                const recipeCost = parseFloat(recipe.cost || "0");
+                const portionSize = parseFloat(menuItem.portionSize || "1");
+                const itemCost = recipeCost * portionSize;
+                totalCOGS += itemCost * (item.quantity || 1);
+              }
+            }
+          });
+        }
+      });
+      
+      // Calculate total salaries
+      const totalSalaries = salaries.reduce((sum: number, s) => sum + parseFloat(s.amount || "0"), 0);
+      
+      // Calculate total bills
+      const totalBills = shopBills.reduce((sum: number, b) => sum + parseFloat(b.amount || "0"), 0);
+      
+      // Net profit
+      const netProfit = totalRevenue - totalCOGS - totalSalaries - totalBills;
+      
+      // Calculate investor's earnings based on interest percentage
+      // Clamp to 0 if net profit is negative (no receivables when in loss)
+      const interestPercentage = parseFloat(investor.interestPercentage || "0");
+      const calculatedEarnings = (netProfit * interestPercentage) / 100;
+      const monthlyEarnings = Math.max(0, calculatedEarnings);
+      
+      // Statement period (current month)
+      const now = new Date();
+      const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      
+      // Generate PDF
+      const pdfBuffer = await generateInvestorStatementPDF({
+        investor: {
+          id: investor.id,
+          name: investor.name,
+          amountInvested: investor.amountInvested,
+          interestPercentage: investor.interestPercentage,
+          notes: investor.notes,
+          createdAt: investor.createdAt,
+        },
+        companyName: settings.restaurantName || 'Company',
+        companyVAT: settings.vatNumber || '',
+        companyAddress: settings.address || '',
+        companyPhone: settings.phone || '',
+        companyEmail: settings.email || '',
+        netProfit,
+        monthlyEarnings,
+        totalRevenue,
+        totalCOGS,
+        totalSalaries,
+        totalBills,
+        statementDate: now,
+        periodStart,
+        periodEnd,
+        logoPath: settings.logoPath || undefined,
+      });
+      
+      // Send PDF response
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="investor-statement-${investor.name.replace(/\s+/g, '-')}-${now.toISOString().split('T')[0]}.pdf"`);
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error("[INVESTORS] Statement generation error:", error);
+      res.status(500).json({ error: "Failed to generate investor statement" });
     }
   });
 
