@@ -4137,15 +4137,22 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       for (const row of data as any[]) {
         try {
+          // Support multiple column name variations (Excel exports may use different headers)
+          const name = row.name || row.Name || row['Item Name'] || row['item name'];
+          if (!name) {
+            console.error("Error importing row: missing name field", row);
+            errors++;
+            continue;
+          }
           await storage.createInventoryItem({
             restaurantId: req.session.user!.restaurantId!,
-            name: row.name,
-            category: row.category,
-            quantity: String(row.quantity),
-            unit: row.unit,
-            supplier: row.supplier,
-            status: row.status || "In Stock",
-            branchId: row.branchId || null,
+            name: name,
+            category: row.category || row.Category || '',
+            quantity: String(row.quantity || row.Quantity || 0),
+            unit: row.unit || row.Unit || '',
+            supplier: row.supplier || row.Supplier || '',
+            status: row.status || row.Status || "In Stock",
+            branchId: row.branchId || row.BranchId || null,
           });
           imported++;
         } catch (error) {

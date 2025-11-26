@@ -41,7 +41,7 @@ Preferred communication style: Simple, everyday language.
 - **IT Account Management**: IT accounts can manage all client accounts - change passwords (with visibility toggle), enable/disable account access, search/filter accounts, and view account statistics. Access via `/it-account-management` route. **Updated Nov 25, 2025**.
 - **WhatsApp Integration**: Automatic deep-link for sending ZATCA-compliant invoices via WhatsApp.
 - **Team Chat**: Internal messaging system with DMs and channels, supporting branch-level and restaurant-wide conversations. **Updated Nov 26, 2025**: Fixed channel creation route middleware.
-- **Granular Permission System**: Role-based access control with 18 granular permissions enforced at backend and frontend. **Updated Nov 26, 2025**: Fixed permission editing to show all 18 permissions when editing existing users.
+- **Granular Permission System**: Role-based access control with 19 granular permissions enforced at backend and frontend. Each permission now supports granular CRUD actions (view, add, edit, delete). Backend uses `requireAction(permission, action)` middleware. Frontend uses `canPerformAction(permission, action)` plus `canView`, `canAdd`, `canEdit`, `canDelete` helpers. Backward compatible with legacy boolean permissions. **Updated Nov 26, 2025**: Implemented full CRUD granular permissions - all POST/PATCH/DELETE routes now enforce specific action permissions.
 - **Bills Management**: Salary bill generation with month selection dialog. **Updated Nov 26, 2025**: Added salary bill type filter and generate salaries feature.
 - **PDF Invoice Generation**: ZATCA-compliant invoices with proper page break handling for multi-item invoices.
 
