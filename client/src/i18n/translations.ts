@@ -519,7 +519,6 @@ export interface Translations {
   selectInvestorType: string;
   moneyInvestor: string;
   recipeOwner: string;
-  selectRecipe: string;
   selectRecipePlaceholder: string;
   recipeOwnerHelp: string;
   selectRecipeForRecipeInvestor: string;
@@ -557,7 +556,6 @@ export interface Translations {
   empPassword: string;
   empEmail: string;
   empPhone: string;
-  newPassword: string;
   leaveEmpty: string;
   enterNewPassword: string;
   admin: string;
@@ -787,9 +785,7 @@ export interface Translations {
   passwordChanged: string;
   passwordChangedDesc: string;
   newPassword: string;
-  confirmNewPassword: string;
   passwordsDoNotMatch: string;
-  passwordTooShort: string;
   searchAccounts: string;
   filterByStatusAll: string;
   filterByStatusActive: string;
@@ -801,7 +797,6 @@ export interface Translations {
   noAccountsFound: string;
   refreshAccounts: string;
   lastActivityTime: string;
-  accountCreated: string;
   noRestaurant: string;
   
   // IT Preferences (Theme & Customization)

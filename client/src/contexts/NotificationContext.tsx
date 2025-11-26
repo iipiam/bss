@@ -238,6 +238,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           } else if (notification.type === 'order:created' || notification.type === 'order:statusUpdated') {
             // Handle order notifications
             playNotificationTone(currentToneRef.current);
+            
+            // Invalidate dashboard and analytics queries for real-time updates
+            queryClient.invalidateQueries({ queryKey: ['/api/analytics/dashboard'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/analytics/sales'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+            console.log('[Notifications] Order updated - refreshing dashboard data');
 
             const title = notification.type === 'order:created' 
               ? `${t.newOrder || 'New Order'} - ${notification.orderNumber}`
