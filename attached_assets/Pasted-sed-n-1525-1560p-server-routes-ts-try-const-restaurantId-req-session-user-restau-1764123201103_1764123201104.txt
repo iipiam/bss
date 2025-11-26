@@ -1,0 +1,114 @@
+sed -n '1525,1560p' server/routes.ts
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      // Get existing settings to delete old logo if exists
+      const existingSettings = await storage.getSettings(restaurantId);
+if (existingSettings?.logoPath) {
+  // logoPath is stored as "/uploads/logos/..." so we strip the leading slash and add "public" prefix
+  const relativePath = existingSettings.logoPath.replace(/^\/+/, '');
+      // Get existing settings to delete old logo if exists
+      const existingSettings = await storage.getSettings(restaurantId);
+      if (existingSettings?.logoPath) {
+        // logoPath is stored as "/uploads/logos/..." so we strip the leading slash and add "public" prefix
+        const relativePath = existingSettings.logoPath.replace(/^\/+/, '');
+        const oldLogoPath = path.join(process.cwd(), 'public', relativePath);
+        if (fs.existsSync(oldLogoPath)) {
+          fs.unlinkSync(oldLogoPath);
+        }
+      }        if (fs.existsSync(oldLogoPath)) {
+          fs.unlinkSync(oldLogoPath);
+        }
+      }
+
+      // Store relative path in database
+      const logoPath = `/uploads/logos/${req.file.filename}`;
+      await storage.updateSettingsLogoPath(restaurantId, logoPath);
+
+      res.json({ success: true, logoPath });
+    } catch (error: any) {
+      // Clean up uploaded file if database update fails
+      if (req.file) {
+        const filePath = req.file.path;
+        if (fs.existsSync(filePath)) {
+ubuntu@ip-172-31-1-112:/home/BSS$ cp server/routes.ts.backup server/routes.ts
+sed -n '1525,1560p' server/routes.ts
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      // Get existing settings to delete old logo if exists
+      const existingSettings = await storage.getSettings(restaurantId);
+if (existingSettings?.logoPath) {
+  // logoPath is stored as "/uploads/logos/..." so we strip the leading slash and add "public" prefix
+  const relativePath = existingSettings.logoPath.replace(/^\/+/, '');
+      // Get existing settings to delete old logo if exists
+      const existingSettings = await storage.getSettings(restaurantId);
+      if (existingSettings?.logoPath) {
+        // logoPath is stored as "/uploads/logos/..." so we strip the leading slash and add "public" prefix
+        const relativePath = existingSettings.logoPath.replace(/^\/+/, '');
+        const oldLogoPath = path.join(process.cwd(), 'public', relativePath);
+        if (fs.existsSync(oldLogoPath)) {
+          fs.unlinkSync(oldLogoPath);
+        }
+      }        if (fs.existsSync(oldLogoPath)) {
+          fs.unlinkSync(oldLogoPath);
+        }
+      }
+
+      // Store relative path in database
+      const logoPath = `/uploads/logos/${req.file.filename}`;
+      await storage.updateSettingsLogoPath(restaurantId, logoPath);
+
+      res.json({ success: true, logoPath });
+    } catch (error: any) {
+      // Clean up uploaded file if database update fails
+      if (req.file) {
+        const filePath = req.file.path;
+        if (fs.existsSync(filePath)) {
+ubuntu@ip-172-31-1-112:/home/BSS$ cp server/routes.ts.backup server/routes.ts
+sed -n '1525,1560p' server/routes.ts
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      // Get existing settings to delete old logo if exists
+      const existingSettings = await storage.getSettings(restaurantId);
+if (existingSettings?.logoPath) {
+  // logoPath is stored as "/uploads/logos/..." so we strip the leading slash and add "public" prefix
+  const relativePath = existingSettings.logoPath.replace(/^\/+/, '');
+      // Get existing settings to delete old logo if exists
+      const existingSettings = await storage.getSettings(restaurantId);
+      if (existingSettings?.logoPath) {
+        // logoPath is stored as "/uploads/logos/..." so we strip the leading slash and add "public" prefix
+        const relativePath = existingSettings.logoPath.replace(/^\/+/, '');
+        const oldLogoPath = path.join(process.cwd(), 'public', relativePath);
+        if (fs.existsSync(oldLogoPath)) {
+          fs.unlinkSync(oldLogoPath);
+        }
+      }        if (fs.existsSync(oldLogoPath)) {
+          fs.unlinkSync(oldLogoPath);
+        }
+      }
+
+      // Store relative path in database
+      const logoPath = `/uploads/logos/${req.file.filename}`;
+      await storage.updateSettingsLogoPath(restaurantId, logoPath);
+
+      res.json({ success: true, logoPath });
+    } catch (error: any) {
+      // Clean up uploaded file if database update fails
+      if (req.file) {
+        const filePath = req.file.path;
+        if (fs.existsSync(filePath)) {
+ubuntu@ip-172-31-1-112:/home/BSS$
