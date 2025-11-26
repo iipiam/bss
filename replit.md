@@ -44,6 +44,8 @@ Preferred communication style: Simple, everyday language.
 - **Granular Permission System**: Role-based access control with 19 granular permissions enforced at backend and frontend. Each permission now supports granular CRUD actions (view, add, edit, delete). Backend uses `requireAction(permission, action)` middleware. Frontend uses `canPerformAction(permission, action)` plus `canView`, `canAdd`, `canEdit`, `canDelete` helpers. Backward compatible with legacy boolean permissions. **Updated Nov 26, 2025**: Implemented full CRUD granular permissions - all POST/PATCH/DELETE routes now enforce specific action permissions.
 - **Bills Management**: Salary bill generation with month selection dialog. **Updated Nov 26, 2025**: Added salary bill type filter and generate salaries feature.
 - **PDF Invoice Generation**: ZATCA-compliant invoices with proper page break handling for multi-item invoices.
+- **Investor Statement PDF**: Downloadable bilingual (EN/AR) investor statement showing investment details, earnings breakdown (revenue, COGS, salaries, bills, net profit), and receivables calculation with interest percentage. Negative receivables are clamped to 0. **Updated Nov 26, 2025**.
+- **Recipe Import**: Flexible column mapping supports multiple variations (Name/name/Recipe Name, Prep Time/prepTime, etc.) with JSON/array/text ingredient/step parsing. **Updated Nov 26, 2025**.
 
 ## External Dependencies
 
