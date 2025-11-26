@@ -1,0 +1,50 @@
+
+0 updates can be applied immediately.
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+*** System restart required ***
+Last login: Wed Nov 26 00:14:25 2025 from 5.246.19.163
+ubuntu@ip-172-31-1-112:~$ ls /home/BSS/
+package-lock.json
+ubuntu@ip-172-31-1-112:~$ ^C
+ubuntu@ip-172-31-1-112:~$ ls /home/BSS/
+package-lock.json
+ubuntu@ip-172-31-1-112:~$ ls /home/BSS/
+package-lock.json
+ubuntu@ip-172-31-1-112:~$ cd /home/BSS
+ls
+package-lock.json
+ubuntu@ip-172-31-1-112:/home/BSS$ cd /home/BSS
+ls
+package-lock.json
+ubuntu@ip-172-31-1-112:/home/BSS$ npm install --legacy-peer-deps
+npm run build
+pm2 restart BSS
+npm error code ENOENT
+npm error syscall open
+npm error path /home/BSS/package.json
+npm error errno -2
+npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/home/BSS/package.json'
+npm error enoent This is related to npm not being able to find a file.
+npm error enoent
+npm error A complete log of this run can be found in: /home/ubuntu/.npm/_logs/2025-11-26T01_06_58_960Z-debug-0.log
+npm error code ENOENT
+npm error syscall open
+npm error path /home/BSS/package.json
+npm error errno -2
+npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/home/BSS/package.json'
+npm error enoent This is related to npm not being able to find a file.
+npm error enoent
+npm error A complete log of this run can be found in: /home/ubuntu/.npm/_logs/2025-11-26T01_06_59_356Z-debug-0.log
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [BSS](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 95   │ online    │ 0%       │ 18.3mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+ubuntu@ip-172-31-1-112:/home/BSS$
