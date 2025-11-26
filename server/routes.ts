@@ -1080,6 +1080,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       let totalBills = 0;
       let recipeName = '';
       
+      // Filter orders to only include finalized/completed orders (exclude cancelled and pending)
+      const validOrderStatuses = ['Completed', 'Ready', 'Preparing', 'Paid'];
+      const finalizedOrders = orders.filter(order => validOrderStatuses.includes(order.status));
+      
       // Check if this is a recipe-based investor
       if (investor.investorType === 'recipe' && investor.recipeId) {
         // Recipe investor: Calculate profit from specific recipe sales only
@@ -1090,17 +1094,17 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         const recipeMenuItems = menuItems.filter(m => m.recipeId === investor.recipeId);
         const recipeMenuItemIds = recipeMenuItems.map(m => m.id);
         
-        // Calculate revenue and COGS from orders containing this recipe's menu items
-        orders.forEach(order => {
+        // Calculate revenue and COGS from finalized orders containing this recipe's menu items
+        finalizedOrders.forEach(order => {
           if (order.items && Array.isArray(order.items)) {
             order.items.forEach((item: any) => {
               if (recipeMenuItemIds.includes(item.id)) {
-                // Revenue from this recipe's items
+                // Revenue from this recipe's items (using basePrice for VAT-excluded calculations)
                 const menuItem = recipeMenuItems.find(m => m.id === item.id);
                 if (menuItem) {
-                  totalRevenue += parseFloat(menuItem.price || "0") * (item.quantity || 1);
+                  totalRevenue += parseFloat(menuItem.basePrice || "0") * (item.quantity || 1);
                   
-                  // COGS for this recipe
+                  // COGS for this recipe (applying portionSize for accurate cost calculation)
                   if (investorRecipe) {
                     const recipeCost = parseFloat(investorRecipe.cost || "0");
                     const portionSize = parseFloat(menuItem.portionSize || "1");
@@ -1120,8 +1124,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         // Money investor: Calculate from total business net profit
         totalRevenue = transactions.reduce((sum, t) => sum + parseFloat(t.total || "0"), 0);
         
-        // Calculate COGS from all orders
-        orders.forEach(order => {
+        // Calculate COGS from finalized orders only
+        finalizedOrders.forEach(order => {
           if (order.items && Array.isArray(order.items)) {
             order.items.forEach((item: any) => {
               const menuItem = menuItems.find(m => m.id === item.id);

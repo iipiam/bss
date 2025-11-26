@@ -599,26 +599,75 @@ export const investors = pgTable("investors", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-const baseInvestorSchema = createInsertSchema(investors).omit({ id: true, createdAt: true });
+const baseInvestorSchema = createInsertSchema(investors)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    investorType: z.enum(["money", "recipe"]),
+  });
 
-export const insertInvestorSchema = baseInvestorSchema.refine(
-  (data) => {
-    const percentage = parseFloat(data.interestPercentage || "0");
-    return percentage >= 0 && percentage <= 100;
-  },
-  { message: "Interest percentage must be between 0 and 100" }
-);
-
-export const updateInvestorSchema = baseInvestorSchema.partial().refine(
-  (data) => {
-    if (data.interestPercentage !== undefined) {
+export const insertInvestorSchema = baseInvestorSchema
+  .refine(
+    (data) => {
       const percentage = parseFloat(data.interestPercentage || "0");
       return percentage >= 0 && percentage <= 100;
+    },
+    { message: "Interest percentage must be between 0 and 100" }
+  )
+  .refine(
+    (data) => {
+      if (data.investorType === "recipe") {
+        return data.recipeId != null && data.recipeId.trim() !== "";
+      }
+      return true;
+    },
+    { message: "Recipe ID is required for recipe investors", path: ["recipeId"] }
+  )
+  .refine(
+    (data) => {
+      if (data.investorType === "money") {
+        const amount = parseFloat(data.amountInvested || "0");
+        return amount > 0;
+      }
+      return true;
+    },
+    { message: "Amount invested must be a positive number for money investors", path: ["amountInvested"] }
+  );
+
+export const updateInvestorSchema = baseInvestorSchema.partial().superRefine((data, ctx) => {
+  if (data.interestPercentage !== undefined) {
+    const percentage = parseFloat(data.interestPercentage || "0");
+    if (percentage < 0 || percentage > 100) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Interest percentage must be between 0 and 100",
+        path: ["interestPercentage"],
+      });
     }
-    return true;
-  },
-  { message: "Interest percentage must be between 0 and 100" }
-);
+  }
+  
+  if (data.investorType === "recipe") {
+    if (data.recipeId === undefined || data.recipeId === null || data.recipeId.trim() === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Recipe ID is required when setting investor type to recipe",
+        path: ["recipeId"],
+      });
+    }
+  }
+  
+  if (data.investorType === "money") {
+    if (data.amountInvested !== undefined) {
+      const amount = parseFloat(data.amountInvested || "0");
+      if (amount <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Amount invested must be a positive number for money investors",
+          path: ["amountInvested"],
+        });
+      }
+    }
+  }
+});
 
 export type InsertInvestor = z.infer<typeof insertInvestorSchema>;
 export type UpdateInvestor = z.infer<typeof updateInvestorSchema>;
