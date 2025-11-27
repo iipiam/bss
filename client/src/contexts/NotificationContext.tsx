@@ -53,7 +53,13 @@ interface SettingsNotification {
   restaurantId: string;
 }
 
-type Notification = OrderNotification | ChatNotification | TicketNotification | SettingsNotification;
+interface PermissionsNotification {
+  type: 'permissions:updated';
+  restaurantId: string;
+  targetUserId: string;
+}
+
+type Notification = OrderNotification | ChatNotification | TicketNotification | SettingsNotification | PermissionsNotification;
 
 interface NotificationContextType {
   isConnected: boolean;
@@ -275,6 +281,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             queryClient.invalidateQueries({ queryKey: ['/api/menu/stock'], refetchType: 'all' });
             queryClient.invalidateQueries({ queryKey: ['/api/addons'], refetchType: 'all' });
             console.log('[Notifications] Menu updated - refreshing menu data with images');
+          } else if (notification.type === 'permissions:updated') {
+            // Handle permission updates - refresh user data to get updated permissions
+            queryClient.invalidateQueries({ queryKey: ['/api/auth/me'], refetchType: 'all' });
+            console.log('[Notifications] Permissions updated - refreshing user data');
+            
+            toast({
+              title: t.permissionsUpdated || 'Permissions Updated',
+              description: t.permissionsUpdatedDesc || 'Your permissions have been updated. The sidebar will refresh automatically.',
+              duration: 5000,
+            });
           }
         } catch (err) {
           console.error('[Notifications] Failed to parse message:', err);

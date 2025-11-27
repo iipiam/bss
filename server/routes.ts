@@ -54,8 +54,10 @@ let wsClients: Set<WSClient> | null = null;
 
 // Unified broadcast function with restaurant filtering
 export function broadcastNotification(event: {
-  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated' | 'menu:updated';
+  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated' | 'menu:updated' | 'permissions:updated';
   restaurantId: string;
+  // Target specific user (for permissions:updated)
+  targetUserId?: string;
   // Order fields
   orderId?: string;
   orderNumber?: string;
@@ -111,6 +113,13 @@ export function broadcastNotification(event: {
     if (event.type === 'chat:message' && event.conversationId) {
       if (!client.conversationIds.has(event.conversationId)) {
         return; // Skip clients not in this conversation
+      }
+    }
+    
+    // For permission updates, only send to the target user
+    if (event.type === 'permissions:updated' && event.targetUserId) {
+      if (client.userId !== event.targetUserId) {
+        return; // Skip clients that are not the target user
       }
     }
     
@@ -2659,6 +2668,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
 
       console.log("[USER UPDATE] User updated successfully. New permissions:", JSON.stringify(user.permissions, null, 2));
+      
+      // Broadcast permission update to the target user for real-time refresh
+      broadcastNotification({
+        type: 'permissions:updated',
+        restaurantId: restaurantId,
+        targetUserId: req.params.id,
+      });
       
       const { password: _p, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
