@@ -50,6 +50,7 @@ const PERMISSION_LABELS: Record<Permission, string> = {
   bills: "Bills",
   deliveryApps: "Delivery Apps",
   licenses: "Licenses",
+  investors: "Investors",
 };
 
 // Action labels for granular permissions
