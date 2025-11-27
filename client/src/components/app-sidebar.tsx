@@ -143,7 +143,7 @@ export function AppSidebar() {
     { title: t.itDashboard || "IT Dashboard", url: "/it-dashboard", icon: BarChart3, testId: "it-dashboard", gradient: "from-violet-500 to-purple-500" },
     { title: "Performance", url: "/performance", icon: TrendingUp, testId: "performance", gradient: "from-cyan-500 to-blue-500" },
     { title: "Account Management", url: "/it-account-management", icon: UserCog, testId: "it-account-management", gradient: "from-orange-500 to-red-500" },
-    { title: t.settings, url: "/settings", icon: Settings, testId: "settings", gradient: "from-slate-500 to-gray-500" },  // Admin-only via permission check in auth
+    { title: t.settings, url: "/settings", icon: Settings, testId: "settings", gradient: "from-slate-500 to-gray-500", permission: 'settings' },
     { title: t.employees, url: "/employees", icon: Users, testId: "employees", gradient: "from-sky-500 to-blue-500", permission: 'users' },
     { title: "Password Manager", url: "/password-manager", icon: Key, testId: "password-manager", gradient: "from-red-500 to-rose-500" },
   ];
@@ -166,9 +166,9 @@ export function AppSidebar() {
         return false;
       }
       
-      // Settings is admin-only (special case)
+      // Settings - check settings permission (or admin)
       if (item.testId === 'settings') {
-        return isAdmin();
+        return isAdmin() || hasPermission('settings');
       }
       
       // Check permission (admin bypasses all checks, otherwise check specific permission)
