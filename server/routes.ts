@@ -130,6 +130,24 @@ export function broadcastNotification(event: {
   console.log(`[WebSocket] Broadcast ${event.type} to ${sentCount} clients in restaurant ${event.restaurantId}`);
 }
 
+// Helper function to add a conversation to a user's WebSocket client
+// Called when user joins a new conversation so they receive real-time notifications
+export function addUserToConversation(userId: string, restaurantId: string, conversationId: string) {
+  if (!wsClients) return;
+  
+  let updatedCount = 0;
+  wsClients.forEach((client) => {
+    if (client.userId === userId && client.restaurantId === restaurantId && client.socket.readyState === WebSocket.OPEN) {
+      client.conversationIds.add(conversationId);
+      updatedCount++;
+    }
+  });
+  
+  if (updatedCount > 0) {
+    console.log(`[WebSocket] Added conversation ${conversationId} to ${updatedCount} client(s) for user ${userId}`);
+  }
+}
+
 // Authentication middleware - CRITICAL for multi-tenant isolation
 // Also tracks user activity for IT Dashboard monitoring
 const requireAuth = (req: any, res: any, next: any) => {
@@ -4099,6 +4117,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         userId,
       });
       
+      // Update creator's WebSocket client to receive notifications for new channel
+      addUserToConversation(userId, restaurantId, conversation.id);
+      
       res.status(201).json(conversation);
     } catch (error) {
       console.error("Create channel error:", error);
@@ -4128,6 +4149,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       
       const conversation = await storage.getOrCreateDirectConversation(restaurantId, userId, otherUserId);
+      
+      // Update both users' WebSocket clients to receive notifications for this DM
+      addUserToConversation(userId, restaurantId, conversation.id);
+      addUserToConversation(otherUserId, restaurantId, conversation.id);
+      
       res.json(conversation);
     } catch (error) {
       console.error("Get/create DM error:", error);
@@ -4324,6 +4350,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         conversationId,
         userId: newUserId,
       });
+      
+      // Update new member's WebSocket client to receive notifications for this channel
+      addUserToConversation(newUserId, restaurantId, conversationId);
       
       res.status(201).json(member);
     } catch (error) {

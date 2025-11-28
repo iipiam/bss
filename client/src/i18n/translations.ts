@@ -953,6 +953,9 @@ export interface Translations {
   failedToDeleteEmployee: string;
   failedToExportFinancial: string;
   exportFailed: string;
+  exportSuccessful: string;
+  importSuccessful: string;
+  importFailed: string;
   failedToResetPassword: string;
   failedToSendResetEmail: string;
   failedToUpdateDevicePreference: string;
@@ -2221,6 +2224,9 @@ export const translations: Record<Language, Translations> = {
     failedToDeleteEmployee: 'Failed to delete employee',
     failedToExportFinancial: 'Failed to export financial data',
     exportFailed: 'Export failed',
+    exportSuccessful: 'Export successful',
+    importSuccessful: 'Import successful',
+    importFailed: 'Import failed',
     failedToResetPassword: 'Failed to reset password',
     failedToSendResetEmail: 'Failed to send reset email',
     failedToUpdateDevicePreference: 'Failed to update device preference',
@@ -3489,6 +3495,9 @@ export const translations: Record<Language, Translations> = {
     failedToDeleteEmployee: 'فشل حذف الموظف',
     failedToExportFinancial: 'فشل تصدير البيانات المالية',
     exportFailed: 'فشل التصدير',
+    exportSuccessful: 'تم التصدير بنجاح',
+    importSuccessful: 'تم الاستيراد بنجاح',
+    importFailed: 'فشل الاستيراد',
     failedToResetPassword: 'فشل إعادة تعيين كلمة المرور',
     failedToSendResetEmail: 'فشل إرسال بريد إعادة التعيين',
     failedToUpdateDevicePreference: 'فشل تحديث تفضيل الجهاز',
@@ -4755,6 +4764,9 @@ export const translations: Record<Language, Translations> = {
     failedToDeleteEmployee: 'Failed to delete employee',
     failedToExportFinancial: 'Failed to export financial data',
     exportFailed: 'Export failed',
+    exportSuccessful: 'Export successful',
+    importSuccessful: 'Import successful',
+    importFailed: 'Import failed',
     failedToResetPassword: 'Failed to reset password',
     failedToSendResetEmail: 'Failed to send reset email',
     failedToUpdateDevicePreference: 'Failed to update device preference',
@@ -6021,6 +6033,9 @@ export const translations: Record<Language, Translations> = {
     failedToDeleteEmployee: 'Failed to delete employee',
     failedToExportFinancial: 'Failed to export financial data',
     exportFailed: 'Export failed',
+    exportSuccessful: 'Export successful',
+    importSuccessful: 'Import successful',
+    importFailed: 'Import failed',
     failedToResetPassword: 'Failed to reset password',
     failedToSendResetEmail: 'Failed to send reset email',
     failedToUpdateDevicePreference: 'Failed to update device preference',
@@ -7287,6 +7302,9 @@ export const translations: Record<Language, Translations> = {
     failedToDeleteEmployee: 'Failed to delete employee',
     failedToExportFinancial: 'Failed to export financial data',
     exportFailed: 'Export failed',
+    exportSuccessful: 'Export successful',
+    importSuccessful: 'Import successful',
+    importFailed: 'Import failed',
     failedToResetPassword: 'Failed to reset password',
     failedToSendResetEmail: 'Failed to send reset email',
     failedToUpdateDevicePreference: 'Failed to update device preference',
@@ -8553,6 +8571,9 @@ export const translations: Record<Language, Translations> = {
     failedToDeleteEmployee: 'Failed to delete employee',
     failedToExportFinancial: 'Failed to export financial data',
     exportFailed: 'Export failed',
+    exportSuccessful: 'Export successful',
+    importSuccessful: 'Import successful',
+    importFailed: 'Import failed',
     failedToResetPassword: 'Failed to reset password',
     failedToSendResetEmail: 'Failed to send reset email',
     failedToUpdateDevicePreference: 'Failed to update device preference',
@@ -9807,6 +9828,9 @@ export const translations: Record<Language, Translations> = {
     failedToDeleteEmployee: 'कर्मचारी हटाने में विफल',
     failedToExportFinancial: 'वित्तीय डेटा निर्यात करने में विफल',
     exportFailed: 'निर्यात विफल',
+    exportSuccessful: 'निर्यात सफल',
+    importSuccessful: 'आयात सफल',
+    importFailed: 'आयात विफल',
     failedToResetPassword: 'पासवर्ड रीसेट करने में विफल',
     
     // Welcome Video Slides
@@ -11075,6 +11099,9 @@ export const translations: Record<Language, Translations> = {
     failedToDeleteEmployee: 'ملازم کو حذف کرنے میں ناکام',
     failedToExportFinancial: 'مالیاتی ڈیٹا برآمد کرنے میں ناکام',
     exportFailed: 'برآمد ناکام',
+    exportSuccessful: 'برآمد کامیاب',
+    importSuccessful: 'درآمد کامیاب',
+    importFailed: 'درآمد ناکام',
     failedToResetPassword: 'پاس ورڈ ری سیٹ کرنے میں ناکام',
     failedToSendResetEmail: 'ری سیٹ ای میل بھیجنے میں ناکام',
     failedToUpdateDevicePreference: 'ڈیوائس ترجیح اپ ڈیٹ کرنے میں ناکام',
@@ -12255,6 +12282,9 @@ export const translations: Record<Language, Translations> = {
     failedToDeleteEmployee: "Fallo al eliminar empleado",
     failedToExportFinancial: "Fallo al exportar datos financieros",
     exportFailed: "Exportación fallida",
+    exportSuccessful: "Exportación exitosa",
+    importSuccessful: "Importación exitosa",
+    importFailed: "Importación fallida",
     failedToResetPassword: "Fallo al restablecer contraseña",
     failedToSendResetEmail: "Fallo al enviar correo de restablecimiento",
     failedToUpdateDevicePreference: "Fallo al actualizar preferencias de dispositivo",
@@ -13449,6 +13479,9 @@ export const translations: Record<Language, Translations> = {
     failedToDeleteEmployee: "Nabigo ang pagtanggal ng empleyado",
     failedToExportFinancial: "Nabigo ang pag-export ng pinansyal na datos",
     exportFailed: "Nabigo ang pag-export",
+    exportSuccessful: "Matagumpay ang pag-export",
+    importSuccessful: "Matagumpay ang pag-import",
+    importFailed: "Nabigo ang pag-import",
     failedToResetPassword: "Nabigo ang pag-reset ng password",
     failedToSendResetEmail: "Nabigo ang pagpadala ng reset email",
     failedToUpdateDevicePreference: "Nabigo ang pag-update ng kagustuhan ng device",

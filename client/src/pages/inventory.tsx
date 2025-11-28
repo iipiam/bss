@@ -115,7 +115,7 @@ const createAddonFormSchema = (t: any) => {
     category: z.string().min(1, t.categoryRequired),
     price: z.coerce.number().positive("Price must be a positive number"),
     available: z.boolean().default(true),
-    menuItemIds: z.array(z.string()).nullable().optional(),
+    menuItemIds: z.array(z.string()).nullable().default(null),
   });
 
   return addonFormSchemaInput.transform((data) => {
@@ -134,6 +134,15 @@ const createAddonFormSchema = (t: any) => {
       menuItemIds,
     };
   });
+};
+
+// Type for addon form values (input shape)
+type AddonFormValues = {
+  name: string;
+  category: string;
+  price: number;
+  available: boolean;
+  menuItemIds: string[] | null;
 };
 
 interface SortableInventoryRowProps {
@@ -416,7 +425,7 @@ export default function Inventory() {
 
   const addonFormSchema = createAddonFormSchema(t);
 
-  const addonForm = useForm({
+  const addonForm = useForm<AddonFormValues>({
     resolver: zodResolver(addonFormSchema),
     defaultValues: {
       name: "",
