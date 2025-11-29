@@ -50,7 +50,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -952,13 +951,11 @@ export default function Inventory() {
                 />
               </label>
             </Button>
+            <Button onClick={() => setOpen(true)} data-testid="button-add-item">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Item
+            </Button>
             <Dialog open={open} onOpenChange={handleOpenChange}>
-              <DialogTrigger asChild>
-                <Button data-testid="button-add-item">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Item
-                </Button>
-              </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
                   <DialogTitle>{editingItem ? "Edit Inventory Item" : "Add New Inventory Item"}</DialogTitle>
@@ -1222,13 +1219,11 @@ export default function Inventory() {
 
         <TabsContent value="addons" className={layout.spaceY}>
           <div className={`flex gap-2 ${layout.isMobile ? 'flex-wrap' : ''}`}>
+            <Button onClick={() => setAddonOpen(true)} data-testid="button-add-addon">
+              <Plus className="h-4 w-4 mr-2" />
+              {t.addAddon}
+            </Button>
             <Dialog open={addonOpen} onOpenChange={handleOpenAddonChange}>
-              <DialogTrigger asChild>
-                <Button data-testid="button-add-addon">
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t.addAddon}
-                </Button>
-              </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
                   <DialogTitle>{editingAddon ? t.editAddon : t.addAddon}</DialogTitle>
