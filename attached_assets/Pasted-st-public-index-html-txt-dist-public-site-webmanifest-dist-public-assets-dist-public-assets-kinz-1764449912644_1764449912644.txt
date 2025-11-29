@@ -1,0 +1,70 @@
+st/public/index.html.txt
+dist/public/site.webmanifest
+dist/public/assets/
+dist/public/assets/kinzhal-eagle-logo-CZZDoCej.jpeg
+dist/public/assets/successful_restauran_41c16385-CXkB1sjj.jpg
+dist/public/assets/restaurant_staff_tea_ce149ad2-BLK6qNRn.jpg
+dist/public/assets/restaurant_staff_tea_658450c1-DEhhxS1m.jpg
+dist/public/assets/successful_restauran_039f182e-BLFEcIAS.jpg
+dist/public/assets/POS_System_Interface_a1bc794e-CI4bSZNr.png
+dist/public/assets/Inventory_management_dashboard_screenshot_918ba2b2-DwmYMsPm.png
+dist/public/assets/successful_restauran_585fac32-D-33tk3R.jpg
+dist/public/assets/Delivery_App_Management_Dashboard_af536108-sz99dwLv.png
+dist/public/assets/Recipe_creation_interface_screenshot_e67a7aa1-B0wGdkCX.png
+dist/public/assets/Analytics_dashboard_screenshot_2b42f16c-CsA4H8dd.png
+dist/public/assets/Customer_management_database_screenshot_7965bb5e-YCkTvhuX.png
+dist/public/assets/Orders_tracking_dashboard_screenshot_f0d2e3a1-DHyd4R4O.png
+dist/public/assets/Profitability_analysis_dashboard_screenshot_2a18aab4-i4S3Vmhl.png
+dist/public/assets/POS_system_interface_screenshot_7e5ae849-DUqqvLTi.png
+dist/public/assets/Financial_reports_dashboard_screenshot_9884d372-DqTXO6Uy.png
+dist/public/assets/Sales_analytics_page_screenshot_1b3c0414-D52Uz2W7.png
+dist/public/assets/Demand_forecasting_interface_screenshot_025a6451-CJLcR_dD.png
+dist/public/assets/ZATCA_invoice_document_screenshot_54e402f8-Ccpk2fQX.png
+dist/public/assets/Order_Management_Display_4049f259-CmLqWA6Y.png
+dist/public/assets/Financial_Reports_Display_af93422d-BIB4yYwk.png
+dist/public/assets/Delivery_Apps_Analytics_Screenshot_8961352b-BFmi4b_-.png
+dist/public/assets/Business_Analytics_Dashboard_3301d762-BjpwCIiJ.png
+dist/public/assets/Invoice_Documents_37f6d13b-D5nVPHjH.png
+dist/public/assets/Business_Forecasting_Analytics_6bf96b65-BkWhbqoT.png
+dist/public/assets/Menu_management_interface_screenshot_b8294dd3-BWrQ3Oui.png
+dist/public/assets/Profitability_Analysis_Setup_1bed8640-Y4xk-D8_.png
+dist/public/assets/Inventory_Management_System_f84dcc3a-B0xIsFPC.png
+dist/public/assets/Happy_Restaurant_Customers_4b909963-DZd4hP6q.png
+dist/public/assets/Recipe_Preparation_Kitchen_c2b136e5-C6lWGyIQ.png
+dist/public/assets/Restaurant_Menu_Display_b812c237-BZjJ_UeF.png
+dist/public/assets/Sales_and_Payment_System_5634d834-o9v6Oxyn.png
+dist/public/assets/index-CYwtVc60.css
+dist/public/assets/index-DgUt9jUE.js
+dist/public/assets/whatsapp-D4dHHM4p.js
+dist/public/assets/html2canvas.esm-Ge7aVWlp.js
+dist/public/assets/index.es-BUUFCqGQ.js
+dist/public/assets/purify.es-C65SP4u9.js
+dist/public/assets/restaurant_staff_tea_7eaa745e-BesZ0Z2A.jpg
+dist/public/index.html
+dist/index.js
+total 88
+drwxr-xr-x  2 ubuntu ubuntu 4096 Nov 23 14:43 .
+drwxr-xr-x 19 ubuntu ubuntu 4096 Nov 29 20:31 ..
+-rw-r--r--  1 ubuntu ubuntu 2454 Nov 27 00:30 analyze-translations.ts
+-rw-r--r--  1 ubuntu ubuntu 4850 Nov 27 00:30 complete-translations.ts
+-rw-r--r--  1 ubuntu ubuntu 3694 Nov 27 00:30 final-verification.ts
+-rw-r--r--  1 ubuntu ubuntu 2253 Nov 27 00:30 find-duplicates.ts
+-rw-r--r--  1 ubuntu ubuntu 1021 Nov 27 00:30 find-missing-translations.ts
+-rw-r--r--  1 ubuntu ubuntu 2959 Nov 27 00:30 fix-all-missing-keys.ts
+-rw-r--r--  1 ubuntu ubuntu 2861 Nov 27 00:30 fix-missing-translations.ts
+-rw-r--r--  1 ubuntu ubuntu 4267 Nov 27 00:30 fix-translations-v2.ts
+-rw-r--r--  1 ubuntu ubuntu 1912 Nov 27 00:30 fix-translations.ts
+-rw-r--r--  1 ubuntu ubuntu  562 Nov 27 00:30 get-missing-keys.ts
+-rw-r--r--  1 ubuntu ubuntu 1992 Nov 27 00:30 migrate-aws-rds.ts
+-rw-r--r--  1 ubuntu ubuntu 1364 Nov 27 00:30 migrate-it-accounts.ts
+-rw-r--r--  1 ubuntu ubuntu 4585 Nov 27 00:30 migrate-permissions.ts
+-rw-r--r--  1 ubuntu ubuntu 2477 Nov 27 00:30 remove-duplicates.ts
+-rw-r--r--  1 ubuntu ubuntu 1401 Nov 27 00:30 reset-password.ts
+-rw-r--r--  1 ubuntu ubuntu 2225 Nov 27 00:30 seed-it-accounts.ts
+-rw-r--r--  1 ubuntu ubuntu 2486 Nov 27 00:30 validate-translations.ts
+ubuntu@ip-172-31-1-112:/home/BSS$ echo $DATABASE_URL
+
+ubuntu@ip-172-31-1-112:/home/BSS$ psql "$DATABASE_URL" -c "ALTER TABLE investors ADD COLUMN IF NOT EXISTS investor_type text NOT NULL DEFAULT 'money'; ALTER TABLE investors ADD COLUMN IF NOT EXISTS recipe_id character varying;"
+psql: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+        Is the server running locally and accepting connections on that socket?
+ubuntu@ip-172-31-1-112:/home/BSS$
