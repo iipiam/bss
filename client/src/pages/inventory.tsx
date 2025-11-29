@@ -102,7 +102,7 @@ const formatToast = (template: string | undefined, label: string | undefined): s
   return template.includes('%s') ? template.replace('%s', label ?? '') : template;
 };
 
-const formSchema = insertInventoryItemSchema.extend({
+const formSchema = insertInventoryItemSchema.omit({ restaurantId: true }).extend({
   quantity: z.coerce.number().positive("Quantity must be a positive number"),
   price: z.coerce.number().min(0, "Price must be zero or positive"),
 });
