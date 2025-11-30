@@ -1,0 +1,64 @@
+0|BSS      |   position: '57',
+0|BSS      |   internalPosition: undefined,
+0|BSS      |   internalQuery: undefined,
+0|BSS      |   where: undefined,
+0|BSS      |   schema: undefined,
+0|BSS      |   table: undefined,
+0|BSS      |   column: undefined,
+0|BSS      |   dataType: undefined,
+0|BSS      |   constraint: undefined,
+0|BSS      |   file: 'parse_target.c',
+0|BSS      |   line: '1065',
+0|BSS      |   routine: 'checkInsertTargets'
+0|BSS      | }
+0|BSS      | 9:20:15 PM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=svTiaxCP08BrPK0A1GQy9 (resolved id: /src/main.tsx?v=svTiaxCP08BrPK0A1GQy9). Does the file exist?
+0|BSS      | 9:20:21 PM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=quUrxPklnEwq9B6xNoEfc (resolved id: /src/main.tsx?v=quUrxPklnEwq9B6xNoEfc). Does the file exist?
+0|BSS      | 9:20:25 PM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=JXD4jJnlgXSuVjT107th- (resolved id: /src/main.tsx?v=JXD4jJnlgXSuVjT107th-). Does the file exist?
+0|BSS      | 9:20:40 PM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=j8IGsUDS_AqbI9LOACTdj (resolved id: /src/main.tsx?v=j8IGsUDS_AqbI9LOACTdj). Does the file exist?
+0|BSS      | 9:21:01 PM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=dHHnfm-UmITHHSmu--oZ8 (resolved id: /src/main.tsx?v=dHHnfm-UmITHHSmu--oZ8). Does the file exist?
+0|BSS      | 9:21:05 PM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=98osxq5XtrSh8BpHQomae (resolved id: /src/main.tsx?v=98osxq5XtrSh8BpHQomae). Does the file exist?
+0|BSS      | 9:21:16 PM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=_JVuiRyJCy5bau82JqzQC (resolved id: /src/main.tsx?v=_JVuiRyJCy5bau82JqzQC). Does the file exist?
+0|BSS      | 9:21:29 PM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=k4SDGLO6TH8PARiPt8GLe (resolved id: /src/main.tsx?v=k4SDGLO6TH8PARiPt8GLe). Does the file exist?
+0|BSS      | 9:21:43 PM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=kss11I9copi1K6hfbYpGI (resolved id: /src/main.tsx?v=kss11I9copi1K6hfbYpGI). Does the file exist?
+0|BSS      | 9:22:08 PM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=TxmNq_VXRPCtnjACeJg51 (resolved id: /src/main.tsx?v=TxmNq_VXRPCtnjACeJg51). Does the file exist?
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/invoices/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/invoices/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/invoices/index.html'
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+
+/home/ubuntu/.pm2/logs/BSS-out.log last 30 lines:
+0|BSS      | ✅ Production mode: SSL enabled for AWS RDS
+0|BSS      | 11:24:21 PM [express] serving on port 5000
+0|BSS      | [WebSocket] Client connected: user=e0874d14-d47b-42df-8fb8-cab333fe9275, restaurant=95a2c64c-0b3f-479a-8f36-6c2531c806d2, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | 11:24:30 PM [express] GET /api/auth/me 200 in 502ms :: {"user":{"id":"e0874d14-d47b-42df-8fb8-cab333f…
+0|BSS      | [WebSocket] Client connected: user=e0874d14-d47b-42df-8fb8-cab333fe9275, restaurant=95a2c64c-0b3f-479a-8f36-6c2531c806d2, conversations=0
+0|BSS      | 11:24:32 PM [express] GET /api/recipes 304 in 1491ms :: [{"id":"2a2fdb2a-c004-490b-92e7-303678afee5a"…
+0|BSS      | 11:24:32 PM [express] GET /api/inventory 304 in 1460ms :: [{"id":"31fd7096-6195-4dd1-997a-89ac8cc121a…
+0|BSS      | 11:24:32 PM [express] GET /api/settings 304 in 335ms :: {"id":"77394422-07fb-45cd-950a-5fe55ffd121c",…
+0|BSS      | 11:24:32 PM [express] GET /api/branches 304 in 331ms :: []
+0|BSS      | 11:24:32 PM [express] GET /api/chat/notification-settings 304 in 343ms :: {"notificationsEnabled":tru…
+0|BSS      | 11:24:37 PM [express] GET /api/addons 200 in 325ms :: []
+0|BSS      | 11:24:37 PM [express] GET /api/menu 200 in 337ms :: [{"id":"99664884-bce5-4fab-b6cc-b3b765d5dbc7","re…
+0|BSS      | 11:24:54 PM [express] PATCH /api/recipes/2a2fdb2a-c004-490b-92e7-303678afee5a 200 in 1511ms :: {"id":…
+0|BSS      | 11:24:54 PM [express] GET /api/recipes 304 in 331ms :: [{"id":"2a2fdb2a-c004-490b-92e7-303678afee5a",…
+0|BSS      | ✅ Production mode: SSL enabled for AWS RDS
+0|BSS      | 11:25:18 PM [express] serving on port 5000
+0|BSS      | 11:25:25 PM [express] GET /api/auth/me 200 in 490ms :: {"user":{"id":"e0874d14-d47b-42df-8fb8-cab333f…
+0|BSS      | 11:25:27 PM [express] GET /api/inventory 304 in 1464ms :: [{"id":"31fd7096-6195-4dd1-997a-89ac8cc121a…
+0|BSS      | [WebSocket] Client connected: user=e0874d14-d47b-42df-8fb8-cab333fe9275, restaurant=95a2c64c-0b3f-479a-8f36-6c2531c806d2, conversations=0
+0|BSS      | 11:25:27 PM [express] GET /api/branches 304 in 1456ms :: []
+0|BSS      | 11:25:27 PM [express] GET /api/recipes 304 in 1500ms :: [{"id":"2a2fdb2a-c004-490b-92e7-303678afee5a"…
+0|BSS      | 11:25:27 PM [express] GET /api/chat/notification-settings 304 in 335ms :: {"notificationsEnabled":tru…
+0|BSS      | 11:25:27 PM [express] GET /api/settings 304 in 338ms :: {"id":"77394422-07fb-45cd-950a-5fe55ffd121c",…
+0|BSS      | 11:25:34 PM [express] PATCH /api/recipes/5e7ea5f8-6380-4429-a83a-80090122df0a 200 in 340ms :: {"id":"…
+0|BSS      | 11:25:35 PM [express] GET /api/recipes 304 in 337ms :: [{"id":"2a2fdb2a-c004-490b-92e7-303678afee5a",…
+0|BSS      | 11:25:40 PM [express] GET /api/addons 200 in 1471ms :: []
+0|BSS      | 11:25:40 PM [express] GET /api/menu 200 in 1500ms :: [{"id":"99664884-bce5-4fab-b6cc-b3b765d5dbc7","r…
+0|BSS      | 11:26:05 PM [express] PATCH /api/inventory/31fd7096-6195-4dd1-997a-89ac8cc121a1 200 in 1504ms :: {"id…
+0|BSS      | 11:26:05 PM [express] GET /api/inventory 200 in 344ms :: [{"id":"7fbd0ad1-7c54-4009-9748-4d608dd6f346…
+
+
