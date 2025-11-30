@@ -135,6 +135,7 @@ export interface IStorage {
   updateRecipe(id: string, restaurantId: string, recipe: Partial<InsertRecipe>): Promise<Recipe | undefined>;
   updateRecipesSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void>;
   deleteRecipe(id: string, restaurantId: string): Promise<boolean>;
+  updateRecipeCostsForInventoryItem(inventoryItemId: string, restaurantId: string, newPrice: number): Promise<Recipe[]>;
 
   // Orders (MULTI-TENANT: requires restaurantId for all operations)
   getOrders(filter: {
@@ -659,6 +660,42 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(recipes)
       .where(and(eq(recipes.id, id), eq(recipes.restaurantId, restaurantId)));
     return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async updateRecipeCostsForInventoryItem(inventoryItemId: string, restaurantId: string, newPrice: number): Promise<Recipe[]> {
+    const allRecipes = await this.getRecipes(restaurantId);
+    const updatedRecipes: Recipe[] = [];
+    
+    for (const recipe of allRecipes) {
+      const ingredients = recipe.ingredients as Array<{ inventoryItemId: string; name: string; quantity: number; unit: string; unitPrice: number }>;
+      
+      let hasMatchingIngredient = false;
+      const updatedIngredients = ingredients.map(ing => {
+        if (ing.inventoryItemId === inventoryItemId) {
+          hasMatchingIngredient = true;
+          return { ...ing, unitPrice: newPrice };
+        }
+        return ing;
+      });
+      
+      if (hasMatchingIngredient) {
+        const newCost = updatedIngredients.reduce((sum, ing) => sum + (ing.quantity * ing.unitPrice), 0);
+        
+        const [updated] = await db.update(recipes)
+          .set({ 
+            ingredients: updatedIngredients,
+            cost: newCost.toFixed(2)
+          })
+          .where(and(eq(recipes.id, recipe.id), eq(recipes.restaurantId, restaurantId)))
+          .returning();
+        
+        if (updated) {
+          updatedRecipes.push(updated);
+        }
+      }
+    }
+    
+    return updatedRecipes;
   }
 
   // Orders (MULTI-TENANT: enforce restaurantId at SQL layer)

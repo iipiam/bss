@@ -54,7 +54,7 @@ let wsClients: Set<WSClient> | null = null;
 
 // Unified broadcast function with restaurant filtering
 export function broadcastNotification(event: {
-  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated' | 'menu:updated' | 'permissions:updated';
+  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated' | 'menu:updated' | 'permissions:updated' | 'recipe:costUpdated';
   restaurantId: string;
   // Target specific user (for permissions:updated)
   targetUserId?: string;
@@ -97,6 +97,8 @@ export function broadcastNotification(event: {
     item?: any;
     itemId?: string;
   };
+  // Recipe cost update fields
+  updatedRecipeIds?: string[];
 }) {
   if (!wsClients) return;
   
@@ -344,10 +346,34 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const data = sanitizePatchBody(req.body, insertInventoryItemSchema.partial());
       // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
       const { restaurantId: _, ...safeData } = data;
+      
+      // Check if price is being updated - need to update recipe costs
+      const priceChanged = safeData.price !== undefined;
+      let oldItem: any = null;
+      if (priceChanged) {
+        oldItem = await storage.getInventoryItem(req.params.id, restaurantId);
+      }
+      
       const item = await storage.updateInventoryItem(req.params.id, restaurantId, safeData);
       if (!item) {
         return res.status(404).json({ error: "Item not found" });
       }
+      
+      // If price changed, update all recipe costs that use this inventory item
+      if (priceChanged && oldItem && parseFloat(oldItem.price) !== parseFloat(item.price)) {
+        const newPrice = parseFloat(item.price);
+        const updatedRecipes = await storage.updateRecipeCostsForInventoryItem(req.params.id, restaurantId, newPrice);
+        
+        // Broadcast recipe cost update notification for real-time updates
+        if (updatedRecipes.length > 0) {
+          broadcastNotification({
+            type: 'recipe:costUpdated',
+            restaurantId,
+            updatedRecipeIds: updatedRecipes.map(r => r.id),
+          });
+        }
+      }
+      
       res.json(item);
     } catch (error) {
       res.status(400).json({ error: "Invalid inventory data" });
