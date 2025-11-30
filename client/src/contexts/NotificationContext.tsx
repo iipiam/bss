@@ -59,7 +59,13 @@ interface PermissionsNotification {
   targetUserId: string;
 }
 
-type Notification = OrderNotification | ChatNotification | TicketNotification | SettingsNotification | PermissionsNotification;
+interface RecipeCostNotification {
+  type: 'recipe:costUpdated';
+  restaurantId: string;
+  updatedRecipeIds: string[];
+}
+
+type Notification = OrderNotification | ChatNotification | TicketNotification | SettingsNotification | PermissionsNotification | RecipeCostNotification;
 
 interface NotificationContextType {
   isConnected: boolean;
@@ -291,6 +297,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               description: t.permissionsUpdatedDesc || 'Your permissions have been updated. The sidebar will refresh automatically.',
               duration: 5000,
             });
+          } else if (notification.type === 'recipe:costUpdated') {
+            // Handle recipe cost updates when inventory prices change
+            queryClient.invalidateQueries({ queryKey: ['/api/recipes'], refetchType: 'all' });
+            console.log('[Notifications] Recipe costs updated - refreshing recipes data');
           }
         } catch (err) {
           console.error('[Notifications] Failed to parse message:', err);
