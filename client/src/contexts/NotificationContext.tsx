@@ -65,7 +65,12 @@ interface RecipeCostNotification {
   updatedRecipeIds: string[];
 }
 
-type Notification = OrderNotification | ChatNotification | TicketNotification | SettingsNotification | PermissionsNotification | RecipeCostNotification;
+interface MenuNotification {
+  type: 'menu:updated';
+  restaurantId: string;
+}
+
+type Notification = OrderNotification | ChatNotification | TicketNotification | SettingsNotification | PermissionsNotification | RecipeCostNotification | MenuNotification;
 
 interface NotificationContextType {
   isConnected: boolean;
