@@ -231,7 +231,7 @@ export default function DeliveryApps() {
     name: z.string().min(1, t.deliveryAppNameRequired),
     commission: z.coerce.number().min(0, "Commission must be 0 or higher").max(100, "Commission cannot exceed 100%"),
     bankingFees: z.coerce.number().min(0, "Banking fees must be 0 or higher").max(100, "Banking fees cannot exceed 100%"),
-    subsidyTiers: z.array(subsidyTierSchema).max(3, "Maximum 3 subsidy tiers allowed").default([]),
+    subsidyTiers: z.array(subsidyTierSchema).default([]),
     posFees: z.coerce.number().min(0, "POS fees must be 0 or higher").default(0),
   });
 
@@ -536,22 +536,20 @@ export default function DeliveryApps() {
                 />
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <FormLabel>Subsidy Tiers (Max 3)</FormLabel>
-                    {form.watch("subsidyTiers").length < 3 && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          const current = form.getValues("subsidyTiers");
-                          form.setValue("subsidyTiers", [...current, { minAmount: 0, maxAmount: null, subsidy: 0 }]);
-                        }}
-                        data-testid="button-add-tier"
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Tier
-                      </Button>
-                    )}
+                    <FormLabel>Subsidy Tiers</FormLabel>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const current = form.getValues("subsidyTiers");
+                        form.setValue("subsidyTiers", [...current, { minAmount: 0, maxAmount: null, subsidy: 0 }]);
+                      }}
+                      data-testid="button-add-tier"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Tier
+                    </Button>
                   </div>
                   {form.watch("subsidyTiers").map((tier, index) => (
                     <div key={index} className="flex gap-2 items-start p-3 border rounded-md bg-muted/30">
