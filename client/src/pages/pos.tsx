@@ -349,18 +349,26 @@ export default function POS() {
     setEarningsDecreaseApplied(false);
   };
 
-  const calculateItemTotal = (item: CartItem) => {
-    const addonTotal = item.addons?.reduce((sum, addon) => sum + addon.price, 0) || 0;
-    return (item.price + addonTotal) * item.quantity;
-  };
-
-  // Calculate base subtotal (items only)
-  const baseSubtotal = cartItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
-
-  // Calculate delivery commission if app is selected
+  // Calculate delivery app settings if app is selected
   const selectedDeliveryApp = selectedDeliveryAppId 
     ? deliveryApps.find(app => app.id === selectedDeliveryAppId) 
     : null;
+
+  // Get mark-up percentage (0 if no delivery app)
+  const markUpPercent = selectedDeliveryApp 
+    ? parseFloat(selectedDeliveryApp.markUp || "0") 
+    : 0;
+
+  const calculateItemTotal = (item: CartItem) => {
+    const addonTotal = item.addons?.reduce((sum, addon) => sum + addon.price, 0) || 0;
+    const basePrice = (item.price + addonTotal) * item.quantity;
+    // Apply mark-up if delivery app is selected
+    const markUpAmount = basePrice * (markUpPercent / 100);
+    return basePrice + markUpAmount;
+  };
+
+  // Calculate base subtotal (items with mark-up applied)
+  const baseSubtotal = cartItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
 
   const deliveryCommission = selectedDeliveryApp 
     ? baseSubtotal * (parseFloat(selectedDeliveryApp.commission) / 100) 
