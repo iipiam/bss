@@ -38,6 +38,7 @@ interface DeliveryApp {
   name: string;
   commission: string;
   bankingFees: string;
+  markUp: string;
   subsidyTiers: Array<{ minAmount: number; maxAmount: number | null; subsidy: number }>;
   posFees: string;
   active: boolean;
@@ -49,6 +50,7 @@ type DeliveryAppFormValues = {
   name: string;
   commission: number;
   bankingFees: number;
+  markUp: number;
   subsidyTiers: Array<{ minAmount: number; maxAmount: number | null; subsidy: number }>;
   posFees: number;
 };
@@ -156,6 +158,10 @@ function SortableDeliveryAppCard({ app, onEdit, onDelete, testOrderAmount, t, la
               <span className="text-muted-foreground">{t.bankingFees}</span>
               <p className="font-semibold">{parseFloat(app.bankingFees).toFixed(2)}%</p>
             </div>
+            <div>
+              <span className="text-muted-foreground">{t.markUp || "Mark-Up"}</span>
+              <p className="font-semibold">{parseFloat(app.markUp || "0").toFixed(2)}%</p>
+            </div>
             <div className="col-span-2">
               <span className="text-muted-foreground">Subsidy Tiers</span>
               {app.subsidyTiers.length > 0 ? (
@@ -231,6 +237,7 @@ export default function DeliveryApps() {
     name: z.string().min(1, t.deliveryAppNameRequired),
     commission: z.coerce.number().min(0, "Commission must be 0 or higher").max(100, "Commission cannot exceed 100%"),
     bankingFees: z.coerce.number().min(0, "Banking fees must be 0 or higher").max(100, "Banking fees cannot exceed 100%"),
+    markUp: z.coerce.number().min(0, "Mark-up must be 0 or higher").max(100, "Mark-up cannot exceed 100%").default(0),
     subsidyTiers: z.array(subsidyTierSchema).default([]),
     posFees: z.coerce.number().min(0, "POS fees must be 0 or higher").default(0),
   });
@@ -241,6 +248,7 @@ export default function DeliveryApps() {
       name: "",
       commission: 0,
       bankingFees: 0,
+      markUp: 0,
       subsidyTiers: [],
       posFees: 0,
     },
@@ -263,6 +271,7 @@ export default function DeliveryApps() {
         name: data.name,
         commission: data.commission.toFixed(2),
         bankingFees: data.bankingFees.toFixed(2),
+        markUp: data.markUp.toFixed(2),
         subsidyTiers: data.subsidyTiers,
         posFees: data.posFees.toFixed(2),
       });
@@ -291,6 +300,7 @@ export default function DeliveryApps() {
         name: data.name,
         commission: data.commission.toFixed(2),
         bankingFees: data.bankingFees.toFixed(2),
+        markUp: data.markUp.toFixed(2),
         subsidyTiers: data.subsidyTiers,
         posFees: data.posFees.toFixed(2),
       });
@@ -365,6 +375,7 @@ export default function DeliveryApps() {
       name: app.name,
       commission: parseFloat(app.commission),
       bankingFees: parseFloat(app.bankingFees),
+      markUp: parseFloat(app.markUp || "0"),
       subsidyTiers: app.subsidyTiers || [],
       posFees: parseFloat(app.posFees),
     });
@@ -528,6 +539,25 @@ export default function DeliveryApps() {
                           placeholder={t.enterBankingFees}
                           {...field}
                           data-testid="input-banking-fees"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="markUp"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t.markUp || "Mark-Up %"}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder={t.enterMarkUp || "Enter mark-up percentage"}
+                          {...field}
+                          data-testid="input-mark-up"
                         />
                       </FormControl>
                       <FormMessage />

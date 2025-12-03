@@ -558,6 +558,7 @@ export const deliveryApps = pgTable("delivery_apps", {
   name: text("name").notNull(), // Manually entered delivery app name (e.g., "HungerStation", "Jahez", "Mrsool")
   commission: decimal("commission", { precision: 5, scale: 2 }).notNull(), // VAT-inclusive commission percentage (e.g., 20.00 for 20%)
   bankingFees: decimal("banking_fees", { precision: 5, scale: 2 }).notNull(), // VAT-inclusive banking fees percentage (e.g., 2.50 for 2.5%)
+  markUp: decimal("mark_up", { precision: 5, scale: 2 }).notNull().default("0"), // Price mark-up percentage for delivery (e.g., 30.00 for 30%)
   subsidyTiers: jsonb("subsidy_tiers").notNull().default(sql`'[]'`).$type<Array<{ minAmount: number; maxAmount: number | null; subsidy: number }>>(), // Tiered subsidy: array of {minAmount: min order, maxAmount: max order (null = unlimited), subsidy: subsidy in SAR}, max 3 tiers
   posFees: decimal("pos_fees", { precision: 10, scale: 2 }).notNull().default("0"), // VAT-inclusive POS fees amount in SAR
   active: boolean("active").notNull().default(true),
