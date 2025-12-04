@@ -581,7 +581,7 @@ const subsidyTierSchema = z.object({
 export const insertDeliveryAppSchema = createInsertSchema(deliveryApps)
   .omit({ id: true, createdAt: true })
   .extend({
-    subsidyTiers: z.array(subsidyTierSchema).max(3, "Maximum 3 subsidy tiers allowed"),
+    subsidyTiers: z.array(subsidyTierSchema),
   });
 export type InsertDeliveryApp = z.infer<typeof insertDeliveryAppSchema>;
 export type DeliveryApp = typeof deliveryApps.$inferSelect;
