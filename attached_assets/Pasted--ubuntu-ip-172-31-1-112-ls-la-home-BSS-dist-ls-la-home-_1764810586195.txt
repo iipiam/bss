@@ -1,0 +1,106 @@
+
+ubuntu@ip-172-31-1-112:~$ ls -la /home/BSS/dist/
+ls -la /home/BSS/dist/public/
+ls -la /home/BSS/dist/public/assets/
+pm2 logs BSS --lines 20
+total 444
+drwxrwxr-x  3 ubuntu ubuntu   4096 Dec  4 01:04 .
+drwxr-xr-x 19 ubuntu ubuntu   4096 Dec  1 01:08 ..
+-rw-rw-r--  1 ubuntu ubuntu 441034 Dec  4 01:04 index.js
+drwxrwxr-x  3 ubuntu ubuntu   4096 Dec  4 00:50 public
+total 157676
+drwxrwxr-x 3 ubuntu ubuntu      4096 Dec  4 00:50 .
+drwxrwxr-x 3 ubuntu ubuntu      4096 Dec  4 01:04 ..
+-rw-rw-r-- 1 ubuntu ubuntu     76113 Dec  4 00:50 android-chrome-192x192.png
+-rw-rw-r-- 1 ubuntu ubuntu    386941 Dec  4 00:50 android-chrome-512x512.png
+-rw-rw-r-- 1 ubuntu ubuntu     68468 Dec  4 00:50 apple-touch-icon.png
+drwxrwxr-x 2 ubuntu ubuntu      4096 Dec  4 01:04 assets
+-rw-rw-r-- 1 ubuntu ubuntu     21620 Dec  4 00:50 deploy-favicon.sh
+-rw-rw-r-- 1 ubuntu ubuntu 160811722 Dec  4 00:50 dist-update.tar.gz
+-rw-rw-r-- 1 ubuntu ubuntu       994 Dec  4 00:50 favicon-16x16.png
+-rw-rw-r-- 1 ubuntu ubuntu      3176 Dec  4 00:50 favicon-32x32.png
+-rw-rw-r-- 1 ubuntu ubuntu     15406 Dec  4 00:50 favicon-bss.ico
+-rw-rw-r-- 1 ubuntu ubuntu     30720 Dec  4 00:50 favicons.tar
+-rw-rw-r-- 1 ubuntu ubuntu      1292 Dec  4 00:50 index.html
+-rw-rw-r-- 1 ubuntu ubuntu      1194 Dec  4 00:50 index.html.txt
+-rw-rw-r-- 1 ubuntu ubuntu       393 Dec  4 00:50 site.webmanifest
+total 29884
+drwxrwxr-x 2 ubuntu ubuntu    4096 Dec  4 01:04 .
+drwxrwxr-x 3 ubuntu ubuntu    4096 Dec  4 00:50 ..
+-rw-rw-r-- 1 ubuntu ubuntu  815854 Dec  4 00:50 Analytics_dashboard_screenshot_2b42f16c-CsA4H8dd.png
+-rw-rw-r-- 1 ubuntu ubuntu 1094620 Dec  4 00:50 Business_Analytics_Dashboard_3301d762-BjpwCIiJ.png
+-rw-rw-r-- 1 ubuntu ubuntu 1437618 Dec  4 00:50 Business_Forecasting_Analytics_6bf96b65-BkWhbqoT.png
+-rw-rw-r-- 1 ubuntu ubuntu  684918 Dec  4 00:50 Customer_management_database_screenshot_7965bb5e-YCkTvhuX.png
+-rw-rw-r-- 1 ubuntu ubuntu 1002674 Dec  4 00:50 Delivery_App_Management_Dashboard_af536108-sz99dwLv.png
+-rw-rw-r-- 1 ubuntu ubuntu  841805 Dec  4 00:50 Delivery_Apps_Analytics_Screenshot_8961352b-BFmi4b_-.png
+-rw-rw-r-- 1 ubuntu ubuntu  908425 Dec  4 00:50 Demand_forecasting_interface_screenshot_025a6451-CJLcR_dD.png
+-rw-rw-r-- 1 ubuntu ubuntu 1426258 Dec  4 00:50 Financial_Reports_Display_af93422d-BIB4yYwk.png
+-rw-rw-r-- 1 ubuntu ubuntu  937085 Dec  4 00:50 Financial_reports_dashboard_screenshot_9884d372-DqTXO6Uy.png
+-rw-rw-r-- 1 ubuntu ubuntu 1716236 Dec  4 00:50 Happy_Restaurant_Customers_4b909963-DZd4hP6q.png
+-rw-rw-r-- 1 ubuntu ubuntu 1977215 Dec  4 00:50 Inventory_Management_System_f84dcc3a-B0xIsFPC.png
+-rw-rw-r-- 1 ubuntu ubuntu  552842 Dec  4 00:50 Inventory_management_dashboard_screenshot_918ba2b2-DwmYMsPm.png
+-rw-rw-r-- 1 ubuntu ubuntu 1179332 Dec  4 00:50 Invoice_Documents_37f6d13b-D5nVPHjH.png
+-rw-rw-r-- 1 ubuntu ubuntu 1192694 Dec  4 00:50 Menu_management_interface_screenshot_b8294dd3-BWrQ3Oui.png
+-rw-rw-r-- 1 ubuntu ubuntu 1181661 Dec  4 00:50 Order_Management_Display_4049f259-CmLqWA6Y.png
+-rw-rw-r-- 1 ubuntu ubuntu  703801 Dec  4 00:50 Orders_tracking_dashboard_screenshot_f0d2e3a1-DHyd4R4O.png
+-rw-rw-r-- 1 ubuntu ubuntu 1037877 Dec  4 00:50 POS_System_Interface_a1bc794e-CI4bSZNr.png
+-rw-rw-r-- 1 ubuntu ubuntu  850478 Dec  4 00:50 POS_system_interface_screenshot_7e5ae849-DUqqvLTi.png
+-rw-rw-r-- 1 ubuntu ubuntu 1529905 Dec  4 00:50 Profitability_Analysis_Setup_1bed8640-Y4xk-D8_.png
+-rw-rw-r-- 1 ubuntu ubuntu  848262 Dec  4 00:50 Profitability_analysis_dashboard_screenshot_2a18aab4-i4S3Vmhl.png
+-rw-rw-r-- 1 ubuntu ubuntu 1678708 Dec  4 00:50 Recipe_Preparation_Kitchen_c2b136e5-C6lWGyIQ.png
+-rw-rw-r-- 1 ubuntu ubuntu  644527 Dec  4 00:50 Recipe_creation_interface_screenshot_e67a7aa1-B0wGdkCX.png
+-rw-rw-r-- 1 ubuntu ubuntu 1609051 Dec  4 00:50 Restaurant_Menu_Display_b812c237-BZjJ_UeF.png
+-rw-rw-r-- 1 ubuntu ubuntu  915365 Dec  4 00:50 Sales_analytics_page_screenshot_1b3c0414-D52Uz2W7.png
+-rw-rw-r-- 1 ubuntu ubuntu 1627515 Dec  4 00:50 Sales_and_Payment_System_5634d834-o9v6Oxyn.png
+-rw-rw-r-- 1 ubuntu ubuntu  749346 Dec  4 00:50 ZATCA_invoice_document_screenshot_54e402f8-Ccpk2fQX.png
+-rw-rw-r-- 1 ubuntu ubuntu  126517 Dec  4 00:50 kinzhal-eagle-logo-CZZDoCej.jpeg
+-rw-rw-r-- 1 ubuntu ubuntu  285620 Dec  4 00:50 restaurant_staff_tea_658450c1-DEhhxS1m.jpg
+-rw-rw-r-- 1 ubuntu ubuntu  174304 Dec  4 00:50 restaurant_staff_tea_7eaa745e-BesZ0Z2A.jpg
+-rw-rw-r-- 1 ubuntu ubuntu  168722 Dec  4 00:50 restaurant_staff_tea_ce149ad2-BLK6qNRn.jpg
+-rw-rw-r-- 1 ubuntu ubuntu  194845 Dec  4 00:50 successful_restauran_039f182e-BLFEcIAS.jpg
+-rw-rw-r-- 1 ubuntu ubuntu  165695 Dec  4 00:50 successful_restauran_41c16385-CXkB1sjj.jpg
+-rw-rw-r-- 1 ubuntu ubuntu  270603 Dec  4 00:50 successful_restauran_585fac32-D-33tk3R.jpg
+[TAILING] Tailing last 20 lines for [BSS] process (change the value with --lines option)
+/home/ubuntu/.pm2/logs/BSS-error.log last 20 lines:
+0|BSS      |       message: 'Maximum 3 subsidy tiers allowed',
+0|BSS      |       path: [Array]
+0|BSS      |     }
+0|BSS      |   ],
+0|BSS      |   addIssue: [Function (anonymous)],
+0|BSS      |   addIssues: [Function (anonymous)],
+0|BSS      |   errors: [
+0|BSS      |     {
+0|BSS      |       code: 'too_big',
+0|BSS      |       maximum: 3,
+0|BSS      |       type: 'array',
+0|BSS      |       inclusive: true,
+0|BSS      |       exact: false,
+0|BSS      |       message: 'Maximum 3 subsidy tiers allowed',
+0|BSS      |       path: [Array]
+0|BSS      |     }
+0|BSS      |   ]
+0|BSS      | }
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+
+/home/ubuntu/.pm2/logs/BSS-out.log last 20 lines:
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | 12:56:15 AM [express] GET /api/auth/me 200 in 514ms :: {"user":{"id":"e0874d14-d47b-42df-8fb8-cab333f…
+0|BSS      | [WebSocket] Client connected: user=e0874d14-d47b-42df-8fb8-cab333fe9275, restaurant=95a2c64c-0b3f-479a-8f36-6c2531c806d2, conversations=0
+0|BSS      | 12:56:17 AM [express] GET /api/delivery-apps 200 in 1545ms :: [{"id":"61642d30-1d20-48c4-b84b-bd95a0a…
+0|BSS      | 12:56:17 AM [express] GET /api/branches 304 in 339ms :: []
+0|BSS      | 12:56:17 AM [express] GET /api/settings 304 in 1524ms :: {"id":"77394422-07fb-45cd-950a-5fe55ffd121c"…
+0|BSS      | 12:56:17 AM [express] GET /api/chat/notification-settings 304 in 343ms :: {"notificationsEnabled":tru…
+0|BSS      | 12:57:46 AM [express] PATCH /api/delivery-apps/61642d30-1d20-48c4-b84b-bd95a0a83d09 400 in 1514ms :: …
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | 12:57:51 AM [express] GET /api/auth/me 200 in 505ms :: {"user":{"id":"e0874d14-d47b-42df-8fb8-cab333f…
+0|BSS      | [WebSocket] Client connected: user=e0874d14-d47b-42df-8fb8-cab333fe9275, restaurant=95a2c64c-0b3f-479a-8f36-6c2531c806d2, conversations=0
+0|BSS      | 12:57:52 AM [express] GET /api/chat/notification-settings 304 in 336ms :: {"notificationsEnabled":tru…
+0|BSS      | 12:57:53 AM [express] GET /api/delivery-apps 304 in 1468ms :: [{"id":"61642d30-1d20-48c4-b84b-bd95a0a…
+0|BSS      | 12:57:53 AM [express] GET /api/settings 304 in 337ms :: {"id":"77394422-07fb-45cd-950a-5fe55ffd121c",…
+0|BSS      | 12:57:54 AM [express] GET /api/branches 304 in 1553ms :: []
+0|BSS      | ✅ Production mode: SSL enabled for AWS RDS
+0|BSS      | 12:58:03 AM [express] serving on port 5000
+0|BSS      | [WebSocket] Client connected: user=e0874d14-d47b-42df-8fb8-cab333fe9275, restaurant=95a2c64c-0b3f-479a-8f36-6c2531c806d2, conversations=0
+0|BSS      | ✅ Production mode: SSL enabled for AWS RDS
+0|BSS      | 1:08:01 AM [express] serving on port 5000
