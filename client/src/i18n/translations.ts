@@ -818,6 +818,43 @@ export interface Translations {
   lastActivityTime: string;
   noRestaurant: string;
   
+  // IT Business Management
+  businessManagement: string;
+  businessManagementDescription: string;
+  clientSubscriptions: string;
+  subscriptionInvoices: string;
+  contactDetails: string;
+  vatGenerator: string;
+  vatStatement: string;
+  generateVatStatement: string;
+  totalSubscriptions: string;
+  totalVatCollected: string;
+  subscriptionAmount: string;
+  vatCalculation: string;
+  selectPeriod: string;
+  fromDate: string;
+  toDate: string;
+  calculateVat: string;
+  downloadPdf: string;
+  downloadExcel: string;
+  clientName: string;
+  clientEmail: string;
+  clientPhone: string;
+  taxNumber: string;
+  commercialReg: string;
+  subscriptionType: string;
+  branchCount: string;
+  baseAmount: string;
+  vatRate: string;
+  totalWithVat: string;
+  noClientsFound: string;
+  noInvoicesFound: string;
+  zatcaCompliant: string;
+  allClients: string;
+  activeSubscriptions: string;
+  expiredSubscriptions: string;
+  cancelledSubscriptions: string;
+  
   // IT Preferences (Theme & Customization)
   itPreferences: string;
   customizeYourExperience: string;
@@ -1260,7 +1297,6 @@ export interface Translations {
   cancelSubscriptionWarning: string;
   keepSubscription: string;
   yesCancelSubscription: string;
-  subscriptionInvoices: string;
   noInvoices: string;
   invoice: string;
   
@@ -1269,7 +1305,6 @@ export interface Translations {
   searchByInvoice: string;
   date: string;
   vat: string;
-  noInvoicesFound: string;
   noPDF: string;
 }
 
@@ -2082,6 +2117,43 @@ export const translations: Record<Language, Translations> = {
     lastActivityTime: 'Last Activity',
     noRestaurant: 'No Restaurant',
     
+    // IT Business Management
+    businessManagement: 'Business Management',
+    businessManagementDescription: 'Manage client subscriptions, invoices, and VAT statements',
+    clientSubscriptions: 'Client Subscriptions',
+    subscriptionInvoices: 'Subscription Invoices',
+    contactDetails: 'Contact Details',
+    vatGenerator: 'VAT Generator',
+    vatStatement: 'VAT Statement',
+    generateVatStatement: 'Generate VAT Statement',
+    totalSubscriptions: 'Total Subscriptions',
+    totalVatCollected: 'Total VAT Collected',
+    subscriptionAmount: 'Subscription Amount',
+    vatCalculation: 'VAT Calculation',
+    selectPeriod: 'Select Period',
+    fromDate: 'From Date',
+    toDate: 'To Date',
+    calculateVat: 'Calculate VAT',
+    downloadPdf: 'Download PDF',
+    downloadExcel: 'Download Excel',
+    clientName: 'Client Name',
+    clientEmail: 'Client Email',
+    clientPhone: 'Client Phone',
+    taxNumber: 'Tax Number',
+    commercialReg: 'Commercial Registration',
+    subscriptionType: 'Subscription Type',
+    branchCount: 'Branch Count',
+    baseAmount: 'Base Amount',
+    vatRate: 'VAT Rate (15%)',
+    totalWithVat: 'Total with VAT',
+    noClientsFound: 'No clients found',
+    noInvoicesFound: 'No invoices found',
+    zatcaCompliant: 'ZATCA Compliant',
+    allClients: 'All Clients',
+    activeSubscriptions: 'Active Subscriptions',
+    expiredSubscriptions: 'Expired Subscriptions',
+    cancelledSubscriptions: 'Cancelled Subscriptions',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
     customizeYourExperience: 'Customize your experience',
@@ -2531,7 +2603,6 @@ export const translations: Record<Language, Translations> = {
     cancelSubscriptionWarning: 'This action cannot be undone. You will lose access to all features when your current period ends.',
     keepSubscription: 'Keep Subscription',
     yesCancelSubscription: 'Yes, Cancel Subscription',
-    subscriptionInvoices: 'Subscription Invoices',
     noInvoices: 'No invoices available',
     invoice: 'Invoice',
     
@@ -2540,7 +2611,6 @@ export const translations: Record<Language, Translations> = {
     searchByInvoice: 'Search by invoice number or order',
     date: 'Date',
     vat: 'VAT',
-    noInvoicesFound: 'No invoices found',
     noPDF: 'No PDF',
   },
   
@@ -3353,6 +3423,43 @@ export const translations: Record<Language, Translations> = {
     lastActivityTime: 'آخر نشاط',
     noRestaurant: 'بدون مطعم',
     
+    // IT Business Management
+    businessManagement: 'إدارة الأعمال',
+    businessManagementDescription: 'إدارة اشتراكات العملاء والفواتير وبيانات ضريبة القيمة المضافة',
+    clientSubscriptions: 'اشتراكات العملاء',
+    subscriptionInvoices: 'فواتير الاشتراكات',
+    contactDetails: 'تفاصيل الاتصال',
+    vatGenerator: 'مولد ضريبة القيمة المضافة',
+    vatStatement: 'بيان ضريبة القيمة المضافة',
+    generateVatStatement: 'إنشاء بيان ضريبة القيمة المضافة',
+    totalSubscriptions: 'إجمالي الاشتراكات',
+    totalVatCollected: 'إجمالي ضريبة القيمة المضافة المحصلة',
+    subscriptionAmount: 'مبلغ الاشتراك',
+    vatCalculation: 'حساب ضريبة القيمة المضافة',
+    selectPeriod: 'حدد الفترة',
+    fromDate: 'من تاريخ',
+    toDate: 'إلى تاريخ',
+    calculateVat: 'حساب الضريبة',
+    downloadPdf: 'تحميل PDF',
+    downloadExcel: 'تحميل Excel',
+    clientName: 'اسم العميل',
+    clientEmail: 'بريد العميل',
+    clientPhone: 'هاتف العميل',
+    taxNumber: 'الرقم الضريبي',
+    commercialReg: 'السجل التجاري',
+    subscriptionType: 'نوع الاشتراك',
+    branchCount: 'عدد الفروع',
+    baseAmount: 'المبلغ الأساسي',
+    vatRate: 'نسبة الضريبة (15%)',
+    totalWithVat: 'الإجمالي شامل الضريبة',
+    noClientsFound: 'لم يتم العثور على عملاء',
+    noInvoicesFound: 'لم يتم العثور على فواتير',
+    zatcaCompliant: 'متوافق مع هيئة الزكاة',
+    allClients: 'جميع العملاء',
+    activeSubscriptions: 'الاشتراكات النشطة',
+    expiredSubscriptions: 'الاشتراكات المنتهية',
+    cancelledSubscriptions: 'الاشتراكات الملغاة',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'تفضيلات تكنولوجيا المعلومات',
     customizeYourExperience: 'خصص تجربتك',
@@ -3802,7 +3909,6 @@ export const translations: Record<Language, Translations> = {
     cancelSubscriptionWarning: 'لا يمكن التراجع عن هذا الإجراء. ستفقد الوصول إلى جميع الميزات عند انتهاء فترتك الحالية.',
     keepSubscription: 'الاحتفاظ بالاشتراك',
     yesCancelSubscription: 'نعم، إلغاء الاشتراك',
-    subscriptionInvoices: 'فواتير الاشتراك',
     noInvoices: 'لا توجد فواتير متاحة',
     invoice: 'الفاتورة',
     
@@ -3811,7 +3917,6 @@ export const translations: Record<Language, Translations> = {
     searchByInvoice: 'البحث برقم الفاتورة أو الطلب',
     date: 'التاريخ',
     vat: 'ضريبة القيمة المضافة',
-    noInvoicesFound: 'لم يتم العثور على فواتير',
     noPDF: 'لا يوجد ملف PDF',
   },
   German: {
@@ -4622,6 +4727,43 @@ export const translations: Record<Language, Translations> = {
     lastActivityTime: 'Letzte Aktivität',
     noRestaurant: 'Kein Restaurant',
     
+    // IT Business Management
+    businessManagement: 'Geschäftsverwaltung',
+    businessManagementDescription: 'Kundenabonnements, Rechnungen und MwSt.-Auszüge verwalten',
+    clientSubscriptions: 'Kundenabonnements',
+    subscriptionInvoices: 'Abonnementrechnungen',
+    contactDetails: 'Kontaktdaten',
+    vatGenerator: 'MwSt.-Generator',
+    vatStatement: 'MwSt.-Auszug',
+    generateVatStatement: 'MwSt.-Auszug erstellen',
+    totalSubscriptions: 'Gesamtabonnements',
+    totalVatCollected: 'Erhobene MwSt. gesamt',
+    subscriptionAmount: 'Abonnementbetrag',
+    vatCalculation: 'MwSt.-Berechnung',
+    selectPeriod: 'Zeitraum auswählen',
+    fromDate: 'Von Datum',
+    toDate: 'Bis Datum',
+    calculateVat: 'MwSt. berechnen',
+    downloadPdf: 'PDF herunterladen',
+    downloadExcel: 'Excel herunterladen',
+    clientName: 'Kundenname',
+    clientEmail: 'Kunden-E-Mail',
+    clientPhone: 'Kundentelefon',
+    taxNumber: 'Steuernummer',
+    commercialReg: 'Handelsregisternummer',
+    subscriptionType: 'Abonnementtyp',
+    branchCount: 'Filialanzahl',
+    baseAmount: 'Grundbetrag',
+    vatRate: 'MwSt.-Satz (15%)',
+    totalWithVat: 'Gesamt mit MwSt.',
+    noClientsFound: 'Keine Kunden gefunden',
+    noInvoicesFound: 'Keine Rechnungen gefunden',
+    zatcaCompliant: 'ZATCA-konform',
+    allClients: 'Alle Kunden',
+    activeSubscriptions: 'Aktive Abonnements',
+    expiredSubscriptions: 'Abgelaufene Abonnements',
+    cancelledSubscriptions: 'Stornierte Abonnements',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
     customizeYourExperience: 'Customize your experience',
@@ -5071,7 +5213,6 @@ export const translations: Record<Language, Translations> = {
     cancelSubscriptionWarning: 'This action cannot be undone. You will lose access to all features when your current period ends.',
     keepSubscription: 'Keep Subscription',
     yesCancelSubscription: 'Yes, Cancel Subscription',
-    subscriptionInvoices: 'Subscription Invoices',
     noInvoices: 'No invoices available',
     invoice: 'Invoice',
     
@@ -5080,7 +5221,6 @@ export const translations: Record<Language, Translations> = {
     searchByInvoice: 'Search by invoice number or order',
     date: 'Date',
     vat: 'VAT',
-    noInvoicesFound: 'No invoices found',
     noPDF: 'No PDF',
   },
   Chinese: {
@@ -5891,6 +6031,43 @@ export const translations: Record<Language, Translations> = {
     lastActivityTime: '最后活动',
     noRestaurant: '无餐厅',
     
+    // IT Business Management
+    businessManagement: '业务管理',
+    businessManagementDescription: '管理客户订阅、发票和增值税报表',
+    clientSubscriptions: '客户订阅',
+    subscriptionInvoices: '订阅发票',
+    contactDetails: '联系方式',
+    vatGenerator: '增值税生成器',
+    vatStatement: '增值税报表',
+    generateVatStatement: '生成增值税报表',
+    totalSubscriptions: '订阅总数',
+    totalVatCollected: '已收增值税总额',
+    subscriptionAmount: '订阅金额',
+    vatCalculation: '增值税计算',
+    selectPeriod: '选择期间',
+    fromDate: '开始日期',
+    toDate: '结束日期',
+    calculateVat: '计算增值税',
+    downloadPdf: '下载PDF',
+    downloadExcel: '下载Excel',
+    clientName: '客户名称',
+    clientEmail: '客户邮箱',
+    clientPhone: '客户电话',
+    taxNumber: '税号',
+    commercialReg: '商业登记',
+    subscriptionType: '订阅类型',
+    branchCount: '分店数量',
+    baseAmount: '基本金额',
+    vatRate: '增值税率 (15%)',
+    totalWithVat: '含税总额',
+    noClientsFound: '未找到客户',
+    noInvoicesFound: '未找到发票',
+    zatcaCompliant: 'ZATCA合规',
+    allClients: '所有客户',
+    activeSubscriptions: '活跃订阅',
+    expiredSubscriptions: '已过期订阅',
+    cancelledSubscriptions: '已取消订阅',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
     customizeYourExperience: 'Customize your experience',
@@ -6340,7 +6517,6 @@ export const translations: Record<Language, Translations> = {
     cancelSubscriptionWarning: 'This action cannot be undone. You will lose access to all features when your current period ends.',
     keepSubscription: 'Keep Subscription',
     yesCancelSubscription: 'Yes, Cancel Subscription',
-    subscriptionInvoices: 'Subscription Invoices',
     noInvoices: 'No invoices available',
     invoice: 'Invoice',
     
@@ -6349,7 +6525,6 @@ export const translations: Record<Language, Translations> = {
     searchByInvoice: 'Search by invoice number or order',
     date: 'Date',
     vat: 'VAT',
-    noInvoicesFound: 'No invoices found',
     noPDF: 'No PDF',
   },
   Bengali: {
@@ -7160,6 +7335,43 @@ export const translations: Record<Language, Translations> = {
     lastActivityTime: 'সর্বশেষ কার্যকলাপ',
     noRestaurant: 'কোনো রেস্তোরাঁ নেই',
     
+    // IT Business Management
+    businessManagement: 'ব্যবসা ব্যবস্থাপনা',
+    businessManagementDescription: 'গ্রাহক সাবস্ক্রিপশন, চালান এবং ভ্যাট বিবরণী পরিচালনা করুন',
+    clientSubscriptions: 'গ্রাহক সাবস্ক্রিপশন',
+    subscriptionInvoices: 'সাবস্ক্রিপশন চালান',
+    contactDetails: 'যোগাযোগের বিবরণ',
+    vatGenerator: 'ভ্যাট জেনারেটর',
+    vatStatement: 'ভ্যাট বিবরণী',
+    generateVatStatement: 'ভ্যাট বিবরণী তৈরি করুন',
+    totalSubscriptions: 'মোট সাবস্ক্রিপশন',
+    totalVatCollected: 'মোট সংগৃহীত ভ্যাট',
+    subscriptionAmount: 'সাবস্ক্রিপশন পরিমাণ',
+    vatCalculation: 'ভ্যাট হিসাব',
+    selectPeriod: 'সময়কাল নির্বাচন করুন',
+    fromDate: 'শুরুর তারিখ',
+    toDate: 'শেষ তারিখ',
+    calculateVat: 'ভ্যাট হিসাব করুন',
+    downloadPdf: 'পিডিএফ ডাউনলোড',
+    downloadExcel: 'এক্সেল ডাউনলোড',
+    clientName: 'গ্রাহকের নাম',
+    clientEmail: 'গ্রাহকের ইমেইল',
+    clientPhone: 'গ্রাহকের ফোন',
+    taxNumber: 'ট্যাক্স নম্বর',
+    commercialReg: 'বাণিজ্যিক নিবন্ধন',
+    subscriptionType: 'সাবস্ক্রিপশন ধরন',
+    branchCount: 'শাখার সংখ্যা',
+    baseAmount: 'মূল পরিমাণ',
+    vatRate: 'ভ্যাট হার (১৫%)',
+    totalWithVat: 'ভ্যাট সহ মোট',
+    noClientsFound: 'কোনো গ্রাহক পাওয়া যায়নি',
+    noInvoicesFound: 'কোনো চালান পাওয়া যায়নি',
+    zatcaCompliant: 'ZATCA অনুগত',
+    allClients: 'সকল গ্রাহক',
+    activeSubscriptions: 'সক্রিয় সাবস্ক্রিপশন',
+    expiredSubscriptions: 'মেয়াদোত্তীর্ণ সাবস্ক্রিপশন',
+    cancelledSubscriptions: 'বাতিল সাবস্ক্রিপশন',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
     customizeYourExperience: 'Customize your experience',
@@ -7609,7 +7821,6 @@ export const translations: Record<Language, Translations> = {
     cancelSubscriptionWarning: 'This action cannot be undone. You will lose access to all features when your current period ends.',
     keepSubscription: 'Keep Subscription',
     yesCancelSubscription: 'Yes, Cancel Subscription',
-    subscriptionInvoices: 'Subscription Invoices',
     noInvoices: 'No invoices available',
     invoice: 'Invoice',
     
@@ -7618,7 +7829,6 @@ export const translations: Record<Language, Translations> = {
     searchByInvoice: 'Search by invoice number or order',
     date: 'Date',
     vat: 'VAT',
-    noInvoicesFound: 'No invoices found',
     noPDF: 'No PDF',
   },
   Italian: {
@@ -8429,6 +8639,43 @@ export const translations: Record<Language, Translations> = {
     lastActivityTime: 'Ultima Attività',
     noRestaurant: 'Nessun Ristorante',
     
+    // IT Business Management
+    businessManagement: 'Gestione Aziendale',
+    businessManagementDescription: 'Gestisci abbonamenti clienti, fatture e dichiarazioni IVA',
+    clientSubscriptions: 'Abbonamenti Clienti',
+    subscriptionInvoices: 'Fatture Abbonamento',
+    contactDetails: 'Dettagli Contatto',
+    vatGenerator: 'Generatore IVA',
+    vatStatement: 'Dichiarazione IVA',
+    generateVatStatement: 'Genera Dichiarazione IVA',
+    totalSubscriptions: 'Abbonamenti Totali',
+    totalVatCollected: 'IVA Totale Raccolta',
+    subscriptionAmount: 'Importo Abbonamento',
+    vatCalculation: 'Calcolo IVA',
+    selectPeriod: 'Seleziona Periodo',
+    fromDate: 'Data Inizio',
+    toDate: 'Data Fine',
+    calculateVat: 'Calcola IVA',
+    downloadPdf: 'Scarica PDF',
+    downloadExcel: 'Scarica Excel',
+    clientName: 'Nome Cliente',
+    clientEmail: 'Email Cliente',
+    clientPhone: 'Telefono Cliente',
+    taxNumber: 'Partita IVA',
+    commercialReg: 'Registrazione Commerciale',
+    subscriptionType: 'Tipo Abbonamento',
+    branchCount: 'Numero Filiali',
+    baseAmount: 'Importo Base',
+    vatRate: 'Aliquota IVA (15%)',
+    totalWithVat: 'Totale con IVA',
+    noClientsFound: 'Nessun cliente trovato',
+    noInvoicesFound: 'Nessuna fattura trovata',
+    zatcaCompliant: 'Conforme ZATCA',
+    allClients: 'Tutti i Clienti',
+    activeSubscriptions: 'Abbonamenti Attivi',
+    expiredSubscriptions: 'Abbonamenti Scaduti',
+    cancelledSubscriptions: 'Abbonamenti Cancellati',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
     customizeYourExperience: 'Customize your experience',
@@ -8878,7 +9125,6 @@ export const translations: Record<Language, Translations> = {
     cancelSubscriptionWarning: 'This action cannot be undone. You will lose access to all features when your current period ends.',
     keepSubscription: 'Keep Subscription',
     yesCancelSubscription: 'Yes, Cancel Subscription',
-    subscriptionInvoices: 'Subscription Invoices',
     noInvoices: 'No invoices available',
     invoice: 'Invoice',
     
@@ -8887,7 +9133,6 @@ export const translations: Record<Language, Translations> = {
     searchByInvoice: 'Search by invoice number or order',
     date: 'Date',
     vat: 'VAT',
-    noInvoicesFound: 'No invoices found',
     noPDF: 'No PDF',
   },
 
@@ -9686,6 +9931,43 @@ export const translations: Record<Language, Translations> = {
     lastActivityTime: 'अंतिम गतिविधि',
     noRestaurant: 'कोई रेस्तरां नहीं',
     
+    // IT Business Management
+    businessManagement: 'व्यवसाय प्रबंधन',
+    businessManagementDescription: 'ग्राहक सदस्यताएं, चालान और वैट विवरण प्रबंधित करें',
+    clientSubscriptions: 'ग्राहक सदस्यताएं',
+    subscriptionInvoices: 'सदस्यता चालान',
+    contactDetails: 'संपर्क विवरण',
+    vatGenerator: 'वैट जनरेटर',
+    vatStatement: 'वैट विवरण',
+    generateVatStatement: 'वैट विवरण जनरेट करें',
+    totalSubscriptions: 'कुल सदस्यताएं',
+    totalVatCollected: 'कुल एकत्रित वैट',
+    subscriptionAmount: 'सदस्यता राशि',
+    vatCalculation: 'वैट गणना',
+    selectPeriod: 'अवधि चुनें',
+    fromDate: 'आरंभ तिथि',
+    toDate: 'समाप्ति तिथि',
+    calculateVat: 'वैट की गणना करें',
+    downloadPdf: 'पीडीएफ डाउनलोड करें',
+    downloadExcel: 'एक्सेल डाउनलोड करें',
+    clientName: 'ग्राहक का नाम',
+    clientEmail: 'ग्राहक ईमेल',
+    clientPhone: 'ग्राहक फोन',
+    taxNumber: 'कर संख्या',
+    commercialReg: 'वाणिज्यिक पंजीकरण',
+    subscriptionType: 'सदस्यता प्रकार',
+    branchCount: 'शाखा संख्या',
+    baseAmount: 'आधार राशि',
+    vatRate: 'वैट दर (15%)',
+    totalWithVat: 'वैट सहित कुल',
+    noClientsFound: 'कोई ग्राहक नहीं मिला',
+    noInvoicesFound: 'कोई चालान नहीं मिला',
+    zatcaCompliant: 'ZATCA अनुपालन',
+    allClients: 'सभी ग्राहक',
+    activeSubscriptions: 'सक्रिय सदस्यताएं',
+    expiredSubscriptions: 'समाप्त सदस्यताएं',
+    cancelledSubscriptions: 'रद्द सदस्यताएं',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'आईटी प्राथमिकताएं',
     customizeYourExperience: 'अपने अनुभव को अनुकूलित करें',
@@ -10135,7 +10417,6 @@ export const translations: Record<Language, Translations> = {
     cancelSubscriptionWarning: 'इस क्रिया को पूर्ववत नहीं किया जा सकता। आपकी वर्तमान अवधि समाप्त होने पर आप सभी सुविधाओं तक पहुंच खो देंगे।',
     keepSubscription: 'सदस्यता रखें',
     yesCancelSubscription: 'हां, सदस्यता रद्द करें',
-    subscriptionInvoices: 'सदस्यता चालान',
     noInvoices: 'कोई चालान उपलब्ध नहीं',
     invoice: 'चालान',
     
@@ -10144,7 +10425,6 @@ export const translations: Record<Language, Translations> = {
     searchByInvoice: 'चालान नंबर या ऑर्डर द्वारा खोजें',
     date: 'तारीख',
     vat: 'वैट',
-    noInvoicesFound: 'कोई चालान नहीं मिला',
     noPDF: 'कोई पीडीएफ नहीं',
   },
   
@@ -10943,6 +11223,43 @@ export const translations: Record<Language, Translations> = {
     lastActivityTime: 'آخری سرگرمی',
     noRestaurant: 'کوئی ریستوراں نہیں',
     
+    // IT Business Management
+    businessManagement: 'کاروباری انتظام',
+    businessManagementDescription: 'کلائنٹ سبسکرپشنز، انوائسز اور VAT بیانات کا انتظام کریں',
+    clientSubscriptions: 'کلائنٹ سبسکرپشنز',
+    subscriptionInvoices: 'سبسکرپشن انوائسز',
+    contactDetails: 'رابطے کی تفصیلات',
+    vatGenerator: 'VAT جنریٹر',
+    vatStatement: 'VAT بیان',
+    generateVatStatement: 'VAT بیان بنائیں',
+    totalSubscriptions: 'کل سبسکرپشنز',
+    totalVatCollected: 'جمع شدہ کل VAT',
+    subscriptionAmount: 'سبسکرپشن رقم',
+    vatCalculation: 'VAT حساب',
+    selectPeriod: 'مدت منتخب کریں',
+    fromDate: 'تاریخ سے',
+    toDate: 'تاریخ تک',
+    calculateVat: 'VAT کا حساب لگائیں',
+    downloadPdf: 'PDF ڈاؤن لوڈ کریں',
+    downloadExcel: 'Excel ڈاؤن لوڈ کریں',
+    clientName: 'کلائنٹ کا نام',
+    clientEmail: 'کلائنٹ ای میل',
+    clientPhone: 'کلائنٹ فون',
+    taxNumber: 'ٹیکس نمبر',
+    commercialReg: 'تجارتی رجسٹریشن',
+    subscriptionType: 'سبسکرپشن کی قسم',
+    branchCount: 'برانچوں کی تعداد',
+    baseAmount: 'بنیادی رقم',
+    vatRate: 'VAT شرح (15%)',
+    totalWithVat: 'VAT سمیت کل',
+    noClientsFound: 'کوئی کلائنٹ نہیں ملا',
+    noInvoicesFound: 'کوئی انوائس نہیں ملا',
+    zatcaCompliant: 'ZATCA موافق',
+    allClients: 'تمام کلائنٹس',
+    activeSubscriptions: 'فعال سبسکرپشنز',
+    expiredSubscriptions: 'ختم شدہ سبسکرپشنز',
+    cancelledSubscriptions: 'منسوخ سبسکرپشنز',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'آئی ٹی ترجیحات',
     customizeYourExperience: 'اپنے تجربے کو اپنی مرضی کے مطابق بنائیں',
@@ -11392,7 +11709,6 @@ export const translations: Record<Language, Translations> = {
     cancelSubscriptionWarning: 'اس عمل کو واپس نہیں کیا جا سکتا۔ آپ اپنی موجودہ مدت ختم ہونے پر تمام خصوصیات تک رسائی کھو دیں گے۔',
     keepSubscription: 'سبسکرپشن رکھیں',
     yesCancelSubscription: 'ہاں، سبسکرپشن منسوخ کریں',
-    subscriptionInvoices: 'سبسکرپشن رسیدیں',
     noInvoices: 'کوئی رسیدیں دستیاب نہیں',
     invoice: 'رسید',
     
@@ -11401,7 +11717,6 @@ export const translations: Record<Language, Translations> = {
     searchByInvoice: 'رسید نمبر یا آرڈر کے ذریعے تلاش کریں',
     date: 'تاریخ',
     vat: 'ویٹ',
-    noInvoicesFound: 'کوئی رسیدیں نہیں ملیں',
     noPDF: 'کوئی پی ڈی ایف نہیں',
   },
   
@@ -12144,6 +12459,43 @@ export const translations: Record<Language, Translations> = {
     lastActivityTime: 'Última Actividad',
     noRestaurant: 'Sin Restaurante',
     
+    // IT Business Management
+    businessManagement: 'Gestión Empresarial',
+    businessManagementDescription: 'Gestionar suscripciones de clientes, facturas y declaraciones de IVA',
+    clientSubscriptions: 'Suscripciones de Clientes',
+    subscriptionInvoices: 'Facturas de Suscripción',
+    contactDetails: 'Datos de Contacto',
+    vatGenerator: 'Generador de IVA',
+    vatStatement: 'Declaración de IVA',
+    generateVatStatement: 'Generar Declaración de IVA',
+    totalSubscriptions: 'Suscripciones Totales',
+    totalVatCollected: 'IVA Total Recaudado',
+    subscriptionAmount: 'Monto de Suscripción',
+    vatCalculation: 'Cálculo de IVA',
+    selectPeriod: 'Seleccionar Período',
+    fromDate: 'Fecha Desde',
+    toDate: 'Fecha Hasta',
+    calculateVat: 'Calcular IVA',
+    downloadPdf: 'Descargar PDF',
+    downloadExcel: 'Descargar Excel',
+    clientName: 'Nombre del Cliente',
+    clientEmail: 'Email del Cliente',
+    clientPhone: 'Teléfono del Cliente',
+    taxNumber: 'Número de Impuesto',
+    commercialReg: 'Registro Comercial',
+    subscriptionType: 'Tipo de Suscripción',
+    branchCount: 'Cantidad de Sucursales',
+    baseAmount: 'Monto Base',
+    vatRate: 'Tasa de IVA (15%)',
+    totalWithVat: 'Total con IVA',
+    noClientsFound: 'No se encontraron clientes',
+    noInvoicesFound: 'No se encontraron facturas',
+    zatcaCompliant: 'Cumple con ZATCA',
+    allClients: 'Todos los Clientes',
+    activeSubscriptions: 'Suscripciones Activas',
+    expiredSubscriptions: 'Suscripciones Vencidas',
+    cancelledSubscriptions: 'Suscripciones Canceladas',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'Preferencias de TI',
     customizeYourExperience: 'Personaliza tu experiencia',
@@ -12589,7 +12941,6 @@ export const translations: Record<Language, Translations> = {
     cancelSubscriptionWarning: "Esta acción no se puede deshacer. Perderás el acceso a todas las funciones cuando termine tu período actual.",
     keepSubscription: "Mantener suscripción",
     yesCancelSubscription: "Sí, cancelar suscripción",
-    subscriptionInvoices: "Facturas de suscripción",
     noInvoices: "No hay facturas disponibles",
     invoice: "Factura",
     
@@ -12598,7 +12949,6 @@ export const translations: Record<Language, Translations> = {
     searchByInvoice: "Buscar por número de factura o pedido",
     date: "Fecha",
     vat: "IVA",
-    noInvoicesFound: "No se encontraron facturas",
     noPDF: "Sin PDF",
   },
 
@@ -13341,6 +13691,43 @@ export const translations: Record<Language, Translations> = {
     lastActivityTime: 'Huling Aktibidad',
     noRestaurant: 'Walang Restaurant',
     
+    // IT Business Management
+    businessManagement: 'Pamamahala ng Negosyo',
+    businessManagementDescription: 'Pamahalaan ang mga subscription ng kliyente, invoice at VAT statements',
+    clientSubscriptions: 'Mga Subscription ng Kliyente',
+    subscriptionInvoices: 'Mga Invoice ng Subscription',
+    contactDetails: 'Mga Detalye ng Kontak',
+    vatGenerator: 'VAT Generator',
+    vatStatement: 'VAT Statement',
+    generateVatStatement: 'Gumawa ng VAT Statement',
+    totalSubscriptions: 'Kabuuang Subscription',
+    totalVatCollected: 'Kabuuang Nakolektang VAT',
+    subscriptionAmount: 'Halaga ng Subscription',
+    vatCalculation: 'Pagkalkula ng VAT',
+    selectPeriod: 'Pumili ng Panahon',
+    fromDate: 'Mula sa Petsa',
+    toDate: 'Hanggang sa Petsa',
+    calculateVat: 'Kalkulahin ang VAT',
+    downloadPdf: 'I-download ang PDF',
+    downloadExcel: 'I-download ang Excel',
+    clientName: 'Pangalan ng Kliyente',
+    clientEmail: 'Email ng Kliyente',
+    clientPhone: 'Telepono ng Kliyente',
+    taxNumber: 'Numero ng Buwis',
+    commercialReg: 'Komersyal na Pagpaparehistro',
+    subscriptionType: 'Uri ng Subscription',
+    branchCount: 'Bilang ng Branch',
+    baseAmount: 'Batayang Halaga',
+    vatRate: 'Rate ng VAT (15%)',
+    totalWithVat: 'Kabuuan kasama ang VAT',
+    noClientsFound: 'Walang nakitang kliyente',
+    noInvoicesFound: 'Walang nakitang invoice',
+    zatcaCompliant: 'Sumusunod sa ZATCA',
+    allClients: 'Lahat ng Kliyente',
+    activeSubscriptions: 'Mga Aktibong Subscription',
+    expiredSubscriptions: 'Mga Nag-expire na Subscription',
+    cancelledSubscriptions: 'Mga Kanselang Subscription',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT na mga Kagustuhan',
     customizeYourExperience: 'I-customize ang iyong karanasan',
@@ -13786,7 +14173,6 @@ export const translations: Record<Language, Translations> = {
     cancelSubscriptionWarning: "Ang aksyong ito ay hindi maaaring bawiin. Mawawalan ka ng access sa lahat ng features kapag natapos ang iyong kasalukuyang periodo.",
     keepSubscription: "Panatilihin ang subscription",
     yesCancelSubscription: "Oo, kanselahin ang subscription",
-    subscriptionInvoices: "Mga invoice ng subscription",
     noInvoices: "Walang available na mga invoice",
     invoice: "Invoice",
     
@@ -13795,7 +14181,6 @@ export const translations: Record<Language, Translations> = {
     searchByInvoice: "Maghanap ayon sa numero ng invoice o order",
     date: "Petsa",
     vat: "VAT",
-    noInvoicesFound: "Walang nahanap na mga invoice",
     noPDF: "Walang PDF",
   },
 };

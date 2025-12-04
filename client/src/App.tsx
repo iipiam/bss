@@ -71,6 +71,7 @@ import SupportDetail from "@/pages/support-detail";
 import ITDashboard from "@/pages/it-dashboard";
 import Performance from "@/pages/performance";
 import ITAccountManagement from "@/pages/it-account-management";
+import BusinessManagement from "@/pages/business-management";
 import Chat from "@/pages/chat";
 import PaymentTest from "@/pages/payment-test";
 import PasswordManager from "@/pages/password-manager";
@@ -121,6 +122,7 @@ function Router() {
       <Route path="/it-dashboard" component={ITDashboard} />
       <Route path="/performance" component={Performance} />
       <Route path="/it-account-management" component={ITAccountManagement} />
+      <Route path="/business-management" component={BusinessManagement} />
       <Route path="/chat" component={Chat} />
       <Route path="/payment-test" component={PaymentTest} />
       <Route component={NotFound} />
@@ -141,7 +143,7 @@ function AppContent() {
   // Handle IT account redirects using useEffect to avoid render issues
   // IT accounts can access /it-dashboard, /performance, and /it-account-management only
   useEffect(() => {
-    const allowedITRoutes = ['/it-dashboard', '/performance', '/it-account-management'];
+    const allowedITRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management'];
     const isAllowedRoute = allowedITRoutes.includes(location);
     
     if (accountType === 'it' && !isAllowedRoute) {

@@ -39,6 +39,7 @@ import {
   users,
   restaurants,
   orders,
+  subscriptionInvoices,
 } from "@shared/schema";
 import { getPlanPricing, type SubscriptionPlan, type BusinessType } from "@shared/subscriptionPricing";
 import { ADMIN_PERMISSIONS, type PermissionSet } from "@shared/permissions";
@@ -5726,6 +5727,494 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("Error updating account status:", error);
       res.status(500).json({ error: "Failed to update account status" });
+    }
+  });
+
+  // ==========================================
+  // IT Business Management Routes
+  // ==========================================
+
+  // Get all clients with subscription details (IT-only)
+  app.get("/api/it/business-management/clients", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      // Get all restaurants with their admin user details
+      const clients = await db
+        .select({
+          restaurantId: restaurants.id,
+          restaurantName: restaurants.name,
+          businessType: restaurants.businessType,
+          type: restaurants.type,
+          subscriptionPlan: restaurants.subscriptionPlan,
+          subscriptionStatus: restaurants.subscriptionStatus,
+          subscriptionStartDate: restaurants.subscriptionStartDate,
+          subscriptionEndDate: restaurants.subscriptionEndDate,
+          branchesCount: restaurants.branchesCount,
+          nationalId: restaurants.nationalId,
+          taxNumber: restaurants.taxNumber,
+          commercialRegistration: restaurants.commercialRegistration,
+          createdAt: restaurants.createdAt,
+          // Admin user details
+          adminId: users.id,
+          adminFullName: users.fullName,
+          adminEmail: users.email,
+          adminPhone: users.phone,
+          adminUsername: users.username,
+        })
+        .from(restaurants)
+        .leftJoin(users, and(
+          eq(users.restaurantId, restaurants.id),
+          eq(users.role, 'admin')
+        ))
+        .orderBy(desc(restaurants.createdAt));
+
+      res.json(clients);
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+      res.status(500).json({ error: "Failed to fetch clients" });
+    }
+  });
+
+  // Get all subscription invoices (IT-only)
+  app.get("/api/it/business-management/invoices", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { fromDate, toDate, restaurantId } = req.query;
+
+      // Build query with optional filters
+      let query = db
+        .select({
+          id: subscriptionInvoices.id,
+          serialNumber: subscriptionInvoices.serialNumber,
+          subscriptionPlan: subscriptionInvoices.subscriptionPlan,
+          branchesCount: subscriptionInvoices.branchesCount,
+          basePlanPrice: subscriptionInvoices.basePlanPrice,
+          additionalBranchesPrice: subscriptionInvoices.additionalBranchesPrice,
+          subtotal: subscriptionInvoices.subtotal,
+          vatAmount: subscriptionInvoices.vatAmount,
+          total: subscriptionInvoices.total,
+          invoiceDate: subscriptionInvoices.invoiceDate,
+          pdfPath: subscriptionInvoices.pdfPath,
+          // User and restaurant details
+          userId: users.id,
+          userName: users.fullName,
+          userEmail: users.email,
+          restaurantId: restaurants.id,
+          restaurantName: restaurants.name,
+          taxNumber: restaurants.taxNumber,
+          commercialRegistration: restaurants.commercialRegistration,
+        })
+        .from(subscriptionInvoices)
+        .leftJoin(users, eq(subscriptionInvoices.userId, users.id))
+        .leftJoin(restaurants, eq(users.restaurantId, restaurants.id))
+        .orderBy(desc(subscriptionInvoices.invoiceDate));
+
+      const invoices = await query;
+
+      // Apply date filters in memory if provided
+      let filteredInvoices = invoices;
+      if (fromDate) {
+        const from = new Date(fromDate as string);
+        filteredInvoices = filteredInvoices.filter(inv => new Date(inv.invoiceDate!) >= from);
+      }
+      if (toDate) {
+        const to = new Date(toDate as string);
+        to.setHours(23, 59, 59, 999);
+        filteredInvoices = filteredInvoices.filter(inv => new Date(inv.invoiceDate!) <= to);
+      }
+      if (restaurantId) {
+        filteredInvoices = filteredInvoices.filter(inv => inv.restaurantId === restaurantId);
+      }
+
+      res.json(filteredInvoices);
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      res.status(500).json({ error: "Failed to fetch invoices" });
+    }
+  });
+
+  // Get VAT summary for all subscriptions (IT-only)
+  app.get("/api/it/business-management/vat-summary", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { fromDate, toDate } = req.query;
+
+      // Get all subscription invoices
+      const invoices = await db
+        .select({
+          subtotal: subscriptionInvoices.subtotal,
+          vatAmount: subscriptionInvoices.vatAmount,
+          total: subscriptionInvoices.total,
+          invoiceDate: subscriptionInvoices.invoiceDate,
+        })
+        .from(subscriptionInvoices)
+        .orderBy(desc(subscriptionInvoices.invoiceDate));
+
+      // Apply date filters
+      let filteredInvoices = invoices;
+      if (fromDate) {
+        const from = new Date(fromDate as string);
+        filteredInvoices = filteredInvoices.filter(inv => new Date(inv.invoiceDate!) >= from);
+      }
+      if (toDate) {
+        const to = new Date(toDate as string);
+        to.setHours(23, 59, 59, 999);
+        filteredInvoices = filteredInvoices.filter(inv => new Date(inv.invoiceDate!) <= to);
+      }
+
+      // Calculate totals
+      const totalSubscriptions = filteredInvoices.length;
+      const totalSubtotal = filteredInvoices.reduce((sum, inv) => sum + parseFloat(inv.subtotal || "0"), 0);
+      const totalVat = filteredInvoices.reduce((sum, inv) => sum + parseFloat(inv.vatAmount || "0"), 0);
+      const totalRevenue = filteredInvoices.reduce((sum, inv) => sum + parseFloat(inv.total || "0"), 0);
+
+      // VAT calculation verification (should be 15% of subtotal)
+      const calculatedVat = totalSubtotal * 0.15;
+
+      res.json({
+        totalSubscriptions,
+        totalSubtotal: totalSubtotal.toFixed(2),
+        totalVatCollected: totalVat.toFixed(2),
+        totalRevenue: totalRevenue.toFixed(2),
+        vatRate: "15%",
+        vatCalculationVerification: {
+          baseAmount: totalSubtotal.toFixed(2),
+          calculatedVat: calculatedVat.toFixed(2),
+          isCorrect: Math.abs(totalVat - calculatedVat) < 0.01,
+        },
+        periodStart: fromDate || null,
+        periodEnd: toDate || null,
+      });
+    } catch (error) {
+      console.error("Error calculating VAT summary:", error);
+      res.status(500).json({ error: "Failed to calculate VAT summary" });
+    }
+  });
+
+  // Generate VAT Statement PDF (IT-only)
+  app.post("/api/it/business-management/vat-statement/pdf", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      // Validate request body
+      const dateRangeSchema = z.object({
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      });
+      
+      const validatedBody = dateRangeSchema.parse(req.body);
+      const { fromDate, toDate } = validatedBody;
+
+      // Get all subscription invoices for the period
+      const invoices = await db
+        .select({
+          serialNumber: subscriptionInvoices.serialNumber,
+          subscriptionPlan: subscriptionInvoices.subscriptionPlan,
+          branchesCount: subscriptionInvoices.branchesCount,
+          subtotal: subscriptionInvoices.subtotal,
+          vatAmount: subscriptionInvoices.vatAmount,
+          total: subscriptionInvoices.total,
+          invoiceDate: subscriptionInvoices.invoiceDate,
+          userName: users.fullName,
+          restaurantName: restaurants.name,
+          taxNumber: restaurants.taxNumber,
+        })
+        .from(subscriptionInvoices)
+        .leftJoin(users, eq(subscriptionInvoices.userId, users.id))
+        .leftJoin(restaurants, eq(users.restaurantId, restaurants.id))
+        .orderBy(desc(subscriptionInvoices.invoiceDate));
+
+      // Apply date filters
+      let filteredInvoices = invoices;
+      if (fromDate) {
+        const from = new Date(fromDate);
+        filteredInvoices = filteredInvoices.filter(inv => new Date(inv.invoiceDate!) >= from);
+      }
+      if (toDate) {
+        const to = new Date(toDate);
+        to.setHours(23, 59, 59, 999);
+        filteredInvoices = filteredInvoices.filter(inv => new Date(inv.invoiceDate!) <= to);
+      }
+
+      // Calculate totals
+      const totalSubtotal = filteredInvoices.reduce((sum, inv) => sum + parseFloat(inv.subtotal || "0"), 0);
+      const totalVat = filteredInvoices.reduce((sum, inv) => sum + parseFloat(inv.vatAmount || "0"), 0);
+      const totalRevenue = filteredInvoices.reduce((sum, inv) => sum + parseFloat(inv.total || "0"), 0);
+
+      // Generate ZATCA-compliant QR code
+      const qrData = [
+        "Kinzhal LTD Co.",
+        "310000000000003", // Company VAT number
+        new Date().toISOString(),
+        totalRevenue.toFixed(2),
+        totalVat.toFixed(2)
+      ].join("|");
+      const qrCodeDataURL = await QRCode.toDataURL(qrData);
+
+      // Import Puppeteer dynamically
+      const puppeteer = await import("puppeteer");
+      const browser = await puppeteer.default.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+      const page = await browser.newPage();
+
+      // Create HTML content for VAT statement
+      const periodText = fromDate && toDate 
+        ? `${new Date(fromDate).toLocaleDateString('en-GB')} - ${new Date(toDate).toLocaleDateString('en-GB')}`
+        : 'All Time';
+
+      const invoiceRows = filteredInvoices.map((inv, idx) => `
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${inv.serialNumber}</td>
+          <td>${inv.restaurantName || 'N/A'}</td>
+          <td>${inv.taxNumber || 'N/A'}</td>
+          <td>${inv.subscriptionPlan}</td>
+          <td>${parseFloat(inv.subtotal || "0").toFixed(2)}</td>
+          <td>${parseFloat(inv.vatAmount || "0").toFixed(2)}</td>
+          <td>${parseFloat(inv.total || "0").toFixed(2)}</td>
+          <td>${new Date(inv.invoiceDate!).toLocaleDateString('en-GB')}</td>
+        </tr>
+      `).join('');
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html dir="ltr">
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; font-size: 11px; }
+            .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 15px; }
+            .header h1 { color: #1a365d; margin: 0; font-size: 20px; }
+            .header h2 { color: #2d3748; margin: 5px 0; font-size: 14px; }
+            .header p { color: #666; margin: 3px 0; font-size: 11px; }
+            .period { background: #f0f4f8; padding: 10px; margin: 15px 0; border-radius: 5px; text-align: center; }
+            table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 10px; }
+            th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+            th { background: #1a365d; color: white; }
+            tr:nth-child(even) { background: #f9f9f9; }
+            .summary { background: #e8f4e8; padding: 15px; margin-top: 20px; border-radius: 5px; }
+            .summary h3 { margin: 0 0 10px 0; color: #1a365d; }
+            .summary-row { display: flex; justify-content: space-between; padding: 5px 0; }
+            .total-row { font-weight: bold; font-size: 14px; border-top: 2px solid #333; padding-top: 10px; margin-top: 10px; }
+            .qr-section { text-align: center; margin-top: 20px; }
+            .qr-section img { width: 100px; height: 100px; }
+            .footer { text-align: center; margin-top: 30px; color: #666; font-size: 10px; border-top: 1px solid #ddd; padding-top: 10px; }
+            .zatca-badge { background: #22c55e; color: white; padding: 3px 8px; border-radius: 3px; font-size: 9px; display: inline-block; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>VAT Statement / بيان ضريبة القيمة المضافة</h1>
+            <h2>Kinzhal LTD Co. - BlindSpot System (BSS)</h2>
+            <p>VAT Registration: 310000000000003</p>
+            <span class="zatca-badge">ZATCA Compliant / متوافق مع هيئة الزكاة</span>
+          </div>
+          
+          <div class="period">
+            <strong>Statement Period / فترة البيان:</strong> ${periodText}
+            <br>
+            <strong>Generated On / تاريخ الإنشاء:</strong> ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB')}
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Invoice No. / رقم الفاتورة</th>
+                <th>Client / العميل</th>
+                <th>Tax No. / الرقم الضريبي</th>
+                <th>Plan / الخطة</th>
+                <th>Base (SAR) / الأساس</th>
+                <th>VAT 15% / الضريبة</th>
+                <th>Total (SAR) / الإجمالي</th>
+                <th>Date / التاريخ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${invoiceRows || '<tr><td colspan="9" style="text-align:center;">No invoices found / لا توجد فواتير</td></tr>'}
+            </tbody>
+          </table>
+
+          <div class="summary">
+            <h3>VAT Summary / ملخص ضريبة القيمة المضافة</h3>
+            <div class="summary-row">
+              <span>Total Subscriptions / إجمالي الاشتراكات:</span>
+              <span>${filteredInvoices.length}</span>
+            </div>
+            <div class="summary-row">
+              <span>Total Base Amount / إجمالي المبلغ الأساسي:</span>
+              <span>${totalSubtotal.toFixed(2)} SAR</span>
+            </div>
+            <div class="summary-row">
+              <span>VAT Rate / نسبة الضريبة:</span>
+              <span>15%</span>
+            </div>
+            <div class="summary-row total-row">
+              <span>Total VAT Collected / إجمالي الضريبة المحصلة:</span>
+              <span>${totalVat.toFixed(2)} SAR</span>
+            </div>
+            <div class="summary-row total-row">
+              <span>Total Revenue (incl. VAT) / إجمالي الإيرادات:</span>
+              <span>${totalRevenue.toFixed(2)} SAR</span>
+            </div>
+          </div>
+
+          <div class="qr-section">
+            <p>Scan for ZATCA Verification / امسح للتحقق من هيئة الزكاة</p>
+            <img src="${qrCodeDataURL}" alt="QR Code" />
+          </div>
+
+          <div class="footer">
+            <p>This is a computer-generated document and does not require a signature.</p>
+            <p>هذا المستند مُنشأ آلياً ولا يتطلب توقيعاً.</p>
+            <p>Made By Kinzhal LTD Co. | BlindSpot System (BSS)</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      const pdfBuffer = await page.pdf({ 
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' }
+      });
+      await browser.close();
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=VAT-Statement-${new Date().toISOString().split('T')[0]}.pdf`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error generating VAT statement PDF:", error);
+      res.status(500).json({ error: "Failed to generate VAT statement PDF" });
+    }
+  });
+
+  // Generate VAT Statement Excel (IT-only)
+  app.post("/api/it/business-management/vat-statement/excel", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      // Validate request body
+      const dateRangeSchema = z.object({
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      });
+      
+      const validatedBody = dateRangeSchema.parse(req.body);
+      const { fromDate, toDate } = validatedBody;
+      const XLSX = await import("xlsx");
+
+      // Get all subscription invoices for the period
+      const invoices = await db
+        .select({
+          serialNumber: subscriptionInvoices.serialNumber,
+          subscriptionPlan: subscriptionInvoices.subscriptionPlan,
+          branchesCount: subscriptionInvoices.branchesCount,
+          subtotal: subscriptionInvoices.subtotal,
+          vatAmount: subscriptionInvoices.vatAmount,
+          total: subscriptionInvoices.total,
+          invoiceDate: subscriptionInvoices.invoiceDate,
+          userName: users.fullName,
+          userEmail: users.email,
+          restaurantName: restaurants.name,
+          taxNumber: restaurants.taxNumber,
+          commercialRegistration: restaurants.commercialRegistration,
+        })
+        .from(subscriptionInvoices)
+        .leftJoin(users, eq(subscriptionInvoices.userId, users.id))
+        .leftJoin(restaurants, eq(users.restaurantId, restaurants.id))
+        .orderBy(desc(subscriptionInvoices.invoiceDate));
+
+      // Apply date filters
+      let filteredInvoices = invoices;
+      if (fromDate) {
+        const from = new Date(fromDate);
+        filteredInvoices = filteredInvoices.filter(inv => new Date(inv.invoiceDate!) >= from);
+      }
+      if (toDate) {
+        const to = new Date(toDate);
+        to.setHours(23, 59, 59, 999);
+        filteredInvoices = filteredInvoices.filter(inv => new Date(inv.invoiceDate!) <= to);
+      }
+
+      // Calculate totals
+      const totalSubtotal = filteredInvoices.reduce((sum, inv) => sum + parseFloat(inv.subtotal || "0"), 0);
+      const totalVat = filteredInvoices.reduce((sum, inv) => sum + parseFloat(inv.vatAmount || "0"), 0);
+      const totalRevenue = filteredInvoices.reduce((sum, inv) => sum + parseFloat(inv.total || "0"), 0);
+
+      // Prepare data for Excel
+      const excelData = filteredInvoices.map((inv, idx) => ({
+        '#': idx + 1,
+        'Invoice Number': inv.serialNumber,
+        'Client Name': inv.restaurantName || 'N/A',
+        'Client Email': inv.userEmail || 'N/A',
+        'Tax Number': inv.taxNumber || 'N/A',
+        'Commercial Registration': inv.commercialRegistration || 'N/A',
+        'Subscription Plan': inv.subscriptionPlan,
+        'Branches': inv.branchesCount,
+        'Base Amount (SAR)': parseFloat(inv.subtotal || "0"),
+        'VAT 15% (SAR)': parseFloat(inv.vatAmount || "0"),
+        'Total (SAR)': parseFloat(inv.total || "0"),
+        'Invoice Date': new Date(inv.invoiceDate!).toLocaleDateString('en-GB'),
+      }));
+
+      // Add summary rows
+      excelData.push({} as any); // Empty row
+      excelData.push({
+        '#': '',
+        'Invoice Number': 'SUMMARY / الملخص',
+        'Client Name': '',
+        'Client Email': '',
+        'Tax Number': '',
+        'Commercial Registration': '',
+        'Subscription Plan': '',
+        'Branches': '',
+        'Base Amount (SAR)': totalSubtotal,
+        'VAT 15% (SAR)': totalVat,
+        'Total (SAR)': totalRevenue,
+        'Invoice Date': '',
+      } as any);
+      excelData.push({
+        '#': '',
+        'Invoice Number': `Total Subscriptions: ${filteredInvoices.length}`,
+        'Client Name': '',
+        'Client Email': '',
+        'Tax Number': '',
+        'Commercial Registration': '',
+        'Subscription Plan': '',
+        'Branches': '',
+        'Base Amount (SAR)': '',
+        'VAT 15% (SAR)': `VAT Rate: 15%`,
+        'Total (SAR)': '',
+        'Invoice Date': '',
+      } as any);
+
+      // Create workbook
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'VAT Statement');
+
+      // Set column widths
+      worksheet['!cols'] = [
+        { wch: 5 },  // #
+        { wch: 25 }, // Invoice Number
+        { wch: 25 }, // Client Name
+        { wch: 25 }, // Client Email
+        { wch: 15 }, // Tax Number
+        { wch: 20 }, // Commercial Registration
+        { wch: 15 }, // Subscription Plan
+        { wch: 10 }, // Branches
+        { wch: 18 }, // Base Amount
+        { wch: 15 }, // VAT
+        { wch: 15 }, // Total
+        { wch: 12 }, // Invoice Date
+      ];
+
+      // Generate buffer
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename=VAT-Statement-${new Date().toISOString().split('T')[0]}.xlsx`);
+      res.send(buffer);
+    } catch (error) {
+      console.error("Error generating VAT statement Excel:", error);
+      res.status(500).json({ error: "Failed to generate VAT statement Excel" });
     }
   });
 
