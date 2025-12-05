@@ -6489,6 +6489,148 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Delete subscription with optional refund clearance invoice (IT-only)
+  app.delete("/api/it/business-management/subscriptions/:restaurantId", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { restaurantId } = req.params;
+      const { reason } = req.body as { reason: "mistake" | "client_request" };
+
+      if (!reason || !["mistake", "client_request"].includes(reason)) {
+        return res.status(400).json({ error: "Invalid reason. Must be 'mistake' or 'client_request'" });
+      }
+
+      // Get restaurant with owner info
+      const restaurant = await db
+        .select({
+          id: restaurants.id,
+          name: restaurants.name,
+          businessType: restaurants.businessType,
+          subscriptionPlan: restaurants.subscriptionPlan,
+          subscriptionStartDate: restaurants.subscriptionStartDate,
+          subscriptionEndDate: restaurants.subscriptionEndDate,
+          taxNumber: restaurants.taxNumber,
+          commercialRegistration: restaurants.commercialRegistration,
+          ownerId: restaurants.ownerId,
+        })
+        .from(restaurants)
+        .where(eq(restaurants.id, restaurantId))
+        .limit(1);
+
+      if (!restaurant[0]) {
+        return res.status(404).json({ error: "Restaurant not found" });
+      }
+
+      const rest = restaurant[0];
+
+      // Get owner details
+      let ownerInfo = { fullName: "Unknown", email: "unknown@email.com" };
+      if (rest.ownerId) {
+        const owner = await db
+          .select({ fullName: users.fullName, email: users.email })
+          .from(users)
+          .where(eq(users.id, rest.ownerId))
+          .limit(1);
+        if (owner[0]) {
+          ownerInfo = { fullName: owner[0].fullName || "Unknown", email: owner[0].email };
+        }
+      }
+
+      // Get business info for invoice
+      const businessInfoResult = await db.select().from(businessInfo).limit(1);
+      const bi = businessInfoResult[0] || null;
+
+      let pdfBase64: string | null = null;
+      let refundAmount = 0;
+
+      if (reason === "client_request" && rest.subscriptionPlan && rest.subscriptionStartDate) {
+        // Import pricing functions
+        const { getPlanPricing } = await import("@shared/subscriptionPricing");
+        
+        const subscriptionStartDate = new Date(rest.subscriptionStartDate);
+        const cancellationDate = new Date();
+        
+        // Calculate months used (round up to full months)
+        const monthsUsed = Math.ceil(
+          (cancellationDate.getTime() - subscriptionStartDate.getTime()) / 
+          (30 * 24 * 60 * 60 * 1000)
+        );
+
+        // Get plan pricing
+        const businessType = (rest.businessType === 'factory' ? 'factory' : 'restaurant') as 'restaurant' | 'factory';
+        const planType = rest.subscriptionPlan as 'weekly' | 'monthly' | 'yearly';
+        const pricing = getPlanPricing(planType, 1, businessType);
+        
+        // Calculate monthly rate based on plan
+        let monthlyRate = 199;  // Fixed monthly rate for early cancellation
+        let originalPrice = pricing.grossAmount;
+        
+        if (planType === 'monthly') {
+          monthlyRate = originalPrice;
+        } else if (planType === 'weekly') {
+          monthlyRate = originalPrice * 4; // Approximate monthly from weekly
+        }
+        // For yearly plans, use the fixed 199 SAR monthly rate
+
+        const chargedAmount = monthlyRate * Math.min(monthsUsed, 12);
+        refundAmount = Math.max(0, originalPrice - chargedAmount);
+
+        // Generate serial number
+        const currentYear = new Date().getFullYear();
+        const countResult = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(subscriptionInvoices)
+          .where(sql`EXTRACT(YEAR FROM ${subscriptionInvoices.invoiceDate}) = ${currentYear}`);
+        const sequenceNumber = (countResult[0]?.count || 0) + 1;
+        const serialNumber = `RC-${currentYear}-${String(sequenceNumber).padStart(6, '0')}`;
+
+        // Generate refund clearance PDF
+        const { generateRefundClearanceInvoice } = await import("./invoice");
+        const pdfBuffer = await generateRefundClearanceInvoice({
+          serialNumber,
+          clientName: ownerInfo.fullName,
+          clientEmail: ownerInfo.email,
+          restaurantName: rest.name,
+          taxNumber: rest.taxNumber,
+          commercialRegistration: rest.commercialRegistration,
+          subscriptionPlan: rest.subscriptionPlan,
+          subscriptionStartDate,
+          cancellationDate,
+          monthsUsed: Math.min(monthsUsed, 12),
+          originalPrice,
+          monthlyRate,
+          chargedAmount,
+          refundAmount,
+          businessInfo: bi,
+        });
+
+        pdfBase64 = pdfBuffer.toString('base64');
+        console.log(`[IT] Refund clearance invoice generated for restaurant ${restaurantId}: ${serialNumber}`);
+      }
+
+      // Update subscription status to cancelled
+      await db
+        .update(restaurants)
+        .set({ subscriptionStatus: 'cancelled' })
+        .where(eq(restaurants.id, restaurantId));
+
+      console.log(`[IT] Subscription deleted for restaurant ${restaurantId}, reason: ${reason}`);
+
+      res.json({
+        success: true,
+        restaurantId,
+        reason,
+        refundAmount,
+        pdfBase64,
+        message: reason === 'client_request' 
+          ? 'Subscription cancelled with refund clearance invoice generated'
+          : 'Subscription cancelled (mistake entry)'
+      });
+    } catch (error) {
+      console.error("Error deleting subscription:", error);
+      res.status(500).json({ error: "Failed to delete subscription" });
+    }
+  });
+
   // ============================================
   // BUSINESS OPERATIONS - Company Bills CRUD (IT-only)
   // ============================================

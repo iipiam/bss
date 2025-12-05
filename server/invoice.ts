@@ -2930,6 +2930,561 @@ export async function generateBssAnalysisStatementPDF(data: BssAnalysisStatement
   }
 }
 
+// Generate Refund Clearance Invoice for subscription cancellations
+interface RefundClearanceData {
+  serialNumber: string;
+  clientName: string;
+  clientEmail: string;
+  restaurantName: string;
+  taxNumber: string | null;
+  commercialRegistration: string | null;
+  subscriptionPlan: string;
+  subscriptionStartDate: Date;
+  cancellationDate: Date;
+  monthsUsed: number;
+  originalPrice: number;
+  monthlyRate: number;
+  chargedAmount: number;
+  refundAmount: number;
+  businessInfo?: {
+    companyNameEn?: string | null;
+    companyNameAr?: string | null;
+    vatNumber?: string | null;
+    crNumber?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    addressEn?: string | null;
+    addressAr?: string | null;
+  } | null;
+}
+
+export async function generateRefundClearanceInvoice(data: RefundClearanceData): Promise<Buffer> {
+  const bi = data.businessInfo || {};
+  const companyNameEn = bi.companyNameEn || "BlindSpot System (BSS)";
+  const companyNameAr = bi.companyNameAr || "نظام بلايند سبوت";
+  const companyEmail = bi.email || "IT@SaudiKinzhal.org";
+  const companyPhone = bi.phone || "";
+  const companyAddressEn = bi.addressEn || "Saudi Arabia";
+  const companyAddressAr = bi.addressAr || "المملكة العربية السعودية";
+  const companyVatNumber = bi.vatNumber || "";
+  const companyCrNumber = bi.crNumber || "";
+
+  const qrData = `Refund Clearance: ${data.serialNumber}\nDate: ${data.cancellationDate.toLocaleDateString('en-GB')}\nRefund: ${data.refundAmount.toFixed(2)} SAR`;
+  const qrCodeDataURL = await QRCode.toDataURL(qrData, { width: 120, margin: 1 });
+
+  const planNames: Record<string, { en: string; ar: string }> = {
+    weekly: { en: "Weekly Plan", ar: "الخطة الأسبوعية" },
+    monthly: { en: "Monthly Plan", ar: "الخطة الشهرية" },
+    yearly: { en: "Annual Plan", ar: "الخطة السنوية" },
+  };
+
+  const planName = planNames[data.subscriptionPlan] || { en: data.subscriptionPlan, ar: data.subscriptionPlan };
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', 'Cairo', sans-serif;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #1a1a1a;
+      background: white;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 20px;
+      border-bottom: 3px solid #dc2626;
+      margin-bottom: 20px;
+    }
+
+    .header-left {
+      flex: 1;
+    }
+
+    .header-right {
+      flex: 1;
+      text-align: right;
+      direction: rtl;
+    }
+
+    .company-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1e40af;
+      margin-bottom: 4px;
+    }
+
+    .company-info {
+      font-size: 10px;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+
+    .document-title {
+      text-align: center;
+      margin: 20px 0;
+      padding: 15px;
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      color: white;
+      border-radius: 8px;
+    }
+
+    .document-title h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .document-title h2 {
+      font-size: 18px;
+      font-weight: 600;
+      direction: rtl;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e40af;
+      margin-bottom: 10px;
+      padding-bottom: 5px;
+      border-bottom: 2px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .section-title-ar {
+      direction: rtl;
+      color: #374151;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .info-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .info-table .label {
+      font-weight: 600;
+      color: #374151;
+      width: 40%;
+    }
+
+    .info-table .value {
+      color: #1a1a1a;
+    }
+
+    .calculation-box {
+      background: #fef2f2;
+      border: 2px solid #dc2626;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .calculation-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #dc2626;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .calculation-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .calculation-table th {
+      padding: 10px;
+      text-align: left;
+      font-weight: 600;
+      background: #fecaca;
+      border: 1px solid #dc2626;
+    }
+
+    .calculation-table th.ar {
+      text-align: right;
+      direction: rtl;
+    }
+
+    .calculation-table td {
+      padding: 10px;
+      border: 1px solid #fca5a5;
+    }
+
+    .calculation-table td.value {
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .calculation-table tr.total {
+      background: #dc2626;
+      color: white;
+    }
+
+    .calculation-table tr.total td {
+      font-weight: 700;
+      font-size: 14px;
+      border-color: #dc2626;
+    }
+
+    .refund-highlight {
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .refund-highlight .label {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .refund-highlight .amount {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .qr-section {
+      text-align: center;
+    }
+
+    .qr-code {
+      width: 100px;
+      height: 100px;
+    }
+
+    .qr-label {
+      font-size: 9px;
+      color: #6b7280;
+      margin-top: 5px;
+    }
+
+    .footer-text {
+      text-align: center;
+      font-size: 10px;
+      color: #6b7280;
+      margin-top: 20px;
+    }
+
+    .zatca-badge {
+      display: inline-block;
+      background: #16a34a;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .signature-section {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+    }
+
+    .signature-box {
+      width: 45%;
+      text-align: center;
+    }
+
+    .signature-line {
+      border-top: 1px solid #1a1a1a;
+      margin-top: 40px;
+      padding-top: 5px;
+      font-size: 11px;
+      color: #374151;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-left">
+        <div class="company-name">${escapeHtml(companyNameEn)}</div>
+        <div class="company-info">
+          ${companyVatNumber ? `VAT: ${escapeHtml(companyVatNumber)}<br>` : ''}
+          ${companyCrNumber ? `CR: ${escapeHtml(companyCrNumber)}<br>` : ''}
+          ${companyEmail ? `${escapeHtml(companyEmail)}<br>` : ''}
+          ${companyPhone ? `${escapeHtml(companyPhone)}<br>` : ''}
+          ${escapeHtml(companyAddressEn)}
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="company-name" style="color: #1e40af;">${escapeHtml(companyNameAr)}</div>
+        <div class="company-info">
+          ${companyVatNumber ? `الرقم الضريبي: ${escapeHtml(companyVatNumber)}<br>` : ''}
+          ${companyCrNumber ? `السجل التجاري: ${escapeHtml(companyCrNumber)}<br>` : ''}
+          ${escapeHtml(companyAddressAr)}
+        </div>
+      </div>
+    </div>
+
+    <div class="document-title">
+      <h1>REFUND CLEARANCE INVOICE</h1>
+      <h2>فاتورة تصفية استرداد</h2>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span>Document Information</span>
+        <span class="section-title-ar">معلومات المستند</span>
+      </div>
+      <div class="info-grid">
+        <table class="info-table">
+          <tr>
+            <td class="label">Document No.</td>
+            <td class="value">${escapeHtml(data.serialNumber)}</td>
+          </tr>
+          <tr>
+            <td class="label">Issue Date</td>
+            <td class="value">${data.cancellationDate.toLocaleDateString('en-GB')}</td>
+          </tr>
+        </table>
+        <table class="info-table" style="direction: rtl;">
+          <tr>
+            <td class="label">رقم المستند</td>
+            <td class="value">${escapeHtml(data.serialNumber)}</td>
+          </tr>
+          <tr>
+            <td class="label">تاريخ الإصدار</td>
+            <td class="value">${data.cancellationDate.toLocaleDateString('ar-SA')}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span>Client Information</span>
+        <span class="section-title-ar">معلومات العميل</span>
+      </div>
+      <div class="info-grid">
+        <table class="info-table">
+          <tr>
+            <td class="label">Client Name</td>
+            <td class="value">${escapeHtml(data.clientName)}</td>
+          </tr>
+          <tr>
+            <td class="label">Restaurant</td>
+            <td class="value">${escapeHtml(data.restaurantName)}</td>
+          </tr>
+          <tr>
+            <td class="label">Email</td>
+            <td class="value">${escapeHtml(data.clientEmail)}</td>
+          </tr>
+          ${data.taxNumber ? `<tr><td class="label">Tax Number</td><td class="value">${escapeHtml(data.taxNumber)}</td></tr>` : ''}
+          ${data.commercialRegistration ? `<tr><td class="label">CR Number</td><td class="value">${escapeHtml(data.commercialRegistration)}</td></tr>` : ''}
+        </table>
+        <table class="info-table" style="direction: rtl;">
+          <tr>
+            <td class="label">اسم العميل</td>
+            <td class="value">${escapeHtml(data.clientName)}</td>
+          </tr>
+          <tr>
+            <td class="label">المطعم</td>
+            <td class="value">${escapeHtml(data.restaurantName)}</td>
+          </tr>
+          <tr>
+            <td class="label">البريد الإلكتروني</td>
+            <td class="value">${escapeHtml(data.clientEmail)}</td>
+          </tr>
+          ${data.taxNumber ? `<tr><td class="label">الرقم الضريبي</td><td class="value">${escapeHtml(data.taxNumber)}</td></tr>` : ''}
+          ${data.commercialRegistration ? `<tr><td class="label">السجل التجاري</td><td class="value">${escapeHtml(data.commercialRegistration)}</td></tr>` : ''}
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span>Subscription Details</span>
+        <span class="section-title-ar">تفاصيل الاشتراك</span>
+      </div>
+      <div class="info-grid">
+        <table class="info-table">
+          <tr>
+            <td class="label">Plan Type</td>
+            <td class="value">${escapeHtml(planName.en)}</td>
+          </tr>
+          <tr>
+            <td class="label">Start Date</td>
+            <td class="value">${data.subscriptionStartDate.toLocaleDateString('en-GB')}</td>
+          </tr>
+          <tr>
+            <td class="label">Cancellation Date</td>
+            <td class="value">${data.cancellationDate.toLocaleDateString('en-GB')}</td>
+          </tr>
+          <tr>
+            <td class="label">Months Used</td>
+            <td class="value">${data.monthsUsed} months</td>
+          </tr>
+        </table>
+        <table class="info-table" style="direction: rtl;">
+          <tr>
+            <td class="label">نوع الخطة</td>
+            <td class="value">${escapeHtml(planName.ar)}</td>
+          </tr>
+          <tr>
+            <td class="label">تاريخ البداية</td>
+            <td class="value">${data.subscriptionStartDate.toLocaleDateString('ar-SA')}</td>
+          </tr>
+          <tr>
+            <td class="label">تاريخ الإلغاء</td>
+            <td class="value">${data.cancellationDate.toLocaleDateString('ar-SA')}</td>
+          </tr>
+          <tr>
+            <td class="label">الأشهر المستخدمة</td>
+            <td class="value">${data.monthsUsed} أشهر</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="calculation-box">
+      <div class="calculation-title">
+        Refund Calculation / حساب الاسترداد
+      </div>
+      <table class="calculation-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th class="ar">الوصف</th>
+            <th style="text-align: center;">Amount (SAR)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Original Subscription Fee</td>
+            <td style="direction: rtl; text-align: right;">رسوم الاشتراك الأصلية</td>
+            <td class="value">${data.originalPrice.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td>Monthly Rate</td>
+            <td style="direction: rtl; text-align: right;">السعر الشهري</td>
+            <td class="value">${data.monthlyRate.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td>Months Used (${data.monthsUsed} × ${data.monthlyRate.toFixed(2)})</td>
+            <td style="direction: rtl; text-align: right;">(${data.monthsUsed} × ${data.monthlyRate.toFixed(2)}) الأشهر المستخدمة</td>
+            <td class="value">${data.chargedAmount.toFixed(2)}</td>
+          </tr>
+          <tr class="total">
+            <td>REFUND AMOUNT</td>
+            <td style="direction: rtl; text-align: right;">مبلغ الاسترداد</td>
+            <td class="value">${data.refundAmount.toFixed(2)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="refund-highlight">
+      <div class="label">Total Refund Amount / إجمالي مبلغ الاسترداد</div>
+      <div class="amount">${data.refundAmount.toFixed(2)} SAR</div>
+    </div>
+
+    <div class="signature-section">
+      <div class="signature-box">
+        <div class="signature-line">
+          Authorized Signature / التوقيع المعتمد
+        </div>
+      </div>
+      <div class="signature-box">
+        <div class="signature-line">
+          Client Signature / توقيع العميل
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="qr-section">
+        <img src="${qrCodeDataURL}" alt="QR Code" class="qr-code">
+        <div class="qr-label">Scan for verification</div>
+      </div>
+      <div style="text-align: center; flex: 1;">
+        <div class="zatca-badge">ZATCA COMPLIANT | متوافق مع الزكاة</div>
+        <div class="footer-text">
+          This document is generated electronically and is valid without signature.<br>
+          هذا المستند تم إنشاؤه إلكترونياً وهو صالح بدون توقيع.<br>
+          ${escapeHtml(companyNameEn)} | ${escapeHtml(companyAddressEn)}
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+
+  try {
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '10mm',
+        right: '10mm',
+        bottom: '10mm',
+        left: '10mm'
+      }
+    });
+
+    console.log('[RefundClearance] PDF generated successfully');
+    return Buffer.from(pdfBuffer);
+  } finally {
+    await page.close();
+  }
+}
+
 // Cleanup function for graceful shutdown
 export async function closeBrowser(): Promise<void> {
   if (browserInstance) {

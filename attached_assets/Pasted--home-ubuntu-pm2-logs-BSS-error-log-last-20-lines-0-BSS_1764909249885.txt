@@ -1,0 +1,48 @@
+/home/ubuntu/.pm2/logs/BSS-error.log last 20 lines:
+0|BSS      |     at node:internal/main/run_main_module:28:49 {
+0|BSS      |   code: 'MODULE_NOT_FOUND',
+0|BSS      |   requireStack: []
+0|BSS      | }
+0|BSS      | Error: Cannot find module '/home/BSS/dist/index.js'
+0|BSS      |     at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+0|BSS      |     at Module._load (node:internal/modules/cjs/loader:1038:27)
+0|BSS      |     at Object.<anonymous> (/usr/lib/node_modules/pm2/lib/ProcessContainerFork.js:33:23)
+0|BSS      |     at Module._compile (node:internal/modules/cjs/loader:1521:14)
+0|BSS      |     at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+0|BSS      |     at Module.load (node:internal/modules/cjs/loader:1266:32)
+0|BSS      |     at Module._load (node:internal/modules/cjs/loader:1091:12)
+0|BSS      |     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+0|BSS      |     at node:internal/main/run_main_module:28:49 {
+0|BSS      |   code: 'MODULE_NOT_FOUND',
+0|BSS      |   requireStack: []
+0|BSS      | }
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+
+/home/ubuntu/.pm2/logs/BSS-out.log last 20 lines:
+0|BSS      | 4:25:57 AM [express] GET /api/it/business-management/invoices// 304 in 169ms
+0|BSS      | 4:25:57 AM [express] GET /api/it/business-management/vat-summary// 304 in 164ms
+0|BSS      | 4:25:57 AM [express] GET /api/it/business-operations/summary// 304 in 170ms
+0|BSS      | 4:25:57 AM [express] GET /api/it/bss-analysis/overview// 304 in 172ms
+0|BSS      | ✅ Production mode: SSL enabled for AWS RDS
+0|BSS      | 4:29:18 AM [express] serving on port 5000
+0|BSS      | [WebSocket] Client connected: user=a45a3619-1d88-483e-871e-07351b525e07, restaurant=undefined, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | 4:30:37 AM [express] GET /api/auth/me 200 in 1475ms :: {"user":{"id":"a45a3619-1d88-483e-871e-07351b…
+0|BSS      | 4:30:37 AM [express] GET /api/branches 403 in 174ms :: {"error":"This endpoint requires a restaurant…
+0|BSS      | 4:30:37 AM [express] GET /api/it/business-management/invoices// 200 in 165ms
+0|BSS      | 4:30:38 AM [express] GET /api/it/bss-analysis/overview// 200 in 175ms
+0|BSS      | 4:30:39 AM [express] GET /api/it/business-management/vat-summary// 200 in 164ms
+0|BSS      | 4:30:39 AM [express] GET /api/settings 403 in 1304ms :: {"error":"This endpoint requires a restauran…
+0|BSS      | [WebSocket] Client connected: user=a45a3619-1d88-483e-871e-07351b525e07, restaurant=undefined, conversations=0
+0|BSS      | 4:30:39 AM [express] GET /api/it/bss-analysis/revenue-trends 304 in 679ms :: [{"month":"2025-01","re…
+0|BSS      | 4:30:39 AM [express] GET /api/it/business-operations/summary// 200 in 173ms
+0|BSS      | 4:30:39 AM [express] GET /api/it/business-management/clients 304 in 1503ms :: [{"restaurantId":"1ef5…
+0|BSS      | 4:30:39 AM [express] GET /api/it/business-operations/bills 304 in 348ms :: [{"id":"e77fcb23-f935-45d…
+0|BSS      | 4:30:40 AM [express] GET /api/it/business-info 304 in 334ms :: {"id":"61de6beb-4449-4c20-9f76-3c4bed…
+
+0|BSS  | ✅ Production mode: SSL enabled for AWS RDS
+0|BSS  | 4:32:34 AM [express] serving on port 5000
+0|BSS  | [WebSocket] Client connected: user=a45a3619-1d88-483e-871e-07351b525e07, restaurant=undefined, conversations=0
+

@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { 
@@ -353,6 +354,9 @@ export default function BusinessManagement() {
 
   // Add Bill Dialog State
   const [isAddBillDialogOpen, setIsAddBillDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  const [deleteReason, setDeleteReason] = useState<"mistake" | "client_request">("mistake");
   const [newBillForm, setNewBillForm] = useState({
     billType: "rent" as "salaries" | "rent" | "utilities" | "software" | "marketing" | "equipment" | "internet" | "maintenance" | "legal" | "insurance" | "other",
     vendor: "",
@@ -593,6 +597,85 @@ export default function BusinessManagement() {
       });
     },
   });
+
+  const deleteSubscriptionMutation = useMutation({
+    mutationFn: async ({ restaurantId, reason }: { restaurantId: string; reason: "mistake" | "client_request" }) => {
+      const response = await fetch(`/api/it/business-management/subscriptions/${restaurantId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ reason }),
+      });
+      if (!response.ok) throw new Error('Failed to delete subscription');
+      const data = await response.json();
+      return { ...data, reason };
+    },
+    onSuccess: (result) => {
+      if (result.pdfBase64 && result.reason === 'client_request') {
+        const byteCharacters = atob(result.pdfBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Refund-Clearance-${result.restaurantId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast({
+          title: t.success || "Success",
+          description: t.subscriptionDeletedWithRefund || "Subscription deleted and refund clearance invoice downloaded",
+        });
+      } else {
+        toast({
+          title: t.success || "Success",
+          description: t.subscriptionDeleted || "Subscription deleted successfully",
+        });
+      }
+      refetchClients();
+      refetchInvoices();
+      setDeleteDialogOpen(false);
+      setClientToDelete(null);
+      setDeleteReason("mistake");
+    },
+    onError: () => {
+      toast({
+        title: t.error || "Error",
+        description: "Failed to delete subscription",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const calculateRefundPreview = (client: Client) => {
+    if (!client.subscriptionStartDate || !client.subscriptionPlan) return null;
+    
+    const startDate = new Date(client.subscriptionStartDate);
+    const now = new Date();
+    const msPerMonth = 30.44 * 24 * 60 * 60 * 1000;
+    const monthsUsed = Math.ceil((now.getTime() - startDate.getTime()) / msPerMonth);
+    
+    let yearlyPrice = 1990;
+    if (client.subscriptionPlan === "premium") yearlyPrice = 2990;
+    if (client.subscriptionPlan === "enterprise") yearlyPrice = 4990;
+    
+    const monthlyRate = 199;  // Fixed monthly rate for early cancellation
+    const chargedAmount = monthlyRate * monthsUsed;
+    const refundAmount = Math.max(0, yearlyPrice - chargedAmount);
+    
+    return {
+      yearlyPrice,
+      monthlyRate,
+      monthsUsed,
+      chargedAmount,
+      refundAmount
+    };
+  };
 
   useEffect(() => {
     if (!authLoading && accountType && accountType !== 'it') {
@@ -977,6 +1060,23 @@ export default function BusinessManagement() {
                                   <span className="ml-1 hidden md:inline">{t.activate || "Activate"}</span>
                                 </Button>
                               )}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setClientToDelete(client);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                disabled={deleteSubscriptionMutation.isPending}
+                                className="text-red-600 hover:text-red-700"
+                                data-testid={`button-delete-${client.restaurantId}`}
+                              >
+                                {deleteSubscriptionMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -2057,6 +2157,122 @@ export default function BusinessManagement() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Delete Subscription Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={(open) => {
+        setDeleteDialogOpen(open);
+        if (!open) {
+          setClientToDelete(null);
+          setDeleteReason("mistake");
+        }
+      }}>
+        <DialogContent className="max-w-md" data-testid="dialog-delete-subscription">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">{t.deleteSubscription || "Delete Subscription"}</DialogTitle>
+            <DialogDescription>
+              {clientToDelete && (
+                <span className="font-medium">{clientToDelete.restaurantName}</span>
+              )}
+              <br />
+              {t.deleteSubscriptionConfirm || "Are you sure you want to delete this subscription?"}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>{t.deletionReason || "Deletion Reason"}</Label>
+              <RadioGroup 
+                value={deleteReason} 
+                onValueChange={(value) => setDeleteReason(value as "mistake" | "client_request")}
+                data-testid="radio-delete-reason"
+              >
+                <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <RadioGroupItem value="mistake" id="mistake" data-testid="radio-mistake" />
+                  <div className="space-y-1 leading-none">
+                    <Label htmlFor="mistake" className="cursor-pointer font-medium">
+                      {t.mistakeSubscription || "Mistake Subscription"}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t.mistakeSubscriptionDesc || "This was entered by mistake - no refund needed"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <RadioGroupItem value="client_request" id="client_request" data-testid="radio-client-request" />
+                  <div className="space-y-1 leading-none">
+                    <Label htmlFor="client_request" className="cursor-pointer font-medium">
+                      {t.clientRequest || "By Client Request"}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t.clientRequestDesc || "Client requested cancellation - generate refund clearance"}
+                    </p>
+                  </div>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {deleteReason === "client_request" && clientToDelete && (() => {
+              const preview = calculateRefundPreview(clientToDelete);
+              if (!preview) return null;
+              return (
+                <div className="rounded-lg border bg-muted/50 p-4 space-y-3" data-testid="refund-preview">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <Calculator className="h-4 w-4" />
+                    {t.refundCalculation || "Refund Calculation"}
+                  </h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="text-muted-foreground">{t.originalSubscriptionFee || "Original Subscription Fee"}:</div>
+                    <div className="font-medium text-right">{preview.yearlyPrice.toLocaleString()} SAR</div>
+                    
+                    <div className="text-muted-foreground">{t.monthlyRate || "Monthly Rate"}:</div>
+                    <div className="font-medium text-right">{preview.monthlyRate.toLocaleString()} SAR</div>
+                    
+                    <div className="text-muted-foreground">{t.monthsUsed || "Months Used"}:</div>
+                    <div className="font-medium text-right">{preview.monthsUsed}</div>
+                    
+                    <div className="text-muted-foreground">{t.chargedAmount || "Charged Amount"}:</div>
+                    <div className="font-medium text-right">{preview.chargedAmount.toLocaleString()} SAR</div>
+                    
+                    <div className="border-t pt-2 font-semibold text-green-600">{t.refundAmount || "Refund Amount"}:</div>
+                    <div className="border-t pt-2 font-bold text-right text-green-600">{preview.refundAmount.toLocaleString()} SAR</div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleteSubscriptionMutation.isPending}
+              data-testid="button-cancel-delete"
+            >
+              {t.cancel || "Cancel"}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (clientToDelete) {
+                  deleteSubscriptionMutation.mutate({
+                    restaurantId: clientToDelete.restaurantId,
+                    reason: deleteReason
+                  });
+                }
+              }}
+              disabled={deleteSubscriptionMutation.isPending}
+              data-testid="button-confirm-delete"
+            >
+              {deleteSubscriptionMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              {t.confirmDeleteBtn || "Confirm Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

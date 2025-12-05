@@ -1035,6 +1035,22 @@ export interface Translations {
   unarchive: string;
   archive: string;
   somethingWentWrong: string;
+  deleteSubscription: string;
+  deleteSubscriptionConfirm: string;
+  mistakeSubscription: string;
+  mistakeSubscriptionDesc: string;
+  clientRequest: string;
+  clientRequestDesc: string;
+  deletionReason: string;
+  refundCalculation: string;
+  originalSubscriptionFee: string;
+  monthlyRate: string;
+  monthsUsed: string;
+  chargedAmount: string;
+  refundAmount: string;
+  confirmDeleteBtn: string;
+  subscriptionDeleted: string;
+  subscriptionDeletedWithRefund: string;
   
   // Toast Messages & Notifications
   procurementCreated: string;
@@ -2411,6 +2427,22 @@ export const translations: Record<Language, Translations> = {
     unarchive: 'Unarchive',
     archive: 'Archive',
     somethingWentWrong: 'Something went wrong',
+    deleteSubscription: 'Delete Subscription',
+    deleteSubscriptionConfirm: 'Are you sure you want to delete this subscription?',
+    mistakeSubscription: 'Mistake Subscription',
+    mistakeSubscriptionDesc: 'This was entered by mistake - no refund needed',
+    clientRequest: 'By Client Request',
+    clientRequestDesc: 'Client requested cancellation - generate refund clearance',
+    deletionReason: 'Deletion Reason',
+    refundCalculation: 'Refund Calculation',
+    originalSubscriptionFee: 'Original Subscription Fee',
+    monthlyRate: 'Monthly Rate',
+    monthsUsed: 'Months Used',
+    chargedAmount: 'Charged Amount',
+    refundAmount: 'Refund Amount',
+    confirmDeleteBtn: 'Confirm Delete',
+    subscriptionDeleted: 'Subscription deleted successfully',
+    subscriptionDeletedWithRefund: 'Subscription deleted and refund clearance invoice downloaded',
     
     // Toast Messages & Notifications
     procurementCreated: 'Procurement item created successfully',
@@ -3787,6 +3819,22 @@ export const translations: Record<Language, Translations> = {
     unarchive: 'إلغاء الأرشفة',
     archive: 'أرشفة',
     somethingWentWrong: 'حدث خطأ ما',
+    deleteSubscription: 'حذف الاشتراك',
+    deleteSubscriptionConfirm: 'هل أنت متأكد من حذف هذا الاشتراك؟',
+    mistakeSubscription: 'الاشتراك خاطئ',
+    mistakeSubscriptionDesc: 'تم إدخاله بالخطأ - لا يوجد استرداد',
+    clientRequest: 'بطلب من العميل',
+    clientRequestDesc: 'العميل طلب الإلغاء - إنشاء فاتورة تصفية استرداد',
+    deletionReason: 'سبب الحذف',
+    refundCalculation: 'حساب الاسترداد',
+    originalSubscriptionFee: 'رسوم الاشتراك الأصلية',
+    monthlyRate: 'السعر الشهري',
+    monthsUsed: 'الأشهر المستخدمة',
+    chargedAmount: 'المبلغ المحصل',
+    refundAmount: 'مبلغ الاسترداد',
+    confirmDeleteBtn: 'تأكيد الحذف',
+    subscriptionDeleted: 'تم حذف الاشتراك بنجاح',
+    subscriptionDeletedWithRefund: 'تم حذف الاشتراك وتنزيل فاتورة تصفية الاسترداد',
     
     // Toast Messages & Notifications
     procurementCreated: 'تم إنشاء عنصر المشتريات بنجاح',
