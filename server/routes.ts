@@ -5901,10 +5901,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // IT Business Management Routes
   // ==========================================
 
-  // Get all clients with subscription details (IT-only)
+  // Get all clients with subscription details (IT-only) - exclude cancelled accounts (those appear in Archive)
   app.get("/api/it/business-management/clients", requireAuth, requireITAccount, async (req, res) => {
     try {
-      // Get all restaurants with their admin user details
+      // Get all restaurants with their admin user details (excluding cancelled subscriptions)
       const clients = await db
         .select({
           restaurantId: restaurants.id,
@@ -5932,6 +5932,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           eq(users.restaurantId, restaurants.id),
           eq(users.role, 'admin')
         ))
+        .where(sql`${restaurants.subscriptionStatus} != 'cancelled' OR ${restaurants.subscriptionStatus} IS NULL`)
         .orderBy(desc(restaurants.createdAt));
 
       res.json(clients);
