@@ -5737,6 +5737,68 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Get archived (cancelled) accounts for IT management
+  app.get("/api/it/archived-accounts", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      // Get all cancelled accounts with their details
+      const archivedAccounts = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          fullName: users.fullName,
+          email: users.email,
+          phone: users.phone,
+          role: users.role,
+          restaurantId: users.restaurantId,
+          restaurantName: restaurants.name,
+          businessType: restaurants.businessType,
+          subscriptionPlan: restaurants.subscriptionPlan,
+          subscriptionStartDate: restaurants.subscriptionStartDate,
+          subscriptionEndDate: restaurants.subscriptionEndDate,
+          subscriptionCancelledAt: restaurants.subscriptionCancelledAt,
+          cancellationReason: restaurants.cancellationReason,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .leftJoin(restaurants, eq(users.restaurantId, restaurants.id))
+        .where(and(
+          isNotNull(users.restaurantId),
+          eq(restaurants.subscriptionStatus, 'cancelled')
+        ))
+        .orderBy(desc(restaurants.subscriptionCancelledAt));
+
+      // Get refund invoices for each archived account
+      const archivedWithRefunds = await Promise.all(
+        archivedAccounts.map(async (account) => {
+          if (!account.restaurantId) return { ...account, refundInvoice: null };
+          
+          const [refundInvoice] = await db
+            .select({
+              id: refundInvoices.id,
+              serialNumber: refundInvoices.serialNumber,
+              refundAmount: refundInvoices.refundAmount,
+              monthsUsed: refundInvoices.monthsUsed,
+              originalPrice: refundInvoices.originalPrice,
+              chargedAmount: refundInvoices.chargedAmount,
+              cancellationDate: refundInvoices.cancellationDate,
+              pdfData: refundInvoices.pdfData,
+            })
+            .from(refundInvoices)
+            .where(eq(refundInvoices.restaurantId, account.restaurantId))
+            .orderBy(desc(refundInvoices.createdAt))
+            .limit(1);
+          
+          return { ...account, refundInvoice: refundInvoice || null };
+        })
+      );
+
+      res.json(archivedWithRefunds);
+    } catch (error) {
+      console.error("Error fetching archived accounts:", error);
+      res.status(500).json({ error: "Failed to fetch archived accounts" });
+    }
+  });
+
   // Get account password (IT-only, for viewing encrypted passwords)
   app.get("/api/it/accounts/:id/password", requireAuth, requireITAccount, async (req, res) => {
     try {
@@ -6713,10 +6775,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         console.log(`[IT] Refund clearance invoice saved: ${serialNumber} for restaurant ${restaurantId}`);
       }
 
-      // Update subscription status to cancelled
+      // Update subscription status to cancelled with reason
       await db
         .update(restaurants)
-        .set({ subscriptionStatus: 'cancelled' })
+        .set({ 
+          subscriptionStatus: 'cancelled',
+          subscriptionCancelledAt: new Date(),
+          cancellationReason: reason
+        })
         .where(eq(restaurants.id, restaurantId));
 
       console.log(`[IT] Subscription deleted for restaurant ${restaurantId}, reason: ${reason}`);

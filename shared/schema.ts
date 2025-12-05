@@ -19,6 +19,7 @@ export const restaurants = pgTable("restaurants", {
   subscriptionStartDate: timestamp("subscription_start_date"),
   subscriptionEndDate: timestamp("subscription_end_date"),
   subscriptionCancelledAt: timestamp("subscription_cancelled_at"),
+  cancellationReason: text("cancellation_reason"), // "mistake" or "client_request"
   setupComplete: boolean("setup_complete").notNull().default(false), // SECURITY: Prevents post-setup cross-tenant user creation
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
