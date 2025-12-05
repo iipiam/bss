@@ -785,9 +785,8 @@ export default function BusinessManagement() {
       
       if (invoices.length === 0) {
         toast({
-          title: t.error || "Error",
-          description: "No refund invoice found for this client",
-          variant: "destructive",
+          title: "Info",
+          description: "No refund invoice available. This subscription was cancelled as a mistake entry (no refund) or before this feature was implemented.",
         });
         return;
       }
