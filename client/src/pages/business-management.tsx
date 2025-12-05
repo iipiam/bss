@@ -230,13 +230,31 @@ export default function BusinessManagement() {
     enabled: !authLoading && !!user && accountType === 'it',
   });
 
+  // Helper to build URL with query params
+  const buildUrl = (base: string, params?: { fromDate?: string; toDate?: string }) => {
+    const url = new URL(base, window.location.origin);
+    if (params?.fromDate) url.searchParams.set('fromDate', params.fromDate);
+    if (params?.toDate) url.searchParams.set('toDate', params.toDate);
+    return url.pathname + url.search;
+  };
+
   const { data: invoices = [], isLoading: invoicesLoading, refetch: refetchInvoices } = useQuery<Invoice[]>({
-    queryKey: ['/api/it/business-management/invoices', fromDate, toDate],
+    queryKey: ['/api/it/business-management/invoices', { fromDate, toDate }],
+    queryFn: async () => {
+      const res = await fetch(buildUrl('/api/it/business-management/invoices', { fromDate, toDate }), { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch invoices');
+      return res.json();
+    },
     enabled: !authLoading && !!user && accountType === 'it',
   });
 
   const { data: vatSummary, isLoading: vatLoading, refetch: refetchVat } = useQuery<VatSummary>({
-    queryKey: ['/api/it/business-management/vat-summary', fromDate, toDate],
+    queryKey: ['/api/it/business-management/vat-summary', { fromDate, toDate }],
+    queryFn: async () => {
+      const res = await fetch(buildUrl('/api/it/business-management/vat-summary', { fromDate, toDate }), { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch VAT summary');
+      return res.json();
+    },
     enabled: !authLoading && !!user && accountType === 'it',
   });
 
@@ -246,12 +264,22 @@ export default function BusinessManagement() {
   });
 
   const { data: billsSummary, isLoading: billsSummaryLoading } = useQuery<BillsSummary>({
-    queryKey: ['/api/it/business-operations/summary', fromDate, toDate],
+    queryKey: ['/api/it/business-operations/summary', { fromDate, toDate }],
+    queryFn: async () => {
+      const res = await fetch(buildUrl('/api/it/business-operations/summary', { fromDate, toDate }), { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch bills summary');
+      return res.json();
+    },
     enabled: !authLoading && !!user && accountType === 'it',
   });
 
   const { data: bssAnalysis, isLoading: analysisLoading } = useQuery<BssAnalysisOverview>({
-    queryKey: ['/api/it/bss-analysis/overview', fromDate, toDate],
+    queryKey: ['/api/it/bss-analysis/overview', { fromDate, toDate }],
+    queryFn: async () => {
+      const res = await fetch(buildUrl('/api/it/bss-analysis/overview', { fromDate, toDate }), { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch BSS analysis');
+      return res.json();
+    },
     enabled: !authLoading && !!user && accountType === 'it',
   });
 
