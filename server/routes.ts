@@ -2817,14 +2817,20 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
 
       const restaurant = await storage.getRestaurant(user.restaurantId!);
-      if (!restaurant || restaurant.subscriptionStatus !== 'active') {
-        return res.status(400).json({ error: "No active subscription to cancel" });
+      if (!restaurant) {
+        return res.status(400).json({ error: "Restaurant not found" });
+      }
+      
+      // Allow cancelling both active and inactive subscriptions
+      if (restaurant.subscriptionStatus === 'cancelled') {
+        return res.status(400).json({ error: "Subscription is already cancelled" });
       }
 
       let pdfBase64: string | null = null;
 
-      // Generate refund invoice for ALL cancellation reasons
-      if (restaurant.subscriptionPlan && restaurant.subscriptionStartDate) {
+      // Only generate refund invoice for ACTIVE subscriptions with valid data
+      // Inactive subscriptions have nothing to refund
+      if (restaurant.subscriptionStatus === 'active' && restaurant.subscriptionPlan && restaurant.subscriptionStartDate) {
         const businessInfoResult = await db.select().from(businessInfo).limit(1);
         const bi = businessInfoResult[0] || null;
 
