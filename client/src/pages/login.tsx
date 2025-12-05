@@ -888,12 +888,12 @@ export default function Login() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <a 
-                    href="mailto:IT@SaudiKinzhal.org"
+                    href="mailto:it@kinbss.com"
                     className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors hover-elevate active-elevate-2 px-3 py-2 rounded-md"
                     data-testid="link-support-email"
                   >
                     <Mail className="h-4 w-4" />
-                    IT@SaudiKinzhal.org
+                    it@kinbss.com
                   </a>
                   <a 
                     href="https://wa.me/966502171067"
