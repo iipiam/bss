@@ -1,0 +1,105 @@
+/home/ubuntu/.pm2/logs/BSS-error.log last 50 lines:
+0|BSS      |     at file:///home/BSS/node_modules/drizzle-orm/pg-core/query-builders/select.js:684:26
+0|BSS      |     at Object.startActiveSpan (file:///home/BSS/node_modules/drizzle-orm/tracing.js:8:14)
+0|BSS      |     at PgSelectBase._prepare (file:///home/BSS/node_modules/drizzle-orm/pg-core/query-builders/select.js:683:19)
+0|BSS      |     at file:///home/BSS/node_modules/drizzle-orm/pg-core/query-builders/select.js:708:19
+0|BSS      |     at Object.startActiveSpan (file:///home/BSS/node_modules/drizzle-orm/tracing.js:8:14)
+0|BSS      |     at PgSelectBase.execute (file:///home/BSS/node_modules/drizzle-orm/pg-core/query-builders/select.js:707:19)
+0|BSS      |     at PgSelectBase.then (file:///home/BSS/node_modules/drizzle-orm/query-promise.js:21:17)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      | Error deleting subscription: TypeError: Cannot convert undefined or null to object
+0|BSS      |     at Function.entries (<anonymous>)
+0|BSS      |     at orderSelectedFields (file:///home/BSS/node_modules/drizzle-orm/utils.js:53:17)
+0|BSS      |     at file:///home/BSS/node_modules/drizzle-orm/utils.js:63:22
+0|BSS      |     at Array.reduce (<anonymous>)
+0|BSS      |     at orderSelectedFields (file:///home/BSS/node_modules/drizzle-orm/utils.js:53:33)
+0|BSS      |     at file:///home/BSS/node_modules/drizzle-orm/pg-core/query-builders/select.js:684:26
+0|BSS      |     at Object.startActiveSpan (file:///home/BSS/node_modules/drizzle-orm/tracing.js:8:14)
+0|BSS      |     at PgSelectBase._prepare (file:///home/BSS/node_modules/drizzle-orm/pg-core/query-builders/select.js:683:19)
+0|BSS      |     at file:///home/BSS/node_modules/drizzle-orm/pg-core/query-builders/select.js:708:19
+0|BSS      |     at Object.startActiveSpan (file:///home/BSS/node_modules/drizzle-orm/tracing.js:8:14)
+0|BSS      |     at PgSelectBase.execute (file:///home/BSS/node_modules/drizzle-orm/pg-core/query-builders/select.js:707:19)
+0|BSS      |     at PgSelectBase.then (file:///home/BSS/node_modules/drizzle-orm/query-promise.js:21:17)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      | Error deleting subscription: TypeError: Cannot convert undefined or null to object
+0|BSS      |     at Function.entries (<anonymous>)
+0|BSS      |     at orderSelectedFields (file:///home/BSS/node_modules/drizzle-orm/utils.js:53:17)
+0|BSS      |     at file:///home/BSS/node_modules/drizzle-orm/utils.js:63:22
+0|BSS      |     at Array.reduce (<anonymous>)
+0|BSS      |     at orderSelectedFields (file:///home/BSS/node_modules/drizzle-orm/utils.js:53:33)
+0|BSS      |     at file:///home/BSS/node_modules/drizzle-orm/pg-core/query-builders/select.js:684:26
+0|BSS      |     at Object.startActiveSpan (file:///home/BSS/node_modules/drizzle-orm/tracing.js:8:14)
+0|BSS      |     at PgSelectBase._prepare (file:///home/BSS/node_modules/drizzle-orm/pg-core/query-builders/select.js:683:19)
+0|BSS      |     at file:///home/BSS/node_modules/drizzle-orm/pg-core/query-builders/select.js:708:19
+0|BSS      |     at Object.startActiveSpan (file:///home/BSS/node_modules/drizzle-orm/tracing.js:8:14)
+0|BSS      |     at PgSelectBase.execute (file:///home/BSS/node_modules/drizzle-orm/pg-core/query-builders/select.js:707:19)
+0|BSS      |     at PgSelectBase.then (file:///home/BSS/node_modules/drizzle-orm/query-promise.js:21:17)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      | Error deleting subscription: TypeError: Cannot convert undefined or null to object
+0|BSS      |     at Function.entries (<anonymous>)
+0|BSS      |     at orderSelectedFields (file:///home/BSS/node_modules/drizzle-orm/utils.js:53:17)
+0|BSS      |     at file:///home/BSS/node_modules/drizzle-orm/utils.js:63:22
+0|BSS      |     at Array.reduce (<anonymous>)
+0|BSS      |     at orderSelectedFields (file:///home/BSS/node_modules/drizzle-orm/utils.js:53:33)
+0|BSS      |     at file:///home/BSS/node_modules/drizzle-orm/pg-core/query-builders/select.js:684:26
+0|BSS      |     at Object.startActiveSpan (file:///home/BSS/node_modules/drizzle-orm/tracing.js:8:14)
+0|BSS      |     at PgSelectBase._prepare (file:///home/BSS/node_modules/drizzle-orm/pg-core/query-builders/select.js:683:19)
+0|BSS      |     at file:///home/BSS/node_modules/drizzle-orm/pg-core/query-builders/select.js:708:19
+0|BSS      |     at Object.startActiveSpan (file:///home/BSS/node_modules/drizzle-orm/tracing.js:8:14)
+0|BSS      |     at PgSelectBase.execute (file:///home/BSS/node_modules/drizzle-orm/pg-core/query-builders/select.js:707:19)
+0|BSS      |     at PgSelectBase.then (file:///home/BSS/node_modules/drizzle-orm/query-promise.js:21:17)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+
+/home/ubuntu/.pm2/logs/BSS-out.log last 50 lines:
+0|BSS      | [Invoice] Browser launched successfully
+0|BSS      | [SIGNUP] Subscription invoice generated: 0101-20251205-065951
+0|BSS      | 6:59:54 AM [express] POST /api/auth/signup 201 in 3718ms :: {"id":"a725352a-e744-4516-ae19-b50106d25…
+0|BSS      | [AUTH] Login attempt for username: n99 accountType: undefined
+0|BSS      | [AUTH] User found: Yes (id: a725352a-e744-4516-ae19-b50106d25875, active: true, restaurantId: fee3cd93-f944-4223-b514-85df60cb7e98)
+0|BSS      | [AUTH] Comparing password hash
+0|BSS      | [AUTH] Password match: true
+0|BSS      | [AUTH] Auto-detected accountType: client (based on restaurantId: fee3cd93-f944-4223-b514-85df60cb7e98 )
+0|BSS      | [AUTH] Session created for user: a725352a-e744-4516-ae19-b50106d25875 restaurant: fee3cd93-f944-4223-b514-85df60cb7e98 accountType: client
+0|BSS      | [AUTH] Login successful
+0|BSS      | 6:59:55 AM [express] POST /api/auth/login 200 in 714ms :: {"user":{"id":"a725352a-e744-4516-ae19-b50…
+0|BSS      | [WebSocket] Client connected: user=a725352a-e744-4516-ae19-b50106d25875, restaurant=fee3cd93-f944-4223-b514-85df60cb7e98, conversations=0
+0|BSS      | 6:59:57 AM [express] GET /api/subscription-invoices/subscription-0101-20251205-065951.pdf 200 in 153…
+0|BSS      | 6:59:57 AM [express] GET /api/chat/notification-settings 200 in 332ms :: {"notificationsEnabled":tru…
+0|BSS      | 6:59:57 AM [express] GET /api/analytics/sales 200 in 344ms :: [{"date":"Sun","sales":0},{"date":"Mon…
+0|BSS      | 6:59:57 AM [express] GET /api/settings 200 in 425ms :: {"moyasarPublishableKey":null}
+0|BSS      | 6:59:57 AM [express] GET /api/branches 304 in 324ms :: []
+0|BSS      | 6:59:58 AM [express] GET /api/shop/bills 200 in 1495ms :: []
+0|BSS      | 6:59:59 AM [express] GET /api/analytics/dashboard 200 in 1903ms :: {"todaysSales":"0.00","activeOrde…
+0|BSS      | 7:01:14 AM [express] POST /api/subscription/cancel 400 in 1662ms :: {"error":"No active subscription…
+0|BSS      | ✅ Production mode: SSL enabled for AWS RDS
+0|BSS      | 7:15:21 AM [express] serving on port 5000
+0|BSS      | [WebSocket] Client connected: user=a725352a-e744-4516-ae19-b50106d25875, restaurant=fee3cd93-f944-4223-b514-85df60cb7e98, conversations=0
+0|BSS      | ✅ Production mode: SSL enabled for AWS RDS
+0|BSS      | 7:15:42 AM [express] serving on port 5000
+0|BSS      | [WebSocket] Client connected: user=a725352a-e744-4516-ae19-b50106d25875, restaurant=fee3cd93-f944-4223-b514-85df60cb7e98, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | 7:15:57 AM [express] GET /api/auth/me 200 in 494ms :: {"user":{"id":"a725352a-e744-4516-ae19-b50106d…
+0|BSS      | [WebSocket] Client connected: user=a725352a-e744-4516-ae19-b50106d25875, restaurant=fee3cd93-f944-4223-b514-85df60cb7e98, conversations=0
+0|BSS      | 7:15:59 AM [express] GET /api/chat/notification-settings 304 in 332ms :: {"notificationsEnabled":tru…
+0|BSS      | 7:15:59 AM [express] GET /api/analytics/sales 304 in 1526ms :: [{"date":"Sun","sales":0},{"date":"Mo…
+0|BSS      | 7:15:59 AM [express] GET /api/settings 304 in 326ms :: {"moyasarPublishableKey":null}
+0|BSS      | 7:15:59 AM [express] GET /api/shop/bills 304 in 342ms :: []
+0|BSS      | 7:15:59 AM [express] GET /api/branches 304 in 342ms :: []
+0|BSS      | 7:15:59 AM [express] GET /api/analytics/dashboard 304 in 1841ms :: {"todaysSales":"0.00","activeOrde…
+0|BSS      | 7:16:13 AM [express] POST /api/subscription/cancel 400 in 1719ms :: {"error":"No active subscription…
+0|BSS      | ✅ Production mode: SSL enabled for AWS RDS
+0|BSS      | 7:30:55 AM [express] serving on port 5000
+0|BSS      | ✅ Production mode: SSL enabled for AWS RDS
+0|BSS      | 7:31:01 AM [express] serving on port 5000
+0|BSS      | 7:31:11 AM [express] GET /api/auth/me 200 in 495ms :: {"user":{"id":"a725352a-e744-4516-ae19-b50106d…
+0|BSS      | [WebSocket] Client connected: user=a725352a-e744-4516-ae19-b50106d25875, restaurant=fee3cd93-f944-4223-b514-85df60cb7e98, conversations=0
+0|BSS      | 7:31:13 AM [express] GET /api/settings 304 in 334ms :: {"moyasarPublishableKey":null}
+0|BSS      | 7:31:13 AM [express] GET /api/chat/notification-settings 304 in 337ms :: {"notificationsEnabled":tru…
+0|BSS      | 7:31:13 AM [express] GET /api/shop/bills 304 in 325ms :: []
+0|BSS      | 7:31:13 AM [express] GET /api/analytics/sales 304 in 1544ms :: [{"date":"Sun","sales":0},{"date":"Mo…
+0|BSS      | 7:31:13 AM [express] GET /api/analytics/dashboard 304 in 1804ms :: {"todaysSales":"0.00","activeOrde…
+0|BSS      | 7:31:13 AM [express] GET /api/branches 304 in 326ms :: []
+0|BSS      | 7:31:22 AM [express] POST /api/subscription/cancel 400 in 493ms :: {"error":"No active subscription …
+0|BSS      | 7:31:26 AM [express] POST /api/subscription/cancel 400 in 491ms :: {"error":"No active subscription …
+
+
