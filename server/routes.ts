@@ -5805,6 +5805,153 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Generate refund invoice for a cancelled account that doesn't have one
+  app.post("/api/it/archived-accounts/:restaurantId/generate-refund-invoice", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { restaurantId } = req.params;
+      const { reason } = req.body; // 'mistake' or 'client_request'
+
+      // Get the restaurant details
+      const [restaurant] = await db
+        .select()
+        .from(restaurants)
+        .where(eq(restaurants.id, restaurantId));
+
+      if (!restaurant) {
+        return res.status(404).json({ error: "Restaurant not found" });
+      }
+
+      if (restaurant.subscriptionStatus !== 'cancelled') {
+        return res.status(400).json({ error: "Restaurant subscription is not cancelled" });
+      }
+
+      // Check if refund invoice already exists
+      const existingInvoice = await db
+        .select()
+        .from(refundInvoices)
+        .where(eq(refundInvoices.restaurantId, restaurantId))
+        .limit(1);
+
+      if (existingInvoice.length > 0) {
+        return res.status(400).json({ error: "Refund invoice already exists for this account" });
+      }
+
+      // Get admin user for this restaurant
+      const [adminUser] = await db
+        .select()
+        .from(users)
+        .where(and(
+          eq(users.restaurantId, restaurantId),
+          eq(users.role, 'admin')
+        ));
+
+      // Get business info for the invoice
+      const businessInfoResult = await db.select().from(businessInfo).limit(1);
+      const bi = businessInfoResult[0] || null;
+
+      // Calculate refund details
+      const subscriptionStartDate = restaurant.subscriptionStartDate 
+        ? new Date(restaurant.subscriptionStartDate) 
+        : new Date(restaurant.createdAt || new Date());
+      const cancellationDate = restaurant.subscriptionCancelledAt 
+        ? new Date(restaurant.subscriptionCancelledAt) 
+        : new Date();
+      
+      const msPerMonth = 30.44 * 24 * 60 * 60 * 1000;
+      const monthsUsed = Math.max(1, Math.ceil((cancellationDate.getTime() - subscriptionStartDate.getTime()) / msPerMonth));
+
+      let yearlyPrice = 1990;
+      if (restaurant.subscriptionPlan === "premium") yearlyPrice = 2990;
+      if (restaurant.subscriptionPlan === "enterprise") yearlyPrice = 4990;
+      
+      const monthlyRate = 199;
+      const chargedAmount = monthlyRate * monthsUsed;
+      
+      // Determine cancellation reason
+      const cancellationReason = reason || restaurant.cancellationReason || 'mistake';
+      const refundAmount = cancellationReason === "client_request" 
+        ? Math.max(0, yearlyPrice - chargedAmount)
+        : 0;
+
+      // Update restaurant with cancellation reason if not set
+      if (!restaurant.cancellationReason) {
+        await db
+          .update(restaurants)
+          .set({ cancellationReason })
+          .where(eq(restaurants.id, restaurantId));
+      }
+
+      // Generate serial number
+      const currentYear = new Date().getFullYear();
+      const countResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(refundInvoices)
+        .where(sql`EXTRACT(YEAR FROM ${refundInvoices.createdAt}) = ${currentYear}`);
+      const sequenceNumber = (countResult[0]?.count || 0) + 1;
+      const serialNumber = `RC-${currentYear}-${String(sequenceNumber).padStart(6, '0')}`;
+
+      // Generate PDF
+      const pdfBuffer = await generateRefundClearanceInvoice({
+        serialNumber,
+        clientName: adminUser?.fullName || "Unknown",
+        clientEmail: adminUser?.email || "unknown@email.com",
+        restaurantName: restaurant.name,
+        taxNumber: restaurant.taxNumber,
+        commercialRegistration: restaurant.commercialRegistration,
+        subscriptionPlan: restaurant.subscriptionPlan || 'monthly',
+        subscriptionStartDate,
+        cancellationDate,
+        monthsUsed,
+        originalPrice: yearlyPrice,
+        monthlyRate,
+        chargedAmount,
+        refundAmount,
+        cancellationReason: cancellationReason as "mistake" | "client_request",
+        businessInfo: bi ? {
+          companyNameEn: bi.companyNameEn,
+          companyNameAr: bi.companyNameAr,
+          vatNumber: bi.vatNumber,
+          crNumber: bi.crNumber,
+          email: bi.email,
+          phone: bi.phone,
+          addressEn: bi.addressEn,
+          addressAr: bi.addressAr,
+        } : null,
+      });
+      const pdfBase64 = pdfBuffer.toString('base64');
+
+      // Save refund invoice to database
+      const [newInvoice] = await db.insert(refundInvoices).values({
+        restaurantId,
+        serialNumber,
+        clientName: adminUser?.fullName || "Unknown",
+        clientEmail: adminUser?.email || "unknown@email.com",
+        restaurantName: restaurant.name,
+        subscriptionPlan: restaurant.subscriptionPlan || 'monthly',
+        subscriptionStartDate,
+        cancellationDate,
+        monthsUsed,
+        originalPrice: yearlyPrice.toString(),
+        monthlyRate: monthlyRate.toString(),
+        chargedAmount: chargedAmount.toString(),
+        refundAmount: refundAmount.toString(),
+        pdfData: pdfBase64,
+      }).returning();
+
+      console.log(`[IT] Generated refund invoice ${serialNumber} for restaurant ${restaurantId}, reason: ${cancellationReason}`);
+
+      res.json({ 
+        success: true, 
+        invoice: newInvoice,
+        pdfBase64,
+        message: `Refund invoice generated successfully` 
+      });
+    } catch (error) {
+      console.error("Error generating refund invoice:", error);
+      res.status(500).json({ error: "Failed to generate refund invoice" });
+    }
+  });
+
   // Get account password (IT-only, for viewing encrypted passwords)
   app.get("/api/it/accounts/:id/password", requireAuth, requireITAccount, async (req, res) => {
     try {

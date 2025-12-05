@@ -193,6 +193,73 @@ export default function ITAccountManagement() {
     },
   });
 
+  // Generate refund invoice mutation
+  const generateRefundInvoiceMutation = useMutation({
+    mutationFn: async ({ restaurantId, reason }: { restaurantId: string; reason: "mistake" | "client_request" }) => {
+      const response = await fetch(`/api/it/archived-accounts/${restaurantId}/generate-refund-invoice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ reason }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate refund invoice');
+      }
+      return response.json();
+    },
+    onSuccess: (result) => {
+      // Download the generated PDF
+      if (result.pdfBase64) {
+        const byteCharacters = atob(result.pdfBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Refund_Invoice_${result.invoice.serialNumber}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+      toast({
+        title: t.success || "Success",
+        description: t.refundInvoiceGenerated || "Refund invoice generated and downloaded successfully.",
+      });
+      refetchArchive();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message || "Failed to generate refund invoice",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleGenerateRefundInvoice = (account: ArchivedAccount) => {
+    if (!account.restaurantId) {
+      toast({
+        title: t.error || "Error",
+        description: "Restaurant ID not found",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Use existing cancellation reason or default to "mistake"
+    const reason = (account.cancellationReason as "mistake" | "client_request") || "mistake";
+    generateRefundInvoiceMutation.mutate({
+      restaurantId: account.restaurantId,
+      reason,
+    });
+  };
+
   // Filter accounts based on search and status
   const filteredAccounts = accounts.filter(account => {
     const matchesSearch = 
@@ -791,12 +858,20 @@ export default function ITAccountManagement() {
                                   {account.refundInvoice.serialNumber}
                                 </Button>
                               ) : (
-                                <span className="text-muted-foreground text-sm">
-                                  {account.cancellationReason === "mistake" 
-                                    ? (t.noRefundMistake || "No refund (mistake)")
-                                    : (t.notAvailable || "N/A")
-                                  }
-                                </span>
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => handleGenerateRefundInvoice(account)}
+                                  disabled={generateRefundInvoiceMutation.isPending}
+                                  data-testid={`button-generate-refund-${account.id}`}
+                                >
+                                  {generateRefundInvoiceMutation.isPending ? (
+                                    <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
+                                  ) : (
+                                    <FileText className="h-4 w-4 mr-1" />
+                                  )}
+                                  {t.generateInvoice || "Generate Invoice"}
+                                </Button>
                               )}
                             </TableCell>
                           </TableRow>
