@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { db } from "./db";
-import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport, generateInvestorStatementPDF, generateBssAnalysisStatementPDF, getBrowser } from "./invoice";
+import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport, generateInvestorStatementPDF, generateBssAnalysisStatementPDF, generateRefundClearanceInvoice, getBrowser } from "./invoice";
 import { PasswordResetMailer } from "./email";
 import { sanitizePatchBody } from "./utils";
 import { requirePermission, requireAnyPermission, requireAllPermissions, requireAction } from "./middleware/requirePermission";
@@ -2807,6 +2807,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // Subscription Management
   app.post("/api/subscription/cancel", requireAuth, requireRestaurant, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
+    const { reason } = req.body as { reason?: "mistake" | "client_request" };
     
     try {
       const user = await storage.getUser(req.session.user!.id, restaurantId);
@@ -2819,13 +2820,71 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "No active subscription to cancel" });
       }
 
+      let pdfBase64: string | null = null;
+
+      if (reason === "client_request" && restaurant.subscriptionPlan && restaurant.subscriptionStartDate) {
+        const businessInfoResult = await db.select().from(businessInfo).limit(1);
+        const bi = businessInfoResult[0] || null;
+
+        const subscriptionStartDate = new Date(restaurant.subscriptionStartDate);
+        const cancellationDate = new Date();
+        
+        const msPerMonth = 30.44 * 24 * 60 * 60 * 1000;
+        const monthsUsed = Math.ceil((cancellationDate.getTime() - subscriptionStartDate.getTime()) / msPerMonth);
+
+        let yearlyPrice = 1990;
+        if (restaurant.subscriptionPlan === "premium") yearlyPrice = 2990;
+        if (restaurant.subscriptionPlan === "enterprise") yearlyPrice = 4990;
+        
+        const monthlyRate = 199;
+        const chargedAmount = monthlyRate * monthsUsed;
+        const refundAmount = Math.max(0, yearlyPrice - chargedAmount);
+
+        const serialNumber = `RC-${Date.now()}`;
+
+        try {
+          const pdfBuffer = await generateRefundClearanceInvoice({
+            serialNumber,
+            clientName: user.fullName || "Unknown",
+            clientEmail: user.email || "unknown@email.com",
+            restaurantName: restaurant.name,
+            taxNumber: restaurant.taxNumber,
+            commercialRegistration: restaurant.commercialRegistration,
+            subscriptionPlan: restaurant.subscriptionPlan,
+            subscriptionStartDate,
+            cancellationDate,
+            monthsUsed,
+            originalPrice: yearlyPrice,
+            monthlyRate,
+            chargedAmount,
+            refundAmount,
+            businessInfo: bi ? {
+              companyNameEn: bi.companyNameEn,
+              companyNameAr: bi.companyNameAr,
+              vatNumber: bi.vatNumber,
+              crNumber: bi.crNumber,
+              email: bi.email,
+              phone: bi.phone,
+              addressEn: bi.addressEn,
+              addressAr: bi.addressAr,
+            } : null,
+          });
+          pdfBase64 = pdfBuffer.toString('base64');
+        } catch (pdfError) {
+          console.error("Failed to generate refund clearance PDF:", pdfError);
+        }
+      }
+
       const updatedUser = await storage.cancelSubscription(req.session.user!.id, restaurantId);
       if (!updatedUser) {
         return res.status(500).json({ error: "Failed to cancel subscription" });
       }
 
-      const { password: _, passwordResetToken, passwordResetExpiry, ...userProfile } = updatedUser;
-      res.json(userProfile);
+      res.json({ 
+        success: true, 
+        pdfBase64,
+        message: pdfBase64 ? 'Subscription cancelled with refund clearance' : 'Subscription cancelled'
+      });
     } catch (error) {
       console.error("Cancel subscription error:", error);
       res.status(500).json({ error: "Failed to cancel subscription" });

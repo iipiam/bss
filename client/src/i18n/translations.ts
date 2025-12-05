@@ -1168,6 +1168,7 @@ export interface Translations {
   profileUpdatedDesc: string;
   updateFailed: string;
   subscriptionCancelledDesc: string;
+  refundClearanceGenerated: string;
   cancellationFailed: string;
   cancellationFailedDesc: string;
   downloadStarted: string;

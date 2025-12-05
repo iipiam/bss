@@ -12,19 +12,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { User, Mail, Phone, CreditCard, Calendar, AlertTriangle, CheckCircle2, XCircle, Shield, FileText, Download } from "lucide-react";
+import { User, Mail, Phone, CreditCard, Calendar, AlertTriangle, CheckCircle2, XCircle, Shield, FileText, Download, Loader2 } from "lucide-react";
 import type { User as UserType, Restaurant, SubscriptionInvoice } from "@shared/schema";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 type ProfileResponse = {
@@ -43,6 +41,8 @@ export default function Profile() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState<"mistake" | "client_request">("mistake");
 
   // Fetch user profile
   const { data: profileData, isLoading } = useQuery<ProfileResponse>({
@@ -80,18 +80,71 @@ export default function Profile() {
     },
   });
 
+  const calculateRefundPreview = () => {
+    if (!restaurant?.subscriptionStartDate || !restaurant?.subscriptionPlan) {
+      return null;
+    }
+    
+    const startDate = new Date(restaurant.subscriptionStartDate);
+    const now = new Date();
+    const msPerMonth = 30.44 * 24 * 60 * 60 * 1000;
+    const monthsUsed = Math.ceil((now.getTime() - startDate.getTime()) / msPerMonth);
+    
+    let yearlyPrice = 1990;
+    if (restaurant.subscriptionPlan === "premium") yearlyPrice = 2990;
+    if (restaurant.subscriptionPlan === "enterprise") yearlyPrice = 4990;
+    
+    const monthlyRate = 199;
+    const chargedAmount = monthlyRate * monthsUsed;
+    const refundAmount = Math.max(0, yearlyPrice - chargedAmount);
+    
+    return {
+      yearlyPrice,
+      monthlyRate,
+      monthsUsed,
+      chargedAmount,
+      refundAmount
+    };
+  };
+
   // Cancel subscription mutation
   const cancelSubscriptionMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("POST", "/api/subscription/cancel", {});
+    mutationFn: async (reason: "mistake" | "client_request") => {
+      const response = await apiRequest("POST", "/api/subscription/cancel", { reason });
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: { success: boolean; pdfBase64?: string; message?: string }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
-      toast({
-        title: t.subscriptionCanceled,
-        description: t.subscriptionCancelledDesc,
-        variant: "destructive",
-      });
+      setCancelDialogOpen(false);
+      
+      if (data.pdfBase64) {
+        const byteCharacters = atob(data.pdfBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `refund-clearance-${Date.now()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        toast({
+          title: t.subscriptionCanceled,
+          description: t.refundClearanceGenerated || "Refund clearance PDF has been downloaded.",
+        });
+      } else {
+        toast({
+          title: t.subscriptionCanceled,
+          description: t.subscriptionCancelledDesc,
+          variant: "destructive",
+        });
+      }
     },
     onError: () => {
       toast({
@@ -115,7 +168,7 @@ export default function Profile() {
   };
 
   const handleCancelSubscription = () => {
-    cancelSubscriptionMutation.mutate();
+    cancelSubscriptionMutation.mutate(cancelReason);
   };
 
   const handleDownloadInvoice = async (invoice: SubscriptionInvoice) => {
@@ -437,36 +490,110 @@ export default function Profile() {
             )}
 
             {restaurant?.subscriptionStatus === "active" && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="destructive"
-                    className="w-full"
-                    data-testid="button-cancel-subscription"
-                  >
-                    {t.cancelSubscription}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{t.areYouSure}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {t.cancelSubscriptionWarning}{" "}
-                      <strong>{formatDate(restaurant?.subscriptionEndDate)}</strong>.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel data-testid="button-cancel-dialog">{t.keepSubscription}</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleCancelSubscription}
-                      className="bg-red-600 hover:bg-red-700"
-                      data-testid="button-confirm-cancel"
-                    >
-                      {t.yesCancelSubscription}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <>
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={() => setCancelDialogOpen(true)}
+                  data-testid="button-cancel-subscription"
+                >
+                  {t.cancelSubscription}
+                </Button>
+                
+                <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>{t.areYouSure}</DialogTitle>
+                      <DialogDescription>
+                        {t.cancelSubscriptionWarning}{" "}
+                        <strong>{formatDate(restaurant?.subscriptionEndDate)}</strong>.
+                      </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4 py-4">
+                      <Label className="text-sm font-medium">{t.deletionReason}</Label>
+                      <RadioGroup
+                        value={cancelReason}
+                        onValueChange={(value: "mistake" | "client_request") => setCancelReason(value)}
+                        className="space-y-3"
+                        data-testid="radio-cancel-reason"
+                      >
+                        <div className="flex items-start space-x-3 rtl:space-x-reverse">
+                          <RadioGroupItem value="mistake" id="mistake" data-testid="radio-mistake" />
+                          <div className="flex flex-col">
+                            <Label htmlFor="mistake" className="font-medium cursor-pointer">
+                              {t.mistakeSubscription}
+                            </Label>
+                            <span className="text-xs text-muted-foreground">
+                              {t.mistakeSubscriptionDesc}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-start space-x-3 rtl:space-x-reverse">
+                          <RadioGroupItem value="client_request" id="client_request" data-testid="radio-client-request" />
+                          <div className="flex flex-col">
+                            <Label htmlFor="client_request" className="font-medium cursor-pointer">
+                              {t.clientRequest}
+                            </Label>
+                            <span className="text-xs text-muted-foreground">
+                              {t.clientRequestDesc}
+                            </span>
+                          </div>
+                        </div>
+                      </RadioGroup>
+                      
+                      {cancelReason === "client_request" && (() => {
+                        const preview = calculateRefundPreview();
+                        if (!preview) return null;
+                        return (
+                          <div className="mt-4 p-4 bg-muted rounded-lg border" data-testid="refund-preview">
+                            <h4 className="font-semibold mb-3 text-sm">
+                              {t.refundCalculation}
+                            </h4>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div className="text-muted-foreground">{t.originalSubscriptionFee}:</div>
+                              <div className="font-medium text-right">{preview.yearlyPrice.toLocaleString()} SAR</div>
+                              
+                              <div className="text-muted-foreground">{t.monthlyRate}:</div>
+                              <div className="font-medium text-right">{preview.monthlyRate.toLocaleString()} SAR</div>
+                              
+                              <div className="text-muted-foreground">{t.monthsUsed}:</div>
+                              <div className="font-medium text-right">{preview.monthsUsed}</div>
+                              
+                              <div className="text-muted-foreground">{t.chargedAmount}:</div>
+                              <div className="font-medium text-right">{preview.chargedAmount.toLocaleString()} SAR</div>
+                              
+                              <div className="border-t pt-2 font-semibold text-green-600">{t.refundAmount}:</div>
+                              <div className="border-t pt-2 font-bold text-right text-green-600">{preview.refundAmount.toLocaleString()} SAR</div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                    
+                    <DialogFooter className="gap-2 sm:gap-0">
+                      <Button
+                        variant="outline"
+                        onClick={() => setCancelDialogOpen(false)}
+                        data-testid="button-cancel-dialog"
+                      >
+                        {t.keepSubscription}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={handleCancelSubscription}
+                        disabled={cancelSubscriptionMutation.isPending}
+                        data-testid="button-confirm-cancel"
+                      >
+                        {cancelSubscriptionMutation.isPending && (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        )}
+                        {t.confirmDeleteBtn || t.yesCancelSubscription}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </>
             )}
           </CardContent>
         </Card>
