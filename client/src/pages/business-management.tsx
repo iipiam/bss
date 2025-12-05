@@ -30,7 +30,10 @@ import {
   Download,
   RefreshCw,
   DollarSign,
-  Percent
+  Percent,
+  Power,
+  PowerOff,
+  Loader2
 } from "lucide-react";
 
 interface Client {
@@ -109,47 +112,16 @@ export default function BusinessManagement() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  useEffect(() => {
-    if (!authLoading && accountType && accountType !== 'it') {
-      navigate('/');
-    }
-  }, [accountType, authLoading, navigate]);
-
-  if (authLoading || !accountType) {
-    return (
-      <div className={layout.padding}>
-        <Skeleton className="h-8 w-64 mb-4" />
-        <Skeleton className="h-4 w-96 mb-8" />
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => (
-            <Skeleton key={i} className="h-16 w-full" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (accountType !== 'it') {
-    return null;
-  }
-
+  // All hooks must be called before any conditional returns
   const { data: clients = [], isLoading: clientsLoading, refetch: refetchClients } = useQuery<Client[]>({
     queryKey: ['/api/it/business-management/clients'],
     enabled: !authLoading && !!user && accountType === 'it',
   });
 
-  const invoiceQueryParams = new URLSearchParams();
-  if (fromDate) invoiceQueryParams.append('fromDate', fromDate);
-  if (toDate) invoiceQueryParams.append('toDate', toDate);
-
   const { data: invoices = [], isLoading: invoicesLoading, refetch: refetchInvoices } = useQuery<Invoice[]>({
     queryKey: ['/api/it/business-management/invoices', fromDate, toDate],
     enabled: !authLoading && !!user && accountType === 'it',
   });
-
-  const vatQueryParams = new URLSearchParams();
-  if (fromDate) vatQueryParams.append('fromDate', fromDate);
-  if (toDate) vatQueryParams.append('toDate', toDate);
 
   const { data: vatSummary, isLoading: vatLoading, refetch: refetchVat } = useQuery<VatSummary>({
     queryKey: ['/api/it/business-management/vat-summary', fromDate, toDate],
@@ -223,6 +195,92 @@ export default function BusinessManagement() {
       });
     },
   });
+
+  const downloadInvoicePdfMutation = useMutation({
+    mutationFn: async (invoiceId: string) => {
+      const response = await fetch(`/api/it/business-management/invoices/${invoiceId}/pdf`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to generate invoice PDF');
+      return response.blob();
+    },
+    onSuccess: (blob, invoiceId) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Invoice-${invoiceId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({
+        title: t.success || "Success",
+        description: "Invoice PDF downloaded successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: t.error || "Error",
+        description: "Failed to generate invoice PDF",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateSubscriptionStatusMutation = useMutation({
+    mutationFn: async ({ restaurantId, status }: { restaurantId: string; status: string }) => {
+      const response = await fetch(`/api/it/business-management/subscriptions/${restaurantId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) throw new Error('Failed to update subscription status');
+      return response.json();
+    },
+    onSuccess: (_, variables) => {
+      refetchClients();
+      toast({
+        title: t.success || "Success",
+        description: variables.status === 'active' 
+          ? "Subscription activated successfully" 
+          : "Subscription suspended successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: t.error || "Error",
+        description: "Failed to update subscription status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (!authLoading && accountType && accountType !== 'it') {
+      navigate('/');
+    }
+  }, [accountType, authLoading, navigate]);
+
+  // Loading and access control after all hooks
+  if (authLoading || !accountType) {
+    return (
+      <div className={layout.padding}>
+        <Skeleton className="h-8 w-64 mb-4" />
+        <Skeleton className="h-4 w-96 mb-8" />
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => (
+            <Skeleton key={i} className="h-16 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (accountType !== 'it') {
+    return null;
+  }
 
   const filteredClients = clients.filter(client => {
     const matchesSearch = 
@@ -451,6 +509,7 @@ export default function BusinessManagement() {
                         <TableHead>{t.taxNumber}</TableHead>
                         <TableHead>{t.branchCount}</TableHead>
                         <TableHead>{t.date}</TableHead>
+                        <TableHead>{t.actions}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -484,6 +543,49 @@ export default function BusinessManagement() {
                             <div className="text-sm">
                               <div>{formatDate(client.subscriptionStartDate)}</div>
                               <div className="text-muted-foreground">to {formatDate(client.subscriptionEndDate)}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              {client.subscriptionStatus === 'active' ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => updateSubscriptionStatusMutation.mutate({ 
+                                    restaurantId: client.restaurantId, 
+                                    status: 'inactive' 
+                                  })}
+                                  disabled={updateSubscriptionStatusMutation.isPending}
+                                  className="text-orange-600 hover:text-orange-700"
+                                  data-testid={`button-suspend-${client.restaurantId}`}
+                                >
+                                  {updateSubscriptionStatusMutation.isPending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <PowerOff className="h-4 w-4" />
+                                  )}
+                                  <span className="ml-1 hidden md:inline">{t.suspend || "Suspend"}</span>
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => updateSubscriptionStatusMutation.mutate({ 
+                                    restaurantId: client.restaurantId, 
+                                    status: 'active' 
+                                  })}
+                                  disabled={updateSubscriptionStatusMutation.isPending}
+                                  className="text-green-600 hover:text-green-700"
+                                  data-testid={`button-activate-${client.restaurantId}`}
+                                >
+                                  {updateSubscriptionStatusMutation.isPending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Power className="h-4 w-4" />
+                                  )}
+                                  <span className="ml-1 hidden md:inline">{t.activate || "Activate"}</span>
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -548,6 +650,7 @@ export default function BusinessManagement() {
                         <TableHead>{t.vatRate || "VAT 15%"}</TableHead>
                         <TableHead>{t.totalWithVat}</TableHead>
                         <TableHead>{t.invoiceDate}</TableHead>
+                        <TableHead>{t.actions}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -564,6 +667,22 @@ export default function BusinessManagement() {
                           <TableCell className="text-blue-600 font-medium">{formatCurrency(invoice.vatAmount)}</TableCell>
                           <TableCell className="font-bold">{formatCurrency(invoice.total)}</TableCell>
                           <TableCell>{formatDate(invoice.invoiceDate)}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => downloadInvoicePdfMutation.mutate(invoice.id)}
+                              disabled={downloadInvoicePdfMutation.isPending}
+                              data-testid={`button-download-invoice-${invoice.id}`}
+                            >
+                              {downloadInvoicePdfMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Download className="h-4 w-4" />
+                              )}
+                              <span className="ml-1 hidden md:inline">{t.download || "PDF"}</span>
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

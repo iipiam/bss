@@ -962,6 +962,8 @@ export interface Translations {
   billsFound: string;
   noBillsFound: string;
   actions: string;
+  suspend: string;
+  activate: string;
   unarchive: string;
   archive: string;
   somethingWentWrong: string;
@@ -2268,6 +2270,8 @@ export const translations: Record<Language, Translations> = {
     billsFound: 'bills found',
     noBillsFound: 'No bills found',
     actions: 'Actions',
+    suspend: 'Suspend',
+    activate: 'Activate',
     unarchive: 'Unarchive',
     archive: 'Archive',
     somethingWentWrong: 'Something went wrong',
@@ -3574,6 +3578,8 @@ export const translations: Record<Language, Translations> = {
     billsFound: 'فاتورة موجودة',
     noBillsFound: 'لم يتم العثور على فواتير',
     actions: 'الإجراءات',
+    suspend: 'تعليق',
+    activate: 'تفعيل',
     unarchive: 'إلغاء الأرشفة',
     archive: 'أرشفة',
     somethingWentWrong: 'حدث خطأ ما',
@@ -4878,6 +4884,8 @@ export const translations: Record<Language, Translations> = {
     billsFound: 'bills found',
     noBillsFound: 'No bills found',
     actions: 'Actions',
+    suspend: 'Suspend',
+    activate: 'Activate',
     unarchive: 'Unarchive',
     archive: 'Archive',
     somethingWentWrong: 'Something went wrong',
@@ -6182,6 +6190,8 @@ export const translations: Record<Language, Translations> = {
     billsFound: 'bills found',
     noBillsFound: 'No bills found',
     actions: 'Actions',
+    suspend: 'Suspend',
+    activate: 'Activate',
     unarchive: 'Unarchive',
     archive: 'Archive',
     somethingWentWrong: 'Something went wrong',
@@ -7486,6 +7496,8 @@ export const translations: Record<Language, Translations> = {
     billsFound: 'bills found',
     noBillsFound: 'No bills found',
     actions: 'Actions',
+    suspend: 'Suspend',
+    activate: 'Activate',
     unarchive: 'Unarchive',
     archive: 'Archive',
     somethingWentWrong: 'Something went wrong',
@@ -8790,6 +8802,8 @@ export const translations: Record<Language, Translations> = {
     billsFound: 'bills found',
     noBillsFound: 'No bills found',
     actions: 'Actions',
+    suspend: 'Suspend',
+    activate: 'Activate',
     unarchive: 'Unarchive',
     archive: 'Archive',
     somethingWentWrong: 'Something went wrong',
@@ -10082,6 +10096,8 @@ export const translations: Record<Language, Translations> = {
     billsFound: 'बिल मिले',
     noBillsFound: 'कोई बिल नहीं मिला',
     actions: 'क्रियाएं',
+    suspend: 'स्थगित करें',
+    activate: 'सक्रिय करें',
     unarchive: 'असंग्रहीत करें',
     archive: 'संग्रहीत करें',
     somethingWentWrong: 'कुछ गलत हो गया',
@@ -11374,6 +11390,8 @@ export const translations: Record<Language, Translations> = {
     billsFound: 'بل ملے',
     noBillsFound: 'کوئی بل نہیں ملا',
     actions: 'اعمال',
+    suspend: 'معطل کریں',
+    activate: 'فعال کریں',
     unarchive: 'غیر محفوظ کریں',
     archive: 'محفوظ کریں',
     somethingWentWrong: 'کچھ غلط ہو گیا',
@@ -12608,6 +12626,8 @@ export const translations: Record<Language, Translations> = {
     billsFound: "Facturas encontradas",
     noBillsFound: "No se encontraron facturas",
     actions: "Acciones",
+    suspend: "Suspender",
+    activate: "Activar",
     unarchive: "Desarchivar",
     archive: "Archivar",
     somethingWentWrong: "Algo salió mal",
@@ -13840,6 +13860,8 @@ export const translations: Record<Language, Translations> = {
     billsFound: "Mga resibong nahanap",
     noBillsFound: "Walang nahanap na resibo",
     actions: "Mga Aksyon",
+    suspend: "Suspendihin",
+    activate: "I-aktibo",
     unarchive: "I-unarchive",
     archive: "I-archive",
     somethingWentWrong: "May nangyaring mali",

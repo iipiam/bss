@@ -5946,11 +5946,33 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       ].join("|");
       const qrCodeDataURL = await QRCode.toDataURL(qrData);
 
-      // Import Puppeteer dynamically
+      // Import Puppeteer dynamically and detect Chromium path
       const puppeteer = await import("puppeteer");
+      const { execSync } = await import("child_process");
+      const { existsSync } = await import("fs");
+      
+      // Detect Chromium executable path
+      let chromiumPath: string | undefined = undefined;
+      try {
+        chromiumPath = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null', { encoding: 'utf8' }).trim();
+        if (!chromiumPath || !existsSync(chromiumPath)) {
+          chromiumPath = undefined;
+        }
+      } catch (e) {
+        // Chromium not found via which
+      }
+      
       const browser = await puppeteer.default.launch({
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        executablePath: chromiumPath,
+        args: [
+          '--no-sandbox', 
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--single-process',
+          '--no-zygote'
+        ],
       });
       const page = await browser.newPage();
 
@@ -6215,6 +6237,247 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("Error generating VAT statement Excel:", error);
       res.status(500).json({ error: "Failed to generate VAT statement Excel" });
+    }
+  });
+
+  // Download individual subscription invoice PDF (IT-only)
+  app.get("/api/it/business-management/invoices/:invoiceId/pdf", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { invoiceId } = req.params;
+
+      // Get the specific invoice with user and restaurant details
+      const [invoice] = await db
+        .select({
+          id: subscriptionInvoices.id,
+          serialNumber: subscriptionInvoices.serialNumber,
+          subscriptionPlan: subscriptionInvoices.subscriptionPlan,
+          branchesCount: subscriptionInvoices.branchesCount,
+          basePlanPrice: subscriptionInvoices.basePlanPrice,
+          additionalBranchesPrice: subscriptionInvoices.additionalBranchesPrice,
+          subtotal: subscriptionInvoices.subtotal,
+          vatAmount: subscriptionInvoices.vatAmount,
+          total: subscriptionInvoices.total,
+          invoiceDate: subscriptionInvoices.invoiceDate,
+          userName: users.fullName,
+          userEmail: users.email,
+          restaurantName: restaurants.name,
+          taxNumber: restaurants.taxNumber,
+          commercialRegistration: restaurants.commercialRegistration,
+        })
+        .from(subscriptionInvoices)
+        .leftJoin(users, eq(subscriptionInvoices.userId, users.id))
+        .leftJoin(restaurants, eq(users.restaurantId, restaurants.id))
+        .where(eq(subscriptionInvoices.id, invoiceId));
+
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+
+      // Generate ZATCA-compliant QR code
+      const qrData = [
+        "Kinzhal LTD Co.",
+        "310000000000003",
+        new Date(invoice.invoiceDate!).toISOString(),
+        parseFloat(invoice.total || "0").toFixed(2),
+        parseFloat(invoice.vatAmount || "0").toFixed(2)
+      ].join("|");
+      const qrCodeDataURL = await QRCode.toDataURL(qrData);
+
+      // Import Puppeteer dynamically and detect Chromium path
+      const puppeteer = await import("puppeteer");
+      const { execSync } = await import("child_process");
+      const { existsSync } = await import("fs");
+      
+      let chromiumPath: string | undefined = undefined;
+      try {
+        chromiumPath = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null', { encoding: 'utf8' }).trim();
+        if (!chromiumPath || !existsSync(chromiumPath)) {
+          chromiumPath = undefined;
+        }
+      } catch (e) {
+        // Chromium not found via which
+      }
+      
+      const browser = await puppeteer.default.launch({
+        headless: true,
+        executablePath: chromiumPath,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process', '--no-zygote'],
+      });
+      const page = await browser.newPage();
+
+      const planNames: { [key: string]: { en: string; ar: string } } = {
+        weekly: { en: 'Weekly', ar: 'أسبوعي' },
+        monthly: { en: 'Monthly', ar: 'شهري' },
+        yearly: { en: 'Yearly', ar: 'سنوي' },
+      };
+      const planName = planNames[invoice.subscriptionPlan] || { en: invoice.subscriptionPlan, ar: invoice.subscriptionPlan };
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html dir="ltr">
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: Arial, sans-serif; padding: 30px; font-size: 12px; max-width: 800px; margin: 0 auto; }
+            .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #1a365d; padding-bottom: 20px; }
+            .header h1 { color: #1a365d; margin: 0; font-size: 24px; }
+            .header h2 { color: #2d3748; margin: 8px 0; font-size: 16px; }
+            .header p { color: #666; margin: 3px 0; font-size: 11px; }
+            .zatca-badge { background: #22c55e; color: white; padding: 4px 12px; border-radius: 4px; font-size: 10px; display: inline-block; margin-top: 10px; }
+            .invoice-info { display: flex; justify-content: space-between; margin: 25px 0; padding: 15px; background: #f8fafc; border-radius: 8px; }
+            .info-block { flex: 1; }
+            .info-block h3 { margin: 0 0 10px 0; color: #1a365d; font-size: 13px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
+            .info-block p { margin: 4px 0; font-size: 11px; color: #4a5568; }
+            .info-block strong { color: #1a365d; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+            th { background: #1a365d; color: white; font-size: 11px; }
+            td { font-size: 11px; }
+            tr:nth-child(even) { background: #f8fafc; }
+            .totals { margin-top: 20px; }
+            .totals-row { display: flex; justify-content: space-between; padding: 8px 15px; font-size: 12px; }
+            .totals-row.subtotal { background: #f0f4f8; border-radius: 4px; }
+            .totals-row.vat { background: #fef3c7; border-radius: 4px; margin: 5px 0; }
+            .totals-row.total { background: #1a365d; color: white; border-radius: 4px; font-size: 14px; font-weight: bold; }
+            .qr-section { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+            .qr-section img { width: 100px; height: 100px; }
+            .qr-section p { font-size: 10px; color: #666; margin: 5px 0; }
+            .footer { text-align: center; margin-top: 40px; color: #666; font-size: 10px; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+            .bilingual { display: flex; justify-content: space-between; }
+            .bilingual .ar { text-align: right; direction: rtl; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>SUBSCRIPTION INVOICE / فاتورة الاشتراك</h1>
+            <h2>Kinzhal LTD Co. - BlindSpot System (BSS)</h2>
+            <p>VAT Registration: 310000000000003 | الرقم الضريبي</p>
+            <span class="zatca-badge">ZATCA Compliant / متوافق مع هيئة الزكاة</span>
+          </div>
+
+          <div class="invoice-info">
+            <div class="info-block">
+              <h3>Invoice Details / تفاصيل الفاتورة</h3>
+              <p><strong>Invoice No:</strong> ${invoice.serialNumber}</p>
+              <p><strong>Date:</strong> ${new Date(invoice.invoiceDate!).toLocaleDateString('en-GB')}</p>
+              <p><strong>Plan:</strong> ${planName.en} / ${planName.ar}</p>
+            </div>
+            <div class="info-block">
+              <h3>Customer / العميل</h3>
+              <p><strong>Name:</strong> ${invoice.restaurantName || invoice.userName || 'N/A'}</p>
+              <p><strong>Tax No:</strong> ${invoice.taxNumber || 'N/A'}</p>
+              <p><strong>CR:</strong> ${invoice.commercialRegistration || 'N/A'}</p>
+              <p><strong>Email:</strong> ${invoice.userEmail || 'N/A'}</p>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width:50%">Description / الوصف</th>
+                <th style="text-align:center">Qty / الكمية</th>
+                <th style="text-align:right">Unit Price / سعر الوحدة</th>
+                <th style="text-align:right">Amount / المبلغ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${planName.en} Subscription / اشتراك ${planName.ar}</td>
+                <td style="text-align:center">1</td>
+                <td style="text-align:right">${parseFloat(invoice.basePlanPrice || "0").toFixed(2)} SAR</td>
+                <td style="text-align:right">${parseFloat(invoice.basePlanPrice || "0").toFixed(2)} SAR</td>
+              </tr>
+              ${parseFloat(invoice.additionalBranchesPrice || "0") > 0 ? `
+              <tr>
+                <td>Additional Branches (${(invoice.branchesCount || 1) - 1}) / فروع إضافية</td>
+                <td style="text-align:center">${(invoice.branchesCount || 1) - 1}</td>
+                <td style="text-align:right">${(parseFloat(invoice.additionalBranchesPrice || "0") / Math.max((invoice.branchesCount || 1) - 1, 1)).toFixed(2)} SAR</td>
+                <td style="text-align:right">${parseFloat(invoice.additionalBranchesPrice || "0").toFixed(2)} SAR</td>
+              </tr>
+              ` : ''}
+            </tbody>
+          </table>
+
+          <div class="totals">
+            <div class="totals-row subtotal">
+              <span>Subtotal (excl. VAT) / المبلغ قبل الضريبة:</span>
+              <span>${parseFloat(invoice.subtotal || "0").toFixed(2)} SAR</span>
+            </div>
+            <div class="totals-row vat">
+              <span>VAT (15%) / ضريبة القيمة المضافة:</span>
+              <span>${parseFloat(invoice.vatAmount || "0").toFixed(2)} SAR</span>
+            </div>
+            <div class="totals-row total">
+              <span>Total (incl. VAT) / الإجمالي شامل الضريبة:</span>
+              <span>${parseFloat(invoice.total || "0").toFixed(2)} SAR</span>
+            </div>
+          </div>
+
+          <div class="qr-section">
+            <p>Scan for ZATCA Verification / امسح للتحقق من هيئة الزكاة</p>
+            <img src="${qrCodeDataURL}" alt="QR Code" />
+          </div>
+
+          <div class="footer">
+            <p>This is a computer-generated document and does not require a signature.</p>
+            <p>هذا المستند مُنشأ آلياً ولا يتطلب توقيعاً.</p>
+            <p>Made By Kinzhal LTD Co. | BlindSpot System (BSS)</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      const pdfBuffer = await page.pdf({ 
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '15mm', right: '15mm', bottom: '15mm', left: '15mm' }
+      });
+      await browser.close();
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=Invoice-${invoice.serialNumber}.pdf`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error generating subscription invoice PDF:", error);
+      res.status(500).json({ error: "Failed to generate invoice PDF" });
+    }
+  });
+
+  // Suspend/Activate subscription (IT-only)
+  app.patch("/api/it/business-management/subscriptions/:restaurantId/status", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { restaurantId } = req.params;
+      const { status } = req.body;
+
+      // Validate status
+      const validStatuses = ["active", "inactive", "cancelled", "expired"];
+      if (!status || !validStatuses.includes(status)) {
+        return res.status(400).json({ error: "Invalid status. Must be one of: active, inactive, cancelled, expired" });
+      }
+
+      // Update the restaurant's subscription status
+      const [updatedRestaurant] = await db
+        .update(restaurants)
+        .set({ subscriptionStatus: status })
+        .where(eq(restaurants.id, restaurantId))
+        .returning();
+
+      if (!updatedRestaurant) {
+        return res.status(404).json({ error: "Restaurant not found" });
+      }
+
+      console.log(`[IT] Subscription status updated for restaurant ${restaurantId}: ${status}`);
+      
+      res.json({ 
+        success: true, 
+        restaurantId,
+        newStatus: status,
+        message: `Subscription ${status === 'active' ? 'activated' : 'suspended'} successfully`
+      });
+    } catch (error) {
+      console.error("Error updating subscription status:", error);
+      res.status(500).json({ error: "Failed to update subscription status" });
     }
   });
 
