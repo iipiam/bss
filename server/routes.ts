@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { db } from "./db";
-import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport, generateInvestorStatementPDF, getBrowser } from "./invoice";
+import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport, generateInvestorStatementPDF, generateBssAnalysisStatementPDF, getBrowser } from "./invoice";
 import { PasswordResetMailer } from "./email";
 import { sanitizePatchBody } from "./utils";
 import { requirePermission, requireAnyPermission, requireAllPermissions, requireAction } from "./middleware/requirePermission";
@@ -7059,6 +7059,125 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("Error fetching accounts by type:", error);
       res.status(500).json({ error: "Failed to fetch accounts breakdown" });
+    }
+  });
+
+  // Download BSS Analysis Statement as PDF
+  app.get("/api/it/bss-analysis/download-pdf", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { fromDate, toDate } = req.query;
+
+      // Calculate all the same metrics as the overview endpoint
+      const allRestaurants = await db
+        .select()
+        .from(restaurants);
+
+      const allUsers = await db
+        .select()
+        .from(users)
+        .where(isNotNull(users.restaurantId));
+
+      // Build invoice date conditions
+      const invoiceConditions = [];
+      if (fromDate && typeof fromDate === 'string') {
+        invoiceConditions.push(gte(subscriptionInvoices.invoiceDate, new Date(fromDate)));
+      }
+      if (toDate && typeof toDate === 'string') {
+        invoiceConditions.push(lte(subscriptionInvoices.invoiceDate, new Date(toDate)));
+      }
+      const invoices = invoiceConditions.length > 0
+        ? await db.select().from(subscriptionInvoices).where(and(...invoiceConditions))
+        : await db.select().from(subscriptionInvoices);
+
+      // Build bills date conditions
+      const billsConditions = [];
+      if (fromDate && typeof fromDate === 'string') {
+        billsConditions.push(gte(companyBills.billDate, new Date(fromDate)));
+      }
+      if (toDate && typeof toDate === 'string') {
+        billsConditions.push(lte(companyBills.billDate, new Date(toDate)));
+      }
+      const bills = billsConditions.length > 0
+        ? await db.select().from(companyBills).where(and(...billsConditions))
+        : await db.select().from(companyBills);
+
+      // Calculate metrics
+      let subscriptionRevenue = 0;
+      let vatCollected = 0;
+      const planBreakdown = { weekly: 0, monthly: 0, yearly: 0 };
+      const revenueByPlan = { weekly: 0, monthly: 0, yearly: 0 };
+
+      for (const inv of invoices) {
+        subscriptionRevenue += parseFloat(inv.subtotal || "0");
+        vatCollected += parseFloat(inv.vatAmount || "0");
+        const plan = inv.subscriptionPlan as 'weekly' | 'monthly' | 'yearly';
+        if (plan && planBreakdown[plan] !== undefined) {
+          planBreakdown[plan]++;
+          revenueByPlan[plan] += parseFloat(inv.subtotal || "0");
+        }
+      }
+
+      let totalExpenses = 0;
+      let expenseVat = 0;
+      for (const bill of bills) {
+        totalExpenses += parseFloat(bill.totalAmount || "0");
+        expenseVat += parseFloat(bill.vatAmount || "0");
+      }
+
+      const totalRevenue = subscriptionRevenue + vatCollected;
+      const netProfit = subscriptionRevenue - totalExpenses;
+      const netVat = vatCollected - expenseVat;
+
+      let restaurantCount = 0;
+      let factoryCount = 0;
+      let activeSubscriptions = 0;
+      let expiredSubscriptions = 0;
+      let cancelledSubscriptions = 0;
+
+      for (const r of allRestaurants) {
+        if (r.businessType === 'restaurant') restaurantCount++;
+        else if (r.businessType === 'factory') factoryCount++;
+        if (r.subscriptionStatus === 'active') activeSubscriptions++;
+        else if (r.subscriptionStatus === 'expired') expiredSubscriptions++;
+        else if (r.subscriptionStatus === 'cancelled') cancelledSubscriptions++;
+      }
+
+      // Get business info for the PDF
+      const businessInfo = await storage.getBusinessInfo();
+
+      // Generate PDF
+      const pdfBuffer = await generateBssAnalysisStatementPDF({
+        subscriptionRevenue,
+        vatCollected,
+        totalRevenue,
+        totalInvoices: invoices.length,
+        totalExpenses,
+        expenseVat,
+        totalBills: bills.length,
+        netProfit,
+        netVat,
+        profitMargin: subscriptionRevenue > 0 ? (netProfit / subscriptionRevenue) * 100 : 0,
+        totalClients: allRestaurants.length,
+        totalAccounts: allUsers.length,
+        restaurantCount,
+        factoryCount,
+        activeSubscriptions,
+        expiredSubscriptions,
+        cancelledSubscriptions,
+        planBreakdown,
+        revenueByPlan,
+        periodStart: fromDate ? new Date(fromDate as string) : new Date(new Date().getFullYear(), 0, 1),
+        periodEnd: toDate ? new Date(toDate as string) : new Date(),
+        businessInfo,
+      });
+
+      const filename = `bss-analysis-statement-${new Date().toISOString().split('T')[0]}.pdf`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error generating BSS analysis PDF:", error);
+      res.status(500).json({ error: "Failed to generate PDF" });
     }
   });
 

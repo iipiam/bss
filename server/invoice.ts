@@ -2320,6 +2320,562 @@ export async function generateInvestorStatementPDF(data: InvestorStatementData):
   }
 }
 
+// BSS Analysis Statement Data Interface
+interface BssAnalysisStatementData {
+  subscriptionRevenue: number;
+  vatCollected: number;
+  totalRevenue: number;
+  totalInvoices: number;
+  totalExpenses: number;
+  expenseVat: number;
+  totalBills: number;
+  netProfit: number;
+  netVat: number;
+  profitMargin: number;
+  totalClients: number;
+  totalAccounts: number;
+  restaurantCount: number;
+  factoryCount: number;
+  activeSubscriptions: number;
+  expiredSubscriptions: number;
+  cancelledSubscriptions: number;
+  planBreakdown: { weekly: number; monthly: number; yearly: number };
+  revenueByPlan: { weekly: number; monthly: number; yearly: number };
+  periodStart: Date;
+  periodEnd: Date;
+  businessInfo?: {
+    companyNameEn?: string | null;
+    companyNameAr?: string | null;
+    vatNumber?: string | null;
+    crNumber?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    addressEn?: string | null;
+  } | null;
+}
+
+function generateBssAnalysisStatementHTML(data: BssAnalysisStatementData): string {
+  const bi = data.businessInfo || {};
+  const companyNameEn = bi.companyNameEn || "BlindSpot System (BSS)";
+  const companyNameAr = bi.companyNameAr || "نظام بلايند سبوت";
+  const companyEmail = bi.email || "IT@SaudiKinzhal.org";
+  const companyPhone = bi.phone || "";
+  const companyAddress = bi.addressEn || "Saudi Arabia";
+  const companyVat = bi.vatNumber || "";
+  const companyCr = bi.crNumber || "";
+
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('en-SA', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
+  const formatCurrency = (amount: number) => {
+    return amount.toLocaleString('en-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const escapedCompanyNameEn = escapeHtml(companyNameEn);
+  const escapedCompanyNameAr = escapeHtml(companyNameAr);
+  const escapedCompanyEmail = escapeHtml(companyEmail);
+  const escapedCompanyPhone = escapeHtml(companyPhone);
+  const escapedCompanyAddress = escapeHtml(companyAddress);
+  const escapedCompanyVat = escapeHtml(companyVat);
+  const escapedCompanyCr = escapeHtml(companyCr);
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', 'Noto Naskh Arabic', sans-serif;
+      font-size: 11px;
+      line-height: 1.5;
+      color: #1a1a1a;
+      background: white;
+    }
+    
+    .container {
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 15mm;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #2962ff 0%, #1e40af 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 15px;
+    }
+    
+    .company-info {
+      text-align: left;
+    }
+    
+    .company-info-ar {
+      text-align: right;
+      direction: rtl;
+    }
+    
+    .company-name {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+    
+    .company-name-ar {
+      font-size: 20px;
+      font-weight: 600;
+      font-family: 'Noto Naskh Arabic', sans-serif;
+    }
+    
+    .company-detail {
+      font-size: 10px;
+      opacity: 0.9;
+    }
+    
+    .document-title {
+      text-align: center;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .document-title h1 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+    
+    .document-title h2 {
+      font-size: 16px;
+      font-weight: 600;
+      font-family: 'Noto Naskh Arabic', sans-serif;
+    }
+    
+    .period-info {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px 15px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .period-label {
+      font-size: 10px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .period-value {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .metric-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+    }
+    
+    .metric-card.green {
+      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+      border-color: #86efac;
+    }
+    
+    .metric-card.blue {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      border-color: #93c5fd;
+    }
+    
+    .metric-card.red {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      border-color: #fca5a5;
+    }
+    
+    .metric-card.purple {
+      background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+      border-color: #c4b5fd;
+    }
+    
+    .metric-label {
+      font-size: 9px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 4px;
+    }
+    
+    .metric-label-ar {
+      font-size: 9px;
+      color: #64748b;
+      font-family: 'Noto Naskh Arabic', sans-serif;
+      direction: rtl;
+    }
+    
+    .metric-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    
+    .metric-value.green { color: #16a34a; }
+    .metric-value.blue { color: #2563eb; }
+    .metric-value.red { color: #dc2626; }
+    .metric-value.purple { color: #7c3aed; }
+    
+    .metric-sub {
+      font-size: 9px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    
+    .section {
+      margin-bottom: 20px;
+    }
+    
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1e40af;
+      margin-bottom: 10px;
+      padding-bottom: 5px;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .section-title-ar {
+      font-family: 'Noto Naskh Arabic', sans-serif;
+      direction: rtl;
+    }
+    
+    .two-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .info-table th,
+    .info-table td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 10px;
+    }
+    
+    .info-table th {
+      background: #f1f5f9;
+      font-weight: 600;
+      color: #475569;
+    }
+    
+    .info-table td.value {
+      text-align: right;
+      font-weight: 600;
+    }
+    
+    .info-table td.value.green { color: #16a34a; }
+    .info-table td.value.blue { color: #2563eb; }
+    .info-table td.value.red { color: #dc2626; }
+    
+    .summary-box {
+      background: linear-gradient(135deg, #2962ff 0%, #1e40af 100%);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+    
+    .summary-title {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    
+    .summary-item {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 10px;
+      border-radius: 4px;
+      text-align: center;
+    }
+    
+    .summary-item-label {
+      font-size: 9px;
+      opacity: 0.9;
+      margin-bottom: 3px;
+    }
+    
+    .summary-item-value {
+      font-size: 14px;
+      font-weight: 700;
+    }
+    
+    .footer {
+      margin-top: 25px;
+      padding-top: 15px;
+      border-top: 2px solid #e2e8f0;
+      text-align: center;
+      font-size: 9px;
+      color: #64748b;
+    }
+    
+    .footer p {
+      margin-bottom: 3px;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 600;
+    }
+    
+    .badge-green { background: #dcfce7; color: #16a34a; }
+    .badge-red { background: #fee2e2; color: #dc2626; }
+    .badge-gray { background: #f1f5f9; color: #64748b; }
+    .badge-orange { background: #ffedd5; color: #ea580c; }
+    .badge-blue { background: #dbeafe; color: #2563eb; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-top">
+        <div class="company-info">
+          <div class="company-name">${escapedCompanyNameEn}</div>
+          ${escapedCompanyEmail ? `<div class="company-detail">${escapedCompanyEmail}</div>` : ''}
+          ${escapedCompanyPhone ? `<div class="company-detail">${escapedCompanyPhone}</div>` : ''}
+        </div>
+        <div class="company-info-ar">
+          <div class="company-name company-name-ar">${escapedCompanyNameAr}</div>
+          ${escapedCompanyVat ? `<div class="company-detail">VAT: ${escapedCompanyVat}</div>` : ''}
+          ${escapedCompanyCr ? `<div class="company-detail">CR: ${escapedCompanyCr}</div>` : ''}
+        </div>
+      </div>
+      <div class="document-title">
+        <h1>BSS Business Analysis Statement</h1>
+        <h2>كشف تحليل أعمال BSS</h2>
+      </div>
+    </div>
+    
+    <div class="period-info">
+      <div>
+        <div class="period-label">Report Period / فترة التقرير</div>
+        <div class="period-value">${formatDate(data.periodStart)} - ${formatDate(data.periodEnd)}</div>
+      </div>
+      <div style="text-align: right;">
+        <div class="period-label">Generated On / تاريخ الإصدار</div>
+        <div class="period-value">${formatDate(new Date())}</div>
+      </div>
+    </div>
+    
+    <div class="metrics-grid">
+      <div class="metric-card green">
+        <div class="metric-label">Subscription Revenue</div>
+        <div class="metric-label-ar">إيرادات الاشتراكات</div>
+        <div class="metric-value green">${formatCurrency(data.subscriptionRevenue)} SAR</div>
+        <div class="metric-sub">${data.totalInvoices} invoices</div>
+      </div>
+      <div class="metric-card blue">
+        <div class="metric-label">VAT Collected</div>
+        <div class="metric-label-ar">ضريبة القيمة المضافة المحصلة</div>
+        <div class="metric-value blue">${formatCurrency(data.vatCollected)} SAR</div>
+        <div class="metric-sub">15% VAT Rate</div>
+      </div>
+      <div class="metric-card red">
+        <div class="metric-label">Total Expenses</div>
+        <div class="metric-label-ar">إجمالي المصروفات</div>
+        <div class="metric-value red">${formatCurrency(data.totalExpenses)} SAR</div>
+        <div class="metric-sub">${data.totalBills} bills</div>
+      </div>
+      <div class="metric-card purple">
+        <div class="metric-label">Net Profit</div>
+        <div class="metric-label-ar">صافي الربح</div>
+        <div class="metric-value ${data.netProfit >= 0 ? 'purple' : 'red'}">${formatCurrency(data.netProfit)} SAR</div>
+        <div class="metric-sub">Margin: ${data.profitMargin.toFixed(1)}%</div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">
+        <span>Client & Account Summary</span>
+        <span class="section-title-ar">ملخص العملاء والحسابات</span>
+      </div>
+      <div class="two-column">
+        <table class="info-table">
+          <tr>
+            <th colspan="2">Account Distribution / توزيع الحسابات</th>
+          </tr>
+          <tr>
+            <td>Total Clients / إجمالي العملاء</td>
+            <td class="value">${data.totalClients}</td>
+          </tr>
+          <tr>
+            <td>Total Accounts / إجمالي الحسابات</td>
+            <td class="value">${data.totalAccounts}</td>
+          </tr>
+          <tr>
+            <td>Restaurant Clients / عملاء المطاعم</td>
+            <td class="value"><span class="badge badge-orange">${data.restaurantCount}</span></td>
+          </tr>
+          <tr>
+            <td>Factory Clients / عملاء المصانع</td>
+            <td class="value"><span class="badge badge-blue">${data.factoryCount}</span></td>
+          </tr>
+        </table>
+        <table class="info-table">
+          <tr>
+            <th colspan="2">Subscription Status / حالة الاشتراكات</th>
+          </tr>
+          <tr>
+            <td>Active Subscriptions / الاشتراكات النشطة</td>
+            <td class="value"><span class="badge badge-green">${data.activeSubscriptions}</span></td>
+          </tr>
+          <tr>
+            <td>Expired Subscriptions / الاشتراكات المنتهية</td>
+            <td class="value"><span class="badge badge-red">${data.expiredSubscriptions}</span></td>
+          </tr>
+          <tr>
+            <td>Cancelled Subscriptions / الاشتراكات الملغاة</td>
+            <td class="value"><span class="badge badge-gray">${data.cancelledSubscriptions}</span></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">
+        <span>Revenue by Subscription Plan</span>
+        <span class="section-title-ar">الإيرادات حسب خطة الاشتراك</span>
+      </div>
+      <table class="info-table">
+        <tr>
+          <th>Plan / الخطة</th>
+          <th style="text-align: center;">Clients / العملاء</th>
+          <th style="text-align: right;">Revenue / الإيرادات</th>
+        </tr>
+        <tr>
+          <td>Weekly Plan / الخطة الأسبوعية</td>
+          <td style="text-align: center;">${data.planBreakdown.weekly}</td>
+          <td class="value green">${formatCurrency(data.revenueByPlan.weekly)} SAR</td>
+        </tr>
+        <tr>
+          <td>Monthly Plan / الخطة الشهرية</td>
+          <td style="text-align: center;">${data.planBreakdown.monthly}</td>
+          <td class="value green">${formatCurrency(data.revenueByPlan.monthly)} SAR</td>
+        </tr>
+        <tr>
+          <td>Yearly Plan / الخطة السنوية</td>
+          <td style="text-align: center;">${data.planBreakdown.yearly}</td>
+          <td class="value green">${formatCurrency(data.revenueByPlan.yearly)} SAR</td>
+        </tr>
+      </table>
+    </div>
+    
+    <div class="summary-box">
+      <div class="summary-title">Financial Overview / نظرة مالية عامة</div>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="summary-item-label">Total Revenue / إجمالي الإيرادات</div>
+          <div class="summary-item-value">${formatCurrency(data.totalRevenue)} SAR</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-item-label">Net VAT / صافي ضريبة القيمة المضافة</div>
+          <div class="summary-item-value">${formatCurrency(data.netVat)} SAR</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-item-label">Profit Margin / هامش الربح</div>
+          <div class="summary-item-value">${data.profitMargin.toFixed(1)}%</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>This statement is generated electronically by BlindSpot System (BSS) and is valid for informational purposes.</p>
+      <p>هذا الكشف تم إنشاؤه إلكترونياً بواسطة نظام بلايند سبوت وهو صالح لأغراض المعلومات.</p>
+      <p style="margin-top: 8px; font-weight: 600;">${escapedCompanyNameEn} | ${escapedCompanyAddress}</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
+export async function generateBssAnalysisStatementPDF(data: BssAnalysisStatementData): Promise<Buffer> {
+  console.log('[BssAnalysis] Generating PDF statement');
+  
+  const html = generateBssAnalysisStatementHTML(data);
+  
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+
+  try {
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '10mm',
+        right: '10mm',
+        bottom: '10mm',
+        left: '10mm'
+      }
+    });
+
+    console.log('[BssAnalysis] PDF generated successfully');
+    return Buffer.from(pdfBuffer);
+  } finally {
+    await page.close();
+  }
+}
+
 // Cleanup function for graceful shutdown
 export async function closeBrowser(): Promise<void> {
   if (browserInstance) {

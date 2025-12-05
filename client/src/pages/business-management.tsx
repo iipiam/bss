@@ -24,6 +24,7 @@ import {
   Calculator,
   FileText,
   FileSpreadsheet,
+  FileDown,
   Search,
   Calendar,
   Phone,
@@ -1598,6 +1599,21 @@ export default function BusinessManagement() {
             </div>
           ) : bssAnalysis ? (
             <>
+              <div className="flex justify-end">
+                <Button
+                  onClick={() => {
+                    const url = new URL('/api/it/bss-analysis/download-pdf', window.location.origin);
+                    if (fromDate) url.searchParams.set('fromDate', fromDate);
+                    if (toDate) url.searchParams.set('toDate', toDate);
+                    window.open(url.toString(), '_blank');
+                  }}
+                  className="gap-2"
+                  data-testid="button-download-analysis-pdf"
+                >
+                  <FileDown className="h-4 w-4" />
+                  {t.downloadStatement || "Download Statement"}
+                </Button>
+              </div>
               <div className="grid gap-4 md:grid-cols-4">
                 <Card className="bg-green-50 dark:bg-green-950" data-testid="card-subscription-revenue">
                   <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
