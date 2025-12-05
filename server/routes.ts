@@ -36,10 +36,12 @@ import {
   insertInvestorSchema,
   updateInvestorSchema,
   insertLicenseSchema,
+  insertCompanyBillSchema,
   users,
   restaurants,
   orders,
   subscriptionInvoices,
+  companyBills,
 } from "@shared/schema";
 import { getPlanPricing, type SubscriptionPlan, type BusinessType } from "@shared/subscriptionPricing";
 import { ADMIN_PERMISSIONS, type PermissionSet } from "@shared/permissions";
@@ -6478,6 +6480,480 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("Error updating subscription status:", error);
       res.status(500).json({ error: "Failed to update subscription status" });
+    }
+  });
+
+  // ============================================
+  // BUSINESS OPERATIONS - Company Bills CRUD (IT-only)
+  // ============================================
+
+  // Get all company bills with optional filtering
+  app.get("/api/it/business-operations/bills", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { status, billType, fromDate, toDate } = req.query;
+
+      let bills = await db
+        .select({
+          id: companyBills.id,
+          billType: companyBills.billType,
+          vendor: companyBills.vendor,
+          amount: companyBills.amount,
+          vatAmount: companyBills.vatAmount,
+          totalAmount: companyBills.totalAmount,
+          billDate: companyBills.billDate,
+          dueDate: companyBills.dueDate,
+          paidDate: companyBills.paidDate,
+          status: companyBills.status,
+          paymentPeriod: companyBills.paymentPeriod,
+          description: companyBills.description,
+          referenceNumber: companyBills.referenceNumber,
+          createdBy: companyBills.createdBy,
+          createdByName: users.fullName,
+          createdAt: companyBills.createdAt,
+        })
+        .from(companyBills)
+        .leftJoin(users, eq(companyBills.createdBy, users.id))
+        .orderBy(desc(companyBills.billDate));
+
+      // Apply filters
+      if (status && status !== 'all') {
+        bills = bills.filter(b => b.status === status);
+      }
+      if (billType && billType !== 'all') {
+        bills = bills.filter(b => b.billType === billType);
+      }
+      if (fromDate) {
+        const from = new Date(fromDate as string);
+        bills = bills.filter(b => new Date(b.billDate!) >= from);
+      }
+      if (toDate) {
+        const to = new Date(toDate as string);
+        to.setHours(23, 59, 59, 999);
+        bills = bills.filter(b => new Date(b.billDate!) <= to);
+      }
+
+      res.json(bills);
+    } catch (error) {
+      console.error("Error fetching company bills:", error);
+      res.status(500).json({ error: "Failed to fetch company bills" });
+    }
+  });
+
+  // Create a new company bill
+  app.post("/api/it/business-operations/bills", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const validatedData = insertCompanyBillSchema.parse({
+        ...req.body,
+        createdBy: req.session.user?.id,
+      });
+
+      const [newBill] = await db
+        .insert(companyBills)
+        .values(validatedData)
+        .returning();
+
+      console.log(`[IT] Company bill created: ${newBill.id} by user ${req.session.user?.id}`);
+      res.status(201).json(newBill);
+    } catch (error) {
+      console.error("Error creating company bill:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid bill data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create company bill" });
+    }
+  });
+
+  // Update a company bill
+  app.patch("/api/it/business-operations/bills/:billId", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { billId } = req.params;
+      
+      // Define allowed update fields
+      const allowedFields = [
+        'billType', 'vendor', 'amount', 'vatAmount', 'totalAmount',
+        'billDate', 'dueDate', 'paidDate', 'status', 'paymentPeriod',
+        'description', 'referenceNumber'
+      ];
+      
+      // Manually filter to allowed fields
+      const updateData: Record<string, any> = {};
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
+      }
+
+      // Convert date strings to Date objects
+      if (updateData.billDate) updateData.billDate = new Date(updateData.billDate);
+      if (updateData.dueDate) updateData.dueDate = new Date(updateData.dueDate);
+      if (updateData.paidDate) updateData.paidDate = new Date(updateData.paidDate);
+
+      const [updatedBill] = await db
+        .update(companyBills)
+        .set({ ...updateData, updatedAt: new Date() })
+        .where(eq(companyBills.id, billId))
+        .returning();
+
+      if (!updatedBill) {
+        return res.status(404).json({ error: "Bill not found" });
+      }
+
+      console.log(`[IT] Company bill updated: ${billId} by user ${req.session.user?.id}`);
+      res.json(updatedBill);
+    } catch (error) {
+      console.error("Error updating company bill:", error);
+      res.status(500).json({ error: "Failed to update company bill" });
+    }
+  });
+
+  // Delete a company bill
+  app.delete("/api/it/business-operations/bills/:billId", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { billId } = req.params;
+
+      const [deletedBill] = await db
+        .delete(companyBills)
+        .where(eq(companyBills.id, billId))
+        .returning();
+
+      if (!deletedBill) {
+        return res.status(404).json({ error: "Bill not found" });
+      }
+
+      console.log(`[IT] Company bill deleted: ${billId} by user ${req.session.user?.id}`);
+      res.json({ success: true, message: "Bill deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting company bill:", error);
+      res.status(500).json({ error: "Failed to delete company bill" });
+    }
+  });
+
+  // Get company bills summary (for dashboard)
+  app.get("/api/it/business-operations/summary", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { fromDate, toDate } = req.query;
+
+      let bills = await db
+        .select()
+        .from(companyBills)
+        .orderBy(desc(companyBills.billDate));
+
+      // Apply date filters
+      if (fromDate) {
+        const from = new Date(fromDate as string);
+        bills = bills.filter(b => new Date(b.billDate!) >= from);
+      }
+      if (toDate) {
+        const to = new Date(toDate as string);
+        to.setHours(23, 59, 59, 999);
+        bills = bills.filter(b => new Date(b.billDate!) <= to);
+      }
+
+      // Calculate summaries by category
+      const byCategory: Record<string, { amount: number; vatAmount: number; totalAmount: number; count: number }> = {};
+      let totalAmount = 0;
+      let totalVat = 0;
+      let totalBills = 0;
+      let paidCount = 0;
+      let pendingCount = 0;
+      let overdueCount = 0;
+
+      for (const bill of bills) {
+        const category = bill.billType;
+        if (!byCategory[category]) {
+          byCategory[category] = { amount: 0, vatAmount: 0, totalAmount: 0, count: 0 };
+        }
+        byCategory[category].amount += parseFloat(bill.amount);
+        byCategory[category].vatAmount += parseFloat(bill.vatAmount);
+        byCategory[category].totalAmount += parseFloat(bill.totalAmount);
+        byCategory[category].count++;
+
+        totalAmount += parseFloat(bill.amount);
+        totalVat += parseFloat(bill.vatAmount);
+        totalBills += parseFloat(bill.totalAmount);
+
+        if (bill.status === 'paid') paidCount++;
+        else if (bill.status === 'pending') pendingCount++;
+        else if (bill.status === 'overdue') overdueCount++;
+      }
+
+      res.json({
+        totalExpenses: totalBills.toFixed(2),
+        totalBaseAmount: totalAmount.toFixed(2),
+        totalVatPaid: totalVat.toFixed(2),
+        billsCount: bills.length,
+        paidCount,
+        pendingCount,
+        overdueCount,
+        byCategory: Object.entries(byCategory).map(([category, data]) => ({
+          category,
+          ...data,
+          amount: data.amount.toFixed(2),
+          vatAmount: data.vatAmount.toFixed(2),
+          totalAmount: data.totalAmount.toFixed(2),
+        })),
+        periodStart: fromDate || null,
+        periodEnd: toDate || null,
+      });
+    } catch (error) {
+      console.error("Error calculating business operations summary:", error);
+      res.status(500).json({ error: "Failed to calculate summary" });
+    }
+  });
+
+  // ============================================
+  // BSS ANALYSIS - Analytics Dashboard (IT-only)
+  // ============================================
+
+  // Get comprehensive BSS analytics overview
+  app.get("/api/it/bss-analysis/overview", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { fromDate, toDate } = req.query;
+
+      // Get all subscription invoices
+      let invoices = await db
+        .select()
+        .from(subscriptionInvoices)
+        .orderBy(desc(subscriptionInvoices.invoiceDate));
+
+      // Get all company bills (expenses)
+      let bills = await db
+        .select()
+        .from(companyBills)
+        .orderBy(desc(companyBills.billDate));
+
+      // Get all restaurants/clients
+      const allRestaurants = await db
+        .select()
+        .from(restaurants);
+
+      // Get all users (accounts)
+      const allUsers = await db
+        .select({
+          id: users.id,
+          restaurantId: users.restaurantId,
+        })
+        .from(users)
+        .where(isNotNull(users.restaurantId));
+
+      // Apply date filters
+      if (fromDate) {
+        const from = new Date(fromDate as string);
+        invoices = invoices.filter(inv => new Date(inv.invoiceDate!) >= from);
+        bills = bills.filter(b => new Date(b.billDate!) >= from);
+      }
+      if (toDate) {
+        const to = new Date(toDate as string);
+        to.setHours(23, 59, 59, 999);
+        invoices = invoices.filter(inv => new Date(inv.invoiceDate!) <= to);
+        bills = bills.filter(b => new Date(b.billDate!) <= to);
+      }
+
+      // Calculate subscription revenue
+      const subscriptionRevenue = invoices.reduce((sum, inv) => sum + parseFloat(inv.subtotal || "0"), 0);
+      const vatCollected = invoices.reduce((sum, inv) => sum + parseFloat(inv.vatAmount || "0"), 0);
+      const totalRevenue = invoices.reduce((sum, inv) => sum + parseFloat(inv.total || "0"), 0);
+
+      // Calculate expenses
+      const totalExpenses = bills.reduce((sum, b) => sum + parseFloat(b.totalAmount || "0"), 0);
+      const expenseVat = bills.reduce((sum, b) => sum + parseFloat(b.vatAmount || "0"), 0);
+
+      // Net profit calculation
+      const netProfit = subscriptionRevenue - (totalExpenses - expenseVat);
+      const netVat = vatCollected - expenseVat;
+
+      // Count by business type
+      const restaurantCount = allRestaurants.filter(r => r.businessType === 'restaurant').length;
+      const factoryCount = allRestaurants.filter(r => r.businessType === 'factory').length;
+
+      // Count by subscription status
+      const activeSubscriptions = allRestaurants.filter(r => r.subscriptionStatus === 'active').length;
+      const expiredSubscriptions = allRestaurants.filter(r => r.subscriptionStatus === 'expired').length;
+      const cancelledSubscriptions = allRestaurants.filter(r => r.subscriptionStatus === 'cancelled').length;
+
+      // Subscription plan breakdown
+      const planBreakdown = {
+        weekly: invoices.filter(inv => inv.subscriptionPlan === 'weekly').length,
+        monthly: invoices.filter(inv => inv.subscriptionPlan === 'monthly').length,
+        yearly: invoices.filter(inv => inv.subscriptionPlan === 'yearly').length,
+      };
+
+      // Revenue by plan
+      const revenueByPlan = {
+        weekly: invoices.filter(inv => inv.subscriptionPlan === 'weekly')
+          .reduce((sum, inv) => sum + parseFloat(inv.total || "0"), 0).toFixed(2),
+        monthly: invoices.filter(inv => inv.subscriptionPlan === 'monthly')
+          .reduce((sum, inv) => sum + parseFloat(inv.total || "0"), 0).toFixed(2),
+        yearly: invoices.filter(inv => inv.subscriptionPlan === 'yearly')
+          .reduce((sum, inv) => sum + parseFloat(inv.total || "0"), 0).toFixed(2),
+      };
+
+      res.json({
+        // Revenue metrics
+        subscriptionRevenue: subscriptionRevenue.toFixed(2),
+        vatCollected: vatCollected.toFixed(2),
+        totalRevenue: totalRevenue.toFixed(2),
+        totalInvoices: invoices.length,
+
+        // Expense metrics
+        totalExpenses: totalExpenses.toFixed(2),
+        expenseVat: expenseVat.toFixed(2),
+        totalBills: bills.length,
+
+        // Profit metrics
+        netProfit: netProfit.toFixed(2),
+        netVat: netVat.toFixed(2),
+        profitMargin: subscriptionRevenue > 0 ? ((netProfit / subscriptionRevenue) * 100).toFixed(1) : "0",
+
+        // Account metrics
+        totalClients: allRestaurants.length,
+        totalAccounts: allUsers.length,
+        restaurantCount,
+        factoryCount,
+
+        // Subscription status
+        activeSubscriptions,
+        expiredSubscriptions,
+        cancelledSubscriptions,
+
+        // Plan breakdown
+        planBreakdown,
+        revenueByPlan,
+
+        // Period
+        periodStart: fromDate || null,
+        periodEnd: toDate || null,
+      });
+    } catch (error) {
+      console.error("Error calculating BSS analysis overview:", error);
+      res.status(500).json({ error: "Failed to calculate analytics" });
+    }
+  });
+
+  // Get monthly revenue trends
+  app.get("/api/it/bss-analysis/revenue-trends", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { months = 12 } = req.query;
+      const numMonths = parseInt(months as string) || 12;
+
+      // Get all subscription invoices
+      const invoices = await db
+        .select()
+        .from(subscriptionInvoices)
+        .orderBy(desc(subscriptionInvoices.invoiceDate));
+
+      // Get all company bills
+      const bills = await db
+        .select()
+        .from(companyBills)
+        .orderBy(desc(companyBills.billDate));
+
+      // Group by month
+      const monthlyData: Record<string, { revenue: number; vat: number; expenses: number; profit: number }> = {};
+
+      // Initialize last N months
+      for (let i = 0; i < numMonths; i++) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthlyData[key] = { revenue: 0, vat: 0, expenses: 0, profit: 0 };
+      }
+
+      // Add invoice revenue
+      for (const inv of invoices) {
+        const date = new Date(inv.invoiceDate!);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        if (monthlyData[key]) {
+          monthlyData[key].revenue += parseFloat(inv.subtotal || "0");
+          monthlyData[key].vat += parseFloat(inv.vatAmount || "0");
+        }
+      }
+
+      // Add expenses
+      for (const bill of bills) {
+        const date = new Date(bill.billDate!);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        if (monthlyData[key]) {
+          monthlyData[key].expenses += parseFloat(bill.totalAmount || "0");
+        }
+      }
+
+      // Calculate profit
+      for (const key of Object.keys(monthlyData)) {
+        monthlyData[key].profit = monthlyData[key].revenue - monthlyData[key].expenses;
+      }
+
+      // Convert to array and sort
+      const trends = Object.entries(monthlyData)
+        .map(([month, data]) => ({
+          month,
+          revenue: data.revenue.toFixed(2),
+          vat: data.vat.toFixed(2),
+          expenses: data.expenses.toFixed(2),
+          profit: data.profit.toFixed(2),
+        }))
+        .sort((a, b) => a.month.localeCompare(b.month));
+
+      res.json(trends);
+    } catch (error) {
+      console.error("Error fetching revenue trends:", error);
+      res.status(500).json({ error: "Failed to fetch revenue trends" });
+    }
+  });
+
+  // Get accounts by business type breakdown
+  app.get("/api/it/bss-analysis/accounts-by-type", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const allRestaurants = await db
+        .select({
+          id: restaurants.id,
+          name: restaurants.name,
+          businessType: restaurants.businessType,
+          subscriptionStatus: restaurants.subscriptionStatus,
+          subscriptionPlan: restaurants.subscriptionPlan,
+        })
+        .from(restaurants);
+
+      const byType = {
+        restaurant: {
+          total: 0,
+          active: 0,
+          expired: 0,
+          cancelled: 0,
+          byPlan: { weekly: 0, monthly: 0, yearly: 0 },
+        },
+        factory: {
+          total: 0,
+          active: 0,
+          expired: 0,
+          cancelled: 0,
+          byPlan: { weekly: 0, monthly: 0, yearly: 0 },
+        },
+      };
+
+      for (const r of allRestaurants) {
+        const type = r.businessType as 'restaurant' | 'factory';
+        if (!byType[type]) continue;
+
+        byType[type].total++;
+        
+        if (r.subscriptionStatus === 'active') byType[type].active++;
+        else if (r.subscriptionStatus === 'expired') byType[type].expired++;
+        else if (r.subscriptionStatus === 'cancelled') byType[type].cancelled++;
+
+        const plan = r.subscriptionPlan as 'weekly' | 'monthly' | 'yearly';
+        if (plan && byType[type].byPlan[plan] !== undefined) {
+          byType[type].byPlan[plan]++;
+        }
+      }
+
+      res.json({
+        totalClients: allRestaurants.length,
+        byType,
+      });
+    } catch (error) {
+      console.error("Error fetching accounts by type:", error);
+      res.status(500).json({ error: "Failed to fetch accounts breakdown" });
     }
   });
 
