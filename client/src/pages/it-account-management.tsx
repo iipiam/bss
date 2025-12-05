@@ -92,11 +92,247 @@ export default function ITAccountManagement() {
   const [, navigate] = useLocation();
   
   // Device-specific layout settings
+  const isMobile = device === 'iphone';
   const layout = {
     padding: device === 'iphone' ? 'p-3' : device === 'ipad' ? 'p-4' : 'p-6',
     spaceY: device === 'iphone' ? 'space-y-3' : device === 'ipad' ? 'space-y-4' : 'space-y-6',
     text3Xl: device === 'iphone' ? 'text-xl' : device === 'ipad' ? 'text-2xl' : 'text-3xl',
+    gridCols: device === 'iphone' ? 'grid-cols-1' : 'md:grid-cols-3',
   };
+
+  // Mobile Account Card Component for iPhone
+  const MobileAccountCard = ({ account }: { account: Account }) => (
+    <Card 
+      data-testid={`card-account-${account.id}`}
+      className="hover-elevate"
+    >
+      <CardContent className="p-4 space-y-3">
+        {/* Header: Status and Business */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={account.active}
+              onCheckedChange={() => handleToggleStatus(account)}
+              disabled={toggleStatusMutation.isPending}
+              data-testid={`switch-status-${account.id}`}
+            />
+            <Badge variant={account.active ? "default" : "destructive"}>
+              {account.active ? (t.active || "Active") : (t.disabled || "Disabled")}
+            </Badge>
+          </div>
+          {account.businessType && (
+            <Badge variant="outline" className="text-xs">
+              {account.businessType}
+            </Badge>
+          )}
+        </div>
+
+        {/* Account Info */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <span className="font-medium truncate">{account.restaurantName || "N/A"}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Users className="h-3 w-3 flex-shrink-0" />
+            <span className="font-mono">{account.username}</span>
+            <span className="text-muted-foreground/50">•</span>
+            <span>{account.fullName}</span>
+          </div>
+        </div>
+
+        {/* Role and Last Login */}
+        <div className="flex items-center justify-between text-sm">
+          <Badge variant="secondary">{account.role}</Badge>
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            <span className="text-xs">{formatDate(account.lastLoginAt)}</span>
+          </div>
+        </div>
+
+        {/* Action Button - Full Width for Easy Touch */}
+        <Dialog 
+          open={passwordDialogOpen && selectedAccount?.id === account.id} 
+          onOpenChange={(open) => {
+            setPasswordDialogOpen(open);
+            if (!open) {
+              setSelectedAccount(null);
+              setNewPassword("");
+              setConfirmPassword("");
+              setShowPassword(false);
+            }
+          }}
+        >
+          <DialogTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setSelectedAccount(account)}
+              data-testid={`button-change-password-${account.id}`}
+            >
+              <Key className="h-4 w-4 mr-2" />
+              {t.changePassword || "Change Password"}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5" />
+                {t.changePassword || "Change Password"}
+              </DialogTitle>
+              <DialogDescription>
+                {t.changePasswordFor || "Change password for"}: <strong>{account.username}</strong>
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor={`newPassword-${account.id}`}>{t.newPassword || "New Password"}</Label>
+                <div className="relative">
+                  <Input
+                    id={`newPassword-${account.id}`}
+                    type={showPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder={t.enterNewPassword || "Enter new password"}
+                    data-testid="input-new-password"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={() => setShowPassword(!showPassword)}
+                    data-testid="button-toggle-password"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor={`confirmPassword-${account.id}`}>{t.confirmPassword || "Confirm Password"}</Label>
+                <Input
+                  id={`confirmPassword-${account.id}`}
+                  type={showPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder={t.confirmNewPassword || "Confirm new password"}
+                  data-testid="input-confirm-password"
+                />
+              </div>
+              {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-sm text-red-500">{t.passwordsMismatch || "Passwords do not match"}</p>
+              )}
+            </div>
+            <DialogFooter className="flex-col gap-2 sm:flex-row">
+              <Button
+                variant="outline"
+                onClick={() => setPasswordDialogOpen(false)}
+                className="w-full sm:w-auto"
+                data-testid="button-cancel"
+              >
+                {t.cancel || "Cancel"}
+              </Button>
+              <Button
+                onClick={handleChangePassword}
+                disabled={changePasswordMutation.isPending || !newPassword || newPassword !== confirmPassword}
+                className="w-full sm:w-auto"
+                data-testid="button-save-password"
+              >
+                {changePasswordMutation.isPending ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    {t.saving || "Saving..."}
+                  </>
+                ) : (
+                  <>
+                    <Key className="h-4 w-4 mr-2" />
+                    {t.savePassword || "Save Password"}
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
+  );
+
+  // Mobile Archive Card Component for iPhone
+  const MobileArchiveCard = ({ account }: { account: ArchivedAccount }) => (
+    <Card 
+      data-testid={`card-archived-${account.id}`}
+      className="hover-elevate"
+    >
+      <CardContent className="p-4 space-y-3">
+        {/* Header: Business Name and Badge */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <span className="font-medium truncate">{account.restaurantName || "N/A"}</span>
+          </div>
+          <Badge variant={getCancellationReasonVariant(account.cancellationReason)}>
+            {getCancellationReasonLabel(account.cancellationReason)}
+          </Badge>
+        </div>
+
+        {/* Account Details */}
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div>
+            <span className="text-muted-foreground">{t.username || "Username"}:</span>
+            <p className="font-mono">{account.username}</p>
+          </div>
+          <div>
+            <span className="text-muted-foreground">{t.subscriptionPlan || "Plan"}:</span>
+            <p><Badge variant="secondary">{account.subscriptionPlan || "-"}</Badge></p>
+          </div>
+          <div>
+            <span className="text-muted-foreground">{t.cancelledOn || "Cancelled On"}:</span>
+            <p className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {formatDateShort(account.subscriptionCancelledAt)}
+            </p>
+          </div>
+          <div>
+            <span className="text-muted-foreground">{t.refundAmount || "Refund"}:</span>
+            <p className="font-medium text-green-600">
+              {account.refundInvoice 
+                ? `${parseFloat(account.refundInvoice.refundAmount).toFixed(2)} SAR`
+                : "-"
+              }
+            </p>
+          </div>
+        </div>
+
+        {/* Action Button - Full Width */}
+        {account.refundInvoice?.pdfData ? (
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => handleDownloadRefundInvoice(account)}
+            data-testid={`button-download-refund-${account.id}`}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {t.download || "Download"} {account.refundInvoice.serialNumber}
+          </Button>
+        ) : (
+          <Button
+            variant="secondary"
+            className="w-full"
+            onClick={() => handleGenerateRefundInvoice(account)}
+            disabled={generateRefundInvoiceMutation.isPending}
+            data-testid={`button-generate-refund-${account.id}`}
+          >
+            {generateRefundInvoiceMutation.isPending ? (
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <FileText className="h-4 w-4 mr-2" />
+            )}
+            {t.generateInvoice || "Generate Invoice"}
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
 
   const [activeTab, setActiveTab] = useState<"accounts" | "archive">("accounts");
   const [searchQuery, setSearchQuery] = useState("");
@@ -446,7 +682,7 @@ export default function ITAccountManagement() {
         {/* Active Accounts Tab */}
         <TabsContent value="accounts" className="space-y-4 mt-4">
           {/* Stats Cards */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className={`grid gap-4 ${layout.gridCols}`}>
             <Card data-testid="card-total-accounts">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
                 <CardTitle className="text-sm font-medium">{t.totalAccounts || "Total Accounts"}</CardTitle>
@@ -491,8 +727,8 @@ export default function ITAccountManagement() {
                 {t.managePasswordsAndAccess || "Change passwords and enable/disable account access"}
               </CardDescription>
               
-              <div className="flex flex-wrap gap-4 pt-4">
-                <div className="relative flex-1 min-w-[200px]">
+              <div className={`flex ${isMobile ? 'flex-col' : 'flex-wrap'} gap-4 pt-4`}>
+                <div className={`relative ${isMobile ? 'w-full' : 'flex-1 min-w-[200px]'}`}>
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder={t.searchAccounts || "Search accounts..."}
@@ -502,11 +738,12 @@ export default function ITAccountManagement() {
                     data-testid="input-search"
                   />
                 </div>
-                <div className="flex gap-2">
+                <div className={`flex gap-2 ${isMobile ? 'w-full' : ''}`}>
                   <Button
                     variant={statusFilter === "all" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setStatusFilter("all")}
+                    className={isMobile ? 'flex-1 text-xs' : ''}
                     data-testid="button-filter-all"
                   >
                     {t.all || "All"}
@@ -515,6 +752,7 @@ export default function ITAccountManagement() {
                     variant={statusFilter === "active" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setStatusFilter("active")}
+                    className={isMobile ? 'flex-1 text-xs' : ''}
                     data-testid="button-filter-active"
                   >
                     <CheckCircle className="h-4 w-4 mr-1" />
@@ -524,6 +762,7 @@ export default function ITAccountManagement() {
                     variant={statusFilter === "disabled" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setStatusFilter("disabled")}
+                    className={isMobile ? 'flex-1 text-xs' : ''}
                     data-testid="button-filter-disabled"
                   >
                     <XCircle className="h-4 w-4 mr-1" />
@@ -533,6 +772,21 @@ export default function ITAccountManagement() {
               </div>
             </CardHeader>
             <CardContent>
+              {/* Mobile Card View */}
+              {isMobile ? (
+                <div className="space-y-3">
+                  {filteredAccounts.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      {t.noAccountsFound || "No accounts found"}
+                    </div>
+                  ) : (
+                    filteredAccounts.map((account) => (
+                      <MobileAccountCard key={account.id} account={account} />
+                    ))
+                  )}
+                </div>
+              ) : (
+              /* Desktop Table View */
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -711,6 +965,7 @@ export default function ITAccountManagement() {
                   </TableBody>
                 </Table>
               </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -718,7 +973,7 @@ export default function ITAccountManagement() {
         {/* Archive Tab */}
         <TabsContent value="archive" className="space-y-4 mt-4">
           {/* Archive Stats */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className={`grid gap-4 ${layout.gridCols}`}>
             <Card data-testid="card-archived-total">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
                 <CardTitle className="text-sm font-medium">{t.totalArchived || "Total Archived"}</CardTitle>
@@ -763,8 +1018,8 @@ export default function ITAccountManagement() {
                 {t.cancelledAccountsHistory || "View cancelled accounts, cancellation reasons, and refund invoices"}
               </CardDescription>
               
-              <div className="flex flex-wrap gap-4 pt-4">
-                <div className="relative flex-1 min-w-[200px]">
+              <div className={`flex ${isMobile ? 'flex-col' : 'flex-wrap'} gap-4 pt-4`}>
+                <div className={`relative ${isMobile ? 'w-full' : 'flex-1 min-w-[200px]'}`}>
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder={t.searchArchivedAccounts || "Search archived accounts..."}
@@ -783,7 +1038,21 @@ export default function ITAccountManagement() {
                     <Skeleton key={i} className="h-16 w-full" />
                   ))}
                 </div>
+              ) : isMobile ? (
+                /* Mobile Card View for Archive */
+                <div className="space-y-3">
+                  {filteredArchivedAccounts.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      {t.noArchivedAccounts || "No archived accounts found"}
+                    </div>
+                  ) : (
+                    filteredArchivedAccounts.map((account) => (
+                      <MobileArchiveCard key={account.id} account={account} />
+                    ))
+                  )}
+                </div>
               ) : (
+                /* Desktop Table View */
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
