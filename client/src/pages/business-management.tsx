@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
@@ -43,8 +43,14 @@ import {
   Edit,
   AlertCircle,
   CheckCircle,
-  Clock
+  Clock,
+  Save,
+  Building,
+  Globe,
+  MapPin,
+  Landmark
 } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 interface Client {
   restaurantId: string;
@@ -169,6 +175,29 @@ interface RevenueTrend {
   profit: string;
 }
 
+interface BusinessInfoData {
+  id: string | null;
+  companyNameEn: string;
+  companyNameAr: string;
+  vatNumber: string;
+  crNumber: string;
+  nationalId: string;
+  email: string;
+  phone: string;
+  website: string;
+  addressEn: string;
+  addressAr: string;
+  city: string;
+  postalCode: string;
+  bankName: string;
+  bankAccountName: string;
+  bankAccountNumber: string;
+  bankIban: string;
+  logoUrl: string | null;
+  updatedBy: string | null;
+  updatedAt: string | null;
+}
+
 export default function BusinessManagement() {
   const { user, accountType, isLoading: authLoading } = useAuth();
   const { t } = useLanguage();
@@ -225,6 +254,69 @@ export default function BusinessManagement() {
   const { data: revenueTrends = [], isLoading: trendsLoading } = useQuery<RevenueTrend[]>({
     queryKey: ['/api/it/bss-analysis/revenue-trends'],
     enabled: !authLoading && !!user && accountType === 'it',
+  });
+
+  // Business Info state and query
+  const [businessInfoForm, setBusinessInfoForm] = useState<BusinessInfoData>({
+    id: null,
+    companyNameEn: "BlindSpot System (BSS)",
+    companyNameAr: "نظام بلايند سبوت",
+    vatNumber: "",
+    crNumber: "",
+    nationalId: "",
+    email: "IT@SaudiKinzhal.org",
+    phone: "",
+    website: "",
+    addressEn: "Saudi Arabia",
+    addressAr: "المملكة العربية السعودية",
+    city: "",
+    postalCode: "",
+    bankName: "",
+    bankAccountName: "",
+    bankAccountNumber: "",
+    bankIban: "",
+    logoUrl: null,
+    updatedBy: null,
+    updatedAt: null,
+  });
+
+  const { data: businessInfo, isLoading: businessInfoLoading } = useQuery<BusinessInfoData>({
+    queryKey: ['/api/it/business-info'],
+    enabled: !authLoading && !!user && accountType === 'it',
+  });
+
+  // Update form when data loads
+  useEffect(() => {
+    if (businessInfo) {
+      setBusinessInfoForm(businessInfo);
+    }
+  }, [businessInfo]);
+
+  const updateBusinessInfoMutation = useMutation({
+    mutationFn: async (data: Partial<BusinessInfoData>) => {
+      const response = await fetch('/api/it/business-info', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update business info');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/it/business-info'] });
+      toast({
+        title: t.success || "Success",
+        description: t.businessInfoSaved || "Business information saved successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: t.error || "Error",
+        description: t.businessInfoSaveError || "Failed to save business information",
+        variant: "destructive",
+      });
+    },
   });
 
   const deleteBillMutation = useMutation({
@@ -594,7 +686,7 @@ export default function BusinessManagement() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5" data-testid="tabs-list">
+        <TabsList className="grid w-full grid-cols-6" data-testid="tabs-list">
           <TabsTrigger value="clients" data-testid="tab-clients">
             <Users className="w-4 h-4 mr-2" />
             {t.clientSubscriptions}
@@ -614,6 +706,10 @@ export default function BusinessManagement() {
           <TabsTrigger value="analysis" data-testid="tab-analysis">
             <BarChart3 className="w-4 h-4 mr-2" />
             {t.bssAnalysis}
+          </TabsTrigger>
+          <TabsTrigger value="business-info" data-testid="tab-business-info">
+            <Building className="w-4 h-4 mr-2" />
+            {t.businessInfos || "Business Infos"}
           </TabsTrigger>
         </TabsList>
 
@@ -1356,6 +1452,268 @@ export default function BusinessManagement() {
               {t.noAnalyticsData}
             </div>
           )}
+        </TabsContent>
+
+        {/* Business Info Tab */}
+        <TabsContent value="business-info" className="space-y-4" data-testid="content-business-info">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building className="h-5 w-5" />
+                {t.businessInfos || "Business Information"}
+              </CardTitle>
+              <CardDescription>
+                {t.businessInfosDescription || "Company details that appear on subscription invoices and bills"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {businessInfoLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+                </div>
+              ) : (
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    updateBusinessInfoMutation.mutate(businessInfoForm);
+                  }}
+                  className="space-y-6"
+                >
+                  {/* Company Identity Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      {t.companyIdentity || "Company Identity"}
+                    </h3>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="companyNameEn">{t.companyNameEn || "Company Name (English)"}</Label>
+                        <Input
+                          id="companyNameEn"
+                          value={businessInfoForm.companyNameEn}
+                          onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, companyNameEn: e.target.value }))}
+                          placeholder="BlindSpot System (BSS)"
+                          data-testid="input-company-name-en"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="companyNameAr">{t.companyNameAr || "Company Name (Arabic)"}</Label>
+                        <Input
+                          id="companyNameAr"
+                          value={businessInfoForm.companyNameAr}
+                          onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, companyNameAr: e.target.value }))}
+                          placeholder="نظام بلايند سبوت"
+                          dir="rtl"
+                          data-testid="input-company-name-ar"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Registration Numbers Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      {t.registrationNumbers || "Registration Numbers"}
+                    </h3>
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="vatNumber">{t.vatRegistrationNumber || "VAT Registration Number"}</Label>
+                        <Input
+                          id="vatNumber"
+                          value={businessInfoForm.vatNumber}
+                          onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, vatNumber: e.target.value }))}
+                          placeholder="e.g., 300000000000003"
+                          data-testid="input-vat-number"
+                        />
+                        <p className="text-xs text-muted-foreground">{t.vatNumberHint || "15-digit VAT number"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="crNumber">{t.crNumber || "CR Number"}</Label>
+                        <Input
+                          id="crNumber"
+                          value={businessInfoForm.crNumber}
+                          onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, crNumber: e.target.value }))}
+                          placeholder="e.g., 1010000000"
+                          data-testid="input-cr-number"
+                        />
+                        <p className="text-xs text-muted-foreground">{t.crNumberHint || "Commercial Registration Number"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="nationalId">{t.nationalId || "National ID / Unified Number"}</Label>
+                        <Input
+                          id="nationalId"
+                          value={businessInfoForm.nationalId}
+                          onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, nationalId: e.target.value }))}
+                          placeholder="e.g., 7000000000"
+                          data-testid="input-national-id"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contact Information Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      {t.contactInfo || "Contact Information"}
+                    </h3>
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="email">{t.email || "Email"}</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={businessInfoForm.email}
+                          onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, email: e.target.value }))}
+                          placeholder="IT@SaudiKinzhal.org"
+                          data-testid="input-email"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">{t.phoneNumber || "Phone Number"}</Label>
+                        <Input
+                          id="phone"
+                          value={businessInfoForm.phone}
+                          onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, phone: e.target.value }))}
+                          placeholder="+966 50 XXX XXXX"
+                          data-testid="input-phone"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="website">{t.website || "Website"}</Label>
+                        <Input
+                          id="website"
+                          value={businessInfoForm.website}
+                          onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, website: e.target.value }))}
+                          placeholder="https://kinbss.com"
+                          data-testid="input-website"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Address Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      {t.address || "Address"}
+                    </h3>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="addressEn">{t.addressEn || "Address (English)"}</Label>
+                        <Input
+                          id="addressEn"
+                          value={businessInfoForm.addressEn}
+                          onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, addressEn: e.target.value }))}
+                          placeholder="Saudi Arabia"
+                          data-testid="input-address-en"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="addressAr">{t.addressAr || "Address (Arabic)"}</Label>
+                        <Input
+                          id="addressAr"
+                          value={businessInfoForm.addressAr}
+                          onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, addressAr: e.target.value }))}
+                          placeholder="المملكة العربية السعودية"
+                          dir="rtl"
+                          data-testid="input-address-ar"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="city">{t.city || "City"}</Label>
+                        <Input
+                          id="city"
+                          value={businessInfoForm.city}
+                          onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, city: e.target.value }))}
+                          placeholder="Riyadh"
+                          data-testid="input-city"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="postalCode">{t.postalCode || "Postal Code"}</Label>
+                        <Input
+                          id="postalCode"
+                          value={businessInfoForm.postalCode}
+                          onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, postalCode: e.target.value }))}
+                          placeholder="12345"
+                          data-testid="input-postal-code"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bank Information Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Landmark className="h-4 w-4" />
+                      {t.bankInfo || "Bank Information"}
+                    </h3>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="bankName">{t.bankName || "Bank Name"}</Label>
+                        <Input
+                          id="bankName"
+                          value={businessInfoForm.bankName}
+                          onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, bankName: e.target.value }))}
+                          placeholder="e.g., Al Rajhi Bank"
+                          data-testid="input-bank-name"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bankAccountName">{t.bankAccountName || "Account Holder Name"}</Label>
+                        <Input
+                          id="bankAccountName"
+                          value={businessInfoForm.bankAccountName}
+                          onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, bankAccountName: e.target.value }))}
+                          placeholder="Company Name"
+                          data-testid="input-bank-account-name"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bankAccountNumber">{t.bankAccountNumber || "Account Number"}</Label>
+                        <Input
+                          id="bankAccountNumber"
+                          value={businessInfoForm.bankAccountNumber}
+                          onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, bankAccountNumber: e.target.value }))}
+                          placeholder="XXXXXXXXXX"
+                          data-testid="input-bank-account-number"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bankIban">{t.iban || "IBAN"}</Label>
+                        <Input
+                          id="bankIban"
+                          value={businessInfoForm.bankIban}
+                          onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, bankIban: e.target.value }))}
+                          placeholder="SAXXXXXXXXXXXXXXXXXX"
+                          data-testid="input-bank-iban"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="flex justify-end gap-2 pt-4 border-t">
+                    <Button
+                      type="submit"
+                      disabled={updateBusinessInfoMutation.isPending}
+                      className="gap-2"
+                      data-testid="button-save-business-info"
+                    >
+                      {updateBusinessInfoMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                      {t.saveChanges || "Save Changes"}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

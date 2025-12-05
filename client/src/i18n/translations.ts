@@ -890,6 +890,35 @@ export interface Translations {
   netVat: string;
   noAnalyticsData: string;
   
+  // Business Infos
+  businessInfos: string;
+  businessInfosDescription: string;
+  businessInfoSaved: string;
+  businessInfoSaveError: string;
+  companyIdentity: string;
+  companyNameEn: string;
+  companyNameAr: string;
+  registrationNumbers: string;
+  vatRegistrationNumber: string;
+  vatNumberHint: string;
+  crNumber: string;
+  crNumberHint: string;
+  nationalId: string;
+  contactInfo: string;
+  website: string;
+  addressEn: string;
+  addressAr: string;
+  city: string;
+  postalCode: string;
+  bankInfo: string;
+  bankName: string;
+  bankAccountName: string;
+  bankAccountNumber: string;
+  iban: string;
+  vendor: string;
+  billDate: string;
+  dueDate: string;
+  
   // IT Preferences (Theme & Customization)
   itPreferences: string;
   customizeYourExperience: string;
@@ -2225,6 +2254,35 @@ export const translations: Record<Language, Translations> = {
     expenseVat: 'Expense VAT',
     netVat: 'Net VAT',
     noAnalyticsData: 'No analytics data available',
+    
+    // Business Infos
+    businessInfos: 'Business Infos',
+    businessInfosDescription: 'Company details that appear on subscription invoices and bills',
+    businessInfoSaved: 'Business information saved successfully',
+    businessInfoSaveError: 'Failed to save business information',
+    companyIdentity: 'Company Identity',
+    companyNameEn: 'Company Name (English)',
+    companyNameAr: 'Company Name (Arabic)',
+    registrationNumbers: 'Registration Numbers',
+    vatRegistrationNumber: 'VAT Registration Number',
+    vatNumberHint: '15-digit VAT number',
+    crNumber: 'CR Number',
+    crNumberHint: 'Commercial Registration Number',
+    nationalId: 'National ID / Unified Number',
+    contactInfo: 'Contact Information',
+    website: 'Website',
+    addressEn: 'Address (English)',
+    addressAr: 'Address (Arabic)',
+    city: 'City',
+    postalCode: 'Postal Code',
+    bankInfo: 'Bank Information',
+    bankName: 'Bank Name',
+    bankAccountName: 'Account Holder Name',
+    bankAccountNumber: 'Account Number',
+    iban: 'IBAN',
+    vendor: 'Vendor',
+    billDate: 'Bill Date',
+    dueDate: 'Due Date',
     
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
@@ -3569,6 +3627,35 @@ export const translations: Record<Language, Translations> = {
     netVat: 'صافي الضريبة',
     noAnalyticsData: 'لا توجد بيانات تحليلية',
     
+    // Business Infos
+    businessInfos: 'معلومات الشركة',
+    businessInfosDescription: 'تفاصيل الشركة التي تظهر على فواتير الاشتراك والفواتير',
+    businessInfoSaved: 'تم حفظ معلومات الشركة بنجاح',
+    businessInfoSaveError: 'فشل في حفظ معلومات الشركة',
+    companyIdentity: 'هوية الشركة',
+    companyNameEn: 'اسم الشركة (بالإنجليزية)',
+    companyNameAr: 'اسم الشركة (بالعربية)',
+    registrationNumbers: 'أرقام التسجيل',
+    vatRegistrationNumber: 'رقم تسجيل ضريبة القيمة المضافة',
+    vatNumberHint: 'رقم ضريبة القيمة المضافة المكون من 15 رقماً',
+    crNumber: 'رقم السجل التجاري',
+    crNumberHint: 'رقم السجل التجاري',
+    nationalId: 'الهوية الوطنية / الرقم الموحد',
+    contactInfo: 'معلومات الاتصال',
+    website: 'الموقع الإلكتروني',
+    addressEn: 'العنوان (بالإنجليزية)',
+    addressAr: 'العنوان (بالعربية)',
+    city: 'المدينة',
+    postalCode: 'الرمز البريدي',
+    bankInfo: 'معلومات البنك',
+    bankName: 'اسم البنك',
+    bankAccountName: 'اسم صاحب الحساب',
+    bankAccountNumber: 'رقم الحساب',
+    iban: 'رقم الآيبان',
+    vendor: 'المورد',
+    billDate: 'تاريخ الفاتورة',
+    dueDate: 'تاريخ الاستحقاق',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'تفضيلات تكنولوجيا المعلومات',
     customizeYourExperience: 'خصص تجربتك',
@@ -4909,6 +4996,35 @@ export const translations: Record<Language, Translations> = {
     expenseVat: 'Ausgaben-MwSt.',
     netVat: 'Netto-MwSt.',
     noAnalyticsData: 'Keine Analysedaten verfügbar',
+    
+    // Business Infos
+    businessInfos: 'Unternehmensinformationen',
+    businessInfosDescription: 'Unternehmensdetails, die auf Abonnementrechnungen erscheinen',
+    businessInfoSaved: 'Unternehmensinformationen erfolgreich gespeichert',
+    businessInfoSaveError: 'Fehler beim Speichern der Unternehmensinformationen',
+    companyIdentity: 'Unternehmensidentität',
+    companyNameEn: 'Firmenname (Englisch)',
+    companyNameAr: 'Firmenname (Arabisch)',
+    registrationNumbers: 'Registrierungsnummern',
+    vatRegistrationNumber: 'Umsatzsteuer-Identifikationsnummer',
+    vatNumberHint: '15-stellige USt-IdNr.',
+    crNumber: 'Handelsregisternummer',
+    crNumberHint: 'Handelsregisternummer',
+    nationalId: 'Nationale ID / Einheitsnummer',
+    contactInfo: 'Kontaktinformationen',
+    website: 'Webseite',
+    addressEn: 'Adresse (Englisch)',
+    addressAr: 'Adresse (Arabisch)',
+    city: 'Stadt',
+    postalCode: 'Postleitzahl',
+    bankInfo: 'Bankinformationen',
+    bankName: 'Bankname',
+    bankAccountName: 'Kontoinhaber',
+    bankAccountNumber: 'Kontonummer',
+    iban: 'IBAN',
+    vendor: 'Lieferant',
+    billDate: 'Rechnungsdatum',
+    dueDate: 'Fälligkeitsdatum',
     
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
@@ -6251,6 +6367,35 @@ export const translations: Record<Language, Translations> = {
     netVat: '净增值税',
     noAnalyticsData: '无分析数据',
     
+    // Business Infos
+    businessInfos: '企业信息',
+    businessInfosDescription: '显示在订阅发票和账单上的公司详情',
+    businessInfoSaved: '企业信息保存成功',
+    businessInfoSaveError: '保存企业信息失败',
+    companyIdentity: '公司身份',
+    companyNameEn: '公司名称（英文）',
+    companyNameAr: '公司名称（阿拉伯文）',
+    registrationNumbers: '注册号码',
+    vatRegistrationNumber: '增值税登记号',
+    vatNumberHint: '15位增值税号',
+    crNumber: '商业登记号',
+    crNumberHint: '商业登记号',
+    nationalId: '国民身份证 / 统一号码',
+    contactInfo: '联系信息',
+    website: '网站',
+    addressEn: '地址（英文）',
+    addressAr: '地址（阿拉伯文）',
+    city: '城市',
+    postalCode: '邮政编码',
+    bankInfo: '银行信息',
+    bankName: '银行名称',
+    bankAccountName: '账户持有人姓名',
+    bankAccountNumber: '账户号码',
+    iban: '国际银行账号',
+    vendor: '供应商',
+    billDate: '账单日期',
+    dueDate: '到期日期',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
     customizeYourExperience: 'Customize your experience',
@@ -7591,6 +7736,35 @@ export const translations: Record<Language, Translations> = {
     expenseVat: 'ব্যয় ভ্যাট',
     netVat: 'নেট ভ্যাট',
     noAnalyticsData: 'কোনো বিশ্লেষণ ডেটা নেই',
+    
+    // Business Infos
+    businessInfos: 'ব্যবসায়িক তথ্য',
+    businessInfosDescription: 'সাবস্ক্রিপশন ইনভয়েস এবং বিলে প্রদর্শিত কোম্পানির বিবরণ',
+    businessInfoSaved: 'ব্যবসায়িক তথ্য সফলভাবে সংরক্ষিত হয়েছে',
+    businessInfoSaveError: 'ব্যবসায়িক তথ্য সংরক্ষণ করতে ব্যর্থ',
+    companyIdentity: 'কোম্পানি পরিচয়',
+    companyNameEn: 'কোম্পানির নাম (ইংরেজি)',
+    companyNameAr: 'কোম্পানির নাম (আরবি)',
+    registrationNumbers: 'নিবন্ধন নম্বর',
+    vatRegistrationNumber: 'ভ্যাট নিবন্ধন নম্বর',
+    vatNumberHint: '১৫ সংখ্যার ভ্যাট নম্বর',
+    crNumber: 'সিআর নম্বর',
+    crNumberHint: 'বাণিজ্যিক নিবন্ধন নম্বর',
+    nationalId: 'জাতীয় পরিচয়পত্র / ইউনিফাইড নম্বর',
+    contactInfo: 'যোগাযোগের তথ্য',
+    website: 'ওয়েবসাইট',
+    addressEn: 'ঠিকানা (ইংরেজি)',
+    addressAr: 'ঠিকানা (আরবি)',
+    city: 'শহর',
+    postalCode: 'পোস্টাল কোড',
+    bankInfo: 'ব্যাংক তথ্য',
+    bankName: 'ব্যাংকের নাম',
+    bankAccountName: 'অ্যাকাউন্ট ধারকের নাম',
+    bankAccountNumber: 'অ্যাকাউন্ট নম্বর',
+    iban: 'আইবিএএন',
+    vendor: 'বিক্রেতা',
+    billDate: 'বিলের তারিখ',
+    dueDate: 'নির্ধারিত তারিখ',
     
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
@@ -8933,6 +9107,35 @@ export const translations: Record<Language, Translations> = {
     netVat: 'IVA Netta',
     noAnalyticsData: 'Nessun dato analitico disponibile',
     
+    // Business Infos
+    businessInfos: 'Informazioni Aziendali',
+    businessInfosDescription: 'Dettagli aziendali che appaiono sulle fatture di abbonamento',
+    businessInfoSaved: 'Informazioni aziendali salvate con successo',
+    businessInfoSaveError: 'Impossibile salvare le informazioni aziendali',
+    companyIdentity: 'Identità Aziendale',
+    companyNameEn: 'Nome Azienda (Inglese)',
+    companyNameAr: 'Nome Azienda (Arabo)',
+    registrationNumbers: 'Numeri di Registrazione',
+    vatRegistrationNumber: 'Numero di Registrazione IVA',
+    vatNumberHint: 'Numero IVA a 15 cifre',
+    crNumber: 'Numero CR',
+    crNumberHint: 'Numero di Registrazione Commerciale',
+    nationalId: 'ID Nazionale / Numero Unificato',
+    contactInfo: 'Informazioni di Contatto',
+    website: 'Sito Web',
+    addressEn: 'Indirizzo (Inglese)',
+    addressAr: 'Indirizzo (Arabo)',
+    city: 'Città',
+    postalCode: 'Codice Postale',
+    bankInfo: 'Informazioni Bancarie',
+    bankName: 'Nome Banca',
+    bankAccountName: 'Nome Titolare Conto',
+    bankAccountNumber: 'Numero Conto',
+    iban: 'IBAN',
+    vendor: 'Fornitore',
+    billDate: 'Data Fattura',
+    dueDate: 'Data Scadenza',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
     customizeYourExperience: 'Customize your experience',
@@ -10261,6 +10464,35 @@ export const translations: Record<Language, Translations> = {
     expenseVat: 'खर्च वैट',
     netVat: 'शुद्ध वैट',
     noAnalyticsData: 'कोई विश्लेषण डेटा उपलब्ध नहीं',
+    
+    // Business Infos
+    businessInfos: 'व्यापार जानकारी',
+    businessInfosDescription: 'कंपनी विवरण जो सदस्यता चालान और बिलों पर दिखाई देते हैं',
+    businessInfoSaved: 'व्यापार जानकारी सफलतापूर्वक सहेजी गई',
+    businessInfoSaveError: 'व्यापार जानकारी सहेजने में विफल',
+    companyIdentity: 'कंपनी पहचान',
+    companyNameEn: 'कंपनी का नाम (अंग्रेज़ी)',
+    companyNameAr: 'कंपनी का नाम (अरबी)',
+    registrationNumbers: 'पंजीकरण संख्याएं',
+    vatRegistrationNumber: 'वैट पंजीकरण संख्या',
+    vatNumberHint: '15-अंकीय वैट नंबर',
+    crNumber: 'सीआर नंबर',
+    crNumberHint: 'वाणिज्यिक पंजीकरण संख्या',
+    nationalId: 'राष्ट्रीय पहचान / एकीकृत संख्या',
+    contactInfo: 'संपर्क जानकारी',
+    website: 'वेबसाइट',
+    addressEn: 'पता (अंग्रेज़ी)',
+    addressAr: 'पता (अरबी)',
+    city: 'शहर',
+    postalCode: 'पिन कोड',
+    bankInfo: 'बैंक जानकारी',
+    bankName: 'बैंक का नाम',
+    bankAccountName: 'खाता धारक का नाम',
+    bankAccountNumber: 'खाता संख्या',
+    iban: 'आईबीएएन',
+    vendor: 'विक्रेता',
+    billDate: 'बिल की तारीख',
+    dueDate: 'देय तिथि',
     
     // IT Preferences (Theme & Customization)
     itPreferences: 'आईटी प्राथमिकताएं',
@@ -11591,6 +11823,35 @@ export const translations: Record<Language, Translations> = {
     netVat: 'خالص ویٹ',
     noAnalyticsData: 'کوئی تجزیاتی ڈیٹا دستیاب نہیں',
     
+    // Business Infos
+    businessInfos: 'کاروباری معلومات',
+    businessInfosDescription: 'کمپنی کی تفصیلات جو سبسکرپشن انوائسز اور بلوں پر ظاہر ہوتی ہیں',
+    businessInfoSaved: 'کاروباری معلومات کامیابی سے محفوظ ہو گئیں',
+    businessInfoSaveError: 'کاروباری معلومات محفوظ کرنے میں ناکام',
+    companyIdentity: 'کمپنی کی شناخت',
+    companyNameEn: 'کمپنی کا نام (انگریزی)',
+    companyNameAr: 'کمپنی کا نام (عربی)',
+    registrationNumbers: 'رجسٹریشن نمبر',
+    vatRegistrationNumber: 'ویٹ رجسٹریشن نمبر',
+    vatNumberHint: '15 ہندسوں کا ویٹ نمبر',
+    crNumber: 'سی آر نمبر',
+    crNumberHint: 'کمرشل رجسٹریشن نمبر',
+    nationalId: 'قومی شناختی نمبر / یونیفائیڈ نمبر',
+    contactInfo: 'رابطے کی معلومات',
+    website: 'ویب سائٹ',
+    addressEn: 'پتہ (انگریزی)',
+    addressAr: 'پتہ (عربی)',
+    city: 'شہر',
+    postalCode: 'پوسٹل کوڈ',
+    bankInfo: 'بینک کی معلومات',
+    bankName: 'بینک کا نام',
+    bankAccountName: 'اکاؤنٹ ہولڈر کا نام',
+    bankAccountNumber: 'اکاؤنٹ نمبر',
+    iban: 'آئی بی اے این',
+    vendor: 'وینڈر',
+    billDate: 'بل کی تاریخ',
+    dueDate: 'واجب الادا تاریخ',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'آئی ٹی ترجیحات',
     customizeYourExperience: 'اپنے تجربے کو اپنی مرضی کے مطابق بنائیں',
@@ -12864,6 +13125,35 @@ export const translations: Record<Language, Translations> = {
     netVat: 'IVA Neto',
     noAnalyticsData: 'No hay datos analíticos disponibles',
     
+    // Business Infos
+    businessInfos: 'Información Empresarial',
+    businessInfosDescription: 'Detalles de la empresa que aparecen en las facturas de suscripción',
+    businessInfoSaved: 'Información empresarial guardada con éxito',
+    businessInfoSaveError: 'Error al guardar la información empresarial',
+    companyIdentity: 'Identidad de la Empresa',
+    companyNameEn: 'Nombre de la Empresa (Inglés)',
+    companyNameAr: 'Nombre de la Empresa (Árabe)',
+    registrationNumbers: 'Números de Registro',
+    vatRegistrationNumber: 'Número de Registro de IVA',
+    vatNumberHint: 'Número de IVA de 15 dígitos',
+    crNumber: 'Número CR',
+    crNumberHint: 'Número de Registro Comercial',
+    nationalId: 'ID Nacional / Número Unificado',
+    contactInfo: 'Información de Contacto',
+    website: 'Sitio Web',
+    addressEn: 'Dirección (Inglés)',
+    addressAr: 'Dirección (Árabe)',
+    city: 'Ciudad',
+    postalCode: 'Código Postal',
+    bankInfo: 'Información Bancaria',
+    bankName: 'Nombre del Banco',
+    bankAccountName: 'Nombre del Titular de la Cuenta',
+    bankAccountNumber: 'Número de Cuenta',
+    iban: 'IBAN',
+    vendor: 'Proveedor',
+    billDate: 'Fecha de Factura',
+    dueDate: 'Fecha de Vencimiento',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'Preferencias de TI',
     customizeYourExperience: 'Personaliza tu experiencia',
@@ -14132,6 +14422,35 @@ export const translations: Record<Language, Translations> = {
     expenseVat: 'VAT ng Gastos',
     netVat: 'Netong VAT',
     noAnalyticsData: 'Walang available na data ng analytics',
+    
+    // Business Infos
+    businessInfos: 'Impormasyon ng Negosyo',
+    businessInfosDescription: 'Mga detalye ng kumpanya na lumalabas sa mga invoice ng subscription at bill',
+    businessInfoSaved: 'Matagumpay na nai-save ang impormasyon ng negosyo',
+    businessInfoSaveError: 'Nabigo ang pag-save ng impormasyon ng negosyo',
+    companyIdentity: 'Pagkakakilanlan ng Kumpanya',
+    companyNameEn: 'Pangalan ng Kumpanya (Ingles)',
+    companyNameAr: 'Pangalan ng Kumpanya (Arabic)',
+    registrationNumbers: 'Mga Numero ng Rehistrasyon',
+    vatRegistrationNumber: 'Numero ng Rehistrasyon ng VAT',
+    vatNumberHint: '15-digit na numero ng VAT',
+    crNumber: 'Numero ng CR',
+    crNumberHint: 'Numero ng Commercial Registration',
+    nationalId: 'National ID / Unified Number',
+    contactInfo: 'Impormasyon sa Pakikipag-ugnayan',
+    website: 'Website',
+    addressEn: 'Address (Ingles)',
+    addressAr: 'Address (Arabic)',
+    city: 'Lungsod',
+    postalCode: 'Postal Code',
+    bankInfo: 'Impormasyon ng Bangko',
+    bankName: 'Pangalan ng Bangko',
+    bankAccountName: 'Pangalan ng May-ari ng Account',
+    bankAccountNumber: 'Numero ng Account',
+    iban: 'IBAN',
+    vendor: 'Vendor',
+    billDate: 'Petsa ng Bill',
+    dueDate: 'Takdang Petsa',
     
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT na mga Kagustuhan',
