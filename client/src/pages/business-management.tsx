@@ -14,6 +14,9 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Building2, 
   Users, 
@@ -314,6 +317,84 @@ export default function BusinessManagement() {
       toast({
         title: t.error || "Error",
         description: t.businessInfoSaveError || "Failed to save business information",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Add Bill Dialog State
+  const [isAddBillDialogOpen, setIsAddBillDialogOpen] = useState(false);
+  const [newBillForm, setNewBillForm] = useState({
+    billType: "rent" as "salaries" | "rent" | "utilities" | "software" | "marketing" | "equipment" | "internet" | "maintenance" | "legal" | "insurance" | "other",
+    vendor: "",
+    amount: "",
+    vatAmount: "",
+    totalAmount: "",
+    billDate: new Date().toISOString().split('T')[0],
+    dueDate: "",
+    status: "pending" as "pending" | "paid" | "overdue",
+    paymentPeriod: "monthly" as "one-time" | "weekly" | "monthly" | "quarterly" | "yearly",
+    description: "",
+    referenceNumber: "",
+  });
+
+  // Calculate VAT and total when amount changes
+  const calculateBillAmounts = (amount: string) => {
+    const amountNum = parseFloat(amount) || 0;
+    const vatNum = amountNum * 0.15;
+    const totalNum = amountNum + vatNum;
+    setNewBillForm(prev => ({
+      ...prev,
+      amount,
+      vatAmount: vatNum.toFixed(2),
+      totalAmount: totalNum.toFixed(2),
+    }));
+  };
+
+  const resetBillForm = () => {
+    setNewBillForm({
+      billType: "rent",
+      vendor: "",
+      amount: "",
+      vatAmount: "",
+      totalAmount: "",
+      billDate: new Date().toISOString().split('T')[0],
+      dueDate: "",
+      status: "pending",
+      paymentPeriod: "monthly",
+      description: "",
+      referenceNumber: "",
+    });
+  };
+
+  const createBillMutation = useMutation({
+    mutationFn: async (data: typeof newBillForm) => {
+      const response = await fetch('/api/it/business-operations/bills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create bill');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/it/business-operations/bills'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/it/business-operations/summary'] });
+      setIsAddBillDialogOpen(false);
+      resetBillForm();
+      toast({
+        title: t.success || "Success",
+        description: t.billAdded || "Bill added successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message || "Failed to add bill",
         variant: "destructive",
       });
     },
@@ -1206,6 +1287,222 @@ export default function BusinessManagement() {
                   >
                     <RefreshCw className="h-4 w-4" />
                   </Button>
+                  <Dialog open={isAddBillDialogOpen} onOpenChange={setIsAddBillDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button data-testid="button-add-bill">
+                        <Plus className="h-4 w-4 mr-2" />
+                        {t.addBill || "Add Bill"}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>{t.addBill || "Add New Bill"}</DialogTitle>
+                        <DialogDescription>
+                          {t.addBillDescription || "Enter the details for the new company bill"}
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          createBillMutation.mutate(newBillForm);
+                        }}
+                        className="space-y-4"
+                      >
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label htmlFor="billType">{t.billType || "Bill Type"} *</Label>
+                            <Select
+                              value={newBillForm.billType}
+                              onValueChange={(value) => setNewBillForm(prev => ({ ...prev, billType: value as typeof prev.billType }))}
+                            >
+                              <SelectTrigger data-testid="select-bill-type">
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="rent">{t.rent || "Rent"}</SelectItem>
+                                <SelectItem value="utilities">{t.utilities || "Utilities"}</SelectItem>
+                                <SelectItem value="salaries">{t.salaries || "Salaries"}</SelectItem>
+                                <SelectItem value="marketing">{t.marketingExpense || "Marketing"}</SelectItem>
+                                <SelectItem value="software">{t.softwareExpense || "Software"}</SelectItem>
+                                <SelectItem value="equipment">{t.equipment || "Equipment"}</SelectItem>
+                                <SelectItem value="internet">{t.internet || "Internet"}</SelectItem>
+                                <SelectItem value="maintenance">{t.maintenance || "Maintenance"}</SelectItem>
+                                <SelectItem value="legal">{t.legal || "Legal"}</SelectItem>
+                                <SelectItem value="insurance">{t.insuranceExpense || "Insurance"}</SelectItem>
+                                <SelectItem value="other">{t.other || "Other"}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="vendor">{t.vendor || "Vendor"} *</Label>
+                            <Input
+                              id="vendor"
+                              value={newBillForm.vendor}
+                              onChange={(e) => setNewBillForm(prev => ({ ...prev, vendor: e.target.value }))}
+                              placeholder="Enter vendor name"
+                              required
+                              data-testid="input-bill-vendor"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-3">
+                          <div className="space-y-2">
+                            <Label htmlFor="amount">{t.amount || "Amount"} (SAR) *</Label>
+                            <Input
+                              id="amount"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={newBillForm.amount}
+                              onChange={(e) => calculateBillAmounts(e.target.value)}
+                              placeholder="0.00"
+                              required
+                              data-testid="input-bill-amount"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="vatAmount">{t.vatAmount || "VAT"} (15%)</Label>
+                            <Input
+                              id="vatAmount"
+                              type="number"
+                              step="0.01"
+                              value={newBillForm.vatAmount}
+                              onChange={(e) => setNewBillForm(prev => ({ 
+                                ...prev, 
+                                vatAmount: e.target.value,
+                                totalAmount: (parseFloat(prev.amount) + parseFloat(e.target.value || '0')).toFixed(2)
+                              }))}
+                              placeholder="0.00"
+                              data-testid="input-bill-vat"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="totalAmount">{t.total || "Total"} (SAR)</Label>
+                            <Input
+                              id="totalAmount"
+                              type="number"
+                              step="0.01"
+                              value={newBillForm.totalAmount}
+                              readOnly
+                              className="bg-muted"
+                              data-testid="input-bill-total"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label htmlFor="billDate">{t.billDate || "Bill Date"} *</Label>
+                            <Input
+                              id="billDate"
+                              type="date"
+                              value={newBillForm.billDate}
+                              onChange={(e) => setNewBillForm(prev => ({ ...prev, billDate: e.target.value }))}
+                              required
+                              data-testid="input-bill-date"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="dueDate">{t.dueDate || "Due Date"}</Label>
+                            <Input
+                              id="dueDate"
+                              type="date"
+                              value={newBillForm.dueDate}
+                              onChange={(e) => setNewBillForm(prev => ({ ...prev, dueDate: e.target.value }))}
+                              data-testid="input-bill-due-date"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label htmlFor="status">{t.status || "Status"}</Label>
+                            <Select
+                              value={newBillForm.status}
+                              onValueChange={(value) => setNewBillForm(prev => ({ ...prev, status: value as typeof prev.status }))}
+                            >
+                              <SelectTrigger data-testid="select-bill-status">
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">{t.pending || "Pending"}</SelectItem>
+                                <SelectItem value="paid">{t.paid || "Paid"}</SelectItem>
+                                <SelectItem value="overdue">{t.overdue || "Overdue"}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="paymentPeriod">{t.paymentPeriod || "Payment Period"}</Label>
+                            <Select
+                              value={newBillForm.paymentPeriod}
+                              onValueChange={(value) => setNewBillForm(prev => ({ ...prev, paymentPeriod: value as typeof prev.paymentPeriod }))}
+                            >
+                              <SelectTrigger data-testid="select-bill-payment-period">
+                                <SelectValue placeholder="Select period" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="one-time">{t.oneTime || "One-time"}</SelectItem>
+                                <SelectItem value="weekly">{t.weekly || "Weekly"}</SelectItem>
+                                <SelectItem value="monthly">{t.monthly || "Monthly"}</SelectItem>
+                                <SelectItem value="quarterly">{t.quarterly || "Quarterly"}</SelectItem>
+                                <SelectItem value="yearly">{t.yearly || "Yearly"}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="referenceNumber">{t.referenceNumber || "Reference Number"}</Label>
+                          <Input
+                            id="referenceNumber"
+                            value={newBillForm.referenceNumber}
+                            onChange={(e) => setNewBillForm(prev => ({ ...prev, referenceNumber: e.target.value }))}
+                            placeholder="Invoice or reference number"
+                            data-testid="input-bill-reference"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="description">{t.description || "Description"}</Label>
+                          <Textarea
+                            id="description"
+                            value={newBillForm.description}
+                            onChange={(e) => setNewBillForm(prev => ({ ...prev, description: e.target.value }))}
+                            placeholder="Optional description"
+                            rows={3}
+                            data-testid="input-bill-description"
+                          />
+                        </div>
+
+                        <DialogFooter>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setIsAddBillDialogOpen(false);
+                              resetBillForm();
+                            }}
+                            data-testid="button-cancel-add-bill"
+                          >
+                            {t.cancel || "Cancel"}
+                          </Button>
+                          <Button
+                            type="submit"
+                            disabled={createBillMutation.isPending || !newBillForm.vendor || !newBillForm.amount}
+                            data-testid="button-submit-add-bill"
+                          >
+                            {createBillMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : (
+                              <Plus className="h-4 w-4 mr-2" />
+                            )}
+                            {t.addBill || "Add Bill"}
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
             </CardHeader>

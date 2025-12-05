@@ -53,6 +53,7 @@ import {
   type InsertMessageRead,
   type License,
   type InsertLicense,
+  type BusinessInfo,
   restaurants,
   branches,
   inventoryItems,
@@ -86,6 +87,7 @@ import {
   type BootstrapResetToken,
   type InsertBootstrapResetToken,
   licenses,
+  businessInfo,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
@@ -361,6 +363,9 @@ export interface IStorage {
   updateLicense(id: string, restaurantId: string, license: Partial<InsertLicense>): Promise<License | undefined>;
   deleteLicense(id: string, restaurantId: string): Promise<boolean>;
   getExpiringLicenses(restaurantId: string, daysAhead: number): Promise<License[]>;
+
+  // Business Info (IT Account - singleton for BSS provider company details)
+  getBusinessInfo(): Promise<BusinessInfo | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2860,6 +2865,12 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(licenses.expiryDate);
+  }
+
+  // Business Info (IT Account - singleton for BSS provider company details)
+  async getBusinessInfo(): Promise<BusinessInfo | null> {
+    const [info] = await db.select().from(businessInfo).limit(1);
+    return info || null;
   }
 }
 
