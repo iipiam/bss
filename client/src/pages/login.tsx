@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn, UserPlus, Check, Languages, Play, Video, Mail, HelpCircle } from "lucide-react";
+import { LogIn, UserPlus, Check, Languages, Play, Video, Mail, HelpCircle, MessageCircle } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
@@ -886,14 +886,26 @@ export default function Login() {
                 <p className="text-sm text-muted-foreground">
                   {t.contactInformation}
                 </p>
-                <a 
-                  href="mailto:it@saudikinzhal.org"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors hover-elevate active-elevate-2 px-3 py-2 rounded-md"
-                  data-testid="link-support-email"
-                >
-                  <Mail className="h-4 w-4" />
-                  it@saudikinzhal.org
-                </a>
+                <div className="flex flex-wrap gap-2">
+                  <a 
+                    href="mailto:it@kinbss.com"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors hover-elevate active-elevate-2 px-3 py-2 rounded-md"
+                    data-testid="link-support-email"
+                  >
+                    <Mail className="h-4 w-4" />
+                    it@kinbss.com
+                  </a>
+                  <a 
+                    href="https://wa.me/966502171067"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-green-600 hover:text-green-700 transition-colors hover-elevate active-elevate-2 px-3 py-2 rounded-md"
+                    data-testid="link-support-whatsapp"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    +966502171067
+                  </a>
+                </div>
               </div>
             </div>
           </div>

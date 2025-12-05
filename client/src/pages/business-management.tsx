@@ -202,10 +202,14 @@ export default function BusinessManagement() {
         method: 'GET',
         credentials: 'include',
       });
-      if (!response.ok) throw new Error('Failed to generate invoice PDF');
-      return response.blob();
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(errorData || 'Failed to generate invoice PDF');
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      return { blob: new Blob([arrayBuffer], { type: 'application/pdf' }), invoiceId };
     },
-    onSuccess: (blob, invoiceId) => {
+    onSuccess: ({ blob, invoiceId }) => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -219,7 +223,8 @@ export default function BusinessManagement() {
         description: "Invoice PDF downloaded successfully",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("PDF download error:", error);
       toast({
         title: t.error || "Error",
         description: "Failed to generate invoice PDF",
