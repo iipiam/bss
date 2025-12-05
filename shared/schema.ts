@@ -999,3 +999,32 @@ export const insertCompanyBillSchema = createInsertSchema(companyBills)
   });
 export type InsertCompanyBill = z.infer<typeof insertCompanyBillSchema>;
 export type CompanyBill = typeof companyBills.$inferSelect;
+
+// Business Info - Kinzhal LTD Co. (BSS Provider) company details for invoices
+export const businessInfo = pgTable("business_info", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyNameEn: text("company_name_en").notNull().default("BlindSpot System (BSS)"), // English company name
+  companyNameAr: text("company_name_ar").notNull().default("نظام بلايند سبوت"), // Arabic company name
+  vatNumber: text("vat_number").notNull().default(""), // VAT Registration Number (15 digits)
+  crNumber: text("cr_number").notNull().default(""), // Commercial Registration Number
+  nationalId: text("national_id").notNull().default(""), // National ID / Unified Number
+  email: text("email").notNull().default("IT@SaudiKinzhal.org"),
+  phone: text("phone").notNull().default(""),
+  website: text("website").notNull().default(""),
+  addressEn: text("address_en").notNull().default("Saudi Arabia"),
+  addressAr: text("address_ar").notNull().default("المملكة العربية السعودية"),
+  city: text("city").notNull().default(""),
+  postalCode: text("postal_code").notNull().default(""),
+  bankName: text("bank_name").notNull().default(""),
+  bankAccountName: text("bank_account_name").notNull().default(""),
+  bankAccountNumber: text("bank_account_number").notNull().default(""),
+  bankIban: text("bank_iban").notNull().default(""),
+  logoUrl: text("logo_url"),
+  updatedBy: varchar("updated_by").references(() => users.id),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertBusinessInfoSchema = createInsertSchema(businessInfo)
+  .omit({ id: true, updatedAt: true });
+export type InsertBusinessInfo = z.infer<typeof insertBusinessInfoSchema>;
+export type BusinessInfo = typeof businessInfo.$inferSelect;

@@ -37,11 +37,13 @@ import {
   updateInvestorSchema,
   insertLicenseSchema,
   insertCompanyBillSchema,
+  insertBusinessInfoSchema,
   users,
   restaurants,
   orders,
   subscriptionInvoices,
   companyBills,
+  businessInfo,
 } from "@shared/schema";
 import { getPlanPricing, type SubscriptionPlan, type BusinessType } from "@shared/subscriptionPricing";
 import { ADMIN_PERMISSIONS, type PermissionSet } from "@shared/permissions";
@@ -6698,6 +6700,105 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("Error calculating business operations summary:", error);
       res.status(500).json({ error: "Failed to calculate summary" });
+    }
+  });
+
+  // ============================================
+  // BUSINESS INFO - Company Details (IT-only)
+  // ============================================
+
+  // Get business info (singleton - returns the single record or default values)
+  app.get("/api/it/business-info", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const [info] = await db.select().from(businessInfo).limit(1);
+      
+      if (!info) {
+        // Return default values if no record exists
+        res.json({
+          id: null,
+          companyNameEn: "BlindSpot System (BSS)",
+          companyNameAr: "نظام بلايند سبوت",
+          vatNumber: "",
+          crNumber: "",
+          nationalId: "",
+          email: "IT@SaudiKinzhal.org",
+          phone: "",
+          website: "",
+          addressEn: "Saudi Arabia",
+          addressAr: "المملكة العربية السعودية",
+          city: "",
+          postalCode: "",
+          bankName: "",
+          bankAccountName: "",
+          bankAccountNumber: "",
+          bankIban: "",
+          logoUrl: null,
+          updatedBy: null,
+          updatedAt: null,
+        });
+      } else {
+        res.json(info);
+      }
+    } catch (error) {
+      console.error("Error fetching business info:", error);
+      res.status(500).json({ error: "Failed to fetch business info" });
+    }
+  });
+
+  // Update business info (creates if doesn't exist, updates if exists)
+  app.put("/api/it/business-info", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      
+      // Check if a record exists
+      const [existing] = await db.select().from(businessInfo).limit(1);
+      
+      const updateData = {
+        companyNameEn: req.body.companyNameEn || "BlindSpot System (BSS)",
+        companyNameAr: req.body.companyNameAr || "نظام بلايند سبوت",
+        vatNumber: req.body.vatNumber || "",
+        crNumber: req.body.crNumber || "",
+        nationalId: req.body.nationalId || "",
+        email: req.body.email || "IT@SaudiKinzhal.org",
+        phone: req.body.phone || "",
+        website: req.body.website || "",
+        addressEn: req.body.addressEn || "Saudi Arabia",
+        addressAr: req.body.addressAr || "المملكة العربية السعودية",
+        city: req.body.city || "",
+        postalCode: req.body.postalCode || "",
+        bankName: req.body.bankName || "",
+        bankAccountName: req.body.bankAccountName || "",
+        bankAccountNumber: req.body.bankAccountNumber || "",
+        bankIban: req.body.bankIban || "",
+        logoUrl: req.body.logoUrl || null,
+        updatedBy: userId,
+        updatedAt: new Date(),
+      };
+
+      let result;
+      if (existing) {
+        // Update existing record
+        [result] = await db
+          .update(businessInfo)
+          .set(updateData)
+          .where(eq(businessInfo.id, existing.id))
+          .returning();
+      } else {
+        // Create new record
+        [result] = await db
+          .insert(businessInfo)
+          .values(updateData)
+          .returning();
+      }
+
+      console.log(`[IT] Business info updated by user ${userId}`);
+      res.json(result);
+    } catch (error) {
+      console.error("Error updating business info:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid business info data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update business info" });
     }
   });
 
