@@ -5704,6 +5704,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.get("/api/it/all-accounts", requireAuth, requireITAccount, async (req, res) => {
     try {
       // Get all client accounts (non-IT accounts with restaurantId)
+      // Filter out accounts from cancelled restaurants
       const allAccounts = await db
         .select({
           id: users.id,
@@ -5716,13 +5717,17 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           restaurantId: users.restaurantId,
           restaurantName: restaurants.name,
           businessType: restaurants.businessType,
+          subscriptionStatus: restaurants.subscriptionStatus,
           lastLoginAt: users.lastLoginAt,
           lastActivityAt: users.lastActivityAt,
           createdAt: users.createdAt,
         })
         .from(users)
         .leftJoin(restaurants, eq(users.restaurantId, restaurants.id))
-        .where(isNotNull(users.restaurantId)) // Only client accounts (not IT)
+        .where(and(
+          isNotNull(users.restaurantId),
+          sql`${restaurants.subscriptionStatus} != 'cancelled' OR ${restaurants.subscriptionStatus} IS NULL`
+        ))
         .orderBy(desc(users.lastActivityAt));
 
       res.json(allAccounts);
