@@ -2918,9 +2918,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         pdfBase64,
         message: pdfBase64 ? 'Subscription cancelled with refund clearance' : 'Subscription cancelled'
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Cancel subscription error:", error);
-      res.status(500).json({ error: "Failed to cancel subscription" });
+      console.error("Error stack:", error?.stack);
+      console.error("Error message:", error?.message);
+      res.status(500).json({ 
+        error: "Failed to cancel subscription", 
+        details: error?.message || String(error)
+      });
     }
   });
 

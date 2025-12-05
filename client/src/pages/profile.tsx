@@ -146,10 +146,11 @@ export default function Profile() {
         });
       }
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Cancel subscription error:", error);
       toast({
         title: t.cancellationFailed,
-        description: t.cancelSubscriptionError,
+        description: error?.message || error?.details || t.cancelSubscriptionError,
         variant: "destructive",
       });
     },
