@@ -2823,7 +2823,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       let pdfBase64: string | null = null;
 
-      if (reason === "client_request" && restaurant.subscriptionPlan && restaurant.subscriptionStartDate) {
+      // Generate refund invoice for ALL cancellation reasons
+      if (restaurant.subscriptionPlan && restaurant.subscriptionStartDate) {
         const businessInfoResult = await db.select().from(businessInfo).limit(1);
         const bi = businessInfoResult[0] || null;
 
@@ -2839,7 +2840,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         
         const monthlyRate = 199;
         const chargedAmount = monthlyRate * monthsUsed;
-        const refundAmount = Math.max(0, yearlyPrice - chargedAmount);
+        
+        // For "mistake" cancellations, refund is 0. For "client_request", calculate actual refund
+        const refundAmount = reason === "client_request" 
+          ? Math.max(0, yearlyPrice - chargedAmount)
+          : 0;
 
         // Generate serial number
         const currentYear = new Date().getFullYear();
@@ -2866,6 +2871,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             monthlyRate,
             chargedAmount,
             refundAmount,
+            cancellationReason: reason, // Pass reason to invoice generator
             businessInfo: bi ? {
               companyNameEn: bi.companyNameEn,
               companyNameAr: bi.companyNameAr,
@@ -2896,7 +2902,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             refundAmount: refundAmount.toString(),
             pdfData: pdfBase64,
           });
-          console.log(`[Client] Refund invoice saved: ${serialNumber} for restaurant ${restaurantId}`);
+          console.log(`[Client] Refund invoice saved: ${serialNumber} for restaurant ${restaurantId}, reason: ${reason || 'unspecified'}`);
         } catch (pdfError) {
           console.error("Failed to generate refund clearance PDF:", pdfError);
         }
@@ -6692,7 +6698,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       let pdfBase64: string | null = null;
       let refundAmount = 0;
 
-      if (reason === "client_request" && rest.subscriptionPlan && rest.subscriptionStartDate) {
+      // Generate refund invoice for ALL cancellation reasons
+      if (rest.subscriptionPlan && rest.subscriptionStartDate) {
         // Import pricing functions
         const { getPlanPricing } = await import("@shared/subscriptionPricing");
         
@@ -6722,7 +6729,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         // For yearly plans, use the fixed 199 SAR monthly rate
 
         const chargedAmount = monthlyRate * Math.min(monthsUsed, 12);
-        refundAmount = Math.max(0, originalPrice - chargedAmount);
+        
+        // For "mistake" cancellations, refund is 0. For "client_request", calculate actual refund
+        if (reason === "client_request") {
+          refundAmount = Math.max(0, originalPrice - chargedAmount);
+        } else {
+          // Mistake subscription - no refund, but still generate invoice for records
+          refundAmount = 0;
+        }
 
         // Generate serial number
         const currentYear = new Date().getFullYear();
@@ -6750,6 +6764,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           monthlyRate,
           chargedAmount,
           refundAmount,
+          cancellationReason: reason, // Pass reason to invoice generator
           businessInfo: bi,
         });
 
@@ -6772,7 +6787,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           refundAmount: refundAmount.toString(),
           pdfData: pdfBase64,
         });
-        console.log(`[IT] Refund clearance invoice saved: ${serialNumber} for restaurant ${restaurantId}`);
+        console.log(`[IT] Refund clearance invoice saved: ${serialNumber} for restaurant ${restaurantId}, reason: ${reason}`);
       }
 
       // Update subscription status to cancelled with reason

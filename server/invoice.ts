@@ -2946,6 +2946,7 @@ interface RefundClearanceData {
   monthlyRate: number;
   chargedAmount: number;
   refundAmount: number;
+  cancellationReason?: "mistake" | "client_request";
   businessInfo?: {
     companyNameEn?: string | null;
     companyNameAr?: string | null;
@@ -2979,6 +2980,15 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
   };
 
   const planName = planNames[data.subscriptionPlan] || { en: data.subscriptionPlan, ar: data.subscriptionPlan };
+
+  const cancellationReasons: Record<string, { en: string; ar: string }> = {
+    mistake: { en: "Mistake Subscription", ar: "اشتراك خاطئ" },
+    client_request: { en: "Client Request", ar: "بناءً على طلب العميل" },
+  };
+
+  const reasonLabel = data.cancellationReason 
+    ? cancellationReasons[data.cancellationReason] || { en: data.cancellationReason, ar: data.cancellationReason }
+    : { en: "Not Specified", ar: "غير محدد" };
 
   const html = `
 <!DOCTYPE html>
@@ -3287,6 +3297,10 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
             <td class="label">Issue Date</td>
             <td class="value">${data.cancellationDate.toLocaleDateString('en-GB')}</td>
           </tr>
+          <tr>
+            <td class="label">Cancellation Reason</td>
+            <td class="value" style="font-weight: 600; color: ${data.cancellationReason === 'mistake' ? '#ca8a04' : '#dc2626'};">${escapeHtml(reasonLabel.en)}</td>
+          </tr>
         </table>
         <table class="info-table" style="direction: rtl;">
           <tr>
@@ -3296,6 +3310,10 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
           <tr>
             <td class="label">تاريخ الإصدار</td>
             <td class="value">${data.cancellationDate.toLocaleDateString('ar-SA')}</td>
+          </tr>
+          <tr>
+            <td class="label">سبب الإلغاء</td>
+            <td class="value" style="font-weight: 600; color: ${data.cancellationReason === 'mistake' ? '#ca8a04' : '#dc2626'};">${escapeHtml(reasonLabel.ar)}</td>
           </tr>
         </table>
       </div>
