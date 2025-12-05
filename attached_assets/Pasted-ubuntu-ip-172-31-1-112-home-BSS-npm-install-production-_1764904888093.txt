@@ -1,0 +1,39 @@
+ubuntu@ip-172-31-1-112:/home/BSS$ npm install --production
+npm warn config production Use `--omit=dev` instead.
+npm error code ERESOLVE
+npm error ERESOLVE could not resolve
+npm error
+npm error While resolving: @tailwindcss/vite@4.1.3
+npm error Found: vite@7.2.2
+npm error node_modules/vite
+npm error   vite@"^7.2.2" from the root project
+npm error   peer vite@"^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0" from @vitejs/plugin-react@5.1.1
+npm error   node_modules/@vitejs/plugin-react
+npm error     @vitejs/plugin-react@"^5.1.1" from the root project
+npm error
+npm error Could not resolve dependency:
+npm error peer vite@"^5.2.0 || ^6" from @tailwindcss/vite@4.1.3
+npm error node_modules/@tailwindcss/vite
+npm error   dev @tailwindcss/vite@"^4.1.3" from the root project
+npm error
+npm error Conflicting peer dependency: vite@6.4.1
+npm error node_modules/vite
+npm error   peer vite@"^5.2.0 || ^6" from @tailwindcss/vite@4.1.3
+npm error   node_modules/@tailwindcss/vite
+npm error     dev @tailwindcss/vite@"^4.1.3" from the root project
+npm error
+npm error Fix the upstream dependency conflict, or retry
+npm error this command with --force or --legacy-peer-deps
+npm error to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error /home/ubuntu/.npm/_logs/2025-12-05T03_20_24_281Z-eresolve-report.txt
+npm error A complete log of this run can be found in: /home/ubuntu/.npm/_logs/2025-12-05T03_20_24_281Z-debug-0.log
+ubuntu@ip-172-31-1-112:/home/BSS$ mkdir -p uploads invoices
+ubuntu@ip-172-31-1-112:/home/BSS$ cd /home/BSS && NODE_ENV=production DATABASE_URL="postgresql://postgres:Admin123456@database-1.ceta4wgeyspe.us-east-1.rds.amazonaws.com:5432/bss_production" pm2 start dist/index.js --name BSS
+pm2 save
+[PM2][ERROR] Script already launched, add -f option to force re-execution
+[PM2] Saving current process list...
+[PM2] Successfully saved in /home/ubuntu/.pm2/dump.pm2
+ubuntu@ip-172-31-1-112:/home/BSS$
