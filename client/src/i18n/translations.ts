@@ -855,6 +855,41 @@ export interface Translations {
   expiredSubscriptions: string;
   cancelledSubscriptions: string;
   
+  // IT Business Operations (new unique keys only)
+  businessOperations: string;
+  businessOperationsDescription: string;
+  companyBills: string;
+  deleteBill: string;
+  billCategories: string;
+  utilities: string;
+  marketingExpense: string;
+  softwareExpense: string;
+  officeSupplies: string;
+  taxesExpense: string;
+  insuranceExpense: string;
+  overdueBills: string;
+  expensesByCategory: string;
+  
+  // IT BSS Analysis
+  bssAnalysis: string;
+  bssAnalysisDescription: string;
+  subscriptionRevenue: string;
+  vatCollected: string;
+  netProfit: string;
+  profitMargin: string;
+  revenueByPlan: string;
+  accountsByType: string;
+  revenueTrends: string;
+  monthlyTrends: string;
+  totalClients: string;
+  restaurantClients: string;
+  factoryClients: string;
+  planBreakdown: string;
+  financialOverview: string;
+  expenseVat: string;
+  netVat: string;
+  noAnalyticsData: string;
+  
   // IT Preferences (Theme & Customization)
   itPreferences: string;
   customizeYourExperience: string;
@@ -2155,6 +2190,41 @@ export const translations: Record<Language, Translations> = {
     activeSubscriptions: 'Active Subscriptions',
     expiredSubscriptions: 'Expired Subscriptions',
     cancelledSubscriptions: 'Cancelled Subscriptions',
+    
+    // IT Business Operations
+    businessOperations: 'Business Operations',
+    businessOperationsDescription: 'Manage company bills, expenses, and operational costs',
+    companyBills: 'Company Bills',
+    deleteBill: 'Delete Bill',
+    billCategories: 'Bill Categories',
+    utilities: 'Utilities',
+    marketingExpense: 'Marketing',
+    softwareExpense: 'Software & Subscriptions',
+    officeSupplies: 'Office Supplies',
+    taxesExpense: 'Taxes',
+    insuranceExpense: 'Insurance',
+    overdueBills: 'Overdue Bills',
+    expensesByCategory: 'Expenses by Category',
+    
+    // IT BSS Analysis
+    bssAnalysis: 'BSS Analysis',
+    bssAnalysisDescription: 'Analytics dashboard for revenue, VAT, profit, and business insights',
+    subscriptionRevenue: 'Subscription Revenue',
+    vatCollected: 'VAT Collected',
+    netProfit: 'Net Profit',
+    profitMargin: 'Profit Margin',
+    revenueByPlan: 'Revenue by Plan',
+    accountsByType: 'Accounts by Type',
+    revenueTrends: 'Revenue Trends',
+    monthlyTrends: 'Monthly Trends',
+    totalClients: 'Total Clients',
+    restaurantClients: 'Restaurant Clients',
+    factoryClients: 'Factory Clients',
+    planBreakdown: 'Plan Breakdown',
+    financialOverview: 'Financial Overview',
+    expenseVat: 'Expense VAT',
+    netVat: 'Net VAT',
+    noAnalyticsData: 'No analytics data available',
     
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
@@ -3464,6 +3534,41 @@ export const translations: Record<Language, Translations> = {
     expiredSubscriptions: 'الاشتراكات المنتهية',
     cancelledSubscriptions: 'الاشتراكات الملغاة',
     
+    // IT Business Operations
+    businessOperations: 'العمليات التجارية',
+    businessOperationsDescription: 'إدارة فواتير الشركة والمصاريف والتكاليف التشغيلية',
+    companyBills: 'فواتير الشركة',
+    deleteBill: 'حذف الفاتورة',
+    billCategories: 'فئات الفواتير',
+    utilities: 'المرافق',
+    marketingExpense: 'التسويق',
+    softwareExpense: 'البرمجيات والاشتراكات',
+    officeSupplies: 'مستلزمات المكتب',
+    taxesExpense: 'الضرائب',
+    insuranceExpense: 'التأمين',
+    overdueBills: 'الفواتير المتأخرة',
+    expensesByCategory: 'المصاريف حسب الفئة',
+    
+    // IT BSS Analysis
+    bssAnalysis: 'تحليلات BSS',
+    bssAnalysisDescription: 'لوحة تحليلات للإيرادات والضرائب والأرباح ورؤى الأعمال',
+    subscriptionRevenue: 'إيرادات الاشتراكات',
+    vatCollected: 'الضريبة المحصلة',
+    netProfit: 'صافي الربح',
+    profitMargin: 'هامش الربح',
+    revenueByPlan: 'الإيرادات حسب الخطة',
+    accountsByType: 'الحسابات حسب النوع',
+    revenueTrends: 'اتجاهات الإيرادات',
+    monthlyTrends: 'الاتجاهات الشهرية',
+    totalClients: 'إجمالي العملاء',
+    restaurantClients: 'عملاء المطاعم',
+    factoryClients: 'عملاء المصانع',
+    planBreakdown: 'تفصيل الخطط',
+    financialOverview: 'نظرة مالية عامة',
+    expenseVat: 'ضريبة المصاريف',
+    netVat: 'صافي الضريبة',
+    noAnalyticsData: 'لا توجد بيانات تحليلية',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'تفضيلات تكنولوجيا المعلومات',
     customizeYourExperience: 'خصص تجربتك',
@@ -4769,6 +4874,41 @@ export const translations: Record<Language, Translations> = {
     activeSubscriptions: 'Aktive Abonnements',
     expiredSubscriptions: 'Abgelaufene Abonnements',
     cancelledSubscriptions: 'Stornierte Abonnements',
+    
+    // IT Business Operations
+    businessOperations: 'Geschäftsbetrieb',
+    businessOperationsDescription: 'Verwalten Sie Unternehmensrechnungen, Ausgaben und Betriebskosten',
+    companyBills: 'Unternehmensrechnungen',
+    deleteBill: 'Rechnung löschen',
+    billCategories: 'Rechnungskategorien',
+    utilities: 'Versorgungsleistungen',
+    marketingExpense: 'Marketing',
+    softwareExpense: 'Software & Abonnements',
+    officeSupplies: 'Bürobedarf',
+    taxesExpense: 'Steuern',
+    insuranceExpense: 'Versicherung',
+    overdueBills: 'Überfällige Rechnungen',
+    expensesByCategory: 'Ausgaben nach Kategorie',
+    
+    // IT BSS Analysis
+    bssAnalysis: 'BSS-Analyse',
+    bssAnalysisDescription: 'Analyse-Dashboard für Umsatz, MwSt., Gewinn und Geschäftseinblicke',
+    subscriptionRevenue: 'Abonnement-Einnahmen',
+    vatCollected: 'Erhobene MwSt.',
+    netProfit: 'Nettogewinn',
+    profitMargin: 'Gewinnmarge',
+    revenueByPlan: 'Einnahmen nach Plan',
+    accountsByType: 'Konten nach Typ',
+    revenueTrends: 'Umsatztrends',
+    monthlyTrends: 'Monatliche Trends',
+    totalClients: 'Gesamtkunden',
+    restaurantClients: 'Restaurant-Kunden',
+    factoryClients: 'Fabrik-Kunden',
+    planBreakdown: 'Planaufschlüsselung',
+    financialOverview: 'Finanzübersicht',
+    expenseVat: 'Ausgaben-MwSt.',
+    netVat: 'Netto-MwSt.',
+    noAnalyticsData: 'Keine Analysedaten verfügbar',
     
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
@@ -6076,6 +6216,41 @@ export const translations: Record<Language, Translations> = {
     expiredSubscriptions: '已过期订阅',
     cancelledSubscriptions: '已取消订阅',
     
+    // IT Business Operations
+    businessOperations: '业务运营',
+    businessOperationsDescription: '管理公司账单、费用和运营成本',
+    companyBills: '公司账单',
+    deleteBill: '删除账单',
+    billCategories: '账单类别',
+    utilities: '公用事业',
+    marketingExpense: '营销',
+    softwareExpense: '软件和订阅',
+    officeSupplies: '办公用品',
+    taxesExpense: '税费',
+    insuranceExpense: '保险',
+    overdueBills: '逾期账单',
+    expensesByCategory: '按类别支出',
+    
+    // IT BSS Analysis
+    bssAnalysis: 'BSS分析',
+    bssAnalysisDescription: '收入、增值税、利润和业务洞察的分析仪表板',
+    subscriptionRevenue: '订阅收入',
+    vatCollected: '已收增值税',
+    netProfit: '净利润',
+    profitMargin: '利润率',
+    revenueByPlan: '按计划收入',
+    accountsByType: '按类型账户',
+    revenueTrends: '收入趋势',
+    monthlyTrends: '月度趋势',
+    totalClients: '客户总数',
+    restaurantClients: '餐厅客户',
+    factoryClients: '工厂客户',
+    planBreakdown: '计划分解',
+    financialOverview: '财务概览',
+    expenseVat: '费用增值税',
+    netVat: '净增值税',
+    noAnalyticsData: '无分析数据',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
     customizeYourExperience: 'Customize your experience',
@@ -7381,6 +7556,41 @@ export const translations: Record<Language, Translations> = {
     activeSubscriptions: 'সক্রিয় সাবস্ক্রিপশন',
     expiredSubscriptions: 'মেয়াদোত্তীর্ণ সাবস্ক্রিপশন',
     cancelledSubscriptions: 'বাতিল সাবস্ক্রিপশন',
+    
+    // IT Business Operations
+    businessOperations: 'ব্যবসায়িক কার্যক্রম',
+    businessOperationsDescription: 'কোম্পানির বিল, খরচ এবং পরিচালন ব্যয় পরিচালনা করুন',
+    companyBills: 'কোম্পানির বিল',
+    deleteBill: 'বিল মুছুন',
+    billCategories: 'বিল বিভাগ',
+    utilities: 'ইউটিলিটি',
+    marketingExpense: 'মার্কেটিং',
+    softwareExpense: 'সফটওয়্যার এবং সাবস্ক্রিপশন',
+    officeSupplies: 'অফিস সরবরাহ',
+    taxesExpense: 'কর',
+    insuranceExpense: 'বীমা',
+    overdueBills: 'বকেয়া বিল',
+    expensesByCategory: 'বিভাগ অনুযায়ী খরচ',
+    
+    // IT BSS Analysis
+    bssAnalysis: 'বিএসএস বিশ্লেষণ',
+    bssAnalysisDescription: 'রাজস্ব, ভ্যাট, মুনাফা এবং ব্যবসায়িক অন্তর্দৃষ্টির জন্য বিশ্লেষণ ড্যাশবোর্ড',
+    subscriptionRevenue: 'সাবস্ক্রিপশন আয়',
+    vatCollected: 'সংগৃহীত ভ্যাট',
+    netProfit: 'নেট মুনাফা',
+    profitMargin: 'মুনাফা মার্জিন',
+    revenueByPlan: 'প্ল্যান অনুযায়ী আয়',
+    accountsByType: 'ধরন অনুযায়ী অ্যাকাউন্ট',
+    revenueTrends: 'রাজস্ব প্রবণতা',
+    monthlyTrends: 'মাসিক প্রবণতা',
+    totalClients: 'মোট ক্লায়েন্ট',
+    restaurantClients: 'রেস্তোরাঁ ক্লায়েন্ট',
+    factoryClients: 'ফ্যাক্টরি ক্লায়েন্ট',
+    planBreakdown: 'প্ল্যান বিভাজন',
+    financialOverview: 'আর্থিক সংক্ষিপ্ত বিবরণ',
+    expenseVat: 'ব্যয় ভ্যাট',
+    netVat: 'নেট ভ্যাট',
+    noAnalyticsData: 'কোনো বিশ্লেষণ ডেটা নেই',
     
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
@@ -8688,6 +8898,41 @@ export const translations: Record<Language, Translations> = {
     expiredSubscriptions: 'Abbonamenti Scaduti',
     cancelledSubscriptions: 'Abbonamenti Cancellati',
     
+    // IT Business Operations
+    businessOperations: 'Operazioni Aziendali',
+    businessOperationsDescription: 'Gestisci fatture aziendali, spese e costi operativi',
+    companyBills: 'Fatture Aziendali',
+    deleteBill: 'Elimina Fattura',
+    billCategories: 'Categorie Fatture',
+    utilities: 'Utenze',
+    marketingExpense: 'Marketing',
+    softwareExpense: 'Software e Abbonamenti',
+    officeSupplies: 'Forniture Ufficio',
+    taxesExpense: 'Tasse',
+    insuranceExpense: 'Assicurazione',
+    overdueBills: 'Fatture Scadute',
+    expensesByCategory: 'Spese per Categoria',
+    
+    // IT BSS Analysis
+    bssAnalysis: 'Analisi BSS',
+    bssAnalysisDescription: 'Dashboard analitico per ricavi, IVA, profitti e approfondimenti aziendali',
+    subscriptionRevenue: 'Ricavi Abbonamenti',
+    vatCollected: 'IVA Riscossa',
+    netProfit: 'Utile Netto',
+    profitMargin: 'Margine di Profitto',
+    revenueByPlan: 'Ricavi per Piano',
+    accountsByType: 'Account per Tipo',
+    revenueTrends: 'Trend Ricavi',
+    monthlyTrends: 'Trend Mensili',
+    totalClients: 'Clienti Totali',
+    restaurantClients: 'Clienti Ristorante',
+    factoryClients: 'Clienti Fabbrica',
+    planBreakdown: 'Dettaglio Piani',
+    financialOverview: 'Panoramica Finanziaria',
+    expenseVat: 'IVA Spese',
+    netVat: 'IVA Netta',
+    noAnalyticsData: 'Nessun dato analitico disponibile',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT Preferences',
     customizeYourExperience: 'Customize your experience',
@@ -9981,6 +10226,41 @@ export const translations: Record<Language, Translations> = {
     activeSubscriptions: 'सक्रिय सदस्यताएं',
     expiredSubscriptions: 'समाप्त सदस्यताएं',
     cancelledSubscriptions: 'रद्द सदस्यताएं',
+    
+    // IT Business Operations
+    businessOperations: 'व्यापार संचालन',
+    businessOperationsDescription: 'कंपनी के बिल, खर्च और परिचालन लागत प्रबंधित करें',
+    companyBills: 'कंपनी के बिल',
+    deleteBill: 'बिल हटाएं',
+    billCategories: 'बिल श्रेणियां',
+    utilities: 'उपयोगिताएं',
+    marketingExpense: 'मार्केटिंग',
+    softwareExpense: 'सॉफ्टवेयर और सदस्यता',
+    officeSupplies: 'कार्यालय आपूर्ति',
+    taxesExpense: 'कर',
+    insuranceExpense: 'बीमा',
+    overdueBills: 'बकाया बिल',
+    expensesByCategory: 'श्रेणी के अनुसार खर्च',
+    
+    // IT BSS Analysis
+    bssAnalysis: 'बीएसएस विश्लेषण',
+    bssAnalysisDescription: 'राजस्व, वैट, लाभ और व्यापार अंतर्दृष्टि के लिए विश्लेषण डैशबोर्ड',
+    subscriptionRevenue: 'सदस्यता राजस्व',
+    vatCollected: 'एकत्रित वैट',
+    netProfit: 'शुद्ध लाभ',
+    profitMargin: 'लाभ मार्जिन',
+    revenueByPlan: 'योजना के अनुसार राजस्व',
+    accountsByType: 'प्रकार के अनुसार खाते',
+    revenueTrends: 'राजस्व रुझान',
+    monthlyTrends: 'मासिक रुझान',
+    totalClients: 'कुल ग्राहक',
+    restaurantClients: 'रेस्तरां ग्राहक',
+    factoryClients: 'कारखाना ग्राहक',
+    planBreakdown: 'योजना विवरण',
+    financialOverview: 'वित्तीय अवलोकन',
+    expenseVat: 'खर्च वैट',
+    netVat: 'शुद्ध वैट',
+    noAnalyticsData: 'कोई विश्लेषण डेटा उपलब्ध नहीं',
     
     // IT Preferences (Theme & Customization)
     itPreferences: 'आईटी प्राथमिकताएं',
@@ -11276,6 +11556,41 @@ export const translations: Record<Language, Translations> = {
     expiredSubscriptions: 'ختم شدہ سبسکرپشنز',
     cancelledSubscriptions: 'منسوخ سبسکرپشنز',
     
+    // IT Business Operations
+    businessOperations: 'کاروباری آپریشنز',
+    businessOperationsDescription: 'کمپنی کے بلوں، اخراجات اور آپریشنل لاگت کا انتظام کریں',
+    companyBills: 'کمپنی کے بل',
+    deleteBill: 'بل حذف کریں',
+    billCategories: 'بل کی اقسام',
+    utilities: 'یوٹیلیٹیز',
+    marketingExpense: 'مارکیٹنگ',
+    softwareExpense: 'سافٹ ویئر اور سبسکرپشنز',
+    officeSupplies: 'دفتری سامان',
+    taxesExpense: 'ٹیکس',
+    insuranceExpense: 'انشورنس',
+    overdueBills: 'واجب الادا بل',
+    expensesByCategory: 'زمرے کے مطابق اخراجات',
+    
+    // IT BSS Analysis
+    bssAnalysis: 'بی ایس ایس تجزیہ',
+    bssAnalysisDescription: 'آمدنی، ویٹ، منافع اور کاروباری بصیرت کے لیے تجزیاتی ڈیش بورڈ',
+    subscriptionRevenue: 'سبسکرپشن آمدنی',
+    vatCollected: 'وصول شدہ ویٹ',
+    netProfit: 'خالص منافع',
+    profitMargin: 'منافع کا مارجن',
+    revenueByPlan: 'پلان کے مطابق آمدنی',
+    accountsByType: 'قسم کے مطابق اکاؤنٹس',
+    revenueTrends: 'آمدنی کے رجحانات',
+    monthlyTrends: 'ماہانہ رجحانات',
+    totalClients: 'کل کلائنٹس',
+    restaurantClients: 'ریستوران کلائنٹس',
+    factoryClients: 'فیکٹری کلائنٹس',
+    planBreakdown: 'پلان کی تفصیل',
+    financialOverview: 'مالی جائزہ',
+    expenseVat: 'اخراجات ویٹ',
+    netVat: 'خالص ویٹ',
+    noAnalyticsData: 'کوئی تجزیاتی ڈیٹا دستیاب نہیں',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'آئی ٹی ترجیحات',
     customizeYourExperience: 'اپنے تجربے کو اپنی مرضی کے مطابق بنائیں',
@@ -12514,6 +12829,41 @@ export const translations: Record<Language, Translations> = {
     expiredSubscriptions: 'Suscripciones Vencidas',
     cancelledSubscriptions: 'Suscripciones Canceladas',
     
+    // IT Business Operations
+    businessOperations: 'Operaciones Empresariales',
+    businessOperationsDescription: 'Gestionar facturas de la empresa, gastos y costos operativos',
+    companyBills: 'Facturas de la Empresa',
+    deleteBill: 'Eliminar Factura',
+    billCategories: 'Categorías de Facturas',
+    utilities: 'Servicios Públicos',
+    marketingExpense: 'Marketing',
+    softwareExpense: 'Software y Suscripciones',
+    officeSupplies: 'Suministros de Oficina',
+    taxesExpense: 'Impuestos',
+    insuranceExpense: 'Seguros',
+    overdueBills: 'Facturas Vencidas',
+    expensesByCategory: 'Gastos por Categoría',
+    
+    // IT BSS Analysis
+    bssAnalysis: 'Análisis BSS',
+    bssAnalysisDescription: 'Panel de análisis para ingresos, IVA, ganancias e información empresarial',
+    subscriptionRevenue: 'Ingresos por Suscripción',
+    vatCollected: 'IVA Recaudado',
+    netProfit: 'Beneficio Neto',
+    profitMargin: 'Margen de Beneficio',
+    revenueByPlan: 'Ingresos por Plan',
+    accountsByType: 'Cuentas por Tipo',
+    revenueTrends: 'Tendencias de Ingresos',
+    monthlyTrends: 'Tendencias Mensuales',
+    totalClients: 'Clientes Totales',
+    restaurantClients: 'Clientes de Restaurante',
+    factoryClients: 'Clientes de Fábrica',
+    planBreakdown: 'Desglose de Planes',
+    financialOverview: 'Resumen Financiero',
+    expenseVat: 'IVA de Gastos',
+    netVat: 'IVA Neto',
+    noAnalyticsData: 'No hay datos analíticos disponibles',
+    
     // IT Preferences (Theme & Customization)
     itPreferences: 'Preferencias de TI',
     customizeYourExperience: 'Personaliza tu experiencia',
@@ -13747,6 +14097,41 @@ export const translations: Record<Language, Translations> = {
     activeSubscriptions: 'Mga Aktibong Subscription',
     expiredSubscriptions: 'Mga Nag-expire na Subscription',
     cancelledSubscriptions: 'Mga Kanselang Subscription',
+    
+    // IT Business Operations
+    businessOperations: 'Operasyon ng Negosyo',
+    businessOperationsDescription: 'Pamahalaan ang mga bill ng kumpanya, gastos at gastusin sa operasyon',
+    companyBills: 'Mga Bill ng Kumpanya',
+    deleteBill: 'Burahin ang Bill',
+    billCategories: 'Mga Kategorya ng Bill',
+    utilities: 'Mga Utility',
+    marketingExpense: 'Marketing',
+    softwareExpense: 'Software at Subscription',
+    officeSupplies: 'Mga Gamit sa Opisina',
+    taxesExpense: 'Buwis',
+    insuranceExpense: 'Insurance',
+    overdueBills: 'Mga Overdue na Bill',
+    expensesByCategory: 'Gastos ayon sa Kategorya',
+    
+    // IT BSS Analysis
+    bssAnalysis: 'Pagsusuri ng BSS',
+    bssAnalysisDescription: 'Dashboard ng analytics para sa kita, VAT, tubo at mga insight sa negosyo',
+    subscriptionRevenue: 'Kita mula sa Subscription',
+    vatCollected: 'Nakolektang VAT',
+    netProfit: 'Netong Tubo',
+    profitMargin: 'Margin ng Tubo',
+    revenueByPlan: 'Kita ayon sa Plano',
+    accountsByType: 'Mga Account ayon sa Uri',
+    revenueTrends: 'Mga Trend ng Kita',
+    monthlyTrends: 'Buwanang Trend',
+    totalClients: 'Kabuuang Kliyente',
+    restaurantClients: 'Mga Kliyenteng Restaurant',
+    factoryClients: 'Mga Kliyenteng Pabrika',
+    planBreakdown: 'Detalye ng Plano',
+    financialOverview: 'Pangkalahatang-ideya sa Pinansyal',
+    expenseVat: 'VAT ng Gastos',
+    netVat: 'Netong VAT',
+    noAnalyticsData: 'Walang available na data ng analytics',
     
     // IT Preferences (Theme & Customization)
     itPreferences: 'IT na mga Kagustuhan',
