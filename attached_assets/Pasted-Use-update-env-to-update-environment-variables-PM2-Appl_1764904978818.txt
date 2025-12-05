@@ -1,0 +1,56 @@
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [BSS](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 20   │ online    │ 0%       │ 18.3mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[PM2] Saving current process list...
+[PM2] Successfully saved in /home/ubuntu/.pm2/dump.pm2
+ubuntu@ip-172-31-1-112:/home/BSS$ npm install --omit=dev --force
+pm2 restart BSS
+pm2 save
+npm warn using --force Recommended protections disabled.
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @tailwindcss/vite@4.1.3
+npm warn Found: vite@7.2.2
+npm warn node_modules/vite
+npm warn   vite@"^7.2.2" from the root project
+npm warn   1 more (@vitejs/plugin-react)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer vite@"^5.2.0 || ^6" from @tailwindcss/vite@4.1.3
+npm warn node_modules/@tailwindcss/vite
+npm warn   dev @tailwindcss/vite@"^4.1.3" from the root project
+npm warn
+npm warn Conflicting peer dependency: vite@6.4.1
+npm warn node_modules/vite
+npm warn   peer vite@"^5.2.0 || ^6" from @tailwindcss/vite@4.1.3
+npm warn   node_modules/@tailwindcss/vite
+npm warn     dev @tailwindcss/vite@"^4.1.3" from the root project
+npm error code 1
+npm error path /home/BSS/node_modules/tsx/node_modules/esbuild
+npm error command failed
+npm error command sh -c node install.js
+npm error /home/BSS/node_modules/tsx/node_modules/esbuild/install.js:136
+npm error     throw new Error(`Expected ${JSON.stringify(versionFromPackageJSON)} but got ${JSON.stringify(stdout)}`);
+npm error           ^
+npm error
+npm error Error: Expected "0.25.12" but got "0.27.0"
+npm error     at validateBinaryVersion (/home/BSS/node_modules/tsx/node_modules/esbuild/install.js:136:11)
+npm error     at /home/BSS/node_modules/tsx/node_modules/esbuild/install.js:287:5
+npm error
+npm error Node.js v20.19.6
+npm error A complete log of this run can be found in: /home/ubuntu/.npm/_logs/2025-12-05T03_22_41_998Z-debug-0.log
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [BSS](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 21   │ online    │ 0%       │ 18.3mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[PM2] Saving current process list...
+[PM2] Successfully saved in /home/ubuntu/.pm2/dump.pm2
+ubuntu@ip-172-31-1-112:/home/BSS$
