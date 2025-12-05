@@ -6558,7 +6558,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "Invalid reason. Must be 'mistake' or 'client_request'" });
       }
 
-      // Get restaurant with owner info
+      // Get restaurant info
       const restaurant = await db
         .select({
           id: restaurants.id,
@@ -6569,7 +6569,6 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           subscriptionEndDate: restaurants.subscriptionEndDate,
           taxNumber: restaurants.taxNumber,
           commercialRegistration: restaurants.commercialRegistration,
-          ownerId: restaurants.ownerId,
         })
         .from(restaurants)
         .where(eq(restaurants.id, restaurantId))
@@ -6581,17 +6580,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       const rest = restaurant[0];
 
-      // Get owner details
+      // Get owner details by finding user with this restaurantId
       let ownerInfo = { fullName: "Unknown", email: "unknown@email.com" };
-      if (rest.ownerId) {
-        const owner = await db
-          .select({ fullName: users.fullName, email: users.email })
-          .from(users)
-          .where(eq(users.id, rest.ownerId))
-          .limit(1);
-        if (owner[0]) {
-          ownerInfo = { fullName: owner[0].fullName || "Unknown", email: owner[0].email };
-        }
+      const owner = await db
+        .select({ fullName: users.fullName, email: users.email })
+        .from(users)
+        .where(eq(users.restaurantId, restaurantId))
+        .limit(1);
+      if (owner[0]) {
+        ownerInfo = { fullName: owner[0].fullName || "Unknown", email: owner[0].email || "unknown@email.com" };
       }
 
       // Get business info for invoice
