@@ -194,7 +194,7 @@ export interface IStorage {
   clearPasswordResetToken(userId: string): Promise<void>;
   getUserProfile(userId: string, restaurantId: string): Promise<User | undefined>;
   updateUserProfile(userId: string, restaurantId: string, profile: { email?: string; phone?: string }): Promise<User | undefined>;
-  cancelSubscription(userId: string, restaurantId: string): Promise<User | undefined>;
+  cancelSubscription(userId: string, restaurantId: string, reason?: "mistake" | "client_request"): Promise<User | undefined>;
   
   // Activity Tracking (for IT Dashboard monitoring)
   updateUserActivity(userId: string): Promise<void>; // Update lastActivityAt timestamp
@@ -1031,16 +1031,17 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async cancelSubscription(userId: string, restaurantId: string): Promise<User | undefined> {
+  async cancelSubscription(userId: string, restaurantId: string, reason?: "mistake" | "client_request"): Promise<User | undefined> {
     // Get user to find their restaurantId
     const user = await this.getUser(userId, restaurantId);
     if (!user || !user.restaurantId) return undefined;
 
-    // Update restaurant subscription status
+    // Update restaurant subscription status with cancellation reason
     await db.update(restaurants)
       .set({
         subscriptionStatus: 'cancelled',
-        subscriptionCancelledAt: new Date()
+        subscriptionCancelledAt: new Date(),
+        cancellationReason: reason || 'mistake'
       })
       .where(eq(restaurants.id, user.restaurantId));
 

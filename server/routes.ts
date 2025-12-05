@@ -2908,7 +2908,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         }
       }
 
-      const updatedUser = await storage.cancelSubscription(req.session.user!.id, restaurantId);
+      const updatedUser = await storage.cancelSubscription(req.session.user!.id, restaurantId, reason);
       if (!updatedUser) {
         return res.status(500).json({ error: "Failed to cancel subscription" });
       }
