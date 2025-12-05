@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, 
   Key, 
@@ -29,7 +30,12 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  RefreshCw
+  RefreshCw,
+  Archive,
+  FileText,
+  Download,
+  AlertCircle,
+  Calendar
 } from "lucide-react";
 
 interface Account {
@@ -48,6 +54,36 @@ interface Account {
   createdAt: string;
 }
 
+interface RefundInvoice {
+  id: number;
+  serialNumber: string;
+  refundAmount: string;
+  monthsUsed: number;
+  originalPrice: string;
+  chargedAmount: string;
+  cancellationDate: string;
+  pdfData: string | null;
+}
+
+interface ArchivedAccount {
+  id: string;
+  username: string;
+  fullName: string;
+  email: string | null;
+  phone: string | null;
+  role: string;
+  restaurantId: string | null;
+  restaurantName: string | null;
+  businessType: string | null;
+  subscriptionPlan: string | null;
+  subscriptionStartDate: string | null;
+  subscriptionEndDate: string | null;
+  subscriptionCancelledAt: string | null;
+  cancellationReason: string | null;
+  createdAt: string;
+  refundInvoice: RefundInvoice | null;
+}
+
 export default function ITAccountManagement() {
   const { user, accountType, isLoading: authLoading } = useAuth();
   const { t } = useLanguage();
@@ -62,7 +98,9 @@ export default function ITAccountManagement() {
     text3Xl: device === 'iphone' ? 'text-xl' : device === 'ipad' ? 'text-2xl' : 'text-3xl',
   };
 
+  const [activeTab, setActiveTab] = useState<"accounts" | "archive">("accounts");
   const [searchQuery, setSearchQuery] = useState("");
+  const [archiveSearchQuery, setArchiveSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "disabled">("all");
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
@@ -102,6 +140,12 @@ export default function ITAccountManagement() {
     queryKey: ['/api/it/all-accounts'],
     enabled: !!user && accountType === 'it',
     refetchInterval: 30000,
+  });
+
+  // Fetch archived accounts
+  const { data: archivedAccounts = [], isLoading: archiveLoading, refetch: refetchArchive } = useQuery<ArchivedAccount[]>({
+    queryKey: ['/api/it/archived-accounts'],
+    enabled: !!user && accountType === 'it',
   });
 
   // Change password mutation
@@ -165,6 +209,17 @@ export default function ITAccountManagement() {
     return matchesSearch && matchesStatus;
   });
 
+  // Filter archived accounts based on search
+  const filteredArchivedAccounts = archivedAccounts.filter(account => {
+    return (
+      account.username.toLowerCase().includes(archiveSearchQuery.toLowerCase()) ||
+      account.fullName.toLowerCase().includes(archiveSearchQuery.toLowerCase()) ||
+      (account.email?.toLowerCase().includes(archiveSearchQuery.toLowerCase())) ||
+      (account.restaurantName?.toLowerCase().includes(archiveSearchQuery.toLowerCase())) ||
+      (account.refundInvoice?.serialNumber?.toLowerCase().includes(archiveSearchQuery.toLowerCase()))
+    );
+  });
+
   const handleChangePassword = () => {
     if (!selectedAccount) return;
     
@@ -199,9 +254,70 @@ export default function ITAccountManagement() {
     });
   };
 
+  const handleDownloadRefundInvoice = (account: ArchivedAccount) => {
+    if (!account.refundInvoice?.pdfData) {
+      toast({
+        title: t.noRefundInvoice || "No Refund Invoice",
+        description: t.noRefundInvoiceAvailable || "No refund invoice available for this account. This may be because it was cancelled as a mistake subscription.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const pdfData = account.refundInvoice.pdfData;
+      const byteCharacters = atob(pdfData);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Refund_Invoice_${account.refundInvoice.serialNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: t.downloadSuccess || "Download Started",
+        description: t.refundInvoiceDownloaded || "Refund invoice downloaded successfully.",
+      });
+    } catch (error) {
+      console.error("Error downloading refund invoice:", error);
+      toast({
+        title: t.downloadError || "Download Failed",
+        description: t.failedToDownloadRefund || "Failed to download refund invoice. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "Never";
     return new Date(dateStr).toLocaleString();
+  };
+
+  const formatDateShort = (dateStr: string | null) => {
+    if (!dateStr) return "-";
+    return new Date(dateStr).toLocaleDateString();
+  };
+
+  const getCancellationReasonLabel = (reason: string | null) => {
+    if (!reason) return t.unknown || "Unknown";
+    if (reason === "mistake") return t.mistakeSubscription || "Mistake Subscription";
+    if (reason === "client_request") return t.byClientRequest || "By Client Request";
+    return reason;
+  };
+
+  const getCancellationReasonVariant = (reason: string | null): "default" | "destructive" | "secondary" => {
+    if (reason === "mistake") return "secondary";
+    if (reason === "client_request") return "destructive";
+    return "default";
   };
 
   if (isLoading) {
@@ -233,7 +349,10 @@ export default function ITAccountManagement() {
         </div>
         <Button 
           variant="outline" 
-          onClick={() => refetch()}
+          onClick={() => {
+            refetch();
+            refetchArchive();
+          }}
           data-testid="button-refresh"
         >
           <RefreshCw className="h-4 w-4 mr-2" />
@@ -241,274 +360,456 @@ export default function ITAccountManagement() {
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card data-testid="card-total-accounts">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">{t.totalAccounts || "Total Accounts"}</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{accounts.length}</div>
-          </CardContent>
-        </Card>
-        <Card data-testid="card-active-accounts">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">{t.activeAccounts || "Active Accounts"}</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {accounts.filter(a => a.active).length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card data-testid="card-disabled-accounts">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">{t.disabledAccounts || "Disabled Accounts"}</CardTitle>
-            <XCircle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {accounts.filter(a => !a.active).length}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Tabs for Accounts and Archive */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "accounts" | "archive")} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="accounts" data-testid="tab-accounts" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            {t.accounts || "Accounts"}
+          </TabsTrigger>
+          <TabsTrigger value="archive" data-testid="tab-archive" className="flex items-center gap-2">
+            <Archive className="h-4 w-4" />
+            {t.archive || "Archive"}
+            {archivedAccounts.length > 0 && (
+              <Badge variant="secondary" className="ml-1">{archivedAccounts.length}</Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Search and Filter */}
-      <Card data-testid="card-accounts-list">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            {t.clientAccounts || "Client Accounts"}
-          </CardTitle>
-          <CardDescription>
-            {t.managePasswordsAndAccess || "Change passwords and enable/disable account access"}
-          </CardDescription>
-          
-          <div className="flex flex-wrap gap-4 pt-4">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={t.searchAccounts || "Search accounts..."}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-                data-testid="input-search"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={statusFilter === "all" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setStatusFilter("all")}
-                data-testid="button-filter-all"
-              >
-                {t.all || "All"}
-              </Button>
-              <Button
-                variant={statusFilter === "active" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setStatusFilter("active")}
-                data-testid="button-filter-active"
-              >
-                <CheckCircle className="h-4 w-4 mr-1" />
-                {t.active || "Active"}
-              </Button>
-              <Button
-                variant={statusFilter === "disabled" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setStatusFilter("disabled")}
-                data-testid="button-filter-disabled"
-              >
-                <XCircle className="h-4 w-4 mr-1" />
-                {t.disabled || "Disabled"}
-              </Button>
-            </div>
+        {/* Active Accounts Tab */}
+        <TabsContent value="accounts" className="space-y-4 mt-4">
+          {/* Stats Cards */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card data-testid="card-total-accounts">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+                <CardTitle className="text-sm font-medium">{t.totalAccounts || "Total Accounts"}</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{accounts.length}</div>
+              </CardContent>
+            </Card>
+            <Card data-testid="card-active-accounts">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+                <CardTitle className="text-sm font-medium">{t.activeAccounts || "Active Accounts"}</CardTitle>
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {accounts.filter(a => a.active).length}
+                </div>
+              </CardContent>
+            </Card>
+            <Card data-testid="card-disabled-accounts">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+                <CardTitle className="text-sm font-medium">{t.disabledAccounts || "Disabled Accounts"}</CardTitle>
+                <XCircle className="h-4 w-4 text-red-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  {accounts.filter(a => !a.active).length}
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t.status || "Status"}</TableHead>
-                  <TableHead>{t.username || "Username"}</TableHead>
-                  <TableHead>{t.fullName || "Full Name"}</TableHead>
-                  <TableHead>{t.business || "Business"}</TableHead>
-                  <TableHead>{t.role || "Role"}</TableHead>
-                  <TableHead>{t.lastLogin || "Last Login"}</TableHead>
-                  <TableHead className="text-right">{t.actions || "Actions"}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAccounts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                      {t.noAccountsFound || "No accounts found"}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredAccounts.map((account) => (
-                    <TableRow key={account.id} data-testid={`row-account-${account.id}`}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={account.active}
-                            onCheckedChange={() => handleToggleStatus(account)}
-                            disabled={toggleStatusMutation.isPending}
-                            data-testid={`switch-status-${account.id}`}
-                          />
-                          <Badge variant={account.active ? "default" : "destructive"}>
-                            {account.active ? (t.active || "Active") : (t.disabled || "Disabled")}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-mono font-medium">
-                        {account.username}
-                      </TableCell>
-                      <TableCell>{account.fullName}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
-                          <span>{account.restaurantName || "N/A"}</span>
-                          {account.businessType && (
-                            <Badge variant="outline" className="ml-1 text-xs">
-                              {account.businessType}
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{account.role}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {formatDate(account.lastLoginAt)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Dialog 
-                          open={passwordDialogOpen && selectedAccount?.id === account.id} 
-                          onOpenChange={(open) => {
-                            setPasswordDialogOpen(open);
-                            if (!open) {
-                              setSelectedAccount(null);
-                              setNewPassword("");
-                              setConfirmPassword("");
-                              setShowPassword(false);
-                            }
-                          }}
-                        >
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedAccount(account)}
-                              data-testid={`button-change-password-${account.id}`}
-                            >
-                              <Key className="h-4 w-4 mr-1" />
-                              {t.changePassword || "Change Password"}
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle className="flex items-center gap-2">
-                                <Key className="h-5 w-5" />
-                                {t.changePassword || "Change Password"}
-                              </DialogTitle>
-                              <DialogDescription>
-                                {t.changePasswordFor || "Change password for"}: <strong>{account.username}</strong>
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="newPassword">{t.newPassword || "New Password"}</Label>
-                                <div className="relative">
-                                  <Input
-                                    id="newPassword"
-                                    type={showPassword ? "text" : "password"}
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                    placeholder={t.enterNewPassword || "Enter new password"}
-                                    data-testid="input-new-password"
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute right-0 top-0 h-full px-3"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    data-testid="button-toggle-password"
-                                  >
-                                    {showPassword ? (
-                                      <EyeOff className="h-4 w-4" />
-                                    ) : (
-                                      <Eye className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                </div>
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">{t.confirmPassword || "Confirm Password"}</Label>
-                                <Input
-                                  id="confirmPassword"
-                                  type={showPassword ? "text" : "password"}
-                                  value={confirmPassword}
-                                  onChange={(e) => setConfirmPassword(e.target.value)}
-                                  placeholder={t.confirmNewPassword || "Confirm new password"}
-                                  data-testid="input-confirm-password"
-                                />
-                              </div>
-                              {newPassword && confirmPassword && newPassword !== confirmPassword && (
-                                <p className="text-sm text-red-500">
-                                  {t.passwordsMismatch || "Passwords do not match"}
-                                </p>
+
+          {/* Search and Filter */}
+          <Card data-testid="card-accounts-list">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                {t.clientAccounts || "Client Accounts"}
+              </CardTitle>
+              <CardDescription>
+                {t.managePasswordsAndAccess || "Change passwords and enable/disable account access"}
+              </CardDescription>
+              
+              <div className="flex flex-wrap gap-4 pt-4">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={t.searchAccounts || "Search accounts..."}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                    data-testid="input-search"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant={statusFilter === "all" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setStatusFilter("all")}
+                    data-testid="button-filter-all"
+                  >
+                    {t.all || "All"}
+                  </Button>
+                  <Button
+                    variant={statusFilter === "active" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setStatusFilter("active")}
+                    data-testid="button-filter-active"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    {t.active || "Active"}
+                  </Button>
+                  <Button
+                    variant={statusFilter === "disabled" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setStatusFilter("disabled")}
+                    data-testid="button-filter-disabled"
+                  >
+                    <XCircle className="h-4 w-4 mr-1" />
+                    {t.disabled || "Disabled"}
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t.status || "Status"}</TableHead>
+                      <TableHead>{t.username || "Username"}</TableHead>
+                      <TableHead>{t.fullName || "Full Name"}</TableHead>
+                      <TableHead>{t.business || "Business"}</TableHead>
+                      <TableHead>{t.role || "Role"}</TableHead>
+                      <TableHead>{t.lastLogin || "Last Login"}</TableHead>
+                      <TableHead className="text-right">{t.actions || "Actions"}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredAccounts.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                          {t.noAccountsFound || "No accounts found"}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredAccounts.map((account) => (
+                        <TableRow key={account.id} data-testid={`row-account-${account.id}`}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={account.active}
+                                onCheckedChange={() => handleToggleStatus(account)}
+                                disabled={toggleStatusMutation.isPending}
+                                data-testid={`switch-status-${account.id}`}
+                              />
+                              <Badge variant={account.active ? "default" : "destructive"}>
+                                {account.active ? (t.active || "Active") : (t.disabled || "Disabled")}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-mono font-medium">
+                            {account.username}
+                          </TableCell>
+                          <TableCell>{account.fullName}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Building2 className="h-4 w-4 text-muted-foreground" />
+                              <span>{account.restaurantName || "N/A"}</span>
+                              {account.businessType && (
+                                <Badge variant="outline" className="ml-1 text-xs">
+                                  {account.businessType}
+                                </Badge>
                               )}
                             </div>
-                            <DialogFooter>
-                              <Button
-                                variant="outline"
-                                onClick={() => setPasswordDialogOpen(false)}
-                                data-testid="button-cancel"
-                              >
-                                {t.cancel || "Cancel"}
-                              </Button>
-                              <Button
-                                onClick={handleChangePassword}
-                                disabled={
-                                  changePasswordMutation.isPending ||
-                                  !newPassword ||
-                                  newPassword !== confirmPassword
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{account.role}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              {formatDate(account.lastLoginAt)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Dialog 
+                              open={passwordDialogOpen && selectedAccount?.id === account.id} 
+                              onOpenChange={(open) => {
+                                setPasswordDialogOpen(open);
+                                if (!open) {
+                                  setSelectedAccount(null);
+                                  setNewPassword("");
+                                  setConfirmPassword("");
+                                  setShowPassword(false);
                                 }
-                                data-testid="button-save-password"
-                              >
-                                {changePasswordMutation.isPending ? (
-                                  <>
-                                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                    {t.saving || "Saving..."}
-                                  </>
-                                ) : (
-                                  <>
-                                    <Key className="h-4 w-4 mr-2" />
-                                    {t.savePassword || "Save Password"}
-                                  </>
-                                )}
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                              }}
+                            >
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setSelectedAccount(account)}
+                                  data-testid={`button-change-password-${account.id}`}
+                                >
+                                  <Key className="h-4 w-4 mr-1" />
+                                  {t.changePassword || "Change Password"}
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle className="flex items-center gap-2">
+                                    <Key className="h-5 w-5" />
+                                    {t.changePassword || "Change Password"}
+                                  </DialogTitle>
+                                  <DialogDescription>
+                                    {t.changePasswordFor || "Change password for"}: <strong>{account.username}</strong>
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                  <div className="space-y-2">
+                                    <Label htmlFor="newPassword">{t.newPassword || "New Password"}</Label>
+                                    <div className="relative">
+                                      <Input
+                                        id="newPassword"
+                                        type={showPassword ? "text" : "password"}
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        placeholder={t.enterNewPassword || "Enter new password"}
+                                        data-testid="input-new-password"
+                                      />
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute right-0 top-0 h-full px-3"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        data-testid="button-toggle-password"
+                                      >
+                                        {showPassword ? (
+                                          <EyeOff className="h-4 w-4" />
+                                        ) : (
+                                          <Eye className="h-4 w-4" />
+                                        )}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="confirmPassword">{t.confirmPassword || "Confirm Password"}</Label>
+                                    <Input
+                                      id="confirmPassword"
+                                      type={showPassword ? "text" : "password"}
+                                      value={confirmPassword}
+                                      onChange={(e) => setConfirmPassword(e.target.value)}
+                                      placeholder={t.confirmNewPassword || "Confirm new password"}
+                                      data-testid="input-confirm-password"
+                                    />
+                                  </div>
+                                  {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                                    <p className="text-sm text-red-500">
+                                      {t.passwordsMismatch || "Passwords do not match"}
+                                    </p>
+                                  )}
+                                </div>
+                                <DialogFooter>
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => setPasswordDialogOpen(false)}
+                                    data-testid="button-cancel"
+                                  >
+                                    {t.cancel || "Cancel"}
+                                  </Button>
+                                  <Button
+                                    onClick={handleChangePassword}
+                                    disabled={
+                                      changePasswordMutation.isPending ||
+                                      !newPassword ||
+                                      newPassword !== confirmPassword
+                                    }
+                                    data-testid="button-save-password"
+                                  >
+                                    {changePasswordMutation.isPending ? (
+                                      <>
+                                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                        {t.saving || "Saving..."}
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Key className="h-4 w-4 mr-2" />
+                                        {t.savePassword || "Save Password"}
+                                      </>
+                                    )}
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Archive Tab */}
+        <TabsContent value="archive" className="space-y-4 mt-4">
+          {/* Archive Stats */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card data-testid="card-archived-total">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+                <CardTitle className="text-sm font-medium">{t.totalArchived || "Total Archived"}</CardTitle>
+                <Archive className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{archivedAccounts.length}</div>
+              </CardContent>
+            </Card>
+            <Card data-testid="card-cancelled-by-mistake">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+                <CardTitle className="text-sm font-medium">{t.mistakeSubscriptions || "Mistake Subscriptions"}</CardTitle>
+                <AlertCircle className="h-4 w-4 text-yellow-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-600">
+                  {archivedAccounts.filter(a => a.cancellationReason === "mistake").length}
+                </div>
+              </CardContent>
+            </Card>
+            <Card data-testid="card-cancelled-by-request">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+                <CardTitle className="text-sm font-medium">{t.clientRequests || "Client Requests"}</CardTitle>
+                <FileText className="h-4 w-4 text-red-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  {archivedAccounts.filter(a => a.cancellationReason === "client_request").length}
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Archived Accounts Table */}
+          <Card data-testid="card-archived-accounts">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Archive className="h-5 w-5" />
+                {t.archivedAccounts || "Archived Accounts"}
+              </CardTitle>
+              <CardDescription>
+                {t.cancelledAccountsHistory || "View cancelled accounts, cancellation reasons, and refund invoices"}
+              </CardDescription>
+              
+              <div className="flex flex-wrap gap-4 pt-4">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={t.searchArchivedAccounts || "Search archived accounts..."}
+                    value={archiveSearchQuery}
+                    onChange={(e) => setArchiveSearchQuery(e.target.value)}
+                    className="pl-10"
+                    data-testid="input-archive-search"
+                  />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {archiveLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map(i => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t.business || "Business"}</TableHead>
+                        <TableHead>{t.username || "Username"}</TableHead>
+                        <TableHead>{t.subscriptionPlan || "Plan"}</TableHead>
+                        <TableHead>{t.cancellationReason || "Cancellation Reason"}</TableHead>
+                        <TableHead>{t.cancelledOn || "Cancelled On"}</TableHead>
+                        <TableHead>{t.refundAmount || "Refund Amount"}</TableHead>
+                        <TableHead className="text-right">{t.refundInvoice || "Refund Invoice"}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredArchivedAccounts.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                            {t.noArchivedAccounts || "No archived accounts found"}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredArchivedAccounts.map((account) => (
+                          <TableRow key={account.id} data-testid={`row-archived-${account.id}`}>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Building2 className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">{account.restaurantName || "N/A"}</span>
+                                {account.businessType && (
+                                  <Badge variant="outline" className="ml-1 text-xs">
+                                    {account.businessType}
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">
+                              {account.username}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">
+                                {account.subscriptionPlan || "-"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={getCancellationReasonVariant(account.cancellationReason)}>
+                                {getCancellationReasonLabel(account.cancellationReason)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <Calendar className="h-3 w-3" />
+                                {formatDateShort(account.subscriptionCancelledAt)}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {account.refundInvoice ? (
+                                <span className="font-medium text-green-600">
+                                  {parseFloat(account.refundInvoice.refundAmount).toFixed(2)} SAR
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {account.refundInvoice?.pdfData ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDownloadRefundInvoice(account)}
+                                  data-testid={`button-download-refund-${account.id}`}
+                                >
+                                  <Download className="h-4 w-4 mr-1" />
+                                  {account.refundInvoice.serialNumber}
+                                </Button>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">
+                                  {account.cancellationReason === "mistake" 
+                                    ? (t.noRefundMistake || "No refund (mistake)")
+                                    : (t.notAvailable || "N/A")
+                                  }
+                                </span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
