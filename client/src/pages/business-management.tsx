@@ -770,6 +770,67 @@ export default function BusinessManagement() {
     return `${num.toFixed(2)} SAR`;
   };
 
+  const [downloadingRefundInvoice, setDownloadingRefundInvoice] = useState<string | null>(null);
+
+  const downloadRefundInvoice = async (restaurantId: string, restaurantName: string) => {
+    setDownloadingRefundInvoice(restaurantId);
+    try {
+      const response = await fetch(`/api/it/business-management/refund-invoices/${restaurantId}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch refund invoice");
+      }
+      const invoices = await response.json();
+      
+      if (invoices.length === 0) {
+        toast({
+          title: t.error || "Error",
+          description: "No refund invoice found for this client",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Get the most recent refund invoice
+      const invoice = invoices[0];
+      if (!invoice.pdfData) {
+        toast({
+          title: t.error || "Error",
+          description: "Refund invoice PDF not available",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Download the PDF
+      const pdfBytes = Uint8Array.from(atob(invoice.pdfData), c => c.charCodeAt(0));
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Refund-${invoice.serialNumber}-${restaurantName}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: t.success || "Success",
+        description: "Refund clearance invoice downloaded",
+      });
+    } catch (error) {
+      console.error("Error downloading refund invoice:", error);
+      toast({
+        title: t.error || "Error",
+        description: "Failed to download refund invoice",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingRefundInvoice(null);
+    }
+  };
+
   const filteredBills = companyBills.filter(bill => {
     const matchesSearch = 
       !billSearchQuery ||
@@ -1077,6 +1138,23 @@ export default function BusinessManagement() {
                                   <Trash2 className="h-4 w-4" />
                                 )}
                               </Button>
+                              {client.subscriptionStatus === 'cancelled' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => downloadRefundInvoice(client.restaurantId, client.restaurantName || 'Unknown')}
+                                  disabled={downloadingRefundInvoice === client.restaurantId}
+                                  className="text-blue-600 hover:text-blue-700"
+                                  data-testid={`button-refund-invoice-${client.restaurantId}`}
+                                  title="Download Refund Invoice"
+                                >
+                                  {downloadingRefundInvoice === client.restaurantId ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <FileDown className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
