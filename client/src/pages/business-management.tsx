@@ -611,7 +611,7 @@ export default function BusinessManagement() {
       return { ...data, reason };
     },
     onSuccess: (result) => {
-      if (result.pdfBase64 && result.reason === 'client_request') {
+      if (result.pdfBase64) {
         const byteCharacters = atob(result.pdfBase64);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
@@ -639,6 +639,13 @@ export default function BusinessManagement() {
       }
       refetchClients();
       refetchInvoices();
+      // Invalidate BSS Analysis cache for immediate updates
+      queryClient.invalidateQueries({ queryKey: ['/api/it/bss-analysis/overview'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/it/bss-analysis/revenue-trends'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/it/bss-analysis/accounts-by-type'] });
+      // Invalidate IT Account Management caches for Archive tab and account list
+      queryClient.invalidateQueries({ queryKey: ['/api/it/archived-accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/it/all-accounts'] });
       setDeleteDialogOpen(false);
       setClientToDelete(null);
       setDeleteReason("mistake");
