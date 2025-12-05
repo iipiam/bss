@@ -71,7 +71,7 @@ function getChromiumPath(): string | undefined {
 let browserInstance: Browser | null = null;
 let browserLaunchPromise: Promise<Browser> | null = null;
 
-async function getBrowser(): Promise<Browser> {
+export async function getBrowser(): Promise<Browser> {
   // If browser is connected and working, return it
   if (browserInstance && browserInstance.isConnected()) {
     try {
