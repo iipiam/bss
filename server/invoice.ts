@@ -967,7 +967,43 @@ export async function generateSubscriptionInvoice(data: {
   vatAmount: number;
   total: number;
   invoiceDate: Date;
+  // Optional business info (uses defaults if not provided)
+  businessInfo?: {
+    companyNameEn?: string | null;
+    companyNameAr?: string | null;
+    vatNumber?: string | null;
+    crNumber?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    website?: string | null;
+    addressEn?: string | null;
+    addressAr?: string | null;
+    city?: string | null;
+    postalCode?: string | null;
+    bankName?: string | null;
+    bankAccountName?: string | null;
+    bankAccountNumber?: string | null;
+    bankIban?: string | null;
+  } | null;
 }): Promise<Buffer> {
+  // Extract business info with defaults for backward compatibility
+  const bi = data.businessInfo || {};
+  const companyNameEn = bi.companyNameEn || "BlindSpot System (BSS)";
+  const companyNameAr = bi.companyNameAr || "نظام بلايند سبوت";
+  const companyEmail = bi.email || "IT@SaudiKinzhal.org";
+  const companyPhone = bi.phone || "";
+  const companyWebsite = bi.website || "https://kinbss.com";
+  const companyAddressEn = bi.addressEn || "Saudi Arabia";
+  const companyAddressAr = bi.addressAr || "المملكة العربية السعودية";
+  const companyCity = bi.city || "";
+  const companyPostalCode = bi.postalCode || "";
+  const companyVatNumber = bi.vatNumber || "";
+  const companyCrNumber = bi.crNumber || "";
+  const bankName = bi.bankName || "";
+  const bankAccountName = bi.bankAccountName || "";
+  const bankAccountNumber = bi.bankAccountNumber || "";
+  const bankIban = bi.bankIban || "";
+
   // Generate QR code for ZATCA compliance
   const qrData = `Invoice: ${data.serialNumber}\nDate: ${data.invoiceDate.toLocaleDateString('en-GB')}\nTotal: ${data.total.toFixed(2)} SAR\nVAT: ${data.vatAmount.toFixed(2)} SAR`;
   const qrCodeDataURL = await QRCode.toDataURL(qrData);
@@ -1224,7 +1260,8 @@ export async function generateSubscriptionInvoice(data: {
 <body>
   <div class="invoice-container">
     <div class="header">
-      <div class="company-name">BlindSpot System (BSS)</div>
+      <div class="company-name">${escapeHtml(companyNameEn)}</div>
+      ${companyNameAr && companyNameAr !== companyNameEn ? `<div class="company-name-ar" style="font-family: 'Noto Naskh Arabic', serif; font-size: 24px; direction: rtl; opacity: 0.9; margin-top: 4px;">${escapeHtml(companyNameAr)}</div>` : ''}
       <div class="bilingual">
         <div class="en invoice-title">Subscription Invoice</div>
         <div class="ar invoice-title">فاتورة الاشتراك</div>
@@ -1257,11 +1294,15 @@ export async function generateSubscriptionInvoice(data: {
         </div>
         <div class="info-block">
           <h3>From / من</h3>
-          <p><strong>BlindSpot System (BSS)</strong></p>
+          <p><strong>${escapeHtml(companyNameEn)}</strong></p>
+          ${companyNameAr && companyNameAr !== companyNameEn ? `<p style="font-family: 'Noto Naskh Arabic', serif; direction: rtl;"><strong>${escapeHtml(companyNameAr)}</strong></p>` : ''}
           <p>Business Management Platform</p>
-          <p>IT@SaudiKinzhal.org</p>
-          <!-- TODO: Update sender email domain when new domain is available -->
-          <p>Saudi Arabia</p>
+          ${companyEmail ? `<p>${escapeHtml(companyEmail)}</p>` : ''}
+          ${companyPhone ? `<p>${escapeHtml(companyPhone)}</p>` : ''}
+          ${companyWebsite ? `<p>${escapeHtml(companyWebsite)}</p>` : ''}
+          ${companyAddressEn || companyCity || companyPostalCode ? `<p>${[companyAddressEn, companyCity, companyPostalCode].filter(Boolean).map(s => escapeHtml(s as string)).join(', ')}</p>` : ''}
+          ${companyVatNumber ? `<p>VAT: ${escapeHtml(companyVatNumber)}</p>` : ''}
+          ${companyCrNumber ? `<p>CR: ${escapeHtml(companyCrNumber)}</p>` : ''}
         </div>
       </div>
 

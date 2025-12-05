@@ -2088,6 +2088,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         // Generate serial number
         const serialNumber = await storage.getNextSubscriptionInvoiceSerialNumber();
 
+        // Fetch business info for invoice
+        const businessInfo = await storage.getBusinessInfo();
+
         // Generate subscription invoice PDF
         const pdfBuffer = await generateSubscriptionInvoice({
           serialNumber,
@@ -2105,6 +2108,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           vatAmount,
           total,
           invoiceDate: new Date(),
+          businessInfo,
         });
 
         // Save PDF to disk
