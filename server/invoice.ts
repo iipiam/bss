@@ -1255,6 +1255,46 @@ export async function generateSubscriptionInvoice(data: {
       line-height: 1.6;
       color: #374151;
     }
+
+    .refund-policy {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      page-break-inside: avoid;
+    }
+
+    .refund-policy h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #b45309;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .refund-policy-content {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .refund-policy-content .en,
+    .refund-policy-content .ar {
+      flex: 1;
+      font-size: 10px;
+      line-height: 1.7;
+      color: #78350f;
+    }
+
+    .refund-policy-content p {
+      margin-bottom: 8px;
+    }
+
+    .refund-policy-content p:last-child {
+      margin-bottom: 0;
+    }
   </style>
 </head>
 <body>
@@ -1367,6 +1407,20 @@ export async function generateSubscriptionInvoice(data: {
           </div>
           <div class="ar">
             ${escapeHtml(securityClause.ar)}
+          </div>
+        </div>
+      </div>
+
+      <div class="refund-policy">
+        <h3 style="text-align: center;">Refund policy / سياسة استرداد الاموال</h3>
+        <div class="refund-policy-content">
+          <div class="en">
+            <p>1-when canceling the subscription before the expiration of the specified period of the subscription item, the financial balance will be calculated at the value of one month's subscription of 199 Saudi riyals only, only when subscribing annually, while there is a discount applied by the company that owns the application.</p>
+            <p>2-if the subscription is canceled with several months and a few days, the value of the days will be calculated by dividing the value of the monthly subscription by the number of days of the month 30 days.</p>
+          </div>
+          <div class="ar">
+            <p>1- عند الغاء الاشتراك قبل مضي المدة المحددة لبند الاشتراك سيتم احتساب المتبقي المالي بقيمة اشتراك الشهر الواحد البالغ 199 ريال سعودي فقط لا غير عند الاشتراك سنويا اثناء وجود خصم مطبق من قبل الشركة المالكة للتطبيق.</p>
+            <p>2- اذا تم الغاء الاشتراك بوجود عدة اشهر وبضعة ايام سيتم احتساب قيمة الايام بتقسيم قيمة الاشترااك الشهري على عدد ايام الشهر 30 يوما.</p>
           </div>
         </div>
       </div>
