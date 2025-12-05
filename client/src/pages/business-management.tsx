@@ -136,8 +136,12 @@ export default function BusinessManagement() {
         credentials: 'include',
         body: JSON.stringify({ fromDate, toDate }),
       });
-      if (!response.ok) throw new Error('Failed to generate PDF');
-      return response.blob();
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to generate PDF');
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      return new Blob([arrayBuffer], { type: 'application/pdf' });
     },
     onSuccess: (blob) => {
       const url = URL.createObjectURL(blob);
@@ -153,7 +157,8 @@ export default function BusinessManagement() {
         description: "VAT statement PDF downloaded successfully",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("VAT PDF download error:", error);
       toast({
         title: t.error || "Error",
         description: "Failed to generate VAT statement PDF",

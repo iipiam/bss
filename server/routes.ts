@@ -6102,7 +6102,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=VAT-Statement-${new Date().toISOString().split('T')[0]}.pdf`);
-      res.send(pdfBuffer);
+      res.end(Buffer.from(pdfBuffer));
     } catch (error) {
       console.error("Error generating VAT statement PDF:", error);
       res.status(500).json({ error: "Failed to generate VAT statement PDF" });
@@ -6437,7 +6437,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=Invoice-${invoice.serialNumber}.pdf`);
-      res.send(pdfBuffer);
+      res.end(Buffer.from(pdfBuffer));
     } catch (error) {
       console.error("Error generating subscription invoice PDF:", error);
       res.status(500).json({ error: "Failed to generate invoice PDF" });
