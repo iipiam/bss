@@ -28,6 +28,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -135,10 +138,71 @@ function AppContent() {
   const { t, isRTL } = useLanguage();
   const { device } = useDevice();
   const [location, setLocation] = useLocation();
+  const { toast } = useToast();
   const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState<"mistake" | "client_request">("mistake");
   const [selectedPlan, setSelectedPlan] = useState(restaurant?.subscriptionPlan || 'monthly');
   const [branchesCount, setBranchesCount] = useState(restaurant?.branchesCount || 1);
   const [expiryAlertDismissed, setExpiryAlertDismissed] = useState(false);
+
+  const cancelSubscriptionMutation = useMutation({
+    mutationFn: async (reason: "mistake" | "client_request") => {
+      const response = await apiRequest("POST", "/api/subscription/cancel", { reason });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (data.pdfBase64) {
+        const link = document.createElement('a');
+        link.href = `data:application/pdf;base64,${data.pdfBase64}`;
+        link.download = `refund-clearance-${Date.now()}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast({
+          title: t.subscriptionCanceled || "Subscription Cancelled",
+          description: t.refundClearanceGenerated || "Refund clearance invoice has been downloaded.",
+        });
+      } else {
+        toast({
+          title: t.subscriptionCanceled || "Subscription Cancelled",
+          description: t.subscriptionCancelledDesc || "Your subscription has been cancelled.",
+          variant: "destructive",
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      setCancelDialogOpen(false);
+      setSubscriptionDialogOpen(false);
+    },
+    onError: () => {
+      toast({
+        title: t.cancellationFailed || "Cancellation Failed",
+        description: t.cancelSubscriptionError || "Failed to cancel subscription. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const calculateRefundPreview = () => {
+    if (!restaurant?.subscriptionStartDate || !restaurant?.subscriptionPlan) {
+      return { monthsUsed: 0, originalPrice: 0, chargedAmount: 0, refundAmount: 0 };
+    }
+    const startDate = new Date(restaurant.subscriptionStartDate);
+    const now = new Date();
+    const msPerMonth = 30.44 * 24 * 60 * 60 * 1000;
+    const monthsUsed = Math.max(1, Math.ceil((now.getTime() - startDate.getTime()) / msPerMonth));
+    
+    let originalPrice = 1990;
+    if (restaurant.subscriptionPlan === "premium") originalPrice = 2990;
+    if (restaurant.subscriptionPlan === "enterprise") originalPrice = 4990;
+    
+    const monthlyRate = 199;
+    const chargedAmount = monthlyRate * monthsUsed;
+    const refundAmount = Math.max(0, originalPrice - chargedAmount);
+    
+    return { monthsUsed, originalPrice, chargedAmount, refundAmount, monthlyRate };
+  };
   
   // Handle IT account redirects using useEffect to avoid render issues
   // IT accounts can access /it-dashboard, /performance, and /it-account-management only
@@ -395,12 +459,7 @@ function AppContent() {
                         <DialogFooter className="flex gap-2">
                           <Button
                             variant="destructive"
-                            onClick={() => {
-                              if (confirm(t.confirmCancelSubscription)) {
-                                alert(t.subscriptionCanceled);
-                                setSubscriptionDialogOpen(false);
-                              }
-                            }}
+                            onClick={() => setCancelDialogOpen(true)}
                             data-testid="button-cancel-subscription"
                           >
                             <XCircle className="mr-2 h-4 w-4" />
@@ -415,6 +474,83 @@ function AppContent() {
                           >
                             <Edit className="mr-2 h-4 w-4" />
                             {t.updatePlan}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                    
+                    {/* Cancel Subscription Two-Reason Dialog */}
+                    <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+                      <DialogContent className="max-w-md">
+                        <DialogHeader>
+                          <DialogTitle className="text-xl font-bold text-destructive">
+                            {t.cancelSubscription}
+                          </DialogTitle>
+                          <DialogDescription>
+                            {t.deletionReason || "Please select a reason for cancellation"}
+                          </DialogDescription>
+                        </DialogHeader>
+                        
+                        <div className="space-y-4 py-4">
+                          <RadioGroup
+                            value={cancelReason}
+                            onValueChange={(value: "mistake" | "client_request") => setCancelReason(value)}
+                            className="space-y-3"
+                          >
+                            <div className={`flex items-start space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                              cancelReason === 'mistake' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                            }`} onClick={() => setCancelReason('mistake')}>
+                              <RadioGroupItem value="mistake" id="reason-mistake" className="mt-1" />
+                              <Label htmlFor="reason-mistake" className="cursor-pointer flex-1">
+                                <p className="font-semibold">{t.mistakeSubscription || "Mistake Subscription"}</p>
+                                <p className="text-sm text-muted-foreground">{t.mistakeSubscriptionDesc || "This subscription was created by mistake"}</p>
+                              </Label>
+                            </div>
+                            
+                            <div className={`flex items-start space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                              cancelReason === 'client_request' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                            }`} onClick={() => setCancelReason('client_request')}>
+                              <RadioGroupItem value="client_request" id="reason-client" className="mt-1" />
+                              <Label htmlFor="reason-client" className="cursor-pointer flex-1">
+                                <p className="font-semibold">{t.clientRequest || "By Client Request"}</p>
+                                <p className="text-sm text-muted-foreground">{t.clientRequestDesc || "Client requested cancellation with refund"}</p>
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                          
+                          {cancelReason === 'client_request' && (() => {
+                            const { monthsUsed, originalPrice, chargedAmount, refundAmount, monthlyRate } = calculateRefundPreview();
+                            return (
+                              <div className="bg-muted/50 p-4 rounded-lg space-y-2 border">
+                                <h4 className="font-semibold text-sm">{t.refundCalculation || "Refund Calculation"}</h4>
+                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                  <span className="text-muted-foreground">{t.originalSubscriptionFee || "Original Fee"}:</span>
+                                  <span className="font-medium">{originalPrice.toFixed(2)} SAR</span>
+                                  <span className="text-muted-foreground">{t.monthlyRate || "Monthly Rate"}:</span>
+                                  <span className="font-medium">{monthlyRate} SAR</span>
+                                  <span className="text-muted-foreground">{t.monthsUsed || "Months Used"}:</span>
+                                  <span className="font-medium">{monthsUsed}</span>
+                                  <span className="text-muted-foreground">{t.chargedAmount || "Charged"}:</span>
+                                  <span className="font-medium text-destructive">{chargedAmount.toFixed(2)} SAR</span>
+                                  <span className="text-muted-foreground font-semibold">{t.refundAmount || "Refund"}:</span>
+                                  <span className="font-bold text-green-600">{refundAmount.toFixed(2)} SAR</span>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                        
+                        <DialogFooter className="flex gap-2">
+                          <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
+                            {t.cancel}
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => cancelSubscriptionMutation.mutate(cancelReason)}
+                            disabled={cancelSubscriptionMutation.isPending}
+                            data-testid="button-confirm-cancel-subscription"
+                          >
+                            {cancelSubscriptionMutation.isPending ? (t.processing || "Processing...") : (t.confirmDeleteBtn || "Confirm Cancellation")}
                           </Button>
                         </DialogFooter>
                       </DialogContent>
