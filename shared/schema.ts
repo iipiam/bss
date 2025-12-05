@@ -956,3 +956,46 @@ export const insertLicenseSchema = createInsertSchema(licenses)
   });
 export type InsertLicense = z.infer<typeof insertLicenseSchema>;
 export type License = typeof licenses.$inferSelect;
+
+// Company Bills - Kinzhal LTD Co. (BSS Provider) internal expenses
+export const companyBills = pgTable("company_bills", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  billType: text("bill_type").notNull(), // "salaries", "rent", "utilities", "software", "marketing", "equipment", "internet", "maintenance", "legal", "insurance", "other"
+  vendor: text("vendor").notNull(), // Vendor/Supplier name
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Amount before VAT
+  vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).notNull().default("0"), // VAT amount (15%)
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(), // Total with VAT
+  billDate: timestamp("bill_date").notNull(), // Date of the bill
+  dueDate: timestamp("due_date"), // Payment due date
+  paidDate: timestamp("paid_date"), // When it was paid
+  status: text("status").notNull().default("pending"), // "pending", "paid", "overdue"
+  paymentPeriod: text("payment_period").notNull().default("monthly"), // "one-time", "weekly", "monthly", "quarterly", "yearly"
+  description: text("description"),
+  referenceNumber: text("reference_number"), // Invoice/Reference number from vendor
+  attachmentPath: text("attachment_path"), // Path to uploaded bill document
+  createdBy: varchar("created_by").references(() => users.id).notNull(), // IT user who created the bill
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertCompanyBillSchema = createInsertSchema(companyBills)
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({
+    billType: z.enum(["salaries", "rent", "utilities", "software", "marketing", "equipment", "internet", "maintenance", "legal", "insurance", "other"]),
+    status: z.enum(["pending", "paid", "overdue"]).optional().default("pending"),
+    paymentPeriod: z.enum(["one-time", "weekly", "monthly", "quarterly", "yearly"]).optional().default("monthly"),
+    billDate: z.union([
+      z.string().transform(val => new Date(val)),
+      z.date(),
+    ]),
+    dueDate: z.union([
+      z.string().transform(val => new Date(val)),
+      z.date(),
+    ]).optional().nullable(),
+    paidDate: z.union([
+      z.string().transform(val => new Date(val)),
+      z.date(),
+    ]).optional().nullable(),
+  });
+export type InsertCompanyBill = z.infer<typeof insertCompanyBillSchema>;
+export type CompanyBill = typeof companyBills.$inferSelect;
