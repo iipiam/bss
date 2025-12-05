@@ -2048,7 +2048,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         type: restaurantType, // Specific subtype (e.g., "Cloud Kitchen", "Manufacturing")
         subscriptionPlan,
         branchesCount: branches,
-        subscriptionStatus: "inactive" as const, // Will be activated after payment
+        subscriptionStatus: "active" as const, // Activated immediately upon signup
       });
 
       const restaurant = await storage.createRestaurant(restaurantData);
