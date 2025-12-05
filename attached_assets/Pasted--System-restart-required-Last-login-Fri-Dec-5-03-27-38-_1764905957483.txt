@@ -1,0 +1,137 @@
+
+*** System restart required ***
+Last login: Fri Dec  5 03:27:38 2025 from 5.245.106.189
+ubuntu@ip-172-31-1-112:~$ pm2 status
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 23   │ online    │ 0%       │ 70.7mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+ubuntu@ip-172-31-1-112:~$ cd /home/BSS
+
+# Stop PM2 first
+pm2 stop BSS
+
+# Clean everything
+rm -rf node_modules
+
+# Fresh install with all flags to bypass issues
+npm install --omit=dev --legacy-peer-deps --ignore-scripts
+
+# Restart with environment variables
+pm2 delete BSS
+NODE_ENV=production DATABASE_URL="postgresql://postgres:Admin123456@database-1.ceta4wgeyspe.us-east-1.rds.amazonaws.com:5432/bss_production" pm2 start dist/index.js --name BSS
+
+pm2 save
+
+# Check logs
+pm2 logs BSS --lines 30
+[PM2] Applying action stopProcessId on app [BSS](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 23   │ stopped   │ 0%       │ 0b       │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+npm warn deprecated har-validator@5.1.5: this library is no longer supported
+npm warn deprecated request-promise@4.2.6: request-promise has been deprecated because it extends the now deprecated request package, see https://github.com/request/request/issues/3142
+npm warn deprecated uuid@3.4.0: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
+npm warn deprecated request@2.88.2: request has been deprecated, see https://github.com/request/request/issues/3142
+
+added 654 packages, and audited 655 packages in 12s
+
+49 packages are looking for funding
+  run `npm fund` for details
+
+6 vulnerabilities (3 moderate, 1 high, 2 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+[PM2] Applying action deleteProcessId on app [BSS](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[PM2] Starting /home/BSS/dist/index.js in fork_mode (1 instance)
+[PM2] Done.
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 0    │ online    │ 0%       │ 17.8mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[PM2] Saving current process list...
+[PM2] Successfully saved in /home/ubuntu/.pm2/dump.pm2
+[TAILING] Tailing last 30 lines for [BSS] process (change the value with --lines option)
+/home/ubuntu/.pm2/logs/BSS-out.log last 30 lines:
+0|BSS      | 1:28:24 AM [express] GET /api/menu/stock 200 in 2267ms :: {"99664884-bce5-4fab-b6cc-b3b765d5dbc7":7,…
+0|BSS      | 1:28:24 AM [express] GET /api/addons 200 in 1554ms :: []
+0|BSS      | 1:28:43 AM [express] GET /api/shop/bills 200 in 1511ms :: [{"id":"a2296b9b-66e0-4d2f-bb47-0ee962e17e…
+0|BSS      | 1:28:43 AM [express] GET /api/analytics/sales 304 in 1512ms :: [{"date":"Sun","sales":0},{"date":"Mo…
+0|BSS      | 1:28:43 AM [express] GET /api/analytics/dashboard 304 in 1853ms :: {"todaysSales":"0.00","activeOrde…
+0|BSS      | 1:45:49 AM [express] GET /api/.env 200 in 1ms
+0|BSS      | 1:46:35 AM [express] GET /api/.env 200 in 2ms
+0|BSS      | 1:46:50 AM [express] GET /api/shared/config/config.env 200 in 1ms
+0|BSS      | 1:46:52 AM [express] GET /api/shared/config.env 200 in 1ms
+0|BSS      | 1:47:20 AM [express] GET /api/shared/config/.env 200 in 1ms
+0|BSS      | 1:47:21 AM [express] GET /api/shared/.env 200 in 1ms
+0|BSS      | 1:47:21 AM [express] GET /api/config.env 200 in 1ms
+0|BSS      | 1:47:24 AM [express] GET /api/shared/config/config.env 200 in 1ms
+0|BSS      | 1:47:24 AM [express] GET /api/shared/config.env 200 in 2ms
+0|BSS      | 1:47:30 AM [express] GET /api/shared/config/.env 200 in 1ms
+0|BSS      | 1:47:31 AM [express] GET /api/shared/.env 200 in 2ms
+0|BSS      | 1:47:31 AM [express] GET /api/config.env 200 in 2ms
+0|BSS      | 1:48:55 AM [express] GET /api/config.js 200 in 2ms
+0|BSS      | 1:49:01 AM [express] GET /api/config.js 200 in 1ms
+0|BSS      | 1:49:01 AM [express] GET /api/objects/codes.php.save 200 in 1ms
+0|BSS      | 1:49:01 AM [express] GET /api/config.js 200 in 1ms
+0|BSS      | 1:49:02 AM [express] GET /api/objects/codes.php.save 200 in 1ms
+0|BSS      | 1:49:02 AM [express] GET /apis/config/config.js 200 in 2ms
+0|BSS      | 1:49:04 AM [express] GET /apis/config/config.js 200 in 2ms
+0|BSS      | 1:49:05 AM [express] GET /apis/controllers/users.js 200 in 1ms
+0|BSS      | 1:49:06 AM [express] GET /apis/controllers/users.js 200 in 1ms
+0|BSS      | 1:49:42 AM [express] GET /api/config/config.yml 200 in 2ms
+0|BSS      | 1:50:37 AM [express] GET /api/config/config.yml 200 in 1ms
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client disconnected from notifications
+
+/home/ubuntu/.pm2/logs/BSS-error.log last 30 lines:
+0|BSS      |     at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+0|BSS      |     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:708:12)
+0|BSS      |     at #cachedDefaultResolve (node:internal/modules/esm/loader:657:25)
+0|BSS      |     at ModuleLoader.resolve (node:internal/modules/esm/loader:640:38)
+0|BSS      |     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:264:38)
+0|BSS      |     at ModuleJob._link (node:internal/modules/esm/module_job:168:49) {
+0|BSS      |   code: 'ERR_MODULE_NOT_FOUND'
+0|BSS      | }
+0|BSS      | Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@replit/vite-plugin-runtime-error-modal' imported from /home/BSS/dist/index.js
+0|BSS      |     at packageResolve (node:internal/modules/esm/resolve:873:9)
+0|BSS      |     at moduleResolve (node:internal/modules/esm/resolve:946:18)
+0|BSS      |     at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+0|BSS      |     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:708:12)
+0|BSS      |     at #cachedDefaultResolve (node:internal/modules/esm/loader:657:25)
+0|BSS      |     at ModuleLoader.resolve (node:internal/modules/esm/loader:640:38)
+0|BSS      |     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:264:38)
+0|BSS      |     at ModuleJob._link (node:internal/modules/esm/module_job:168:49) {
+0|BSS      |   code: 'ERR_MODULE_NOT_FOUND'
+0|BSS      | }
+0|BSS      | Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@replit/vite-plugin-runtime-error-modal' imported from /home/BSS/dist/index.js
+0|BSS      |     at packageResolve (node:internal/modules/esm/resolve:873:9)
+0|BSS      |     at moduleResolve (node:internal/modules/esm/resolve:946:18)
+0|BSS      |     at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+0|BSS      |     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:708:12)
+0|BSS      |     at #cachedDefaultResolve (node:internal/modules/esm/loader:657:25)
+0|BSS      |     at ModuleLoader.resolve (node:internal/modules/esm/loader:640:38)
+0|BSS      |     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:264:38)
+0|BSS      |     at ModuleJob._link (node:internal/modules/esm/module_job:168:49) {
+0|BSS      |   code: 'ERR_MODULE_NOT_FOUND'
+0|BSS      | }
+
+
