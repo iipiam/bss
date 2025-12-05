@@ -42,6 +42,7 @@ import {
   restaurants,
   orders,
   subscriptionInvoices,
+  refundInvoices,
   companyBills,
   businessInfo,
 } from "@shared/schema";
@@ -2840,7 +2841,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         const chargedAmount = monthlyRate * monthsUsed;
         const refundAmount = Math.max(0, yearlyPrice - chargedAmount);
 
-        const serialNumber = `RC-${Date.now()}`;
+        // Generate serial number
+        const currentYear = new Date().getFullYear();
+        const countResult = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(refundInvoices)
+          .where(sql`EXTRACT(YEAR FROM ${refundInvoices.createdAt}) = ${currentYear}`);
+        const sequenceNumber = (countResult[0]?.count || 0) + 1;
+        const serialNumber = `RC-${currentYear}-${String(sequenceNumber).padStart(6, '0')}`;
 
         try {
           const pdfBuffer = await generateRefundClearanceInvoice({
@@ -2870,6 +2878,25 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             } : null,
           });
           pdfBase64 = pdfBuffer.toString('base64');
+
+          // Save refund invoice to database
+          await db.insert(refundInvoices).values({
+            restaurantId,
+            serialNumber,
+            clientName: user.fullName || "Unknown",
+            clientEmail: user.email || "unknown@email.com",
+            restaurantName: restaurant.name,
+            subscriptionPlan: restaurant.subscriptionPlan,
+            subscriptionStartDate,
+            cancellationDate,
+            monthsUsed,
+            originalPrice: yearlyPrice.toString(),
+            monthlyRate: monthlyRate.toString(),
+            chargedAmount: chargedAmount.toString(),
+            refundAmount: refundAmount.toString(),
+            pdfData: pdfBase64,
+          });
+          console.log(`[Client] Refund invoice saved: ${serialNumber} for restaurant ${restaurantId}`);
         } catch (pdfError) {
           console.error("Failed to generate refund clearance PDF:", pdfError);
         }
@@ -6634,8 +6661,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         const currentYear = new Date().getFullYear();
         const countResult = await db
           .select({ count: sql<number>`count(*)` })
-          .from(subscriptionInvoices)
-          .where(sql`EXTRACT(YEAR FROM ${subscriptionInvoices.invoiceDate}) = ${currentYear}`);
+          .from(refundInvoices)
+          .where(sql`EXTRACT(YEAR FROM ${refundInvoices.createdAt}) = ${currentYear}`);
         const sequenceNumber = (countResult[0]?.count || 0) + 1;
         const serialNumber = `RC-${currentYear}-${String(sequenceNumber).padStart(6, '0')}`;
 
@@ -6660,7 +6687,25 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         });
 
         pdfBase64 = pdfBuffer.toString('base64');
-        console.log(`[IT] Refund clearance invoice generated for restaurant ${restaurantId}: ${serialNumber}`);
+
+        // Save refund invoice to database
+        await db.insert(refundInvoices).values({
+          restaurantId,
+          serialNumber,
+          clientName: ownerInfo.fullName,
+          clientEmail: ownerInfo.email,
+          restaurantName: rest.name,
+          subscriptionPlan: rest.subscriptionPlan,
+          subscriptionStartDate,
+          cancellationDate,
+          monthsUsed: Math.min(monthsUsed, 12),
+          originalPrice: originalPrice.toString(),
+          monthlyRate: monthlyRate.toString(),
+          chargedAmount: chargedAmount.toString(),
+          refundAmount: refundAmount.toString(),
+          pdfData: pdfBase64,
+        });
+        console.log(`[IT] Refund clearance invoice saved: ${serialNumber} for restaurant ${restaurantId}`);
       }
 
       // Update subscription status to cancelled
@@ -6684,6 +6729,64 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("Error deleting subscription:", error);
       res.status(500).json({ error: "Failed to delete subscription" });
+    }
+  });
+
+  // Get refund invoice for a restaurant (IT-only)
+  app.get("/api/it/business-management/refund-invoices/:restaurantId", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { restaurantId } = req.params;
+      
+      const invoices = await db
+        .select({
+          id: refundInvoices.id,
+          restaurantId: refundInvoices.restaurantId,
+          serialNumber: refundInvoices.serialNumber,
+          clientName: refundInvoices.clientName,
+          clientEmail: refundInvoices.clientEmail,
+          restaurantName: refundInvoices.restaurantName,
+          subscriptionPlan: refundInvoices.subscriptionPlan,
+          subscriptionStartDate: refundInvoices.subscriptionStartDate,
+          cancellationDate: refundInvoices.cancellationDate,
+          monthsUsed: refundInvoices.monthsUsed,
+          originalPrice: refundInvoices.originalPrice,
+          monthlyRate: refundInvoices.monthlyRate,
+          chargedAmount: refundInvoices.chargedAmount,
+          refundAmount: refundInvoices.refundAmount,
+          pdfData: refundInvoices.pdfData,
+          createdAt: refundInvoices.createdAt,
+        })
+        .from(refundInvoices)
+        .where(eq(refundInvoices.restaurantId, restaurantId))
+        .orderBy(desc(refundInvoices.createdAt));
+
+      res.json(invoices);
+    } catch (error) {
+      console.error("Error fetching refund invoices:", error);
+      res.status(500).json({ error: "Failed to fetch refund invoices" });
+    }
+  });
+
+  // Get all refund invoices (IT-only)
+  app.get("/api/it/business-management/refund-invoices", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const invoices = await db
+        .select({
+          id: refundInvoices.id,
+          restaurantId: refundInvoices.restaurantId,
+          serialNumber: refundInvoices.serialNumber,
+          clientName: refundInvoices.clientName,
+          restaurantName: refundInvoices.restaurantName,
+          refundAmount: refundInvoices.refundAmount,
+          createdAt: refundInvoices.createdAt,
+        })
+        .from(refundInvoices)
+        .orderBy(desc(refundInvoices.createdAt));
+
+      res.json(invoices);
+    } catch (error) {
+      console.error("Error fetching all refund invoices:", error);
+      res.status(500).json({ error: "Failed to fetch refund invoices" });
     }
   });
 

@@ -695,6 +695,30 @@ export const insertSubscriptionInvoiceSchema = createInsertSchema(subscriptionIn
 export type InsertSubscriptionInvoice = z.infer<typeof insertSubscriptionInvoiceSchema>;
 export type SubscriptionInvoice = typeof subscriptionInvoices.$inferSelect;
 
+// Refund Clearance Invoices (for cancelled subscriptions)
+export const refundInvoices = pgTable("refund_invoices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id),
+  serialNumber: text("serial_number").notNull().unique(), // Format: RC-YYYY-XXXXXX
+  clientName: text("client_name").notNull(),
+  clientEmail: text("client_email").notNull(),
+  restaurantName: text("restaurant_name").notNull(),
+  subscriptionPlan: text("subscription_plan").notNull(),
+  subscriptionStartDate: timestamp("subscription_start_date").notNull(),
+  cancellationDate: timestamp("cancellation_date").notNull(),
+  monthsUsed: integer("months_used").notNull(),
+  originalPrice: decimal("original_price", { precision: 10, scale: 2 }).notNull(),
+  monthlyRate: decimal("monthly_rate", { precision: 10, scale: 2 }).notNull(),
+  chargedAmount: decimal("charged_amount", { precision: 10, scale: 2 }).notNull(),
+  refundAmount: decimal("refund_amount", { precision: 10, scale: 2 }).notNull(),
+  pdfData: text("pdf_data"), // Base64 encoded PDF data
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertRefundInvoiceSchema = createInsertSchema(refundInvoices).omit({ id: true, createdAt: true });
+export type InsertRefundInvoice = z.infer<typeof insertRefundInvoiceSchema>;
+export type RefundInvoice = typeof refundInvoices.$inferSelect;
+
 // Monthly VAT Reports
 export const monthlyVatReports = pgTable("monthly_vat_reports", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
