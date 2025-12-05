@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDevice } from "@/contexts/DeviceContext";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +33,17 @@ import {
   Percent,
   Power,
   PowerOff,
-  Loader2
+  Loader2,
+  Briefcase,
+  TrendingUp,
+  BarChart3,
+  PieChart,
+  Plus,
+  Trash2,
+  Edit,
+  AlertCircle,
+  CheckCircle,
+  Clock
 } from "lucide-react";
 
 interface Client {
@@ -93,6 +103,72 @@ interface VatSummary {
   periodEnd: string | null;
 }
 
+interface CompanyBill {
+  id: string;
+  billType: string;
+  vendor: string;
+  amount: string;
+  vatAmount: string;
+  totalAmount: string;
+  billDate: string;
+  dueDate: string | null;
+  paidDate: string | null;
+  status: string;
+  paymentPeriod: string | null;
+  description: string | null;
+  referenceNumber: string | null;
+  createdBy: string | null;
+  createdByName: string | null;
+  createdAt: string;
+}
+
+interface BillsSummary {
+  totalExpenses: string;
+  totalBaseAmount: string;
+  totalVatPaid: string;
+  billsCount: number;
+  paidCount: number;
+  pendingCount: number;
+  overdueCount: number;
+  byCategory: Array<{
+    category: string;
+    count: number;
+    amount: string;
+    vatAmount: string;
+    totalAmount: string;
+  }>;
+}
+
+interface BssAnalysisOverview {
+  subscriptionRevenue: string;
+  vatCollected: string;
+  totalRevenue: string;
+  totalInvoices: number;
+  totalExpenses: string;
+  expenseVat: string;
+  totalBills: number;
+  netProfit: string;
+  netVat: string;
+  profitMargin: string;
+  totalClients: number;
+  totalAccounts: number;
+  restaurantCount: number;
+  factoryCount: number;
+  activeSubscriptions: number;
+  expiredSubscriptions: number;
+  cancelledSubscriptions: number;
+  planBreakdown: { weekly: number; monthly: number; yearly: number };
+  revenueByPlan: { weekly: string; monthly: string; yearly: string };
+}
+
+interface RevenueTrend {
+  month: string;
+  revenue: string;
+  vat: string;
+  expenses: string;
+  profit: string;
+}
+
 export default function BusinessManagement() {
   const { user, accountType, isLoading: authLoading } = useAuth();
   const { t } = useLanguage();
@@ -111,6 +187,9 @@ export default function BusinessManagement() {
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "expired" | "cancelled">("all");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [billSearchQuery, setBillSearchQuery] = useState("");
+  const [billStatusFilter, setBillStatusFilter] = useState<"all" | "paid" | "pending" | "overdue">("all");
+  const [billTypeFilter, setBillTypeFilter] = useState("all");
 
   // All hooks must be called before any conditional returns
   const { data: clients = [], isLoading: clientsLoading, refetch: refetchClients } = useQuery<Client[]>({
@@ -126,6 +205,52 @@ export default function BusinessManagement() {
   const { data: vatSummary, isLoading: vatLoading, refetch: refetchVat } = useQuery<VatSummary>({
     queryKey: ['/api/it/business-management/vat-summary', fromDate, toDate],
     enabled: !authLoading && !!user && accountType === 'it',
+  });
+
+  const { data: companyBills = [], isLoading: billsLoading, refetch: refetchBills } = useQuery<CompanyBill[]>({
+    queryKey: ['/api/it/business-operations/bills'],
+    enabled: !authLoading && !!user && accountType === 'it',
+  });
+
+  const { data: billsSummary, isLoading: billsSummaryLoading } = useQuery<BillsSummary>({
+    queryKey: ['/api/it/business-operations/summary', fromDate, toDate],
+    enabled: !authLoading && !!user && accountType === 'it',
+  });
+
+  const { data: bssAnalysis, isLoading: analysisLoading } = useQuery<BssAnalysisOverview>({
+    queryKey: ['/api/it/bss-analysis/overview', fromDate, toDate],
+    enabled: !authLoading && !!user && accountType === 'it',
+  });
+
+  const { data: revenueTrends = [], isLoading: trendsLoading } = useQuery<RevenueTrend[]>({
+    queryKey: ['/api/it/bss-analysis/revenue-trends'],
+    enabled: !authLoading && !!user && accountType === 'it',
+  });
+
+  const deleteBillMutation = useMutation({
+    mutationFn: async (billId: string) => {
+      const response = await fetch(`/api/it/business-operations/bills/${billId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to delete bill');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/it/business-operations/bills'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/it/business-operations/summary'] });
+      toast({
+        title: t.success || "Success",
+        description: t.billDeleted || "Bill deleted successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: t.error || "Error",
+        description: "Failed to delete bill",
+        variant: "destructive",
+      });
+    },
   });
 
   const downloadPdfMutation = useMutation({
@@ -360,6 +485,48 @@ export default function BusinessManagement() {
     return `${num.toFixed(2)} SAR`;
   };
 
+  const filteredBills = companyBills.filter(bill => {
+    const matchesSearch = 
+      !billSearchQuery ||
+      bill.vendor?.toLowerCase().includes(billSearchQuery.toLowerCase()) ||
+      bill.description?.toLowerCase().includes(billSearchQuery.toLowerCase()) ||
+      bill.referenceNumber?.toLowerCase().includes(billSearchQuery.toLowerCase());
+    
+    const matchesStatus = billStatusFilter === "all" || bill.status === billStatusFilter;
+    const matchesType = billTypeFilter === "all" || bill.billType === billTypeFilter;
+    
+    return matchesSearch && matchesStatus && matchesType;
+  });
+
+  const getBillStatusBadge = (status: string) => {
+    switch (status) {
+      case "paid":
+        return <Badge className="bg-green-500" data-testid="badge-bill-paid"><CheckCircle className="w-3 h-3 mr-1" />{t.paid}</Badge>;
+      case "pending":
+        return <Badge className="bg-yellow-500" data-testid="badge-bill-pending"><Clock className="w-3 h-3 mr-1" />{t.pending}</Badge>;
+      case "overdue":
+        return <Badge variant="destructive" data-testid="badge-bill-overdue"><AlertCircle className="w-3 h-3 mr-1" />{t.overdueBills}</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const getBillTypeName = (billType: string) => {
+    const types: Record<string, string> = {
+      rent: t.rent || "Rent",
+      utilities: t.utilities || "Utilities",
+      salaries: t.salaries || "Salaries",
+      marketing: t.marketingExpense || "Marketing",
+      software: t.softwareExpense || "Software",
+      office_supplies: t.officeSupplies || "Office Supplies",
+      maintenance: t.maintenance || "Maintenance",
+      taxes: t.taxesExpense || "Taxes",
+      insurance: t.insuranceExpense || "Insurance",
+      other: t.other || "Other",
+    };
+    return types[billType] || billType;
+  };
+
   return (
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -427,7 +594,7 @@ export default function BusinessManagement() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3" data-testid="tabs-list">
+        <TabsList className="grid w-full grid-cols-5" data-testid="tabs-list">
           <TabsTrigger value="clients" data-testid="tab-clients">
             <Users className="w-4 h-4 mr-2" />
             {t.clientSubscriptions}
@@ -439,6 +606,14 @@ export default function BusinessManagement() {
           <TabsTrigger value="vat" data-testid="tab-vat">
             <Calculator className="w-4 h-4 mr-2" />
             {t.vatGenerator}
+          </TabsTrigger>
+          <TabsTrigger value="operations" data-testid="tab-operations">
+            <Briefcase className="w-4 h-4 mr-2" />
+            {t.businessOperations}
+          </TabsTrigger>
+          <TabsTrigger value="analysis" data-testid="tab-analysis">
+            <BarChart3 className="w-4 h-4 mr-2" />
+            {t.bssAnalysis}
           </TabsTrigger>
         </TabsList>
 
@@ -826,6 +1001,361 @@ export default function BusinessManagement() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="operations" className="space-y-4" data-testid="content-operations">
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card data-testid="card-total-expenses">
+              <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t.totalExpenses}</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(billsSummary?.totalExpenses || 0)}</div>
+                <p className="text-xs text-muted-foreground">{billsSummary?.billsCount || 0} {t.companyBills?.toLowerCase()}</p>
+              </CardContent>
+            </Card>
+
+            <Card data-testid="card-paid-bills">
+              <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t.paidBills}</CardTitle>
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{billsSummary?.paidCount || 0}</div>
+                <p className="text-xs text-muted-foreground">{t.paid}</p>
+              </CardContent>
+            </Card>
+
+            <Card data-testid="card-pending-bills">
+              <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t.pendingBills}</CardTitle>
+                <Clock className="h-4 w-4 text-yellow-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-600">{billsSummary?.pendingCount || 0}</div>
+                <p className="text-xs text-muted-foreground">{t.pending}</p>
+              </CardContent>
+            </Card>
+
+            <Card data-testid="card-overdue-bills">
+              <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t.overdueBills}</CardTitle>
+                <AlertCircle className="h-4 w-4 text-red-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">{billsSummary?.overdueCount || 0}</div>
+                <p className="text-xs text-muted-foreground">{t.overdueBills}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <CardTitle>{t.companyBills}</CardTitle>
+                  <CardDescription>{t.businessOperationsDescription}</CardDescription>
+                </div>
+                <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder={t.search || "Search..."}
+                      value={billSearchQuery}
+                      onChange={(e) => setBillSearchQuery(e.target.value)}
+                      className="pl-10 w-64"
+                      data-testid="input-search-bills"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={billStatusFilter === "all" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setBillStatusFilter("all")}
+                      data-testid="button-filter-bills-all"
+                    >
+                      {t.all}
+                    </Button>
+                    <Button
+                      variant={billStatusFilter === "paid" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setBillStatusFilter("paid")}
+                      data-testid="button-filter-bills-paid"
+                    >
+                      {t.paid}
+                    </Button>
+                    <Button
+                      variant={billStatusFilter === "pending" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setBillStatusFilter("pending")}
+                      data-testid="button-filter-bills-pending"
+                    >
+                      {t.pending}
+                    </Button>
+                    <Button
+                      variant={billStatusFilter === "overdue" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setBillStatusFilter("overdue")}
+                      data-testid="button-filter-bills-overdue"
+                    >
+                      {t.overdueBills}
+                    </Button>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => refetchBills()}
+                    data-testid="button-refresh-bills"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {billsLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+                </div>
+              ) : filteredBills.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground" data-testid="text-no-bills">
+                  {t.noBillsFound}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t.billType}</TableHead>
+                        <TableHead>{t.vendor}</TableHead>
+                        <TableHead>{t.amount}</TableHead>
+                        <TableHead>{t.vatAmount}</TableHead>
+                        <TableHead>{t.total}</TableHead>
+                        <TableHead>{t.billDate}</TableHead>
+                        <TableHead>{t.dueDate}</TableHead>
+                        <TableHead>{t.status}</TableHead>
+                        <TableHead>{t.actions}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredBills.map((bill) => (
+                        <TableRow key={bill.id} data-testid={`row-bill-${bill.id}`}>
+                          <TableCell>
+                            <Badge variant="outline">{getBillTypeName(bill.billType)}</Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">{bill.vendor}</TableCell>
+                          <TableCell>{formatCurrency(bill.amount)}</TableCell>
+                          <TableCell>{formatCurrency(bill.vatAmount)}</TableCell>
+                          <TableCell className="font-bold">{formatCurrency(bill.totalAmount)}</TableCell>
+                          <TableCell>{formatDate(bill.billDate)}</TableCell>
+                          <TableCell>{formatDate(bill.dueDate)}</TableCell>
+                          <TableCell>{getBillStatusBadge(bill.status)}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteBillMutation.mutate(bill.id)}
+                              disabled={deleteBillMutation.isPending}
+                              data-testid={`button-delete-bill-${bill.id}`}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {billsSummary && billsSummary.byCategory.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t.expensesByCategory}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {billsSummary.byCategory.map((cat) => (
+                    <Card key={cat.category} className="bg-muted/50">
+                      <CardContent className="pt-4">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{getBillTypeName(cat.category)}</span>
+                          <Badge variant="secondary">{cat.count} bills</Badge>
+                        </div>
+                        <div className="text-2xl font-bold mt-2">{formatCurrency(cat.totalAmount)}</div>
+                        <p className="text-xs text-muted-foreground">
+                          {t.vatAmount}: {formatCurrency(cat.vatAmount)}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="analysis" className="space-y-4" data-testid="content-analysis">
+          {analysisLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full" />)}
+            </div>
+          ) : bssAnalysis ? (
+            <>
+              <div className="grid gap-4 md:grid-cols-4">
+                <Card className="bg-green-50 dark:bg-green-950" data-testid="card-subscription-revenue">
+                  <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{t.subscriptionRevenue}</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-green-600" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-600">{formatCurrency(bssAnalysis.subscriptionRevenue)}</div>
+                    <p className="text-xs text-muted-foreground">{bssAnalysis.totalInvoices} {t.invoices?.toLowerCase()}</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-blue-50 dark:bg-blue-950" data-testid="card-vat-collected">
+                  <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{t.vatCollected}</CardTitle>
+                    <Percent className="h-4 w-4 text-blue-600" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-blue-600">{formatCurrency(bssAnalysis.vatCollected)}</div>
+                    <p className="text-xs text-muted-foreground">15% {t.vatRate?.split('(')[0] || "VAT"}</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-red-50 dark:bg-red-950" data-testid="card-total-expenses-analysis">
+                  <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{t.totalExpenses}</CardTitle>
+                    <Briefcase className="h-4 w-4 text-red-600" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-red-600">{formatCurrency(bssAnalysis.totalExpenses)}</div>
+                    <p className="text-xs text-muted-foreground">{bssAnalysis.totalBills} {t.companyBills?.toLowerCase()}</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-purple-50 dark:bg-purple-950" data-testid="card-net-profit">
+                  <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{t.netProfit}</CardTitle>
+                    <BarChart3 className="h-4 w-4 text-purple-600" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className={`text-2xl font-bold ${parseFloat(bssAnalysis.netProfit) >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
+                      {formatCurrency(bssAnalysis.netProfit)}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{t.profitMargin}: {bssAnalysis.profitMargin}%</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card data-testid="card-accounts-by-type">
+                  <CardHeader>
+                    <CardTitle>{t.accountsByType}</CardTitle>
+                    <CardDescription>{t.totalClients}: {bssAnalysis.totalClients}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-5 w-5 text-orange-500" />
+                          <span>{t.restaurantClients}</span>
+                        </div>
+                        <Badge className="bg-orange-500">{bssAnalysis.restaurantCount}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Briefcase className="h-5 w-5 text-blue-500" />
+                          <span>{t.factoryClients}</span>
+                        </div>
+                        <Badge className="bg-blue-500">{bssAnalysis.factoryCount}</Badge>
+                      </div>
+                      <div className="border-t pt-4 mt-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-muted-foreground">{t.activeSubscriptions}</span>
+                          <Badge className="bg-green-500">{bssAnalysis.activeSubscriptions}</Badge>
+                        </div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-muted-foreground">{t.expiredSubscriptions}</span>
+                          <Badge variant="destructive">{bssAnalysis.expiredSubscriptions}</Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">{t.cancelledSubscriptions}</span>
+                          <Badge variant="secondary">{bssAnalysis.cancelledSubscriptions}</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card data-testid="card-revenue-by-plan">
+                  <CardHeader>
+                    <CardTitle>{t.revenueByPlan}</CardTitle>
+                    <CardDescription>{t.planBreakdown}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-blue-500">{t.yearly}</Badge>
+                          <span className="text-sm text-muted-foreground">({bssAnalysis.planBreakdown.yearly} clients)</span>
+                        </div>
+                        <span className="font-bold">{formatCurrency(bssAnalysis.revenueByPlan.yearly)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-purple-500">{t.monthly}</Badge>
+                          <span className="text-sm text-muted-foreground">({bssAnalysis.planBreakdown.monthly} clients)</span>
+                        </div>
+                        <span className="font-bold">{formatCurrency(bssAnalysis.revenueByPlan.monthly)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-orange-500">{t.weekly}</Badge>
+                          <span className="text-sm text-muted-foreground">({bssAnalysis.planBreakdown.weekly} clients)</span>
+                        </div>
+                        <span className="font-bold">{formatCurrency(bssAnalysis.revenueByPlan.weekly)}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card data-testid="card-financial-overview">
+                <CardHeader>
+                  <CardTitle>{t.financialOverview}</CardTitle>
+                  <CardDescription>{t.bssAnalysisDescription}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="text-center p-4 bg-muted/50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">{t.totalRevenue}</p>
+                      <p className="text-2xl font-bold">{formatCurrency(bssAnalysis.totalRevenue)}</p>
+                    </div>
+                    <div className="text-center p-4 bg-muted/50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">{t.netVat}</p>
+                      <p className={`text-2xl font-bold ${parseFloat(bssAnalysis.netVat) >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                        {formatCurrency(bssAnalysis.netVat)}
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-muted/50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">{t.totalAccounts}</p>
+                      <p className="text-2xl font-bold">{bssAnalysis.totalAccounts}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground" data-testid="text-no-analytics">
+              {t.noAnalyticsData}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
