@@ -7373,6 +7373,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         .from(companyBills)
         .orderBy(desc(companyBills.billDate));
 
+      // Get all refund invoices to deduct from revenue
+      let refunds = await db
+        .select()
+        .from(refundInvoices)
+        .orderBy(desc(refundInvoices.createdAt));
+
       // Get all restaurants/clients
       const allRestaurants = await db
         .select()
@@ -7387,29 +7393,44 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         .from(users)
         .where(isNotNull(users.restaurantId));
 
-      // Apply date filters
+      // Apply date filters (with null safety checks)
       if (fromDate) {
         const from = new Date(fromDate as string);
-        invoices = invoices.filter(inv => new Date(inv.invoiceDate!) >= from);
-        bills = bills.filter(b => new Date(b.billDate!) >= from);
+        invoices = invoices.filter(inv => inv.invoiceDate && new Date(inv.invoiceDate) >= from);
+        bills = bills.filter(b => b.billDate && new Date(b.billDate) >= from);
+        refunds = refunds.filter(r => r.createdAt && new Date(r.createdAt) >= from);
       }
       if (toDate) {
         const to = new Date(toDate as string);
         to.setHours(23, 59, 59, 999);
-        invoices = invoices.filter(inv => new Date(inv.invoiceDate!) <= to);
-        bills = bills.filter(b => new Date(b.billDate!) <= to);
+        invoices = invoices.filter(inv => inv.invoiceDate && new Date(inv.invoiceDate) <= to);
+        bills = bills.filter(b => b.billDate && new Date(b.billDate) <= to);
+        refunds = refunds.filter(r => r.createdAt && new Date(r.createdAt) <= to);
       }
 
-      // Calculate subscription revenue
-      const subscriptionRevenue = invoices.reduce((sum, inv) => sum + parseFloat(inv.subtotal || "0"), 0);
-      const vatCollected = invoices.reduce((sum, inv) => sum + parseFloat(inv.vatAmount || "0"), 0);
-      const totalRevenue = invoices.reduce((sum, inv) => sum + parseFloat(inv.total || "0"), 0);
+      // Calculate total refunds issued (refundAmount is VAT-inclusive)
+      // VAT rate is 15% per Saudi regulations
+      const VAT_RATE = 0.15;
+      const totalRefunds = refunds.reduce((sum, r) => sum + parseFloat(r.refundAmount || "0"), 0);
+
+      // Calculate subscription revenue (gross before refunds)
+      const grossSubscriptionRevenue = invoices.reduce((sum, inv) => sum + parseFloat(inv.subtotal || "0"), 0);
+      const grossVatCollected = invoices.reduce((sum, inv) => sum + parseFloat(inv.vatAmount || "0"), 0);
+      const grossTotalRevenue = invoices.reduce((sum, inv) => sum + parseFloat(inv.total || "0"), 0);
+
+      // Net revenue after refunds (refunds are VAT-inclusive amounts at 15% Saudi VAT rate)
+      // Formula: netRefund = totalRefunds / (1 + VAT_RATE)
+      const netRefundAmount = totalRefunds / (1 + VAT_RATE); // Net refund before VAT
+      const refundVatAmount = totalRefunds - netRefundAmount; // VAT portion of refunds
+      const subscriptionRevenue = grossSubscriptionRevenue - netRefundAmount;
+      const vatCollected = grossVatCollected - refundVatAmount;
+      const totalRevenue = grossTotalRevenue - totalRefunds;
 
       // Calculate expenses
       const totalExpenses = bills.reduce((sum, b) => sum + parseFloat(b.totalAmount || "0"), 0);
       const expenseVat = bills.reduce((sum, b) => sum + parseFloat(b.vatAmount || "0"), 0);
 
-      // Net profit calculation
+      // Net profit calculation (using net revenue after refunds)
       const netProfit = subscriptionRevenue - (totalExpenses - expenseVat);
       const netVat = vatCollected - expenseVat;
 
@@ -7440,11 +7461,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       };
 
       res.json({
-        // Revenue metrics
+        // Revenue metrics (net after refunds)
         subscriptionRevenue: subscriptionRevenue.toFixed(2),
         vatCollected: vatCollected.toFixed(2),
         totalRevenue: totalRevenue.toFixed(2),
         totalInvoices: invoices.length,
+
+        // Refund metrics
+        totalRefunds: totalRefunds.toFixed(2),
+        refundCount: refunds.length,
+        grossRevenue: grossTotalRevenue.toFixed(2),
 
         // Expense metrics
         totalExpenses: totalExpenses.toFixed(2),
@@ -7499,18 +7525,24 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         .from(companyBills)
         .orderBy(desc(companyBills.billDate));
 
-      // Group by month
-      const monthlyData: Record<string, { revenue: number; vat: number; expenses: number; profit: number }> = {};
+      // Get all refund invoices to deduct from revenue
+      const refunds = await db
+        .select()
+        .from(refundInvoices)
+        .orderBy(desc(refundInvoices.createdAt));
+
+      // Group by month - track net revenue, VAT, net expenses (before VAT), and gross expenses
+      const monthlyData: Record<string, { revenue: number; vat: number; netExpenses: number; expenseVat: number; profit: number; refunds: number }> = {};
 
       // Initialize last N months
       for (let i = 0; i < numMonths; i++) {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
         const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        monthlyData[key] = { revenue: 0, vat: 0, expenses: 0, profit: 0 };
+        monthlyData[key] = { revenue: 0, vat: 0, netExpenses: 0, expenseVat: 0, profit: 0, refunds: 0 };
       }
 
-      // Add invoice revenue
+      // Add invoice revenue (gross)
       for (const inv of invoices) {
         const date = new Date(inv.invoiceDate!);
         const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -7520,18 +7552,40 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         }
       }
 
-      // Add expenses
-      for (const bill of bills) {
-        const date = new Date(bill.billDate!);
+      // Deduct refunds from revenue (refund amounts are VAT-inclusive at 15% Saudi VAT rate)
+      const VAT_RATE = 0.15;
+      for (const refund of refunds) {
+        // Skip refunds with null createdAt
+        if (!refund.createdAt) continue;
+        
+        const date = new Date(refund.createdAt);
         const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         if (monthlyData[key]) {
-          monthlyData[key].expenses += parseFloat(bill.totalAmount || "0");
+          const refundAmount = parseFloat(refund.refundAmount || "0");
+          const netRefund = refundAmount / (1 + VAT_RATE); // Extract net amount before VAT
+          const refundVat = refundAmount - netRefund;
+          monthlyData[key].revenue -= netRefund;
+          monthlyData[key].vat -= refundVat;
+          monthlyData[key].refunds += refundAmount;
         }
       }
 
-      // Calculate profit
+      // Add expenses (track both gross and net for proper profit calculation)
+      for (const bill of bills) {
+        if (!bill.billDate) continue;
+        const date = new Date(bill.billDate);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        if (monthlyData[key]) {
+          const grossExpense = parseFloat(bill.totalAmount || "0");
+          const billVat = parseFloat(bill.vatAmount || "0");
+          monthlyData[key].netExpenses += (grossExpense - billVat); // Net expense before VAT
+          monthlyData[key].expenseVat += billVat;
+        }
+      }
+
+      // Calculate profit (net revenue after refunds minus net expenses)
       for (const key of Object.keys(monthlyData)) {
-        monthlyData[key].profit = monthlyData[key].revenue - monthlyData[key].expenses;
+        monthlyData[key].profit = monthlyData[key].revenue - monthlyData[key].netExpenses;
       }
 
       // Convert to array and sort
@@ -7540,8 +7594,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           month,
           revenue: data.revenue.toFixed(2),
           vat: data.vat.toFixed(2),
-          expenses: data.expenses.toFixed(2),
+          expenses: (data.netExpenses + data.expenseVat).toFixed(2), // Return gross expenses for display
+          netExpenses: data.netExpenses.toFixed(2),
           profit: data.profit.toFixed(2),
+          refunds: data.refunds.toFixed(2),
         }))
         .sort((a, b) => a.month.localeCompare(b.month));
 
@@ -7647,15 +7703,34 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         ? await db.select().from(companyBills).where(and(...billsConditions))
         : await db.select().from(companyBills);
 
-      // Calculate metrics
-      let subscriptionRevenue = 0;
-      let vatCollected = 0;
+      // Build refund date conditions
+      const refundConditions = [];
+      if (fromDate && typeof fromDate === 'string') {
+        refundConditions.push(gte(refundInvoices.createdAt, new Date(fromDate)));
+      }
+      if (toDate && typeof toDate === 'string') {
+        refundConditions.push(lte(refundInvoices.createdAt, new Date(toDate)));
+      }
+      const refunds = refundConditions.length > 0
+        ? await db.select().from(refundInvoices).where(and(...refundConditions))
+        : await db.select().from(refundInvoices);
+
+      // Calculate total refunds (VAT-inclusive at 15% Saudi VAT rate)
+      const VAT_RATE = 0.15;
+      let totalRefunds = 0;
+      for (const refund of refunds) {
+        totalRefunds += parseFloat(refund.refundAmount || "0");
+      }
+
+      // Calculate metrics (gross before refunds)
+      let grossSubscriptionRevenue = 0;
+      let grossVatCollected = 0;
       const planBreakdown = { weekly: 0, monthly: 0, yearly: 0 };
       const revenueByPlan = { weekly: 0, monthly: 0, yearly: 0 };
 
       for (const inv of invoices) {
-        subscriptionRevenue += parseFloat(inv.subtotal || "0");
-        vatCollected += parseFloat(inv.vatAmount || "0");
+        grossSubscriptionRevenue += parseFloat(inv.subtotal || "0");
+        grossVatCollected += parseFloat(inv.vatAmount || "0");
         const plan = inv.subscriptionPlan as 'weekly' | 'monthly' | 'yearly';
         if (plan && planBreakdown[plan] !== undefined) {
           planBreakdown[plan]++;
@@ -7663,16 +7738,24 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         }
       }
 
-      let totalExpenses = 0;
+      // Calculate net revenue after refunds
+      const netRefund = totalRefunds / (1 + VAT_RATE); // Net refund before VAT
+      const refundVat = totalRefunds - netRefund;
+      const subscriptionRevenue = grossSubscriptionRevenue - netRefund;
+      const vatCollected = grossVatCollected - refundVat;
+
+      let grossExpenses = 0;
       let expenseVat = 0;
       for (const bill of bills) {
-        totalExpenses += parseFloat(bill.totalAmount || "0");
+        grossExpenses += parseFloat(bill.totalAmount || "0");
         expenseVat += parseFloat(bill.vatAmount || "0");
       }
+      const netExpenses = grossExpenses - expenseVat; // Net expenses before VAT
 
       const totalRevenue = subscriptionRevenue + vatCollected;
-      const netProfit = subscriptionRevenue - totalExpenses;
+      const netProfit = subscriptionRevenue - netExpenses; // Net revenue minus net expenses
       const netVat = vatCollected - expenseVat;
+      const grossRevenue = grossSubscriptionRevenue + grossVatCollected;
 
       let restaurantCount = 0;
       let factoryCount = 0;
@@ -7691,13 +7774,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Get business info for the PDF
       const businessInfo = await storage.getBusinessInfo();
 
-      // Generate PDF
+      // Generate PDF with refund metrics
       const pdfBuffer = await generateBssAnalysisStatementPDF({
         subscriptionRevenue,
         vatCollected,
         totalRevenue,
         totalInvoices: invoices.length,
-        totalExpenses,
+        totalRefunds,
+        refundCount: refunds.length,
+        grossRevenue,
+        totalExpenses: grossExpenses,
         expenseVat,
         totalBills: bills.length,
         netProfit,

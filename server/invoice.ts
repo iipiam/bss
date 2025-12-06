@@ -2380,6 +2380,9 @@ interface BssAnalysisStatementData {
   vatCollected: number;
   totalRevenue: number;
   totalInvoices: number;
+  totalRefunds?: number;
+  refundCount?: number;
+  grossRevenue?: number;
   totalExpenses: number;
   expenseVat: number;
   totalBills: number;
