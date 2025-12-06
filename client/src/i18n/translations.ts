@@ -171,6 +171,10 @@ export interface Translations {
   itemName: string;
   category: string;
   quantity: string;
+  referenceQuantity: string;
+  referenceQuantityHint: string;
+  totalPrice: string;
+  totalPriceHint: string;
   unit: string;
   supplier: string;
   status: string;
@@ -1556,6 +1560,10 @@ export const translations: Record<Language, Translations> = {
     itemName: 'Item Name',
     category: 'Category',
     quantity: 'Quantity',
+    referenceQuantity: 'Reference Quantity',
+    referenceQuantityHint: 'The reference quantity for calculating the unit price (e.g., 1 kg, 1 unit)',
+    totalPrice: 'Total Price',
+    totalPriceHint: 'Total price for the entire stock quantity',
     unit: 'Unit',
     supplier: 'Supplier',
     status: 'Status',
@@ -4338,6 +4346,10 @@ export const translations: Record<Language, Translations> = {
     itemName: 'Item Name',
     category: 'Category',
     quantity: 'Quantity',
+    referenceQuantity: 'Reference Quantity',
+    referenceQuantityHint: 'The reference quantity for calculating the unit price (e.g., 1 kg, 1 unit)',
+    totalPrice: 'Total Price',
+    totalPriceHint: 'Total price for the entire stock quantity',
     unit: 'Unit',
     supplier: 'Supplier',
     status: 'Status',
@@ -5712,6 +5724,10 @@ export const translations: Record<Language, Translations> = {
     itemName: 'Item Name',
     category: 'Category',
     quantity: 'Quantity',
+    referenceQuantity: 'Reference Quantity',
+    referenceQuantityHint: 'The reference quantity for calculating the unit price (e.g., 1 kg, 1 unit)',
+    totalPrice: 'Total Price',
+    totalPriceHint: 'Total price for the entire stock quantity',
     unit: 'Unit',
     supplier: 'Supplier',
     status: 'Status',
@@ -7086,6 +7102,10 @@ export const translations: Record<Language, Translations> = {
     itemName: 'Item Name',
     category: 'Category',
     quantity: 'Quantity',
+    referenceQuantity: 'Reference Quantity',
+    referenceQuantityHint: 'The reference quantity for calculating the unit price (e.g., 1 kg, 1 unit)',
+    totalPrice: 'Total Price',
+    totalPriceHint: 'Total price for the entire stock quantity',
     unit: 'Unit',
     supplier: 'Supplier',
     status: 'Status',
@@ -8460,6 +8480,10 @@ export const translations: Record<Language, Translations> = {
     itemName: 'Item Name',
     category: 'Category',
     quantity: 'Quantity',
+    referenceQuantity: 'Reference Quantity',
+    referenceQuantityHint: 'The reference quantity for calculating the unit price (e.g., 1 kg, 1 unit)',
+    totalPrice: 'Total Price',
+    totalPriceHint: 'Total price for the entire stock quantity',
     unit: 'Unit',
     supplier: 'Supplier',
     status: 'Status',
