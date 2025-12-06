@@ -53,7 +53,8 @@ import {
   Building,
   Globe,
   MapPin,
-  Landmark
+  Landmark,
+  X
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
@@ -128,6 +129,7 @@ interface CompanyBill {
   paymentPeriod: string | null;
   description: string | null;
   referenceNumber: string | null;
+  attachmentPath: string | null;
   createdBy: string | null;
   createdByName: string | null;
   createdAt: string;
@@ -370,6 +372,7 @@ export default function BusinessManagement() {
     description: "",
     referenceNumber: "",
   });
+  const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
 
   // Calculate VAT and total when amount changes
   const calculateBillAmounts = (amount: string) => {
@@ -398,15 +401,29 @@ export default function BusinessManagement() {
       description: "",
       referenceNumber: "",
     });
+    setInvoiceFile(null);
   };
 
   const createBillMutation = useMutation({
-    mutationFn: async (data: typeof newBillForm) => {
+    mutationFn: async (data: { form: typeof newBillForm; file: File | null }) => {
+      const formData = new FormData();
+      formData.append('billType', data.form.billType);
+      formData.append('vendor', data.form.vendor);
+      formData.append('amount', data.form.amount);
+      formData.append('vatAmount', data.form.vatAmount);
+      formData.append('totalAmount', data.form.totalAmount);
+      formData.append('billDate', data.form.billDate);
+      if (data.form.dueDate) formData.append('dueDate', data.form.dueDate);
+      formData.append('status', data.form.status);
+      formData.append('paymentPeriod', data.form.paymentPeriod);
+      if (data.form.description) formData.append('description', data.form.description);
+      if (data.form.referenceNumber) formData.append('referenceNumber', data.form.referenceNumber);
+      if (data.file) formData.append('invoiceFile', data.file);
+
       const response = await fetch('/api/it/business-operations/bills', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(data),
+        body: formData,
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -1517,7 +1534,7 @@ export default function BusinessManagement() {
                       <form
                         onSubmit={(e) => {
                           e.preventDefault();
-                          createBillMutation.mutate(newBillForm);
+                          createBillMutation.mutate({ form: newBillForm, file: invoiceFile });
                         }}
                         className="space-y-4"
                       >
@@ -1688,6 +1705,53 @@ export default function BusinessManagement() {
                           />
                         </div>
 
+                        <div className="space-y-2">
+                          <Label htmlFor="invoiceFile">{t.invoice || "Invoice"} PDF ({t.optional || "Optional"})</Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              id="invoiceFile"
+                              type="file"
+                              accept=".pdf,application/pdf"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                if (file && file.size > 10 * 1024 * 1024) {
+                                  toast({
+                                    title: t.error || "Error",
+                                    description: "File size must be less than 10MB",
+                                    variant: "destructive",
+                                  });
+                                  e.target.value = '';
+                                  return;
+                                }
+                                setInvoiceFile(file);
+                              }}
+                              className="flex-1"
+                              data-testid="input-bill-invoice-file"
+                            />
+                            {invoiceFile && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setInvoiceFile(null);
+                                  const fileInput = document.getElementById('invoiceFile') as HTMLInputElement;
+                                  if (fileInput) fileInput.value = '';
+                                }}
+                                data-testid="button-remove-invoice-file"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          {invoiceFile && (
+                            <p className="text-sm text-muted-foreground flex items-center gap-1">
+                              <FileText className="h-4 w-4" />
+                              {invoiceFile.name}
+                            </p>
+                          )}
+                        </div>
+
                         <DialogFooter>
                           <Button
                             type="button"
@@ -1741,6 +1805,7 @@ export default function BusinessManagement() {
                         <TableHead>{t.billDate}</TableHead>
                         <TableHead>{t.dueDate}</TableHead>
                         <TableHead>{t.status}</TableHead>
+                        <TableHead>{t.invoice || "Invoice"}</TableHead>
                         <TableHead>{t.actions}</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1757,6 +1822,20 @@ export default function BusinessManagement() {
                           <TableCell>{formatDate(bill.billDate)}</TableCell>
                           <TableCell>{formatDate(bill.dueDate)}</TableCell>
                           <TableCell>{getBillStatusBadge(bill.status)}</TableCell>
+                          <TableCell>
+                            {bill.attachmentPath ? (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => window.open(bill.attachmentPath!, '_blank')}
+                                data-testid={`button-view-invoice-${bill.id}`}
+                              >
+                                <FileText className="h-4 w-4 text-blue-500" />
+                              </Button>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">-</span>
+                            )}
+                          </TableCell>
                           <TableCell>
                             <Button
                               variant="ghost"

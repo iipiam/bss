@@ -4127,6 +4127,62 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Configure multer for bill invoice uploads (IT-only, disk storage)
+  const billInvoiceStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      const uploadPath = path.join(process.cwd(), 'uploads', 'bill-invoices');
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+      cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, 'bill-' + uniqueSuffix + ext);
+    }
+  });
+
+  const uploadBillInvoice = multer({
+    storage: billInvoiceStorage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: function (req, file, cb) {
+      const allowedTypes = /pdf/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const mimetype = file.mimetype === 'application/pdf';
+      if (mimetype && extname) {
+        return cb(null, true);
+      }
+      cb(new Error('Only PDF files are allowed for bill invoices!'));
+    }
+  });
+
+  // Authenticated endpoint to download bill invoice files (IT-only)
+  app.get('/api/it/bill-invoices/:filename', requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const filename = req.params.filename;
+      
+      // Validate filename format to prevent path traversal
+      if (!/^bill-[\w-]+\.pdf$/i.test(filename)) {
+        return res.status(400).json({ error: 'Invalid filename format' });
+      }
+      
+      const filePath = path.join(process.cwd(), 'uploads', 'bill-invoices', filename);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Bill invoice file not found' });
+      }
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error('Bill invoice download error:', error);
+      res.status(500).json({ error: 'Failed to download bill invoice' });
+    }
+  });
+
   // Authenticated endpoint to download subscription invoices
   // SECURITY: Requires authentication and verifies restaurant ownership via database join
   app.get('/api/subscription-invoices/:filename', requireAuth, requireRestaurant, async (req, res) => {
@@ -7059,6 +7115,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           paymentPeriod: companyBills.paymentPeriod,
           description: companyBills.description,
           referenceNumber: companyBills.referenceNumber,
+          attachmentPath: companyBills.attachmentPath,
           createdBy: companyBills.createdBy,
           createdByName: users.fullName,
           createdAt: companyBills.createdAt,
@@ -7091,20 +7148,35 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Create a new company bill
-  app.post("/api/it/business-operations/bills", requireAuth, requireITAccount, async (req, res) => {
+  // Create a new company bill with optional PDF invoice upload
+  app.post("/api/it/business-operations/bills", requireAuth, requireITAccount, uploadBillInvoice.single('invoiceFile'), async (req, res) => {
     try {
-      const validatedData = insertCompanyBillSchema.parse({
-        ...req.body,
+      // Parse form data - multipart form fields are in req.body as strings
+      const billData = {
+        billType: req.body.billType,
+        vendor: req.body.vendor,
+        amount: req.body.amount,
+        vatAmount: req.body.vatAmount,
+        totalAmount: req.body.totalAmount,
+        billDate: req.body.billDate,
+        dueDate: req.body.dueDate || null,
+        paidDate: req.body.paidDate || null,
+        status: req.body.status || 'pending',
+        paymentPeriod: req.body.paymentPeriod || 'monthly',
+        description: req.body.description || null,
+        referenceNumber: req.body.referenceNumber || null,
+        attachmentPath: req.file ? `/api/it/bill-invoices/${req.file.filename}` : null,
         createdBy: req.session.user?.id,
-      });
+      };
+
+      const validatedData = insertCompanyBillSchema.parse(billData);
 
       const [newBill] = await db
         .insert(companyBills)
         .values(validatedData)
         .returning();
 
-      console.log(`[IT] Company bill created: ${newBill.id} by user ${req.session.user?.id}`);
+      console.log(`[IT] Company bill created: ${newBill.id} by user ${req.session.user?.id}${req.file ? ' with PDF invoice' : ''}`);
       res.status(201).json(newBill);
     } catch (error) {
       console.error("Error creating company bill:", error);
