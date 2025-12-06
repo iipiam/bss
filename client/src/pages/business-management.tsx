@@ -6,6 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useDevice } from "@/contexts/DeviceContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Legend, AreaChart, Area } from "recharts";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -157,6 +158,9 @@ interface BssAnalysisOverview {
   vatCollected: string;
   totalRevenue: string;
   totalInvoices: number;
+  grossRevenue: string;
+  totalRefunds: string;
+  refundCount: number;
   totalExpenses: string;
   expenseVat: string;
   totalBills: number;
@@ -2148,6 +2152,204 @@ export default function BusinessManagement() {
                     <div className="text-center p-4 bg-muted/50 rounded-lg">
                       <p className="text-sm text-muted-foreground">{t.totalAccounts}</p>
                       <p className="text-2xl font-bold">{bssAnalysis.totalAccounts}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Profitability Analysis Section */}
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* Revenue vs Expenses Trend Chart */}
+                <Card data-testid="card-profitability-trends">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5" />
+                      {t.profitability || "Profitability Trends"}
+                    </CardTitle>
+                    <CardDescription>
+                      {"Monthly revenue vs expenses comparison"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {trendsLoading ? (
+                      <Skeleton className="h-64 w-full" />
+                    ) : revenueTrends.length > 0 ? (
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={revenueTrends.map(trend => ({
+                            ...trend,
+                            revenue: parseFloat(trend.revenue) || 0,
+                            expenses: parseFloat(trend.expenses) || 0,
+                            profit: parseFloat(trend.profit) || 0,
+                          }))}>
+                            <defs>
+                              <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                              </linearGradient>
+                              <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                              </linearGradient>
+                              <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                            <XAxis 
+                              dataKey="month" 
+                              tick={{ fontSize: 12 }}
+                              tickFormatter={(value) => {
+                                const [year, month] = value.split('-');
+                                return `${month}/${year.slice(2)}`;
+                              }}
+                            />
+                            <YAxis 
+                              tick={{ fontSize: 12 }}
+                              tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                            />
+                            <Tooltip 
+                              formatter={(value: any) => `${parseFloat(value).toLocaleString()} SAR`}
+                              labelFormatter={(label) => {
+                                const [year, month] = label.split('-');
+                                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                return `${monthNames[parseInt(month) - 1]} ${year}`;
+                              }}
+                            />
+                            <Legend />
+                            <Area 
+                              type="monotone" 
+                              dataKey="revenue" 
+                              name={t.revenue || "Revenue"} 
+                              stroke="#10b981" 
+                              fill="url(#colorRevenue)" 
+                              strokeWidth={2}
+                            />
+                            <Area 
+                              type="monotone" 
+                              dataKey="expenses" 
+                              name={t.expenses || "Expenses"} 
+                              stroke="#ef4444" 
+                              fill="url(#colorExpenses)" 
+                              strokeWidth={2}
+                            />
+                            <Area 
+                              type="monotone" 
+                              dataKey="profit" 
+                              name={t.profit || "Profit"} 
+                              stroke="#8b5cf6" 
+                              fill="url(#colorProfit)" 
+                              strokeWidth={2}
+                            />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : (
+                      <div className="h-64 flex items-center justify-center text-muted-foreground">
+                        {"No trend data available"}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Expense Breakdown Pie Chart */}
+                <Card data-testid="card-expense-breakdown">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <PieChart className="h-5 w-5" />
+                      {t.expensesByCategory || "Expense Breakdown"}
+                    </CardTitle>
+                    <CardDescription>
+                      {"Distribution of expenses by category"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {billsSummaryLoading ? (
+                      <Skeleton className="h-64 w-full" />
+                    ) : billsSummary && billsSummary.byCategory && billsSummary.byCategory.length > 0 ? (
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RechartsPieChart>
+                            <Pie
+                              data={billsSummary.byCategory.map((cat, index) => ({
+                                name: getBillTypeName(cat.category),
+                                value: parseFloat(cat.totalAmount),
+                                color: [
+                                  '#10b981', '#3b82f6', '#f59e0b', '#ef4444', 
+                                  '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16',
+                                  '#f97316', '#6366f1', '#14b8a6'
+                                ][index % 11]
+                              }))}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={50}
+                              outerRadius={80}
+                              paddingAngle={2}
+                              dataKey="value"
+                              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                              labelLine={false}
+                            >
+                              {billsSummary.byCategory.map((_, index) => (
+                                <Cell 
+                                  key={`cell-${index}`} 
+                                  fill={[
+                                    '#10b981', '#3b82f6', '#f59e0b', '#ef4444', 
+                                    '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16',
+                                    '#f97316', '#6366f1', '#14b8a6'
+                                  ][index % 11]} 
+                                />
+                              ))}
+                            </Pie>
+                            <Tooltip 
+                              formatter={(value: any) => `${parseFloat(value).toLocaleString()} SAR`}
+                            />
+                            <Legend />
+                          </RechartsPieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : (
+                      <div className="h-64 flex items-center justify-center text-muted-foreground">
+                        {"No expense data available"}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Profitability Summary Card */}
+              <Card className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950" data-testid="card-profitability-summary">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calculator className="h-5 w-5" />
+                    {t.profitability || "Profitability Summary"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-6 md:grid-cols-4">
+                    <div className="text-center p-4 bg-white/50 dark:bg-black/20 rounded-lg">
+                      <p className="text-sm text-muted-foreground mb-1">{"Gross Revenue"}</p>
+                      <p className="text-2xl font-bold text-green-600">{formatCurrency(bssAnalysis.grossRevenue)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{"Before refunds"}</p>
+                    </div>
+                    <div className="text-center p-4 bg-white/50 dark:bg-black/20 rounded-lg">
+                      <p className="text-sm text-muted-foreground mb-1">{"Total Refunds"}</p>
+                      <p className="text-2xl font-bold text-orange-600">-{formatCurrency(bssAnalysis.totalRefunds)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{bssAnalysis.refundCount} refunds</p>
+                    </div>
+                    <div className="text-center p-4 bg-white/50 dark:bg-black/20 rounded-lg">
+                      <p className="text-sm text-muted-foreground mb-1">{t.operatingExpenses || "Operating Expenses"}</p>
+                      <p className="text-2xl font-bold text-red-600">-{formatCurrency(bssAnalysis.totalExpenses)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{bssAnalysis.totalBills} {t.companyBills?.toLowerCase() || "bills"}</p>
+                    </div>
+                    <div className="text-center p-4 bg-white/50 dark:bg-black/20 rounded-lg border-2 border-purple-200 dark:border-purple-800">
+                      <p className="text-sm text-muted-foreground mb-1">{t.netProfit}</p>
+                      <p className={`text-2xl font-bold ${parseFloat(bssAnalysis.netProfit) >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
+                        {formatCurrency(bssAnalysis.netProfit)}
+                      </p>
+                      <p className="text-xs font-medium mt-1">
+                        {t.profitMargin}: <span className={parseFloat(bssAnalysis.profitMargin) >= 0 ? 'text-green-600' : 'text-red-600'}>{bssAnalysis.profitMargin}%</span>
+                      </p>
                     </div>
                   </div>
                 </CardContent>
