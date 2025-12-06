@@ -372,12 +372,15 @@ export default function Recipes() {
     const item = inventoryItems.find(i => i.id === itemId);
     if (item) {
       const updated = [...ingredients];
+      const totalPrice = parseFloat(item.price);
+      const totalQuantity = parseFloat(item.quantity);
+      const unitPrice = totalQuantity > 0 ? totalPrice / totalQuantity : 0;
       updated[index] = {
         inventoryItemId: item.id,
         name: item.name,
         quantity: "",
         unit: item.unit,
-        unitPrice: parseFloat(item.price),
+        unitPrice: unitPrice,
       };
       setIngredients(updated);
     }

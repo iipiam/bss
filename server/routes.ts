@@ -353,10 +353,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
       const { restaurantId: _, ...safeData } = data;
       
-      // Check if price is being updated - need to update recipe costs
-      const priceChanged = safeData.price !== undefined;
+      // Check if price or quantity is being updated - need to update recipe costs (unit price = price / quantity)
+      const priceOrQuantityChanged = safeData.price !== undefined || safeData.quantity !== undefined;
       let oldItem: any = null;
-      if (priceChanged) {
+      if (priceOrQuantityChanged) {
         oldItem = await storage.getInventoryItem(req.params.id, restaurantId);
       }
       
@@ -365,18 +365,23 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(404).json({ error: "Item not found" });
       }
       
-      // If price changed, update all recipe costs that use this inventory item
-      if (priceChanged && oldItem && parseFloat(oldItem.price) !== parseFloat(item.price)) {
-        const newPrice = parseFloat(item.price);
-        const updatedRecipes = await storage.updateRecipeCostsForInventoryItem(req.params.id, restaurantId, newPrice);
+      // If price or quantity changed, update all recipe costs that use this inventory item
+      // Unit price is calculated as: price / quantity
+      if (priceOrQuantityChanged && oldItem) {
+        const oldUnitPrice = parseFloat(oldItem.quantity) > 0 ? parseFloat(oldItem.price) / parseFloat(oldItem.quantity) : 0;
+        const newUnitPrice = parseFloat(item.quantity) > 0 ? parseFloat(item.price) / parseFloat(item.quantity) : 0;
         
-        // Broadcast recipe cost update notification for real-time updates
-        if (updatedRecipes.length > 0) {
-          broadcastNotification({
-            type: 'recipe:costUpdated',
-            restaurantId,
-            updatedRecipeIds: updatedRecipes.map(r => r.id),
-          });
+        if (oldUnitPrice !== newUnitPrice) {
+          const updatedRecipes = await storage.updateRecipeCostsForInventoryItem(req.params.id, restaurantId, newUnitPrice);
+          
+          // Broadcast recipe cost update notification for real-time updates
+          if (updatedRecipes.length > 0) {
+            broadcastNotification({
+              type: 'recipe:costUpdated',
+              restaurantId,
+              updatedRecipeIds: updatedRecipes.map(r => r.id),
+            });
+          }
         }
       }
       
