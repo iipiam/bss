@@ -54,6 +54,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -104,6 +105,7 @@ const formatToast = (template: string | undefined, label: string | undefined): s
 
 const formSchema = insertInventoryItemSchema.omit({ restaurantId: true }).extend({
   quantity: z.coerce.number().positive("Quantity must be a positive number"),
+  referenceQuantity: z.coerce.number().positive("Reference quantity must be a positive number"),
   price: z.coerce.number().min(0, "Price must be zero or positive"),
 });
 
@@ -415,6 +417,7 @@ export default function Inventory() {
       category: "",
       quantity: 0,
       unit: "",
+      referenceQuantity: 1,
       price: 0,
       supplier: "",
       status: "In Stock",
@@ -517,6 +520,7 @@ export default function Inventory() {
         category: data.category,
         quantity: data.quantity.toFixed(2),
         unit: data.unit,
+        referenceQuantity: data.referenceQuantity.toFixed(2),
         price: data.price.toFixed(2),
         supplier: data.supplier,
         status: data.status,
@@ -549,6 +553,7 @@ export default function Inventory() {
         category: data.category,
         quantity: data.quantity.toFixed(2),
         unit: data.unit,
+        referenceQuantity: data.referenceQuantity.toFixed(2),
         price: data.price.toFixed(2),
         supplier: data.supplier,
         status: data.status,
@@ -664,6 +669,7 @@ export default function Inventory() {
   const handleEditItem = (item: InventoryItem) => {
     const quantity = parseFloat(item.quantity);
     const price = parseFloat(item.price);
+    const referenceQuantity = parseFloat(item.referenceQuantity || "1");
     if (isNaN(quantity)) {
       toast({
         title: "Invalid data",
@@ -679,6 +685,7 @@ export default function Inventory() {
       category: item.category,
       quantity,
       unit: item.unit,
+      referenceQuantity: isNaN(referenceQuantity) ? 1 : referenceQuantity,
       price: isNaN(price) ? 0 : price,
       supplier: item.supplier,
       status: item.status,
@@ -1036,7 +1043,7 @@ export default function Inventory() {
                         name="quantity"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Quantity</FormLabel>
+                            <FormLabel>{t.quantity || "Quantity"}</FormLabel>
                             <FormControl>
                               <Input {...field} type="number" step="0.01" placeholder="0.00" data-testid="input-item-quantity" />
                             </FormControl>
@@ -1046,18 +1053,37 @@ export default function Inventory() {
                       />
                       <FormField
                         control={form.control}
-                        name="price"
+                        name="referenceQuantity"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Price per Unit (SAR)</FormLabel>
+                            <FormLabel>{t.referenceQuantity || "Reference Quantity"}</FormLabel>
                             <FormControl>
-                              <Input {...field} type="number" step="0.01" placeholder="0.00" data-testid="input-item-price" />
+                              <Input {...field} type="number" step="0.01" placeholder="1" data-testid="input-item-reference-quantity" />
                             </FormControl>
+                            <FormDescription className="text-xs">
+                              {t.referenceQuantityHint || "Base unit for cost calculation (e.g., 1 kg)"}
+                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
+                    <FormField
+                      control={form.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t.totalPrice || "Total Price (SAR)"}</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" step="0.01" placeholder="0.00" data-testid="input-item-price" />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            {t.totalPriceHint || "Total price for the entire quantity"}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                       control={form.control}
                       name="supplier"
