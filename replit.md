@@ -32,7 +32,7 @@ Preferred communication style: Simple, everyday language.
 - **Analytics & Reporting**: Dashboard with DoD, WoW, MoM, YoY metrics, daily demand forecasting, peak hours analysis.
 - **ZATCA Compliance**: Bilingual PDF invoice generation (Arabic/English) with QR codes.
 - **Financial Management**: Delivery app cost calculation, PDF export for financial statements, Excel import/export.
-- **Management Modules**: CRUD for Customer, Menu Item (with discount, optional stock), Inventory (Excel import/export), Recipe (inventory-linked costing).
+- **Management Modules**: CRUD for Customer, Menu Item (with discount, optional stock), Inventory (Excel import/export), Recipe (inventory-linked costing). **Updated Dec 06, 2025**: Added reference quantity field to inventory for accurate unit price calculation (unitPrice = price / quantity). Recipe costs now automatically recalculate when either inventory price or quantity changes.
 - **Stock Management**: Real-time stock calculation and deduction on POS orders.
 - **Authentication & Subscriptions**: Subscription-based authentication with Commercial Registration, secure password recovery, and authenticated subscription invoice downloads. Centralized VAT-inclusive pricing module.
 - **Subscription Management**: Interactive dialogs for plan changes, dynamic pricing, and plan comparison.
