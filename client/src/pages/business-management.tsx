@@ -476,6 +476,98 @@ export default function BusinessManagement() {
     },
   });
 
+  // Edit Bill Dialog State
+  const [isEditBillDialogOpen, setIsEditBillDialogOpen] = useState(false);
+  const [billToEdit, setBillToEdit] = useState<CompanyBill | null>(null);
+  const [editBillForm, setEditBillForm] = useState({
+    billType: "rent" as "salaries" | "rent" | "utilities" | "software" | "marketing" | "equipment" | "internet" | "maintenance" | "legal" | "insurance" | "other",
+    vendor: "",
+    amount: "",
+    vatAmount: "",
+    totalAmount: "",
+    billDate: "",
+    dueDate: "",
+    status: "pending" as "pending" | "paid" | "overdue",
+    paymentPeriod: "monthly" as "one-time" | "weekly" | "monthly" | "quarterly" | "yearly",
+    description: "",
+    referenceNumber: "",
+  });
+
+  const openEditBillDialog = (bill: CompanyBill) => {
+    setBillToEdit(bill);
+    setEditBillForm({
+      billType: bill.billType as any,
+      vendor: bill.vendor || "",
+      amount: bill.amount || "",
+      vatAmount: bill.vatAmount || "",
+      totalAmount: bill.totalAmount || "",
+      billDate: bill.billDate ? new Date(bill.billDate).toISOString().split('T')[0] : "",
+      dueDate: bill.dueDate ? new Date(bill.dueDate).toISOString().split('T')[0] : "",
+      status: bill.status as any || "pending",
+      paymentPeriod: bill.paymentPeriod as any || "monthly",
+      description: bill.description || "",
+      referenceNumber: bill.referenceNumber || "",
+    });
+    setIsEditBillDialogOpen(true);
+  };
+
+  const calculateEditBillAmounts = (amount: string) => {
+    const amountNum = parseFloat(amount) || 0;
+    const vatNum = amountNum * 0.15;
+    const totalNum = amountNum + vatNum;
+    setEditBillForm(prev => ({
+      ...prev,
+      amount,
+      vatAmount: vatNum.toFixed(2),
+      totalAmount: totalNum.toFixed(2),
+    }));
+  };
+
+  const updateBillMutation = useMutation({
+    mutationFn: async (data: { billId: string; form: typeof editBillForm }) => {
+      const response = await fetch(`/api/it/business-operations/bills/${data.billId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          billType: data.form.billType,
+          vendor: data.form.vendor,
+          amount: data.form.amount,
+          vatAmount: data.form.vatAmount,
+          totalAmount: data.form.totalAmount,
+          billDate: data.form.billDate,
+          dueDate: data.form.dueDate || null,
+          status: data.form.status,
+          paymentPeriod: data.form.paymentPeriod,
+          description: data.form.description || null,
+          referenceNumber: data.form.referenceNumber || null,
+        }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update bill');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/it/business-operations/bills'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/it/business-operations/summary'] });
+      setIsEditBillDialogOpen(false);
+      setBillToEdit(null);
+      toast({
+        title: t.success || "Success",
+        description: t.billUpdated || "Bill updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message || "Failed to update bill",
+        variant: "destructive",
+      });
+    },
+  });
+
   const downloadPdfMutation = useMutation({
     mutationFn: async () => {
       const response = await fetch('/api/it/business-management/vat-statement/pdf', {
@@ -1837,15 +1929,25 @@ export default function BusinessManagement() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => deleteBillMutation.mutate(bill.id)}
-                              disabled={deleteBillMutation.isPending}
-                              data-testid={`button-delete-bill-${bill.id}`}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openEditBillDialog(bill)}
+                                data-testid={`button-edit-bill-${bill.id}`}
+                              >
+                                <Edit className="h-4 w-4 text-blue-500" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => deleteBillMutation.mutate(bill.id)}
+                                disabled={deleteBillMutation.isPending}
+                                data-testid={`button-delete-bill-${bill.id}`}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -2434,6 +2536,220 @@ export default function BusinessManagement() {
               {t.confirmDeleteBtn || "Confirm Delete"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Bill Dialog */}
+      <Dialog open={isEditBillDialogOpen} onOpenChange={setIsEditBillDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t.editBill || "Edit Bill"}</DialogTitle>
+            <DialogDescription>
+              {"Update the bill details"}
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (billToEdit) {
+                updateBillMutation.mutate({ billId: billToEdit.id, form: editBillForm });
+              }
+            }}
+            className="space-y-4"
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-billType">{t.billType || "Bill Type"} *</Label>
+                <Select
+                  value={editBillForm.billType}
+                  onValueChange={(value) => setEditBillForm(prev => ({ ...prev, billType: value as typeof prev.billType }))}
+                >
+                  <SelectTrigger data-testid="select-edit-bill-type">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="rent">{t.rent || "Rent"}</SelectItem>
+                    <SelectItem value="utilities">{t.utilities || "Utilities"}</SelectItem>
+                    <SelectItem value="salaries">{t.salaries || "Salaries"}</SelectItem>
+                    <SelectItem value="marketing">{t.marketingExpense || "Marketing"}</SelectItem>
+                    <SelectItem value="software">{t.softwareExpense || "Software"}</SelectItem>
+                    <SelectItem value="equipment">{t.equipment || "Equipment"}</SelectItem>
+                    <SelectItem value="internet">{t.internet || "Internet"}</SelectItem>
+                    <SelectItem value="maintenance">{t.maintenance || "Maintenance"}</SelectItem>
+                    <SelectItem value="legal">{t.legal || "Legal"}</SelectItem>
+                    <SelectItem value="insurance">{t.insuranceExpense || "Insurance"}</SelectItem>
+                    <SelectItem value="other">{t.other || "Other"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-vendor">{t.vendor || "Vendor"} *</Label>
+                <Input
+                  id="edit-vendor"
+                  value={editBillForm.vendor}
+                  onChange={(e) => setEditBillForm(prev => ({ ...prev, vendor: e.target.value }))}
+                  placeholder="Enter vendor name"
+                  required
+                  data-testid="input-edit-bill-vendor"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="edit-amount">{t.amount || "Amount"} (SAR) *</Label>
+                <Input
+                  id="edit-amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editBillForm.amount}
+                  onChange={(e) => calculateEditBillAmounts(e.target.value)}
+                  placeholder="0.00"
+                  required
+                  data-testid="input-edit-bill-amount"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-vatAmount">{t.vatAmount || "VAT"} (15%)</Label>
+                <Input
+                  id="edit-vatAmount"
+                  type="number"
+                  step="0.01"
+                  value={editBillForm.vatAmount}
+                  onChange={(e) => setEditBillForm(prev => ({ 
+                    ...prev, 
+                    vatAmount: e.target.value,
+                    totalAmount: (parseFloat(prev.amount) + parseFloat(e.target.value || '0')).toFixed(2)
+                  }))}
+                  placeholder="0.00"
+                  data-testid="input-edit-bill-vat"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-totalAmount">{t.total || "Total"} (SAR)</Label>
+                <Input
+                  id="edit-totalAmount"
+                  type="number"
+                  step="0.01"
+                  value={editBillForm.totalAmount}
+                  readOnly
+                  className="bg-muted"
+                  data-testid="input-edit-bill-total"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-billDate">{t.billDate || "Bill Date"} *</Label>
+                <Input
+                  id="edit-billDate"
+                  type="date"
+                  value={editBillForm.billDate}
+                  onChange={(e) => setEditBillForm(prev => ({ ...prev, billDate: e.target.value }))}
+                  required
+                  data-testid="input-edit-bill-date"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-dueDate">{t.dueDate || "Due Date"}</Label>
+                <Input
+                  id="edit-dueDate"
+                  type="date"
+                  value={editBillForm.dueDate}
+                  onChange={(e) => setEditBillForm(prev => ({ ...prev, dueDate: e.target.value }))}
+                  data-testid="input-edit-bill-due-date"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-status">{t.status || "Status"}</Label>
+                <Select
+                  value={editBillForm.status}
+                  onValueChange={(value) => setEditBillForm(prev => ({ ...prev, status: value as typeof prev.status }))}
+                >
+                  <SelectTrigger data-testid="select-edit-bill-status">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">{t.pending || "Pending"}</SelectItem>
+                    <SelectItem value="paid">{t.paid || "Paid"}</SelectItem>
+                    <SelectItem value="overdue">{t.overdue || "Overdue"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-paymentPeriod">{t.paymentPeriod || "Payment Period"}</Label>
+                <Select
+                  value={editBillForm.paymentPeriod}
+                  onValueChange={(value) => setEditBillForm(prev => ({ ...prev, paymentPeriod: value as typeof prev.paymentPeriod }))}
+                >
+                  <SelectTrigger data-testid="select-edit-bill-payment-period">
+                    <SelectValue placeholder="Select period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="one-time">{t.oneTime || "One-time"}</SelectItem>
+                    <SelectItem value="weekly">{t.weekly || "Weekly"}</SelectItem>
+                    <SelectItem value="monthly">{t.monthly || "Monthly"}</SelectItem>
+                    <SelectItem value="quarterly">{t.quarterly || "Quarterly"}</SelectItem>
+                    <SelectItem value="yearly">{t.yearly || "Yearly"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-referenceNumber">{t.referenceNumber || "Reference Number"}</Label>
+              <Input
+                id="edit-referenceNumber"
+                value={editBillForm.referenceNumber}
+                onChange={(e) => setEditBillForm(prev => ({ ...prev, referenceNumber: e.target.value }))}
+                placeholder="Invoice or reference number"
+                data-testid="input-edit-bill-reference"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">{t.description || "Description"}</Label>
+              <Textarea
+                id="edit-description"
+                value={editBillForm.description}
+                onChange={(e) => setEditBillForm(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Optional description"
+                rows={3}
+                data-testid="input-edit-bill-description"
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsEditBillDialogOpen(false);
+                  setBillToEdit(null);
+                }}
+                data-testid="button-cancel-edit-bill"
+              >
+                {t.cancel || "Cancel"}
+              </Button>
+              <Button
+                type="submit"
+                disabled={updateBillMutation.isPending || !editBillForm.vendor || !editBillForm.amount}
+                data-testid="button-submit-edit-bill"
+              >
+                {updateBillMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Edit className="h-4 w-4 mr-2" />
+                )}
+                {t.saveChanges || "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
