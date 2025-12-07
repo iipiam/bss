@@ -184,6 +184,11 @@ export interface Translations {
   inStock: string;
   lowStock: string;
   outOfStock: string;
+  expirationDays: string;
+  expirationDaysHint: string;
+  totalInventoryValue: string;
+  totalItems: string;
+  expiringSoon: string;
   
   // Notifications
   newOrder: string;
@@ -1577,6 +1582,11 @@ export const translations: Record<Language, Translations> = {
     inStock: 'In Stock',
     lowStock: 'Low Stock',
     outOfStock: 'Out of Stock',
+    expirationDays: 'Expiration Days',
+    expirationDaysHint: 'Number of days until this item expires (leave empty if no expiration)',
+    totalInventoryValue: 'Total Inventory Value',
+    totalItems: 'Items',
+    expiringSoon: 'Expiring Soon',
     
     // Notifications
     newOrder: 'New Order',
@@ -4368,6 +4378,11 @@ export const translations: Record<Language, Translations> = {
     inStock: 'In Stock',
     lowStock: 'Low Stock',
     outOfStock: 'Out of Stock',
+    expirationDays: 'Expiration Days',
+    expirationDaysHint: 'Number of days until this item expires (leave empty if no expiration)',
+    totalInventoryValue: 'Total Inventory Value',
+    totalItems: 'Items',
+    expiringSoon: 'Expiring Soon',
     
     // Notifications
     newOrder: 'New Order',
@@ -5750,6 +5765,11 @@ export const translations: Record<Language, Translations> = {
     inStock: 'In Stock',
     lowStock: 'Low Stock',
     outOfStock: 'Out of Stock',
+    expirationDays: 'Expiration Days',
+    expirationDaysHint: 'Number of days until this item expires (leave empty if no expiration)',
+    totalInventoryValue: 'Total Inventory Value',
+    totalItems: 'Items',
+    expiringSoon: 'Expiring Soon',
     
     // Notifications
     newOrder: 'New Order',
@@ -7132,6 +7152,11 @@ export const translations: Record<Language, Translations> = {
     inStock: 'In Stock',
     lowStock: 'Low Stock',
     outOfStock: 'Out of Stock',
+    expirationDays: 'Expiration Days',
+    expirationDaysHint: 'Number of days until this item expires (leave empty if no expiration)',
+    totalInventoryValue: 'Total Inventory Value',
+    totalItems: 'Items',
+    expiringSoon: 'Expiring Soon',
     
     // Notifications
     newOrder: 'New Order',
@@ -8514,6 +8539,11 @@ export const translations: Record<Language, Translations> = {
     inStock: 'In Stock',
     lowStock: 'Low Stock',
     outOfStock: 'Out of Stock',
+    expirationDays: 'Expiration Days',
+    expirationDaysHint: 'Number of days until this item expires (leave empty if no expiration)',
+    totalInventoryValue: 'Total Inventory Value',
+    totalItems: 'Items',
+    expiringSoon: 'Expiring Soon',
     
     // Notifications
     newOrder: 'New Order',
