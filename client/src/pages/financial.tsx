@@ -270,6 +270,35 @@ export default function Financial() {
     }
   };
 
+  const handleExportExpensesPDF = async () => {
+    try {
+      const response = await fetch(`/api/export/expenses-pdf?year=${selectedYear}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Export failed');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `expenses-report-${selectedYear}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: "PDF Export Successful",
+        description: `Expenses report for ${selectedYear} exported to PDF`,
+      });
+    } catch (error) {
+      toast({
+        title: t.exportFailed,
+        description: error instanceof Error ? error.message : "Failed to export expenses PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
@@ -421,6 +450,14 @@ export default function Financial() {
         </TabsContent>
 
         <TabsContent value="expenses" className="space-y-4">
+          {/* Export Button */}
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={handleExportExpensesPDF} data-testid="button-export-expenses-pdf">
+              <FileDown className="h-4 w-4 mr-2" />
+              Export PDF
+            </Button>
+          </div>
+          
           {/* Expense Summary Cards */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <Card>

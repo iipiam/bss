@@ -950,6 +950,426 @@ export async function generateFinancialStatementPDF(data: FinancialStatementData
   }
 }
 
+interface ExpensesPDFData {
+  companyName: string;
+  companyVAT: string;
+  year: string;
+  totalExpenses: number;
+  inventoryValue: number;
+  totalBillsAmount: number;
+  paidBillsAmount: number;
+  pendingBillsAmount: number;
+  billsByCategory: Array<{ category: string; amount: number }>;
+  monthlyExpenses: Array<{ month: string; amount: number }>;
+  breakEvenAnalysis?: {
+    fixedCosts: number;
+    variableCostsPerUnit: number;
+    sellingPricePerUnit: number;
+    contributionMarginPerUnit: number;
+    contributionMarginTotal: number;
+    breakEvenUnits: number;
+    breakEvenRevenue: number;
+    marginOfSafety: number;
+    currentRevenue: number;
+    unitsSold: number;
+    isProfitable: boolean;
+  };
+}
+
+export async function generateExpensesPDF(data: ExpensesPDFData): Promise<Buffer> {
+  const escapedCompanyName = escapeHtml(data.companyName);
+  const escapedCompanyVAT = escapeHtml(data.companyVAT);
+  const escapedYear = escapeHtml(data.year);
+
+  const bep = data.breakEvenAnalysis;
+  
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background: white;
+      padding: 40px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      border-bottom: 3px solid #dc2626;
+      padding-bottom: 20px;
+    }
+    
+    .company-name {
+      font-size: 32px;
+      font-weight: 700;
+      color: #dc2626;
+      margin-bottom: 10px;
+    }
+    
+    .document-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+    
+    .year {
+      font-size: 18px;
+      color: #6b7280;
+    }
+    
+    .meta-info {
+      margin-bottom: 30px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    
+    .summary-box {
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 8px;
+      margin-bottom: 40px;
+    }
+    
+    .summary-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    
+    .summary-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 6px;
+    }
+    
+    .summary-label {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-bottom: 4px;
+    }
+    
+    .summary-value {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    
+    .section {
+      margin-bottom: 30px;
+    }
+    
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #991b1b;
+      margin-bottom: 15px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    
+    .data-table thead {
+      background: #f3f4f6;
+    }
+    
+    .data-table th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #374151;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .data-table th.text-right {
+      text-align: right;
+    }
+    
+    .data-table tbody tr:nth-child(even) {
+      background: #f9fafb;
+    }
+    
+    .data-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .data-table td.text-right {
+      text-align: right;
+    }
+    
+    .data-table tfoot {
+      font-weight: 700;
+      background: #f3f4f6;
+    }
+    
+    .data-table tfoot td {
+      padding: 12px;
+      border-top: 2px solid #dc2626;
+    }
+    
+    .bep-box {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: white;
+      padding: 25px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    
+    .bep-box.loss {
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    }
+    
+    .bep-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 15px;
+    }
+    
+    .bep-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+    }
+    
+    .bep-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 12px;
+      border-radius: 6px;
+    }
+    
+    .bep-label {
+      font-size: 11px;
+      opacity: 0.9;
+      margin-bottom: 4px;
+    }
+    
+    .bep-value {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+      font-size: 11px;
+      color: #6b7280;
+    }
+    
+    .page-break {
+      page-break-before: always;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="company-name">${escapedCompanyName}</div>
+    <div class="document-title">Expenses Report</div>
+    <div class="year">Year ${escapedYear}</div>
+  </div>
+  
+  <div class="meta-info">
+    <div>VAT Number: ${escapedCompanyVAT}</div>
+    <div>Generated: ${new Date().toLocaleDateString('en-GB')}</div>
+  </div>
+  
+  <div class="summary-box">
+    <div class="summary-title">Annual Expenses Summary</div>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="summary-label">Total Expenses</div>
+        <div class="summary-value">${data.totalExpenses.toFixed(2)} SAR</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Inventory Value</div>
+        <div class="summary-value">${data.inventoryValue.toFixed(2)} SAR</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Bills Total</div>
+        <div class="summary-value">${data.totalBillsAmount.toFixed(2)} SAR</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Paid Bills</div>
+        <div class="summary-value">${data.paidBillsAmount.toFixed(2)} SAR</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Pending Bills</div>
+        <div class="summary-value">${data.pendingBillsAmount.toFixed(2)} SAR</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Payment Rate</div>
+        <div class="summary-value">${((data.paidBillsAmount / data.totalBillsAmount) * 100 || 0).toFixed(1)}%</div>
+      </div>
+    </div>
+  </div>
+  
+  ${bep ? `
+  <div class="bep-box ${bep.isProfitable ? '' : 'loss'}">
+    <div class="bep-title">Break-Even Analysis</div>
+    <div class="bep-grid">
+      <div class="bep-item">
+        <div class="bep-label">Fixed Costs</div>
+        <div class="bep-value">${bep.fixedCosts.toFixed(2)} SAR</div>
+      </div>
+      <div class="bep-item">
+        <div class="bep-label">Variable Costs/Unit</div>
+        <div class="bep-value">${bep.variableCostsPerUnit.toFixed(2)} SAR</div>
+      </div>
+      <div class="bep-item">
+        <div class="bep-label">Selling Price/Unit</div>
+        <div class="bep-value">${bep.sellingPricePerUnit.toFixed(2)} SAR</div>
+      </div>
+      <div class="bep-item">
+        <div class="bep-label">Contribution Margin/Unit</div>
+        <div class="bep-value">${bep.contributionMarginPerUnit.toFixed(2)} SAR</div>
+      </div>
+      <div class="bep-item">
+        <div class="bep-label">Total Contribution Margin</div>
+        <div class="bep-value">${bep.contributionMarginTotal.toFixed(2)} SAR</div>
+      </div>
+      <div class="bep-item">
+        <div class="bep-label">Break-Even Units</div>
+        <div class="bep-value">${Math.ceil(bep.breakEvenUnits)} units</div>
+      </div>
+      <div class="bep-item">
+        <div class="bep-label">Break-Even Revenue</div>
+        <div class="bep-value">${bep.breakEvenRevenue.toFixed(2)} SAR</div>
+      </div>
+      <div class="bep-item">
+        <div class="bep-label">Current Revenue</div>
+        <div class="bep-value">${bep.currentRevenue.toFixed(2)} SAR</div>
+      </div>
+      <div class="bep-item">
+        <div class="bep-label">Margin of Safety</div>
+        <div class="bep-value">${bep.marginOfSafety.toFixed(1)}%</div>
+      </div>
+      <div class="bep-item">
+        <div class="bep-label">Units Sold</div>
+        <div class="bep-value">${bep.unitsSold} units</div>
+      </div>
+      <div class="bep-item">
+        <div class="bep-label">Status</div>
+        <div class="bep-value">${bep.isProfitable ? 'PROFITABLE' : 'BELOW BEP'}</div>
+      </div>
+    </div>
+  </div>
+  ` : ''}
+  
+  <div class="section">
+    <div class="section-title">Expenses by Category</div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th class="text-right">Amount (SAR)</th>
+          <th class="text-right">% of Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.billsByCategory.map(cat => `
+          <tr>
+            <td>${escapeHtml(cat.category)}</td>
+            <td class="text-right">${cat.amount.toFixed(2)}</td>
+            <td class="text-right">${((cat.amount / data.totalBillsAmount) * 100 || 0).toFixed(1)}%</td>
+          </tr>
+        `).join('')}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>TOTAL</td>
+          <td class="text-right">${data.totalBillsAmount.toFixed(2)}</td>
+          <td class="text-right">100%</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  
+  <div class="section">
+    <div class="section-title">Monthly Operating Expenses</div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th class="text-right">Amount (SAR)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.monthlyExpenses.map(m => `
+          <tr>
+            <td>${escapeHtml(m.month)}</td>
+            <td class="text-right">${m.amount.toFixed(2)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>TOTAL</td>
+          <td class="text-right">${data.monthlyExpenses.reduce((sum, m) => sum + m.amount, 0).toFixed(2)}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  
+  <div class="footer">
+    <div>BlindSpot System (BSS) Expenses Report</div>
+    <div>Generated on ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB')}</div>
+  </div>
+</body>
+</html>
+  `;
+
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+
+  try {
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '15mm',
+        right: '15mm',
+        bottom: '15mm',
+        left: '15mm'
+      }
+    });
+
+    return Buffer.from(pdfBuffer);
+  } finally {
+    await page.close();
+  }
+}
+
 // Generate ZATCA-compliant subscription invoice
 export async function generateSubscriptionInvoice(data: {
   serialNumber: string;

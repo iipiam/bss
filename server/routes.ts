@@ -3983,6 +3983,126 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Export Expenses PDF
+  app.get("/api/export/expenses-pdf", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const year = req.query.year as string || new Date().getFullYear().toString();
+      
+      const settings = await storage.getSettings(restaurantId);
+      
+      // Fetch all required data
+      const bills = await storage.getBills({ restaurantId });
+      const inventory = await storage.getInventoryItems({ restaurantId });
+      const transactions = await storage.getTransactions({ restaurantId });
+      
+      // Filter by year
+      const yearBills = bills.filter(b => {
+        const dueDate = new Date(b.dueDate);
+        return dueDate.getFullYear() === parseInt(year);
+      });
+      
+      const yearTransactions = transactions.filter(t => 
+        new Date(t.createdAt).getFullYear() === parseInt(year)
+      );
+      
+      // Calculate inventory value
+      const inventoryValue = inventory.reduce((sum, item) => {
+        return sum + parseFloat(item.price) * parseFloat(item.quantity);
+      }, 0);
+      
+      // Calculate bills totals
+      const totalBillsAmount = yearBills.reduce((sum, b) => sum + parseFloat(b.amount), 0);
+      const paidBillsAmount = yearBills
+        .filter(b => b.status === 'paid')
+        .reduce((sum, b) => sum + parseFloat(b.amount), 0);
+      const pendingBillsAmount = yearBills
+        .filter(b => b.status !== 'paid')
+        .reduce((sum, b) => sum + parseFloat(b.amount), 0);
+      
+      // Aggregate bills by category
+      const categoryMap = new Map<string, number>();
+      yearBills.forEach(b => {
+        const cat = b.category || 'Other';
+        categoryMap.set(cat, (categoryMap.get(cat) || 0) + parseFloat(b.amount));
+      });
+      const billsByCategory = Array.from(categoryMap.entries())
+        .map(([category, amount]) => ({ category, amount }))
+        .sort((a, b) => b.amount - a.amount);
+      
+      // Calculate monthly operating expenses (exclude one-time and foundational)
+      const monthlyExpenses = Array.from({ length: 12 }, (_, i) => {
+        const monthBills = yearBills.filter(b => {
+          const dueDate = new Date(b.dueDate);
+          return dueDate.getMonth() === i && 
+                 b.paymentPeriod !== 'one-time' && 
+                 b.billType !== 'foundational';
+        });
+        const amount = monthBills.reduce((sum, b) => sum + parseFloat(b.amount), 0);
+        return {
+          month: new Date(parseInt(year), i).toLocaleString('default', { month: 'long' }),
+          amount
+        };
+      });
+      
+      // Calculate BEP data
+      const totalRevenue = yearTransactions.reduce((sum, t) => sum + parseFloat(t.subtotal), 0);
+      const unitsSold = yearTransactions.reduce((sum, t) => {
+        const itemCount = t.items?.length || 0;
+        return sum + itemCount;
+      }, 0);
+      
+      const fixedCosts = totalBillsAmount;
+      const variableCostsPerUnit = unitsSold > 0 ? inventoryValue / unitsSold : 0;
+      const sellingPricePerUnit = unitsSold > 0 ? totalRevenue / unitsSold : 0;
+      const contributionMarginPerUnit = sellingPricePerUnit - variableCostsPerUnit;
+      const contributionMarginTotal = unitsSold * contributionMarginPerUnit;
+      const breakEvenUnits = contributionMarginPerUnit > 0 ? fixedCosts / contributionMarginPerUnit : 0;
+      const breakEvenRevenue = breakEvenUnits * sellingPricePerUnit;
+      const marginOfSafety = totalRevenue > 0 && totalRevenue > breakEvenRevenue 
+        ? ((totalRevenue - breakEvenRevenue) / totalRevenue) * 100 
+        : 0;
+      const isProfitable = totalRevenue >= breakEvenRevenue;
+      
+      const totalExpenses = totalBillsAmount + inventoryValue;
+      
+      const { generateExpensesPDF } = await import('./invoice.js');
+      
+      const pdfBuffer = await generateExpensesPDF({
+        companyName: settings?.restaurantName || "BlindSpot System (BSS)",
+        companyVAT: settings?.vatNumber || "",
+        year,
+        totalExpenses,
+        inventoryValue,
+        totalBillsAmount,
+        paidBillsAmount,
+        pendingBillsAmount,
+        billsByCategory,
+        monthlyExpenses,
+        breakEvenAnalysis: {
+          fixedCosts,
+          variableCostsPerUnit,
+          sellingPricePerUnit,
+          contributionMarginPerUnit,
+          contributionMarginTotal,
+          breakEvenUnits,
+          breakEvenRevenue,
+          marginOfSafety,
+          currentRevenue: totalRevenue,
+          unitsSold,
+          isProfitable
+        }
+      });
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=expenses-report-${year}.pdf`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Expenses PDF export error:", error);
+      res.status(500).json({ error: "Failed to export expenses report" });
+    }
+  });
+
   // Download individual invoice PDF
   app.get("/api/invoices/:id/download", requireAuth, requireRestaurant, async (req, res) => {
     try {
