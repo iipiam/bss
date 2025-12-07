@@ -173,6 +173,8 @@ export interface Translations {
   quantity: string;
   referenceQuantity: string;
   referenceQuantityHint: string;
+  pricePerUnit: string;
+  pricePerUnitHint: string;
   totalPrice: string;
   totalPriceHint: string;
   unit: string;
@@ -1562,6 +1564,8 @@ export const translations: Record<Language, Translations> = {
     quantity: 'Quantity',
     referenceQuantity: 'Reference Quantity',
     referenceQuantityHint: 'The reference quantity for calculating the unit price (e.g., 1 kg, 1 unit)',
+    pricePerUnit: 'Price per Unit (SAR)',
+    pricePerUnitHint: 'Automatically calculated: Total Price ÷ Quantity',
     totalPrice: 'Total Price',
     totalPriceHint: 'Total price for the entire stock quantity',
     unit: 'Unit',
@@ -4348,6 +4352,8 @@ export const translations: Record<Language, Translations> = {
     quantity: 'Quantity',
     referenceQuantity: 'Reference Quantity',
     referenceQuantityHint: 'The reference quantity for calculating the unit price (e.g., 1 kg, 1 unit)',
+    pricePerUnit: 'Price per Unit (SAR)',
+    pricePerUnitHint: 'Automatically calculated: Total Price ÷ Quantity',
     totalPrice: 'Total Price',
     totalPriceHint: 'Total price for the entire stock quantity',
     unit: 'Unit',
@@ -5726,6 +5732,8 @@ export const translations: Record<Language, Translations> = {
     quantity: 'Quantity',
     referenceQuantity: 'Reference Quantity',
     referenceQuantityHint: 'The reference quantity for calculating the unit price (e.g., 1 kg, 1 unit)',
+    pricePerUnit: 'Price per Unit (SAR)',
+    pricePerUnitHint: 'Automatically calculated: Total Price ÷ Quantity',
     totalPrice: 'Total Price',
     totalPriceHint: 'Total price for the entire stock quantity',
     unit: 'Unit',
@@ -7104,6 +7112,8 @@ export const translations: Record<Language, Translations> = {
     quantity: 'Quantity',
     referenceQuantity: 'Reference Quantity',
     referenceQuantityHint: 'The reference quantity for calculating the unit price (e.g., 1 kg, 1 unit)',
+    pricePerUnit: 'Price per Unit (SAR)',
+    pricePerUnitHint: 'Automatically calculated: Total Price ÷ Quantity',
     totalPrice: 'Total Price',
     totalPriceHint: 'Total price for the entire stock quantity',
     unit: 'Unit',
@@ -8482,6 +8492,8 @@ export const translations: Record<Language, Translations> = {
     quantity: 'Quantity',
     referenceQuantity: 'Reference Quantity',
     referenceQuantityHint: 'The reference quantity for calculating the unit price (e.g., 1 kg, 1 unit)',
+    pricePerUnit: 'Price per Unit (SAR)',
+    pricePerUnitHint: 'Automatically calculated: Total Price ÷ Quantity',
     totalPrice: 'Total Price',
     totalPriceHint: 'Total price for the entire stock quantity',
     unit: 'Unit',

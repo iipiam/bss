@@ -425,6 +425,18 @@ export default function Inventory() {
     },
   });
 
+  // Watch form values for calculating price per unit
+  const watchedPrice = form.watch("price");
+  const watchedQuantity = form.watch("quantity");
+  const watchedUnit = form.watch("unit");
+  
+  // Calculate price per unit
+  const calculatedUnitPrice = (() => {
+    const price = parseFloat(String(watchedPrice)) || 0;
+    const quantity = parseFloat(String(watchedQuantity)) || 0;
+    return quantity > 0 ? (price / quantity).toFixed(2) : "0.00";
+  })();
+
   const addonFormSchema = createAddonFormSchema(t);
 
   const addonForm = useForm<AddonFormValues>({
@@ -1068,6 +1080,25 @@ export default function Inventory() {
                         )}
                       />
                     </div>
+                    
+                    {/* Price per Unit - Calculated automatically */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">{t.pricePerUnit || "Price per Unit (SAR)"}</label>
+                      <div className="flex items-center gap-2">
+                        <Input 
+                          value={calculatedUnitPrice} 
+                          readOnly 
+                          disabled
+                          className="bg-muted"
+                          data-testid="display-price-per-unit"
+                        />
+                        {watchedUnit && <span className="text-sm text-muted-foreground">/ {watchedUnit}</span>}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {t.pricePerUnitHint || "Automatically calculated: Total Price ÷ Quantity"}
+                      </p>
+                    </div>
+                    
                     <FormField
                       control={form.control}
                       name="price"
