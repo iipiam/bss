@@ -6,7 +6,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Edit, Trash2, GripVertical, Calculator } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Search, Edit, Trash2, GripVertical, Calculator, TrendingUp, FileText } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +19,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeviceLayout } from "@/lib/mobileLayout";
+import type { DeliveryProfitability } from "@shared/schema";
 import {
   DndContext,
   closestCenter,
@@ -471,6 +476,194 @@ export default function DeliveryApps() {
   const exampleApp = filteredApps[0];
   const calculation = calculateExample(testOrderAmount, exampleApp);
 
+  // Profitability Entries State
+  const [profitabilityYear, setProfitabilityYear] = useState(new Date().getFullYear());
+  const [profitabilityDialogOpen, setProfitabilityDialogOpen] = useState(false);
+  const [editingProfitability, setEditingProfitability] = useState<DeliveryProfitability | null>(null);
+  const [deletingProfitability, setDeletingProfitability] = useState<DeliveryProfitability | null>(null);
+
+  // Profitability form schema
+  const profitabilityFormSchema = z.object({
+    deliveryAppId: z.string().min(1, "Delivery app is required"),
+    year: z.coerce.number().min(2020, "Year must be 2020 or later").max(2100, "Year must be 2100 or earlier"),
+    month: z.coerce.number().min(1, "Month is required").max(12, "Month must be 1-12"),
+    orders: z.coerce.number().min(0, "Orders must be 0 or higher"),
+    sales: z.coerce.number().min(0, "Sales must be 0 or higher"),
+    revenue: z.coerce.number().min(0, "Revenue must be 0 or higher"),
+    commission: z.coerce.number().min(0, "Commission must be 0 or higher"),
+    banking: z.coerce.number().min(0, "Banking must be 0 or higher"),
+    subsidy: z.coerce.number().min(0, "Subsidy must be 0 or higher"),
+    posFees: z.coerce.number().min(0, "POS Fees must be 0 or higher"),
+    netEarnings: z.coerce.number(),
+    notes: z.string().optional(),
+  });
+
+  type ProfitabilityFormValues = z.infer<typeof profitabilityFormSchema>;
+
+  const profitabilityForm = useForm<ProfitabilityFormValues>({
+    resolver: zodResolver(profitabilityFormSchema),
+    defaultValues: {
+      deliveryAppId: "",
+      year: new Date().getFullYear(),
+      month: new Date().getMonth() + 1,
+      orders: 0,
+      sales: 0,
+      revenue: 0,
+      commission: 0,
+      banking: 0,
+      subsidy: 0,
+      posFees: 0,
+      netEarnings: 0,
+      notes: "",
+    },
+  });
+
+  // Fetch profitability entries
+  const { data: profitabilityEntries = [], isLoading: isLoadingProfitability } = useQuery<DeliveryProfitability[]>({
+    queryKey: ["/api/delivery-profitability", { year: profitabilityYear }],
+    queryFn: async () => {
+      const res = await fetch(`/api/delivery-profitability?year=${profitabilityYear}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch profitability entries");
+      return res.json();
+    },
+  });
+
+  // Create profitability mutation
+  const createProfitabilityMutation = useMutation({
+    mutationFn: async (data: ProfitabilityFormValues) => {
+      return await apiRequest("POST", "/api/delivery-profitability", {
+        ...data,
+        sales: data.sales.toFixed(2),
+        revenue: data.revenue.toFixed(2),
+        commission: data.commission.toFixed(2),
+        banking: data.banking.toFixed(2),
+        subsidy: data.subsidy.toFixed(2),
+        posFees: data.posFees.toFixed(2),
+        netEarnings: data.netEarnings.toFixed(2),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/delivery-profitability"] });
+      setProfitabilityDialogOpen(false);
+      profitabilityForm.reset();
+      toast({
+        title: "Profitability entry created",
+        description: "The entry has been added successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to create entry",
+        description: error.message || "Could not create profitability entry",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update profitability mutation
+  const updateProfitabilityMutation = useMutation({
+    mutationFn: async (data: ProfitabilityFormValues & { id: string }) => {
+      return await apiRequest("PATCH", `/api/delivery-profitability/${data.id}`, {
+        deliveryAppId: data.deliveryAppId,
+        year: data.year,
+        month: data.month,
+        orders: data.orders,
+        sales: data.sales.toFixed(2),
+        revenue: data.revenue.toFixed(2),
+        commission: data.commission.toFixed(2),
+        banking: data.banking.toFixed(2),
+        subsidy: data.subsidy.toFixed(2),
+        posFees: data.posFees.toFixed(2),
+        netEarnings: data.netEarnings.toFixed(2),
+        notes: data.notes,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/delivery-profitability"] });
+      setProfitabilityDialogOpen(false);
+      setEditingProfitability(null);
+      profitabilityForm.reset();
+      toast({
+        title: "Profitability entry updated",
+        description: "The entry has been updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to update entry",
+        description: error.message || "Could not update profitability entry",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete profitability mutation
+  const deleteProfitabilityMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/delivery-profitability/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/delivery-profitability"] });
+      setDeletingProfitability(null);
+      toast({
+        title: "Profitability entry deleted",
+        description: "The entry has been removed successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to delete entry",
+        description: error.message || "Could not delete profitability entry",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleProfitabilitySubmit = (data: ProfitabilityFormValues) => {
+    if (editingProfitability) {
+      updateProfitabilityMutation.mutate({ ...data, id: editingProfitability.id });
+    } else {
+      createProfitabilityMutation.mutate(data);
+    }
+  };
+
+  const handleEditProfitability = (entry: DeliveryProfitability) => {
+    setEditingProfitability(entry);
+    profitabilityForm.reset({
+      deliveryAppId: entry.deliveryAppId,
+      year: entry.year,
+      month: entry.month,
+      orders: entry.orders,
+      sales: parseFloat(entry.sales),
+      revenue: parseFloat(entry.revenue),
+      commission: parseFloat(entry.commission),
+      banking: parseFloat(entry.banking),
+      subsidy: parseFloat(entry.subsidy),
+      posFees: parseFloat(entry.posFees),
+      netEarnings: parseFloat(entry.netEarnings),
+      notes: entry.notes || "",
+    });
+    setProfitabilityDialogOpen(true);
+  };
+
+  const handleProfitabilityDialogChange = (isOpen: boolean) => {
+    setProfitabilityDialogOpen(isOpen);
+    if (!isOpen) {
+      setEditingProfitability(null);
+      profitabilityForm.reset();
+    }
+  };
+
+  const getDeliveryAppName = (appId: string) => {
+    const app = deliveryApps.find(a => a.id === appId);
+    return app?.name || "Unknown App";
+  };
+
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
   return (
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div className="flex items-center justify-between gap-4">
@@ -478,7 +671,23 @@ export default function DeliveryApps() {
           <h1 className={`${layout.text3Xl} font-bold`}>{t.deliveryApps}</h1>
           <p className="text-muted-foreground mt-1">Manage delivery platform commissions and fees</p>
         </div>
-        <Dialog open={open} onOpenChange={handleOpenChange}>
+      </div>
+
+      <Tabs defaultValue="apps" className="space-y-4" data-testid="tabs-delivery">
+        <TabsList>
+          <TabsTrigger value="apps" data-testid="tab-delivery-apps">
+            <TrendingUp className="h-4 w-4 mr-2" />
+            Delivery Apps
+          </TabsTrigger>
+          <TabsTrigger value="profitability" data-testid="tab-profitability-entries">
+            <FileText className="h-4 w-4 mr-2" />
+            Profitability Entries
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="apps" className="space-y-4">
+          <div className="flex justify-end">
+            <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
             <Button data-testid="button-add-delivery-app">
               <Plus className="h-4 w-4 mr-2" />
@@ -810,6 +1019,322 @@ export default function DeliveryApps() {
           </SortableContext>
         </DndContext>
       )}
+        </TabsContent>
+
+        <TabsContent value="profitability" className="space-y-4">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Year:</label>
+              <Select
+                value={profitabilityYear.toString()}
+                onValueChange={(val) => setProfitabilityYear(parseInt(val))}
+              >
+                <SelectTrigger className="w-[120px]" data-testid="select-profitability-year">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i).map((year) => (
+                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Dialog open={profitabilityDialogOpen} onOpenChange={handleProfitabilityDialogChange}>
+              <DialogTrigger asChild>
+                <Button data-testid="button-add-profitability">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Entry
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[90vh] overflow-y-auto max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>{editingProfitability ? "Edit Profitability Entry" : "Add Profitability Entry"}</DialogTitle>
+                  <DialogDescription>
+                    {editingProfitability ? "Update the profitability data for this period" : "Enter profitability data for a delivery app"}
+                  </DialogDescription>
+                </DialogHeader>
+                <Form {...profitabilityForm}>
+                  <form onSubmit={profitabilityForm.handleSubmit(handleProfitabilitySubmit)} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormField
+                        control={profitabilityForm.control}
+                        name="deliveryAppId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Delivery App</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-delivery-app">
+                                  <SelectValue placeholder="Select app" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {deliveryApps.map((app) => (
+                                  <SelectItem key={app.id} value={app.id}>{app.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={profitabilityForm.control}
+                        name="year"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Year</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} data-testid="input-profitability-year" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={profitabilityForm.control}
+                        name="month"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Month</FormLabel>
+                            <Select onValueChange={(val) => field.onChange(parseInt(val))} value={field.value?.toString()}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-month">
+                                  <SelectValue placeholder="Select month" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {monthNames.map((name, index) => (
+                                  <SelectItem key={index + 1} value={(index + 1).toString()}>{name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={profitabilityForm.control}
+                        name="orders"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Orders</FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="0" {...field} data-testid="input-orders" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={profitabilityForm.control}
+                        name="sales"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Sales (SAR)</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-sales" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={profitabilityForm.control}
+                        name="revenue"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Revenue (SAR)</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-revenue" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={profitabilityForm.control}
+                        name="commission"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Commission (SAR)</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-commission-amount" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={profitabilityForm.control}
+                        name="banking"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Banking (SAR)</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-banking" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={profitabilityForm.control}
+                        name="subsidy"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Subsidy (SAR)</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-subsidy" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={profitabilityForm.control}
+                        name="posFees"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>POS Fees (SAR)</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-pos-fees-amount" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={profitabilityForm.control}
+                        name="netEarnings"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Net Earnings (SAR)</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-net-earnings" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={profitabilityForm.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Notes (Optional)</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Additional notes..." {...field} data-testid="input-notes" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="flex justify-end gap-2 pt-4">
+                      <Button type="button" variant="outline" onClick={() => handleProfitabilityDialogChange(false)} data-testid="button-cancel-profitability">
+                        {t.cancel}
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={createProfitabilityMutation.isPending || updateProfitabilityMutation.isPending}
+                        data-testid="button-save-profitability"
+                      >
+                        {createProfitabilityMutation.isPending || updateProfitabilityMutation.isPending ? t.loading : t.save}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {isLoadingProfitability ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">{t.loading}</p>
+            </div>
+          ) : profitabilityEntries.length === 0 ? (
+            <Card>
+              <CardContent className={`${layout.cardPadding} text-center py-12`}>
+                <p className="text-muted-foreground">No profitability entries for {profitabilityYear}. Add one to get started.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-0">
+                <Table data-testid="table-profitability">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>App</TableHead>
+                      <TableHead>Period</TableHead>
+                      <TableHead className="text-right">Orders</TableHead>
+                      <TableHead className="text-right">Sales</TableHead>
+                      <TableHead className="text-right">Revenue</TableHead>
+                      <TableHead className="text-right">Commission</TableHead>
+                      <TableHead className="text-right">Net Earnings</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {profitabilityEntries.map((entry) => (
+                      <TableRow key={entry.id} data-testid={`row-profitability-${entry.id}`}>
+                        <TableCell className="font-medium" data-testid={`text-app-name-${entry.id}`}>
+                          {getDeliveryAppName(entry.deliveryAppId)}
+                        </TableCell>
+                        <TableCell data-testid={`text-period-${entry.id}`}>
+                          {monthNames[entry.month - 1]} {entry.year}
+                        </TableCell>
+                        <TableCell className="text-right" data-testid={`text-orders-${entry.id}`}>
+                          {entry.orders.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right" data-testid={`text-sales-${entry.id}`}>
+                          {parseFloat(entry.sales).toLocaleString('en-SA', { minimumFractionDigits: 2 })} SAR
+                        </TableCell>
+                        <TableCell className="text-right" data-testid={`text-revenue-${entry.id}`}>
+                          {parseFloat(entry.revenue).toLocaleString('en-SA', { minimumFractionDigits: 2 })} SAR
+                        </TableCell>
+                        <TableCell className="text-right" data-testid={`text-commission-${entry.id}`}>
+                          {parseFloat(entry.commission).toLocaleString('en-SA', { minimumFractionDigits: 2 })} SAR
+                        </TableCell>
+                        <TableCell className="text-right font-semibold" data-testid={`text-net-earnings-${entry.id}`}>
+                          <Badge variant={parseFloat(entry.netEarnings) >= 0 ? "default" : "destructive"}>
+                            {parseFloat(entry.netEarnings).toLocaleString('en-SA', { minimumFractionDigits: 2 })} SAR
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => handleEditProfitability(entry)}
+                              data-testid={`button-edit-profitability-${entry.id}`}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => setDeletingProfitability(entry)}
+                              data-testid={`button-delete-profitability-${entry.id}`}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
 
       <AlertDialog open={!!deletingApp} onOpenChange={(open) => !open && setDeletingApp(null)}>
         <AlertDialogContent>
@@ -824,6 +1349,27 @@ export default function DeliveryApps() {
             <AlertDialogAction
               onClick={() => deletingApp && deleteDeliveryAppMutation.mutate(deletingApp.id)}
               className="bg-destructive hover:bg-destructive/90"
+            >
+              {t.delete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deletingProfitability} onOpenChange={(open) => !open && setDeletingProfitability(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Profitability Entry</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this profitability entry for {deletingProfitability ? getDeliveryAppName(deletingProfitability.deliveryAppId) : ""}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete-profitability">{t.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingProfitability && deleteProfitabilityMutation.mutate(deletingProfitability.id)}
+              className="bg-destructive hover:bg-destructive/90"
+              data-testid="button-confirm-delete-profitability"
             >
               {t.delete}
             </AlertDialogAction>

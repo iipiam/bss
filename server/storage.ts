@@ -31,6 +31,8 @@ import {
   type InsertShopBill,
   type DeliveryApp,
   type InsertDeliveryApp,
+  type DeliveryProfitability,
+  type InsertDeliveryProfitability,
   type Investor,
   type InsertInvestor,
   type SubscriptionInvoice,
@@ -70,6 +72,7 @@ import {
   salaries,
   shopBills,
   deliveryApps,
+  deliveryProfitability,
   investors,
   subscriptionInvoices,
   monthlyVatReports,
@@ -258,6 +261,14 @@ export interface IStorage {
   deleteDeliveryApp(id: string): Promise<boolean>;
   updateDeliveryAppsSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void>;
   getDeliveryAppProfitability(restaurantId: string): Promise<any>;
+
+  // Delivery Profitability (MULTI-TENANT: manual entries per delivery app)
+  getDeliveryProfitability(restaurantId: string, year?: number): Promise<DeliveryProfitability[]>;
+  getDeliveryProfitabilityEntry(id: string): Promise<DeliveryProfitability | undefined>;
+  createDeliveryProfitability(entry: InsertDeliveryProfitability): Promise<DeliveryProfitability>;
+  updateDeliveryProfitability(id: string, entry: Partial<InsertDeliveryProfitability>): Promise<DeliveryProfitability | undefined>;
+  deleteDeliveryProfitability(id: string): Promise<boolean>;
+  upsertDeliveryProfitability(entry: InsertDeliveryProfitability): Promise<DeliveryProfitability>;
 
   // Investors (MULTI-TENANT: requires restaurantId)
   getInvestors(restaurantId: string): Promise<Investor[]>;
@@ -1568,6 +1579,64 @@ export class DatabaseStorage implements IStorage {
       apps: profitabilityData,
       summary,
     };
+  }
+
+  // Delivery Profitability Manual Entries
+  async getDeliveryProfitability(restaurantId: string, year?: number): Promise<DeliveryProfitability[]> {
+    if (year) {
+      return await db.select().from(deliveryProfitability).where(
+        and(eq(deliveryProfitability.restaurantId, restaurantId), eq(deliveryProfitability.year, year))
+      ).orderBy(desc(deliveryProfitability.year), desc(deliveryProfitability.month));
+    }
+    return await db.select().from(deliveryProfitability).where(
+      eq(deliveryProfitability.restaurantId, restaurantId)
+    ).orderBy(desc(deliveryProfitability.year), desc(deliveryProfitability.month));
+  }
+
+  async getDeliveryProfitabilityEntry(id: string): Promise<DeliveryProfitability | undefined> {
+    const result = await db.select().from(deliveryProfitability).where(eq(deliveryProfitability.id, id));
+    return result[0];
+  }
+
+  async createDeliveryProfitability(entry: InsertDeliveryProfitability): Promise<DeliveryProfitability> {
+    const result = await db.insert(deliveryProfitability).values(entry).returning();
+    return result[0];
+  }
+
+  async updateDeliveryProfitability(id: string, entry: Partial<InsertDeliveryProfitability>): Promise<DeliveryProfitability | undefined> {
+    const result = await db.update(deliveryProfitability)
+      .set({ ...entry, updatedAt: new Date() })
+      .where(eq(deliveryProfitability.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteDeliveryProfitability(id: string): Promise<boolean> {
+    const result = await db.delete(deliveryProfitability).where(eq(deliveryProfitability.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async upsertDeliveryProfitability(entry: InsertDeliveryProfitability): Promise<DeliveryProfitability> {
+    // Check if entry exists for this app/year/month
+    const existing = await db.select().from(deliveryProfitability).where(
+      and(
+        eq(deliveryProfitability.restaurantId, entry.restaurantId),
+        eq(deliveryProfitability.deliveryAppId, entry.deliveryAppId),
+        eq(deliveryProfitability.year, entry.year),
+        eq(deliveryProfitability.month, entry.month)
+      )
+    );
+    
+    if (existing.length > 0) {
+      const result = await db.update(deliveryProfitability)
+        .set({ ...entry, updatedAt: new Date() })
+        .where(eq(deliveryProfitability.id, existing[0].id))
+        .returning();
+      return result[0];
+    }
+    
+    const result = await db.insert(deliveryProfitability).values(entry).returning();
+    return result[0];
   }
 
   async getSalesComparison(restaurantId: string): Promise<any> {

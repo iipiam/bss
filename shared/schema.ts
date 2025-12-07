@@ -590,6 +590,31 @@ export const insertDeliveryAppSchema = createInsertSchema(deliveryApps)
 export type InsertDeliveryApp = z.infer<typeof insertDeliveryAppSchema>;
 export type DeliveryApp = typeof deliveryApps.$inferSelect;
 
+// Delivery Profitability - Manual entries for tracking delivery app financial performance
+export const deliveryProfitability = pgTable("delivery_profitability", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  deliveryAppId: varchar("delivery_app_id").references(() => deliveryApps.id, { onDelete: "cascade" }).notNull(),
+  year: integer("year").notNull(),
+  month: integer("month").notNull(), // 1-12
+  orders: integer("orders").notNull().default(0),
+  sales: decimal("sales", { precision: 12, scale: 2 }).notNull().default("0"),
+  revenue: decimal("revenue", { precision: 12, scale: 2 }).notNull().default("0"),
+  commission: decimal("commission", { precision: 12, scale: 2 }).notNull().default("0"),
+  banking: decimal("banking", { precision: 12, scale: 2 }).notNull().default("0"),
+  subsidy: decimal("subsidy", { precision: 12, scale: 2 }).notNull().default("0"),
+  posFees: decimal("pos_fees", { precision: 12, scale: 2 }).notNull().default("0"),
+  netEarnings: decimal("net_earnings", { precision: 12, scale: 2 }).notNull().default("0"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertDeliveryProfitabilitySchema = createInsertSchema(deliveryProfitability)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertDeliveryProfitability = z.infer<typeof insertDeliveryProfitabilitySchema>;
+export type DeliveryProfitability = typeof deliveryProfitability.$inferSelect;
+
 // Investors
 export const investors = pgTable("investors", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

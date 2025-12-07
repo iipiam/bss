@@ -33,6 +33,7 @@ import {
   insertSalarySchema,
   insertShopBillSchema,
   insertDeliveryAppSchema,
+  insertDeliveryProfitabilitySchema,
   insertInvestorSchema,
   updateInvestorSchema,
   insertLicenseSchema,
@@ -1030,6 +1031,79 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("[DELIVERY_APP] Profitability error:", error);
       res.status(500).json({ error: "Failed to calculate profitability" });
+    }
+  });
+
+  // Delivery Profitability Manual Entries
+  app.get("/api/delivery-profitability", requireAuth, requireRestaurant, requirePermission('deliveryApps'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const year = req.query.year ? parseInt(req.query.year as string) : undefined;
+      const entries = await storage.getDeliveryProfitability(restaurantId, year);
+      res.json(entries);
+    } catch (error) {
+      console.error("[DELIVERY_PROFITABILITY] Get entries error:", error);
+      res.status(500).json({ error: "Failed to get delivery profitability entries" });
+    }
+  });
+
+  app.get("/api/delivery-profitability/:id", requireAuth, requireRestaurant, requirePermission('deliveryApps'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const entry = await storage.getDeliveryProfitabilityEntry(req.params.id);
+      if (!entry || entry.restaurantId !== restaurantId) {
+        return res.status(404).json({ error: "Entry not found" });
+      }
+      res.json(entry);
+    } catch (error) {
+      console.error("[DELIVERY_PROFITABILITY] Get entry error:", error);
+      res.status(500).json({ error: "Failed to get delivery profitability entry" });
+    }
+  });
+
+  app.post("/api/delivery-profitability", requireAuth, requireRestaurant, requireAction('deliveryApps', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const data = insertDeliveryProfitabilitySchema.parse({ ...req.body, restaurantId });
+      const entry = await storage.upsertDeliveryProfitability(data);
+      res.status(201).json(entry);
+    } catch (error) {
+      console.error("[DELIVERY_PROFITABILITY] Create entry error:", error);
+      res.status(400).json({ error: "Invalid delivery profitability data", details: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.patch("/api/delivery-profitability/:id", requireAuth, requireRestaurant, requireAction('deliveryApps', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const existing = await storage.getDeliveryProfitabilityEntry(req.params.id);
+      if (!existing || existing.restaurantId !== restaurantId) {
+        return res.status(404).json({ error: "Entry not found" });
+      }
+      const data = sanitizePatchBody(req.body, insertDeliveryProfitabilitySchema.partial());
+      const entry = await storage.updateDeliveryProfitability(req.params.id, data);
+      res.json(entry);
+    } catch (error) {
+      console.error("[DELIVERY_PROFITABILITY] Update entry error:", error);
+      res.status(400).json({ error: "Invalid delivery profitability data", details: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.delete("/api/delivery-profitability/:id", requireAuth, requireRestaurant, requireAction('deliveryApps', 'delete'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const existing = await storage.getDeliveryProfitabilityEntry(req.params.id);
+      if (!existing || existing.restaurantId !== restaurantId) {
+        return res.status(404).json({ error: "Entry not found" });
+      }
+      const success = await storage.deleteDeliveryProfitability(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Entry not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("[DELIVERY_PROFITABILITY] Delete entry error:", error);
+      res.status(500).json({ error: "Failed to delete entry" });
     }
   });
 
@@ -2999,68 +3073,78 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       const year = req.query.year as string || new Date().getFullYear().toString();
       
-      // Get all delivery apps and orders
-      const deliveryApps = await storage.getDeliveryApps(restaurantId);
-      const orders = await storage.getOrders({ restaurantId });
+      // Get all delivery apps and manual profitability entries
+      const deliveryAppsData = await storage.getDeliveryApps(restaurantId);
+      const manualEntries = await storage.getDeliveryProfitability(restaurantId, parseInt(year));
       
-      // Filter orders by year
-      const yearOrders = orders.filter(o => {
-        const orderDate = new Date(o.createdAt);
-        return orderDate.getFullYear() === parseInt(year);
+      // Aggregate manual entries by delivery app (sum all months for the year)
+      const manualTotalsByApp = new Map<string, {
+        orders: number;
+        sales: number;
+        revenue: number;
+        commission: number;
+        banking: number;
+        subsidy: number;
+        posFees: number;
+        netEarnings: number;
+      }>();
+      
+      manualEntries.forEach(entry => {
+        const existing = manualTotalsByApp.get(entry.deliveryAppId) || {
+          orders: 0, sales: 0, revenue: 0, commission: 0, banking: 0, subsidy: 0, posFees: 0, netEarnings: 0
+        };
+        manualTotalsByApp.set(entry.deliveryAppId, {
+          orders: existing.orders + (entry.orders || 0),
+          sales: existing.sales + parseFloat(entry.sales || "0"),
+          revenue: existing.revenue + parseFloat(entry.revenue || "0"),
+          commission: existing.commission + parseFloat(entry.commission || "0"),
+          banking: existing.banking + parseFloat(entry.banking || "0"),
+          subsidy: existing.subsidy + parseFloat(entry.subsidy || "0"),
+          posFees: existing.posFees + parseFloat(entry.posFees || "0"),
+          netEarnings: existing.netEarnings + parseFloat(entry.netEarnings || "0"),
+        });
       });
       
-      // Calculate subsidy for an order based on delivery app's tier structure
-      const calculateSubsidy = (orderTotal: number, subsidyTiers: Array<{ minAmount: number; maxAmount: number | null; subsidy: number }>) => {
-        if (!subsidyTiers || subsidyTiers.length === 0) return 0;
-        for (const tier of subsidyTiers) {
-          if (orderTotal >= tier.minAmount && (tier.maxAmount === null || orderTotal <= tier.maxAmount)) {
-            return tier.subsidy;
-          }
+      // Build breakdown using manual entries (primary source)
+      const breakdown = deliveryAppsData.map(app => {
+        const manualData = manualTotalsByApp.get(app.id);
+        
+        if (manualData) {
+          // Use manual data
+          return {
+            id: app.id,
+            name: app.name,
+            orders: manualData.orders,
+            sales: parseFloat(manualData.sales.toFixed(2)),
+            revenue: parseFloat(manualData.revenue.toFixed(2)),
+            commission: parseFloat(manualData.commission.toFixed(2)),
+            banking: parseFloat(manualData.banking.toFixed(2)),
+            subsidy: parseFloat(manualData.subsidy.toFixed(2)),
+            posFees: parseFloat(manualData.posFees.toFixed(2)),
+            netEarnings: parseFloat(manualData.netEarnings.toFixed(2)),
+            commissionRate: parseFloat(app.commission),
+            bankingRate: parseFloat(app.bankingFees),
+            active: app.active,
+            hasManualData: true,
+          };
         }
-        return 0;
-      };
-      
-      // Calculate breakdown for each delivery app
-      const breakdown = deliveryApps.map(app => {
-        const appOrders = yearOrders.filter(o => o.deliveryAppId === app.id);
-        const orderCount = appOrders.length;
-        const sales = appOrders.reduce((sum, o) => sum + parseFloat(o.total), 0);
-        const revenue = sales; // Revenue equals sales for delivery apps
         
-        // Calculate commission (percentage of sales)
-        const commissionRate = parseFloat(app.commission) / 100;
-        const commission = sales * commissionRate;
-        
-        // Calculate banking fees (percentage of sales)
-        const bankingRate = parseFloat(app.bankingFees) / 100;
-        const banking = sales * bankingRate;
-        
-        // Calculate total subsidy
-        const subsidy = appOrders.reduce((sum, o) => {
-          const orderTotal = parseFloat(o.total);
-          return sum + calculateSubsidy(orderTotal, app.subsidyTiers as any);
-        }, 0);
-        
-        // Calculate POS fees (fixed per order or total)
-        const posFees = parseFloat(app.posFees) * orderCount;
-        
-        // Net Earnings = Revenue - Commission - Banking - POS Fees + Subsidy
-        const netEarnings = revenue - commission - banking - posFees + subsidy;
-        
+        // No manual data - return zeroes
         return {
           id: app.id,
           name: app.name,
-          orders: orderCount,
-          sales: parseFloat(sales.toFixed(2)),
-          revenue: parseFloat(revenue.toFixed(2)),
-          commission: parseFloat(commission.toFixed(2)),
-          banking: parseFloat(banking.toFixed(2)),
-          subsidy: parseFloat(subsidy.toFixed(2)),
-          posFees: parseFloat(posFees.toFixed(2)),
-          netEarnings: parseFloat(netEarnings.toFixed(2)),
+          orders: 0,
+          sales: 0,
+          revenue: 0,
+          commission: 0,
+          banking: 0,
+          subsidy: 0,
+          posFees: 0,
+          netEarnings: 0,
           commissionRate: parseFloat(app.commission),
           bankingRate: parseFloat(app.bankingFees),
           active: app.active,
+          hasManualData: false,
         };
       });
       
