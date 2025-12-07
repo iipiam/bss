@@ -1199,7 +1199,7 @@ export async function generateExpensesPDF(data: ExpensesPDFData): Promise<Buffer
   
   <div class="meta-info">
     <div>VAT Number: ${escapedCompanyVAT}</div>
-    <div>Generated: ${new Date().toLocaleDateString('en-GB')}</div>
+    <div>Generated: ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB')}</div>
   </div>
   
   <div class="summary-box">
