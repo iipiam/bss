@@ -2993,6 +2993,100 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     });
   });
 
+  // Delivery App Financial Breakdown
+  app.get("/api/analytics/delivery-breakdown", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const year = req.query.year as string || new Date().getFullYear().toString();
+      
+      // Get all delivery apps and orders
+      const deliveryApps = await storage.getDeliveryApps(restaurantId);
+      const orders = await storage.getOrders({ restaurantId });
+      
+      // Filter orders by year
+      const yearOrders = orders.filter(o => {
+        const orderDate = new Date(o.createdAt);
+        return orderDate.getFullYear() === parseInt(year);
+      });
+      
+      // Calculate subsidy for an order based on delivery app's tier structure
+      const calculateSubsidy = (orderTotal: number, subsidyTiers: Array<{ minAmount: number; maxAmount: number | null; subsidy: number }>) => {
+        if (!subsidyTiers || subsidyTiers.length === 0) return 0;
+        for (const tier of subsidyTiers) {
+          if (orderTotal >= tier.minAmount && (tier.maxAmount === null || orderTotal <= tier.maxAmount)) {
+            return tier.subsidy;
+          }
+        }
+        return 0;
+      };
+      
+      // Calculate breakdown for each delivery app
+      const breakdown = deliveryApps.map(app => {
+        const appOrders = yearOrders.filter(o => o.deliveryAppId === app.id);
+        const orderCount = appOrders.length;
+        const sales = appOrders.reduce((sum, o) => sum + parseFloat(o.total), 0);
+        const revenue = sales; // Revenue equals sales for delivery apps
+        
+        // Calculate commission (percentage of sales)
+        const commissionRate = parseFloat(app.commission) / 100;
+        const commission = sales * commissionRate;
+        
+        // Calculate banking fees (percentage of sales)
+        const bankingRate = parseFloat(app.bankingFees) / 100;
+        const banking = sales * bankingRate;
+        
+        // Calculate total subsidy
+        const subsidy = appOrders.reduce((sum, o) => {
+          const orderTotal = parseFloat(o.total);
+          return sum + calculateSubsidy(orderTotal, app.subsidyTiers as any);
+        }, 0);
+        
+        // Calculate POS fees (fixed per order or total)
+        const posFees = parseFloat(app.posFees) * orderCount;
+        
+        // Net Earnings = Revenue - Commission - Banking - POS Fees + Subsidy
+        const netEarnings = revenue - commission - banking - posFees + subsidy;
+        
+        return {
+          id: app.id,
+          name: app.name,
+          orders: orderCount,
+          sales: parseFloat(sales.toFixed(2)),
+          revenue: parseFloat(revenue.toFixed(2)),
+          commission: parseFloat(commission.toFixed(2)),
+          banking: parseFloat(banking.toFixed(2)),
+          subsidy: parseFloat(subsidy.toFixed(2)),
+          posFees: parseFloat(posFees.toFixed(2)),
+          netEarnings: parseFloat(netEarnings.toFixed(2)),
+          commissionRate: parseFloat(app.commission),
+          bankingRate: parseFloat(app.bankingFees),
+          active: app.active,
+        };
+      });
+      
+      // Calculate totals
+      const totals = {
+        orders: breakdown.reduce((sum, b) => sum + b.orders, 0),
+        sales: breakdown.reduce((sum, b) => sum + b.sales, 0),
+        revenue: breakdown.reduce((sum, b) => sum + b.revenue, 0),
+        commission: breakdown.reduce((sum, b) => sum + b.commission, 0),
+        banking: breakdown.reduce((sum, b) => sum + b.banking, 0),
+        subsidy: breakdown.reduce((sum, b) => sum + b.subsidy, 0),
+        posFees: breakdown.reduce((sum, b) => sum + b.posFees, 0),
+        netEarnings: breakdown.reduce((sum, b) => sum + b.netEarnings, 0),
+      };
+      
+      res.json({
+        breakdown,
+        totals,
+        year,
+      });
+    } catch (error) {
+      console.error("Delivery breakdown error:", error);
+      res.status(500).json({ error: "Failed to calculate delivery breakdown" });
+    }
+  });
+
   // Invoices (MULTI-TENANT: require auth + restaurantId filtering)
   app.get("/api/invoices", requireAuth, requireRestaurant, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
@@ -3992,14 +4086,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const settings = await storage.getSettings(restaurantId);
       
       // Fetch all required data
-      const bills = await storage.getBills({ restaurantId });
-      const inventory = await storage.getInventoryItems({ restaurantId });
+      const bills = await storage.getShopBills(restaurantId);
+      const inventory = await storage.getInventoryItems(restaurantId);
       const transactions = await storage.getTransactions({ restaurantId });
       
       // Filter by year
       const yearBills = bills.filter(b => {
-        const dueDate = new Date(b.dueDate);
-        return dueDate.getFullYear() === parseInt(year);
+        const paymentDate = new Date(b.paymentDate);
+        return paymentDate.getFullYear() === parseInt(year);
       });
       
       const yearTransactions = transactions.filter(t => 
@@ -4020,10 +4114,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         .filter(b => b.status !== 'paid')
         .reduce((sum, b) => sum + parseFloat(b.amount), 0);
       
-      // Aggregate bills by category
+      // Aggregate bills by billType
       const categoryMap = new Map<string, number>();
       yearBills.forEach(b => {
-        const cat = b.category || 'Other';
+        const cat = b.billType || 'other';
         categoryMap.set(cat, (categoryMap.get(cat) || 0) + parseFloat(b.amount));
       });
       const billsByCategory = Array.from(categoryMap.entries())
@@ -4033,8 +4127,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Calculate monthly operating expenses (exclude one-time and foundational)
       const monthlyExpenses = Array.from({ length: 12 }, (_, i) => {
         const monthBills = yearBills.filter(b => {
-          const dueDate = new Date(b.dueDate);
-          return dueDate.getMonth() === i && 
+          const paymentDate = new Date(b.paymentDate);
+          return paymentDate.getMonth() === i && 
                  b.paymentPeriod !== 'one-time' && 
                  b.billType !== 'foundational';
         });
@@ -4048,8 +4142,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Calculate BEP data
       const totalRevenue = yearTransactions.reduce((sum, t) => sum + parseFloat(t.subtotal), 0);
       const unitsSold = yearTransactions.reduce((sum, t) => {
-        const itemCount = t.items?.length || 0;
-        return sum + itemCount;
+        return sum + (t.itemCount || 1);
       }, 0);
       
       const fixedCosts = totalBillsAmount;

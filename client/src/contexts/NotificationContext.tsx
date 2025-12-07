@@ -83,6 +83,7 @@ interface NotificationContextType {
   isConnected: boolean;
   notificationsEnabled: boolean;
   setNotificationsEnabled: (enabled: boolean) => void;
+  lastNotification: Notification | null;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -98,6 +99,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem('notificationsEnabled');
     return saved === null ? true : saved === 'true';
   });
+  const [lastNotification, setLastNotification] = useState<Notification | null>(null);
   
   // Store latest tone in ref so WebSocket handler always uses current value
   const currentToneRef = useRef<ToneId>('tone1');
@@ -161,6 +163,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       wsRef.current.onmessage = (event) => {
         try {
           const notification: Notification = JSON.parse(event.data);
+          
+          // Always update lastNotification for components to react to
+          setLastNotification(notification);
           
           if (!notificationsEnabled) return;
 
@@ -371,7 +376,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, [notificationsEnabled, user]);
 
   return (
-    <NotificationContext.Provider value={{ isConnected, notificationsEnabled, setNotificationsEnabled }}>
+    <NotificationContext.Provider value={{ isConnected, notificationsEnabled, setNotificationsEnabled, lastNotification }}>
       {children}
     </NotificationContext.Provider>
   );

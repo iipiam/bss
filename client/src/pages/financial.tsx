@@ -1,16 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, TrendingUp, TrendingDown, DollarSign, FileText, Receipt, FileDown, Wallet, Target, Radio } from "lucide-react";
+import { Download, TrendingUp, TrendingDown, DollarSign, FileText, Receipt, FileDown, Wallet, Target, Radio, Truck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 import type { Invoice, ShopBill, InventoryItem } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Package } from "lucide-react";
+import { useNotifications } from "@/contexts/NotificationContext";
+import { queryClient } from "@/lib/queryClient";
+
+interface DeliveryBreakdown {
+  id: string;
+  name: string;
+  orders: number;
+  sales: number;
+  revenue: number;
+  commission: number;
+  banking: number;
+  subsidy: number;
+  posFees: number;
+  netEarnings: number;
+  commissionRate: number;
+  bankingRate: number;
+  active: boolean;
+}
+
+interface DeliveryBreakdownResponse {
+  breakdown: DeliveryBreakdown[];
+  totals: {
+    orders: number;
+    sales: number;
+    revenue: number;
+    commission: number;
+    banking: number;
+    subsidy: number;
+    posFees: number;
+    netEarnings: number;
+  };
+  year: string;
+}
 
 export default function Financial() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
@@ -44,7 +77,26 @@ export default function Financial() {
     queryKey: ["/api/inventory"],
   });
 
-  if (financialLoading || invoicesLoading || billsLoading || inventoryLoading) {
+  const { data: deliveryBreakdown, isLoading: deliveryLoading } = useQuery<DeliveryBreakdownResponse>({
+    queryKey: ["/api/analytics/delivery-breakdown", selectedYear],
+    queryFn: async () => {
+      const response = await fetch(`/api/analytics/delivery-breakdown?year=${selectedYear}`);
+      if (!response.ok) throw new Error("Failed to fetch delivery breakdown");
+      return response.json();
+    },
+  });
+
+  const { lastNotification } = useNotifications();
+
+  useEffect(() => {
+    if (lastNotification?.type === 'sales:updated') {
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/financial"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/delivery-breakdown"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+    }
+  }, [lastNotification]);
+
+  if (financialLoading || invoicesLoading || billsLoading || inventoryLoading || deliveryLoading) {
     return (
       <div className="p-8">
         <h1 className="text-3xl font-bold mb-2">Financial Statements</h1>
@@ -234,12 +286,12 @@ export default function Financial() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast({
-        title: t.downloadSuccessful,
+        title: "Download Successful",
         description: `Invoice ${invoiceNumber} downloaded`,
       });
     } catch (error) {
       toast({
-        title: t.downloadFailed,
+        title: "Download Failed",
         description: error instanceof Error ? error.message : "Failed to download invoice",
         variant: "destructive",
       });
@@ -803,6 +855,120 @@ export default function Financial() {
                 <div className="text-center py-12 text-muted-foreground">
                   <Wallet className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No expenses recorded for {selectedYear}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Delivery App Financial Breakdown */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Truck className="h-5 w-5 text-primary" />
+                  <div>
+                    <CardTitle>Delivery App Breakdown</CardTitle>
+                    <CardDescription>Detailed financial performance by delivery app for {selectedYear}</CardDescription>
+                  </div>
+                </div>
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Radio className="h-3 w-3 text-green-500 animate-pulse" />
+                  Live
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {deliveryBreakdown && deliveryBreakdown.breakdown.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2 font-semibold">App</th>
+                          <th className="text-right py-2 font-semibold">Orders</th>
+                          <th className="text-right py-2 font-semibold">Sales</th>
+                          <th className="text-right py-2 font-semibold">Revenue</th>
+                          <th className="text-right py-2 font-semibold">Commission</th>
+                          <th className="text-right py-2 font-semibold">Banking</th>
+                          <th className="text-right py-2 font-semibold">Subsidy</th>
+                          <th className="text-right py-2 font-semibold">Net Earnings</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {deliveryBreakdown.breakdown.map((app) => (
+                          <tr key={app.id} className="border-b hover-elevate" data-testid={`delivery-breakdown-${app.id}`}>
+                            <td className="py-3">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{app.name}</span>
+                                {!app.active && <Badge variant="secondary" className="text-xs">Inactive</Badge>}
+                              </div>
+                            </td>
+                            <td className="text-right py-3 font-mono">{app.orders}</td>
+                            <td className="text-right py-3 font-mono">{app.sales.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR</td>
+                            <td className="text-right py-3 font-mono">{app.revenue.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR</td>
+                            <td className="text-right py-3 font-mono text-destructive">-{app.commission.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR</td>
+                            <td className="text-right py-3 font-mono text-destructive">-{app.banking.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR</td>
+                            <td className="text-right py-3 font-mono text-green-600">+{app.subsidy.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR</td>
+                            <td className={`text-right py-3 font-mono font-bold ${app.netEarnings >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                              {app.netEarnings >= 0 ? '+' : ''}{app.netEarnings.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="bg-muted/50">
+                        <tr className="font-bold">
+                          <td className="py-3">Total</td>
+                          <td className="text-right py-3 font-mono">{deliveryBreakdown.totals.orders}</td>
+                          <td className="text-right py-3 font-mono">{deliveryBreakdown.totals.sales.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR</td>
+                          <td className="text-right py-3 font-mono">{deliveryBreakdown.totals.revenue.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR</td>
+                          <td className="text-right py-3 font-mono text-destructive">-{deliveryBreakdown.totals.commission.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR</td>
+                          <td className="text-right py-3 font-mono text-destructive">-{deliveryBreakdown.totals.banking.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR</td>
+                          <td className="text-right py-3 font-mono text-green-600">+{deliveryBreakdown.totals.subsidy.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR</td>
+                          <td className={`text-right py-3 font-mono font-bold ${deliveryBreakdown.totals.netEarnings >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                            {deliveryBreakdown.totals.netEarnings >= 0 ? '+' : ''}{deliveryBreakdown.totals.netEarnings.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                  
+                  {/* Delivery Summary Cards */}
+                  <div className="grid gap-4 md:grid-cols-4 pt-4 border-t">
+                    <Card className="bg-gradient-to-r from-blue-500/5 to-blue-600/10">
+                      <CardContent className="pt-4">
+                        <div className="text-sm text-muted-foreground">Total Orders</div>
+                        <div className="text-2xl font-bold font-mono">{deliveryBreakdown.totals.orders}</div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-r from-purple-500/5 to-purple-600/10">
+                      <CardContent className="pt-4">
+                        <div className="text-sm text-muted-foreground">Total Sales</div>
+                        <div className="text-2xl font-bold font-mono">{deliveryBreakdown.totals.sales.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR</div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-r from-red-500/5 to-red-600/10">
+                      <CardContent className="pt-4">
+                        <div className="text-sm text-muted-foreground">Total Fees</div>
+                        <div className="text-2xl font-bold font-mono text-destructive">
+                          -{(deliveryBreakdown.totals.commission + deliveryBreakdown.totals.banking + deliveryBreakdown.totals.posFees).toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className={`bg-gradient-to-r ${deliveryBreakdown.totals.netEarnings >= 0 ? 'from-green-500/5 to-green-600/10' : 'from-red-500/5 to-red-600/10'}`}>
+                      <CardContent className="pt-4">
+                        <div className="text-sm text-muted-foreground">Net Earnings</div>
+                        <div className={`text-2xl font-bold font-mono ${deliveryBreakdown.totals.netEarnings >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                          {deliveryBreakdown.totals.netEarnings >= 0 ? '+' : ''}{deliveryBreakdown.totals.netEarnings.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Truck className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No delivery app orders for {selectedYear}</p>
+                  <p className="text-xs mt-2">Orders placed through delivery apps will appear here</p>
                 </div>
               )}
             </CardContent>
