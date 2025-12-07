@@ -444,6 +444,10 @@ export default function Inventory() {
   const [editingAddon, setEditingAddon] = useState<Addon | null>(null);
   const [addonDeleteDialogOpen, setAddonDeleteDialogOpen] = useState(false);
   const [addonToDelete, setAddonToDelete] = useState<Addon | null>(null);
+  
+  // State for adding inventory item as addon
+  const [addAsAddon, setAddAsAddon] = useState(false);
+  const [addonPrice, setAddonPrice] = useState("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -714,6 +718,8 @@ export default function Inventory() {
     setOpen(isOpen);
     if (!isOpen) {
       setEditingItem(null);
+      setAddAsAddon(false);
+      setAddonPrice("");
       form.reset();
     }
   };
@@ -721,6 +727,8 @@ export default function Inventory() {
   const handleCloseDialog = () => {
     setOpen(false);
     setEditingItem(null);
+    setAddAsAddon(false);
+    setAddonPrice("");
     form.reset();
   };
 
@@ -764,11 +772,66 @@ export default function Inventory() {
     }
   };
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
     if (editingItem) {
       updateMutation.mutate({ id: editingItem.id, data });
     } else {
-      createMutation.mutate(data);
+      // If addAsAddon is checked, we need to create inventory item first, then addon
+      if (addAsAddon && addonPrice) {
+        try {
+          // Create inventory item first
+          const inventoryResult = await apiRequest("POST", "/api/inventory", {
+            name: data.name,
+            category: data.category,
+            quantity: data.quantity.toFixed(2),
+            unit: data.unit,
+            referenceQuantity: data.referenceQuantity.toFixed(2),
+            price: data.price.toFixed(2),
+            supplier: data.supplier,
+            status: data.status,
+            branchId: data.branchId || null,
+            sortOrder: data.sortOrder || 0,
+            expirationDays: data.expirationDays ?? null,
+          });
+          
+          const inventoryItem = await inventoryResult.json();
+          
+          // Calculate VAT-inclusive and base prices for addon
+          const addonPriceNum = parseFloat(addonPrice) || 0;
+          const basePrice = addonPriceNum / 1.15; // Extract base price (price is VAT-inclusive)
+          const vatAmount = addonPriceNum - basePrice;
+          
+          // Create addon linked to inventory item
+          await apiRequest("POST", "/api/addons", {
+            name: data.name,
+            category: data.category,
+            price: addonPriceNum.toFixed(2),
+            basePrice: basePrice.toFixed(2),
+            vatAmount: vatAmount.toFixed(2),
+            available: true,
+            menuItemIds: null,
+            inventoryItemId: inventoryItem.id,
+          });
+          
+          queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/addons"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
+          
+          toast({
+            title: t.itemCreatedTitle || "Item created",
+            description: "Inventory item and add-on have been added",
+          });
+          handleCloseDialog();
+        } catch (error: any) {
+          toast({
+            title: t.failedToCreateItem || "Failed to create item",
+            description: error.message || "An error occurred",
+            variant: "destructive",
+          });
+        }
+      } else {
+        createMutation.mutate(data);
+      }
     }
   };
 
@@ -1275,6 +1338,45 @@ export default function Inventory() {
                         </FormItem>
                       )}
                     />
+                    
+                    {/* Add as Add-on option - only for new items */}
+                    {!editingItem && (
+                      <div className="space-y-3 border-t pt-4">
+                        <div className="flex items-center space-x-3">
+                          <Checkbox
+                            id="add-as-addon"
+                            checked={addAsAddon}
+                            onCheckedChange={(checked) => setAddAsAddon(checked === true)}
+                            data-testid="checkbox-add-as-addon"
+                          />
+                          <label
+                            htmlFor="add-as-addon"
+                            className="text-sm font-medium cursor-pointer"
+                          >
+                            {t.alsoAddAsAddon || "Also add as Add-on"}
+                          </label>
+                        </div>
+                        {addAsAddon && (
+                          <div className="ml-6">
+                            <label className="text-sm font-medium">{t.addonPrice || "Add-on Price (SAR)"}</label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="e.g., 5.00"
+                              value={addonPrice}
+                              onChange={(e) => setAddonPrice(e.target.value)}
+                              className="mt-1"
+                              data-testid="input-addon-price"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {t.addonPriceHint || "VAT-inclusive price for this add-on in POS"}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
                     <div className="flex justify-end gap-2 pt-4">
                       <Button type="button" variant="outline" onClick={handleCloseDialog} data-testid="button-cancel">
                         Cancel
