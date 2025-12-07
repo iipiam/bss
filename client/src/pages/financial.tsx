@@ -191,8 +191,14 @@ export default function Financial() {
   const paidBillsAmount = billsForYear.filter(b => b.status === "paid").reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
   const pendingBillsAmount = billsForYear.filter(b => b.status === "pending").reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
 
-  // Calculate total inventory value
-  const totalInventoryValue = inventoryItems.reduce((sum, item) => sum + parseFloat(item.price || "0"), 0);
+  // Calculate total inventory value using unit price (price / referenceQuantity) * current quantity
+  const totalInventoryValue = inventoryItems.reduce((sum, item) => {
+    const price = parseFloat(item.price || "0");
+    const refQty = parseFloat(item.referenceQuantity || "1") || 1;
+    const currentQty = parseFloat(item.quantity || "0");
+    const unitPrice = price / refQty;
+    return sum + (unitPrice * currentQty);
+  }, 0);
 
   // Total expenses including inventory
   const totalExpensesWithInventory = totalBillsAmount + totalInventoryValue;

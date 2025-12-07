@@ -1004,7 +1004,12 @@ export default function Inventory() {
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wider">{t.totalInventoryValue || "Total Inventory Value"}</p>
                   <p className={`${layout.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-primary`} data-testid="total-inventory-value">
-                    {inventoryItems.reduce((sum, item) => sum + parseFloat(item.price || "0"), 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                    {inventoryItems.reduce((sum, item) => {
+                      const price = parseFloat(item.price || "0");
+                      const refQty = parseFloat(item.referenceQuantity || "1") || 1;
+                      const currentQty = parseFloat(item.quantity || "0");
+                      return sum + (price / refQty) * currentQty;
+                    }, 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                   </p>
                 </div>
               </div>

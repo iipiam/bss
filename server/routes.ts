@@ -4204,9 +4204,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         new Date(t.createdAt).getFullYear() === parseInt(year)
       );
       
-      // Calculate inventory value
+      // Calculate inventory value using unit price (price / referenceQuantity) * current quantity
       const inventoryValue = inventory.reduce((sum, item) => {
-        return sum + parseFloat(item.price) * parseFloat(item.quantity);
+        const price = parseFloat(item.price) || 0;
+        const refQty = parseFloat(item.referenceQuantity) || 1;
+        const currentQty = parseFloat(item.quantity) || 0;
+        const unitPrice = price / refQty;
+        return sum + (unitPrice * currentQty);
       }, 0);
       
       // Calculate bills totals
