@@ -994,6 +994,44 @@ export default function Inventory() {
         </TabsList>
 
         <TabsContent value="inventory" className={layout.spaceY}>
+          {/* Total Inventory Value Summary */}
+          <Card className="bg-gradient-to-r from-primary/5 to-primary/10">
+            <CardContent className={`${layout.isMobile ? 'p-3' : 'p-4'} flex ${layout.isMobile ? 'flex-col gap-2' : 'items-center justify-between gap-4'}`}>
+              <div className="flex items-center gap-3">
+                <div className={`${layout.isMobile ? 'h-10 w-10' : 'h-12 w-12'} rounded-full bg-primary/20 flex items-center justify-center`}>
+                  <span className={`${layout.isMobile ? 'text-lg' : 'text-xl'} font-bold text-primary`}>$</span>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">{t.totalInventoryValue || "Total Inventory Value"}</p>
+                  <p className={`${layout.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-primary`} data-testid="total-inventory-value">
+                    {inventoryItems.reduce((sum, item) => sum + parseFloat(item.price || "0"), 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                  </p>
+                </div>
+              </div>
+              <div className={`flex ${layout.isMobile ? 'justify-between' : 'gap-6'} text-sm`}>
+                <div className="text-center">
+                  <p className="text-muted-foreground">{t.totalItems || "Items"}</p>
+                  <p className="font-semibold" data-testid="total-items-count">{inventoryItems.length}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-muted-foreground">{t.lowStockItems || "Low Stock"}</p>
+                  <p className="font-semibold text-destructive" data-testid="low-stock-count">
+                    {inventoryItems.filter(i => i.status === "Low Stock").length}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-muted-foreground">{t.expiringSoon || "Expiring Soon"}</p>
+                  <p className="font-semibold text-yellow-600" data-testid="expiring-soon-count">
+                    {inventoryItems.filter(i => {
+                      const days = calculateDaysRemaining(i.purchaseDate, i.expirationDays);
+                      return days !== null && days > 0 && days <= 7;
+                    }).length}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className={`flex gap-2 ${layout.isMobile ? 'flex-wrap' : ''}`}>
             <Button variant="outline" onClick={handleDownloadTemplate} data-testid="button-download-template">
               <FileDown className="h-4 w-4 mr-2" />
