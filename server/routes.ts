@@ -4248,6 +4248,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Get BEP data from the centralized calculation (uses correct COGS from recipes)
       const bepData = await storage.getBepMetrics(restaurantId, parseInt(year));
       
+      console.log('[PDF Export] BEP data from getBepMetrics:', {
+        fixedCosts: bepData.fixedCosts,
+        cogsTotal: bepData.cogsTotal,
+        avgVariableCostPerUnit: bepData.avgVariableCostPerUnit,
+        unitsSold: bepData.unitsSold,
+        revenue: bepData.revenue
+      });
+      
       // Extract values from BEP data
       const totalRevenue = bepData.revenue;
       const unitsSold = bepData.unitsSold;
@@ -4293,6 +4301,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=expenses-report-${year}.pdf`);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.send(pdfBuffer);
     } catch (error) {
       console.error("Expenses PDF export error:", error);
