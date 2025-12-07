@@ -8,8 +8,9 @@ import { Download, TrendingUp, TrendingDown, DollarSign, FileText, Receipt, File
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
-import type { Invoice, ShopBill } from "@shared/schema";
+import type { Invoice, ShopBill, InventoryItem } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Package } from "lucide-react";
 
 export default function Financial() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
@@ -39,7 +40,11 @@ export default function Financial() {
     },
   });
 
-  if (financialLoading || invoicesLoading || billsLoading) {
+  const { data: inventoryItems = [], isLoading: inventoryLoading } = useQuery<InventoryItem[]>({
+    queryKey: ["/api/inventory"],
+  });
+
+  if (financialLoading || invoicesLoading || billsLoading || inventoryLoading) {
     return (
       <div className="p-8">
         <h1 className="text-3xl font-bold mb-2">Financial Statements</h1>
@@ -60,6 +65,12 @@ export default function Financial() {
   const totalBillsAmount = billsForYear.reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
   const paidBillsAmount = billsForYear.filter(b => b.status === "paid").reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
   const pendingBillsAmount = billsForYear.filter(b => b.status === "pending").reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
+
+  // Calculate total inventory value
+  const totalInventoryValue = inventoryItems.reduce((sum, item) => sum + parseFloat(item.price || "0"), 0);
+
+  // Total expenses including inventory
+  const totalExpensesWithInventory = totalBillsAmount + totalInventoryValue;
 
   // Group bills by type for pie chart
   const billsByType = billsForYear.reduce((acc, bill) => {
@@ -353,37 +364,48 @@ export default function Financial() {
 
         <TabsContent value="expenses" className="space-y-4">
           {/* Expense Summary Cards */}
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
                 <Wallet className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold font-mono">{totalBillsAmount.toFixed(2)} SAR</div>
-                <p className="text-xs text-muted-foreground">Year {selectedYear}</p>
+                <div className="text-2xl font-bold font-mono">{totalExpensesWithInventory.toFixed(2)} SAR</div>
+                <p className="text-xs text-muted-foreground">Bills + Inventory ({selectedYear})</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-r from-blue-500/5 to-blue-600/10">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Inventory Value</CardTitle>
+                <Package className="h-4 w-4 text-blue-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold font-mono text-blue-600" data-testid="expense-inventory-value">{totalInventoryValue.toFixed(2)} SAR</div>
+                <p className="text-xs text-muted-foreground">{inventoryItems.length} items in stock</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Paid</CardTitle>
+                <CardTitle className="text-sm font-medium">Paid Bills</CardTitle>
                 <TrendingUp className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold font-mono text-green-600">{paidBillsAmount.toFixed(2)} SAR</div>
-                <p className="text-xs text-muted-foreground">{((paidBillsAmount / totalBillsAmount) * 100 || 0).toFixed(1)}% of total</p>
+                <p className="text-xs text-muted-foreground">{((paidBillsAmount / totalBillsAmount) * 100 || 0).toFixed(1)}% of bills</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending</CardTitle>
+                <CardTitle className="text-sm font-medium">Pending Bills</CardTitle>
                 <TrendingDown className="h-4 w-4 text-orange-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold font-mono text-orange-600">{pendingBillsAmount.toFixed(2)} SAR</div>
-                <p className="text-xs text-muted-foreground">{((pendingBillsAmount / totalBillsAmount) * 100 || 0).toFixed(1)}% of total</p>
+                <p className="text-xs text-muted-foreground">{((pendingBillsAmount / totalBillsAmount) * 100 || 0).toFixed(1)}% of bills</p>
               </CardContent>
             </Card>
           </div>
@@ -445,10 +467,18 @@ export default function Financial() {
             <Card>
               <CardHeader>
                 <CardTitle>Expenses Summary</CardTitle>
-                <CardDescription>Total by expense category</CardDescription>
+                <CardDescription>Total by expense category (including inventory)</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
+                  {/* Inventory Value - Always show first */}
+                  <div className="flex items-center justify-between bg-blue-500/5 p-2 rounded-md">
+                    <div className="flex items-center gap-2">
+                      <Package className="w-4 h-4 text-blue-500" />
+                      <span className="font-medium">Inventory Value</span>
+                    </div>
+                    <span className="font-mono font-semibold text-blue-600">{totalInventoryValue.toFixed(2)} SAR</span>
+                  </div>
                   {billTypeData.sort((a, b) => b.value - a.value).map((item, index) => (
                     <div key={index} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -458,9 +488,14 @@ export default function Financial() {
                       <span className="font-mono font-semibold">{item.value.toFixed(2)} SAR</span>
                     </div>
                   ))}
-                  {billTypeData.length === 0 && (
+                  {billTypeData.length === 0 && totalInventoryValue === 0 && (
                     <div className="text-center py-8 text-muted-foreground">No expenses recorded</div>
                   )}
+                  {/* Total Line */}
+                  <div className="flex items-center justify-between border-t pt-3 mt-3">
+                    <span className="font-semibold">Total Expenses</span>
+                    <span className="font-mono font-bold text-lg">{totalExpensesWithInventory.toFixed(2)} SAR</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
