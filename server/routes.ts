@@ -4243,26 +4243,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         };
       });
       
-      // Calculate BEP data
-      const totalRevenue = yearTransactions.reduce((sum, t) => sum + parseFloat(t.subtotal), 0);
-      const unitsSold = yearTransactions.reduce((sum, t) => {
-        return sum + (t.itemCount || 1);
-      }, 0);
+      // Get BEP data from the centralized calculation (uses correct COGS from recipes)
+      const bepData = await storage.getBepMetrics(restaurantId, parseInt(year));
       
-      // Fixed costs exclude foundational and one-time bills (only recurring operating expenses)
-      const fixedCosts = yearBills
-        .filter(b => b.billType !== 'foundational' && b.paymentPeriod !== 'one-time')
-        .reduce((sum, b) => sum + parseFloat(b.amount), 0);
-      const variableCostsPerUnit = unitsSold > 0 ? inventoryValue / unitsSold : 0;
-      const sellingPricePerUnit = unitsSold > 0 ? totalRevenue / unitsSold : 0;
-      const contributionMarginPerUnit = sellingPricePerUnit - variableCostsPerUnit;
-      const contributionMarginTotal = unitsSold * contributionMarginPerUnit;
-      const breakEvenUnits = contributionMarginPerUnit > 0 ? fixedCosts / contributionMarginPerUnit : 0;
-      const breakEvenRevenue = breakEvenUnits * sellingPricePerUnit;
-      const marginOfSafety = totalRevenue > 0 && totalRevenue > breakEvenRevenue 
-        ? ((totalRevenue - breakEvenRevenue) / totalRevenue) * 100 
-        : 0;
-      const isProfitable = totalRevenue >= breakEvenRevenue;
+      // Extract values from BEP data
+      const totalRevenue = bepData.revenue;
+      const unitsSold = bepData.unitsSold;
+      const fixedCosts = bepData.fixedCosts;
+      const variableCostsPerUnit = bepData.avgVariableCostPerUnit;
+      const sellingPricePerUnit = bepData.avgSellingPrice;
+      const contributionMarginPerUnit = bepData.contributionMarginPerUnit;
+      const contributionMarginTotal = bepData.contributionMarginRatio * totalRevenue;
+      const breakEvenUnits = bepData.bepUnits;
+      const breakEvenRevenue = bepData.bepRevenue;
+      const marginOfSafety = bepData.marginOfSafety;
+      const isProfitable = bepData.isProfitable;
       
       const totalExpenses = totalBillsAmount + inventoryValue;
       

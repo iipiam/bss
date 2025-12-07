@@ -1714,7 +1714,7 @@ export class DatabaseStorage implements IStorage {
     const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999);
 
     // 1. Get fixed costs from shop bills
-    // Exclude bills where billType='foundational' AND paymentPeriod='one-time'
+    // Exclude foundational bills (not operational costs) AND one-time bills (not recurring)
     const allBills = await db.select().from(shopBills).where(
       and(
         eq(shopBills.restaurantId, restaurantId),
@@ -1723,9 +1723,9 @@ export class DatabaseStorage implements IStorage {
       )
     );
 
-    // Filter out foundational one-time bills (these are not recurring fixed costs)
+    // Filter out foundational bills AND one-time bills (fixed costs = recurring operational expenses only)
     const recurringBills = allBills.filter(bill => 
-      !(bill.billType === 'foundational' && bill.paymentPeriod === 'one-time')
+      bill.billType !== 'foundational' && bill.paymentPeriod !== 'one-time'
     );
 
     // Calculate total fixed costs and breakdown by category
