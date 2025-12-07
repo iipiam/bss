@@ -180,6 +180,16 @@ function SortableInventoryRow({ item, onEdit, onDelete, disabled = false }: Sort
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const daysRemaining = calculateDaysRemaining(item.purchaseDate, item.expirationDays);
+
+  const getExpirationDisplay = () => {
+    if (daysRemaining === null) return <span className="text-muted-foreground">-</span>;
+    if (daysRemaining <= 0) return <Badge variant="destructive">Expired</Badge>;
+    if (daysRemaining <= 7) return <Badge variant="destructive">{daysRemaining}d</Badge>;
+    if (daysRemaining <= 30) return <Badge variant="outline" className="border-yellow-500 text-yellow-600">{daysRemaining}d</Badge>;
+    return <span className="text-muted-foreground">{daysRemaining}d</span>;
+  };
+
   return (
     <TableRow ref={setNodeRef} style={style} data-testid={`row-item-${item.id}`}>
       <TableCell>
@@ -203,6 +213,7 @@ function SortableInventoryRow({ item, onEdit, onDelete, disabled = false }: Sort
       <TableCell>{item.unit}</TableCell>
       <TableCell className="font-mono text-primary">{parseFloat(item.price).toFixed(2)} SAR</TableCell>
       <TableCell className="text-muted-foreground">{item.supplier}</TableCell>
+      <TableCell>{getExpirationDisplay()}</TableCell>
       <TableCell>
         <Badge variant={item.status === "Low Stock" ? "destructive" : "secondary"}>
           {item.status}
@@ -243,6 +254,16 @@ function SortableInventoryCard({ item, onEdit, onDelete, disabled = false }: Sor
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const daysRemaining = calculateDaysRemaining(item.purchaseDate, item.expirationDays);
+
+  const getExpirationDisplay = () => {
+    if (daysRemaining === null) return null;
+    if (daysRemaining <= 0) return <Badge variant="destructive" className="text-xs">Expired</Badge>;
+    if (daysRemaining <= 7) return <Badge variant="destructive" className="text-xs">{daysRemaining}d left</Badge>;
+    if (daysRemaining <= 30) return <Badge variant="outline" className="border-yellow-500 text-yellow-600 text-xs">{daysRemaining}d left</Badge>;
+    return <span className="text-xs text-muted-foreground">{daysRemaining}d left</span>;
+  };
+
   return (
     <div ref={setNodeRef} style={style}>
       <Card className={isDragging ? "shadow-lg" : "hover-elevate"} data-testid={`card-item-${item.id}`}>
@@ -265,9 +286,12 @@ function SortableInventoryCard({ item, onEdit, onDelete, disabled = false }: Sor
                 <p className="text-xs text-muted-foreground">{item.category}</p>
               </div>
             </div>
-            <Badge variant={item.status === "Low Stock" ? "destructive" : "secondary"} className="text-xs">
-              {item.status}
-            </Badge>
+            <div className="flex flex-col items-end gap-1">
+              <Badge variant={item.status === "Low Stock" ? "destructive" : "secondary"} className="text-xs">
+                {item.status}
+              </Badge>
+              {getExpirationDisplay()}
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
             <div>
@@ -1280,6 +1304,7 @@ export default function Inventory() {
                         <TableHead>Unit</TableHead>
                         <TableHead>Price/Unit</TableHead>
                         <TableHead>Supplier</TableHead>
+                        <TableHead>Expires</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
