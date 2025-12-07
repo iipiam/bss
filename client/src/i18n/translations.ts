@@ -851,6 +851,7 @@ export interface Translations {
   subscriptionType: string;
   branchCount: string;
   baseAmount: string;
+  vatInclusive: string;
   vatRate: string;
   totalWithVat: string;
   noClientsFound: string;
@@ -2243,6 +2244,7 @@ export const translations: Record<Language, Translations> = {
     subscriptionType: 'Subscription Type',
     branchCount: 'Branch Count',
     baseAmount: 'Base Amount',
+    vatInclusive: 'VAT Inclusive',
     vatRate: 'VAT Rate (15%)',
     totalWithVat: 'Total with VAT',
     noClientsFound: 'No clients found',
@@ -3635,6 +3637,7 @@ export const translations: Record<Language, Translations> = {
     subscriptionType: 'نوع الاشتراك',
     branchCount: 'عدد الفروع',
     baseAmount: 'المبلغ الأساسي',
+    vatInclusive: 'شامل الضريبة',
     vatRate: 'نسبة الضريبة (15%)',
     totalWithVat: 'الإجمالي شامل الضريبة',
     noClientsFound: 'لم يتم العثور على عملاء',
@@ -5031,6 +5034,7 @@ export const translations: Record<Language, Translations> = {
     subscriptionType: 'Abonnementtyp',
     branchCount: 'Filialanzahl',
     baseAmount: 'Grundbetrag',
+    vatInclusive: 'Inkl. MwSt.',
     vatRate: 'MwSt.-Satz (15%)',
     totalWithVat: 'Gesamt mit MwSt.',
     noClientsFound: 'Keine Kunden gefunden',
@@ -6411,6 +6415,7 @@ export const translations: Record<Language, Translations> = {
     subscriptionType: '订阅类型',
     branchCount: '分店数量',
     baseAmount: '基本金额',
+    vatInclusive: '含增值税',
     vatRate: '增值税率 (15%)',
     totalWithVat: '含税总额',
     noClientsFound: '未找到客户',
@@ -7791,6 +7796,7 @@ export const translations: Record<Language, Translations> = {
     subscriptionType: 'সাবস্ক্রিপশন ধরন',
     branchCount: 'শাখার সংখ্যা',
     baseAmount: 'মূল পরিমাণ',
+    vatInclusive: 'ভ্যাট সহ',
     vatRate: 'ভ্যাট হার (১৫%)',
     totalWithVat: 'ভ্যাট সহ মোট',
     noClientsFound: 'কোনো গ্রাহক পাওয়া যায়নি',
@@ -9171,6 +9177,7 @@ export const translations: Record<Language, Translations> = {
     subscriptionType: 'Tipo Abbonamento',
     branchCount: 'Numero Filiali',
     baseAmount: 'Importo Base',
+    vatInclusive: 'IVA Inclusa',
     vatRate: 'Aliquota IVA (15%)',
     totalWithVat: 'Totale con IVA',
     noClientsFound: 'Nessun cliente trovato',
@@ -10533,6 +10540,7 @@ export const translations: Record<Language, Translations> = {
     subscriptionType: 'सदस्यता प्रकार',
     branchCount: 'शाखा संख्या',
     baseAmount: 'आधार राशि',
+    vatInclusive: 'वैट शामिल',
     vatRate: 'वैट दर (15%)',
     totalWithVat: 'वैट सहित कुल',
     noClientsFound: 'कोई ग्राहक नहीं मिला',
@@ -11895,6 +11903,7 @@ export const translations: Record<Language, Translations> = {
     subscriptionType: 'سبسکرپشن کی قسم',
     branchCount: 'برانچوں کی تعداد',
     baseAmount: 'بنیادی رقم',
+    vatInclusive: 'ویٹ شامل',
     vatRate: 'VAT شرح (15%)',
     totalWithVat: 'VAT سمیت کل',
     noClientsFound: 'کوئی کلائنٹ نہیں ملا',
@@ -13201,6 +13210,7 @@ export const translations: Record<Language, Translations> = {
     subscriptionType: 'Tipo de Suscripción',
     branchCount: 'Cantidad de Sucursales',
     baseAmount: 'Monto Base',
+    vatInclusive: 'IVA Incluido',
     vatRate: 'Tasa de IVA (15%)',
     totalWithVat: 'Total con IVA',
     noClientsFound: 'No se encontraron clientes',
@@ -14503,6 +14513,7 @@ export const translations: Record<Language, Translations> = {
     subscriptionType: 'Uri ng Subscription',
     branchCount: 'Bilang ng Branch',
     baseAmount: 'Batayang Halaga',
+    vatInclusive: 'Kasama ang VAT',
     vatRate: 'Rate ng VAT (15%)',
     totalWithVat: 'Kabuuan kasama ang VAT',
     noClientsFound: 'Walang nakitang kliyente',

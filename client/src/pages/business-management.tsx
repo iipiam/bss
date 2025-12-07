@@ -378,16 +378,18 @@ export default function BusinessManagement() {
   });
   const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
 
-  // Calculate VAT and total when amount changes
-  const calculateBillAmounts = (amount: string) => {
-    const amountNum = parseFloat(amount) || 0;
-    const vatNum = amountNum * 0.15;
-    const totalNum = amountNum + vatNum;
+  // Calculate base amount and VAT from total (VAT-inclusive)
+  const calculateBillAmountsFromTotal = (totalAmount: string) => {
+    const totalNum = parseFloat(totalAmount) || 0;
+    // Total is VAT-inclusive, so: Total = Base + VAT = Base + (Base * 0.15) = Base * 1.15
+    // Therefore: Base = Total / 1.15
+    const baseAmount = totalNum / 1.15;
+    const vatNum = totalNum - baseAmount;
     setNewBillForm(prev => ({
       ...prev,
-      amount,
+      amount: baseAmount.toFixed(2),
       vatAmount: vatNum.toFixed(2),
-      totalAmount: totalNum.toFixed(2),
+      totalAmount: totalAmount,
     }));
   };
 
@@ -515,15 +517,18 @@ export default function BusinessManagement() {
     setIsEditBillDialogOpen(true);
   };
 
-  const calculateEditBillAmounts = (amount: string) => {
-    const amountNum = parseFloat(amount) || 0;
-    const vatNum = amountNum * 0.15;
-    const totalNum = amountNum + vatNum;
+  // Calculate base amount and VAT from total (VAT-inclusive) for edit form
+  const calculateEditBillAmountsFromTotal = (totalAmount: string) => {
+    const totalNum = parseFloat(totalAmount) || 0;
+    // Total is VAT-inclusive, so: Total = Base + VAT = Base + (Base * 0.15) = Base * 1.15
+    // Therefore: Base = Total / 1.15
+    const baseAmount = totalNum / 1.15;
+    const vatNum = totalNum - baseAmount;
     setEditBillForm(prev => ({
       ...prev,
-      amount,
+      amount: baseAmount.toFixed(2),
       vatAmount: vatNum.toFixed(2),
-      totalAmount: totalNum.toFixed(2),
+      totalAmount: totalAmount,
     }));
   };
 
@@ -1674,16 +1679,28 @@ export default function BusinessManagement() {
 
                         <div className="grid gap-4 md:grid-cols-3">
                           <div className="space-y-2">
-                            <Label htmlFor="amount">{t.amount || "Amount"} (SAR) *</Label>
+                            <Label htmlFor="totalAmount">{t.total || "Total"} (SAR) * <span className="text-xs text-muted-foreground">({t.vatInclusive || "VAT Inclusive"})</span></Label>
+                            <Input
+                              id="totalAmount"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={newBillForm.totalAmount}
+                              onChange={(e) => calculateBillAmountsFromTotal(e.target.value)}
+                              placeholder="0.00"
+                              required
+                              data-testid="input-bill-total"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="amount">{t.baseAmount || "Base Amount"} (SAR)</Label>
                             <Input
                               id="amount"
                               type="number"
                               step="0.01"
-                              min="0"
                               value={newBillForm.amount}
-                              onChange={(e) => calculateBillAmounts(e.target.value)}
-                              placeholder="0.00"
-                              required
+                              readOnly
+                              className="bg-muted"
                               data-testid="input-bill-amount"
                             />
                           </div>
@@ -1694,25 +1711,9 @@ export default function BusinessManagement() {
                               type="number"
                               step="0.01"
                               value={newBillForm.vatAmount}
-                              onChange={(e) => setNewBillForm(prev => ({ 
-                                ...prev, 
-                                vatAmount: e.target.value,
-                                totalAmount: (parseFloat(prev.amount) + parseFloat(e.target.value || '0')).toFixed(2)
-                              }))}
-                              placeholder="0.00"
-                              data-testid="input-bill-vat"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="totalAmount">{t.total || "Total"} (SAR)</Label>
-                            <Input
-                              id="totalAmount"
-                              type="number"
-                              step="0.01"
-                              value={newBillForm.totalAmount}
                               readOnly
                               className="bg-muted"
-                              data-testid="input-bill-total"
+                              data-testid="input-bill-vat"
                             />
                           </div>
                         </div>
@@ -1862,7 +1863,7 @@ export default function BusinessManagement() {
                           </Button>
                           <Button
                             type="submit"
-                            disabled={createBillMutation.isPending || !newBillForm.vendor || !newBillForm.amount}
+                            disabled={createBillMutation.isPending || !newBillForm.vendor || !newBillForm.totalAmount}
                             data-testid="button-submit-add-bill"
                           >
                             {createBillMutation.isPending ? (
@@ -2799,16 +2800,28 @@ export default function BusinessManagement() {
 
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="edit-amount">{t.amount || "Amount"} (SAR) *</Label>
+                <Label htmlFor="edit-totalAmount">{t.total || "Total"} (SAR) * <span className="text-xs text-muted-foreground">({t.vatInclusive || "VAT Inclusive"})</span></Label>
+                <Input
+                  id="edit-totalAmount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editBillForm.totalAmount}
+                  onChange={(e) => calculateEditBillAmountsFromTotal(e.target.value)}
+                  placeholder="0.00"
+                  required
+                  data-testid="input-edit-bill-total"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-amount">{t.baseAmount || "Base Amount"} (SAR)</Label>
                 <Input
                   id="edit-amount"
                   type="number"
                   step="0.01"
-                  min="0"
                   value={editBillForm.amount}
-                  onChange={(e) => calculateEditBillAmounts(e.target.value)}
-                  placeholder="0.00"
-                  required
+                  readOnly
+                  className="bg-muted"
                   data-testid="input-edit-bill-amount"
                 />
               </div>
@@ -2819,25 +2832,9 @@ export default function BusinessManagement() {
                   type="number"
                   step="0.01"
                   value={editBillForm.vatAmount}
-                  onChange={(e) => setEditBillForm(prev => ({ 
-                    ...prev, 
-                    vatAmount: e.target.value,
-                    totalAmount: (parseFloat(prev.amount) + parseFloat(e.target.value || '0')).toFixed(2)
-                  }))}
-                  placeholder="0.00"
-                  data-testid="input-edit-bill-vat"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-totalAmount">{t.total || "Total"} (SAR)</Label>
-                <Input
-                  id="edit-totalAmount"
-                  type="number"
-                  step="0.01"
-                  value={editBillForm.totalAmount}
                   readOnly
                   className="bg-muted"
-                  data-testid="input-edit-bill-total"
+                  data-testid="input-edit-bill-vat"
                 />
               </div>
             </div>
@@ -2940,7 +2937,7 @@ export default function BusinessManagement() {
               </Button>
               <Button
                 type="submit"
-                disabled={updateBillMutation.isPending || !editBillForm.vendor || !editBillForm.amount}
+                disabled={updateBillMutation.isPending || !editBillForm.vendor || !editBillForm.totalAmount}
                 data-testid="button-submit-edit-bill"
               >
                 {updateBillMutation.isPending ? (
