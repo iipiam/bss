@@ -112,7 +112,7 @@ const formSchema = insertInventoryItemSchema.omit({ restaurantId: true, purchase
 
 // Helper function to calculate days remaining until expiration
 const calculateDaysRemaining = (purchaseDate: Date | string | null | undefined, expirationDays: number | null | undefined): number | null => {
-  if (!purchaseDate || !expirationDays) return null;
+  if (!purchaseDate || expirationDays === null || expirationDays === undefined) return null;
   const purchase = new Date(purchaseDate);
   const now = new Date();
   const expirationDate = new Date(purchase.getTime() + expirationDays * 24 * 60 * 60 * 1000);
@@ -582,7 +582,7 @@ export default function Inventory() {
         status: data.status,
         branchId: data.branchId || null,
         sortOrder: data.sortOrder || 0,
-        expirationDays: data.expirationDays || null,
+        expirationDays: data.expirationDays ?? null,
       });
     },
     onSuccess: () => {
@@ -615,7 +615,7 @@ export default function Inventory() {
         supplier: data.supplier,
         status: data.status,
         branchId: data.branchId || null,
-        expirationDays: data.expirationDays || null,
+        expirationDays: data.expirationDays ?? null,
       });
     },
     onSuccess: () => {
