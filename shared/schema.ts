@@ -207,12 +207,14 @@ export const addons = pgTable("addons", {
   menuItemIds: varchar("menu_item_ids").array(), // Optional: link to multiple menu items (null means "All items")
   available: boolean("available").notNull().default(true),
   sortOrder: integer("sort_order").default(0),
+  inventoryItemId: varchar("inventory_item_id").references(() => inventoryItems.id, { onDelete: "set null" }), // Optional: link to inventory item for stock tracking
 });
 
 export const insertAddonSchema = createInsertSchema(addons)
   .omit({ id: true })
   .extend({
     menuItemIds: z.array(z.string()).nullable().optional(),
+    inventoryItemId: z.string().nullable().optional(),
   });
 export type InsertAddon = z.infer<typeof insertAddonSchema>;
 export type Addon = typeof addons.$inferSelect;
