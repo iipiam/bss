@@ -4145,7 +4145,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return sum + (t.itemCount || 1);
       }, 0);
       
-      const fixedCosts = totalBillsAmount;
+      // Fixed costs exclude foundational bills (one-time setup costs)
+      const fixedCosts = yearBills
+        .filter(b => b.billType !== 'foundational')
+        .reduce((sum, b) => sum + parseFloat(b.amount), 0);
       const variableCostsPerUnit = unitsSold > 0 ? inventoryValue / unitsSold : 0;
       const sellingPricePerUnit = unitsSold > 0 ? totalRevenue / unitsSold : 0;
       const contributionMarginPerUnit = sellingPricePerUnit - variableCostsPerUnit;

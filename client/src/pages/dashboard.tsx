@@ -297,8 +297,11 @@ export default function Dashboard() {
     },
   });
 
-  // Calculate monthly expense trends (last 6 months)
-  const monthlyExpensesMap = bills.reduce((acc, bill) => {
+  // Filter out foundational bills from operating expenses (foundational = one-time setup costs, not recurring)
+  const operatingBills = bills.filter(bill => bill.billType !== 'foundational');
+
+  // Calculate monthly expense trends (last 6 months) - excluding foundational bills
+  const monthlyExpensesMap = operatingBills.reduce((acc, bill) => {
     const billDate = new Date(bill.paymentDate);
     const monthKey = `${billDate.getFullYear()}-${String(billDate.getMonth() + 1).padStart(2, '0')}`;
     if (!acc[monthKey]) {
@@ -318,8 +321,9 @@ export default function Dashboard() {
     .slice(-6)
     .map(({ month, expenses }) => ({ month, expenses }));
 
-  const totalExpenses = bills.reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
-  const pendingExpenses = bills.filter(b => b.status === "pending").reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
+  // Operating expenses exclude foundational bills (which are one-time setup costs)
+  const totalExpenses = operatingBills.reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
+  const pendingExpenses = operatingBills.filter(b => b.status === "pending").reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
 
   if (dashboardLoading || salesLoading || billsLoading) {
     return (

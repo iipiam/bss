@@ -125,11 +125,14 @@ export default function Financial() {
   const totalExpensesWithInventory = totalBillsAmount + totalInventoryValue;
 
   // Break Even Point (BEP) Calculation
-  // Fixed Costs = Operating Bills (rent, utilities, salaries, etc.)
+  // Fixed Costs = Operating Bills (rent, utilities, salaries, etc.) - excluding foundational bills
   // Variable Costs = Inventory/COGS
   // Revenue = Total Sales
   const totalRevenue = parseFloat(yearlyData.revenue || "0");
-  const fixedCosts = totalBillsAmount; // Operating expenses
+  // Fixed costs exclude foundational bills (one-time setup costs, not recurring operating expenses)
+  const fixedCosts = billsForYear
+    .filter(bill => bill.billType !== 'foundational')
+    .reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
   const variableCosts = totalInventoryValue; // COGS approximation
   
   // Calculate total units sold from invoices for the selected year
