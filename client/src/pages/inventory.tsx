@@ -438,11 +438,12 @@ export default function Inventory() {
   })();
 
   // Auto-set referenceQuantity to 1 when unit is "pcs" (pieces don't need reference quantity)
+  const watchedRefQty = form.watch("referenceQuantity");
   useEffect(() => {
-    if (watchedUnit === "pcs") {
-      form.setValue("referenceQuantity", 1);
+    if (watchedUnit === "pcs" && watchedRefQty !== 1) {
+      form.setValue("referenceQuantity", 1, { shouldValidate: false });
     }
-  }, [watchedUnit, form]);
+  }, [watchedUnit, watchedRefQty]);
 
   const addonFormSchema = createAddonFormSchema(t);
 

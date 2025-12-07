@@ -684,11 +684,17 @@ export default function Recipes() {
                           <SelectValue placeholder="Select ingredient" />
                         </SelectTrigger>
                         <SelectContent>
-                          {inventoryItems.map((item) => (
-                            <SelectItem key={item.id} value={item.id}>
-                              {item.name} ({item.unit}) - {parseFloat(item.price).toFixed(2)} SAR
-                            </SelectItem>
-                          ))}
+                          {inventoryItems.map((item) => {
+                            // Calculate unit price: total price / quantity
+                            const totalPrice = parseFloat(item.price) || 0;
+                            const totalQuantity = parseFloat(item.quantity) || 0;
+                            const unitPrice = totalQuantity > 0 ? (totalPrice / totalQuantity) : 0;
+                            return (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.name} ({item.unit}) - {unitPrice.toFixed(2)} SAR/{item.unit}
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                     </div>
