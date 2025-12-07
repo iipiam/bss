@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, TrendingUp, TrendingDown, DollarSign, FileText, Receipt, FileDown, Wallet, Target } from "lucide-react";
+import { Download, TrendingUp, TrendingDown, DollarSign, FileText, Receipt, FileDown, Wallet, Target, Radio } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
@@ -458,13 +458,19 @@ export default function Financial() {
           {/* Break Even Point (BEP) Analysis */}
           <Card className="bg-gradient-to-r from-purple-500/5 to-purple-600/10">
             <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-purple-500/20 flex items-center justify-center">
-                  <Target className="h-5 w-5 text-purple-600" />
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+                    <Target className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <CardTitle>BEP (Break Even Point)</CardTitle>
+                    <CardDescription>Sales needed to cover all costs for {selectedYear}</CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle>BEP (Break Even Point)</CardTitle>
-                  <CardDescription>Sales needed to cover all costs for {selectedYear}</CardDescription>
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-green-500/10 rounded-full">
+                  <Radio className="h-3 w-3 text-green-500 animate-pulse" />
+                  <span className="text-xs font-medium text-green-600">Live</span>
                 </div>
               </div>
             </CardHeader>

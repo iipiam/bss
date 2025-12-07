@@ -23,7 +23,7 @@ Preferred communication style: Simple, everyday language.
 - **Multi-tenant Architecture**: Complete data isolation using `restaurantId`. Includes dedicated IT account system for cross-tenant support.
 - **Device Preference System**: Users can select iPhone/iPad/Laptop layouts with persistent settings.
 - **Business Type Support**: Dual architecture for Restaurant and Factory operations with type-specific features and terminology.
-- **Real-Time Communication**: WebSocket-based system for employee notifications, real-time support ticket updates, and instant menu updates to POS (including images). **Updated Nov 30, 2025**: Added real-time recipe cost updates when inventory prices change - recipe costs automatically recalculate and broadcast via WebSocket.
+- **Real-Time Communication**: WebSocket-based system for employee notifications, real-time support ticket updates, and instant menu updates to POS (including images). **Updated Nov 30, 2025**: Added real-time recipe cost updates when inventory prices change - recipe costs automatically recalculate and broadcast via WebSocket. **Updated Dec 07, 2025**: Added real-time sales tracking for BEP (Break Even Point) - when new invoices are created, sales data is broadcast via WebSocket and BEP calculations update automatically.
 - **Data Storage**: AWS RDS PostgreSQL (Production) with SSL/TLS encryption, using `node-postgres` and Drizzle ORM.
 - **Schema Design**: Central `restaurants` table with `restaurantId` foreign key across 22 domain tables.
 - **Database Migrations**: Drizzle Kit with custom AWS RDS migration script.

@@ -60,7 +60,7 @@ let wsClients: Set<WSClient> | null = null;
 
 // Unified broadcast function with restaurant filtering
 export function broadcastNotification(event: {
-  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated' | 'menu:updated' | 'permissions:updated' | 'recipe:costUpdated';
+  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated' | 'menu:updated' | 'permissions:updated' | 'recipe:costUpdated' | 'sales:updated';
   restaurantId: string;
   // Target specific user (for permissions:updated)
   targetUserId?: string;
@@ -105,6 +105,9 @@ export function broadcastNotification(event: {
   };
   // Recipe cost update fields
   updatedRecipeIds?: string[];
+  // Sales update fields (for BEP real-time tracking)
+  invoiceId?: string;
+  invoiceTotal?: string;
 }) {
   if (!wsClients) return;
   
@@ -2002,6 +2005,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         pdfPath: `/invoices/${pdfFilename}`,
       });
 
+      // Broadcast sales update for real-time BEP tracking
+      broadcastNotification({
+        type: 'sales:updated',
+        restaurantId,
+        invoiceId: createdInvoice.id,
+        invoiceTotal: order.total,
+      });
+
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.orderNumber}.pdf`);
       res.send(pdfBuffer);
@@ -3015,6 +3026,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // SECURITY: Strip restaurantId from request body and use session restaurantId
       const { restaurantId: _, ...safeData } = data;
       const invoice = await storage.createInvoice({ ...safeData, restaurantId });
+      
+      // Broadcast sales update for real-time BEP tracking
+      broadcastNotification({
+        type: 'sales:updated',
+        restaurantId,
+        invoiceId: invoice.id,
+        invoiceTotal: invoice.total,
+      });
+      
       res.status(201).json(invoice);
     } catch (error) {
       res.status(400).json({ error: "Invalid invoice data" });
@@ -3410,6 +3430,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       await storage.updateInvoice(createdInvoice.id, restaurantId, {
         qrCode,
         pdfPath: `/invoices/${pdfFilename}`,
+      });
+
+      // Broadcast sales update for real-time BEP tracking
+      broadcastNotification({
+        type: 'sales:updated',
+        restaurantId,
+        invoiceId: createdInvoice.id,
+        invoiceTotal: order.total,
       });
 
       // Return PDF as download

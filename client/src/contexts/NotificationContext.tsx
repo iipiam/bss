@@ -70,7 +70,14 @@ interface MenuNotification {
   restaurantId: string;
 }
 
-type Notification = OrderNotification | ChatNotification | TicketNotification | SettingsNotification | PermissionsNotification | RecipeCostNotification | MenuNotification;
+interface SalesNotification {
+  type: 'sales:updated';
+  restaurantId: string;
+  invoiceId: string;
+  invoiceTotal: string;
+}
+
+type Notification = OrderNotification | ChatNotification | TicketNotification | SettingsNotification | PermissionsNotification | RecipeCostNotification | MenuNotification | SalesNotification;
 
 interface NotificationContextType {
   isConnected: boolean;
@@ -306,6 +313,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             // Handle recipe cost updates when inventory prices change
             queryClient.invalidateQueries({ queryKey: ['/api/recipes'], refetchType: 'all' });
             console.log('[Notifications] Recipe costs updated - refreshing recipes data');
+          } else if (notification.type === 'sales:updated') {
+            // Handle sales updates for real-time BEP tracking
+            queryClient.invalidateQueries({ queryKey: ['/api/invoices'], refetchType: 'all' });
+            queryClient.invalidateQueries({ queryKey: ['/api/analytics/financial'], refetchType: 'all' });
+            console.log('[Notifications] Sales updated - refreshing financial data for BEP');
           }
         } catch (err) {
           console.error('[Notifications] Failed to parse message:', err);
