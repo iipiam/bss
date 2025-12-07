@@ -320,14 +320,26 @@ export default function Recipes() {
     setPrepTime(recipe.prepTime);
     setCookTime(recipe.cookTime);
     setServings(recipe.servings.toString());
-    // Note: cost is now auto-calculated from ingredients
-    setIngredients(recipe.ingredients.map(ing => ({
-      inventoryItemId: ing.inventoryItemId,
-      name: ing.name,
-      quantity: ing.quantity.toString(),
-      unit: ing.unit,
-      unitPrice: ing.unitPrice
-    })));
+    // Recalculate unit prices from current inventory data
+    setIngredients(recipe.ingredients.map(ing => {
+      // Find current inventory item to get fresh unit price
+      const inventoryItem = inventoryItems.find(i => i.id === ing.inventoryItemId);
+      let currentUnitPrice = ing.unitPrice; // fallback to saved price
+      
+      if (inventoryItem) {
+        const totalPrice = parseFloat(inventoryItem.price) || 0;
+        const totalQuantity = parseFloat(inventoryItem.quantity) || 0;
+        currentUnitPrice = totalQuantity > 0 ? (totalPrice / totalQuantity) : 0;
+      }
+      
+      return {
+        inventoryItemId: ing.inventoryItemId,
+        name: ing.name,
+        quantity: ing.quantity.toString(),
+        unit: ing.unit,
+        unitPrice: currentUnitPrice
+      };
+    }));
     setSteps(recipe.steps);
     setOpen(true);
   };
