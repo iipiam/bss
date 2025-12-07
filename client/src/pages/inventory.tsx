@@ -103,11 +103,22 @@ const formatToast = (template: string | undefined, label: string | undefined): s
   return template.includes('%s') ? template.replace('%s', label ?? '') : template;
 };
 
-const formSchema = insertInventoryItemSchema.omit({ restaurantId: true }).extend({
+const formSchema = insertInventoryItemSchema.omit({ restaurantId: true, purchaseDate: true }).extend({
   quantity: z.coerce.number().positive("Quantity must be a positive number"),
   referenceQuantity: z.coerce.number().positive("Reference quantity must be a positive number"),
   price: z.coerce.number().min(0, "Price must be zero or positive"),
+  expirationDays: z.coerce.number().min(0, "Expiration days must be zero or positive").nullable().optional(),
 });
+
+// Helper function to calculate days remaining until expiration
+const calculateDaysRemaining = (purchaseDate: Date | string | null | undefined, expirationDays: number | null | undefined): number | null => {
+  if (!purchaseDate || !expirationDays) return null;
+  const purchase = new Date(purchaseDate);
+  const now = new Date();
+  const expirationDate = new Date(purchase.getTime() + expirationDays * 24 * 60 * 60 * 1000);
+  const daysRemaining = Math.ceil((expirationDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+  return daysRemaining;
+};
 
 // Helper to create addon form schema with translations
 const createAddonFormSchema = (t: any) => {
@@ -422,6 +433,7 @@ export default function Inventory() {
       supplier: "",
       status: "In Stock",
       branchId: null,
+      expirationDays: null,
     },
   });
 
@@ -546,6 +558,7 @@ export default function Inventory() {
         status: data.status,
         branchId: data.branchId || null,
         sortOrder: data.sortOrder || 0,
+        expirationDays: data.expirationDays || null,
       });
     },
     onSuccess: () => {
@@ -578,6 +591,7 @@ export default function Inventory() {
         supplier: data.supplier,
         status: data.status,
         branchId: data.branchId || null,
+        expirationDays: data.expirationDays || null,
       });
     },
     onSuccess: () => {
@@ -710,6 +724,7 @@ export default function Inventory() {
       supplier: item.supplier,
       status: item.status,
       branchId: item.branchId,
+      expirationDays: item.expirationDays ?? null,
     });
     setOpen(true);
   };
@@ -1129,6 +1144,30 @@ export default function Inventory() {
                           </FormControl>
                           <FormDescription className="text-xs">
                             {t.totalPriceHint || "Total price for the entire quantity"}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="expirationDays"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t.expirationDays || "Expiration Days"}</FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              type="number" 
+                              min="0"
+                              placeholder="e.g., 30" 
+                              value={field.value ?? ""}
+                              onChange={(e) => field.onChange(e.target.value === "" ? null : parseInt(e.target.value))}
+                              data-testid="input-item-expiration-days" 
+                            />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            {t.expirationDaysHint || "Number of days until this item expires (leave empty if no expiration)"}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
