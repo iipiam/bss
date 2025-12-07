@@ -298,7 +298,12 @@ export default function Dashboard() {
   });
 
   // Filter out foundational and one-time bills from operating expenses (only recurring costs)
-  const operatingBills = bills.filter(bill => bill.billType !== 'foundational' && bill.paymentPeriod !== 'one-time');
+  // Note: paymentPeriod can be 'one-time' or 'oneTime' depending on when data was created
+  const operatingBills = bills.filter(bill => 
+    bill.billType !== 'foundational' && 
+    bill.paymentPeriod !== 'one-time' && 
+    bill.paymentPeriod !== 'oneTime'
+  );
 
   // Calculate monthly expense trends (last 6 months) - excluding foundational bills
   const monthlyExpensesMap = operatingBills.reduce((acc, bill) => {

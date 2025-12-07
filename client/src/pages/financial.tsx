@@ -201,8 +201,11 @@ export default function Financial() {
   const totalRevenue = parseFloat(yearlyData.revenue || "0");
 
   // Filter out one-time payments and foundational bills for recurring expenses analysis
+  // Note: paymentPeriod can be 'one-time' or 'oneTime' depending on when data was created
   const recurringBillsForYear = billsForYear.filter(bill => 
-    bill.paymentPeriod !== "one-time" && bill.billType !== "foundational"
+    bill.paymentPeriod !== "one-time" && 
+    bill.paymentPeriod !== "oneTime" && 
+    bill.billType !== "foundational"
   );
 
   // Group recurring bills by type for pie chart (excludes one-time & foundational)

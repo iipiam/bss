@@ -1724,8 +1724,11 @@ export class DatabaseStorage implements IStorage {
     );
 
     // Filter out foundational bills AND one-time bills (fixed costs = recurring operational expenses only)
+    // Note: paymentPeriod can be 'one-time' or 'oneTime' depending on when data was created
     const recurringBills = allBills.filter(bill => 
-      bill.billType !== 'foundational' && bill.paymentPeriod !== 'one-time'
+      bill.billType !== 'foundational' && 
+      bill.paymentPeriod !== 'one-time' && 
+      bill.paymentPeriod !== 'oneTime'
     );
 
     // Calculate total fixed costs and breakdown by category

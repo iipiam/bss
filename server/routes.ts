@@ -4229,11 +4229,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         .sort((a, b) => b.amount - a.amount);
       
       // Calculate monthly operating expenses (exclude one-time and foundational)
+      // Note: paymentPeriod can be 'one-time' or 'oneTime' depending on when data was created
       const monthlyExpenses = Array.from({ length: 12 }, (_, i) => {
         const monthBills = yearBills.filter(b => {
           const paymentDate = new Date(b.paymentDate);
           return paymentDate.getMonth() === i && 
                  b.paymentPeriod !== 'one-time' && 
+                 b.paymentPeriod !== 'oneTime' && 
                  b.billType !== 'foundational';
         });
         const amount = monthBills.reduce((sum, b) => sum + parseFloat(b.amount), 0);

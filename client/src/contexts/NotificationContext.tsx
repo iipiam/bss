@@ -316,13 +316,22 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             });
           } else if (notification.type === 'recipe:costUpdated') {
             // Handle recipe cost updates when inventory prices change
+            // Invalidate recipes for Detailed Item Analysis real-time updates
             queryClient.invalidateQueries({ queryKey: ['/api/recipes'], refetchType: 'all' });
-            console.log('[Notifications] Recipe costs updated - refreshing recipes data');
+            // Invalidate BEP analytics since recipe costs affect COGS calculation
+            queryClient.invalidateQueries({ queryKey: ['/api/analytics/bep'], refetchType: 'all' });
+            // Invalidate menu items as they reference recipes
+            queryClient.invalidateQueries({ queryKey: ['/api/menu'], refetchType: 'all' });
+            console.log('[Notifications] Recipe costs updated - refreshing recipes, menu, and BEP data');
           } else if (notification.type === 'sales:updated') {
             // Handle sales updates for real-time BEP tracking
             queryClient.invalidateQueries({ queryKey: ['/api/invoices'], refetchType: 'all' });
             queryClient.invalidateQueries({ queryKey: ['/api/analytics/financial'], refetchType: 'all' });
-            console.log('[Notifications] Sales updated - refreshing financial data for BEP');
+            // Invalidate BEP analytics since new sales affect revenue and COGS
+            queryClient.invalidateQueries({ queryKey: ['/api/analytics/bep'], refetchType: 'all' });
+            // Invalidate delivery breakdown for real-time updates
+            queryClient.invalidateQueries({ queryKey: ['/api/analytics/delivery-breakdown'], refetchType: 'all' });
+            console.log('[Notifications] Sales updated - refreshing financial data, BEP, and delivery breakdown');
           }
         } catch (err) {
           console.error('[Notifications] Failed to parse message:', err);
