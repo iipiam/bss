@@ -437,6 +437,13 @@ export default function Inventory() {
     return quantity > 0 ? (price / quantity).toFixed(2) : "0.00";
   })();
 
+  // Auto-set referenceQuantity to 1 when unit is "pcs" (pieces don't need reference quantity)
+  useEffect(() => {
+    if (watchedUnit === "pcs") {
+      form.setValue("referenceQuantity", 1);
+    }
+  }, [watchedUnit, form]);
+
   const addonFormSchema = createAddonFormSchema(t);
 
   const addonForm = useForm<AddonFormValues>({
@@ -1070,10 +1077,21 @@ export default function Inventory() {
                           <FormItem>
                             <FormLabel>{t.referenceQuantity || "Reference Quantity"}</FormLabel>
                             <FormControl>
-                              <Input {...field} type="number" step="0.01" placeholder="1" data-testid="input-item-reference-quantity" />
+                              {watchedUnit === "pcs" ? (
+                                <Input 
+                                  value={t.notApplicable || "N/A"} 
+                                  disabled 
+                                  className="bg-muted"
+                                  data-testid="input-item-reference-quantity" 
+                                />
+                              ) : (
+                                <Input {...field} type="number" step="0.01" placeholder="1" data-testid="input-item-reference-quantity" />
+                              )}
                             </FormControl>
                             <FormDescription className="text-xs">
-                              {t.referenceQuantityHint || "Base unit for cost calculation (e.g., 1 kg)"}
+                              {watchedUnit === "pcs" 
+                                ? (t.referenceQuantityNotApplicable || "Not applicable for pieces")
+                                : (t.referenceQuantityHint || "Base unit for cost calculation (e.g., 1 kg)")}
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
