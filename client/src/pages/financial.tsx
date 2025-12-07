@@ -1,18 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, TrendingUp, TrendingDown, DollarSign, FileText, Receipt, FileDown, Wallet, Target, Radio, Truck } from "lucide-react";
+import { Download, TrendingUp, TrendingDown, DollarSign, FileText, Receipt, FileDown, Wallet, Target, Radio, Truck, Package, ChevronDown, ChevronUp, HelpCircle, Calculator } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
-import type { Invoice, ShopBill, InventoryItem } from "@shared/schema";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend } from "recharts";
+import type { Invoice, ShopBill, InventoryItem, BepMetrics } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Package } from "lucide-react";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { queryClient } from "@/lib/queryClient";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 
 interface DeliveryBreakdown {
   id: string;
@@ -86,17 +88,88 @@ export default function Financial() {
     },
   });
 
+  const { data: bepMetrics, isLoading: bepLoading } = useQuery<BepMetrics>({
+    queryKey: ["/api/analytics/bep", selectedYear],
+    queryFn: async () => {
+      const response = await fetch(`/api/analytics/bep?year=${selectedYear}`);
+      if (!response.ok) throw new Error("Failed to fetch BEP metrics");
+      return response.json();
+    },
+  });
+
+  const [fixedExpensesOpen, setFixedExpensesOpen] = useState(false);
+  const [priceChange, setPriceChange] = useState("0");
+  const [variableCostChange, setVariableCostChange] = useState("0");
+  const [fixedCostChange, setFixedCostChange] = useState("0");
+
   const { lastNotification } = useNotifications();
 
   useEffect(() => {
     if (lastNotification?.type === 'sales:updated') {
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/financial"] });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/delivery-breakdown"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/bep"] });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
     }
   }, [lastNotification]);
 
-  if (financialLoading || invoicesLoading || billsLoading || inventoryLoading || deliveryLoading) {
+  const sensitivityScenarios = useMemo(() => {
+    if (!bepMetrics) return { best: null, base: null, worst: null };
+    
+    const priceMultiplier = 1 + parseFloat(priceChange) / 100;
+    const variableMultiplier = 1 + parseFloat(variableCostChange) / 100;
+    const fixedMultiplier = 1 + parseFloat(fixedCostChange) / 100;
+    
+    const adjustedPrice = bepMetrics.avgSellingPrice * priceMultiplier;
+    const adjustedVariableCost = bepMetrics.avgVariableCostPerUnit * variableMultiplier;
+    const adjustedFixedCosts = bepMetrics.fixedCosts * fixedMultiplier;
+    
+    const adjustedCM = adjustedPrice - adjustedVariableCost;
+    const adjustedCMRatio = adjustedPrice > 0 ? adjustedCM / adjustedPrice : 0;
+    
+    const adjustedBepUnits = adjustedCM > 0 ? Math.ceil(adjustedFixedCosts / adjustedCM) : 0;
+    const adjustedBepRevenue = adjustedCMRatio > 0 ? adjustedFixedCosts / adjustedCMRatio : 0;
+    
+    const bestPrice = bepMetrics.avgSellingPrice * 1.2;
+    const bestVC = bepMetrics.avgVariableCostPerUnit * 0.8;
+    const bestFC = bepMetrics.fixedCosts * 0.8;
+    const bestCM = bestPrice - bestVC;
+    const bestCMRatio = bestPrice > 0 ? bestCM / bestPrice : 0;
+    const bestBepRevenue = bestCMRatio > 0 ? bestFC / bestCMRatio : 0;
+    
+    const worstPrice = bepMetrics.avgSellingPrice * 0.8;
+    const worstVC = bepMetrics.avgVariableCostPerUnit * 1.2;
+    const worstFC = bepMetrics.fixedCosts * 1.2;
+    const worstCM = worstPrice - worstVC;
+    const worstCMRatio = worstPrice > 0 ? worstCM / worstPrice : 0;
+    const worstBepRevenue = worstCMRatio > 0 ? worstFC / worstCMRatio : 0;
+    
+    return {
+      best: { bepRevenue: bestBepRevenue, label: "Best Case" },
+      base: { bepRevenue: adjustedBepRevenue, label: "Your Scenario" },
+      worst: { bepRevenue: worstBepRevenue, label: "Worst Case" },
+      adjusted: {
+        price: adjustedPrice,
+        variableCost: adjustedVariableCost,
+        fixedCosts: adjustedFixedCosts,
+        contributionMargin: adjustedCM,
+        contributionMarginRatio: adjustedCMRatio,
+        bepUnits: adjustedBepUnits,
+        bepRevenue: adjustedBepRevenue,
+      }
+    };
+  }, [bepMetrics, priceChange, variableCostChange, fixedCostChange]);
+
+  const scenarioChartData = useMemo(() => {
+    if (!sensitivityScenarios.best || !sensitivityScenarios.base || !sensitivityScenarios.worst) return [];
+    return [
+      { name: "Best Case", bepRevenue: sensitivityScenarios.best.bepRevenue, fill: "hsl(142, 76%, 36%)" },
+      { name: "Your Scenario", bepRevenue: sensitivityScenarios.base.bepRevenue, fill: "hsl(199, 89%, 48%)" },
+      { name: "Worst Case", bepRevenue: sensitivityScenarios.worst.bepRevenue, fill: "hsl(0, 84%, 60%)" },
+    ];
+  }, [sensitivityScenarios]);
+
+  if (financialLoading || invoicesLoading || billsLoading || inventoryLoading || deliveryLoading || bepLoading) {
     return (
       <div className="p-8">
         <h1 className="text-3xl font-bold mb-2">Financial Statements</h1>
@@ -123,59 +196,9 @@ export default function Financial() {
 
   // Total expenses including inventory
   const totalExpensesWithInventory = totalBillsAmount + totalInventoryValue;
-
-  // Break Even Point (BEP) Calculation
-  // Fixed Costs = Operating Bills (rent, utilities, salaries, etc.) - excluding foundational bills
-  // Variable Costs = Inventory/COGS
-  // Revenue = Total Sales
+  
+  // Revenue from financial data (for display purposes)
   const totalRevenue = parseFloat(yearlyData.revenue || "0");
-  // Fixed costs exclude foundational and one-time bills (only recurring operating expenses)
-  const fixedCosts = billsForYear
-    .filter(bill => bill.billType !== 'foundational' && bill.paymentPeriod !== 'one-time')
-    .reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
-  const variableCosts = totalInventoryValue; // COGS approximation
-  
-  // Calculate total units sold from invoices for the selected year
-  const invoicesForYear = invoices.filter((inv) => {
-    const invYear = new Date(inv.createdAt || "").getFullYear();
-    return invYear === parseInt(selectedYear);
-  });
-  const totalUnitsSold = invoicesForYear.reduce((sum, inv) => {
-    const items = inv.items as Array<{ quantity: number }> || [];
-    return sum + items.reduce((itemSum, item) => itemSum + (item.quantity || 0), 0);
-  }, 0);
-  
-  // Per-unit calculations
-  const sellingPricePerUnit = totalUnitsSold > 0 ? totalRevenue / totalUnitsSold : 0;
-  const variableCostPerUnit = totalUnitsSold > 0 ? variableCosts / totalUnitsSold : 0;
-  const contributionMarginPerUnit = sellingPricePerUnit - variableCostPerUnit;
-  
-  // Contribution Margin = Revenue - Variable Costs
-  const contributionMargin = totalRevenue - variableCosts;
-  // Contribution Margin Ratio = Contribution Margin / Revenue
-  const contributionMarginRatio = totalRevenue > 0 ? contributionMargin / totalRevenue : 0;
-  
-  // BEP in Units = Fixed Costs / Contribution Margin per Unit
-  const bepInUnits = contributionMarginPerUnit > 0 ? Math.ceil(fixedCosts / contributionMarginPerUnit) : 0;
-  // BEP in Revenue = Fixed Costs / Contribution Margin Ratio
-  const bepInRevenue = contributionMarginRatio > 0 ? fixedCosts / contributionMarginRatio : 0;
-  
-  // Margin of Safety = (Current Revenue - BEP Revenue) / Current Revenue * 100%
-  const marginOfSafety = totalRevenue > 0 ? ((totalRevenue - bepInRevenue) / totalRevenue) * 100 : 0;
-  
-  // Current position relative to BEP
-  const revenueVsBep = totalRevenue - bepInRevenue;
-  const bepProgress = bepInRevenue > 0 ? (totalRevenue / bepInRevenue) * 100 : 0;
-  
-  // BEP Chart Data - showing revenue levels vs costs
-  const maxRevenue = Math.max(totalRevenue * 1.5, bepInRevenue * 1.5, 10000);
-  const bepChartData = [
-    { revenue: 0, totalCosts: fixedCosts, totalRevenue: 0, label: '0' },
-    { revenue: maxRevenue * 0.25, totalCosts: fixedCosts + (variableCostPerUnit * (maxRevenue * 0.25 / sellingPricePerUnit || 0)), totalRevenue: maxRevenue * 0.25, label: `${(maxRevenue * 0.25 / 1000).toFixed(0)}K` },
-    { revenue: bepInRevenue, totalCosts: fixedCosts + variableCosts * (bepInRevenue / totalRevenue || 0), totalRevenue: bepInRevenue, label: 'BEP', isBep: true },
-    { revenue: maxRevenue * 0.75, totalCosts: fixedCosts + (variableCostPerUnit * (maxRevenue * 0.75 / sellingPricePerUnit || 0)), totalRevenue: maxRevenue * 0.75, label: `${(maxRevenue * 0.75 / 1000).toFixed(0)}K` },
-    { revenue: maxRevenue, totalCosts: fixedCosts + (variableCostPerUnit * (maxRevenue / sellingPricePerUnit || 0)), totalRevenue: maxRevenue, label: `${(maxRevenue / 1000).toFixed(0)}K` },
-  ].sort((a, b) => a.revenue - b.revenue);
 
   // Filter out one-time payments and foundational bills for recurring expenses analysis
   const recurringBillsForYear = billsForYear.filter(bill => 
@@ -579,173 +602,327 @@ export default function Financial() {
             </CardContent>
           </Card>
 
-          {/* Break Even Point (BEP) Analysis */}
-          <Card className="bg-gradient-to-r from-purple-500/5 to-purple-600/10">
+          {/* BEP Calculator Section */}
+          <Card className="bg-gradient-to-r from-teal-500/5 to-cyan-600/10">
             <CardHeader>
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-purple-500/20 flex items-center justify-center">
-                    <Target className="h-5 w-5 text-purple-600" />
+                  <div className="h-10 w-10 rounded-full bg-teal-500/20 flex items-center justify-center">
+                    <Calculator className="h-5 w-5 text-teal-600" />
                   </div>
                   <div>
-                    <CardTitle>BEP (Break Even Point) Analysis</CardTitle>
-                    <CardDescription>Complete break-even analysis for {selectedYear}</CardDescription>
+                    <CardTitle>BEP Calculator</CardTitle>
+                    <CardDescription>Break-Even Point Analysis for {selectedYear}</CardDescription>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-green-500/10 rounded-full">
-                  <Radio className="h-3 w-3 text-green-500 animate-pulse" />
-                  <span className="text-xs font-medium text-green-600">Live</span>
+                <div className="flex items-center gap-2">
+                  <Badge variant={bepMetrics?.isProfitable ? "default" : "destructive"} data-testid="bep-status-badge">
+                    {bepMetrics?.isProfitable ? "Profitable" : "Unprofitable"}
+                  </Badge>
+                  <div className="flex items-center gap-1.5 px-2 py-1 bg-green-500/10 rounded-full">
+                    <Radio className="h-3 w-3 text-green-500 animate-pulse" />
+                    <span className="text-xs font-medium text-green-600">Live</span>
+                  </div>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* BEP Summary - Main Metrics */}
-              <div className="grid gap-4 md:grid-cols-4">
-                <div className="space-y-1 p-3 bg-purple-500/10 rounded-lg">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">BEP in Revenue</p>
-                  <p className="text-xl font-bold font-mono text-purple-600" data-testid="bep-revenue">
-                    {bepInRevenue.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
-                  </p>
-                </div>
-                <div className="space-y-1 p-3 bg-purple-500/10 rounded-lg">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">BEP in Units</p>
-                  <p className="text-xl font-bold font-mono text-purple-600" data-testid="bep-units">
-                    {bepInUnits.toLocaleString("en-SA")} units
-                  </p>
-                </div>
-                <div className="space-y-1 p-3 bg-background rounded-lg">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Current Revenue</p>
-                  <p className="text-xl font-bold font-mono">
-                    {totalRevenue.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
-                  </p>
-                </div>
-                <div className="space-y-1 p-3 bg-background rounded-lg">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Status</p>
-                  <p className={`text-xl font-bold font-mono ${revenueVsBep >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="bep-status">
-                    {revenueVsBep >= 0 ? 'Profitable' : 'Below BEP'}
-                  </p>
+              {/* A. Summary Cards */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+                <Card className="bg-gradient-to-r from-green-500/5 to-green-600/10">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground">Fixed Costs</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" data-testid="tooltip-fixed-costs" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">Recurring expenses like rent, salaries, utilities. Excludes one-time and foundational costs.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <p className="text-lg font-bold font-mono text-green-600" data-testid="bep-fixed-costs">
+                      {(bepMetrics?.fixedCosts || 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-r from-orange-500/5 to-orange-600/10">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground">Variable Costs</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" data-testid="tooltip-variable-costs" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">Cost of goods sold (COGS) based on recipes and ingredients used.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <p className="text-lg font-bold font-mono text-orange-600" data-testid="bep-variable-costs">
+                      {(bepMetrics?.cogsTotal || 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-r from-teal-500/5 to-teal-600/10">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground">BEP Units</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" data-testid="tooltip-bep" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">Sales needed to cover all costs. Above this = profit, below = loss.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <p className="text-lg font-bold font-mono text-teal-600" data-testid="bep-units">
+                      {(bepMetrics?.bepUnits || 0).toLocaleString("en-SA")} units
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-r from-teal-500/5 to-teal-600/10">
+                  <CardContent className="pt-4">
+                    <span className="text-xs text-muted-foreground">BEP Revenue</span>
+                    <p className="text-lg font-bold font-mono text-teal-600" data-testid="bep-revenue">
+                      {(bepMetrics?.bepRevenue || 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <span className="text-xs text-muted-foreground">Current Revenue</span>
+                    <p className="text-lg font-bold font-mono" data-testid="bep-current-revenue">
+                      {(bepMetrics?.revenue || 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className={bepMetrics?.marginOfSafety && bepMetrics.marginOfSafety >= 0 ? "bg-gradient-to-r from-blue-500/5 to-blue-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground">Margin of Safety</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" data-testid="tooltip-margin-of-safety" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">How much revenue can drop before reaching break-even.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <p className={`text-lg font-bold font-mono ${(bepMetrics?.marginOfSafety || 0) >= 20 ? 'text-green-600' : (bepMetrics?.marginOfSafety || 0) >= 0 ? 'text-blue-600' : 'text-destructive'}`} data-testid="bep-margin-of-safety">
+                      {(bepMetrics?.marginOfSafety || 0).toFixed(1)}%
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className={bepMetrics?.isProfitable ? "bg-gradient-to-r from-green-500/5 to-green-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
+                  <CardContent className="pt-4">
+                    <span className="text-xs text-muted-foreground">Status</span>
+                    <p className={`text-lg font-bold font-mono ${bepMetrics?.isProfitable ? 'text-green-600' : 'text-destructive'}`} data-testid="bep-status">
+                      {bepMetrics?.isProfitable ? 'Profitable' : 'Below BEP'}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* B. Collapsible Fixed Expenses Breakdown */}
+              <Collapsible open={fixedExpensesOpen} onOpenChange={setFixedExpensesOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between" data-testid="button-toggle-fixed-expenses">
+                    <span>Fixed Expenses Breakdown</span>
+                    {fixedExpensesOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Category</TableHead>
+                        <TableHead className="text-right">Amount (SAR)</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {bepMetrics?.fixedCostsBreakdown.map((item, index) => (
+                        <TableRow key={index} data-testid={`fixed-expense-row-${index}`}>
+                          <TableCell className="capitalize font-medium">{item.category}</TableCell>
+                          <TableCell className="text-right font-mono">{item.amount.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                    <TableFooter>
+                      <TableRow>
+                        <TableCell className="font-bold">Total Fixed Costs</TableCell>
+                        <TableCell className="text-right font-bold font-mono" data-testid="fixed-expenses-total">
+                          {(bepMetrics?.fixedCosts || 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                        </TableCell>
+                      </TableRow>
+                    </TableFooter>
+                  </Table>
+                </CollapsibleContent>
+              </Collapsible>
+
+              {/* C. Cost Structure Section */}
+              <div className="pt-4 border-t">
+                <p className="text-sm font-medium mb-3">Cost Structure</p>
+                <div className="grid gap-4 md:grid-cols-4">
+                  <div className="space-y-1 p-3 bg-muted/30 rounded-lg">
+                    <span className="text-xs text-muted-foreground">Selling Price/Unit</span>
+                    <p className="text-lg font-bold font-mono" data-testid="bep-selling-price-unit">
+                      {(bepMetrics?.avgSellingPrice || 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                    </p>
+                  </div>
+                  <div className="space-y-1 p-3 bg-muted/30 rounded-lg">
+                    <span className="text-xs text-muted-foreground">Variable Cost/Unit</span>
+                    <p className="text-lg font-bold font-mono" data-testid="bep-variable-cost-unit">
+                      {(bepMetrics?.avgVariableCostPerUnit || 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                    </p>
+                  </div>
+                  <div className="space-y-1 p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground">Contribution Margin/Unit</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" data-testid="tooltip-contribution-margin" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">Amount each unit sold contributes to covering fixed costs.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <p className="text-lg font-bold font-mono" data-testid="bep-contribution-margin-unit">
+                      {(bepMetrics?.contributionMarginPerUnit || 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                    </p>
+                  </div>
+                  <div className="space-y-1 p-3 bg-muted/30 rounded-lg">
+                    <span className="text-xs text-muted-foreground">CM Ratio</span>
+                    <p className="text-lg font-bold font-mono" data-testid="bep-cm-ratio">
+                      {((bepMetrics?.contributionMarginRatio || 0) * 100).toFixed(1)}%
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {/* Progress bar */}
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Progress to Break Even</span>
-                  <span className="font-semibold">{Math.min(bepProgress, 100).toFixed(1)}%</span>
+              {/* D. Sensitivity Analysis Section */}
+              <div className="pt-4 border-t">
+                <p className="text-sm font-medium mb-3">Sensitivity Analysis</p>
+                <div className="grid gap-4 md:grid-cols-3 mb-4">
+                  <div className="space-y-2">
+                    <label className="text-xs text-muted-foreground">Selling Price Change</label>
+                    <Select value={priceChange} onValueChange={setPriceChange} data-testid="select-price-change">
+                      <SelectTrigger data-testid="select-price-change-trigger">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="-20">-20%</SelectItem>
+                        <SelectItem value="-10">-10%</SelectItem>
+                        <SelectItem value="0">0%</SelectItem>
+                        <SelectItem value="10">+10%</SelectItem>
+                        <SelectItem value="20">+20%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs text-muted-foreground">Variable Cost Change</label>
+                    <Select value={variableCostChange} onValueChange={setVariableCostChange} data-testid="select-variable-cost-change">
+                      <SelectTrigger data-testid="select-variable-cost-change-trigger">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="-20">-20%</SelectItem>
+                        <SelectItem value="-10">-10%</SelectItem>
+                        <SelectItem value="0">0%</SelectItem>
+                        <SelectItem value="10">+10%</SelectItem>
+                        <SelectItem value="20">+20%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs text-muted-foreground">Fixed Cost Change</label>
+                    <Select value={fixedCostChange} onValueChange={setFixedCostChange} data-testid="select-fixed-cost-change">
+                      <SelectTrigger data-testid="select-fixed-cost-change-trigger">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="-20">-20%</SelectItem>
+                        <SelectItem value="-10">-10%</SelectItem>
+                        <SelectItem value="0">0%</SelectItem>
+                        <SelectItem value="10">+10%</SelectItem>
+                        <SelectItem value="20">+20%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full rounded-full transition-all ${bepProgress >= 100 ? 'bg-green-500' : 'bg-purple-500'}`}
-                    style={{ width: `${Math.min(bepProgress, 100)}%` }}
-                  />
+
+                {/* Scenario Cards */}
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Card className="bg-gradient-to-r from-green-500/5 to-green-600/10 border-green-500/20">
+                    <CardContent className="pt-4">
+                      <p className="text-xs text-muted-foreground font-medium text-green-600">Best Case</p>
+                      <p className="text-sm text-muted-foreground">+20% Price, -20% Costs</p>
+                      <p className="text-xl font-bold font-mono text-green-600 mt-2" data-testid="scenario-best-bep">
+                        {(sensitivityScenarios.best?.bepRevenue || 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-r from-blue-500/5 to-blue-600/10 border-blue-500/20">
+                    <CardContent className="pt-4">
+                      <p className="text-xs text-muted-foreground font-medium text-blue-600">Your Scenario</p>
+                      <p className="text-sm text-muted-foreground">
+                        {priceChange !== "0" && `${parseInt(priceChange) > 0 ? '+' : ''}${priceChange}% Price`}
+                        {priceChange !== "0" && (variableCostChange !== "0" || fixedCostChange !== "0") && ", "}
+                        {variableCostChange !== "0" && `${parseInt(variableCostChange) > 0 ? '+' : ''}${variableCostChange}% VC`}
+                        {variableCostChange !== "0" && fixedCostChange !== "0" && ", "}
+                        {fixedCostChange !== "0" && `${parseInt(fixedCostChange) > 0 ? '+' : ''}${fixedCostChange}% FC`}
+                        {priceChange === "0" && variableCostChange === "0" && fixedCostChange === "0" && "No changes"}
+                      </p>
+                      <p className="text-xl font-bold font-mono text-blue-600 mt-2" data-testid="scenario-base-bep">
+                        {(sensitivityScenarios.adjusted?.bepRevenue || 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-r from-red-500/5 to-red-600/10 border-red-500/20">
+                    <CardContent className="pt-4">
+                      <p className="text-xs text-muted-foreground font-medium text-red-600">Worst Case</p>
+                      <p className="text-sm text-muted-foreground">-20% Price, +20% Costs</p>
+                      <p className="text-xl font-bold font-mono text-red-600 mt-2" data-testid="scenario-worst-bep">
+                        {(sensitivityScenarios.worst?.bepRevenue || 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                      </p>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
 
-              {/* BEP Graph */}
-              <div className="pt-2 border-t">
-                <p className="text-sm font-medium mb-3">Break-Even Chart</p>
+              {/* E. Bar Chart for Scenario Comparison */}
+              <div className="pt-4 border-t">
+                <p className="text-sm font-medium mb-3">Scenario Comparison</p>
                 <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={bepChartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <BarChart data={scenarioChartData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="label" />
+                    <XAxis dataKey="name" />
                     <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
-                    <Tooltip 
+                    <RechartsTooltip 
                       formatter={(value: number) => `${value.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR`}
-                      labelFormatter={(label) => label === 'BEP' ? 'Break-Even Point' : `Revenue: ${label} SAR`}
                     />
-                    <Line type="monotone" dataKey="totalRevenue" stroke="hsl(var(--chart-1))" strokeWidth={2} name="Revenue" dot={{ r: 4 }} />
-                    <Line type="monotone" dataKey="totalCosts" stroke="hsl(var(--destructive))" strokeWidth={2} name="Total Costs" dot={{ r: 4 }} />
-                  </LineChart>
+                    <Bar dataKey="bepRevenue" name="BEP Revenue" radius={[4, 4, 0, 0]}>
+                      {scenarioChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
                 <p className="text-xs text-muted-foreground text-center mt-2">
-                  Where Revenue (blue) crosses Total Costs (red) = Break-Even Point
+                  Lower BEP Revenue is better - means you need less sales to break even
                 </p>
-              </div>
-
-              {/* Cost & Margin Details */}
-              <div className="grid gap-4 md:grid-cols-2 pt-2 border-t">
-                {/* Fixed & Variable Costs */}
-                <div className="space-y-3">
-                  <p className="text-sm font-medium">Cost Structure</p>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Fixed Costs (Bills)</span>
-                      <span className="font-mono font-medium">{fixedCosts.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Variable Costs (Total)</span>
-                      <span className="font-mono font-medium">{variableCosts.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Variable Cost per Unit</span>
-                      <span className="font-mono font-medium">{variableCostPerUnit.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Selling Price per Unit</span>
-                      <span className="font-mono font-medium">{sellingPricePerUnit.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contribution Margin */}
-                <div className="space-y-3">
-                  <p className="text-sm font-medium">Contribution Margin</p>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Contribution Margin (Total)</span>
-                      <span className="font-mono font-medium">{contributionMargin.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Contribution Margin per Unit</span>
-                      <span className="font-mono font-medium">{contributionMarginPerUnit.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Contribution Margin Ratio</span>
-                      <span className="font-mono font-medium">{(contributionMarginRatio * 100).toFixed(1)}%</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Total Units Sold</span>
-                      <span className="font-mono font-medium">{totalUnitsSold.toLocaleString("en-SA")} units</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Margin of Safety */}
-              <div className={`p-3 rounded-md ${marginOfSafety >= 0 ? 'bg-blue-500/10' : 'bg-orange-500/10'}`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="font-medium">Margin of Safety</span>
-                    <p className="text-xs text-muted-foreground">How much revenue can drop before reaching BEP</p>
-                  </div>
-                  <span className={`text-lg font-bold font-mono ${marginOfSafety >= 20 ? 'text-green-600' : marginOfSafety >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
-                    {marginOfSafety.toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-
-              {/* Profit/Loss indicator */}
-              <div className={`p-3 rounded-md ${revenueVsBep >= 0 ? 'bg-green-500/10' : 'bg-destructive/10'}`}>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{revenueVsBep >= 0 ? 'Profit Above BEP' : 'Amount Below BEP'}</span>
-                  <span className={`text-lg font-bold font-mono ${revenueVsBep >= 0 ? 'text-green-600' : 'text-destructive'}`}>
-                    {revenueVsBep >= 0 ? '+' : ''}{revenueVsBep.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
-                  </span>
-                </div>
-              </div>
-
-              {/* Assumptions */}
-              <div className="pt-2 border-t">
-                <p className="text-sm font-medium mb-2">Assumptions</p>
-                <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                  <li>Fixed Costs = All bills (rent, utilities, salaries, etc.) for {selectedYear}</li>
-                  <li>Variable Costs = Total inventory value (COGS approximation)</li>
-                  <li>Selling Price per Unit = Total Revenue / Total Units Sold</li>
-                  <li>Variable Cost per Unit = Total Variable Costs / Total Units Sold</li>
-                  <li>BEP in Units = Fixed Costs / (Selling Price - Variable Cost per Unit)</li>
-                  <li>BEP in Revenue = Fixed Costs / Contribution Margin Ratio</li>
-                  <li>Margin of Safety = (Revenue - BEP Revenue) / Revenue × 100%</li>
-                </ul>
               </div>
             </CardContent>
           </Card>

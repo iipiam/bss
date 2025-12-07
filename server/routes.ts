@@ -1118,6 +1118,26 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // BEP (Break-Even Point) Analytics
+  app.get("/api/analytics/bep", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const yearParam = req.query.year as string;
+      
+      // Validate year parameter
+      const year = yearParam ? parseInt(yearParam, 10) : new Date().getFullYear();
+      if (isNaN(year) || year < 2000 || year > 2100) {
+        return res.status(400).json({ error: "Invalid year parameter. Must be a valid year between 2000 and 2100." });
+      }
+      
+      const bepMetrics = await storage.getBepMetrics(restaurantId, year);
+      res.json(bepMetrics);
+    } catch (error) {
+      console.error("[ANALYTICS] BEP metrics error:", error);
+      res.status(500).json({ error: "Failed to calculate BEP metrics" });
+    }
+  });
+
   // Investors
   app.get("/api/investors", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
     try {

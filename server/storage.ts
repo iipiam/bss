@@ -89,6 +89,7 @@ import {
   bootstrapResetTokens,
   type BootstrapResetToken,
   type InsertBootstrapResetToken,
+  type BepMetrics,
   licenses,
   businessInfo,
 } from "@shared/schema";
@@ -330,6 +331,7 @@ export interface IStorage {
 
   // Analytics (MULTI-TENANT: requires restaurantId)
   getSalesComparison(restaurantId: string): Promise<any>;
+  getBepMetrics(restaurantId: string, year: number): Promise<BepMetrics>;
 
   // Team Chat - Conversations (MULTI-TENANT: SQL-level restaurantId filtering)
   getConversations(restaurantId: string, userId: string, branchId?: string): Promise<any[]>; // Returns conversations with unread count
@@ -1704,6 +1706,167 @@ export class DatabaseStorage implements IStorage {
         revenuePercentage: totalRevenue > 0 ? (deliveryAppMetrics.totalRevenue / totalRevenue) * 100 : 0,
         breakdown: deliveryAppBreakdown,
       },
+    };
+  }
+
+  async getBepMetrics(restaurantId: string, year: number): Promise<BepMetrics> {
+    const yearStart = new Date(year, 0, 1);
+    const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999);
+
+    // 1. Get fixed costs from shop bills
+    // Exclude bills where billType='foundational' AND paymentPeriod='one-time'
+    const allBills = await db.select().from(shopBills).where(
+      and(
+        eq(shopBills.restaurantId, restaurantId),
+        gte(shopBills.paymentDate, yearStart),
+        lte(shopBills.paymentDate, yearEnd)
+      )
+    );
+
+    // Filter out foundational one-time bills (these are not recurring fixed costs)
+    const recurringBills = allBills.filter(bill => 
+      !(bill.billType === 'foundational' && bill.paymentPeriod === 'one-time')
+    );
+
+    // Calculate total fixed costs and breakdown by category
+    const fixedCostsMap = new Map<string, number>();
+    let fixedCosts = 0;
+    
+    for (const bill of recurringBills) {
+      const amount = parseFloat(bill.amount) || 0;
+      fixedCosts += amount;
+      
+      const category = bill.billType || 'other';
+      fixedCostsMap.set(category, (fixedCostsMap.get(category) || 0) + amount);
+    }
+
+    const fixedCostsBreakdown = Array.from(fixedCostsMap.entries()).map(([category, amount]) => ({
+      category,
+      amount,
+    }));
+
+    // 2. Get invoices for the year
+    const yearInvoices = await db.select().from(invoices).where(
+      and(
+        eq(invoices.restaurantId, restaurantId),
+        gte(invoices.createdAt, yearStart),
+        lte(invoices.createdAt, yearEnd)
+      )
+    );
+
+    // 3. Calculate revenue and units sold
+    let revenue = 0;
+    let unitsSold = 0;
+    
+    for (const invoice of yearInvoices) {
+      revenue += parseFloat(invoice.total) || 0;
+      
+      // Count units sold from items
+      if (invoice.items && Array.isArray(invoice.items)) {
+        for (const item of invoice.items) {
+          unitsSold += (item.quantity || 0);
+        }
+      }
+    }
+
+    // 4. Calculate COGS from orders linked to invoices
+    // Get all menu items and recipes for cost lookup
+    const allMenuItems = await db.select().from(menuItems).where(eq(menuItems.restaurantId, restaurantId));
+    const allRecipes = await db.select().from(recipes).where(eq(recipes.restaurantId, restaurantId));
+    const allInventory = await db.select().from(inventoryItems).where(eq(inventoryItems.restaurantId, restaurantId));
+    
+    // Create lookup maps
+    const menuItemMap = new Map(allMenuItems.map(mi => [mi.id, mi]));
+    const recipeMap = new Map(allRecipes.map(r => [r.id, r]));
+    const inventoryMap = new Map(allInventory.map(inv => [inv.id, inv]));
+
+    let cogsTotal = 0;
+
+    // Get orders linked to invoices and calculate COGS
+    for (const invoice of yearInvoices) {
+      if (!invoice.orderId) {
+        // Manual invoice without order - skip COGS calculation
+        continue;
+      }
+
+      // Get the order
+      const [order] = await db.select().from(orders).where(
+        and(
+          eq(orders.id, invoice.orderId),
+          eq(orders.restaurantId, restaurantId)
+        )
+      );
+
+      if (!order || !order.items || !Array.isArray(order.items)) {
+        continue;
+      }
+
+      // Calculate COGS for each item in the order
+      for (const orderItem of order.items) {
+        const menuItemId = orderItem.id;
+        const quantity = orderItem.quantity || 0;
+        
+        const menuItem = menuItemMap.get(menuItemId);
+        if (!menuItem) {
+          continue;
+        }
+
+        if (menuItem.recipeId) {
+          // Menu item has a recipe - use recipe cost × portionSize × quantity
+          const recipe = recipeMap.get(menuItem.recipeId);
+          if (recipe) {
+            const recipeCost = parseFloat(recipe.cost) || 0;
+            const portionSize = parseFloat(menuItem.portionSize || "1.0") || 1.0;
+            cogsTotal += recipeCost * portionSize * quantity;
+          }
+        } else if (menuItem.inventoryItemId) {
+          // Menu item is direct from inventory - use inventory price × quantity
+          const inventoryItem = inventoryMap.get(menuItem.inventoryItemId);
+          if (inventoryItem) {
+            const inventoryPrice = parseFloat(inventoryItem.price) || 0;
+            cogsTotal += inventoryPrice * quantity;
+          }
+        }
+        // Else: no cost data, COGS += 0
+      }
+    }
+
+    // 5. Calculate BEP metrics
+    const avgSellingPrice = unitsSold > 0 ? revenue / unitsSold : 0;
+    const avgVariableCostPerUnit = unitsSold > 0 ? cogsTotal / unitsSold : 0;
+    const contributionMarginPerUnit = avgSellingPrice - avgVariableCostPerUnit;
+    const contributionMarginRatio = revenue > 0 ? (revenue - cogsTotal) / revenue : 0;
+    
+    // BEP calculations with safety for division by zero or negative margins
+    const bepUnits = contributionMarginPerUnit > 0 
+      ? fixedCosts / contributionMarginPerUnit 
+      : 0;
+    const bepRevenue = contributionMarginRatio > 0 
+      ? fixedCosts / contributionMarginRatio 
+      : 0;
+    
+    // Margin of safety: (Actual Revenue - BEP Revenue) / Actual Revenue × 100
+    const marginOfSafety = revenue > 0 && bepRevenue > 0 
+      ? ((revenue - bepRevenue) / revenue) * 100 
+      : 0;
+    
+    // Is the business profitable? (Revenue > BEP Revenue)
+    const isProfitable = revenue > bepRevenue && bepRevenue > 0;
+
+    return {
+      fixedCosts,
+      fixedCostsBreakdown,
+      cogsTotal,
+      revenue,
+      unitsSold,
+      avgSellingPrice,
+      avgVariableCostPerUnit,
+      contributionMarginPerUnit,
+      contributionMarginRatio,
+      bepUnits,
+      bepRevenue,
+      marginOfSafety,
+      isProfitable,
     };
   }
 

@@ -1081,3 +1081,20 @@ export const insertBusinessInfoSchema = createInsertSchema(businessInfo)
   .omit({ id: true, updatedAt: true });
 export type InsertBusinessInfo = z.infer<typeof insertBusinessInfoSchema>;
 export type BusinessInfo = typeof businessInfo.$inferSelect;
+
+// BEP (Break-Even Point) Analytics Metrics - not a table, just a type for API responses
+export type BepMetrics = {
+  fixedCosts: number;
+  fixedCostsBreakdown: Array<{ category: string; amount: number }>;
+  cogsTotal: number;
+  revenue: number;
+  unitsSold: number;
+  avgSellingPrice: number;
+  avgVariableCostPerUnit: number;
+  contributionMarginPerUnit: number;
+  contributionMarginRatio: number;
+  bepUnits: number;
+  bepRevenue: number;
+  marginOfSafety: number;
+  isProfitable: boolean;
+};
