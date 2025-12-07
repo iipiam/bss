@@ -64,6 +64,8 @@ export const inventoryItems = pgTable("inventory_items", {
   status: text("status").notNull().default("In Stock"),
   branchId: varchar("branch_id").references(() => branches.id),
   sortOrder: integer("sort_order").default(0),
+  expirationDays: integer("expiration_days"), // Number of days until expiration from purchase date
+  purchaseDate: timestamp("purchase_date").defaultNow(), // Date when item was added/purchased
 });
 
 export const insertInventoryItemSchema = createInsertSchema(inventoryItems).omit({ id: true });
