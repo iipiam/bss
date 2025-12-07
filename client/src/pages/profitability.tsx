@@ -80,7 +80,9 @@ export default function Profitability() {
     const itemProfitability = menuItems.map((item) => {
       // Find recipe linked to this menu item via menuItem.recipeId
       const recipe = item.recipeId ? recipes.find((r) => r.id === item.recipeId) : null;
-      const cost = recipe ? parseFloat(recipe.cost) : 0;
+      // Apply portion size multiplier to recipe cost (1.0=full, 0.5=half, 0.25=quarter, 0.75=three-quarter)
+      const portionMultiplier = item.portionSize ? parseFloat(item.portionSize as string) : 1.0;
+      const cost = recipe ? parseFloat(recipe.cost) * portionMultiplier : 0;
       // Use basePrice (pre-VAT) for accurate profit calculation
       const basePrice = parseFloat(item.basePrice);
       const profit = basePrice - cost;

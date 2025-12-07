@@ -3986,7 +3986,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Calculate profitability data
       const profitabilityData = menuItems.map((item) => {
         const recipe = item.recipeId ? recipes.find((r) => r.id === item.recipeId) : null;
-        const cost = recipe ? parseFloat(recipe.cost) : 0;
+        // Apply portion size multiplier to recipe cost (1.0=full, 0.5=half, 0.25=quarter, 0.75=three-quarter)
+        const portionMultiplier = item.portionSize ? parseFloat(item.portionSize) : 1.0;
+        const cost = recipe ? parseFloat(recipe.cost) * portionMultiplier : 0;
         const basePrice = parseFloat(item.basePrice);
         const profit = basePrice - cost;
         const margin = basePrice > 0 ? (profit / basePrice) * 100 : 0;

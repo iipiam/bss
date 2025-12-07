@@ -49,7 +49,7 @@ Preferred communication style: Simple, everyday language.
 - **Recipe Import**: Flexible column mapping supports multiple variations (Name/name/Recipe Name, Prep Time/prepTime, etc.) with JSON/array/text ingredient/step parsing. **Updated Nov 26, 2025**.
 - **License Document Upload**: Secure file upload for license documents (PDF, JPEG, PNG, GIF, WebP) with 10MB limit. Files stored outside public web root and served through authenticated endpoint with permission checks. Drag-and-drop upload UI with file type/size validation. **Updated Nov 26, 2025**.
 - **License Fees**: Optional fee tracking for each license. Displays fee amount in SAR on license cards. **Added Nov 26, 2025**.
-- **Menu Item Portion Sizes**: When linking menu items to recipes, users can select portion sizes (1/4, 1/2, 3/4, Full). Recipe ingredient costs and inventory deductions are automatically scaled by the portion multiplier.
+- **Menu Item Portion Sizes**: When linking menu items to recipes, users can select portion sizes (1/4, 1/2, 3/4, Full). Recipe ingredient costs and inventory deductions are automatically scaled by the portion multiplier. **Updated Dec 07, 2025**: Profitability Analysis now correctly applies portion size multiplier to recipe costs - if a menu item uses 1/2 portion of a recipe costing 30 SAR, the item cost is calculated as 30 * 0.5 = 15 SAR. Fixed in both frontend UI and backend Excel export.
 
 ## External Dependencies
 
