@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, TrendingUp, TrendingDown, DollarSign, FileText, Receipt, FileDown, Wallet } from "lucide-react";
+import { Download, TrendingUp, TrendingDown, DollarSign, FileText, Receipt, FileDown, Wallet, Target } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
@@ -71,6 +71,24 @@ export default function Financial() {
 
   // Total expenses including inventory
   const totalExpensesWithInventory = totalBillsAmount + totalInventoryValue;
+
+  // Break Even Point (BEP) Calculation
+  // Fixed Costs = Operating Bills (rent, utilities, salaries, etc.)
+  // Variable Costs = Inventory/COGS
+  // Revenue = Total Sales
+  const totalRevenue = parseFloat(yearlyData.revenue || "0");
+  const fixedCosts = totalBillsAmount; // Operating expenses
+  const variableCosts = totalInventoryValue; // COGS approximation
+  
+  // Contribution Margin = Revenue - Variable Costs
+  const contributionMargin = totalRevenue - variableCosts;
+  // Contribution Margin Ratio = Contribution Margin / Revenue
+  const contributionMarginRatio = totalRevenue > 0 ? contributionMargin / totalRevenue : 0;
+  // BEP = Fixed Costs / Contribution Margin Ratio
+  const breakEvenPoint = contributionMarginRatio > 0 ? fixedCosts / contributionMarginRatio : 0;
+  // Current position relative to BEP
+  const revenueVsBep = totalRevenue - breakEvenPoint;
+  const bepProgress = breakEvenPoint > 0 ? (totalRevenue / breakEvenPoint) * 100 : 0;
 
   // Group bills by type for pie chart
   const billsByType = billsForYear.reduce((acc, bill) => {
@@ -426,6 +444,87 @@ export default function Financial() {
                   <Line type="monotone" dataKey="expenses" stroke="hsl(var(--destructive))" strokeWidth={2} name="Expenses (SAR)" />
                 </LineChart>
               </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Break Even Point (BEP) Analysis */}
+          <Card className="bg-gradient-to-r from-purple-500/5 to-purple-600/10">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+                  <Target className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <CardTitle>BEP (Break Even Point)</CardTitle>
+                  <CardDescription>Sales needed to cover all costs for {selectedYear}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Break Even Point</p>
+                  <p className="text-2xl font-bold font-mono text-purple-600" data-testid="bep-value">
+                    {breakEvenPoint.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Current Revenue</p>
+                  <p className="text-2xl font-bold font-mono">
+                    {totalRevenue.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Status</p>
+                  <p className={`text-2xl font-bold font-mono ${revenueVsBep >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="bep-status">
+                    {revenueVsBep >= 0 ? 'Profitable' : 'Below BEP'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Progress to Break Even</span>
+                  <span className="font-semibold">{Math.min(bepProgress, 100).toFixed(1)}%</span>
+                </div>
+                <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full transition-all ${bepProgress >= 100 ? 'bg-green-500' : 'bg-purple-500'}`}
+                    style={{ width: `${Math.min(bepProgress, 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* BEP Details */}
+              <div className="grid gap-3 md:grid-cols-2 pt-2 border-t">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Fixed Costs (Bills)</span>
+                  <span className="font-mono font-medium">{fixedCosts.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Variable Costs (Inventory)</span>
+                  <span className="font-mono font-medium">{variableCosts.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Contribution Margin</span>
+                  <span className="font-mono font-medium">{contributionMargin.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Margin Ratio</span>
+                  <span className="font-mono font-medium">{(contributionMarginRatio * 100).toFixed(1)}%</span>
+                </div>
+              </div>
+
+              {/* Profit/Loss indicator */}
+              <div className={`p-3 rounded-md ${revenueVsBep >= 0 ? 'bg-green-500/10' : 'bg-destructive/10'}`}>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">{revenueVsBep >= 0 ? 'Profit Above BEP' : 'Amount Below BEP'}</span>
+                  <span className={`text-lg font-bold font-mono ${revenueVsBep >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                    {revenueVsBep >= 0 ? '+' : ''}{revenueVsBep.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                  </span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
