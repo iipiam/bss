@@ -4145,9 +4145,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return sum + (t.itemCount || 1);
       }, 0);
       
-      // Fixed costs exclude foundational bills (one-time setup costs)
+      // Fixed costs exclude foundational and one-time bills (only recurring operating expenses)
       const fixedCosts = yearBills
-        .filter(b => b.billType !== 'foundational')
+        .filter(b => b.billType !== 'foundational' && b.paymentPeriod !== 'one-time')
         .reduce((sum, b) => sum + parseFloat(b.amount), 0);
       const variableCostsPerUnit = unitsSold > 0 ? inventoryValue / unitsSold : 0;
       const sellingPricePerUnit = unitsSold > 0 ? totalRevenue / unitsSold : 0;

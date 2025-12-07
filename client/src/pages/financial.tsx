@@ -129,9 +129,9 @@ export default function Financial() {
   // Variable Costs = Inventory/COGS
   // Revenue = Total Sales
   const totalRevenue = parseFloat(yearlyData.revenue || "0");
-  // Fixed costs exclude foundational bills (one-time setup costs, not recurring operating expenses)
+  // Fixed costs exclude foundational and one-time bills (only recurring operating expenses)
   const fixedCosts = billsForYear
-    .filter(bill => bill.billType !== 'foundational')
+    .filter(bill => bill.billType !== 'foundational' && bill.paymentPeriod !== 'one-time')
     .reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
   const variableCosts = totalInventoryValue; // COGS approximation
   
