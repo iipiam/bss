@@ -102,7 +102,7 @@ function SortableRecipeCard({ recipe, onEdit, onDelete }: SortableRecipeCardProp
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground mb-1">Cost per Serving</p>
-              <p className="text-2xl font-bold font-mono text-primary">{parseFloat(recipe.cost).toFixed(2)} SAR</p>
+              <p className="text-2xl font-bold font-mono text-primary">{(parseFloat(recipe.cost) / (recipe.servings || 1)).toFixed(2)} SAR</p>
             </div>
           </div>
         </CardHeader>
