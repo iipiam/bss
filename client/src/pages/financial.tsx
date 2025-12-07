@@ -90,8 +90,13 @@ export default function Financial() {
   const revenueVsBep = totalRevenue - breakEvenPoint;
   const bepProgress = breakEvenPoint > 0 ? (totalRevenue / breakEvenPoint) * 100 : 0;
 
-  // Group bills by type for pie chart
-  const billsByType = billsForYear.reduce((acc, bill) => {
+  // Filter out one-time payments and foundational bills for recurring expenses analysis
+  const recurringBillsForYear = billsForYear.filter(bill => 
+    bill.paymentPeriod !== "one-time" && bill.billType !== "foundational"
+  );
+
+  // Group recurring bills by type for pie chart (excludes one-time & foundational)
+  const billsByType = recurringBillsForYear.reduce((acc, bill) => {
     const type = bill.billType;
     acc[type] = (acc[type] || 0) + parseFloat(bill.amount || "0");
     return acc;
@@ -102,8 +107,8 @@ export default function Financial() {
   // Colors for pie chart
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
-  // Group bills by month for line chart (sorted chronologically)
-  const billsByMonthMap = billsForYear.reduce((acc, bill) => {
+  // Group recurring bills by month for line chart (excludes one-time & foundational)
+  const billsByMonthMap = recurringBillsForYear.reduce((acc, bill) => {
     const billDate = new Date(bill.paymentDate);
     const monthNum = billDate.getMonth();
     const monthKey = String(monthNum).padStart(2, '0');
@@ -118,6 +123,9 @@ export default function Financial() {
     .map(([key, value]) => ({ month: value.month, expenses: value.amount, sortKey: key }))
     .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
     .map(({ month, expenses }) => ({ month, expenses }));
+  
+  // Calculate recurring expenses total (for summary display)
+  const recurringExpensesTotal = recurringBillsForYear.reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
 
   const handleExport = async () => {
     try {
@@ -431,8 +439,8 @@ export default function Financial() {
           {/* Monthly Expenses Trend */}
           <Card>
             <CardHeader>
-              <CardTitle>Monthly Expenses</CardTitle>
-              <CardDescription>Operating expenses by month for {selectedYear}</CardDescription>
+              <CardTitle>Monthly Operating Expenses</CardTitle>
+              <CardDescription>Recurring expenses by month for {selectedYear} (excludes one-time & foundational)</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -532,8 +540,8 @@ export default function Financial() {
             {/* Expenses by Type Pie Chart */}
             <Card>
               <CardHeader>
-                <CardTitle>Expenses by Type</CardTitle>
-                <CardDescription>Breakdown of expenses by category</CardDescription>
+                <CardTitle>Operating Expenses by Type</CardTitle>
+                <CardDescription>Recurring expenses breakdown (excludes one-time & foundational)</CardDescription>
               </CardHeader>
               <CardContent>
                 {billTypeData.length > 0 ? (
@@ -565,8 +573,8 @@ export default function Financial() {
             {/* Top Expenses by Type */}
             <Card>
               <CardHeader>
-                <CardTitle>Expenses Summary</CardTitle>
-                <CardDescription>Total by expense category (including inventory)</CardDescription>
+                <CardTitle>Operating Expenses Summary</CardTitle>
+                <CardDescription>Recurring expenses by category (excludes one-time & foundational)</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -592,8 +600,8 @@ export default function Financial() {
                   )}
                   {/* Total Line */}
                   <div className="flex items-center justify-between border-t pt-3 mt-3">
-                    <span className="font-semibold">Total Expenses</span>
-                    <span className="font-mono font-bold text-lg">{totalExpensesWithInventory.toFixed(2)} SAR</span>
+                    <span className="font-semibold">Total Operating Expenses</span>
+                    <span className="font-mono font-bold text-lg">{(recurringExpensesTotal + totalInventoryValue).toFixed(2)} SAR</span>
                   </div>
                 </div>
               </CardContent>
