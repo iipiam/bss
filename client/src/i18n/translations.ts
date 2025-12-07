@@ -215,6 +215,8 @@ export interface Translations {
   addonName: string;
   addonCategory: string;
   addonPrice: string;
+  alsoAddAsAddon: string;
+  addonPriceHint: string;
   selectAddons: string;
   availableAddons: string;
   selectedAddons: string;
@@ -1613,6 +1615,8 @@ export const translations: Record<Language, Translations> = {
     addonName: 'Add-on Name',
     addonCategory: 'Add-on Category',
     addonPrice: 'Add-on Price',
+    alsoAddAsAddon: 'Also add as Add-on',
+    addonPriceHint: 'VAT-inclusive price for this add-on in POS',
     selectAddons: 'Select Add-ons',
     availableAddons: 'Available Add-ons',
     selectedAddons: 'Selected Add-ons',
@@ -3005,6 +3009,8 @@ export const translations: Record<Language, Translations> = {
     addonName: 'اسم الإضافة',
     addonCategory: 'فئة الإضافة',
     addonPrice: 'سعر الإضافة',
+    alsoAddAsAddon: 'إضافة كإضافة أيضاً',
+    addonPriceHint: 'السعر شامل الضريبة لهذه الإضافة في نقطة البيع',
     selectAddons: 'اختر الإضافات',
     availableAddons: 'الإضافات المتاحة',
     selectedAddons: 'الإضافات المحددة',
@@ -4409,6 +4415,8 @@ export const translations: Record<Language, Translations> = {
     addonName: 'Add-on Name',
     addonCategory: 'Add-on Category',
     addonPrice: 'Add-on Price',
+    alsoAddAsAddon: 'Also add as Add-on',
+    addonPriceHint: 'VAT-inclusive price for this add-on in POS',
     selectAddons: 'Select Add-ons',
     availableAddons: 'Available Add-ons',
     selectedAddons: 'Selected Add-ons',
@@ -5796,6 +5804,8 @@ export const translations: Record<Language, Translations> = {
     addonName: 'Add-on Name',
     addonCategory: 'Add-on Category',
     addonPrice: 'Add-on Price',
+    alsoAddAsAddon: 'Also add as Add-on',
+    addonPriceHint: 'VAT-inclusive price for this add-on in POS',
     selectAddons: 'Select Add-ons',
     availableAddons: 'Available Add-ons',
     selectedAddons: 'Selected Add-ons',
@@ -7183,6 +7193,8 @@ export const translations: Record<Language, Translations> = {
     addonName: 'Add-on Name',
     addonCategory: 'Add-on Category',
     addonPrice: 'Add-on Price',
+    alsoAddAsAddon: 'Also add as Add-on',
+    addonPriceHint: 'VAT-inclusive price for this add-on in POS',
     selectAddons: 'Select Add-ons',
     availableAddons: 'Available Add-ons',
     selectedAddons: 'Selected Add-ons',
@@ -8570,6 +8582,8 @@ export const translations: Record<Language, Translations> = {
     addonName: 'Add-on Name',
     addonCategory: 'Add-on Category',
     addonPrice: 'Add-on Price',
+    alsoAddAsAddon: 'Also add as Add-on',
+    addonPriceHint: 'VAT-inclusive price for this add-on in POS',
     selectAddons: 'Select Add-ons',
     availableAddons: 'Available Add-ons',
     selectedAddons: 'Selected Add-ons',
@@ -9946,6 +9960,8 @@ export const translations: Record<Language, Translations> = {
     addonName: 'ऐड-ऑन नाम',
     addonCategory: 'ऐड-ऑन श्रेणी',
     addonPrice: 'ऐड-ऑन कीमत',
+    alsoAddAsAddon: 'ऐड-ऑन के रूप में भी जोड़ें',
+    addonPriceHint: 'पीओएस में इस ऐड-ऑन के लिए वैट सहित कीमत',
     selectAddons: 'ऐड-ऑन चुनें',
     availableAddons: 'उपलब्ध ऐड-ऑन',
     selectedAddons: 'चयनित ऐड-ऑन',
@@ -11309,6 +11325,8 @@ export const translations: Record<Language, Translations> = {
     addonName: 'اضافی شے کا نام',
     addonCategory: 'اضافی شے کا زمرہ',
     addonPrice: 'اضافی شے کی قیمت',
+    alsoAddAsAddon: 'اضافی شے کے طور پر بھی شامل کریں',
+    addonPriceHint: 'پی او ایس میں اس اضافی شے کی ویٹ شامل قیمت',
     selectAddons: 'اضافی اشیاء منتخب کریں',
     availableAddons: 'دستیاب اضافی اشیاء',
     selectedAddons: 'منتخب شدہ اضافی اشیاء',
@@ -12648,6 +12666,8 @@ export const translations: Record<Language, Translations> = {
     addonName: "Add-on Name",
     addonCategory: "Add-on Category",
     addonPrice: "Add-on Price",
+    alsoAddAsAddon: "Also add as Add-on",
+    addonPriceHint: "VAT-inclusive price for this add-on in POS",
     selectAddons: "Select Add-ons",
     availableAddons: "Available Add-ons",
     selectedAddons: "Selected Add-ons",
@@ -13950,6 +13970,8 @@ export const translations: Record<Language, Translations> = {
     addonName: "Add-on Name",
     addonCategory: "Add-on Category",
     addonPrice: "Add-on Price",
+    alsoAddAsAddon: "Also add as Add-on",
+    addonPriceHint: "VAT-inclusive price for this add-on in POS",
     selectAddons: "Select Add-ons",
     availableAddons: "Available Add-ons",
     selectedAddons: "Selected Add-ons",
