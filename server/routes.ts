@@ -923,7 +923,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         delete bodyWithDate.paymentDate;
       }
       const data = sanitizePatchBody(bodyWithDate, insertShopBillSchema.partial());
-      const bill = await storage.updateShopBill(req.params.id, data);
+      const bill = await storage.updateShopBill(req.params.id, restaurantId, data);
       res.json(bill);
     } catch (error) {
       console.error("[SHOP] Bill update error:", error);
@@ -937,7 +937,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     if (!existing || existing.restaurantId !== restaurantId) {
       return res.status(404).json({ error: "Bill not found" });
     }
-    const success = await storage.deleteShopBill(req.params.id);
+    const success = await storage.deleteShopBill(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Bill not found" });
     }
@@ -2028,18 +2028,125 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const data = sanitizePatchBody(req.body, insertProcurementSchema.partial());
       // SECURITY: Strip restaurantId from request body to prevent cross-tenant reassignment
       const { restaurantId: _, ...safeData } = data;
+      
+      // Get existing procurement to check for status change
+      const existingProcurement = await storage.getProcurement(req.params.id, restaurantId);
+      if (!existingProcurement) {
+        return res.status(404).json({ error: "Procurement not found" });
+      }
+      
+      const newStatus = safeData.status || existingProcurement.status;
+      const oldStatus = existingProcurement.status;
+      
+      // Prepare update data with latest values for bill descriptions
+      const updatedTitle = safeData.title || existingProcurement.title;
+      const updatedSupplier = safeData.supplier !== undefined ? safeData.supplier : existingProcurement.supplier;
+      const updatedBranchId = safeData.branchId !== undefined ? safeData.branchId : existingProcurement.branchId;
+      const updatedType = safeData.type || existingProcurement.type;
+      
+      // Sync with bills when status changes
+      let billIdToSet: string | null | undefined = undefined;
+      
+      // SECURITY: Verify billId ownership upfront if one exists
+      let validBillId: string | null = null;
+      if (existingProcurement.billId) {
+        const existingBill = await storage.getShopBill(existingProcurement.billId);
+        if (existingBill && existingBill.restaurantId === restaurantId) {
+          validBillId = existingProcurement.billId;
+        } else {
+          // Bill doesn't exist or belongs to another tenant - clear the stale link
+          console.warn(`[SECURITY] Clearing stale/invalid billId ${existingProcurement.billId} from procurement ${req.params.id}`);
+          billIdToSet = null; // Will clear the bad link
+        }
+      }
+      
+      if (safeData.status && safeData.status !== oldStatus) {
+        const totalCost = parseFloat(safeData.totalCost || existingProcurement.totalCost || "0");
+        
+        if (safeData.status === "cancelled") {
+          // Remove associated bill when cancelled
+          if (validBillId) {
+            await storage.deleteShopBill(validBillId, restaurantId);
+            billIdToSet = null; // Clear the billId link
+          }
+        } else if (safeData.status === "completed") {
+          // Create or update bill as "paid" only when completed (not received)
+          const billData = {
+            restaurantId,
+            billType: updatedType === "inventory" ? "foundational" : "maintenance",
+            amount: totalCost.toFixed(2),
+            paymentDate: new Date(),
+            paymentPeriod: "one-time" as const,
+            status: "paid" as const,
+            description: `Procurement: ${updatedTitle}${updatedSupplier ? ` (${updatedSupplier})` : ""}`,
+            branchId: updatedBranchId || null,
+          };
+          
+          if (validBillId) {
+            // Update existing bill - ownership verified above
+            await storage.updateShopBill(validBillId, restaurantId, billData);
+          } else {
+            const bill = await storage.createShopBill(billData as any);
+            billIdToSet = bill.id;
+          }
+        } else if (["pending", "approved", "ordered", "received"].includes(safeData.status)) {
+          // Create or update bill as "pending" for in-progress statuses
+          const billData = {
+            restaurantId,
+            billType: updatedType === "inventory" ? "foundational" : "maintenance",
+            amount: totalCost.toFixed(2),
+            paymentDate: existingProcurement.expectedDelivery || new Date(),
+            paymentPeriod: "one-time" as const,
+            status: "pending" as const,
+            description: `Procurement: ${updatedTitle}${updatedSupplier ? ` (${updatedSupplier})` : ""}`,
+            branchId: updatedBranchId || null,
+          };
+          
+          if (validBillId) {
+            // Update existing bill - ownership verified above
+            await storage.updateShopBill(validBillId, restaurantId, billData);
+          } else {
+            const bill = await storage.createShopBill(billData as any);
+            billIdToSet = bill.id;
+          }
+        }
+      }
+      
+      // Add billId to update if it changed
+      if (billIdToSet !== undefined) {
+        (safeData as any).billId = billIdToSet;
+      }
+      
       const procurement = await storage.updateProcurement(req.params.id, restaurantId, safeData);
       if (!procurement) {
         return res.status(404).json({ error: "Procurement not found" });
       }
       res.json(procurement);
     } catch (error) {
+      console.error("Procurement update error:", error);
       res.status(400).json({ error: "Invalid procurement data" });
     }
   });
 
   app.delete("/api/procurement/:id", requireAuth, requireRestaurant, requireAction('procurement', 'delete'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
+    
+    // Get procurement to check for associated bill
+    const existingProcurement = await storage.getProcurement(req.params.id, restaurantId);
+    if (!existingProcurement) {
+      return res.status(404).json({ error: "Procurement not found" });
+    }
+    
+    // Delete associated bill if exists and belongs to this tenant
+    if (existingProcurement.billId) {
+      const existingBill = await storage.getShopBill(existingProcurement.billId);
+      if (existingBill && existingBill.restaurantId === restaurantId) {
+        await storage.deleteShopBill(existingProcurement.billId, restaurantId);
+      } else if (existingBill) {
+        console.warn(`[SECURITY] Procurement ${req.params.id} has billId ${existingProcurement.billId} belonging to another tenant - not deleting`);
+      }
+    }
+    
     const success = await storage.deleteProcurement(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Procurement not found" });

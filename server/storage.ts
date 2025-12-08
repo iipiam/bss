@@ -178,7 +178,7 @@ export interface IStorage {
   }): Promise<Procurement[]>;
   getProcurement(id: string, restaurantId: string): Promise<Procurement | undefined>;
   createProcurement(procurement: InsertProcurement): Promise<Procurement>;
-  updateProcurement(id: string, restaurantId: string, procurement: Partial<InsertProcurement>): Promise<Procurement | undefined>;
+  updateProcurement(id: string, restaurantId: string, procurement: Partial<InsertProcurement> & { billId?: string | null }): Promise<Procurement | undefined>;
   deleteProcurement(id: string, restaurantId: string): Promise<boolean>;
 
   // Users (MULTI-TENANT: requires restaurantId for all operations)
@@ -249,8 +249,8 @@ export interface IStorage {
   getShopBills(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date, includeArchived?: boolean): Promise<ShopBill[]>;
   getShopBill(id: string): Promise<ShopBill | undefined>;
   createShopBill(bill: InsertShopBill): Promise<ShopBill>;
-  updateShopBill(id: string, bill: Partial<InsertShopBill>): Promise<ShopBill | undefined>;
-  deleteShopBill(id: string): Promise<boolean>;
+  updateShopBill(id: string, restaurantId: string, bill: Partial<InsertShopBill>): Promise<ShopBill | undefined>;
+  deleteShopBill(id: string, restaurantId: string): Promise<boolean>;
   archiveShopBill(id: string, archived: boolean): Promise<ShopBill | undefined>;
   generateSalaryBills(restaurantId: string, paymentMonth: string): Promise<{ created: number; skipped: number; bills: ShopBill[] }>;
 
@@ -863,11 +863,11 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateProcurement(id: string, restaurantId: string, procurementData: Partial<InsertProcurement>): Promise<Procurement | undefined> {
+  async updateProcurement(id: string, restaurantId: string, procurementData: Partial<InsertProcurement> & { billId?: string | null }): Promise<Procurement | undefined> {
     // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
     const { restaurantId: _, ...safeData } = procurementData;
     const updateData = Object.fromEntries(
-      Object.entries(safeData).filter(([_, value]) => value !== undefined)
+      Object.entries(safeData).filter(([key, value]) => value !== undefined || key === 'billId')
     );
     if (Object.keys(updateData).length === 0) {
       return this.getProcurement(id, restaurantId);
@@ -1297,22 +1297,24 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateShopBill(id: string, bill: Partial<InsertShopBill>): Promise<ShopBill | undefined> {
+  async updateShopBill(id: string, restaurantId: string, bill: Partial<InsertShopBill>): Promise<ShopBill | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(bill).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
       return this.getShopBill(id);
     }
+    // SECURITY: Enforce tenant isolation at database level
     const [updated] = await db.update(shopBills)
       .set(updateData)
-      .where(eq(shopBills.id, id))
+      .where(and(eq(shopBills.id, id), eq(shopBills.restaurantId, restaurantId)))
       .returning();
     return updated;
   }
 
-  async deleteShopBill(id: string): Promise<boolean> {
-    const result = await db.delete(shopBills).where(eq(shopBills.id, id));
+  async deleteShopBill(id: string, restaurantId: string): Promise<boolean> {
+    // SECURITY: Enforce tenant isolation at database level
+    const result = await db.delete(shopBills).where(and(eq(shopBills.id, id), eq(shopBills.restaurantId, restaurantId)));
     return result.rowCount ? result.rowCount > 0 : false;
   }
 

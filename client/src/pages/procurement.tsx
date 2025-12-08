@@ -147,6 +147,7 @@ export default function ProcurementPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/procurement"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/bills"] });
       toast({ title: t.success, description: t.procurementUpdated });
       setIsDialogOpen(false);
       setEditingItem(null);
@@ -164,6 +165,7 @@ export default function ProcurementPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/procurement"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/bills"] });
       toast({ title: t.success, description: t.procurementDeleted });
     },
     onError: (error: Error) => {
@@ -762,6 +764,12 @@ export default function ProcurementPage() {
                                 </Badge>
                                 {item.category && (
                                   <Badge variant="secondary">{item.category}</Badge>
+                                )}
+                                {item.billId && (
+                                  <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+                                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                                    {t.syncedToBills || "Synced to Bills"}
+                                  </Badge>
                                 )}
                               </div>
 
