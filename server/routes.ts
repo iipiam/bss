@@ -4654,13 +4654,24 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Authenticated endpoint to view/download procurement invoice images
+  // SECURITY: Verifies that the invoice belongs to a procurement record owned by the requesting restaurant
   app.get('/api/procurement/invoices/:filename', requireAuth, requireRestaurant, requireAction('procurement', 'view'), async (req, res) => {
     try {
       const filename = req.params.filename;
+      const restaurantId = req.session.restaurantId;
       
       // Validate filename format to prevent path traversal
       if (!/^procurement-[\w-]+\.(pdf|jpg|jpeg|png|gif|webp)$/i.test(filename)) {
         return res.status(400).json({ error: 'Invalid filename format' });
+      }
+      
+      // SECURITY: Verify that this invoice belongs to a procurement owned by the requesting restaurant
+      const invoicePath = `/api/procurement/invoices/${filename}`;
+      const procurementRecords = await storage.getProcurements(restaurantId!);
+      const ownsInvoice = procurementRecords.some(p => p.invoiceImage === invoicePath);
+      
+      if (!ownsInvoice) {
+        return res.status(403).json({ error: 'Access denied: Invoice does not belong to your restaurant' });
       }
       
       const filePath = path.join(process.cwd(), 'uploads', 'procurement-invoices', filename);

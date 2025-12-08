@@ -786,6 +786,45 @@ export default function ProcurementPage() {
                                 </div>
                               )}
 
+                              {item.invoiceImage && (
+                                <div className="flex items-center gap-2 mt-2">
+                                  {item.invoiceImage.endsWith('.pdf') ? (
+                                    <div className="flex items-center gap-2 p-2 bg-muted rounded">
+                                      <FileText className="h-5 w-5 text-red-500" />
+                                      <span className="text-sm">Invoice PDF</span>
+                                      <Button 
+                                        size="sm" 
+                                        variant="ghost"
+                                        onClick={() => window.open(item.invoiceImage!, '_blank')}
+                                        data-testid={`button-view-invoice-${item.id}`}
+                                      >
+                                        <Eye className="h-4 w-4 mr-1" />
+                                        View
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-3 p-2 bg-muted rounded">
+                                      <img 
+                                        src={item.invoiceImage} 
+                                        alt="Invoice" 
+                                        className="h-12 w-12 object-cover rounded border cursor-pointer hover:opacity-80"
+                                        onClick={() => setViewImageUrl(item.invoiceImage)}
+                                      />
+                                      <span className="text-sm text-muted-foreground">Invoice Image</span>
+                                      <Button 
+                                        size="sm" 
+                                        variant="ghost"
+                                        onClick={() => setViewImageUrl(item.invoiceImage)}
+                                        data-testid={`button-view-invoice-${item.id}`}
+                                      >
+                                        <Eye className="h-4 w-4 mr-1" />
+                                        View
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
                               <div className="flex gap-2 pt-2">
                                 <Button size="sm" variant="outline" onClick={() => handleEdit(item)} data-testid={`button-edit-${item.id}`}>
                                   Edit
@@ -835,6 +874,24 @@ export default function ProcurementPage() {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Image Viewer Dialog */}
+      <Dialog open={!!viewImageUrl} onOpenChange={() => setViewImageUrl(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Invoice Image</DialogTitle>
+          </DialogHeader>
+          {viewImageUrl && (
+            <div className="flex justify-center">
+              <img 
+                src={viewImageUrl} 
+                alt="Invoice" 
+                className="max-h-[70vh] object-contain"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
