@@ -79,6 +79,7 @@ import Chat from "@/pages/chat";
 import PaymentTest from "@/pages/payment-test";
 import PasswordManager from "@/pages/password-manager";
 import Licenses from "@/pages/licenses";
+import Violations from "@/pages/violations";
 import Login from "@/pages/login";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
@@ -105,6 +106,7 @@ function Router() {
       <Route path="/invoices" component={Invoices} />
       <Route path="/vat-reports" component={VatReports} />
       <Route path="/bills" component={Bills} />
+      <Route path="/violations" component={Violations} />
       <Route path="/pos" component={POS} />
       <Route path="/branches" component={Branches} />
       <Route path="/orders" component={Orders} />

@@ -29,6 +29,7 @@ import {
   UtensilsCrossed,
   FileKey,
   UserCog,
+  AlertTriangle,
 } from "lucide-react";
 import logoImage from "@assets/kinzhal-eagle-logo.jpeg";
 import {
@@ -132,6 +133,7 @@ export function AppSidebar() {
     { title: t.invoices, url: "/invoices", icon: FileCheck, testId: "invoices", gradient: "from-violet-500 to-purple-500", permission: 'reports' },
     { title: t.vatReports, url: "/vat-reports", icon: FileBarChart2, testId: "vat-reports", gradient: "from-indigo-500 to-blue-500", permission: 'reports' },
     { title: t.bills, url: "/bills", icon: FileText, testId: "bills", gradient: "from-rose-500 to-pink-500", permission: 'bills' },
+    { title: (t as any).violations || "Violations", url: "/violations", icon: AlertTriangle, testId: "violations", gradient: "from-red-500 to-orange-500", permission: 'bills' },
   ];
 
   const allSystem: MenuItem[] = [
