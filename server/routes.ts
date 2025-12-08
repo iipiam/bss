@@ -32,6 +32,7 @@ import {
   insertCustomerSchema,
   insertSalarySchema,
   insertShopBillSchema,
+  insertViolationSchema,
   insertDeliveryAppSchema,
   insertDeliveryProfitabilitySchema,
   insertInvestorSchema,
@@ -237,6 +238,37 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         cb(null, true);
       } else {
         cb(new Error('Invalid file type. Only PNG, JPG, and SVG allowed.'));
+      }
+    }
+  });
+
+  // Violation document upload configuration
+  const violationDocStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      const uploadPath = path.join(process.cwd(), 'uploads', 'violation-documents');
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+      cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+      const restaurantId = (req as any).session?.user?.restaurantId;
+      const ext = path.extname(file.originalname);
+      const uniqueName = `violation-${restaurantId}-${Date.now()}${ext}`;
+      cb(null, uniqueName);
+    }
+  });
+
+  const uploadViolationDoc = multer({
+    storage: violationDocStorage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit for PDFs and images
+    fileFilter: (req: any, file: any, cb: any) => {
+      const allowed = ['.pdf', '.png', '.jpg', '.jpeg', '.gif', '.webp'];
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (allowed.includes(ext)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid file type. Only PDF, PNG, JPG, JPEG, GIF, and WebP allowed.'));
       }
     }
   });
@@ -979,6 +1011,162 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error: any) {
       console.error("Failed to generate salary bills:", error);
       res.status(500).json({ error: "Failed to generate salary bills" });
+    }
+  });
+
+  // Violations
+  app.get("/api/violations", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const branchId = req.query.branchId as string | undefined;
+      const authority = req.query.authority as string | undefined;
+      const status = req.query.status as string | undefined;
+      const violations = await storage.getViolations(restaurantId, branchId, authority, status);
+      res.json(violations);
+    } catch (error) {
+      console.error("[VIOLATIONS] Get violations error:", error);
+      res.status(500).json({ error: "Failed to get violations" });
+    }
+  });
+
+  app.get("/api/violations/stats", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const stats = await storage.getViolationStats(restaurantId);
+      res.json(stats);
+    } catch (error) {
+      console.error("[VIOLATIONS] Get stats error:", error);
+      res.status(500).json({ error: "Failed to get violation statistics" });
+    }
+  });
+
+  app.get("/api/violations/:id", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const violation = await storage.getViolation(req.params.id, restaurantId);
+      if (!violation) {
+        return res.status(404).json({ error: "Violation not found" });
+      }
+      res.json(violation);
+    } catch (error) {
+      console.error("[VIOLATIONS] Get violation error:", error);
+      res.status(500).json({ error: "Failed to get violation" });
+    }
+  });
+
+  app.post("/api/violations", requireAuth, requireRestaurant, requireAction('bills', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const data = insertViolationSchema.parse({ ...req.body, restaurantId });
+      const violation = await storage.createViolation(data);
+      res.status(201).json(violation);
+    } catch (error) {
+      console.error("[VIOLATIONS] Create violation error:", error);
+      res.status(400).json({ error: "Invalid violation data", details: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.patch("/api/violations/:id", requireAuth, requireRestaurant, requireAction('bills', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const existing = await storage.getViolation(req.params.id, restaurantId);
+      if (!existing) {
+        return res.status(404).json({ error: "Violation not found" });
+      }
+      // Convert date strings to Date objects
+      const bodyWithDates = { ...req.body };
+      if (bodyWithDates.violationDate && typeof bodyWithDates.violationDate === 'string') {
+        bodyWithDates.violationDate = new Date(bodyWithDates.violationDate);
+      }
+      if (bodyWithDates.resolvedDate && typeof bodyWithDates.resolvedDate === 'string') {
+        bodyWithDates.resolvedDate = new Date(bodyWithDates.resolvedDate);
+      }
+      const data = sanitizePatchBody(bodyWithDates, insertViolationSchema.partial());
+      const violation = await storage.updateViolation(req.params.id, restaurantId, data as any);
+      res.json(violation);
+    } catch (error) {
+      console.error("[VIOLATIONS] Update violation error:", error);
+      res.status(400).json({ error: "Invalid violation data", details: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.delete("/api/violations/:id", requireAuth, requireRestaurant, requireAction('bills', 'delete'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const existing = await storage.getViolation(req.params.id, restaurantId);
+      if (!existing) {
+        return res.status(404).json({ error: "Violation not found" });
+      }
+      const success = await storage.deleteViolation(req.params.id, restaurantId);
+      if (!success) {
+        return res.status(404).json({ error: "Violation not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("[VIOLATIONS] Delete violation error:", error);
+      res.status(500).json({ error: "Failed to delete violation" });
+    }
+  });
+
+  // Violation document upload
+  app.post("/api/violations/:id/document", requireAuth, requireRestaurant, requireAction('bills', 'edit'), uploadViolationDoc.single('document'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const existing = await storage.getViolation(req.params.id, restaurantId);
+      if (!existing) {
+        return res.status(404).json({ error: "Violation not found" });
+      }
+      
+      if (!req.file) {
+        return res.status(400).json({ error: "No document file uploaded" });
+      }
+      
+      // Store the file path relative to uploads directory
+      const documentPath = `uploads/${req.file.filename}`;
+      const violation = await storage.updateViolation(req.params.id, restaurantId, { documentPath });
+      res.json(violation);
+    } catch (error) {
+      console.error("[VIOLATIONS] Document upload error:", error);
+      res.status(500).json({ error: "Failed to upload document" });
+    }
+  });
+
+  // Create bill from violation (link violation to one-time bill payment)
+  app.post("/api/violations/:id/create-bill", requireAuth, requireRestaurant, requireAction('bills', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const existing = await storage.getViolation(req.params.id, restaurantId);
+      if (!existing) {
+        return res.status(404).json({ error: "Violation not found" });
+      }
+      
+      // Check if violation already has a linked bill
+      if (existing.linkedBillId) {
+        return res.status(400).json({ error: "Violation already has a linked bill" });
+      }
+      
+      // Create the shop bill
+      const billData = {
+        restaurantId,
+        branchId: existing.branchId,
+        billType: 'one_time' as const,
+        amount: existing.feeAmount,
+        description: `Violation: ${existing.title} (${existing.authority})`,
+        paymentDate: new Date(),
+        paymentPeriod: 'one_time' as const,
+        status: 'pending' as const,
+        archived: false,
+      };
+      
+      const bill = await storage.createShopBill(billData);
+      
+      // Link the bill to the violation
+      await storage.updateViolation(req.params.id, restaurantId, { linkedBillId: bill.id });
+      
+      res.status(201).json({ violation: { ...existing, linkedBillId: bill.id }, bill });
+    } catch (error) {
+      console.error("[VIOLATIONS] Create bill error:", error);
+      res.status(500).json({ error: "Failed to create bill from violation" });
     }
   });
 
