@@ -708,6 +708,8 @@ export type UpdateInvestor = z.infer<typeof updateInvestorSchema>;
 export type Investor = typeof investors.$inferSelect;
 
 // Subscription Invoices
+// Note: These are generated AFTER successful payment (post-transaction receipts)
+// All records in this table represent completed payments - no status field needed
 export const subscriptionInvoices = pgTable("subscription_invoices", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),

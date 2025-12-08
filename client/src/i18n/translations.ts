@@ -905,6 +905,25 @@ export interface Translations {
   netVat: string;
   noAnalyticsData: string;
   
+  // IT BEP Analysis
+  bepCalculator: string;
+  breakEvenPointAnalysis: string;
+  profitable: string;
+  unprofitable: string;
+  fixedCosts: string;
+  bepSubscriptions: string;
+  bepRevenue: string;
+  currentRevenue: string;
+  marginOfSafety: string;
+  belowBep: string;
+  fixedExpensesBreakdown: string;
+  totalFixedCosts: string;
+  costStructure: string;
+  activeClients: string;
+  avgRevenuePerSub: string;
+  cmRatio: string;
+  noDataAvailable: string;
+  
   // Business Infos
   businessInfos: string;
   businessInfosDescription: string;
@@ -2306,6 +2325,25 @@ export const translations: Record<Language, Translations> = {
     netVat: 'Net VAT',
     noAnalyticsData: 'No analytics data available',
     
+    // IT BEP Analysis
+    bepCalculator: 'BEP Calculator',
+    breakEvenPointAnalysis: 'Break-Even Point Analysis',
+    profitable: 'Profitable',
+    unprofitable: 'Unprofitable',
+    fixedCosts: 'Fixed Costs',
+    bepSubscriptions: 'BEP Subscriptions',
+    bepRevenue: 'BEP Revenue',
+    currentRevenue: 'Current Revenue',
+    marginOfSafety: 'Margin of Safety',
+    belowBep: 'Below BEP',
+    fixedExpensesBreakdown: 'Fixed Expenses Breakdown',
+    totalFixedCosts: 'Total Fixed Costs',
+    costStructure: 'Cost Structure',
+    activeClients: 'Active Clients',
+    avgRevenuePerSub: 'Avg Revenue/Sub',
+    cmRatio: 'CM Ratio',
+    noDataAvailable: 'No data available',
+    
     // Business Infos
     businessInfos: 'Business Infos',
     businessInfosDescription: 'Company details that appear on subscription invoices and bills',
@@ -3700,6 +3738,25 @@ export const translations: Record<Language, Translations> = {
     expenseVat: 'ضريبة المصاريف',
     netVat: 'صافي الضريبة',
     noAnalyticsData: 'لا توجد بيانات تحليلية',
+    
+    // IT BEP Analysis
+    bepCalculator: 'حاسبة نقطة التعادل',
+    breakEvenPointAnalysis: 'تحليل نقطة التعادل',
+    profitable: 'مربح',
+    unprofitable: 'غير مربح',
+    fixedCosts: 'التكاليف الثابتة',
+    bepSubscriptions: 'اشتراكات نقطة التعادل',
+    bepRevenue: 'إيرادات نقطة التعادل',
+    currentRevenue: 'الإيرادات الحالية',
+    marginOfSafety: 'هامش الأمان',
+    belowBep: 'أقل من نقطة التعادل',
+    fixedExpensesBreakdown: 'تفصيل المصاريف الثابتة',
+    totalFixedCosts: 'إجمالي التكاليف الثابتة',
+    costStructure: 'هيكل التكلفة',
+    activeClients: 'العملاء النشطون',
+    avgRevenuePerSub: 'متوسط الإيراد/اشتراك',
+    cmRatio: 'نسبة هامش المساهمة',
+    noDataAvailable: 'لا توجد بيانات',
     
     // Business Infos
     businessInfos: 'معلومات الشركة',
@@ -5106,6 +5163,25 @@ export const translations: Record<Language, Translations> = {
     netVat: 'Netto-MwSt.',
     noAnalyticsData: 'Keine Analysedaten verfügbar',
     
+    // IT BEP Analysis
+    bepCalculator: 'BEP-Rechner',
+    breakEvenPointAnalysis: 'Break-Even-Punkt-Analyse',
+    profitable: 'Profitabel',
+    unprofitable: 'Unprofitabel',
+    fixedCosts: 'Fixkosten',
+    bepSubscriptions: 'BEP-Abonnements',
+    bepRevenue: 'BEP-Umsatz',
+    currentRevenue: 'Aktueller Umsatz',
+    marginOfSafety: 'Sicherheitsmarge',
+    belowBep: 'Unter BEP',
+    fixedExpensesBreakdown: 'Aufschlüsselung der Fixkosten',
+    totalFixedCosts: 'Gesamte Fixkosten',
+    costStructure: 'Kostenstruktur',
+    activeClients: 'Aktive Kunden',
+    avgRevenuePerSub: 'Durchschn. Umsatz/Abo',
+    cmRatio: 'DB-Verhältnis',
+    noDataAvailable: 'Keine Daten verfügbar',
+    
     // Business Infos
     businessInfos: 'Unternehmensinformationen',
     businessInfosDescription: 'Unternehmensdetails, die auf Abonnementrechnungen erscheinen',
@@ -6494,6 +6570,25 @@ export const translations: Record<Language, Translations> = {
     expenseVat: '费用增值税',
     netVat: '净增值税',
     noAnalyticsData: '无分析数据',
+    
+    // IT BEP Analysis
+    bepCalculator: '盈亏平衡计算器',
+    breakEvenPointAnalysis: '盈亏平衡点分析',
+    profitable: '盈利',
+    unprofitable: '亏损',
+    fixedCosts: '固定成本',
+    bepSubscriptions: '盈亏平衡订阅数',
+    bepRevenue: '盈亏平衡收入',
+    currentRevenue: '当前收入',
+    marginOfSafety: '安全边际',
+    belowBep: '低于盈亏平衡点',
+    fixedExpensesBreakdown: '固定费用明细',
+    totalFixedCosts: '总固定成本',
+    costStructure: '成本结构',
+    activeClients: '活跃客户',
+    avgRevenuePerSub: '平均订阅收入',
+    cmRatio: '边际贡献率',
+    noDataAvailable: '无可用数据',
     
     // Business Infos
     businessInfos: '企业信息',
@@ -7884,6 +7979,25 @@ export const translations: Record<Language, Translations> = {
     netVat: 'নেট ভ্যাট',
     noAnalyticsData: 'কোনো বিশ্লেষণ ডেটা নেই',
     
+    // IT BEP Analysis
+    bepCalculator: 'বিইপি ক্যালকুলেটর',
+    breakEvenPointAnalysis: 'ব্রেক-ইভেন পয়েন্ট বিশ্লেষণ',
+    profitable: 'লাভজনক',
+    unprofitable: 'অলাভজনক',
+    fixedCosts: 'স্থির খরচ',
+    bepSubscriptions: 'বিইপি সাবস্ক্রিপশন',
+    bepRevenue: 'বিইপি আয়',
+    currentRevenue: 'বর্তমান আয়',
+    marginOfSafety: 'নিরাপত্তা মার্জিন',
+    belowBep: 'বিইপি-র নিচে',
+    fixedExpensesBreakdown: 'স্থির খরচের বিভাজন',
+    totalFixedCosts: 'মোট স্থির খরচ',
+    costStructure: 'খরচ কাঠামো',
+    activeClients: 'সক্রিয় ক্লায়েন্ট',
+    avgRevenuePerSub: 'গড় আয়/সাবস্ক্রিপশন',
+    cmRatio: 'সিএম অনুপাত',
+    noDataAvailable: 'কোনো ডেটা নেই',
+    
     // Business Infos
     businessInfos: 'ব্যবসায়িক তথ্য',
     businessInfosDescription: 'সাবস্ক্রিপশন ইনভয়েস এবং বিলে প্রদর্শিত কোম্পানির বিবরণ',
@@ -9273,6 +9387,25 @@ export const translations: Record<Language, Translations> = {
     netVat: 'IVA Netta',
     noAnalyticsData: 'Nessun dato analitico disponibile',
     
+    // IT BEP Analysis
+    bepCalculator: 'Calcolatore BEP',
+    breakEvenPointAnalysis: 'Analisi del Punto di Pareggio',
+    profitable: 'Redditizio',
+    unprofitable: 'Non Redditizio',
+    fixedCosts: 'Costi Fissi',
+    bepSubscriptions: 'Abbonamenti BEP',
+    bepRevenue: 'Ricavi BEP',
+    currentRevenue: 'Ricavi Attuali',
+    marginOfSafety: 'Margine di Sicurezza',
+    belowBep: 'Sotto il BEP',
+    fixedExpensesBreakdown: 'Dettaglio Spese Fisse',
+    totalFixedCosts: 'Totale Costi Fissi',
+    costStructure: 'Struttura dei Costi',
+    activeClients: 'Clienti Attivi',
+    avgRevenuePerSub: 'Ricavo Medio/Abb',
+    cmRatio: 'Rapporto MDC',
+    noDataAvailable: 'Nessun dato disponibile',
+    
     // Business Infos
     businessInfos: 'Informazioni Aziendali',
     businessInfosDescription: 'Dettagli aziendali che appaiono sulle fatture di abbonamento',
@@ -10637,6 +10770,25 @@ export const translations: Record<Language, Translations> = {
     expenseVat: 'खर्च वैट',
     netVat: 'शुद्ध वैट',
     noAnalyticsData: 'कोई विश्लेषण डेटा उपलब्ध नहीं',
+    
+    // IT BEP Analysis
+    bepCalculator: 'बीईपी कैलकुलेटर',
+    breakEvenPointAnalysis: 'ब्रेक-ईवन पॉइंट विश्लेषण',
+    profitable: 'लाभदायक',
+    unprofitable: 'अलाभकारी',
+    fixedCosts: 'निश्चित लागत',
+    bepSubscriptions: 'बीईपी सदस्यताएं',
+    bepRevenue: 'बीईपी राजस्व',
+    currentRevenue: 'वर्तमान राजस्व',
+    marginOfSafety: 'सुरक्षा मार्जिन',
+    belowBep: 'बीईपी से नीचे',
+    fixedExpensesBreakdown: 'निश्चित खर्च विवरण',
+    totalFixedCosts: 'कुल निश्चित लागत',
+    costStructure: 'लागत संरचना',
+    activeClients: 'सक्रिय ग्राहक',
+    avgRevenuePerSub: 'औसत राजस्व/सदस्यता',
+    cmRatio: 'सीएम अनुपात',
+    noDataAvailable: 'कोई डेटा उपलब्ध नहीं',
     
     // Business Infos
     businessInfos: 'व्यापार जानकारी',
@@ -12003,6 +12155,25 @@ export const translations: Record<Language, Translations> = {
     netVat: 'خالص ویٹ',
     noAnalyticsData: 'کوئی تجزیاتی ڈیٹا دستیاب نہیں',
     
+    // IT BEP Analysis
+    bepCalculator: 'بی ای پی کیلکولیٹر',
+    breakEvenPointAnalysis: 'بریک ایون پوائنٹ تجزیہ',
+    profitable: 'منافع بخش',
+    unprofitable: 'غیر منافع بخش',
+    fixedCosts: 'مقررہ اخراجات',
+    bepSubscriptions: 'بی ای پی سبسکرپشنز',
+    bepRevenue: 'بی ای پی آمدنی',
+    currentRevenue: 'موجودہ آمدنی',
+    marginOfSafety: 'حفاظتی مارجن',
+    belowBep: 'بی ای پی سے نیچے',
+    fixedExpensesBreakdown: 'مقررہ اخراجات کی تفصیل',
+    totalFixedCosts: 'کل مقررہ اخراجات',
+    costStructure: 'لاگت کا ڈھانچہ',
+    activeClients: 'فعال کلائنٹس',
+    avgRevenuePerSub: 'اوسط آمدنی/سب',
+    cmRatio: 'سی ایم تناسب',
+    noDataAvailable: 'کوئی ڈیٹا دستیاب نہیں',
+    
     // Business Infos
     businessInfos: 'کاروباری معلومات',
     businessInfosDescription: 'کمپنی کی تفصیلات جو سبسکرپشن انوائسز اور بلوں پر ظاہر ہوتی ہیں',
@@ -13312,6 +13483,25 @@ export const translations: Record<Language, Translations> = {
     netVat: 'IVA Neto',
     noAnalyticsData: 'No hay datos analíticos disponibles',
     
+    // IT BEP Analysis
+    bepCalculator: 'Calculadora de PE',
+    breakEvenPointAnalysis: 'Análisis del Punto de Equilibrio',
+    profitable: 'Rentable',
+    unprofitable: 'No Rentable',
+    fixedCosts: 'Costos Fijos',
+    bepSubscriptions: 'Suscripciones PE',
+    bepRevenue: 'Ingresos PE',
+    currentRevenue: 'Ingresos Actuales',
+    marginOfSafety: 'Margen de Seguridad',
+    belowBep: 'Por debajo del PE',
+    fixedExpensesBreakdown: 'Desglose de Gastos Fijos',
+    totalFixedCosts: 'Total de Costos Fijos',
+    costStructure: 'Estructura de Costos',
+    activeClients: 'Clientes Activos',
+    avgRevenuePerSub: 'Ing. Promedio/Sub',
+    cmRatio: 'Ratio MC',
+    noDataAvailable: 'No hay datos disponibles',
+    
     // Business Infos
     businessInfos: 'Información Empresarial',
     businessInfosDescription: 'Detalles de la empresa que aparecen en las facturas de suscripción',
@@ -14616,6 +14806,25 @@ export const translations: Record<Language, Translations> = {
     expenseVat: 'VAT ng Gastos',
     netVat: 'Netong VAT',
     noAnalyticsData: 'Walang available na data ng analytics',
+    
+    // IT BEP Analysis
+    bepCalculator: 'BEP Calculator',
+    breakEvenPointAnalysis: 'Pagsusuri ng Break-Even Point',
+    profitable: 'Kumikita',
+    unprofitable: 'Hindi Kumikita',
+    fixedCosts: 'Fixed Costs',
+    bepSubscriptions: 'BEP Subscriptions',
+    bepRevenue: 'BEP Revenue',
+    currentRevenue: 'Kasalukuyang Kita',
+    marginOfSafety: 'Margin of Safety',
+    belowBep: 'Below BEP',
+    fixedExpensesBreakdown: 'Detalye ng Fixed Expenses',
+    totalFixedCosts: 'Kabuuang Fixed Costs',
+    costStructure: 'Istruktura ng Gastos',
+    activeClients: 'Mga Aktibong Kliyente',
+    avgRevenuePerSub: 'Ave. Revenue/Sub',
+    cmRatio: 'CM Ratio',
+    noDataAvailable: 'Walang data na available',
     
     // Business Infos
     businessInfos: 'Impormasyon ng Negosyo',

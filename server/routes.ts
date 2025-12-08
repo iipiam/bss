@@ -8352,6 +8352,169 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Get BEP (Break-Even Point) Analysis for BSS
+  app.get("/api/it/bss-analysis/bep", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { year } = req.query;
+      const selectedYear = year ? parseInt(year as string) : new Date().getFullYear();
+      const yearStart = new Date(selectedYear, 0, 1);
+      const yearEnd = new Date(selectedYear, 11, 31, 23, 59, 59, 999);
+      
+      // Get subscription invoices for the selected year
+      // Note: All subscription invoices represent COMPLETED PAYMENTS (post-transaction receipts)
+      // They are generated after successful payment processing, not before
+      const invoices = await db
+        .select()
+        .from(subscriptionInvoices)
+        .orderBy(desc(subscriptionInvoices.invoiceDate));
+      
+      // Filter by year - all subscription invoices are inherently "paid"
+      const yearInvoices = invoices.filter(inv => {
+        if (!inv.invoiceDate) return false;
+        const invDate = new Date(inv.invoiceDate);
+        return invDate >= yearStart && invDate <= yearEnd;
+      });
+      
+      // Get company bills (operating expenses) for the selected year
+      const bills = await db
+        .select()
+        .from(companyBills)
+        .orderBy(desc(companyBills.billDate));
+      
+      const yearBills = bills.filter(b => {
+        if (!b.billDate) return false;
+        const billDate = new Date(b.billDate);
+        // Only include paid bills for accurate fixed cost calculation
+        const isPaid = b.status === 'paid';
+        return isPaid && billDate >= yearStart && billDate <= yearEnd;
+      });
+      
+      // Get refund invoices for the selected year
+      const refunds = await db
+        .select()
+        .from(refundInvoices)
+        .orderBy(desc(refundInvoices.createdAt));
+      
+      const yearRefunds = refunds.filter(r => {
+        if (!r.createdAt) return false;
+        const refundDate = new Date(r.createdAt);
+        return refundDate >= yearStart && refundDate <= yearEnd;
+      });
+      
+      // Get all users to map userIds to restaurantIds
+      const allUsers = await db.select().from(users);
+      const userToRestaurantMap = new Map(allUsers.map(u => [u.id, u.restaurantId]));
+      
+      // Derive unique restaurants from paid invoices in the selected year
+      // This ensures revenue and client count are aligned to the same period
+      const uniqueRestaurantIdsInYear = new Set(
+        yearInvoices
+          .map(inv => userToRestaurantMap.get(inv.userId))
+          .filter((id): id is string => !!id)
+      );
+      const clientsInYear = uniqueRestaurantIdsInYear.size;
+      
+      // Use year-scoped client count for BEP calculation
+      const activeClients = clientsInYear;
+      
+      // Calculate revenue (net after refunds)
+      const VAT_RATE = 0.15;
+      const grossRevenue = yearInvoices.reduce((sum, inv) => sum + parseFloat(inv.subtotal || "0"), 0);
+      const totalRefunds = yearRefunds.reduce((sum, r) => sum + parseFloat(r.refundAmount || "0"), 0);
+      const netRefundAmount = totalRefunds / (1 + VAT_RATE);
+      const revenue = grossRevenue - netRefundAmount;
+      
+      // Calculate fixed costs (operating expenses, excluding VAT)
+      // Group by bill type for breakdown
+      const fixedCostsBreakdown: { category: string; amount: number }[] = [];
+      const billsByType: Record<string, number> = {};
+      
+      for (const bill of yearBills) {
+        const billType = bill.billType || 'other';
+        const amount = parseFloat(bill.amount || "0"); // Base amount before VAT
+        billsByType[billType] = (billsByType[billType] || 0) + amount;
+      }
+      
+      for (const [category, amount] of Object.entries(billsByType)) {
+        fixedCostsBreakdown.push({ category, amount });
+      }
+      
+      // Sort breakdown by amount descending
+      fixedCostsBreakdown.sort((a, b) => b.amount - a.amount);
+      
+      const fixedCosts = fixedCostsBreakdown.reduce((sum, item) => sum + item.amount, 0);
+      
+      // Calculate BEP metrics using active client-based model
+      // This approach normalizes for billing cadence differences (weekly/monthly/yearly)
+      // The question we answer: "How many active clients do we need to break even this year?"
+      
+      const totalSubscriptions = yearInvoices.length; // Raw invoice count (for display)
+      
+      // Average annual revenue per active client normalizes across billing frequencies
+      // A monthly client paying 215 SAR * 12 months = same as yearly client paying 2580 SAR
+      const avgRevenuePerClient = activeClients > 0 
+        ? revenue / activeClients 
+        : (totalSubscriptions > 0 ? revenue / totalSubscriptions : 0); // Fallback to invoice-based
+      
+      // For SaaS model, variable costs per client are minimal (hosting, support)
+      const variableCostPerClient = 0; // SaaS model - minimal per-client variable costs
+      const totalVariableCosts = variableCostPerClient * activeClients;
+      
+      // BEP in number of active clients = Fixed Costs / Contribution Margin per Client
+      const contributionMarginPerClient = avgRevenuePerClient - variableCostPerClient;
+      const bepSubscriptions = contributionMarginPerClient > 0 
+        ? Math.ceil(fixedCosts / contributionMarginPerClient) 
+        : 0;
+      
+      // BEP Revenue = BEP Clients * Avg Revenue per Client
+      const bepRevenue = bepSubscriptions * avgRevenuePerClient;
+      
+      // Margin of Safety
+      const marginOfSafety = revenue > 0 && bepRevenue > 0
+        ? ((revenue - bepRevenue) / revenue) * 100
+        : 0;
+      
+      // Contribution Margin Ratio
+      const contributionMarginRatio = avgRevenuePerClient > 0 
+        ? contributionMarginPerClient / avgRevenuePerClient 
+        : 0;
+      
+      // Net profit
+      const netProfit = revenue - fixedCosts - totalVariableCosts;
+      const isProfitable = netProfit > 0;
+      
+      res.json({
+        // Core BEP metrics
+        fixedCosts,
+        variableCosts: totalVariableCosts,
+        revenue,
+        netProfit,
+        
+        // BEP calculations
+        bepSubscriptions,
+        bepRevenue,
+        marginOfSafety,
+        isProfitable,
+        
+        // Unit metrics (using active clients for normalized BEP analysis)
+        totalSubscriptions,
+        activeClients,
+        avgRevenuePerSubscription: avgRevenuePerClient, // Named for UI compatibility
+        contributionMarginPerSubscription: contributionMarginPerClient, // Named for UI compatibility
+        contributionMarginRatio,
+        
+        // Breakdown
+        fixedCostsBreakdown,
+        
+        // Period
+        year: selectedYear,
+      });
+    } catch (error) {
+      console.error("Error calculating IT BEP metrics:", error);
+      res.status(500).json({ error: "Failed to calculate BEP metrics" });
+    }
+  });
+
   // Get accounts by business type breakdown
   app.get("/api/it/bss-analysis/accounts-by-type", requireAuth, requireITAccount, async (req, res) => {
     try {

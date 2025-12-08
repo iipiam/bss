@@ -19,6 +19,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { TableFooter } from "@/components/ui/table";
 import { 
   Building2, 
   Users, 
@@ -55,7 +57,11 @@ import {
   Globe,
   MapPin,
   Landmark,
-  X
+  X,
+  ChevronUp,
+  ChevronDown,
+  Target,
+  Activity
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
@@ -186,6 +192,24 @@ interface RevenueTrend {
   profit: string;
 }
 
+interface BepMetrics {
+  fixedCosts: number;
+  variableCosts: number;
+  revenue: number;
+  netProfit: number;
+  bepSubscriptions: number;
+  bepRevenue: number;
+  marginOfSafety: number;
+  isProfitable: boolean;
+  totalSubscriptions: number;
+  activeClients: number;
+  avgRevenuePerSubscription: number;
+  contributionMarginPerSubscription: number;
+  contributionMarginRatio: number;
+  fixedCostsBreakdown: Array<{ category: string; amount: number }>;
+  year: number;
+}
+
 interface BusinessInfoData {
   id: string | null;
   companyNameEn: string;
@@ -292,6 +316,20 @@ export default function BusinessManagement() {
 
   const { data: revenueTrends = [], isLoading: trendsLoading } = useQuery<RevenueTrend[]>({
     queryKey: ['/api/it/bss-analysis/revenue-trends'],
+    enabled: !authLoading && !!user && accountType === 'it',
+  });
+
+  // BEP Analysis state and query
+  const [bepYear, setBepYear] = useState(new Date().getFullYear().toString());
+  const [bepFixedExpensesOpen, setBepFixedExpensesOpen] = useState(false);
+  
+  const { data: bepMetrics, isLoading: bepLoading } = useQuery<BepMetrics>({
+    queryKey: ['/api/it/bss-analysis/bep', bepYear],
+    queryFn: async () => {
+      const res = await fetch(`/api/it/bss-analysis/bep?year=${bepYear}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch BEP metrics');
+      return res.json();
+    },
     enabled: !authLoading && !!user && accountType === 'it',
   });
 
@@ -2353,6 +2391,169 @@ export default function BusinessManagement() {
                       </p>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* BEP Analysis Section */}
+              <Card data-testid="card-bep-analysis">
+                <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <CardTitle className="text-base font-medium">{t.bepCalculator || "BEP Calculator"}</CardTitle>
+                      <CardDescription className="text-xs">{t.breakEvenPointAnalysis || "Break-Even Point Analysis"}</CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select value={bepYear} onValueChange={setBepYear}>
+                      <SelectTrigger className="w-[100px]" data-testid="select-bep-year">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[...Array(5)].map((_, i) => {
+                          const year = new Date().getFullYear() - i;
+                          return (
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    <Badge variant={bepMetrics?.isProfitable ? "default" : "destructive"} data-testid="bep-status-badge">
+                      {bepMetrics?.isProfitable ? (t.profitable || "Profitable") : (t.unprofitable || "Unprofitable")}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {bepLoading ? (
+                    <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+                      {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-20 w-full" />)}
+                    </div>
+                  ) : bepMetrics ? (
+                    <>
+                      {/* BEP Metric Cards */}
+                      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+                        <Card className="bg-teal-50 dark:bg-teal-950" data-testid="card-bep-fixed-costs">
+                          <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{t.fixedCosts || "Fixed Costs"}</CardTitle>
+                            <Calculator className="h-4 w-4 text-teal-600" />
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold text-teal-600" data-testid="bep-fixed-costs">
+                              {formatCurrency(bepMetrics.fixedCosts)}
+                            </div>
+                            <p className="text-xs text-muted-foreground">{t.totalFixedCosts || "Total Fixed Costs"}</p>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="bg-cyan-50 dark:bg-cyan-950" data-testid="card-bep-subscriptions">
+                          <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{t.bepSubscriptions || "BEP Subs"}</CardTitle>
+                            <Target className="h-4 w-4 text-cyan-600" />
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold text-cyan-600" data-testid="bep-subscriptions">
+                              {bepMetrics.bepSubscriptions}
+                            </div>
+                            <p className="text-xs text-muted-foreground">{t.activeClients || "Active Clients"}: {bepMetrics.activeClients}</p>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="bg-blue-50 dark:bg-blue-950" data-testid="card-bep-revenue">
+                          <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{t.bepRevenue || "BEP Revenue"}</CardTitle>
+                            <TrendingUp className="h-4 w-4 text-blue-600" />
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold text-blue-600" data-testid="bep-revenue">
+                              {formatCurrency(bepMetrics.bepRevenue)}
+                            </div>
+                            <p className="text-xs text-muted-foreground">{t.currentRevenue || "Current"}: {formatCurrency(bepMetrics.revenue)}</p>
+                          </CardContent>
+                        </Card>
+
+                        <Card data-testid="card-bep-current-revenue">
+                          <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{t.avgRevenuePerSub || "Avg Revenue"}</CardTitle>
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold" data-testid="bep-avg-revenue">
+                              {formatCurrency(bepMetrics.avgRevenuePerSubscription)}
+                            </div>
+                            <p className="text-xs text-muted-foreground">{t.totalSubscriptions || "Subs"}: {bepMetrics.totalSubscriptions}</p>
+                          </CardContent>
+                        </Card>
+
+                        <Card className={bepMetrics.marginOfSafety >= 0 ? "bg-green-50 dark:bg-green-950" : "bg-red-50 dark:bg-red-950"} data-testid="card-bep-margin-safety">
+                          <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{t.marginOfSafety || "Safety"}</CardTitle>
+                            <Activity className={`h-4 w-4 ${bepMetrics.marginOfSafety >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+                          </CardHeader>
+                          <CardContent>
+                            <div className={`text-2xl font-bold ${bepMetrics.marginOfSafety >= 20 ? 'text-green-600' : bepMetrics.marginOfSafety >= 0 ? 'text-blue-600' : 'text-red-600'}`} data-testid="bep-margin-of-safety">
+                              {bepMetrics.marginOfSafety.toFixed(1)}%
+                            </div>
+                            <p className="text-xs text-muted-foreground">{t.cmRatio || "CM"}: {(bepMetrics.contributionMarginRatio * 100).toFixed(1)}%</p>
+                          </CardContent>
+                        </Card>
+
+                        <Card className={bepMetrics.isProfitable ? "bg-purple-50 dark:bg-purple-950" : "bg-red-50 dark:bg-red-950"} data-testid="card-bep-status">
+                          <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{t.status || "Status"}</CardTitle>
+                            <BarChart3 className={`h-4 w-4 ${bepMetrics.isProfitable ? 'text-purple-600' : 'text-red-600'}`} />
+                          </CardHeader>
+                          <CardContent>
+                            <div className={`text-2xl font-bold ${bepMetrics.isProfitable ? 'text-purple-600' : 'text-red-600'}`} data-testid="bep-status">
+                              {bepMetrics.isProfitable ? (t.profitable || 'Profitable') : (t.belowBep || 'Below BEP')}
+                            </div>
+                            <p className="text-xs text-muted-foreground">{bepMetrics.activeClients} {t.activeClients || "clients"}</p>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {/* Collapsible Fixed Expenses Breakdown */}
+                      <Collapsible open={bepFixedExpensesOpen} onOpenChange={setBepFixedExpensesOpen}>
+                        <CollapsibleTrigger asChild>
+                          <Button variant="outline" className="w-full justify-between" data-testid="button-toggle-fixed-expenses">
+                            <span>{t.fixedExpensesBreakdown || "Fixed Expenses Breakdown"}</span>
+                            {bepFixedExpensesOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="pt-4">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>{t.category || "Category"}</TableHead>
+                                <TableHead className="text-right">{t.amount || "Amount"} (SAR)</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {bepMetrics.fixedCostsBreakdown.map((item, index) => (
+                                <TableRow key={index} data-testid={`fixed-expense-row-${index}`}>
+                                  <TableCell className="capitalize font-medium">{getBillTypeName(item.category)}</TableCell>
+                                  <TableCell className="text-right font-mono">{item.amount.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                            <TableFooter>
+                              <TableRow>
+                                <TableCell className="font-bold">{t.totalFixedCosts || "Total Fixed Costs"}</TableCell>
+                                <TableCell className="text-right font-bold font-mono" data-testid="fixed-expenses-total">
+                                  {bepMetrics.fixedCosts.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                                </TableCell>
+                              </TableRow>
+                            </TableFooter>
+                          </Table>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      {t.noDataAvailable || "No data available"}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </>
