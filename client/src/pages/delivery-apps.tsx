@@ -493,7 +493,9 @@ export default function DeliveryApps() {
     commission: z.coerce.number().min(0, "Commission must be 0 or higher"),
     banking: z.coerce.number().min(0, "Banking must be 0 or higher"),
     subsidy: z.coerce.number().min(0, "Subsidy must be 0 or higher"),
+    vat: z.coerce.number().min(0, "VAT must be 0 or higher"),
     posFees: z.coerce.number().min(0, "POS Fees must be 0 or higher"),
+    profit: z.coerce.number(),
     netEarnings: z.coerce.number(),
     notes: z.string().optional(),
   });
@@ -512,7 +514,9 @@ export default function DeliveryApps() {
       commission: 0,
       banking: 0,
       subsidy: 0,
+      vat: 0,
       posFees: 0,
+      profit: 0,
       netEarnings: 0,
       notes: "",
     },
@@ -538,7 +542,9 @@ export default function DeliveryApps() {
         commission: data.commission.toFixed(2),
         banking: data.banking.toFixed(2),
         subsidy: data.subsidy.toFixed(2),
+        vat: data.vat.toFixed(2),
         posFees: data.posFees.toFixed(2),
+        profit: data.profit.toFixed(2),
         netEarnings: data.netEarnings.toFixed(2),
       });
     },
@@ -573,7 +579,9 @@ export default function DeliveryApps() {
         commission: data.commission.toFixed(2),
         banking: data.banking.toFixed(2),
         subsidy: data.subsidy.toFixed(2),
+        vat: data.vat.toFixed(2),
         posFees: data.posFees.toFixed(2),
+        profit: data.profit.toFixed(2),
         netEarnings: data.netEarnings.toFixed(2),
         notes: data.notes,
       });
@@ -639,7 +647,9 @@ export default function DeliveryApps() {
       commission: parseFloat(entry.commission),
       banking: parseFloat(entry.banking),
       subsidy: parseFloat(entry.subsidy),
+      vat: parseFloat(entry.vat || "0"),
       posFees: parseFloat(entry.posFees),
+      profit: parseFloat(entry.profit || "0"),
       netEarnings: parseFloat(entry.netEarnings),
       notes: entry.notes || "",
     });
@@ -1196,12 +1206,38 @@ export default function DeliveryApps() {
                       />
                       <FormField
                         control={profitabilityForm.control}
+                        name="vat"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>VAT (SAR)</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-vat" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={profitabilityForm.control}
                         name="posFees"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>POS Fees (SAR)</FormLabel>
                             <FormControl>
                               <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-pos-fees-amount" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={profitabilityForm.control}
+                        name="profit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Profit (SAR)</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-profit" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1276,6 +1312,8 @@ export default function DeliveryApps() {
                       <TableHead className="text-right">Sales</TableHead>
                       <TableHead className="text-right">Revenue</TableHead>
                       <TableHead className="text-right">Commission</TableHead>
+                      <TableHead className="text-right">VAT</TableHead>
+                      <TableHead className="text-right">Profit</TableHead>
                       <TableHead className="text-right">Net Earnings</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -1300,6 +1338,14 @@ export default function DeliveryApps() {
                         </TableCell>
                         <TableCell className="text-right" data-testid={`text-commission-${entry.id}`}>
                           {parseFloat(entry.commission).toLocaleString('en-SA', { minimumFractionDigits: 2 })} SAR
+                        </TableCell>
+                        <TableCell className="text-right" data-testid={`text-vat-${entry.id}`}>
+                          {parseFloat(entry.vat || "0").toLocaleString('en-SA', { minimumFractionDigits: 2 })} SAR
+                        </TableCell>
+                        <TableCell className="text-right" data-testid={`text-profit-${entry.id}`}>
+                          <Badge variant={parseFloat(entry.profit || "0") >= 0 ? "default" : "destructive"}>
+                            {parseFloat(entry.profit || "0").toLocaleString('en-SA', { minimumFractionDigits: 2 })} SAR
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-right font-semibold" data-testid={`text-net-earnings-${entry.id}`}>
                           <Badge variant={parseFloat(entry.netEarnings) >= 0 ? "default" : "destructive"}>

@@ -607,7 +607,9 @@ export const deliveryProfitability = pgTable("delivery_profitability", {
   commission: decimal("commission", { precision: 12, scale: 2 }).notNull().default("0"),
   banking: decimal("banking", { precision: 12, scale: 2 }).notNull().default("0"),
   subsidy: decimal("subsidy", { precision: 12, scale: 2 }).notNull().default("0"),
+  vat: decimal("vat", { precision: 12, scale: 2 }).notNull().default("0"), // VAT amount
   posFees: decimal("pos_fees", { precision: 12, scale: 2 }).notNull().default("0"),
+  profit: decimal("profit", { precision: 12, scale: 2 }).notNull().default("0"), // Net profit after all deductions
   netEarnings: decimal("net_earnings", { precision: 12, scale: 2 }).notNull().default("0"),
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
