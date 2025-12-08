@@ -74,7 +74,7 @@ export default function SupportDetail() {
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, accountType } = useAuth();
   const { toast } = useToast();
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -190,10 +190,9 @@ export default function SupportDetail() {
     }
   };
 
-  const { accountType } = useAuth();
   const isITAccount = accountType === 'it';
 
-  if (ticketLoading) {
+  if (!id || ticketLoading) {
     return (
       <div className="p-6 max-w-5xl mx-auto">
         <div className="animate-pulse space-y-4">
