@@ -17,7 +17,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import type { Procurement, InsertProcurement } from "@shared/schema";
 import { insertProcurementSchema } from "@shared/schema";
-import { Plus, Package, Wrench, HardHat, Computer, Calendar, User, AlertCircle, CheckCircle2, Clock, XCircle, RefreshCw } from "lucide-react";
+import { Plus, Package, Wrench, HardHat, Computer, Calendar, User, AlertCircle, CheckCircle2, Clock, XCircle, RefreshCw, Upload, Image, X, FileText, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -60,6 +60,9 @@ export default function ProcurementPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all-statuses");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Procurement | null>(null);
+  const [invoiceImage, setInvoiceImage] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [viewImageUrl, setViewImageUrl] = useState<string | null>(null);
 
   const { data: procurements = [], isLoading } = useQuery<Procurement[]>({
     queryKey: [
@@ -189,6 +192,7 @@ export default function ProcurementPage() {
       approvedBy: data.approvedBy || null,
       branchId: trimmedBranchId || null,
       notes: data.notes || null,
+      invoiceImage: invoiceImage,
     };
     if (editingItem) {
       updateMutation.mutate({ id: editingItem.id, data: processedData });
@@ -199,6 +203,7 @@ export default function ProcurementPage() {
 
   const handleEdit = (item: Procurement) => {
     setEditingItem(item);
+    setInvoiceImage(item.invoiceImage || null);
     form.reset({
       type: item.type,
       title: item.title,
@@ -220,6 +225,36 @@ export default function ProcurementPage() {
 
   const handleStatusChange = (id: string, newStatus: string) => {
     updateMutation.mutate({ id, data: { status: newStatus } });
+  };
+
+  // Handle invoice image upload
+  const handleInvoiceUpload = async (file: File) => {
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append("invoiceImage", file);
+    
+    setIsUploading(true);
+    try {
+      const response = await fetch("/api/procurement/upload-invoice", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to upload invoice image");
+      }
+      
+      const data = await response.json();
+      setInvoiceImage(data.imageUrl);
+      toast({ title: t.success, description: "Invoice image uploaded successfully" });
+    } catch (error) {
+      console.error("Invoice upload error:", error);
+      toast({ title: t.error, description: "Failed to upload invoice image", variant: "destructive" });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   // Sync inventory items to procurement
@@ -268,7 +303,7 @@ export default function ProcurementPage() {
           </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => { setEditingItem(null); form.reset(); }} data-testid="button-add-procurement">
+              <Button onClick={() => { setEditingItem(null); form.reset(); setInvoiceImage(null); }} data-testid="button-add-procurement">
                 <Plus className="h-4 w-4 mr-2" />
                 New Request
               </Button>
@@ -480,6 +515,93 @@ export default function ProcurementPage() {
                   />
                 </div>
 
+                                {/* Invoice Image Upload */}
+                <div className="space-y-2">
+                  <Label>Invoice Image</Label>
+                  <div 
+                    className={`border-2 border-dashed rounded-lg p-4 transition-colors ${
+                      isUploading ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'
+                    }`}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const file = e.dataTransfer.files[0];
+                      if (file) handleInvoiceUpload(file);
+                    }}
+                  >
+                    {invoiceImage ? (
+                      <div className="flex items-center gap-3">
+                        {invoiceImage.endsWith('.pdf') ? (
+                          <FileText className="h-10 w-10 text-red-500" />
+                        ) : (
+                          <img 
+                            src={invoiceImage} 
+                            alt="Invoice" 
+                            className="h-16 w-16 object-cover rounded border"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Invoice uploaded</p>
+                          <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                            {invoiceImage.split('/').pop()}
+                          </p>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => window.open(invoiceImage, '_blank')}
+                            data-testid="button-view-invoice"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => setInvoiceImage(null)}
+                            data-testid="button-remove-invoice"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center cursor-pointer gap-2">
+                        {isUploading ? (
+                          <>
+                            <RefreshCw className="h-8 w-8 text-primary animate-spin" />
+                            <span className="text-sm text-muted-foreground">Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-8 w-8 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">
+                              Drag & drop or click to upload invoice
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              JPEG, PNG, GIF, WebP, PDF (max 10MB)
+                            </span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleInvoiceUpload(file);
+                          }}
+                          disabled={isUploading}
+                          data-testid="input-invoice-image"
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+
                 <FormField
                   control={form.control}
                   name="notes"
@@ -498,7 +620,7 @@ export default function ProcurementPage() {
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending} data-testid="button-submit">
                     {createMutation.isPending || updateMutation.isPending ? "Saving..." : editingItem ? "Update" : "Create"}
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); setEditingItem(null); form.reset(); }}>
+                  <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); setEditingItem(null); form.reset(); setInvoiceImage(null); }}>
                     Cancel
                   </Button>
                 </div>
