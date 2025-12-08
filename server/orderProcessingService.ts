@@ -154,7 +154,7 @@ export class OrderProcessingService {
         quantityBefore: quantityBefore.toString(),
         quantityAfter: quantityAfter.toString(),
         notes: `Deducted for order`,
-        branchId,
+        branchId: branchId || undefined, // Convert empty string to undefined to avoid FK constraint violation
       };
 
       await tx.insert(inventoryTransactions).values(transactionRecord);
@@ -328,7 +328,7 @@ export class OrderProcessingService {
           quantityBefore: quantityBefore.toString(),
           quantityAfter: quantityAfter.toString(),
           notes: `Deducted for order`,
-          branchId,
+          branchId: branchId || undefined, // Convert empty string to undefined to avoid FK constraint violation
         };
 
         await tx.insert(inventoryTransactions).values(transactionRecord);
