@@ -376,7 +376,6 @@ export const procurement = pgTable("procurement", {
   expectedDelivery: timestamp("expected_delivery"),
   actualDelivery: timestamp("actual_delivery"),
   notes: text("notes"),
-  invoiceNumber: text("invoice_number"), // Procurement invoice number
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

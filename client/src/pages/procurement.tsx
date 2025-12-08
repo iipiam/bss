@@ -100,7 +100,6 @@ export default function ProcurementPage() {
     expectedDelivery: z.date().optional().nullable(),
     actualDelivery: z.date().optional().nullable(),
     notes: z.string().optional().nullable(),
-    invoiceNumber: z.string().optional().nullable(),
   });
 
   const form = useForm({
@@ -120,7 +119,6 @@ export default function ProcurementPage() {
       approvedBy: "",
       branchId: "",
       notes: "",
-      invoiceNumber: "",
     },
   });
 
@@ -176,7 +174,6 @@ export default function ProcurementPage() {
     const trimmedUnitPrice = typeof data.unitPrice === 'string' ? data.unitPrice.trim() : null;
     const trimmedBranchId = typeof data.branchId === 'string' ? data.branchId.trim() : null;
     const trimmedTotalCost = data.totalCost.trim();
-    const trimmedInvoiceNumber = typeof data.invoiceNumber === 'string' ? data.invoiceNumber.trim() : null;
     const processedData = {
       type: data.type,
       title: data.title,
@@ -192,7 +189,6 @@ export default function ProcurementPage() {
       approvedBy: data.approvedBy || null,
       branchId: trimmedBranchId || null,
       notes: data.notes || null,
-      invoiceNumber: trimmedInvoiceNumber || null,
     };
     if (editingItem) {
       updateMutation.mutate({ id: editingItem.id, data: processedData });
@@ -218,7 +214,6 @@ export default function ProcurementPage() {
       approvedBy: item.approvedBy || "",
       branchId: item.branchId || "",
       notes: item.notes || "",
-      invoiceNumber: (item as any).invoiceNumber || "",
     } as any);
     setIsDialogOpen(true);
   };
@@ -485,35 +480,19 @@ export default function ProcurementPage() {
                   />
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="invoiceNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Invoice Number</FormLabel>
-                        <FormControl>
-                          <Input placeholder="INV-001" {...field} value={field.value || ""} data-testid="input-invoice-number" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Notes</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Additional notes" {...field} value={field.value || ""} data-testid="input-notes" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Notes</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Additional notes" {...field} value={field.value || ""} data-testid="input-notes" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <div className="flex gap-2 pt-4">
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending} data-testid="button-submit">
