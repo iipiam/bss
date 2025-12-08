@@ -134,36 +134,6 @@ export default function ITDashboard() {
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // SECURITY: Redirect non-IT accounts immediately
-  useEffect(() => {
-    if (accountType && accountType !== 'it') {
-      navigate('/');
-    }
-  }, [accountType, navigate]);
-
-  // SECURITY: Early return if not IT account (prevents flash of content)
-  if (accountType !== 'it') {
-    return null;
-  }
-
-  // Handle device change
-  const handleDeviceChange = async (newDevice: 'laptop' | 'ipad' | 'iphone') => {
-    try {
-      await setDevice(newDevice);
-      const deviceLabel = newDevice === 'laptop' ? t.laptop : newDevice === 'ipad' ? t.ipad : t.iphone;
-      toast({
-        title: t.success,
-        description: `${t.devicePreferenceUpdated || "Device preference updated to"} ${deviceLabel}`,
-      });
-    } catch (error) {
-      toast({
-        title: t.error,
-        description: t.failedToUpdateDevicePreference || "Failed to update device preference",
-        variant: "destructive",
-      });
-    }
-  };
-
   // Fetch analytics data with 30-second refetch (only when authenticated as IT)
   const { data: analytics, isLoading: analyticsLoading } = useQuery<ITAnalytics>({
     queryKey: ["/api/it/analytics"],
@@ -228,6 +198,37 @@ export default function ITDashboard() {
       });
     },
   });
+
+  // SECURITY: Redirect non-IT accounts immediately (after all hooks)
+  useEffect(() => {
+    if (accountType && accountType !== 'it') {
+      navigate('/');
+    }
+  }, [accountType, navigate]);
+
+  // SECURITY: Early return if not IT account (prevents flash of content)
+  // This must come AFTER all hooks to avoid "Rendered more hooks than during the previous render" error
+  if (accountType !== 'it') {
+    return null;
+  }
+
+  // Handle device change
+  const handleDeviceChange = async (newDevice: 'laptop' | 'ipad' | 'iphone') => {
+    try {
+      await setDevice(newDevice);
+      const deviceLabel = newDevice === 'laptop' ? t.laptop : newDevice === 'ipad' ? t.ipad : t.iphone;
+      toast({
+        title: t.success,
+        description: `${t.devicePreferenceUpdated || "Device preference updated to"} ${deviceLabel}`,
+      });
+    } catch (error) {
+      toast({
+        title: t.error,
+        description: t.failedToUpdateDevicePreference || "Failed to update device preference",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Filter tickets
   const filteredTickets = activeTickets.filter((ticket) => {
