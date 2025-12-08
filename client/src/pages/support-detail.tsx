@@ -219,6 +219,7 @@ export default function SupportDetail() {
   };
 
   const isITAccount = accountType === 'it';
+  const backPath = isITAccount ? '/it-dashboard' : '/support';
 
   if (!id || ticketLoading) {
     return (
@@ -249,7 +250,7 @@ export default function SupportDetail() {
               {t.ticketNotFound}
             </p>
             <Button
-              onClick={() => navigate('/support')}
+              onClick={() => navigate(backPath)}
               className="mt-4"
               variant="outline"
               data-testid="button-back-to-support"
@@ -268,7 +269,7 @@ export default function SupportDetail() {
       <div className="flex items-center justify-between">
         <Button
           variant="ghost"
-          onClick={() => navigate('/support')}
+          onClick={() => navigate(backPath)}
           data-testid="button-back"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />

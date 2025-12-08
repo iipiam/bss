@@ -205,10 +205,10 @@ function AppContent() {
   };
   
   // Handle IT account redirects using useEffect to avoid render issues
-  // IT accounts can access /it-dashboard, /performance, and /it-account-management only
+  // IT accounts can access /it-dashboard, /performance, /it-account-management, /business-management, and /support routes
   useEffect(() => {
     const allowedITRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management'];
-    const isAllowedRoute = allowedITRoutes.includes(location);
+    const isAllowedRoute = allowedITRoutes.includes(location) || location.startsWith('/support');
     
     if (accountType === 'it' && !isAllowedRoute) {
       setLocation('/it-dashboard');
