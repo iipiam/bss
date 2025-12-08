@@ -303,8 +303,44 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.post("/api/inventory", requireAuth, requireRestaurant, requireAction('inventory', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
+      const userId = req.session.user!.id;
+      const userName = req.session.user!.fullName || req.session.user!.username;
       const data = insertInventoryItemSchema.parse({ ...req.body, restaurantId });
       const item = await storage.createInventoryItem(data);
+      
+      // Auto-create procurement record for this inventory item
+      try {
+        const refQty = item.referenceQuantity ? parseInt(String(item.referenceQuantity), 10) : null;
+        const invQty = item.quantity ? parseInt(String(item.quantity), 10) : null;
+        const quantity = refQty || invQty || null;
+        const unitPrice = refQty && refQty > 0 
+          ? (parseFloat(item.price) / refQty).toFixed(2) 
+          : null;
+        
+        const procurementData = {
+          restaurantId,
+          type: "inventory" as const,
+          title: item.name,
+          description: `Auto-generated from inventory: ${item.name}${item.category ? ` (${item.category})` : ''}`,
+          supplier: item.supplier || null,
+          category: item.category || null,
+          quantity,
+          unitPrice,
+          totalCost: item.price,
+          status: "received" as const,
+          priority: "medium" as const,
+          requestedBy: userName,
+          approvedBy: userName,
+          branchId: item.branchId || null,
+          notes: `Inventory Item ID: ${item.id}`,
+        };
+        await storage.createProcurement(procurementData);
+        console.log(`[INVENTORY] Auto-created procurement for inventory item: ${item.name}`);
+      } catch (procError) {
+        // Log but don't fail the main inventory creation
+        console.error("[INVENTORY] Failed to auto-create procurement:", procError);
+      }
+      
       res.status(201).json(item);
     } catch (error) {
       console.error("Failed to create inventory item:", error);
