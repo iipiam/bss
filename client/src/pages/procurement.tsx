@@ -552,7 +552,13 @@ export default function ProcurementPage() {
                             type="button" 
                             variant="ghost" 
                             size="icon"
-                            onClick={() => window.open(invoiceImage, '_blank')}
+                            onClick={() => {
+                              if (invoiceImage?.endsWith('.pdf')) {
+                                window.open(invoiceImage, '_blank');
+                              } else {
+                                setViewImageUrl(invoiceImage);
+                              }
+                            }}
                             data-testid="button-view-invoice"
                           >
                             <Eye className="h-4 w-4" />
