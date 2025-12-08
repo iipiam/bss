@@ -1067,7 +1067,7 @@ export const businessInfo = pgTable("business_info", {
   vatNumber: text("vat_number").notNull().default(""), // VAT Registration Number (15 digits)
   crNumber: text("cr_number").notNull().default(""), // Commercial Registration Number
   nationalId: text("national_id").notNull().default(""), // National ID / Unified Number
-  email: text("email").notNull().default("IT@SaudiKinzhal.org"),
+  email: text("email").notNull().default("IT@kinbss.com"),
   phone: text("phone").notNull().default(""),
   website: text("website").notNull().default(""),
   addressEn: text("address_en").notNull().default("Saudi Arabia"),

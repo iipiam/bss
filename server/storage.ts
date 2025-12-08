@@ -312,6 +312,7 @@ export interface IStorage {
   getTicketTrends(restaurantId?: string): Promise<any[]>;
   assignTicket(ticketId: string, restaurantId: string | null, assignedTo: string | null, assignedBy: string): Promise<SupportTicket | undefined>;
   getAllActiveTicketsForIT(): Promise<SupportTicket[]>;
+  getAllSupportTicketsForIT(userId?: string, status?: string): Promise<SupportTicket[]>;
   getSupportTicketForIT(id: string): Promise<SupportTicket | undefined>;
   getTicketMessagesForIT(ticketId: string): Promise<TicketMessage[]>;
   updateSupportTicketForIT(id: string, ticket: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined>;
@@ -2423,6 +2424,27 @@ export class DatabaseStorage implements IStorage {
       .orderBy(sql`${supportTickets.createdAt} DESC`);
     
     return tickets;
+  }
+
+  async getAllSupportTicketsForIT(userId?: string, status?: string): Promise<SupportTicket[]> {
+    // Get all tickets across all restaurants for IT accounts (with optional filters)
+    let query = db.select().from(supportTickets);
+    
+    const conditions = [];
+    if (userId) {
+      conditions.push(eq(supportTickets.userId, userId));
+    }
+    if (status) {
+      conditions.push(eq(supportTickets.status, status));
+    }
+    
+    if (conditions.length === 1) {
+      query = query.where(conditions[0]) as any;
+    } else if (conditions.length > 1) {
+      query = query.where(and(...conditions)) as any;
+    }
+    
+    return await query.orderBy(sql`${supportTickets.createdAt} DESC`);
   }
 
   async getSupportTicketForIT(id: string): Promise<SupportTicket | undefined> {

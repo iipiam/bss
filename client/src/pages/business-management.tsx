@@ -341,7 +341,7 @@ export default function BusinessManagement() {
     vatNumber: "",
     crNumber: "",
     nationalId: "",
-    email: "IT@SaudiKinzhal.org",
+    email: "IT@kinbss.com",
     phone: "",
     website: "",
     addressEn: "Saudi Arabia",
@@ -2696,7 +2696,7 @@ export default function BusinessManagement() {
                           type="email"
                           value={businessInfoForm.email}
                           onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, email: e.target.value }))}
-                          placeholder="IT@SaudiKinzhal.org"
+                          placeholder="IT@kinbss.com"
                           data-testid="input-email"
                         />
                       </div>

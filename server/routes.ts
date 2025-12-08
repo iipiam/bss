@@ -6027,13 +6027,25 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Support Tickets
-  app.get("/api/tickets", requireAuth, requireRestaurant, async (req, res) => {
+  app.get("/api/tickets", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const accountType = req.session.accountType;
       const userId = req.query.userId as string | undefined;
       const status = req.query.status as string | undefined;
       
-      const tickets = await storage.getSupportTickets(restaurantId, userId, status);
+      let tickets;
+      if (accountType === 'it') {
+        // IT accounts see all tickets across all restaurants
+        tickets = await storage.getAllSupportTicketsForIT(userId, status);
+      } else {
+        // Restaurant accounts can only access their own tickets
+        const restaurantId = req.session.user!.restaurantId;
+        if (!restaurantId) {
+          return res.status(403).json({ error: "This endpoint requires a restaurant account" });
+        }
+        tickets = await storage.getSupportTickets(restaurantId, userId, status);
+      }
+      
       res.json(tickets);
     } catch (error) {
       console.error("Error fetching tickets:", error);
@@ -8100,7 +8112,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           vatNumber: "",
           crNumber: "",
           nationalId: "",
-          email: "IT@SaudiKinzhal.org",
+          email: "IT@kinbss.com",
           phone: "",
           website: "",
           addressEn: "Saudi Arabia",
