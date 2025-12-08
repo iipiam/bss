@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DollarSign, ShoppingCart, Package, AlertTriangle, TrendingUp, TrendingDown, Calendar, CalendarDays, Clock, User, Phone, CreditCard, Wallet } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { useQuery } from "@tanstack/react-query";
-import type { Order, ShopBill } from "@shared/schema";
+import type { Order, ShopBill, InventoryItem } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeviceLayout, useCompactChartConfig } from "@/lib/mobileLayout";
 import { useState } from "react";
@@ -297,13 +297,25 @@ export default function Dashboard() {
     },
   });
 
+  const { data: inventoryItems = [], isLoading: inventoryLoading } = useQuery<InventoryItem[]>({
+    queryKey: ["/api/inventory"],
+  });
+
   // Filter out foundational and one-time bills from operating expenses (only recurring costs)
   // Note: paymentPeriod can be 'one-time' or 'oneTime' depending on when data was created
-  const operatingBills = bills.filter(bill => 
-    bill.billType !== 'foundational' && 
-    bill.paymentPeriod !== 'one-time' && 
-    bill.paymentPeriod !== 'oneTime'
-  );
+  // Use explicit String() conversion to handle any type issues
+  const operatingBills = bills.filter(bill => {
+    const billType = String(bill.billType || '').toLowerCase();
+    const paymentPeriod = String(bill.paymentPeriod || '').toLowerCase();
+    return billType !== 'foundational' && 
+           paymentPeriod !== 'one-time' && 
+           paymentPeriod !== 'onetime';
+  });
+
+  // Calculate total inventory value
+  const totalInventoryValue = inventoryItems.reduce((sum, item) => {
+    return sum + parseFloat(item.price || "0");
+  }, 0);
 
   // Calculate monthly expense trends (last 6 months) - excluding foundational bills
   const monthlyExpensesMap = operatingBills.reduce((acc, bill) => {
@@ -326,11 +338,12 @@ export default function Dashboard() {
     .slice(-6)
     .map(({ month, expenses }) => ({ month, expenses }));
 
-  // Operating expenses exclude foundational bills (which are one-time setup costs)
-  const totalExpenses = operatingBills.reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
+  // Operating expenses = recurring bills + inventory value (matching Financial page calculation)
+  const recurringBillsTotal = operatingBills.reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
+  const totalExpenses = recurringBillsTotal + totalInventoryValue;
   const pendingExpenses = operatingBills.filter(b => b.status === "pending").reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
 
-  if (dashboardLoading || salesLoading || billsLoading) {
+  if (dashboardLoading || salesLoading || billsLoading || inventoryLoading) {
     return (
       <div className={`${layout.padding} ${layout.spaceY}`}>
         <div>
