@@ -82,18 +82,28 @@ export default function ProcurementPage() {
     },
   });
 
-  const procurementFormSchema = insertProcurementSchema.omit({ restaurantId: true }).extend({
+  const procurementFormSchema = z.object({
+    type: z.string().min(1, "Type is required"),
+    title: z.string().min(1, "Title is required"),
+    description: z.string().optional().nullable(),
+    supplier: z.string().optional().nullable(),
+    category: z.string().optional().nullable(),
+    quantity: z.coerce.number().optional().nullable(),
+    unitPrice: z.string().optional().nullable(),
+    totalCost: z.string().min(1, t.priceRequired || "Total cost is required"),
+    status: z.string().min(1, "Status is required"),
+    priority: z.string().min(1, "Priority is required"),
+    requestedBy: z.string().optional().nullable(),
+    approvedBy: z.string().optional().nullable(),
+    branchId: z.string().optional().nullable(),
     orderDate: z.date().optional().nullable(),
     expectedDelivery: z.date().optional().nullable(),
     actualDelivery: z.date().optional().nullable(),
-    title: z.string().min(1, "Title is required"),
-    totalCost: z.string().min(1, t.priceRequired || "Total cost is required"),
-    type: z.string().min(1, "Type is required"),
-    status: z.string().min(1, "Status is required"),
-    priority: z.string().min(1, "Priority is required"),
+    notes: z.string().optional().nullable(),
+    invoiceNumber: z.string().optional().nullable(),
   });
 
-  const form = useForm<InsertProcurement>({
+  const form = useForm({
     resolver: zodResolver(procurementFormSchema),
     defaultValues: {
       type: "inventory",
@@ -110,6 +120,7 @@ export default function ProcurementPage() {
       approvedBy: "",
       branchId: "",
       notes: "",
+      invoiceNumber: "",
     },
   });
 
@@ -160,22 +171,33 @@ export default function ProcurementPage() {
     },
   });
 
-  const handleSubmit = (data: InsertProcurement) => {
+  const handleSubmit = (data: z.infer<typeof procurementFormSchema>) => {
     console.log("[Procurement] Form submitted with data:", data);
-    const trimmedUnitPrice = data.unitPrice?.trim();
-    const trimmedBranchId = data.branchId?.trim();
+    const trimmedUnitPrice = typeof data.unitPrice === 'string' ? data.unitPrice.trim() : null;
+    const trimmedBranchId = typeof data.branchId === 'string' ? data.branchId.trim() : null;
     const trimmedTotalCost = data.totalCost.trim();
-    const processedData: InsertProcurement = {
-      ...data,
+    const trimmedInvoiceNumber = typeof data.invoiceNumber === 'string' ? data.invoiceNumber.trim() : null;
+    const processedData = {
+      type: data.type,
+      title: data.title,
+      description: data.description || null,
+      supplier: data.supplier || null,
+      category: data.category || null,
       quantity: typeof data.quantity === "number" && Number.isFinite(data.quantity) ? data.quantity : null,
-      unitPrice: trimmedUnitPrice ? trimmedUnitPrice : null,
+      unitPrice: trimmedUnitPrice || null,
       totalCost: trimmedTotalCost,
-      branchId: trimmedBranchId ? trimmedBranchId : null,
+      status: data.status,
+      priority: data.priority,
+      requestedBy: data.requestedBy || null,
+      approvedBy: data.approvedBy || null,
+      branchId: trimmedBranchId || null,
+      notes: data.notes || null,
+      invoiceNumber: trimmedInvoiceNumber || null,
     };
     if (editingItem) {
       updateMutation.mutate({ id: editingItem.id, data: processedData });
     } else {
-      createMutation.mutate(processedData);
+      createMutation.mutate(processedData as InsertProcurement);
     }
   };
 
@@ -196,7 +218,8 @@ export default function ProcurementPage() {
       approvedBy: item.approvedBy || "",
       branchId: item.branchId || "",
       notes: item.notes || "",
-    });
+      invoiceNumber: (item as any).invoiceNumber || "",
+    } as any);
     setIsDialogOpen(true);
   };
 
@@ -462,19 +485,35 @@ export default function ProcurementPage() {
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notes</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="Additional notes" {...field} value={field.value || ""} data-testid="input-notes" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="invoiceNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Invoice Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="INV-001" {...field} value={field.value || ""} data-testid="input-invoice-number" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notes</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Additional notes" {...field} value={field.value || ""} data-testid="input-notes" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <div className="flex gap-2 pt-4">
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending} data-testid="button-submit">
