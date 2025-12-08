@@ -50,6 +50,7 @@ Preferred communication style: Simple, everyday language.
 - **License Document Upload**: Secure file upload for license documents (PDF, JPEG, PNG, GIF, WebP) with 10MB limit. Files stored outside public web root and served through authenticated endpoint with permission checks. Drag-and-drop upload UI with file type/size validation. **Updated Nov 26, 2025**.
 - **License Fees**: Optional fee tracking for each license. Displays fee amount in SAR on license cards. **Added Nov 26, 2025**.
 - **Menu Item Portion Sizes**: When linking menu items to recipes, users can select portion sizes (1/4, 1/2, 3/4, Full). Recipe ingredient costs and inventory deductions are automatically scaled by the portion multiplier. **Updated Dec 07, 2025**: Profitability Analysis now correctly applies portion size multiplier to recipe costs - if a menu item uses 1/2 portion of a recipe costing 30 SAR, the item cost is calculated as 30 * 0.5 = 15 SAR. Fixed in both frontend UI and backend Excel export.
+- **Procurement Invoice Image Upload**: Procurement requests now support invoice image/PDF uploads. **Added Dec 08, 2025**: Drag-and-drop upload for invoice images (JPEG, PNG, GIF, WebP) and PDFs with 10MB limit. Files stored securely with tenant-level access control - only the restaurant that owns the procurement record can view the invoice. Invoice thumbnails displayed on procurement cards with click-to-view modal for images and open-in-new-tab for PDFs.
 
 ## External Dependencies
 
