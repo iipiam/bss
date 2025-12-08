@@ -79,15 +79,23 @@ export default function SupportDetail() {
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { data: ticket, isLoading: ticketLoading } = useQuery<SupportTicket>({
+  const { data: ticket, isLoading: ticketLoading, error: ticketError, isFetching, isSuccess, status } = useQuery<SupportTicket>({
     queryKey: ['/api/tickets', id],
     enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    gcTime: 0,
   });
 
   const { data: messages, isLoading: messagesLoading } = useQuery<TicketMessage[]>({
     queryKey: ['/api/tickets', id, 'messages'],
     enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    gcTime: 0,
   });
+
+  console.log("[SupportDetail] Render - id:", id, "status:", status, "isLoading:", ticketLoading, "isFetching:", isFetching, "isSuccess:", isSuccess, "ticket:", ticket ? "exists" : "null", "error:", ticketError?.message || null);
 
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
