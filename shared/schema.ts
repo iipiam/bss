@@ -376,6 +376,7 @@ export const procurement = pgTable("procurement", {
   expectedDelivery: timestamp("expected_delivery"),
   actualDelivery: timestamp("actual_delivery"),
   notes: text("notes"),
+  invoiceImage: text("invoice_image"), // Path to uploaded invoice image
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

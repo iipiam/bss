@@ -4607,6 +4607,89 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Configure multer for procurement invoice image uploads (disk storage)
+  const procurementInvoiceStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      const uploadPath = path.join(process.cwd(), 'uploads', 'procurement-invoices');
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+      cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, 'procurement-' + uniqueSuffix + ext);
+    }
+  });
+
+  const uploadProcurementInvoice = multer({
+    storage: procurementInvoiceStorage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: function (req, file, cb) {
+      const allowedTypes = /jpeg|jpg|png|gif|webp|pdf/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const allowedMimetypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+      const mimetype = allowedMimetypes.includes(file.mimetype);
+      if (mimetype && extname) {
+        return cb(null, true);
+      }
+      cb(new Error('Only image files (JPEG, PNG, GIF, WebP) and PDF documents are allowed!'));
+    }
+  });
+
+  // Upload procurement invoice image
+  app.post("/api/procurement/upload-invoice", requireAuth, requireRestaurant, requireAction('procurement', 'add'), uploadProcurementInvoice.single('invoiceImage'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      
+      const imageUrl = `/api/procurement/invoices/${req.file.filename}`;
+      res.json({ imageUrl, originalName: req.file.originalname });
+    } catch (error) {
+      console.error("Procurement invoice upload error:", error);
+      res.status(500).json({ error: "Failed to upload invoice image" });
+    }
+  });
+
+  // Authenticated endpoint to view/download procurement invoice images
+  app.get('/api/procurement/invoices/:filename', requireAuth, requireRestaurant, requireAction('procurement', 'view'), async (req, res) => {
+    try {
+      const filename = req.params.filename;
+      
+      // Validate filename format to prevent path traversal
+      if (!/^procurement-[\w-]+\.(pdf|jpg|jpeg|png|gif|webp)$/i.test(filename)) {
+        return res.status(400).json({ error: 'Invalid filename format' });
+      }
+      
+      const filePath = path.join(process.cwd(), 'uploads', 'procurement-invoices', filename);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Invoice image not found' });
+      }
+      
+      const ext = path.extname(filename).toLowerCase();
+      const contentTypes: Record<string, string> = {
+        '.pdf': 'application/pdf',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+      };
+      
+      const contentType = contentTypes[ext] || 'application/octet-stream';
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error('Procurement invoice download error:', error);
+      res.status(500).json({ error: 'Failed to download invoice image' });
+    }
+  });
+
   // Configure multer for bill invoice uploads (IT-only, disk storage)
   const billInvoiceStorage = multer.diskStorage({
     destination: function (req, file, cb) {
