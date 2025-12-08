@@ -2163,18 +2163,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getITStaff(restaurantId?: string): Promise<any[]> {
-    // Get all users with IT support permissions (checking permissions array)
-    const conditions = [
-      or(
-        eq(users.role, 'admin'),
-        sql`${users.permissions} ? 'support'`
-      )
-    ];
-    
-    // If restaurantId provided, filter by it; otherwise get all IT staff
-    if (restaurantId) {
-      conditions.push(eq(users.restaurantId, restaurantId));
-    }
+    // IT Staff are users with restaurantId = null (IT accounts only)
+    // These are the only users who can be assigned to support tickets
+    // The restaurantId parameter is ignored - we always return IT accounts only
     
     const itStaff = await db.select({
       id: users.id,
@@ -2183,7 +2174,7 @@ export class DatabaseStorage implements IStorage {
       role: users.role
     })
     .from(users)
-    .where(and(...conditions));
+    .where(sql`${users.restaurantId} IS NULL`);
     
     return itStaff;
   }
