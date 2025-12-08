@@ -297,8 +297,23 @@ export default function Dashboard() {
     },
   });
 
-  const { data: inventoryItems = [], isLoading: inventoryLoading } = useQuery<InventoryItem[]>({
+  // Inventory fetch is optional - gracefully handle permission errors (403)
+  const { data: inventoryItems = [] } = useQuery<InventoryItem[]>({
     queryKey: ["/api/inventory"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/inventory");
+        if (!response.ok) {
+          // Return empty array if user lacks inventory permission
+          if (response.status === 403) return [];
+          throw new Error("Failed to fetch inventory");
+        }
+        return response.json();
+      } catch {
+        return [];
+      }
+    },
+    retry: false, // Don't retry on permission errors
   });
 
   // Filter out foundational and one-time bills from operating expenses (only recurring costs)
@@ -343,7 +358,7 @@ export default function Dashboard() {
   const totalExpenses = recurringBillsTotal + totalInventoryValue;
   const pendingExpenses = operatingBills.filter(b => b.status === "pending").reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
 
-  if (dashboardLoading || salesLoading || billsLoading || inventoryLoading) {
+  if (dashboardLoading || salesLoading || billsLoading) {
     return (
       <div className={`${layout.padding} ${layout.spaceY}`}>
         <div>

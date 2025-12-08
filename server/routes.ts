@@ -1340,9 +1340,18 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           }
         });
         
-        // Calculate total salaries and bills
+        // Calculate total salaries and recurring bills (exclude foundational & one-time)
         totalSalaries = salaries.reduce((sum: number, s) => sum + parseFloat(s.amount || "0"), 0);
-        totalBills = shopBills.reduce((sum: number, b) => sum + parseFloat(b.amount || "0"), 0);
+        
+        // Filter out foundational and one-time bills - only include recurring operational expenses
+        const recurringBills = shopBills.filter(b => {
+          const billType = String(b.billType || '').toLowerCase();
+          const paymentPeriod = String(b.paymentPeriod || '').toLowerCase();
+          return billType !== 'foundational' && 
+                 paymentPeriod !== 'one-time' && 
+                 paymentPeriod !== 'onetime';
+        });
+        totalBills = recurringBills.reduce((sum: number, b) => sum + parseFloat(b.amount || "0"), 0);
       }
       
       // Net profit
