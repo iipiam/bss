@@ -605,7 +605,14 @@ export default function Profitability() {
                     break;
                 }
                 
-                return billDate >= cutoffDate;
+                // Filter by date and exclude foundational/one-time bills (consistent with Dashboard)
+                const billType = String(bill.billType || '').toLowerCase();
+                const paymentPeriod = String(bill.paymentPeriod || '').toLowerCase();
+                const isRecurring = billType !== 'foundational' && 
+                                   paymentPeriod !== 'one-time' && 
+                                   paymentPeriod !== 'onetime';
+                
+                return billDate >= cutoffDate && isRecurring;
               })}
             />
           </TabsContent>
@@ -1166,7 +1173,7 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono text-orange-600">{totalOperatingExpenses.toFixed(2)} SAR</div>
-            <p className="text-xs text-muted-foreground">Rent, utilities, salaries, etc.</p>
+            <p className="text-xs text-muted-foreground">Recurring expenses (excludes one-time & foundational)</p>
           </CardContent>
         </Card>
 
@@ -1197,7 +1204,7 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
       <Card>
         <CardHeader>
           <CardTitle>Operating Expenses by Category</CardTitle>
-          <CardDescription>Fixed and variable operating costs</CardDescription>
+          <CardDescription>Recurring expenses breakdown (excludes one-time & foundational)</CardDescription>
         </CardHeader>
         <CardContent>
           {expenseTypeData.length > 0 ? (
