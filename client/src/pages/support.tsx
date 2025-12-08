@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/lib/auth";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +36,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 import {
   Ticket,
   Plus,
@@ -46,6 +47,7 @@ import {
   AlertCircle,
   Filter,
   ArrowRight,
+  RefreshCw,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -93,10 +95,41 @@ const getPriorityLabel = (priority: string, t: any) => {
 
 export default function Support() {
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, accountType } = useAuth();
   const { toast } = useToast();
+  const { lastNotification, isConnected } = useNotifications();
+  const searchString = useSearch();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  
+  // Parse status from URL query parameters (for IT Dashboard navigation)
+  const urlParams = new URLSearchParams(searchString);
+  const urlStatus = urlParams.get('status');
+  
+  // Map URL status to internal filter value
+  const getInitialStatusFilter = () => {
+    if (urlStatus === 'pending') return 'pending'; // Show pending (open + in-progress combined)
+    if (urlStatus === 'resolved') return 'resolved';
+    if (urlStatus === 'closed') return 'closed';
+    return 'all';
+  };
+  
+  const [statusFilter, setStatusFilter] = useState<string>(getInitialStatusFilter());
+  
+  // Update filter when URL changes
+  useEffect(() => {
+    setStatusFilter(getInitialStatusFilter());
+  }, [urlStatus]);
+
+  // Real-time updates: Invalidate ticket queries when WebSocket notifications are received
+  useEffect(() => {
+    if (lastNotification) {
+      const { type } = lastNotification;
+      // Handle ticket-related notifications for real-time updates
+      if (type.startsWith('ticket:') || type === 'support_ticket_created' || type === 'support_ticket_updated') {
+        queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
+      }
+    }
+  }, [lastNotification]);
 
   const ticketSchema = createTicketSchema(t);
   type TicketFormData = z.infer<typeof ticketSchema>;
@@ -147,6 +180,10 @@ export default function Support() {
 
   const filteredTickets = tickets?.filter(ticket => {
     if (statusFilter === "all") return true;
+    // For "pending" filter, show both open and in-progress tickets
+    if (statusFilter === "pending") {
+      return ticket.status === 'open' || ticket.status === 'in-progress';
+    }
     return ticket.status === statusFilter;
   }) || [];
 
@@ -186,6 +223,7 @@ export default function Support() {
     'in-progress': tickets?.filter(t => t.status === 'in-progress').length || 0,
     resolved: tickets?.filter(t => t.status === 'resolved').length || 0,
     closed: tickets?.filter(t => t.status === 'closed').length || 0,
+    pending: tickets?.filter(t => t.status === 'open' || t.status === 'in-progress').length || 0,
   };
 
   return (
@@ -195,6 +233,12 @@ export default function Support() {
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Ticket className="h-8 w-8" />
             {t.supportTickets}
+            {isConnected && (
+              <Badge variant="outline" className="ml-2 text-xs bg-green-500/10 text-green-600">
+                <RefreshCw className="h-3 w-3 mr-1 animate-spin" style={{ animationDuration: '3s' }} />
+                Live
+              </Badge>
+            )}
           </h1>
           <p className="text-muted-foreground mt-1">
             {t.supportTicketsDescription}
@@ -221,6 +265,16 @@ export default function Support() {
           {t.allTickets} ({statusCounts.all})
         </Button>
         <Button
+          variant={statusFilter === "pending" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setStatusFilter("pending")}
+          data-testid="filter-pending"
+          className={statusFilter === "pending" ? "bg-yellow-500 hover:bg-yellow-600" : ""}
+        >
+          <Clock className="h-3 w-3 mr-1" />
+          {t.ticketStatusPending} ({statusCounts.pending})
+        </Button>
+        <Button
           variant={statusFilter === "open" ? "default" : "outline"}
           size="sm"
           onClick={() => setStatusFilter("open")}
@@ -243,6 +297,7 @@ export default function Support() {
           size="sm"
           onClick={() => setStatusFilter("resolved")}
           data-testid="filter-resolved"
+          className={statusFilter === "resolved" ? "bg-green-500 hover:bg-green-600" : ""}
         >
           <CheckCircle className="h-3 w-3 mr-1" />
           {t.ticketStatusResolved} ({statusCounts.resolved})

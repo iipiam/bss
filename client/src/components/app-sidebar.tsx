@@ -30,6 +30,10 @@ import {
   FileKey,
   UserCog,
   AlertTriangle,
+  Ticket,
+  Clock,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import logoImage from "@assets/kinzhal-eagle-logo.jpeg";
 import {
@@ -142,24 +146,37 @@ export function AppSidebar() {
     { title: "Profile", url: "/profile", icon: UserCircle, testId: "profile", gradient: "from-indigo-500 to-purple-500" },
     { title: "Team Chat", url: "/chat", icon: MessageCircle, testId: "chat", gradient: "from-blue-500 to-cyan-500" },
     { title: t.support || "Support", url: "/support", icon: HeadphonesIcon, testId: "support", gradient: "from-emerald-500 to-teal-500" },
-    { title: t.itDashboard || "IT Dashboard", url: "/it-dashboard", icon: BarChart3, testId: "it-dashboard", gradient: "from-violet-500 to-purple-500" },
-    { title: "Performance", url: "/performance", icon: TrendingUp, testId: "performance", gradient: "from-cyan-500 to-blue-500" },
-    { title: "Account Management", url: "/it-account-management", icon: UserCog, testId: "it-account-management", gradient: "from-orange-500 to-red-500" },
-    { title: t.businessManagement || "Business Management", url: "/business-management", icon: Building2, testId: "business-management", gradient: "from-teal-500 to-cyan-500" },
     { title: t.settings, url: "/settings", icon: Settings, testId: "settings", gradient: "from-slate-500 to-gray-500", permission: 'settings' },
     { title: t.employees, url: "/employees", icon: Users, testId: "employees", gradient: "from-sky-500 to-blue-500", permission: 'users' },
     { title: "Password Manager", url: "/password-manager", icon: Key, testId: "password-manager", gradient: "from-red-500 to-rose-500" },
   ];
 
+  // IT Dashboard menu items (visible only to IT accounts)
+  const itDashboardItems: MenuItem[] = [
+    { title: t.itDashboard || "IT Dashboard", url: "/it-dashboard", icon: BarChart3, testId: "it-dashboard", gradient: "from-violet-500 to-purple-500" },
+    { title: "Performance", url: "/performance", icon: TrendingUp, testId: "performance", gradient: "from-cyan-500 to-blue-500" },
+    { title: "Account Management", url: "/it-account-management", icon: UserCog, testId: "it-account-management", gradient: "from-orange-500 to-red-500" },
+    { title: t.businessManagement || "Business Management", url: "/business-management", icon: Building2, testId: "business-management", gradient: "from-teal-500 to-cyan-500" },
+  ];
+
+  // Support menu items for IT Dashboard (visible only to IT accounts)
+  const itSupportItems: MenuItem[] = [
+    { title: t.allTickets || "All Tickets", url: "/support", icon: Ticket, testId: "it-support-all", gradient: "from-blue-500 to-indigo-500" },
+    { title: (t as any).pending || "Pending", url: "/support?status=pending", icon: Clock, testId: "it-support-pending", gradient: "from-yellow-500 to-amber-500" },
+    { title: t.ticketStatusResolved || "Solved", url: "/support?status=resolved", icon: CheckCircle, testId: "it-support-solved", gradient: "from-green-500 to-emerald-500" },
+    { title: t.ticketStatusClosed || "Closed", url: "/support?status=closed", icon: XCircle, testId: "it-support-closed", gradient: "from-gray-500 to-slate-500" },
+  ];
+
   // Filter menu items based on both permissions and business type
   const filterMenuItems = (items: MenuItem[]) => 
     items.filter(item => {
-      // IT accounts can access IT Dashboard, Performance, Account Management, and Business Management only
+      // IT accounts - filter out non-IT items from system menu (we'll show IT items in a separate section)
       if (accountType === 'it') {
-        return item.testId === 'it-dashboard' || item.testId === 'performance' || item.testId === 'it-account-management' || item.testId === 'business-management';
+        // Don't show these in the regular system menu for IT - they'll be in IT Dashboard section
+        return false;
       }
       
-      // Client accounts cannot see IT Dashboard, Performance, Account Management, or Business Management (IT-only pages)
+      // Client accounts cannot see IT-only pages
       if (item.testId === 'it-dashboard' || item.testId === 'performance' || item.testId === 'it-account-management' || item.testId === 'business-management') {
         return false;
       }
@@ -274,9 +291,51 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
+        {accountType === 'it' && (
+          <>
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-xs font-bold tracking-wider">
+                {t.itDashboard || "IT Dashboard"}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {renderMenuItems(itDashboardItems)}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-xs font-bold tracking-wider">
+                {t.support || "Support"}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {itSupportItems.map((item) => {
+                    const isActive = location === item.url || 
+                      (item.url.includes('?') && location.startsWith('/support') && location.includes(item.url.split('?')[1]));
+                    return (
+                      <SidebarMenuItem key={item.url}>
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <Link 
+                            href={item.url} 
+                            data-testid={`link-${item.testId}`}
+                          >
+                            <item.icon />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
+
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs font-bold tracking-wider">
-            {t.support}
+            {t.help || "Help"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>

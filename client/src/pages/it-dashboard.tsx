@@ -16,7 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Ticket, AlertCircle, Clock, CheckCircle, TrendingUp, TrendingDown, Circle, Users, Languages, Laptop, Tablet, Smartphone, Moon, Sun, Settings } from "lucide-react";
+import { Ticket, AlertCircle, Clock, CheckCircle, TrendingUp, TrendingDown, Circle, Users, Languages, Laptop, Tablet, Smartphone, Moon, Sun, Settings, RefreshCw } from "lucide-react";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { PieChart, Pie, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from "recharts";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -124,6 +125,7 @@ export default function ITDashboard() {
   const { device, setDevice, isUpdating: isDeviceUpdating } = useDevice();
   const { theme, setTheme } = useTheme();
   const { user, accountType } = useAuth();
+  const { lastNotification, isConnected } = useNotifications();
   const layout = useDeviceLayout();
   const chartConfig = useCompactChartConfig();
   const [, navigate] = useLocation();
@@ -205,6 +207,30 @@ export default function ITDashboard() {
       navigate('/');
     }
   }, [accountType, navigate]);
+
+  // Real-time updates: Invalidate queries when WebSocket notifications are received
+  useEffect(() => {
+    if (lastNotification) {
+      const { type } = lastNotification;
+      // Handle ticket-related notifications
+      if (type.startsWith('ticket:') || type === 'support_ticket_created' || type === 'support_ticket_updated') {
+        queryClient.invalidateQueries({ queryKey: ["/api/it/active-tickets"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/it/analytics"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/it/workload"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/it/trends"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/it/category-breakdown"] });
+      }
+      // Handle analytics-related notifications
+      if (type === 'analytics:update' || type.startsWith('analytics:')) {
+        queryClient.invalidateQueries({ queryKey: ["/api/it/analytics"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/it/trends"] });
+      }
+      // Handle client account activity
+      if (type === 'user:activity' || type.startsWith('user:')) {
+        queryClient.invalidateQueries({ queryKey: ["/api/it/client-accounts"] });
+      }
+    }
+  }, [lastNotification]);
 
   // SECURITY: Early return if not IT account (prevents flash of content)
   // This must come AFTER all hooks to avoid "Rendered more hooks than during the previous render" error
@@ -304,8 +330,14 @@ export default function ITDashboard() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex-1 min-w-[200px]">
-          <h1 className={`${layout.text3Xl} font-bold mb-2`} data-testid="text-page-title">
+          <h1 className={`${layout.text3Xl} font-bold mb-2 flex items-center gap-2`} data-testid="text-page-title">
             {t.itDashboard}
+            {isConnected && (
+              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600">
+                <RefreshCw className="h-3 w-3 mr-1 animate-spin" style={{ animationDuration: '3s' }} />
+                Live
+              </Badge>
+            )}
           </h1>
           <p className="text-muted-foreground">{t.itAnalytics || "IT support analytics and ticket management"}</p>
         </div>

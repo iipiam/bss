@@ -1,13 +1,16 @@
 import { MetricCard } from "@/components/metric-card";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DollarSign, ShoppingCart, Package, AlertTriangle, TrendingUp, TrendingDown, Calendar, CalendarDays, Clock, User, Phone, CreditCard, Wallet } from "lucide-react";
+import { DollarSign, ShoppingCart, Package, AlertTriangle, TrendingUp, TrendingDown, Calendar, CalendarDays, Clock, User, Phone, CreditCard, Wallet, RefreshCw } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import type { Order, ShopBill, InventoryItem } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { useDeviceLayout, useCompactChartConfig } from "@/lib/mobileLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { queryClient } from "@/lib/queryClient";
 
 interface PerformanceMetric {
   current: number;
@@ -279,9 +282,24 @@ export default function Dashboard() {
   const { t } = useLanguage();
   const layout = useDeviceLayout();
   const chartConfig = useCompactChartConfig();
+  const { lastNotification, isConnected } = useNotifications();
+
+  // Real-time updates: Refresh dashboard data when sales/order updates come in
+  useEffect(() => {
+    if (lastNotification) {
+      if (lastNotification.type === 'sales:updated' || 
+          lastNotification.type === 'order:created' || 
+          lastNotification.type === 'order:statusUpdated') {
+        // Invalidate dashboard queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/analytics/sales"] });
+      }
+    }
+  }, [lastNotification]);
 
   const { data: dashboardData, isLoading: dashboardLoading } = useQuery<DashboardData>({
     queryKey: ["/api/analytics/dashboard"],
+    refetchInterval: 30000, // Auto-refresh every 30 seconds for real-time updates
   });
 
   const { data: salesData, isLoading: salesLoading } = useQuery<SalesChartData[]>({
@@ -372,7 +390,15 @@ export default function Dashboard() {
   return (
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div>
-        <h1 className={`${layout.text3Xl} font-bold mb-2 text-[#ffffff]`}>{t.dashboard}</h1>
+        <h1 className={`${layout.text3Xl} font-bold mb-2 text-[#ffffff] flex items-center gap-2`}>
+          {t.dashboard}
+          {isConnected && (
+            <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600">
+              <RefreshCw className="h-3 w-3 mr-1 animate-spin" style={{ animationDuration: '3s' }} />
+              Live
+            </Badge>
+          )}
+        </h1>
         <p className="text-muted-foreground text-sm">{t.dashboardOverview || "Overview of your restaurant performance"}</p>
       </div>
       <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 3, mobile: 2 })}`}>

@@ -698,6 +698,7 @@ export interface Translations {
   ticketStatusInProgress: string;
   ticketStatusResolved: string;
   ticketStatusClosed: string;
+  ticketStatusPending: string;
   priorityLow: string;
   priorityMedium: string;
   priorityHigh: string;
@@ -2155,6 +2156,7 @@ export const translations: Record<Language, Translations> = {
     ticketStatusInProgress: 'In Progress',
     ticketStatusResolved: 'Resolved',
     ticketStatusClosed: 'Closed',
+    ticketStatusPending: 'Pending',
     priorityLow: 'Low',
     priorityMedium: 'Medium',
     priorityHigh: 'High',
@@ -3605,6 +3607,7 @@ export const translations: Record<Language, Translations> = {
     ticketStatusInProgress: 'In Progress',
     ticketStatusResolved: 'Resolved',
     ticketStatusClosed: 'Closed',
+    ticketStatusPending: 'قيد الانتظار',
     priorityLow: 'Low',
     priorityMedium: 'Medium',
     priorityHigh: 'High',
@@ -5065,6 +5068,7 @@ export const translations: Record<Language, Translations> = {
     ticketStatusInProgress: 'In Progress',
     ticketStatusResolved: 'Resolved',
     ticketStatusClosed: 'Closed',
+    ticketStatusPending: 'Ausstehend',
     priorityLow: 'Low',
     priorityMedium: 'Medium',
     priorityHigh: 'High',
@@ -6509,6 +6513,7 @@ export const translations: Record<Language, Translations> = {
     ticketStatusInProgress: 'In Progress',
     ticketStatusResolved: 'Resolved',
     ticketStatusClosed: 'Closed',
+    ticketStatusPending: '待处理',
     priorityLow: 'Low',
     priorityMedium: 'Medium',
     priorityHigh: 'High',
@@ -7953,6 +7958,7 @@ export const translations: Record<Language, Translations> = {
     ticketStatusInProgress: 'In Progress',
     ticketStatusResolved: 'Resolved',
     ticketStatusClosed: 'Closed',
+    ticketStatusPending: 'মুলতুবি',
     priorityLow: 'Low',
     priorityMedium: 'Medium',
     priorityHigh: 'High',
@@ -9397,6 +9403,7 @@ export const translations: Record<Language, Translations> = {
     ticketStatusInProgress: 'In Progress',
     ticketStatusResolved: 'Resolved',
     ticketStatusClosed: 'Closed',
+    ticketStatusPending: 'In attesa',
     priorityLow: 'Low',
     priorityMedium: 'Medium',
     priorityHigh: 'High',
@@ -10817,6 +10824,7 @@ export const translations: Record<Language, Translations> = {
     ticketStatusInProgress: 'In Progress',
     ticketStatusResolved: 'Resolved',
     ticketStatusClosed: 'Closed',
+    ticketStatusPending: 'लंबित',
     priorityLow: 'Low',
     priorityMedium: 'Medium',
     priorityHigh: 'High',
@@ -12237,6 +12245,7 @@ export const translations: Record<Language, Translations> = {
     ticketStatusInProgress: 'In Progress',
     ticketStatusResolved: 'Resolved',
     ticketStatusClosed: 'Closed',
+    ticketStatusPending: 'زیر التواء',
     priorityLow: 'Low',
     priorityMedium: 'Medium',
     priorityHigh: 'High',
@@ -13602,6 +13611,7 @@ export const translations: Record<Language, Translations> = {
     ticketStatusInProgress: "In Progress",
     ticketStatusResolved: "Resolved",
     ticketStatusClosed: "Closed",
+    ticketStatusPending: "Pendiente",
     priorityLow: "Low",
     priorityMedium: "Medium",
     priorityHigh: "High",
@@ -14962,6 +14972,7 @@ export const translations: Record<Language, Translations> = {
     ticketStatusInProgress: "In Progress",
     ticketStatusResolved: "Resolved",
     ticketStatusClosed: "Closed",
+    ticketStatusPending: "Nakabinbin",
     priorityLow: "Low",
     priorityMedium: "Medium",
     priorityHigh: "High",
