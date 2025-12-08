@@ -2047,6 +2047,86 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.status(204).send();
   });
 
+  // Sync all inventory items to procurement (creates missing procurement records)
+  app.post("/api/procurement/sync-inventory", requireAuth, requireRestaurant, requireAction('procurement', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const userName = req.session.user!.fullName || req.session.user!.username;
+      
+      // Get all inventory items
+      const inventoryItems = await storage.getInventoryItems(restaurantId);
+      
+      // Get all existing procurements to check which inventory items already have records
+      const existingProcurements = await storage.getProcurements({ restaurantId });
+      
+      // Extract inventory IDs that already have procurement records (from notes field)
+      const existingInventoryIds = new Set<string>();
+      for (const proc of existingProcurements) {
+        if (proc.notes && proc.notes.includes("Inventory Item ID:")) {
+          const match = proc.notes.match(/Inventory Item ID:\s*([a-f0-9-]+)/i);
+          if (match) {
+            existingInventoryIds.add(match[1]);
+          }
+        }
+      }
+      
+      // Create procurement records for inventory items that don't have one
+      let created = 0;
+      let skipped = 0;
+      
+      for (const item of inventoryItems) {
+        if (existingInventoryIds.has(item.id)) {
+          skipped++;
+          continue;
+        }
+        
+        try {
+          const refQty = item.referenceQuantity ? parseInt(String(item.referenceQuantity), 10) : null;
+          const invQty = item.quantity ? parseInt(String(item.quantity), 10) : null;
+          const quantity = refQty || invQty || null;
+          const unitPrice = refQty && refQty > 0 
+            ? (parseFloat(item.price) / refQty).toFixed(2) 
+            : null;
+          
+          const procurementData = {
+            restaurantId,
+            type: "inventory" as const,
+            title: item.name,
+            description: `Synced from inventory: ${item.name}${item.category ? ` (${item.category})` : ''}`,
+            supplier: item.supplier || null,
+            category: item.category || null,
+            quantity,
+            unitPrice,
+            totalCost: item.price,
+            status: "received" as const,
+            priority: "medium" as const,
+            requestedBy: userName,
+            approvedBy: userName,
+            branchId: item.branchId || null,
+            notes: `Inventory Item ID: ${item.id}`,
+          };
+          
+          await storage.createProcurement(procurementData);
+          created++;
+        } catch (err) {
+          console.error(`[PROCUREMENT SYNC] Failed to create procurement for inventory item ${item.id}:`, err);
+        }
+      }
+      
+      console.log(`[PROCUREMENT SYNC] Created ${created} procurement records, skipped ${skipped} (already exist)`);
+      res.json({ 
+        success: true, 
+        created, 
+        skipped, 
+        total: inventoryItems.length,
+        message: `Created ${created} procurement records for inventory items` 
+      });
+    } catch (error) {
+      console.error("[PROCUREMENT SYNC] Error syncing inventory to procurement:", error);
+      res.status(500).json({ error: "Failed to sync inventory to procurement" });
+    }
+  });
+
   // POS - Generate Invoice (redirects to main invoice creation endpoint)
   app.post("/api/pos/generate-invoice", requireAuth, requireRestaurant, requireAction('pos', 'add'), async (req, res) => {
     // This endpoint now redirects to the main invoice creation endpoint

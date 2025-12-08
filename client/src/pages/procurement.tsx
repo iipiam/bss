@@ -17,7 +17,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import type { Procurement, InsertProcurement } from "@shared/schema";
 import { insertProcurementSchema } from "@shared/schema";
-import { Plus, Package, Wrench, HardHat, Computer, Calendar, User, AlertCircle, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Plus, Package, Wrench, HardHat, Computer, Calendar, User, AlertCircle, CheckCircle2, Clock, XCircle, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -199,6 +199,25 @@ export default function ProcurementPage() {
     updateMutation.mutate({ id, data: { status: newStatus } });
   };
 
+  // Sync inventory items to procurement
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/procurement/sync-inventory");
+      return response.json();
+    },
+    onSuccess: (data: { created: number; skipped: number; total: number }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/procurement"] });
+      toast({ 
+        title: t.success, 
+        description: `Synced ${data.created} inventory items to procurement (${data.skipped} already existed)` 
+      });
+    },
+    onError: (error: Error) => {
+      console.error("Sync inventory error:", error);
+      toast({ title: t.error, description: error.message || "Failed to sync inventory", variant: "destructive" });
+    },
+  });
+
   const stats = {
     total: procurements.length,
     pending: procurements.filter(p => p.status === "pending").length,
@@ -214,13 +233,23 @@ export default function ProcurementPage() {
           <h1 className="text-3xl font-bold mb-2">Procurement Management</h1>
           <p className="text-muted-foreground">Manage inventory, maintenance, installations, and equipment procurement</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => { setEditingItem(null); form.reset(); }} data-testid="button-add-procurement">
-              <Plus className="h-4 w-4 mr-2" />
-              New Request
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => syncMutation.mutate()}
+            disabled={syncMutation.isPending}
+            data-testid="button-sync-inventory"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
+            {syncMutation.isPending ? 'Syncing...' : 'Sync Inventory'}
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => { setEditingItem(null); form.reset(); }} data-testid="button-add-procurement">
+                <Plus className="h-4 w-4 mr-2" />
+                New Request
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingItem ? "Edit Procurement" : "New Procurement Request"}</DialogTitle>
@@ -454,6 +483,7 @@ export default function ProcurementPage() {
             </Form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-5 gap-4">
