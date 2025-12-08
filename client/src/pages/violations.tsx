@@ -433,14 +433,17 @@ export default function ViolationsPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t.branch || "Branch"} ({t.optional || "Optional"})</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <Select 
+                          onValueChange={(value) => field.onChange(value === "none" ? "" : value)} 
+                          value={field.value || "none"}
+                        >
                           <FormControl>
                             <SelectTrigger data-testid="select-branch">
                               <SelectValue placeholder="Select branch" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">None</SelectItem>
+                            <SelectItem value="none">{t.none || "None"}</SelectItem>
                             {branches.map((branch) => (
                               <SelectItem key={branch.id} value={branch.id}>
                                 {branch.name}
