@@ -1104,3 +1104,48 @@ export type BepMetrics = {
   marginOfSafety: number;
   isProfitable: boolean;
 };
+
+// Violations - Client store violations from authorities
+export const violations = pgTable("violations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  branchId: varchar("branch_id").references(() => branches.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  authority: text("authority").notNull(),
+  feeAmount: decimal("fee_amount", { precision: 10, scale: 2 }).notNull(),
+  status: text("status").notNull().default("pending"),
+  violationDate: timestamp("violation_date").notNull(),
+  resolvedDate: timestamp("resolved_date"),
+  documentPath: text("document_path"),
+  linkedBillId: varchar("linked_bill_id").references(() => shopBills.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertViolationSchema = createInsertSchema(violations)
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({
+    authority: z.enum(["municipality", "zatca", "police", "ministry_of_commerce"]),
+    status: z.enum(["pending", "appealed", "waived", "paid"]).optional().default("pending"),
+    violationDate: z.union([
+      z.string().transform(val => new Date(val)),
+      z.date(),
+    ]),
+    resolvedDate: z.union([
+      z.string().transform(val => new Date(val)),
+      z.date(),
+    ]).optional().nullable(),
+  });
+export type InsertViolation = z.infer<typeof insertViolationSchema>;
+export type Violation = typeof violations.$inferSelect;
+
+export type ViolationStats = {
+  totalViolations: number;
+  totalFees: number;
+  paidFees: number;
+  pendingFees: number;
+  byAuthority: Array<{ authority: string; count: number; totalFees: number }>;
+  byStatus: Array<{ status: string; count: number }>;
+  monthlyTrend: Array<{ month: string; count: number; totalFees: number }>;
+};
