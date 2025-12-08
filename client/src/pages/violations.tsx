@@ -59,16 +59,14 @@ const authorityLabels: Record<string, string> = {
 
 const statusColors = {
   pending: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400",
-  appealed: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
-  waived: "bg-gray-500/10 text-gray-700 dark:text-gray-400",
   paid: "bg-green-500/10 text-green-700 dark:text-green-400",
+  disputed: "bg-red-500/10 text-red-700 dark:text-red-400",
 };
 
 const statusLabels: Record<string, string> = {
   pending: "Pending",
-  appealed: "Appealed",
-  waived: "Waived",
   paid: "Paid",
+  disputed: "Disputed",
 };
 
 const violationFormSchema = z.object({
@@ -76,7 +74,7 @@ const violationFormSchema = z.object({
   description: z.string().optional().nullable(),
   authority: z.enum(["municipality", "zatca", "police", "ministry_of_commerce"]),
   feeAmount: z.string().min(1, "Fee amount is required"),
-  status: z.enum(["pending", "appealed", "waived", "paid"]),
+  status: z.enum(["pending", "paid", "disputed"]),
   violationDate: z.string().min(1, "Violation date is required"),
   resolvedDate: z.string().optional().nullable(),
   branchId: z.string().optional().nullable(),
@@ -276,6 +274,10 @@ export default function ViolationsPage() {
   const totalFees = stats?.totalFees ?? violations.reduce((sum, v) => sum + parseFloat(v.feeAmount || "0"), 0);
   const pendingFees = stats?.pendingFees ?? violations.filter(v => v.status === "pending").reduce((sum, v) => sum + parseFloat(v.feeAmount || "0"), 0);
   const paidFees = stats?.paidFees ?? violations.filter(v => v.status === "paid").reduce((sum, v) => sum + parseFloat(v.feeAmount || "0"), 0);
+  const disputedFees = stats?.disputedFees ?? violations.filter(v => v.status === "disputed").reduce((sum, v) => sum + parseFloat(v.feeAmount || "0"), 0);
+  const pendingCount = stats?.pendingCount ?? violations.filter(v => v.status === "pending").length;
+  const paidCount = stats?.paidCount ?? violations.filter(v => v.status === "paid").length;
+  const disputedCount = stats?.disputedCount ?? violations.filter(v => v.status === "disputed").length;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -415,10 +417,9 @@ export default function ViolationsPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="appealed">Appealed</SelectItem>
-                            <SelectItem value="waived">Waived</SelectItem>
-                            <SelectItem value="paid">Paid</SelectItem>
+                            <SelectItem value="pending">{t.pending || "Pending"}</SelectItem>
+                            <SelectItem value="paid">{t.paid || "Paid"}</SelectItem>
+                            <SelectItem value="disputed">{t.disputed || "Disputed"}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -510,7 +511,7 @@ export default function ViolationsPage() {
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t.totalViolations || "Total Violations"}</CardTitle>
@@ -519,52 +520,46 @@ export default function ViolationsPage() {
           <CardContent>
             <div className="text-2xl font-bold" data-testid="text-total-violations">{totalViolations}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {t.allRecordedViolations || "All recorded violations"}
+              {totalFees.toFixed(2)} {t.sar || "SAR"} {t.total || "total"}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.totalFees || "Total Fees"}</CardTitle>
-            <DollarSign className="w-4 h-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-total-fees">
-              {totalFees.toFixed(2)} {t.sar || "SAR"}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {t.sumOfAllFees || "Sum of all violation fees"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.pendingFees || "Pending Fees"}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.pendingViolations || "Pending"}</CardTitle>
             <Clock className="w-4 h-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600" data-testid="text-pending-fees">
-              {pendingFees.toFixed(2)} {t.sar || "SAR"}
-            </div>
+            <div className="text-2xl font-bold text-yellow-600" data-testid="text-pending-count">{pendingCount}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {t.awaitingPayment || "Awaiting payment or resolution"}
+              {pendingFees.toFixed(2)} {t.sar || "SAR"}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.paidFees || "Paid Fees"}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.paidViolations || "Paid"}</CardTitle>
             <CheckCircle2 className="w-4 h-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600" data-testid="text-paid-fees">
-              {paidFees.toFixed(2)} {t.sar || "SAR"}
-            </div>
+            <div className="text-2xl font-bold text-green-600" data-testid="text-paid-count">{paidCount}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {t.alreadyPaid || "Already paid violations"}
+              {paidFees.toFixed(2)} {t.sar || "SAR"}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t.disputedViolations || "Disputed"}</CardTitle>
+            <Shield className="w-4 h-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600" data-testid="text-disputed-count">{disputedCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {disputedFees.toFixed(2)} {t.sar || "SAR"}
             </p>
           </CardContent>
         </Card>
@@ -619,10 +614,9 @@ export default function ViolationsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t.all || "All Statuses"}</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="appealed">Appealed</SelectItem>
-                <SelectItem value="waived">Waived</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="pending">{t.pending || "Pending"}</SelectItem>
+                <SelectItem value="paid">{t.paid || "Paid"}</SelectItem>
+                <SelectItem value="disputed">{t.disputed || "Disputed"}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -725,7 +719,7 @@ export default function ViolationsPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            {!violation.linkedBillId && violation.status !== "waived" && (
+                            {!violation.linkedBillId && violation.status !== "paid" && (
                               <Button
                                 variant="ghost"
                                 size="sm"

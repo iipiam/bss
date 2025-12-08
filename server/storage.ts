@@ -1451,8 +1451,19 @@ export class DatabaseStorage implements IStorage {
     
     const totalViolations = allViolations.length;
     const totalFees = allViolations.reduce((sum, v) => sum + parseFloat(v.feeAmount || '0'), 0);
-    const paidFees = allViolations.filter(v => v.status === 'paid').reduce((sum, v) => sum + parseFloat(v.feeAmount || '0'), 0);
-    const pendingFees = allViolations.filter(v => v.status === 'pending' || v.status === 'appealed').reduce((sum, v) => sum + parseFloat(v.feeAmount || '0'), 0);
+    
+    // Calculate fees and counts by status
+    const paidViolations = allViolations.filter(v => v.status === 'paid');
+    const pendingViolations = allViolations.filter(v => v.status === 'pending');
+    const disputedViolations = allViolations.filter(v => v.status === 'disputed');
+    
+    const paidFees = paidViolations.reduce((sum, v) => sum + parseFloat(v.feeAmount || '0'), 0);
+    const pendingFees = pendingViolations.reduce((sum, v) => sum + parseFloat(v.feeAmount || '0'), 0);
+    const disputedFees = disputedViolations.reduce((sum, v) => sum + parseFloat(v.feeAmount || '0'), 0);
+    
+    const paidCount = paidViolations.length;
+    const pendingCount = pendingViolations.length;
+    const disputedCount = disputedViolations.length;
     
     // Group by authority
     const authorityMap = new Map<string, { count: number; totalFees: number }>();
@@ -1496,6 +1507,10 @@ export class DatabaseStorage implements IStorage {
       totalFees,
       paidFees,
       pendingFees,
+      disputedFees,
+      paidCount,
+      pendingCount,
+      disputedCount,
       byAuthority,
       byStatus,
       monthlyTrend,

@@ -1127,7 +1127,7 @@ export const insertViolationSchema = createInsertSchema(violations)
   .omit({ id: true, createdAt: true, updatedAt: true })
   .extend({
     authority: z.enum(["municipality", "zatca", "police", "ministry_of_commerce"]),
-    status: z.enum(["pending", "appealed", "waived", "paid"]).optional().default("pending"),
+    status: z.enum(["pending", "paid", "disputed"]).optional().default("pending"),
     violationDate: z.union([
       z.string().transform(val => new Date(val)),
       z.date(),
@@ -1145,6 +1145,10 @@ export type ViolationStats = {
   totalFees: number;
   paidFees: number;
   pendingFees: number;
+  disputedFees: number;
+  paidCount: number;
+  pendingCount: number;
+  disputedCount: number;
   byAuthority: Array<{ authority: string; count: number; totalFees: number }>;
   byStatus: Array<{ status: string; count: number }>;
   monthlyTrend: Array<{ month: string; count: number; totalFees: number }>;
