@@ -17,7 +17,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import type { Procurement, InsertProcurement } from "@shared/schema";
 import { insertProcurementSchema } from "@shared/schema";
-import { Plus, Package, Wrench, HardHat, Computer, Calendar, User, AlertCircle, CheckCircle2, Clock, XCircle, RefreshCw, Upload, Image, X, FileText, Eye } from "lucide-react";
+import { Plus, Package, Wrench, HardHat, Computer, Calendar, User, AlertCircle, CheckCircle2, Clock, XCircle, RefreshCw, Upload, Image, X, FileText, Eye, Download } from "lucide-react";
 import { format } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -63,6 +63,7 @@ export default function ProcurementPage() {
   const [invoiceImage, setInvoiceImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [viewImageUrl, setViewImageUrl] = useState<string | null>(null);
+  const [viewingProcurementId, setViewingProcurementId] = useState<string | null>(null);
 
   const { data: procurements = [], isLoading } = useQuery<Procurement[]>({
     queryKey: [
@@ -256,6 +257,43 @@ export default function ProcurementPage() {
       toast({ title: t.error, description: "Failed to upload invoice image", variant: "destructive" });
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  // Handle invoice download using dedicated server endpoint
+  const handleInvoiceDownload = async (procurementId: string) => {
+    try {
+      // Use dedicated download endpoint that handles all URL formats server-side
+      // and returns file with proper Content-Disposition: attachment header
+      const response = await fetch(`/api/procurement/${procurementId}/download-invoice`, { 
+        credentials: "include" 
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Download failed" }));
+        throw new Error(errorData.error || "Failed to download invoice");
+      }
+      
+      // Get filename from Content-Disposition header
+      const contentDisposition = response.headers.get('Content-Disposition') || '';
+      const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+      const filename = filenameMatch ? filenameMatch[1] : 'invoice.pdf';
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      toast({ title: t.success, description: t.invoiceDownloaded || "Invoice downloaded successfully" });
+    } catch (error) {
+      console.error("Invoice download error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to download invoice";
+      toast({ title: t.error, description: errorMessage, variant: "destructive" });
     }
   };
 
@@ -813,7 +851,16 @@ export default function ProcurementPage() {
                                         data-testid={`button-view-invoice-${item.id}`}
                                       >
                                         <Eye className="h-4 w-4 mr-1" />
-                                        View
+                                        {t.view || "View"}
+                                      </Button>
+                                      <Button 
+                                        size="sm" 
+                                        variant="ghost"
+                                        onClick={() => handleInvoiceDownload(item.id)}
+                                        data-testid={`button-download-invoice-${item.id}`}
+                                      >
+                                        <Download className="h-4 w-4 mr-1" />
+                                        {t.download || "Download"}
                                       </Button>
                                     </div>
                                   ) : (
@@ -822,17 +869,26 @@ export default function ProcurementPage() {
                                         src={item.invoiceImage} 
                                         alt="Invoice" 
                                         className="h-12 w-12 object-cover rounded border cursor-pointer hover:opacity-80"
-                                        onClick={() => setViewImageUrl(item.invoiceImage)}
+                                        onClick={() => { setViewImageUrl(item.invoiceImage); setViewingProcurementId(item.id); }}
                                       />
                                       <span className="text-sm text-muted-foreground">Invoice Image</span>
                                       <Button 
                                         size="sm" 
                                         variant="ghost"
-                                        onClick={() => setViewImageUrl(item.invoiceImage)}
+                                        onClick={() => { setViewImageUrl(item.invoiceImage); setViewingProcurementId(item.id); }}
                                         data-testid={`button-view-invoice-${item.id}`}
                                       >
                                         <Eye className="h-4 w-4 mr-1" />
-                                        View
+                                        {t.view || "View"}
+                                      </Button>
+                                      <Button 
+                                        size="sm" 
+                                        variant="ghost"
+                                        onClick={() => handleInvoiceDownload(item.id)}
+                                        data-testid={`button-download-invoice-${item.id}`}
+                                      >
+                                        <Download className="h-4 w-4 mr-1" />
+                                        {t.download || "Download"}
                                       </Button>
                                     </div>
                                   )}
@@ -890,18 +946,27 @@ export default function ProcurementPage() {
       </Card>
 
       {/* Image Viewer Dialog */}
-      <Dialog open={!!viewImageUrl} onOpenChange={() => setViewImageUrl(null)}>
+      <Dialog open={!!viewImageUrl} onOpenChange={() => { setViewImageUrl(null); setViewingProcurementId(null); }}>
         <DialogContent className="max-w-4xl max-h-[90vh]">
           <DialogHeader>
-            <DialogTitle>Invoice Image</DialogTitle>
+            <DialogTitle>{t.invoiceImage || "Invoice Image"}</DialogTitle>
           </DialogHeader>
           {viewImageUrl && (
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-4">
               <img 
                 src={viewImageUrl} 
                 alt="Invoice" 
-                className="max-h-[70vh] object-contain"
+                className="max-h-[60vh] object-contain"
               />
+              {viewingProcurementId && (
+                <Button 
+                  onClick={() => handleInvoiceDownload(viewingProcurementId)}
+                  data-testid="button-download-invoice-viewer"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {t.downloadInvoice || "Download Invoice"}
+                </Button>
+              )}
             </div>
           )}
         </DialogContent>

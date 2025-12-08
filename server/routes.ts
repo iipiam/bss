@@ -46,6 +46,7 @@ import {
   refundInvoices,
   companyBills,
   businessInfo,
+  procurement,
 } from "@shared/schema";
 import { getPlanPricing, type SubscriptionPlan, type BusinessType } from "@shared/subscriptionPricing";
 import { ADMIN_PERMISSIONS, type PermissionSet } from "@shared/permissions";
@@ -4796,6 +4797,77 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error('Procurement invoice download error:', error);
       res.status(500).json({ error: 'Failed to download invoice image' });
+    }
+  });
+
+  // Download procurement invoice by procurement ID (authenticated, with proper Content-Disposition)
+  // This endpoint resolves the stored invoice URL and serves the file as an attachment
+  app.get('/api/procurement/:id/download-invoice', requireAuth, requireRestaurant, requireAction('procurement', 'view'), async (req, res) => {
+    try {
+      const procurementId = req.params.id;
+      const restaurantId = req.session.user?.restaurantId;
+      
+      // Get the procurement record
+      const procurementRecord = await db.select().from(procurement).where(
+        sql`${procurement.id} = ${procurementId} AND ${procurement.restaurantId} = ${restaurantId}`
+      ).limit(1);
+      
+      if (!procurementRecord || procurementRecord.length === 0) {
+        return res.status(404).json({ error: 'Procurement record not found' });
+      }
+      
+      const record = procurementRecord[0];
+      
+      if (!record.invoiceImage) {
+        return res.status(404).json({ error: 'No invoice attached to this procurement' });
+      }
+      
+      // Extract filename from stored URL (handles /api/procurement/invoices/filename or /uploads/procurement-invoices/filename)
+      let filename: string | null = null;
+      const apiMatch = record.invoiceImage.match(/\/api\/procurement\/invoices\/([^?]+)/);
+      const uploadMatch = record.invoiceImage.match(/\/uploads\/procurement-invoices\/([^?]+)/);
+      
+      if (apiMatch) {
+        filename = apiMatch[1];
+      } else if (uploadMatch) {
+        filename = uploadMatch[1];
+      } else {
+        // Try to extract last path segment
+        filename = record.invoiceImage.split('/').pop()?.split('?')[0] || null;
+      }
+      
+      if (!filename || !/^procurement-[\w-]+\.(pdf|jpg|jpeg|png|gif|webp)$/i.test(filename)) {
+        return res.status(400).json({ error: 'Invalid invoice file format' });
+      }
+      
+      const filePath = path.join(process.cwd(), 'uploads', 'procurement-invoices', filename);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Invoice file not found on server' });
+      }
+      
+      const ext = path.extname(filename).toLowerCase();
+      const contentTypes: Record<string, string> = {
+        '.pdf': 'application/pdf',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+      };
+      
+      // Create user-friendly download filename
+      const sanitizedTitle = record.title.replace(/[^a-zA-Z0-9\u0600-\u06FF\s-]/g, '').replace(/\s+/g, '_').slice(0, 50);
+      const downloadFilename = `invoice_${sanitizedTitle || 'procurement'}${ext}`;
+      
+      const contentType = contentTypes[ext] || 'application/octet-stream';
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+      res.setHeader('Cache-Control', 'no-cache');
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error('Procurement invoice download by ID error:', error);
+      res.status(500).json({ error: 'Failed to download invoice' });
     }
   });
 
