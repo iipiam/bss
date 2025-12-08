@@ -82,11 +82,15 @@ export default function ProcurementPage() {
     },
   });
 
-  const procurementFormSchema = insertProcurementSchema.extend({
-    orderDate: insertProcurementSchema.shape.orderDate.optional(),
-    expectedDelivery: insertProcurementSchema.shape.expectedDelivery.optional(),
-    actualDelivery: insertProcurementSchema.shape.actualDelivery.optional(),
+  const procurementFormSchema = insertProcurementSchema.omit({ restaurantId: true }).extend({
+    orderDate: z.date().optional().nullable(),
+    expectedDelivery: z.date().optional().nullable(),
+    actualDelivery: z.date().optional().nullable(),
+    title: z.string().min(1, "Title is required"),
     totalCost: z.string().min(1, t.priceRequired || "Total cost is required"),
+    type: z.string().min(1, "Type is required"),
+    status: z.string().min(1, "Status is required"),
+    priority: z.string().min(1, "Priority is required"),
   });
 
   const form = useForm<InsertProcurement>({
@@ -157,6 +161,7 @@ export default function ProcurementPage() {
   });
 
   const handleSubmit = (data: InsertProcurement) => {
+    console.log("[Procurement] Form submitted with data:", data);
     const trimmedUnitPrice = data.unitPrice?.trim();
     const trimmedBranchId = data.branchId?.trim();
     const trimmedTotalCost = data.totalCost.trim();
@@ -255,7 +260,7 @@ export default function ProcurementPage() {
               <DialogTitle>{editingItem ? "Edit Procurement" : "New Procurement Request"}</DialogTitle>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(handleSubmit, (errors) => console.log("[Procurement] Form validation errors:", errors))} className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
