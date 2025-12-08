@@ -56,6 +56,9 @@ import {
   type License,
   type InsertLicense,
   type BusinessInfo,
+  type Violation,
+  type InsertViolation,
+  type ViolationStats,
   restaurants,
   branches,
   inventoryItems,
@@ -92,6 +95,7 @@ import {
   type BepMetrics,
   licenses,
   businessInfo,
+  violations,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
@@ -253,6 +257,14 @@ export interface IStorage {
   deleteShopBill(id: string, restaurantId: string): Promise<boolean>;
   archiveShopBill(id: string, archived: boolean): Promise<ShopBill | undefined>;
   generateSalaryBills(restaurantId: string, paymentMonth: string): Promise<{ created: number; skipped: number; bills: ShopBill[] }>;
+
+  // Violations (MULTI-TENANT: requires restaurantId)
+  getViolations(restaurantId: string, branchId?: string, authority?: string, status?: string): Promise<Violation[]>;
+  getViolation(id: string, restaurantId: string): Promise<Violation | undefined>;
+  createViolation(violation: InsertViolation): Promise<Violation>;
+  updateViolation(id: string, restaurantId: string, violation: Partial<InsertViolation>): Promise<Violation | undefined>;
+  deleteViolation(id: string, restaurantId: string): Promise<boolean>;
+  getViolationStats(restaurantId: string): Promise<ViolationStats>;
 
   // Delivery Apps (MULTI-TENANT: requires restaurantId)
   getDeliveryApps(restaurantId: string): Promise<DeliveryApp[]>;
@@ -1389,6 +1401,105 @@ export class DatabaseStorage implements IStorage {
     }
 
     return { created, skipped, bills: createdBills };
+  }
+
+  // Violations (MULTI-TENANT: filters by restaurantId)
+  async getViolations(restaurantId: string, branchId?: string, authority?: string, status?: string): Promise<Violation[]> {
+    const conditions = [eq(violations.restaurantId, restaurantId)];
+    if (branchId) conditions.push(eq(violations.branchId, branchId));
+    if (authority) conditions.push(eq(violations.authority, authority));
+    if (status) conditions.push(eq(violations.status, status));
+    
+    return await db.select().from(violations).where(and(...conditions)).orderBy(desc(violations.violationDate));
+  }
+
+  async getViolation(id: string, restaurantId: string): Promise<Violation | undefined> {
+    const [violation] = await db.select().from(violations).where(
+      and(eq(violations.id, id), eq(violations.restaurantId, restaurantId))
+    );
+    return violation;
+  }
+
+  async createViolation(violation: InsertViolation): Promise<Violation> {
+    const [created] = await db.insert(violations).values(violation).returning();
+    return created;
+  }
+
+  async updateViolation(id: string, restaurantId: string, violation: Partial<InsertViolation>): Promise<Violation | undefined> {
+    const updateData = Object.fromEntries(
+      Object.entries(violation).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getViolation(id, restaurantId);
+    }
+    // SECURITY: Enforce tenant isolation at database level
+    const [updated] = await db.update(violations)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(and(eq(violations.id, id), eq(violations.restaurantId, restaurantId)))
+      .returning();
+    return updated;
+  }
+
+  async deleteViolation(id: string, restaurantId: string): Promise<boolean> {
+    // SECURITY: Enforce tenant isolation at database level
+    const result = await db.delete(violations).where(and(eq(violations.id, id), eq(violations.restaurantId, restaurantId)));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async getViolationStats(restaurantId: string): Promise<ViolationStats> {
+    const allViolations = await this.getViolations(restaurantId);
+    
+    const totalViolations = allViolations.length;
+    const totalFees = allViolations.reduce((sum, v) => sum + parseFloat(v.feeAmount || '0'), 0);
+    const paidFees = allViolations.filter(v => v.status === 'paid').reduce((sum, v) => sum + parseFloat(v.feeAmount || '0'), 0);
+    const pendingFees = allViolations.filter(v => v.status === 'pending' || v.status === 'appealed').reduce((sum, v) => sum + parseFloat(v.feeAmount || '0'), 0);
+    
+    // Group by authority
+    const authorityMap = new Map<string, { count: number; totalFees: number }>();
+    allViolations.forEach(v => {
+      const existing = authorityMap.get(v.authority) || { count: 0, totalFees: 0 };
+      authorityMap.set(v.authority, {
+        count: existing.count + 1,
+        totalFees: existing.totalFees + parseFloat(v.feeAmount || '0'),
+      });
+    });
+    const byAuthority = Array.from(authorityMap.entries()).map(([authority, data]) => ({
+      authority,
+      count: data.count,
+      totalFees: data.totalFees,
+    }));
+    
+    // Group by status
+    const statusMap = new Map<string, number>();
+    allViolations.forEach(v => {
+      statusMap.set(v.status, (statusMap.get(v.status) || 0) + 1);
+    });
+    const byStatus = Array.from(statusMap.entries()).map(([status, count]) => ({ status, count }));
+    
+    // Monthly trend (last 12 months)
+    const monthlyMap = new Map<string, { count: number; totalFees: number }>();
+    allViolations.forEach(v => {
+      const month = new Date(v.violationDate).toISOString().slice(0, 7);
+      const existing = monthlyMap.get(month) || { count: 0, totalFees: 0 };
+      monthlyMap.set(month, {
+        count: existing.count + 1,
+        totalFees: existing.totalFees + parseFloat(v.feeAmount || '0'),
+      });
+    });
+    const monthlyTrend = Array.from(monthlyMap.entries())
+      .map(([month, data]) => ({ month, count: data.count, totalFees: data.totalFees }))
+      .sort((a, b) => a.month.localeCompare(b.month))
+      .slice(-12);
+    
+    return {
+      totalViolations,
+      totalFees,
+      paidFees,
+      pendingFees,
+      byAuthority,
+      byStatus,
+      monthlyTrend,
+    };
   }
 
   // Delivery Apps (MULTI-TENANT: filters by restaurantId)
