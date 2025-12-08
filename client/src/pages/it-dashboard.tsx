@@ -82,7 +82,7 @@ interface WorkloadData {
 }
 
 interface ActiveTicket {
-  id: number;
+  id: string;
   ticketNumber: string;
   subject: string;
   priority: string;
@@ -208,7 +208,7 @@ export default function ITDashboard() {
 
   // Assignment mutation
   const assignMutation = useMutation({
-    mutationFn: async ({ ticketId, staffId }: { ticketId: number; staffId: number | null }) => {
+    mutationFn: async ({ ticketId, staffId }: { ticketId: string; staffId: string | null }) => {
       await apiRequest("PATCH", `/api/it/tickets/${ticketId}/assign`, { staffId });
     },
     onSuccess: () => {
@@ -906,7 +906,7 @@ export default function ITDashboard() {
                       <Select
                         value={ticket.assignedTo?.toString() || "unassigned"}
                         onValueChange={(value) => {
-                          const staffId = value === "unassigned" ? null : parseInt(value);
+                          const staffId = value === "unassigned" ? null : value;
                           assignMutation.mutate({ ticketId: ticket.id, staffId });
                         }}
                         disabled={assignMutation.isPending}
