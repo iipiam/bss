@@ -4902,9 +4902,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Authenticated endpoint to download bill invoice files (IT-only)
+  // Use ?download=true query param to force download instead of inline display
   app.get('/api/it/bill-invoices/:filename', requireAuth, requireITAccount, async (req, res) => {
     try {
       const filename = req.params.filename;
+      const forceDownload = req.query.download === 'true';
       
       // Validate filename format to prevent path traversal
       if (!/^bill-[\w-]+\.pdf$/i.test(filename)) {
@@ -4918,7 +4920,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      // Use attachment for download, inline for viewing in browser
+      const disposition = forceDownload ? 'attachment' : 'inline';
+      res.setHeader('Content-Disposition', `${disposition}; filename="${filename}"`);
       res.setHeader('Cache-Control', 'private, max-age=3600');
       res.sendFile(filePath);
     } catch (error) {

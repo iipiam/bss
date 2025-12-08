@@ -1959,14 +1959,34 @@ export default function BusinessManagement() {
                           <TableCell>{getBillStatusBadge(bill.status)}</TableCell>
                           <TableCell>
                             {bill.attachmentPath ? (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => window.open(bill.attachmentPath!, '_blank')}
-                                data-testid={`button-view-invoice-${bill.id}`}
-                              >
-                                <FileText className="h-4 w-4 text-blue-500" />
-                              </Button>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => window.open(bill.attachmentPath!, '_blank')}
+                                  data-testid={`button-view-invoice-${bill.id}`}
+                                  title={t.view || "View"}
+                                >
+                                  <FileText className="h-4 w-4 text-blue-500" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    const downloadUrl = `${bill.attachmentPath}?download=true`;
+                                    const a = document.createElement('a');
+                                    a.href = downloadUrl;
+                                    a.download = '';
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                  }}
+                                  data-testid={`button-download-invoice-${bill.id}`}
+                                  title={t.downloadInvoice || "Download"}
+                                >
+                                  <Download className="h-4 w-4 text-green-500" />
+                                </Button>
+                              </div>
                             ) : (
                               <span className="text-muted-foreground text-sm">-</span>
                             )}
