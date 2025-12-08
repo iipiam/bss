@@ -30,29 +30,18 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const url = queryKey.join("/") as string;
-    console.log("[QueryClient] Fetching:", url);
     
     const res = await fetch(url, {
       credentials: "include",
       cache: "no-store",
     });
 
-    console.log("[QueryClient] Response status:", res.status, "for", url);
-
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
     }
 
     await throwIfResNotOk(res);
-    
-    try {
-      const data = await res.json();
-      console.log("[QueryClient] Parsed data for", url, "- success:", !!data);
-      return data;
-    } catch (e) {
-      console.error("[QueryClient] JSON parse error for", url, ":", e);
-      throw e;
-    }
+    return await res.json();
   };
 
 export const queryClient = new QueryClient({

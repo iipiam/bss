@@ -79,23 +79,55 @@ export default function SupportDetail() {
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { data: ticket, isLoading: ticketLoading, error: ticketError, isFetching, isSuccess, status } = useQuery<SupportTicket>({
-    queryKey: ['/api/tickets', id],
+  const ticketQuery = useQuery<SupportTicket>({
+    queryKey: ['ticket-detail', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/tickets/${id}`, {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (!res.ok) {
+        throw new Error(`Failed to fetch ticket: ${res.status}`);
+      }
+      return res.json();
+    },
     enabled: !!id,
-    staleTime: 0,
-    refetchOnMount: 'always',
-    gcTime: 0,
   });
 
-  const { data: messages, isLoading: messagesLoading } = useQuery<TicketMessage[]>({
-    queryKey: ['/api/tickets', id, 'messages'],
+  const messagesQuery = useQuery<TicketMessage[]>({
+    queryKey: ['ticket-messages', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/tickets/${id}/messages`, {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (!res.ok) {
+        throw new Error(`Failed to fetch messages: ${res.status}`);
+      }
+      return res.json();
+    },
     enabled: !!id,
-    staleTime: 0,
-    refetchOnMount: 'always',
-    gcTime: 0,
   });
 
-  console.log("[SupportDetail] Render - id:", id, "status:", status, "isLoading:", ticketLoading, "isFetching:", isFetching, "isSuccess:", isSuccess, "ticket:", ticket ? "exists" : "null", "error:", ticketError?.message || null);
+  const ticket = ticketQuery.data;
+  const ticketLoading = ticketQuery.isLoading;
+  const ticketError = ticketQuery.error;
+  const messages = messagesQuery.data;
+  const messagesLoading = messagesQuery.isLoading;
+
+  console.log("[SupportDetail] Query state:", {
+    id,
+    status: ticketQuery.status,
+    fetchStatus: ticketQuery.fetchStatus,
+    isLoading: ticketLoading,
+    isPending: ticketQuery.isPending,
+    isFetching: ticketQuery.isFetching,
+    isSuccess: ticketQuery.isSuccess,
+    isError: ticketQuery.isError,
+    hasData: !!ticket,
+    dataType: ticket ? typeof ticket : 'undefined',
+    error: ticketError?.message,
+  });
 
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
@@ -107,8 +139,8 @@ export default function SupportDetail() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tickets', id, 'messages'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tickets', id] });
+      queryClient.invalidateQueries({ queryKey: ['ticket-messages', id] });
+      queryClient.invalidateQueries({ queryKey: ['ticket-detail', id] });
       queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
       setNewMessage("");
     },
@@ -126,7 +158,7 @@ export default function SupportDetail() {
       return await apiRequest('PATCH', `/api/tickets/${id}`, { status });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tickets', id] });
+      queryClient.invalidateQueries({ queryKey: ['ticket-detail', id] });
       queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
       toast({
         title: t.statusUpdated,
@@ -150,7 +182,7 @@ export default function SupportDetail() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tickets', id, 'messages'] });
+      queryClient.invalidateQueries({ queryKey: ['ticket-messages', id] });
     }, 5000);
 
     return () => clearInterval(interval);
