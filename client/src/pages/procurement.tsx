@@ -86,7 +86,7 @@ export default function ProcurementPage() {
     orderDate: insertProcurementSchema.shape.orderDate.optional(),
     expectedDelivery: insertProcurementSchema.shape.expectedDelivery.optional(),
     actualDelivery: insertProcurementSchema.shape.actualDelivery.optional(),
-    totalCost: z.string().min(1, t.totalCostRequired),
+    totalCost: z.string().min(1, t.priceRequired || "Total cost is required"),
   });
 
   const form = useForm<InsertProcurement>({
@@ -119,6 +119,10 @@ export default function ProcurementPage() {
       setIsDialogOpen(false);
       form.reset();
     },
+    onError: (error: Error) => {
+      console.error("Create procurement error:", error);
+      toast({ title: t.error, description: error.message || "Failed to create procurement request", variant: "destructive" });
+    },
   });
 
   const updateMutation = useMutation({
@@ -132,6 +136,10 @@ export default function ProcurementPage() {
       setEditingItem(null);
       form.reset();
     },
+    onError: (error: Error) => {
+      console.error("Update procurement error:", error);
+      toast({ title: t.error, description: error.message || "Failed to update procurement request", variant: "destructive" });
+    },
   });
 
   const deleteMutation = useMutation({
@@ -141,6 +149,10 @@ export default function ProcurementPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/procurement"] });
       toast({ title: t.success, description: t.procurementDeleted });
+    },
+    onError: (error: Error) => {
+      console.error("Delete procurement error:", error);
+      toast({ title: t.error, description: error.message || "Failed to delete procurement request", variant: "destructive" });
     },
   });
 
