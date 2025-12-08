@@ -92,6 +92,7 @@ export default function SupportDetail() {
       return res.json();
     },
     enabled: !!id,
+    staleTime: 0,
   });
 
   const messagesQuery = useQuery<TicketMessage[]>({
@@ -107,6 +108,7 @@ export default function SupportDetail() {
       return res.json();
     },
     enabled: !!id,
+    staleTime: 0,
   });
 
   const ticket = ticketQuery.data;
@@ -114,20 +116,6 @@ export default function SupportDetail() {
   const ticketError = ticketQuery.error;
   const messages = messagesQuery.data;
   const messagesLoading = messagesQuery.isLoading;
-
-  console.log("[SupportDetail] Query state:", {
-    id,
-    status: ticketQuery.status,
-    fetchStatus: ticketQuery.fetchStatus,
-    isLoading: ticketLoading,
-    isPending: ticketQuery.isPending,
-    isFetching: ticketQuery.isFetching,
-    isSuccess: ticketQuery.isSuccess,
-    isError: ticketQuery.isError,
-    hasData: !!ticket,
-    dataType: ticket ? typeof ticket : 'undefined',
-    error: ticketError?.message,
-  });
 
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
