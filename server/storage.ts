@@ -59,6 +59,8 @@ import {
   type Violation,
   type InsertViolation,
   type ViolationStats,
+  type Printer,
+  type InsertPrinter,
   restaurants,
   branches,
   inventoryItems,
@@ -96,6 +98,7 @@ import {
   licenses,
   businessInfo,
   violations,
+  printers,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
@@ -392,6 +395,14 @@ export interface IStorage {
 
   // Business Info (IT Account - singleton for BSS provider company details)
   getBusinessInfo(): Promise<BusinessInfo | null>;
+
+  // Printers (MULTI-TENANT: requires restaurantId for all operations)
+  getPrinters(restaurantId: string, branchId?: string): Promise<Printer[]>;
+  getPrinter(id: string, restaurantId: string): Promise<Printer | undefined>;
+  createPrinter(printer: InsertPrinter): Promise<Printer>;
+  updatePrinter(id: string, restaurantId: string, printer: Partial<InsertPrinter>): Promise<Printer | undefined>;
+  deletePrinter(id: string, restaurantId: string): Promise<boolean>;
+  setDefaultPrinter(id: string, restaurantId: string, branchId?: string): Promise<Printer | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3248,6 +3259,77 @@ export class DatabaseStorage implements IStorage {
   async getBusinessInfo(): Promise<BusinessInfo | null> {
     const [info] = await db.select().from(businessInfo).limit(1);
     return info || null;
+  }
+
+  // Printers (MULTI-TENANT: SQL-level restaurantId filtering)
+  async getPrinters(restaurantId: string, branchId?: string): Promise<Printer[]> {
+    const conditions = [eq(printers.restaurantId, restaurantId)];
+    if (branchId) {
+      conditions.push(eq(printers.branchId, branchId));
+    }
+    return await db
+      .select()
+      .from(printers)
+      .where(and(...conditions))
+      .orderBy(desc(printers.isDefault), printers.name);
+  }
+
+  async getPrinter(id: string, restaurantId: string): Promise<Printer | undefined> {
+    const [printer] = await db
+      .select()
+      .from(printers)
+      .where(and(eq(printers.id, id), eq(printers.restaurantId, restaurantId)));
+    return printer;
+  }
+
+  async createPrinter(printer: InsertPrinter): Promise<Printer> {
+    const [created] = await db.insert(printers).values(printer).returning();
+    return created;
+  }
+
+  async updatePrinter(id: string, restaurantId: string, printer: Partial<InsertPrinter>): Promise<Printer | undefined> {
+    const updateData = Object.fromEntries(
+      Object.entries(printer).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getPrinter(id, restaurantId);
+    }
+    const [updated] = await db
+      .update(printers)
+      .set({
+        ...updateData,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(printers.id, id), eq(printers.restaurantId, restaurantId)))
+      .returning();
+    return updated;
+  }
+
+  async deletePrinter(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db
+      .delete(printers)
+      .where(and(eq(printers.id, id), eq(printers.restaurantId, restaurantId)));
+    return !!result;
+  }
+
+  async setDefaultPrinter(id: string, restaurantId: string, branchId?: string): Promise<Printer | undefined> {
+    // First, unset all defaults for this restaurant/branch
+    const unsetConditions = [eq(printers.restaurantId, restaurantId)];
+    if (branchId) {
+      unsetConditions.push(eq(printers.branchId, branchId));
+    }
+    await db
+      .update(printers)
+      .set({ isDefault: false, updatedAt: new Date() })
+      .where(and(...unsetConditions));
+
+    // Then set the specified printer as default
+    const [updated] = await db
+      .update(printers)
+      .set({ isDefault: true, updatedAt: new Date() })
+      .where(and(eq(printers.id, id), eq(printers.restaurantId, restaurantId)))
+      .returning();
+    return updated;
   }
 }
 

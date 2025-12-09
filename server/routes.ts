@@ -40,6 +40,7 @@ import {
   insertLicenseSchema,
   insertCompanyBillSchema,
   insertBusinessInfoSchema,
+  insertPrinterSchema,
   users,
   restaurants,
   orders,
@@ -1167,6 +1168,95 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("[VIOLATIONS] Create bill error:", error);
       res.status(500).json({ error: "Failed to create bill from violation" });
+    }
+  });
+
+  // Printers (Settings)
+  app.get("/api/printers", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const branchId = req.query.branchId as string | undefined;
+      const printers = await storage.getPrinters(restaurantId, branchId);
+      res.json(printers);
+    } catch (error) {
+      console.error("[PRINTERS] Get error:", error);
+      res.status(500).json({ error: "Failed to fetch printers" });
+    }
+  });
+
+  app.get("/api/printers/:id", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const printer = await storage.getPrinter(req.params.id, restaurantId);
+      if (!printer) {
+        return res.status(404).json({ error: "Printer not found" });
+      }
+      res.json(printer);
+    } catch (error) {
+      console.error("[PRINTERS] Get by ID error:", error);
+      res.status(500).json({ error: "Failed to fetch printer" });
+    }
+  });
+
+  app.post("/api/printers", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const data = insertPrinterSchema.parse({ ...req.body, restaurantId });
+      const printer = await storage.createPrinter(data);
+      res.status(201).json(printer);
+    } catch (error) {
+      console.error("[PRINTERS] Create error:", error);
+      res.status(400).json({ error: "Invalid printer data", details: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.patch("/api/printers/:id", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const existing = await storage.getPrinter(req.params.id, restaurantId);
+      if (!existing) {
+        return res.status(404).json({ error: "Printer not found" });
+      }
+      const data = sanitizePatchBody(req.body, insertPrinterSchema.partial());
+      const printer = await storage.updatePrinter(req.params.id, restaurantId, data);
+      res.json(printer);
+    } catch (error) {
+      console.error("[PRINTERS] Update error:", error);
+      res.status(400).json({ error: "Invalid printer data", details: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.delete("/api/printers/:id", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const existing = await storage.getPrinter(req.params.id, restaurantId);
+      if (!existing) {
+        return res.status(404).json({ error: "Printer not found" });
+      }
+      const success = await storage.deletePrinter(req.params.id, restaurantId);
+      if (!success) {
+        return res.status(500).json({ error: "Failed to delete printer" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("[PRINTERS] Delete error:", error);
+      res.status(500).json({ error: "Failed to delete printer" });
+    }
+  });
+
+  app.post("/api/printers/:id/set-default", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { branchId } = req.body;
+      const existing = await storage.getPrinter(req.params.id, restaurantId);
+      if (!existing) {
+        return res.status(404).json({ error: "Printer not found" });
+      }
+      const printer = await storage.setDefaultPrinter(req.params.id, restaurantId, branchId);
+      res.json(printer);
+    } catch (error) {
+      console.error("[PRINTERS] Set default error:", error);
+      res.status(500).json({ error: "Failed to set default printer" });
     }
   });
 
