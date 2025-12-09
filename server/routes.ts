@@ -185,8 +185,8 @@ const requireITAccount = (req: any, res: any, next: any) => {
   if (!req.session?.user) {
     return res.status(401).json({ error: "Not authenticated" });
   }
-  // IT accounts have restaurantId as null
-  if (req.session.user.restaurantId !== null) {
+  // IT accounts have restaurantId as null/undefined
+  if (req.session.user.restaurantId) {
     return res.status(403).json({ error: "Access denied. IT account required." });
   }
   next();
