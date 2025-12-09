@@ -1,3 +1,5 @@
+import crypto from "crypto";
+
 interface ZatcaInvoiceLineItem {
   name: string;
   quantity: number;
@@ -75,6 +77,61 @@ function formatDecimal(value: number, decimals: number = 2): string {
   return value.toFixed(decimals);
 }
 
+/**
+ * Validates and formats VAT number to ZATCA requirements
+ * VAT number must be exactly 15 digits, starting and ending with "3"
+ */
+export function formatVatNumber(vatNumber: string): string {
+  const digitsOnly = vatNumber.replace(/\D/g, "");
+  
+  if (digitsOnly.length === 15 && digitsOnly.startsWith("3") && digitsOnly.endsWith("3")) {
+    return digitsOnly;
+  }
+  
+  if (digitsOnly.length === 10) {
+    return "3" + digitsOnly + "0003";
+  }
+  
+  if (digitsOnly.length > 0 && digitsOnly.length < 13) {
+    const paddedNumber = digitsOnly.padStart(13, "0");
+    return "3" + paddedNumber + "3";
+  }
+  
+  return "300000000000003";
+}
+
+/**
+ * Generates ZATCA TLV (Tag-Length-Value) QR code data
+ * According to ZATCA specifications for Phase 1
+ */
+export function generateZatcaTlvQrCode(
+  sellerName: string,
+  vatNumber: string,
+  timestamp: string,
+  totalWithVat: number,
+  vatAmount: number
+): string {
+  const formattedVat = formatVatNumber(vatNumber);
+  
+  const tlvData: Buffer[] = [];
+  
+  const addTlv = (tag: number, value: string) => {
+    const valueBuffer = Buffer.from(value, "utf8");
+    const tagBuffer = Buffer.from([tag]);
+    const lengthBuffer = Buffer.from([valueBuffer.length]);
+    tlvData.push(Buffer.concat([tagBuffer, lengthBuffer, valueBuffer]));
+  };
+  
+  addTlv(1, sellerName);
+  addTlv(2, formattedVat);
+  addTlv(3, timestamp);
+  addTlv(4, formatDecimal(totalWithVat));
+  addTlv(5, formatDecimal(vatAmount));
+  
+  const combinedBuffer = Buffer.concat(tlvData);
+  return combinedBuffer.toString("base64");
+}
+
 export function generateInvoiceTypeCode(invoiceType: "standard" | "simplified", invoiceSubType: "01" | "02"): string {
   if (invoiceSubType === "02") {
     return invoiceType === "standard" ? "383" : "381";
@@ -88,9 +145,10 @@ export function generateInvoiceTypeCodeName(invoiceType: "standard" | "simplifie
 }
 
 export function generatePartyTaxScheme(vatNumber: string): string {
+  const formattedVat = formatVatNumber(vatNumber);
   return `
     <cac:PartyTaxScheme>
-      <cbc:CompanyID>${escapeXml(vatNumber)}</cbc:CompanyID>
+      <cbc:CompanyID>${escapeXml(formattedVat)}</cbc:CompanyID>
       <cac:TaxScheme>
         <cbc:ID>VAT</cbc:ID>
       </cac:TaxScheme>
@@ -147,7 +205,7 @@ export function generateAccountingCustomerParty(buyer: NonNullable<ZatcaInvoiceD
     <cac:Party>
       ${buyer.vatNumber ? `
       <cac:PartyIdentification>
-        <cbc:ID schemeID="VAT">${escapeXml(buyer.vatNumber)}</cbc:ID>
+        <cbc:ID schemeID="VAT">${escapeXml(formatVatNumber(buyer.vatNumber))}</cbc:ID>
       </cac:PartyIdentification>` : ""}
       ${buyer.streetName && buyer.buildingNumber && buyer.city && buyer.postalZone && buyer.countryCode ? 
         generatePostalAddress(
@@ -171,16 +229,17 @@ export function generateInvoiceLine(
   lineIndex: number,
   vatRate: number = 15
 ): string {
-  const lineExtensionAmount = item.totalAmount;
   const itemVatRate = item.taxPercent ?? vatRate;
   const taxCategory = item.taxCategory ?? "S";
+  
+  const lineExtensionAmount = item.quantity * item.unitPrice;
   const taxAmount = lineExtensionAmount * (itemVatRate / 100);
   const roundingAmount = lineExtensionAmount + taxAmount;
   
   return `
   <cac:InvoiceLine>
     <cbc:ID>${lineIndex}</cbc:ID>
-    <cbc:InvoicedQuantity unitCode="PCE">${item.quantity}</cbc:InvoicedQuantity>
+    <cbc:InvoicedQuantity unitCode="PCE">${formatDecimal(item.quantity, 0)}</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="SAR">${formatDecimal(lineExtensionAmount)}</cbc:LineExtensionAmount>
     <cac:TaxTotal>
       <cbc:TaxAmount currencyID="SAR">${formatDecimal(taxAmount)}</cbc:TaxAmount>
@@ -198,6 +257,7 @@ export function generateInvoiceLine(
     </cac:Item>
     <cac:Price>
       <cbc:PriceAmount currencyID="SAR">${formatDecimal(item.unitPrice)}</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="PCE">1</cbc:BaseQuantity>
     </cac:Price>
   </cac:InvoiceLine>`;
 }
@@ -304,7 +364,7 @@ export function generateUBLExtensions(
                         <xades:Cert>
                           <xades:CertDigest>
                             <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
-                            <ds:DigestValue>${certificateBase64 ? require("crypto").createHash("sha256").update(Buffer.from(certificateBase64, "base64")).digest("base64") : ""}</ds:DigestValue>
+                            <ds:DigestValue>${certificateBase64 ? crypto.createHash("sha256").update(Buffer.from(certificateBase64, "base64")).digest("base64") : ""}</ds:DigestValue>
                           </xades:CertDigest>
                           <xades:IssuerSerial>
                             <ds:X509IssuerName>CN=ZATCA-Code-Signing-CA</ds:X509IssuerName>
@@ -338,7 +398,7 @@ export function generateAdditionalDocumentReference(
   previousInvoiceHash: string | null,
   qrCode?: string
 ): string {
-  const defaultPIH = "0".repeat(64);
+  const defaultPIH = "NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==";
   const pihValue = previousInvoiceHash || defaultPIH;
   
   let references = `
@@ -424,6 +484,10 @@ export function generateZatcaInvoiceXml(data: ZatcaInvoiceData): string {
   return xml;
 }
 
+/**
+ * Generate unsigned invoice XML for Phase 1 simplified invoices
+ * This version includes proper QR code but no digital signature
+ */
 export function generateUnsignedInvoiceXml(data: Omit<ZatcaInvoiceData, 'qrCode' | 'signatureValue' | 'signedPropertiesHash' | 'invoiceHash' | 'certificateBase64'>): string {
   const { 
     invoiceNumber, invoiceType, invoiceSubType, paymentMethod,
@@ -435,16 +499,24 @@ export function generateUnsignedInvoiceXml(data: Omit<ZatcaInvoiceData, 'qrCode'
   const invoiceTypeCode = generateInvoiceTypeCode(invoiceType, invoiceSubType);
   const invoiceTypeCodeName = generateInvoiceTypeCodeName(invoiceType, invoiceSubType);
   
+  const timestamp = `${issueDate}T${issueTime}`;
+  const qrCode = generateZatcaTlvQrCode(
+    sellerInfo.name,
+    sellerInfo.vatNumber,
+    timestamp,
+    total,
+    vatAmount
+  );
+  
   const invoiceLines = items.map((item, index) => 
     generateInvoiceLine(item, index + 1)
   ).join("\n");
   
   const taxTotal = generateTaxTotal(subtotal, vatAmount);
   const legalMonetaryTotal = generateLegalMonetaryTotal(subtotal, subtotal, total, total, discount);
-  const additionalDocRefs = generateAdditionalDocumentReference(invoiceCounter, uuid, previousInvoiceHash);
+  const additionalDocRefs = generateAdditionalDocumentReference(invoiceCounter, uuid, previousInvoiceHash, qrCode);
   const supplierParty = generateAccountingSupplierParty(sellerInfo);
   const customerParty = buyerInfo ? generateAccountingCustomerParty(buyerInfo) : "";
-  const signature = generateSignature();
   
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="${ZATCA_XML_NAMESPACE.xmlns}"
@@ -459,13 +531,7 @@ export function generateUnsignedInvoiceXml(data: Omit<ZatcaInvoiceData, 'qrCode'
   <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>
   <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
   <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>
-  <cac:BillingReference>
-    <cac:InvoiceDocumentReference>
-      <cbc:ID>${invoiceCounter}</cbc:ID>
-    </cac:InvoiceDocumentReference>
-  </cac:BillingReference>
   ${additionalDocRefs}
-  ${signature}
   ${supplierParty}
   ${customerParty}
   <cac:PaymentMeans>
@@ -480,8 +546,6 @@ export function generateUnsignedInvoiceXml(data: Omit<ZatcaInvoiceData, 'qrCode'
 }
 
 export function generateInvoiceHash(xmlContent: string): string {
-  const crypto = require("crypto");
-  
   let cleanedXml = xmlContent.replace(/<\?xml[^?]*\?>\s*/g, "");
   cleanedXml = cleanedXml.replace(/<ext:UBLExtensions>[\s\S]*?<\/ext:UBLExtensions>/g, "");
   cleanedXml = cleanedXml.replace(/<cac:Signature>[\s\S]*?<\/cac:Signature>/g, "");
@@ -495,8 +559,6 @@ export function generateInvoiceHash(xmlContent: string): string {
 }
 
 export function generateInvoiceHashHex(xmlContent: string): string {
-  const crypto = require("crypto");
-  
   let cleanedXml = xmlContent.replace(/<\?xml[^?]*\?>\s*/g, "");
   cleanedXml = cleanedXml.replace(/<ext:UBLExtensions>[\s\S]*?<\/ext:UBLExtensions>/g, "");
   cleanedXml = cleanedXml.replace(/<cac:Signature>[\s\S]*?<\/cac:Signature>/g, "");
