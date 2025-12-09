@@ -266,15 +266,12 @@ export function generateAdditionalDocumentReference(
 }
 
 export function generateZatcaInvoiceXml(data: ZatcaInvoiceData): string {
-  const { invoice, items, invoiceCounter, previousInvoiceHash, uuid, issueDate, issueTime, sellerInfo, buyerInfo } = data;
-  
-  const invoiceType = invoice.invoiceType === "b2b" ? "standard" : "simplified";
-  const invoiceSubType = invoice.invoiceType === "b2b" ? "01" : "02";
-  
-  const subtotal = Number(invoice.subtotal);
-  const vatAmount = Number(invoice.vatAmount);
-  const total = Number(invoice.total);
-  const discount = Number(invoice.discount);
+  const { 
+    invoiceNumber, invoiceType, invoiceSubType, paymentMethod,
+    subtotal, vatAmount, total, discount,
+    items, invoiceCounter, previousInvoiceHash, uuid, 
+    issueDate, issueTime, sellerInfo, buyerInfo 
+  } = data;
   
   const invoiceTypeCode = generateInvoiceTypeCode(invoiceType, invoiceSubType);
   const invoiceTypeCodeName = generateInvoiceTypeCodeName(invoiceSubType);
@@ -285,7 +282,7 @@ export function generateZatcaInvoiceXml(data: ZatcaInvoiceData): string {
   
   const taxTotal = generateTaxTotal(subtotal, vatAmount);
   const legalMonetaryTotal = generateLegalMonetaryTotal(subtotal, subtotal, total, total, discount);
-  const additionalDocRefs = generateAdditionalDocumentReference(invoice.invoiceNumber, uuid, previousInvoiceHash);
+  const additionalDocRefs = generateAdditionalDocumentReference(invoiceNumber, uuid, previousInvoiceHash);
   const supplierParty = generateAccountingSupplierParty(sellerInfo);
   const customerParty = buyerInfo ? generateAccountingCustomerParty(buyerInfo) : "";
   
@@ -296,7 +293,7 @@ export function generateZatcaInvoiceXml(data: ZatcaInvoiceData): string {
          xmlns:ext="${ZATCA_XML_NAMESPACE["xmlns:ext"]}">
   ${generateUBLExtensions()}
   <cbc:ProfileID>reporting:1.0</cbc:ProfileID>
-  <cbc:ID>${escapeXml(invoice.invoiceNumber)}</cbc:ID>
+  <cbc:ID>${escapeXml(invoiceNumber)}</cbc:ID>
   <cbc:UUID>${escapeXml(uuid)}</cbc:UUID>
   <cbc:IssueDate>${escapeXml(issueDate)}</cbc:IssueDate>
   <cbc:IssueTime>${escapeXml(issueTime)}</cbc:IssueTime>
@@ -312,7 +309,7 @@ export function generateZatcaInvoiceXml(data: ZatcaInvoiceData): string {
   ${supplierParty}
   ${customerParty}
   <cac:PaymentMeans>
-    <cbc:PaymentMeansCode>${invoice.paymentMethod === "cash" ? "10" : invoice.paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>
+    <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>
   </cac:PaymentMeans>
   ${taxTotal}
   ${legalMonetaryTotal}
@@ -322,11 +319,11 @@ export function generateZatcaInvoiceXml(data: ZatcaInvoiceData): string {
   return xml;
 }
 
-export function generateInvoiceHash(xmlContent: string): Promise<string> {
+export function generateInvoiceHash(xmlContent: string): string {
   const crypto = require("crypto");
   const hash = crypto.createHash("sha256");
   hash.update(xmlContent, "utf8");
   return hash.digest("base64");
 }
 
-export type { ZatcaInvoiceData };
+export type { ZatcaInvoiceData, ZatcaInvoiceLineItem };

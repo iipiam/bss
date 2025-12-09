@@ -9248,6 +9248,219 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // ============== ZATCA SETTINGS & E-INVOICING ROUTES ==============
+  
+  // Get ZATCA settings
+  app.get("/api/zatca/settings", requireAuth, async (req, res) => {
+    try {
+      const { restaurantId } = req.session.user!;
+      if (!restaurantId) {
+        return res.status(403).json({ error: "Restaurant context required" });
+      }
+      
+      const settings = await storage.getZatcaSettings(restaurantId);
+      if (!settings) {
+        return res.json(null);
+      }
+      
+      const safeSettings = {
+        ...settings,
+        privateKey: settings.privateKey ? "[CONFIGURED]" : null,
+        complianceCsid: settings.complianceCsid ? "[CONFIGURED]" : null,
+        complianceCsidSecret: settings.complianceCsidSecret ? "[CONFIGURED]" : null,
+        productionCsid: settings.productionCsid ? "[CONFIGURED]" : null,
+        productionCsidSecret: settings.productionCsidSecret ? "[CONFIGURED]" : null,
+      };
+      
+      res.json(safeSettings);
+    } catch (error) {
+      console.error("Error fetching ZATCA settings:", error);
+      res.status(500).json({ error: "Failed to fetch ZATCA settings" });
+    }
+  });
+
+  // Create or update ZATCA settings
+  app.post("/api/zatca/settings", requireAuth, async (req, res) => {
+    try {
+      const { restaurantId } = req.session.user!;
+      if (!restaurantId) {
+        return res.status(403).json({ error: "Restaurant context required" });
+      }
+      
+      const existingSettings = await storage.getZatcaSettings(restaurantId);
+      
+      if (existingSettings) {
+        const updated = await storage.updateZatcaSettings(restaurantId, req.body);
+        res.json(updated);
+      } else {
+        const created = await storage.createZatcaSettings({
+          restaurantId,
+          ...req.body
+        });
+        res.status(201).json(created);
+      }
+    } catch (error) {
+      console.error("Error saving ZATCA settings:", error);
+      res.status(500).json({ error: "Failed to save ZATCA settings" });
+    }
+  });
+
+  // Generate CSR for ZATCA onboarding
+  app.post("/api/zatca/generate-csr", requireAuth, async (req, res) => {
+    try {
+      const { restaurantId } = req.session.user!;
+      if (!restaurantId) {
+        return res.status(403).json({ error: "Restaurant context required" });
+      }
+      
+      const { generateCSR } = await import("./zatca/crypto");
+      const settings = await storage.getZatcaSettings(restaurantId);
+      
+      if (!settings) {
+        return res.status(400).json({ error: "ZATCA settings not configured. Please save settings first." });
+      }
+      
+      const { csr, privateKey } = generateCSR(
+        settings.csrCommonName || "",
+        settings.csrOrganizationName || "",
+        settings.csrOrganizationUnitName || "",
+        settings.csrCountryName || "SA",
+        settings.csrSerialNumber || "",
+        settings.csrOrganizationIdentifier || "",
+        (settings.csrInvoiceType || "1100") as "1000" | "0100" | "1100",
+        settings.csrSerialNumber || "",
+        settings.csrOrganizationUnitName || ""
+      );
+      
+      await storage.updateZatcaSettings(restaurantId, {
+        csr,
+        privateKey
+      });
+      
+      res.json({ 
+        success: true, 
+        message: "CSR generated successfully. Ready for ZATCA onboarding." 
+      });
+    } catch (error) {
+      console.error("Error generating CSR:", error);
+      res.status(500).json({ error: "Failed to generate CSR" });
+    }
+  });
+
+  // Onboard to ZATCA (request compliance CSID)
+  app.post("/api/zatca/onboard", requireAuth, async (req, res) => {
+    try {
+      const { restaurantId } = req.session.user!;
+      if (!restaurantId) {
+        return res.status(403).json({ error: "Restaurant context required" });
+      }
+      
+      const { otp } = req.body;
+      if (!otp) {
+        return res.status(400).json({ error: "OTP is required" });
+      }
+      
+      const { onboardToZatca } = await import("./zatca/service");
+      const result = await onboardToZatca(restaurantId, otp);
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json({ error: result.message });
+      }
+    } catch (error) {
+      console.error("Error onboarding to ZATCA:", error);
+      res.status(500).json({ error: "Failed to onboard to ZATCA" });
+    }
+  });
+
+  // Request production CSID
+  app.post("/api/zatca/production-csid", requireAuth, async (req, res) => {
+    try {
+      const { restaurantId } = req.session.user!;
+      if (!restaurantId) {
+        return res.status(403).json({ error: "Restaurant context required" });
+      }
+      
+      const { complianceRequestId } = req.body;
+      if (!complianceRequestId) {
+        return res.status(400).json({ error: "Compliance request ID is required" });
+      }
+      
+      const { getProductionCSID } = await import("./zatca/service");
+      const result = await getProductionCSID(restaurantId, complianceRequestId);
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json({ error: result.message });
+      }
+    } catch (error) {
+      console.error("Error requesting production CSID:", error);
+      res.status(500).json({ error: "Failed to request production CSID" });
+    }
+  });
+
+  // Get invoice ZATCA status
+  app.get("/api/zatca/invoices", requireAuth, async (req, res) => {
+    try {
+      const { restaurantId } = req.session.user!;
+      if (!restaurantId) {
+        return res.status(403).json({ error: "Restaurant context required" });
+      }
+      
+      const { status } = req.query;
+      const invoices = await storage.getInvoiceZatcaStatuses(
+        restaurantId, 
+        status as string | undefined
+      );
+      
+      res.json(invoices);
+    } catch (error) {
+      console.error("Error fetching ZATCA invoices:", error);
+      res.status(500).json({ error: "Failed to fetch ZATCA invoices" });
+    }
+  });
+
+  // Retry pending invoices
+  app.post("/api/zatca/retry-pending", requireAuth, async (req, res) => {
+    try {
+      const { restaurantId } = req.session.user!;
+      if (!restaurantId) {
+        return res.status(403).json({ error: "Restaurant context required" });
+      }
+      
+      const { retryPendingInvoices } = await import("./zatca/service");
+      const result = await retryPendingInvoices(restaurantId);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error retrying pending invoices:", error);
+      res.status(500).json({ error: "Failed to retry pending invoices" });
+    }
+  });
+
+  // Process invoice for ZATCA (used internally or for testing)
+  app.post("/api/zatca/process-invoice", requireAuth, async (req, res) => {
+    try {
+      const { restaurantId } = req.session.user!;
+      if (!restaurantId) {
+        return res.status(403).json({ error: "Restaurant context required" });
+      }
+      
+      const { processInvoiceForZatca } = await import("./zatca/service");
+      const result = await processInvoiceForZatca({
+        restaurantId,
+        ...req.body
+      });
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error processing invoice for ZATCA:", error);
+      res.status(500).json({ error: "Failed to process invoice for ZATCA" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Setup WebSocket server for real-time notifications on specific path to avoid conflicts with Vite HMR

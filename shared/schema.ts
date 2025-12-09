@@ -1236,6 +1236,13 @@ export const zatcaSettings = pgTable("zatca_settings", {
   csrInvoiceType: text("csr_invoice_type").default("1100"), // 1100 = both B2B and B2C
   csrLocationAddress: text("csr_location_address"),
   csrIndustryBusinessCategory: text("csr_industry_business_category"),
+  // Seller Address (for UBL XML)
+  sellerStreetName: text("seller_street_name"),
+  sellerBuildingNumber: text("seller_building_number"),
+  sellerCitySubdivision: text("seller_city_subdivision"),
+  sellerCity: text("seller_city"),
+  sellerPostalZone: text("seller_postal_zone"),
+  sellerCrNumber: text("seller_cr_number"), // Commercial Registration Number
   // Cryptographic Keys (stored encrypted)
   privateKey: text("private_key"), // PEM-encoded private key
   csr: text("csr"), // PEM-encoded CSR
