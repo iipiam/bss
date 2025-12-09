@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, decimal, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, decimal, boolean, timestamp, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import type { PermissionSet } from "./permissions";
@@ -66,7 +66,9 @@ export const inventoryItems = pgTable("inventory_items", {
   sortOrder: integer("sort_order").default(0),
   expirationDays: integer("expiration_days"), // Number of days until expiration from purchase date
   purchaseDate: timestamp("purchase_date").defaultNow(), // Date when item was added/purchased
-});
+}, (table) => ({
+  restaurantIdx: index("inventory_items_restaurant_idx").on(table.restaurantId),
+}));
 
 export const insertInventoryItemSchema = createInsertSchema(inventoryItems).omit({ id: true });
 export type InsertInventoryItem = z.infer<typeof insertInventoryItemSchema>;
@@ -243,7 +245,10 @@ export const orders = pgTable("orders", {
   status: text("status").notNull().default("Pending"),
   createdBy: varchar("created_by").references(() => users.id, { onDelete: "set null" }), // Nullable: tracks which user created the order
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  restaurantCreatedAtIdx: index("orders_restaurant_created_at_idx").on(table.restaurantId, table.createdAt),
+  restaurantStatusIdx: index("orders_restaurant_status_idx").on(table.restaurantId, table.status),
+}));
 
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true });
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
@@ -513,7 +518,9 @@ export const invoices = pgTable("invoices", {
   qrCode: text("qr_code"), // Base64 encoded QR code
   pdfPath: text("pdf_path"), // Path to generated PDF
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  restaurantCreatedAtIdx: index("invoices_restaurant_created_at_idx").on(table.restaurantId, table.createdAt),
+}));
 
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({ id: true, createdAt: true });
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
@@ -553,7 +560,9 @@ export const shopBills = pgTable("shop_bills", {
   archived: boolean("archived").notNull().default(false), // For archiving old bills
   branchId: varchar("branch_id").references(() => branches.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  restaurantStatusIdx: index("shop_bills_restaurant_status_idx").on(table.restaurantId, table.status),
+}));
 
 export const insertShopBillSchema = createInsertSchema(shopBills).omit({ id: true, createdAt: true });
 export type InsertShopBill = z.infer<typeof insertShopBillSchema>;
@@ -614,7 +623,9 @@ export const deliveryProfitability = pgTable("delivery_profitability", {
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  restaurantDeliveryAppIdx: index("delivery_profitability_restaurant_app_idx").on(table.restaurantId, table.deliveryAppId),
+}));
 
 export const insertDeliveryProfitabilitySchema = createInsertSchema(deliveryProfitability)
   .omit({ id: true, createdAt: true, updatedAt: true });
@@ -798,7 +809,9 @@ export const supportTickets = pgTable("support_tickets", {
   assignedTo: varchar("assigned_to").references(() => users.id), // IT staff member assigned to this ticket
   assignedBy: varchar("assigned_by").references(() => users.id), // Who made the assignment
   assignedAt: timestamp("assigned_at"), // When the ticket was assigned
-});
+}, (table) => ({
+  restaurantStatusIdx: index("support_tickets_restaurant_status_idx").on(table.restaurantId, table.status),
+}));
 
 export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit({ 
   id: true, 
