@@ -1,0 +1,898 @@
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         263965 commons-codec.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-cloud-storage\io-minio
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         142186 minio.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-cloud-storage\joda-time
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         589289 joda-time.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-cloud-storage\net-jcip
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM           2254 jcip-annotations.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-cloud-storage\org-apache-httpcomponents
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         747794 httpclient.jar
+-a----         5/16/2025   7:33 PM         323824 httpcore.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-cloud-storage\org-checkerframework
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         343222 checker-qual.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-cloud-storage\org-codehaus-mojo
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM           3482 animal-sniffer-annotations.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-cloud-storage\xpp3
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         120069 xpp3.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-console\org-apache-commons
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         587402 commons-lang3.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-designer\com-google-code-gson
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         283367 gson.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-designer\commons-io
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         494227 commons-io.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-designer\commons-logging
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          38015 commons-logging.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-designer\org-apache-commons
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         587402 commons-lang3.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-designer\org-apache-xmlgraphics
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         485992 batik-anim.jar
+-a----         5/16/2025   7:33 PM         424429 batik-awt-util.jar
+-a----         5/16/2025   7:33 PM         704814 batik-bridge.jar
+-a----         5/16/2025   7:33 PM           8436 batik-constants.jar
+-a----         5/16/2025   7:33 PM         330640 batik-css.jar
+-a----         5/16/2025   7:33 PM         184033 batik-dom.jar
+-a----         5/16/2025   7:33 PM          10244 batik-ext.jar
+-a----         5/16/2025   7:33 PM         173063 batik-gui-util.jar
+-a----         5/16/2025   7:33 PM         192067 batik-gvt.jar
+-a----         5/16/2025   7:33 PM          11427 batik-i18n.jar
+-a----         5/16/2025   7:33 PM          76812 batik-parser.jar
+-a----         5/16/2025   7:33 PM          24654 batik-script.jar
+-a----         5/16/2025   7:33 PM           6670 batik-shared-resources.jar
+-a----         5/16/2025   7:33 PM         230456 batik-svg-dom.jar
+-a----         5/16/2025   7:33 PM         191430 batik-swing.jar
+-a----         5/16/2025   7:33 PM         127142 batik-util.jar
+-a----         5/16/2025   7:33 PM          33826 batik-xml.jar
+-a----         5/16/2025   7:33 PM         678189 xmlgraphics-commons.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-designer\org-locationtech-jts
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM        1103721 jts-core.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-designer\xml-apis
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          85686 xml-apis-ext.jar
+-a----         5/16/2025   7:33 PM         220536 xml-apis.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-dro\com-miglayout
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         120438 miglayout-core.jar
+-a----         5/16/2025   7:33 PM          23287 miglayout-swing.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-filebrowser\com-miglayout
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         120438 miglayout-core.jar
+-a----         5/16/2025   7:33 PM          23287 miglayout-swing.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-filebrowser\org-apache-commons
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         587402 commons-lang3.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-jog\com-miglayout
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         120438 miglayout-core.jar
+-a----         5/16/2025   7:33 PM          23287 miglayout-swing.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-joystick\com-badlogicgames-gdx
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM           6658 gdx-jnigen-loader.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-joystick\com-badlogicgames-jamepad
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM        3282647 jamepad.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-joystick\com-miglayout
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         120438 miglayout-core.jar
+-a----         5/16/2025   7:33 PM          23287 miglayout-swing.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-joystick\org-apache-commons
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         587402 commons-lang3.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-toolbox\com-google-code-gson
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         283367 gson.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-plugin-toolbox\com-miglayout
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         120438 miglayout-core.jar
+-a----         5/16/2025   7:33 PM          23287 miglayout-swing.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-surfacescanner\com-google-code-gson
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         283367 gson.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-surfacescanner\commons-io
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         494227 commons-io.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugscore\com-github-vatbub
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          67773 mslinks.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\antlr
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         445288 antlr.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\com-beust
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          88407 jcommander.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\com-fasterxml-jackson-core
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          75565 jackson-annotations.jar
+-a----         5/16/2025   7:33 PM         549233 jackson-core.jar
+-a----         5/16/2025   7:33 PM        1620120 jackson-databind.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\com-fasterxml-jackson-module
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          31860 jackson-module-jakarta-xmlbind-annotations.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\com-fazecast
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         884922 jSerialComm.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\com-google-code-findbugs
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          19936 jsr305.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\com-google-code-gson
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         283367 gson.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\com-google-errorprone
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          16829 error_prone_annotations.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\com-google-guava
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM           4740 failureaccess.jar
+-a----         5/16/2025   7:33 PM        3047503 guava.jar
+-a----         5/16/2025   7:33 PM           2199 listenablefuture.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\com-google-j2objc
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM           9301 j2objc-annotations.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\com-google-zxing
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         607650 core.jar
+-a----         5/16/2025   7:33 PM          38225 javase.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\com-miglayout
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         120438 miglayout-core.jar
+-a----         5/16/2025   7:33 PM          23287 miglayout-swing.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\com-willwinder-universalgcodesender
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM        1229651 ugs-core.jar
+-a----         5/16/2025   7:33 PM         216946 ugs-pendant.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\commons-io
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         494227 commons-io.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\jakarta-activation
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          63473 jakarta.activation-api.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\jakarta-annotation
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          26141 jakarta.annotation-api.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\jakarta-inject
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          10681 jakarta.inject-api.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\jakarta-servlet
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         347613 jakarta.servlet-api.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\jakarta-transaction
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          28607 jakarta.transaction-api.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\jakarta-validation
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          93298 jakarta.validation-api.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\jakarta-websocket
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          49349 jakarta.websocket-api.jar
+-a----         5/16/2025   7:33 PM          42635 jakarta.websocket-client-api.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\jakarta-ws-rs
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         154815 jakarta.ws.rs-api.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\jakarta-xml-bind
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         127111 jakarta.xml.bind-api.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\javax-media
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM        1904171 jmf.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\net-glxn
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM           7194 qrgen.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-apache-commons
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          51322 commons-csv.jar
+-a----         5/16/2025   7:33 PM         587402 commons-lang3.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-checkerframework
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         228963 checker-qual.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-eclipse-jetty
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM           7135 jetty-alpn-client.jar
+-a----         5/16/2025   7:33 PM         342184 jetty-client.jar
+-a----         5/16/2025   7:33 PM         386921 jetty-http.jar
+-a----         5/16/2025   7:33 PM         275709 jetty-io.jar
+-a----         5/16/2025   7:33 PM          34789 jetty-jndi.jar
+-a----         5/16/2025   7:33 PM         144892 jetty-security.jar
+-a----         5/16/2025   7:33 PM         570622 jetty-server.jar
+-a----         5/16/2025   7:33 PM         116941 jetty-session.jar
+-a----         5/16/2025   7:33 PM         623495 jetty-util.jar
+-a----         5/16/2025   7:33 PM          80689 jetty-xml.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-eclipse-jetty-ee10
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          81865 jetty-ee10-annotations.jar
+-a----         5/16/2025   7:33 PM          57555 jetty-ee10-plus.jar
+-a----         5/16/2025   7:33 PM         398659 jetty-ee10-servlet.jar
+-a----         5/16/2025   7:33 PM         149176 jetty-ee10-webapp.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-eclipse-jetty-ee10-websocket
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          20184 jetty-ee10-websocket-jakarta-client.jar
+-a----         5/16/2025   7:33 PM         113590 jetty-ee10-websocket-jakarta-common.jar
+-a----         5/16/2025   7:33 PM          41043 jetty-ee10-websocket-jakarta-server.jar
+-a----         5/16/2025   7:33 PM           8654 jetty-ee10-websocket-servlet.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-eclipse-jetty-websocket
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          24380 jetty-websocket-core-client.jar
+-a----         5/16/2025   7:33 PM         187002 jetty-websocket-core-common.jar
+-a----         5/16/2025   7:33 PM          45520 jetty-websocket-core-server.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-glassfish-hk2
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         207249 hk2-api.jar
+-a----         5/16/2025   7:33 PM         205288 hk2-locator.jar
+-a----         5/16/2025   7:33 PM         132025 hk2-utils.jar
+-a----         5/16/2025   7:33 PM          19479 osgi-resource-locator.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-glassfish-hk2-external
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          27419 aopalliance-repackaged.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-glassfish-jersey-containers
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          58048 jersey-container-jetty-http.jar
+-a----         5/16/2025   7:33 PM          74543 jersey-container-servlet-core.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-glassfish-jersey-core
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         306875 jersey-client.jar
+-a----         5/16/2025   7:33 PM        1242900 jersey-common.jar
+-a----         5/16/2025   7:33 PM         988778 jersey-server.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-glassfish-jersey-ext
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          84884 jersey-entity-filtering.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-glassfish-jersey-inject
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          78426 jersey-hk2.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-glassfish-jersey-media
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          86337 jersey-media-json-jackson.jar
+-a----         5/16/2025   7:33 PM         104498 jersey-media-multipart.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-glassfish-tyrus-bundles
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM        2061474 tyrus-standalone-client.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-javassist
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         794137 javassist.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-jmdns
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         216631 jmdns.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-jogamp-gluegen
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM            345 gluegen-rt-main.jar
+-a----         5/16/2025   7:33 PM           5301 gluegen-rt-natives-android-aarch64.jar
+-a----         5/16/2025   7:33 PM           4836 gluegen-rt-natives-linux-aarch64.jar
+-a----         5/16/2025   7:33 PM           5395 gluegen-rt-natives-linux-amd64.jar
+-a----         5/16/2025   7:33 PM           4412 gluegen-rt-natives-linux-armv6hf.jar
+-a----         5/16/2025   7:33 PM           9433 gluegen-rt-natives-macosx-universal.jar
+-a----         5/16/2025   7:33 PM          22570 gluegen-rt-natives-windows-amd64.jar
+-a----         5/16/2025   7:33 PM         387897 gluegen-rt.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-jogamp-jogl
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM            345 jogl-all-main.jar
+-a----         5/16/2025   7:33 PM          51663 jogl-all-natives-android-aarch64.jar
+-a----         5/16/2025   7:33 PM         247137 jogl-all-natives-linux-aarch64.jar
+-a----         5/16/2025   7:33 PM         240065 jogl-all-natives-linux-amd64.jar
+-a----         5/16/2025   7:33 PM         198330 jogl-all-natives-linux-armv6hf.jar
+-a----         5/16/2025   7:33 PM         463991 jogl-all-natives-macosx-universal.jar
+-a----         5/16/2025   7:33 PM         273632 jogl-all-natives-windows-amd64.jar
+-a----         5/16/2025   7:33 PM        3741453 jogl-all.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-jvnet-mimepull
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          64944 mimepull.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-openjdk-nashorn
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM        2167292 nashorn-core.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-ow2-asm
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          33446 asm-analysis.jar
+-a----         5/16/2025   7:33 PM          71548 asm-commons.jar
+-a----         5/16/2025   7:33 PM          52826 asm-tree.jar
+-a----         5/16/2025   7:33 PM          84817 asm-util.jar
+-a----         5/16/2025   7:33 PM         121836 asm.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-slf4j
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          41203 slf4j-api.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-swinglabs
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         118119 swing-layout.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-ugslib\org-yaml
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         334352 snakeyaml.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-visualizer\com-aparapi
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM       19232438 aparapi-jni.jar
+-a----         5/16/2025   7:33 PM         655377 aparapi.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-visualizer\com-breiler-jcsg
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         202671 jcsg-core.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-visualizer\com-google-code-gson
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         298435 gson.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-visualizer\com-google-errorprone
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          19370 error_prone_annotations.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-visualizer\commons-io
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         494227 commons-io.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-visualizer\javax-vecmath
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         169541 vecmath.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-visualizer\org-apache-bcel
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM         695048 bcel.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-visualizer\org-locationtech-jts
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM        1103721 jts-core.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\ext\com.willw
+    inder.ugs-platform-visualizer\org-scala-lang
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM        5917034 scala-library.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules\locale
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM           1270 org-netbeans-core-windows_ugsplatform.jar
+-a----         5/16/2025   7:33 PM            934 org-netbeans-core_ugsplatform.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\win64-ugs-platform-app-2.1.13\ugsplatform-win\ugsplatform\modules
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         5/16/2025   7:33 PM          11758 com-willwinder-GcodeTools.jar
+-a----         5/16/2025   7:33 PM         245533 com-willwinder-ProbeModule.jar
+-a----         5/16/2025   7:33 PM           2665 com-willwinder-ugs-platform-branding.jar
+-a----         5/16/2025   7:33 PM         241597 com-willwinder-ugs-platform-gcode-editor.jar
+-a----         5/16/2025   7:33 PM          27900 com-willwinder-ugs-platform-plugin-cloud-storage.jar
+-a----         5/16/2025   7:33 PM          10331 com-willwinder-ugs-platform-plugin-console.jar
+-a----         5/16/2025   7:33 PM        5350850 com-willwinder-ugs-platform-plugin-designer.jar
+-a----         5/16/2025   7:33 PM          26990 com-willwinder-ugs-platform-plugin-dro.jar
+-a----         5/16/2025   7:33 PM          35225 com-willwinder-ugs-platform-plugin-filebrowser.jar
+-a----         5/16/2025   7:33 PM         215801 com-willwinder-ugs-platform-plugin-jog.jar
+-a----         5/16/2025   7:33 PM         119169 com-willwinder-ugs-platform-plugin-joystick.jar
+-a----         5/16/2025   7:33 PM          92973 com-willwinder-ugs-platform-plugin-setup-wizard.jar
+-a----         5/16/2025   7:33 PM          35690 com-willwinder-ugs-platform-plugin-toolbox.jar
+-a----         5/16/2025   7:33 PM          42839 com-willwinder-ugs-platform-plugin-workflow.jar
+-a----         5/16/2025   7:33 PM         105772 com-willwinder-ugs-platform-surfacescanner.jar
+-a----         5/16/2025   7:33 PM        1326179 com-willwinder-ugs-platform-ugscore.jar
+-a----         5/16/2025   7:33 PM          49133 com-willwinder-ugs-platform-ugslib.jar
+-a----         5/16/2025   7:33 PM         226628 com-willwinder-ugs-platform-visualizer.jar
+-a----         5/16/2025   7:33 PM         680134 com-willwinder-ugs-platform-welcome-page.jar
+
+
+    Directory: C:\Users\akaqa\Downloads\zatca-einvoicing-sdk-Java-238-R3.4.7\Apps
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         12/9/2025   5:19 PM       23947837 zatca-einvoicing-sdk-238-R3.4.7.jar
