@@ -213,6 +213,7 @@ export function AppSidebar() {
             <Link 
               href={item.url} 
               data-testid={`link-${item.testId}`}
+              onClick={() => console.log(`[SIDEBAR DEBUG] Clicked: ${item.url}`)}
             >
               <item.icon />
               <span>{item.title}</span>
