@@ -84,6 +84,7 @@ const PaymentTest = lazy(() => import("@/pages/payment-test"));
 const PasswordManager = lazy(() => import("@/pages/password-manager"));
 const Licenses = lazy(() => import("@/pages/licenses"));
 const Violations = lazy(() => import("@/pages/violations"));
+const PrinterSettings = lazy(() => import("@/pages/printer-settings"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Auth pages loaded eagerly to avoid Suspense issues with AuthProvider
@@ -130,6 +131,7 @@ function Router() {
         <Route path="/kitchen" component={Kitchen} />
         <Route path="/procurement" component={Procurement} />
         <Route path="/settings" component={SettingsPage} />
+        <Route path="/printer-settings" component={PrinterSettings} />
         <Route path="/employees" component={Employees} />
         <Route path="/password-manager" component={PasswordManager} />
         <Route path="/tutorial" component={Tutorial} />
