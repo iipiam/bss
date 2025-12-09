@@ -2676,7 +2676,6 @@ export const translations: Record<Language, Translations> = {
     referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
     noReferences: 'No reference documents found',
     viewPdf: 'View PDF',
-    downloadPdf: 'Download PDF',
 
     deleteSubscription: 'Delete Subscription',
     deleteSubscriptionConfirm: 'Are you sure you want to delete this subscription?',
@@ -4193,7 +4192,6 @@ export const translations: Record<Language, Translations> = {
     referenceDeleteConfirm: 'هل أنت متأكد أنك تريد حذف هذا المستند المرجعي؟',
     noReferences: 'لا توجد مستندات مرجعية',
     viewPdf: 'عرض PDF',
-    downloadPdf: 'تحميل PDF',
 
     deleteSubscription: 'حذف الاشتراك',
     deleteSubscriptionConfirm: 'هل أنت متأكد من حذف هذا الاشتراك؟',
@@ -5709,7 +5707,6 @@ export const translations: Record<Language, Translations> = {
     referenceDeleteConfirm: 'Möchten Sie dieses Referenzdokument wirklich löschen?',
     noReferences: 'Keine Referenzdokumente gefunden',
     viewPdf: 'PDF anzeigen',
-    downloadPdf: 'PDF herunterladen',
     
     // Toast Messages & Notifications
     procurementCreated: 'Procurement item created successfully',
@@ -7208,7 +7205,6 @@ export const translations: Record<Language, Translations> = {
     referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
     noReferences: 'No reference documents found',
     viewPdf: 'View PDF',
-    downloadPdf: 'Download PDF',
     
     // Toast Messages & Notifications
     procurementCreated: 'Procurement item created successfully',
@@ -8707,7 +8703,6 @@ export const translations: Record<Language, Translations> = {
     referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
     noReferences: 'No reference documents found',
     viewPdf: 'View PDF',
-    downloadPdf: 'Download PDF',
     
     // Toast Messages & Notifications
     procurementCreated: 'Procurement item created successfully',
@@ -10206,7 +10201,6 @@ export const translations: Record<Language, Translations> = {
     referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
     noReferences: 'No reference documents found',
     viewPdf: 'View PDF',
-    downloadPdf: 'Download PDF',
     
     // Toast Messages & Notifications
     procurementCreated: 'Procurement item created successfully',
@@ -11681,7 +11675,6 @@ export const translations: Record<Language, Translations> = {
     referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
     noReferences: 'No reference documents found',
     viewPdf: 'View PDF',
-    downloadPdf: 'Download PDF',
     
     // Toast Messages & Notifications
     procurementCreated: 'खरीद आइटम सफलतापूर्वक बनाया गया',
@@ -13156,7 +13149,6 @@ export const translations: Record<Language, Translations> = {
     referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
     noReferences: 'No reference documents found',
     viewPdf: 'View PDF',
-    downloadPdf: 'Download PDF',
     
     // Toast Messages & Notifications
     procurementCreated: 'خریداری کی آئٹم کامیابی سے بنائی گئی',
@@ -14573,7 +14565,6 @@ export const translations: Record<Language, Translations> = {
     referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
     noReferences: 'No reference documents found',
     viewPdf: 'View PDF',
-    downloadPdf: 'Download PDF',
 
     procurementCreated: "Artículo de adquisición creado exitosamente",
     procurementUpdated: "Artículo de adquisición actualizado exitosamente",
@@ -15989,7 +15980,6 @@ export const translations: Record<Language, Translations> = {
     referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
     noReferences: 'No reference documents found',
     viewPdf: 'View PDF',
-    downloadPdf: 'Download PDF',
 
     procurementCreated: "Matagumpay na nagawa ang item sa pagbili",
     procurementUpdated: "Matagumpay na na-update ang item sa pagbili",

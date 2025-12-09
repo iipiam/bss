@@ -33,7 +33,8 @@ import {
   Clock,
   CheckCircle2
 } from "lucide-react";
-import type { Violation, ViolationStats, Branch } from "@shared/schema";
+import type { Violation, ViolationStats, Branch, ViolationReference } from "@shared/schema";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 
 const authorityIcons = {
@@ -92,6 +93,12 @@ export default function ViolationsPage() {
   const [editingItem, setEditingItem] = useState<Violation | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [viewDocumentUrl, setViewDocumentUrl] = useState<string | null>(null);
+  const [refDialogOpen, setRefDialogOpen] = useState(false);
+  const [selectedRefAuthority, setSelectedRefAuthority] = useState<string>("municipality");
+  const [refFile, setRefFile] = useState<File | null>(null);
+  const [refTitle, setRefTitle] = useState("");
+  const [refDescription, setRefDescription] = useState("");
+  const [isUploadingRef, setIsUploadingRef] = useState(false);
 
   const { data: violations = [], isLoading } = useQuery<Violation[]>({
     queryKey: ["/api/violations", { authority: authorityFilter, status: statusFilter }],
@@ -114,6 +121,10 @@ export default function ViolationsPage() {
 
   const { data: branches = [] } = useQuery<Branch[]>({
     queryKey: ["/api/branches"],
+  });
+
+  const { data: references = [], isLoading: referencesLoading } = useQuery<ViolationReference[]>({
+    queryKey: ["/api/violation-references"],
   });
 
   const form = useForm<ViolationFormData>({
@@ -203,6 +214,44 @@ export default function ViolationsPage() {
     },
   });
 
+  const uploadReferenceMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await fetch('/api/violation-references', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Failed to upload reference');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/violation-references"] });
+      toast({ title: t.referenceUploaded || "Reference document uploaded successfully" });
+      setRefDialogOpen(false);
+      setRefFile(null);
+      setRefTitle("");
+      setRefDescription("");
+      setIsUploadingRef(false);
+    },
+    onError: () => {
+      toast({ title: t.violationError || "Error uploading reference", variant: "destructive" });
+      setIsUploadingRef(false);
+    },
+  });
+
+  const deleteReferenceMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/violation-references/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/violation-references"] });
+      toast({ title: t.referenceDeleted || "Reference document deleted successfully" });
+    },
+    onError: () => {
+      toast({ title: t.violationError || "Error deleting reference", variant: "destructive" });
+    },
+  });
+
   const handleSubmit = (data: ViolationFormData) => {
     if (editingItem) {
       updateMutation.mutate({ id: editingItem.id, data });
@@ -268,6 +317,24 @@ export default function ViolationsPage() {
 
   const handleDocumentDownload = (documentPath: string) => {
     window.open(documentPath, "_blank");
+  };
+
+  const handleUploadReference = () => {
+    if (!refFile || !refTitle.trim()) {
+      toast({ title: "Please provide a title and select a PDF file", variant: "destructive" });
+      return;
+    }
+    
+    setIsUploadingRef(true);
+    const formData = new FormData();
+    formData.append('file', refFile);
+    formData.append('authority', selectedRefAuthority);
+    formData.append('title', refTitle.trim());
+    if (refDescription.trim()) {
+      formData.append('description', refDescription.trim());
+    }
+    
+    uploadReferenceMutation.mutate(formData);
   };
 
   const totalViolations = stats?.totalViolations ?? violations.length;
@@ -766,6 +833,198 @@ export default function ViolationsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Violation References Section */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            {t.violationReferences || "Reference Documents"}
+          </CardTitle>
+          <CardDescription>
+            {t.referenceDocuments || "Upload PDF reference documents for each authority type"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="municipality" className="w-full">
+            <TabsList className="grid w-full grid-cols-4 mb-4">
+              <TabsTrigger value="municipality" className="flex items-center gap-1">
+                <Building className="w-4 h-4" />
+                <span className="hidden sm:inline">{t.municipality || "Municipality"}</span>
+              </TabsTrigger>
+              <TabsTrigger value="zatca" className="flex items-center gap-1">
+                <Receipt className="w-4 h-4" />
+                <span className="hidden sm:inline">{t.zatca || "ZATCA"}</span>
+              </TabsTrigger>
+              <TabsTrigger value="police" className="flex items-center gap-1">
+                <Shield className="w-4 h-4" />
+                <span className="hidden sm:inline">{t.police || "Police"}</span>
+              </TabsTrigger>
+              <TabsTrigger value="ministry_of_commerce" className="flex items-center gap-1">
+                <Briefcase className="w-4 h-4" />
+                <span className="hidden sm:inline">{t.ministryOfCommerce || "Ministry"}</span>
+              </TabsTrigger>
+            </TabsList>
+            
+            {["municipality", "zatca", "police", "ministry_of_commerce"].map((authority) => {
+              const AuthorityIcon = authorityIcons[authority as keyof typeof authorityIcons];
+              const authorityRefs = references.filter(ref => ref.authority === authority);
+              
+              return (
+                <TabsContent key={authority} value={authority} className="space-y-4">
+                  <div className="flex justify-between items-center flex-wrap gap-2">
+                    <h3 className="text-lg font-medium flex items-center gap-2">
+                      <AuthorityIcon className="w-5 h-5" />
+                      {authorityLabels[authority]} {t.referenceDocuments || "Reference Documents"}
+                    </h3>
+                    <Button
+                      onClick={() => {
+                        setSelectedRefAuthority(authority);
+                        setRefDialogOpen(true);
+                      }}
+                      data-testid={`button-add-ref-${authority}`}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      {t.addReferenceDocument || "Add Reference"}
+                    </Button>
+                  </div>
+                  
+                  {authorityRefs.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>{t.noReferences || "No reference documents found"}</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {authorityRefs.map((ref) => (
+                        <div
+                          key={ref.id}
+                          className="flex items-center justify-between p-3 border rounded-lg hover-elevate"
+                          data-testid={`ref-item-${ref.id}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <FileText className="w-5 h-5 text-red-500" />
+                            <div>
+                              <p className="font-medium">{ref.title}</p>
+                              {ref.description && (
+                                <p className="text-sm text-muted-foreground">{ref.description}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(ref.uploadedAt), 'PP')}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => window.open(`/api/violation-references/${ref.id}/file`, '_blank')}
+                              data-testid={`button-view-ref-${ref.id}`}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = `/api/violation-references/${ref.id}/file`;
+                                link.download = ref.title + '.pdf';
+                                link.click();
+                              }}
+                              data-testid={`button-download-ref-${ref.id}`}
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                if (confirm(t.referenceDeleteConfirm || "Are you sure you want to delete this reference document?")) {
+                                  deleteReferenceMutation.mutate(ref.id);
+                                }
+                              }}
+                              disabled={deleteReferenceMutation.isPending}
+                              data-testid={`button-delete-ref-${ref.id}`}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              );
+            })}
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Upload Reference Dialog */}
+      <Dialog open={refDialogOpen} onOpenChange={setRefDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.addReferenceDocument || "Add Reference Document"}</DialogTitle>
+            <DialogDescription>
+              {t.pdfOnly || "PDF files only (max 10MB)"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t.referenceTitle || "Document Title"}</label>
+              <Input
+                value={refTitle}
+                onChange={(e) => setRefTitle(e.target.value)}
+                placeholder={t.referenceTitle || "Enter document title"}
+                data-testid="input-ref-title"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t.referenceDescription || "Description (Optional)"}</label>
+              <Textarea
+                value={refDescription}
+                onChange={(e) => setRefDescription(e.target.value)}
+                placeholder={t.referenceDescription || "Enter description (optional)"}
+                data-testid="input-ref-description"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t.uploadPdf || "Upload PDF"}</label>
+              <div className="border-2 border-dashed rounded-lg p-4 text-center">
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => setRefFile(e.target.files?.[0] || null)}
+                  className="hidden"
+                  id="ref-file-input"
+                  data-testid="input-ref-file"
+                />
+                <label htmlFor="ref-file-input" className="cursor-pointer">
+                  <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                  {refFile ? (
+                    <p className="text-sm font-medium">{refFile.name}</p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t.pdfOnly || "Click to select a PDF file"}</p>
+                  )}
+                </label>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRefDialogOpen(false)}>
+              {t.cancel || "Cancel"}
+            </Button>
+            <Button 
+              onClick={handleUploadReference} 
+              disabled={isUploadingRef || !refFile || !refTitle.trim()}
+              data-testid="button-submit-ref"
+            >
+              {isUploadingRef ? (t.uploading || "Uploading...") : (t.upload || "Upload")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!viewDocumentUrl} onOpenChange={() => setViewDocumentUrl(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh]">
