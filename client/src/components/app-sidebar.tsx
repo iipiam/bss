@@ -150,7 +150,6 @@ export function AppSidebar() {
     { title: t.support || "Support", url: "/support", icon: HeadphonesIcon, testId: "support", gradient: "from-emerald-500 to-teal-500" },
     { title: t.settings, url: "/settings", icon: Settings, testId: "settings", gradient: "from-slate-500 to-gray-500", permission: 'settings' },
     { title: t.printers || "Printers", url: "/printer-settings", icon: Printer, testId: "printer-settings", gradient: "from-teal-500 to-cyan-500", permission: 'settings' },
-    { title: (t as any).zatcaSettings || "ZATCA E-Invoicing", url: "/zatca-settings", icon: Shield, testId: "zatca-settings", gradient: "from-green-600 to-emerald-500", permission: 'settings' },
     { title: t.employees, url: "/employees", icon: Users, testId: "employees", gradient: "from-sky-500 to-blue-500", permission: 'users' },
     { title: "Password Manager", url: "/password-manager", icon: Key, testId: "password-manager", gradient: "from-red-500 to-rose-500" },
   ];
@@ -161,6 +160,7 @@ export function AppSidebar() {
     { title: "Performance", url: "/performance", icon: TrendingUp, testId: "performance", gradient: "from-cyan-500 to-blue-500" },
     { title: "Account Management", url: "/it-account-management", icon: UserCog, testId: "it-account-management", gradient: "from-orange-500 to-red-500" },
     { title: t.businessManagement || "Business Management", url: "/business-management", icon: Building2, testId: "business-management", gradient: "from-teal-500 to-cyan-500" },
+    { title: (t as any).zatcaSettings || "ZATCA E-Invoicing", url: "/zatca-settings", icon: Shield, testId: "zatca-settings", gradient: "from-green-600 to-emerald-500" },
   ];
 
   // Support menu items for IT Dashboard (visible only to IT accounts)

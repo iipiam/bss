@@ -185,7 +185,8 @@ const requireITAccount = (req: any, res: any, next: any) => {
   if (!req.session?.user) {
     return res.status(401).json({ error: "Not authenticated" });
   }
-  if (req.session.accountType !== 'it') {
+  // IT accounts have restaurantId as null
+  if (req.session.user.restaurantId !== null) {
     return res.status(403).json({ error: "Access denied. IT account required." });
   }
   next();
@@ -9248,17 +9249,17 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // ============== ZATCA SETTINGS & E-INVOICING ROUTES ==============
+  // ============== ZATCA SETTINGS & E-INVOICING ROUTES (IT ONLY) ==============
   
-  // Get ZATCA settings
-  app.get("/api/zatca/settings", requireAuth, async (req, res) => {
+  // Get ZATCA settings (IT only - requires restaurantId in query)
+  app.get("/api/zatca/settings", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const { restaurantId } = req.session.user!;
-      if (!restaurantId) {
-        return res.status(403).json({ error: "Restaurant context required" });
+      const targetRestaurantId = req.query.restaurantId as string;
+      if (!targetRestaurantId) {
+        return res.status(400).json({ error: "Restaurant ID required in query parameter" });
       }
       
-      const settings = await storage.getZatcaSettings(restaurantId);
+      const settings = await storage.getZatcaSettings(targetRestaurantId);
       if (!settings) {
         return res.json(null);
       }
@@ -9279,23 +9280,23 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Create or update ZATCA settings
-  app.post("/api/zatca/settings", requireAuth, async (req, res) => {
+  // Create or update ZATCA settings (IT only)
+  app.post("/api/zatca/settings", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const { restaurantId } = req.session.user!;
-      if (!restaurantId) {
-        return res.status(403).json({ error: "Restaurant context required" });
+      const { restaurantId: targetRestaurantId, ...settingsData } = req.body;
+      if (!targetRestaurantId) {
+        return res.status(400).json({ error: "Restaurant ID required in request body" });
       }
       
-      const existingSettings = await storage.getZatcaSettings(restaurantId);
+      const existingSettings = await storage.getZatcaSettings(targetRestaurantId);
       
       if (existingSettings) {
-        const updated = await storage.updateZatcaSettings(restaurantId, req.body);
+        const updated = await storage.updateZatcaSettings(targetRestaurantId, settingsData);
         res.json(updated);
       } else {
         const created = await storage.createZatcaSettings({
-          restaurantId,
-          ...req.body
+          restaurantId: targetRestaurantId,
+          ...settingsData
         });
         res.status(201).json(created);
       }
@@ -9305,16 +9306,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Generate CSR for ZATCA onboarding
-  app.post("/api/zatca/generate-csr", requireAuth, async (req, res) => {
+  // Generate CSR for ZATCA onboarding (IT only)
+  app.post("/api/zatca/generate-csr", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const { restaurantId } = req.session.user!;
-      if (!restaurantId) {
-        return res.status(403).json({ error: "Restaurant context required" });
+      const { restaurantId: targetRestaurantId } = req.body;
+      if (!targetRestaurantId) {
+        return res.status(400).json({ error: "Restaurant ID required in request body" });
       }
       
       const { generateCSR } = await import("./zatca/crypto");
-      const settings = await storage.getZatcaSettings(restaurantId);
+      const settings = await storage.getZatcaSettings(targetRestaurantId);
       
       if (!settings) {
         return res.status(400).json({ error: "ZATCA settings not configured. Please save settings first." });
@@ -9332,7 +9333,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         settings.csrOrganizationUnitName || ""
       );
       
-      await storage.updateZatcaSettings(restaurantId, {
+      await storage.updateZatcaSettings(targetRestaurantId, {
         csr,
         privateKey
       });
@@ -9347,21 +9348,19 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Onboard to ZATCA (request compliance CSID)
-  app.post("/api/zatca/onboard", requireAuth, async (req, res) => {
+  // Onboard to ZATCA (request compliance CSID) - IT only
+  app.post("/api/zatca/onboard", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const { restaurantId } = req.session.user!;
-      if (!restaurantId) {
-        return res.status(403).json({ error: "Restaurant context required" });
+      const { restaurantId: targetRestaurantId, otp } = req.body;
+      if (!targetRestaurantId) {
+        return res.status(400).json({ error: "Restaurant ID required in request body" });
       }
-      
-      const { otp } = req.body;
       if (!otp) {
         return res.status(400).json({ error: "OTP is required" });
       }
       
       const { onboardToZatca } = await import("./zatca/service");
-      const result = await onboardToZatca(restaurantId, otp);
+      const result = await onboardToZatca(targetRestaurantId, otp);
       
       if (result.success) {
         res.json(result);
@@ -9374,21 +9373,19 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Request production CSID
-  app.post("/api/zatca/production-csid", requireAuth, async (req, res) => {
+  // Request production CSID - IT only
+  app.post("/api/zatca/production-csid", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const { restaurantId } = req.session.user!;
-      if (!restaurantId) {
-        return res.status(403).json({ error: "Restaurant context required" });
+      const { restaurantId: targetRestaurantId, complianceRequestId } = req.body;
+      if (!targetRestaurantId) {
+        return res.status(400).json({ error: "Restaurant ID required in request body" });
       }
-      
-      const { complianceRequestId } = req.body;
       if (!complianceRequestId) {
         return res.status(400).json({ error: "Compliance request ID is required" });
       }
       
       const { getProductionCSID } = await import("./zatca/service");
-      const result = await getProductionCSID(restaurantId, complianceRequestId);
+      const result = await getProductionCSID(targetRestaurantId, complianceRequestId);
       
       if (result.success) {
         res.json(result);
@@ -9401,17 +9398,17 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Get invoice ZATCA status
-  app.get("/api/zatca/invoices", requireAuth, async (req, res) => {
+  // Get invoice ZATCA status - IT only
+  app.get("/api/zatca/invoices", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const { restaurantId } = req.session.user!;
-      if (!restaurantId) {
-        return res.status(403).json({ error: "Restaurant context required" });
+      const targetRestaurantId = req.query.restaurantId as string;
+      if (!targetRestaurantId) {
+        return res.status(400).json({ error: "Restaurant ID required in query parameter" });
       }
       
       const { status } = req.query;
       const invoices = await storage.getInvoiceZatcaStatuses(
-        restaurantId, 
+        targetRestaurantId, 
         status as string | undefined
       );
       
@@ -9422,16 +9419,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Retry pending invoices
-  app.post("/api/zatca/retry-pending", requireAuth, async (req, res) => {
+  // Retry pending invoices - IT only
+  app.post("/api/zatca/retry-pending", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const { restaurantId } = req.session.user!;
-      if (!restaurantId) {
-        return res.status(403).json({ error: "Restaurant context required" });
+      const { restaurantId: targetRestaurantId } = req.body;
+      if (!targetRestaurantId) {
+        return res.status(400).json({ error: "Restaurant ID required in request body" });
       }
       
       const { retryPendingInvoices } = await import("./zatca/service");
-      const result = await retryPendingInvoices(restaurantId);
+      const result = await retryPendingInvoices(targetRestaurantId);
       
       res.json(result);
     } catch (error) {
@@ -9440,18 +9437,18 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Process invoice for ZATCA (used internally or for testing)
-  app.post("/api/zatca/process-invoice", requireAuth, async (req, res) => {
+  // Process invoice for ZATCA (used internally or for testing) - IT only
+  app.post("/api/zatca/process-invoice", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const { restaurantId } = req.session.user!;
-      if (!restaurantId) {
-        return res.status(403).json({ error: "Restaurant context required" });
+      const { restaurantId: targetRestaurantId, ...invoiceData } = req.body;
+      if (!targetRestaurantId) {
+        return res.status(400).json({ error: "Restaurant ID required in request body" });
       }
       
       const { processInvoiceForZatca } = await import("./zatca/service");
       const result = await processInvoiceForZatca({
-        restaurantId,
-        ...req.body
+        restaurantId: targetRestaurantId,
+        ...invoiceData
       });
       
       res.json(result);

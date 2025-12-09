@@ -13,7 +13,13 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Shield, AlertCircle, CheckCircle2, Settings, KeyRound, FileText, RefreshCw, Clock, XCircle, Info, Eye, EyeOff, Copy, Download } from "lucide-react";
+import { Loader2, Shield, AlertCircle, CheckCircle2, Settings, KeyRound, FileText, RefreshCw, Clock, XCircle, Info, Eye, EyeOff, Copy, Download, Building2 } from "lucide-react";
+
+interface Restaurant {
+  id: string;
+  name: string;
+  businessType?: string;
+}
 
 interface ZatcaSettings {
   id: string;
@@ -59,6 +65,7 @@ export default function ZatcaSettingsPage() {
   const { isLoading: authLoading, user } = useAuth();
   const { toast } = useToast();
   
+  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string>("");
   const [formData, setFormData] = useState<Partial<ZatcaSettings>>({
     environment: "sandbox",
     csrCountryName: "SA",
@@ -71,6 +78,16 @@ export default function ZatcaSettingsPage() {
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const [showComplianceCsid, setShowComplianceCsid] = useState(false);
   const [showProductionCsid, setShowProductionCsid] = useState(false);
+  
+  // Check if user is IT account (restaurantId is null)
+  const isITAccount = user && user.restaurantId === null;
+  
+  // Fetch list of restaurants for IT account
+  const { data: restaurants = [], isLoading: restaurantsLoading } = useQuery<Restaurant[]>({
+    queryKey: ["/api/it/business-management/clients"],
+    enabled: !authLoading && isITAccount,
+    retry: false,
+  });
 
   const maskValue = (value: string | null | undefined, showFull: boolean): string => {
     if (!value) return "";
@@ -113,29 +130,57 @@ export default function ZatcaSettingsPage() {
   };
 
   const { data: settings, isLoading } = useQuery<ZatcaSettings | null>({
-    queryKey: ["/api/zatca/settings"],
-    enabled: !authLoading && !!user?.restaurantId,
+    queryKey: ["/api/zatca/settings", selectedRestaurantId],
+    queryFn: async () => {
+      if (!selectedRestaurantId) return null;
+      const res = await fetch(`/api/zatca/settings?restaurantId=${selectedRestaurantId}`, {
+        credentials: "include"
+      });
+      if (!res.ok) {
+        if (res.status === 403) throw new Error("Access denied. IT account required.");
+        throw new Error("Failed to fetch settings");
+      }
+      return res.json();
+    },
+    enabled: !authLoading && isITAccount && !!selectedRestaurantId,
     retry: false,
   });
 
   const { data: invoiceStatuses } = useQuery<InvoiceZatcaStatus[]>({
-    queryKey: ["/api/zatca/invoices"],
-    enabled: !authLoading && !!user?.restaurantId,
+    queryKey: ["/api/zatca/invoices", selectedRestaurantId],
+    queryFn: async () => {
+      if (!selectedRestaurantId) return [];
+      const res = await fetch(`/api/zatca/invoices?restaurantId=${selectedRestaurantId}`, {
+        credentials: "include"
+      });
+      if (!res.ok) throw new Error("Failed to fetch invoices");
+      return res.json();
+    },
+    enabled: !authLoading && isITAccount && !!selectedRestaurantId,
     retry: false,
   });
 
   useEffect(() => {
     if (settings) {
       setFormData(settings);
+    } else {
+      // Reset form when restaurant changes
+      setFormData({
+        environment: "sandbox",
+        csrCountryName: "SA",
+        countryCode: "SA",
+        csrInvoiceType: "1100",
+        onboardingStatus: "not_started"
+      });
     }
-  }, [settings]);
+  }, [settings, selectedRestaurantId]);
 
   const saveMutation = useMutation({
     mutationFn: async (data: Partial<ZatcaSettings>) => {
-      await apiRequest("POST", "/api/zatca/settings", data);
+      await apiRequest("POST", "/api/zatca/settings", { ...data, restaurantId: selectedRestaurantId });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings", selectedRestaurantId] });
       toast({
         title: t.success || "Success",
         description: t.zatcaSettingsSaved || "ZATCA settings saved successfully",
@@ -152,10 +197,10 @@ export default function ZatcaSettingsPage() {
 
   const generateCsrMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/zatca/generate-csr", {});
+      return await apiRequest("POST", "/api/zatca/generate-csr", { restaurantId: selectedRestaurantId });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings", selectedRestaurantId] });
       toast({
         title: t.success || "Success",
         description: t.csrGenerated || "CSR generated successfully. Ready for onboarding.",
@@ -172,10 +217,10 @@ export default function ZatcaSettingsPage() {
 
   const onboardMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/zatca/onboard", { otp });
+      return await apiRequest("POST", "/api/zatca/onboard", { otp, restaurantId: selectedRestaurantId });
     },
     onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings", selectedRestaurantId] });
       if (data.complianceRequestId) {
         setComplianceRequestId(data.complianceRequestId);
       }
@@ -195,10 +240,10 @@ export default function ZatcaSettingsPage() {
 
   const productionCsidMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/zatca/production-csid", { complianceRequestId });
+      return await apiRequest("POST", "/api/zatca/production-csid", { complianceRequestId, restaurantId: selectedRestaurantId });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings", selectedRestaurantId] });
       toast({
         title: t.success || "Success",
         description: t.productionCsidSuccess || "Production CSID received. ZATCA integration is now active.",
@@ -215,10 +260,10 @@ export default function ZatcaSettingsPage() {
 
   const retryPendingMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/zatca/retry-pending", {});
+      return await apiRequest("POST", "/api/zatca/retry-pending", { restaurantId: selectedRestaurantId });
     },
     onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/zatca/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/zatca/invoices", selectedRestaurantId] });
       toast({
         title: t.success || "Success",
         description: `Processed ${data.processed} invoices. ${data.successful} successful, ${data.failed} failed.`,
@@ -242,10 +287,25 @@ export default function ZatcaSettingsPage() {
     saveMutation.mutate(formData);
   };
 
-  if (authLoading || isLoading) {
+  if (authLoading || restaurantsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+  
+  // Check if user is IT account
+  if (!isITAccount) {
+    return (
+      <div className="p-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>{t.accessDenied || "Access Denied"}</AlertTitle>
+          <AlertDescription>
+            {t.itAccountRequired || "This feature is only available for IT accounts. Please contact your administrator."}
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -298,12 +358,65 @@ export default function ZatcaSettingsPage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 mb-6">
-        <span className="text-sm font-medium">{t.onboardingStatus || "Onboarding Status"}:</span>
-        {getStatusBadge(settings?.onboardingStatus || "not_started")}
-      </div>
+      {/* Restaurant Selector for IT Account */}
+      <Card className="mb-6">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            {t.selectRestaurant || "Select Restaurant"}
+          </CardTitle>
+          <CardDescription>
+            {t.selectRestaurantDescription || "Choose a client to manage their ZATCA e-invoicing settings"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Select
+            value={selectedRestaurantId}
+            onValueChange={(value) => {
+              setSelectedRestaurantId(value);
+              setFormData({
+                environment: "sandbox",
+                csrCountryName: "SA",
+                countryCode: "SA",
+                csrInvoiceType: "1100",
+                onboardingStatus: "not_started"
+              });
+            }}
+          >
+            <SelectTrigger className="w-full" data-testid="select-restaurant">
+              <SelectValue placeholder={t.selectRestaurantPlaceholder || "Select a restaurant..."} />
+            </SelectTrigger>
+            <SelectContent>
+              {restaurants.map((restaurant) => (
+                <SelectItem key={restaurant.id} value={restaurant.id} data-testid={`option-restaurant-${restaurant.id}`}>
+                  {restaurant.name} {restaurant.businessType ? `(${restaurant.businessType})` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
 
-      <Tabs defaultValue="settings" className="space-y-6">
+      {!selectedRestaurantId ? (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>{t.noRestaurantSelected || "No Restaurant Selected"}</AlertTitle>
+          <AlertDescription>
+            {t.pleaseSelectRestaurant || "Please select a restaurant from the dropdown above to manage their ZATCA settings."}
+          </AlertDescription>
+        </Alert>
+      ) : isLoading ? (
+        <div className="flex items-center justify-center min-h-[200px]">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-4 mb-6">
+            <span className="text-sm font-medium">{t.onboardingStatus || "Onboarding Status"}:</span>
+            {getStatusBadge(settings?.onboardingStatus || "not_started")}
+          </div>
+
+          <Tabs defaultValue="settings" className="space-y-6">
         <TabsList>
           <TabsTrigger value="settings" data-testid="tab-settings">
             <Settings className="w-4 h-4 mr-2" />
@@ -820,6 +933,8 @@ export default function ZatcaSettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+        </>
+      )}
     </div>
   );
 }
