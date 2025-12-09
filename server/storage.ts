@@ -59,6 +59,8 @@ import {
   type Violation,
   type InsertViolation,
   type ViolationStats,
+  type ViolationReference,
+  type InsertViolationReference,
   type Printer,
   type InsertPrinter,
   restaurants,
@@ -98,6 +100,7 @@ import {
   licenses,
   businessInfo,
   violations,
+  violationReferences,
   printers,
 } from "@shared/schema";
 import { db } from "./db";
@@ -268,6 +271,12 @@ export interface IStorage {
   updateViolation(id: string, restaurantId: string, violation: Partial<InsertViolation>): Promise<Violation | undefined>;
   deleteViolation(id: string, restaurantId: string): Promise<boolean>;
   getViolationStats(restaurantId: string): Promise<ViolationStats>;
+
+  // Violation References (MULTI-TENANT: requires restaurantId)
+  getViolationReferences(restaurantId: string, authority?: string): Promise<ViolationReference[]>;
+  getViolationReference(id: string, restaurantId: string): Promise<ViolationReference | undefined>;
+  createViolationReference(reference: InsertViolationReference): Promise<ViolationReference>;
+  deleteViolationReference(id: string, restaurantId: string): Promise<boolean>;
 
   // Delivery Apps (MULTI-TENANT: requires restaurantId)
   getDeliveryApps(restaurantId: string): Promise<DeliveryApp[]>;
@@ -1526,6 +1535,40 @@ export class DatabaseStorage implements IStorage {
       byStatus,
       monthlyTrend,
     };
+  }
+
+  // Violation References (MULTI-TENANT: filters by restaurantId)
+  async getViolationReferences(restaurantId: string, authority?: string): Promise<ViolationReference[]> {
+    if (authority) {
+      return await db.select().from(violationReferences).where(
+        and(
+          eq(violationReferences.restaurantId, restaurantId),
+          eq(violationReferences.authority, authority)
+        )
+      ).orderBy(desc(violationReferences.uploadedAt));
+    }
+    return await db.select().from(violationReferences).where(
+      eq(violationReferences.restaurantId, restaurantId)
+    ).orderBy(desc(violationReferences.uploadedAt));
+  }
+
+  async getViolationReference(id: string, restaurantId: string): Promise<ViolationReference | undefined> {
+    const [ref] = await db.select().from(violationReferences).where(
+      and(eq(violationReferences.id, id), eq(violationReferences.restaurantId, restaurantId))
+    );
+    return ref;
+  }
+
+  async createViolationReference(reference: InsertViolationReference): Promise<ViolationReference> {
+    const [created] = await db.insert(violationReferences).values(reference as any).returning();
+    return created;
+  }
+
+  async deleteViolationReference(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(violationReferences).where(
+      and(eq(violationReferences.id, id), eq(violationReferences.restaurantId, restaurantId))
+    );
+    return (result as any).rowCount > 0;
   }
 
   // Delivery Apps (MULTI-TENANT: filters by restaurantId)

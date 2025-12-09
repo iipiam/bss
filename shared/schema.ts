@@ -1199,3 +1199,22 @@ export const insertPrinterSchema = createInsertSchema(printers)
   });
 export type InsertPrinter = z.infer<typeof insertPrinterSchema>;
 export type Printer = typeof printers.$inferSelect;
+
+// Violation References - Reference PDF documents for each authority type
+export const violationReferences = pgTable("violation_references", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  authority: text("authority").notNull(), // "municipality", "zatca", "police", "ministry_of_commerce"
+  title: text("title").notNull(), // Document title/name
+  description: text("description"), // Optional description
+  documentPath: text("document_path").notNull(), // Path to uploaded PDF file
+  uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
+});
+
+export const insertViolationReferenceSchema = createInsertSchema(violationReferences)
+  .omit({ id: true, uploadedAt: true })
+  .extend({
+    authority: z.enum(["municipality", "zatca", "police", "ministry_of_commerce"]),
+  });
+export type InsertViolationReference = z.infer<typeof insertViolationReferenceSchema>;
+export type ViolationReference = typeof violationReferences.$inferSelect;
