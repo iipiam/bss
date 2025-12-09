@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Shield, AlertCircle, CheckCircle2, Settings, KeyRound, FileText, RefreshCw, Clock, XCircle, Info } from "lucide-react";
+import { Loader2, Shield, AlertCircle, CheckCircle2, Settings, KeyRound, FileText, RefreshCw, Clock, XCircle, Info, Eye, EyeOff, Copy, Download } from "lucide-react";
 
 interface ZatcaSettings {
   id: string;
@@ -68,6 +68,49 @@ export default function ZatcaSettingsPage() {
   });
   const [otp, setOtp] = useState("");
   const [complianceRequestId, setComplianceRequestId] = useState("");
+  const [showPrivateKey, setShowPrivateKey] = useState(false);
+  const [showComplianceCsid, setShowComplianceCsid] = useState(false);
+  const [showProductionCsid, setShowProductionCsid] = useState(false);
+
+  const maskValue = (value: string | null | undefined, showFull: boolean): string => {
+    if (!value) return "";
+    if (showFull) return value;
+    if (value.length <= 8) return "••••••••";
+    return value.substring(0, 4) + "••••••••" + value.substring(value.length - 4);
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: t.copiedToClipboard || "Copied",
+        description: t.copiedToClipboardDesc || "Value copied to clipboard",
+      });
+    } catch (err) {
+      toast({
+        title: t.copyFailed || "Copy Failed",
+        description: t.copyFailedDesc || "Could not copy to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const downloadPrivateKey = () => {
+    if (!settings?.privateKey) return;
+    const blob = new Blob([settings.privateKey], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "zatca-private-key.pem";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast({
+      title: t.downloadStarted || "Download Started",
+      description: t.privateKeyDownloaded || "Private key downloaded securely",
+    });
+  };
 
   const { data: settings, isLoading } = useQuery<ZatcaSettings | null>({
     queryKey: ["/api/zatca/settings"],
@@ -547,10 +590,42 @@ export default function ZatcaSettingsPage() {
                   </Button>
                 </div>
                 {settings?.complianceCsid && (
-                  <Badge variant="default" className="bg-green-500">
-                    <CheckCircle2 className="w-3 h-3 mr-1" />
-                    {t.complianceCsidReceived || "Compliance CSID Received"}
-                  </Badge>
+                  <div className="space-y-3 mt-4 p-4 bg-muted rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="default" className="bg-green-500">
+                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                        {t.complianceCsidReceived || "Compliance CSID Received"}
+                      </Badge>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t.complianceCertificate || "Compliance Certificate"}</Label>
+                      <div className="flex items-center gap-2">
+                        <Input 
+                          type={showComplianceCsid ? "text" : "password"}
+                          value={maskValue(settings.complianceCsid, showComplianceCsid)}
+                          readOnly
+                          className="font-mono text-xs"
+                          data-testid="input-compliance-csid-masked"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => setShowComplianceCsid(!showComplianceCsid)}
+                          data-testid="button-toggle-compliance-csid"
+                        >
+                          {showComplianceCsid ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => copyToClipboard(settings.complianceCsid || "")}
+                          data-testid="button-copy-compliance-csid"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -586,10 +661,82 @@ export default function ZatcaSettingsPage() {
                   </Button>
                 </div>
                 {settings?.productionCsid && (
-                  <Badge variant="default" className="bg-green-500">
-                    <CheckCircle2 className="w-3 h-3 mr-1" />
-                    {t.productionCsidReceived || "Production CSID Received"}
-                  </Badge>
+                  <div className="space-y-3 mt-4 p-4 bg-muted rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="default" className="bg-green-500">
+                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                        {t.productionCsidReceived || "Production CSID Received"}
+                      </Badge>
+                    </div>
+                    <Alert className="bg-yellow-50 border-yellow-200">
+                      <AlertCircle className="h-4 w-4 text-yellow-600" />
+                      <AlertTitle className="text-yellow-800">{t.securityWarning || "Security Warning"}</AlertTitle>
+                      <AlertDescription className="text-yellow-700">
+                        {t.securityWarningDesc || "Keep your production credentials secure. Never share them publicly."}
+                      </AlertDescription>
+                    </Alert>
+                    <div className="space-y-2">
+                      <Label>{t.productionCertificate || "Production Certificate"}</Label>
+                      <div className="flex items-center gap-2">
+                        <Input 
+                          type={showProductionCsid ? "text" : "password"}
+                          value={maskValue(settings.productionCsid, showProductionCsid)}
+                          readOnly
+                          className="font-mono text-xs"
+                          data-testid="input-production-csid-masked"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => setShowProductionCsid(!showProductionCsid)}
+                          data-testid="button-toggle-production-csid"
+                        >
+                          {showProductionCsid ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => copyToClipboard(settings.productionCsid || "")}
+                          data-testid="button-copy-production-csid"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    {settings?.privateKey && (
+                      <div className="space-y-2">
+                        <Label>{t.privateKey || "Private Key"}</Label>
+                        <div className="flex items-center gap-2">
+                          <Input 
+                            type="password"
+                            value={maskValue(settings.privateKey, showPrivateKey)}
+                            readOnly
+                            className="font-mono text-xs"
+                            data-testid="input-private-key-masked"
+                          />
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={() => setShowPrivateKey(!showPrivateKey)}
+                            data-testid="button-toggle-private-key"
+                          >
+                            {showPrivateKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={downloadPrivateKey}
+                            data-testid="button-download-private-key"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {t.privateKeyWarning || "Store this key securely. You will need it if you reinstall or move to a new system."}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>

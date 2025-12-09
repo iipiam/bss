@@ -1,6 +1,6 @@
 import { storage } from "../storage";
-import { generateZatcaInvoiceXml, generateInvoiceHash, type ZatcaInvoiceData } from "./xml-generator";
-import { generateZatcaQRCode, generateUUID, signWithECDSA, formatIssueDate, formatIssueTime, formatTimestamp } from "./crypto";
+import { generateZatcaInvoiceXml, generateUnsignedInvoiceXml, generateInvoiceHash, generateInvoiceHashHex, type ZatcaInvoiceData } from "./xml-generator";
+import { generateZatcaQRCode, generateUUID, signWithECDSA, formatIssueDate, formatIssueTime, formatTimestamp, hashSHA256Hex, extractPublicKeyBase64 } from "./crypto";
 import { ZatcaApiClient, submitInvoiceToZatca, type ZatcaConfig } from "./api-client";
 import QRCode from "qrcode";
 
@@ -71,14 +71,16 @@ export async function processInvoiceForZatca(
   const issueTime = formatIssueTime(now);
   const timestamp = formatTimestamp(now);
 
+  const previousHashHex = settings.lastInvoiceHash || null;
+
   const { counter, previousHash } = await storage.incrementInvoiceCounter(
     params.restaurantId,
-    ""
+    previousHashHex || ""
   );
 
   const invoiceSubType = params.invoiceType === "standard" ? "01" : "02";
 
-  const invoiceData: ZatcaInvoiceData = {
+  const baseInvoiceData = {
     invoiceNumber: params.invoiceNumber,
     invoiceType: params.invoiceType,
     invoiceSubType: invoiceSubType as "01" | "02",
@@ -89,7 +91,7 @@ export async function processInvoiceForZatca(
     discount: params.discount,
     items: params.items,
     invoiceCounter: counter,
-    previousInvoiceHash: previousHash,
+    previousInvoiceHash: previousHash || null,
     uuid,
     issueDate,
     issueTime,
@@ -110,13 +112,34 @@ export async function processInvoiceForZatca(
     } : undefined
   };
 
-  const xmlContent = generateZatcaInvoiceXml(invoiceData);
-  const invoiceHash = generateInvoiceHash(xmlContent);
+  const unsignedXml = generateUnsignedInvoiceXml(baseInvoiceData);
+  const invoiceHash = generateInvoiceHash(unsignedXml);
+  const invoiceHashHex = generateInvoiceHashHex(unsignedXml);
 
   let signature: string | undefined;
-  if (settings.privateKey) {
+  let signedPropertiesHash: string | undefined;
+  let certificateBase64: string | undefined;
+  let publicKeyBase64: string | undefined;
+  
+  const certificate = settings.productionCsid || settings.complianceCsid;
+  
+  if (settings.privateKey && certificate) {
     try {
       signature = signWithECDSA(settings.privateKey, invoiceHash);
+      
+      const signingTime = now.toISOString();
+      const signedPropertiesContent = `<xades:SignedProperties Id="xadesSignedProperties"><xades:SignedSignatureProperties><xades:SigningTime>${signingTime}</xades:SigningTime></xades:SignedSignatureProperties></xades:SignedProperties>`;
+      signedPropertiesHash = hashSHA256Hex(signedPropertiesContent);
+      
+      certificateBase64 = certificate.replace(/-----BEGIN CERTIFICATE-----/g, '')
+        .replace(/-----END CERTIFICATE-----/g, '')
+        .replace(/\s/g, '');
+      
+      try {
+        publicKeyBase64 = extractPublicKeyBase64(certificate);
+      } catch (e) {
+        publicKeyBase64 = certificateBase64;
+      }
     } catch (error) {
       console.error("Failed to sign invoice:", error);
     }
@@ -128,10 +151,22 @@ export async function processInvoiceForZatca(
     timestamp: timestamp,
     invoiceTotal: params.total.toFixed(2),
     vatTotal: params.vatAmount.toFixed(2),
-    invoiceHash: invoiceHash,
-    signature: signature
+    invoiceHash: invoiceHashHex,
+    signature: signature,
+    publicKey: publicKeyBase64
   };
   const qrCodeBase64 = generateZatcaQRCode(qrTlvData);
+
+  const signedInvoiceData: ZatcaInvoiceData = {
+    ...baseInvoiceData,
+    qrCode: qrCodeBase64,
+    signatureValue: signature,
+    signedPropertiesHash: signedPropertiesHash,
+    invoiceHash: invoiceHash,
+    certificateBase64: certificateBase64
+  };
+  
+  const signedXml = generateZatcaInvoiceXml(signedInvoiceData);
 
   let qrCodeImage = "";
   try {
@@ -146,7 +181,7 @@ export async function processInvoiceForZatca(
   }
 
   await storage.updateZatcaSettings(params.restaurantId, {
-    lastInvoiceHash: invoiceHash
+    lastInvoiceHash: invoiceHashHex
   });
 
   let submissionStatus: "pending" | "cleared" | "reported" | "rejected" = "pending";
@@ -166,7 +201,7 @@ export async function processInvoiceForZatca(
 
     const result = await submitInvoiceToZatca(
       config,
-      xmlContent,
+      signedXml,
       invoiceHash,
       uuid,
       params.invoiceType
@@ -193,7 +228,7 @@ export async function processInvoiceForZatca(
       submissionType: params.invoiceType === "standard" ? "clearance" : "reporting",
       submissionStatus: submissionStatus,
       qrCode: qrCodeBase64,
-      signedXml: xmlContent,
+      signedXml: signedXml,
       clearedAt: result.clearedAt,
       submittedAt: result.reportedAt || (result.success ? new Date() : undefined),
       zatcaErrors: errors.length > 0 ? errors : null,
@@ -211,7 +246,7 @@ export async function processInvoiceForZatca(
       submissionType: params.invoiceType === "standard" ? "clearance" : "reporting",
       submissionStatus: "pending",
       qrCode: qrCodeBase64,
-      signedXml: xmlContent
+      signedXml: signedXml
     });
   }
 
@@ -221,7 +256,7 @@ export async function processInvoiceForZatca(
     invoiceHash,
     qrCode: qrCodeBase64,
     qrCodeImage,
-    signedXml: xmlContent,
+    signedXml: signedXml,
     submissionStatus,
     zatcaResponse,
     errors: errors.length > 0 ? errors : undefined
@@ -326,7 +361,8 @@ export async function onboardToZatca(
 
   await storage.updateZatcaSettings(restaurantId, {
     complianceCsid: data.binarySecurityToken,
-    complianceCsidSecret: data.secret
+    complianceCsidSecret: data.secret,
+    onboardingStatus: "compliance_received"
   });
 
   return {
@@ -373,11 +409,116 @@ export async function getProductionCSID(
   await storage.updateZatcaSettings(restaurantId, {
     productionCsid: data.binarySecurityToken,
     productionCsidSecret: data.secret,
-    isEnabled: true
+    isEnabled: true,
+    onboardingStatus: "production_ready"
   });
 
   return {
     success: true,
     message: "Production CSID obtained successfully. ZATCA integration is now active."
   };
+}
+
+export async function runComplianceChecks(
+  restaurantId: string
+): Promise<{
+  success: boolean;
+  results: Array<{
+    invoiceType: string;
+    passed: boolean;
+    errors?: Array<{ code: string; message: string }>;
+    warnings?: Array<{ code: string; message: string }>;
+  }>;
+}> {
+  const settings = await storage.getZatcaSettings(restaurantId);
+  const csid = settings?.complianceCsid;
+  const csidSecret = settings?.complianceCsidSecret;
+  
+  if (!settings || !csid || !csidSecret) {
+    return { 
+      success: false, 
+      results: [{ invoiceType: "all", passed: false, errors: [{ code: "NO_CSID", message: "Compliance CSID not found" }] }]
+    };
+  }
+
+  const config: ZatcaConfig = {
+    environment: settings.environment as "sandbox" | "simulation" | "production",
+    csid: csid,
+    csidSecret: csidSecret,
+    privateKey: settings.privateKey || ""
+  };
+
+  const client = new ZatcaApiClient(config);
+  const results: Array<{
+    invoiceType: string;
+    passed: boolean;
+    errors?: Array<{ code: string; message: string }>;
+    warnings?: Array<{ code: string; message: string }>;
+  }> = [];
+
+  const testInvoiceTypes = [
+    { type: "simplified" as const, subType: "01" as const },
+    { type: "standard" as const, subType: "01" as const }
+  ];
+
+  for (const testType of testInvoiceTypes) {
+    const testUuid = generateUUID();
+    const now = new Date();
+    const testData: ZatcaInvoiceData = {
+      invoiceNumber: `TEST-${Date.now()}`,
+      invoiceType: testType.type,
+      invoiceSubType: testType.subType,
+      paymentMethod: "cash",
+      subtotal: 100.00,
+      vatAmount: 15.00,
+      total: 115.00,
+      discount: 0,
+      items: [{
+        name: "Test Item",
+        quantity: 1,
+        unitPrice: 100.00,
+        totalAmount: 100.00
+      }],
+      invoiceCounter: 1,
+      previousInvoiceHash: null,
+      uuid: testUuid,
+      issueDate: formatIssueDate(now),
+      issueTime: formatIssueTime(now),
+      sellerInfo: {
+        name: settings.csrOrganizationName || "Test Company",
+        vatNumber: settings.csrOrganizationIdentifier || "300000000000003",
+        streetName: settings.sellerStreetName || "Test Street",
+        buildingNumber: settings.sellerBuildingNumber || "1234",
+        citySubdivision: settings.sellerCitySubdivision || "Test District",
+        city: settings.sellerCity || "Riyadh",
+        postalZone: settings.sellerPostalZone || "12345",
+        countryCode: "SA",
+        crNumber: settings.sellerCrNumber || "1234567890"
+      }
+    };
+
+    const testXml = generateZatcaInvoiceXml(testData);
+    const testHash = generateInvoiceHash(testXml);
+    const testInvoiceBase64 = Buffer.from(testXml, "utf8").toString("base64");
+
+    const response = await client.complianceCheck(testHash, testUuid, testInvoiceBase64);
+
+    results.push({
+      invoiceType: `${testType.type}-${testType.subType}`,
+      passed: response.success && response.data?.status !== "REJECTED",
+      errors: response.error ? [{ code: response.error.code, message: response.error.message }] : 
+              response.data?.validationResults?.errorMessages,
+      warnings: response.data?.validationResults?.warningMessages || response.warnings
+    });
+  }
+
+  const allPassed = results.every(r => r.passed);
+  
+  if (allPassed) {
+    await storage.updateZatcaSettings(restaurantId, {
+      onboardingStatus: "compliance_received"
+    });
+  }
+
+  return { success: allPassed, results };
 }

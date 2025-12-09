@@ -137,8 +137,11 @@ export class ZatcaApiClient {
     return this.request<CSIDResponse>(
       "/compliance",
       "POST",
-      { csr },
-      { "OTP": otp }
+      { csr: csr },
+      { 
+        "OTP": otp,
+        "Accept-Version": "V2"
+      }
     );
   }
 
