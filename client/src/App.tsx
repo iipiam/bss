@@ -27,7 +27,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -41,97 +41,113 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User as UserIcon, CreditCard, Edit, XCircle, X } from "lucide-react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import Dashboard from "@/pages/dashboard";
-import Inventory from "@/pages/inventory";
-import Menu from "@/pages/menu";
-import Recipes from "@/pages/recipes";
-import Customers from "@/pages/customers";
-import Sales from "@/pages/sales";
-import Reports from "@/pages/reports";
-import Forecasting from "@/pages/forecasting";
-import Analysis from "@/pages/analysis";
-import Profitability from "@/pages/profitability";
-import Financial from "@/pages/financial";
-import Invoices from "@/pages/invoices";
-import VatReports from "@/pages/vat-reports";
-import Bills from "@/pages/bills";
-import POS from "@/pages/pos";
-import Branches from "@/pages/branches";
-import Orders from "@/pages/orders";
-import Kitchen from "@/pages/kitchen";
-import Procurement from "@/pages/procurement";
-import SettingsPage from "@/pages/settings";
-import Employees from "@/pages/employees";
-import Tutorial from "@/pages/tutorial";
-import Shop from "@/pages/shop";
-import Profile from "@/pages/profile";
-import DeliveryApps from "@/pages/delivery-apps";
-import DeliveryAppProfitability from "@/pages/delivery-app-profitability";
-import SalesComparison from "@/pages/sales-comparison";
-import Investors from "@/pages/investors";
-import Support from "@/pages/support";
-import SupportDetail from "@/pages/support-detail";
-import ITDashboard from "@/pages/it-dashboard";
-import Performance from "@/pages/performance";
-import ITAccountManagement from "@/pages/it-account-management";
-import BusinessManagement from "@/pages/business-management";
-import Chat from "@/pages/chat";
-import PaymentTest from "@/pages/payment-test";
-import PasswordManager from "@/pages/password-manager";
-import Licenses from "@/pages/licenses";
-import Violations from "@/pages/violations";
-import Login from "@/pages/login";
-import ForgotPassword from "@/pages/forgot-password";
-import ResetPassword from "@/pages/reset-password";
-import EmergencyReset from "@/pages/emergency-reset";
-import NotFound from "@/pages/not-found";
 import type { User } from "@shared/schema";
 import kinzhalLogo from "@assets/kinzhal-eagle-logo.jpeg";
 
+// Lazy-loaded pages for code splitting - reduces initial bundle size
+const Dashboard = lazy(() => import("@/pages/dashboard"));
+const Inventory = lazy(() => import("@/pages/inventory"));
+const Menu = lazy(() => import("@/pages/menu"));
+const Recipes = lazy(() => import("@/pages/recipes"));
+const Customers = lazy(() => import("@/pages/customers"));
+const Sales = lazy(() => import("@/pages/sales"));
+const Reports = lazy(() => import("@/pages/reports"));
+const Forecasting = lazy(() => import("@/pages/forecasting"));
+const Analysis = lazy(() => import("@/pages/analysis"));
+const Profitability = lazy(() => import("@/pages/profitability"));
+const Financial = lazy(() => import("@/pages/financial"));
+const Invoices = lazy(() => import("@/pages/invoices"));
+const VatReports = lazy(() => import("@/pages/vat-reports"));
+const Bills = lazy(() => import("@/pages/bills"));
+const POS = lazy(() => import("@/pages/pos"));
+const Branches = lazy(() => import("@/pages/branches"));
+const Orders = lazy(() => import("@/pages/orders"));
+const Kitchen = lazy(() => import("@/pages/kitchen"));
+const Procurement = lazy(() => import("@/pages/procurement"));
+const SettingsPage = lazy(() => import("@/pages/settings"));
+const Employees = lazy(() => import("@/pages/employees"));
+const Tutorial = lazy(() => import("@/pages/tutorial"));
+const Shop = lazy(() => import("@/pages/shop"));
+const Profile = lazy(() => import("@/pages/profile"));
+const DeliveryApps = lazy(() => import("@/pages/delivery-apps"));
+const DeliveryAppProfitability = lazy(() => import("@/pages/delivery-app-profitability"));
+const SalesComparison = lazy(() => import("@/pages/sales-comparison"));
+const Investors = lazy(() => import("@/pages/investors"));
+const Support = lazy(() => import("@/pages/support"));
+const SupportDetail = lazy(() => import("@/pages/support-detail"));
+const ITDashboard = lazy(() => import("@/pages/it-dashboard"));
+const Performance = lazy(() => import("@/pages/performance"));
+const ITAccountManagement = lazy(() => import("@/pages/it-account-management"));
+const BusinessManagement = lazy(() => import("@/pages/business-management"));
+const Chat = lazy(() => import("@/pages/chat"));
+const PaymentTest = lazy(() => import("@/pages/payment-test"));
+const PasswordManager = lazy(() => import("@/pages/password-manager"));
+const Licenses = lazy(() => import("@/pages/licenses"));
+const Violations = lazy(() => import("@/pages/violations"));
+const Login = lazy(() => import("@/pages/login"));
+const ForgotPassword = lazy(() => import("@/pages/forgot-password"));
+const ResetPassword = lazy(() => import("@/pages/reset-password"));
+const EmergencyReset = lazy(() => import("@/pages/emergency-reset"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+
+// Loading fallback component for lazy-loaded pages
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
 function Router() {
   return (
-    <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/inventory" component={Inventory} />
-      <Route path="/menu" component={Menu} />
-      <Route path="/recipes" component={Recipes} />
-      <Route path="/licenses" component={Licenses} />
-      <Route path="/customers" component={Customers} />
-      <Route path="/sales" component={Sales} />
-      <Route path="/reports" component={Reports} />
-      <Route path="/forecasting" component={Forecasting} />
-      <Route path="/analysis" component={Analysis} />
-      <Route path="/profitability" component={Profitability} />
-      <Route path="/financial" component={Financial} />
-      <Route path="/invoices" component={Invoices} />
-      <Route path="/vat-reports" component={VatReports} />
-      <Route path="/bills" component={Bills} />
-      <Route path="/violations" component={Violations} />
-      <Route path="/pos" component={POS} />
-      <Route path="/branches" component={Branches} />
-      <Route path="/orders" component={Orders} />
-      <Route path="/kitchen" component={Kitchen} />
-      <Route path="/procurement" component={Procurement} />
-      <Route path="/settings" component={SettingsPage} />
-      <Route path="/employees" component={Employees} />
-      <Route path="/password-manager" component={PasswordManager} />
-      <Route path="/tutorial" component={Tutorial} />
-      <Route path="/shop" component={Shop} />
-      <Route path="/profile" component={Profile} />
-      <Route path="/delivery-apps" component={DeliveryApps} />
-      <Route path="/delivery-app-profitability" component={DeliveryAppProfitability} />
-      <Route path="/sales-comparison" component={SalesComparison} />
-      <Route path="/investors" component={Investors} />
-      <Route path="/support" component={Support} />
-      <Route path="/support/:id" component={SupportDetail} />
-      <Route path="/it-dashboard" component={ITDashboard} />
-      <Route path="/performance" component={Performance} />
-      <Route path="/it-account-management" component={ITAccountManagement} />
-      <Route path="/business-management" component={BusinessManagement} />
-      <Route path="/chat" component={Chat} />
-      <Route path="/payment-test" component={PaymentTest} />
-      <Route component={NotFound} />
-    </Switch>
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/inventory" component={Inventory} />
+        <Route path="/menu" component={Menu} />
+        <Route path="/recipes" component={Recipes} />
+        <Route path="/licenses" component={Licenses} />
+        <Route path="/customers" component={Customers} />
+        <Route path="/sales" component={Sales} />
+        <Route path="/reports" component={Reports} />
+        <Route path="/forecasting" component={Forecasting} />
+        <Route path="/analysis" component={Analysis} />
+        <Route path="/profitability" component={Profitability} />
+        <Route path="/financial" component={Financial} />
+        <Route path="/invoices" component={Invoices} />
+        <Route path="/vat-reports" component={VatReports} />
+        <Route path="/bills" component={Bills} />
+        <Route path="/violations" component={Violations} />
+        <Route path="/pos" component={POS} />
+        <Route path="/branches" component={Branches} />
+        <Route path="/orders" component={Orders} />
+        <Route path="/kitchen" component={Kitchen} />
+        <Route path="/procurement" component={Procurement} />
+        <Route path="/settings" component={SettingsPage} />
+        <Route path="/employees" component={Employees} />
+        <Route path="/password-manager" component={PasswordManager} />
+        <Route path="/tutorial" component={Tutorial} />
+        <Route path="/shop" component={Shop} />
+        <Route path="/profile" component={Profile} />
+        <Route path="/delivery-apps" component={DeliveryApps} />
+        <Route path="/delivery-app-profitability" component={DeliveryAppProfitability} />
+        <Route path="/sales-comparison" component={SalesComparison} />
+        <Route path="/investors" component={Investors} />
+        <Route path="/support" component={Support} />
+        <Route path="/support/:id" component={SupportDetail} />
+        <Route path="/it-dashboard" component={ITDashboard} />
+        <Route path="/performance" component={Performance} />
+        <Route path="/it-account-management" component={ITAccountManagement} />
+        <Route path="/business-management" component={BusinessManagement} />
+        <Route path="/chat" component={Chat} />
+        <Route path="/payment-test" component={PaymentTest} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
@@ -265,13 +281,13 @@ function AppContent() {
 
   // Handle public routes (forgot-password, reset-password, emergency-reset) before checking authentication
   if (location === "/forgot-password") {
-    return <ForgotPassword />;
+    return <Suspense fallback={<PageLoader />}><ForgotPassword /></Suspense>;
   }
   if (location === "/reset-password") {
-    return <ResetPassword />;
+    return <Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>;
   }
   if (location === "/emergency-reset") {
-    return <EmergencyReset />;
+    return <Suspense fallback={<PageLoader />}><EmergencyReset /></Suspense>;
   }
 
   // Show loading state
@@ -288,7 +304,7 @@ function AppContent() {
 
   // Show login page if not authenticated
   if (!user) {
-    return <Login />;
+    return <Suspense fallback={<PageLoader />}><Login /></Suspense>;
   }
 
   // Show main app if authenticated with device-responsive layout
