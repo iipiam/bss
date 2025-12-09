@@ -1,0 +1,678 @@
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, Shield, AlertCircle, CheckCircle2, Settings, KeyRound, FileText, RefreshCw, Clock, XCircle, Info } from "lucide-react";
+
+interface ZatcaSettings {
+  id: string;
+  restaurantId: string;
+  environment: string;
+  csrCommonName: string | null;
+  csrOrganizationName: string | null;
+  csrOrganizationIdentifier: string | null;
+  csrOrganizationUnitName: string | null;
+  csrCountryName: string | null;
+  csrSerialNumber: string | null;
+  csrInvoiceType: string | null;
+  streetName: string | null;
+  buildingNumber: string | null;
+  citySubdivision: string | null;
+  city: string | null;
+  postalZone: string | null;
+  countryCode: string | null;
+  crNumber: string | null;
+  csr: string | null;
+  privateKey: string | null;
+  complianceCsid: string | null;
+  complianceCsidSecret: string | null;
+  productionCsid: string | null;
+  productionCsidSecret: string | null;
+  onboardingStatus: string;
+  lastHashedInvoice: string | null;
+  invoiceCounter: number;
+}
+
+interface InvoiceZatcaStatus {
+  id: string;
+  invoiceId: string;
+  invoiceNumber: string;
+  status: string;
+  zatcaResponse: string | null;
+  errorMessage: string | null;
+  submittedAt: string | null;
+}
+
+export default function ZatcaSettingsPage() {
+  const { t, isRTL } = useLanguage();
+  const { isLoading: authLoading, user } = useAuth();
+  const { toast } = useToast();
+  
+  const [formData, setFormData] = useState<Partial<ZatcaSettings>>({
+    environment: "sandbox",
+    csrCountryName: "SA",
+    countryCode: "SA",
+    csrInvoiceType: "1100",
+    onboardingStatus: "not_started"
+  });
+  const [otp, setOtp] = useState("");
+  const [complianceRequestId, setComplianceRequestId] = useState("");
+
+  const { data: settings, isLoading } = useQuery<ZatcaSettings | null>({
+    queryKey: ["/api/zatca/settings"],
+    enabled: !authLoading && !!user?.restaurantId,
+    retry: false,
+  });
+
+  const { data: invoiceStatuses } = useQuery<InvoiceZatcaStatus[]>({
+    queryKey: ["/api/zatca/invoices"],
+    enabled: !authLoading && !!user?.restaurantId,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (settings) {
+      setFormData(settings);
+    }
+  }, [settings]);
+
+  const saveMutation = useMutation({
+    mutationFn: async (data: Partial<ZatcaSettings>) => {
+      await apiRequest("POST", "/api/zatca/settings", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings"] });
+      toast({
+        title: t.success || "Success",
+        description: t.zatcaSettingsSaved || "ZATCA settings saved successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateCsrMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/zatca/generate-csr", {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings"] });
+      toast({
+        title: t.success || "Success",
+        description: t.csrGenerated || "CSR generated successfully. Ready for onboarding.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onboardMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/zatca/onboard", { otp });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings"] });
+      if (data.complianceRequestId) {
+        setComplianceRequestId(data.complianceRequestId);
+      }
+      toast({
+        title: t.success || "Success",
+        description: t.onboardingSuccess || "Successfully onboarded to ZATCA. Compliance CSID received.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const productionCsidMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/zatca/production-csid", { complianceRequestId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings"] });
+      toast({
+        title: t.success || "Success",
+        description: t.productionCsidSuccess || "Production CSID received. ZATCA integration is now active.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const retryPendingMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/zatca/retry-pending", {});
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/zatca/invoices"] });
+      toast({
+        title: t.success || "Success",
+        description: `Processed ${data.processed} invoices. ${data.successful} successful, ${data.failed} failed.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleChange = (field: keyof ZatcaSettings, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveMutation.mutate(formData);
+  };
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "not_started":
+        return <Badge variant="secondary" data-testid="badge-status-not-started"><Clock className="w-3 h-3 mr-1" />{t.notStarted || "Not Started"}</Badge>;
+      case "csr_generated":
+        return <Badge variant="outline" data-testid="badge-status-csr-generated"><Settings className="w-3 h-3 mr-1" />{t.csrGenerated || "CSR Generated"}</Badge>;
+      case "compliance_received":
+        return <Badge variant="default" className="bg-yellow-500" data-testid="badge-status-compliance"><AlertCircle className="w-3 h-3 mr-1" />{t.complianceReceived || "Compliance CSID"}</Badge>;
+      case "production_ready":
+        return <Badge variant="default" className="bg-green-500" data-testid="badge-status-production"><CheckCircle2 className="w-3 h-3 mr-1" />{t.productionReady || "Production Ready"}</Badge>;
+      default:
+        return <Badge variant="secondary" data-testid="badge-status-unknown">{status}</Badge>;
+    }
+  };
+
+  const getInvoiceStatusBadge = (status: string) => {
+    switch (status) {
+      case "pending":
+        return <Badge variant="secondary" data-testid={`badge-invoice-pending`}><Clock className="w-3 h-3 mr-1" />{t.pending || "Pending"}</Badge>;
+      case "submitted":
+        return <Badge variant="default" className="bg-blue-500" data-testid={`badge-invoice-submitted`}><RefreshCw className="w-3 h-3 mr-1" />{(t as any).submitted || "Submitted"}</Badge>;
+      case "cleared":
+        return <Badge variant="default" className="bg-green-500" data-testid={`badge-invoice-cleared`}><CheckCircle2 className="w-3 h-3 mr-1" />{t.cleared || "Cleared"}</Badge>;
+      case "reported":
+        return <Badge variant="default" className="bg-green-500" data-testid={`badge-invoice-reported`}><CheckCircle2 className="w-3 h-3 mr-1" />{t.reported || "Reported"}</Badge>;
+      case "rejected":
+        return <Badge variant="destructive" data-testid={`badge-invoice-rejected`}><XCircle className="w-3 h-3 mr-1" />{t.rejected || "Rejected"}</Badge>;
+      case "failed":
+        return <Badge variant="destructive" data-testid={`badge-invoice-failed`}><XCircle className="w-3 h-3 mr-1" />{(t as any).failed || "Failed"}</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
+  const pendingCount = invoiceStatuses?.filter(s => s.status === "pending").length || 0;
+  const clearedCount = invoiceStatuses?.filter(s => s.status === "cleared" || s.status === "reported").length || 0;
+  const failedCount = invoiceStatuses?.filter(s => s.status === "rejected" || s.status === "failed").length || 0;
+
+  return (
+    <div className={`container mx-auto p-6 max-w-4xl ${isRTL ? "rtl" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
+      <div className="flex items-center gap-3 mb-6">
+        <Shield className="h-8 w-8 text-primary" />
+        <div>
+          <h1 className="text-2xl font-bold" data-testid="text-page-title">{t.zatcaSettings || "ZATCA E-Invoicing Settings"}</h1>
+          <p className="text-muted-foreground">{t.zatcaSettingsDescription || "Configure your ZATCA Phase 2 e-invoicing integration"}</p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 mb-6">
+        <span className="text-sm font-medium">{t.onboardingStatus || "Onboarding Status"}:</span>
+        {getStatusBadge(settings?.onboardingStatus || "not_started")}
+      </div>
+
+      <Tabs defaultValue="settings" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="settings" data-testid="tab-settings">
+            <Settings className="w-4 h-4 mr-2" />
+            {t.settings || "Settings"}
+          </TabsTrigger>
+          <TabsTrigger value="onboarding" data-testid="tab-onboarding">
+            <KeyRound className="w-4 h-4 mr-2" />
+            {t.onboarding || "Onboarding"}
+          </TabsTrigger>
+          <TabsTrigger value="invoices" data-testid="tab-invoices">
+            <FileText className="w-4 h-4 mr-2" />
+            {t.invoices || "Invoices"}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="settings">
+          <form onSubmit={handleSubmit}>
+            <Card>
+              <CardHeader>
+                <CardTitle>{t.organizationDetails || "Organization Details"}</CardTitle>
+                <CardDescription>{t.organizationDetailsDescription || "Configure your organization information for ZATCA certificate generation"}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="environment">{t.environment || "Environment"}</Label>
+                    <Select
+                      value={formData.environment || "sandbox"}
+                      onValueChange={(value) => handleChange("environment", value)}
+                    >
+                      <SelectTrigger id="environment" data-testid="select-environment">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sandbox">{t.sandbox || "Sandbox (Testing)"}</SelectItem>
+                        <SelectItem value="production">{t.production || "Production"}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="csrInvoiceType">{t.invoiceType || "Invoice Type"}</Label>
+                    <Select
+                      value={formData.csrInvoiceType || "1100"}
+                      onValueChange={(value) => handleChange("csrInvoiceType", value)}
+                    >
+                      <SelectTrigger id="csrInvoiceType" data-testid="select-invoice-type">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1000">{t.b2bOnly || "B2B Only (Standard)"}</SelectItem>
+                        <SelectItem value="0100">{t.b2cOnly || "B2C Only (Simplified)"}</SelectItem>
+                        <SelectItem value="1100">{t.bothB2bB2c || "Both B2B & B2C"}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="csrCommonName">{t.commonName || "Common Name"}</Label>
+                    <Input
+                      id="csrCommonName"
+                      value={formData.csrCommonName || ""}
+                      onChange={(e) => handleChange("csrCommonName", e.target.value)}
+                      placeholder={t.enterCommonName || "e.g., EGS1-TST-886431145-399900000000001"}
+                      data-testid="input-common-name"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="csrOrganizationName">{t.organizationName || "Organization Name"}</Label>
+                    <Input
+                      id="csrOrganizationName"
+                      value={formData.csrOrganizationName || ""}
+                      onChange={(e) => handleChange("csrOrganizationName", e.target.value)}
+                      placeholder={t.enterOrganizationName || "Your company name"}
+                      data-testid="input-organization-name"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="csrOrganizationIdentifier">{t.vatNumber || "VAT Number"}</Label>
+                    <Input
+                      id="csrOrganizationIdentifier"
+                      value={formData.csrOrganizationIdentifier || ""}
+                      onChange={(e) => handleChange("csrOrganizationIdentifier", e.target.value)}
+                      placeholder={t.enterVatNumber || "e.g., 300000000000003"}
+                      data-testid="input-vat-number"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="csrOrganizationUnitName">{t.branchName || "Branch/Unit Name"}</Label>
+                    <Input
+                      id="csrOrganizationUnitName"
+                      value={formData.csrOrganizationUnitName || ""}
+                      onChange={(e) => handleChange("csrOrganizationUnitName", e.target.value)}
+                      placeholder={t.enterBranchName || "Main Branch"}
+                      data-testid="input-branch-name"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="csrSerialNumber">{t.deviceSerialNumber || "Device Serial Number"}</Label>
+                    <Input
+                      id="csrSerialNumber"
+                      value={formData.csrSerialNumber || ""}
+                      onChange={(e) => handleChange("csrSerialNumber", e.target.value)}
+                      placeholder={t.enterDeviceSerial || "e.g., 1-TST|2-TST|3-ed22f1d8-e6a2-1118-9b58-d9a8195e05"}
+                      data-testid="input-device-serial"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="crNumber">{t.commercialRegistration || "Commercial Registration"}</Label>
+                    <Input
+                      id="crNumber"
+                      value={formData.crNumber || ""}
+                      onChange={(e) => handleChange("crNumber", e.target.value)}
+                      placeholder={t.enterCrNumber || "e.g., 3100000000"}
+                      data-testid="input-cr-number"
+                    />
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">{t.businessAddress || "Business Address"}</h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="streetName">{t.streetName || "Street Name"}</Label>
+                      <Input
+                        id="streetName"
+                        value={formData.streetName || ""}
+                        onChange={(e) => handleChange("streetName", e.target.value)}
+                        placeholder={t.enterStreetName || "King Fahd Road"}
+                        data-testid="input-street-name"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="buildingNumber">{t.buildingNumber || "Building Number"}</Label>
+                      <Input
+                        id="buildingNumber"
+                        value={formData.buildingNumber || ""}
+                        onChange={(e) => handleChange("buildingNumber", e.target.value)}
+                        placeholder={t.enterBuildingNumber || "1234"}
+                        data-testid="input-building-number"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="citySubdivision">{t.district || "District"}</Label>
+                      <Input
+                        id="citySubdivision"
+                        value={formData.citySubdivision || ""}
+                        onChange={(e) => handleChange("citySubdivision", e.target.value)}
+                        placeholder={t.enterDistrict || "Al Olaya"}
+                        data-testid="input-district"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="city">{t.city || "City"}</Label>
+                      <Input
+                        id="city"
+                        value={formData.city || ""}
+                        onChange={(e) => handleChange("city", e.target.value)}
+                        placeholder={t.enterCity || "Riyadh"}
+                        data-testid="input-city"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="postalZone">{t.postalCode || "Postal Code"}</Label>
+                      <Input
+                        id="postalZone"
+                        value={formData.postalZone || ""}
+                        onChange={(e) => handleChange("postalZone", e.target.value)}
+                        placeholder={t.enterPostalCode || "12345"}
+                        data-testid="input-postal-code"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="countryCode">{t.countryCode || "Country Code"}</Label>
+                      <Input
+                        id="countryCode"
+                        value={formData.countryCode || "SA"}
+                        onChange={(e) => handleChange("countryCode", e.target.value)}
+                        placeholder="SA"
+                        data-testid="input-country-code"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-4">
+                  <Button
+                    type="submit"
+                    disabled={saveMutation.isPending}
+                    data-testid="button-save-settings"
+                  >
+                    {saveMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    {(t as any).saveSettings || "Save Settings"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </form>
+        </TabsContent>
+
+        <TabsContent value="onboarding">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold">1</span>
+                  {t.generateCsr || "Generate CSR"}
+                </CardTitle>
+                <CardDescription>{t.generateCsrDescription || "Generate a Certificate Signing Request based on your settings"}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4">
+                  <Button
+                    onClick={() => generateCsrMutation.mutate()}
+                    disabled={generateCsrMutation.isPending || !settings}
+                    data-testid="button-generate-csr"
+                  >
+                    {generateCsrMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    {t.generateCsr || "Generate CSR"}
+                  </Button>
+                  {settings?.csr && (
+                    <Badge variant="default" className="bg-green-500">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      {t.csrReady || "CSR Ready"}
+                    </Badge>
+                  )}
+                </div>
+                {!settings && (
+                  <Alert className="mt-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>{t.settingsRequired || "Settings Required"}</AlertTitle>
+                    <AlertDescription>{t.saveSettingsFirst || "Please save your organization settings first."}</AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold">2</span>
+                  {t.requestComplianceCsid || "Request Compliance CSID"}
+                </CardTitle>
+                <CardDescription>{t.requestComplianceCsidDescription || "Submit your CSR to ZATCA to receive a compliance certificate"}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>{t.otpRequired || "OTP Required"}</AlertTitle>
+                  <AlertDescription>{t.otpInstructions || "You need to request an OTP from ZATCA portal (fatoora.zatca.gov.sa) before proceeding."}</AlertDescription>
+                </Alert>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <Label htmlFor="otp">{t.enterOtp || "Enter OTP"}</Label>
+                    <Input
+                      id="otp"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      placeholder="123456"
+                      maxLength={6}
+                      data-testid="input-otp"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => onboardMutation.mutate()}
+                    disabled={onboardMutation.isPending || !settings?.csr || !otp}
+                    className="mt-6"
+                    data-testid="button-request-compliance"
+                  >
+                    {onboardMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    {t.requestCsid || "Request CSID"}
+                  </Button>
+                </div>
+                {settings?.complianceCsid && (
+                  <Badge variant="default" className="bg-green-500">
+                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                    {t.complianceCsidReceived || "Compliance CSID Received"}
+                  </Badge>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold">3</span>
+                  {t.requestProductionCsid || "Request Production CSID"}
+                </CardTitle>
+                <CardDescription>{t.requestProductionCsidDescription || "Complete compliance checks and receive your production certificate"}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <Label htmlFor="complianceRequestId">{t.complianceRequestId || "Compliance Request ID"}</Label>
+                    <Input
+                      id="complianceRequestId"
+                      value={complianceRequestId}
+                      onChange={(e) => setComplianceRequestId(e.target.value)}
+                      placeholder={t.enterComplianceRequestId || "From step 2"}
+                      data-testid="input-compliance-request-id"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => productionCsidMutation.mutate()}
+                    disabled={productionCsidMutation.isPending || !settings?.complianceCsid || !complianceRequestId}
+                    className="mt-6"
+                    data-testid="button-request-production"
+                  >
+                    {productionCsidMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    {t.requestProductionCsid || "Request Production CSID"}
+                  </Button>
+                </div>
+                {settings?.productionCsid && (
+                  <Badge variant="default" className="bg-green-500">
+                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                    {t.productionCsidReceived || "Production CSID Received"}
+                  </Badge>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="invoices">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>{t.invoiceSubmissionStatus || "Invoice Submission Status"}</span>
+                <Button
+                  variant="outline"
+                  onClick={() => retryPendingMutation.mutate()}
+                  disabled={retryPendingMutation.isPending || pendingCount === 0}
+                  data-testid="button-retry-pending"
+                >
+                  {retryPendingMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  {t.retryPending || "Retry Pending"} ({pendingCount})
+                </Button>
+              </CardTitle>
+              <CardDescription>{t.invoiceSubmissionDescription || "Track the status of invoices submitted to ZATCA"}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold text-yellow-500" data-testid="text-pending-count">{pendingCount}</div>
+                    <p className="text-sm text-muted-foreground">{t.pending || "Pending"}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold text-green-500" data-testid="text-cleared-count">{clearedCount}</div>
+                    <p className="text-sm text-muted-foreground">{t.cleared || "Cleared/Reported"}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold text-red-500" data-testid="text-failed-count">{failedCount}</div>
+                    <p className="text-sm text-muted-foreground">{t.failed || "Failed/Rejected"}</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {invoiceStatuses && invoiceStatuses.length > 0 ? (
+                <div className="space-y-2">
+                  {invoiceStatuses.slice(0, 20).map((invoice) => (
+                    <div 
+                      key={invoice.id} 
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                      data-testid={`row-invoice-${invoice.id}`}
+                    >
+                      <div>
+                        <span className="font-medium">{invoice.invoiceNumber}</span>
+                        {invoice.submittedAt && (
+                          <span className="text-sm text-muted-foreground ml-2">
+                            {new Date(invoice.submittedAt).toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-4">
+                        {getInvoiceStatusBadge(invoice.status)}
+                        {invoice.errorMessage && (
+                          <span className="text-sm text-red-500 max-w-xs truncate" title={invoice.errorMessage}>
+                            {invoice.errorMessage}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>{t.noInvoicesYet || "No invoices submitted to ZATCA yet"}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

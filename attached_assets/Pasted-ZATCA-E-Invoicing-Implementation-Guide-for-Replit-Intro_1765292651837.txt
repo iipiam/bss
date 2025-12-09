@@ -1,0 +1,318 @@
+ZATCA E-Invoicing Implementation Guide for Replit
+
+Introduction
+
+This document provides a comprehensive guide for developers on Replit to implement ZATCA (Zakat, Tax and Customs Authority) e-invoicing regulations for an e-commerce application operating in Saudi Arabia. Adherence to these regulations is mandatory for all businesses in the region. This guide breaks down the technical requirements and provides a step-by-step approach to ensure a compliant implementation.
+
+High-Level E-Invoicing Workflow
+
+The ZATCA e-invoicing process can be summarized in the following steps:
+
+1.
+Customer places an order: The e-commerce application receives an order and payment.
+
+2.
+Invoice data is collected: All necessary information for the invoice is gathered from the order details.
+
+3.
+XML invoice is generated: An XML file is created in the format specified by ZATCA.
+
+4.
+Cryptographic signing: The XML invoice is digitally signed using a certificate obtained from ZATCA.
+
+5.
+QR code is generated: A QR code containing key invoice information is created.
+
+6.
+API submission: The signed XML invoice is submitted to the ZATCA API for clearance or reporting.
+
+7.
+Response handling: The application processes the response from the ZATCA API, handling any errors or warnings.
+
+8.
+Invoice issuance: The cleared and stamped invoice is issued to the customer.
+
+Prerequisites
+
+Before beginning the implementation, ensure the following prerequisites are met:
+
+•
+ZATCA Developer Portal Account: Register for an account on the ZATCA Developer Portal to access the necessary tools, documentation, and API credentials.
+
+•
+Programming Language and Libraries: Choose a suitable backend programming language available on Replit (e.g., Python, Node.js) and install the necessary libraries for:
+
+•
+XML generation and parsing
+
+•
+HTTP requests (for API communication)
+
+•
+Cryptographic operations (SHA-256 hashing, digital signatures)
+
+•
+Base64 encoding
+
+•
+QR code generation
+
+
+
+Phase 1: Invoice Data Generation & XML Creation
+
+The first step is to generate an XML invoice that complies with ZATCA's standards. This involves collecting the required data from each order and structuring it correctly in an XML file.
+
+Data Requirements
+
+The following table outlines the mandatory data fields for a standard e-invoice. Refer to the official ZATCA Data Dictionary for a complete list and detailed descriptions.
+
+Category
+Field Name
+Description
+Seller Details
+Seller Name
+The legal name of the seller.
+
+
+Seller TIN
+The seller's Tax Identification Number.
+
+
+Seller Address
+The physical address of the seller.
+Buyer Details
+Buyer Name
+The legal name of the buyer.
+
+
+Buyer TIN
+The buyer's Tax Identification Number (if applicable).
+
+
+Buyer Address
+The shipping or billing address of the buyer.
+Invoice Details
+Invoice Number
+A unique identifier for the invoice.
+
+
+Issue Date & Time
+The date and time the invoice was issued.
+
+
+Line Items
+A list of products or services, including description, quantity, unit price, and tax.
+
+
+Total Amount
+The total amount of the invoice, including taxes.
+
+
+VAT Amount
+The total Value Added Tax amount.
+
+
+XML Generation
+
+Once the data is collected, it must be formatted into an XML file according to the ZATCA XML Implementation Standard. The XML structure is hierarchical, with specific tags for each data field. It is crucial to follow the schema precisely to avoid validation errors.
+
+Phase 2: Cryptographic Operations
+
+To ensure the authenticity and integrity of e-invoices, ZATCA requires several cryptographic operations to be performed.
+
+Certificate Acquisition
+
+•
+Compliance Cryptographic Stamp Identifier (CCSID): For testing purposes, you will need to obtain a CCSID from the ZATCA Developer Portal. This is used to sign invoices submitted to the integration sandbox.
+
+•
+Production CSID: Once testing is complete, you will need to request a Production CSID for signing live invoices.
+
+Invoice Hashing and Signing
+
+1.
+Generate Invoice Hash: Create a SHA-256 hash of the canonicalized XML invoice file.
+
+2.
+Digitally Sign: Use the private key associated with your CSID to sign the invoice hash. The resulting digital signature must be embedded within the XML invoice in the designated fields.
+
+QR Code Generation
+
+A QR code must be generated and included in the invoice. The QR code must contain the following information:
+
+•
+Seller's Name
+
+•
+Seller's TIN
+
+•
+Invoice Timestamp
+
+•
+Invoice Total Amount (with VAT)
+
+•
+VAT Amount
+
+•
+Invoice Hash
+
+•
+Digital Signature
+
+Phase 3: API Integration
+
+With the signed XML invoice ready, the next step is to integrate with the ZATCA APIs.
+
+API Endpoints
+
+ZATCA provides several API endpoints for different purposes:
+
+•
+Onboarding APIs: Used to obtain and manage your CSIDs.
+
+•
+Reporting API: Used for submitting simplified invoices.
+
+•
+Clearance API: Used for submitting standard invoices for real-time clearance.
+
+API Submission Process
+
+1.
+Base64 Encoding: Before submitting the invoice via the API, the entire signed XML file must be encoded in Base64.
+
+2.
+API Request: Create an HTTP POST request to the appropriate ZATCA API endpoint. The request body should be a JSON object containing the Base64-encoded invoice and other required metadata.
+
+3.
+API Response: The ZATCA API will respond with a JSON object indicating the status of the submission. A successful submission will return a 200 OK status and a clearance stamp (for the Clearance API).
+
+Phase 4: Validation and Error Handling
+
+Thorough validation and robust error handling are critical for a successful implementation.
+
+Validation
+
+•
+ZATCA SDK: Use the ZATCA SDK (available on the Developer Portal) to validate your XML invoices locally before submitting them to the API. This can help you catch and fix errors early in the development process.
+
+•
+Web-Based Validator: The Developer Portal also provides a web-based tool for validating XML invoices.
+
+Error Handling
+
+The ZATCA API will return different HTTP status codes and error messages to indicate issues with your submission. Your application should be able to handle these responses gracefully.
+
+Status Code
+Meaning
+Action
+200 OK
+Success
+The invoice was successfully submitted and cleared.
+400 Bad Request
+Validation Error
+The invoice failed validation. Check the error messages for details.
+303 See Other
+Clearance Disabled
+Use the Reporting API instead of the Clearance API.
+
+
+Phase 5: Testing and Deployment
+
+Sandbox Testing
+
+Before going live, you must thoroughly test your implementation in the ZATCA integration sandbox. Use your CCSID to submit test invoices and ensure that your application can handle the entire e-invoicing workflow correctly.
+
+Production Deployment
+
+Once you are confident that your implementation is working correctly, you can deploy it to your production environment on Replit. Remember to switch from the CCSID to your Production CSID for signing live invoices.
+
+Implementation Checklist
+
+
+
+
+Set up a ZATCA Developer Portal account.
+
+
+
+
+Choose a backend language and install necessary libraries on Replit.
+
+
+
+
+Implement a process for collecting all mandatory invoice data.
+
+
+
+
+Generate ZATCA-compliant XML invoices.
+
+
+
+
+Obtain a CCSID for testing.
+
+
+
+
+Implement SHA-256 invoice hashing.
+
+
+
+
+Implement digital signing of invoices.
+
+
+
+
+Generate QR codes with the required information.
+
+
+
+
+Implement Base64 encoding of XML invoices.
+
+
+
+
+Integrate with the ZATCA Onboarding and Reporting/Clearance APIs.
+
+
+
+
+Implement robust error handling for API responses.
+
+
+
+
+Thoroughly test the implementation in the ZATCA sandbox.
+
+
+
+
+Obtain a Production CSID.
+
+
+
+
+Deploy the application to production on Replit.
+
+References
+
+•
+[1] ZATCA Developer Portal
+
+•
+[2] ZATCA E-Invoice XML Implementation Standard
+
+•
+[3] ZATCA E-Invoice Security Features and Implementation Standards
+
+•
+[4] ZATCA E-Invoice Data Dictionary
+

@@ -35,6 +35,7 @@ import {
   CheckCircle,
   XCircle,
   Printer,
+  Shield,
 } from "lucide-react";
 import logoImage from "@assets/kinzhal-eagle-logo.jpeg";
 import {
@@ -149,6 +150,7 @@ export function AppSidebar() {
     { title: t.support || "Support", url: "/support", icon: HeadphonesIcon, testId: "support", gradient: "from-emerald-500 to-teal-500" },
     { title: t.settings, url: "/settings", icon: Settings, testId: "settings", gradient: "from-slate-500 to-gray-500", permission: 'settings' },
     { title: t.printers || "Printers", url: "/printer-settings", icon: Printer, testId: "printer-settings", gradient: "from-teal-500 to-cyan-500", permission: 'settings' },
+    { title: (t as any).zatcaSettings || "ZATCA E-Invoicing", url: "/zatca-settings", icon: Shield, testId: "zatca-settings", gradient: "from-green-600 to-emerald-500", permission: 'settings' },
     { title: t.employees, url: "/employees", icon: Users, testId: "employees", gradient: "from-sky-500 to-blue-500", permission: 'users' },
     { title: "Password Manager", url: "/password-manager", icon: Key, testId: "password-manager", gradient: "from-red-500 to-rose-500" },
   ];
