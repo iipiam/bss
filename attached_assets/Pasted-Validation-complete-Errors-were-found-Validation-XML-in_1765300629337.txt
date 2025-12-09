@@ -1,0 +1,68 @@
+Validation complete. Errors were found
+
+Validation XML
+invoice-INV-ORD-1765271076293 (2).xml
+
+Valid: false
+
+Errors
+category:
+SIGNATURE_ERROR
+code:
+certificate
+message:
+wrong invoiceCertificate
+category:
+QR_CODE_ERROR
+code:
+QRCODE_INVALID
+message:
+Invalid QR code format, Please follow the ZATCA QR code specifications
+category:
+SIGNATURE_ERROR
+code:
+NullPointerException
+message:
+category:
+BR_KSA_ERROR
+code:
+BR-KSA-30
+message:
+The document cryptographic stamp (KSA-15) must contain the exact “urn:oasis:names:specification:ubl:dsig:enveloped:xades” value for signature method.
+category:
+BR_KSA_ERROR
+code:
+BR-KSA-28
+message:
+If the cryptographic stamp (KSA-15) exists in the invoice, this cryptographic stamp (KSA-15) must contain the exact “urn:oasis:names:specification:ubl:signature:1” value for signature information ID.
+Warnings
+category:
+BR_KSA_WARNING
+code:
+BR-KSA-29
+message:
+If the cryptographic stamp (KSA-15) exists in the invoice, this cryptographic stamp (KSA-15) must contain the exact “urn:oasis:names:specification:ubl:signature:Invoice” value for referenced signature ID and signature ID.
+category:
+BR_WARNING
+code:
+BR-CO-10
+message:
+Sum of Invoice line net amount (BT-106)
+category:
+BR_KSA_WARNING
+code:
+BR-KSA-60
+message:
+[BR-KSA-60]-Cryptographic stamp (KSA-15) must exist in simplified tax invoices and associated credit notes and debit notes (KSA-2, position 1 and 2 = 02).
+category:
+BR_WARNING
+code:
+BR-CO-13
+message:
+Invoice total amount without VAT (BT-109) = S Invoice line net amount (BT-131) - Sum of allowances on document level (BT-107) + Sum of charges on document level (BT-108).
+category:
+BR_WARNING
+code:
+BR-S-08
+message:
+[BR-S-08]-In a VAT breakdown (BG-23) where the VAT category code (BT-118) is ' Standard rated' the VAT category taxable amount (BT-116) shall equal the sum of Invoice line net amounts (BT-131) minus the sum of Document level allowance amounts (BT-92) plus the sum of Document level charge amounts (BT-99) where the VAT category codes (BT-151, BT-95, BT-102) are 'Standard Rate'.

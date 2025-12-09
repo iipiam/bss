@@ -514,15 +514,26 @@ export function generateUnsignedInvoiceXml(data: Omit<ZatcaInvoiceData, 'qrCode'
   
   const taxTotal = generateTaxTotal(subtotal, vatAmount);
   const legalMonetaryTotal = generateLegalMonetaryTotal(subtotal, subtotal, total, total, discount);
-  const additionalDocRefs = generateAdditionalDocumentReference(invoiceCounter, uuid, previousInvoiceHash, qrCode);
   const supplierParty = generateAccountingSupplierParty(sellerInfo);
   const customerParty = buyerInfo ? generateAccountingCustomerParty(buyerInfo) : "";
   
+  // Generate QR-only additional document reference (no PIH for Phase 1 simplified)
+  const qrRef = `
+  <cac:AdditionalDocumentReference>
+    <cbc:ID>ICV</cbc:ID>
+    <cbc:UUID>${invoiceCounter}</cbc:UUID>
+  </cac:AdditionalDocumentReference>
+  <cac:AdditionalDocumentReference>
+    <cbc:ID>QR</cbc:ID>
+    <cac:Attachment>
+      <cbc:EmbeddedDocumentBinaryObject mimeCode="text/plain">${qrCode}</cbc:EmbeddedDocumentBinaryObject>
+    </cac:Attachment>
+  </cac:AdditionalDocumentReference>`;
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="${ZATCA_XML_NAMESPACE.xmlns}"
          xmlns:cac="${ZATCA_XML_NAMESPACE["xmlns:cac"]}"
-         xmlns:cbc="${ZATCA_XML_NAMESPACE["xmlns:cbc"]}"
-         xmlns:ext="${ZATCA_XML_NAMESPACE["xmlns:ext"]}">
+         xmlns:cbc="${ZATCA_XML_NAMESPACE["xmlns:cbc"]}">
   <cbc:ProfileID>reporting:1.0</cbc:ProfileID>
   <cbc:ID>${escapeXml(invoiceNumber)}</cbc:ID>
   <cbc:UUID>${escapeXml(uuid)}</cbc:UUID>
@@ -531,7 +542,7 @@ export function generateUnsignedInvoiceXml(data: Omit<ZatcaInvoiceData, 'qrCode'
   <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>
   <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
   <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>
-  ${additionalDocRefs}
+  ${qrRef}
   ${supplierParty}
   ${customerParty}
   <cac:PaymentMeans>
