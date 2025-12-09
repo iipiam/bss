@@ -5012,6 +5012,86 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Download individual invoice XML (ZATCA-compliant UBL 2.1 format)
+  app.get("/api/invoices/:id/download-xml", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const invoice = await storage.getInvoice(req.params.id, restaurantId);
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+      
+      // Get restaurant settings for seller info
+      const restaurant = await storage.getRestaurant(restaurantId);
+      if (!restaurant) {
+        return res.status(404).json({ error: "Restaurant not found" });
+      }
+      
+      // Import the XML generator
+      const { generateUnsignedInvoiceXml } = await import("./zatca/xml-generator");
+      
+      // Parse invoice date
+      const invoiceDate = new Date(invoice.createdAt);
+      const issueDate = invoiceDate.toISOString().split('T')[0]; // YYYY-MM-DD
+      const issueTime = invoiceDate.toISOString().split('T')[1].split('.')[0]; // HH:MM:SS
+      
+      // Map invoice items to ZATCA format
+      const items = (invoice.items as Array<{ name: string; quantity: number; basePrice: number; vatAmount: number; total: number }>).map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: item.basePrice / item.quantity,
+        totalAmount: item.total,
+        taxCategory: "S" as const,
+        taxPercent: 15,
+      }));
+      
+      // Generate UUID for invoice (use invoice ID)
+      const uuid = invoice.id;
+      
+      // Build ZATCA invoice data
+      const zatcaData = {
+        invoiceNumber: invoice.invoiceNumber,
+        invoiceType: "simplified" as const,
+        invoiceSubType: "01" as const,
+        paymentMethod: "cash" as const,
+        subtotal: parseFloat(invoice.subtotal),
+        vatAmount: parseFloat(invoice.vatAmount),
+        total: parseFloat(invoice.total),
+        discount: 0,
+        items,
+        invoiceCounter: 1,
+        previousInvoiceHash: null,
+        uuid,
+        issueDate,
+        issueTime,
+        sellerInfo: {
+          name: restaurant.name,
+          vatNumber: restaurant.taxNumber || "300000000000003",
+          streetName: "Street Name",
+          buildingNumber: "1234",
+          citySubdivision: "District",
+          city: "Riyadh",
+          postalZone: "12345",
+          countryCode: "SA",
+          crNumber: restaurant.commercialRegistration || "0000000000",
+        },
+        buyerInfo: invoice.customerName ? {
+          name: invoice.customerName,
+        } : undefined,
+      };
+      
+      // Generate XML
+      const xml = generateUnsignedInvoiceXml(zatcaData);
+      
+      res.setHeader('Content-Type', 'application/xml');
+      res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoiceNumber}.xml`);
+      res.send(xml);
+    } catch (error) {
+      console.error("Invoice XML download error:", error);
+      res.status(500).json({ error: "Failed to generate invoice XML" });
+    }
+  });
+
   // Import routes with file upload (using static multer import from top of file)
   const upload = multer({ storage: multer.memoryStorage() });
 

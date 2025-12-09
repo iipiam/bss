@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Download, FileText } from "lucide-react";
+import { Search, Download, FileText, FileCode } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import type { Invoice } from "@shared/schema";
@@ -45,6 +45,36 @@ export default function Invoices() {
       toast({
         title: t.downloadFailed,
         description: error instanceof Error ? error.message : t.downloadInvoiceError,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadXml = async (invoice: Invoice) => {
+    try {
+      const response = await fetch(`/api/invoices/${invoice.id}/download-xml`);
+      if (!response.ok) {
+        throw new Error("Failed to download XML");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice-${invoice.invoiceNumber}.xml`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: t.invoiceDownloaded,
+        description: `${t.invoice} ${invoice.invoiceNumber} XML ${t.hasBeenDownloaded}`,
+      });
+    } catch (error) {
+      toast({
+        title: t.downloadFailed,
+        description: error instanceof Error ? error.message : (t as any).downloadXmlError || "Failed to download XML",
         variant: "destructive",
       });
     }
@@ -128,14 +158,23 @@ export default function Invoices() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDownload(invoice)}
-                          data-testid={`button-download-${invoice.id}`}
+                          data-testid={`button-download-pdf-${invoice.id}`}
                         >
                           <Download className="h-4 w-4 mr-1" />
-                          {t.download}
+                          PDF
                         </Button>
                       ) : (
                         <Badge variant="outline">{t.noPDF}</Badge>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDownloadXml(invoice)}
+                        data-testid={`button-download-xml-${invoice.id}`}
+                      >
+                        <FileCode className="h-4 w-4 mr-1" />
+                        XML
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
