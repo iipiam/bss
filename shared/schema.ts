@@ -1168,3 +1168,34 @@ export type ViolationStats = {
   byStatus: Array<{ status: string; count: number }>;
   monthlyTrend: Array<{ month: string; count: number; totalFees: number }>;
 };
+
+// Printers - Client-configured printers for receipt/invoice printing
+export const printers = pgTable("printers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  branchId: varchar("branch_id").references(() => branches.id), // Optional: assign to specific branch
+  name: text("name").notNull(), // e.g., "Kitchen Printer", "Receipt Printer"
+  printerType: text("printer_type").notNull(), // "thermal", "inkjet", "laser"
+  connectionType: text("connection_type").notNull(), // "network", "usb", "bluetooth"
+  ipAddress: text("ip_address"), // For network printers
+  port: integer("port").default(9100), // Default ESC/POS port
+  deviceName: text("device_name"), // For USB/Bluetooth printers
+  brand: text("brand"), // "epson", "star", "bixolon", "generic"
+  model: text("model"), // Specific model number
+  paperWidth: integer("paper_width").default(80), // Paper width in mm (58, 80)
+  isDefault: boolean("is_default").notNull().default(false), // Default printer for this branch/restaurant
+  isActive: boolean("is_active").notNull().default(true), // Enable/disable printer
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertPrinterSchema = createInsertSchema(printers)
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({
+    printerType: z.enum(["thermal", "inkjet", "laser"]),
+    connectionType: z.enum(["network", "usb", "bluetooth"]),
+    brand: z.enum(["epson", "star", "bixolon", "citizen", "generic"]).optional().nullable(),
+    paperWidth: z.number().min(58).max(80).optional().default(80),
+  });
+export type InsertPrinter = z.infer<typeof insertPrinterSchema>;
+export type Printer = typeof printers.$inferSelect;

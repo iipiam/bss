@@ -33,6 +33,9 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+const EMPTY_RECIPES: Recipe[] = [];
+const EMPTY_INVENTORY: InventoryItem[] = [];
+
 interface SortableRecipeCardProps {
   recipe: Recipe;
   onEdit: (recipe: Recipe) => void;
@@ -168,13 +171,13 @@ export default function Recipes() {
     return totalCost.toFixed(2);
   }, [ingredients]);
 
-  const { data: recipesData = [], isLoading } = useQuery<Recipe[]>({
+  const { data: recipesData = EMPTY_RECIPES, isLoading } = useQuery<Recipe[]>({
     queryKey: ["/api/recipes"],
   });
 
   // Sort recipes by sortOrder directly without local state to avoid infinite loops
   const recipes = useMemo(() => {
-    if (!recipesData) return [];
+    if (!recipesData || recipesData.length === 0) return EMPTY_RECIPES;
     return [...recipesData].sort((a, b) => {
       const orderA = a.sortOrder ?? 0;
       const orderB = b.sortOrder ?? 0;
@@ -240,7 +243,7 @@ export default function Recipes() {
     }
   };
 
-  const { data: inventoryItems = [], isLoading: isLoadingInventory } = useQuery<InventoryItem[]>({
+  const { data: inventoryItems = EMPTY_INVENTORY, isLoading: isLoadingInventory } = useQuery<InventoryItem[]>({
     queryKey: ["/api/inventory"],
   });
 
