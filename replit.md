@@ -76,3 +76,9 @@ Preferred communication style: Simple, everyday language.
 - **express-session**: Session middleware.
 - **date-fns**: Date manipulation.
 - **xlsx**: Excel generation and parsing.
+
+### Performance Optimizations
+- **Database Indexes**: Composite indexes on high-traffic tables (orders, invoices, inventoryItems, shopBills, supportTickets, deliveryProfitability) targeting (restaurantId, timestamp/status) for efficient multi-tenant queries.
+- **Code Splitting**: React.lazy and Suspense for all 40+ page components, reducing initial bundle size and improving Time to Interactive. Auth pages (Login, ForgotPassword, ResetPassword, EmergencyReset) are eagerly loaded to avoid Suspense issues.
+- **React Query Tuning**: staleTime=2min (data freshness), gcTime=5min (cache garbage collection), refetchOnWindowFocus=true for volatile data refresh.
+- **Deployment Note**: Database indexes require `npm run db:push` on production server after deployment.
