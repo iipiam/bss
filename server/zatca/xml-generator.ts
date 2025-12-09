@@ -52,18 +52,6 @@ interface ZatcaInvoiceData {
   certificateBase64?: string;
 }
 
-const ZATCA_XML_NAMESPACE = {
-  xmlns: "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
-  "xmlns:cac": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2",
-  "xmlns:cbc": "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
-  "xmlns:ext": "urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2",
-  "xmlns:sig": "urn:oasis:names:specification:ubl:schema:xsd:CommonSignatureComponents-2",
-  "xmlns:sac": "urn:oasis:names:specification:ubl:schema:xsd:SignatureAggregateComponents-2",
-  "xmlns:sbc": "urn:oasis:names:specification:ubl:schema:xsd:SignatureBasicComponents-2",
-  "xmlns:ds": "http://www.w3.org/2000/09/xmldsig#",
-  "xmlns:xades": "http://uri.etsi.org/01903/v1.3.2#",
-};
-
 function escapeXml(str: string): string {
   return str
     .replace(/&/g, "&amp;")
@@ -102,7 +90,7 @@ export function formatVatNumber(vatNumber: string): string {
 
 /**
  * Generates ZATCA TLV (Tag-Length-Value) QR code data
- * According to ZATCA specifications for Phase 1
+ * According to ZATCA specifications for Phase 1 (5 tags)
  */
 export function generateZatcaTlvQrCode(
   sellerName: string,
@@ -139,195 +127,289 @@ export function generateInvoiceTypeCode(invoiceType: "standard" | "simplified", 
   return "388";
 }
 
-export function generateInvoiceTypeCodeName(invoiceType: "standard" | "simplified", invoiceSubType: "01" | "02"): string {
-  const base = invoiceType === "standard" ? "0100000" : "0200000";
-  return base;
+export function generateInvoiceTypeCodeName(invoiceType: "standard" | "simplified"): string {
+  return invoiceType === "standard" ? "0100000" : "0200000";
 }
 
-export function generatePartyTaxScheme(vatNumber: string): string {
-  const formattedVat = formatVatNumber(vatNumber);
-  return `
-    <cac:PartyTaxScheme>
-      <cbc:CompanyID>${escapeXml(formattedVat)}</cbc:CompanyID>
-      <cac:TaxScheme>
-        <cbc:ID>VAT</cbc:ID>
-      </cac:TaxScheme>
-    </cac:PartyTaxScheme>`;
-}
-
-export function generatePostalAddress(
-  streetName: string,
-  buildingNumber: string,
-  citySubdivision: string,
-  city: string,
-  postalZone: string,
-  countryCode: string
-): string {
-  return `
-    <cac:PostalAddress>
-      <cbc:StreetName>${escapeXml(streetName)}</cbc:StreetName>
-      <cbc:BuildingNumber>${escapeXml(buildingNumber)}</cbc:BuildingNumber>
-      <cbc:CitySubdivisionName>${escapeXml(citySubdivision)}</cbc:CitySubdivisionName>
-      <cbc:CityName>${escapeXml(city)}</cbc:CityName>
-      <cbc:PostalZone>${escapeXml(postalZone)}</cbc:PostalZone>
-      <cac:Country>
-        <cbc:IdentificationCode>${escapeXml(countryCode)}</cbc:IdentificationCode>
-      </cac:Country>
-    </cac:PostalAddress>`;
-}
-
-export function generateAccountingSupplierParty(seller: ZatcaInvoiceData["sellerInfo"]): string {
-  return `
-  <cac:AccountingSupplierParty>
-    <cac:Party>
-      <cac:PartyIdentification>
-        <cbc:ID schemeID="CRN">${escapeXml(seller.crNumber)}</cbc:ID>
-      </cac:PartyIdentification>
-      ${generatePostalAddress(
-        seller.streetName,
-        seller.buildingNumber,
-        seller.citySubdivision,
-        seller.city,
-        seller.postalZone,
-        seller.countryCode
-      )}
-      ${generatePartyTaxScheme(seller.vatNumber)}
-      <cac:PartyLegalEntity>
-        <cbc:RegistrationName>${escapeXml(seller.name)}</cbc:RegistrationName>
-      </cac:PartyLegalEntity>
-    </cac:Party>
-  </cac:AccountingSupplierParty>`;
-}
-
-export function generateAccountingCustomerParty(buyer: NonNullable<ZatcaInvoiceData["buyerInfo"]>): string {
-  return `
-  <cac:AccountingCustomerParty>
-    <cac:Party>
-      ${buyer.vatNumber ? `
-      <cac:PartyIdentification>
-        <cbc:ID schemeID="VAT">${escapeXml(formatVatNumber(buyer.vatNumber))}</cbc:ID>
-      </cac:PartyIdentification>` : ""}
-      ${buyer.streetName && buyer.buildingNumber && buyer.city && buyer.postalZone && buyer.countryCode ? 
-        generatePostalAddress(
-          buyer.streetName,
-          buyer.buildingNumber,
-          buyer.citySubdivision || "",
-          buyer.city,
-          buyer.postalZone,
-          buyer.countryCode
-        ) : ""}
-      ${buyer.vatNumber ? generatePartyTaxScheme(buyer.vatNumber) : ""}
-      <cac:PartyLegalEntity>
-        <cbc:RegistrationName>${escapeXml(buyer.name)}</cbc:RegistrationName>
-      </cac:PartyLegalEntity>
-    </cac:Party>
-  </cac:AccountingCustomerParty>`;
-}
-
-export function generateInvoiceLine(
-  item: ZatcaInvoiceLineItem,
-  lineIndex: number,
-  vatRate: number = 15
-): string {
-  const itemVatRate = item.taxPercent ?? vatRate;
-  const taxCategory = item.taxCategory ?? "S";
+/**
+ * Generate Phase 1 simplified invoice XML (unsigned, with QR code)
+ * Matches ZATCA official sample format exactly
+ */
+export function generateUnsignedInvoiceXml(data: Omit<ZatcaInvoiceData, 'qrCode' | 'signatureValue' | 'signedPropertiesHash' | 'invoiceHash' | 'certificateBase64'>): string {
+  const { 
+    invoiceNumber, invoiceType, invoiceSubType, paymentMethod,
+    subtotal, vatAmount, total, discount,
+    items, invoiceCounter, previousInvoiceHash, uuid, 
+    issueDate, issueTime, sellerInfo, buyerInfo
+  } = data;
   
-  const lineExtensionAmount = item.quantity * item.unitPrice;
-  const taxAmount = lineExtensionAmount * (itemVatRate / 100);
-  const roundingAmount = lineExtensionAmount + taxAmount;
+  const invoiceTypeCode = generateInvoiceTypeCode(invoiceType, invoiceSubType);
+  const invoiceTypeCodeName = generateInvoiceTypeCodeName(invoiceType);
+  const formattedVat = formatVatNumber(sellerInfo.vatNumber);
   
-  return `
+  const timestamp = `${issueDate}T${issueTime}`;
+  const qrCode = generateZatcaTlvQrCode(
+    sellerInfo.name,
+    sellerInfo.vatNumber,
+    timestamp,
+    total,
+    vatAmount
+  );
+  
+  const defaultPIH = "NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==";
+  const pihValue = previousInvoiceHash || defaultPIH;
+  
+  let invoiceLinesXml = "";
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const itemVatRate = item.taxPercent ?? 15;
+    const lineExtension = item.quantity * item.unitPrice;
+    const lineTax = lineExtension * (itemVatRate / 100);
+    const lineTotal = lineExtension + lineTax;
+    
+    invoiceLinesXml += `
   <cac:InvoiceLine>
-    <cbc:ID>${lineIndex}</cbc:ID>
-    <cbc:InvoicedQuantity unitCode="PCE">${formatDecimal(item.quantity, 0)}</cbc:InvoicedQuantity>
-    <cbc:LineExtensionAmount currencyID="SAR">${formatDecimal(lineExtensionAmount)}</cbc:LineExtensionAmount>
+    <cbc:ID>${i + 1}</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="PCE">${item.quantity}</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="SAR">${formatDecimal(lineExtension)}</cbc:LineExtensionAmount>
     <cac:TaxTotal>
-      <cbc:TaxAmount currencyID="SAR">${formatDecimal(taxAmount)}</cbc:TaxAmount>
-      <cbc:RoundingAmount currencyID="SAR">${formatDecimal(roundingAmount)}</cbc:RoundingAmount>
+      <cbc:TaxAmount currencyID="SAR">${formatDecimal(lineTax)}</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="SAR">${formatDecimal(lineTotal)}</cbc:RoundingAmount>
     </cac:TaxTotal>
     <cac:Item>
       <cbc:Name>${escapeXml(item.name)}</cbc:Name>
       <cac:ClassifiedTaxCategory>
-        <cbc:ID schemeID="UN/ECE 5305" schemeAgencyID="6">${taxCategory}</cbc:ID>
-        <cbc:Percent>${formatDecimal(itemVatRate)}</cbc:Percent>
+        <cbc:ID>${item.taxCategory || "S"}</cbc:ID>
+        <cbc:Percent>${itemVatRate}</cbc:Percent>
         <cac:TaxScheme>
-          <cbc:ID schemeID="UN/ECE 5153" schemeAgencyID="6">VAT</cbc:ID>
+          <cbc:ID>VAT</cbc:ID>
         </cac:TaxScheme>
       </cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price>
       <cbc:PriceAmount currencyID="SAR">${formatDecimal(item.unitPrice)}</cbc:PriceAmount>
-      <cbc:BaseQuantity unitCode="PCE">1</cbc:BaseQuantity>
     </cac:Price>
   </cac:InvoiceLine>`;
-}
+  }
 
-export function generateTaxTotal(
-  taxableAmount: number,
-  taxAmount: number,
-  vatRate: number = 15,
-  taxCategory: string = "S"
-): string {
-  return `
+  let customerPartyXml = "";
+  if (buyerInfo) {
+    const buyerVat = buyerInfo.vatNumber ? formatVatNumber(buyerInfo.vatNumber) : "";
+    customerPartyXml = `
+  <cac:AccountingCustomerParty>
+    <cac:Party>${buyerInfo.vatNumber ? `
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VAT">${buyerVat}</cbc:ID>
+      </cac:PartyIdentification>` : ""}
+      <cac:PostalAddress>
+        <cbc:StreetName>${escapeXml(buyerInfo.streetName || "-")}</cbc:StreetName>
+        <cbc:BuildingNumber>${escapeXml(buyerInfo.buildingNumber || "0000")}</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>${escapeXml(buyerInfo.citySubdivision || "-")}</cbc:CitySubdivisionName>
+        <cbc:CityName>${escapeXml(buyerInfo.city || "Riyadh")}</cbc:CityName>
+        <cbc:PostalZone>${escapeXml(buyerInfo.postalZone || "00000")}</cbc:PostalZone>
+        <cac:Country>
+          <cbc:IdentificationCode>${escapeXml(buyerInfo.countryCode || "SA")}</cbc:IdentificationCode>
+        </cac:Country>
+      </cac:PostalAddress>${buyerInfo.vatNumber ? `
+      <cac:PartyTaxScheme>
+        <cbc:CompanyID>${buyerVat}</cbc:CompanyID>
+        <cac:TaxScheme>
+          <cbc:ID>VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>` : ""}
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>${escapeXml(buyerInfo.name)}</cbc:RegistrationName>
+      </cac:PartyLegalEntity>
+    </cac:Party>
+  </cac:AccountingCustomerParty>`;
+  }
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2">
+  <cbc:ProfileID>reporting:1.0</cbc:ProfileID>
+  <cbc:ID>${escapeXml(invoiceNumber)}</cbc:ID>
+  <cbc:UUID>${escapeXml(uuid)}</cbc:UUID>
+  <cbc:IssueDate>${escapeXml(issueDate)}</cbc:IssueDate>
+  <cbc:IssueTime>${escapeXml(issueTime)}</cbc:IssueTime>
+  <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>
+  <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
+  <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>
+  <cac:AdditionalDocumentReference>
+    <cbc:ID>ICV</cbc:ID>
+    <cbc:UUID>${invoiceCounter}</cbc:UUID>
+  </cac:AdditionalDocumentReference>
+  <cac:AdditionalDocumentReference>
+    <cbc:ID>PIH</cbc:ID>
+    <cac:Attachment>
+      <cbc:EmbeddedDocumentBinaryObject mimeCode="text/plain">${pihValue}</cbc:EmbeddedDocumentBinaryObject>
+    </cac:Attachment>
+  </cac:AdditionalDocumentReference>
+  <cac:AdditionalDocumentReference>
+    <cbc:ID>QR</cbc:ID>
+    <cac:Attachment>
+      <cbc:EmbeddedDocumentBinaryObject mimeCode="text/plain">${qrCode}</cbc:EmbeddedDocumentBinaryObject>
+    </cac:Attachment>
+  </cac:AdditionalDocumentReference>
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="CRN">${escapeXml(sellerInfo.crNumber)}</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PostalAddress>
+        <cbc:StreetName>${escapeXml(sellerInfo.streetName)}</cbc:StreetName>
+        <cbc:BuildingNumber>${escapeXml(sellerInfo.buildingNumber)}</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>${escapeXml(sellerInfo.citySubdivision)}</cbc:CitySubdivisionName>
+        <cbc:CityName>${escapeXml(sellerInfo.city)}</cbc:CityName>
+        <cbc:PostalZone>${escapeXml(sellerInfo.postalZone)}</cbc:PostalZone>
+        <cac:Country>
+          <cbc:IdentificationCode>${escapeXml(sellerInfo.countryCode)}</cbc:IdentificationCode>
+        </cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cbc:CompanyID>${formattedVat}</cbc:CompanyID>
+        <cac:TaxScheme>
+          <cbc:ID>VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>${escapeXml(sellerInfo.name)}</cbc:RegistrationName>
+      </cac:PartyLegalEntity>
+    </cac:Party>
+  </cac:AccountingSupplierParty>${customerPartyXml}
+  <cac:Delivery>
+    <cbc:ActualDeliveryDate>${escapeXml(issueDate)}</cbc:ActualDeliveryDate>
+  </cac:Delivery>
+  <cac:PaymentMeans>
+    <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>
+  </cac:PaymentMeans>
   <cac:TaxTotal>
-    <cbc:TaxAmount currencyID="SAR">${formatDecimal(taxAmount)}</cbc:TaxAmount>
+    <cbc:TaxAmount currencyID="SAR">${formatDecimal(vatAmount)}</cbc:TaxAmount>
   </cac:TaxTotal>
   <cac:TaxTotal>
-    <cbc:TaxAmount currencyID="SAR">${formatDecimal(taxAmount)}</cbc:TaxAmount>
+    <cbc:TaxAmount currencyID="SAR">${formatDecimal(vatAmount)}</cbc:TaxAmount>
     <cac:TaxSubtotal>
-      <cbc:TaxableAmount currencyID="SAR">${formatDecimal(taxableAmount)}</cbc:TaxableAmount>
-      <cbc:TaxAmount currencyID="SAR">${formatDecimal(taxAmount)}</cbc:TaxAmount>
+      <cbc:TaxableAmount currencyID="SAR">${formatDecimal(subtotal)}</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="SAR">${formatDecimal(vatAmount)}</cbc:TaxAmount>
       <cac:TaxCategory>
-        <cbc:ID schemeID="UN/ECE 5305" schemeAgencyID="6">${taxCategory}</cbc:ID>
-        <cbc:Percent>${formatDecimal(vatRate)}</cbc:Percent>
+        <cbc:ID schemeID="UN/ECE 5305" schemeAgencyID="6">S</cbc:ID>
+        <cbc:Percent>15</cbc:Percent>
         <cac:TaxScheme>
           <cbc:ID schemeID="UN/ECE 5153" schemeAgencyID="6">VAT</cbc:ID>
         </cac:TaxScheme>
       </cac:TaxCategory>
     </cac:TaxSubtotal>
-  </cac:TaxTotal>`;
-}
-
-export function generateLegalMonetaryTotal(
-  lineExtensionAmount: number,
-  taxExclusiveAmount: number,
-  taxInclusiveAmount: number,
-  payableAmount: number,
-  allowanceTotalAmount: number = 0
-): string {
-  return `
+  </cac:TaxTotal>
   <cac:LegalMonetaryTotal>
-    <cbc:LineExtensionAmount currencyID="SAR">${formatDecimal(lineExtensionAmount)}</cbc:LineExtensionAmount>
-    <cbc:TaxExclusiveAmount currencyID="SAR">${formatDecimal(taxExclusiveAmount)}</cbc:TaxExclusiveAmount>
-    <cbc:TaxInclusiveAmount currencyID="SAR">${formatDecimal(taxInclusiveAmount)}</cbc:TaxInclusiveAmount>
-    <cbc:AllowanceTotalAmount currencyID="SAR">${formatDecimal(allowanceTotalAmount)}</cbc:AllowanceTotalAmount>
-    <cbc:PayableAmount currencyID="SAR">${formatDecimal(payableAmount)}</cbc:PayableAmount>
-  </cac:LegalMonetaryTotal>`;
+    <cbc:LineExtensionAmount currencyID="SAR">${formatDecimal(subtotal)}</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="SAR">${formatDecimal(subtotal)}</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="SAR">${formatDecimal(total)}</cbc:TaxInclusiveAmount>
+    <cbc:AllowanceTotalAmount currencyID="SAR">${formatDecimal(discount)}</cbc:AllowanceTotalAmount>
+    <cbc:PayableAmount currencyID="SAR">${formatDecimal(total)}</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>${invoiceLinesXml}
+</Invoice>`;
+
+  return xml;
 }
 
-export function generateUBLExtensions(
-  invoiceHash?: string,
-  signatureValue?: string,
-  certificateBase64?: string,
-  signedPropertiesHash?: string
-): string {
-  const signingTime = new Date().toISOString();
+/**
+ * Generate signed invoice XML for Phase 2 (with digital signature)
+ */
+export function generateZatcaInvoiceXml(data: ZatcaInvoiceData): string {
+  const { 
+    invoiceNumber, invoiceType, invoiceSubType, paymentMethod,
+    subtotal, vatAmount, total, discount,
+    items, invoiceCounter, previousInvoiceHash, uuid, 
+    issueDate, issueTime, sellerInfo, buyerInfo,
+    qrCode, signatureValue, signedPropertiesHash, invoiceHash, certificateBase64
+  } = data;
   
-  return `
+  const invoiceTypeCode = generateInvoiceTypeCode(invoiceType, invoiceSubType);
+  const invoiceTypeCodeName = generateInvoiceTypeCodeName(invoiceType);
+  const formattedVat = formatVatNumber(sellerInfo.vatNumber);
+  
+  const defaultPIH = "NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==";
+  const pihValue = previousInvoiceHash || defaultPIH;
+  const signingTime = new Date().toISOString().replace(/\.\d{3}Z$/, "");
+  
+  let invoiceLinesXml = "";
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const itemVatRate = item.taxPercent ?? 15;
+    const lineExtension = item.quantity * item.unitPrice;
+    const lineTax = lineExtension * (itemVatRate / 100);
+    const lineTotal = lineExtension + lineTax;
+    
+    invoiceLinesXml += `
+  <cac:InvoiceLine>
+    <cbc:ID>${i + 1}</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="PCE">${item.quantity}</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="SAR">${formatDecimal(lineExtension)}</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="SAR">${formatDecimal(lineTax)}</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="SAR">${formatDecimal(lineTotal)}</cbc:RoundingAmount>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Name>${escapeXml(item.name)}</cbc:Name>
+      <cac:ClassifiedTaxCategory>
+        <cbc:ID>${item.taxCategory || "S"}</cbc:ID>
+        <cbc:Percent>${itemVatRate}</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:ID>VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:ClassifiedTaxCategory>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="SAR">${formatDecimal(item.unitPrice)}</cbc:PriceAmount>
+    </cac:Price>
+  </cac:InvoiceLine>`;
+  }
+
+  let customerPartyXml = "";
+  if (buyerInfo) {
+    const buyerVat = buyerInfo.vatNumber ? formatVatNumber(buyerInfo.vatNumber) : "";
+    customerPartyXml = `
+  <cac:AccountingCustomerParty>
+    <cac:Party>${buyerInfo.vatNumber ? `
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VAT">${buyerVat}</cbc:ID>
+      </cac:PartyIdentification>` : ""}
+      <cac:PostalAddress>
+        <cbc:StreetName>${escapeXml(buyerInfo.streetName || "-")}</cbc:StreetName>
+        <cbc:BuildingNumber>${escapeXml(buyerInfo.buildingNumber || "0000")}</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>${escapeXml(buyerInfo.citySubdivision || "-")}</cbc:CitySubdivisionName>
+        <cbc:CityName>${escapeXml(buyerInfo.city || "Riyadh")}</cbc:CityName>
+        <cbc:PostalZone>${escapeXml(buyerInfo.postalZone || "00000")}</cbc:PostalZone>
+        <cac:Country>
+          <cbc:IdentificationCode>${escapeXml(buyerInfo.countryCode || "SA")}</cbc:IdentificationCode>
+        </cac:Country>
+      </cac:PostalAddress>${buyerInfo.vatNumber ? `
+      <cac:PartyTaxScheme>
+        <cbc:CompanyID>${buyerVat}</cbc:CompanyID>
+        <cac:TaxScheme>
+          <cbc:ID>VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>` : ""}
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>${escapeXml(buyerInfo.name)}</cbc:RegistrationName>
+      </cac:PartyLegalEntity>
+    </cac:Party>
+  </cac:AccountingCustomerParty>`;
+  }
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:sig="urn:oasis:names:specification:ubl:schema:xsd:CommonSignatureComponents-2" xmlns:sac="urn:oasis:names:specification:ubl:schema:xsd:SignatureAggregateComponents-2" xmlns:sbc="urn:oasis:names:specification:ubl:schema:xsd:SignatureBasicComponents-2">
   <ext:UBLExtensions>
     <ext:UBLExtension>
       <ext:ExtensionURI>urn:oasis:names:specification:ubl:dsig:enveloped:xades</ext:ExtensionURI>
       <ext:ExtensionContent>
-        <sig:UBLDocumentSignatures xmlns:sig="${ZATCA_XML_NAMESPACE["xmlns:sig"]}"
-                                   xmlns:sac="${ZATCA_XML_NAMESPACE["xmlns:sac"]}"
-                                   xmlns:sbc="${ZATCA_XML_NAMESPACE["xmlns:sbc"]}">
+        <sig:UBLDocumentSignatures>
           <sac:SignatureInformation>
             <cbc:ID>urn:oasis:names:specification:ubl:signature:1</cbc:ID>
             <sbc:ReferencedSignatureID>urn:oasis:names:specification:ubl:signature:Invoice</sbc:ReferencedSignatureID>
-            <ds:Signature xmlns:ds="${ZATCA_XML_NAMESPACE["xmlns:ds"]}" Id="signature">
+            <ds:Signature Id="signature" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
               <ds:SignedInfo>
-                <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2006/12/xml-c14n11"/>
-                <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256"/>
+                <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2006/12/xml-c14n11" />
+                <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256" />
                 <ds:Reference Id="invoiceSignedData" URI="">
                   <ds:Transforms>
                     <ds:Transform Algorithm="http://www.w3.org/TR/1999/REC-xpath-19991116">
@@ -339,13 +421,13 @@ export function generateUBLExtensions(
                     <ds:Transform Algorithm="http://www.w3.org/TR/1999/REC-xpath-19991116">
                       <ds:XPath>not(//ancestor-or-self::cac:AdditionalDocumentReference[cbc:ID='QR'])</ds:XPath>
                     </ds:Transform>
-                    <ds:Transform Algorithm="http://www.w3.org/2006/12/xml-c14n11"/>
+                    <ds:Transform Algorithm="http://www.w3.org/2006/12/xml-c14n11" />
                   </ds:Transforms>
-                  <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+                  <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" />
                   <ds:DigestValue>${invoiceHash || ""}</ds:DigestValue>
                 </ds:Reference>
                 <ds:Reference Type="http://www.w3.org/2000/09/xmldsig#SignatureProperties" URI="#xadesSignedProperties">
-                  <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+                  <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" />
                   <ds:DigestValue>${signedPropertiesHash || ""}</ds:DigestValue>
                 </ds:Reference>
               </ds:SignedInfo>
@@ -356,14 +438,14 @@ export function generateUBLExtensions(
                 </ds:X509Data>
               </ds:KeyInfo>
               <ds:Object>
-                <xades:QualifyingProperties xmlns:xades="${ZATCA_XML_NAMESPACE["xmlns:xades"]}" Target="signature">
+                <xades:QualifyingProperties Target="signature" xmlns:xades="http://uri.etsi.org/01903/v1.3.2#">
                   <xades:SignedProperties Id="xadesSignedProperties">
                     <xades:SignedSignatureProperties>
                       <xades:SigningTime>${signingTime}</xades:SigningTime>
                       <xades:SigningCertificate>
                         <xades:Cert>
                           <xades:CertDigest>
-                            <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+                            <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" />
                             <ds:DigestValue>${certificateBase64 ? crypto.createHash("sha256").update(Buffer.from(certificateBase64, "base64")).digest("base64") : ""}</ds:DigestValue>
                           </xades:CertDigest>
                           <xades:IssuerSerial>
@@ -381,27 +463,15 @@ export function generateUBLExtensions(
         </sig:UBLDocumentSignatures>
       </ext:ExtensionContent>
     </ext:UBLExtension>
-  </ext:UBLExtensions>`;
-}
-
-export function generateSignature(): string {
-  return `
-  <cac:Signature>
-    <cbc:ID>urn:oasis:names:specification:ubl:signature:Invoice</cbc:ID>
-    <cbc:SignatureMethod>urn:oasis:names:specification:ubl:dsig:enveloped:xades</cbc:SignatureMethod>
-  </cac:Signature>`;
-}
-
-export function generateAdditionalDocumentReference(
-  invoiceCounter: number,
-  uuid: string,
-  previousInvoiceHash: string | null,
-  qrCode?: string
-): string {
-  const defaultPIH = "NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==";
-  const pihValue = previousInvoiceHash || defaultPIH;
-  
-  let references = `
+  </ext:UBLExtensions>
+  <cbc:ProfileID>reporting:1.0</cbc:ProfileID>
+  <cbc:ID>${escapeXml(invoiceNumber)}</cbc:ID>
+  <cbc:UUID>${escapeXml(uuid)}</cbc:UUID>
+  <cbc:IssueDate>${escapeXml(issueDate)}</cbc:IssueDate>
+  <cbc:IssueTime>${escapeXml(issueTime)}</cbc:IssueTime>
+  <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>
+  <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
+  <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>
   <cac:AdditionalDocumentReference>
     <cbc:ID>ICV</cbc:ID>
     <cbc:UUID>${invoiceCounter}</cbc:UUID>
@@ -411,146 +481,73 @@ export function generateAdditionalDocumentReference(
     <cac:Attachment>
       <cbc:EmbeddedDocumentBinaryObject mimeCode="text/plain">${pihValue}</cbc:EmbeddedDocumentBinaryObject>
     </cac:Attachment>
-  </cac:AdditionalDocumentReference>`;
-  
-  if (qrCode) {
-    references += `
-  <cac:AdditionalDocumentReference>
-    <cbc:ID>QR</cbc:ID>
-    <cac:Attachment>
-      <cbc:EmbeddedDocumentBinaryObject mimeCode="text/plain">${escapeXml(qrCode)}</cbc:EmbeddedDocumentBinaryObject>
-    </cac:Attachment>
-  </cac:AdditionalDocumentReference>`;
-  }
-  
-  return references;
-}
-
-export function generateZatcaInvoiceXml(data: ZatcaInvoiceData): string {
-  const { 
-    invoiceNumber, invoiceType, invoiceSubType, paymentMethod,
-    subtotal, vatAmount, total, discount,
-    items, invoiceCounter, previousInvoiceHash, uuid, 
-    issueDate, issueTime, sellerInfo, buyerInfo,
-    qrCode, signatureValue, signedPropertiesHash, invoiceHash, certificateBase64
-  } = data;
-  
-  const invoiceTypeCode = generateInvoiceTypeCode(invoiceType, invoiceSubType);
-  const invoiceTypeCodeName = generateInvoiceTypeCodeName(invoiceType, invoiceSubType);
-  
-  const invoiceLines = items.map((item, index) => 
-    generateInvoiceLine(item, index + 1)
-  ).join("\n");
-  
-  const taxTotal = generateTaxTotal(subtotal, vatAmount);
-  const legalMonetaryTotal = generateLegalMonetaryTotal(subtotal, subtotal, total, total, discount);
-  const additionalDocRefs = generateAdditionalDocumentReference(invoiceCounter, uuid, previousInvoiceHash, qrCode);
-  const supplierParty = generateAccountingSupplierParty(sellerInfo);
-  const customerParty = buyerInfo ? generateAccountingCustomerParty(buyerInfo) : "";
-  const ublExtensions = generateUBLExtensions(invoiceHash, signatureValue, certificateBase64, signedPropertiesHash);
-  const signature = generateSignature();
-  
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<Invoice xmlns="${ZATCA_XML_NAMESPACE.xmlns}"
-         xmlns:cac="${ZATCA_XML_NAMESPACE["xmlns:cac"]}"
-         xmlns:cbc="${ZATCA_XML_NAMESPACE["xmlns:cbc"]}"
-         xmlns:ext="${ZATCA_XML_NAMESPACE["xmlns:ext"]}">
-  ${ublExtensions}
-  <cbc:ProfileID>reporting:1.0</cbc:ProfileID>
-  <cbc:ID>${escapeXml(invoiceNumber)}</cbc:ID>
-  <cbc:UUID>${escapeXml(uuid)}</cbc:UUID>
-  <cbc:IssueDate>${escapeXml(issueDate)}</cbc:IssueDate>
-  <cbc:IssueTime>${escapeXml(issueTime)}</cbc:IssueTime>
-  <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>
-  <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
-  <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>
-  <cac:BillingReference>
-    <cac:InvoiceDocumentReference>
-      <cbc:ID>${invoiceCounter}</cbc:ID>
-    </cac:InvoiceDocumentReference>
-  </cac:BillingReference>
-  ${additionalDocRefs}
-  ${signature}
-  ${supplierParty}
-  ${customerParty}
-  <cac:PaymentMeans>
-    <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>
-  </cac:PaymentMeans>
-  ${taxTotal}
-  ${legalMonetaryTotal}
-  ${invoiceLines}
-</Invoice>`;
-
-  return xml;
-}
-
-/**
- * Generate unsigned invoice XML for Phase 1 simplified invoices
- * This version includes proper QR code but no digital signature
- */
-export function generateUnsignedInvoiceXml(data: Omit<ZatcaInvoiceData, 'qrCode' | 'signatureValue' | 'signedPropertiesHash' | 'invoiceHash' | 'certificateBase64'>): string {
-  const { 
-    invoiceNumber, invoiceType, invoiceSubType, paymentMethod,
-    subtotal, vatAmount, total, discount,
-    items, invoiceCounter, previousInvoiceHash, uuid, 
-    issueDate, issueTime, sellerInfo, buyerInfo
-  } = data;
-  
-  const invoiceTypeCode = generateInvoiceTypeCode(invoiceType, invoiceSubType);
-  const invoiceTypeCodeName = generateInvoiceTypeCodeName(invoiceType, invoiceSubType);
-  
-  const timestamp = `${issueDate}T${issueTime}`;
-  const qrCode = generateZatcaTlvQrCode(
-    sellerInfo.name,
-    sellerInfo.vatNumber,
-    timestamp,
-    total,
-    vatAmount
-  );
-  
-  const invoiceLines = items.map((item, index) => 
-    generateInvoiceLine(item, index + 1)
-  ).join("\n");
-  
-  const taxTotal = generateTaxTotal(subtotal, vatAmount);
-  const legalMonetaryTotal = generateLegalMonetaryTotal(subtotal, subtotal, total, total, discount);
-  const supplierParty = generateAccountingSupplierParty(sellerInfo);
-  const customerParty = buyerInfo ? generateAccountingCustomerParty(buyerInfo) : "";
-  
-  // Generate QR-only additional document reference (no PIH for Phase 1 simplified)
-  const qrRef = `
-  <cac:AdditionalDocumentReference>
-    <cbc:ID>ICV</cbc:ID>
-    <cbc:UUID>${invoiceCounter}</cbc:UUID>
   </cac:AdditionalDocumentReference>
   <cac:AdditionalDocumentReference>
     <cbc:ID>QR</cbc:ID>
     <cac:Attachment>
-      <cbc:EmbeddedDocumentBinaryObject mimeCode="text/plain">${qrCode}</cbc:EmbeddedDocumentBinaryObject>
+      <cbc:EmbeddedDocumentBinaryObject mimeCode="text/plain">${qrCode || ""}</cbc:EmbeddedDocumentBinaryObject>
     </cac:Attachment>
-  </cac:AdditionalDocumentReference>`;
-
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<Invoice xmlns="${ZATCA_XML_NAMESPACE.xmlns}"
-         xmlns:cac="${ZATCA_XML_NAMESPACE["xmlns:cac"]}"
-         xmlns:cbc="${ZATCA_XML_NAMESPACE["xmlns:cbc"]}">
-  <cbc:ProfileID>reporting:1.0</cbc:ProfileID>
-  <cbc:ID>${escapeXml(invoiceNumber)}</cbc:ID>
-  <cbc:UUID>${escapeXml(uuid)}</cbc:UUID>
-  <cbc:IssueDate>${escapeXml(issueDate)}</cbc:IssueDate>
-  <cbc:IssueTime>${escapeXml(issueTime)}</cbc:IssueTime>
-  <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>
-  <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
-  <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>
-  ${qrRef}
-  ${supplierParty}
-  ${customerParty}
+  </cac:AdditionalDocumentReference>
+  <cac:Signature>
+    <cbc:ID>urn:oasis:names:specification:ubl:signature:Invoice</cbc:ID>
+    <cbc:SignatureMethod>urn:oasis:names:specification:ubl:dsig:enveloped:xades</cbc:SignatureMethod>
+  </cac:Signature>
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="CRN">${escapeXml(sellerInfo.crNumber)}</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PostalAddress>
+        <cbc:StreetName>${escapeXml(sellerInfo.streetName)}</cbc:StreetName>
+        <cbc:BuildingNumber>${escapeXml(sellerInfo.buildingNumber)}</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>${escapeXml(sellerInfo.citySubdivision)}</cbc:CitySubdivisionName>
+        <cbc:CityName>${escapeXml(sellerInfo.city)}</cbc:CityName>
+        <cbc:PostalZone>${escapeXml(sellerInfo.postalZone)}</cbc:PostalZone>
+        <cac:Country>
+          <cbc:IdentificationCode>${escapeXml(sellerInfo.countryCode)}</cbc:IdentificationCode>
+        </cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cbc:CompanyID>${formattedVat}</cbc:CompanyID>
+        <cac:TaxScheme>
+          <cbc:ID>VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>${escapeXml(sellerInfo.name)}</cbc:RegistrationName>
+      </cac:PartyLegalEntity>
+    </cac:Party>
+  </cac:AccountingSupplierParty>${customerPartyXml}
+  <cac:Delivery>
+    <cbc:ActualDeliveryDate>${escapeXml(issueDate)}</cbc:ActualDeliveryDate>
+  </cac:Delivery>
   <cac:PaymentMeans>
     <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>
   </cac:PaymentMeans>
-  ${taxTotal}
-  ${legalMonetaryTotal}
-  ${invoiceLines}
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="SAR">${formatDecimal(vatAmount)}</cbc:TaxAmount>
+  </cac:TaxTotal>
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="SAR">${formatDecimal(vatAmount)}</cbc:TaxAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="SAR">${formatDecimal(subtotal)}</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="SAR">${formatDecimal(vatAmount)}</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cbc:ID schemeID="UN/ECE 5305" schemeAgencyID="6">S</cbc:ID>
+        <cbc:Percent>15</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:ID schemeID="UN/ECE 5153" schemeAgencyID="6">VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="SAR">${formatDecimal(subtotal)}</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="SAR">${formatDecimal(subtotal)}</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="SAR">${formatDecimal(total)}</cbc:TaxInclusiveAmount>
+    <cbc:AllowanceTotalAmount currencyID="SAR">${formatDecimal(discount)}</cbc:AllowanceTotalAmount>
+    <cbc:PayableAmount currencyID="SAR">${formatDecimal(total)}</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>${invoiceLinesXml}
 </Invoice>`;
 
   return xml;
