@@ -19,14 +19,19 @@ import { useDeviceLayout } from "@/lib/mobileLayout";
 import type { Printer as PrinterType } from "@shared/schema";
 import type { Translations } from "@/i18n/translations";
 
+// Display names for the UI
 const PRINTER_BRANDS = [
-  "Epson",
-  "Star Micronics",
-  "Bixolon",
-  "Citizen",
-  "Sewoo",
-  "Custom",
-  "Other",
+  { value: "epson", label: "Epson" },
+  { value: "star", label: "Star Micronics" },
+  { value: "bixolon", label: "Bixolon" },
+  { value: "citizen", label: "Citizen" },
+  { value: "generic", label: "Generic/Other" },
+] as const;
+
+const PRINTER_TYPES = [
+  { value: "thermal", label: "Thermal" },
+  { value: "inkjet", label: "Inkjet" },
+  { value: "laser", label: "Laser" },
 ] as const;
 
 const CONNECTION_TYPES = ["network", "usb", "bluetooth"] as const;
@@ -34,6 +39,7 @@ const CONNECTION_TYPES = ["network", "usb", "bluetooth"] as const;
 type PrinterFormValues = {
   name: string;
   brand: string;
+  printerType: string;
   connectionType: string;
   ipAddress: string;
   branchId: string;
@@ -153,6 +159,7 @@ export default function PrinterSettings() {
   const printerFormSchema = z.object({
     name: z.string().min(1, t.enterPrinterName || "Printer name is required"),
     brand: z.string().min(1, t.selectBrand || "Brand is required"),
+    printerType: z.string().min(1, "Printer type is required"),
     connectionType: z.string().min(1, "Connection type is required"),
     ipAddress: z.string().optional(),
     branchId: z.string().optional(),
@@ -171,6 +178,7 @@ export default function PrinterSettings() {
     defaultValues: {
       name: "",
       brand: "",
+      printerType: "thermal",
       connectionType: "network",
       ipAddress: "",
       branchId: "",
@@ -188,6 +196,7 @@ export default function PrinterSettings() {
       return await apiRequest("POST", "/api/printers", {
         name: data.name,
         brand: data.brand,
+        printerType: data.printerType,
         connectionType: data.connectionType,
         ipAddress: data.connectionType === "network" ? data.ipAddress : null,
         branchId: data.branchId || null,
@@ -215,6 +224,7 @@ export default function PrinterSettings() {
       return await apiRequest("PATCH", `/api/printers/${id}`, {
         name: data.name,
         brand: data.brand,
+        printerType: data.printerType,
         connectionType: data.connectionType,
         ipAddress: data.connectionType === "network" ? data.ipAddress : null,
         branchId: data.branchId || null,
@@ -284,6 +294,7 @@ export default function PrinterSettings() {
     form.reset({
       name: "",
       brand: "",
+      printerType: "thermal",
       connectionType: "network",
       ipAddress: "",
       branchId: "",
@@ -295,6 +306,7 @@ export default function PrinterSettings() {
     form.reset({
       name: printer.name,
       brand: printer.brand || "",
+      printerType: printer.printerType || "thermal",
       connectionType: printer.connectionType,
       ipAddress: printer.ipAddress || "",
       branchId: printer.branchId || "",
@@ -393,8 +405,36 @@ export default function PrinterSettings() {
                             </FormControl>
                             <SelectContent>
                               {PRINTER_BRANDS.map((brand) => (
-                                <SelectItem key={brand} value={brand}>
-                                  {brand}
+                                <SelectItem key={brand.value} value={brand.value}>
+                                  {brand.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="printerType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t.printerType || "Printer Type"}</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger data-testid="select-printer-type">
+                                <SelectValue placeholder={t.selectPrinterType || "Select printer type"} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {PRINTER_TYPES.map((type) => (
+                                <SelectItem key={type.value} value={type.value}>
+                                  {type.label}
                                 </SelectItem>
                               ))}
                             </SelectContent>

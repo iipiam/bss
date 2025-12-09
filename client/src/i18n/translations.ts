@@ -133,6 +133,8 @@ export interface Translations {
   deletePrinter: string;
   printerName: string;
   printerBrand: string;
+  printerType: string;
+  selectPrinterType: string;
   connectionType: string;
   ipAddress: string;
   defaultPrinter: string;
@@ -1626,6 +1628,8 @@ export const translations: Record<Language, Translations> = {
     deletePrinter: 'Delete Printer',
     printerName: 'Printer Name',
     printerBrand: 'Printer Brand',
+    printerType: 'Printer Type',
+    selectPrinterType: 'Select printer type',
     connectionType: 'Connection Type',
     ipAddress: 'IP Address',
     defaultPrinter: 'Default Printer',
@@ -3124,6 +3128,8 @@ export const translations: Record<Language, Translations> = {
     deletePrinter: 'حذف الطابعة',
     printerName: 'اسم الطابعة',
     printerBrand: 'ماركة الطابعة',
+    printerType: 'نوع الطابعة',
+    selectPrinterType: 'اختر نوع الطابعة',
     connectionType: 'نوع الاتصال',
     ipAddress: 'عنوان IP',
     defaultPrinter: 'الطابعة الافتراضية',
@@ -4610,6 +4616,8 @@ export const translations: Record<Language, Translations> = {
     deletePrinter: 'Drucker löschen',
     printerName: 'Druckername',
     printerBrand: 'Druckermarke',
+    printerType: 'Druckertyp',
+    selectPrinterType: 'Druckertyp auswählen',
     connectionType: 'Verbindungstyp',
     ipAddress: 'IP-Adresse',
     defaultPrinter: 'Standarddrucker',
@@ -6091,6 +6099,8 @@ export const translations: Record<Language, Translations> = {
     deletePrinter: '删除打印机',
     printerName: '打印机名称',
     printerBrand: '打印机品牌',
+    printerType: '打印机类型',
+    selectPrinterType: '选择打印机类型',
     connectionType: '连接类型',
     ipAddress: 'IP地址',
     defaultPrinter: '默认打印机',
@@ -7572,6 +7582,8 @@ export const translations: Record<Language, Translations> = {
     deletePrinter: 'প্রিন্টার মুছুন',
     printerName: 'প্রিন্টারের নাম',
     printerBrand: 'প্রিন্টার ব্র্যান্ড',
+    printerType: 'প্রিন্টার ধরন',
+    selectPrinterType: 'প্রিন্টার ধরন নির্বাচন করুন',
     connectionType: 'সংযোগের ধরন',
     ipAddress: 'আইপি ঠিকানা',
     defaultPrinter: 'ডিফল্ট প্রিন্টার',
@@ -9053,6 +9065,8 @@ export const translations: Record<Language, Translations> = {
     deletePrinter: 'Elimina Stampante',
     printerName: 'Nome Stampante',
     printerBrand: 'Marca Stampante',
+    printerType: 'Tipo di Stampante',
+    selectPrinterType: 'Seleziona tipo stampante',
     connectionType: 'Tipo di Connessione',
     ipAddress: 'Indirizzo IP',
     defaultPrinter: 'Stampante Predefinita',
@@ -10535,6 +10549,8 @@ export const translations: Record<Language, Translations> = {
     deletePrinter: 'प्रिंटर हटाएं',
     printerName: 'प्रिंटर का नाम',
     printerBrand: 'प्रिंटर ब्रांड',
+    printerType: 'प्रिंटर प्रकार',
+    selectPrinterType: 'प्रिंटर प्रकार चुनें',
     connectionType: 'कनेक्शन प्रकार',
     ipAddress: 'आईपी पता',
     defaultPrinter: 'डिफ़ॉल्ट प्रिंटर',
@@ -11992,6 +12008,8 @@ export const translations: Record<Language, Translations> = {
     deletePrinter: 'پرنٹر حذف کریں',
     printerName: 'پرنٹر کا نام',
     printerBrand: 'پرنٹر برانڈ',
+    printerType: 'پرنٹر کی قسم',
+    selectPrinterType: 'پرنٹر کی قسم منتخب کریں',
     connectionType: 'کنکشن کی قسم',
     ipAddress: 'آئی پی ایڈریس',
     defaultPrinter: 'ڈیفالٹ پرنٹر',
@@ -13435,6 +13453,8 @@ export const translations: Record<Language, Translations> = {
     deletePrinter: "Eliminar Impresora",
     printerName: "Nombre de Impresora",
     printerBrand: "Marca de Impresora",
+    printerType: "Tipo de Impresora",
+    selectPrinterType: "Seleccionar tipo de impresora",
     connectionType: "Tipo de Conexión",
     ipAddress: "Dirección IP",
     defaultPrinter: "Impresora Predeterminada",
@@ -14832,6 +14852,8 @@ export const translations: Record<Language, Translations> = {
     deletePrinter: "Tanggalin ang Printer",
     printerName: "Pangalan ng Printer",
     printerBrand: "Brand ng Printer",
+    printerType: "Uri ng Printer",
+    selectPrinterType: "Pumili ng uri ng printer",
     connectionType: "Uri ng Koneksyon",
     ipAddress: "IP Address",
     defaultPrinter: "Default na Printer",
