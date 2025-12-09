@@ -1218,3 +1218,91 @@ export const insertViolationReferenceSchema = createInsertSchema(violationRefere
   });
 export type InsertViolationReference = z.infer<typeof insertViolationReferenceSchema>;
 export type ViolationReference = typeof violationReferences.$inferSelect;
+
+// ZATCA Settings - Store ZATCA e-invoicing configuration per restaurant
+export const zatcaSettings = pgTable("zatca_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull().unique(),
+  // Environment
+  environment: text("environment").notNull().default("sandbox"), // "sandbox", "simulation", "production"
+  isEnabled: boolean("is_enabled").notNull().default(false),
+  // CSR Configuration
+  csrCommonName: text("csr_common_name"), // EGS unit identifier
+  csrSerialNumber: text("csr_serial_number"), // EGS serial number format: 1-xxx|2-xxx|3-uuid
+  csrOrganizationIdentifier: text("csr_organization_identifier"), // VAT number (15 digits)
+  csrOrganizationUnitName: text("csr_organization_unit_name"), // Branch name
+  csrOrganizationName: text("csr_organization_name"), // Company name
+  csrCountryName: text("csr_country_name").default("SA"),
+  csrInvoiceType: text("csr_invoice_type").default("1100"), // 1100 = both B2B and B2C
+  csrLocationAddress: text("csr_location_address"),
+  csrIndustryBusinessCategory: text("csr_industry_business_category"),
+  // Cryptographic Keys (stored encrypted)
+  privateKey: text("private_key"), // PEM-encoded private key
+  csr: text("csr"), // PEM-encoded CSR
+  // CSID (Cryptographic Stamp Identifier)
+  complianceCsid: text("compliance_csid"), // Compliance CSID for testing
+  complianceCsidSecret: text("compliance_csid_secret"), // Compliance CSID secret
+  productionCsid: text("production_csid"), // Production CSID
+  productionCsidSecret: text("production_csid_secret"), // Production CSID secret
+  csidExpiresAt: timestamp("csid_expires_at"),
+  // Certificate chain
+  certificate: text("certificate"), // X.509 certificate from ZATCA
+  // Invoice counters
+  lastInvoiceCounter: integer("last_invoice_counter").notNull().default(0),
+  lastInvoiceHash: text("last_invoice_hash"), // Previous invoice hash for chaining
+  // Timestamps
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertZatcaSettingsSchema = createInsertSchema(zatcaSettings)
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({
+    environment: z.enum(["sandbox", "simulation", "production"]).default("sandbox"),
+  });
+export type InsertZatcaSettings = z.infer<typeof insertZatcaSettingsSchema>;
+export type ZatcaSettings = typeof zatcaSettings.$inferSelect;
+
+// ZATCA Invoice Status - Track ZATCA submission status for each invoice
+export const invoiceZatcaStatus = pgTable("invoice_zatca_status", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  invoiceId: varchar("invoice_id").references(() => invoices.id).notNull(),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  // Invoice identification
+  invoiceType: text("invoice_type").notNull(), // "standard" (B2B), "simplified" (B2C)
+  invoiceSubType: text("invoice_sub_type").notNull(), // "01" debit, "02" credit
+  uuid: text("uuid").notNull(), // ZATCA invoice UUID
+  invoiceHash: text("invoice_hash").notNull(), // SHA256 hash of the invoice
+  invoiceCounter: integer("invoice_counter").notNull(), // Sequential counter
+  // Submission details
+  submissionType: text("submission_type").notNull(), // "clearance" (B2B), "reporting" (B2C)
+  submissionStatus: text("submission_status").notNull().default("pending"), // "pending", "submitted", "cleared", "reported", "rejected", "warning"
+  // ZATCA response
+  zatcaRequestId: text("zatca_request_id"), // Request ID from ZATCA
+  zatcaResponseCode: text("zatca_response_code"), // Response code
+  zatcaResponseMessage: text("zatca_response_message"), // Response message
+  zatcaWarnings: jsonb("zatca_warnings").$type<Array<{ code: string; message: string }>>(), // Validation warnings
+  zatcaErrors: jsonb("zatca_errors").$type<Array<{ code: string; message: string }>>(), // Validation errors
+  // Signed invoice data
+  signedXml: text("signed_xml"), // Full signed XML
+  qrCode: text("qr_code"), // Base64-encoded QR code with cryptographic stamp
+  // Timestamps
+  submittedAt: timestamp("submitted_at"),
+  clearedAt: timestamp("cleared_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  invoiceIdx: index("invoice_zatca_status_invoice_idx").on(table.invoiceId),
+  restaurantIdx: index("invoice_zatca_status_restaurant_idx").on(table.restaurantId),
+  statusIdx: index("invoice_zatca_status_status_idx").on(table.submissionStatus),
+}));
+
+export const insertInvoiceZatcaStatusSchema = createInsertSchema(invoiceZatcaStatus)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    invoiceType: z.enum(["standard", "simplified"]),
+    invoiceSubType: z.enum(["01", "02"]), // 01=debit/invoice, 02=credit note
+    submissionType: z.enum(["clearance", "reporting"]),
+    submissionStatus: z.enum(["pending", "submitted", "cleared", "reported", "rejected", "warning"]).default("pending"),
+  });
+export type InsertInvoiceZatcaStatus = z.infer<typeof insertInvoiceZatcaStatusSchema>;
+export type InvoiceZatcaStatus = typeof invoiceZatcaStatus.$inferSelect;

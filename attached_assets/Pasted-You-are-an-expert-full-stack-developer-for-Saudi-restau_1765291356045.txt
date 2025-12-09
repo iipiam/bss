@@ -1,0 +1,41 @@
+You are an expert full-stack developer for Saudi restaurant POS systems.
+
+I need you to build a complete, production-ready module for my web POS (React + Node.js/Express) that does ALL of the following in Saudi Arabia:
+
+1. Printer Management (already have Add Printer modal)
+   - Support Network (IP) thermal printers
+   - Auto-discover printers on local network (mDNS + port 9100 scan)
+   - Support these brands only: Epson, Star Micronics, Bixolon, Citizen, Generic
+   - One-click test print + auto-cut + cash drawer kick
+   - Allow unlimited tablets/devices to print to the same IP printer simultaneously
+   - Save printers per restaurant/branch in database
+
+2. Full ZATCA Phase 2 (Fatoora) Integration – Mandatory in Saudi Arabia
+   - Generate e-invoice in correct UBL 2.1 XML format
+   - Calculate invoice hash chain correctly
+   - Sign invoice with CSID (using the private key from ZATCA portal)
+   - Generate correct QR code (Base64 encoded as per ZATCA spec)
+   - Send invoice in real-time to ZATCA using both:
+        • Clearance API (for standard invoices)
+        • Reporting API (for simplified invoices)
+   - Full Sandbox + Production mode switch
+   - Save ZATCA UUID and clearance status in database
+   - Handle offline mode (queue invoices and send when online)
+   - Print the final invoice with QR code on thermal printer (80mm)
+
+3. Bonus (very important for restaurants)
+   - Print Arabic text correctly on thermal printer
+   - Auto-print customer receipt (with QR) + kitchen ticket (no QR) when order is paid
+   - Support multiple printers (Cashier, Kitchen, Bar
+
+Please generate:
+- Complete backend routes (/api/printers, /api/zatca/...)
+- Full working Node.js functions for XML generation, hashing, signing, QR, API calls
+- React components for printer discovery and ZATCA settings
+- Ready-to-use Postman collection for testing Sandbox
+- .env example with all required variables
+- Instructions to get CSID from ZATCA portal and onboard the solution
+
+This must be 100% compliant with latest ZATCA requirements (December 2025) and work with real restaurants in Riyadh, Jeddah, Dammam.
+
+Start now and give me the full code + folder structure.

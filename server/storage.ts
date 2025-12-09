@@ -63,6 +63,10 @@ import {
   type InsertViolationReference,
   type Printer,
   type InsertPrinter,
+  type ZatcaSettings,
+  type InsertZatcaSettings,
+  type InvoiceZatcaStatus,
+  type InsertInvoiceZatcaStatus,
   restaurants,
   branches,
   inventoryItems,
@@ -102,6 +106,8 @@ import {
   violations,
   violationReferences,
   printers,
+  zatcaSettings,
+  invoiceZatcaStatus,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
@@ -412,6 +418,18 @@ export interface IStorage {
   updatePrinter(id: string, restaurantId: string, printer: Partial<InsertPrinter>): Promise<Printer | undefined>;
   deletePrinter(id: string, restaurantId: string): Promise<boolean>;
   setDefaultPrinter(id: string, restaurantId: string, branchId?: string): Promise<Printer | undefined>;
+
+  // ZATCA Settings (MULTI-TENANT: requires restaurantId for all operations)
+  getZatcaSettings(restaurantId: string): Promise<ZatcaSettings | undefined>;
+  createZatcaSettings(settings: InsertZatcaSettings): Promise<ZatcaSettings>;
+  updateZatcaSettings(restaurantId: string, settings: Partial<InsertZatcaSettings>): Promise<ZatcaSettings | undefined>;
+  incrementInvoiceCounter(restaurantId: string, lastHash: string): Promise<{ counter: number; previousHash: string | null }>;
+
+  // ZATCA Invoice Status (MULTI-TENANT: requires restaurantId for all operations)
+  getInvoiceZatcaStatuses(restaurantId: string, status?: string): Promise<InvoiceZatcaStatus[]>;
+  getInvoiceZatcaStatus(invoiceId: string, restaurantId: string): Promise<InvoiceZatcaStatus | undefined>;
+  createInvoiceZatcaStatus(status: InsertInvoiceZatcaStatus): Promise<InvoiceZatcaStatus>;
+  updateInvoiceZatcaStatus(invoiceId: string, restaurantId: string, status: Partial<InsertInvoiceZatcaStatus>): Promise<InvoiceZatcaStatus | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3371,6 +3389,93 @@ export class DatabaseStorage implements IStorage {
       .update(printers)
       .set({ isDefault: true, updatedAt: new Date() })
       .where(and(eq(printers.id, id), eq(printers.restaurantId, restaurantId)))
+      .returning();
+    return updated;
+  }
+
+  // ZATCA Settings
+  async getZatcaSettings(restaurantId: string): Promise<ZatcaSettings | undefined> {
+    const [settings] = await db
+      .select()
+      .from(zatcaSettings)
+      .where(eq(zatcaSettings.restaurantId, restaurantId));
+    return settings;
+  }
+
+  async createZatcaSettings(settings: InsertZatcaSettings): Promise<ZatcaSettings> {
+    const [created] = await db.insert(zatcaSettings).values(settings).returning();
+    return created;
+  }
+
+  async updateZatcaSettings(restaurantId: string, settings: Partial<InsertZatcaSettings>): Promise<ZatcaSettings | undefined> {
+    const [updated] = await db
+      .update(zatcaSettings)
+      .set({ ...settings, updatedAt: new Date() })
+      .where(eq(zatcaSettings.restaurantId, restaurantId))
+      .returning();
+    return updated;
+  }
+
+  async incrementInvoiceCounter(restaurantId: string, lastHash: string): Promise<{ counter: number; previousHash: string | null }> {
+    // Get current settings
+    const current = await this.getZatcaSettings(restaurantId);
+    if (!current) {
+      throw new Error("ZATCA settings not found for restaurant");
+    }
+    
+    const previousHash = current.lastInvoiceHash;
+    const newCounter = current.lastInvoiceCounter + 1;
+    
+    // Update counter and hash atomically
+    await db
+      .update(zatcaSettings)
+      .set({ 
+        lastInvoiceCounter: newCounter, 
+        lastInvoiceHash: lastHash,
+        updatedAt: new Date() 
+      })
+      .where(eq(zatcaSettings.restaurantId, restaurantId));
+    
+    return { counter: newCounter, previousHash };
+  }
+
+  // ZATCA Invoice Status
+  async getInvoiceZatcaStatuses(restaurantId: string, status?: string): Promise<InvoiceZatcaStatus[]> {
+    const conditions = [eq(invoiceZatcaStatus.restaurantId, restaurantId)];
+    if (status) {
+      conditions.push(eq(invoiceZatcaStatus.submissionStatus, status));
+    }
+    return db
+      .select()
+      .from(invoiceZatcaStatus)
+      .where(and(...conditions))
+      .orderBy(desc(invoiceZatcaStatus.createdAt));
+  }
+
+  async getInvoiceZatcaStatus(invoiceId: string, restaurantId: string): Promise<InvoiceZatcaStatus | undefined> {
+    const [status] = await db
+      .select()
+      .from(invoiceZatcaStatus)
+      .where(and(
+        eq(invoiceZatcaStatus.invoiceId, invoiceId),
+        eq(invoiceZatcaStatus.restaurantId, restaurantId)
+      ));
+    return status;
+  }
+
+  async createInvoiceZatcaStatus(status: InsertInvoiceZatcaStatus): Promise<InvoiceZatcaStatus> {
+    const [created] = await db.insert(invoiceZatcaStatus).values(status as any).returning();
+    return created;
+  }
+
+  async updateInvoiceZatcaStatus(invoiceId: string, restaurantId: string, status: Partial<InsertInvoiceZatcaStatus>): Promise<InvoiceZatcaStatus | undefined> {
+    const [updated] = await db
+      .update(invoiceZatcaStatus)
+      .set(status as any)
+      .where(and(
+        eq(invoiceZatcaStatus.invoiceId, invoiceId),
+        eq(invoiceZatcaStatus.restaurantId, restaurantId)
+      ))
       .returning();
     return updated;
   }
