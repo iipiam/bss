@@ -1123,6 +1123,21 @@ export interface Translations {
   ministryOfCommerce: string;
   disputed: string;
 
+  // Violation References
+  violationReferences: string;
+  referenceDocuments: string;
+  addReferenceDocument: string;
+  referenceTitle: string;
+  referenceDescription: string;
+  selectAuthority: string;
+  uploadPdf: string;
+  pdfOnly: string;
+  referenceUploaded: string;
+  referenceDeleted: string;
+  referenceDeleteConfirm: string;
+  noReferences: string;
+  viewPdf: string;
+
   sar: string;
   archived: string;
   yes: string;
@@ -2647,6 +2662,22 @@ export const translations: Record<Language, Translations> = {
     ministryOfCommerce: 'Ministry of Commerce',
     disputed: 'Disputed',
 
+    // Violation References
+    violationReferences: 'Reference Documents',
+    referenceDocuments: 'Reference Documents',
+    addReferenceDocument: 'Add Reference Document',
+    referenceTitle: 'Document Title',
+    referenceDescription: 'Description (Optional)',
+    selectAuthority: 'Select Authority',
+    uploadPdf: 'Upload PDF',
+    pdfOnly: 'PDF files only (max 10MB)',
+    referenceUploaded: 'Reference document uploaded successfully',
+    referenceDeleted: 'Reference document deleted successfully',
+    referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
+    noReferences: 'No reference documents found',
+    viewPdf: 'View PDF',
+    downloadPdf: 'Download PDF',
+
     deleteSubscription: 'Delete Subscription',
     deleteSubscriptionConfirm: 'Are you sure you want to delete this subscription?',
     mistakeSubscription: 'Mistake Subscription',
@@ -4148,6 +4179,22 @@ export const translations: Record<Language, Translations> = {
     ministryOfCommerce: 'وزارة التجارة',
     disputed: 'متنازع عليه',
 
+    // Violation References
+    violationReferences: 'المستندات المرجعية',
+    referenceDocuments: 'المستندات المرجعية',
+    addReferenceDocument: 'إضافة مستند مرجعي',
+    referenceTitle: 'عنوان المستند',
+    referenceDescription: 'الوصف (اختياري)',
+    selectAuthority: 'اختر الجهة',
+    uploadPdf: 'رفع ملف PDF',
+    pdfOnly: 'ملفات PDF فقط (حد أقصى 10 ميجابايت)',
+    referenceUploaded: 'تم رفع المستند المرجعي بنجاح',
+    referenceDeleted: 'تم حذف المستند المرجعي بنجاح',
+    referenceDeleteConfirm: 'هل أنت متأكد أنك تريد حذف هذا المستند المرجعي؟',
+    noReferences: 'لا توجد مستندات مرجعية',
+    viewPdf: 'عرض PDF',
+    downloadPdf: 'تحميل PDF',
+
     deleteSubscription: 'حذف الاشتراك',
     deleteSubscriptionConfirm: 'هل أنت متأكد من حذف هذا الاشتراك؟',
     mistakeSubscription: 'الاشتراك خاطئ',
@@ -5647,6 +5694,22 @@ export const translations: Record<Language, Translations> = {
     police: 'Police',
     ministryOfCommerce: 'Ministry of Commerce',
     disputed: 'Disputed',
+
+    // Violation References
+    violationReferences: 'Referenzdokumente',
+    referenceDocuments: 'Referenzdokumente',
+    addReferenceDocument: 'Referenzdokument hinzufügen',
+    referenceTitle: 'Dokumenttitel',
+    referenceDescription: 'Beschreibung (Optional)',
+    selectAuthority: 'Behörde auswählen',
+    uploadPdf: 'PDF hochladen',
+    pdfOnly: 'Nur PDF-Dateien (max. 10MB)',
+    referenceUploaded: 'Referenzdokument erfolgreich hochgeladen',
+    referenceDeleted: 'Referenzdokument erfolgreich gelöscht',
+    referenceDeleteConfirm: 'Möchten Sie dieses Referenzdokument wirklich löschen?',
+    noReferences: 'Keine Referenzdokumente gefunden',
+    viewPdf: 'PDF anzeigen',
+    downloadPdf: 'PDF herunterladen',
     
     // Toast Messages & Notifications
     procurementCreated: 'Procurement item created successfully',
@@ -7130,6 +7193,22 @@ export const translations: Record<Language, Translations> = {
     police: 'Police',
     ministryOfCommerce: 'Ministry of Commerce',
     disputed: 'Disputed',
+
+    // Violation References
+    violationReferences: 'Reference Documents',
+    referenceDocuments: 'Reference Documents',
+    addReferenceDocument: 'Add Reference Document',
+    referenceTitle: 'Document Title',
+    referenceDescription: 'Description (Optional)',
+    selectAuthority: 'Select Authority',
+    uploadPdf: 'Upload PDF',
+    pdfOnly: 'PDF files only (max 10MB)',
+    referenceUploaded: 'Reference document uploaded successfully',
+    referenceDeleted: 'Reference document deleted successfully',
+    referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
+    noReferences: 'No reference documents found',
+    viewPdf: 'View PDF',
+    downloadPdf: 'Download PDF',
     
     // Toast Messages & Notifications
     procurementCreated: 'Procurement item created successfully',
@@ -8613,6 +8692,22 @@ export const translations: Record<Language, Translations> = {
     police: 'Police',
     ministryOfCommerce: 'Ministry of Commerce',
     disputed: 'Disputed',
+
+    // Violation References
+    violationReferences: 'Reference Documents',
+    referenceDocuments: 'Reference Documents',
+    addReferenceDocument: 'Add Reference Document',
+    referenceTitle: 'Document Title',
+    referenceDescription: 'Description (Optional)',
+    selectAuthority: 'Select Authority',
+    uploadPdf: 'Upload PDF',
+    pdfOnly: 'PDF files only (max 10MB)',
+    referenceUploaded: 'Reference document uploaded successfully',
+    referenceDeleted: 'Reference document deleted successfully',
+    referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
+    noReferences: 'No reference documents found',
+    viewPdf: 'View PDF',
+    downloadPdf: 'Download PDF',
     
     // Toast Messages & Notifications
     procurementCreated: 'Procurement item created successfully',
@@ -10096,6 +10191,22 @@ export const translations: Record<Language, Translations> = {
     police: 'Police',
     ministryOfCommerce: 'Ministry of Commerce',
     disputed: 'Disputed',
+
+    // Violation References
+    violationReferences: 'Reference Documents',
+    referenceDocuments: 'Reference Documents',
+    addReferenceDocument: 'Add Reference Document',
+    referenceTitle: 'Document Title',
+    referenceDescription: 'Description (Optional)',
+    selectAuthority: 'Select Authority',
+    uploadPdf: 'Upload PDF',
+    pdfOnly: 'PDF files only (max 10MB)',
+    referenceUploaded: 'Reference document uploaded successfully',
+    referenceDeleted: 'Reference document deleted successfully',
+    referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
+    noReferences: 'No reference documents found',
+    viewPdf: 'View PDF',
+    downloadPdf: 'Download PDF',
     
     // Toast Messages & Notifications
     procurementCreated: 'Procurement item created successfully',
@@ -11555,6 +11666,22 @@ export const translations: Record<Language, Translations> = {
     police: 'Police',
     ministryOfCommerce: 'Ministry of Commerce',
     disputed: 'Disputed',
+
+    // Violation References
+    violationReferences: 'Reference Documents',
+    referenceDocuments: 'Reference Documents',
+    addReferenceDocument: 'Add Reference Document',
+    referenceTitle: 'Document Title',
+    referenceDescription: 'Description (Optional)',
+    selectAuthority: 'Select Authority',
+    uploadPdf: 'Upload PDF',
+    pdfOnly: 'PDF files only (max 10MB)',
+    referenceUploaded: 'Reference document uploaded successfully',
+    referenceDeleted: 'Reference document deleted successfully',
+    referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
+    noReferences: 'No reference documents found',
+    viewPdf: 'View PDF',
+    downloadPdf: 'Download PDF',
     
     // Toast Messages & Notifications
     procurementCreated: 'खरीद आइटम सफलतापूर्वक बनाया गया',
@@ -13014,6 +13141,22 @@ export const translations: Record<Language, Translations> = {
     police: 'Police',
     ministryOfCommerce: 'Ministry of Commerce',
     disputed: 'Disputed',
+
+    // Violation References
+    violationReferences: 'Reference Documents',
+    referenceDocuments: 'Reference Documents',
+    addReferenceDocument: 'Add Reference Document',
+    referenceTitle: 'Document Title',
+    referenceDescription: 'Description (Optional)',
+    selectAuthority: 'Select Authority',
+    uploadPdf: 'Upload PDF',
+    pdfOnly: 'PDF files only (max 10MB)',
+    referenceUploaded: 'Reference document uploaded successfully',
+    referenceDeleted: 'Reference document deleted successfully',
+    referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
+    noReferences: 'No reference documents found',
+    viewPdf: 'View PDF',
+    downloadPdf: 'Download PDF',
     
     // Toast Messages & Notifications
     procurementCreated: 'خریداری کی آئٹم کامیابی سے بنائی گئی',
@@ -14416,6 +14559,22 @@ export const translations: Record<Language, Translations> = {
     ministryOfCommerce: 'Ministry of Commerce',
     disputed: 'Disputed',
 
+    // Violation References
+    violationReferences: 'Reference Documents',
+    referenceDocuments: 'Reference Documents',
+    addReferenceDocument: 'Add Reference Document',
+    referenceTitle: 'Document Title',
+    referenceDescription: 'Description (Optional)',
+    selectAuthority: 'Select Authority',
+    uploadPdf: 'Upload PDF',
+    pdfOnly: 'PDF files only (max 10MB)',
+    referenceUploaded: 'Reference document uploaded successfully',
+    referenceDeleted: 'Reference document deleted successfully',
+    referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
+    noReferences: 'No reference documents found',
+    viewPdf: 'View PDF',
+    downloadPdf: 'Download PDF',
+
     procurementCreated: "Artículo de adquisición creado exitosamente",
     procurementUpdated: "Artículo de adquisición actualizado exitosamente",
     procurementDeleted: "Artículo de adquisición eliminado exitosamente",
@@ -15815,6 +15974,22 @@ export const translations: Record<Language, Translations> = {
     police: 'Police',
     ministryOfCommerce: 'Ministry of Commerce',
     disputed: 'Disputed',
+
+    // Violation References
+    violationReferences: 'Reference Documents',
+    referenceDocuments: 'Reference Documents',
+    addReferenceDocument: 'Add Reference Document',
+    referenceTitle: 'Document Title',
+    referenceDescription: 'Description (Optional)',
+    selectAuthority: 'Select Authority',
+    uploadPdf: 'Upload PDF',
+    pdfOnly: 'PDF files only (max 10MB)',
+    referenceUploaded: 'Reference document uploaded successfully',
+    referenceDeleted: 'Reference document deleted successfully',
+    referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
+    noReferences: 'No reference documents found',
+    viewPdf: 'View PDF',
+    downloadPdf: 'Download PDF',
 
     procurementCreated: "Matagumpay na nagawa ang item sa pagbili",
     procurementUpdated: "Matagumpay na na-update ang item sa pagbili",

@@ -274,6 +274,38 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Violation reference PDF upload configuration
+  const violationReferenceStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      const uploadPath = path.join(process.cwd(), 'uploads', 'violation-references');
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+      cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+      const restaurantId = (req as any).session?.user?.restaurantId;
+      const authority = (req as any).body?.authority || 'unknown';
+      const ext = path.extname(file.originalname);
+      const uniqueName = `ref-${restaurantId}-${authority}-${Date.now()}${ext}`;
+      cb(null, uniqueName);
+    }
+  });
+
+  const uploadViolationReference = multer({
+    storage: violationReferenceStorage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit for PDFs
+    fileFilter: (req: any, file: any, cb: any) => {
+      const allowed = ['.pdf'];
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (allowed.includes(ext)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid file type. Only PDF files allowed.'));
+      }
+    }
+  });
+
   // Branches (Multi-tenant isolated)
   app.get("/api/branches", requireAuth, requireRestaurant, requirePermission('branches'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
@@ -1168,6 +1200,115 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("[VIOLATIONS] Create bill error:", error);
       res.status(500).json({ error: "Failed to create bill from violation" });
+    }
+  });
+
+  // Violation References (MULTI-TENANT: PDF documents per authority type)
+  app.get("/api/violation-references", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const authority = req.query.authority as string | undefined;
+      const references = await storage.getViolationReferences(restaurantId, authority);
+      res.json(references);
+    } catch (error) {
+      console.error("[VIOLATION-REFERENCES] Get error:", error);
+      res.status(500).json({ error: "Failed to fetch violation references" });
+    }
+  });
+
+  app.get("/api/violation-references/:id", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const reference = await storage.getViolationReference(req.params.id, restaurantId);
+      if (!reference) {
+        return res.status(404).json({ error: "Violation reference not found" });
+      }
+      res.json(reference);
+    } catch (error) {
+      console.error("[VIOLATION-REFERENCES] Get by ID error:", error);
+      res.status(500).json({ error: "Failed to fetch violation reference" });
+    }
+  });
+
+  app.post("/api/violation-references", requireAuth, requireRestaurant, requireAction('bills', 'add'), uploadViolationReference.single('file'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      
+      const { authority, title, description } = req.body;
+      
+      if (!authority || !title) {
+        return res.status(400).json({ error: "Authority and title are required" });
+      }
+      
+      const validAuthorities = ['municipality', 'zatca', 'police', 'ministry_of_commerce'];
+      if (!validAuthorities.includes(authority)) {
+        return res.status(400).json({ error: "Invalid authority type" });
+      }
+      
+      const reference = await storage.createViolationReference({
+        restaurantId,
+        authority,
+        title,
+        description: description || null,
+        documentPath: file.path,
+      });
+      
+      res.status(201).json(reference);
+    } catch (error) {
+      console.error("[VIOLATION-REFERENCES] Create error:", error);
+      res.status(500).json({ error: "Failed to create violation reference" });
+    }
+  });
+
+  app.delete("/api/violation-references/:id", requireAuth, requireRestaurant, requireAction('bills', 'delete'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const reference = await storage.getViolationReference(req.params.id, restaurantId);
+      
+      if (!reference) {
+        return res.status(404).json({ error: "Violation reference not found" });
+      }
+      
+      // Delete the file from disk
+      if (reference.documentPath && fs.existsSync(reference.documentPath)) {
+        fs.unlinkSync(reference.documentPath);
+      }
+      
+      const deleted = await storage.deleteViolationReference(req.params.id, restaurantId);
+      res.json({ success: deleted });
+    } catch (error) {
+      console.error("[VIOLATION-REFERENCES] Delete error:", error);
+      res.status(500).json({ error: "Failed to delete violation reference" });
+    }
+  });
+
+  // Serve violation reference files
+  app.get("/api/violation-references/:id/file", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const reference = await storage.getViolationReference(req.params.id, restaurantId);
+      
+      if (!reference) {
+        return res.status(404).json({ error: "Violation reference not found" });
+      }
+      
+      if (!reference.documentPath || !fs.existsSync(reference.documentPath)) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      
+      // Extract filename from the document path
+      const fileName = path.basename(reference.documentPath);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+      res.sendFile(path.resolve(reference.documentPath));
+    } catch (error) {
+      console.error("[VIOLATION-REFERENCES] File serve error:", error);
+      res.status(500).json({ error: "Failed to serve file" });
     }
   });
 
