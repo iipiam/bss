@@ -84,11 +84,13 @@ const PaymentTest = lazy(() => import("@/pages/payment-test"));
 const PasswordManager = lazy(() => import("@/pages/password-manager"));
 const Licenses = lazy(() => import("@/pages/licenses"));
 const Violations = lazy(() => import("@/pages/violations"));
-const Login = lazy(() => import("@/pages/login"));
-const ForgotPassword = lazy(() => import("@/pages/forgot-password"));
-const ResetPassword = lazy(() => import("@/pages/reset-password"));
-const EmergencyReset = lazy(() => import("@/pages/emergency-reset"));
 const NotFound = lazy(() => import("@/pages/not-found"));
+
+// Auth pages loaded eagerly to avoid Suspense issues with AuthProvider
+import Login from "@/pages/login";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
+import EmergencyReset from "@/pages/emergency-reset";
 
 // Loading fallback component for lazy-loaded pages
 function PageLoader() {
@@ -281,13 +283,13 @@ function AppContent() {
 
   // Handle public routes (forgot-password, reset-password, emergency-reset) before checking authentication
   if (location === "/forgot-password") {
-    return <Suspense fallback={<PageLoader />}><ForgotPassword /></Suspense>;
+    return <ForgotPassword />;
   }
   if (location === "/reset-password") {
-    return <Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>;
+    return <ResetPassword />;
   }
   if (location === "/emergency-reset") {
-    return <Suspense fallback={<PageLoader />}><EmergencyReset /></Suspense>;
+    return <EmergencyReset />;
   }
 
   // Show loading state
@@ -304,7 +306,7 @@ function AppContent() {
 
   // Show login page if not authenticated
   if (!user) {
-    return <Suspense fallback={<PageLoader />}><Login /></Suspense>;
+    return <Login />;
   }
 
   // Show main app if authenticated with device-responsive layout
