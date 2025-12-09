@@ -1239,10 +1239,22 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "No file uploaded" });
       }
       
-      const { authority, title, description } = req.body;
+      const { authority, title: rawTitle, description: rawDescription } = req.body;
+      
+      // Trim and validate title/description
+      const title = typeof rawTitle === 'string' ? rawTitle.trim() : '';
+      const description = typeof rawDescription === 'string' ? rawDescription.trim() : '';
       
       if (!authority || !title) {
         return res.status(400).json({ error: "Authority and title are required" });
+      }
+      
+      if (title.length > 255) {
+        return res.status(400).json({ error: "Title must be 255 characters or less" });
+      }
+      
+      if (description.length > 1000) {
+        return res.status(400).json({ error: "Description must be 1000 characters or less" });
       }
       
       const validAuthorities = ['municipality', 'zatca', 'police', 'ministry_of_commerce'];

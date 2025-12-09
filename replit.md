@@ -51,7 +51,7 @@ Preferred communication style: Simple, everyday language.
 - **License Fees**: Optional fee tracking for each license.
 - **Procurement Invoice Image Upload**: Drag-and-drop upload for invoice images (JPEG, PNG, GIF, WebP) and PDFs with 10MB limit, secure storage, and authentication-based access.
 - **Procurement-to-Bills Sync**: Automatic synchronization between procurement status and shop bills (creates/updates/deletes bills based on procurement status) with full tenant isolation.
-- **Violations Management**: Track government authority violations (Municipality, ZATCA, Police, Ministry of Commerce) with PDF/image document uploads, status tracking (pending, paid, disputed), and automatic bill creation for violation payments. Includes statistics dashboard with counts and amounts by status.
+- **Violations Management**: Track government authority violations (Municipality, ZATCA, Police, Ministry of Commerce) with PDF/image document uploads, status tracking (pending, paid, disputed), and automatic bill creation for violation payments. Includes statistics dashboard with counts and amounts by status. Violation References feature allows uploading PDF reference documents per authority type for storing regulations, guidelines, and reference materials with multi-tenant isolation.
 - **Printer Configuration**: Multi-tenant printer settings with support for thermal receipt printers (Epson, Star Micronics, Brother, Zebra, BIXOLON). Supports IP-based network printers with QZ Tray integration for direct printing and browser fallback. Per-branch printer configuration with default printer selection.
 
 ## External Dependencies
