@@ -12,7 +12,13 @@ import {
   TrendingUp,
   FileCheck,
   Receipt,
-  Truck
+  Truck,
+  Users,
+  Wallet,
+  Headphones,
+  MessageSquare,
+  FileWarning,
+  Printer
 } from "lucide-react";
 
 import posImage from "@assets/generated_images/POS_System_Interface_a1bc794e.png";
@@ -43,12 +49,12 @@ import invoiceScreenshot from "@assets/generated_images/ZATCA_invoice_document_s
 import financialScreenshot from "@assets/generated_images/Financial_reports_dashboard_screenshot_9884d372.png";
 import deliveryAppsScreenshot from "@assets/generated_images/Delivery_Apps_Analytics_Screenshot_8961352b.png";
 
-type Language = 'en' | 'ar' | 'zh' | 'de' | 'hi' | 'ur' | 'bn';
+type Language = 'en' | 'ar' | 'zh' | 'de' | 'hi' | 'ur' | 'bn' | 'it' | 'es' | 'tl';
 
 const tutorialMetadata = {
-  icons: [ShoppingCart, Package, UtensilsCrossed, ChefHat, UserCircle, ClipboardList, BarChart3, DollarSign, Calculator, TrendingUp, FileCheck, Receipt, Truck],
-  images: [posImage, inventoryImage, menuImage, recipesImage, customersImage, ordersImage, dashboardImage, salesImage, profitabilityImage, forecastingImage, invoicesImage, financialImage, deliveryAppsImage],
-  screenshots: [posScreenshot, inventoryScreenshot, menuScreenshot, recipeScreenshot, customerScreenshot, orderScreenshot, analyticsScreenshot, salesScreenshot, profitabilityScreenshot, forecastingScreenshot, invoiceScreenshot, financialScreenshot, deliveryAppsScreenshot],
+  icons: [ShoppingCart, Package, UtensilsCrossed, ChefHat, UserCircle, ClipboardList, BarChart3, DollarSign, Calculator, TrendingUp, FileCheck, Receipt, Truck, Users, Wallet, Headphones, MessageSquare, FileWarning, Printer],
+  images: [posImage, inventoryImage, menuImage, recipesImage, customersImage, ordersImage, dashboardImage, salesImage, profitabilityImage, forecastingImage, invoicesImage, financialImage, deliveryAppsImage, deliveryAppsImage, deliveryAppsImage, deliveryAppsImage, deliveryAppsImage, deliveryAppsImage, deliveryAppsImage],
+  screenshots: [posScreenshot, inventoryScreenshot, menuScreenshot, recipeScreenshot, customerScreenshot, orderScreenshot, analyticsScreenshot, salesScreenshot, profitabilityScreenshot, forecastingScreenshot, invoiceScreenshot, financialScreenshot, deliveryAppsScreenshot, deliveryAppsScreenshot, deliveryAppsScreenshot, deliveryAppsScreenshot, deliveryAppsScreenshot, deliveryAppsScreenshot, deliveryAppsScreenshot],
   gradients: [
     "from-emerald-500 to-teal-500",
     "from-blue-500 to-indigo-500",
@@ -62,7 +68,13 @@ const tutorialMetadata = {
     "from-cyan-500 to-sky-500",
     "from-violet-500 to-purple-500",
     "from-blue-500 to-purple-500",
-    "from-orange-500 to-red-500"
+    "from-orange-500 to-red-500",
+    "from-indigo-500 to-blue-500",
+    "from-rose-500 to-pink-500",
+    "from-teal-500 to-cyan-500",
+    "from-fuchsia-500 to-purple-500",
+    "from-red-500 to-orange-500",
+    "from-slate-500 to-gray-500"
   ]
 };
 
@@ -247,6 +259,83 @@ const tutorialContent: Record<Language, Omit<Tutorial, 'icon' | 'image' | 'scree
         { title: "Review Cost Formula", description: "Understand the cost calculation: Commission = (Price - Subsidy) × Commission%, Banking Fees = Price × Banking%, then Total = (Commission + Banking + POS) × 1.15 for VAT.", tips: ["Subsidy increases your net revenue", "All fees include 15% VAT automatically"] },
         { title: "Optimize Strategy", description: "Use profitability data to negotiate better rates or focus on the most profitable platforms.", tips: ["Compare item costs (COGS) against revenue", "Monitor profit margins per platform"] }
       ]
+    },
+    {
+      title: "Employee Management",
+      description: "Manage team members, set roles with granular permissions, and track employee performance.",
+      estimatedTime: "6 minutes",
+      steps: [
+        { title: "Navigate to Employees", description: "Click 'Employees' in the sidebar to access the employee management system.", tips: ["Employee management is essential for organizing your team and tracking performance"] },
+        { title: "Add New Employee", description: "Click 'Add Employee', enter name, role, salary, and contact information to create a new team member profile.", tips: ["Ensure accurate salary information for payroll calculations", "Assign appropriate roles based on job responsibilities"] },
+        { title: "Configure Granular Permissions", description: "Set up to 19 different permissions for each employee including POS access, inventory management, financial reports, and system settings.", tips: ["Permissions control what each employee can view and modify", "Restrict sensitive data access to authorized personnel only"] },
+        { title: "Track Attendance and Performance", description: "Monitor employee attendance records, work hours, and performance metrics over time.", tips: ["Regular performance tracking helps identify training needs", "Use attendance data for scheduling optimization"] },
+        { title: "Update Employee Details", description: "Edit employee information, change roles, adjust salaries, or modify permissions as needed.", tips: ["Keep employee records current for accurate reporting", "Update permissions when roles change"] }
+      ]
+    },
+    {
+      title: "Bills & Expenses",
+      description: "Track shop bills, procurement costs, utility payments, and salary expenses with automated calculations.",
+      estimatedTime: "7 minutes",
+      steps: [
+        { title: "Access Shop/Bills", description: "Navigate to 'Shop' or 'Bills' in the sidebar to view and manage all business expenses.", tips: ["Bills section centralizes all expense tracking in one place"] },
+        { title: "Add New Bill", description: "Click 'Add Bill', enter vendor name, amount, expense type, and due date to record a new expense.", tips: ["Categorize expenses accurately for better financial reporting", "Include invoice numbers for reference"] },
+        { title: "Categorize Expenses", description: "Assign bills to categories like utilities, rent, supplies, or procurement for organized expense tracking.", tips: ["Proper categorization enables detailed expense analysis", "Create custom categories for business-specific needs"] },
+        { title: "Track Payment Status", description: "Monitor bill status as pending or paid, and update when payments are made.", tips: ["Track pending bills to avoid late payment fees", "Mark bills as paid immediately after payment"] },
+        { title: "Generate Salary Bills", description: "Create salary expense records with month selection for payroll tracking and reporting.", tips: ["Salary bills link to employee records automatically", "Select the correct month for accurate period tracking"] },
+        { title: "Link Procurement to Bills", description: "Connect procurement orders to corresponding bills for complete expense tracking.", tips: ["Linked records provide complete audit trail", "Verify amounts match between procurement and bills"] },
+        { title: "Export Expense Reports", description: "Download expense reports in various formats for accounting and tax purposes.", tips: ["Regular exports support financial planning", "Use date filters to generate period-specific reports"] }
+      ]
+    },
+    {
+      title: "Support Tickets",
+      description: "Submit support requests, track ticket status, and communicate with IT support team in real-time.",
+      estimatedTime: "5 minutes",
+      steps: [
+        { title: "Access Support Section", description: "Click 'Support' in the sidebar to open the support ticket management system.", tips: ["Support tickets help track and resolve technical issues efficiently"] },
+        { title: "Create New Ticket", description: "Click 'New Ticket', enter a description of the issue, select priority level (low, medium, high, urgent), and submit.", tips: ["Provide detailed descriptions for faster resolution", "Set appropriate priority based on business impact"] },
+        { title: "Upload Attachments", description: "Attach screenshots, documents, or files to help the support team understand and resolve your issue.", tips: ["Screenshots help illustrate problems clearly", "Include error messages when applicable"] },
+        { title: "Track Ticket Status", description: "Monitor your tickets as they progress through open, in-progress, and resolved states.", tips: ["Check ticket status regularly for updates", "Respond promptly to support team questions"] },
+        { title: "Use Real-Time Chat", description: "Communicate directly with the IT support team through the built-in chat feature for quick assistance.", tips: ["Real-time chat speeds up issue resolution", "Keep chat focused on the specific issue"] },
+        { title: "View Ticket History", description: "Review past tickets and their resolutions for reference or to report recurring issues.", tips: ["Historical tickets help identify patterns", "Reference past solutions for similar issues"] }
+      ]
+    },
+    {
+      title: "Team Chat",
+      description: "Communicate with team members through direct messages and channel-based conversations.",
+      estimatedTime: "4 minutes",
+      steps: [
+        { title: "Access Team Chat", description: "Click 'Chat' or 'Team Chat' in the sidebar to open the messaging system.", tips: ["Team chat enables instant communication across your organization"] },
+        { title: "Send Direct Messages", description: "Select a colleague from the user list and send private messages for one-on-one communication.", tips: ["Direct messages are private between you and the recipient", "Use for sensitive or personal work discussions"] },
+        { title: "Create/Join Channels", description: "Create themed channels for departments or projects, or join existing channels for team discussions.", tips: ["Channels organize conversations by topic", "Name channels clearly to indicate their purpose"] },
+        { title: "Branch and Restaurant Messaging", description: "Communicate with all team members across branches or restaurant-wide for announcements and updates.", tips: ["Use broadcast channels for important announcements", "Ensure messages reach the appropriate audience"] },
+        { title: "Share Files and Updates", description: "Upload and share files, images, and documents directly in chat conversations.", tips: ["File sharing streamlines collaboration", "Keep shared files organized and relevant"] }
+      ]
+    },
+    {
+      title: "Violations Management",
+      description: "Track government authority violations, upload documents, manage payment status, and link to bills.",
+      estimatedTime: "6 minutes",
+      steps: [
+        { title: "Access Violations Page", description: "Navigate to 'Violations' in the sidebar to view and manage all regulatory violations.", tips: ["Centralized violation tracking ensures compliance management"] },
+        { title: "Add Violation", description: "Click 'Add Violation', select the authority type (municipality, health, labor, etc.), enter the amount, and set initial status.", tips: ["Record violations promptly for accurate tracking", "Include all relevant authority details"] },
+        { title: "Upload Documents", description: "Attach PDF or image files of violation notices, receipts, and correspondence for documentation.", tips: ["Keep digital copies of all violation documents", "Organize documents by date and type"] },
+        { title: "Track Status", description: "Monitor violation status as pending, paid, or disputed, and update as the situation progresses.", tips: ["Track deadlines to avoid additional penalties", "Document all status changes"] },
+        { title: "Create Bills from Violations", description: "Automatically generate expense bills from violations to integrate with your financial tracking.", tips: ["Linking to bills ensures expenses are captured", "Verify amounts match violation notices"] },
+        { title: "View Statistics Dashboard", description: "Review violation statistics showing total counts, amounts, and trends over time.", tips: ["Statistics help identify compliance patterns", "Use data to improve operations and reduce future violations"] }
+      ]
+    },
+    {
+      title: "Printer Configuration",
+      description: "Configure thermal receipt printers with QZ Tray integration for automated receipt printing.",
+      estimatedTime: "5 minutes",
+      steps: [
+        { title: "Access Printers", description: "Navigate to 'Printers' under the System menu to manage printer configurations.", tips: ["Proper printer setup ensures reliable receipt printing"] },
+        { title: "Add Printer", description: "Click 'Add Printer', enter the printer name, IP address, and select the connection type.", tips: ["Use static IP addresses for network printers", "Name printers by location for easy identification"] },
+        { title: "Select Printer Brand", description: "Choose your printer brand from supported options: Epson, Star Micronics, Brother, Zebra, or BIXOLON.", tips: ["Select the correct brand for proper driver commands", "Consult printer documentation for model compatibility"] },
+        { title: "Set Default Printer", description: "Assign a default printer for each branch to streamline receipt printing.", tips: ["Default printer reduces manual selection during checkout", "Configure separate defaults for different order types"] },
+        { title: "Print Test Page", description: "Click 'Test Print' to verify the printer connection and print quality.", tips: ["Test printing confirms proper configuration", "Check alignment and text clarity on test pages"] },
+        { title: "Configure QZ Tray", description: "Set up QZ Tray integration for automatic silent printing, with browser dialog as fallback.", tips: ["QZ Tray enables seamless background printing", "Browser fallback ensures printing works without QZ Tray"] }
+      ]
     }
   ],
 
@@ -417,6 +506,83 @@ const tutorialContent: Record<Language, Omit<Tutorial, 'icon' | 'image' | 'scree
         { title: "تحليل الربحية", description: "انتقل إلى 'تحليل الربحية' ضمن التحليلات لمقارنة الإيرادات والتكاليف (العمولة، رسوم البنك، رسوم POS مع VAT)، والربح عبر جميع تطبيقات التوصيل.", tips: ["الرسوم البيانية تظهر المنصات الأكثر ربحية", "عرض تفاصيل التكلفة لكل تطبيق"] },
         { title: "مراجعة صيغة التكلفة", description: "فهم حساب التكلفة: العمولة = (السعر - الدعم) × ٪، رسوم البنك = السعر × ٪، ثم الإجمالي = (العمولة + البنك + POS) × 1.15 لضريبة القيمة المضافة.", tips: ["الدعم يزيد صافي إيراداتك", "جميع الرسوم تتضمن VAT تلقائياً"] },
         { title: "تحسين الاستراتيجية", description: "استخدم بيانات الربحية للتفاوض على أسعار أفضل أو التركيز على المنصات الأكثر ربحية.", tips: ["قارن تكاليف البضائع المباعة مقابل الإيرادات", "راقب الهوامش لكل منصة"] }
+      ]
+    },
+    {
+      title: "إدارة الموظفين",
+      description: "إدارة أعضاء الفريق وتعيين الأدوار بصلاحيات دقيقة وتتبع أداء الموظفين.",
+      estimatedTime: "6 دقائق",
+      steps: [
+        { title: "الانتقال إلى الموظفين", description: "انقر على 'الموظفين' في الشريط الجانبي للوصول إلى نظام إدارة الموظفين.", tips: ["إدارة الموظفين ضرورية لتنظيم فريقك وتتبع الأداء"] },
+        { title: "إضافة موظف جديد", description: "انقر على 'إضافة موظف'، أدخل الاسم والدور والراتب ومعلومات الاتصال لإنشاء ملف تعريف عضو فريق جديد.", tips: ["تأكد من دقة معلومات الراتب لحسابات الرواتب", "قم بتعيين الأدوار المناسبة بناءً على مسؤوليات الوظيفة"] },
+        { title: "تكوين الصلاحيات الدقيقة", description: "قم بإعداد ما يصل إلى 19 صلاحية مختلفة لكل موظف بما في ذلك الوصول إلى نقطة البيع وإدارة المخزون والتقارير المالية وإعدادات النظام.", tips: ["الصلاحيات تتحكم في ما يمكن لكل موظف عرضه وتعديله", "قم بتقييد الوصول إلى البيانات الحساسة للموظفين المصرح لهم فقط"] },
+        { title: "تتبع الحضور والأداء", description: "راقب سجلات حضور الموظفين وساعات العمل ومقاييس الأداء بمرور الوقت.", tips: ["تتبع الأداء المنتظم يساعد في تحديد احتياجات التدريب", "استخدم بيانات الحضور لتحسين الجدولة"] },
+        { title: "تحديث تفاصيل الموظف", description: "عدّل معلومات الموظف أو غيّر الأدوار أو اضبط الرواتب أو عدّل الصلاحيات حسب الحاجة.", tips: ["حافظ على تحديث سجلات الموظفين للتقارير الدقيقة", "قم بتحديث الصلاحيات عند تغيير الأدوار"] }
+      ]
+    },
+    {
+      title: "الفواتير والمصروفات",
+      description: "تتبع فواتير المحل وتكاليف المشتريات ومدفوعات المرافق ومصروفات الرواتب مع الحسابات الآلية.",
+      estimatedTime: "7 دقائق",
+      steps: [
+        { title: "الوصول إلى المحل/الفواتير", description: "انتقل إلى 'المحل' أو 'الفواتير' في الشريط الجانبي لعرض وإدارة جميع مصروفات الأعمال.", tips: ["قسم الفواتير يركز جميع تتبع المصروفات في مكان واحد"] },
+        { title: "إضافة فاتورة جديدة", description: "انقر على 'إضافة فاتورة'، أدخل اسم المورد والمبلغ ونوع المصروف وتاريخ الاستحقاق لتسجيل مصروف جديد.", tips: ["صنّف المصروفات بدقة للتقارير المالية الأفضل", "قم بتضمين أرقام الفواتير للمرجع"] },
+        { title: "تصنيف المصروفات", description: "قم بتعيين الفواتير لفئات مثل المرافق والإيجار واللوازم أو المشتريات لتتبع المصروفات المنظم.", tips: ["التصنيف الصحيح يتيح تحليل المصروفات التفصيلي", "أنشئ فئات مخصصة لاحتياجات العمل الخاصة"] },
+        { title: "تتبع حالة الدفع", description: "راقب حالة الفاتورة كمعلقة أو مدفوعة، وقم بالتحديث عند إجراء المدفوعات.", tips: ["تتبع الفواتير المعلقة لتجنب رسوم التأخير", "ضع علامة مدفوعة على الفواتير فوراً بعد الدفع"] },
+        { title: "إنشاء فواتير الرواتب", description: "أنشئ سجلات مصروفات الرواتب مع اختيار الشهر لتتبع الرواتب والتقارير.", tips: ["فواتير الرواتب ترتبط بسجلات الموظفين تلقائياً", "اختر الشهر الصحيح لتتبع الفترة بدقة"] },
+        { title: "ربط المشتريات بالفواتير", description: "اربط أوامر الشراء بالفواتير المقابلة لتتبع المصروفات الكامل.", tips: ["السجلات المرتبطة توفر مسار تدقيق كامل", "تحقق من تطابق المبالغ بين المشتريات والفواتير"] },
+        { title: "تصدير تقارير المصروفات", description: "قم بتنزيل تقارير المصروفات بتنسيقات مختلفة لأغراض المحاسبة والضرائب.", tips: ["التصديرات المنتظمة تدعم التخطيط المالي", "استخدم فلاتر التاريخ لإنشاء تقارير خاصة بالفترة"] }
+      ]
+    },
+    {
+      title: "تذاكر الدعم",
+      description: "إرسال طلبات الدعم وتتبع حالة التذاكر والتواصل مع فريق الدعم الفني في الوقت الفعلي.",
+      estimatedTime: "5 دقائق",
+      steps: [
+        { title: "الوصول إلى قسم الدعم", description: "انقر على 'الدعم' في الشريط الجانبي لفتح نظام إدارة تذاكر الدعم.", tips: ["تذاكر الدعم تساعد في تتبع وحل المشاكل التقنية بكفاءة"] },
+        { title: "إنشاء تذكرة جديدة", description: "انقر على 'تذكرة جديدة'، أدخل وصف المشكلة، حدد مستوى الأولوية (منخفض، متوسط، عالي، عاجل)، ثم أرسل.", tips: ["قدم أوصافاً مفصلة لحل أسرع", "حدد الأولوية المناسبة بناءً على تأثير العمل"] },
+        { title: "رفع المرفقات", description: "أرفق لقطات شاشة أو مستندات أو ملفات لمساعدة فريق الدعم على فهم مشكلتك وحلها.", tips: ["لقطات الشاشة تساعد في توضيح المشاكل بوضوح", "قم بتضمين رسائل الخطأ عند الاقتضاء"] },
+        { title: "تتبع حالة التذكرة", description: "راقب تذاكرك أثناء تقدمها عبر حالات مفتوحة وقيد التنفيذ ومحلولة.", tips: ["تحقق من حالة التذكرة بانتظام للحصول على التحديثات", "استجب فوراً لأسئلة فريق الدعم"] },
+        { title: "الدردشة في الوقت الفعلي", description: "تواصل مباشرة مع فريق الدعم الفني من خلال ميزة الدردشة المدمجة للمساعدة السريعة.", tips: ["الدردشة في الوقت الفعلي تسرع حل المشكلات", "حافظ على تركيز الدردشة على المشكلة المحددة"] },
+        { title: "عرض سجل التذاكر", description: "راجع التذاكر السابقة وحلولها للمرجع أو للإبلاغ عن المشاكل المتكررة.", tips: ["التذاكر التاريخية تساعد في تحديد الأنماط", "ارجع إلى الحلول السابقة للمشاكل المماثلة"] }
+      ]
+    },
+    {
+      title: "محادثة الفريق",
+      description: "التواصل مع أعضاء الفريق من خلال الرسائل المباشرة والمحادثات الجماعية.",
+      estimatedTime: "4 دقائق",
+      steps: [
+        { title: "الوصول إلى محادثة الفريق", description: "انقر على 'المحادثة' أو 'محادثة الفريق' في الشريط الجانبي لفتح نظام المراسلة.", tips: ["محادثة الفريق تتيح التواصل الفوري عبر مؤسستك"] },
+        { title: "إرسال رسائل مباشرة", description: "اختر زميلاً من قائمة المستخدمين وأرسل رسائل خاصة للتواصل الفردي.", tips: ["الرسائل المباشرة خاصة بينك وبين المستلم", "استخدمها للنقاشات الحساسة أو الشخصية في العمل"] },
+        { title: "إنشاء/الانضمام للقنوات", description: "أنشئ قنوات مواضيعية للأقسام أو المشاريع، أو انضم إلى القنوات الموجودة لمناقشات الفريق.", tips: ["القنوات تنظم المحادثات حسب الموضوع", "سمِّ القنوات بوضوح للإشارة إلى غرضها"] },
+        { title: "الرسائل على مستوى الفرع والمطعم", description: "تواصل مع جميع أعضاء الفريق عبر الفروع أو على مستوى المطعم للإعلانات والتحديثات.", tips: ["استخدم قنوات البث للإعلانات المهمة", "تأكد من وصول الرسائل للجمهور المناسب"] },
+        { title: "مشاركة الملفات والتحديثات", description: "ارفع وشارك الملفات والصور والمستندات مباشرة في محادثات الدردشة.", tips: ["مشاركة الملفات تبسط التعاون", "حافظ على تنظيم الملفات المشتركة وارتباطها بالموضوع"] }
+      ]
+    },
+    {
+      title: "إدارة المخالفات",
+      description: "تتبع مخالفات الجهات الحكومية ورفع المستندات وإدارة حالة الدفع والربط بالفواتير.",
+      estimatedTime: "6 دقائق",
+      steps: [
+        { title: "الوصول إلى صفحة المخالفات", description: "انتقل إلى 'المخالفات' في الشريط الجانبي لعرض وإدارة جميع المخالفات التنظيمية.", tips: ["تتبع المخالفات المركزي يضمن إدارة الامتثال"] },
+        { title: "إضافة مخالفة", description: "انقر على 'إضافة مخالفة'، اختر نوع الجهة (البلدية، الصحة، العمل، إلخ)، أدخل المبلغ، وحدد الحالة الأولية.", tips: ["سجّل المخالفات فوراً للتتبع الدقيق", "قم بتضمين جميع تفاصيل الجهة ذات الصلة"] },
+        { title: "رفع المستندات", description: "أرفق ملفات PDF أو صور لإشعارات المخالفات والإيصالات والمراسلات للتوثيق.", tips: ["احتفظ بنسخ رقمية لجميع مستندات المخالفات", "نظّم المستندات حسب التاريخ والنوع"] },
+        { title: "تتبع الحالة", description: "راقب حالة المخالفة كمعلقة أو مدفوعة أو متنازع عليها، وقم بالتحديث مع تقدم الوضع.", tips: ["تتبع المواعيد النهائية لتجنب العقوبات الإضافية", "وثّق جميع تغييرات الحالة"] },
+        { title: "إنشاء فواتير تلقائياً", description: "أنشئ فواتير مصروفات تلقائياً من المخالفات للتكامل مع تتبعك المالي.", tips: ["الربط بالفواتير يضمن تسجيل المصروفات", "تحقق من تطابق المبالغ مع إشعارات المخالفات"] },
+        { title: "عرض لوحة الإحصائيات", description: "راجع إحصائيات المخالفات التي تظهر إجمالي الأعداد والمبالغ والاتجاهات بمرور الوقت.", tips: ["الإحصائيات تساعد في تحديد أنماط الامتثال", "استخدم البيانات لتحسين العمليات وتقليل المخالفات المستقبلية"] }
+      ]
+    },
+    {
+      title: "تكوين الطابعة",
+      description: "تكوين طابعات الإيصالات الحرارية مع تكامل QZ Tray للطباعة الآلية.",
+      estimatedTime: "5 دقائق",
+      steps: [
+        { title: "الوصول إلى الطابعات", description: "انتقل إلى 'الطابعات' ضمن قائمة النظام لإدارة تكوينات الطابعة.", tips: ["الإعداد الصحيح للطابعة يضمن طباعة إيصالات موثوقة"] },
+        { title: "إضافة طابعة", description: "انقر على 'إضافة طابعة'، أدخل اسم الطابعة وعنوان IP واختر نوع الاتصال.", tips: ["استخدم عناوين IP ثابتة للطابعات الشبكية", "سمِّ الطابعات حسب الموقع لسهولة التعرف"] },
+        { title: "اختيار العلامة التجارية", description: "اختر علامة طابعتك التجارية من الخيارات المدعومة: Epson، Star Micronics، Brother، Zebra، أو BIXOLON.", tips: ["اختر العلامة التجارية الصحيحة لأوامر التشغيل المناسبة", "راجع وثائق الطابعة للتوافق مع الطراز"] },
+        { title: "تعيين الطابعة الافتراضية", description: "عيّن طابعة افتراضية لكل فرع لتبسيط طباعة الإيصالات.", tips: ["الطابعة الافتراضية تقلل الاختيار اليدوي أثناء الدفع", "قم بتكوين افتراضيات منفصلة لأنواع الطلبات المختلفة"] },
+        { title: "طباعة صفحة اختبار", description: "انقر على 'طباعة تجريبية' للتحقق من اتصال الطابعة وجودة الطباعة.", tips: ["الطباعة التجريبية تؤكد التكوين الصحيح", "تحقق من المحاذاة ووضوح النص في صفحات الاختبار"] },
+        { title: "الطباعة الآلية مع QZ Tray", description: "قم بإعداد تكامل QZ Tray للطباعة الصامتة التلقائية، مع استخدام مربع حوار المتصفح كبديل.", tips: ["QZ Tray يتيح الطباعة في الخلفية بسلاسة", "البديل عبر المتصفح يضمن عمل الطباعة بدون QZ Tray"] }
       ]
     }
   ],
@@ -590,6 +756,83 @@ const tutorialContent: Record<Language, Omit<Tutorial, 'icon' | 'image' | 'scree
         { title: "审查成本公式", description: "了解成本计算：佣金 =（价格 - 补贴）×%，银行手续费 = 价格 ×%，然后总计 =（佣金 + 银行 + POS）× 1.15 用于增值税。", tips: ["补贴增加您的净收入", "所有费用自动包含VAT"] },
         { title: "优化策略", description: "使用盈利数据协商更好的费率或专注于最有利可图的平台。", tips: ["将商品成本与收入进行比较", "监控每个平台的利润率"] }
       ]
+    },
+    {
+      title: "员工管理",
+      description: "管理团队成员，设置细粒度权限角色，跟踪员工绩效。",
+      estimatedTime: "6 分钟",
+      steps: [
+        { title: "导航到员工页面", description: "点击侧边栏中的'员工'以访问员工管理系统。", tips: ["员工管理对于组织团队和跟踪绩效至关重要"] },
+        { title: "添加新员工", description: "点击'添加员工'，输入姓名、角色、薪资和联系信息以创建新的团队成员档案。", tips: ["确保薪资信息准确以便工资计算", "根据工作职责分配适当的角色"] },
+        { title: "配置细粒度权限", description: "为每位员工设置多达19种不同的权限，包括POS访问、库存管理、财务报告和系统设置。", tips: ["权限控制每位员工可以查看和修改的内容", "仅限授权人员访问敏感数据"] },
+        { title: "跟踪考勤和绩效", description: "监控员工考勤记录、工作时间和绩效指标。", tips: ["定期绩效跟踪有助于识别培训需求", "使用考勤数据优化排班"] },
+        { title: "更新员工信息", description: "根据需要编辑员工信息、更改角色、调整薪资或修改权限。", tips: ["保持员工记录更新以确保报告准确", "角色变更时更新权限"] }
+      ]
+    },
+    {
+      title: "账单与支出",
+      description: "跟踪店铺账单、采购成本、公用事业付款和薪资支出，自动计算。",
+      estimatedTime: "7 分钟",
+      steps: [
+        { title: "访问店铺/账单", description: "在侧边栏中导航到'店铺'或'账单'以查看和管理所有业务支出。", tips: ["账单部分将所有支出跟踪集中在一处"] },
+        { title: "添加新账单", description: "点击'添加账单'，输入供应商名称、金额、支出类型和到期日以记录新支出。", tips: ["准确分类支出以便更好地进行财务报告", "包含发票号码以供参考"] },
+        { title: "分类支出", description: "将账单分配到公用事业、租金、用品或采购等类别以进行有组织的支出跟踪。", tips: ["正确分类可实现详细的支出分析", "为特定业务需求创建自定义类别"] },
+        { title: "跟踪付款状态", description: "监控账单状态为待付或已付，并在付款后更新。", tips: ["跟踪待付账单以避免逾期费用", "付款后立即标记为已付"] },
+        { title: "生成薪资账单", description: "创建薪资支出记录并选择月份以进行工资跟踪和报告。", tips: ["薪资账单自动链接到员工记录", "选择正确的月份以准确跟踪期间"] },
+        { title: "关联采购账单", description: "将采购订单连接到相应的账单以进行完整的支出跟踪。", tips: ["关联记录提供完整的审计追踪", "验证采购和账单之间的金额匹配"] },
+        { title: "导出支出报告", description: "以各种格式下载支出报告用于会计和税务目的。", tips: ["定期导出支持财务规划", "使用日期过滤器生成特定期间的报告"] }
+      ]
+    },
+    {
+      title: "支持工单",
+      description: "提交支持请求，跟踪工单状态，与IT支持团队实时沟通。",
+      estimatedTime: "5 分钟",
+      steps: [
+        { title: "访问支持部分", description: "点击侧边栏中的'支持'以打开支持工单管理系统。", tips: ["支持工单有助于高效跟踪和解决技术问题"] },
+        { title: "创建新工单", description: "点击'新建工单'，输入问题描述，选择优先级（低、中、高、紧急），然后提交。", tips: ["提供详细描述以加快解决速度", "根据业务影响设置适当的优先级"] },
+        { title: "上传附件", description: "附加截图、文档或文件以帮助支持团队理解和解决您的问题。", tips: ["截图有助于清楚说明问题", "在适用时包含错误消息"] },
+        { title: "跟踪工单状态", description: "监控您的工单在开放、处理中和已解决状态之间的进展。", tips: ["定期检查工单状态以获取更新", "及时回复支持团队的问题"] },
+        { title: "使用实时聊天", description: "通过内置聊天功能与IT支持团队直接沟通以获得快速帮助。", tips: ["实时聊天加快问题解决", "保持聊天专注于具体问题"] },
+        { title: "查看工单历史", description: "查看过去的工单及其解决方案以供参考或报告重复问题。", tips: ["历史工单有助于识别模式", "参考过去的解决方案处理类似问题"] }
+      ]
+    },
+    {
+      title: "团队聊天",
+      description: "通过私信和频道对话与团队成员沟通。",
+      estimatedTime: "4 分钟",
+      steps: [
+        { title: "访问团队聊天", description: "点击侧边栏中的'聊天'或'团队聊天'以打开消息系统。", tips: ["团队聊天实现组织内的即时通信"] },
+        { title: "发送私信", description: "从用户列表中选择同事并发送私人消息进行一对一沟通。", tips: ["私信仅在您和收件人之间可见", "用于敏感或个人工作讨论"] },
+        { title: "创建/加入频道", description: "为部门或项目创建主题频道，或加入现有频道进行团队讨论。", tips: ["频道按主题组织对话", "清晰命名频道以表明其目的"] },
+        { title: "分店和全店消息", description: "与跨分店或全餐厅的所有团队成员沟通以发布公告和更新。", tips: ["使用广播频道发布重要公告", "确保消息到达适当的受众"] },
+        { title: "即时分享文件和更新", description: "直接在聊天对话中上传和分享文件、图片和文档。", tips: ["文件共享简化协作", "保持共享文件有组织且相关"] }
+      ]
+    },
+    {
+      title: "违规管理",
+      description: "跟踪政府部门违规记录，上传文档，管理付款状态，关联账单。",
+      estimatedTime: "6 分钟",
+      steps: [
+        { title: "访问违规页面", description: "在侧边栏中导航到'违规'以查看和管理所有监管违规。", tips: ["集中的违规跟踪确保合规管理"] },
+        { title: "添加违规", description: "点击'添加违规'，选择机构类型（市政、卫生、劳动等），输入金额并设置初始状态。", tips: ["及时记录违规以进行准确跟踪", "包含所有相关机构详情"] },
+        { title: "上传文档", description: "附加违规通知、收据和通信的PDF或图片文件以供存档。", tips: ["保留所有违规文件的数字副本", "按日期和类型组织文档"] },
+        { title: "跟踪状态", description: "监控违规状态为待处理、已付或争议，并随着情况进展更新。", tips: ["跟踪截止日期以避免额外罚款", "记录所有状态变更"] },
+        { title: "自动创建账单", description: "从违规自动生成支出账单以与您的财务跟踪集成。", tips: ["链接到账单确保支出被记录", "验证金额与违规通知匹配"] },
+        { title: "查看统计仪表板", description: "查看违规统计显示总数、金额和随时间变化的趋势。", tips: ["统计有助于识别合规模式", "使用数据改进运营并减少未来违规"] }
+      ]
+    },
+    {
+      title: "打印机配置",
+      description: "配置热敏收据打印机，集成QZ Tray实现自动收据打印。",
+      estimatedTime: "5 分钟",
+      steps: [
+        { title: "访问打印机", description: "在系统菜单下导航到'打印机'以管理打印机配置。", tips: ["正确的打印机设置确保可靠的收据打印"] },
+        { title: "添加打印机", description: "点击'添加打印机'，输入打印机名称、IP地址并选择连接类型。", tips: ["为网络打印机使用静态IP地址", "按位置命名打印机以便于识别"] },
+        { title: "选择打印机品牌", description: "从支持的选项中选择您的打印机品牌：爱普生、Star Micronics、兄弟、斑马或BIXOLON。", tips: ["选择正确的品牌以获得正确的驱动程序命令", "查阅打印机文档了解型号兼容性"] },
+        { title: "设置默认打印机", description: "为每个分店分配默认打印机以简化收据打印。", tips: ["默认打印机减少结账时的手动选择", "为不同订单类型配置单独的默认设置"] },
+        { title: "打印测试页", description: "点击'测试打印'以验证打印机连接和打印质量。", tips: ["测试打印确认正确配置", "检查测试页的对齐和文本清晰度"] },
+        { title: "配置QZ Tray", description: "设置QZ Tray集成以实现自动静默打印，浏览器对话框作为后备。", tips: ["QZ Tray实现无缝后台打印", "浏览器后备确保在没有QZ Tray时也能打印"] }
+      ]
     }
   ],
   // German translations
@@ -760,6 +1003,83 @@ const tutorialContent: Record<Language, Omit<Tutorial, 'icon' | 'image' | 'scree
         { title: "Rentabilität analysieren", description: "Navigieren Sie zu 'Rentabilitätsanalyse' unter Analytics, um Umsatz, Kosten (Provision, Bankgebühren, POS-Gebühren mit VAT) und Gewinn über alle Lieferapps hinweg zu vergleichen.", tips: ["Diagramme zeigen die profitabelsten Plattformen", "Detaillierte Kostenaufschlüsselungen pro App anzeigen"] },
         { title: "Kostenformel überprüfen", description: "Kostenberechnung verstehen: Provision = (Preis - Zuschuss) × %, Bankgebühren = Preis × %, dann Gesamt = (Provision + Bank + POS) × 1,15 für MwSt.", tips: ["Zuschuss erhöht Ihren Nettoumsatz", "Alle Gebühren beinhalten automatisch VAT"] },
         { title: "Strategie optimieren", description: "Verwenden Sie Rentabilitätsdaten, um bessere Tarife auszuhandeln oder sich auf die profitabelsten Plattformen zu konzentrieren.", tips: ["Warenkosten mit Umsatz vergleichen", "Margen pro Plattform überwachen"] }
+      ]
+    },
+    {
+      title: "Mitarbeiterverwaltung",
+      description: "Teammitglieder verwalten, Rollen mit detaillierten Berechtigungen festlegen und Mitarbeiterleistung verfolgen.",
+      estimatedTime: "6 Minuten",
+      steps: [
+        { title: "Zu Mitarbeiter navigieren", description: "Klicken Sie in der Seitenleiste auf 'Mitarbeiter', um auf das Mitarbeiterverwaltungssystem zuzugreifen.", tips: ["Mitarbeiterverwaltung ist essenziell für die Teamorganisation und Leistungsverfolgung"] },
+        { title: "Neuen Mitarbeiter hinzufügen", description: "Klicken Sie auf 'Mitarbeiter hinzufügen', geben Sie Name, Rolle, Gehalt und Kontaktinformationen ein, um ein neues Teammitgliederprofil zu erstellen.", tips: ["Stellen Sie genaue Gehaltsinformationen für Gehaltsabrechnungen sicher", "Weisen Sie basierend auf den Arbeitsaufgaben geeignete Rollen zu"] },
+        { title: "Detaillierte Berechtigungen konfigurieren", description: "Richten Sie bis zu 19 verschiedene Berechtigungen für jeden Mitarbeiter ein, einschließlich POS-Zugriff, Lagerverwaltung, Finanzberichte und Systemeinstellungen.", tips: ["Berechtigungen steuern, was jeder Mitarbeiter anzeigen und ändern kann", "Beschränken Sie den Zugriff auf sensible Daten nur auf autorisiertes Personal"] },
+        { title: "Anwesenheit und Leistung verfolgen", description: "Überwachen Sie Mitarbeiter-Anwesenheitsprotokolle, Arbeitszeiten und Leistungskennzahlen im Zeitverlauf.", tips: ["Regelmäßige Leistungsverfolgung hilft bei der Identifizierung von Schulungsbedarf", "Verwenden Sie Anwesenheitsdaten für die Planungsoptimierung"] },
+        { title: "Mitarbeiterdaten aktualisieren", description: "Bearbeiten Sie Mitarbeiterinformationen, ändern Sie Rollen, passen Sie Gehälter an oder modifizieren Sie Berechtigungen nach Bedarf.", tips: ["Halten Sie Mitarbeiterdaten für genaue Berichte aktuell", "Aktualisieren Sie Berechtigungen bei Rollenwechseln"] }
+      ]
+    },
+    {
+      title: "Rechnungen & Ausgaben",
+      description: "Ladenrechnungen, Beschaffungskosten, Nebenkostenzahlungen und Gehaltsausgaben mit automatischen Berechnungen verfolgen.",
+      estimatedTime: "7 Minuten",
+      steps: [
+        { title: "Auf Laden/Rechnungen zugreifen", description: "Navigieren Sie in der Seitenleiste zu 'Laden' oder 'Rechnungen', um alle Geschäftsausgaben anzuzeigen und zu verwalten.", tips: ["Der Rechnungsbereich zentralisiert alle Ausgabenverfolgung an einem Ort"] },
+        { title: "Neue Rechnung hinzufügen", description: "Klicken Sie auf 'Rechnung hinzufügen', geben Sie Lieferantenname, Betrag, Ausgabentyp und Fälligkeitsdatum ein, um eine neue Ausgabe zu erfassen.", tips: ["Kategorisieren Sie Ausgaben genau für bessere Finanzberichte", "Fügen Sie Rechnungsnummern als Referenz hinzu"] },
+        { title: "Ausgaben kategorisieren", description: "Ordnen Sie Rechnungen Kategorien wie Nebenkosten, Miete, Verbrauchsmaterialien oder Beschaffung für organisierte Ausgabenverfolgung zu.", tips: ["Richtige Kategorisierung ermöglicht detaillierte Ausgabenanalyse", "Erstellen Sie benutzerdefinierte Kategorien für geschäftsspezifische Anforderungen"] },
+        { title: "Zahlungsstatus verfolgen", description: "Überwachen Sie den Rechnungsstatus als ausstehend oder bezahlt und aktualisieren Sie ihn nach erfolgter Zahlung.", tips: ["Verfolgen Sie ausstehende Rechnungen, um Verzugsgebühren zu vermeiden", "Markieren Sie Rechnungen sofort nach der Zahlung als bezahlt"] },
+        { title: "Gehaltsabrechnungen erstellen", description: "Erstellen Sie Gehaltsausgabeneinträge mit Monatsauswahl für Gehaltsabrechnung und Berichterstattung.", tips: ["Gehaltsabrechnungen werden automatisch mit Mitarbeiterdaten verknüpft", "Wählen Sie den korrekten Monat für genaue Periodenverfolgung"] },
+        { title: "Beschaffung mit Rechnungen verknüpfen", description: "Verbinden Sie Beschaffungsaufträge mit den entsprechenden Rechnungen für vollständige Ausgabenverfolgung.", tips: ["Verknüpfte Datensätze bieten einen vollständigen Prüfpfad", "Überprüfen Sie, ob die Beträge zwischen Beschaffung und Rechnungen übereinstimmen"] },
+        { title: "Ausgabenberichte exportieren", description: "Laden Sie Ausgabenberichte in verschiedenen Formaten für Buchhaltungs- und Steuerzwecke herunter.", tips: ["Regelmäßige Exporte unterstützen die Finanzplanung", "Verwenden Sie Datumsfilter für periodenspezifische Berichte"] }
+      ]
+    },
+    {
+      title: "Support-Tickets",
+      description: "Supportanfragen einreichen, Ticketstatus verfolgen und in Echtzeit mit dem IT-Support kommunizieren.",
+      estimatedTime: "5 Minuten",
+      steps: [
+        { title: "Auf Supportbereich zugreifen", description: "Klicken Sie in der Seitenleiste auf 'Support', um das Support-Ticket-Verwaltungssystem zu öffnen.", tips: ["Support-Tickets helfen bei der effizienten Verfolgung und Lösung technischer Probleme"] },
+        { title: "Neues Ticket mit Priorität erstellen", description: "Klicken Sie auf 'Neues Ticket', geben Sie eine Beschreibung des Problems ein, wählen Sie die Prioritätsstufe (niedrig, mittel, hoch, dringend) und senden Sie es ab.", tips: ["Geben Sie detaillierte Beschreibungen für schnellere Lösung an", "Setzen Sie die Priorität entsprechend der Geschäftsauswirkung"] },
+        { title: "Anhänge hochladen", description: "Fügen Sie Screenshots, Dokumente oder Dateien bei, um dem Support-Team zu helfen, Ihr Problem zu verstehen und zu lösen.", tips: ["Screenshots helfen, Probleme klar zu veranschaulichen", "Fügen Sie Fehlermeldungen hinzu, wenn zutreffend"] },
+        { title: "Ticketstatus verfolgen", description: "Überwachen Sie Ihre Tickets, während sie durch die Status offen, in Bearbeitung und gelöst fortschreiten.", tips: ["Überprüfen Sie den Ticketstatus regelmäßig auf Updates", "Antworten Sie umgehend auf Fragen des Support-Teams"] },
+        { title: "Echtzeit-Chat nutzen", description: "Kommunizieren Sie direkt mit dem IT-Support-Team über die integrierte Chat-Funktion für schnelle Unterstützung.", tips: ["Echtzeit-Chat beschleunigt die Problemlösung", "Halten Sie den Chat auf das spezifische Problem fokussiert"] },
+        { title: "Ticketverlauf anzeigen", description: "Überprüfen Sie vergangene Tickets und ihre Lösungen als Referenz oder um wiederkehrende Probleme zu melden.", tips: ["Historische Tickets helfen bei der Identifizierung von Mustern", "Verweisen Sie auf frühere Lösungen für ähnliche Probleme"] }
+      ]
+    },
+    {
+      title: "Team-Chat",
+      description: "Mit Teammitgliedern über Direktnachrichten und Kanalgespräche kommunizieren.",
+      estimatedTime: "4 Minuten",
+      steps: [
+        { title: "Auf Team-Chat zugreifen", description: "Klicken Sie in der Seitenleiste auf 'Chat' oder 'Team-Chat', um das Nachrichtensystem zu öffnen.", tips: ["Team-Chat ermöglicht sofortige Kommunikation in Ihrer gesamten Organisation"] },
+        { title: "Direktnachrichten senden", description: "Wählen Sie einen Kollegen aus der Benutzerliste aus und senden Sie private Nachrichten für persönliche Kommunikation.", tips: ["Direktnachrichten sind privat zwischen Ihnen und dem Empfänger", "Verwenden Sie sie für sensible oder persönliche Arbeitsgespräche"] },
+        { title: "Kanäle erstellen/beitreten", description: "Erstellen Sie thematische Kanäle für Abteilungen oder Projekte, oder treten Sie bestehenden Kanälen für Teamdiskussionen bei.", tips: ["Kanäle organisieren Gespräche nach Thema", "Benennen Sie Kanäle klar, um ihren Zweck anzugeben"] },
+        { title: "Filial- und restaurantweite Nachrichten", description: "Kommunizieren Sie mit allen Teammitgliedern über Filialen hinweg oder restaurantweit für Ankündigungen und Updates.", tips: ["Verwenden Sie Broadcast-Kanäle für wichtige Ankündigungen", "Stellen Sie sicher, dass Nachrichten das richtige Publikum erreichen"] },
+        { title: "Dateien und Updates sofort teilen", description: "Laden Sie Dateien, Bilder und Dokumente hoch und teilen Sie sie direkt in Chat-Gesprächen.", tips: ["Dateifreigabe vereinfacht die Zusammenarbeit", "Halten Sie geteilte Dateien organisiert und relevant"] }
+      ]
+    },
+    {
+      title: "Verstöße-Verwaltung",
+      description: "Verstöße von Regierungsbehörden verfolgen, Dokumente hochladen, Zahlungsstatus verwalten und mit Rechnungen verknüpfen.",
+      estimatedTime: "6 Minuten",
+      steps: [
+        { title: "Auf Verstöße-Seite zugreifen", description: "Navigieren Sie in der Seitenleiste zu 'Verstöße', um alle behördlichen Verstöße anzuzeigen und zu verwalten.", tips: ["Zentralisierte Verstößeverfolgung gewährleistet Compliance-Management"] },
+        { title: "Verstoß hinzufügen", description: "Klicken Sie auf 'Verstoß hinzufügen', wählen Sie den Behördentyp (Gemeinde, Gesundheit, Arbeit usw.), geben Sie den Betrag ein und legen Sie den Anfangsstatus fest.", tips: ["Erfassen Sie Verstöße umgehend für genaue Verfolgung", "Fügen Sie alle relevanten Behördendetails hinzu"] },
+        { title: "PDF/Bild-Dokumente hochladen", description: "Hängen Sie PDF- oder Bilddateien von Verstößbescheiden, Quittungen und Korrespondenz zur Dokumentation an.", tips: ["Bewahren Sie digitale Kopien aller Verstößdokumente auf", "Organisieren Sie Dokumente nach Datum und Typ"] },
+        { title: "Status verfolgen", description: "Überwachen Sie den Verstößstatus als ausstehend, bezahlt oder angefochten und aktualisieren Sie ihn, während sich die Situation entwickelt.", tips: ["Verfolgen Sie Fristen, um zusätzliche Strafen zu vermeiden", "Dokumentieren Sie alle Statusänderungen"] },
+        { title: "Rechnungen automatisch erstellen", description: "Generieren Sie automatisch Ausgabenrechnungen aus Verstößen, um sie in Ihre Finanzverfolgung zu integrieren.", tips: ["Verknüpfung mit Rechnungen stellt sicher, dass Ausgaben erfasst werden", "Überprüfen Sie, ob die Beträge mit den Verstößbescheiden übereinstimmen"] },
+        { title: "Statistik-Dashboard anzeigen", description: "Überprüfen Sie Verstößstatistiken, die Gesamtzahlen, Beträge und Trends im Zeitverlauf anzeigen.", tips: ["Statistiken helfen bei der Identifizierung von Compliance-Mustern", "Nutzen Sie Daten zur Verbesserung der Abläufe und Reduzierung zukünftiger Verstöße"] }
+      ]
+    },
+    {
+      title: "Druckerkonfiguration",
+      description: "Thermodrucker für Quittungen mit QZ Tray-Integration für automatischen Druck konfigurieren.",
+      estimatedTime: "5 Minuten",
+      steps: [
+        { title: "Auf Drucker im Systemmenü zugreifen", description: "Navigieren Sie im Systemmenü zu 'Drucker', um Druckerkonfigurationen zu verwalten.", tips: ["Richtige Druckereinrichtung gewährleistet zuverlässigen Quittungsdruck"] },
+        { title: "Drucker hinzufügen", description: "Klicken Sie auf 'Drucker hinzufügen', geben Sie Druckername, IP-Adresse ein und wählen Sie den Verbindungstyp.", tips: ["Verwenden Sie statische IP-Adressen für Netzwerkdrucker", "Benennen Sie Drucker nach Standort für einfache Identifizierung"] },
+        { title: "Druckermarke auswählen", description: "Wählen Sie Ihre Druckermarke aus den unterstützten Optionen: Epson, Star Micronics, Brother, Zebra oder BIXOLON.", tips: ["Wählen Sie die richtige Marke für korrekte Treiberbefehle", "Konsultieren Sie die Druckerdokumentation für Modellkompatibilität"] },
+        { title: "Standarddrucker pro Filiale festlegen", description: "Weisen Sie einen Standarddrucker für jede Filiale zu, um den Quittungsdruck zu optimieren.", tips: ["Standarddrucker reduziert manuelle Auswahl beim Checkout", "Konfigurieren Sie separate Standards für verschiedene Bestelltypen"] },
+        { title: "Testseite drucken", description: "Klicken Sie auf 'Testdruck', um die Druckerverbindung und Druckqualität zu überprüfen.", tips: ["Testdruck bestätigt die korrekte Konfiguration", "Überprüfen Sie Ausrichtung und Textklarheit auf Testseiten"] },
+        { title: "Automatisches Drucken mit QZ Tray nutzen", description: "Richten Sie die QZ Tray-Integration für automatisches stilles Drucken ein, mit Browser-Dialog als Fallback.", tips: ["QZ Tray ermöglicht nahtloses Hintergrunddrucken", "Browser-Fallback stellt sicher, dass Drucken ohne QZ Tray funktioniert"] }
       ]
     }
   ],
@@ -932,6 +1252,83 @@ const tutorialContent: Record<Language, Omit<Tutorial, 'icon' | 'image' | 'scree
         { title: "लागत फॉर्मूला की समीक्षा करें", description: "लागत गणना समझें: कमीशन = (मूल्य - सब्सिडी) × %, बैंकिंग शुल्क = मूल्य × %, फिर कुल = (कमीशन + बैंकिंग + POS) × 1.15 VAT के लिए।", tips: ["सब्सिडी आपका शुद्ध राजस्व बढ़ाती है", "सभी शुल्क स्वचालित रूप से VAT शामिल करते हैं"] },
         { title: "रणनीति अनुकूलित करें", description: "बेहतर दरों पर बातचीत करने या सबसे लाभदायक प्लेटफ़ॉर्म पर ध्यान केंद्रित करने के लिए लाभप्रदता डेटा का उपयोग करें।", tips: ["राजस्व के मुकाबले आइटम लागत (COGS) की तुलना करें", "प्रति प्लेटफ़ॉर्म मार्जिन की निगरानी करें"] }
       ]
+    },
+    {
+      title: "कर्मचारी प्रबंधन",
+      description: "टीम सदस्यों का प्रबंधन करें, विस्तृत अनुमतियों के साथ भूमिकाएं सेट करें और कर्मचारी प्रदर्शन ट्रैक करें।",
+      estimatedTime: "6 मिनट",
+      steps: [
+        { title: "कर्मचारियों पर नेविगेट करें", description: "कर्मचारी प्रबंधन प्रणाली तक पहुंचने के लिए साइडबार में 'कर्मचारी' पर क्लिक करें।", tips: ["कर्मचारी प्रबंधन आपकी टीम को व्यवस्थित करने और प्रदर्शन ट्रैक करने के लिए आवश्यक है"] },
+        { title: "कर्मचारी जोड़ें", description: "'कर्मचारी जोड़ें' पर क्लिक करें, नाम, भूमिका, वेतन और संपर्क जानकारी दर्ज करें।", tips: ["पेरोल गणना के लिए सटीक वेतन जानकारी सुनिश्चित करें", "नौकरी की जिम्मेदारियों के आधार पर उचित भूमिकाएं असाइन करें"] },
+        { title: "19 विस्तृत अनुमतियां कॉन्फ़िगर करें", description: "प्रत्येक कर्मचारी के लिए 19 विभिन्न अनुमतियां सेट करें जिसमें POS एक्सेस, इन्वेंटरी प्रबंधन, वित्तीय रिपोर्ट और सिस्टम सेटिंग्स शामिल हैं।", tips: ["अनुमतियां नियंत्रित करती हैं कि प्रत्येक कर्मचारी क्या देख और संशोधित कर सकता है", "संवेदनशील डेटा एक्सेस केवल अधिकृत कर्मियों तक सीमित रखें"] },
+        { title: "उपस्थिति और प्रदर्शन ट्रैक करें", description: "समय के साथ कर्मचारी उपस्थिति रिकॉर्ड, कार्य घंटे और प्रदर्शन मेट्रिक्स की निगरानी करें।", tips: ["नियमित प्रदर्शन ट्रैकिंग प्रशिक्षण आवश्यकताओं की पहचान करने में मदद करती है", "शेड्यूलिंग अनुकूलन के लिए उपस्थिति डेटा का उपयोग करें"] },
+        { title: "कर्मचारी विवरण अपडेट करें", description: "आवश्यकतानुसार कर्मचारी जानकारी, भूमिकाएं बदलें, वेतन समायोजित करें या अनुमतियां संशोधित करें।", tips: ["सटीक रिपोर्टिंग के लिए कर्मचारी रिकॉर्ड वर्तमान रखें", "भूमिकाएं बदलने पर अनुमतियां अपडेट करें"] }
+      ]
+    },
+    {
+      title: "बिल और खर्च",
+      description: "दुकान के बिल, खरीद लागत, उपयोगिता भुगतान और वेतन खर्च को स्वचालित गणना के साथ ट्रैक करें।",
+      estimatedTime: "7 मिनट",
+      steps: [
+        { title: "दुकान/बिल एक्सेस करें", description: "सभी व्यापार खर्चों को देखने और प्रबंधित करने के लिए साइडबार में 'दुकान' या 'बिल' पर नेविगेट करें।", tips: ["बिल अनुभाग सभी खर्च ट्रैकिंग को एक स्थान पर केंद्रीकृत करता है"] },
+        { title: "नया बिल जोड़ें", description: "'बिल जोड़ें' पर क्लिक करें, विक्रेता का नाम, राशि, खर्च प्रकार और देय तिथि दर्ज करें।", tips: ["बेहतर वित्तीय रिपोर्टिंग के लिए खर्चों को सही ढंग से वर्गीकृत करें", "संदर्भ के लिए इनवॉइस नंबर शामिल करें"] },
+        { title: "खर्चों को वर्गीकृत करें", description: "संगठित खर्च ट्रैकिंग के लिए बिलों को उपयोगिताओं, किराया, आपूर्ति या खरीद जैसी श्रेणियों में असाइन करें।", tips: ["उचित वर्गीकरण विस्तृत खर्च विश्लेषण सक्षम करता है", "व्यवसाय-विशिष्ट आवश्यकताओं के लिए कस्टम श्रेणियां बनाएं"] },
+        { title: "भुगतान स्थिति ट्रैक करें", description: "बिल स्थिति को लंबित या भुगतान के रूप में मॉनिटर करें, और भुगतान होने पर अपडेट करें।", tips: ["विलंब शुल्क से बचने के लिए लंबित बिलों को ट्रैक करें", "भुगतान के तुरंत बाद बिलों को भुगतान के रूप में चिह्नित करें"] },
+        { title: "वेतन बिल जनरेट करें", description: "पेरोल ट्रैकिंग और रिपोर्टिंग के लिए महीने के चयन के साथ वेतन खर्च रिकॉर्ड बनाएं।", tips: ["वेतन बिल स्वचालित रूप से कर्मचारी रिकॉर्ड से लिंक होते हैं", "सटीक अवधि ट्रैकिंग के लिए सही महीना चुनें"] },
+        { title: "खरीद को बिल से लिंक करें", description: "पूर्ण खर्च ट्रैकिंग के लिए खरीद ऑर्डर को संबंधित बिलों से कनेक्ट करें।", tips: ["लिंक किए गए रिकॉर्ड पूर्ण ऑडिट ट्रेल प्रदान करते हैं", "खरीद और बिलों के बीच राशियों का मिलान सत्यापित करें"] },
+        { title: "खर्च रिपोर्ट निर्यात करें", description: "लेखांकन और कर उद्देश्यों के लिए विभिन्न प्रारूपों में खर्च रिपोर्ट डाउनलोड करें।", tips: ["नियमित निर्यात वित्तीय योजना का समर्थन करते हैं", "अवधि-विशिष्ट रिपोर्ट जनरेट करने के लिए दिनांक फ़िल्टर का उपयोग करें"] }
+      ]
+    },
+    {
+      title: "सहायता टिकट",
+      description: "सहायता अनुरोध सबमिट करें, टिकट स्थिति ट्रैक करें और IT सहायता टीम के साथ रीयल-टाइम में संवाद करें।",
+      estimatedTime: "5 मिनट",
+      steps: [
+        { title: "सहायता अनुभाग एक्सेस करें", description: "सहायता टिकट प्रबंधन प्रणाली खोलने के लिए साइडबार में 'सहायता' पर क्लिक करें।", tips: ["सहायता टिकट तकनीकी समस्याओं को कुशलतापूर्वक ट्रैक और हल करने में मदद करते हैं"] },
+        { title: "प्राथमिकता के साथ नया टिकट बनाएं", description: "'नया टिकट' पर क्लिक करें, समस्या का विवरण दर्ज करें, प्राथमिकता स्तर (निम्न, मध्यम, उच्च, तत्काल) चुनें और सबमिट करें।", tips: ["तेजी से समाधान के लिए विस्तृत विवरण प्रदान करें", "व्यापार प्रभाव के आधार पर उचित प्राथमिकता सेट करें"] },
+        { title: "अटैचमेंट अपलोड करें", description: "सहायता टीम को आपकी समस्या समझने और हल करने में मदद के लिए स्क्रीनशॉट, दस्तावेज़ या फाइलें अटैच करें।", tips: ["स्क्रीनशॉट समस्याओं को स्पष्ट रूप से दर्शाने में मदद करते हैं", "जब लागू हो तो त्रुटि संदेश शामिल करें"] },
+        { title: "टिकट स्थिति ट्रैक करें", description: "अपने टिकटों की निगरानी करें जैसे वे खुला, प्रगति में और हल स्थितियों से गुजरते हैं।", tips: ["अपडेट के लिए नियमित रूप से टिकट स्थिति जांचें", "सहायता टीम के प्रश्नों का तुरंत जवाब दें"] },
+        { title: "रीयल-टाइम चैट का उपयोग करें", description: "त्वरित सहायता के लिए अंतर्निहित चैट सुविधा के माध्यम से IT सहायता टीम के साथ सीधे संवाद करें।", tips: ["रीयल-टाइम चैट समस्या समाधान को तेज करती है", "विशिष्ट समस्या पर चैट केंद्रित रखें"] },
+        { title: "टिकट इतिहास देखें", description: "संदर्भ के लिए या आवर्ती समस्याओं की रिपोर्ट करने के लिए पिछले टिकट और उनके समाधान की समीक्षा करें।", tips: ["ऐतिहासिक टिकट पैटर्न की पहचान करने में मदद करते हैं", "समान समस्याओं के लिए पिछले समाधानों का संदर्भ लें"] }
+      ]
+    },
+    {
+      title: "टीम चैट",
+      description: "डायरेक्ट मैसेज और चैनल वार्तालाप के माध्यम से टीम सदस्यों के साथ संवाद करें।",
+      estimatedTime: "4 मिनट",
+      steps: [
+        { title: "टीम चैट एक्सेस करें", description: "मैसेजिंग सिस्टम खोलने के लिए साइडबार में 'चैट' या 'टीम चैट' पर क्लिक करें।", tips: ["टीम चैट आपके संगठन में तत्काल संचार सक्षम करती है"] },
+        { title: "डायरेक्ट मैसेज भेजें", description: "एक-एक संचार के लिए उपयोगकर्ता सूची से सहकर्मी चुनें और निजी संदेश भेजें।", tips: ["डायरेक्ट मैसेज आपके और प्राप्तकर्ता के बीच निजी हैं", "संवेदनशील या व्यक्तिगत कार्य चर्चाओं के लिए उपयोग करें"] },
+        { title: "चैनल बनाएं/जॉइन करें", description: "विभागों या परियोजनाओं के लिए थीम चैनल बनाएं, या टीम चर्चाओं के लिए मौजूदा चैनलों में शामिल हों।", tips: ["चैनल विषय के अनुसार वार्तालाप व्यवस्थित करते हैं", "उनके उद्देश्य को इंगित करने के लिए चैनलों को स्पष्ट नाम दें"] },
+        { title: "ब्रांच और रेस्तरां-व्यापी मैसेजिंग", description: "घोषणाओं और अपडेट के लिए शाखाओं या रेस्तरां-व्यापी सभी टीम सदस्यों के साथ संवाद करें।", tips: ["महत्वपूर्ण घोषणाओं के लिए प्रसारण चैनलों का उपयोग करें", "सुनिश्चित करें कि संदेश उचित दर्शकों तक पहुंचें"] },
+        { title: "फाइल और अपडेट तुरंत शेयर करें", description: "चैट वार्तालापों में सीधे फाइलें, छवियां और दस्तावेज़ अपलोड और साझा करें।", tips: ["फाइल शेयरिंग सहयोग को सुव्यवस्थित करती है", "साझा की गई फाइलों को व्यवस्थित और प्रासंगिक रखें"] }
+      ]
+    },
+    {
+      title: "उल्लंघन प्रबंधन",
+      description: "सरकारी प्राधिकरण उल्लंघनों को ट्रैक करें, दस्तावेज अपलोड करें, भुगतान स्थिति प्रबंधित करें और बिलों से लिंक करें।",
+      estimatedTime: "6 मिनट",
+      steps: [
+        { title: "उल्लंघन पृष्ठ एक्सेस करें", description: "सभी नियामक उल्लंघनों को देखने और प्रबंधित करने के लिए साइडबार में 'उल्लंघन' पर नेविगेट करें।", tips: ["केंद्रीकृत उल्लंघन ट्रैकिंग अनुपालन प्रबंधन सुनिश्चित करता है"] },
+        { title: "उल्लंघन जोड़ें", description: "'उल्लंघन जोड़ें' पर क्लिक करें, प्राधिकरण प्रकार (नगरपालिका, स्वास्थ्य, श्रम, आदि) चुनें, राशि दर्ज करें और प्रारंभिक स्थिति सेट करें।", tips: ["सटीक ट्रैकिंग के लिए उल्लंघनों को तुरंत रिकॉर्ड करें", "सभी प्रासंगिक प्राधिकरण विवरण शामिल करें"] },
+        { title: "PDF/छवि दस्तावेज अपलोड करें", description: "दस्तावेज़ीकरण के लिए उल्लंघन नोटिस, रसीदें और पत्राचार की PDF या छवि फाइलें अटैच करें।", tips: ["सभी उल्लंघन दस्तावेजों की डिजिटल प्रतियां रखें", "दिनांक और प्रकार के अनुसार दस्तावेज़ व्यवस्थित करें"] },
+        { title: "स्थिति ट्रैक करें", description: "उल्लंघन स्थिति को लंबित, भुगतान या विवादित के रूप में मॉनिटर करें, और स्थिति बदलने पर अपडेट करें।", tips: ["अतिरिक्त दंड से बचने के लिए समय सीमा ट्रैक करें", "सभी स्थिति परिवर्तनों का दस्तावेज़ीकरण करें"] },
+        { title: "स्वचालित रूप से बिल बनाएं", description: "अपनी वित्तीय ट्रैकिंग के साथ एकीकृत करने के लिए उल्लंघनों से स्वचालित रूप से खर्च बिल जनरेट करें।", tips: ["बिलों से लिंक करना सुनिश्चित करता है कि खर्च कैप्चर किए गए हैं", "उल्लंघन नोटिस के साथ राशियों का मिलान सत्यापित करें"] },
+        { title: "सांख्यिकी डैशबोर्ड देखें", description: "समय के साथ कुल गणना, राशियां और रुझान दिखाने वाले उल्लंघन सांख्यिकी की समीक्षा करें।", tips: ["सांख्यिकी अनुपालन पैटर्न की पहचान करने में मदद करती हैं", "संचालन में सुधार और भविष्य के उल्लंघनों को कम करने के लिए डेटा का उपयोग करें"] }
+      ]
+    },
+    {
+      title: "प्रिंटर कॉन्फ़िगरेशन",
+      description: "स्वचालित रसीद प्रिंटिंग के लिए QZ Tray एकीकरण के साथ थर्मल रसीद प्रिंटर कॉन्फ़िगर करें।",
+      estimatedTime: "5 मिनट",
+      steps: [
+        { title: "सिस्टम मेनू में प्रिंटर एक्सेस करें", description: "प्रिंटर कॉन्फ़िगरेशन प्रबंधित करने के लिए सिस्टम मेनू के तहत 'प्रिंटर' पर नेविगेट करें।", tips: ["उचित प्रिंटर सेटअप विश्वसनीय रसीद प्रिंटिंग सुनिश्चित करता है"] },
+        { title: "प्रिंटर जोड़ें", description: "'प्रिंटर जोड़ें' पर क्लिक करें, प्रिंटर नाम, IP पता दर्ज करें और कनेक्शन प्रकार चुनें।", tips: ["नेटवर्क प्रिंटर के लिए स्थिर IP पते का उपयोग करें", "आसान पहचान के लिए स्थान के अनुसार प्रिंटर नाम दें"] },
+        { title: "ब्रांड चुनें", description: "समर्थित विकल्पों में से अपना प्रिंटर ब्रांड चुनें: Epson, Star Micronics, Brother, Zebra, या BIXOLON।", tips: ["उचित ड्राइवर कमांड के लिए सही ब्रांड चुनें", "मॉडल संगतता के लिए प्रिंटर दस्तावेज़ीकरण देखें"] },
+        { title: "प्रति ब्रांच डिफ़ॉल्ट प्रिंटर सेट करें", description: "रसीद प्रिंटिंग को सुव्यवस्थित करने के लिए प्रत्येक शाखा के लिए एक डिफ़ॉल्ट प्रिंटर असाइन करें।", tips: ["डिफ़ॉल्ट प्रिंटर चेकआउट के दौरान मैनुअल चयन कम करता है", "विभिन्न ऑर्डर प्रकारों के लिए अलग डिफ़ॉल्ट कॉन्फ़िगर करें"] },
+        { title: "टेस्ट पेज प्रिंट करें", description: "प्रिंटर कनेक्शन और प्रिंट गुणवत्ता सत्यापित करने के लिए 'टेस्ट प्रिंट' पर क्लिक करें।", tips: ["टेस्ट प्रिंटिंग उचित कॉन्फ़िगरेशन की पुष्टि करती है", "टेस्ट पेजों पर संरेखण और टेक्स्ट स्पष्टता जांचें"] },
+        { title: "QZ Tray के साथ स्वचालित प्रिंटिंग", description: "स्वचालित साइलेंट प्रिंटिंग के लिए QZ Tray एकीकरण सेट करें, फॉलबैक के रूप में ब्राउज़र डायलॉग के साथ।", tips: ["QZ Tray सहज बैकग्राउंड प्रिंटिंग सक्षम करता है", "ब्राउज़र फॉलबैक QZ Tray के बिना प्रिंटिंग सुनिश्चित करता है"] }
+      ]
     }
   ],
   // Urdu translations  
@@ -1102,6 +1499,83 @@ const tutorialContent: Record<Language, Omit<Tutorial, 'icon' | 'image' | 'scree
         { title: "منافع بخش کا تجزیہ کریں", description: "تمام ڈیلیوری ایپس میں آمدنی، لاگت (کمیشن، بینکنگ فیس، VAT کے ساتھ POS فیس)، اور منافع کا موازنہ کرنے کے لیے تجزیات کے تحت 'منافع بخش تجزیہ' پر جائیں۔", tips: ["چارٹس دکھاتے ہیں کہ کون سے پلیٹ فارمز سب سے زیادہ منافع بخش ہیں", "فی ایپ تفصیلی لاگت کی تقسیم دیکھیں"] },
         { title: "لاگت کے فارمولے کا جائزہ لیں", description: "لاگت کی گنتی سمجھیں: کمیشن = (قیمت - سبسڈی) × %، بینکنگ فیس = قیمت × %، پھر کل = (کمیشن + بینکنگ + POS) × 1.15 VAT کے لیے۔", tips: ["سبسڈی آپ کی خالص آمدنی بڑھاتی ہے", "تمام فیسیں خودکار طور پر VAT شامل کرتی ہیں"] },
         { title: "حکمت عملی کو بہتر بنائیں", description: "بہتر شرحوں پر گفت و شنید کرنے یا سب سے زیادہ منافع بخش پلیٹ فارمز پر توجہ مرکوز کرنے کے لیے منافع بخش ڈیٹا استعمال کریں۔", tips: ["آمدنی کے مقابلے میں آئٹم کی لاگت (COGS) کا موازنہ کریں", "فی پلیٹ فارم مارجنز کی نگرانی کریں"] }
+      ]
+    },
+    {
+      title: "ملازمین کا انتظام",
+      description: "ٹیم ممبران کا انتظام کریں، تفصیلی اجازتوں کے ساتھ کردار مقرر کریں اور ملازمین کی کارکردگی کا سراغ لگائیں۔",
+      estimatedTime: "6 منٹ",
+      steps: [
+        { title: "ملازمین میں جائیں", description: "ملازمین کے انتظام کے نظام تک رسائی کے لیے سائڈبار میں 'ملازمین' پر کلک کریں۔", tips: ["ملازمین کا انتظام آپ کی ٹیم کو منظم کرنے اور کارکردگی کو ٹریک کرنے کے لیے ضروری ہے"] },
+        { title: "ملازم شامل کریں", description: "'ملازم شامل کریں' پر کلک کریں، نام، کردار، تنخواہ اور رابطے کی معلومات درج کریں تاکہ نئے ٹیم ممبر کا پروفائل بنایا جا سکے۔", tips: ["تنخواہ کی درست معلومات یقینی بنائیں", "ملازمت کی ذمہ داریوں کی بنیاد پر مناسب کردار تفویض کریں"] },
+        { title: "19 تفصیلی اجازتیں ترتیب دیں", description: "ہر ملازم کے لیے 19 مختلف اجازتیں ترتیب دیں بشمول POS تک رسائی، انوینٹری کا انتظام، مالی رپورٹس، اور سسٹم کی ترتیبات۔", tips: ["اجازتیں کنٹرول کرتی ہیں کہ ہر ملازم کیا دیکھ اور تبدیل کر سکتا ہے", "حساس ڈیٹا تک رسائی صرف مجاز اہلکاروں تک محدود کریں"] },
+        { title: "حاضری اور کارکردگی کا سراغ لگائیں", description: "ملازمین کی حاضری کے ریکارڈز، کام کے گھنٹے، اور وقت کے ساتھ کارکردگی کے میٹرکس کی نگرانی کریں۔", tips: ["باقاعدہ کارکردگی کی ٹریکنگ تربیت کی ضروریات کی شناخت میں مدد کرتی ہے", "شیڈولنگ کی اصلاح کے لیے حاضری کا ڈیٹا استعمال کریں"] },
+        { title: "ملازم کی تفصیلات اپ ڈیٹ کریں", description: "ملازم کی معلومات میں ترمیم کریں، کردار تبدیل کریں، تنخواہیں ایڈجسٹ کریں، یا ضرورت کے مطابق اجازتیں تبدیل کریں۔", tips: ["درست رپورٹنگ کے لیے ملازم کے ریکارڈز کو موجودہ رکھیں", "کردار تبدیل ہونے پر اجازتیں اپ ڈیٹ کریں"] }
+      ]
+    },
+    {
+      title: "بل اور اخراجات",
+      description: "دکان کے بل، خریداری کے اخراجات، یوٹیلیٹی ادائیگیاں اور تنخواہ کے اخراجات کو خودکار حسابات کے ساتھ ٹریک کریں۔",
+      estimatedTime: "7 منٹ",
+      steps: [
+        { title: "دکان/بل تک رسائی حاصل کریں", description: "تمام کاروباری اخراجات دیکھنے اور ان کا انتظام کرنے کے لیے سائڈبار میں 'دکان' یا 'بل' پر جائیں۔", tips: ["بل سیکشن تمام اخراجات کی ٹریکنگ کو ایک جگہ مرکوز کرتا ہے"] },
+        { title: "نیا بل شامل کریں", description: "'بل شامل کریں' پر کلک کریں، وینڈر کا نام، رقم، اخراجات کی قسم، اور مقررہ تاریخ درج کریں تاکہ نیا خرچ ریکارڈ ہو۔", tips: ["بہتر مالی رپورٹنگ کے لیے اخراجات کی درست درجہ بندی کریں", "حوالے کے لیے انوائس نمبر شامل کریں"] },
+        { title: "اخراجات کی درجہ بندی کریں", description: "منظم اخراجات کی ٹریکنگ کے لیے بلوں کو یوٹیلیٹیز، کرایہ، سپلائیز، یا خریداری جیسی کیٹگریز میں تفویض کریں۔", tips: ["مناسب درجہ بندی تفصیلی اخراجات کے تجزیہ کو قابل بناتی ہے", "کاروبار کی مخصوص ضروریات کے لیے حسب ضرورت کیٹگریز بنائیں"] },
+        { title: "ادائیگی کی حیثیت ٹریک کریں", description: "بل کی حیثیت کی نگرانی کریں جیسے زیر التواء یا ادا شدہ، اور ادائیگیاں ہونے پر اپ ڈیٹ کریں۔", tips: ["تاخیر سے ادائیگی کی فیس سے بچنے کے لیے زیر التواء بلوں کو ٹریک کریں", "ادائیگی کے فوراً بعد بلوں کو ادا شدہ کے طور پر نشان زد کریں"] },
+        { title: "تنخواہ کے بل بنائیں", description: "پے رول ٹریکنگ اور رپورٹنگ کے لیے مہینے کے انتخاب کے ساتھ تنخواہ کے اخراجات کے ریکارڈز بنائیں۔", tips: ["تنخواہ کے بل ملازم کے ریکارڈز سے خودکار طور پر لنک ہوتے ہیں", "درست مدت کی ٹریکنگ کے لیے صحیح مہینہ منتخب کریں"] },
+        { title: "خریداری کو بل سے لنک کریں", description: "مکمل اخراجات کی ٹریکنگ کے لیے خریداری کے آرڈرز کو متعلقہ بلوں سے جوڑیں۔", tips: ["لنک شدہ ریکارڈز مکمل آڈٹ ٹریل فراہم کرتے ہیں", "خریداری اور بلوں کے درمیان رقوم کی تصدیق کریں"] },
+        { title: "اخراجات کی رپورٹ برآمد کریں", description: "اکاؤنٹنگ اور ٹیکس کے مقاصد کے لیے مختلف فارمیٹس میں اخراجات کی رپورٹس ڈاؤن لوڈ کریں۔", tips: ["باقاعدہ برآمدات مالی منصوبہ بندی کی معاونت کرتی ہیں", "مدت کی مخصوص رپورٹس بنانے کے لیے تاریخ کے فلٹرز استعمال کریں"] }
+      ]
+    },
+    {
+      title: "سپورٹ ٹکٹ",
+      description: "سپورٹ درخواستیں جمع کریں، ٹکٹ کی حیثیت ٹریک کریں اور IT سپورٹ ٹیم کے ساتھ ریئل ٹائم میں بات چیت کریں۔",
+      estimatedTime: "5 منٹ",
+      steps: [
+        { title: "سپورٹ سیکشن تک رسائی حاصل کریں", description: "سپورٹ ٹکٹ مینجمنٹ سسٹم کھولنے کے لیے سائڈبار میں 'سپورٹ' پر کلک کریں۔", tips: ["سپورٹ ٹکٹس تکنیکی مسائل کو مؤثر طریقے سے ٹریک اور حل کرنے میں مدد کرتے ہیں"] },
+        { title: "ترجیح کے ساتھ نیا ٹکٹ بنائیں", description: "'نیا ٹکٹ' پر کلک کریں، مسئلے کی تفصیل درج کریں، ترجیحی سطح (کم، درمیانی، زیادہ، فوری) منتخب کریں، اور جمع کریں۔", tips: ["تیز حل کے لیے تفصیلی وضاحتیں فراہم کریں", "کاروباری اثر کی بنیاد پر مناسب ترجیح مقرر کریں"] },
+        { title: "اٹیچمنٹس اپ لوڈ کریں", description: "سپورٹ ٹیم کو آپ کے مسئلے کو سمجھنے اور حل کرنے میں مدد کے لیے اسکرین شاٹس، دستاویزات، یا فائلز اٹیچ کریں۔", tips: ["اسکرین شاٹس مسائل کو واضح طور پر ظاہر کرنے میں مدد کرتے ہیں", "جب لاگو ہو تو غلطی کے پیغامات شامل کریں"] },
+        { title: "ٹکٹ کی حیثیت ٹریک کریں", description: "اپنے ٹکٹس کی نگرانی کریں جب وہ اوپن، جاری، اور حل شدہ حالتوں میں آگے بڑھتے ہیں۔", tips: ["اپ ڈیٹس کے لیے باقاعدگی سے ٹکٹ کی حیثیت چیک کریں", "سپورٹ ٹیم کے سوالات کا فوری جواب دیں"] },
+        { title: "ریئل ٹائم چیٹ استعمال کریں", description: "فوری مدد کے لیے بلٹ ان چیٹ فیچر کے ذریعے IT سپورٹ ٹیم کے ساتھ براہ راست بات چیت کریں۔", tips: ["ریئل ٹائم چیٹ مسئلے کے حل کو تیز کرتی ہے", "چیٹ کو مخصوص مسئلے پر مرکوز رکھیں"] },
+        { title: "ٹکٹ کی تاریخ دیکھیں", description: "ماضی کے ٹکٹس اور ان کے حل کا جائزہ لیں یا بار بار آنے والے مسائل کی رپورٹ کریں۔", tips: ["تاریخی ٹکٹس پیٹرنز کی شناخت میں مدد کرتے ہیں", "ملتے جلتے مسائل کے لیے ماضی کے حل کا حوالہ دیں"] }
+      ]
+    },
+    {
+      title: "ٹیم چیٹ",
+      description: "ڈائریکٹ میسج اور چینل گفتگو کے ذریعے ٹیم ممبران کے ساتھ بات چیت کریں۔",
+      estimatedTime: "4 منٹ",
+      steps: [
+        { title: "ٹیم چیٹ تک رسائی حاصل کریں", description: "میسجنگ سسٹم کھولنے کے لیے سائڈبار میں 'چیٹ' یا 'ٹیم چیٹ' پر کلک کریں۔", tips: ["ٹیم چیٹ آپ کی تنظیم میں فوری رابطے کو قابل بناتی ہے"] },
+        { title: "ڈائریکٹ میسج بھیجیں", description: "یوزر لسٹ سے کسی ساتھی کو منتخب کریں اور ایک دوسرے سے رابطے کے لیے نجی پیغامات بھیجیں۔", tips: ["ڈائریکٹ میسجز آپ اور وصول کنندہ کے درمیان نجی ہیں", "حساس یا ذاتی کام کی بحث کے لیے استعمال کریں"] },
+        { title: "چینلز بنائیں/شامل ہوں", description: "ڈیپارٹمنٹس یا پروجیکٹس کے لیے تھیمڈ چینلز بنائیں، یا ٹیم کی بحث کے لیے موجودہ چینلز میں شامل ہوں۔", tips: ["چینلز موضوع کے لحاظ سے گفتگو کو منظم کرتے ہیں", "ان کے مقصد کی نشاندہی کے لیے چینلز کو واضح طور پر نام دیں"] },
+        { title: "برانچ اور ریسٹورنٹ وسیع پیغام رسانی", description: "اعلانات اور اپ ڈیٹس کے لیے تمام برانچوں یا ریسٹورنٹ بھر میں ٹیم ممبران کے ساتھ بات چیت کریں۔", tips: ["اہم اعلانات کے لیے براڈکاسٹ چینلز استعمال کریں", "یقینی بنائیں کہ پیغامات مناسب سامعین تک پہنچیں"] },
+        { title: "فائلز اور اپ ڈیٹس فوری شیئر کریں", description: "چیٹ کی گفتگو میں براہ راست فائلز، تصاویر، اور دستاویزات اپ لوڈ اور شیئر کریں۔", tips: ["فائل شیئرنگ تعاون کو آسان بناتی ہے", "شیئر کی گئی فائلوں کو منظم اور متعلقہ رکھیں"] }
+      ]
+    },
+    {
+      title: "خلاف ورزیوں کا انتظام",
+      description: "سرکاری اتھارٹی کی خلاف ورزیوں کا سراغ لگائیں، دستاویزات اپ لوڈ کریں، ادائیگی کی حیثیت کا انتظام کریں اور بل سے لنک کریں۔",
+      estimatedTime: "6 منٹ",
+      steps: [
+        { title: "خلاف ورزیوں کے صفحے تک رسائی حاصل کریں", description: "تمام ریگولیٹری خلاف ورزیوں کو دیکھنے اور ان کا انتظام کرنے کے لیے سائڈبار میں 'خلاف ورزیاں' پر جائیں۔", tips: ["مرکزی خلاف ورزی ٹریکنگ تعمیل کے انتظام کو یقینی بناتی ہے"] },
+        { title: "خلاف ورزی شامل کریں", description: "'خلاف ورزی شامل کریں' پر کلک کریں، اتھارٹی کی قسم (میونسپلٹی، صحت، لیبر، وغیرہ) منتخب کریں، رقم درج کریں، اور ابتدائی حیثیت مقرر کریں۔", tips: ["درست ٹریکنگ کے لیے خلاف ورزیوں کو فوری طور پر ریکارڈ کریں", "تمام متعلقہ اتھارٹی کی تفصیلات شامل کریں"] },
+        { title: "PDF/تصویری دستاویزات اپ لوڈ کریں", description: "دستاویزات کے لیے خلاف ورزی کے نوٹسز، رسیدوں، اور خط و کتابت کی PDF یا تصویری فائلز اٹیچ کریں۔", tips: ["تمام خلاف ورزی کی دستاویزات کی ڈیجیٹل کاپیاں رکھیں", "تاریخ اور قسم کے لحاظ سے دستاویزات کو منظم کریں"] },
+        { title: "حیثیت ٹریک کریں", description: "خلاف ورزی کی حیثیت کی نگرانی کریں جیسے زیر التواء، ادا شدہ، یا متنازعہ، اور صورتحال کے بڑھنے پر اپ ڈیٹ کریں۔", tips: ["اضافی جرمانوں سے بچنے کے لیے ڈیڈ لائنز ٹریک کریں", "تمام حیثیت کی تبدیلیوں کو دستاویز کریں"] },
+        { title: "خودکار طور پر بل بنائیں", description: "اپنی مالی ٹریکنگ کے ساتھ ضم کرنے کے لیے خلاف ورزیوں سے خودکار طور پر اخراجات کے بل بنائیں۔", tips: ["بلوں سے لنک کرنا یقینی بناتا ہے کہ اخراجات ریکارڈ ہوں", "خلاف ورزی کے نوٹسز کے ساتھ رقوم کی تصدیق کریں"] },
+        { title: "شماریاتی ڈیش بورڈ دیکھیں", description: "کل تعداد، رقوم، اور وقت کے ساتھ رجحانات دکھانے والے خلاف ورزی کے اعدادوشمار کا جائزہ لیں۔", tips: ["اعدادوشمار تعمیل کے پیٹرنز کی شناخت میں مدد کرتے ہیں", "آپریشنز کو بہتر بنانے اور مستقبل کی خلاف ورزیوں کو کم کرنے کے لیے ڈیٹا استعمال کریں"] }
+      ]
+    },
+    {
+      title: "پرنٹر کنفیگریشن",
+      description: "خودکار رسید پرنٹنگ کے لیے QZ Tray انضمام کے ساتھ تھرمل رسید پرنٹرز کنفیگر کریں۔",
+      estimatedTime: "5 منٹ",
+      steps: [
+        { title: "سسٹم مینو میں پرنٹرز تک رسائی حاصل کریں", description: "پرنٹر کنفیگریشنز کا انتظام کرنے کے لیے سسٹم مینو کے تحت 'پرنٹرز' پر جائیں۔", tips: ["مناسب پرنٹر سیٹ اپ قابل اعتماد رسید پرنٹنگ کو یقینی بناتا ہے"] },
+        { title: "پرنٹر شامل کریں", description: "'پرنٹر شامل کریں' پر کلک کریں، پرنٹر کا نام، IP ایڈریس درج کریں اور کنکشن کی قسم منتخب کریں۔", tips: ["نیٹ ورک پرنٹرز کے لیے جامد IP ایڈریسز استعمال کریں", "آسان شناخت کے لیے پرنٹرز کو مقام کے لحاظ سے نام دیں"] },
+        { title: "برانڈ منتخب کریں", description: "معاون آپشنز سے اپنا پرنٹر برانڈ منتخب کریں: Epson، Star Micronics، Brother، Zebra، یا BIXOLON۔", tips: ["مناسب ڈرائیور کمانڈز کے لیے صحیح برانڈ منتخب کریں", "ماڈل کی مطابقت کے لیے پرنٹر کی دستاویزات دیکھیں"] },
+        { title: "ہر برانچ کے لیے ڈیفالٹ پرنٹر سیٹ کریں", description: "رسید پرنٹنگ کو آسان بنانے کے لیے ہر برانچ کے لیے ایک ڈیفالٹ پرنٹر مقرر کریں۔", tips: ["ڈیفالٹ پرنٹر چیک آؤٹ کے دوران دستی انتخاب کو کم کرتا ہے", "مختلف آرڈر اقسام کے لیے الگ ڈیفالٹس کنفیگر کریں"] },
+        { title: "ٹیسٹ پیج پرنٹ کریں", description: "پرنٹر کنکشن اور پرنٹ کوالٹی کی تصدیق کے لیے 'ٹیسٹ پرنٹ' پر کلک کریں۔", tips: ["ٹیسٹ پرنٹنگ مناسب کنفیگریشن کی تصدیق کرتی ہے", "ٹیسٹ پیجز پر الائنمنٹ اور ٹیکسٹ کی وضاحت چیک کریں"] },
+        { title: "QZ Tray کے ساتھ خودکار پرنٹنگ", description: "خودکار خاموش پرنٹنگ کے لیے QZ Tray انضمام سیٹ کریں، فال بیک کے طور پر براؤزر ڈائیلاگ کے ساتھ۔", tips: ["QZ Tray بغیر رکاوٹ بیک گراؤنڈ پرنٹنگ کو قابل بناتا ہے", "براؤزر فال بیک QZ Tray کے بغیر پرنٹنگ کو یقینی بناتا ہے"] }
       ]
     }
   ],
@@ -1274,8 +1748,94 @@ const tutorialContent: Record<Language, Omit<Tutorial, 'icon' | 'image' | 'scree
         { title: "খরচ সূত্র পর্যালোচনা করুন", description: "খরচ গণনা বুঝুন: কমিশন = (মূল্য - ভর্তুকি) × %, ব্যাংকিং ফি = মূল্য × %, তারপর মোট = (কমিশন + ব্যাংকিং + POS) × 1.15 VAT-এর জন্য।", tips: ["ভর্তুকি আপনার নিট রাজস্ব বৃদ্ধি করে", "সমস্ত ফি স্বয়ংক্রিয়ভাবে VAT অন্তর্ভুক্ত করে"] },
         { title: "কৌশল অপ্টিমাইজ করুন", description: "ভাল রেট আলোচনা করতে বা সবচেয়ে লাভজনক প্ল্যাটফর্মে ফোকাস করতে লাভজনকতা ডেটা ব্যবহার করুন।", tips: ["রাজস্বের বিপরীতে আইটেম খরচ (COGS) তুলনা করুন", "প্রতি প্ল্যাটফর্ম মার্জিন মনিটর করুন"] }
       ]
+    },
+    {
+      title: "কর্মচারী ব্যবস্থাপনা",
+      description: "দলের সদস্যদের পরিচালনা করুন, বিস্তারিত অনুমতি সহ ভূমিকা সেট করুন এবং কর্মচারী কর্মক্ষমতা ট্র্যাক করুন।",
+      estimatedTime: "৬ মিনিট",
+      steps: [
+        { title: "কর্মচারীতে নেভিগেট করুন", description: "কর্মচারী ব্যবস্থাপনা সিস্টেম অ্যাক্সেস করতে সাইডবারে 'কর্মচারী'-তে ক্লিক করুন।", tips: ["কর্মচারী ব্যবস্থাপনা আপনার দল সংগঠিত করতে এবং কর্মক্ষমতা ট্র্যাক করতে অপরিহার্য"] },
+        { title: "কর্মচারী যোগ করুন", description: "'কর্মচারী যোগ করুন'-এ ক্লিক করুন, নাম, ভূমিকা, বেতন এবং যোগাযোগের তথ্য প্রবেশ করুন একটি নতুন দলের সদস্যের প্রোফাইল তৈরি করতে।", tips: ["বেতন গণনার জন্য সঠিক বেতন তথ্য নিশ্চিত করুন", "কাজের দায়িত্বের উপর ভিত্তি করে উপযুক্ত ভূমিকা বরাদ্দ করুন"] },
+        { title: "১৯টি বিস্তারিত অনুমতি কনফিগার করুন", description: "POS অ্যাক্সেস, ইনভেন্টরি ম্যানেজমেন্ট, আর্থিক রিপোর্ট এবং সিস্টেম সেটিংস সহ প্রতিটি কর্মচারীর জন্য ১৯টি বিভিন্ন অনুমতি সেট করুন।", tips: ["অনুমতি নিয়ন্ত্রণ করে প্রতিটি কর্মচারী কী দেখতে এবং পরিবর্তন করতে পারে", "শুধুমাত্র অনুমোদিত কর্মীদের সংবেদনশীল ডেটা অ্যাক্সেস সীমাবদ্ধ করুন"] },
+        { title: "উপস্থিতি এবং কর্মক্ষমতা ট্র্যাক করুন", description: "সময়ের সাথে কর্মচারী উপস্থিতি রেকর্ড, কাজের ঘন্টা এবং কর্মক্ষমতা মেট্রিক্স মনিটর করুন।", tips: ["নিয়মিত কর্মক্ষমতা ট্র্যাকিং প্রশিক্ষণ প্রয়োজন সনাক্ত করতে সাহায্য করে", "সময়সূচী অপ্টিমাইজেশনের জন্য উপস্থিতি ডেটা ব্যবহার করুন"] },
+        { title: "কর্মচারীর বিবরণ আপডেট করুন", description: "প্রয়োজন অনুযায়ী কর্মচারীর তথ্য সম্পাদনা করুন, ভূমিকা পরিবর্তন করুন, বেতন সমন্বয় করুন বা অনুমতি পরিবর্তন করুন।", tips: ["সঠিক রিপোর্টিংয়ের জন্য কর্মচারী রেকর্ড আপডেট রাখুন", "ভূমিকা পরিবর্তন হলে অনুমতি আপডেট করুন"] }
+      ]
+    },
+    {
+      title: "বিল এবং খরচ",
+      description: "দোকানের বিল, ক্রয় খরচ, ইউটিলিটি পেমেন্ট এবং বেতন খরচ স্বয়ংক্রিয় গণনার সাথে ট্র্যাক করুন।",
+      estimatedTime: "৭ মিনিট",
+      steps: [
+        { title: "দোকান/বিল অ্যাক্সেস করুন", description: "সমস্ত ব্যবসায়িক খরচ দেখতে এবং পরিচালনা করতে সাইডবারে 'দোকান' বা 'বিল'-এ নেভিগেট করুন।", tips: ["বিল সেকশন এক জায়গায় সমস্ত খরচ ট্র্যাকিং কেন্দ্রীভূত করে"] },
+        { title: "নতুন বিল যোগ করুন", description: "'বিল যোগ করুন'-এ ক্লিক করুন, বিক্রেতার নাম, পরিমাণ, খরচের ধরন এবং নির্ধারিত তারিখ প্রবেশ করুন একটি নতুন খরচ রেকর্ড করতে।", tips: ["ভালো আর্থিক রিপোর্টিংয়ের জন্য খরচ সঠিকভাবে শ্রেণীবদ্ধ করুন", "রেফারেন্সের জন্য ইনভয়েস নম্বর অন্তর্ভুক্ত করুন"] },
+        { title: "খরচ শ্রেণীবদ্ধ করুন", description: "সংগঠিত খরচ ট্র্যাকিংয়ের জন্য বিলগুলিকে ইউটিলিটি, ভাড়া, সরবরাহ বা ক্রয়ের মতো ক্যাটাগরিতে বরাদ্দ করুন।", tips: ["সঠিক শ্রেণীবিভাগ বিস্তারিত খরচ বিশ্লেষণ সক্ষম করে", "ব্যবসা-নির্দিষ্ট প্রয়োজনের জন্য কাস্টম ক্যাটাগরি তৈরি করুন"] },
+        { title: "পেমেন্ট স্ট্যাটাস ট্র্যাক করুন", description: "বিলের স্ট্যাটাস মুলতুবি বা পরিশোধিত হিসাবে মনিটর করুন এবং পেমেন্ট করা হলে আপডেট করুন।", tips: ["বিলম্বিত পেমেন্ট ফি এড়াতে মুলতুবি বিল ট্র্যাক করুন", "পেমেন্টের পরে তাৎক্ষণিকভাবে বিল পরিশোধিত হিসাবে চিহ্নিত করুন"] },
+        { title: "বেতন বিল জেনারেট করুন", description: "বেতন ট্র্যাকিং এবং রিপোর্টিংয়ের জন্য মাস নির্বাচন সহ বেতন খরচ রেকর্ড তৈরি করুন।", tips: ["বেতন বিল স্বয়ংক্রিয়ভাবে কর্মচারী রেকর্ডের সাথে লিঙ্ক করে", "সঠিক সময়কাল ট্র্যাকিংয়ের জন্য সঠিক মাস নির্বাচন করুন"] },
+        { title: "ক্রয় বিলের সাথে লিংক করুন", description: "সম্পূর্ণ খরচ ট্র্যাকিংয়ের জন্য ক্রয় অর্ডার সংশ্লিষ্ট বিলের সাথে সংযুক্ত করুন।", tips: ["লিঙ্কড রেকর্ড সম্পূর্ণ অডিট ট্রেইল প্রদান করে", "ক্রয় এবং বিলের মধ্যে পরিমাণ মিলছে কিনা যাচাই করুন"] },
+        { title: "খরচ রিপোর্ট এক্সপোর্ট করুন", description: "অ্যাকাউন্টিং এবং ট্যাক্স উদ্দেশ্যে বিভিন্ন ফরম্যাটে খরচ রিপোর্ট ডাউনলোড করুন।", tips: ["নিয়মিত এক্সপোর্ট আর্থিক পরিকল্পনা সমর্থন করে", "সময়কাল-নির্দিষ্ট রিপোর্ট তৈরি করতে তারিখ ফিল্টার ব্যবহার করুন"] }
+      ]
+    },
+    {
+      title: "সাপোর্ট টিকেট",
+      description: "সাপোর্ট অনুরোধ জমা দিন, টিকেট স্ট্যাটাস ট্র্যাক করুন এবং IT সাপোর্ট টিমের সাথে রিয়েল-টাইমে যোগাযোগ করুন।",
+      estimatedTime: "৫ মিনিট",
+      steps: [
+        { title: "সাপোর্ট সেকশন অ্যাক্সেস করুন", description: "সাপোর্ট টিকেট ম্যানেজমেন্ট সিস্টেম খুলতে সাইডবারে 'সাপোর্ট'-এ ক্লিক করুন।", tips: ["সাপোর্ট টিকেট প্রযুক্তিগত সমস্যা দক্ষতার সাথে ট্র্যাক এবং সমাধান করতে সাহায্য করে"] },
+        { title: "অগ্রাধিকার সহ নতুন টিকেট তৈরি করুন", description: "'নতুন টিকেট'-এ ক্লিক করুন, সমস্যার বিবরণ প্রবেশ করুন, অগ্রাধিকার স্তর (নিম্ন, মাঝারি, উচ্চ, জরুরি) নির্বাচন করুন এবং জমা দিন।", tips: ["দ্রুত সমাধানের জন্য বিস্তারিত বিবরণ প্রদান করুন", "ব্যবসায়িক প্রভাবের উপর ভিত্তি করে উপযুক্ত অগ্রাধিকার সেট করুন"] },
+        { title: "অ্যাটাচমেন্ট আপলোড করুন", description: "সাপোর্ট টিমকে আপনার সমস্যা বুঝতে এবং সমাধান করতে সাহায্য করতে স্ক্রিনশট, ডকুমেন্ট বা ফাইল সংযুক্ত করুন।", tips: ["স্ক্রিনশট সমস্যা স্পষ্টভাবে চিত্রিত করতে সাহায্য করে", "প্রযোজ্য হলে ত্রুটি বার্তা অন্তর্ভুক্ত করুন"] },
+        { title: "টিকেট স্ট্যাটাস ট্র্যাক করুন", description: "আপনার টিকেটগুলি ওপেন, প্রগ্রেসে এবং সমাধানকৃত স্থিতিতে অগ্রসর হওয়ার সাথে মনিটর করুন।", tips: ["আপডেটের জন্য নিয়মিত টিকেট স্ট্যাটাস পরীক্ষা করুন", "সাপোর্ট টিমের প্রশ্নে দ্রুত সাড়া দিন"] },
+        { title: "রিয়েল-টাইম চ্যাট ব্যবহার করুন", description: "দ্রুত সহায়তার জন্য বিল্ট-ইন চ্যাট ফিচারের মাধ্যমে IT সাপোর্ট টিমের সাথে সরাসরি যোগাযোগ করুন।", tips: ["রিয়েল-টাইম চ্যাট সমস্যা সমাধান দ্রুত করে", "চ্যাট নির্দিষ্ট সমস্যায় ফোকাস রাখুন"] },
+        { title: "টিকেট ইতিহাস দেখুন", description: "রেফারেন্সের জন্য বা পুনরাবৃত্ত সমস্যা রিপোর্ট করতে অতীত টিকেট এবং তাদের সমাধান পর্যালোচনা করুন।", tips: ["ঐতিহাসিক টিকেট প্যাটার্ন সনাক্ত করতে সাহায্য করে", "অনুরূপ সমস্যার জন্য অতীত সমাধান রেফারেন্স করুন"] }
+      ]
+    },
+    {
+      title: "টিম চ্যাট",
+      description: "সরাসরি বার্তা এবং চ্যানেল কথোপকথনের মাধ্যমে দলের সদস্যদের সাথে যোগাযোগ করুন।",
+      estimatedTime: "৪ মিনিট",
+      steps: [
+        { title: "টিম চ্যাট অ্যাক্সেস করুন", description: "মেসেজিং সিস্টেম খুলতে সাইডবারে 'চ্যাট' বা 'টিম চ্যাট'-এ ক্লিক করুন।", tips: ["টিম চ্যাট আপনার সংস্থা জুড়ে তাৎক্ষণিক যোগাযোগ সক্ষম করে"] },
+        { title: "সরাসরি বার্তা পাঠান", description: "একের পর এক যোগাযোগের জন্য ইউজার লিস্ট থেকে একজন সহকর্মী নির্বাচন করুন এবং ব্যক্তিগত বার্তা পাঠান।", tips: ["সরাসরি বার্তা আপনার এবং প্রাপকের মধ্যে ব্যক্তিগত", "সংবেদনশীল বা ব্যক্তিগত কাজের আলোচনার জন্য ব্যবহার করুন"] },
+        { title: "চ্যানেল তৈরি/যোগদান করুন", description: "বিভাগ বা প্রকল্পের জন্য থিমযুক্ত চ্যানেল তৈরি করুন, বা দলীয় আলোচনার জন্য বিদ্যমান চ্যানেলে যোগদান করুন।", tips: ["চ্যানেল বিষয় অনুসারে কথোপকথন সংগঠিত করে", "তাদের উদ্দেশ্য নির্দেশ করতে চ্যানেল স্পষ্টভাবে নাম দিন"] },
+        { title: "শাখা এবং রেস্তোরাঁ-ব্যাপী মেসেজিং", description: "ঘোষণা এবং আপডেটের জন্য শাখা জুড়ে বা রেস্তোরাঁ-ব্যাপী সমস্ত দলের সদস্যদের সাথে যোগাযোগ করুন।", tips: ["গুরুত্বপূর্ণ ঘোষণার জন্য ব্রডকাস্ট চ্যানেল ব্যবহার করুন", "বার্তা উপযুক্ত দর্শকদের কাছে পৌঁছায় তা নিশ্চিত করুন"] },
+        { title: "ফাইল এবং আপডেট তাৎক্ষণিক শেয়ার করুন", description: "চ্যাট কথোপকথনে সরাসরি ফাইল, ছবি এবং ডকুমেন্ট আপলোড এবং শেয়ার করুন।", tips: ["ফাইল শেয়ারিং সহযোগিতা সহজতর করে", "শেয়ার করা ফাইল সংগঠিত এবং প্রাসঙ্গিক রাখুন"] }
+      ]
+    },
+    {
+      title: "লঙ্ঘন ব্যবস্থাপনা",
+      description: "সরকারি কর্তৃপক্ষের লঙ্ঘন ট্র্যাক করুন, ডকুমেন্ট আপলোড করুন, পেমেন্ট স্ট্যাটাস পরিচালনা করুন এবং বিলের সাথে লিংক করুন।",
+      estimatedTime: "৬ মিনিট",
+      steps: [
+        { title: "লঙ্ঘন পৃষ্ঠা অ্যাক্সেস করুন", description: "সমস্ত নিয়ন্ত্রক লঙ্ঘন দেখতে এবং পরিচালনা করতে সাইডবারে 'লঙ্ঘন'-এ নেভিগেট করুন।", tips: ["কেন্দ্রীভূত লঙ্ঘন ট্র্যাকিং কমপ্লায়েন্স ম্যানেজমেন্ট নিশ্চিত করে"] },
+        { title: "লঙ্ঘন যোগ করুন", description: "'লঙ্ঘন যোগ করুন'-এ ক্লিক করুন, কর্তৃপক্ষের ধরন (পৌরসভা, স্বাস্থ্য, শ্রম ইত্যাদি) নির্বাচন করুন, পরিমাণ প্রবেশ করুন এবং প্রাথমিক স্ট্যাটাস সেট করুন।", tips: ["সঠিক ট্র্যাকিংয়ের জন্য লঙ্ঘন দ্রুত রেকর্ড করুন", "সমস্ত প্রাসঙ্গিক কর্তৃপক্ষ বিবরণ অন্তর্ভুক্ত করুন"] },
+        { title: "PDF/ছবি ডকুমেন্ট আপলোড করুন", description: "ডকুমেন্টেশনের জন্য লঙ্ঘন নোটিশ, রসিদ এবং চিঠিপত্রের PDF বা ছবি ফাইল সংযুক্ত করুন।", tips: ["সমস্ত লঙ্ঘন ডকুমেন্টের ডিজিটাল কপি রাখুন", "তারিখ এবং ধরন অনুসারে ডকুমেন্ট সংগঠিত করুন"] },
+        { title: "স্ট্যাটাস ট্র্যাক করুন", description: "লঙ্ঘন স্ট্যাটাস মুলতুবি, পরিশোধিত বা বিতর্কিত হিসাবে মনিটর করুন এবং পরিস্থিতি অগ্রসর হলে আপডেট করুন।", tips: ["অতিরিক্ত জরিমানা এড়াতে ডেডলাইন ট্র্যাক করুন", "সমস্ত স্ট্যাটাস পরিবর্তন ডকুমেন্ট করুন"] },
+        { title: "স্বয়ংক্রিয়ভাবে বিল তৈরি করুন", description: "আপনার আর্থিক ট্র্যাকিংয়ের সাথে ইন্টিগ্রেট করতে লঙ্ঘন থেকে স্বয়ংক্রিয়ভাবে খরচ বিল তৈরি করুন।", tips: ["বিলের সাথে লিংক করা নিশ্চিত করে খরচ রেকর্ড হয়", "লঙ্ঘন নোটিশের সাথে পরিমাণ মিলছে কিনা যাচাই করুন"] },
+        { title: "পরিসংখ্যান ড্যাশবোর্ড দেখুন", description: "মোট সংখ্যা, পরিমাণ এবং সময়ের সাথে প্রবণতা দেখানো লঙ্ঘন পরিসংখ্যান পর্যালোচনা করুন।", tips: ["পরিসংখ্যান কমপ্লায়েন্স প্যাটার্ন সনাক্ত করতে সাহায্য করে", "অপারেশন উন্নত করতে এবং ভবিষ্যত লঙ্ঘন কমাতে ডেটা ব্যবহার করুন"] }
+      ]
+    },
+    {
+      title: "প্রিন্টার কনফিগারেশন",
+      description: "স্বয়ংক্রিয় রসিদ প্রিন্টিংয়ের জন্য QZ Tray ইন্টিগ্রেশন সহ থার্মাল রসিদ প্রিন্টার কনফিগার করুন।",
+      estimatedTime: "৫ মিনিট",
+      steps: [
+        { title: "সিস্টেম মেনুতে প্রিন্টার অ্যাক্সেস করুন", description: "প্রিন্টার কনফিগারেশন পরিচালনা করতে সিস্টেম মেনুর অধীনে 'প্রিন্টার'-এ নেভিগেট করুন।", tips: ["সঠিক প্রিন্টার সেটআপ নির্ভরযোগ্য রসিদ প্রিন্টিং নিশ্চিত করে"] },
+        { title: "প্রিন্টার যোগ করুন", description: "'প্রিন্টার যোগ করুন'-এ ক্লিক করুন, প্রিন্টারের নাম, IP ঠিকানা প্রবেশ করুন এবং সংযোগের ধরন নির্বাচন করুন।", tips: ["নেটওয়ার্ক প্রিন্টারের জন্য স্ট্যাটিক IP ঠিকানা ব্যবহার করুন", "সহজ শনাক্তকরণের জন্য অবস্থান অনুসারে প্রিন্টার নাম দিন"] },
+        { title: "ব্র্যান্ড নির্বাচন করুন", description: "সমর্থিত অপশন থেকে আপনার প্রিন্টার ব্র্যান্ড নির্বাচন করুন: Epson, Star Micronics, Brother, Zebra, বা BIXOLON।", tips: ["সঠিক ড্রাইভার কমান্ডের জন্য সঠিক ব্র্যান্ড নির্বাচন করুন", "মডেল সামঞ্জস্যতার জন্য প্রিন্টার ডকুমেন্টেশন দেখুন"] },
+        { title: "প্রতি শাখায় ডিফল্ট প্রিন্টার সেট করুন", description: "রসিদ প্রিন্টিং সহজতর করতে প্রতিটি শাখার জন্য একটি ডিফল্ট প্রিন্টার বরাদ্দ করুন।", tips: ["ডিফল্ট প্রিন্টার চেকআউটের সময় ম্যানুয়াল নির্বাচন কমায়", "বিভিন্ন অর্ডার ধরনের জন্য আলাদা ডিফল্ট কনফিগার করুন"] },
+        { title: "টেস্ট পেজ প্রিন্ট করুন", description: "প্রিন্টার সংযোগ এবং প্রিন্ট কোয়ালিটি যাচাই করতে 'টেস্ট প্রিন্ট'-এ ক্লিক করুন।", tips: ["টেস্ট প্রিন্টিং সঠিক কনফিগারেশন নিশ্চিত করে", "টেস্ট পেজে অ্যালাইনমেন্ট এবং টেক্সট স্পষ্টতা পরীক্ষা করুন"] },
+        { title: "QZ Tray দিয়ে স্বয়ংক্রিয় প্রিন্টিং", description: "স্বয়ংক্রিয় সাইলেন্ট প্রিন্টিংয়ের জন্য QZ Tray ইন্টিগ্রেশন সেট করুন, ফলব্যাক হিসাবে ব্রাউজার ডায়ালগ সহ।", tips: ["QZ Tray বিরামহীন ব্যাকগ্রাউন্ড প্রিন্টিং সক্ষম করে", "ব্রাউজার ফলব্যাক QZ Tray ছাড়া প্রিন্টিং নিশ্চিত করে"] }
+      ]
     }
-  ]
+  ],
+
+  // Italian - uses English as fallback via the fallback mechanism below
+  it: [],
+
+  // Spanish - uses English as fallback via the fallback mechanism below
+  es: [],
+
+  // Tagalog - uses English as fallback via the fallback mechanism below
+  tl: []
 };
 
 // For languages without full translations, use English as fallback

@@ -71,14 +71,17 @@ export default function Tutorial() {
   const [selectedTutorial, setSelectedTutorial] = useState<Tutorial | null>(null);
 
   // Map language names to codes for tutorial content
-  const languageCodeMap: Record<string, 'en' | 'ar' | 'zh' | 'de' | 'hi' | 'ur' | 'bn'> = {
+  const languageCodeMap: Record<string, 'en' | 'ar' | 'zh' | 'de' | 'hi' | 'ur' | 'bn' | 'it' | 'es' | 'tl'> = {
     'English': 'en',
     'Arabic': 'ar',
     'Chinese': 'zh',
     'German': 'de',
     'Hindi': 'hi',
     'Urdu': 'ur',
-    'Bengali': 'bn'
+    'Bengali': 'bn',
+    'Italian': 'it',
+    'Spanish': 'es',
+    'Tagalog': 'tl'
   };
 
   // Get tutorials in the user's selected language
