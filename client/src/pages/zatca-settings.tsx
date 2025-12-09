@@ -16,8 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Shield, AlertCircle, CheckCircle2, Settings, KeyRound, FileText, RefreshCw, Clock, XCircle, Info, Eye, EyeOff, Copy, Download, Building2 } from "lucide-react";
 
 interface Restaurant {
-  id: string;
-  name: string;
+  restaurantId: string;
+  restaurantName: string;
   businessType?: string;
 }
 
@@ -85,7 +85,7 @@ export default function ZatcaSettingsPage() {
   // Fetch list of restaurants for IT account
   const { data: restaurants = [], isLoading: restaurantsLoading } = useQuery<Restaurant[]>({
     queryKey: ["/api/it/business-management/clients"],
-    enabled: !authLoading && isITAccount,
+    enabled: !authLoading && !!isITAccount,
     retry: false,
   });
 
@@ -142,7 +142,7 @@ export default function ZatcaSettingsPage() {
       }
       return res.json();
     },
-    enabled: !authLoading && isITAccount && !!selectedRestaurantId,
+    enabled: !authLoading && !!isITAccount && !!selectedRestaurantId,
     retry: false,
   });
 
@@ -156,7 +156,7 @@ export default function ZatcaSettingsPage() {
       if (!res.ok) throw new Error("Failed to fetch invoices");
       return res.json();
     },
-    enabled: !authLoading && isITAccount && !!selectedRestaurantId,
+    enabled: !authLoading && !!isITAccount && !!selectedRestaurantId,
     retry: false,
   });
 
@@ -387,9 +387,9 @@ export default function ZatcaSettingsPage() {
               <SelectValue placeholder={t.selectRestaurantPlaceholder || "Select a restaurant..."} />
             </SelectTrigger>
             <SelectContent>
-              {restaurants.map((restaurant) => (
-                <SelectItem key={restaurant.id} value={restaurant.id} data-testid={`option-restaurant-${restaurant.id}`}>
-                  {restaurant.name} {restaurant.businessType ? `(${restaurant.businessType})` : ""}
+              {restaurants.map((restaurant: Restaurant) => (
+                <SelectItem key={restaurant.restaurantId} value={restaurant.restaurantId} data-testid={`option-restaurant-${restaurant.restaurantId}`}>
+                  {restaurant.restaurantName} {restaurant.businessType ? `(${restaurant.businessType})` : ""}
                 </SelectItem>
               ))}
             </SelectContent>
