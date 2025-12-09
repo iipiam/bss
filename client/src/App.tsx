@@ -229,9 +229,9 @@ function AppContent() {
   };
   
   // Handle IT account redirects using useEffect to avoid render issues
-  // IT accounts can access /it-dashboard, /performance, /it-account-management, /business-management, and /support routes
+  // IT accounts can access /it-dashboard, /performance, /it-account-management, /business-management, /zatca-settings, and /support routes
   useEffect(() => {
-    const allowedITRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management'];
+    const allowedITRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management', '/zatca-settings'];
     const isAllowedRoute = allowedITRoutes.includes(location) || location.startsWith('/support');
     
     if (accountType === 'it' && !isAllowedRoute) {
