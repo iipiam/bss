@@ -2430,8 +2430,11 @@ export class DatabaseStorage implements IStorage {
     const responseTimesMs: number[] = [];
     const ticketsWithResponse = new Set<string>();
 
+    // IT support roles that count as responses
+    const itSupportRoles = ['it_support', 'admin', 'it', 'support'];
+    
     for (const msg of messagesData) {
-      if (msg.senderRole === 'it_support' && !ticketsWithResponse.has(msg.ticketId)) {
+      if (itSupportRoles.includes(msg.senderRole) && !ticketsWithResponse.has(msg.ticketId)) {
         const ticket = tickets.find(t => t.id === msg.ticketId);
         if (ticket) {
           const responseTime = new Date(msg.createdAt).getTime() - new Date(ticket.createdAt).getTime();
