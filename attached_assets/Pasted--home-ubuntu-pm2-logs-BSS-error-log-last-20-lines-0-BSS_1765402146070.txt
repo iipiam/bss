@@ -1,0 +1,28 @@
+
+/home/ubuntu/.pm2/logs/BSS-error.log last 20 lines:
+0|BSS      |     at requireITAccount (file:///home/BSS/dist/index.js:9866:3)
+0|BSS      |     at Layer.handle [as handle_request] (/home/BSS/node_modules/express/lib/router/layer.js:95:5)
+0|BSS      |     at next (/home/BSS/node_modules/express/lib/router/route.js:149:13)
+0|BSS      |     at requireAuth (file:///home/BSS/dist/index.js:9857:3)
+0|BSS      |     at Layer.handle [as handle_request] (/home/BSS/node_modules/express/lib/router/layer.js:95:5)
+0|BSS      |     at next (/home/BSS/node_modules/express/lib/router/route.js:149:13)
+0|BSS      |     at Route.dispatch (/home/BSS/node_modules/express/lib/router/route.js:119:3)
+0|BSS      |     at Layer.handle [as handle_request] (/home/BSS/node_modules/express/lib/router/layer.js:95:5)
+0|BSS      |     at /home/BSS/node_modules/express/lib/router/index.js:284:15
+0|BSS      |     at Function.process_params (/home/BSS/node_modules/express/lib/router/index.js:346:12)
+0|BSS      |     at next (/home/BSS/node_modules/express/lib/router/index.js:280:10)
+0|BSS      |     at file:///home/BSS/dist/index.js:17334:3
+0|BSS      |     at Layer.handle [as handle_request] (/home/BSS/node_modules/express/lib/router/layer.js:95:5)
+0|BSS      |     at trim_prefix (/home/BSS/node_modules/express/lib/router/index.js:328:13)
+0|BSS      |     at /home/BSS/node_modules/express/lib/router/index.js:286:9
+0|BSS      |     at Function.process_params (/home/BSS/node_modules/express/lib/router/index.js:346:12)
+0|BSS      |     at next (/home/BSS/node_modules/express/lib/router/index.js:280:10)
+0|BSS      |     at /home/BSS/node_modules/express-session/index.js:514:7
+0|BSS      |     at /home/BSS/node_modules/connect-pg-simple/index.js:370:18
+0|BSS      | Email configuration missing. Skipping email notification.
+
+/home/ubuntu/.pm2/logs/BSS-out.log last 20 lines:
+0|BSS      | 9:22:52 PM [express] GET /api/it/active-tickets 200 in 461ms :: []
+0|BSS      | 9:22:53 PM [express] GET /api/it/client-accounts 200 in 1500ms :: [{"userId":"e0874d14-d47b-42df-8fb…
+0|BSS      | 9:22:53 PM [express] GET /api/it/analytics 200 in 1679ms :: {"totalOpen":0,"totalInProgress":0,"tota…
+0|BSS      | 9:22:53 PM [express] GET /api/it/workload 200 in 1844ms :: {"staff":[{"id":"82f9d924-d521-4e02-b885-…
