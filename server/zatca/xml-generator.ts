@@ -45,11 +45,11 @@ interface ZatcaInvoiceData {
     postalZone?: string;
     countryCode?: string;
   };
-  qrCode?: string;
-  signatureValue?: string;
-  signedPropertiesHash?: string;
-  invoiceHash?: string;
-  certificateBase64?: string;
+}
+
+interface SigningCredentials {
+  privateKey: string;
+  certificate: string;
 }
 
 function escapeXml(str: string): string {
@@ -89,10 +89,51 @@ export function formatVatNumber(vatNumber: string): string {
 }
 
 /**
- * Generates ZATCA TLV (Tag-Length-Value) QR code data
- * According to ZATCA specifications for Phase 1 (5 tags)
+ * Generates TLV (Tag-Length-Value) encoded data for QR code
+ * Phase 1: 5 tags, Phase 2: 9 tags
  */
-export function generateZatcaTlvQrCode(
+function generateTlvData(tag: number, value: string): Buffer {
+  const valueBuffer = Buffer.from(value, "utf8");
+  const tagBuffer = Buffer.from([tag]);
+  const lengthBuffer = Buffer.from([valueBuffer.length]);
+  return Buffer.concat([tagBuffer, lengthBuffer, valueBuffer]);
+}
+
+/**
+ * Generates ZATCA Phase 2 QR code with 9 tags (TLV format)
+ */
+export function generatePhase2QrCode(
+  sellerName: string,
+  vatNumber: string,
+  timestamp: string,
+  totalWithVat: number,
+  vatAmount: number,
+  invoiceHash: string,
+  signature: string,
+  publicKey: string,
+  certificateSignature: string
+): string {
+  const formattedVat = formatVatNumber(vatNumber);
+  
+  const tlvParts: Buffer[] = [
+    generateTlvData(1, sellerName),
+    generateTlvData(2, formattedVat),
+    generateTlvData(3, timestamp),
+    generateTlvData(4, formatDecimal(totalWithVat)),
+    generateTlvData(5, formatDecimal(vatAmount)),
+    generateTlvData(6, invoiceHash),
+    generateTlvData(7, signature),
+    generateTlvData(8, publicKey),
+    generateTlvData(9, certificateSignature),
+  ];
+  
+  return Buffer.concat(tlvParts).toString("base64");
+}
+
+/**
+ * Generates ZATCA Phase 1 QR code with 5 tags (TLV format)
+ */
+export function generatePhase1QrCode(
   sellerName: string,
   vatNumber: string,
   timestamp: string,
@@ -101,23 +142,15 @@ export function generateZatcaTlvQrCode(
 ): string {
   const formattedVat = formatVatNumber(vatNumber);
   
-  const tlvData: Buffer[] = [];
+  const tlvParts: Buffer[] = [
+    generateTlvData(1, sellerName),
+    generateTlvData(2, formattedVat),
+    generateTlvData(3, timestamp),
+    generateTlvData(4, formatDecimal(totalWithVat)),
+    generateTlvData(5, formatDecimal(vatAmount)),
+  ];
   
-  const addTlv = (tag: number, value: string) => {
-    const valueBuffer = Buffer.from(value, "utf8");
-    const tagBuffer = Buffer.from([tag]);
-    const lengthBuffer = Buffer.from([valueBuffer.length]);
-    tlvData.push(Buffer.concat([tagBuffer, lengthBuffer, valueBuffer]));
-  };
-  
-  addTlv(1, sellerName);
-  addTlv(2, formattedVat);
-  addTlv(3, timestamp);
-  addTlv(4, formatDecimal(totalWithVat));
-  addTlv(5, formatDecimal(vatAmount));
-  
-  const combinedBuffer = Buffer.concat(tlvData);
-  return combinedBuffer.toString("base64");
+  return Buffer.concat(tlvParts).toString("base64");
 }
 
 export function generateInvoiceTypeCode(invoiceType: "standard" | "simplified", invoiceSubType: "01" | "02"): string {
@@ -132,10 +165,51 @@ export function generateInvoiceTypeCodeName(invoiceType: "standard" | "simplifie
 }
 
 /**
- * Generate Phase 1 simplified invoice XML (unsigned, with QR code)
- * Matches ZATCA official sample format exactly
+ * Generate SHA-256 hash of invoice content
  */
-export function generateUnsignedInvoiceXml(data: Omit<ZatcaInvoiceData, 'qrCode' | 'signatureValue' | 'signedPropertiesHash' | 'invoiceHash' | 'certificateBase64'>): string {
+export function generateInvoiceHash(xmlContent: string): string {
+  let cleanedXml = xmlContent.replace(/<\?xml[^?]*\?>\s*/g, "");
+  cleanedXml = cleanedXml.replace(/<ext:UBLExtensions>[\s\S]*?<\/ext:UBLExtensions>/g, "");
+  cleanedXml = cleanedXml.replace(/<cac:Signature>[\s\S]*?<\/cac:Signature>/g, "");
+  cleanedXml = cleanedXml.replace(/<cac:AdditionalDocumentReference>\s*<cbc:ID>QR<\/cbc:ID>[\s\S]*?<\/cac:AdditionalDocumentReference>/g, "");
+  cleanedXml = cleanedXml.replace(/>\s+</g, "><").trim();
+  
+  return crypto.createHash("sha256").update(cleanedXml, "utf8").digest("base64");
+}
+
+/**
+ * Generate digital signature using private key
+ */
+export function signInvoice(xmlContent: string, privateKey: string): string {
+  try {
+    const sign = crypto.createSign("sha256");
+    sign.update(xmlContent);
+    return sign.sign(privateKey, "base64");
+  } catch (error) {
+    console.error("Signature generation failed:", error);
+    return "";
+  }
+}
+
+/**
+ * Generate certificate hash
+ */
+export function generateCertificateHash(certificate: string): string {
+  const cleanCert = certificate
+    .replace(/-----BEGIN CERTIFICATE-----/g, "")
+    .replace(/-----END CERTIFICATE-----/g, "")
+    .replace(/\s/g, "");
+  
+  return crypto.createHash("sha256").update(Buffer.from(cleanCert, "base64")).digest("base64");
+}
+
+/**
+ * Generate ZATCA Phase 2 compliant invoice XML with digital signature structure
+ */
+export function generateSignedInvoiceXml(
+  data: ZatcaInvoiceData, 
+  credentials?: SigningCredentials
+): string {
   const { 
     invoiceNumber, invoiceType, invoiceSubType, paymentMethod,
     subtotal, vatAmount, total, discount,
@@ -146,26 +220,25 @@ export function generateUnsignedInvoiceXml(data: Omit<ZatcaInvoiceData, 'qrCode'
   const invoiceTypeCode = generateInvoiceTypeCode(invoiceType, invoiceSubType);
   const invoiceTypeCodeName = generateInvoiceTypeCodeName(invoiceType);
   const formattedVat = formatVatNumber(sellerInfo.vatNumber);
-  
-  const timestamp = `${issueDate}T${issueTime}`;
-  const qrCode = generateZatcaTlvQrCode(
-    sellerInfo.name,
-    sellerInfo.vatNumber,
-    timestamp,
-    total,
-    vatAmount
-  );
+  const timestamp = `${issueDate}T${issueTime}Z`;
+  const signingTime = new Date().toISOString().replace(/\.\d{3}Z$/, "");
   
   const defaultPIH = "NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==";
   const pihValue = previousInvoiceHash || defaultPIH;
   
   let invoiceLinesXml = "";
+  let calculatedSubtotal = 0;
+  let calculatedVat = 0;
+  
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     const itemVatRate = item.taxPercent ?? 15;
     const lineExtension = item.quantity * item.unitPrice;
     const lineTax = lineExtension * (itemVatRate / 100);
     const lineTotal = lineExtension + lineTax;
+    
+    calculatedSubtotal += lineExtension;
+    calculatedVat += lineTax;
     
     invoiceLinesXml += `
   <cac:InvoiceLine>
@@ -191,6 +264,10 @@ export function generateUnsignedInvoiceXml(data: Omit<ZatcaInvoiceData, 'qrCode'
     </cac:Price>
   </cac:InvoiceLine>`;
   }
+
+  const finalSubtotal = formatDecimal(calculatedSubtotal);
+  const finalVat = formatDecimal(calculatedVat);
+  const finalTotal = formatDecimal(calculatedSubtotal + calculatedVat);
 
   let customerPartyXml = "";
   if (buyerInfo) {
@@ -224,7 +301,7 @@ export function generateUnsignedInvoiceXml(data: Omit<ZatcaInvoiceData, 'qrCode'
   </cac:AccountingCustomerParty>`;
   }
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+  const baseInvoiceXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2">
   <cbc:ProfileID>reporting:1.0</cbc:ProfileID>
   <cbc:ID>${escapeXml(invoiceNumber)}</cbc:ID>
@@ -242,12 +319,6 @@ export function generateUnsignedInvoiceXml(data: Omit<ZatcaInvoiceData, 'qrCode'
     <cbc:ID>PIH</cbc:ID>
     <cac:Attachment>
       <cbc:EmbeddedDocumentBinaryObject mimeCode="text/plain">${pihValue}</cbc:EmbeddedDocumentBinaryObject>
-    </cac:Attachment>
-  </cac:AdditionalDocumentReference>
-  <cac:AdditionalDocumentReference>
-    <cbc:ID>QR</cbc:ID>
-    <cac:Attachment>
-      <cbc:EmbeddedDocumentBinaryObject mimeCode="text/plain">${qrCode}</cbc:EmbeddedDocumentBinaryObject>
     </cac:Attachment>
   </cac:AdditionalDocumentReference>
   <cac:AccountingSupplierParty>
@@ -283,13 +354,13 @@ export function generateUnsignedInvoiceXml(data: Omit<ZatcaInvoiceData, 'qrCode'
     <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>
   </cac:PaymentMeans>
   <cac:TaxTotal>
-    <cbc:TaxAmount currencyID="SAR">${formatDecimal(vatAmount)}</cbc:TaxAmount>
+    <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>
   </cac:TaxTotal>
   <cac:TaxTotal>
-    <cbc:TaxAmount currencyID="SAR">${formatDecimal(vatAmount)}</cbc:TaxAmount>
+    <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>
     <cac:TaxSubtotal>
-      <cbc:TaxableAmount currencyID="SAR">${formatDecimal(subtotal)}</cbc:TaxableAmount>
-      <cbc:TaxAmount currencyID="SAR">${formatDecimal(vatAmount)}</cbc:TaxAmount>
+      <cbc:TaxableAmount currencyID="SAR">${finalSubtotal}</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>
       <cac:TaxCategory>
         <cbc:ID schemeID="UN/ECE 5305" schemeAgencyID="6">S</cbc:ID>
         <cbc:Percent>15</cbc:Percent>
@@ -300,103 +371,66 @@ export function generateUnsignedInvoiceXml(data: Omit<ZatcaInvoiceData, 'qrCode'
     </cac:TaxSubtotal>
   </cac:TaxTotal>
   <cac:LegalMonetaryTotal>
-    <cbc:LineExtensionAmount currencyID="SAR">${formatDecimal(subtotal)}</cbc:LineExtensionAmount>
-    <cbc:TaxExclusiveAmount currencyID="SAR">${formatDecimal(subtotal)}</cbc:TaxExclusiveAmount>
-    <cbc:TaxInclusiveAmount currencyID="SAR">${formatDecimal(total)}</cbc:TaxInclusiveAmount>
+    <cbc:LineExtensionAmount currencyID="SAR">${finalSubtotal}</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="SAR">${finalSubtotal}</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="SAR">${finalTotal}</cbc:TaxInclusiveAmount>
     <cbc:AllowanceTotalAmount currencyID="SAR">${formatDecimal(discount)}</cbc:AllowanceTotalAmount>
-    <cbc:PayableAmount currencyID="SAR">${formatDecimal(total)}</cbc:PayableAmount>
+    <cbc:PayableAmount currencyID="SAR">${finalTotal}</cbc:PayableAmount>
   </cac:LegalMonetaryTotal>${invoiceLinesXml}
 </Invoice>`;
 
-  return xml;
-}
-
-/**
- * Generate signed invoice XML for Phase 2 (with digital signature)
- */
-export function generateZatcaInvoiceXml(data: ZatcaInvoiceData): string {
-  const { 
-    invoiceNumber, invoiceType, invoiceSubType, paymentMethod,
-    subtotal, vatAmount, total, discount,
-    items, invoiceCounter, previousInvoiceHash, uuid, 
-    issueDate, issueTime, sellerInfo, buyerInfo,
-    qrCode, signatureValue, signedPropertiesHash, invoiceHash, certificateBase64
-  } = data;
+  const invoiceHash = generateInvoiceHash(baseInvoiceXml);
   
-  const invoiceTypeCode = generateInvoiceTypeCode(invoiceType, invoiceSubType);
-  const invoiceTypeCodeName = generateInvoiceTypeCodeName(invoiceType);
-  const formattedVat = formatVatNumber(sellerInfo.vatNumber);
+  let signatureValue = "PLACEHOLDER_SIGNATURE_VALUE";
+  let certificateBase64 = "PLACEHOLDER_CERTIFICATE";
+  let certificateHash = "PLACEHOLDER_CERTIFICATE_HASH";
+  let signedPropertiesHash = "PLACEHOLDER_SIGNED_PROPERTIES_HASH";
   
-  const defaultPIH = "NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==";
-  const pihValue = previousInvoiceHash || defaultPIH;
-  const signingTime = new Date().toISOString().replace(/\.\d{3}Z$/, "");
-  
-  let invoiceLinesXml = "";
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    const itemVatRate = item.taxPercent ?? 15;
-    const lineExtension = item.quantity * item.unitPrice;
-    const lineTax = lineExtension * (itemVatRate / 100);
-    const lineTotal = lineExtension + lineTax;
+  if (credentials?.privateKey && credentials?.certificate) {
+    signatureValue = signInvoice(baseInvoiceXml, credentials.privateKey);
+    certificateBase64 = credentials.certificate
+      .replace(/-----BEGIN CERTIFICATE-----/g, "")
+      .replace(/-----END CERTIFICATE-----/g, "")
+      .replace(/\s/g, "");
+    certificateHash = generateCertificateHash(credentials.certificate);
     
-    invoiceLinesXml += `
-  <cac:InvoiceLine>
-    <cbc:ID>${i + 1}</cbc:ID>
-    <cbc:InvoicedQuantity unitCode="PCE">${item.quantity}</cbc:InvoicedQuantity>
-    <cbc:LineExtensionAmount currencyID="SAR">${formatDecimal(lineExtension)}</cbc:LineExtensionAmount>
-    <cac:TaxTotal>
-      <cbc:TaxAmount currencyID="SAR">${formatDecimal(lineTax)}</cbc:TaxAmount>
-      <cbc:RoundingAmount currencyID="SAR">${formatDecimal(lineTotal)}</cbc:RoundingAmount>
-    </cac:TaxTotal>
-    <cac:Item>
-      <cbc:Name>${escapeXml(item.name)}</cbc:Name>
-      <cac:ClassifiedTaxCategory>
-        <cbc:ID>${item.taxCategory || "S"}</cbc:ID>
-        <cbc:Percent>${itemVatRate}</cbc:Percent>
-        <cac:TaxScheme>
-          <cbc:ID>VAT</cbc:ID>
-        </cac:TaxScheme>
-      </cac:ClassifiedTaxCategory>
-    </cac:Item>
-    <cac:Price>
-      <cbc:PriceAmount currencyID="SAR">${formatDecimal(item.unitPrice)}</cbc:PriceAmount>
-    </cac:Price>
-  </cac:InvoiceLine>`;
+    const signedProperties = `<xades:SignedProperties Id="xadesSignedProperties">
+      <xades:SignedSignatureProperties>
+        <xades:SigningTime>${signingTime}</xades:SigningTime>
+        <xades:SigningCertificate>
+          <xades:Cert>
+            <xades:CertDigest>
+              <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" />
+              <ds:DigestValue>${certificateHash}</ds:DigestValue>
+            </xades:CertDigest>
+          </xades:Cert>
+        </xades:SigningCertificate>
+      </xades:SignedSignatureProperties>
+    </xades:SignedProperties>`;
+    signedPropertiesHash = crypto.createHash("sha256").update(signedProperties).digest("base64");
   }
 
-  let customerPartyXml = "";
-  if (buyerInfo) {
-    const buyerVat = buyerInfo.vatNumber ? formatVatNumber(buyerInfo.vatNumber) : "";
-    customerPartyXml = `
-  <cac:AccountingCustomerParty>
-    <cac:Party>${buyerInfo.vatNumber ? `
-      <cac:PartyIdentification>
-        <cbc:ID schemeID="VAT">${buyerVat}</cbc:ID>
-      </cac:PartyIdentification>` : ""}
-      <cac:PostalAddress>
-        <cbc:StreetName>${escapeXml(buyerInfo.streetName || "-")}</cbc:StreetName>
-        <cbc:BuildingNumber>${escapeXml(buyerInfo.buildingNumber || "0000")}</cbc:BuildingNumber>
-        <cbc:CitySubdivisionName>${escapeXml(buyerInfo.citySubdivision || "-")}</cbc:CitySubdivisionName>
-        <cbc:CityName>${escapeXml(buyerInfo.city || "Riyadh")}</cbc:CityName>
-        <cbc:PostalZone>${escapeXml(buyerInfo.postalZone || "00000")}</cbc:PostalZone>
-        <cac:Country>
-          <cbc:IdentificationCode>${escapeXml(buyerInfo.countryCode || "SA")}</cbc:IdentificationCode>
-        </cac:Country>
-      </cac:PostalAddress>${buyerInfo.vatNumber ? `
-      <cac:PartyTaxScheme>
-        <cbc:CompanyID>${buyerVat}</cbc:CompanyID>
-        <cac:TaxScheme>
-          <cbc:ID>VAT</cbc:ID>
-        </cac:TaxScheme>
-      </cac:PartyTaxScheme>` : ""}
-      <cac:PartyLegalEntity>
-        <cbc:RegistrationName>${escapeXml(buyerInfo.name)}</cbc:RegistrationName>
-      </cac:PartyLegalEntity>
-    </cac:Party>
-  </cac:AccountingCustomerParty>`;
-  }
+  const qrCode = credentials?.privateKey 
+    ? generatePhase2QrCode(
+        sellerInfo.name,
+        sellerInfo.vatNumber,
+        timestamp,
+        calculatedSubtotal + calculatedVat,
+        calculatedVat,
+        invoiceHash,
+        signatureValue,
+        certificateBase64.substring(0, 100),
+        certificateHash
+      )
+    : generatePhase1QrCode(
+        sellerInfo.name,
+        sellerInfo.vatNumber,
+        timestamp,
+        calculatedSubtotal + calculatedVat,
+        calculatedVat
+      );
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+  const signedXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:sig="urn:oasis:names:specification:ubl:schema:xsd:CommonSignatureComponents-2" xmlns:sac="urn:oasis:names:specification:ubl:schema:xsd:SignatureAggregateComponents-2" xmlns:sbc="urn:oasis:names:specification:ubl:schema:xsd:SignatureBasicComponents-2">
   <ext:UBLExtensions>
     <ext:UBLExtension>
@@ -424,17 +458,17 @@ export function generateZatcaInvoiceXml(data: ZatcaInvoiceData): string {
                     <ds:Transform Algorithm="http://www.w3.org/2006/12/xml-c14n11" />
                   </ds:Transforms>
                   <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" />
-                  <ds:DigestValue>${invoiceHash || ""}</ds:DigestValue>
+                  <ds:DigestValue>${invoiceHash}</ds:DigestValue>
                 </ds:Reference>
                 <ds:Reference Type="http://www.w3.org/2000/09/xmldsig#SignatureProperties" URI="#xadesSignedProperties">
                   <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" />
-                  <ds:DigestValue>${signedPropertiesHash || ""}</ds:DigestValue>
+                  <ds:DigestValue>${signedPropertiesHash}</ds:DigestValue>
                 </ds:Reference>
               </ds:SignedInfo>
-              <ds:SignatureValue>${signatureValue || ""}</ds:SignatureValue>
+              <ds:SignatureValue>${signatureValue}</ds:SignatureValue>
               <ds:KeyInfo>
                 <ds:X509Data>
-                  <ds:X509Certificate>${certificateBase64 || ""}</ds:X509Certificate>
+                  <ds:X509Certificate>${certificateBase64}</ds:X509Certificate>
                 </ds:X509Data>
               </ds:KeyInfo>
               <ds:Object>
@@ -446,10 +480,10 @@ export function generateZatcaInvoiceXml(data: ZatcaInvoiceData): string {
                         <xades:Cert>
                           <xades:CertDigest>
                             <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" />
-                            <ds:DigestValue>${certificateBase64 ? crypto.createHash("sha256").update(Buffer.from(certificateBase64, "base64")).digest("base64") : ""}</ds:DigestValue>
+                            <ds:DigestValue>${certificateHash}</ds:DigestValue>
                           </xades:CertDigest>
                           <xades:IssuerSerial>
-                            <ds:X509IssuerName>CN=ZATCA-Code-Signing-CA</ds:X509IssuerName>
+                            <ds:X509IssuerName>CN=ZATCA-Code-Signing-CA, DC=zatca, DC=gov, DC=sa</ds:X509IssuerName>
                             <ds:X509SerialNumber>0</ds:X509SerialNumber>
                           </xades:IssuerSerial>
                         </xades:Cert>
@@ -485,7 +519,7 @@ export function generateZatcaInvoiceXml(data: ZatcaInvoiceData): string {
   <cac:AdditionalDocumentReference>
     <cbc:ID>QR</cbc:ID>
     <cac:Attachment>
-      <cbc:EmbeddedDocumentBinaryObject mimeCode="text/plain">${qrCode || ""}</cbc:EmbeddedDocumentBinaryObject>
+      <cbc:EmbeddedDocumentBinaryObject mimeCode="text/plain">${qrCode}</cbc:EmbeddedDocumentBinaryObject>
     </cac:Attachment>
   </cac:AdditionalDocumentReference>
   <cac:Signature>
@@ -525,13 +559,13 @@ export function generateZatcaInvoiceXml(data: ZatcaInvoiceData): string {
     <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>
   </cac:PaymentMeans>
   <cac:TaxTotal>
-    <cbc:TaxAmount currencyID="SAR">${formatDecimal(vatAmount)}</cbc:TaxAmount>
+    <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>
   </cac:TaxTotal>
   <cac:TaxTotal>
-    <cbc:TaxAmount currencyID="SAR">${formatDecimal(vatAmount)}</cbc:TaxAmount>
+    <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>
     <cac:TaxSubtotal>
-      <cbc:TaxableAmount currencyID="SAR">${formatDecimal(subtotal)}</cbc:TaxableAmount>
-      <cbc:TaxAmount currencyID="SAR">${formatDecimal(vatAmount)}</cbc:TaxAmount>
+      <cbc:TaxableAmount currencyID="SAR">${finalSubtotal}</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>
       <cac:TaxCategory>
         <cbc:ID schemeID="UN/ECE 5305" schemeAgencyID="6">S</cbc:ID>
         <cbc:Percent>15</cbc:Percent>
@@ -542,41 +576,19 @@ export function generateZatcaInvoiceXml(data: ZatcaInvoiceData): string {
     </cac:TaxSubtotal>
   </cac:TaxTotal>
   <cac:LegalMonetaryTotal>
-    <cbc:LineExtensionAmount currencyID="SAR">${formatDecimal(subtotal)}</cbc:LineExtensionAmount>
-    <cbc:TaxExclusiveAmount currencyID="SAR">${formatDecimal(subtotal)}</cbc:TaxExclusiveAmount>
-    <cbc:TaxInclusiveAmount currencyID="SAR">${formatDecimal(total)}</cbc:TaxInclusiveAmount>
+    <cbc:LineExtensionAmount currencyID="SAR">${finalSubtotal}</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="SAR">${finalSubtotal}</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="SAR">${finalTotal}</cbc:TaxInclusiveAmount>
     <cbc:AllowanceTotalAmount currencyID="SAR">${formatDecimal(discount)}</cbc:AllowanceTotalAmount>
-    <cbc:PayableAmount currencyID="SAR">${formatDecimal(total)}</cbc:PayableAmount>
+    <cbc:PayableAmount currencyID="SAR">${finalTotal}</cbc:PayableAmount>
   </cac:LegalMonetaryTotal>${invoiceLinesXml}
 </Invoice>`;
 
-  return xml;
+  return signedXml;
 }
 
-export function generateInvoiceHash(xmlContent: string): string {
-  let cleanedXml = xmlContent.replace(/<\?xml[^?]*\?>\s*/g, "");
-  cleanedXml = cleanedXml.replace(/<ext:UBLExtensions>[\s\S]*?<\/ext:UBLExtensions>/g, "");
-  cleanedXml = cleanedXml.replace(/<cac:Signature>[\s\S]*?<\/cac:Signature>/g, "");
-  cleanedXml = cleanedXml.replace(/<cac:AdditionalDocumentReference>\s*<cbc:ID>QR<\/cbc:ID>[\s\S]*?<\/cac:AdditionalDocumentReference>/g, "");
-  
-  cleanedXml = cleanedXml.replace(/>\s+</g, "><").trim();
-  
-  const hash = crypto.createHash("sha256");
-  hash.update(cleanedXml, "utf8");
-  return hash.digest("base64");
+export function generateUnsignedInvoiceXml(data: ZatcaInvoiceData): string {
+  return generateSignedInvoiceXml(data, undefined);
 }
 
-export function generateInvoiceHashHex(xmlContent: string): string {
-  let cleanedXml = xmlContent.replace(/<\?xml[^?]*\?>\s*/g, "");
-  cleanedXml = cleanedXml.replace(/<ext:UBLExtensions>[\s\S]*?<\/ext:UBLExtensions>/g, "");
-  cleanedXml = cleanedXml.replace(/<cac:Signature>[\s\S]*?<\/cac:Signature>/g, "");
-  cleanedXml = cleanedXml.replace(/<cac:AdditionalDocumentReference>\s*<cbc:ID>QR<\/cbc:ID>[\s\S]*?<\/cac:AdditionalDocumentReference>/g, "");
-  
-  cleanedXml = cleanedXml.replace(/>\s+</g, "><").trim();
-  
-  const hash = crypto.createHash("sha256");
-  hash.update(cleanedXml, "utf8");
-  return hash.digest("hex");
-}
-
-export type { ZatcaInvoiceData, ZatcaInvoiceLineItem };
+export type { ZatcaInvoiceData, ZatcaInvoiceLineItem, SigningCredentials };
