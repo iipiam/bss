@@ -212,21 +212,17 @@ export default function ITDashboard() {
   useEffect(() => {
     if (lastNotification) {
       const { type } = lastNotification;
-      // Handle ticket-related notifications
-      if (type.startsWith('ticket:') || type === 'support_ticket_created' || type === 'support_ticket_updated') {
+      // Handle ticket-related notifications (ticket:created, ticket:updated, ticket:message)
+      if (type === 'ticket:created' || type === 'ticket:updated' || type === 'ticket:message') {
+        console.log('[IT Dashboard] Received ticket notification:', type);
         queryClient.invalidateQueries({ queryKey: ["/api/it/active-tickets"] });
         queryClient.invalidateQueries({ queryKey: ["/api/it/analytics"] });
         queryClient.invalidateQueries({ queryKey: ["/api/it/workload"] });
         queryClient.invalidateQueries({ queryKey: ["/api/it/trends"] });
         queryClient.invalidateQueries({ queryKey: ["/api/it/category-breakdown"] });
       }
-      // Handle analytics-related notifications
-      if (type === 'analytics:update' || type.startsWith('analytics:')) {
-        queryClient.invalidateQueries({ queryKey: ["/api/it/analytics"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/it/trends"] });
-      }
-      // Handle client account activity
-      if (type === 'user:activity' || type.startsWith('user:')) {
+      // Handle settings updates (might affect IT dashboard if viewing client data)
+      if (type === 'settings:updated') {
         queryClient.invalidateQueries({ queryKey: ["/api/it/client-accounts"] });
       }
     }
