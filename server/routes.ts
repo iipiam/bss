@@ -6882,7 +6882,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       // IT accounts can see category breakdown across all restaurants
       const breakdown = await storage.getCategoryBreakdown();
-      res.json(breakdown);
+      // Transform to expected format: { categories: [{ name, value }] }
+      const categories = breakdown.map(item => ({
+        name: item.category,
+        value: item.count
+      }));
+      res.json({ categories });
     } catch (error) {
       console.error("Error fetching category breakdown:", error);
       res.status(500).json({ error: "Failed to fetch category breakdown" });
@@ -6893,7 +6898,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       // IT accounts can see ticket trends across all restaurants
       const trends = await storage.getTicketTrends();
-      res.json(trends);
+      // Wrap in expected format: { trends: [...] }
+      res.json({ trends });
     } catch (error) {
       console.error("Error fetching ticket trends:", error);
       res.status(500).json({ error: "Failed to fetch ticket trends" });
