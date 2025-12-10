@@ -507,10 +507,12 @@ export const invoices = pgTable("invoices", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   invoiceNumber: text("invoice_number").notNull().unique(),
+  invoiceType: text("invoice_type").notNull().default("simplified"), // "standard" (B2B), "simplified" (B2C)
   transactionId: varchar("transaction_id").references(() => transactions.id),
   orderId: varchar("order_id").references(() => orders.id),
   branchId: varchar("branch_id").references(() => branches.id),
   customerName: text("customer_name"),
+  customerVatNumber: text("customer_vat_number"), // VAT number for B2B invoices
   items: jsonb("items").notNull().$type<Array<{ name: string; quantity: number; basePrice: number; vatAmount: number; total: number }>>(),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).notNull(),
