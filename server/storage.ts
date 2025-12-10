@@ -2692,9 +2692,19 @@ export class DatabaseStorage implements IStorage {
     // SECURITY: Strip restaurantId to prevent cross-tenant reassignment
     const { restaurantId: _, userId: __, ...safeData } = ticket;
     
-    const updateData = Object.fromEntries(
+    const updateData: any = Object.fromEntries(
       Object.entries(safeData).filter(([_, value]) => value !== undefined)
     );
+    
+    // Set timestamps for status changes
+    updateData.updatedAt = new Date();
+    if (ticket.status === 'resolved' && !updateData.resolvedAt) {
+      updateData.resolvedAt = new Date();
+    }
+    if (ticket.status === 'closed' && !updateData.closedAt) {
+      updateData.closedAt = new Date();
+    }
+    
     if (Object.keys(updateData).length === 0) {
       return this.getSupportTicketForIT(id);
     }
