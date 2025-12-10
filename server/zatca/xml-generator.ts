@@ -165,7 +165,7 @@ export function generateInvoiceTypeCodeName(invoiceType: "standard" | "simplifie
 }
 
 /**
- * Generate SHA-256 hash of invoice content
+ * Generate SHA-256 hash of invoice content (base64 format)
  */
 export function generateInvoiceHash(xmlContent: string): string {
   let cleanedXml = xmlContent.replace(/<\?xml[^?]*\?>\s*/g, "");
@@ -175,6 +175,19 @@ export function generateInvoiceHash(xmlContent: string): string {
   cleanedXml = cleanedXml.replace(/>\s+</g, "><").trim();
   
   return crypto.createHash("sha256").update(cleanedXml, "utf8").digest("base64");
+}
+
+/**
+ * Generate SHA-256 hash of invoice content (hex format)
+ */
+export function generateInvoiceHashHex(xmlContent: string): string {
+  let cleanedXml = xmlContent.replace(/<\?xml[^?]*\?>\s*/g, "");
+  cleanedXml = cleanedXml.replace(/<ext:UBLExtensions>[\s\S]*?<\/ext:UBLExtensions>/g, "");
+  cleanedXml = cleanedXml.replace(/<cac:Signature>[\s\S]*?<\/cac:Signature>/g, "");
+  cleanedXml = cleanedXml.replace(/<cac:AdditionalDocumentReference>\s*<cbc:ID>QR<\/cbc:ID>[\s\S]*?<\/cac:AdditionalDocumentReference>/g, "");
+  cleanedXml = cleanedXml.replace(/>\s+</g, "><").trim();
+  
+  return crypto.createHash("sha256").update(cleanedXml, "utf8").digest("hex");
 }
 
 /**
@@ -596,5 +609,8 @@ export function generateSignedInvoiceXml(
 export function generateUnsignedInvoiceXml(data: ZatcaInvoiceData): string {
   return generateSignedInvoiceXml(data, undefined);
 }
+
+// Alias for generateSignedInvoiceXml for backward compatibility
+export const generateZatcaInvoiceXml = generateSignedInvoiceXml;
 
 export type { ZatcaInvoiceData, ZatcaInvoiceLineItem, SigningCredentials };
