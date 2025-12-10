@@ -164,6 +164,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         try {
           const notification: Notification = JSON.parse(event.data);
           
+          console.log('[Notifications] Received WebSocket message:', notification.type, notification);
+          
           // Always update lastNotification for components to react to
           setLastNotification(notification);
           
@@ -209,6 +211,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             }
           } else if (notification.type === 'ticket:created' || notification.type === 'ticket:updated') {
             // Handle ticket creation and updates
+            console.log('[Notifications] Processing ticket event:', notification.type, 'ticketId:', notification.ticketId);
             playNotificationTone(currentToneRef.current);
             
             // Invalidate ticket list to show new/updated tickets (client accounts)
@@ -220,12 +223,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             }
             
             // For IT Dashboard - invalidate IT-specific queries (real-time updates for IT accounts)
+            console.log('[Notifications] Invalidating IT Dashboard queries...');
             queryClient.invalidateQueries({ queryKey: ['/api/it/tickets'] });
             queryClient.invalidateQueries({ queryKey: ['/api/it/active-tickets'] });
             queryClient.invalidateQueries({ queryKey: ['/api/it/analytics'] });
             queryClient.invalidateQueries({ queryKey: ['/api/it/workload'] });
             queryClient.invalidateQueries({ queryKey: ['/api/it/trends'] });
             queryClient.invalidateQueries({ queryKey: ['/api/it/category-breakdown'] });
+            console.log('[Notifications] IT Dashboard queries invalidated');
             
             const title = notification.type === 'ticket:created'
               ? `New Ticket - ${notification.ticketNumber}`
