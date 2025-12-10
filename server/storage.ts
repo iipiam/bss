@@ -2483,6 +2483,26 @@ export class DatabaseStorage implements IStorage {
       ? Math.round(((totalOpen - totalOpenYesterday) / totalOpenYesterday) * 100)
       : 0;
 
+    // Build statusDistribution array for pie chart
+    const statusDistribution = [
+      { name: 'Open', value: totalOpen },
+      { name: 'In Progress', value: totalInProgress },
+      { name: 'Resolved', value: totalResolved },
+      { name: 'Closed', value: totalClosed },
+    ].filter(s => s.value > 0); // Only include statuses with tickets
+
+    // Build priorityBreakdown array for bar chart (count ALL tickets including closed)
+    const lowPriorityCount = tickets.filter(t => t.priority === 'low').length;
+    const mediumPriorityCount = tickets.filter(t => t.priority === 'medium').length;
+    const allHighPriorityCount = tickets.filter(t => t.priority === 'high').length;
+    const allUrgentCount = tickets.filter(t => t.priority === 'urgent').length;
+    const priorityBreakdown = [
+      { name: 'Low', value: lowPriorityCount },
+      { name: 'Medium', value: mediumPriorityCount },
+      { name: 'High', value: allHighPriorityCount },
+      { name: 'Urgent', value: allUrgentCount },
+    ].filter(p => p.value > 0); // Only include priorities with tickets
+
     return {
       totalOpen,
       totalInProgress,
@@ -2495,6 +2515,8 @@ export class DatabaseStorage implements IStorage {
       ticketsClosedToday,
       ticketsClosedThisWeek,
       ticketsClosedThisMonth,
+      statusDistribution,
+      priorityBreakdown,
     };
   }
 
@@ -2537,20 +2559,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCategoryBreakdown(restaurantId?: string): Promise<{ category: string; count: number }[]> {
-    const conditions = [sql`${supportTickets.status} != 'closed'`];
+    // Include ALL tickets (including closed) for complete category breakdown
+    const conditions: any[] = [];
     if (restaurantId) {
       conditions.push(eq(supportTickets.restaurantId, restaurantId));
     }
     
-    const result = await db.select({
-      category: supportTickets.category,
-      count: sql<number>`count(*)`
-    })
-    .from(supportTickets)
-    .where(and(...conditions))
-    .groupBy(supportTickets.category);
+    const result = conditions.length > 0
+      ? await db.select({
+          category: supportTickets.category,
+          count: sql<number>`count(*)`
+        })
+        .from(supportTickets)
+        .where(and(...conditions))
+        .groupBy(supportTickets.category)
+      : await db.select({
+          category: supportTickets.category,
+          count: sql<number>`count(*)`
+        })
+        .from(supportTickets)
+        .groupBy(supportTickets.category);
 
-    return result.map(r => ({ category: r.category, count: r.count || 0 }));
+    return result.map(r => ({ category: r.category, count: Number(r.count) || 0 }));
   }
 
   async getTicketTrends(restaurantId?: string, days: number = 30): Promise<{
