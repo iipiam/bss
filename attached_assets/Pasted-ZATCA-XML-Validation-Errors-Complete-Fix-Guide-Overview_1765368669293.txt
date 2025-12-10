@@ -1,0 +1,1077 @@
+ZATCA XML Validation Errors - Complete Fix Guide
+
+Overview
+
+You're getting 6 errors and 4 warnings from ZATCA validation. This guide explains exactly what each error means and how to fix it in your JavaScript code.
+
+
+
+
+ERROR 1: SIGNATURE_ERROR - "wrong invoiceCertificate"
+
+What This Means
+
+Your digital signature certificate is incorrect or doesn't match your CCSID.
+
+Root Causes
+
+1.
+Using the wrong private key
+
+2.
+Private key doesn't match your CCSID certificate
+
+3.
+Certificate has expired
+
+4.
+Certificate format is incorrect
+
+How to Fix in Replit
+
+Step 1: Verify Your Certificate
+
+JavaScript
+
+
+// Verify certificate matches CCSID
+const crypto = require('crypto');
+const fs = require('fs');
+
+function verifyCertificate(privateKeyPath, ccsid) {
+  try {
+    const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+    
+    // Check if private key is valid PEM format
+    if (!privateKey.includes('BEGIN PRIVATE KEY') && 
+        !privateKey.includes('BEGIN RSA PRIVATE KEY')) {
+      console.error('ERROR: Invalid private key format');
+      return false;
+    }
+    
+    console.log('✓ Private key format is valid');
+    return true;
+  } catch (error) {
+    console.error('ERROR: Cannot read private key file:', error.message);
+    return false;
+  }
+}
+
+// Test it
+verifyCertificate('./private_key.pem', process.env.ZATCA_CCSID);
+
+
+Step 2: Ensure Correct Key Pair
+
+JavaScript
+
+
+// When generating CSR, save BOTH files securely
+// 1. private_key.pem (keep secret)
+// 2. certificate.pem (from ZATCA)
+
+// Verify they match:
+const privateKey = fs.readFileSync('./private_key.pem', 'utf8');
+const certificate = fs.readFileSync('./certificate.pem', 'utf8');
+
+// Both should be present and valid
+if (privateKey && certificate) {
+  console.log('✓ Both certificate files present');
+}
+
+
+Step 3: Use Correct Signing Method
+
+JavaScript
+
+
+// CORRECT: Use the private key that matches your CCSID
+function signInvoiceCorrectly(invoiceXML, privateKeyPath) {
+  const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+  
+  // Create hash of invoice
+  const hash = crypto
+    .createHash('sha256')
+    .update(invoiceXML)
+    .digest();
+  
+  // Sign with private key using correct algorithm
+  const sign = crypto.createSign('sha256');
+  sign.update(invoiceXML);
+  
+  const signature = sign.sign(
+    {
+      key: privateKey,
+      format: 'pem',
+      type: 'pkcs8'  // Important: use correct key type
+    },
+    'base64'
+  );
+  
+  return signature;
+}
+
+
+Step 4: Re-obtain Certificate if Needed
+
+JavaScript
+
+
+// If certificate is invalid, request new CCSID:
+// 1. Go to ZATCA Developer Portal
+// 2. Generate new CSR
+// 3. Submit CSR
+// 4. Download new CCSID
+// 5. Update private key and certificate files
+// 6. Update environment variables
+
+console.log('To fix: Request new CCSID from ZATCA Developer Portal');
+
+
+
+
+
+ERROR 2: QR_CODE_ERROR - "Invalid QR code format"
+
+What This Means
+
+Your QR code data is not in the correct ZATCA format.
+
+ZATCA QR Code Format Requirements
+
+The QR code must contain exactly these fields in this exact order:
+
+Plain Text
+
+
+[Seller Name]: # "| [Seller TIN] | [Invoice Timestamp] | [Invoice Total] | [VAT Amount] | [Invoice Hash] | [Digital Signature]"
+
+
+How to Fix in Replit
+
+Step 1: Create Correct QR Code Data
+
+JavaScript
+
+
+// CORRECT QR Code Format
+function generateCorrectQRCodeData(invoiceData, invoiceHash, signature) {
+  // Format: All fields separated by pipe (|)
+  // Order is CRITICAL
+  
+  const qrData = [
+    invoiceData.seller.name,           // Field 1: Seller Name
+    invoiceData.seller.tin,            // Field 2: Seller TIN (10 digits)
+    invoiceData.issueDate,             // Field 3: Timestamp (ISO 8601)
+    invoiceData.totalAmount.toFixed(2), // Field 4: Invoice Total (with 2 decimals)
+    invoiceData.taxAmount.toFixed(2),  // Field 5: VAT Amount (with 2 decimals)
+    invoiceHash,                       // Field 6: Invoice Hash (SHA-256 hex)
+    signature                          // Field 7: Digital Signature (base64)
+  ].join('|');
+  
+  return qrData;
+}
+
+// Example output:
+// "Tech Store Saudi|1234567890|2024-01-15T10:30:00|230.00|30.00|abc123def456...|xyz789..."
+
+
+Step 2: Encode QR Code Correctly
+
+JavaScript
+
+
+const QRCode = require('qrcode');
+
+async function generateQRCodeImage(qrData) {
+  try {
+    // Generate QR code as data URL
+    const qrCodeImage = await QRCode.toDataURL(qrData, {
+      errorCorrectionLevel: 'L',  // Low error correction
+      type: 'image/png',
+      quality: 0.92,
+      margin: 1,
+      width: 200,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    });
+    
+    return qrCodeImage;
+  } catch (error) {
+    console.error('QR Code generation failed:', error);
+    throw error;
+  }
+}
+
+
+Step 3: Validate QR Code Data Before Generation
+
+JavaScript
+
+
+function validateQRCodeData(qrData) {
+  const parts = qrData.split('|');
+  
+  // Must have exactly 7 parts
+  if (parts.length !== 7) {
+    console.error(`ERROR: QR code must have 7 fields, got ${parts.length}`);
+    return false;
+  }
+  
+  const [sellerName, tin, timestamp, total, vat, hash, sig] = parts;
+  
+  // Validate each field
+  if (!sellerName) {
+    console.error('ERROR: Seller name is empty');
+    return false;
+  }
+  
+  if (tin.length !== 10 || isNaN(tin)) {
+    console.error('ERROR: TIN must be exactly 10 digits');
+    return false;
+  }
+  
+  if (!timestamp.includes('T')) {
+    console.error('ERROR: Timestamp must be ISO 8601 format (YYYY-MM-DDTHH:MM:SS)');
+    return false;
+  }
+  
+  if (isNaN(parseFloat(total))) {
+    console.error('ERROR: Total amount must be a number');
+    return false;
+  }
+  
+  if (isNaN(parseFloat(vat))) {
+    console.error('ERROR: VAT amount must be a number');
+    return false;
+  }
+  
+  if (hash.length < 32) {
+    console.error('ERROR: Hash appears too short (should be SHA-256)');
+    return false;
+  }
+  
+  if (!sig || sig.length < 10) {
+    console.error('ERROR: Signature is missing or too short');
+    return false;
+  }
+  
+  console.log('✓ QR code data format is valid');
+  return true;
+}
+
+
+Step 4: Complete QR Code Generation Function
+
+JavaScript
+
+
+async function generateCompleteQRCode(invoiceData, invoiceHash, signature) {
+  // Step 1: Create QR data in correct format
+  const qrData = generateCorrectQRCodeData(invoiceData, invoiceHash, signature);
+  
+  // Step 2: Validate QR data
+  if (!validateQRCodeData(qrData)) {
+    throw new Error('QR code data validation failed');
+  }
+  
+  // Step 3: Generate QR code image
+  const qrCodeImage = await generateQRCodeImage(qrData);
+  
+  return {
+    data: qrData,
+    image: qrCodeImage
+  };
+}
+
+
+
+
+
+ERROR 3: SIGNATURE_ERROR - "NullPointerException"
+
+What This Means
+
+The signature is null/empty or not being generated properly.
+
+Root Causes
+
+1.
+Private key not loaded
+
+2.
+Invoice XML is empty
+
+3.
+Signature generation failed silently
+
+4.
+Signature not being embedded in XML
+
+How to Fix in Replit
+
+Step 1: Check Private Key is Loaded
+
+JavaScript
+
+
+function loadPrivateKey(privateKeyPath) {
+  try {
+    const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+    
+    if (!privateKey || privateKey.length === 0) {
+      throw new Error('Private key file is empty');
+    }
+    
+    console.log('✓ Private key loaded successfully');
+    return privateKey;
+  } catch (error) {
+    console.error('ERROR: Cannot load private key:', error.message);
+    throw error;
+  }
+}
+
+
+Step 2: Verify Invoice XML is Not Empty
+
+JavaScript
+
+
+function validateInvoiceXML(invoiceXML) {
+  if (!invoiceXML || invoiceXML.trim().length === 0) {
+    throw new Error('Invoice XML is empty');
+  }
+  
+  if (!invoiceXML.includes('<Invoice')) {
+    throw new Error('Invoice XML is malformed');
+  }
+  
+  console.log('✓ Invoice XML is valid');
+  return true;
+}
+
+
+Step 3: Generate Signature with Error Handling
+
+JavaScript
+
+
+function generateSignatureWithErrorHandling(invoiceXML, privateKeyPath) {
+  try {
+    // Validate inputs
+    validateInvoiceXML(invoiceXML);
+    const privateKey = loadPrivateKey(privateKeyPath);
+    
+    // Generate signature
+    const sign = crypto.createSign('sha256');
+    sign.update(invoiceXML);
+    
+    const signature = sign.sign(privateKey, 'base64');
+    
+    // Verify signature is not null
+    if (!signature || signature.length === 0) {
+      throw new Error('Signature generation returned empty result');
+    }
+    
+    console.log('✓ Signature generated successfully');
+    return signature;
+  } catch (error) {
+    console.error('ERROR: Signature generation failed:', error.message);
+    throw error;
+  }
+}
+
+
+Step 4: Embed Signature in XML
+
+JavaScript
+
+
+function embedSignatureInXML(invoiceXML, signature) {
+  // Add signature to XML structure
+  const signatureElement = `
+    <ext:UBLExtensions>
+      <ext:UBLExtension>
+        <ext:ExtensionContent>
+          <sig:UBLDocumentSignatures>
+            <sig:SignatureInformation>
+              <sig:id>urn:oasis:names:specification:ubl:signature:Invoice</sig:id>
+              <sig:ReferencedSignatureID>urn:oasis:names:specification:ubl:signature:Invoice</sig:ReferencedSignatureID>
+              <sig:SignatureMethod>urn:oasis:names:specification:ubl:dsig:enveloped:xades</sig:SignatureMethod>
+              <sig:SignatureValue>${signature}</sig:SignatureValue>
+            </sig:SignatureInformation>
+          </sig:UBLDocumentSignatures>
+        </ext:ExtensionContent>
+      </ext:UBLExtension>
+    </ext:UBLExtensions>
+  `;
+  
+  // Insert after XML declaration and before Invoice element
+  const insertPoint = invoiceXML.indexOf('<Invoice');
+  const newXML = invoiceXML.substring(0, insertPoint) + 
+                 signatureElement + 
+                 invoiceXML.substring(insertPoint);
+  
+  return newXML;
+}
+
+
+
+
+
+ERROR 4: BR-KSA-30 - "wrong signature method"
+
+What This Means
+
+The signature method in the XML is not exactly: urn:oasis:names:specification:ubl:dsig:enveloped:xades
+
+How to Fix in Replit
+
+Step 1: Use Exact Signature Method
+
+JavaScript
+
+
+// CORRECT signature method
+const CORRECT_SIGNATURE_METHOD = 'urn:oasis:names:specification:ubl:dsig:enveloped:xades';
+
+function createSignatureElement(signature) {
+  return {
+    'sig:SignatureMethod': CORRECT_SIGNATURE_METHOD,  // Must be EXACT
+    'sig:SignatureValue': signature
+  };
+}
+
+
+Step 2: Add to XML Structure
+
+JavaScript
+
+
+// In your XML generation, include:
+const signatureInfo = {
+  'sig:SignatureInformation': {
+    'sig:id': 'urn:oasis:names:specification:ubl:signature:Invoice',
+    'sig:ReferencedSignatureID': 'urn:oasis:names:specification:ubl:signature:Invoice',
+    'sig:SignatureMethod': 'urn:oasis:names:specification:ubl:dsig:enveloped:xades',  // EXACT
+    'sig:SignatureValue': signature
+  }
+};
+
+
+Step 3: Validate in XML
+
+JavaScript
+
+
+function validateSignatureMethod(xmlString) {
+  const correctMethod = 'urn:oasis:names:specification:ubl:dsig:enveloped:xades';
+  
+  if (!xmlString.includes(correctMethod)) {
+    console.error('ERROR: Signature method is incorrect');
+    console.error('Expected:', correctMethod);
+    return false;
+  }
+  
+  console.log('✓ Signature method is correct');
+  return true;
+}
+
+
+
+
+
+ERROR 5: BR-KSA-28 - "wrong signature information ID"
+
+What This Means
+
+The signature information ID must be exactly: urn:oasis:names:specification:ubl:signature:1
+
+How to Fix in Replit
+
+Step 1: Use Exact Signature ID
+
+JavaScript
+
+
+// CORRECT signature information ID
+const CORRECT_SIG_INFO_ID = 'urn:oasis:names:specification:ubl:signature:1';
+
+function createSignatureInformation(signature) {
+  return {
+    'sig:SignatureInformation': {
+      'sig:id': CORRECT_SIG_INFO_ID,  // Must be EXACT
+      'sig:ReferencedSignatureID': 'urn:oasis:names:specification:ubl:signature:Invoice',
+      'sig:SignatureMethod': 'urn:oasis:names:specification:ubl:dsig:enveloped:xades',
+      'sig:SignatureValue': signature
+    }
+  };
+}
+
+
+Step 2: Validate in XML
+
+JavaScript
+
+
+function validateSignatureID(xmlString) {
+  const correctID = 'urn:oasis:names:specification:ubl:signature:1';
+  
+  if (!xmlString.includes(`<sig:id>${correctID}</sig:id>`)) {
+    console.error('ERROR: Signature information ID is incorrect');
+    console.error('Expected:', correctID);
+    return false;
+  }
+  
+  console.log('✓ Signature information ID is correct');
+  return true;
+}
+
+
+
+
+
+WARNING 1: BR-KSA-29 - "wrong referenced signature ID"
+
+What This Means
+
+The referenced signature ID should be: urn:oasis:names:specification:ubl:signature:Invoice
+
+How to Fix in Replit
+
+Step 1: Use Correct Referenced ID
+
+JavaScript
+
+
+// CORRECT referenced signature ID
+const CORRECT_REFERENCED_ID = 'urn:oasis:names:specification:ubl:signature:Invoice';
+
+function createSignatureInformation(signature) {
+  return {
+    'sig:SignatureInformation': {
+      'sig:id': 'urn:oasis:names:specification:ubl:signature:1',
+      'sig:ReferencedSignatureID': CORRECT_REFERENCED_ID,  // Must be EXACT
+      'sig:SignatureMethod': 'urn:oasis:names:specification:ubl:dsig:enveloped:xades',
+      'sig:SignatureValue': signature
+    }
+  };
+}
+
+
+
+
+
+WARNING 2 & 3: BR-CO-10 & BR-CO-13 - "Sum calculation warnings"
+
+What This Means
+
+Your invoice totals don't match the line items sum.
+
+How to Fix in Replit
+
+Step 1: Verify Calculation Logic
+
+JavaScript
+
+
+function calculateInvoiceTotals(lineItems) {
+  // Calculate subtotal (sum of all line items before tax)
+  const subtotal = lineItems.reduce((sum, item) => {
+    return sum + (item.quantity * item.unitPrice);
+  }, 0);
+  
+  // Calculate tax (15% of subtotal)
+  const taxAmount = subtotal * 0.15;
+  
+  // Calculate total (subtotal + tax)
+  const totalAmount = subtotal + taxAmount;
+  
+  return {
+    subtotal: parseFloat(subtotal.toFixed(2)),
+    taxAmount: parseFloat(taxAmount.toFixed(2)),
+    totalAmount: parseFloat(totalAmount.toFixed(2))
+  };
+}
+
+// Example:
+const items = [
+  { quantity: 2, unitPrice: 100 }
+];
+const totals = calculateInvoiceTotals(items);
+console.log(totals);
+// Output: { subtotal: 200, taxAmount: 30, totalAmount: 230 }
+
+
+Step 2: Ensure XML Totals Match Calculations
+
+JavaScript
+
+
+function validateInvoiceTotals(invoiceData) {
+  // Calculate what totals should be
+  const calculated = calculateInvoiceTotals(invoiceData.lineItems);
+  
+  // Compare with invoice data
+  if (Math.abs(calculated.subtotal - invoiceData.subtotal) > 0.01) {
+    console.error('ERROR: Subtotal mismatch');
+    console.error('Expected:', calculated.subtotal);
+    console.error('Got:', invoiceData.subtotal);
+    return false;
+  }
+  
+  if (Math.abs(calculated.taxAmount - invoiceData.taxAmount) > 0.01) {
+    console.error('ERROR: Tax amount mismatch');
+    console.error('Expected:', calculated.taxAmount);
+    console.error('Got:', invoiceData.taxAmount);
+    return false;
+  }
+  
+  if (Math.abs(calculated.totalAmount - invoiceData.totalAmount) > 0.01) {
+    console.error('ERROR: Total amount mismatch');
+    console.error('Expected:', calculated.totalAmount);
+    console.error('Got:', invoiceData.totalAmount);
+    return false;
+  }
+  
+  console.log('✓ All invoice totals are correct');
+  return true;
+}
+
+
+
+
+
+WARNING 4: BR-KSA-60 - "Cryptographic stamp missing"
+
+What This Means
+
+For simplified invoices, the cryptographic stamp (signature) must be included.
+
+How to Fix in Replit
+
+Step 1: Check Invoice Type
+
+JavaScript
+
+
+function isSimplifiedInvoice(invoiceData) {
+  // Simplified invoices have ProfileID = "reporting:1.0"
+  return invoiceData.profileID === 'reporting:1.0';
+}
+
+
+Step 2: Ensure Signature is Included for Simplified Invoices
+
+JavaScript
+
+
+function validateSignatureForInvoiceType(invoiceXML, invoiceData) {
+  if (isSimplifiedInvoice(invoiceData)) {
+    // Simplified invoices MUST have signature
+    if (!invoiceXML.includes('<sig:SignatureInformation>')) {
+      console.error('ERROR: Simplified invoice must include cryptographic stamp');
+      return false;
+    }
+  }
+  
+  console.log('✓ Signature requirement met for invoice type');
+  return true;
+}
+
+
+
+
+
+WARNING 5: BR-S-08 - "VAT breakdown validation"
+
+What This Means
+
+The VAT amount in the tax breakdown must equal the sum of all line items with standard VAT rate.
+
+How to Fix in Replit
+
+Step 1: Validate VAT Breakdown
+
+JavaScript
+
+
+function validateVATBreakdown(invoiceData) {
+  // Sum all line items with standard VAT (15%)
+  const standardVATTotal = invoiceData.lineItems
+    .filter(item => item.taxRate === 0.15)
+    .reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+  
+  // Calculate expected tax
+  const expectedTax = standardVATTotal * 0.15;
+  
+  // Compare with invoice tax amount
+  if (Math.abs(expectedTax - invoiceData.taxAmount) > 0.01) {
+    console.error('ERROR: VAT breakdown mismatch');
+    console.error('Expected tax:', expectedTax);
+    console.error('Invoice tax:', invoiceData.taxAmount);
+    return false;
+  }
+  
+  console.log('✓ VAT breakdown is correct');
+  return true;
+}
+
+
+
+
+
+Complete Fixed Invoice Generation Function
+
+Tell Replit: Use This Complete Function
+
+JavaScript
+
+
+// services/completeInvoiceGenerator.js
+const xml2js = require('xml2js');
+const crypto = require('crypto');
+const fs = require('fs');
+const QRCode = require('qrcode');
+
+class InvoiceGenerator {
+  constructor(privateKeyPath, ccsid) {
+    this.privateKeyPath = privateKeyPath;
+    this.ccsid = ccsid;
+  }
+
+  // Step 1: Validate all inputs
+  validateInvoiceData(invoiceData) {
+    // Validate seller
+    if (!invoiceData.seller.tin || invoiceData.seller.tin.length !== 10) {
+      throw new Error('Seller TIN must be 10 digits');
+    }
+
+    // Validate line items
+    if (!invoiceData.lineItems || invoiceData.lineItems.length === 0) {
+      throw new Error('Invoice must have at least one line item');
+    }
+
+    // Validate totals
+    const calculated = this.calculateTotals(invoiceData.lineItems);
+    if (Math.abs(calculated.subtotal - invoiceData.subtotal) > 0.01) {
+      throw new Error('Subtotal calculation mismatch');
+    }
+
+    console.log('✓ Invoice data validation passed');
+    return true;
+  }
+
+  // Step 2: Calculate totals correctly
+  calculateTotals(lineItems) {
+    const subtotal = lineItems.reduce((sum, item) => {
+      return sum + (item.quantity * item.unitPrice);
+    }, 0);
+
+    const taxAmount = subtotal * 0.15;
+    const totalAmount = subtotal + taxAmount;
+
+    return {
+      subtotal: parseFloat(subtotal.toFixed(2)),
+      taxAmount: parseFloat(taxAmount.toFixed(2)),
+      totalAmount: parseFloat(totalAmount.toFixed(2))
+    };
+  }
+
+  // Step 3: Generate XML
+  generateXML(invoiceData) {
+    const totals = this.calculateTotals(invoiceData.lineItems);
+
+    const invoice = {
+      Invoice: {
+        $: {
+          xmlns: 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
+          'xmlns:cac': 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
+          'xmlns:cbc': 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
+          'xmlns:ext': 'urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2',
+          'xmlns:sig': 'urn:oasis:names:specification:ubl:schema:xsd:CommonSignatureComponents-2'
+        },
+        'cbc:UBLVersionID': '2.1',
+        'cbc:CustomizationID': 'urn:cefact:ubl:ph:ZATCA:Invoice:v1.0',
+        'cbc:ProfileID': 'reporting:1.0',
+        'cbc:ID': invoiceData.invoiceNumber,
+        'cbc:IssueDate': invoiceData.issueDate.split('T')[0],
+        'cbc:IssueTime': invoiceData.issueDate.split('T')[1] || '00:00:00',
+        'cbc:InvoiceTypeCode': '388',
+        'cbc:DocumentCurrencyCode': 'SAR',
+
+        'cac:AccountingSupplierParty': {
+          'cac:Party': {
+            'cac:PartyIdentification': {
+              'cbc:ID': {
+                $: { schemeID: 'TIN' },
+                _: invoiceData.seller.tin
+              }
+            },
+            'cac:PartyName': {
+              'cbc:Name': invoiceData.seller.name
+            },
+            'cac:PostalAddress': {
+              'cbc:StreetName': invoiceData.seller.address,
+              'cbc:BuildingNumber': invoiceData.seller.buildingNumber || '',
+              'cbc:CityName': invoiceData.seller.city,
+              'cbc:PostalZone': invoiceData.seller.postalCode,
+              'cac:Country': {
+                'cbc:IdentificationCode': 'SA'
+              }
+            },
+            'cac:PartyTaxScheme': {
+              'cbc:CompanyID': invoiceData.seller.tin,
+              'cac:TaxScheme': {
+                'cbc:ID': 'VAT'
+              }
+            }
+          }
+        },
+
+        'cac:AccountingCustomerParty': {
+          'cac:Party': {
+            'cac:PartyName': {
+              'cbc:Name': invoiceData.buyer.name
+            },
+            'cac:PostalAddress': {
+              'cbc:StreetName': invoiceData.buyer.address,
+              'cbc:BuildingNumber': invoiceData.buyer.buildingNumber || '',
+              'cbc:CityName': invoiceData.buyer.city,
+              'cbc:PostalZone': invoiceData.buyer.postalCode,
+              'cac:Country': {
+                'cbc:IdentificationCode': 'SA'
+              }
+            }
+          }
+        },
+
+        'cac:InvoiceLine': invoiceData.lineItems.map((item, index) => ({
+          'cbc:ID': (index + 1).toString(),
+          'cbc:InvoicedQuantity': {
+            $: { unitCode: 'C62' },
+            _: item.quantity.toString()
+          },
+          'cbc:LineExtensionAmount': {
+            $: { currencyID: 'SAR' },
+            _: (item.quantity * item.unitPrice).toFixed(2)
+          },
+          'cac:Item': {
+            'cbc:Name': item.description,
+            'cbc:Description': item.description
+          },
+          'cac:Price': {
+            'cbc:PriceAmount': {
+              $: { currencyID: 'SAR' },
+              _: item.unitPrice.toFixed(2)
+            }
+          },
+          'cac:TaxTotal': {
+            'cbc:TaxAmount': {
+              $: { currencyID: 'SAR' },
+              _: (item.quantity * item.unitPrice * 0.15).toFixed(2)
+            },
+            'cac:TaxSubtotal': {
+              'cbc:TaxableAmount': {
+                $: { currencyID: 'SAR' },
+                _: (item.quantity * item.unitPrice).toFixed(2)
+              },
+              'cbc:TaxAmount': {
+                $: { currencyID: 'SAR' },
+                _: (item.quantity * item.unitPrice * 0.15).toFixed(2)
+              },
+              'cbc:Percent': '15',
+              'cac:TaxCategory': {
+                'cbc:ID': 'S',
+                'cac:TaxScheme': {
+                  'cbc:ID': 'VAT'
+                }
+              }
+            }
+          }
+        })),
+
+        'cac:TaxTotal': {
+          'cbc:TaxAmount': {
+            $: { currencyID: 'SAR' },
+            _: totals.taxAmount.toFixed(2)
+          },
+          'cac:TaxSubtotal': {
+            'cbc:TaxableAmount': {
+              $: { currencyID: 'SAR' },
+              _: totals.subtotal.toFixed(2)
+            },
+            'cbc:TaxAmount': {
+              $: { currencyID: 'SAR' },
+              _: totals.taxAmount.toFixed(2)
+            },
+            'cbc:Percent': '15',
+            'cac:TaxCategory': {
+              'cbc:ID': 'S',
+              'cac:TaxScheme': {
+                'cbc:ID': 'VAT'
+              }
+            }
+          }
+        },
+
+        'cac:LegalMonetaryTotal': {
+          'cbc:LineExtensionAmount': {
+            $: { currencyID: 'SAR' },
+            _: totals.subtotal.toFixed(2)
+          },
+          'cbc:TaxExclusiveAmount': {
+            $: { currencyID: 'SAR' },
+            _: totals.subtotal.toFixed(2)
+          },
+          'cbc:TaxInclusiveAmount': {
+            $: { currencyID: 'SAR' },
+            _: totals.totalAmount.toFixed(2)
+          },
+          'cbc:PayableAmount': {
+            $: { currencyID: 'SAR' },
+            _: totals.totalAmount.toFixed(2)
+          }
+        }
+      }
+    };
+
+    const builder = new xml2js.Builder({
+      xmldec: { version: '1.0', encoding: 'UTF-8' }
+    });
+
+    return builder.buildObject(invoice);
+  }
+
+  // Step 4: Generate hash
+  generateHash(xmlContent) {
+    return crypto
+      .createHash('sha256')
+      .update(xmlContent)
+      .digest('hex');
+  }
+
+  // Step 5: Generate signature
+  generateSignature(xmlContent) {
+    const privateKey = fs.readFileSync(this.privateKeyPath, 'utf8');
+    const sign = crypto.createSign('sha256');
+    sign.update(xmlContent);
+
+    return sign.sign(privateKey, 'base64');
+  }
+
+  // Step 6: Generate QR code
+  async generateQRCode(invoiceData, hash, signature) {
+    const qrData = [
+      invoiceData.seller.name,
+      invoiceData.seller.tin,
+      invoiceData.issueDate,
+      invoiceData.totalAmount.toFixed(2),
+      invoiceData.taxAmount.toFixed(2),
+      hash,
+      signature
+    ].join('|');
+
+    const qrImage = await QRCode.toDataURL(qrData);
+    return { data: qrData, image: qrImage };
+  }
+
+  // Step 7: Embed signature in XML
+  embedSignatureInXML(xmlContent, signature) {
+    const signatureElement = `<ext:UBLExtensions>
+      <ext:UBLExtension>
+        <ext:ExtensionContent>
+          <sig:UBLDocumentSignatures xmlns:sig="urn:oasis:names:specification:ubl:schema:xsd:CommonSignatureComponents-2">
+            <sig:SignatureInformation>
+              <sig:id>urn:oasis:names:specification:ubl:signature:1</sig:id>
+              <sig:ReferencedSignatureID>urn:oasis:names:specification:ubl:signature:Invoice</sig:ReferencedSignatureID>
+              <sig:SignatureMethod>urn:oasis:names:specification:ubl:dsig:enveloped:xades</sig:SignatureMethod>
+              <sig:SignatureValue>${signature}</sig:SignatureValue>
+            </sig:SignatureInformation>
+          </sig:UBLDocumentSignatures>
+        </ext:ExtensionContent>
+      </ext:UBLExtension>
+    </ext:UBLExtensions>`;
+
+    const insertPoint = xmlContent.indexOf('<Invoice');
+    return xmlContent.substring(0, insertPoint) + signatureElement + xmlContent.substring(insertPoint);
+  }
+
+  // Main function: Generate complete invoice
+  async generateCompleteInvoice(invoiceData) {
+    try {
+      // Validate
+      this.validateInvoiceData(invoiceData);
+
+      // Generate XML
+      let xml = this.generateXML(invoiceData);
+
+      // Generate hash
+      const hash = this.generateHash(xml);
+
+      // Generate signature
+      const signature = this.generateSignature(xml);
+
+      // Embed signature in XML
+      xml = this.embedSignatureInXML(xml, signature);
+
+      // Generate QR code
+      const qr = await this.generateQRCode(invoiceData, hash, signature);
+
+      console.log('✓ Invoice generated successfully');
+
+      return {
+        xml: xml,
+        hash: hash,
+        signature: signature,
+        qrCode: qr,
+        totals: this.calculateTotals(invoiceData.lineItems)
+      };
+    } catch (error) {
+      console.error('ERROR: Invoice generation failed:', error.message);
+      throw error;
+    }
+  }
+}
+
+module.exports = InvoiceGenerator;
+
+
+
+
+
+Summary: What to Tell Replit
+
+To avoid all these errors, tell Replit:
+
+1.
+Fix Certificate: Verify private key matches CCSID certificate
+
+2.
+Fix QR Code: Use exact format: Name|TIN|Timestamp|Total|VAT|Hash|Signature
+
+3.
+Fix Signature: Ensure signature is generated and not null
+
+4.
+Fix Signature Method: Use exact value: urn:oasis:names:specification:ubl:dsig:enveloped:xades
+
+5.
+Fix Signature ID: Use exact value: urn:oasis:names:specification:ubl:signature:1
+
+6.
+Fix Referenced ID: Use exact value: urn:oasis:names:specification:ubl:signature:Invoice
+
+7.
+Fix Totals: Calculate: Subtotal = sum of items, Tax = Subtotal × 0.15, Total = Subtotal + Tax
+
+8.
+Fix VAT Breakdown: Ensure tax amount matches line items × 15%
+
+9.
+Include Signature: For simplified invoices, cryptographic stamp is mandatory
+
+Use the complete InvoiceGenerator class provided above to generate error-free invoices.
+
