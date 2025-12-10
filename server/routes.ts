@@ -119,9 +119,22 @@ export function broadcastNotification(event: {
   let sentCount = 0;
   
   wsClients.forEach((client) => {
-    // Filter by restaurant for multi-tenant isolation
-    if (client.restaurantId !== event.restaurantId || client.socket.readyState !== WebSocket.OPEN) {
+    if (client.socket.readyState !== WebSocket.OPEN) {
       return;
+    }
+    
+    // For ticket events, also send to IT accounts (marked with 'IT_ACCOUNT' sentinel)
+    const isTicketEvent = event.type === 'ticket:created' || event.type === 'ticket:updated' || event.type === 'ticket:message';
+    const isITClient = client.restaurantId === 'IT_ACCOUNT';
+    
+    // Filter by restaurant for multi-tenant isolation (except IT accounts get all ticket events)
+    if (!isITClient && client.restaurantId !== event.restaurantId) {
+      return;
+    }
+    
+    // For non-ticket events, IT clients should only receive events if they match the restaurant
+    if (!isTicketEvent && isITClient && event.restaurantId) {
+      return; // IT clients don't need non-ticket events from specific restaurants
     }
     
     // For chat messages, additionally filter by conversation membership
@@ -9562,16 +9575,22 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           return;
         }
         
-        const { restaurantId, id: userId } = session.user;
+        const { restaurantId: rawRestaurantId, id: userId } = session.user;
+        // IT accounts have null/undefined restaurantId - mark them with sentinel value
+        const restaurantId = rawRestaurantId || 'IT_ACCOUNT';
+        const isITAccount = !rawRestaurantId;
         
         wss.handleUpgrade(request, socket, head, async (ws) => {
           // Fetch user's conversations to enable participant-only message delivery
+          // Skip for IT accounts as they don't have restaurant-specific conversations
           let conversationIds = new Set<string>();
-          try {
-            const conversations = await storage.getConversations(restaurantId, userId);
-            conversationIds = new Set(conversations.map((c: any) => c.id));
-          } catch (error) {
-            console.error('[WebSocket] Failed to load conversations:', error);
+          if (!isITAccount) {
+            try {
+              const conversations = await storage.getConversations(rawRestaurantId, userId);
+              conversationIds = new Set(conversations.map((c: any) => c.id));
+            } catch (error) {
+              console.error('[WebSocket] Failed to load conversations:', error);
+            }
           }
           
           const client: WSClient = {
@@ -9581,7 +9600,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             conversationIds,
           };
           
-          console.log(`[WebSocket] Client connected: user=${userId}, restaurant=${restaurantId}, conversations=${conversationIds.size}`);
+          console.log(`[WebSocket] Client connected: user=${userId}, restaurant=${restaurantId}${isITAccount ? ' (IT Account)' : ''}, conversations=${conversationIds.size}`);
           wsClients!.add(client);
           
           ws.on('close', () => {

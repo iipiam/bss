@@ -125,7 +125,7 @@ export default function Support() {
     if (lastNotification) {
       const { type } = lastNotification;
       // Handle ticket-related notifications for real-time updates
-      if (type.startsWith('ticket:') || type === 'support_ticket_created' || type === 'support_ticket_updated') {
+      if (type === 'ticket:created' || type === 'ticket:updated' || type === 'ticket:message') {
         queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
       }
     }

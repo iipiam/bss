@@ -211,7 +211,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             // Handle ticket creation and updates
             playNotificationTone(currentToneRef.current);
             
-            // Invalidate ticket list to show new/updated tickets
+            // Invalidate ticket list to show new/updated tickets (client accounts)
             queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
             
             // If viewing specific ticket, invalidate its details
@@ -219,9 +219,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               queryClient.invalidateQueries({ queryKey: ['/api/tickets', notification.ticketId] });
             }
             
-            // For IT Dashboard - invalidate IT-specific queries
+            // For IT Dashboard - invalidate IT-specific queries (real-time updates for IT accounts)
             queryClient.invalidateQueries({ queryKey: ['/api/it/tickets'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/it/active-tickets'] });
             queryClient.invalidateQueries({ queryKey: ['/api/it/analytics'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/it/workload'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/it/trends'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/it/category-breakdown'] });
             
             const title = notification.type === 'ticket:created'
               ? `New Ticket - ${notification.ticketNumber}`
@@ -249,10 +253,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 queryKey: ['/api/tickets', notification.ticketId, 'messages'] 
               });
               queryClient.invalidateQueries({ queryKey: ['/api/tickets', notification.ticketId] });
+              // For IT Support - invalidate IT ticket messages
+              queryClient.invalidateQueries({ 
+                queryKey: ['/api/it/tickets', notification.ticketId, 'messages'] 
+              });
             }
             
             // Invalidate ticket list to update "last message" info
             queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
+            
+            // For IT Dashboard - invalidate IT-specific queries (real-time updates for IT accounts)
+            queryClient.invalidateQueries({ queryKey: ['/api/it/tickets'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/it/active-tickets'] });
             
             // Show toast/sound if user is not the sender
             if (ticketMessage && ticketMessage.senderId !== user?.id) {
