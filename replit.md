@@ -32,7 +32,8 @@ Preferred communication style: Simple, everyday language.
 - **Analytics & Reporting**: Dashboard with DoD, WoW, MoM, YoY metrics, daily demand forecasting, peak hours analysis, and detailed BEP calculator with sensitivity analysis.
 - **ZATCA Compliance**: Bilingual PDF invoice generation (Arabic/English) with QR codes. ZATCA Phase 2 E-Invoicing settings are IT-only, allowing centralized management of client e-invoicing configurations.
 - **Financial Management**: Delivery app cost calculation, PDF export for financial statements, Excel import/export. Enhanced BEP calculator uses true COGS from invoice items via orders, menu items, and recipes with portion size multipliers. Includes manual delivery profitability entry with VAT and Profit tracking fields.
-- **Management Modules**: CRUD for Customer, Menu Item (with discount, optional stock), Inventory (Excel import/export, expiration tracking, add-on creation), Recipe (inventory-linked costing, portion sizes).
+- **Management Modules**: CRUD for Customer, Menu Item (with discount, optional stock, configurable display sizes), Inventory (Excel import/export, expiration tracking, add-on creation), Recipe (inventory-linked costing, portion sizes).
+- **Menu Item Display Sizes**: Menu items support configurable display sizes (small, medium, large) that control how items appear in POS and Menu grids - large items span 2 columns for better visibility.
 - **Stock Management**: Real-time stock calculation and deduction on POS orders.
 - **Authentication & Subscriptions**: Subscription-based authentication with Commercial Registration, secure password recovery, and authenticated subscription invoice downloads. Centralized VAT-inclusive pricing.
 - **Subscription Management**: Interactive dialogs for plan changes, dynamic pricing, and plan comparison.
