@@ -1961,6 +1961,39 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.status(204).send();
   });
 
+  // Sync all recipe ingredient units with current inventory units (one-time fix)
+  app.post("/api/recipes/sync-units", requireAuth, requireRestaurant, requireAction('recipes', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      
+      // Get all inventory items and recipes
+      const inventoryItems = await storage.getInventoryItems(restaurantId);
+      const inventoryMap = new Map(inventoryItems.map(item => [item.id, item]));
+      
+      let totalUpdated = 0;
+      
+      // For each inventory item, update recipe units
+      for (const item of inventoryItems) {
+        const updatedRecipes = await storage.updateRecipeUnitsForInventoryItem(item.id, restaurantId, item.unit);
+        totalUpdated += updatedRecipes.length;
+      }
+      
+      console.log(`[RECIPES] Synced units for ${totalUpdated} recipe-ingredient combinations`);
+      
+      // Broadcast update for real-time refresh
+      broadcastNotification({
+        type: 'recipe:costUpdated',
+        restaurantId,
+        updatedRecipeIds: [],
+      });
+      
+      res.json({ success: true, updatedCount: totalUpdated });
+    } catch (error) {
+      console.error("[RECIPES] Sync units error:", error);
+      res.status(500).json({ error: "Failed to sync recipe units" });
+    }
+  });
+
   // Orders (MULTI-TENANT: require auth + restaurantId filtering)
   // IT accounts use a different endpoint below for cross-restaurant access
   app.get("/api/orders", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
