@@ -158,6 +158,7 @@ export interface IStorage {
   updateRecipesSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void>;
   deleteRecipe(id: string, restaurantId: string): Promise<boolean>;
   updateRecipeCostsForInventoryItem(inventoryItemId: string, restaurantId: string, newPrice: number): Promise<Recipe[]>;
+  updateRecipeUnitsForInventoryItem(inventoryItemId: string, restaurantId: string, newUnit: string): Promise<Recipe[]>;
 
   // Orders (MULTI-TENANT: requires restaurantId for all operations)
   getOrders(filter: {
@@ -755,6 +756,37 @@ export class DatabaseStorage implements IStorage {
             ingredients: updatedIngredients,
             cost: newCost.toFixed(2)
           })
+          .where(and(eq(recipes.id, recipe.id), eq(recipes.restaurantId, restaurantId)))
+          .returning();
+        
+        if (updated) {
+          updatedRecipes.push(updated);
+        }
+      }
+    }
+    
+    return updatedRecipes;
+  }
+
+  async updateRecipeUnitsForInventoryItem(inventoryItemId: string, restaurantId: string, newUnit: string): Promise<Recipe[]> {
+    const allRecipes = await this.getRecipes(restaurantId);
+    const updatedRecipes: Recipe[] = [];
+    
+    for (const recipe of allRecipes) {
+      const ingredients = recipe.ingredients as Array<{ inventoryItemId: string; name: string; quantity: number; unit: string; unitPrice: number }>;
+      
+      let hasMatchingIngredient = false;
+      const updatedIngredients = ingredients.map(ing => {
+        if (ing.inventoryItemId === inventoryItemId) {
+          hasMatchingIngredient = true;
+          return { ...ing, unit: newUnit };
+        }
+        return ing;
+      });
+      
+      if (hasMatchingIngredient) {
+        const [updated] = await db.update(recipes)
+          .set({ ingredients: updatedIngredients })
           .where(and(eq(recipes.id, recipe.id), eq(recipes.restaurantId, restaurantId)))
           .returning();
         

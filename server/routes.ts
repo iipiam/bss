@@ -477,10 +477,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
       const { restaurantId: _, ...safeData } = data;
       
-      // Check if price or quantity is being updated - need to update recipe costs (unit price = price / quantity)
+      // Check if price, quantity, or unit is being updated - need to update recipes
       const priceOrQuantityChanged = safeData.price !== undefined || safeData.quantity !== undefined;
+      const unitChanged = safeData.unit !== undefined;
       let oldItem: any = null;
-      if (priceOrQuantityChanged) {
+      if (priceOrQuantityChanged || unitChanged) {
         oldItem = await storage.getInventoryItem(req.params.id, restaurantId);
       }
       
@@ -516,6 +517,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
               updatedRecipeIds: updatedRecipes.map(r => r.id),
             });
           }
+        }
+      }
+      
+      // If unit changed, update all recipe ingredients that use this inventory item
+      if (unitChanged && oldItem && oldItem.unit !== item.unit) {
+        const updatedRecipes = await storage.updateRecipeUnitsForInventoryItem(req.params.id, restaurantId, item.unit);
+        console.log(`[INVENTORY] Updated unit from "${oldItem.unit}" to "${item.unit}" for ${updatedRecipes.length} recipes`);
+        
+        // Broadcast recipe update notification for real-time updates
+        if (updatedRecipes.length > 0) {
+          broadcastNotification({
+            type: 'recipe:costUpdated',
+            restaurantId,
+            updatedRecipeIds: updatedRecipes.map(r => r.id),
+          });
         }
       }
       
