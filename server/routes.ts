@@ -1890,6 +1890,33 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(recipes);
   });
 
+  // IMPORTANT: Sort route must come BEFORE :id route to avoid matching "sort" as an id
+  app.patch("/api/recipes/sort", requireAuth, requireRestaurant, requireAction('recipes', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { updates } = req.body;
+      if (!Array.isArray(updates)) {
+        return res.status(400).json({ error: "Invalid updates format" });
+      }
+      
+      // SECURITY: Verify all recipe IDs belong to this restaurant before updating
+      // This prevents cross-tenant metadata leak via probing
+      const recipeIds = updates.map((u: any) => u.id);
+      const allRecipes = await storage.getRecipes(restaurantId);
+      const validIds = new Set(allRecipes.map(r => r.id));
+      
+      const invalidIds = recipeIds.filter(id => !validIds.has(id));
+      if (invalidIds.length > 0) {
+        return res.status(403).json({ error: "Some recipe IDs do not belong to your restaurant" });
+      }
+      
+      await storage.updateRecipesSortOrder(restaurantId, updates);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.get("/api/recipes/:id", requireAuth, requireRestaurant, requirePermission('recipes'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const recipe = await storage.getRecipe(req.params.id, restaurantId);
@@ -1923,32 +1950,6 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       res.json(recipe);
     } catch (error) {
       res.status(400).json({ error: "Invalid recipe data" });
-    }
-  });
-
-  app.patch("/api/recipes/sort", requireAuth, requireRestaurant, requireAction('recipes', 'edit'), async (req, res) => {
-    try {
-      const restaurantId = req.session.user!.restaurantId!;
-      const { updates } = req.body;
-      if (!Array.isArray(updates)) {
-        return res.status(400).json({ error: "Invalid updates format" });
-      }
-      
-      // SECURITY: Verify all recipe IDs belong to this restaurant before updating
-      // This prevents cross-tenant metadata leak via probing
-      const recipeIds = updates.map((u: any) => u.id);
-      const allRecipes = await storage.getRecipes(restaurantId);
-      const validIds = new Set(allRecipes.map(r => r.id));
-      
-      const invalidIds = recipeIds.filter(id => !validIds.has(id));
-      if (invalidIds.length > 0) {
-        return res.status(403).json({ error: "Some recipe IDs do not belong to your restaurant" });
-      }
-      
-      await storage.updateRecipesSortOrder(restaurantId, updates);
-      res.json({ success: true });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
     }
   });
 
