@@ -133,6 +133,7 @@ export const menuItems = pgTable("menu_items", {
   description: text("description"),
   available: boolean("available").notNull().default(true),
   imageUrl: text("image_url"),
+  displaySize: text("display_size").notNull().default("medium"), // Display size in POS/Menu: small, medium, large
 });
 
 // Base menu item schema (before refinements) - reusable for insert and update

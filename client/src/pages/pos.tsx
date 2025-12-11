@@ -554,10 +554,23 @@ export default function POS() {
                 const stockCount = stock[item.id] ?? 0;
                 const isOutOfStock = stockCount === 0;
                 
+                // Display size support
+                const displaySize = (item.displaySize as "small" | "medium" | "large") || "medium";
+                const sizeClasses = {
+                  small: "",
+                  medium: "",
+                  large: "col-span-2",
+                };
+                const imageClasses = {
+                  small: "h-16",
+                  medium: "aspect-square",
+                  large: "h-32",
+                };
+                
                 return (
                   <Card
                     key={item.id}
-                    className={`cursor-pointer hover-elevate active-elevate-2 relative ${isOutOfStock ? 'opacity-50' : ''}`}
+                    className={`cursor-pointer hover-elevate active-elevate-2 relative ${isOutOfStock ? 'opacity-50' : ''} ${sizeClasses[displaySize]}`}
                     onClick={() => !isOutOfStock && handleItemClick(item)}
                     data-testid={`card-pos-item-${item.id}`}
                   >
@@ -572,23 +585,23 @@ export default function POS() {
                       </div>
                     )}
                     <CardHeader className="p-3 pb-2">
-                      <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-md flex items-center justify-center mb-2 overflow-hidden">
+                      <div className={`${imageClasses[displaySize]} bg-gradient-to-br from-primary/20 to-primary/5 rounded-md flex items-center justify-center mb-2 overflow-hidden`}>
                         {item.imageUrl ? (
                           <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                         ) : (
-                          <UtensilsCrossed className="h-8 w-8 text-primary/40" />
+                          <UtensilsCrossed className={`${displaySize === "small" ? "h-6 w-6" : displaySize === "large" ? "h-12 w-12" : "h-8 w-8"} text-primary/40`} />
                         )}
                       </div>
                     </CardHeader>
                     <CardContent className="p-3 pt-0">
-                      <p className="font-semibold text-sm mb-1 line-clamp-2">{item.name}</p>
+                      <p className={`font-semibold mb-1 line-clamp-2 ${displaySize === "small" ? "text-xs" : displaySize === "large" ? "text-base" : "text-sm"}`}>{item.name}</p>
                       {hasDiscount ? (
                         <div className="space-y-0.5">
-                          <p className="text-base font-bold font-mono text-primary">{finalPrice.toFixed(2)}</p>
+                          <p className={`font-bold font-mono text-primary ${displaySize === "large" ? "text-lg" : "text-base"}`}>{finalPrice.toFixed(2)}</p>
                           <p className="text-xs font-mono text-muted-foreground line-through">{originalPrice.toFixed(2)}</p>
                         </div>
                       ) : (
-                        <p className="text-base font-bold font-mono text-primary">{originalPrice.toFixed(2)}</p>
+                        <p className={`font-bold font-mono text-primary ${displaySize === "large" ? "text-lg" : "text-base"}`}>{originalPrice.toFixed(2)}</p>
                       )}
                       <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                         <Package className="h-3 w-3" />
@@ -1034,10 +1047,23 @@ export default function POS() {
             const stockCount = stock[item.id] ?? 0;
             const isOutOfStock = stockCount === 0;
             
+            // Display size support
+            const displaySize = (item.displaySize as "small" | "medium" | "large") || "medium";
+            const sizeClasses = {
+              small: "",
+              medium: "",
+              large: "col-span-2 row-span-2",
+            };
+            const imageClasses = {
+              small: "h-20",
+              medium: "aspect-square",
+              large: "h-48",
+            };
+            
             return (
               <Card
                 key={item.id}
-                className={`cursor-pointer hover-elevate active-elevate-2 relative ${isOutOfStock ? 'opacity-50' : ''}`}
+                className={`cursor-pointer hover-elevate active-elevate-2 relative ${isOutOfStock ? 'opacity-50' : ''} ${sizeClasses[displaySize]}`}
                 onClick={() => !isOutOfStock && handleItemClick(item)}
                 data-testid={`card-pos-item-${item.id}`}
               >
@@ -1052,19 +1078,23 @@ export default function POS() {
                   </div>
                 )}
                 <CardHeader className="p-4 pb-2">
-                  <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-md flex items-center justify-center mb-2">
-                    <UtensilsCrossed className="h-12 w-12 text-primary/40" />
+                  <div className={`${imageClasses[displaySize]} bg-gradient-to-br from-primary/20 to-primary/5 rounded-md flex items-center justify-center mb-2 overflow-hidden`}>
+                    {item.imageUrl ? (
+                      <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <UtensilsCrossed className={`${displaySize === "small" ? "h-8 w-8" : displaySize === "large" ? "h-20 w-20" : "h-12 w-12"} text-primary/40`} />
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
-                  <p className="font-semibold mb-1 line-clamp-2">{item.name}</p>
+                  <p className={`font-semibold mb-1 line-clamp-2 ${displaySize === "small" ? "text-sm" : displaySize === "large" ? "text-xl" : ""}`}>{item.name}</p>
                   {hasDiscount ? (
                     <div className="space-y-1">
-                      <p className="text-xl font-bold font-mono text-primary">{finalPrice.toFixed(2)} {t.sar}</p>
+                      <p className={`font-bold font-mono text-primary ${displaySize === "large" ? "text-2xl" : "text-xl"}`}>{finalPrice.toFixed(2)} {t.sar}</p>
                       <p className="text-sm font-mono text-muted-foreground line-through">{originalPrice.toFixed(2)} {t.sar}</p>
                     </div>
                   ) : (
-                    <p className="text-xl font-bold font-mono text-primary">{originalPrice.toFixed(2)} {t.sar}</p>
+                    <p className={`font-bold font-mono text-primary ${displaySize === "large" ? "text-2xl" : "text-xl"}`}>{originalPrice.toFixed(2)} {t.sar}</p>
                   )}
                   <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
                     <Package className="h-3 w-3" />

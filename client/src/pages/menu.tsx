@@ -38,6 +38,7 @@ const createMenuFormSchema = (t: any) => z.object({
     { message: t.discountRange || "Discount must be between 0 and 100" }
   ),
   description: z.string().min(1, t.descriptionRequired || "Description is required"),
+  displaySize: z.enum(["small", "medium", "large"]).default("medium"),
 }).refine(
   (data) => {
     // If stockNo is provided, it must be a valid positive number
@@ -110,6 +111,7 @@ export default function Menu() {
       stockNo: "",
       price: 0,
       discount: "0",
+      displaySize: "medium",
     },
   });
 
@@ -166,6 +168,7 @@ export default function Menu() {
         discount: discountNum.toFixed(2),
         available: true,
         imageUrl: data.imageUrl || null,
+        displaySize: data.displaySize || "medium",
       };
 
       // Only include recipeId if it's set and not "none"
@@ -231,6 +234,7 @@ export default function Menu() {
         vatAmount: discountedVAT.toFixed(2), // VAT on discounted base
         discount: discountNum.toFixed(2),
         imageUrl: data.imageUrl !== undefined ? data.imageUrl : undefined,
+        displaySize: data.displaySize || "medium",
       };
 
       // Handle recipe vs non-recipe items - ensure both stockNo and inventoryItemId are cleared together
@@ -388,6 +392,7 @@ export default function Menu() {
       stockNo: item.stockNo || "",
       price: originalPrice, // Original VAT-inclusive price
       discount: item.discount || "0",
+      displaySize: (item.displaySize as "small" | "medium" | "large") || "medium",
     });
     setOpen(true);
   };
@@ -945,6 +950,31 @@ export default function Menu() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="displaySize"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Display Size (POS/Menu)</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-display-size">
+                            <SelectValue placeholder="Select display size" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="small">Small</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="large">Large</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Controls the card size in POS and Menu views
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <div className={`flex gap-3 pt-4 ${layout.isMobile ? 'flex-col' : 'justify-end'}`}>
                   <Button 
                     type="button" 
@@ -1054,15 +1084,27 @@ export default function Menu() {
             );
           }
           
-          // Desktop vertical layout
+          // Desktop vertical layout - with display size support
+          const sizeClasses = {
+            small: "col-span-1",
+            medium: "col-span-1", 
+            large: "col-span-2 row-span-2",
+          };
+          const imageHeightClasses = {
+            small: "h-24",
+            medium: "aspect-square",
+            large: "h-48",
+          };
+          const displaySize = (item.displaySize as "small" | "medium" | "large") || "medium";
+          
           return (
-            <Card key={item.id} className="overflow-hidden" data-testid={`card-menu-${item.id}`}>
+            <Card key={item.id} className={`overflow-hidden ${sizeClasses[displaySize]}`} data-testid={`card-menu-${item.id}`}>
               <CardHeader className="p-0">
-                <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden">
+                <div className={`${displaySize === "small" ? imageHeightClasses.small : displaySize === "large" ? imageHeightClasses.large : "aspect-square"} bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden`}>
                   {item.imageUrl ? (
                     <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                   ) : (
-                    <UtensilsCrossed className="h-16 w-16 text-primary/40" />
+                    <UtensilsCrossed className={`${displaySize === "small" ? "h-8 w-8" : displaySize === "large" ? "h-24 w-24" : "h-16 w-16"} text-primary/40`} />
                   )}
                 </div>
               </CardHeader>
