@@ -144,6 +144,7 @@ const baseMenuItemSchema = createInsertSchema(menuItems)
     inventoryItemId: z.string().nullable().optional(), // Allow null, for simple items
     portionSize: z.string().nullable().optional(), // Portion multiplier (1.0, 0.5, 0.25) - nullable when no recipe
     stockNo: z.string().nullable().optional(), // Stock quantity per item (nullable)
+    displaySize: z.enum(["small", "medium", "large"]).optional().default("medium"), // Display size for POS grid
   });
 
 // Insert schema with full validations
