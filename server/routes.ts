@@ -64,7 +64,7 @@ let wsClients: Set<WSClient> | null = null;
 
 // Unified broadcast function with restaurant filtering
 export function broadcastNotification(event: {
-  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated' | 'menu:updated' | 'permissions:updated' | 'recipe:costUpdated' | 'sales:updated';
+  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated' | 'menu:updated' | 'permissions:updated' | 'recipe:costUpdated' | 'sales:updated' | 'inventory:updated';
   restaurantId: string;
   // Target specific user (for permissions:updated)
   targetUserId?: string;
@@ -112,6 +112,10 @@ export function broadcastNotification(event: {
   // Sales update fields (for BEP real-time tracking)
   invoiceId?: string;
   invoiceTotal?: string;
+  // Inventory update fields
+  inventoryItemId?: string;
+  inventoryItemName?: string;
+  updatedFields?: string[];
 }) {
   if (!wsClients) return;
   
@@ -484,6 +488,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (!item) {
         return res.status(404).json({ error: "Item not found" });
       }
+      
+      // Broadcast inventory update for real-time sync (especially unit changes)
+      const updatedFields = Object.keys(safeData);
+      broadcastNotification({
+        type: 'inventory:updated',
+        restaurantId,
+        inventoryItemId: req.params.id,
+        inventoryItemName: item.name,
+        updatedFields,
+      });
       
       // If price or quantity changed, update all recipe costs that use this inventory item
       // Unit price is calculated as: price / quantity

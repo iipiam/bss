@@ -77,7 +77,15 @@ interface SalesNotification {
   invoiceTotal: string;
 }
 
-type Notification = OrderNotification | ChatNotification | TicketNotification | SettingsNotification | PermissionsNotification | RecipeCostNotification | MenuNotification | SalesNotification;
+interface InventoryNotification {
+  type: 'inventory:updated';
+  restaurantId: string;
+  inventoryItemId: string;
+  inventoryItemName: string;
+  updatedFields: string[];
+}
+
+type Notification = OrderNotification | ChatNotification | TicketNotification | SettingsNotification | PermissionsNotification | RecipeCostNotification | MenuNotification | SalesNotification | InventoryNotification;
 
 interface NotificationContextType {
   isConnected: boolean;
@@ -349,6 +357,17 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             // Invalidate delivery breakdown for real-time updates
             queryClient.invalidateQueries({ queryKey: ['/api/analytics/delivery-breakdown'], refetchType: 'all' });
             console.log('[Notifications] Sales updated - refreshing financial data, BEP, and delivery breakdown');
+          } else if (notification.type === 'inventory:updated') {
+            // Handle inventory updates for real-time sync with recipes
+            // Invalidate inventory queries
+            queryClient.invalidateQueries({ queryKey: ['/api/inventory'], refetchType: 'all' });
+            // Invalidate recipes since they reference inventory items (especially unit changes)
+            queryClient.invalidateQueries({ queryKey: ['/api/recipes'], refetchType: 'all' });
+            // Invalidate menu items as they may reference inventory
+            queryClient.invalidateQueries({ queryKey: ['/api/menu'], refetchType: 'all' });
+            // Invalidate menu stock as it depends on inventory
+            queryClient.invalidateQueries({ queryKey: ['/api/menu/stock'], refetchType: 'all' });
+            console.log('[Notifications] Inventory updated - refreshing inventory, recipes, and menu data');
           }
         } catch (err) {
           console.error('[Notifications] Failed to parse message:', err);
