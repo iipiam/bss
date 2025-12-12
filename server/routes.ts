@@ -1091,6 +1091,149 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Shop Files - Configure multer for shop document uploads
+  const shopFileStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      const uploadPath = path.join(process.cwd(), 'uploads', 'shop-files');
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+      cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, 'shop-' + uniqueSuffix + ext);
+    }
+  });
+
+  const uploadShopFile = multer({
+    storage: shopFileStorage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: function (req, file, cb) {
+      const allowedTypes = /pdf/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const allowedMimetypes = ['application/pdf'];
+      const mimetype = allowedMimetypes.includes(file.mimetype);
+      if (mimetype && extname) {
+        return cb(null, true);
+      }
+      cb(new Error('Only PDF documents are allowed!'));
+    }
+  });
+
+  // Get all shop files for a restaurant
+  app.get("/api/shop/files", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const files = await storage.getShopFiles(restaurantId);
+      res.json(files);
+    } catch (error) {
+      console.error("[SHOP FILES] Get files error:", error);
+      res.status(500).json({ error: "Failed to get shop files" });
+    }
+  });
+
+  // Upload a shop file
+  app.post("/api/shop/files/upload", requireAuth, requireRestaurant, requireAction('bills', 'add'), uploadShopFile.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const restaurantId = req.session.user!.restaurantId!;
+      const userId = req.session.user!.id;
+      const fileType = req.body.fileType;
+
+      // Validate file type
+      const validTypes = ['cr_certificate', 'vat_certificate', 'iban_certificate', 'national_address'];
+      if (!fileType || !validTypes.includes(fileType)) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ error: "Invalid file type. Must be one of: " + validTypes.join(', ') });
+      }
+
+      // Check if file of this type already exists
+      const existingFile = await storage.getShopFileByType(restaurantId, fileType);
+      if (existingFile) {
+        // Delete old file from disk
+        const oldPath = path.join(process.cwd(), existingFile.filePath);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+        // Delete old record
+        await storage.deleteShopFile(existingFile.id, restaurantId);
+      }
+
+      // Create new file record
+      const fileRecord = await storage.createShopFile({
+        restaurantId,
+        fileType,
+        fileName: req.file.originalname,
+        filePath: `uploads/shop-files/${req.file.filename}`,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+        uploadedBy: userId,
+      });
+
+      res.status(201).json(fileRecord);
+    } catch (error) {
+      console.error("[SHOP FILES] Upload error:", error);
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      res.status(500).json({ error: "Failed to upload file" });
+    }
+  });
+
+  // Download a shop file
+  app.get("/api/shop/files/:id/download", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const file = await storage.getShopFile(req.params.id, restaurantId);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      const filePath = path.join(process.cwd(), file.filePath);
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: "File not found on disk" });
+      }
+
+      res.setHeader('Content-Type', file.mimeType || 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${file.fileName}"`);
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error("[SHOP FILES] Download error:", error);
+      res.status(500).json({ error: "Failed to download file" });
+    }
+  });
+
+  // Delete a shop file
+  app.delete("/api/shop/files/:id", requireAuth, requireRestaurant, requireAction('bills', 'delete'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const file = await storage.getShopFile(req.params.id, restaurantId);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      // Delete file from disk
+      const filePath = path.join(process.cwd(), file.filePath);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+
+      // Delete record from database
+      await storage.deleteShopFile(req.params.id, restaurantId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("[SHOP FILES] Delete error:", error);
+      res.status(500).json({ error: "Failed to delete file" });
+    }
+  });
+
   // Violations
   app.get("/api/violations", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
     try {
