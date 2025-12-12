@@ -7619,6 +7619,138 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // ==========================================
+  // IT Company Files Routes (IT-only)
+  // ==========================================
+
+  // Configure multer for company file uploads
+  const companyFileStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      const uploadPath = path.join(process.cwd(), 'uploads', 'company-files');
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+      cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, 'company-' + uniqueSuffix + ext);
+    }
+  });
+
+  const uploadCompanyFile = multer({
+    storage: companyFileStorage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: function (req, file, cb) {
+      const allowedTypes = /pdf/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const allowedMimetypes = ['application/pdf'];
+      const mimetype = allowedMimetypes.includes(file.mimetype);
+      if (mimetype && extname) {
+        return cb(null, true);
+      }
+      cb(new Error('Only PDF documents are allowed!'));
+    }
+  });
+
+  // Get all company files
+  app.get("/api/it/company-files", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const files = await storage.getCompanyFiles();
+      res.json(files);
+    } catch (error) {
+      console.error("[COMPANY FILES] Get files error:", error);
+      res.status(500).json({ error: "Failed to get company files" });
+    }
+  });
+
+  // Upload a company file
+  app.post("/api/it/company-files/upload", requireAuth, requireITAccount, uploadCompanyFile.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const userId = req.session.user!.id;
+      const fileType = req.body.fileType;
+      const description = req.body.description;
+
+      // Validate file type
+      const validTypes = ['cr_certificate', 'vat_certificate', 'license', 'iban_certificate', 'national_address'];
+      if (!fileType || !validTypes.includes(fileType)) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ error: "Invalid file type. Must be one of: " + validTypes.join(', ') });
+      }
+
+      // Create new file record
+      const fileRecord = await storage.createCompanyFile({
+        fileType,
+        fileName: req.file.originalname,
+        filePath: `uploads/company-files/${req.file.filename}`,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+        description: description || null,
+        uploadedBy: userId,
+      });
+
+      res.status(201).json(fileRecord);
+    } catch (error) {
+      console.error("[COMPANY FILES] Upload error:", error);
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      res.status(500).json({ error: "Failed to upload file" });
+    }
+  });
+
+  // Download a company file
+  app.get("/api/it/company-files/:id/download", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const file = await storage.getCompanyFile(req.params.id);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      const filePath = path.join(process.cwd(), file.filePath);
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: "File not found on disk" });
+      }
+
+      res.setHeader('Content-Type', file.mimeType || 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${file.fileName}"`);
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error("[COMPANY FILES] Download error:", error);
+      res.status(500).json({ error: "Failed to download file" });
+    }
+  });
+
+  // Delete a company file
+  app.delete("/api/it/company-files/:id", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const file = await storage.getCompanyFile(req.params.id);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      // Delete file from disk
+      const filePath = path.join(process.cwd(), file.filePath);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+
+      // Delete record from database
+      await storage.deleteCompanyFile(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("[COMPANY FILES] Delete error:", error);
+      res.status(500).json({ error: "Failed to delete file" });
+    }
+  });
+
+  // ==========================================
   // IT Business Management Routes
   // ==========================================
 
