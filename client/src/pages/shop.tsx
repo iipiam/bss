@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertSalarySchema, insertShopBillSchema, type Salary, type ShopBill } from "@shared/schema";
 import { z } from "zod";
-import { Plus, Pencil, Trash2, DollarSign, FileText, Search, Sparkles } from "lucide-react";
+import { Plus, Pencil, Trash2, DollarSign, FileText, Search, Sparkles, Upload, Download, FolderOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +63,113 @@ export default function Shop() {
   const { data: bills, isLoading: billsLoading } = useQuery<ShopBill[]>({
     queryKey: ["/api/shop/bills"],
   });
+
+  interface ShopFile {
+    id: string;
+    fileType: string;
+    fileName: string;
+    fileSize: number;
+    uploadedAt: string;
+  }
+
+  const { data: shopFiles, isLoading: filesLoading } = useQuery<ShopFile[]>({
+    queryKey: ["/api/shop/files"],
+  });
+
+  const uploadFileMutation = useMutation({
+    mutationFn: async ({ file, fileType }: { file: File; fileType: string }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("fileType", fileType);
+      const response = await fetch("/api/shop/files/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/files"] });
+      toast({ title: t.fileUploaded });
+    },
+    onError: () => {
+      toast({ title: t.fileUploadError, variant: "destructive" });
+    },
+  });
+
+  const deleteFileMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest("DELETE", `/api/shop/files/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/files"] });
+      toast({ title: t.fileDeleted });
+    },
+    onError: () => {
+      toast({ title: t.fileDeleteError, variant: "destructive" });
+    },
+  });
+
+  const handleFileUpload = (fileType: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type !== "application/pdf") {
+        toast({ title: t.pdfFilesOnly, variant: "destructive" });
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast({ title: t.pdfFilesOnly, variant: "destructive" });
+        return;
+      }
+      uploadFileMutation.mutate({ file, fileType });
+    }
+    event.target.value = "";
+  };
+
+  const handleFileDrop = (fileType: string) => (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+      if (file.type !== "application/pdf") {
+        toast({ title: t.pdfFilesOnly, variant: "destructive" });
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast({ title: t.pdfFilesOnly, variant: "destructive" });
+        return;
+      }
+      uploadFileMutation.mutate({ file, fileType });
+    }
+  };
+
+  const handleDownloadFile = (id: string, fileName: string) => {
+    const link = document.createElement("a");
+    link.href = `/api/shop/files/${id}/download`;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const fileTypes = [
+    { type: "cr_certificate", label: t.crCertificate },
+    { type: "vat_certificate", label: t.vatCertificate },
+    { type: "iban_certificate", label: t.ibanCertificate },
+    { type: "national_address", label: t.nationalAddress },
+  ];
+
+  const getFileByType = (fileType: string) => {
+    return shopFiles?.find((f) => f.fileType === fileType);
+  };
 
   const salaryFormSchema = createSalaryFormSchema(t);
   const billFormSchema = createBillFormSchema(t);
@@ -321,7 +428,7 @@ export default function Shop() {
       </div>
 
       <Tabs defaultValue="salaries" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="salaries" data-testid="tab-salaries">
             <DollarSign className="w-4 h-4 mr-2" />
             {t.salaries}
@@ -329,6 +436,10 @@ export default function Shop() {
           <TabsTrigger value="bills" data-testid="tab-bills">
             <FileText className="w-4 h-4 mr-2" />
             {t.shopBills}
+          </TabsTrigger>
+          <TabsTrigger value="files" data-testid="tab-files">
+            <FolderOpen className="w-4 h-4 mr-2" />
+            {t.shopFiles}
           </TabsTrigger>
         </TabsList>
 
@@ -825,6 +936,96 @@ export default function Shop() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground" data-testid="empty-bills">{t.noBills}</div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="files" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t.businessDocuments}</CardTitle>
+              <CardDescription>{t.manageBusinessDocuments}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {filesLoading ? (
+                <div className="text-center py-8" data-testid="loading-files">{t.loading}</div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2">
+                  {fileTypes.map(({ type, label }) => {
+                    const file = getFileByType(type);
+                    return (
+                      <Card key={type} className="relative" data-testid={`file-card-${type}`}>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-base font-medium">{label}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {file ? (
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                                <FileText className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium truncate" data-testid={`file-name-${type}`}>{file.fileName}</p>
+                                  <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                                    <span data-testid={`file-size-${type}`}>{t.fileSize}: {formatFileSize(file.fileSize)}</span>
+                                    <span data-testid={`file-date-${type}`}>{t.uploadedOn}: {format(new Date(file.uploadedAt), "dd MMM yyyy")}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1"
+                                  onClick={() => handleDownloadFile(file.id, file.fileName)}
+                                  data-testid={`button-download-${type}`}
+                                >
+                                  <Download className="h-4 w-4 mr-2" />
+                                  {t.downloadFile}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1"
+                                  onClick={() => {
+                                    if (window.confirm(t.confirmDeleteFile)) {
+                                      deleteFileMutation.mutate(file.id);
+                                    }
+                                  }}
+                                  disabled={deleteFileMutation.isPending}
+                                  data-testid={`button-delete-file-${type}`}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  {t.deleteFile}
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div
+                              className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors hover:border-primary hover:bg-muted/50"
+                              onDragOver={(e) => e.preventDefault()}
+                              onDrop={handleFileDrop(type)}
+                              onClick={() => document.getElementById(`file-input-${type}`)?.click()}
+                              data-testid={`upload-area-${type}`}
+                            >
+                              <input
+                                type="file"
+                                id={`file-input-${type}`}
+                                accept=".pdf,application/pdf"
+                                className="hidden"
+                                onChange={handleFileUpload(type)}
+                                data-testid={`input-file-${type}`}
+                              />
+                              <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                              <p className="text-sm font-medium">{t.dragAndDropOrClick}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{t.pdfFilesOnly}</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
               )}
             </CardContent>
           </Card>

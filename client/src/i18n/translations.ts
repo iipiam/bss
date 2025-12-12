@@ -1156,6 +1156,33 @@ export interface Translations {
   // Bills Page
   bills: string;
 
+  // Shop Files
+  shopFiles: string;
+  shopFilesDescription: string;
+  crCertificate: string;
+  vatCertificate: string;
+  ibanCertificate: string;
+  nationalAddress: string;
+  uploadFile: string;
+  dragAndDropOrClick: string;
+  pdfFilesOnly: string;
+  fileUploaded: string;
+  fileDeleted: string;
+  fileUploadError: string;
+  fileDeleteError: string;
+  noFileUploaded: string;
+  uploadedOn: string;
+  fileSize: string;
+  downloadFile: string;
+  deleteFile: string;
+  confirmDeleteFile: string;
+  businessDocuments: string;
+  manageBusinessDocuments: string;
+  companyFiles: string;
+  companyFilesDescription: string;
+  licenses: string;
+  kinzhalCertificates: string;
+
   // Violations
   violations: string;
   violationsManagement: string;
@@ -2739,6 +2766,30 @@ export const translations: Record<Language, Translations> = {
     
     // Bills Page
     bills: 'Bills',
+    
+    // Shop Files
+    shopFiles: 'Files',
+    shopFilesDescription: 'Upload and manage business certificates',
+    crCertificate: 'CR Certificate',
+    vatCertificate: 'VAT Certificate',
+    ibanCertificate: 'IBAN Account Certificate',
+    nationalAddress: 'National Address',
+    uploadFile: 'Upload File',
+    dragAndDropOrClick: 'Drag and drop or click to upload',
+    pdfFilesOnly: 'PDF files only (max 10MB)',
+    fileUploaded: 'File uploaded successfully',
+    fileDeleted: 'File deleted successfully',
+    fileUploadError: 'Failed to upload file',
+    fileDeleteError: 'Failed to delete file',
+    noFileUploaded: 'No file uploaded',
+    uploadedOn: 'Uploaded on',
+    fileSize: 'File size',
+    downloadFile: 'Download',
+    deleteFile: 'Delete',
+    confirmDeleteFile: 'Are you sure you want to delete this file?',
+    businessDocuments: 'Business Documents',
+    manageBusinessDocuments: 'Upload and manage your business certificates and documents',
+    
     sar: 'SAR',
     archived: 'Archived',
     yes: 'Yes',
@@ -4321,6 +4372,30 @@ export const translations: Record<Language, Translations> = {
     
     // Bills Page
     bills: 'الفواتير',
+    
+    // Shop Files
+    shopFiles: 'الملفات',
+    shopFilesDescription: 'رفع وإدارة شهادات العمل',
+    crCertificate: 'شهادة السجل التجاري',
+    vatCertificate: 'شهادة ضريبة القيمة المضافة',
+    ibanCertificate: 'شهادة حساب الآيبان',
+    nationalAddress: 'العنوان الوطني',
+    uploadFile: 'رفع ملف',
+    dragAndDropOrClick: 'اسحب وأفلت أو انقر للرفع',
+    pdfFilesOnly: 'ملفات PDF فقط (حد أقصى 10 ميجابايت)',
+    fileUploaded: 'تم رفع الملف بنجاح',
+    fileDeleted: 'تم حذف الملف بنجاح',
+    fileUploadError: 'فشل رفع الملف',
+    fileDeleteError: 'فشل حذف الملف',
+    noFileUploaded: 'لم يتم رفع ملف',
+    uploadedOn: 'تم الرفع في',
+    fileSize: 'حجم الملف',
+    downloadFile: 'تحميل',
+    deleteFile: 'حذف',
+    confirmDeleteFile: 'هل أنت متأكد من حذف هذا الملف؟',
+    businessDocuments: 'مستندات العمل',
+    manageBusinessDocuments: 'رفع وإدارة شهادات ومستندات عملك',
+    
     sar: 'ريال',
     archived: 'مؤرشف',
     yes: 'نعم',
@@ -5901,6 +5976,30 @@ export const translations: Record<Language, Translations> = {
     
     // Bills Page
     bills: 'Bills',
+    
+    // Shop Files
+    shopFiles: 'Files',
+    shopFilesDescription: 'Upload and manage business certificates',
+    crCertificate: 'CR Certificate',
+    vatCertificate: 'VAT Certificate',
+    ibanCertificate: 'IBAN Account Certificate',
+    nationalAddress: 'National Address',
+    uploadFile: 'Upload File',
+    dragAndDropOrClick: 'Drag and drop or click to upload',
+    pdfFilesOnly: 'PDF files only (max 10MB)',
+    fileUploaded: 'File uploaded successfully',
+    fileDeleted: 'File deleted successfully',
+    fileUploadError: 'Failed to upload file',
+    fileDeleteError: 'Failed to delete file',
+    noFileUploaded: 'No file uploaded',
+    uploadedOn: 'Uploaded on',
+    fileSize: 'File size',
+    downloadFile: 'Download',
+    deleteFile: 'Delete',
+    confirmDeleteFile: 'Are you sure you want to delete this file?',
+    businessDocuments: 'Business Documents',
+    manageBusinessDocuments: 'Upload and manage your business certificates and documents',
+    
     sar: 'SAR',
     archived: 'Archived',
     yes: 'Yes',
@@ -7465,6 +7564,30 @@ export const translations: Record<Language, Translations> = {
     
     // Bills Page
     bills: 'Bills',
+    
+    // Shop Files
+    shopFiles: 'Files',
+    shopFilesDescription: 'Upload and manage business certificates',
+    crCertificate: 'CR Certificate',
+    vatCertificate: 'VAT Certificate',
+    ibanCertificate: 'IBAN Account Certificate',
+    nationalAddress: 'National Address',
+    uploadFile: 'Upload File',
+    dragAndDropOrClick: 'Drag and drop or click to upload',
+    pdfFilesOnly: 'PDF files only (max 10MB)',
+    fileUploaded: 'File uploaded successfully',
+    fileDeleted: 'File deleted successfully',
+    fileUploadError: 'Failed to upload file',
+    fileDeleteError: 'Failed to delete file',
+    noFileUploaded: 'No file uploaded',
+    uploadedOn: 'Uploaded on',
+    fileSize: 'File size',
+    downloadFile: 'Download',
+    deleteFile: 'Delete',
+    confirmDeleteFile: 'Are you sure you want to delete this file?',
+    businessDocuments: 'Business Documents',
+    manageBusinessDocuments: 'Upload and manage your business certificates and documents',
+    
     sar: 'SAR',
     archived: 'Archived',
     yes: 'Yes',
@@ -9029,6 +9152,30 @@ export const translations: Record<Language, Translations> = {
     
     // Bills Page
     bills: 'Bills',
+    
+    // Shop Files
+    shopFiles: 'Files',
+    shopFilesDescription: 'Upload and manage business certificates',
+    crCertificate: 'CR Certificate',
+    vatCertificate: 'VAT Certificate',
+    ibanCertificate: 'IBAN Account Certificate',
+    nationalAddress: 'National Address',
+    uploadFile: 'Upload File',
+    dragAndDropOrClick: 'Drag and drop or click to upload',
+    pdfFilesOnly: 'PDF files only (max 10MB)',
+    fileUploaded: 'File uploaded successfully',
+    fileDeleted: 'File deleted successfully',
+    fileUploadError: 'Failed to upload file',
+    fileDeleteError: 'Failed to delete file',
+    noFileUploaded: 'No file uploaded',
+    uploadedOn: 'Uploaded on',
+    fileSize: 'File size',
+    downloadFile: 'Download',
+    deleteFile: 'Delete',
+    confirmDeleteFile: 'Are you sure you want to delete this file?',
+    businessDocuments: 'Business Documents',
+    manageBusinessDocuments: 'Upload and manage your business certificates and documents',
+    
     sar: 'SAR',
     archived: 'Archived',
     yes: 'Yes',
@@ -10593,6 +10740,30 @@ export const translations: Record<Language, Translations> = {
     
     // Bills Page
     bills: 'Bills',
+    
+    // Shop Files
+    shopFiles: 'Files',
+    shopFilesDescription: 'Upload and manage business certificates',
+    crCertificate: 'CR Certificate',
+    vatCertificate: 'VAT Certificate',
+    ibanCertificate: 'IBAN Account Certificate',
+    nationalAddress: 'National Address',
+    uploadFile: 'Upload File',
+    dragAndDropOrClick: 'Drag and drop or click to upload',
+    pdfFilesOnly: 'PDF files only (max 10MB)',
+    fileUploaded: 'File uploaded successfully',
+    fileDeleted: 'File deleted successfully',
+    fileUploadError: 'Failed to upload file',
+    fileDeleteError: 'Failed to delete file',
+    noFileUploaded: 'No file uploaded',
+    uploadedOn: 'Uploaded on',
+    fileSize: 'File size',
+    downloadFile: 'Download',
+    deleteFile: 'Delete',
+    confirmDeleteFile: 'Are you sure you want to delete this file?',
+    businessDocuments: 'Business Documents',
+    manageBusinessDocuments: 'Upload and manage your business certificates and documents',
+    
     sar: 'SAR',
     archived: 'Archived',
     yes: 'Yes',
