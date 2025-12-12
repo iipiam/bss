@@ -67,6 +67,10 @@ import {
   type InsertZatcaSettings,
   type InvoiceZatcaStatus,
   type InsertInvoiceZatcaStatus,
+  type ShopFile,
+  type InsertShopFile,
+  type CompanyFile,
+  type InsertCompanyFile,
   restaurants,
   branches,
   inventoryItems,
@@ -108,6 +112,8 @@ import {
   printers,
   zatcaSettings,
   invoiceZatcaStatus,
+  shopFiles,
+  companyFiles,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
@@ -431,6 +437,20 @@ export interface IStorage {
   getInvoiceZatcaStatus(invoiceId: string, restaurantId: string): Promise<InvoiceZatcaStatus | undefined>;
   createInvoiceZatcaStatus(status: InsertInvoiceZatcaStatus): Promise<InvoiceZatcaStatus>;
   updateInvoiceZatcaStatus(invoiceId: string, restaurantId: string, status: Partial<InsertInvoiceZatcaStatus>): Promise<InvoiceZatcaStatus | undefined>;
+
+  // Shop Files (MULTI-TENANT: requires restaurantId for all operations)
+  getShopFiles(restaurantId: string): Promise<ShopFile[]>;
+  getShopFile(id: string, restaurantId: string): Promise<ShopFile | undefined>;
+  getShopFileByType(restaurantId: string, fileType: string): Promise<ShopFile | undefined>;
+  createShopFile(file: InsertShopFile): Promise<ShopFile>;
+  deleteShopFile(id: string, restaurantId: string): Promise<boolean>;
+
+  // Company Files (IT Account only - global company documents)
+  getCompanyFiles(): Promise<CompanyFile[]>;
+  getCompanyFile(id: string): Promise<CompanyFile | undefined>;
+  getCompanyFilesByType(fileType: string): Promise<CompanyFile[]>;
+  createCompanyFile(file: InsertCompanyFile): Promise<CompanyFile>;
+  deleteCompanyFile(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3553,6 +3573,79 @@ export class DatabaseStorage implements IStorage {
       ))
       .returning();
     return updated;
+  }
+
+  // Shop Files (MULTI-TENANT: requires restaurantId)
+  async getShopFiles(restaurantId: string): Promise<ShopFile[]> {
+    return db
+      .select()
+      .from(shopFiles)
+      .where(eq(shopFiles.restaurantId, restaurantId))
+      .orderBy(desc(shopFiles.createdAt));
+  }
+
+  async getShopFile(id: string, restaurantId: string): Promise<ShopFile | undefined> {
+    const [file] = await db
+      .select()
+      .from(shopFiles)
+      .where(and(eq(shopFiles.id, id), eq(shopFiles.restaurantId, restaurantId)));
+    return file;
+  }
+
+  async getShopFileByType(restaurantId: string, fileType: string): Promise<ShopFile | undefined> {
+    const [file] = await db
+      .select()
+      .from(shopFiles)
+      .where(and(eq(shopFiles.restaurantId, restaurantId), eq(shopFiles.fileType, fileType)));
+    return file;
+  }
+
+  async createShopFile(file: InsertShopFile): Promise<ShopFile> {
+    const [created] = await db.insert(shopFiles).values(file).returning();
+    return created;
+  }
+
+  async deleteShopFile(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db
+      .delete(shopFiles)
+      .where(and(eq(shopFiles.id, id), eq(shopFiles.restaurantId, restaurantId)));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Company Files (IT Account only - global company documents)
+  async getCompanyFiles(): Promise<CompanyFile[]> {
+    return db
+      .select()
+      .from(companyFiles)
+      .orderBy(desc(companyFiles.createdAt));
+  }
+
+  async getCompanyFile(id: string): Promise<CompanyFile | undefined> {
+    const [file] = await db
+      .select()
+      .from(companyFiles)
+      .where(eq(companyFiles.id, id));
+    return file;
+  }
+
+  async getCompanyFilesByType(fileType: string): Promise<CompanyFile[]> {
+    return db
+      .select()
+      .from(companyFiles)
+      .where(eq(companyFiles.fileType, fileType))
+      .orderBy(desc(companyFiles.createdAt));
+  }
+
+  async createCompanyFile(file: InsertCompanyFile): Promise<CompanyFile> {
+    const [created] = await db.insert(companyFiles).values(file).returning();
+    return created;
+  }
+
+  async deleteCompanyFile(id: string): Promise<boolean> {
+    const result = await db
+      .delete(companyFiles)
+      .where(eq(companyFiles.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 }
 
