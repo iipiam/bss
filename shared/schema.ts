@@ -1317,3 +1317,50 @@ export const insertInvoiceZatcaStatusSchema = createInsertSchema(invoiceZatcaSta
   });
 export type InsertInvoiceZatcaStatus = z.infer<typeof insertInvoiceZatcaStatusSchema>;
 export type InvoiceZatcaStatus = typeof invoiceZatcaStatus.$inferSelect;
+
+// Shop Files - Client account document storage (CR, VAT, IBAN, National Address certificates)
+export const shopFiles = pgTable("shop_files", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  fileType: text("file_type").notNull(), // "cr_certificate", "vat_certificate", "iban_certificate", "national_address"
+  fileName: text("file_name").notNull(),
+  filePath: text("file_path").notNull(),
+  fileSize: integer("file_size"),
+  mimeType: text("mime_type"),
+  uploadedBy: varchar("uploaded_by").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  restaurantIdx: index("shop_files_restaurant_idx").on(table.restaurantId),
+  typeIdx: index("shop_files_type_idx").on(table.fileType),
+}));
+
+export const insertShopFileSchema = createInsertSchema(shopFiles)
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({
+    fileType: z.enum(["cr_certificate", "vat_certificate", "iban_certificate", "national_address"]),
+  });
+export type InsertShopFile = z.infer<typeof insertShopFileSchema>;
+export type ShopFile = typeof shopFiles.$inferSelect;
+
+// Company Files - IT account document storage for Kinzhal LTD Co. (CR, VAT, Licenses, IBAN, National Address)
+export const companyFiles = pgTable("company_files", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fileType: text("file_type").notNull(), // "cr_certificate", "vat_certificate", "license", "iban_certificate", "national_address"
+  fileName: text("file_name").notNull(),
+  filePath: text("file_path").notNull(),
+  fileSize: integer("file_size"),
+  mimeType: text("mime_type"),
+  description: text("description"),
+  uploadedBy: varchar("uploaded_by").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertCompanyFileSchema = createInsertSchema(companyFiles)
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({
+    fileType: z.enum(["cr_certificate", "vat_certificate", "license", "iban_certificate", "national_address"]),
+  });
+export type InsertCompanyFile = z.infer<typeof insertCompanyFileSchema>;
+export type CompanyFile = typeof companyFiles.$inferSelect;
