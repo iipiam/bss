@@ -6206,6 +6206,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             available,
             imageUrl,
             discount: String(discount),
+            displaySize: "medium",
           });
           imported++;
         } catch (error) {
