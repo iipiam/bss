@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertSalarySchema, insertShopBillSchema, type Salary, type ShopBill } from "@shared/schema";
 import { z } from "zod";
-import { Plus, Pencil, Trash2, DollarSign, FileText, Search, Sparkles, Upload, Download, FolderOpen } from "lucide-react";
+import { Plus, Pencil, Trash2, DollarSign, FileText, Search, Sparkles, Upload, Download, FolderOpen, Eye, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -337,6 +337,42 @@ export default function Shop() {
         description: error.message || t.anErrorOccurred,
         variant: "destructive" 
       });
+    },
+  });
+
+  const uploadBillInvoiceMutation = useMutation({
+    mutationFn: async ({ billId, file }: { billId: string; file: File }) => {
+      const formData = new FormData();
+      formData.append("invoice", file);
+      const response = await fetch(`/api/shop/bills/${billId}/invoice`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/bills"] });
+      toast({ title: t.invoiceUploaded || "Invoice uploaded" });
+    },
+    onError: () => {
+      toast({ title: t.invoiceUploadError || "Failed to upload invoice", variant: "destructive" });
+    },
+  });
+
+  const deleteBillInvoiceMutation = useMutation({
+    mutationFn: async (billId: string) => {
+      return await apiRequest("DELETE", `/api/shop/bills/${billId}/invoice`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/bills"] });
+      toast({ title: t.invoiceDeleted || "Invoice deleted" });
+    },
+    onError: () => {
+      toast({ title: t.invoiceDeleteError || "Failed to delete invoice", variant: "destructive" });
     },
   });
 
@@ -915,8 +951,68 @@ export default function Shop() {
                           <div className={`text-sm ${bill.status === "paid" ? "text-green-600" : bill.status === "overdue" ? "text-red-600" : "text-orange-600"}`} data-testid={`text-bill-status-${bill.id}`}>
                             {bill.status === "paid" ? t.paid : bill.status === "overdue" ? t.overdue : t.pending}
                           </div>
+                          {bill.invoiceImage && (
+                            <Badge variant="outline" className="mt-1" data-testid={`badge-invoice-${bill.id}`}>
+                              <FileText className="w-3 h-3 mr-1" />
+                              {t.invoiceAttached || "Invoice"}
+                            </Badge>
+                          )}
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1">
+                          {bill.invoiceImage ? (
+                            <>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => window.open(`/api/shop/bills/${bill.id}/invoice`, '_blank')}
+                                title={t.viewInvoice || "View Invoice"}
+                                data-testid={`button-view-invoice-${bill.id}`}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => deleteBillInvoiceMutation.mutate(bill.id)}
+                                disabled={deleteBillInvoiceMutation.isPending}
+                                title={t.deleteInvoice || "Delete Invoice"}
+                                data-testid={`button-delete-invoice-${bill.id}`}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    if (file.size > 10 * 1024 * 1024) {
+                                      toast({ title: t.fileTooLarge || "File too large (max 10MB)", variant: "destructive" });
+                                      return;
+                                    }
+                                    uploadBillInvoiceMutation.mutate({ billId: bill.id, file });
+                                  }
+                                  e.target.value = "";
+                                }}
+                                data-testid={`input-upload-invoice-${bill.id}`}
+                              />
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                asChild
+                                disabled={uploadBillInvoiceMutation.isPending}
+                                title={t.uploadInvoice || "Upload Invoice"}
+                              >
+                                <span data-testid={`button-upload-invoice-${bill.id}`}>
+                                  <Upload className="w-4 h-4" />
+                                </span>
+                              </Button>
+                            </label>
+                          )}
                           <Button size="icon" variant="ghost" onClick={() => handleEditBill(bill)} data-testid={`button-edit-bill-${bill.id}`}>
                             <Pencil className="w-4 h-4" />
                           </Button>

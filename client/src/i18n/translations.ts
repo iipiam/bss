@@ -1172,6 +1172,15 @@ export interface Translations {
   fileDeleteError: string;
   noFileUploaded: string;
   uploadedOn: string;
+  invoiceUploaded: string;
+  invoiceDeleted: string;
+  invoiceUploadError: string;
+  invoiceDeleteError: string;
+  invoiceAttached: string;
+  viewInvoice: string;
+  uploadInvoice: string;
+  deleteInvoice: string;
+  fileTooLarge: string;
   fileSize: string;
   downloadFile: string;
   deleteFile: string;
@@ -2783,6 +2792,15 @@ export const translations: Record<Language, Translations> = {
     fileDeleteError: 'Failed to delete file',
     noFileUploaded: 'No file uploaded',
     uploadedOn: 'Uploaded on',
+    invoiceUploaded: 'Invoice uploaded successfully',
+    invoiceDeleted: 'Invoice deleted successfully',
+    invoiceUploadError: 'Failed to upload invoice',
+    invoiceDeleteError: 'Failed to delete invoice',
+    invoiceAttached: 'Invoice',
+    viewInvoice: 'View Invoice',
+    uploadInvoice: 'Upload Invoice',
+    deleteInvoice: 'Delete Invoice',
+    fileTooLarge: 'File too large (max 10MB)',
     fileSize: 'File size',
     downloadFile: 'Download',
     deleteFile: 'Delete',
@@ -4389,6 +4407,15 @@ export const translations: Record<Language, Translations> = {
     fileDeleteError: 'فشل حذف الملف',
     noFileUploaded: 'لم يتم رفع ملف',
     uploadedOn: 'تم الرفع في',
+    invoiceUploaded: 'تم رفع الفاتورة بنجاح',
+    invoiceDeleted: 'تم حذف الفاتورة بنجاح',
+    invoiceUploadError: 'فشل رفع الفاتورة',
+    invoiceDeleteError: 'فشل حذف الفاتورة',
+    invoiceAttached: 'فاتورة',
+    viewInvoice: 'عرض الفاتورة',
+    uploadInvoice: 'رفع الفاتورة',
+    deleteInvoice: 'حذف الفاتورة',
+    fileTooLarge: 'الملف كبير جداً (الحد الأقصى 10 ميجابايت)',
     fileSize: 'حجم الملف',
     downloadFile: 'تحميل',
     deleteFile: 'حذف',
@@ -5993,6 +6020,15 @@ export const translations: Record<Language, Translations> = {
     fileDeleteError: 'Failed to delete file',
     noFileUploaded: 'No file uploaded',
     uploadedOn: 'Uploaded on',
+    invoiceUploaded: 'Invoice uploaded successfully',
+    invoiceDeleted: 'Invoice deleted successfully',
+    invoiceUploadError: 'Failed to upload invoice',
+    invoiceDeleteError: 'Failed to delete invoice',
+    invoiceAttached: 'Invoice',
+    viewInvoice: 'View Invoice',
+    uploadInvoice: 'Upload Invoice',
+    deleteInvoice: 'Delete Invoice',
+    fileTooLarge: 'File too large (max 10MB)',
     fileSize: 'File size',
     downloadFile: 'Download',
     deleteFile: 'Delete',
@@ -7581,6 +7617,15 @@ export const translations: Record<Language, Translations> = {
     fileDeleteError: 'Failed to delete file',
     noFileUploaded: 'No file uploaded',
     uploadedOn: 'Uploaded on',
+    invoiceUploaded: 'Invoice uploaded successfully',
+    invoiceDeleted: 'Invoice deleted successfully',
+    invoiceUploadError: 'Failed to upload invoice',
+    invoiceDeleteError: 'Failed to delete invoice',
+    invoiceAttached: 'Invoice',
+    viewInvoice: 'View Invoice',
+    uploadInvoice: 'Upload Invoice',
+    deleteInvoice: 'Delete Invoice',
+    fileTooLarge: 'File too large (max 10MB)',
     fileSize: 'File size',
     downloadFile: 'Download',
     deleteFile: 'Delete',
@@ -9169,6 +9214,15 @@ export const translations: Record<Language, Translations> = {
     fileDeleteError: 'Failed to delete file',
     noFileUploaded: 'No file uploaded',
     uploadedOn: 'Uploaded on',
+    invoiceUploaded: 'Invoice uploaded successfully',
+    invoiceDeleted: 'Invoice deleted successfully',
+    invoiceUploadError: 'Failed to upload invoice',
+    invoiceDeleteError: 'Failed to delete invoice',
+    invoiceAttached: 'Invoice',
+    viewInvoice: 'View Invoice',
+    uploadInvoice: 'Upload Invoice',
+    deleteInvoice: 'Delete Invoice',
+    fileTooLarge: 'File too large (max 10MB)',
     fileSize: 'File size',
     downloadFile: 'Download',
     deleteFile: 'Delete',
@@ -10757,6 +10811,15 @@ export const translations: Record<Language, Translations> = {
     fileDeleteError: 'Failed to delete file',
     noFileUploaded: 'No file uploaded',
     uploadedOn: 'Uploaded on',
+    invoiceUploaded: 'Invoice uploaded successfully',
+    invoiceDeleted: 'Invoice deleted successfully',
+    invoiceUploadError: 'Failed to upload invoice',
+    invoiceDeleteError: 'Failed to delete invoice',
+    invoiceAttached: 'Invoice',
+    viewInvoice: 'View Invoice',
+    uploadInvoice: 'Upload Invoice',
+    deleteInvoice: 'Delete Invoice',
+    fileTooLarge: 'File too large (max 10MB)',
     fileSize: 'File size',
     downloadFile: 'Download',
     deleteFile: 'Delete',
