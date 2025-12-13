@@ -465,6 +465,17 @@ export const users = pgTable("users", {
   certifications: text("certifications").array(),
   trainingCompleted: text("training_completed").array(),
   
+  // Weekly Schedule (days off tracking)
+  weeklySchedule: jsonb("weekly_schedule").$type<{
+    sunday: boolean;
+    monday: boolean;
+    tuesday: boolean;
+    wednesday: boolean;
+    thursday: boolean;
+    friday: boolean;
+    saturday: boolean;
+  }>(),
+  
   // Chat notification settings (user-level overrides for restaurant defaults)
   chatNotificationSettings: jsonb("chat_notification_settings").$type<{
     notificationsEnabled?: boolean; // Override restaurant default
