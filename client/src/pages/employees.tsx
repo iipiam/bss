@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, UserCheck, UserX, Calendar, FileText, Plane, Award, Shield, Briefcase, Clock, Info, Key, LogIn, Trash2 } from "lucide-react";
+import { Plus, Edit, UserCheck, UserX, Calendar, FileText, Plane, Award, Shield, Briefcase, Clock, Info, Key, LogIn, Trash2, CalendarDays } from "lucide-react";
 import type { User } from "@shared/schema";
 import { 
   DEFAULT_EMPLOYEE_PERMISSIONS, 
@@ -61,6 +61,28 @@ const ACTION_LABELS: Record<PermissionAction, string> = {
   delete: "Delete",
 };
 
+// Default weekly schedule (Saudi weekend: Friday off)
+const DEFAULT_WEEKLY_SCHEDULE = {
+  sunday: true,
+  monday: true,
+  tuesday: true,
+  wednesday: true,
+  thursday: true,
+  friday: false,
+  saturday: true,
+};
+
+// Day labels for schedule display
+const DAY_LABELS = {
+  sunday: "Sunday",
+  monday: "Monday",
+  tuesday: "Tuesday",
+  wednesday: "Wednesday",
+  thursday: "Thursday",
+  friday: "Friday",
+  saturday: "Saturday",
+};
+
 export default function Employees() {
   const { t } = useLanguage();
   const layout = useDeviceLayout();
@@ -106,6 +128,8 @@ export default function Employees() {
     documents: [],
     certifications: [],
     trainingCompleted: [],
+    // Weekly Schedule
+    weeklySchedule: { ...DEFAULT_WEEKLY_SCHEDULE },
   });
 
   const { toast } = useToast();
@@ -211,6 +235,7 @@ export default function Employees() {
       documents: [],
       certifications: [],
       trainingCompleted: [],
+      weeklySchedule: { ...DEFAULT_WEEKLY_SCHEDULE },
     });
   };
 
@@ -245,6 +270,7 @@ export default function Employees() {
       ticketStatus: formData.ticketStatus || null,
       lastReviewDate: formData.lastReviewDate || null,
       performanceNotes: formData.performanceNotes || null,
+      weeklySchedule: formData.weeklySchedule,
     };
     
     createMutation.mutate(createData);
@@ -283,6 +309,7 @@ export default function Employees() {
       documents: user.documents || [],
       certifications: user.certifications || [],
       trainingCompleted: user.trainingCompleted || [],
+      weeklySchedule: user.weeklySchedule || { ...DEFAULT_WEEKLY_SCHEDULE },
     });
     setIsEditDialogOpen(true);
   };
@@ -319,6 +346,7 @@ export default function Employees() {
       documents: formData.documents,
       certifications: formData.certifications,
       trainingCompleted: formData.trainingCompleted,
+      weeklySchedule: formData.weeklySchedule,
     };
     
     if (formData.password) {
@@ -411,13 +439,17 @@ export default function Employees() {
               <DialogDescription>{t.addNewEmployeeDesc || "Add a new employee to your system"}</DialogDescription>
             </DialogHeader>
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+              <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7">
                 <TabsTrigger value="basic" className="h-[44px]">{t.basic || "Basic"}</TabsTrigger>
                 <TabsTrigger value="recruitment" className="h-[44px]">{t.recruitment || "Recruitment"}</TabsTrigger>
                 <TabsTrigger value="vacation" className="h-[44px]">{t.vacation || "Vacation"}</TabsTrigger>
                 <TabsTrigger value="visa" className="h-[44px]">{t.visa || "Visa"}</TabsTrigger>
                 <TabsTrigger value="ticket" className="h-[44px]">{t.ticket || "Ticket"}</TabsTrigger>
                 <TabsTrigger value="performance" className="h-[44px]">{t.performance || "Performance"}</TabsTrigger>
+                <TabsTrigger value="schedule" className="h-[44px]">
+                  <CalendarDays className="mr-1 h-4 w-4" />
+                  {t.schedule || "Schedule"}
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="basic" className="space-y-4 mt-4">
@@ -800,6 +832,41 @@ export default function Employees() {
                   />
                 </div>
               </TabsContent>
+
+              <TabsContent value="schedule" className="space-y-4 mt-4">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="font-semibold">{t.weeklySchedule || "Weekly Schedule"}</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t.scheduleDescription || "Set which days the employee works. Toggle OFF for days off."}
+                  </p>
+                  <div className="space-y-3">
+                    {(Object.keys(DAY_LABELS) as Array<keyof typeof DAY_LABELS>).map((day) => (
+                      <div key={day} className="flex items-center justify-between h-[44px] p-3 rounded-lg border">
+                        <Label htmlFor={`schedule-${day}`} className="text-sm font-medium capitalize">
+                          {t[day] || DAY_LABELS[day]}
+                        </Label>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {formData.weeklySchedule?.[day] ? (t.working || "Working") : (t.dayOff || "Day Off")}
+                          </span>
+                          <Switch
+                            id={`schedule-${day}`}
+                            checked={formData.weeklySchedule?.[day] ?? true}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              weeklySchedule: { ...formData.weeklySchedule, [day]: checked }
+                            })}
+                            data-testid={`switch-schedule-${day}`}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </TabsContent>
             </Tabs>
 
             <div className="flex justify-end gap-2 mt-6">
@@ -935,6 +1002,24 @@ export default function Employees() {
                       <Badge variant="outline">{user.performanceRating}/5.00</Badge>
                     </div>
                   )}
+                  {user.weeklySchedule && (
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">{t.daysOff || "Days Off"}:</span>
+                      <div className="flex flex-wrap gap-1">
+                        {Object.entries(user.weeklySchedule as Record<string, boolean>)
+                          .filter(([_, isWorking]) => !isWorking)
+                          .map(([day]) => (
+                            <Badge key={day} variant="secondary" className="text-xs capitalize">
+                              {(t as any)[day] || day}
+                            </Badge>
+                          ))}
+                        {Object.values(user.weeklySchedule as Record<string, boolean>).every(v => v) && (
+                          <span className="text-xs text-muted-foreground">{t.noDaysOff || "None"}</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="flex gap-2">
@@ -970,13 +1055,17 @@ export default function Employees() {
             <DialogDescription>{t.updateEmployeeInfo || "Update employee information and settings"}</DialogDescription>
           </DialogHeader>
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7">
               <TabsTrigger value="basic" className="h-[44px]">{t.basic || "Basic"}</TabsTrigger>
               <TabsTrigger value="recruitment" className="h-[44px]">{t.recruitment || "Recruitment"}</TabsTrigger>
               <TabsTrigger value="vacation" className="h-[44px]">{t.vacation || "Vacation"}</TabsTrigger>
               <TabsTrigger value="visa" className="h-[44px]">{t.visa || "Visa"}</TabsTrigger>
               <TabsTrigger value="ticket" className="h-[44px]">{t.ticket || "Ticket"}</TabsTrigger>
               <TabsTrigger value="performance" className="h-[44px]">{t.performance || "Performance"}</TabsTrigger>
+              <TabsTrigger value="schedule" className="h-[44px]">
+                <CalendarDays className="mr-1 h-4 w-4" />
+                {t.schedule || "Schedule"}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="basic" className="space-y-4 mt-4">
@@ -1368,6 +1457,41 @@ export default function Employees() {
                   rows={4}
                   data-testid="input-edit-performance-notes"
                 />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="schedule" className="space-y-4 mt-4">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="font-semibold">{t.weeklySchedule || "Weekly Schedule"}</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t.scheduleDescription || "Set which days the employee works. Toggle OFF for days off."}
+                </p>
+                <div className="space-y-3">
+                  {(Object.keys(DAY_LABELS) as Array<keyof typeof DAY_LABELS>).map((day) => (
+                    <div key={day} className="flex items-center justify-between h-[44px] p-3 rounded-lg border">
+                      <Label htmlFor={`edit-schedule-${day}`} className="text-sm font-medium capitalize">
+                        {t[day] || DAY_LABELS[day]}
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {formData.weeklySchedule?.[day] ? (t.working || "Working") : (t.dayOff || "Day Off")}
+                        </span>
+                        <Switch
+                          id={`edit-schedule-${day}`}
+                          checked={formData.weeklySchedule?.[day] ?? true}
+                          onCheckedChange={(checked) => setFormData({
+                            ...formData,
+                            weeklySchedule: { ...formData.weeklySchedule, [day]: checked }
+                          })}
+                          data-testid={`switch-edit-schedule-${day}`}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </TabsContent>
           </Tabs>
