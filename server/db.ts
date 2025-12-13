@@ -7,7 +7,9 @@ import path from 'path';
 const { Pool } = pg;
 
 // Use AWS_DATABASE_URL for external AWS RDS, fallback to DATABASE_URL for Replit's built-in
-const databaseUrl = process.env.AWS_DATABASE_URL || process.env.DATABASE_URL;
+// Clean up any accidental newlines or escape sequences from copy-paste
+const rawUrl = process.env.AWS_DATABASE_URL || process.env.DATABASE_URL || '';
+const databaseUrl = rawUrl.replace(/^[\s\\n]+/, '').replace(/\\n/g, '').trim();
 
 if (!databaseUrl) {
   throw new Error(
