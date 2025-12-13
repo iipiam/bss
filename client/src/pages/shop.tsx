@@ -69,7 +69,7 @@ export default function Shop() {
     fileType: string;
     fileName: string;
     fileSize: number;
-    uploadedAt: string;
+    createdAt: string;
   }
 
   const { data: shopFiles, isLoading: filesLoading } = useQuery<ShopFile[]>({
@@ -968,7 +968,7 @@ export default function Shop() {
                                   <p className="font-medium truncate" data-testid={`file-name-${type}`}>{file.fileName}</p>
                                   <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                                     <span data-testid={`file-size-${type}`}>{t.fileSize}: {formatFileSize(file.fileSize)}</span>
-                                    <span data-testid={`file-date-${type}`}>{t.uploadedOn}: {format(new Date(file.uploadedAt), "dd MMM yyyy")}</span>
+                                    <span data-testid={`file-date-${type}`}>{t.uploadedOn}: {format(new Date(file.createdAt), "dd MMM yyyy")}</span>
                                   </div>
                                 </div>
                               </div>

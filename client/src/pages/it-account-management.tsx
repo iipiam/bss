@@ -35,8 +35,13 @@ import {
   FileText,
   Download,
   AlertCircle,
-  Calendar
+  Calendar,
+  FolderOpen,
+  Upload,
+  Trash2,
+  File
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Account {
   id: string;
@@ -83,6 +88,21 @@ interface ArchivedAccount {
   createdAt: string;
   refundInvoice: RefundInvoice | null;
 }
+
+interface CompanyFile {
+  id: string;
+  fileType: string;
+  fileName: string;
+  filePath: string;
+  fileSize: number | null;
+  mimeType: string | null;
+  description: string | null;
+  uploadedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+type FileTypeKey = 'cr_certificate' | 'vat_certificate' | 'license' | 'iban_certificate' | 'national_address';
 
 export default function ITAccountManagement() {
   const { user, accountType, isLoading: authLoading } = useAuth();
@@ -334,7 +354,7 @@ export default function ITAccountManagement() {
     </Card>
   );
 
-  const [activeTab, setActiveTab] = useState<"accounts" | "archive">("accounts");
+  const [activeTab, setActiveTab] = useState<"accounts" | "archive" | "files">("accounts");
   const [searchQuery, setSearchQuery] = useState("");
   const [archiveSearchQuery, setArchiveSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "disabled">("all");
@@ -343,6 +363,12 @@ export default function ITAccountManagement() {
   const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
+  
+  // Company Files state
+  const [uploadingFileType, setUploadingFileType] = useState<FileTypeKey | null>(null);
+  const [fileDescription, setFileDescription] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<CompanyFile | null>(null);
 
   // Security: Redirect non-IT accounts using useEffect to wait for auth to load
   useEffect(() => {
@@ -383,6 +409,116 @@ export default function ITAccountManagement() {
     queryKey: ['/api/it/archived-accounts'],
     enabled: !!user && accountType === 'it',
   });
+
+  // Fetch company files
+  const { data: companyFiles = [], isLoading: filesLoading, refetch: refetchFiles } = useQuery<CompanyFile[]>({
+    queryKey: ['/api/it/company-files'],
+    enabled: !!user && accountType === 'it',
+  });
+
+  // File type configuration
+  const fileTypes: { key: FileTypeKey; label: string; allowMultiple: boolean }[] = [
+    { key: 'cr_certificate', label: t.crCertificate || 'CR Certificate', allowMultiple: false },
+    { key: 'vat_certificate', label: t.vatCertificate || 'VAT Certificate', allowMultiple: false },
+    { key: 'license', label: t.licenses || 'Licenses', allowMultiple: true },
+    { key: 'iban_certificate', label: t.ibanCertificate || 'IBAN Account Certificate', allowMultiple: false },
+    { key: 'national_address', label: t.nationalAddress || 'National Address', allowMultiple: false },
+  ];
+
+  // Get files by type
+  const getFilesByType = (fileType: FileTypeKey) => {
+    return companyFiles.filter(f => f.fileType === fileType);
+  };
+
+  // Upload file mutation
+  const uploadFileMutation = useMutation({
+    mutationFn: async ({ file, fileType, description }: { file: File; fileType: FileTypeKey; description?: string }) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('fileType', fileType);
+      if (description) formData.append('description', description);
+
+      const response = await fetch('/api/it/company-files/upload', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to upload file');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: t.success || "Success",
+        description: t.fileUploaded || "File uploaded successfully.",
+      });
+      setUploadingFileType(null);
+      setFileDescription("");
+      queryClient.invalidateQueries({ queryKey: ['/api/it/company-files'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message || t.fileUploadError || "Failed to upload file",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete file mutation
+  const deleteFileMutation = useMutation({
+    mutationFn: async (fileId: string) => {
+      return apiRequest("DELETE", `/api/it/company-files/${fileId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: t.success || "Success",
+        description: t.fileDeleted || "File deleted successfully.",
+      });
+      setDeleteDialogOpen(false);
+      setFileToDelete(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/it/company-files'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message || t.fileDeleteError || "Failed to delete file",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle file upload
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fileType: FileTypeKey) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      toast({
+        title: t.error || "Error",
+        description: t.pdfFilesOnly || "Only PDF files are allowed",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    uploadFileMutation.mutate({ file, fileType, description: fileDescription });
+  };
+
+  // Handle file download
+  const handleFileDownload = (file: CompanyFile) => {
+    window.open(`/api/it/company-files/${file.id}/download`, '_blank');
+  };
+
+  // Format file size
+  const formatFileSize = (bytes: number | null) => {
+    if (!bytes) return '-';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   // Change password mutation
   const changePasswordMutation = useMutation({
@@ -655,6 +791,7 @@ export default function ITAccountManagement() {
           onClick={() => {
             refetch();
             refetchArchive();
+            refetchFiles();
           }}
           data-testid="button-refresh"
         >
@@ -663,9 +800,9 @@ export default function ITAccountManagement() {
         </Button>
       </div>
 
-      {/* Tabs for Accounts and Archive */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "accounts" | "archive")} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+      {/* Tabs for Accounts, Archive, and Company Files */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "accounts" | "archive" | "files")} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 max-w-lg">
           <TabsTrigger value="accounts" data-testid="tab-accounts" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             {t.accounts || "Accounts"}
@@ -676,6 +813,10 @@ export default function ITAccountManagement() {
             {archivedAccounts.length > 0 && (
               <Badge variant="secondary" className="ml-1">{archivedAccounts.length}</Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="files" data-testid="tab-company-files" className="flex items-center gap-2">
+            <FolderOpen className="h-4 w-4" />
+            {t.companyFiles || "Company Files"}
           </TabsTrigger>
         </TabsList>
 
@@ -1148,6 +1289,238 @@ export default function ITAccountManagement() {
                       )}
                     </TableBody>
                   </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Company Files Tab */}
+        <TabsContent value="files" className="space-y-4 mt-4">
+          <Card data-testid="card-company-files">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FolderOpen className="h-5 w-5" />
+                {t.companyFiles || "Company Files"}
+              </CardTitle>
+              <CardDescription>
+                {t.companyFilesDescription || "Upload and manage company documents like CR Certificate, VAT Certificate, licenses, and more"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {filesLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <Skeleton key={i} className="h-24 w-full" />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {fileTypes.map((fileType) => {
+                    const filesOfType = getFilesByType(fileType.key);
+                    const canUpload = fileType.allowMultiple || filesOfType.length === 0;
+
+                    return (
+                      <Card key={fileType.key} data-testid={`card-file-type-${fileType.key}`}>
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <CardTitle className="text-base flex items-center gap-2">
+                              <File className="h-4 w-4" />
+                              {fileType.label}
+                              {fileType.allowMultiple && (
+                                <Badge variant="outline" className="text-xs">
+                                  {t.multiple || "Multiple"}
+                                </Badge>
+                              )}
+                            </CardTitle>
+                            {canUpload && (
+                              <Dialog 
+                                open={uploadingFileType === fileType.key} 
+                                onOpenChange={(open) => {
+                                  if (!open) {
+                                    setUploadingFileType(null);
+                                    setFileDescription("");
+                                  }
+                                }}
+                              >
+                                <DialogTrigger asChild>
+                                  <Button 
+                                    size="sm" 
+                                    onClick={() => setUploadingFileType(fileType.key)}
+                                    data-testid={`button-upload-${fileType.key}`}
+                                  >
+                                    <Upload className="h-4 w-4 mr-1" />
+                                    {t.uploadFile || "Upload File"}
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle className="flex items-center gap-2">
+                                      <Upload className="h-5 w-5" />
+                                      {t.uploadFile || "Upload File"}: {fileType.label}
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                      {t.pdfFilesOnly || "Only PDF files are allowed"}
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="space-y-4 py-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor={`description-${fileType.key}`}>
+                                        {t.description || "Description"} ({t.optional || "optional"})
+                                      </Label>
+                                      <Textarea
+                                        id={`description-${fileType.key}`}
+                                        value={fileDescription}
+                                        onChange={(e) => setFileDescription(e.target.value)}
+                                        placeholder={t.enterDescription || "Enter a description for this file..."}
+                                        data-testid={`input-file-description-${fileType.key}`}
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor={`file-${fileType.key}`}>{t.selectFile || "Select File"}</Label>
+                                      <Input
+                                        id={`file-${fileType.key}`}
+                                        type="file"
+                                        accept=".pdf,application/pdf"
+                                        onChange={(e) => handleFileUpload(e, fileType.key)}
+                                        disabled={uploadFileMutation.isPending}
+                                        data-testid={`input-file-${fileType.key}`}
+                                      />
+                                    </div>
+                                    {uploadFileMutation.isPending && (
+                                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <RefreshCw className="h-4 w-4 animate-spin" />
+                                        {t.uploading || "Uploading..."}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <DialogFooter>
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => {
+                                        setUploadingFileType(null);
+                                        setFileDescription("");
+                                      }}
+                                      data-testid={`button-cancel-upload-${fileType.key}`}
+                                    >
+                                      {t.cancel || "Cancel"}
+                                    </Button>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          {filesOfType.length === 0 ? (
+                            <div className="text-center text-muted-foreground py-4 border border-dashed rounded-md">
+                              <File className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                              <p className="text-sm">{t.noFileUploaded || "No file uploaded"}</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              {filesOfType.map((file) => (
+                                <div 
+                                  key={file.id} 
+                                  className="flex items-center justify-between gap-4 p-3 border rounded-md hover-elevate"
+                                  data-testid={`file-item-${file.id}`}
+                                >
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <FileText className="h-4 w-4 text-red-500 flex-shrink-0" />
+                                      <span className="font-medium truncate">{file.fileName}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1 flex-wrap">
+                                      <span>{formatFileSize(file.fileSize)}</span>
+                                      <span>•</span>
+                                      <span>{t.uploadedOn || "Uploaded"}: {formatDateShort(file.createdAt)}</span>
+                                      {file.description && (
+                                        <>
+                                          <span>•</span>
+                                          <span className="italic">{file.description}</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => handleFileDownload(file)}
+                                      data-testid={`button-download-file-${file.id}`}
+                                    >
+                                      <Download className="h-4 w-4" />
+                                    </Button>
+                                    <Dialog 
+                                      open={deleteDialogOpen && fileToDelete?.id === file.id}
+                                      onOpenChange={(open) => {
+                                        setDeleteDialogOpen(open);
+                                        if (!open) setFileToDelete(null);
+                                      }}
+                                    >
+                                      <DialogTrigger asChild>
+                                        <Button
+                                          variant="outline"
+                                          size="icon"
+                                          onClick={() => setFileToDelete(file)}
+                                          data-testid={`button-delete-file-${file.id}`}
+                                        >
+                                          <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                      </DialogTrigger>
+                                      <DialogContent>
+                                        <DialogHeader>
+                                          <DialogTitle className="flex items-center gap-2">
+                                            <AlertCircle className="h-5 w-5 text-destructive" />
+                                            {t.confirmDeleteFile || "Delete File?"}
+                                          </DialogTitle>
+                                          <DialogDescription>
+                                            {t.actionCannotBeUndone || "This action cannot be undone."} 
+                                            <br />
+                                            <strong>{file.fileName}</strong>
+                                          </DialogDescription>
+                                        </DialogHeader>
+                                        <DialogFooter className="flex-col gap-2 sm:flex-row">
+                                          <Button
+                                            variant="outline"
+                                            onClick={() => {
+                                              setDeleteDialogOpen(false);
+                                              setFileToDelete(null);
+                                            }}
+                                            data-testid="button-cancel-delete"
+                                          >
+                                            {t.cancel || "Cancel"}
+                                          </Button>
+                                          <Button
+                                            variant="destructive"
+                                            onClick={() => deleteFileMutation.mutate(file.id)}
+                                            disabled={deleteFileMutation.isPending}
+                                            data-testid="button-confirm-delete"
+                                          >
+                                            {deleteFileMutation.isPending ? (
+                                              <>
+                                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                                {t.deleting || "Deleting..."}
+                                              </>
+                                            ) : (
+                                              <>
+                                                <Trash2 className="h-4 w-4 mr-2" />
+                                                {t.deleteFile || "Delete"}
+                                              </>
+                                            )}
+                                          </Button>
+                                        </DialogFooter>
+                                      </DialogContent>
+                                    </Dialog>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
