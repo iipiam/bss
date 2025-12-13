@@ -1234,6 +1234,146 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Shop Bill Invoice Upload - Configure multer for bill invoice uploads
+  const shopBillInvoiceStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      const uploadPath = path.join(process.cwd(), 'uploads', 'shop-bill-invoices');
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+      cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, 'bill-invoice-' + uniqueSuffix + ext);
+    }
+  });
+
+  const uploadShopBillInvoice = multer({
+    storage: shopBillInvoiceStorage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: function (req, file, cb) {
+      const allowedTypes = /pdf|jpeg|jpg|png|gif|webp/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const allowedMimetypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const mimetype = allowedMimetypes.includes(file.mimetype);
+      if (mimetype && extname) {
+        return cb(null, true);
+      }
+      cb(new Error('Only PDF, JPEG, PNG, GIF, and WebP files are allowed for bill invoices!'));
+    }
+  });
+
+  // Upload invoice to a shop bill
+  app.post("/api/shop/bills/:id/invoice", requireAuth, requireRestaurant, requireAction('bills', 'edit'), uploadShopBillInvoice.single('invoice'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const restaurantId = req.session.user!.restaurantId!;
+      const billId = req.params.id;
+
+      // Check if bill exists and belongs to restaurant
+      const existing = await storage.getShopBill(billId);
+      if (!existing || existing.restaurantId !== restaurantId) {
+        fs.unlinkSync(req.file.path);
+        return res.status(404).json({ error: "Bill not found" });
+      }
+
+      // Delete old invoice if exists
+      if (existing.invoiceImage) {
+        const oldPath = path.join(process.cwd(), existing.invoiceImage);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
+
+      // Update bill with new invoice path
+      const invoicePath = `uploads/shop-bill-invoices/${req.file.filename}`;
+      const bill = await storage.updateShopBill(billId, restaurantId, { invoiceImage: invoicePath });
+      
+      console.log(`[SHOP BILLS] Invoice uploaded for bill ${billId}`);
+      res.json(bill);
+    } catch (error) {
+      console.error("[SHOP BILLS] Invoice upload error:", error);
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      res.status(500).json({ error: "Failed to upload invoice" });
+    }
+  });
+
+  // Download/view invoice for a shop bill
+  app.get("/api/shop/bills/:id/invoice", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const bill = await storage.getShopBill(req.params.id);
+      
+      if (!bill || bill.restaurantId !== restaurantId) {
+        return res.status(404).json({ error: "Bill not found" });
+      }
+
+      if (!bill.invoiceImage) {
+        return res.status(404).json({ error: "No invoice attached to this bill" });
+      }
+
+      const filePath = path.join(process.cwd(), bill.invoiceImage);
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: "Invoice file not found on disk" });
+      }
+
+      const ext = path.extname(filePath).toLowerCase();
+      const mimeTypes: Record<string, string> = {
+        '.pdf': 'application/pdf',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+      };
+
+      res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `inline; filename="bill-invoice${ext}"`);
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error("[SHOP BILLS] Invoice download error:", error);
+      res.status(500).json({ error: "Failed to download invoice" });
+    }
+  });
+
+  // Delete invoice from a shop bill
+  app.delete("/api/shop/bills/:id/invoice", requireAuth, requireRestaurant, requireAction('bills', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const bill = await storage.getShopBill(req.params.id);
+      
+      if (!bill || bill.restaurantId !== restaurantId) {
+        return res.status(404).json({ error: "Bill not found" });
+      }
+
+      if (!bill.invoiceImage) {
+        return res.status(404).json({ error: "No invoice attached to this bill" });
+      }
+
+      // Delete file from disk
+      const filePath = path.join(process.cwd(), bill.invoiceImage);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+
+      // Update bill to remove invoice path
+      const updatedBill = await storage.updateShopBill(req.params.id, restaurantId, { invoiceImage: null });
+      
+      console.log(`[SHOP BILLS] Invoice deleted for bill ${req.params.id}`);
+      res.json(updatedBill);
+    } catch (error) {
+      console.error("[SHOP BILLS] Invoice delete error:", error);
+      res.status(500).json({ error: "Failed to delete invoice" });
+    }
+  });
+
   // Violations
   app.get("/api/violations", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
     try {
