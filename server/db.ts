@@ -6,9 +6,12 @@ import path from 'path';
 
 const { Pool } = pg;
 
-if (!process.env.DATABASE_URL) {
+// Use AWS_DATABASE_URL for external AWS RDS, fallback to DATABASE_URL for Replit's built-in
+const databaseUrl = process.env.AWS_DATABASE_URL || process.env.DATABASE_URL;
+
+if (!databaseUrl) {
   throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
+    "AWS_DATABASE_URL or DATABASE_URL must be set. Did you forget to provision a database?",
   );
 }
 
@@ -48,9 +51,9 @@ if (isProduction) {
 // Format: postgresql://username:password@host:port/database
 let parsedUrl: URL;
 try {
-  parsedUrl = new URL(process.env.DATABASE_URL);
+  parsedUrl = new URL(databaseUrl);
 } catch (error) {
-  throw new Error(`Invalid DATABASE_URL format: ${error instanceof Error ? error.message : 'Unable to parse URL'}`);
+  throw new Error(`Invalid database URL format: ${error instanceof Error ? error.message : 'Unable to parse URL'}`);
 }
 
 // Extract connection parameters from parsed URL
