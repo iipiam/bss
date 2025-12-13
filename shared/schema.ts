@@ -573,6 +573,7 @@ export const shopBills = pgTable("shop_bills", {
   employeeName: text("employee_name"), // Cached employee name for salary bills
   paymentMonth: text("payment_month"), // Format: "YYYY-MM" for tracking salary payment months
   archived: boolean("archived").notNull().default(false), // For archiving old bills
+  invoiceImage: text("invoice_image"), // Path to uploaded invoice image/PDF
   branchId: varchar("branch_id").references(() => branches.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => ({
