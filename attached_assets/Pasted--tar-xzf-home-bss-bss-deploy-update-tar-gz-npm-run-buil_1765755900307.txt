@@ -1,0 +1,345 @@
+
+tar xzf ~/home/bss/bss-deploy-update.tar.gz
+npm run build && pm2 restart all
+tar (child): /home/ubuntu/home/bss/bss-deploy-update.tar.gz: Cannot open: No such file or directory
+tar (child): Error is not recoverable: exiting now
+tar: Child returned status 2
+tar: Error is not recoverable: exiting now
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.2.2 building client environment for production...
+
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "newPassword" in object literal
+1968 |      passwordChanged: 'Password Changed',
+1969 |      passwordChangedDesc: 'The account password has been updated successfully',
+1970 |      newPassword: 'New Password',
+     |      ^
+1971 |      confirmNewPassword: 'Confirm New Password',
+1972 |      passwordsDoNotMatch: 'Passwords do not match',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "confirmNewPassword" in object literal
+1969 |      passwordChangedDesc: 'The account password has been updated successfully',
+1970 |      newPassword: 'New Password',
+1971 |      confirmNewPassword: 'Confirm New Password',
+     |      ^
+1972 |      passwordsDoNotMatch: 'Passwords do not match',
+1973 |      passwordTooShort: 'Password must be at least 6 characters',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "accountCreated" in object literal
+1983 |      refreshAccounts: 'Refresh',
+1984 |      lastActivityTime: 'Last Activity',
+1985 |      accountCreated: 'Account Created',
+     |      ^
+1986 |      noRestaurant: 'No Restaurant',
+1987 |
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "passwordTooShort" in object literal
+2145 |      passwordsDontMatch: "Passwords don't match",
+2146 |      passwordsDontMatchDesc: 'Please make sure both passwords are the same.',
+2147 |      passwordTooShort: 'Password too short',
+     |      ^
+2148 |      passwordTooShortDesc: 'Password must be at least 6 characters long.',
+2149 |      passwordResetSuccessful: 'Password reset successful',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "newPassword" in object literal
+3189 |      passwordChanged: 'تم تغيير كلمة المرور',
+3190 |      passwordChangedDesc: 'تم تحديث كلمة مرور الحساب بنجاح',
+3191 |      newPassword: 'كلمة المرور الجديدة',
+     |      ^
+3192 |      confirmNewPassword: 'تأكيد كلمة المرور الجديدة',
+3193 |      passwordsDoNotMatch: 'كلمات المرور غير متطابقة',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "confirmNewPassword" in object literal
+3190 |      passwordChangedDesc: 'تم تحديث كلمة مرور الحساب بنجاح',
+3191 |      newPassword: 'كلمة المرور الجديدة',
+3192 |      confirmNewPassword: 'تأكيد كلمة المرور الجديدة',
+     |      ^
+3193 |      passwordsDoNotMatch: 'كلمات المرور غير متطابقة',
+3194 |      passwordTooShort: 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "accountCreated" in object literal
+3204 |      refreshAccounts: 'تحديث',
+3205 |      lastActivityTime: 'آخر نشاط',
+3206 |      accountCreated: 'تاريخ إنشاء الحساب',
+     |      ^
+3207 |      noRestaurant: 'بدون مطعم',
+3208 |
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "passwordTooShort" in object literal
+3366 |      passwordsDontMatch: 'كلمات المرور غير متطابقة',
+3367 |      passwordsDontMatchDesc: 'يرجى التأكد من تطابق كلمتي المرور.',
+3368 |      passwordTooShort: 'كلمة المرور قصيرة جداً',
+     |      ^
+3369 |      passwordTooShortDesc: 'يجب أن تكون كلمة المرور 6 أحرف على الأقل.',
+3370 |      passwordResetSuccessful: 'تمت إعادة تعيين كلمة المرور بنجاح',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "newPassword" in object literal
+4408 |      passwordChanged: 'Passwort geändert',
+4409 |      passwordChangedDesc: 'Das Kontopasswort wurde erfolgreich aktualisiert',
+4410 |      newPassword: 'Neues Passwort',
+     |      ^
+4411 |      confirmNewPassword: 'Neues Passwort bestätigen',
+4412 |      passwordsDoNotMatch: 'Passwörter stimmen nicht überein',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "confirmNewPassword" in object literal
+4409 |      passwordChangedDesc: 'Das Kontopasswort wurde erfolgreich aktualisiert',
+4410 |      newPassword: 'Neues Passwort',
+4411 |      confirmNewPassword: 'Neues Passwort bestätigen',
+     |      ^
+4412 |      passwordsDoNotMatch: 'Passwörter stimmen nicht überein',
+4413 |      passwordTooShort: 'Passwort muss mindestens 6 Zeichen haben',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "accountCreated" in object literal
+4423 |      refreshAccounts: 'Aktualisieren',
+4424 |      lastActivityTime: 'Letzte Aktivität',
+4425 |      accountCreated: 'Konto erstellt',
+     |      ^
+4426 |      noRestaurant: 'Kein Restaurant',
+4427 |
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "passwordTooShort" in object literal
+4585 |      passwordsDontMatch: "Passwords don't match",
+4586 |      passwordsDontMatchDesc: 'Please make sure both passwords are the same.',
+4587 |      passwordTooShort: 'Password too short',
+     |      ^
+4588 |      passwordTooShortDesc: 'Password must be at least 6 characters long.',
+4589 |      passwordResetSuccessful: 'Password reset successful',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "newPassword" in object literal
+5627 |      passwordChanged: '密码已更改',
+5628 |      passwordChangedDesc: '账户密码已成功更新',
+5629 |      newPassword: '新密码',
+     |      ^
+5630 |      confirmNewPassword: '确认新密码',
+5631 |      passwordsDoNotMatch: '密码不匹配',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "confirmNewPassword" in object literal
+5628 |      passwordChangedDesc: '账户密码已成功更新',
+5629 |      newPassword: '新密码',
+5630 |      confirmNewPassword: '确认新密码',
+     |      ^
+5631 |      passwordsDoNotMatch: '密码不匹配',
+5632 |      passwordTooShort: '密码必须至少6个字符',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "accountCreated" in object literal
+5642 |      refreshAccounts: '刷新',
+5643 |      lastActivityTime: '最后活动',
+5644 |      accountCreated: '账户创建时间',
+     |      ^
+5645 |      noRestaurant: '无餐厅',
+5646 |
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "passwordTooShort" in object literal
+5804 |      passwordsDontMatch: "Passwords don't match",
+5805 |      passwordsDontMatchDesc: 'Please make sure both passwords are the same.',
+5806 |      passwordTooShort: 'Password too short',
+     |      ^
+5807 |      passwordTooShortDesc: 'Password must be at least 6 characters long.',
+5808 |      passwordResetSuccessful: 'Password reset successful',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "newPassword" in object literal
+6846 |      passwordChanged: 'পাসওয়ার্ড পরিবর্তিত হয়েছে',
+6847 |      passwordChangedDesc: 'অ্যাকাউন্টের পাসওয়ার্ড সফলভাবে আপডেট হয়েছে',
+6848 |      newPassword: 'নতুন পাসওয়ার্ড',
+     |      ^
+6849 |      confirmNewPassword: 'নতুন পাসওয়ার্ড নিশ্চিত করুন',
+6850 |      passwordsDoNotMatch: 'পাসওয়ার্ড মিলছে না',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "confirmNewPassword" in object literal
+6847 |      passwordChangedDesc: 'অ্যাকাউন্টের পাসওয়ার্ড সফলভাবে আপডেট হয়েছে',
+6848 |      newPassword: 'নতুন পাসওয়ার্ড',
+6849 |      confirmNewPassword: 'নতুন পাসওয়ার্ড নিশ্চিত করুন',
+     |      ^
+6850 |      passwordsDoNotMatch: 'পাসওয়ার্ড মিলছে না',
+6851 |      passwordTooShort: 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "accountCreated" in object literal
+6861 |      refreshAccounts: 'রিফ্রেশ',
+6862 |      lastActivityTime: 'সর্বশেষ কার্যকলাপ',
+6863 |      accountCreated: 'অ্যাকাউন্ট তৈরি হয়েছে',
+     |      ^
+6864 |      noRestaurant: 'কোনো রেস্তোরাঁ নেই',
+6865 |
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "passwordTooShort" in object literal
+7023 |      passwordsDontMatch: "Passwords don't match",
+7024 |      passwordsDontMatchDesc: 'Please make sure both passwords are the same.',
+7025 |      passwordTooShort: 'Password too short',
+     |      ^
+7026 |      passwordTooShortDesc: 'Password must be at least 6 characters long.',
+7027 |      passwordResetSuccessful: 'Password reset successful',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "newPassword" in object literal
+8065 |      passwordChanged: 'Password Cambiata',
+8066 |      passwordChangedDesc: "La password dell'account è stata aggiornata con successo",
+8067 |      newPassword: 'Nuova Password',
+     |      ^
+8068 |      confirmNewPassword: 'Conferma Nuova Password',
+8069 |      passwordsDoNotMatch: 'Le password non corrispondono',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "confirmNewPassword" in object literal
+8066 |      passwordChangedDesc: "La password dell'account è stata aggiornata con successo",
+8067 |      newPassword: 'Nuova Password',
+8068 |      confirmNewPassword: 'Conferma Nuova Password',
+     |      ^
+8069 |      passwordsDoNotMatch: 'Le password non corrispondono',
+8070 |      passwordTooShort: 'La password deve contenere almeno 6 caratteri',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "accountCreated" in object literal
+8080 |      refreshAccounts: 'Aggiorna',
+8081 |      lastActivityTime: 'Ultima Attività',
+8082 |      accountCreated: 'Account Creato',
+     |      ^
+8083 |      noRestaurant: 'Nessun Ristorante',
+8084 |
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "passwordTooShort" in object literal
+8242 |      passwordsDontMatch: "Passwords don't match",
+8243 |      passwordsDontMatchDesc: 'Please make sure both passwords are the same.',
+8244 |      passwordTooShort: 'Password too short',
+     |      ^
+8245 |      passwordTooShortDesc: 'Password must be at least 6 characters long.',
+8246 |      passwordResetSuccessful: 'Password reset successful',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "newPassword" in object literal
+9272 |      passwordChanged: 'पासवर्ड बदला गया',
+9273 |      passwordChangedDesc: 'खाते का पासवर्ड सफलतापूर्वक अपडेट किया गया',
+9274 |      newPassword: 'नया पासवर्ड',
+     |      ^
+9275 |      confirmNewPassword: 'नया पासवर्ड पुष्टि करें',
+9276 |      passwordsDoNotMatch: 'पासवर्ड मेल नहीं खाते',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "confirmNewPassword" in object literal
+9273 |      passwordChangedDesc: 'खाते का पासवर्ड सफलतापूर्वक अपडेट किया गया',
+9274 |      newPassword: 'नया पासवर्ड',
+9275 |      confirmNewPassword: 'नया पासवर्ड पुष्टि करें',
+     |      ^
+9276 |      passwordsDoNotMatch: 'पासवर्ड मेल नहीं खाते',
+9277 |      passwordTooShort: 'पासवर्ड कम से कम 6 अक्षर का होना चाहिए',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "accountCreated" in object literal
+9287 |      refreshAccounts: 'रिफ्रेश',
+9288 |      lastActivityTime: 'अंतिम गतिविधि',
+9289 |      accountCreated: 'खाता बनाया गया',
+     |      ^
+9290 |      noRestaurant: 'कोई रेस्तरां नहीं',
+9291 |
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "passwordTooShort" in object literal
+9463 |      passwordsDontMatch: 'पासवर्ड मेल नहीं खाते',
+9464 |      passwordsDontMatchDesc: 'कृपया सुनिश्चित करें कि दोनों पासवर्ड समान हैं।',
+9465 |      passwordTooShort: 'पासवर्ड बहुत छोटा है',
+     |      ^
+9466 |      passwordTooShortDesc: 'पासवर्ड कम से कम 6 अक्षर लंबा होना चाहिए।',
+9467 |      passwordResetSuccessful: 'पासवर्ड रीसेट सफल',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "newPassword" in object literal
+10479 |      passwordChanged: 'پاس ورڈ تبدیل ہو گیا',
+10480 |      passwordChangedDesc: 'اکاؤنٹ کا پاس ورڈ کامیابی سے اپ ڈیٹ ہو گیا',
+10481 |      newPassword: 'نیا پاس ورڈ',
+      |      ^
+10482 |      confirmNewPassword: 'نئے پاس ورڈ کی تصدیق کریں',
+10483 |      passwordsDoNotMatch: 'پاس ورڈ مماثل نہیں ہیں',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "confirmNewPassword" in object literal
+10480 |      passwordChangedDesc: 'اکاؤنٹ کا پاس ورڈ کامیابی سے اپ ڈیٹ ہو گیا',
+10481 |      newPassword: 'نیا پاس ورڈ',
+10482 |      confirmNewPassword: 'نئے پاس ورڈ کی تصدیق کریں',
+      |      ^
+10483 |      passwordsDoNotMatch: 'پاس ورڈ مماثل نہیں ہیں',
+10484 |      passwordTooShort: 'پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "accountCreated" in object literal
+10494 |      refreshAccounts: 'ریفریش',
+10495 |      lastActivityTime: 'آخری سرگرمی',
+10496 |      accountCreated: 'اکاؤنٹ بنایا گیا',
+      |      ^
+10497 |      noRestaurant: 'کوئی ریستوراں نہیں',
+10498 |
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "passwordTooShort" in object literal
+10670 |      passwordsDontMatch: 'پاس ورڈ میل نہیں کھاتے',
+10671 |      passwordsDontMatchDesc: 'براہ کرم یقینی بنائیں کہ دونوں پاس ورڈ ایک جیسے ہیں۔',
+10672 |      passwordTooShort: 'پاس ورڈ بہت چھوٹا ہے',
+      |      ^
+10673 |      passwordTooShortDesc: 'پاس ورڈ کم از کم 6 حروف لمبا ہونا چاہیے۔',
+10674 |      passwordResetSuccessful: 'پاس ورڈ ری سیٹ کامیاب',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "newPassword" in object literal
+11628 |      passwordChanged: 'Contraseña Cambiada',
+11629 |      passwordChangedDesc: 'La contraseña de la cuenta se ha actualizado correctamente',
+11630 |      newPassword: 'Nueva Contraseña',
+      |      ^
+11631 |      confirmNewPassword: 'Confirmar Nueva Contraseña',
+11632 |      passwordsDoNotMatch: 'Las contraseñas no coinciden',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "confirmNewPassword" in object literal
+11629 |      passwordChangedDesc: 'La contraseña de la cuenta se ha actualizado correctamente',
+11630 |      newPassword: 'Nueva Contraseña',
+11631 |      confirmNewPassword: 'Confirmar Nueva Contraseña',
+      |      ^
+11632 |      passwordsDoNotMatch: 'Las contraseñas no coinciden',
+11633 |      passwordTooShort: 'La contraseña debe tener al menos 6 caracteres',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "accountCreated" in object literal
+11643 |      refreshAccounts: 'Actualizar',
+11644 |      lastActivityTime: 'Última Actividad',
+11645 |      accountCreated: 'Cuenta Creada',
+      |      ^
+11646 |      noRestaurant: 'Sin Restaurante',
+11647 |
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "passwordTooShort" in object literal
+11801 |      passwordsDontMatch: "Las contraseñas no coinciden",
+11802 |      passwordsDontMatchDesc: "Asegúrate de que ambas contraseñas sean iguales.",
+11803 |      passwordTooShort: "Contraseña muy corta",
+      |      ^
+11804 |      passwordTooShortDesc: "La contraseña debe tener al menos 6 caracteres.",
+11805 |      passwordResetSuccessful: "Contraseña Restablecida Exitosamente",
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "newPassword" in object literal
+12773 |      passwordChanged: 'Nabago ang Password',
+12774 |      passwordChangedDesc: 'Matagumpay na na-update ang password ng account',
+12775 |      newPassword: 'Bagong Password',
+      |      ^
+12776 |      confirmNewPassword: 'Kumpirmahin ang Bagong Password',
+12777 |      passwordsDoNotMatch: 'Hindi tugma ang mga password',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "confirmNewPassword" in object literal
+12774 |      passwordChangedDesc: 'Matagumpay na na-update ang password ng account',
+12775 |      newPassword: 'Bagong Password',
+12776 |      confirmNewPassword: 'Kumpirmahin ang Bagong Password',
+      |      ^
+12777 |      passwordsDoNotMatch: 'Hindi tugma ang mga password',
+12778 |      passwordTooShort: 'Ang password ay dapat may kahit 6 na karakter',
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "accountCreated" in object literal
+12788 |      refreshAccounts: 'I-refresh',
+12789 |      lastActivityTime: 'Huling Aktibidad',
+12790 |      accountCreated: 'Nagawa ang Account',
+      |      ^
+12791 |      noRestaurant: 'Walang Restaurant',
+12792 |
+
+[plugin vite:esbuild] client/src/i18n/translations.ts: Duplicate key "passwordTooShort" in object literal
+12946 |      passwordsDontMatch: "Hindi tugma ang mga password",
+12947 |      passwordsDontMatchDesc: "Siguraduhing pareho ang dalawang password.",
+12948 |      passwordTooShort: "Masyadong maikli ang password",
+      |      ^
+12949 |      passwordTooShortDesc: "Ang password ay dapat hindi bababa sa 6 characters.",
+12950 |      passwordResetSuccessful: "Matagumpay na Na-reset ang Password",
+
+✓ 2323 modules transformed.
+✗ Build failed in 9.71s
+error during build:
+[vite:asset] Could not load /home/ubuntu/home/bss/bss-aws-deploy/attached_assets/stock_images/successful_restauran_585fac32.jpg (imported by client/src/components/WelcomeVideo.tsx): ENOENT: no such file or directory, open '/home/ubuntu/home/bss/bss-aws-deploy/attached_assets/stock_images/successful_restauran_585fac32.jpg'
+    at async open (node:internal/fs/promises:639:25)
+    at async Object.readFile (node:internal/fs/promises:1246:14)
+    at async fileToBuiltUrl (file:///home/ubuntu/home/bss/bss-aws-deploy/node_modules/vite/dist/node/chunks/config.js:8992:18)
+    at async Object.handler (file:///home/ubuntu/home/bss/bss-aws-deploy/node_modules/vite/dist/node/chunks/config.js:8886:17)
+    at async PluginDriver.hookFirstAndGetPlugin (file:///home/ubuntu/home/bss/bss-aws-deploy/node_modules/rollup/dist/es/shared/node-entry.js:22319:28)
+    at async file:///home/ubuntu/home/bss/bss-aws-deploy/node_modules/rollup/dist/es/shared/node-entry.js:21319:33
+    at async Queue.work (file:///home/ubuntu/home/bss/bss-aws-deploy/node_modules/rollup/dist/es/shared/node-entry.js:22547:32)
