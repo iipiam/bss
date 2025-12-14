@@ -516,12 +516,25 @@ export class DatabaseStorage implements IStorage {
 
   // Inventory (MULTI-TENANT: filters by restaurantId)
   async getInventoryItems(restaurantId: string, branchId?: string): Promise<InventoryItem[]> {
-    if (branchId) {
-      return await db.select().from(inventoryItems).where(
-        and(eq(inventoryItems.restaurantId, restaurantId), eq(inventoryItems.branchId, branchId))
-      );
+    try {
+      if (branchId) {
+        return await db.select().from(inventoryItems).where(
+          and(eq(inventoryItems.restaurantId, restaurantId), eq(inventoryItems.branchId, branchId))
+        );
+      }
+      return await db.select().from(inventoryItems).where(eq(inventoryItems.restaurantId, restaurantId));
+    } catch (error: any) {
+      // Handle case where unit_price column doesn't exist yet (pre-migration)
+      if (error.message?.includes('unit_price')) {
+        console.warn('[Inventory] unit_price column not found, using fallback query');
+        const query = branchId 
+          ? sql`SELECT id, restaurant_id as "restaurantId", name, category, quantity, unit, reference_quantity as "referenceQuantity", price, '0' as "unitPrice", supplier, status, branch_id as "branchId", sort_order as "sortOrder", expiration_days as "expirationDays", purchase_date as "purchaseDate" FROM inventory_items WHERE restaurant_id = ${restaurantId} AND branch_id = ${branchId}`
+          : sql`SELECT id, restaurant_id as "restaurantId", name, category, quantity, unit, reference_quantity as "referenceQuantity", price, '0' as "unitPrice", supplier, status, branch_id as "branchId", sort_order as "sortOrder", expiration_days as "expirationDays", purchase_date as "purchaseDate" FROM inventory_items WHERE restaurant_id = ${restaurantId}`;
+        const result = await db.execute(query);
+        return result.rows as InventoryItem[];
+      }
+      throw error;
     }
-    return await db.select().from(inventoryItems).where(eq(inventoryItems.restaurantId, restaurantId));
   }
 
   async getInventoryItem(id: string, restaurantId: string): Promise<InventoryItem | undefined> {

@@ -60,6 +60,7 @@ export const inventoryItems = pgTable("inventory_items", {
   unit: text("unit").notNull(),
   referenceQuantity: decimal("reference_quantity", { precision: 10, scale: 2 }).notNull().default("1"), // Reference quantity for cost calculation (e.g., 1 kg)
   price: decimal("price", { precision: 10, scale: 2 }).notNull().default("0"), // Total price for the entire quantity in SAR
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull().default("0"), // Price per unit - stays fixed once entered
   supplier: text("supplier").notNull(),
   status: text("status").notNull().default("In Stock"),
   branchId: varchar("branch_id").references(() => branches.id),

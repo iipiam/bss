@@ -389,7 +389,18 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       const userName = req.session.user!.fullName || req.session.user!.username;
-      const data = insertInventoryItemSchema.parse({ ...req.body, restaurantId });
+      
+      // Calculate and store unitPrice = price / quantity (stays fixed once entered)
+      const parsedBody = { ...req.body, restaurantId };
+      const qty = parseFloat(parsedBody.quantity) || 0;
+      const price = parseFloat(parsedBody.price) || 0;
+      if (qty > 0 && price > 0) {
+        parsedBody.unitPrice = (price / qty).toFixed(2);
+      } else {
+        parsedBody.unitPrice = "0";
+      }
+      
+      const data = insertInventoryItemSchema.parse(parsedBody);
       const item = await storage.createInventoryItem(data);
       
       // Auto-create procurement record for this inventory item
@@ -475,7 +486,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       const data = sanitizePatchBody(req.body, insertInventoryItemSchema.partial());
       // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
-      const { restaurantId: _, ...safeData } = data;
+      // Also strip unitPrice - it should never be changed after initial creation
+      const { restaurantId: _, unitPrice: __, ...safeData } = data;
       
       // Check if price, quantity, or unit is being updated - need to update recipes
       const priceOrQuantityChanged = safeData.price !== undefined || safeData.quantity !== undefined;
