@@ -3131,10 +3131,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         };
       });
 
-      // Create invoice record first to get the ID
+      // Create invoice record first to get the ID (B2C Simplified Invoice)
       const invoiceData = {
         restaurantId: req.session.user!.restaurantId!,
         invoiceNumber,
+        invoiceType: "simplified" as const, // B2C - Simplified Tax Invoice
         orderId: order.id,
         branchId: order.branchId,
         customerName: order.customerName || "Walk-in Customer",
@@ -3149,7 +3150,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const createdInvoice = await storage.createInvoice(invoiceData);
       const baseUrl = `${req.protocol}://${req.get('host')}`;
 
-      // Generate PDF with invoice ID for QR code
+      // Generate PDF with invoice ID for QR code (Simplified Invoice format)
       const pdfData = {
         order,
         companyName: settings?.restaurantName || "Restaurant Management System",
@@ -3162,6 +3163,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         invoiceId: createdInvoice.id,
         baseUrl,
         logoPath: settings?.logoPath || undefined,
+        invoiceType: "simplified" as const, // B2C - Simplified Tax Invoice
       };
 
       const { pdfBuffer, qrCode } = await generateZATCAInvoice(pdfData);
@@ -4660,10 +4662,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         };
       });
 
-      // Create invoice record first to get the ID (without QR code and PDF path yet)
+      // Create invoice record first to get the ID (B2C Simplified Invoice)
       const invoiceData = {
         restaurantId: req.session.user!.restaurantId!,
         invoiceNumber,
+        invoiceType: "simplified" as const, // B2C - Simplified Tax Invoice
         orderId: order.id,
         branchId: order.branchId,
         customerName: order.customerName || "Walk-in Customer",
@@ -4680,7 +4683,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Get base URL from request
       const baseUrl = `${req.protocol}://${req.get('host')}`;
 
-      // Now generate PDF with invoice ID for QR code
+      // Now generate PDF with invoice ID for QR code (Simplified Invoice format)
       const pdfData = {
         order,
         companyName: settings?.restaurantName || "Restaurant Management System",
@@ -4693,6 +4696,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         invoiceId: createdInvoice.id,
         baseUrl,
         logoPath: settings?.logoPath || undefined,
+        invoiceType: "simplified" as const, // B2C - Simplified Tax Invoice
       };
 
       const { pdfBuffer, qrCode } = await generateZATCAInvoice(pdfData);

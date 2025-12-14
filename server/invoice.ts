@@ -17,6 +17,8 @@ interface InvoiceData {
   invoiceId: string;
   baseUrl: string;
   logoPath?: string; // Optional logo path
+  invoiceType?: "standard" | "simplified"; // B2B (standard) or B2C (simplified)
+  customerVatNumber?: string; // Required for B2B Standard invoices
 }
 
 // HTML escaping function to prevent injection
@@ -126,6 +128,10 @@ export async function getBrowser(): Promise<Browser> {
 
 function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string): string {
   const { order, companyName, companyVAT, branchAddress, companyEmail, companyPhone, invoiceNumber, invoiceDate } = data;
+  
+  // Determine invoice type: B2B (standard) vs B2C (simplified)
+  const isB2B = data.invoiceType === "standard";
+  const escapedCustomerVAT = data.customerVatNumber ? escapeHtml(data.customerVatNumber) : "";
   
   // Escape all user inputs
   const escapedCompanyName = escapeHtml(companyName);
@@ -442,7 +448,9 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     <div class="header">
       ${logoHTML}
       <div class="company-name english">${escapedCompanyName}</div>
-      <div class="invoice-badge">TAX INVOICE | فاتورة ضريبية</div>
+      ${isB2B 
+        ? '<div class="invoice-badge">STANDARD TAX INVOICE | فاتورة ضريبية قياسية</div>'
+        : '<div class="invoice-badge">SIMPLIFIED TAX INVOICE | فاتورة ضريبية مبسطة</div>'}
     </div>
     
     <!-- Company Information - Bilingual -->
@@ -489,6 +497,29 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
         </div>
       </div>
     </div>
+    
+    ${isB2B && escapedCustomerVAT ? `
+    <!-- Buyer Information - B2B Standard Invoice Only -->
+    <div class="bilingual-section">
+      <!-- English Left -->
+      <div class="section-left english">
+        <div class="section-title">Buyer Information</div>
+        <div class="info-row">
+          <div class="info-label">Buyer VAT:</div>
+          <div class="info-value">${escapedCustomerVAT}</div>
+        </div>
+      </div>
+      
+      <!-- Arabic Right -->
+      <div class="section-right arabic">
+        <div class="section-title">معلومات المشتري</div>
+        <div class="info-row">
+          <div class="info-value">${escapedCustomerVAT}</div>
+          <div class="info-label">:الرقم الضريبي للمشتري</div>
+        </div>
+      </div>
+    </div>
+    ` : ''}
     
     <!-- Invoice Details - Bilingual -->
     <div class="bilingual-section">
