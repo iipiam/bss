@@ -17,7 +17,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import type { Procurement, InsertProcurement } from "@shared/schema";
 import { insertProcurementSchema } from "@shared/schema";
-import { Plus, Package, Wrench, HardHat, Computer, Calendar, User, AlertCircle, CheckCircle2, Clock, XCircle, RefreshCw, Upload, Image, X, FileText, Eye, Download } from "lucide-react";
+import { Plus, Package, Wrench, HardHat, Computer, Calendar, User, AlertCircle, CheckCircle2, Clock, XCircle, RefreshCw, Upload, Image, X, FileText, Eye, Download, Search } from "lucide-react";
 import { format } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -58,6 +58,7 @@ export default function ProcurementPage() {
   const { t } = useLanguage();
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all-statuses");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Procurement | null>(null);
   const [invoiceImage, setInvoiceImage] = useState<string | null>(null);
@@ -722,9 +723,21 @@ export default function ProcurementPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <CardTitle>Procurement Requests</CardTitle>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center flex-wrap">
+              <div className="relative">
+                <Label htmlFor="search-procurement" className="sr-only">{t.search}</Label>
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="search-procurement"
+                  placeholder={t.search}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-48"
+                  data-testid="input-search-procurement"
+                />
+              </div>
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                 <SelectTrigger className="w-40" data-testid="filter-status">
                   <SelectValue placeholder="Filter by status" />
@@ -758,7 +771,19 @@ export default function ProcurementPage() {
               <div className="text-center py-8 text-muted-foreground">No procurement requests found</div>
             ) : (
               <div className="space-y-4">
-                {procurements.map((item) => {
+                {procurements
+                  .filter((item) => {
+                    if (!searchQuery.trim()) return true;
+                    const query = searchQuery.toLowerCase();
+                    return (
+                      item.title?.toLowerCase().includes(query) ||
+                      item.description?.toLowerCase().includes(query) ||
+                      item.supplier?.toLowerCase().includes(query) ||
+                      item.category?.toLowerCase().includes(query) ||
+                      item.requestedBy?.toLowerCase().includes(query)
+                    );
+                  })
+                  .map((item) => {
                   const Icon = typeIcons[item.type as keyof typeof typeIcons];
                   const StatusIcon = statusIcons[item.status as keyof typeof statusIcons];
                   
