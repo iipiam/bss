@@ -2817,7 +2817,36 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const data = insertProcurementSchema.omit({ restaurantId: true }).parse(req.body);
-      const procurement = await storage.createProcurement({ ...data, restaurantId });
+      let procurement = await storage.createProcurement({ ...data, restaurantId });
+      
+      // Auto-create inventory item when procurement type is "inventory" and status is complete
+      if (procurement.type === "inventory" && ["received", "completed"].includes(procurement.status)) {
+        try {
+          const inventoryData = {
+            restaurantId,
+            name: procurement.title,
+            category: procurement.category || "General",
+            quantity: String(procurement.quantity || 1),
+            unit: "pcs",
+            referenceQuantity: String(procurement.quantity || 1),
+            price: procurement.totalCost || "0",
+            supplier: procurement.supplier || "",
+            status: "In Stock",
+            branchId: procurement.branchId || null,
+          };
+          const inventoryItem = await storage.createInventoryItem(inventoryData);
+          console.log(`[PROCUREMENT] Auto-created inventory item: ${inventoryItem.name} from procurement ${procurement.id}`);
+          
+          // Link inventory item to procurement to prevent duplicate creation
+          const updatedProcurement = await storage.updateProcurement(procurement.id, restaurantId, { inventoryItemId: inventoryItem.id } as any);
+          if (updatedProcurement) {
+            procurement = updatedProcurement;
+          }
+        } catch (invError) {
+          console.error("[PROCUREMENT] Failed to auto-create inventory item:", invError);
+        }
+      }
+      
       res.status(201).json(procurement);
     } catch (error) {
       res.status(400).json({ error: "Invalid procurement data" });
@@ -2917,6 +2946,36 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Add billId to update if it changed
       if (billIdToSet !== undefined) {
         (safeData as any).billId = billIdToSet;
+      }
+      
+      // Auto-create inventory item when procurement type is "inventory" and status changes to complete
+      // Only create if no inventory item has been created yet (check inventoryItemId)
+      const wasNotComplete = !["received", "completed"].includes(oldStatus);
+      const isNowComplete = ["received", "completed"].includes(newStatus);
+      const hasExistingInventory = !!existingProcurement.inventoryItemId;
+      
+      if (updatedType === "inventory" && wasNotComplete && isNowComplete && !hasExistingInventory) {
+        try {
+          const inventoryData = {
+            restaurantId,
+            name: updatedTitle,
+            category: existingProcurement.category || "General",
+            quantity: String(existingProcurement.quantity || 1),
+            unit: "pcs",
+            referenceQuantity: String(existingProcurement.quantity || 1),
+            price: safeData.totalCost || existingProcurement.totalCost || "0",
+            supplier: updatedSupplier || "",
+            status: "In Stock",
+            branchId: updatedBranchId || null,
+          };
+          const inventoryItem = await storage.createInventoryItem(inventoryData);
+          console.log(`[PROCUREMENT] Auto-created inventory item: ${inventoryItem.name} from procurement update ${req.params.id}`);
+          
+          // Link inventory item to procurement to prevent duplicate creation
+          (safeData as any).inventoryItemId = inventoryItem.id;
+        } catch (invError) {
+          console.error("[PROCUREMENT] Failed to auto-create inventory item on update:", invError);
+        }
       }
       
       const procurement = await storage.updateProcurement(req.params.id, restaurantId, safeData);
