@@ -191,6 +191,7 @@ export interface IStorage {
   getSettings(restaurantId: string): Promise<Settings | undefined>;
   updateSettings(restaurantId: string, settings: Partial<InsertSettings>): Promise<Settings>;
   updateSettingsLogoPath(restaurantId: string, logoPath: string | null): Promise<void>;
+  getNextB2BInvoiceNumber(restaurantId: string): Promise<string>; // Get and increment B2B invoice sequence
 
   // Procurement (MULTI-TENANT: requires restaurantId for all operations)
   getProcurements(filter: {
@@ -938,6 +939,29 @@ export class DatabaseStorage implements IStorage {
       await db.insert(settings)
         .values({ restaurantId, logoPath } as any);
     }
+  }
+
+  async getNextB2BInvoiceNumber(restaurantId: string): Promise<string> {
+    // Atomic increment using UPDATE ... RETURNING to prevent race conditions
+    const result = await db.transaction(async (tx) => {
+      // Try to increment existing settings row
+      const [updated] = await tx.update(settings)
+        .set({ b2bInvoiceSequence: sql`COALESCE(${settings.b2bInvoiceSequence}, 0) + 1` })
+        .where(eq(settings.restaurantId, restaurantId))
+        .returning({ sequence: settings.b2bInvoiceSequence });
+      
+      if (updated) {
+        return updated.sequence;
+      }
+      
+      // If no settings row exists, this shouldn't happen in normal flow
+      // but handle it defensively by returning 1
+      return 1;
+    });
+    
+    // Format: B2B-INV-XXXX (padded to 4 digits minimum)
+    const paddedSeq = String(result).padStart(4, '0');
+    return `B2B-INV-${paddedSeq}`;
   }
 
   // Procurement

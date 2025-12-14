@@ -356,6 +356,7 @@ export const settings = pgTable("settings", {
       timezone: string; // "Asia/Riyadh"
     };
   }>(),
+  b2bInvoiceSequence: integer("b2b_invoice_sequence").notNull().default(0), // Separate sequence counter for B2B (Standard) invoices
 });
 
 export const insertSettingsSchema = createInsertSchema(settings).omit({ id: true });
