@@ -3027,6 +3027,60 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.status(204).send();
   });
 
+  // Reorder a completed/received procurement
+  app.post("/api/procurement/:id/reorder", requireAuth, requireRestaurant, requireAction('procurement', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const userName = req.session.user!.fullName || req.session.user!.username;
+      
+      // Get the original procurement
+      const originalProcurement = await storage.getProcurement(req.params.id, restaurantId);
+      if (!originalProcurement) {
+        return res.status(404).json({ error: "Procurement not found" });
+      }
+      
+      // Only allow reordering of completed or received procurements
+      if (!["received", "completed"].includes(originalProcurement.status)) {
+        return res.status(400).json({ error: "Only completed or received procurements can be reordered" });
+      }
+      
+      // Create a new procurement record based on the original
+      const reorderData = {
+        restaurantId,
+        type: originalProcurement.type,
+        title: `Reorder: ${originalProcurement.title}`,
+        description: originalProcurement.description,
+        supplier: originalProcurement.supplier,
+        category: originalProcurement.category,
+        quantity: originalProcurement.quantity,
+        unitPrice: originalProcurement.unitPrice,
+        totalCost: originalProcurement.totalCost,
+        status: "pending" as const,
+        priority: originalProcurement.priority as "low" | "medium" | "high" | "urgent",
+        requestedBy: userName,
+        branchId: originalProcurement.branchId,
+        notes: `Reorder of procurement ID: ${originalProcurement.id}`,
+      };
+      
+      const newProcurement = await storage.createProcurement(reorderData);
+      
+      // Link to original and to the same inventory item
+      await storage.updateProcurement(newProcurement.id, restaurantId, {
+        originalProcurementId: originalProcurement.id,
+        inventoryItemId: originalProcurement.inventoryItemId,
+      } as any);
+      
+      // Fetch the updated procurement to return
+      const finalProcurement = await storage.getProcurement(newProcurement.id, restaurantId);
+      
+      console.log(`[PROCUREMENT] Created reorder ${newProcurement.id} from original ${originalProcurement.id}`);
+      res.status(201).json(finalProcurement);
+    } catch (error) {
+      console.error("Reorder error:", error);
+      res.status(400).json({ error: "Failed to create reorder" });
+    }
+  });
+
   // Sync all inventory items to procurement (creates missing procurement records)
   app.post("/api/procurement/sync-inventory", requireAuth, requireRestaurant, requireAction('procurement', 'add'), async (req, res) => {
     try {

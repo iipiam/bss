@@ -388,11 +388,12 @@ export const procurement = pgTable("procurement", {
   invoiceImage: text("invoice_image"), // Path to uploaded invoice image
   billId: varchar("bill_id"), // Link to shop_bills for cost tracking sync
   inventoryItemId: varchar("inventory_item_id"), // Link to auto-created inventory item (for type="inventory")
+  originalProcurementId: varchar("original_procurement_id"), // Link to original procurement for reorders
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const insertProcurementSchema = createInsertSchema(procurement).omit({ id: true, createdAt: true, updatedAt: true, billId: true, inventoryItemId: true });
+export const insertProcurementSchema = createInsertSchema(procurement).omit({ id: true, createdAt: true, updatedAt: true, billId: true, inventoryItemId: true, originalProcurementId: true });
 export type InsertProcurement = z.infer<typeof insertProcurementSchema>;
 export type Procurement = typeof procurement.$inferSelect;
 
