@@ -1,0 +1,70 @@
+ubuntu@ip-172-31-1-112:~/home/bss/bss-aws-deploy$ npm run db:push -- --force
+
+> rest-express@1.0.0 db:push
+> drizzle-kit push --force
+
+sh: 1: drizzle-kit: not found
+ubuntu@ip-172-31-1-112:~/home/bss/bss-aws-deploy$ ^C
+ubuntu@ip-172-31-1-112:~/home/bss/bss-aws-deploy$ npm install --legacy-peer-deps
+
+npm run build
+
+npm run db:push
+
+pm2 restart all
+npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+npm warn deprecated har-validator@5.1.5: this library is no longer supported
+npm warn deprecated request-promise@4.2.6: request-promise has been deprecated because it extends the now deprecated request package, see https://github.com/request/request/issues/3142
+npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+npm warn deprecated uuid@3.4.0: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
+npm warn deprecated request@2.88.2: request has been deprecated, see https://github.com/request/request/issues/3142
+
+added 788 packages, and audited 789 packages in 14s
+
+79 packages are looking for funding
+  run `npm fund` for details
+
+12 vulnerabilities (1 low, 7 moderate, 2 high, 2 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.2.2 building client environment for production...
+✓ 16 modules transformed.
+✗ Build failed in 846ms
+error during build:
+[vite:asset] Could not load /home/ubuntu/home/bss/bss-aws-deploy/attached_assets/kinzhal-eagle-logo.jpeg (imported by client/src/App.tsx): ENOENT: no such file or directory, open '/home/ubuntu/home/bss/bss-aws-deploy/attached_assets/kinzhal-eagle-logo.jpeg'
+    at async open (node:internal/fs/promises:639:25)
+    at async Object.readFile (node:internal/fs/promises:1246:14)
+    at async fileToBuiltUrl (file:///home/ubuntu/home/bss/bss-aws-deploy/node_modules/vite/dist/node/chunks/config.js:8992:18)
+    at async Object.handler (file:///home/ubuntu/home/bss/bss-aws-deploy/node_modules/vite/dist/node/chunks/config.js:8886:17)
+    at async PluginDriver.hookFirstAndGetPlugin (file:///home/ubuntu/home/bss/bss-aws-deploy/node_modules/rollup/dist/es/shared/node-entry.js:22319:28)
+    at async file:///home/ubuntu/home/bss/bss-aws-deploy/node_modules/rollup/dist/es/shared/node-entry.js:21319:33
+    at async Queue.work (file:///home/ubuntu/home/bss/bss-aws-deploy/node_modules/rollup/dist/es/shared/node-entry.js:22547:32)
+
+> rest-express@1.0.0 db:push
+> drizzle-kit push
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/home/ubuntu/home/bss/bss-aws-deploy/drizzle.config.ts'
+DATABASE_URL, ensure the database is provisioned
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 19   │ online    │ 0%       │ 18.3mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+ubuntu@ip-172-31-1-112:~/home/bss/bss-aws-deploy$
