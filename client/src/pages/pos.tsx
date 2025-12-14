@@ -116,10 +116,10 @@ export default function POS() {
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
       const response = await apiRequest("POST", "/api/orders", orderData);
-      return await response.json(); // Parse JSON to get the actual order object
+      return await response.json();
     },
     onSuccess: async (order: any) => {
-      // Create transaction record
+      // Create transaction record (fast, essential)
       const transaction = {
         transactionId: `TXN-${Date.now()}`,
         orderId: order.id,
@@ -132,21 +132,37 @@ export default function POS() {
       };
       await apiRequest("POST", "/api/transactions", transaction);
       
-      // Create invoice record and generate PDF
-      try {
-        console.log("[POS] Creating invoice for order:", order.id);
-        const requestBody = { orderId: order.id };
-        console.log("[POS] Request body:", requestBody);
-        
-        const response = await fetch("/api/invoices/create-and-generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include", // Include session cookie
-          body: JSON.stringify(requestBody),
-        });
-        
-        console.log("[POS] Invoice response status:", response.status);
-        
+      // Show success immediately - don't wait for PDF generation
+      toast({
+        title: t.orderCompleted,
+        description: t.orderCompletedDesc.replace('${order.orderNumber}', order.orderNumber),
+      });
+      
+      // Reset cart immediately for fast UX
+      setCartItems([]);
+      setCustomerName("");
+      setCustomerPhone("");
+      setTableNumber("");
+      setSelectedDeliveryAppId(null);
+      setEarningsDecreaseApplied(false);
+      
+      // Invalidate queries immediately
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/financial"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
+      
+      // Background tasks (fire-and-forget) - don't block checkout
+      // Invoice generation runs in background
+      fetch("/api/invoices/create-and-generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ orderId: order.id }),
+      }).then(async (response) => {
         if (response.ok) {
           const blob = await response.blob();
           const url = window.URL.createObjectURL(blob);
@@ -157,90 +173,47 @@ export default function POS() {
           a.click();
           window.URL.revokeObjectURL(url);
           document.body.removeChild(a);
-        } else {
-          const errorData = await response.json();
-          console.error("[POS] Invoice generation failed:", errorData);
         }
-      } catch (error) {
-        console.error("Invoice creation failed:", error);
-      }
-      
-      // Send bilingual ZATCA invoice via WhatsApp if customer phone is provided
-      if (order.customerPhone && order.customerPhone.trim()) {
-        const { isValidWhatsAppPhone, openWhatsAppWithMessage, createWhatsAppInvoiceMessage } = await import('@/lib/whatsapp');
-        
-        if (isValidWhatsAppPhone(order.customerPhone)) {
-          try {
-            // Get restaurant name from settings
-            const settingsResponse = await fetch('/api/settings');
-            const settings = settingsResponse.ok ? await settingsResponse.json() : null;
-            const restaurantName = settings?.restaurantName || t.restaurant;
-            
-            // Construct public invoice URL (matches invoice generation pattern)
-            const invoiceUrl = `${window.location.origin}/public/invoice/${order.id}`;
-            
-            // Create bilingual ZATCA-compliant message with invoice URL and customer name
-            const message = createWhatsAppInvoiceMessage({
-              invoiceNumber: order.orderNumber,
-              total: total.toFixed(2),
-              paymentMethod: paymentMethod,
-              invoiceUrl,
-              restaurantName,
-              customerName: order.customerName || undefined,
-            });
-            
-            const success = openWhatsAppWithMessage(order.customerPhone, message);
-            
-            if (!success) {
-              toast({
-                title: t.whatsapp,
-                description: t.whatsappPopupBlockedDesc,
-                variant: "default",
-              });
-            }
-          } catch (error) {
-            console.error("WhatsApp invoice sending failed:", error);
-          }
-        }
-      }
-      
-      // Auto-save customer information to customers table (silent background save)
-      if ((order.customerName && order.customerName.trim()) || (order.customerPhone && order.customerPhone.trim())) {
-        const name = order.customerName?.trim() || t.unknown;
-        const phone = order.customerPhone?.trim();
-        
-        if (phone) {
-          try {
-            console.log("[POS Customer Auto-Save] Saving customer:", { name, phone });
-            const response = await apiRequest("POST", "/api/customers?upsert=true", { name, phone });
-            const savedCustomer = await response.json();
-            console.log("[POS Customer Auto-Save] Customer saved successfully:", savedCustomer);
-            
-            // Invalidate customers cache to refresh the list
-            queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
-          } catch (error) {
-            // Silent failure - don't block order flow
-            console.error("[POS Customer Auto-Save] Failed to save customer (non-blocking):", error);
-          }
-        } else {
-          console.log("[POS Customer Auto-Save] Skipped - no phone number provided");
-        }
-      }
-      
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/analytics/financial"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
-      
-      toast({
-        title: t.orderCompleted,
-        description: t.orderCompletedDesc.replace('${order.orderNumber}', order.orderNumber),
+      }).catch((error) => {
+        console.error("Background invoice generation failed:", error);
       });
       
-      clearCart();
+      // WhatsApp notification in background
+      if (order.customerPhone && order.customerPhone.trim()) {
+        import('@/lib/whatsapp').then(async ({ isValidWhatsAppPhone, openWhatsAppWithMessage, createWhatsAppInvoiceMessage }) => {
+          if (isValidWhatsAppPhone(order.customerPhone)) {
+            try {
+              const settingsResponse = await fetch('/api/settings');
+              const settings = settingsResponse.ok ? await settingsResponse.json() : null;
+              const restaurantName = settings?.restaurantName || t.restaurant;
+              const invoiceUrl = `${window.location.origin}/public/invoice/${order.id}`;
+              const message = createWhatsAppInvoiceMessage({
+                invoiceNumber: order.orderNumber,
+                total: total.toFixed(2),
+                paymentMethod: paymentMethod,
+                invoiceUrl,
+                restaurantName,
+                customerName: order.customerName || undefined,
+              });
+              openWhatsAppWithMessage(order.customerPhone, message);
+            } catch (error) {
+              console.error("WhatsApp failed:", error);
+            }
+          }
+        });
+      }
+      
+      // Customer auto-save in background
+      if ((order.customerName?.trim()) || (order.customerPhone?.trim())) {
+        const name = order.customerName?.trim() || t.unknown;
+        const phone = order.customerPhone?.trim();
+        if (phone) {
+          apiRequest("POST", "/api/customers?upsert=true", { name, phone })
+            .then(() => queryClient.invalidateQueries({ queryKey: ["/api/customers"] }))
+            .catch(() => {});
+        }
+      }
+      
     },
     onError: (error: any) => {
       toast({
