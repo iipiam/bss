@@ -900,8 +900,26 @@ export class DatabaseStorage implements IStorage {
 
   // Settings (MULTI-TENANT: SQL-level restaurantId filtering)
   async getSettings(restaurantId: string): Promise<Settings | undefined> {
-    const [setting] = await db.select().from(settings).where(eq(settings.restaurantId, restaurantId));
-    return setting;
+    try {
+      const [setting] = await db.select().from(settings).where(eq(settings.restaurantId, restaurantId));
+      return setting;
+    } catch (error: any) {
+      // Handle case where b2b_invoice_sequence column doesn't exist yet (pre-migration)
+      if (error.message?.includes('b2b_invoice_sequence')) {
+        console.warn('[Settings] b2b_invoice_sequence column not found, using fallback query');
+        const result = await db.execute(sql`
+          SELECT id, restaurant_id as "restaurantId", restaurant_name as "restaurantName", 
+                 vat_number as "vatNumber", address, email, phone, language, 
+                 opening_time as "openingTime", closing_time as "closingTime", 
+                 logo_path as "logoPath", notification_tone as "notificationTone",
+                 chat_notification_defaults as "chatNotificationDefaults",
+                 0 as "b2bInvoiceSequence"
+          FROM settings WHERE restaurant_id = ${restaurantId}
+        `);
+        return result.rows[0] as Settings | undefined;
+      }
+      throw error;
+    }
   }
 
   async updateSettings(restaurantId: string, settingsData: Partial<InsertSettings>): Promise<Settings> {
@@ -942,26 +960,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getNextB2BInvoiceNumber(restaurantId: string): Promise<string> {
-    // Atomic increment using UPDATE ... RETURNING to prevent race conditions
-    const result = await db.transaction(async (tx) => {
-      // Try to increment existing settings row
-      const [updated] = await tx.update(settings)
-        .set({ b2bInvoiceSequence: sql`COALESCE(${settings.b2bInvoiceSequence}, 0) + 1` })
-        .where(eq(settings.restaurantId, restaurantId))
-        .returning({ sequence: settings.b2bInvoiceSequence });
+    try {
+      // Atomic increment using UPDATE ... RETURNING to prevent race conditions
+      const result = await db.transaction(async (tx) => {
+        // Try to increment existing settings row
+        const [updated] = await tx.update(settings)
+          .set({ b2bInvoiceSequence: sql`COALESCE(${settings.b2bInvoiceSequence}, 0) + 1` })
+          .where(eq(settings.restaurantId, restaurantId))
+          .returning({ sequence: settings.b2bInvoiceSequence });
+        
+        if (updated) {
+          return updated.sequence;
+        }
+        
+        // If no settings row exists, this shouldn't happen in normal flow
+        // but handle it defensively by returning 1
+        return 1;
+      });
       
-      if (updated) {
-        return updated.sequence;
+      // Format: B2B-INV-XXXX (padded to 4 digits minimum)
+      const paddedSeq = String(result).padStart(4, '0');
+      return `B2B-INV-${paddedSeq}`;
+    } catch (error: any) {
+      // Handle case where b2b_invoice_sequence column doesn't exist yet (pre-migration)
+      // Generate a unique invoice number based on timestamp
+      if (error.message?.includes('b2b_invoice_sequence')) {
+        console.warn('[B2B Invoice] b2b_invoice_sequence column not found, using timestamp-based fallback');
+        const timestamp = Date.now().toString().slice(-6);
+        return `B2B-INV-${timestamp}`;
       }
-      
-      // If no settings row exists, this shouldn't happen in normal flow
-      // but handle it defensively by returning 1
-      return 1;
-    });
-    
-    // Format: B2B-INV-XXXX (padded to 4 digits minimum)
-    const paddedSeq = String(result).padStart(4, '0');
-    return `B2B-INV-${paddedSeq}`;
+      throw error;
+    }
   }
 
   // Procurement
@@ -1411,7 +1440,46 @@ export class DatabaseStorage implements IStorage {
     if (endDate) conditions.push(lte(shopBills.paymentDate, endDate));
     if (!includeArchived) conditions.push(eq(shopBills.archived, false));
     
-    return await db.select().from(shopBills).where(and(...conditions));
+    try {
+      return await db.select().from(shopBills).where(and(...conditions));
+    } catch (error: any) {
+      // Handle missing columns (backward compatibility for schema migrations)
+      if (error.message?.includes('does not exist')) {
+        console.log('[ShopBills] Column not found, using minimal fallback query');
+        const result = await db.execute(sql`
+          SELECT id, restaurant_id, branch_id, bill_type, description, amount, 
+                 payment_date, payment_period, status, employee_id, employee_name, 
+                 created_at, payment_month, archived
+          FROM shop_bills 
+          WHERE restaurant_id = ${restaurantId}
+          ${branchId ? sql`AND branch_id = ${branchId}` : sql``}
+          ${startDate ? sql`AND payment_date >= ${startDate}` : sql``}
+          ${endDate ? sql`AND payment_date <= ${endDate}` : sql``}
+          ${!includeArchived ? sql`AND archived = false` : sql``}
+        `);
+        return (result.rows || []).map((row: any) => ({
+          id: row.id,
+          restaurantId: row.restaurant_id,
+          branchId: row.branch_id,
+          billType: row.bill_type,
+          description: row.description,
+          amount: row.amount,
+          paymentDate: row.payment_date,
+          paymentPeriod: row.payment_period,
+          status: row.status,
+          employeeId: row.employee_id,
+          employeeName: row.employee_name,
+          createdAt: row.created_at,
+          paymentMonth: row.payment_month,
+          archived: row.archived,
+          procurementId: null, // Column may not exist yet
+          violationId: null, // Column may not exist yet
+          notes: null, // Column may not exist yet
+          invoiceImage: null, // Column may not exist yet
+        })) as ShopBill[];
+      }
+      throw error;
+    }
   }
 
   async getShopBill(id: string): Promise<ShopBill | undefined> {

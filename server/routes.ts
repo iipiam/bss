@@ -3095,6 +3095,141 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Generate B2B (Standard) Invoice for Procurement Request
+  app.post("/api/procurement/:id/generate-b2b-invoice", requireAuth, requireRestaurant, requireAction('procurement', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const procurementId = req.params.id;
+      
+      // Get procurement record
+      const procurementRecord = await storage.getProcurement(procurementId, restaurantId);
+      if (!procurementRecord) {
+        return res.status(404).json({ error: "Procurement not found" });
+      }
+      
+      const settings = await storage.getSettings(restaurantId);
+      const branch = procurementRecord.branchId 
+        ? await storage.getBranch(procurementRecord.branchId, restaurantId) 
+        : null;
+      
+      // Generate B2B invoice number (separate sequence from POS)
+      const invoiceNumber = await storage.getNextB2BInvoiceNumber(restaurantId);
+      
+      // Calculate pricing from procurement data
+      const totalCost = parseFloat(procurementRecord.totalCost || "0");
+      const vatRate = 0.15;
+      const subtotal = totalCost / (1 + vatRate);
+      const vatAmount = totalCost - subtotal;
+      
+      // Create Order-like object for PDF generation
+      const procurementOrder = {
+        id: procurementId,
+        restaurantId,
+        branchId: procurementRecord.branchId || null,
+        orderNumber: `PROC-${procurementRecord.id.substring(0, 8).toUpperCase()}`,
+        orderType: "Procurement",
+        status: "completed",
+        items: [{
+          name: procurementRecord.title || "Procurement Item",
+          quantity: procurementRecord.quantity || 1,
+          price: procurementRecord.unitPrice ? parseFloat(procurementRecord.unitPrice) : totalCost,
+        }],
+        subtotal: subtotal.toFixed(2),
+        tax: vatAmount.toFixed(2),
+        total: totalCost.toFixed(2),
+        customerName: procurementRecord.supplier || "Supplier",
+        table: null,
+        address: null,
+        createdAt: procurementRecord.createdAt || new Date(),
+      } as any;
+      
+      // Transform items to invoice items format with VAT breakdown
+      const invoiceItems = procurementOrder.items.map((item: any) => {
+        const itemTotal = item.quantity * item.price;
+        const basePrice = itemTotal / 1.15;
+        const itemVat = itemTotal - basePrice;
+        return {
+          name: item.name,
+          quantity: item.quantity,
+          basePrice: parseFloat(basePrice.toFixed(2)),
+          vatAmount: parseFloat(itemVat.toFixed(2)),
+          total: parseFloat(itemTotal.toFixed(2)),
+        };
+      });
+      
+      // Create invoice record first to get the ID (B2B Standard Invoice)
+      const invoiceData = {
+        restaurantId,
+        invoiceNumber,
+        invoiceType: "standard" as const, // B2B - Standard Tax Invoice
+        orderId: null, // No order ID - this is from procurement
+        branchId: procurementRecord.branchId || null,
+        customerName: procurementRecord.supplier || "Supplier",
+        customerVatNumber: settings?.vatNumber || null, // Use supplier VAT if available
+        items: invoiceItems,
+        subtotal: subtotal.toFixed(2),
+        vatAmount: vatAmount.toFixed(2),
+        total: totalCost.toFixed(2),
+        qrCode: "",
+        pdfPath: "",
+      };
+      
+      const createdInvoice = await storage.createInvoice(invoiceData);
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      
+      // Generate PDF with invoice ID for QR code (Standard Invoice format for B2B)
+      const pdfData = {
+        order: procurementOrder,
+        companyName: settings?.restaurantName || "Business Management System",
+        companyVAT: settings?.vatNumber || "300123456789003",
+        branchAddress: branch?.location || settings?.address || "Main Location, Riyadh",
+        companyEmail: settings?.email || "info@business.sa",
+        companyPhone: settings?.phone || "+966 11 234 5678",
+        invoiceNumber,
+        invoiceDate: new Date(),
+        invoiceId: createdInvoice.id,
+        baseUrl,
+        logoPath: settings?.logoPath || undefined,
+        invoiceType: "standard" as const, // B2B - Standard Tax Invoice
+        customerVatNumber: settings?.vatNumber, // Buyer VAT for B2B invoice
+      };
+      
+      const { pdfBuffer, qrCode } = await generateZATCAInvoice(pdfData);
+      
+      // Ensure invoices directory exists in public folder
+      const invoicesDir = path.join(process.cwd(), "public", "invoices");
+      if (!fs.existsSync(invoicesDir)) {
+        fs.mkdirSync(invoicesDir, { recursive: true });
+      }
+      
+      // Save PDF to filesystem
+      const pdfFilename = `${invoiceNumber}.pdf`;
+      const pdfPath = path.join(invoicesDir, pdfFilename);
+      fs.writeFileSync(pdfPath, pdfBuffer);
+      
+      // Update invoice record with QR code and PDF path
+      await storage.updateInvoice(createdInvoice.id, restaurantId, {
+        qrCode,
+        pdfPath: `/invoices/${pdfFilename}`,
+      });
+      
+      // Broadcast sales update for real-time BEP tracking
+      broadcastNotification({
+        type: 'sales:updated',
+        restaurantId,
+        invoiceId: createdInvoice.id,
+        invoiceTotal: totalCost.toFixed(2),
+      });
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=b2b-invoice-${invoiceNumber}.pdf`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("B2B Invoice generation error:", error);
+      res.status(500).json({ error: "Failed to generate B2B invoice" });
+    }
+  });
+
   // POS - Generate Invoice (redirects to main invoice creation endpoint)
   app.post("/api/pos/generate-invoice", requireAuth, requireRestaurant, requireAction('pos', 'add'), async (req, res) => {
     // This endpoint now redirects to the main invoice creation endpoint
