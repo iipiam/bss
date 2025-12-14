@@ -21,33 +21,34 @@ import {
   Printer
 } from "lucide-react";
 
-import posImage from "@assets/generated_images/POS_System_Interface_a1bc794e.png";
-import inventoryImage from "@assets/generated_images/Inventory_Management_System_f84dcc3a.png";
-import menuImage from "@assets/generated_images/Restaurant_Menu_Display_b812c237.png";
-import recipesImage from "@assets/generated_images/Recipe_Preparation_Kitchen_c2b136e5.png";
-import customersImage from "@assets/generated_images/Happy_Restaurant_Customers_4b909963.png";
-import ordersImage from "@assets/generated_images/Order_Management_Display_4049f259.png";
-import dashboardImage from "@assets/generated_images/Business_Analytics_Dashboard_3301d762.png";
-import salesImage from "@assets/generated_images/Sales_and_Payment_System_5634d834.png";
-import profitabilityImage from "@assets/generated_images/Profitability_Analysis_Setup_1bed8640.png";
-import forecastingImage from "@assets/generated_images/Business_Forecasting_Analytics_6bf96b65.png";
-import invoicesImage from "@assets/generated_images/Invoice_Documents_37f6d13b.png";
-import financialImage from "@assets/generated_images/Financial_Reports_Display_af93422d.png";
-import deliveryAppsImage from "@assets/generated_images/Delivery_App_Management_Dashboard_af536108.png";
+// Use placeholder URLs for production builds - avoids asset dependency
+const posImage = "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&q=80";
+const inventoryImage = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&q=80";
+const menuImage = "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80";
+const recipesImage = "https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=600&q=80";
+const customersImage = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80";
+const ordersImage = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80";
+const dashboardImage = "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80";
+const salesImage = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&q=80";
+const profitabilityImage = "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&q=80";
+const forecastingImage = "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80";
+const invoicesImage = "https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=600&q=80";
+const financialImage = "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&q=80";
+const deliveryAppsImage = "https://images.unsplash.com/photo-1526367790999-0150786686a2?w=600&q=80";
 
-import posScreenshot from "@assets/generated_images/POS_system_interface_screenshot_7e5ae849.png";
-import inventoryScreenshot from "@assets/generated_images/Inventory_management_dashboard_screenshot_918ba2b2.png";
-import menuScreenshot from "@assets/generated_images/Menu_management_interface_screenshot_b8294dd3.png";
-import recipeScreenshot from "@assets/generated_images/Recipe_creation_interface_screenshot_e67a7aa1.png";
-import customerScreenshot from "@assets/generated_images/Customer_management_database_screenshot_7965bb5e.png";
-import orderScreenshot from "@assets/generated_images/Orders_tracking_dashboard_screenshot_f0d2e3a1.png";
-import analyticsScreenshot from "@assets/generated_images/Analytics_dashboard_screenshot_2b42f16c.png";
-import salesScreenshot from "@assets/generated_images/Sales_analytics_page_screenshot_1b3c0414.png";
-import profitabilityScreenshot from "@assets/generated_images/Profitability_analysis_dashboard_screenshot_2a18aab4.png";
-import forecastingScreenshot from "@assets/generated_images/Demand_forecasting_interface_screenshot_025a6451.png";
-import invoiceScreenshot from "@assets/generated_images/ZATCA_invoice_document_screenshot_54e402f8.png";
-import financialScreenshot from "@assets/generated_images/Financial_reports_dashboard_screenshot_9884d372.png";
-import deliveryAppsScreenshot from "@assets/generated_images/Delivery_Apps_Analytics_Screenshot_8961352b.png";
+const posScreenshot = "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80";
+const inventoryScreenshot = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&q=80";
+const menuScreenshot = "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80";
+const recipeScreenshot = "https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=800&q=80";
+const customerScreenshot = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80";
+const orderScreenshot = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80";
+const analyticsScreenshot = "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80";
+const salesScreenshot = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80";
+const profitabilityScreenshot = "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80";
+const forecastingScreenshot = "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80";
+const invoiceScreenshot = "https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=800&q=80";
+const financialScreenshot = "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80";
+const deliveryAppsScreenshot = "https://images.unsplash.com/photo-1526367790999-0150786686a2?w=800&q=80";
 
 type Language = 'en' | 'ar' | 'zh' | 'de' | 'hi' | 'ur' | 'bn' | 'it' | 'es' | 'tl';
 

@@ -23,31 +23,8 @@ import {
   CheckCircle2
 } from "lucide-react";
 
-import posImage from "@assets/generated_images/POS_System_Interface_a1bc794e.png";
-import inventoryImage from "@assets/generated_images/Inventory_Management_System_f84dcc3a.png";
-import menuImage from "@assets/generated_images/Restaurant_Menu_Display_b812c237.png";
-import recipesImage from "@assets/generated_images/Recipe_Preparation_Kitchen_c2b136e5.png";
-import customersImage from "@assets/generated_images/Happy_Restaurant_Customers_4b909963.png";
-import ordersImage from "@assets/generated_images/Order_Management_Display_4049f259.png";
-import dashboardImage from "@assets/generated_images/Business_Analytics_Dashboard_3301d762.png";
-import salesImage from "@assets/generated_images/Sales_and_Payment_System_5634d834.png";
-import profitabilityImage from "@assets/generated_images/Profitability_Analysis_Setup_1bed8640.png";
-import forecastingImage from "@assets/generated_images/Business_Forecasting_Analytics_6bf96b65.png";
-import invoicesImage from "@assets/generated_images/Invoice_Documents_37f6d13b.png";
-import financialImage from "@assets/generated_images/Financial_Reports_Display_af93422d.png";
-
-import posScreenshot from "@assets/generated_images/POS_system_interface_screenshot_7e5ae849.png";
-import inventoryScreenshot from "@assets/generated_images/Inventory_management_dashboard_screenshot_918ba2b2.png";
-import menuScreenshot from "@assets/generated_images/Menu_management_interface_screenshot_b8294dd3.png";
-import recipeScreenshot from "@assets/generated_images/Recipe_creation_interface_screenshot_e67a7aa1.png";
-import customerScreenshot from "@assets/generated_images/Customer_management_database_screenshot_7965bb5e.png";
-import orderScreenshot from "@assets/generated_images/Orders_tracking_dashboard_screenshot_f0d2e3a1.png";
-import analyticsScreenshot from "@assets/generated_images/Analytics_dashboard_screenshot_2b42f16c.png";
-import salesScreenshot from "@assets/generated_images/Sales_analytics_page_screenshot_1b3c0414.png";
-import profitabilityScreenshot from "@assets/generated_images/Profitability_analysis_dashboard_screenshot_2a18aab4.png";
-import forecastingScreenshot from "@assets/generated_images/Demand_forecasting_interface_screenshot_025a6451.png";
-import invoiceScreenshot from "@assets/generated_images/ZATCA_invoice_document_screenshot_54e402f8.png";
-import financialScreenshot from "@assets/generated_images/Financial_reports_dashboard_screenshot_9884d372.png";
+// Tutorial images are now loaded from tutorialSteps.ts via getTutorialsByLanguage
+// No direct imports needed here - images are passed through the Tutorial interface
 
 export interface TutorialStep {
   title: string;

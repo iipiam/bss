@@ -6,13 +6,13 @@ import { X, Play, Volume2, VolumeX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-// Import stock images
-import businessOwner1 from "@assets/stock_images/successful_restauran_585fac32.jpg";
-import businessOwner2 from "@assets/stock_images/successful_restauran_41c16385.jpg";
-import businessOwner3 from "@assets/stock_images/successful_restauran_039f182e.jpg";
-import teamWork1 from "@assets/stock_images/restaurant_staff_tea_658450c1.jpg";
-import teamWork2 from "@assets/stock_images/restaurant_staff_tea_ce149ad2.jpg";
-import teamWork3 from "@assets/stock_images/restaurant_staff_tea_7eaa745e.jpg";
+// Use placeholder images for production builds - avoids asset dependency
+const businessOwner1 = "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80";
+const businessOwner2 = "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&q=80";
+const businessOwner3 = "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=80";
+const teamWork1 = "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80";
+const teamWork2 = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80";
+const teamWork3 = "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&q=80";
 
 interface Slide {
   image: string;
