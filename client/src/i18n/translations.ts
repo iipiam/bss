@@ -1279,6 +1279,14 @@ export interface Translations {
   subscriptionDeleted: string;
   subscriptionDeletedWithRefund: string;
   
+  // B2B Invoice Generation
+  generateB2BInvoice: string;
+  b2bInvoiceGenerated: string;
+  b2bInvoiceGenerationFailed: string;
+  standardTaxInvoice: string;
+  simplifiedTaxInvoice: string;
+  buyerVatNumber: string;
+
   // Toast Messages & Notifications
   procurementCreated: string;
   procurementUpdated: string;
@@ -2895,6 +2903,14 @@ export const translations: Record<Language, Translations> = {
     subscriptionDeleted: 'Subscription deleted successfully',
     subscriptionDeletedWithRefund: 'Subscription deleted and refund clearance invoice downloaded',
     
+    // B2B Invoice Generation
+    generateB2BInvoice: 'Generate B2B Invoice',
+    b2bInvoiceGenerated: 'B2B invoice generated successfully',
+    b2bInvoiceGenerationFailed: 'Failed to generate B2B invoice',
+    standardTaxInvoice: 'Standard Tax Invoice',
+    simplifiedTaxInvoice: 'Simplified Tax Invoice',
+    buyerVatNumber: 'Buyer VAT Number',
+
     // Toast Messages & Notifications
     procurementCreated: 'Procurement item created successfully',
     procurementUpdated: 'Procurement item updated successfully',
@@ -4510,6 +4526,14 @@ export const translations: Record<Language, Translations> = {
     subscriptionDeleted: 'تم حذف الاشتراك بنجاح',
     subscriptionDeletedWithRefund: 'تم حذف الاشتراك وتنزيل فاتورة تصفية الاسترداد',
     
+    // B2B Invoice Generation
+    generateB2BInvoice: 'إنشاء فاتورة B2B',
+    b2bInvoiceGenerated: 'تم إنشاء فاتورة B2B بنجاح',
+    b2bInvoiceGenerationFailed: 'فشل إنشاء فاتورة B2B',
+    standardTaxInvoice: 'فاتورة ضريبية قياسية',
+    simplifiedTaxInvoice: 'فاتورة ضريبية مبسطة',
+    buyerVatNumber: 'الرقم الضريبي للمشتري',
+
     // Toast Messages & Notifications
     procurementCreated: 'تم إنشاء عنصر المشتريات بنجاح',
     procurementUpdated: 'تم تحديث عنصر المشتريات بنجاح',
@@ -6106,9 +6130,17 @@ export const translations: Record<Language, Translations> = {
     referenceDeleteConfirm: 'Möchten Sie dieses Referenzdokument wirklich löschen?',
     noReferences: 'Keine Referenzdokumente gefunden',
     viewPdf: 'PDF anzeigen',
+
+    // B2B Invoice
+    generateB2BInvoice: 'B2B-Rechnung erstellen',
+    b2bInvoiceGenerated: 'B2B-Rechnung erfolgreich erstellt',
+    b2bInvoiceGenerationFailed: 'B2B-Rechnung konnte nicht erstellt werden',
+    standardTaxInvoice: 'Standard-Steuerrechnung',
+    simplifiedTaxInvoice: 'Vereinfachte Steuerrechnung',
+    buyerVatNumber: 'USt-IdNr. des Käufers',
     
     // Toast Messages & Notifications
-    procurementCreated: 'Procurement item created successfully',
+    procurementCreated: 'Beschaffungsartikel erfolgreich erstellt',
     procurementUpdated: 'Procurement item updated successfully',
     procurementDeleted: 'Procurement item deleted successfully',
     orderCompleted: 'Order completed successfully',
@@ -7704,6 +7736,14 @@ export const translations: Record<Language, Translations> = {
     noReferences: 'No reference documents found',
     viewPdf: 'View PDF',
     
+
+    // B2B Invoice (Chinese)
+    generateB2BInvoice: '生成B2B发票',
+    b2bInvoiceGenerated: 'B2B发票生成成功',
+    b2bInvoiceGenerationFailed: 'B2B发票生成失败',
+    standardTaxInvoice: '标准税务发票',
+    simplifiedTaxInvoice: '简化税务发票',
+    buyerVatNumber: '买方增值税号',
     // Toast Messages & Notifications
     procurementCreated: 'Procurement item created successfully',
     procurementUpdated: 'Procurement item updated successfully',
@@ -9301,6 +9341,14 @@ export const translations: Record<Language, Translations> = {
     noReferences: 'No reference documents found',
     viewPdf: 'View PDF',
     
+
+    // B2B Invoice (Bengali)
+    generateB2BInvoice: 'B2B ইনভয়েস তৈরি করুন',
+    b2bInvoiceGenerated: 'B2B ইনভয়েস সফলভাবে তৈরি হয়েছে',
+    b2bInvoiceGenerationFailed: 'B2B ইনভয়েস তৈরি ব্যর্থ হয়েছে',
+    standardTaxInvoice: 'স্ট্যান্ডার্ড ট্যাক্স ইনভয়েস',
+    simplifiedTaxInvoice: 'সরলীকৃত ট্যাক্স ইনভয়েস',
+    buyerVatNumber: 'ক্রেতার ভ্যাট নম্বর',
     // Toast Messages & Notifications
     procurementCreated: 'Procurement item created successfully',
     procurementUpdated: 'Procurement item updated successfully',
@@ -10898,6 +10946,14 @@ export const translations: Record<Language, Translations> = {
     noReferences: 'No reference documents found',
     viewPdf: 'View PDF',
     
+
+    // B2B Invoice (Italian)
+    generateB2BInvoice: 'Genera Fattura B2B',
+    b2bInvoiceGenerated: 'Fattura B2B generata con successo',
+    b2bInvoiceGenerationFailed: 'Generazione fattura B2B fallita',
+    standardTaxInvoice: 'Fattura Fiscale Standard',
+    simplifiedTaxInvoice: 'Fattura Fiscale Semplificata',
+    buyerVatNumber: 'Partita IVA Acquirente',
     // Toast Messages & Notifications
     procurementCreated: 'Procurement item created successfully',
     procurementUpdated: 'Procurement item updated successfully',
@@ -12438,6 +12494,14 @@ export const translations: Record<Language, Translations> = {
     noReferences: 'No reference documents found',
     viewPdf: 'View PDF',
     
+
+    // B2B Invoice (Hindi)
+    generateB2BInvoice: 'B2B चालान बनाएं',
+    b2bInvoiceGenerated: 'B2B चालान सफलतापूर्वक बनाया गया',
+    b2bInvoiceGenerationFailed: 'B2B चालान बनाने में विफल',
+    standardTaxInvoice: 'मानक कर चालान',
+    simplifiedTaxInvoice: 'सरलीकृत कर चालान',
+    buyerVatNumber: 'खरीदार वैट नंबर',
     // Toast Messages & Notifications
     procurementCreated: 'खरीद आइटम सफलतापूर्वक बनाया गया',
     procurementUpdated: 'खरीद आइटम सफलतापूर्वक अपडेट किया गया',
@@ -13978,6 +14042,14 @@ export const translations: Record<Language, Translations> = {
     noReferences: 'No reference documents found',
     viewPdf: 'View PDF',
     
+
+    // B2B Invoice (Urdu)
+    generateB2BInvoice: 'B2B رسید بنائیں',
+    b2bInvoiceGenerated: 'B2B رسید کامیابی سے بنائی گئی',
+    b2bInvoiceGenerationFailed: 'B2B رسید بنانے میں ناکامی',
+    standardTaxInvoice: 'معیاری ٹیکس رسید',
+    simplifiedTaxInvoice: 'آسان ٹیکس رسید',
+    buyerVatNumber: 'خریدار VAT نمبر',
     // Toast Messages & Notifications
     procurementCreated: 'خریداری کی آئٹم کامیابی سے بنائی گئی',
     procurementUpdated: 'خریداری کی آئٹم کامیابی سے اپ ڈیٹ کی گئی',
@@ -15460,6 +15532,14 @@ export const translations: Record<Language, Translations> = {
     noReferences: 'No reference documents found',
     viewPdf: 'View PDF',
 
+    // B2B Invoice (Spanish)
+    generateB2BInvoice: 'Generar Factura B2B',
+    b2bInvoiceGenerated: 'Factura B2B generada exitosamente',
+    b2bInvoiceGenerationFailed: 'Error al generar factura B2B',
+    standardTaxInvoice: 'Factura Fiscal Estándar',
+    simplifiedTaxInvoice: 'Factura Fiscal Simplificada',
+    buyerVatNumber: 'NIF del Comprador',
+
     procurementCreated: "Artículo de adquisición creado exitosamente",
     procurementUpdated: "Artículo de adquisición actualizado exitosamente",
     procurementDeleted: "Artículo de adquisición eliminado exitosamente",
@@ -16940,6 +17020,14 @@ export const translations: Record<Language, Translations> = {
     referenceDeleteConfirm: 'Are you sure you want to delete this reference document?',
     noReferences: 'No reference documents found',
     viewPdf: 'View PDF',
+
+    // B2B Invoice (Tagalog)
+    generateB2BInvoice: 'Gumawa ng B2B Invoice',
+    b2bInvoiceGenerated: 'Matagumpay na nagawa ang B2B invoice',
+    b2bInvoiceGenerationFailed: 'Nabigo ang paggawa ng B2B invoice',
+    standardTaxInvoice: 'Standard na Tax Invoice',
+    simplifiedTaxInvoice: 'Pinasimpleng Tax Invoice',
+    buyerVatNumber: 'VAT Number ng Mamimili',
 
     procurementCreated: "Matagumpay na nagawa ang item sa pagbili",
     procurementUpdated: "Matagumpay na na-update ang item sa pagbili",
