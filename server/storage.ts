@@ -1013,12 +1013,43 @@ export class DatabaseStorage implements IStorage {
     status?: string;
     branchId?: string;
   }): Promise<Procurement[]> {
-    const conditions = [eq(procurement.restaurantId, filter.restaurantId)];
-    if (filter.type) conditions.push(eq(procurement.type, filter.type));
-    if (filter.status) conditions.push(eq(procurement.status, filter.status));
-    if (filter.branchId) conditions.push(eq(procurement.branchId, filter.branchId));
-    
-    return await db.select().from(procurement).where(and(...conditions));
+    try {
+      const conditions = [eq(procurement.restaurantId, filter.restaurantId)];
+      if (filter.type) conditions.push(eq(procurement.type, filter.type));
+      if (filter.status) conditions.push(eq(procurement.status, filter.status));
+      if (filter.branchId) conditions.push(eq(procurement.branchId, filter.branchId));
+      
+      return await db.select().from(procurement).where(and(...conditions));
+    } catch (error: any) {
+      // Fallback if new columns (inventory_item_id, original_procurement_id) don't exist yet
+      if (error.message?.includes('inventory_item_id') || error.message?.includes('original_procurement_id')) {
+        console.log('[Procurement] New columns not found, using fallback query');
+        // Build SQL with template literals for proper parameter handling
+        const baseQuery = sql`SELECT id, restaurant_id as "restaurantId", type, title, description, supplier, category, 
+          quantity, unit_price as "unitPrice", total_cost as "totalCost", status, priority, 
+          requested_by as "requestedBy", approved_by as "approvedBy", branch_id as "branchId", 
+          order_date as "orderDate", expected_delivery as "expectedDelivery", actual_delivery as "actualDelivery", 
+          notes, invoice_image as "invoiceImage", bill_id as "billId", 
+          NULL as "inventoryItemId", NULL as "originalProcurementId",
+          created_at as "createdAt", updated_at as "updatedAt"
+          FROM procurement WHERE restaurant_id = ${filter.restaurantId}`;
+        
+        let finalQuery = baseQuery;
+        if (filter.type) {
+          finalQuery = sql`${finalQuery} AND type = ${filter.type}`;
+        }
+        if (filter.status) {
+          finalQuery = sql`${finalQuery} AND status = ${filter.status}`;
+        }
+        if (filter.branchId) {
+          finalQuery = sql`${finalQuery} AND branch_id = ${filter.branchId}`;
+        }
+        
+        const result = await db.execute(finalQuery);
+        return (result as any).rows || [];
+      }
+      throw error;
+    }
   }
 
   async getProcurement(id: string, restaurantId: string): Promise<Procurement | undefined> {
