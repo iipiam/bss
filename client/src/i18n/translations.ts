@@ -1189,7 +1189,6 @@ export interface Translations {
   manageBusinessDocuments: string;
   companyFiles: string;
   companyFilesDescription: string;
-  licenses: string;
   kinzhalCertificates: string;
 
   // Violations
