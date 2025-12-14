@@ -740,17 +740,19 @@ export default function ProcurementPage() {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <CardTitle>Procurement Requests</CardTitle>
             <div className="flex gap-2 items-center flex-wrap">
-              <div className="relative">
-                <Label htmlFor="search-procurement" className="sr-only">{t.search}</Label>
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search-procurement"
-                  placeholder={t.search}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-48"
-                  data-testid="input-search-procurement"
-                />
+              <div className="flex items-center gap-2">
+                <Label htmlFor="search-procurement" className="text-sm font-medium">{t.search || "Search"}:</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="search-procurement"
+                    placeholder={t.searchProcurement || "Search procurement..."}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 w-48"
+                    data-testid="input-search-procurement"
+                  />
+                </div>
               </div>
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                 <SelectTrigger className="w-40" data-testid="filter-status">
@@ -786,6 +788,8 @@ export default function ProcurementPage() {
             ) : (
               <div className="space-y-4">
                 {procurements
+                  .slice()
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                   .filter((item) => {
                     if (!searchQuery.trim()) return true;
                     const query = searchQuery.toLowerCase();
