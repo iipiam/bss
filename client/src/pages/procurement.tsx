@@ -17,7 +17,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import type { Procurement, InsertProcurement } from "@shared/schema";
 import { insertProcurementSchema } from "@shared/schema";
-import { Plus, Package, Wrench, HardHat, Computer, Calendar, User, AlertCircle, CheckCircle2, Clock, XCircle, RefreshCw, Upload, Image, X, FileText, Eye, Download, Search } from "lucide-react";
+import { Plus, Package, Wrench, HardHat, Computer, Calendar, User, AlertCircle, CheckCircle2, Clock, XCircle, RefreshCw, Upload, Image, X, FileText, Eye, Download, Search, Repeat } from "lucide-react";
 import { format } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -173,6 +173,20 @@ export default function ProcurementPage() {
     onError: (error: Error) => {
       console.error("Delete procurement error:", error);
       toast({ title: t.error, description: error.message || "Failed to delete procurement request", variant: "destructive" });
+    },
+  });
+
+  const reorderMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("POST", `/api/procurement/${id}/reorder`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/procurement"] });
+      toast({ title: t.success, description: t.reorderCreated || "Reorder request created successfully" });
+    },
+    onError: (error: Error) => {
+      console.error("Reorder procurement error:", error);
+      toast({ title: t.error, description: error.message || "Failed to create reorder request", variant: "destructive" });
     },
   });
 
@@ -942,6 +956,18 @@ export default function ProcurementPage() {
                                 {item.status === "received" && (
                                   <Button size="sm" variant="outline" onClick={() => handleStatusChange(item.id, "completed")}>
                                     Mark as Completed
+                                  </Button>
+                                )}
+                                {item.type === "inventory" && ["received", "completed"].includes(item.status) && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    onClick={() => reorderMutation.mutate(item.id)}
+                                    disabled={reorderMutation.isPending}
+                                    data-testid={`button-reorder-${item.id}`}
+                                  >
+                                    <Repeat className="h-3 w-3 mr-1" />
+                                    {t.reorder || "Reorder"}
                                   </Button>
                                 )}
                                 <Button 

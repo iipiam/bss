@@ -2966,7 +2966,30 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const isNowComplete = ["received", "completed"].includes(newStatus);
       const hasExistingInventory = !!existingProcurement.inventoryItemId;
       
-      if (updatedType === "inventory" && wasNotComplete && isNowComplete && !hasExistingInventory) {
+      // Handle reorder - when a reorder procurement is received/completed, ADD to existing inventory
+      const isReorder = !!existingProcurement.originalProcurementId;
+      if (updatedType === "inventory" && wasNotComplete && isNowComplete && isReorder && existingProcurement.inventoryItemId) {
+        try {
+          const inventoryItem = await storage.getInventoryItem(existingProcurement.inventoryItemId, restaurantId);
+          if (inventoryItem) {
+            const currentQty = parseFloat(String(inventoryItem.quantity)) || 0;
+            // Use updated quantity if provided in this request, otherwise use existing procurement quantity
+            const addQty = parseFloat(String(safeData.quantity ?? existingProcurement.quantity ?? 0)) || 0;
+            const newQty = currentQty + addQty;
+            
+            await storage.updateInventoryItem(existingProcurement.inventoryItemId, restaurantId, {
+              quantity: String(newQty),
+            });
+            console.log(`[PROCUREMENT] Reorder received - added ${addQty} to inventory ${inventoryItem.name} (new qty: ${newQty})`);
+          } else {
+            console.warn(`[PROCUREMENT] Reorder inventory item ${existingProcurement.inventoryItemId} not found`);
+          }
+        } catch (invError) {
+          console.error("[PROCUREMENT] Failed to update inventory for reorder:", invError);
+        }
+      }
+      // Handle new procurement - create inventory item when first completed
+      else if (updatedType === "inventory" && wasNotComplete && isNowComplete && !hasExistingInventory) {
         try {
           const inventoryData = {
             restaurantId,
