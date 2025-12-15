@@ -554,8 +554,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       
       res.json(item);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid inventory data" });
+    } catch (error: any) {
+      console.error('[INVENTORY PATCH] Error:', error.message || error);
+      res.status(400).json({ error: error.message || "Invalid inventory data" });
     }
   });
 
