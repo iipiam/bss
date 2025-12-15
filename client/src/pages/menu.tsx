@@ -121,7 +121,7 @@ export default function Menu() {
 
   // Fetch saved custom categories from the database
   const { data: savedCategories = [] } = useQuery<{ id: string; name: string; restaurantId: string; sortOrder: number | null }[]>({
-    queryKey: ["/api/menu/categories"],
+    queryKey: ["/api/menu-categories"],
   });
 
   // Derive categories dynamically from actual menu items in database
@@ -306,10 +306,10 @@ export default function Menu() {
   // Category mutations for persisting categories to the database
   const createCategoryMutation = useMutation({
     mutationFn: async (name: string) => {
-      return await apiRequest("POST", "/api/menu/categories", { name });
+      return await apiRequest("POST", "/api/menu-categories", { name });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/menu/categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu-categories"] });
       setNewCategory("");
       toast({
         title: "Category added",
@@ -327,10 +327,10 @@ export default function Menu() {
 
   const deleteCategoryMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/menu/categories/${id}`);
+      await apiRequest("DELETE", `/api/menu-categories/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/menu/categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu-categories"] });
       toast({
         title: "Category removed",
         description: "Category has been removed from menu categories",

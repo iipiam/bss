@@ -98,7 +98,7 @@ export default function POS() {
 
   // Fetch saved custom categories from the database
   const { data: savedCategories = [] } = useQuery<{ id: string; name: string; restaurantId: string; sortOrder: number | null }[]>({
-    queryKey: ["/api/menu/categories"],
+    queryKey: ["/api/menu-categories"],
   });
 
   // Derive categories dynamically from actual menu items in database
