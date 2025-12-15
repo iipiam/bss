@@ -7304,6 +7304,181 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Geidea Payment Gateway
+  app.post("/api/geidea/create-session", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { orderId, amount, description, customerEmail, language } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: "Invalid amount" });
+      }
+
+      const { createPaymentSession } = await import('./geidea');
+      
+      const merchantReferenceId = orderId || `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const callbackUrl = `${req.protocol}://${req.get('host')}/api/geidea/callback`;
+
+      const sessionResponse = await createPaymentSession({
+        amount: parseFloat(amount),
+        merchantReferenceId,
+        callbackUrl,
+        customerEmail,
+        language: language || 'en',
+      });
+
+      // Save payment record to database (reusing moyasarPayments table for now)
+      const geideaPayment = await storage.createMoyasarPayment({
+        restaurantId,
+        moyasarId: sessionResponse.session.id,
+        orderId: orderId || null,
+        transactionId: null,
+        amount: amount.toString(),
+        amountHalalas: Math.round(parseFloat(amount) * 100),
+        currency: 'SAR',
+        status: 'initiated',
+        paymentMethod: 'geidea',
+        cardBrand: null,
+        cardLast4: null,
+        fee: null,
+        refundedAmount: "0",
+        description: description || 'Payment',
+        customerName: req.body.customerName || null,
+        customerEmail: customerEmail || null,
+        customerPhone: req.body.customerPhone || null,
+        callbackUrl,
+        metadata: { merchantReferenceId, gateway: 'geidea' },
+        errorMessage: null,
+        branchId: req.body.branchId || null,
+      });
+
+      res.json({
+        success: true,
+        sessionId: sessionResponse.session.id,
+        redirectUrl: sessionResponse.session.redirectUrl,
+        payment: geideaPayment,
+      });
+    } catch (error: any) {
+      console.error("[Geidea] Session creation error:", error);
+      res.status(500).json({ 
+        error: "Payment session creation failed",
+        message: error.message,
+      });
+    }
+  });
+
+  app.post("/api/geidea/callback", async (req, res) => {
+    try {
+      const { order } = req.body;
+      
+      if (!order) {
+        console.warn('[Geidea Webhook] Missing order in callback');
+        return res.status(400).json({ error: 'Missing order data' });
+      }
+
+      const { orderId: geideaOrderId, status, detailedStatus, merchantReferenceId, amount, currency } = order;
+      
+      console.log(`[Geidea Webhook] Received callback for order ${geideaOrderId}, status: ${status}`);
+
+      // Find payment by session ID (stored as moyasarId) or by merchantReferenceId in metadata
+      let payment = await storage.getMoyasarPaymentByMoyasarIdAnyTenant(geideaOrderId);
+      
+      if (!payment) {
+        console.warn(`[Geidea Webhook] Payment not found for order: ${geideaOrderId}`);
+        return res.status(404).json({ error: "Payment not found" });
+      }
+
+      // Map Geidea status to internal status
+      const { isPaymentSuccessful, isPaymentFailed } = await import('./geidea');
+      let internalStatus = status.toLowerCase();
+      if (isPaymentSuccessful(status)) {
+        internalStatus = 'paid';
+      } else if (isPaymentFailed(status)) {
+        internalStatus = 'failed';
+      }
+
+      // Get card details from transactions if available
+      let cardBrand = null;
+      let cardLast4 = null;
+      if (order.transactions && order.transactions.length > 0) {
+        const lastTx = order.transactions[order.transactions.length - 1];
+        if (lastTx.paymentMethod) {
+          cardBrand = lastTx.paymentMethod.brand || null;
+          cardLast4 = lastTx.paymentMethod.maskedCardNumber ? 
+            lastTx.paymentMethod.maskedCardNumber.slice(-4) : null;
+        }
+      }
+
+      // Update payment in database
+      await storage.updateMoyasarPayment(payment.id, payment.restaurantId, {
+        status: internalStatus,
+        cardBrand,
+        cardLast4,
+        paymentMethod: 'geidea-card',
+      });
+
+      // If payment is successful and linked to an order, update order status
+      if (internalStatus === 'paid' && payment.orderId) {
+        await storage.updateOrder(payment.orderId, payment.restaurantId, {
+          status: 'paid',
+          paymentMethod: 'Geidea - ' + (cardBrand || 'Card'),
+        });
+      }
+
+      console.log(`[Geidea Webhook] Payment ${geideaOrderId} updated to ${internalStatus} (restaurant: ${payment.restaurantId})`);
+      
+      // Redirect to success or failure page
+      const baseUrl = req.protocol + '://' + req.get('host');
+      if (internalStatus === 'paid') {
+        res.redirect(`${baseUrl}/payment-success?orderId=${payment.orderId || ''}&paymentId=${payment.id}`);
+      } else {
+        res.redirect(`${baseUrl}/payment-failed?orderId=${payment.orderId || ''}&reason=${encodeURIComponent(detailedStatus || status)}`);
+      }
+    } catch (error: any) {
+      console.error("[Geidea Callback] Error:", error);
+      res.status(500).json({ 
+        error: "Callback processing failed",
+        message: error.message,
+      });
+    }
+  });
+
+  app.get("/api/geidea/order/:orderId", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const { getOrderDetails, isPaymentSuccessful } = await import('./geidea');
+      const orderDetails = await getOrderDetails(req.params.orderId);
+      
+      res.json({
+        ...orderDetails,
+        isSuccessful: isPaymentSuccessful(orderDetails.order.status),
+      });
+    } catch (error: any) {
+      console.error("[Geidea] Get order error:", error);
+      res.status(500).json({ 
+        error: "Failed to get order details",
+        message: error.message,
+      });
+    }
+  });
+
+  app.get("/api/geidea/payments", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const branchId = req.query.branchId as string | undefined;
+      // Reuse moyasar payments storage, filter by gateway in metadata
+      const allPayments = await storage.getMoyasarPayments(restaurantId, branchId);
+      const geideaPayments = allPayments.filter((p: any) => 
+        p.paymentMethod === 'geidea' || 
+        p.paymentMethod === 'geidea-card' ||
+        (p.metadata && typeof p.metadata === 'object' && (p.metadata as any).gateway === 'geidea')
+      );
+      res.json(geideaPayments);
+    } catch (error) {
+      console.error("[Geidea] Error fetching payments:", error);
+      res.status(500).json({ error: "Failed to fetch payments" });
+    }
+  });
+
   // Support Tickets
   app.get("/api/tickets", requireAuth, async (req, res) => {
     try {

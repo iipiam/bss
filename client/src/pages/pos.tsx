@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDevice } from "@/contexts/DeviceContext";
 import { useBusinessType } from "@/hooks/useBusinessType";
-import { MoyasarPayment } from "@/components/MoyasarPayment";
+import { GeideaPayment } from "@/components/GeideaPayment";
 import type { MenuItem, DeliveryApp, Addon } from "@shared/schema";
 
 interface CartItemAddon {
@@ -1591,7 +1591,7 @@ export default function POS() {
         </DialogContent>
       </Dialog>
 
-      {/* Moyasar Payment Dialog */}
+      {/* Geidea Payment Dialog */}
       <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -1601,7 +1601,7 @@ export default function POS() {
             </DialogDescription>
           </DialogHeader>
           {pendingOrderData && (
-            <MoyasarPayment
+            <GeideaPayment
               amount={parseFloat(pendingOrderData.total)}
               description={`Order ${pendingOrderData.orderNumber} - ${itemCount} items`}
               orderId={pendingOrderData.orderNumber}
