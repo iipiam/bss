@@ -1730,8 +1730,39 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createShopBill(bill: InsertShopBill): Promise<ShopBill> {
-    const [created] = await db.insert(shopBills).values(bill).returning();
-    return created;
+    try {
+      const [created] = await db.insert(shopBills).values(bill).returning();
+      return created;
+    } catch (error: any) {
+      if (error.message?.includes('invoice_image') || error.message?.includes('does not exist')) {
+        console.log('[ShopBills] createShopBill: New columns not found, using fallback insert');
+        const result = await db.execute(sql`
+          INSERT INTO shop_bills (
+            id, restaurant_id, branch_id, bill_type, description, amount, 
+            payment_date, payment_period, status, employee_id, employee_name, 
+            created_at, payment_month, archived
+          ) VALUES (
+            gen_random_uuid(), ${bill.restaurantId}, ${bill.branchId || null}, ${bill.billType},
+            ${bill.description || null}, ${bill.amount}, ${bill.paymentDate || new Date()}, 
+            ${bill.paymentPeriod || null}, ${bill.status || 'pending'}, ${bill.employeeId || null}, 
+            ${bill.employeeName || null}, NOW(), ${bill.paymentMonth || null}, ${bill.archived || false}
+          )
+          RETURNING id, restaurant_id as "restaurantId", branch_id as "branchId", bill_type as "billType",
+                    description, amount, payment_date as "paymentDate", payment_period as "paymentPeriod",
+                    status, employee_id as "employeeId", employee_name as "employeeName",
+                    created_at as "createdAt", payment_month as "paymentMonth", archived
+        `);
+        const row = (result as any).rows?.[0];
+        return {
+          ...row,
+          procurementId: null,
+          violationId: null,
+          notes: null,
+          invoiceImage: null,
+        } as ShopBill;
+      }
+      throw error;
+    }
   }
 
   async updateShopBill(id: string, restaurantId: string, bill: Partial<InsertShopBill>): Promise<ShopBill | undefined> {

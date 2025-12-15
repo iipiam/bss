@@ -11,6 +11,35 @@ import {
   type InventoryItem,
 } from "@shared/schema";
 
+// Helper to safely get inventory item with fallback for missing unit_price column
+async function getInventoryItemSafe(id: string): Promise<InventoryItem | null> {
+  try {
+    const result = await db
+      .select()
+      .from(inventoryItems)
+      .where(eq(inventoryItems.id, id))
+      .limit(1);
+    return result.length > 0 ? result[0] : null;
+  } catch (error: any) {
+    if (error.message?.includes('unit_price')) {
+      console.log('[OrderProcessing] unit_price column not found, using fallback query');
+      const result = await db.execute(sql`
+        SELECT id, restaurant_id as "restaurantId", name, category, quantity, unit,
+               reference_quantity as "referenceQuantity", price,
+               CASE WHEN reference_quantity::numeric > 0 
+                    THEN (price::numeric / reference_quantity::numeric)::text 
+                    ELSE '0' END as "unitPrice",
+               supplier, status, branch_id as "branchId", sort_order as "sortOrder",
+               expiration_days as "expirationDays", purchase_date as "purchaseDate"
+        FROM inventory_items WHERE id = ${id}
+      `);
+      const rows = (result as any).rows;
+      return rows && rows.length > 0 ? rows[0] as InventoryItem : null;
+    }
+    throw error;
+  }
+}
+
 interface OrderItem {
   id: string;
   name: string;
@@ -120,11 +149,12 @@ export class OrderProcessingService {
     branchId: string
   ): Promise<void> {
     for (const [inventoryItemId, requirement] of Array.from(stockRequirements.entries())) {
-      const currentItem = await tx
-        .select()
-        .from(inventoryItems)
-        .where(eq(inventoryItems.id, inventoryItemId))
-        .limit(1);
+      // Use raw SQL to avoid unit_price column issue
+      const result = await tx.execute(sql`
+        SELECT id, restaurant_id as "restaurantId", quantity 
+        FROM inventory_items WHERE id = ${inventoryItemId}
+      `);
+      const currentItem = (result as any).rows;
 
       if (!currentItem || currentItem.length === 0) continue;
 
@@ -197,24 +227,20 @@ export class OrderProcessingService {
       if (existing) {
         existing.requiredQuantity += requiredQty;
       } else {
-        const invItem = await db
-          .select()
-          .from(inventoryItems)
-          .where(eq(inventoryItems.id, ingredient.inventoryItemId))
-          .limit(1);
+        const invItem = await getInventoryItemSafe(ingredient.inventoryItemId);
 
-        if (invItem && invItem.length > 0) {
+        if (invItem) {
           // Only enforce branch consistency if both inventory item and order have branchId
           // Items with branchId=null are global and available to all branches
-          if (branchId && invItem[0].branchId && invItem[0].branchId !== branchId) {
-            throw new Error(`Inventory item ${invItem[0].id} (${invItem[0].name}) belongs to branch ${invItem[0].branchId} but order is for branch ${branchId}`);
+          if (branchId && invItem.branchId && invItem.branchId !== branchId) {
+            throw new Error(`Inventory item ${invItem.id} (${invItem.name}) belongs to branch ${invItem.branchId} but order is for branch ${branchId}`);
           }
           
           stockRequirements.set(ingredient.inventoryItemId, {
             inventoryItemId: ingredient.inventoryItemId,
             inventoryItemName: ingredient.name,
             requiredQuantity: requiredQty,
-            availableQuantity: parseFloat(invItem[0].quantity),
+            availableQuantity: parseFloat(invItem.quantity),
             unit: ingredient.unit,
           });
         }
@@ -233,18 +259,12 @@ export class OrderProcessingService {
       return;
     }
 
-    const invItems = await db
-      .select()
-      .from(inventoryItems)
-      .where(eq(inventoryItems.id, menuItem.inventoryItemId))
-      .limit(1);
+    const invItem = await getInventoryItemSafe(menuItem.inventoryItemId);
 
-    if (!invItems || invItems.length === 0) {
+    if (!invItem) {
       console.warn(`Inventory item ${menuItem.inventoryItemId} not found for menu item "${menuItem.name}"`);
       return;
     }
-
-    const invItem = invItems[0];
     
     // Only enforce branch consistency if both inventory item and order have branchId
     // Items with branchId=null are global and available to all branches
@@ -304,11 +324,12 @@ export class OrderProcessingService {
   ): Promise<void> {
     await db.transaction(async (tx) => {
       for (const [inventoryItemId, requirement] of Array.from(stockRequirements.entries())) {
-        const currentItem = await tx
-          .select()
-          .from(inventoryItems)
-          .where(eq(inventoryItems.id, inventoryItemId))
-          .limit(1);
+        // Use raw SQL to avoid unit_price column issue
+        const result = await tx.execute(sql`
+          SELECT id, restaurant_id as "restaurantId", quantity 
+          FROM inventory_items WHERE id = ${inventoryItemId}
+        `);
+        const currentItem = (result as any).rows;
 
         if (!currentItem || currentItem.length === 0) continue;
 
