@@ -1602,24 +1602,83 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
-    const [created] = await db.insert(invoices).values(invoice as any).returning();
-    return created;
+    try {
+      const [created] = await db.insert(invoices).values(invoice as any).returning();
+      return created;
+    } catch (error: any) {
+      // Handle case where procurement_id column doesn't exist yet
+      if (error.message?.includes('procurement_id')) {
+        console.warn('[Invoices] procurement_id column not found, using fallback INSERT');
+        const { procurementId, ...invoiceWithoutProcurement } = invoice as any;
+        const result = await db.execute(sql`
+          INSERT INTO invoices (restaurant_id, invoice_number, invoice_type, transaction_id, order_id, branch_id,
+                               customer_name, customer_vat_number, items, subtotal, vat_amount, total, qr_code, pdf_path)
+          VALUES (${invoiceWithoutProcurement.restaurantId}, ${invoiceWithoutProcurement.invoiceNumber}, 
+                  ${invoiceWithoutProcurement.invoiceType || 'simplified'}, ${invoiceWithoutProcurement.transactionId || null},
+                  ${invoiceWithoutProcurement.orderId || null}, ${invoiceWithoutProcurement.branchId || null},
+                  ${invoiceWithoutProcurement.customerName || null}, ${invoiceWithoutProcurement.customerVatNumber || null},
+                  ${JSON.stringify(invoiceWithoutProcurement.items)}, ${invoiceWithoutProcurement.subtotal},
+                  ${invoiceWithoutProcurement.vatAmount}, ${invoiceWithoutProcurement.total},
+                  ${invoiceWithoutProcurement.qrCode || ''}, ${invoiceWithoutProcurement.pdfPath || ''})
+          RETURNING id, restaurant_id as "restaurantId", invoice_number as "invoiceNumber",
+                    invoice_type as "invoiceType", transaction_id as "transactionId",
+                    order_id as "orderId", NULL as "procurementId", branch_id as "branchId",
+                    customer_name as "customerName", customer_vat_number as "customerVatNumber",
+                    items, subtotal, vat_amount as "vatAmount", total,
+                    qr_code as "qrCode", pdf_path as "pdfPath", created_at as "createdAt"
+        `);
+        return (result as any).rows[0] as Invoice;
+      }
+      throw error;
+    }
   }
 
   async updateInvoice(id: string, restaurantId: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined> {
     // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
-    const { restaurantId: _, ...safeData } = invoice;
+    const { restaurantId: _, procurementId: __, ...safeData } = invoice as any;
     const updateData = Object.fromEntries(
       Object.entries(safeData).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
       return this.getInvoice(id, restaurantId);
     }
-    const [updated] = await db.update(invoices)
-      .set(updateData as any)
-      .where(and(eq(invoices.id, id), eq(invoices.restaurantId, restaurantId)))
-      .returning();
-    return updated;
+    try {
+      const [updated] = await db.update(invoices)
+        .set(updateData as any)
+        .where(and(eq(invoices.id, id), eq(invoices.restaurantId, restaurantId)))
+        .returning();
+      return updated;
+    } catch (error: any) {
+      // Handle case where procurement_id column doesn't exist yet
+      if (error.message?.includes('procurement_id')) {
+        console.warn('[Invoices] procurement_id column not found, using fallback UPDATE');
+        // Build dynamic UPDATE query for only the fields we have
+        const setClauses: string[] = [];
+        const values: any[] = [];
+        if (updateData.qrCode !== undefined) { setClauses.push('qr_code = $' + (values.push(updateData.qrCode))); }
+        if (updateData.pdfPath !== undefined) { setClauses.push('pdf_path = $' + (values.push(updateData.pdfPath))); }
+        if (updateData.customerName !== undefined) { setClauses.push('customer_name = $' + (values.push(updateData.customerName))); }
+        if (updateData.customerVatNumber !== undefined) { setClauses.push('customer_vat_number = $' + (values.push(updateData.customerVatNumber))); }
+        
+        if (setClauses.length === 0) {
+          return this.getInvoice(id, restaurantId);
+        }
+        
+        // Simple update for common fields
+        const result = await db.execute(sql`
+          UPDATE invoices SET qr_code = ${updateData.qrCode || null}, pdf_path = ${updateData.pdfPath || null}
+          WHERE id = ${id} AND restaurant_id = ${restaurantId}
+          RETURNING id, restaurant_id as "restaurantId", invoice_number as "invoiceNumber",
+                    invoice_type as "invoiceType", transaction_id as "transactionId",
+                    order_id as "orderId", NULL as "procurementId", branch_id as "branchId",
+                    customer_name as "customerName", customer_vat_number as "customerVatNumber",
+                    items, subtotal, vat_amount as "vatAmount", total,
+                    qr_code as "qrCode", pdf_path as "pdfPath", created_at as "createdAt"
+        `);
+        return (result as any).rows[0] as Invoice | undefined;
+      }
+      throw error;
+    }
   }
 
   // Customers (MULTI-TENANT: filters by restaurantId)
