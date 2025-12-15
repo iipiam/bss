@@ -65,6 +65,10 @@ export default function ProcurementPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [viewImageUrl, setViewImageUrl] = useState<string | null>(null);
   const [viewingProcurementId, setViewingProcurementId] = useState<string | null>(null);
+  const [isReorderDialogOpen, setIsReorderDialogOpen] = useState(false);
+  const [reorderItem, setReorderItem] = useState<Procurement | null>(null);
+  const [reorderQuantity, setReorderQuantity] = useState<string>("");
+  const [reorderUnitPrice, setReorderUnitPrice] = useState<string>("");
 
   const { data: procurements = [], isLoading } = useQuery<Procurement[]>({
     queryKey: [
@@ -177,11 +181,19 @@ export default function ProcurementPage() {
   });
 
   const reorderMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest("POST", `/api/procurement/${id}/reorder`);
+    mutationFn: async (data: { id: string; quantity: number; unitPrice: string }) => {
+      await apiRequest("POST", `/api/procurement/${data.id}/reorder`, {
+        quantity: data.quantity,
+        unitPrice: data.unitPrice,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/procurement"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      setIsReorderDialogOpen(false);
+      setReorderItem(null);
+      setReorderQuantity("");
+      setReorderUnitPrice("");
       toast({ title: t.success, description: t.reorderCreated || "Reorder request created successfully" });
     },
     onError: (error: Error) => {
@@ -189,6 +201,20 @@ export default function ProcurementPage() {
       toast({ title: t.error, description: error.message || "Failed to create reorder request", variant: "destructive" });
     },
   });
+
+  const handleOpenReorderDialog = (item: Procurement) => {
+    setReorderItem(item);
+    setReorderQuantity(item.quantity?.toString() || "1");
+    setReorderUnitPrice(item.unitPrice || "");
+    setIsReorderDialogOpen(true);
+  };
+
+  const handleReorderSubmit = () => {
+    if (!reorderItem) return;
+    const quantity = parseFloat(reorderQuantity) || 1;
+    const unitPrice = reorderUnitPrice || "0";
+    reorderMutation.mutate({ id: reorderItem.id, quantity, unitPrice });
+  };
 
   const handleSubmit = (data: z.infer<typeof procurementFormSchema>) => {
     console.log("[Procurement] Form submitted with data:", data);
@@ -966,8 +992,7 @@ export default function ProcurementPage() {
                                   <Button 
                                     size="sm" 
                                     variant="outline" 
-                                    onClick={() => reorderMutation.mutate(item.id)}
-                                    disabled={reorderMutation.isPending}
+                                    onClick={() => handleOpenReorderDialog(item)}
                                     data-testid={`button-reorder-${item.id}`}
                                   >
                                     <Repeat className="h-3 w-3 mr-1" />
@@ -1024,6 +1049,69 @@ export default function ProcurementPage() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reorder Dialog */}
+      <Dialog open={isReorderDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsReorderDialogOpen(false);
+          setReorderItem(null);
+          setReorderQuantity("");
+          setReorderUnitPrice("");
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t.reorder || "Reorder"}: {reorderItem?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="reorder-quantity">{t.quantity || "Quantity"}</Label>
+              <Input
+                id="reorder-quantity"
+                type="number"
+                min="1"
+                step="1"
+                value={reorderQuantity}
+                onChange={(e) => setReorderQuantity(e.target.value)}
+                placeholder="1"
+                data-testid="input-reorder-quantity"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reorder-unit-price">{t.price || "Unit Price"} (SAR)</Label>
+              <Input
+                id="reorder-unit-price"
+                type="number"
+                min="0"
+                step="0.01"
+                value={reorderUnitPrice}
+                onChange={(e) => setReorderUnitPrice(e.target.value)}
+                placeholder="0.00"
+                data-testid="input-reorder-unit-price"
+              />
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {t.totalCosts || "Total Cost"}: SAR {((parseFloat(reorderQuantity) || 0) * (parseFloat(reorderUnitPrice) || 0)).toFixed(2)}
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsReorderDialogOpen(false)}
+              data-testid="button-reorder-cancel"
+            >
+              {t.cancel || "Cancel"}
+            </Button>
+            <Button
+              onClick={handleReorderSubmit}
+              disabled={reorderMutation.isPending || !reorderQuantity || !reorderUnitPrice}
+              data-testid="button-reorder-submit"
+            >
+              {reorderMutation.isPending ? t.processing || "Processing..." : t.reorder || "Create Reorder"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

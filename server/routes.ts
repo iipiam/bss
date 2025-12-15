@@ -3056,6 +3056,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       const userName = req.session.user!.fullName || req.session.user!.username;
       
+      // Get price and quantity from request body
+      const { quantity, unitPrice } = req.body;
+      if (!quantity || quantity <= 0) {
+        return res.status(400).json({ error: "Quantity is required and must be greater than 0" });
+      }
+      if (!unitPrice || parseFloat(unitPrice) < 0) {
+        return res.status(400).json({ error: "Unit price is required" });
+      }
+      
       // Get the original procurement
       const originalProcurement = await storage.getProcurement(req.params.id, restaurantId);
       if (!originalProcurement) {
@@ -3067,7 +3076,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "Only completed or received procurements can be reordered" });
       }
       
-      // Create a new procurement record based on the original
+      // Parse and validate numeric values
+      const parsedQuantity = parseFloat(quantity);
+      const parsedUnitPrice = parseFloat(unitPrice);
+      
+      // Calculate total cost (unitPrice is VAT-inclusive)
+      const totalCostNum = parsedQuantity * parsedUnitPrice;
+      
+      // Create a new procurement record based on the original with new price/quantity
       const reorderData = {
         restaurantId,
         type: originalProcurement.type,
@@ -3075,9 +3091,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         description: originalProcurement.description,
         supplier: originalProcurement.supplier,
         category: originalProcurement.category,
-        quantity: originalProcurement.quantity,
-        unitPrice: originalProcurement.unitPrice,
-        totalCost: originalProcurement.totalCost,
+        quantity: parsedQuantity,
+        unitPrice: parsedUnitPrice.toFixed(2),
+        totalCost: totalCostNum.toFixed(2),
         status: "pending" as const,
         priority: originalProcurement.priority as "low" | "medium" | "high" | "urgent",
         requestedBy: userName,
@@ -3093,11 +3109,56 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         inventoryItemId: originalProcurement.inventoryItemId,
       } as any);
       
+      // Create an invoice for the reorder
+      const settings = await storage.getSettings(restaurantId);
+      const branch = originalProcurement.branchId ? await storage.getBranch(originalProcurement.branchId, restaurantId) : null;
+      
+      // Calculate VAT (15%) - unitPrice is VAT-inclusive
+      // Net price per unit = unitPrice / 1.15
+      // VAT per unit = unitPrice - netPricePerUnit
+      const netPricePerUnit = parsedUnitPrice / 1.15;
+      const vatPerUnit = parsedUnitPrice - netPricePerUnit;
+      
+      // Calculate totals
+      const subtotalNum = netPricePerUnit * parsedQuantity;
+      const vatAmountNum = vatPerUnit * parsedQuantity;
+      const totalNum = subtotalNum + vatAmountNum; // Should equal totalCostNum
+      
+      // Generate invoice number
+      const invoiceNumber = `REORDER-${Date.now()}`;
+      
+      // Create invoice items with consistent VAT calculation
+      const invoiceItems = [{
+        name: originalProcurement.title,
+        quantity: parsedQuantity,
+        basePrice: parseFloat(netPricePerUnit.toFixed(2)),
+        vatAmount: parseFloat(vatPerUnit.toFixed(2)),
+        total: parseFloat((netPricePerUnit + vatPerUnit).toFixed(2)),
+      }];
+      
+      // Create invoice record - ensure line items reconcile with totals
+      const invoiceData = {
+        restaurantId,
+        invoiceNumber,
+        invoiceType: "standard" as const,
+        orderId: null,
+        branchId: originalProcurement.branchId || null,
+        customerName: originalProcurement.supplier || "Supplier",
+        items: invoiceItems,
+        subtotal: subtotalNum.toFixed(2),
+        vatAmount: vatAmountNum.toFixed(2),
+        total: totalNum.toFixed(2),
+        qrCode: "",
+        pdfPath: "",
+      };
+      
+      const createdInvoice = await storage.createInvoice(invoiceData);
+      
       // Fetch the updated procurement to return
       const finalProcurement = await storage.getProcurement(newProcurement.id, restaurantId);
       
-      console.log(`[PROCUREMENT] Created reorder ${newProcurement.id} from original ${originalProcurement.id}`);
-      res.status(201).json(finalProcurement);
+      console.log(`[PROCUREMENT] Created reorder ${newProcurement.id} from original ${originalProcurement.id} with invoice ${createdInvoice.id}`);
+      res.status(201).json({ procurement: finalProcurement, invoice: createdInvoice });
     } catch (error) {
       console.error("Reorder error:", error);
       res.status(400).json({ error: "Failed to create reorder" });
