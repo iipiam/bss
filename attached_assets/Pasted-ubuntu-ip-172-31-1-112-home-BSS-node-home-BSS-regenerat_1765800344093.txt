@@ -1,0 +1,112 @@
+ubuntu@ip-172-31-1-112:/home/BSS$ node /home/BSS/regenerate-invoice.js
+file:///home/BSS/regenerate-invoice.js:1
+const http = require('http');
+             ^
+
+ReferenceError: require is not defined in ES module scope, you can use import instead
+This file is being treated as an ES module because it has a '.js' file extension and '/home/BSS/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.
+    at file:///home/BSS/regenerate-invoice.js:1:14
+    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v20.19.6
+ubuntu@ip-172-31-1-112:/home/BSS$ const http = require('http');
+
+const data = JSON.stringify({ orderId: 'fa6f19c1-db72-46ef-82b7-5e584d2c08ee' });
+
+// First, we need to login
+const loginData = JSON.stringify({
+  username: 'bss_production',
+  password: 'KinzhalLTDCo1990'
+});
+
+const loginOptions = {
+  hostname: 'localhost',
+  port: 5000,
+  path: '/api/auth/login',
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' }
+};
+
+const loginReq = http.request(loginOptions, (loginRes) => {
+  const cookies = loginRes.headers['set-cookie'];
+  const sessionCookie = cookies?.find(c => c.startsWith('connect.sid'))?.split(';')[0];
+
+loginReq.end();loginData);ocess.stdout.write(d));');
+-bash: syntax error near unexpected token `('
+-bash: syntax error near unexpected token `('
+-bash: //: Is a directory
+-bash: syntax error near unexpected token `('
+username:: command not found
+Command 'password:' not found, did you mean:
+  command 'passwordz' from snap passwordz (1.0.0)
+See 'snap info <snapname>' for additional versions.
+-bash: syntax error near unexpected token `}'
+Command 'const' not found, did you mean:
+  command 'coinst' from deb coinst (1.9.3-5)
+Try: sudo apt install <deb name>
+Command 'hostname:' not found, did you mean:
+  command 'hostname' from deb hostname (3.23+nmu1ubuntu1)
+Try: sudo apt install <deb name>
+Command 'port:' not found, did you mean:
+  command 'port' from snap port (1.10.0)
+  command 'portx' from snap portx (2.2.15)
+See 'snap info <snapname>' for additional versions.
+Command 'path:' not found, did you mean:
+  command 'path6' from deb ipv6toolkit (2.0+ds.1-2)
+Try: sudo apt install <deb name>
+method:: command not found
+headers:: command not found
+-bash: syntax error near unexpected token `}'
+-bash: syntax error near unexpected token `('
+Command 'const' not found, did you mean:
+  command 'coinst' from deb coinst (1.9.3-5)
+Try: sudo apt install <deb name>
+-bash: syntax error near unexpected token `('
+-bash: !sessionCookie: event not found
+-bash: syntax error near unexpected token `'Login failed''
+-bash: return: can only `return' from a function or sourced script
+-bash: syntax error near unexpected token `}'
+-bash: syntax error near unexpected token `'Logged in, regenerating invoice...''
+Command 'const' not found, did you mean:
+  command 'coinst' from deb coinst (1.9.3-5)
+Try: sudo apt install <deb name>
+Command 'hostname:' not found, did you mean:
+  command 'hostname' from deb hostname (3.23+nmu1ubuntu1)
+Try: sudo apt install <deb name>
+Command 'port:' not found, did you mean:
+  command 'port' from snap port (1.10.0)
+  command 'portx' from snap portx (2.2.15)
+See 'snap info <snapname>' for additional versions.
+Command 'path:' not found, did you mean:
+  command 'path6' from deb ipv6toolkit (2.0+ds.1-2)
+Try: sudo apt install <deb name>
+method:: command not found
+headers:: command not found
+Content-Type:: command not found
+Cookie:: command not found
+-bash: syntax error near unexpected token `}'
+-bash: syntax error near unexpected token `}'
+-bash: syntax error near unexpected token `('
+-bash: syntax error near unexpected token `'Status:','
+-bash: syntax error near unexpected token `'data','
+-bash: syntax error near unexpected token `}'
+-bash: syntax error near unexpected token `data'
+-bash: syntax error near unexpected token `;'
+-bash: syntax error near unexpected token `}'
+-bash: syntax error near unexpected token `loginData'
+-bash: syntax error near unexpected token `;'
+ubuntu@ip-172-31-1-112:/home/BSS$ node /home/BSS/regenerate-invoice.js
+file:///home/BSS/regenerate-invoice.js:1
+const http = require('http');
+             ^
+
+ReferenceError: require is not defined in ES module scope, you can use import instead
+This file is being treated as an ES module because it has a '.js' file extension and '/home/BSS/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.
+    at file:///home/BSS/regenerate-invoice.js:1:14
+    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v20.19.6
