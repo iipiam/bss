@@ -103,9 +103,11 @@ export function broadcastNotification(event: {
   };
   // Menu update fields
   data?: {
-    action: 'created' | 'updated' | 'deleted';
+    action: 'created' | 'updated' | 'deleted' | 'category-created' | 'category-updated' | 'category-deleted';
     item?: any;
     itemId?: string;
+    category?: any;
+    categoryId?: string;
   };
   // Recipe cost update fields
   updatedRecipeIds?: string[];

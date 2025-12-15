@@ -79,7 +79,6 @@ export default function Menu() {
   const [isImporting, setIsImporting] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [deletingItem, setDeletingItem] = useState<MenuItem | null>(null);
-  const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [newCategory, setNewCategory] = useState("");
   const { toast } = useToast();
 
@@ -120,16 +119,22 @@ export default function Menu() {
     queryKey: ["/api/inventory"],
   });
 
+  // Fetch saved custom categories from the database
+  const { data: savedCategories = [] } = useQuery<{ id: string; name: string; restaurantId: string; sortOrder: number | null }[]>({
+    queryKey: ["/api/menu-categories"],
+  });
+
   // Derive categories dynamically from actual menu items in database
-  // Combines categories from existing items with any custom categories added by user
+  // Combines categories from existing items with saved custom categories from the database
   const categories = useMemo(() => {
     const menuCategories = menuItems
       .map(item => item.category)
       .filter((cat): cat is string => Boolean(cat));
-    const allCategories = [...menuCategories, ...customCategories];
+    const savedCategoryNames = savedCategories.map(c => c.name);
+    const allCategories = [...menuCategories, ...savedCategoryNames];
     const uniqueCategories = Array.from(new Set(allCategories));
     return uniqueCategories.sort((a, b) => a.localeCompare(b));
-  }, [menuItems, customCategories]);
+  }, [menuItems, savedCategories]);
 
   // Get selected recipe details and calculate stock with portion size
   const selectedRecipe = recipes.find(r => r.id === selectedRecipeId && selectedRecipeId !== "none");
@@ -293,6 +298,48 @@ export default function Menu() {
       toast({
         title: formatToast(t.itemDeleteFailedTitle, labels.menuItem),
         description: error.message || `Could not delete ${labels.menuItem.toLowerCase()}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Category mutations for persisting categories to the database
+  const createCategoryMutation = useMutation({
+    mutationFn: async (name: string) => {
+      return await apiRequest("POST", "/api/menu-categories", { name });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/menu-categories"] });
+      setNewCategory("");
+      toast({
+        title: "Category added",
+        description: "New category has been added successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to add category",
+        description: error.message || "Could not add category",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/menu-categories/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/menu-categories"] });
+      toast({
+        title: "Category removed",
+        description: "Category has been removed from menu categories",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to remove category",
+        description: error.message || "Could not remove category",
         variant: "destructive",
       });
     },
@@ -603,19 +650,15 @@ export default function Menu() {
                   <Button
                     onClick={() => {
                       if (newCategory.trim() && !categories.includes(newCategory.trim())) {
-                        setCustomCategories([...customCategories, newCategory.trim()]);
-                        setNewCategory("");
-                        toast({
-                          title: "Category added",
-                          description: `${newCategory} has been added to menu categories`,
-                        });
+                        createCategoryMutation.mutate(newCategory.trim());
                       }
                     }}
+                    disabled={createCategoryMutation.isPending}
                     className={layout.isMobile ? 'w-full h-[44px]' : ''}
                     data-testid="button-add-category"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add
+                    {createCategoryMutation.isPending ? "Adding..." : "Add"}
                   </Button>
                 </div>
                 <div className="space-y-2">
@@ -627,7 +670,9 @@ export default function Menu() {
                     categories.map((category) => {
                       const itemCount = menuItems.filter(item => item.category === category).length;
                       const isInUse = itemCount > 0;
-                      const isCustomOnly = customCategories.includes(category) && !isInUse;
+                      // Find the saved category object if it exists (for deletion by ID)
+                      const savedCategory = savedCategories.find(c => c.name === category);
+                      const canDelete = savedCategory && !isInUse;
                       
                       return (
                         <div
@@ -643,17 +688,14 @@ export default function Menu() {
                               </Badge>
                             )}
                           </div>
-                          {isCustomOnly ? (
+                          {canDelete ? (
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => {
-                                setCustomCategories(customCategories.filter((c) => c !== category));
-                                toast({
-                                  title: "Category removed",
-                                  description: `${category} has been removed from menu categories`,
-                                });
+                                deleteCategoryMutation.mutate(savedCategory.id);
                               }}
+                              disabled={deleteCategoryMutation.isPending}
                               data-testid={`button-delete-category-${category}`}
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
