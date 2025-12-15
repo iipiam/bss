@@ -117,17 +117,13 @@ export default function Login() {
       });
       
       if (!response.ok) {
-        // Safely parse JSON response, fallback to empty object if response is not JSON
         let error;
         try {
           error = await response.json();
         } catch {
-          // Non-JSON response (500 errors, plain text, HTML, etc.)
           error = { error: undefined };
         }
-        // TODO: Implement backend error code system (e.g., USERNAME_TAKEN, INVALID_TAX_NUMBER)
-        // to map to translation keys for precise localized error messages
-        throw error; // Throw the entire error object to be handled by onError
+        throw error;
       }
       
       return response.json();
@@ -138,15 +134,12 @@ export default function Login() {
         description: t.accountCreatedDesc,
       });
       
-      // Reset legal acknowledgement checkbox
       setLegalAcknowledgementChecked(false);
       
       // Auto-login after signup
       try {
         await login(signupUsername, signupPassword);
         
-        // SECURITY: Download subscription invoice AFTER successful authentication
-        // This ensures the download goes through the authenticated endpoint
         if (data.invoiceFilename) {
           try {
             const response = await fetch(`/api/subscription-invoices/${data.invoiceFilename}`);
@@ -186,10 +179,7 @@ export default function Login() {
       }
     },
     onError: (error: any) => {
-      // Log detailed error for debugging
       console.error('[SIGNUP ERROR] Full error object:', error);
-      console.error('[SIGNUP ERROR] error.error:', error.error);
-      console.error('[SIGNUP ERROR] error.message:', error.message);
       
       toast({
         title: t.signUpFailed,

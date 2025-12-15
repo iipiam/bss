@@ -216,6 +216,16 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>; // SPECIAL: Used for login, no restaurantId filter
   getUserByEmail(email: string): Promise<User | undefined>; // SPECIAL: Used for password reset, no restaurantId filter
   createUser(user: InsertUser): Promise<User>;
+  createUserWithHashedPassword(user: {
+    restaurantId: string;
+    username: string;
+    passwordHash: string;
+    fullName: string;
+    email: string;
+    role: string;
+    isOwner?: boolean;
+    permissions?: any;
+  }): Promise<User>;
   updateUser(id: string, restaurantId: string, user: Partial<InsertUser>): Promise<User | undefined>;
   updateUserById(id: string, user: Partial<InsertUser>): Promise<User | undefined>; // SPECIAL: Used for IT accounts, no restaurantId filter
   deleteUser(id: string, restaurantId: string): Promise<boolean>;
@@ -1311,6 +1321,32 @@ export class DatabaseStorage implements IStorage {
     const hashedPassword = await bcrypt.hash(user.password, 10);
     const [created] = await db.insert(users)
       .values({ ...user, password: hashedPassword } as any)
+      .returning();
+    return created;
+  }
+
+  async createUserWithHashedPassword(user: {
+    restaurantId: string;
+    username: string;
+    passwordHash: string;
+    fullName: string;
+    email: string;
+    role: string;
+    isOwner?: boolean;
+    permissions?: any;
+  }): Promise<User> {
+    // Insert user with pre-hashed password (used for signup flow where password is hashed before payment)
+    const [created] = await db.insert(users)
+      .values({
+        restaurantId: user.restaurantId,
+        username: user.username,
+        password: user.passwordHash, // Already hashed
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        isOwner: user.isOwner ?? false,
+        permissions: user.permissions ?? null,
+      } as any)
       .returning();
     return created;
   }
