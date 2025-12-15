@@ -2131,7 +2131,35 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
                  paymentPeriod !== 'one-time' && 
                  paymentPeriod !== 'onetime';
         });
-        totalBills = recurringBills.reduce((sum: number, b) => sum + parseFloat(b.amount || "0"), 0);
+        
+        // Helper function to prorate bill amounts to monthly values
+        // Quarterly bills should be divided by 3, semi-annual by 6, yearly by 12
+        const getMonthlyAmount = (amount: number, period: string): number => {
+          const normalized = String(period || 'monthly').toLowerCase();
+          switch (normalized) {
+            case 'weekly':
+              return amount * 4.33; // Average weeks per month
+            case 'monthly':
+              return amount;
+            case 'quarterly':
+              return amount / 3; // Divide by 3 months
+            case 'semi-annually':
+            case 'semiannually':
+            case 'semi-annual':
+              return amount / 6; // Divide by 6 months
+            case 'yearly':
+            case 'annually':
+              return amount / 12; // Divide by 12 months
+            default:
+              return amount; // Default to monthly
+          }
+        };
+        
+        // Sum bills with proper proration for monthly calculations
+        totalBills = recurringBills.reduce((sum: number, b) => {
+          const rawAmount = parseFloat(b.amount || "0");
+          return sum + getMonthlyAmount(rawAmount, b.paymentPeriod || 'monthly');
+        }, 0);
       }
       
       // Net profit

@@ -1943,12 +1943,76 @@ export class DatabaseStorage implements IStorage {
     if (Object.keys(updateData).length === 0) {
       return this.getShopBill(id);
     }
-    // SECURITY: Enforce tenant isolation at database level
-    const [updated] = await db.update(shopBills)
-      .set(updateData)
-      .where(and(eq(shopBills.id, id), eq(shopBills.restaurantId, restaurantId)))
-      .returning();
-    return updated;
+    
+    try {
+      // SECURITY: Enforce tenant isolation at database level
+      const [updated] = await db.update(shopBills)
+        .set(updateData)
+        .where(and(eq(shopBills.id, id), eq(shopBills.restaurantId, restaurantId)))
+        .returning();
+      return updated;
+    } catch (error: any) {
+      // Handle case where invoiceImage or other new columns don't exist in database
+      if (error.message?.includes('invoice_image') || error.message?.includes('does not exist')) {
+        console.log('[ShopBills] updateShopBill: Column not found, using fallback query');
+        
+        // Build dynamic SET clause excluding invoiceImage and other new columns
+        const setClauses: string[] = [];
+        const values: any[] = [];
+        let paramIndex = 3; // Start at 3 because $1=id, $2=restaurantId
+        
+        // Map of allowed fields to column names (excluding columns that may not exist)
+        const fieldMapping: Record<string, string> = {
+          billType: 'bill_type',
+          amount: 'amount',
+          paymentDate: 'payment_date',
+          paymentPeriod: 'payment_period',
+          status: 'status',
+          description: 'description',
+          employeeId: 'employee_id',
+          employeeName: 'employee_name',
+          paymentMonth: 'payment_month',
+          archived: 'archived',
+          branchId: 'branch_id',
+        };
+        
+        for (const [key, value] of Object.entries(updateData)) {
+          const columnName = fieldMapping[key];
+          if (columnName && value !== undefined) {
+            setClauses.push(`${columnName} = $${paramIndex}`);
+            values.push(value);
+            paramIndex++;
+          }
+        }
+        
+        if (setClauses.length === 0) {
+          return this.getShopBill(id);
+        }
+        
+        const query = `
+          UPDATE shop_bills 
+          SET ${setClauses.join(', ')}
+          WHERE id = $1 AND restaurant_id = $2
+          RETURNING id, restaurant_id as "restaurantId", branch_id as "branchId", bill_type as "billType",
+                    description, amount, payment_date as "paymentDate", payment_period as "paymentPeriod",
+                    status, employee_id as "employeeId", employee_name as "employeeName",
+                    created_at as "createdAt", payment_month as "paymentMonth", archived
+        `;
+        
+        const result = await pool.query(query, [id, restaurantId, ...values]);
+        const row = result.rows?.[0];
+        if (!row) return undefined;
+        
+        return {
+          ...row,
+          procurementId: null,
+          violationId: null,
+          notes: null,
+          invoiceImage: null,
+        } as ShopBill;
+      }
+      throw error;
+    }
   }
 
   async deleteShopBill(id: string, restaurantId: string): Promise<boolean> {
@@ -2558,15 +2622,40 @@ export class DatabaseStorage implements IStorage {
     );
 
     // Calculate total fixed costs and breakdown by category
+    // IMPORTANT: Prorate amounts based on payment period for monthly calculations
+    // Quarterly bills should be divided by 3, semi-annual by 6, yearly by 12
     const fixedCostsMap = new Map<string, number>();
     let fixedCosts = 0;
     
+    // Helper function to get monthly amount from bill based on payment period
+    const getMonthlyAmount = (amount: number, paymentPeriod: string): number => {
+      const period = String(paymentPeriod || 'monthly').toLowerCase();
+      switch (period) {
+        case 'weekly':
+          return amount * 4.33; // Average weeks per month
+        case 'monthly':
+          return amount;
+        case 'quarterly':
+          return amount / 3; // Divide by 3 months
+        case 'semi-annually':
+        case 'semiannually':
+        case 'semi-annual':
+          return amount / 6; // Divide by 6 months
+        case 'yearly':
+        case 'annually':
+          return amount / 12; // Divide by 12 months
+        default:
+          return amount; // Default to monthly
+      }
+    };
+    
     for (const bill of recurringBills) {
-      const amount = parseFloat(bill.amount) || 0;
-      fixedCosts += amount;
+      const rawAmount = parseFloat(bill.amount) || 0;
+      const monthlyAmount = getMonthlyAmount(rawAmount, bill.paymentPeriod);
+      fixedCosts += monthlyAmount;
       
       const category = bill.billType || 'other';
-      fixedCostsMap.set(category, (fixedCostsMap.get(category) || 0) + amount);
+      fixedCostsMap.set(category, (fixedCostsMap.get(category) || 0) + monthlyAmount);
     }
 
     const fixedCostsBreakdown = Array.from(fixedCostsMap.entries()).map(([category, amount]) => ({
