@@ -1053,9 +1053,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProcurement(id: string, restaurantId: string): Promise<Procurement | undefined> {
-    const [item] = await db.select().from(procurement)
-      .where(and(eq(procurement.id, id), eq(procurement.restaurantId, restaurantId)));
-    return item;
+    try {
+      const [item] = await db.select().from(procurement)
+        .where(and(eq(procurement.id, id), eq(procurement.restaurantId, restaurantId)));
+      return item;
+    } catch (error: any) {
+      if (error.message?.includes('inventory_item_id') || error.message?.includes('original_procurement_id')) {
+        console.log('[Procurement] getProcurement: New columns not found, using fallback query');
+        const result = await db.execute(sql`SELECT id, restaurant_id as "restaurantId", type, title, description, supplier, category, 
+          quantity, unit_price as "unitPrice", total_cost as "totalCost", status, priority, 
+          requested_by as "requestedBy", approved_by as "approvedBy", branch_id as "branchId", 
+          order_date as "orderDate", expected_delivery as "expectedDelivery", actual_delivery as "actualDelivery", 
+          notes, invoice_image as "invoiceImage", bill_id as "billId", 
+          NULL as "inventoryItemId", NULL as "originalProcurementId",
+          created_at as "createdAt", updated_at as "updatedAt"
+          FROM procurement WHERE id = ${id} AND restaurant_id = ${restaurantId}`);
+        return (result as any).rows?.[0];
+      }
+      throw error;
+    }
   }
 
   async createProcurement(procurementData: InsertProcurement): Promise<Procurement> {
@@ -1065,18 +1081,54 @@ export class DatabaseStorage implements IStorage {
 
   async updateProcurement(id: string, restaurantId: string, procurementData: Partial<InsertProcurement> & { billId?: string | null }): Promise<Procurement | undefined> {
     // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
-    const { restaurantId: _, ...safeData } = procurementData;
+    const { restaurantId: _, inventoryItemId: _inv, originalProcurementId: _orig, ...safeData } = procurementData as any;
     const updateData = Object.fromEntries(
       Object.entries(safeData).filter(([key, value]) => value !== undefined || key === 'billId')
     );
     if (Object.keys(updateData).length === 0) {
       return this.getProcurement(id, restaurantId);
     }
-    const [updated] = await db.update(procurement)
-      .set({ ...updateData, updatedAt: new Date() })
-      .where(and(eq(procurement.id, id), eq(procurement.restaurantId, restaurantId)))
-      .returning();
-    return updated;
+    try {
+      const [updated] = await db.update(procurement)
+        .set({ ...updateData, updatedAt: new Date() })
+        .where(and(eq(procurement.id, id), eq(procurement.restaurantId, restaurantId)))
+        .returning();
+      return updated;
+    } catch (error: any) {
+      if (error.message?.includes('inventory_item_id') || error.message?.includes('original_procurement_id')) {
+        console.log('[Procurement] updateProcurement: New columns not found, using fallback update');
+        // Use simple SQL update without the new columns
+        const result = await db.execute(sql`
+          UPDATE procurement SET
+            type = COALESCE(${updateData.type}, type),
+            title = COALESCE(${updateData.title}, title),
+            description = COALESCE(${updateData.description}, description),
+            supplier = COALESCE(${updateData.supplier}, supplier),
+            category = COALESCE(${updateData.category}, category),
+            quantity = COALESCE(${updateData.quantity}, quantity),
+            unit_price = COALESCE(${updateData.unitPrice}, unit_price),
+            total_cost = COALESCE(${updateData.totalCost}, total_cost),
+            status = COALESCE(${updateData.status}, status),
+            priority = COALESCE(${updateData.priority}, priority),
+            requested_by = COALESCE(${updateData.requestedBy}, requested_by),
+            approved_by = COALESCE(${updateData.approvedBy}, approved_by),
+            notes = COALESCE(${updateData.notes}, notes),
+            invoice_image = COALESCE(${updateData.invoiceImage}, invoice_image),
+            bill_id = COALESCE(${updateData.billId}, bill_id),
+            updated_at = NOW()
+          WHERE id = ${id} AND restaurant_id = ${restaurantId}
+          RETURNING id, restaurant_id as "restaurantId", type, title, description, supplier, category,
+            quantity, unit_price as "unitPrice", total_cost as "totalCost", status, priority,
+            requested_by as "requestedBy", approved_by as "approvedBy", branch_id as "branchId",
+            order_date as "orderDate", expected_delivery as "expectedDelivery", actual_delivery as "actualDelivery",
+            notes, invoice_image as "invoiceImage", bill_id as "billId",
+            NULL as "inventoryItemId", NULL as "originalProcurementId",
+            created_at as "createdAt", updated_at as "updatedAt"
+        `);
+        return (result as any).rows?.[0];
+      }
+      throw error;
+    }
   }
 
   async deleteProcurement(id: string, restaurantId: string): Promise<boolean> {
