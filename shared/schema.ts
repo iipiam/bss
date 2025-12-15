@@ -1382,3 +1382,35 @@ export const insertCompanyFileSchema = createInsertSchema(companyFiles)
   });
 export type InsertCompanyFile = z.infer<typeof insertCompanyFileSchema>;
 export type CompanyFile = typeof companyFiles.$inferSelect;
+
+// Pending Signups - Temporary storage for signup data during Geidea payment
+export const pendingSignups = pgTable("pending_signups", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  geideaSessionId: text("geidea_session_id").notNull().unique(),
+  username: text("username").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  fullName: text("full_name").notNull(),
+  email: text("email").notNull(),
+  restaurantName: text("restaurant_name").notNull(),
+  nationalId: text("national_id").notNull(),
+  taxNumber: text("tax_number").notNull(),
+  commercialRegistration: text("commercial_registration").notNull(),
+  businessType: text("business_type").notNull(),
+  restaurantType: text("restaurant_type").notNull(),
+  subscriptionPlan: text("subscription_plan").notNull(),
+  branchesCount: integer("branches_count").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  status: text("status").notNull().default("pending"), // pending, paid, failed, expired
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
+
+export const insertPendingSignupSchema = createInsertSchema(pendingSignups)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    businessType: z.enum(["restaurant", "factory"]),
+    subscriptionPlan: z.enum(["weekly", "monthly", "yearly"]),
+    status: z.enum(["pending", "paid", "failed", "expired"]).default("pending"),
+  });
+export type InsertPendingSignup = z.infer<typeof insertPendingSignupSchema>;
+export type PendingSignup = typeof pendingSignups.$inferSelect;
