@@ -80,6 +80,8 @@ export default function POS() {
 
   const { data: stock = {} } = useQuery<Record<string, number>>({
     queryKey: ["/api/menu/stock"],
+    staleTime: 0, // Always refetch when invalidated
+    refetchInterval: 30000, // Refresh every 30 seconds as backup
   });
 
   const { data: branches = [] } = useQuery<Branch[]>({
