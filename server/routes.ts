@@ -2867,8 +2867,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       
       res.status(201).json(procurement);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid procurement data" });
+    } catch (error: any) {
+      console.error("[Procurement] Create error:", error);
+      const details = error?.errors?.[0]?.message || error?.message || "Unknown error";
+      res.status(400).json({ error: "Invalid procurement data", details });
     }
   });
 
