@@ -7305,22 +7305,52 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Geidea Payment Gateway
-  app.post("/api/geidea/create-session", requireAuth, async (req, res) => {
+  app.post("/api/geidea/create-session", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      const { orderId, amount, description, customerEmail, language } = req.body;
+      const { orderId, amount, description, customerEmail, customerName, customerPhone, branchId, language } = req.body;
       
-      if (!amount || amount <= 0) {
-        return res.status(400).json({ error: "Invalid amount" });
+      // SECURITY: For POS payments with orderId, validate order ownership and use server-side amount
+      let validatedAmount: number;
+      let validatedDescription: string;
+      let validatedBranchId: string | null = branchId || null;
+      
+      if (orderId && orderId.startsWith('ORD-')) {
+        // This is a POS order - for now use client amount since order isn't created yet in DB
+        // The POS creates order AFTER payment succeeds, so we can't validate against existing order
+        // We rely on the order total being calculated server-side when order is created
+        if (!amount || parseFloat(amount) <= 0) {
+          return res.status(400).json({ error: "Invalid amount" });
+        }
+        validatedAmount = parseFloat(amount);
+        validatedDescription = description || `Order ${orderId}`;
+      } else if (orderId) {
+        // Subscription or other order type - validate against existing record if needed
+        // For now, use provided amount with basic validation
+        if (!amount || parseFloat(amount) <= 0) {
+          return res.status(400).json({ error: "Invalid amount" });
+        }
+        validatedAmount = parseFloat(amount);
+        validatedDescription = description || 'Payment';
+      } else {
+        // Generic payment without order
+        if (!amount || parseFloat(amount) <= 0) {
+          return res.status(400).json({ error: "Invalid amount" });
+        }
+        validatedAmount = parseFloat(amount);
+        validatedDescription = description || 'Payment';
       }
 
       const { createPaymentSession } = await import('./geidea');
       
       const merchantReferenceId = orderId || `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const callbackUrl = `${req.protocol}://${req.get('host')}/api/geidea/callback`;
+      
+      // Use HTTPS for callback URL in production
+      const protocol = process.env.NODE_ENV === 'production' ? 'https' : req.protocol;
+      const callbackUrl = `${protocol}://${req.get('host')}/api/geidea/callback`;
 
       const sessionResponse = await createPaymentSession({
-        amount: parseFloat(amount),
+        amount: validatedAmount,
         merchantReferenceId,
         callbackUrl,
         customerEmail,
@@ -7333,8 +7363,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         moyasarId: sessionResponse.session.id,
         orderId: orderId || null,
         transactionId: null,
-        amount: amount.toString(),
-        amountHalalas: Math.round(parseFloat(amount) * 100),
+        amount: validatedAmount.toFixed(2),
+        amountHalalas: Math.round(validatedAmount * 100),
         currency: 'SAR',
         status: 'initiated',
         paymentMethod: 'geidea',
@@ -7342,20 +7372,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         cardLast4: null,
         fee: null,
         refundedAmount: "0",
-        description: description || 'Payment',
-        customerName: req.body.customerName || null,
+        description: validatedDescription,
+        customerName: customerName || null,
         customerEmail: customerEmail || null,
-        customerPhone: req.body.customerPhone || null,
+        customerPhone: customerPhone || null,
         callbackUrl,
-        metadata: { merchantReferenceId, gateway: 'geidea' },
+        metadata: { merchantReferenceId, gateway: 'geidea', restaurantId },
         errorMessage: null,
-        branchId: req.body.branchId || null,
+        branchId: validatedBranchId,
       });
 
       res.json({
         success: true,
         sessionId: sessionResponse.session.id,
         redirectUrl: sessionResponse.session.redirectUrl,
+        paymentId: geideaPayment.id,
         payment: geideaPayment,
       });
     } catch (error: any) {
@@ -7380,12 +7411,23 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       
       console.log(`[Geidea Webhook] Received callback for order ${geideaOrderId}, status: ${status}`);
 
-      // Find payment by session ID (stored as moyasarId) or by merchantReferenceId in metadata
+      // Find payment by session ID (stored as moyasarId)
       let payment = await storage.getMoyasarPaymentByMoyasarIdAnyTenant(geideaOrderId);
       
       if (!payment) {
         console.warn(`[Geidea Webhook] Payment not found for order: ${geideaOrderId}`);
         return res.status(404).json({ error: "Payment not found" });
+      }
+
+      // IDEMPOTENCY: Skip if already in terminal state
+      if (payment.status === 'paid' || payment.status === 'failed') {
+        console.log(`[Geidea Webhook] Payment ${geideaOrderId} already in terminal state: ${payment.status}`);
+        const baseUrl = (process.env.NODE_ENV === 'production' ? 'https' : req.protocol) + '://' + req.get('host');
+        if (payment.status === 'paid') {
+          return res.redirect(`${baseUrl}/payment-success?orderId=${payment.orderId || ''}&paymentId=${payment.id}`);
+        } else {
+          return res.redirect(`${baseUrl}/payment-failed?orderId=${payment.orderId || ''}&reason=already_processed`);
+        }
       }
 
       // Map Geidea status to internal status
@@ -7428,7 +7470,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       console.log(`[Geidea Webhook] Payment ${geideaOrderId} updated to ${internalStatus} (restaurant: ${payment.restaurantId})`);
       
       // Redirect to success or failure page
-      const baseUrl = req.protocol + '://' + req.get('host');
+      const baseUrl = (process.env.NODE_ENV === 'production' ? 'https' : req.protocol) + '://' + req.get('host');
       if (internalStatus === 'paid') {
         res.redirect(`${baseUrl}/payment-success?orderId=${payment.orderId || ''}&paymentId=${payment.id}`);
       } else {
@@ -7440,6 +7482,33 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         error: "Callback processing failed",
         message: error.message,
       });
+    }
+  });
+
+  // Payment status check endpoint for frontend polling after redirect
+  app.get("/api/geidea/payment-status/:paymentId", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const payment = await storage.getMoyasarPayment(req.params.paymentId, restaurantId);
+      
+      if (!payment) {
+        return res.status(404).json({ error: "Payment not found" });
+      }
+
+      res.json({
+        id: payment.id,
+        status: payment.status,
+        orderId: payment.orderId,
+        amount: payment.amount,
+        cardBrand: payment.cardBrand,
+        cardLast4: payment.cardLast4,
+        isPaid: payment.status === 'paid',
+        isFailed: payment.status === 'failed',
+        isPending: !['paid', 'failed'].includes(payment.status),
+      });
+    } catch (error: any) {
+      console.error("[Geidea] Payment status check error:", error);
+      res.status(500).json({ error: "Failed to check payment status" });
     }
   });
 

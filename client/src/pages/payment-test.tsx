@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MoyasarPayment } from "@/components/MoyasarPayment";
+import { GeideaPayment } from "@/components/GeideaPayment";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -51,7 +51,7 @@ export default function PaymentTest() {
   if (showPaymentForm) {
     return (
       <div className="max-w-2xl mx-auto p-6">
-        <MoyasarPayment
+        <GeideaPayment
           amount={parseFloat(amount)}
           description={description}
           orderId="TEST-ORDER-001"
@@ -69,7 +69,7 @@ export default function PaymentTest() {
     <div className="max-w-2xl mx-auto p-6">
       <Card>
         <CardHeader>
-          <CardTitle>{t.moyasarPaymentTest}</CardTitle>
+          <CardTitle>{t.geideaPaymentTest || 'Geidea Payment Test'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
