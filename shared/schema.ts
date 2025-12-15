@@ -200,6 +200,18 @@ export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
 export type UpdateMenuItem = z.infer<typeof updateMenuItemSchema>;
 export type MenuItem = typeof menuItems.$inferSelect;
 
+// Menu Categories (custom categories that persist across sessions)
+export const menuCategories = pgTable("menu_categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  name: text("name").notNull(),
+  sortOrder: integer("sort_order").default(0),
+});
+
+export const insertMenuCategorySchema = createInsertSchema(menuCategories).omit({ id: true });
+export type InsertMenuCategory = z.infer<typeof insertMenuCategorySchema>;
+export type MenuCategory = typeof menuCategories.$inferSelect;
+
 // Add-ons
 export const addons = pgTable("addons", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
