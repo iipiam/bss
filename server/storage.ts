@@ -2623,7 +2623,27 @@ export class DatabaseStorage implements IStorage {
     // Get all menu items and recipes for cost lookup
     const allMenuItems = await db.select().from(menuItems).where(eq(menuItems.restaurantId, restaurantId));
     const allRecipes = await db.select().from(recipes).where(eq(recipes.restaurantId, restaurantId));
-    const allInventory = await db.select().from(inventoryItems).where(eq(inventoryItems.restaurantId, restaurantId));
+    
+    // Get inventory items with fallback for missing unit_price column
+    let allInventory: any[];
+    try {
+      allInventory = await db.select().from(inventoryItems).where(eq(inventoryItems.restaurantId, restaurantId));
+    } catch (error: any) {
+      if (error.message?.includes('unit_price')) {
+        console.log('[BepMetrics] Inventory unit_price column not found, using fallback query');
+        const result = await pool.query(`
+          SELECT id, restaurant_id as "restaurantId", name, category, quantity, unit, 
+            reference_quantity as "referenceQuantity", price,
+            CASE WHEN CAST(quantity AS NUMERIC) > 0 THEN CAST(CAST(price AS NUMERIC) / CAST(quantity AS NUMERIC) AS DECIMAL(10,2))::text ELSE '0' END as "unitPrice",
+            supplier, status, branch_id as "branchId", sort_order as "sortOrder", 
+            expiration_days as "expirationDays", purchase_date as "purchaseDate"
+          FROM inventory_items WHERE restaurant_id = $1
+        `, [restaurantId]);
+        allInventory = result.rows;
+      } else {
+        throw error;
+      }
+    }
     
     // Create lookup maps
     const menuItemMap = new Map(allMenuItems.map(mi => [mi.id, mi]));
