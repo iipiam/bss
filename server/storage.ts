@@ -784,35 +784,68 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Menu Categories (MULTI-TENANT: SQL-level restaurantId filtering)
+  // Note: Fallback handling for when menu_categories table doesn't exist (pre-migration)
   async getMenuCategories(restaurantId: string): Promise<MenuCategory[]> {
-    return await db.select().from(menuCategories).where(eq(menuCategories.restaurantId, restaurantId));
+    try {
+      return await db.select().from(menuCategories).where(eq(menuCategories.restaurantId, restaurantId));
+    } catch (error: any) {
+      if (error.code === '42P01' || error.message?.includes('menu_categories')) {
+        console.warn('[MenuCategories] Table does not exist, returning empty array');
+        return [];
+      }
+      throw error;
+    }
   }
 
   async createMenuCategory(category: InsertMenuCategory): Promise<MenuCategory> {
-    const [created] = await db.insert(menuCategories).values(category).returning();
-    return created;
+    try {
+      const [created] = await db.insert(menuCategories).values(category).returning();
+      return created;
+    } catch (error: any) {
+      if (error.code === '42P01' || error.message?.includes('menu_categories')) {
+        console.warn('[MenuCategories] Table does not exist, cannot create category');
+        throw new Error('Menu categories feature requires database migration. Please run npm run db:push on production.');
+      }
+      throw error;
+    }
   }
 
   async updateMenuCategory(id: string, restaurantId: string, category: Partial<InsertMenuCategory>): Promise<MenuCategory | undefined> {
-    const { restaurantId: _, ...safeData } = category;
-    const updateData = Object.fromEntries(
-      Object.entries(safeData).filter(([_, value]) => value !== undefined)
-    );
-    if (Object.keys(updateData).length === 0) {
-      const [existing] = await db.select().from(menuCategories)
-        .where(and(eq(menuCategories.id, id), eq(menuCategories.restaurantId, restaurantId)));
-      return existing;
+    try {
+      const { restaurantId: _, ...safeData } = category;
+      const updateData = Object.fromEntries(
+        Object.entries(safeData).filter(([_, value]) => value !== undefined)
+      );
+      if (Object.keys(updateData).length === 0) {
+        const [existing] = await db.select().from(menuCategories)
+          .where(and(eq(menuCategories.id, id), eq(menuCategories.restaurantId, restaurantId)));
+        return existing;
+      }
+      const [updated] = await db.update(menuCategories).set(updateData)
+        .where(and(eq(menuCategories.id, id), eq(menuCategories.restaurantId, restaurantId)))
+        .returning();
+      return updated;
+    } catch (error: any) {
+      if (error.code === '42P01' || error.message?.includes('menu_categories')) {
+        console.warn('[MenuCategories] Table does not exist, cannot update category');
+        return undefined;
+      }
+      throw error;
     }
-    const [updated] = await db.update(menuCategories).set(updateData)
-      .where(and(eq(menuCategories.id, id), eq(menuCategories.restaurantId, restaurantId)))
-      .returning();
-    return updated;
   }
 
   async deleteMenuCategory(id: string, restaurantId: string): Promise<boolean> {
-    const result = await db.delete(menuCategories)
-      .where(and(eq(menuCategories.id, id), eq(menuCategories.restaurantId, restaurantId)));
-    return result.rowCount !== null && result.rowCount > 0;
+    try {
+      const result = await db.delete(menuCategories)
+        .where(and(eq(menuCategories.id, id), eq(menuCategories.restaurantId, restaurantId)));
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error: any) {
+      if (error.code === '42P01' || error.message?.includes('menu_categories')) {
+        console.warn('[MenuCategories] Table does not exist, cannot delete category');
+        return false;
+      }
+      throw error;
+    }
   }
 
   // Add-ons (MULTI-TENANT: SQL-level restaurantId filtering)
