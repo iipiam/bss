@@ -1509,29 +1509,96 @@ export class DatabaseStorage implements IStorage {
     branchId?: string;
     dateRange?: { start?: Date; end?: Date };
   }): Promise<Invoice[]> {
-    const conditions = [eq(invoices.restaurantId, filter.restaurantId)];
-    if (filter.branchId) conditions.push(eq(invoices.branchId, filter.branchId));
-    if (filter.dateRange?.start) conditions.push(gte(invoices.createdAt, filter.dateRange.start));
-    if (filter.dateRange?.end) conditions.push(lte(invoices.createdAt, filter.dateRange.end));
-    
-    return await db.select().from(invoices).where(and(...conditions));
+    try {
+      const conditions = [eq(invoices.restaurantId, filter.restaurantId)];
+      if (filter.branchId) conditions.push(eq(invoices.branchId, filter.branchId));
+      if (filter.dateRange?.start) conditions.push(gte(invoices.createdAt, filter.dateRange.start));
+      if (filter.dateRange?.end) conditions.push(lte(invoices.createdAt, filter.dateRange.end));
+      
+      return await db.select().from(invoices).where(and(...conditions));
+    } catch (error: any) {
+      // Handle case where procurement_id column doesn't exist yet (pre-migration)
+      if (error.message?.includes('procurement_id')) {
+        console.warn('[Invoices] procurement_id column not found, using fallback query');
+        const result = await db.execute(sql`
+          SELECT id, restaurant_id as "restaurantId", invoice_number as "invoiceNumber",
+                 invoice_type as "invoiceType", transaction_id as "transactionId",
+                 order_id as "orderId", NULL as "procurementId", branch_id as "branchId",
+                 customer_name as "customerName", customer_vat_number as "customerVatNumber",
+                 items, subtotal, vat_amount as "vatAmount", total,
+                 qr_code as "qrCode", pdf_path as "pdfPath", created_at as "createdAt"
+          FROM invoices WHERE restaurant_id = ${filter.restaurantId}
+          ORDER BY created_at DESC
+        `);
+        return (result as any).rows as Invoice[];
+      }
+      throw error;
+    }
   }
 
   async getInvoice(id: string, restaurantId: string): Promise<Invoice | undefined> {
-    const [invoice] = await db.select().from(invoices)
-      .where(and(eq(invoices.id, id), eq(invoices.restaurantId, restaurantId)));
-    return invoice;
+    try {
+      const [invoice] = await db.select().from(invoices)
+        .where(and(eq(invoices.id, id), eq(invoices.restaurantId, restaurantId)));
+      return invoice;
+    } catch (error: any) {
+      if (error.message?.includes('procurement_id')) {
+        console.warn('[Invoices] procurement_id column not found, using fallback query');
+        const result = await db.execute(sql`
+          SELECT id, restaurant_id as "restaurantId", invoice_number as "invoiceNumber",
+                 invoice_type as "invoiceType", transaction_id as "transactionId",
+                 order_id as "orderId", NULL as "procurementId", branch_id as "branchId",
+                 customer_name as "customerName", customer_vat_number as "customerVatNumber",
+                 items, subtotal, vat_amount as "vatAmount", total,
+                 qr_code as "qrCode", pdf_path as "pdfPath", created_at as "createdAt"
+          FROM invoices WHERE id = ${id} AND restaurant_id = ${restaurantId}
+        `);
+        return (result as any).rows[0] as Invoice | undefined;
+      }
+      throw error;
+    }
   }
 
   async getInvoicePublic(orderIdOrInvoiceId: string): Promise<Invoice | undefined> {
     // PUBLIC: For QR code and WhatsApp links, bypasses restaurantId check
-    // Try to find by orderId first (for WhatsApp links), then by invoice id (for QR codes)
-    const [invoiceByOrderId] = await db.select().from(invoices).where(eq(invoices.orderId, orderIdOrInvoiceId));
-    if (invoiceByOrderId) {
-      return invoiceByOrderId;
+    try {
+      // Try to find by orderId first (for WhatsApp links), then by invoice id (for QR codes)
+      const [invoiceByOrderId] = await db.select().from(invoices).where(eq(invoices.orderId, orderIdOrInvoiceId));
+      if (invoiceByOrderId) {
+        return invoiceByOrderId;
+      }
+      const [invoiceById] = await db.select().from(invoices).where(eq(invoices.id, orderIdOrInvoiceId));
+      return invoiceById;
+    } catch (error: any) {
+      if (error.message?.includes('procurement_id')) {
+        console.warn('[Invoices] procurement_id column not found, using fallback query for public access');
+        // Try by orderId first
+        let result = await db.execute(sql`
+          SELECT id, restaurant_id as "restaurantId", invoice_number as "invoiceNumber",
+                 invoice_type as "invoiceType", transaction_id as "transactionId",
+                 order_id as "orderId", NULL as "procurementId", branch_id as "branchId",
+                 customer_name as "customerName", customer_vat_number as "customerVatNumber",
+                 items, subtotal, vat_amount as "vatAmount", total,
+                 qr_code as "qrCode", pdf_path as "pdfPath", created_at as "createdAt"
+          FROM invoices WHERE order_id = ${orderIdOrInvoiceId}
+        `);
+        if ((result as any).rows.length > 0) {
+          return (result as any).rows[0] as Invoice;
+        }
+        // Try by invoice id
+        result = await db.execute(sql`
+          SELECT id, restaurant_id as "restaurantId", invoice_number as "invoiceNumber",
+                 invoice_type as "invoiceType", transaction_id as "transactionId",
+                 order_id as "orderId", NULL as "procurementId", branch_id as "branchId",
+                 customer_name as "customerName", customer_vat_number as "customerVatNumber",
+                 items, subtotal, vat_amount as "vatAmount", total,
+                 qr_code as "qrCode", pdf_path as "pdfPath", created_at as "createdAt"
+          FROM invoices WHERE id = ${orderIdOrInvoiceId}
+        `);
+        return (result as any).rows[0] as Invoice | undefined;
+      }
+      throw error;
     }
-    const [invoiceById] = await db.select().from(invoices).where(eq(invoices.id, orderIdOrInvoiceId));
-    return invoiceById;
   }
 
   async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
