@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Download, FileText, Plus, Search, Loader2 } from "lucide-react";
+import { Download, FileText, Plus, Search, Loader2, Calendar, TrendingUp, TrendingDown, Receipt, Calculator } from "lucide-react";
 import { format } from "date-fns";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { MonthlyVatReport } from "@shared/schema";
@@ -125,9 +126,30 @@ export default function VatReports() {
     return months.find(m => parseInt(m.value) === month)?.label || "";
   };
 
+  const summaryStats = useMemo(() => {
+    if (reports.length === 0) return null;
+    
+    const totalSales = reports.reduce((sum, r) => sum + parseFloat(r.totalSales), 0);
+    const totalPurchases = reports.reduce((sum, r) => sum + parseFloat(r.totalPurchases), 0);
+    const totalVatPayable = reports.reduce((sum, r) => sum + parseFloat(r.netVatPayable), 0);
+    const latestReport = reports.reduce((latest, r) => {
+      const latestDate = new Date(latest.generatedAt);
+      const currentDate = new Date(r.generatedAt);
+      return currentDate > latestDate ? r : latest;
+    }, reports[0]);
+    
+    return {
+      totalReports: reports.length,
+      totalSales,
+      totalPurchases,
+      totalVatPayable,
+      latestReport,
+    };
+  }, [reports]);
+
   return (
     <div className="p-8 space-y-6">
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-start gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold mb-2">Monthly VAT Reports</h1>
           <p className="text-muted-foreground">Generate and download ZATCA-compliant monthly VAT reports for tax filing</p>
@@ -209,87 +231,188 @@ export default function VatReports() {
         </Dialog>
       </div>
 
-      <Card className="p-6">
-        <div className="flex gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by serial number, month, or year..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              data-testid="input-search-reports"
-            />
-          </div>
+      {isLoading ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+                <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+                <div className="h-4 w-4 bg-muted animate-pulse rounded" />
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 w-32 bg-muted animate-pulse rounded mb-2" />
+                <div className="h-3 w-20 bg-muted animate-pulse rounded" />
+              </CardContent>
+            </Card>
+          ))}
         </div>
+      ) : summaryStats && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card data-testid="card-total-reports">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+              <CardTitle className="text-sm font-medium">Total Reports</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{summaryStats.totalReports}</div>
+              <p className="text-xs text-muted-foreground">Generated reports</p>
+            </CardContent>
+          </Card>
 
-        {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Card data-testid="card-total-sales">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+              <CardTitle className="text-sm font-medium">Total Sales VAT</CardTitle>
+              <TrendingUp className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold font-mono text-green-600 dark:text-green-500">
+                {summaryStats.totalSales.toFixed(2)} SAR
+              </div>
+              <p className="text-xs text-muted-foreground">Output VAT collected</p>
+            </CardContent>
+          </Card>
+
+          <Card data-testid="card-total-purchases">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+              <CardTitle className="text-sm font-medium">Total Purchases VAT</CardTitle>
+              <TrendingDown className="h-4 w-4 text-red-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold font-mono text-red-600 dark:text-red-500">
+                {summaryStats.totalPurchases.toFixed(2)} SAR
+              </div>
+              <p className="text-xs text-muted-foreground">Input VAT paid</p>
+            </CardContent>
+          </Card>
+
+          <Card data-testid="card-net-vat">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+              <CardTitle className="text-sm font-medium">Net VAT Payable</CardTitle>
+              <Calculator className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold font-mono ${summaryStats.totalVatPayable >= 0 ? 'text-blue-600 dark:text-blue-500' : 'text-green-600 dark:text-green-500'}`}>
+                {summaryStats.totalVatPayable.toFixed(2)} SAR
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {summaryStats.totalVatPayable >= 0 ? 'Amount owed to ZATCA' : 'Credit balance'}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-muted-foreground" />
+              <CardTitle>VAT Report History</CardTitle>
+            </div>
+            <div className="relative w-full max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by serial number, month, or year..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                data-testid="input-search-reports"
+              />
+            </div>
           </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Serial Number</TableHead>
-                <TableHead>Period</TableHead>
-                <TableHead>Total Sales</TableHead>
-                <TableHead>Total Purchases</TableHead>
-                <TableHead>Net VAT Payable</TableHead>
-                <TableHead>Generated Date</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredReports.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    {searchQuery ? "No VAT reports found matching your search" : "No VAT reports yet. Click 'Generate Report' to create one."}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredReports.map((report) => (
-                  <TableRow key={report.id} data-testid={`row-report-${report.id}`}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        {report.serialNumber}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {getMonthName(report.reportMonth)} {report.reportYear}
-                    </TableCell>
-                    <TableCell className="font-mono">
-                      {parseFloat(report.totalSales).toFixed(2)} SAR
-                    </TableCell>
-                    <TableCell className="font-mono">
-                      {parseFloat(report.totalPurchases).toFixed(2)} SAR
-                    </TableCell>
-                    <TableCell className="font-mono font-semibold">
-                      {parseFloat(report.netVatPayable).toFixed(2)} SAR
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(report.generatedAt), "MMM dd, yyyy")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDownload(report)}
-                          data-testid={`button-download-${report.id}`}
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          Download
-                        </Button>
-                      </div>
-                    </TableCell>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Serial Number</TableHead>
+                    <TableHead>Period</TableHead>
+                    <TableHead className="text-right">Sales VAT</TableHead>
+                    <TableHead className="text-right">Purchases VAT</TableHead>
+                    <TableHead className="text-right">Net Payable</TableHead>
+                    <TableHead>Generated</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        )}
+                </TableHeader>
+                <TableBody>
+                  {filteredReports.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-12">
+                        <div className="flex flex-col items-center gap-2">
+                          <FileText className="h-12 w-12 text-muted-foreground opacity-50" />
+                          <p className="text-muted-foreground">
+                            {searchQuery ? "No VAT reports found matching your search" : "No VAT reports yet"}
+                          </p>
+                          {!searchQuery && (
+                            <p className="text-sm text-muted-foreground">
+                              Click 'Generate Report' to create your first VAT report
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredReports
+                      .sort((a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime())
+                      .map((report) => {
+                        const netVat = parseFloat(report.netVatPayable);
+                        return (
+                          <TableRow key={report.id} data-testid={`row-report-${report.id}`}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium font-mono">{report.serialNumber}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="font-normal">
+                                <Calendar className="h-3 w-3 mr-1" />
+                                {getMonthName(report.reportMonth)} {report.reportYear}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-green-600 dark:text-green-500">
+                              {parseFloat(report.totalSales).toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-red-600 dark:text-red-500">
+                              {parseFloat(report.totalPurchases).toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Badge 
+                                variant={netVat >= 0 ? "default" : "secondary"}
+                                className="font-mono"
+                              >
+                                {netVat.toFixed(2)} SAR
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {format(new Date(report.generatedAt), "MMM dd, yyyy")}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDownload(report)}
+                                data-testid={`button-download-${report.id}`}
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                Download
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
       </Card>
     </div>
   );

@@ -205,6 +205,74 @@ export default function Profitability() {
     }
   };
 
+  const handleExportStrategicPDF = () => {
+    const periodLabel = period === "week" ? "This Week" : period === "month" ? "This Month" : period === "quarter" ? "This Quarter" : "This Year";
+    
+    const strategicData = [
+      { section: "--- TOP PERFORMERS BY PROFIT ---", name: "", category: "", profit: "", margin: "" },
+      ...topByProfit.map((item) => ({
+        section: "",
+        name: item.name,
+        category: item.category,
+        profit: item.totalProfit.toFixed(2) + " SAR",
+        margin: item.margin.toFixed(1) + "%",
+      })),
+      { section: "--- TOP PERFORMERS BY MARGIN ---", name: "", category: "", profit: "", margin: "" },
+      ...topByMargin.map((item) => ({
+        section: "",
+        name: item.name,
+        category: item.category,
+        profit: item.totalProfit.toFixed(2) + " SAR",
+        margin: item.margin.toFixed(1) + "%",
+      })),
+      { section: "--- CATEGORY BREAKDOWN ---", name: "", category: "", profit: "", margin: "" },
+      ...categoryData.filter(c => c.revenue > 0).map((cat) => ({
+        section: "",
+        name: cat.category,
+        category: "-",
+        profit: cat.profit.toFixed(2) + " SAR",
+        margin: cat.revenue > 0 ? ((cat.profit / cat.revenue) * 100).toFixed(1) + "%" : "N/A",
+      })),
+      { section: "--- LOW MARGIN ITEMS (ATTENTION NEEDED) ---", name: "", category: "", profit: "", margin: "" },
+      ...lowPerformers.map((item) => ({
+        section: "",
+        name: item.name,
+        category: item.category,
+        profit: item.profit.toFixed(2) + " SAR/unit",
+        margin: item.margin.toFixed(1) + "%",
+      })),
+    ];
+
+    const columns = [
+      { header: "Section", accessor: "section", width: 60 },
+      { header: "Item/Category", accessor: "name", width: 45 },
+      { header: "Category", accessor: "category", width: 30 },
+      { header: "Profit", accessor: "profit", width: 30 },
+      { header: "Margin", accessor: "margin", width: 25 },
+    ];
+
+    const totalSalesVolume = profitabilityData.reduce((sum, i) => sum + i.salesVolume, 0);
+    const subtitle = `Strategic Overview | Period: ${periodLabel} | Revenue: ${totalRevenue.toFixed(2)} SAR | Profit: ${totalProfit.toFixed(2)} SAR | Avg Margin: ${avgMargin.toFixed(1)}%`;
+
+    const result = exportToPDF("Strategic Overview Report", strategicData, columns, {
+      subtitle,
+      orientation: "portrait",
+    });
+
+    if (result.success) {
+      toast({
+        title: t.pdfExportSuccessful,
+        description: "Strategic overview exported to PDF",
+      });
+    } else {
+      toast({
+        title: t.exportFailed,
+        description: "Failed to export strategic overview to PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleExport = async () => {
     try {
       const response = await fetch(`/api/export/profitability?period=${period}`);
@@ -319,6 +387,12 @@ export default function Profitability() {
 
           {/* Strategic Decision-Making Tab */}
           <TabsContent value="strategic" className="space-y-6">
+          <div className="flex justify-end mb-4">
+            <Button variant="outline" onClick={handleExportStrategicPDF} data-testid="button-export-strategic-pdf">
+              <Download className="h-4 w-4 mr-2" />
+              Export PDF
+            </Button>
+          </div>
           {/* Overview Cards */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card data-testid="card-total-revenue">
@@ -636,8 +710,33 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
   // High margin items (40%+)
   const highMarginItems = profitabilityData.filter(item => item.margin >= 40);
 
+  const handleExportPDF = () => {
+    const allItems = [...belowCostItems, ...lowMarginItems, ...healthyMarginItems, ...highMarginItems]
+      .map(item => ({
+        ...item,
+        category: item.margin < 0 ? 'Below Cost' : item.margin < 20 ? 'Low (0-20%)' : item.margin < 40 ? 'Healthy (20-40%)' : 'Premium (40%+)',
+        suggestedPrice: (item.cost / 0.7).toFixed(2),
+      }));
+    
+    exportToPDF("Pricing Analysis Report", allItems, [
+      { header: "Item Name", accessor: "name", width: 60 },
+      { header: "Category", accessor: "category", width: 35 },
+      { header: "Price (SAR)", accessor: (row: any) => row.basePrice.toFixed(2), width: 30 },
+      { header: "Cost (SAR)", accessor: (row: any) => row.cost.toFixed(2), width: 30 },
+      { header: "Profit (SAR)", accessor: (row: any) => row.profit.toFixed(2), width: 30 },
+      { header: "Margin %", accessor: (row: any) => row.margin.toFixed(1) + "%", width: 25 },
+      { header: "Suggested Price", accessor: "suggestedPrice", width: 35 },
+    ], { subtitle: `Items analyzed: ${allItems.length}` });
+  };
+
   return (
     <>
+      <div className="flex justify-end mb-4">
+        <Button variant="outline" onClick={handleExportPDF} data-testid="button-export-pricing-pdf">
+          <Download className="h-4 w-4 mr-2" />
+          Export PDF
+        </Button>
+      </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -961,8 +1060,25 @@ function ScalingAnalysisTab({ profitabilityData, totalRevenue, totalProfit }: { 
     .sort((a, b) => b.salesVolume - a.salesVolume)
     .slice(0, 10);
 
+  const handleExportPDF = () => {
+    exportToPDF("Scaling Viability Report", itemsWithSales, [
+      { header: "Item Name", accessor: "name", width: 60 },
+      { header: "Sales Volume", accessor: (row: any) => row.salesVolume.toString(), width: 30 },
+      { header: "Profit/Unit (SAR)", accessor: (row: any) => row.profit.toFixed(2), width: 35 },
+      { header: "Total Revenue (SAR)", accessor: (row: any) => row.totalRevenue.toFixed(2), width: 40 },
+      { header: "Total Profit (SAR)", accessor: (row: any) => row.totalProfit.toFixed(2), width: 40 },
+      { header: "Margin %", accessor: (row: any) => row.margin.toFixed(1) + "%", width: 25 },
+    ], { subtitle: `Avg Profit/Unit: ${avgProfitPerUnit.toFixed(2)} SAR | Overall Margin: ${totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0}%` });
+  };
+
   return (
     <>
+      <div className="flex justify-end mb-4">
+        <Button variant="outline" onClick={handleExportPDF} data-testid="button-export-scaling-pdf">
+          <Download className="h-4 w-4 mr-2" />
+          Export PDF
+        </Button>
+      </div>
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -1162,8 +1278,35 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
 
+  const handleExportPDF = () => {
+    const exportData = [
+      ...highCostItems.map(item => ({ ...item, type: 'Menu Item Cost' })),
+      ...bills.map(bill => ({
+        name: bill.description || bill.billType,
+        cost: parseFloat(bill.amount || "0"),
+        type: bill.billType,
+        status: bill.status,
+        margin: 0,
+      })),
+    ];
+    
+    exportToPDF("Cost Management Report", exportData, [
+      { header: "Item/Expense", accessor: "name", width: 70 },
+      { header: "Type", accessor: "type", width: 40 },
+      { header: "Cost/Amount (SAR)", accessor: (row: any) => row.cost.toFixed(2), width: 40 },
+      { header: "Margin %", accessor: (row: any) => row.margin ? row.margin.toFixed(1) + "%" : "-", width: 30 },
+      { header: "Status", accessor: (row: any) => row.status || "-", width: 30 },
+    ], { subtitle: `Total Operating Expenses: ${totalOperatingExpenses.toFixed(2)} SAR | Paid: ${paidExpenses.toFixed(2)} SAR | Pending: ${pendingExpenses.toFixed(2)} SAR` });
+  };
+
   return (
     <>
+      <div className="flex justify-end mb-4">
+        <Button variant="outline" onClick={handleExportPDF} data-testid="button-export-cost-pdf">
+          <Download className="h-4 w-4 mr-2" />
+          Export PDF
+        </Button>
+      </div>
       {/* Operating Expenses Summary */}
       <div className="grid gap-6 md:grid-cols-3">
         <Card>

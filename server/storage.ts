@@ -2575,13 +2575,34 @@ export class DatabaseStorage implements IStorage {
     }));
 
     // 2. Get invoices for the year
-    const yearInvoices = await db.select().from(invoices).where(
-      and(
-        eq(invoices.restaurantId, restaurantId),
-        gte(invoices.createdAt, yearStart),
-        lte(invoices.createdAt, yearEnd)
-      )
-    );
+    let yearInvoices: any[];
+    try {
+      yearInvoices = await db.select().from(invoices).where(
+        and(
+          eq(invoices.restaurantId, restaurantId),
+          gte(invoices.createdAt, yearStart),
+          lte(invoices.createdAt, yearEnd)
+        )
+      );
+    } catch (error: any) {
+      // Handle case where procurement_id or other new columns don't exist yet
+      if (error.message?.includes('column') && error.message?.includes('does not exist')) {
+        console.log('[BepMetrics] Invoices column not found, using fallback query');
+        const result = await pool.query(`
+          SELECT id, restaurant_id as "restaurantId", invoice_number as "invoiceNumber",
+                 invoice_type as "invoiceType", transaction_id as "transactionId",
+                 order_id as "orderId", branch_id as "branchId",
+                 customer_name as "customerName", customer_vat_number as "customerVatNumber",
+                 items, subtotal, vat_amount as "vatAmount", total, qr_code as "qrCode",
+                 pdf_path as "pdfPath", created_at as "createdAt"
+          FROM invoices
+          WHERE restaurant_id = $1 AND created_at >= $2 AND created_at <= $3
+        `, [restaurantId, yearStart, yearEnd]);
+        yearInvoices = result.rows;
+      } else {
+        throw error;
+      }
+    }
 
     // 3. Calculate revenue and units sold
     let revenue = 0;

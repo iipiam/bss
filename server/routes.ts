@@ -1042,10 +1042,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Bill not found" });
       }
+      // Coerce numeric fields to strings before schema validation (schema expects strings for text columns)
+      const body = { ...req.body };
+      if (body.amount !== undefined) body.amount = String(body.amount);
       // Convert ISO date string to Date object if present
       const bodyWithDate = {
-        ...req.body,
-        paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate) : undefined,
+        ...body,
+        paymentDate: body.paymentDate ? new Date(body.paymentDate) : undefined,
       };
       // Remove undefined paymentDate to avoid overwriting with undefined
       if (bodyWithDate.paymentDate === undefined) {
@@ -5753,24 +5756,70 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(404).json({ error: "Invoice not found" });
       }
       
-      // If pdfPath exists, serve the file
+      // If pdfPath exists, try to serve the file
       if (invoice.pdfPath) {
-        // pdfPath is stored as /invoices/filename.pdf, strip leading slash and join with public directory
         const relativePath = invoice.pdfPath.replace(/^\/+/, '');
         const filePath = path.normalize(path.join(process.cwd(), 'public', relativePath));
-        console.log('[Invoice Download] Looking for file at:', filePath);
         
         if (fs.existsSync(filePath)) {
           res.setHeader('Content-Type', 'application/pdf');
           res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`);
           return res.sendFile(filePath);
-        } else {
-          console.error('[Invoice Download] PDF file not found at:', filePath);
         }
+        console.log('[Invoice Download] PDF not on disk, regenerating:', filePath);
       }
       
-      // If PDF doesn't exist, return error (PDF should be generated during invoice creation)
-      res.status(404).json({ error: "Invoice PDF not found" });
+      // PDF doesn't exist - regenerate it on-demand
+      const settings = await storage.getSettings(restaurantId);
+      const order = invoice.orderId ? await storage.getOrder(invoice.orderId, restaurantId) : null;
+      const branch = invoice.branchId ? await storage.getBranch(invoice.branchId, restaurantId) : null;
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      
+      // Build PDF data from invoice record
+      const pdfData = {
+        order: order || {
+          orderNumber: invoice.invoiceNumber,
+          items: invoice.items,
+          subtotal: invoice.subtotal,
+          tax: invoice.vatAmount,
+          total: invoice.total,
+          customerName: invoice.customerName || "Customer",
+          createdAt: invoice.createdAt,
+        } as any,
+        companyName: settings?.restaurantName || "Restaurant Management System",
+        companyVAT: settings?.vatNumber || "300123456789003",
+        branchAddress: branch?.location || settings?.address || "Main Location",
+        companyEmail: settings?.email || "",
+        companyPhone: settings?.phone || "",
+        invoiceNumber: invoice.invoiceNumber,
+        invoiceDate: new Date(invoice.createdAt),
+        invoiceId: invoice.id,
+        baseUrl,
+        logoPath: settings?.logoPath || undefined,
+        invoiceType: invoice.invoiceType as "simplified" | "standard",
+        customerVatNumber: invoice.customerVatNumber || undefined,
+      };
+      
+      const { pdfBuffer, qrCode } = await generateZATCAInvoice(pdfData);
+      
+      // Save regenerated PDF to filesystem
+      const invoicesDir = path.join(process.cwd(), "public", "invoices");
+      if (!fs.existsSync(invoicesDir)) {
+        fs.mkdirSync(invoicesDir, { recursive: true });
+      }
+      const pdfFilename = `${invoice.invoiceNumber}.pdf`;
+      const pdfPath = path.join(invoicesDir, pdfFilename);
+      fs.writeFileSync(pdfPath, pdfBuffer);
+      
+      // Update invoice record with new PDF path
+      await storage.updateInvoice(invoice.id, restaurantId, {
+        qrCode: qrCode || invoice.qrCode,
+        pdfPath: `/invoices/${pdfFilename}`,
+      });
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`);
+      res.send(pdfBuffer);
     } catch (error) {
       console.error("Invoice download error:", error);
       res.status(500).json({ error: "Failed to download invoice" });
@@ -7377,7 +7426,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         customerEmail: customerEmail || null,
         customerPhone: customerPhone || null,
         callbackUrl,
-        metadata: { merchantReferenceId, gateway: 'geidea', restaurantId },
+        metadata: { merchantReferenceId, gateway: 'geidea', restaurantId } as Record<string, any>,
         errorMessage: null,
         branchId: validatedBranchId,
       });
@@ -7496,9 +7545,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.get("/api/geidea/payment-status/:paymentId", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      const payment = await storage.getMoyasarPayment(req.params.paymentId, restaurantId);
+      const payment = await storage.getMoyasarPayment(req.params.paymentId);
       
       if (!payment) {
+        return res.status(404).json({ error: "Payment not found" });
+      }
+      
+      // SECURITY: Verify payment belongs to this restaurant
+      if (payment.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Payment not found" });
       }
 
