@@ -64,7 +64,7 @@ let wsClients: Set<WSClient> | null = null;
 
 // Unified broadcast function with restaurant filtering
 export function broadcastNotification(event: {
-  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated' | 'menu:updated' | 'permissions:updated' | 'recipe:costUpdated' | 'sales:updated' | 'inventory:updated';
+  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated' | 'menu:updated' | 'permissions:updated' | 'recipe:costUpdated' | 'sales:updated' | 'inventory:updated' | 'bills:updated' | 'salaries:updated';
   restaurantId: string;
   // Target specific user (for permissions:updated)
   targetUserId?: string;
@@ -1028,6 +1028,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       };
       const data = insertShopBillSchema.parse(bodyWithDate);
       const bill = await storage.createShopBill(data);
+      
+      // Broadcast real-time update for Operating Expenses tracking
+      broadcastNotification({
+        type: 'bills:updated',
+        restaurantId,
+      });
+      console.log(`[SHOP] Bill created - broadcasting real-time update for restaurant ${restaurantId}`);
+      
       res.status(201).json(bill);
     } catch (error) {
       console.error("[SHOP] Bill validation error:", error);
@@ -1056,6 +1064,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       const data = sanitizePatchBody(bodyWithDate, insertShopBillSchema.partial());
       const bill = await storage.updateShopBill(req.params.id, restaurantId, data);
+      
+      // Broadcast real-time update for Operating Expenses tracking
+      broadcastNotification({
+        type: 'bills:updated',
+        restaurantId,
+      });
+      console.log(`[SHOP] Bill updated - broadcasting real-time update for restaurant ${restaurantId}`);
+      
       res.json(bill);
     } catch (error) {
       console.error("[SHOP] Bill update error:", error);
@@ -1073,6 +1089,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     if (!success) {
       return res.status(404).json({ error: "Bill not found" });
     }
+    
+    // Broadcast real-time update for Operating Expenses tracking
+    broadcastNotification({
+      type: 'bills:updated',
+      restaurantId,
+    });
+    console.log(`[SHOP] Bill deleted - broadcasting real-time update for restaurant ${restaurantId}`);
+    
     res.status(204).send();
   });
 
@@ -1085,6 +1109,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       const { archived } = req.body;
       const bill = await storage.archiveShopBill(req.params.id, archived);
+      
+      // Broadcast real-time update for Operating Expenses tracking
+      broadcastNotification({
+        type: 'bills:updated',
+        restaurantId,
+      });
+      
       res.json(bill);
     } catch (error) {
       res.status(400).json({ error: "Failed to archive bill" });
@@ -1106,6 +1137,18 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       
       const result = await storage.generateSalaryBills(restaurantId, paymentMonth);
+      
+      // Broadcast real-time updates for Fixed Costs and Operating Expenses
+      broadcastNotification({
+        type: 'salaries:updated',
+        restaurantId,
+      });
+      broadcastNotification({
+        type: 'bills:updated',
+        restaurantId,
+      });
+      console.log(`[SHOP] Salary bills generated - broadcasting real-time update for restaurant ${restaurantId}`);
+      
       res.json(result);
     } catch (error: any) {
       console.error("Failed to generate salary bills:", error);

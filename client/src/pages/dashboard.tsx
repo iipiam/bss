@@ -327,14 +327,42 @@ export default function Dashboard() {
            paymentPeriod !== 'onetime';
   });
 
+  // Helper function to prorate bill amounts to monthly values
+  // quarterly÷3, semi-annual÷6, yearly÷12, weekly×4.33
+  // Handles all known variants: case-insensitive, hyphenated, spaced, and compound forms
+  const getMonthlyAmount = (paymentPeriod: string | null | undefined, amount: number): number => {
+    if (!paymentPeriod || amount === 0) return amount;
+    const period = paymentPeriod.toLowerCase().replace(/[\s-]/g, ''); // normalize: remove spaces/hyphens
+    switch (period) {
+      case 'weekly':
+        return amount * 4.33;
+      case 'monthly':
+        return amount;
+      case 'quarterly':
+        return amount / 3;
+      case 'semiannual':
+      case 'biannual':
+        return amount / 6;
+      case 'yearly':
+      case 'annual':
+      case 'annually':
+        return amount / 12;
+      default:
+        return amount;
+    }
+  };
+
   // Calculate monthly expense trends (last 6 months) - excluding foundational bills
+  // Uses prorated monthly amounts for consistent comparison
   const monthlyExpensesMap = operatingBills.reduce((acc, bill) => {
     const billDate = new Date(bill.paymentDate);
     const monthKey = `${billDate.getFullYear()}-${String(billDate.getMonth() + 1).padStart(2, '0')}`;
     if (!acc[monthKey]) {
       acc[monthKey] = { date: billDate, amount: 0 };
     }
-    acc[monthKey].amount += parseFloat(bill.amount || "0");
+    const rawAmount = parseFloat(bill.amount || "0");
+    const monthlyAmount = getMonthlyAmount(bill.paymentPeriod, rawAmount);
+    acc[monthKey].amount += monthlyAmount;
     return acc;
   }, {} as Record<string, { date: Date; amount: number }>);
 
@@ -348,10 +376,16 @@ export default function Dashboard() {
     .slice(-6)
     .map(({ month, expenses }) => ({ month, expenses }));
 
-  // Operating expenses = recurring bills + COGS (Cost of Goods Sold from completed orders)
-  const recurringBillsTotal = operatingBills.reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
+  // Operating expenses = recurring bills (prorated to monthly) + COGS (Cost of Goods Sold from completed orders)
+  const recurringBillsTotal = operatingBills.reduce((sum, bill) => {
+    const rawAmount = parseFloat(bill.amount || "0");
+    return sum + getMonthlyAmount(bill.paymentPeriod, rawAmount);
+  }, 0);
   const totalExpenses = recurringBillsTotal + (dashboardData?.cogsTotal || 0);
-  const pendingExpenses = operatingBills.filter(b => b.status === "pending").reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
+  const pendingExpenses = operatingBills.filter(b => b.status === "pending").reduce((sum, bill) => {
+    const rawAmount = parseFloat(bill.amount || "0");
+    return sum + getMonthlyAmount(bill.paymentPeriod, rawAmount);
+  }, 0);
 
   if (dashboardLoading || salesLoading || billsLoading) {
     return (

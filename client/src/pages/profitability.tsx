@@ -1262,15 +1262,59 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
     .filter(item => item.margin < 30 && item.cost > 10)
     .sort((a, b) => b.cost - a.cost);
 
-  // Calculate operating expenses from bills
-  const totalOperatingExpenses = bills.reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
-  const paidExpenses = bills.filter(b => b.status === "paid").reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
-  const pendingExpenses = bills.filter(b => b.status === "pending").reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
+  // Helper function to prorate bill amounts to monthly values
+  // quarterly÷3, semi-annual÷6, yearly÷12, weekly×4.33
+  // Handles all known variants: case-insensitive, hyphenated, spaced, and compound forms
+  const getMonthlyAmount = (paymentPeriod: string | null | undefined, amount: number): number => {
+    if (!paymentPeriod || amount === 0) return amount;
+    const period = paymentPeriod.toLowerCase().replace(/[\s-]/g, ''); // normalize: remove spaces/hyphens
+    switch (period) {
+      case 'weekly':
+        return amount * 4.33;
+      case 'monthly':
+        return amount;
+      case 'quarterly':
+        return amount / 3;
+      case 'semiannual':
+      case 'biannual':
+        return amount / 6;
+      case 'yearly':
+      case 'annual':
+      case 'annually':
+        return amount / 12;
+      default:
+        return amount;
+    }
+  };
 
-  // Group bills by type
-  const expensesByType = bills.reduce((acc, bill) => {
+  // Filter to recurring bills only (exclude one-time and foundational)
+  const recurringBills = bills.filter(bill => {
+    const paymentPeriod = String(bill.paymentPeriod || '').toLowerCase();
+    const billType = String(bill.billType || '').toLowerCase();
+    return billType !== 'foundational' && 
+           paymentPeriod !== 'one-time' && 
+           paymentPeriod !== 'onetime';
+  });
+
+  // Calculate operating expenses from bills with proration
+  const totalOperatingExpenses = recurringBills.reduce((sum, bill) => {
+    const rawAmount = parseFloat(bill.amount || "0");
+    return sum + getMonthlyAmount(bill.paymentPeriod, rawAmount);
+  }, 0);
+  const paidExpenses = recurringBills.filter(b => b.status === "paid").reduce((sum, bill) => {
+    const rawAmount = parseFloat(bill.amount || "0");
+    return sum + getMonthlyAmount(bill.paymentPeriod, rawAmount);
+  }, 0);
+  const pendingExpenses = recurringBills.filter(b => b.status === "pending").reduce((sum, bill) => {
+    const rawAmount = parseFloat(bill.amount || "0");
+    return sum + getMonthlyAmount(bill.paymentPeriod, rawAmount);
+  }, 0);
+
+  // Group bills by type with prorated amounts
+  const expensesByType = recurringBills.reduce((acc, bill) => {
     const type = bill.billType;
-    acc[type] = (acc[type] || 0) + parseFloat(bill.amount || "0");
+    const rawAmount = parseFloat(bill.amount || "0");
+    acc[type] = (acc[type] || 0) + getMonthlyAmount(bill.paymentPeriod, rawAmount);
     return acc;
   }, {} as Record<string, number>);
 
@@ -1281,9 +1325,9 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
   const handleExportPDF = () => {
     const exportData = [
       ...highCostItems.map(item => ({ ...item, type: 'Menu Item Cost' })),
-      ...bills.map(bill => ({
+      ...recurringBills.map(bill => ({
         name: bill.description || bill.billType,
-        cost: parseFloat(bill.amount || "0"),
+        cost: getMonthlyAmount(bill.paymentPeriod, parseFloat(bill.amount || "0")),
         type: bill.billType,
         status: bill.status,
         margin: 0,
@@ -1293,10 +1337,10 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
     exportToPDF("Cost Management Report", exportData, [
       { header: "Item/Expense", accessor: "name", width: 70 },
       { header: "Type", accessor: "type", width: 40 },
-      { header: "Cost/Amount (SAR)", accessor: (row: any) => row.cost.toFixed(2), width: 40 },
+      { header: "Monthly Cost (SAR)", accessor: (row: any) => row.cost.toFixed(2), width: 40 },
       { header: "Margin %", accessor: (row: any) => row.margin ? row.margin.toFixed(1) + "%" : "-", width: 30 },
       { header: "Status", accessor: (row: any) => row.status || "-", width: 30 },
-    ], { subtitle: `Total Operating Expenses: ${totalOperatingExpenses.toFixed(2)} SAR | Paid: ${paidExpenses.toFixed(2)} SAR | Pending: ${pendingExpenses.toFixed(2)} SAR` });
+    ], { subtitle: `Monthly Operating Expenses: ${totalOperatingExpenses.toFixed(2)} SAR | Paid: ${paidExpenses.toFixed(2)} SAR | Pending: ${pendingExpenses.toFixed(2)} SAR` });
   };
 
   return (

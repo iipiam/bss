@@ -85,7 +85,19 @@ interface InventoryNotification {
   updatedFields: string[];
 }
 
-type Notification = OrderNotification | ChatNotification | TicketNotification | SettingsNotification | PermissionsNotification | RecipeCostNotification | MenuNotification | SalesNotification | InventoryNotification;
+interface BillsNotification {
+  type: 'bills:updated';
+  restaurantId: string;
+  action?: 'created' | 'updated' | 'deleted' | 'archived';
+  billType?: string;
+}
+
+interface SalariesNotification {
+  type: 'salaries:updated';
+  restaurantId: string;
+}
+
+type Notification = OrderNotification | ChatNotification | TicketNotification | SettingsNotification | PermissionsNotification | RecipeCostNotification | MenuNotification | SalesNotification | InventoryNotification | BillsNotification | SalariesNotification;
 
 interface NotificationContextType {
   isConnected: boolean;
@@ -350,24 +362,56 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             console.log('[Notifications] Recipe costs updated - refreshing recipes, menu, and BEP data');
           } else if (notification.type === 'sales:updated') {
             // Handle sales updates for real-time BEP tracking
-            queryClient.invalidateQueries({ queryKey: ['/api/invoices'], refetchType: 'all' });
-            queryClient.invalidateQueries({ queryKey: ['/api/analytics/financial'], refetchType: 'all' });
-            // Invalidate BEP analytics since new sales affect revenue and COGS
-            queryClient.invalidateQueries({ queryKey: ['/api/analytics/bep'], refetchType: 'all' });
-            // Invalidate delivery breakdown for real-time updates
-            queryClient.invalidateQueries({ queryKey: ['/api/analytics/delivery-breakdown'], refetchType: 'all' });
-            console.log('[Notifications] Sales updated - refreshing financial data, BEP, and delivery breakdown');
+            // Use predicate to invalidate ALL queries containing these base paths (handles arrays and object keys)
+            const targetKeys = ['/api/invoices', '/api/analytics/financial', '/api/analytics/bep', 
+                               '/api/analytics/delivery-breakdown', '/api/analytics/dashboard', 
+                               '/api/analytics/sales', '/api/shop/bills'];
+            queryClient.invalidateQueries({ 
+              predicate: (query) => {
+                // Check all segments of the query key array
+                return query.queryKey.some(segment => 
+                  typeof segment === 'string' && targetKeys.some(key => segment.startsWith(key))
+                );
+              },
+              refetchType: 'all'
+            });
+            console.log('[Notifications] Sales updated - refreshing all financial/analytics data');
           } else if (notification.type === 'inventory:updated') {
             // Handle inventory updates for real-time sync with recipes
-            // Invalidate inventory queries
-            queryClient.invalidateQueries({ queryKey: ['/api/inventory'], refetchType: 'all' });
-            // Invalidate recipes since they reference inventory items (especially unit changes)
-            queryClient.invalidateQueries({ queryKey: ['/api/recipes'], refetchType: 'all' });
-            // Invalidate menu items as they may reference inventory
-            queryClient.invalidateQueries({ queryKey: ['/api/menu'], refetchType: 'all' });
-            // Invalidate menu stock as it depends on inventory
-            queryClient.invalidateQueries({ queryKey: ['/api/menu/stock'], refetchType: 'all' });
-            console.log('[Notifications] Inventory updated - refreshing inventory, recipes, and menu data');
+            const targetKeys = ['/api/inventory', '/api/recipes', '/api/menu', '/api/menu/stock', '/api/analytics/bep'];
+            queryClient.invalidateQueries({ 
+              predicate: (query) => {
+                return query.queryKey.some(segment => 
+                  typeof segment === 'string' && targetKeys.some(key => segment.startsWith(key))
+                );
+              },
+              refetchType: 'all'
+            });
+            console.log('[Notifications] Inventory updated - refreshing inventory, recipes, menu, and BEP data');
+          } else if (notification.type === 'bills:updated') {
+            // Handle bill updates for real-time Operating Expenses tracking
+            const targetKeys = ['/api/shop/bills', '/api/analytics/financial', '/api/analytics/bep', '/api/analytics/dashboard'];
+            queryClient.invalidateQueries({ 
+              predicate: (query) => {
+                return query.queryKey.some(segment => 
+                  typeof segment === 'string' && targetKeys.some(key => segment.startsWith(key))
+                );
+              },
+              refetchType: 'all'
+            });
+            console.log('[Notifications] Bills updated - refreshing Operating Expenses, BEP, and dashboard');
+          } else if (notification.type === 'salaries:updated') {
+            // Handle salary updates for real-time Fixed Costs tracking
+            const targetKeys = ['/api/salaries', '/api/shop/bills', '/api/analytics/bep', '/api/analytics/financial', '/api/analytics/dashboard'];
+            queryClient.invalidateQueries({ 
+              predicate: (query) => {
+                return query.queryKey.some(segment => 
+                  typeof segment === 'string' && targetKeys.some(key => segment.startsWith(key))
+                );
+              },
+              refetchType: 'all'
+            });
+            console.log('[Notifications] Salaries updated - refreshing Fixed Costs and BEP data');
           }
         } catch (err) {
           console.error('[Notifications] Failed to parse message:', err);

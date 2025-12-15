@@ -116,13 +116,24 @@ export default function Financial() {
   const sensitivityScenarios = useMemo(() => {
     if (!bepMetrics) return { best: null, base: null, worst: null };
     
-    const priceMultiplier = 1 + parseFloat(priceChange) / 100;
-    const variableMultiplier = 1 + parseFloat(variableCostChange) / 100;
-    const fixedMultiplier = 1 + parseFloat(fixedCostChange) / 100;
+    // Safe parsing with NaN fallback to 0
+    const safeParseFloat = (val: string): number => {
+      const parsed = parseFloat(val);
+      return isNaN(parsed) ? 0 : parsed;
+    };
     
-    const adjustedPrice = bepMetrics.avgSellingPrice * priceMultiplier;
-    const adjustedVariableCost = bepMetrics.avgVariableCostPerUnit * variableMultiplier;
-    const adjustedFixedCosts = bepMetrics.fixedCosts * fixedMultiplier;
+    // Get base values with safe defaults (use 1 for prices to avoid division by zero)
+    const basePrice = bepMetrics.avgSellingPrice || 1;
+    const baseVC = bepMetrics.avgVariableCostPerUnit || 0;
+    const baseFC = bepMetrics.fixedCosts || 0;
+    
+    const priceMultiplier = 1 + safeParseFloat(priceChange) / 100;
+    const variableMultiplier = 1 + safeParseFloat(variableCostChange) / 100;
+    const fixedMultiplier = 1 + safeParseFloat(fixedCostChange) / 100;
+    
+    const adjustedPrice = basePrice * priceMultiplier;
+    const adjustedVariableCost = baseVC * variableMultiplier;
+    const adjustedFixedCosts = baseFC * fixedMultiplier;
     
     const adjustedCM = adjustedPrice - adjustedVariableCost;
     const adjustedCMRatio = adjustedPrice > 0 ? adjustedCM / adjustedPrice : 0;
@@ -130,32 +141,39 @@ export default function Financial() {
     const adjustedBepUnits = adjustedCM > 0 ? Math.ceil(adjustedFixedCosts / adjustedCM) : 0;
     const adjustedBepRevenue = adjustedCMRatio > 0 ? adjustedFixedCosts / adjustedCMRatio : 0;
     
-    const bestPrice = bepMetrics.avgSellingPrice * 1.2;
-    const bestVC = bepMetrics.avgVariableCostPerUnit * 0.8;
-    const bestFC = bepMetrics.fixedCosts * 0.8;
+    // Best case: +20% price, -20% costs
+    const bestPrice = basePrice * 1.2;
+    const bestVC = baseVC * 0.8;
+    const bestFC = baseFC * 0.8;
     const bestCM = bestPrice - bestVC;
     const bestCMRatio = bestPrice > 0 ? bestCM / bestPrice : 0;
     const bestBepRevenue = bestCMRatio > 0 ? bestFC / bestCMRatio : 0;
     
-    const worstPrice = bepMetrics.avgSellingPrice * 0.8;
-    const worstVC = bepMetrics.avgVariableCostPerUnit * 1.2;
-    const worstFC = bepMetrics.fixedCosts * 1.2;
+    // Worst case: -20% price, +20% costs
+    const worstPrice = basePrice * 0.8;
+    const worstVC = baseVC * 1.2;
+    const worstFC = baseFC * 1.2;
     const worstCM = worstPrice - worstVC;
     const worstCMRatio = worstPrice > 0 ? worstCM / worstPrice : 0;
     const worstBepRevenue = worstCMRatio > 0 ? worstFC / worstCMRatio : 0;
     
+    // Ensure all values are valid numbers (not NaN or Infinity)
+    const safeValue = (val: number): number => {
+      return isNaN(val) || !isFinite(val) ? 0 : val;
+    };
+    
     return {
-      best: { bepRevenue: bestBepRevenue, label: "Best Case" },
-      base: { bepRevenue: adjustedBepRevenue, label: "Your Scenario" },
-      worst: { bepRevenue: worstBepRevenue, label: "Worst Case" },
+      best: { bepRevenue: safeValue(bestBepRevenue), label: "Best Case" },
+      base: { bepRevenue: safeValue(adjustedBepRevenue), label: "Your Scenario" },
+      worst: { bepRevenue: safeValue(worstBepRevenue), label: "Worst Case" },
       adjusted: {
-        price: adjustedPrice,
-        variableCost: adjustedVariableCost,
-        fixedCosts: adjustedFixedCosts,
-        contributionMargin: adjustedCM,
-        contributionMarginRatio: adjustedCMRatio,
-        bepUnits: adjustedBepUnits,
-        bepRevenue: adjustedBepRevenue,
+        price: safeValue(adjustedPrice),
+        variableCost: safeValue(adjustedVariableCost),
+        fixedCosts: safeValue(adjustedFixedCosts),
+        contributionMargin: safeValue(adjustedCM),
+        contributionMarginRatio: safeValue(adjustedCMRatio),
+        bepUnits: safeValue(adjustedBepUnits),
+        bepRevenue: safeValue(adjustedBepRevenue),
       }
     };
   }, [bepMetrics, priceChange, variableCostChange, fixedCostChange]);
@@ -213,20 +231,23 @@ export default function Financial() {
 
   // Helper function to prorate bill amounts to monthly values
   // quarterly÷3, semi-annual÷6, yearly÷12, weekly×4.33
+  // Handles all known variants: case-insensitive, hyphenated, spaced, and compound forms
   const getMonthlyAmount = (paymentPeriod: string | null | undefined, amount: number): number => {
     if (!paymentPeriod || amount === 0) return amount;
-    switch (paymentPeriod.toLowerCase()) {
+    const period = paymentPeriod.toLowerCase().replace(/[\s-]/g, ''); // normalize: remove spaces/hyphens
+    switch (period) {
       case 'weekly':
         return amount * 4.33;
       case 'monthly':
         return amount;
       case 'quarterly':
         return amount / 3;
-      case 'semi-annual':
       case 'semiannual':
+      case 'biannual':
         return amount / 6;
       case 'yearly':
       case 'annual':
+      case 'annually':
         return amount / 12;
       default:
         return amount;
