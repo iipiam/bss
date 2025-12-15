@@ -211,10 +211,35 @@ export default function Financial() {
     bill.billType !== "foundational"
   );
 
+  // Helper function to prorate bill amounts to monthly values
+  // quarterly÷3, semi-annual÷6, yearly÷12, weekly×4.33
+  const getMonthlyAmount = (paymentPeriod: string | null | undefined, amount: number): number => {
+    if (!paymentPeriod || amount === 0) return amount;
+    switch (paymentPeriod.toLowerCase()) {
+      case 'weekly':
+        return amount * 4.33;
+      case 'monthly':
+        return amount;
+      case 'quarterly':
+        return amount / 3;
+      case 'semi-annual':
+      case 'semiannual':
+        return amount / 6;
+      case 'yearly':
+      case 'annual':
+        return amount / 12;
+      default:
+        return amount;
+    }
+  };
+
   // Group recurring bills by type for pie chart (excludes one-time & foundational)
+  // Uses prorated monthly amounts for accurate comparison
   const billsByType = recurringBillsForYear.reduce((acc, bill) => {
     const type = bill.billType;
-    acc[type] = (acc[type] || 0) + parseFloat(bill.amount || "0");
+    const rawAmount = parseFloat(bill.amount || "0");
+    const monthlyAmount = getMonthlyAmount(bill.paymentPeriod, rawAmount);
+    acc[type] = (acc[type] || 0) + monthlyAmount;
     return acc;
   }, {} as Record<string, number>);
 
@@ -240,8 +265,11 @@ export default function Financial() {
     .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
     .map(({ month, expenses }) => ({ month, expenses }));
   
-  // Calculate recurring expenses total (for summary display)
-  const recurringExpensesTotal = recurringBillsForYear.reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
+  // Calculate recurring expenses total (for summary display) - uses prorated monthly amounts
+  const recurringExpensesTotal = recurringBillsForYear.reduce((sum, bill) => {
+    const rawAmount = parseFloat(bill.amount || "0");
+    return sum + getMonthlyAmount(bill.paymentPeriod, rawAmount);
+  }, 0);
 
   const handleExport = async () => {
     try {
