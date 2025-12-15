@@ -71,7 +71,10 @@ import {
   type InsertShopFile,
   type CompanyFile,
   type InsertCompanyFile,
+  type PendingSignup,
+  type InsertPendingSignup,
   restaurants,
+  pendingSignups,
   branches,
   inventoryItems,
   menuItems,
@@ -367,6 +370,12 @@ export interface IStorage {
   getMoyasarPaymentByMoyasarIdAnyTenant(moyasarId: string): Promise<MoyasarPayment | undefined>; // Webhook use only
   createMoyasarPayment(payment: InsertMoyasarPayment): Promise<MoyasarPayment>;
   updateMoyasarPayment(id: string, restaurantId: string, payment: Partial<InsertMoyasarPayment>): Promise<MoyasarPayment | undefined>;
+
+  // Pending Signups (for Geidea payment flow)
+  createPendingSignup(signup: InsertPendingSignup): Promise<PendingSignup>;
+  getPendingSignupBySessionId(geideaSessionId: string): Promise<PendingSignup | undefined>;
+  updatePendingSignupStatus(id: string, status: string): Promise<void>;
+  deletePendingSignup(id: string): Promise<void>;
 
   // Analytics (MULTI-TENANT: requires restaurantId)
   getSalesComparison(restaurantId: string): Promise<any>;
@@ -4176,6 +4185,25 @@ export class DatabaseStorage implements IStorage {
       .delete(companyFiles)
       .where(eq(companyFiles.id, id));
     return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Pending Signups (for Geidea payment flow)
+  async createPendingSignup(signup: InsertPendingSignup): Promise<PendingSignup> {
+    const [result] = await db.insert(pendingSignups).values(signup).returning();
+    return result;
+  }
+
+  async getPendingSignupBySessionId(geideaSessionId: string): Promise<PendingSignup | undefined> {
+    const [result] = await db.select().from(pendingSignups).where(eq(pendingSignups.geideaSessionId, geideaSessionId));
+    return result;
+  }
+
+  async updatePendingSignupStatus(id: string, status: string): Promise<void> {
+    await db.update(pendingSignups).set({ status }).where(eq(pendingSignups.id, id));
+  }
+
+  async deletePendingSignup(id: string): Promise<void> {
+    await db.delete(pendingSignups).where(eq(pendingSignups.id, id));
   }
 }
 
