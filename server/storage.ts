@@ -526,10 +526,16 @@ export class DatabaseStorage implements IStorage {
     } catch (error: any) {
       // Handle case where unit_price column doesn't exist yet (pre-migration)
       if (error.message?.includes('unit_price')) {
-        console.warn('[Inventory] unit_price column not found, using fallback query');
+        console.warn('[Inventory] unit_price column not found, using fallback query with calculated unitPrice');
         const query = branchId 
-          ? sql`SELECT id, restaurant_id as "restaurantId", name, category, quantity, unit, reference_quantity as "referenceQuantity", price, '0' as "unitPrice", supplier, status, branch_id as "branchId", sort_order as "sortOrder", expiration_days as "expirationDays", purchase_date as "purchaseDate" FROM inventory_items WHERE restaurant_id = ${restaurantId} AND branch_id = ${branchId}`
-          : sql`SELECT id, restaurant_id as "restaurantId", name, category, quantity, unit, reference_quantity as "referenceQuantity", price, '0' as "unitPrice", supplier, status, branch_id as "branchId", sort_order as "sortOrder", expiration_days as "expirationDays", purchase_date as "purchaseDate" FROM inventory_items WHERE restaurant_id = ${restaurantId}`;
+          ? sql`SELECT id, restaurant_id as "restaurantId", name, category, quantity, unit, reference_quantity as "referenceQuantity", price, 
+                CASE WHEN CAST(quantity AS NUMERIC) > 0 THEN CAST(CAST(price AS NUMERIC) / CAST(quantity AS NUMERIC) AS DECIMAL(10,2))::text ELSE '0' END as "unitPrice", 
+                supplier, status, branch_id as "branchId", sort_order as "sortOrder", expiration_days as "expirationDays", purchase_date as "purchaseDate" 
+                FROM inventory_items WHERE restaurant_id = ${restaurantId} AND branch_id = ${branchId}`
+          : sql`SELECT id, restaurant_id as "restaurantId", name, category, quantity, unit, reference_quantity as "referenceQuantity", price, 
+                CASE WHEN CAST(quantity AS NUMERIC) > 0 THEN CAST(CAST(price AS NUMERIC) / CAST(quantity AS NUMERIC) AS DECIMAL(10,2))::text ELSE '0' END as "unitPrice", 
+                supplier, status, branch_id as "branchId", sort_order as "sortOrder", expiration_days as "expirationDays", purchase_date as "purchaseDate" 
+                FROM inventory_items WHERE restaurant_id = ${restaurantId}`;
         const result = await db.execute(query);
         return result.rows as InventoryItem[];
       }
