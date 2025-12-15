@@ -484,7 +484,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.patch("/api/inventory/:id", requireAuth, requireRestaurant, requireAction('inventory', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      const data = sanitizePatchBody(req.body, insertInventoryItemSchema.partial());
+      // Coerce numeric fields to strings before schema validation (schema expects strings for text columns)
+      const body = { ...req.body };
+      if (body.quantity !== undefined) body.quantity = String(body.quantity);
+      if (body.referenceQuantity !== undefined) body.referenceQuantity = String(body.referenceQuantity);
+      if (body.price !== undefined) body.price = String(body.price);
+      if (body.expirationDays !== undefined && body.expirationDays !== null) body.expirationDays = Number(body.expirationDays);
+      const data = sanitizePatchBody(body, insertInventoryItemSchema.partial());
       // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
       // Also strip unitPrice - it should never be changed after initial creation
       const { restaurantId: _, unitPrice: __, ...safeData } = data;
