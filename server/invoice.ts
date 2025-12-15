@@ -21,16 +21,16 @@ const PDF_STYLES = {
     english: "'Inter', sans-serif",
   },
   
-  // Font sizes (consistent across all PDFs)
+  // Font sizes - COMPACT for single-page PDFs
   fontSize: {
-    xs: '8px',
-    sm: '9px',
-    base: '10px',
-    md: '11px',
-    lg: '13px',
-    xl: '16px',
-    '2xl': '20px',
-    '3xl': '24px',
+    xs: '6px',
+    sm: '7px',
+    base: '8px',
+    md: '9px',
+    lg: '10px',
+    xl: '12px',
+    '2xl': '14px',
+    '3xl': '16px',
   },
   
   // Colors (consistent brand colors)
@@ -46,17 +46,17 @@ const PDF_STYLES = {
     white: '#ffffff',
   },
   
-  // Standard margins for PDF pages
+  // Standard margins for PDF pages - COMPACT
   margins: {
-    page: '10mm',
-    container: '12mm',
+    page: '6mm',
+    container: '6mm',
   },
   
-  // Page settings
+  // Page settings - ONE PAGE CONSTRAINT
   pageSettings: `
     @page {
       size: A4;
-      margin: 10mm;
+      margin: 6mm;
     }
   `,
   
@@ -79,7 +79,7 @@ const PDF_STYLES = {
     }
   `,
   
-  // Table styles for consistent formatting and proper page breaks
+  // Table styles for consistent formatting - COMPACT
   tableStyles: `
     table {
       width: 100%;
@@ -99,16 +99,30 @@ const PDF_STYLES = {
     }
   `,
   
-  // Page break utilities
+  // Page break utilities - PREVENT breaks for one-page
   pageBreakStyles: `
     .page-break-before { page-break-before: always; }
     .page-break-after { page-break-after: always; }
     .avoid-break { page-break-inside: avoid; }
     .keep-together { page-break-inside: avoid; break-inside: avoid; }
+    .no-break { page-break-inside: avoid; break-inside: avoid; }
+  `,
+  
+  // One-page constraint styles
+  onePageStyles: `
+    html, body {
+      height: 277mm;
+      max-height: 277mm;
+      overflow: hidden;
+    }
+    .pdf-container {
+      max-height: 277mm;
+      overflow: hidden;
+    }
   `,
 };
 
-// Helper function to generate complete base CSS for PDFs
+// Helper function to generate complete base CSS for PDFs - ONE PAGE LAYOUT
 function getBasePdfStyles(): string {
   return `
     ${PDF_STYLES.fontImport}
@@ -117,11 +131,12 @@ function getBasePdfStyles(): string {
     ${PDF_STYLES.printStyles}
     ${PDF_STYLES.tableStyles}
     ${PDF_STYLES.pageBreakStyles}
+    ${PDF_STYLES.onePageStyles}
     
     body {
       font-family: ${PDF_STYLES.fonts.primary};
       font-size: ${PDF_STYLES.fontSize.base};
-      line-height: 1.4;
+      line-height: 1.2;
       color: ${PDF_STYLES.colors.text};
       background: ${PDF_STYLES.colors.white};
     }
@@ -136,12 +151,12 @@ function getBasePdfStyles(): string {
   `;
 }
 
-// Standard PDF margins for puppeteer
+// Standard PDF margins for puppeteer - COMPACT for one-page
 const PDF_MARGINS = {
-  top: '10mm',
-  right: '10mm',
-  bottom: '10mm',
-  left: '10mm',
+  top: '6mm',
+  right: '6mm',
+  bottom: '6mm',
+  left: '6mm',
 };
 
 // ============================================================================
@@ -321,54 +336,52 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     ${getBasePdfStyles()}
     
     body {
-      font-size: ${PDF_STYLES.fontSize.md};
+      font-size: ${PDF_STYLES.fontSize.sm};
     }
     
     .invoice-container {
       max-width: 210mm;
       margin: 0 auto;
-      padding: ${PDF_STYLES.margins.container};
+      padding: 4mm;
     }
     
     .header {
       background: linear-gradient(135deg, ${PDF_STYLES.colors.primary} 0%, ${PDF_STYLES.colors.primaryDark} 100%);
       color: ${PDF_STYLES.colors.white};
-      padding: 15px 20px;
+      padding: 8px 12px;
       text-align: center;
-      border-radius: 6px 6px 0 0;
-      margin-bottom: 12px;
-      page-break-inside: avoid;
+      border-radius: 4px 4px 0 0;
+      margin-bottom: 6px;
     }
     
     .company-name {
-      font-size: ${PDF_STYLES.fontSize['2xl']};
+      font-size: ${PDF_STYLES.fontSize.xl};
       font-weight: 700;
-      margin-bottom: 6px;
-      letter-spacing: 0.3px;
+      margin-bottom: 3px;
+      letter-spacing: 0.2px;
     }
     
     .invoice-badge {
       display: inline-block;
       background: ${PDF_STYLES.colors.white};
       color: ${PDF_STYLES.colors.primary};
-      padding: 4px 16px;
-      border-radius: 12px;
+      padding: 2px 10px;
+      border-radius: 8px;
       font-weight: 700;
-      font-size: ${PDF_STYLES.fontSize.base};
-      margin-top: 4px;
+      font-size: ${PDF_STYLES.fontSize.xs};
+      margin-top: 2px;
     }
     
     .bilingual-section {
       display: flex;
-      gap: 12px;
-      margin-bottom: 10px;
-      page-break-inside: avoid;
+      gap: 6px;
+      margin-bottom: 5px;
     }
     
     .section-left, .section-right {
       flex: 1;
-      padding: 10px 12px;
-      border-radius: 4px;
+      padding: 5px 8px;
+      border-radius: 3px;
       border: 1px solid ${PDF_STYLES.colors.border};
     }
     
@@ -384,18 +397,18 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     
     .section-title {
       font-weight: 700;
-      font-size: ${PDF_STYLES.fontSize.sm};
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: ${PDF_STYLES.colors.primaryDark};
-      margin-bottom: 6px;
+      margin-bottom: 3px;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
     }
     
     .info-row {
       display: flex;
-      margin-bottom: 4px;
-      font-size: ${PDF_STYLES.fontSize.sm};
-      line-height: 1.3;
+      margin-bottom: 2px;
+      font-size: ${PDF_STYLES.fontSize.xs};
+      line-height: 1.2;
     }
     
     .section-right .info-row {
@@ -405,7 +418,7 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     
     .info-label {
       font-weight: 600;
-      min-width: 80px;
+      min-width: 60px;
       color: ${PDF_STYLES.colors.textSecondary};
     }
     
@@ -416,16 +429,15 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     
     .customer-section {
       background: ${PDF_STYLES.colors.background};
-      padding: 8px 12px;
-      border-radius: 4px;
-      margin-bottom: 10px;
+      padding: 4px 8px;
+      border-radius: 3px;
+      margin-bottom: 5px;
       border: 1px solid ${PDF_STYLES.colors.border};
-      page-break-inside: avoid;
     }
     
     .customer-grid {
       display: flex;
-      gap: 20px;
+      gap: 12px;
     }
     
     .customer-col {
@@ -433,9 +445,9 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     }
     
     .items-table {
-      margin-bottom: 10px;
+      margin-bottom: 5px;
       border: 1px solid ${PDF_STYLES.colors.border};
-      border-radius: 4px;
+      border-radius: 3px;
       overflow: hidden;
     }
     
@@ -446,12 +458,12 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     }
     
     .items-table th {
-      padding: 6px 8px;
+      padding: 3px 5px;
       text-align: left;
       font-weight: 600;
       font-size: ${PDF_STYLES.fontSize.xs};
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
     }
     
     .items-table th.rtl {
@@ -464,14 +476,13 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     
     .items-table tbody tr {
       border-bottom: 1px solid ${PDF_STYLES.colors.border};
-      page-break-inside: avoid;
     }
     
     .items-table td {
-      padding: 5px 8px;
-      font-size: ${PDF_STYLES.fontSize.sm};
+      padding: 3px 5px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       word-break: break-word;
-      line-height: 1.3;
+      line-height: 1.2;
     }
     
     .text-right {
@@ -483,27 +494,26 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     }
     
     .totals-section {
-      max-width: 300px;
+      max-width: 220px;
       margin-left: auto;
-      margin-bottom: 10px;
-      page-break-inside: avoid;
+      margin-bottom: 5px;
     }
     
     .totals-row {
       display: flex;
       justify-content: space-between;
-      padding: 4px 10px;
-      font-size: ${PDF_STYLES.fontSize.base};
+      padding: 2px 6px;
+      font-size: ${PDF_STYLES.fontSize.xs};
     }
     
     .totals-row.total {
       background: ${PDF_STYLES.colors.primary};
       color: ${PDF_STYLES.colors.white};
       font-weight: 700;
-      font-size: ${PDF_STYLES.fontSize.lg};
-      border-radius: 4px;
-      padding: 8px 12px;
-      margin-top: 6px;
+      font-size: ${PDF_STYLES.fontSize.sm};
+      border-radius: 3px;
+      padding: 4px 8px;
+      margin-top: 3px;
     }
     
     .totals-row.subtotal {
@@ -514,20 +524,19 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 15px;
+      gap: 10px;
       background: ${PDF_STYLES.colors.background};
-      padding: 10px 15px;
-      border-radius: 4px;
+      padding: 6px 10px;
+      border-radius: 3px;
       border: 1px solid ${PDF_STYLES.colors.border};
-      page-break-inside: avoid;
     }
     
     .qr-code {
-      width: 80px;
-      height: 80px;
-      border: 2px solid ${PDF_STYLES.colors.border};
-      border-radius: 4px;
-      padding: 4px;
+      width: 55px;
+      height: 55px;
+      border: 1px solid ${PDF_STYLES.colors.border};
+      border-radius: 3px;
+      padding: 2px;
       flex-shrink: 0;
     }
     
@@ -538,20 +547,20 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     .zatca-badge {
       color: ${PDF_STYLES.colors.primary};
       font-weight: 700;
-      font-size: ${PDF_STYLES.fontSize.base};
-      margin-bottom: 4px;
+      font-size: ${PDF_STYLES.fontSize.xs};
+      margin-bottom: 2px;
     }
     
     .footer-text {
       font-size: ${PDF_STYLES.fontSize.xs};
       color: ${PDF_STYLES.colors.textMuted};
-      margin-bottom: 2px;
-      line-height: 1.3;
+      margin-bottom: 1px;
+      line-height: 1.2;
     }
   </style>
 </head>
 <body>
-  <div class="invoice-container">
+  <div class="invoice-container pdf-container">
     <!-- Header -->
     <div class="header">
       ${logoHTML}
@@ -834,119 +843,114 @@ export async function generateFinancialStatementPDF(data: FinancialStatementData
 <head>
   <meta charset="UTF-8">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    ${getBasePdfStyles()}
     
     body {
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      line-height: 1.6;
-      color: #1a1a1a;
-      background: white;
-      padding: 40px;
+      font-size: ${PDF_STYLES.fontSize.sm};
+      padding: 4mm;
+    }
+    
+    .pdf-container {
+      max-height: 277mm;
+      overflow: hidden;
     }
     
     .header {
       text-align: center;
-      margin-bottom: 40px;
-      border-bottom: 3px solid #2962ff;
-      padding-bottom: 20px;
+      margin-bottom: 8px;
+      border-bottom: 2px solid ${PDF_STYLES.colors.primary};
+      padding-bottom: 6px;
     }
     
     .company-name {
-      font-size: 32px;
+      font-size: ${PDF_STYLES.fontSize.xl};
       font-weight: 700;
-      color: #2962ff;
-      margin-bottom: 10px;
+      color: ${PDF_STYLES.colors.primary};
+      margin-bottom: 3px;
     }
     
     .document-title {
-      font-size: 24px;
+      font-size: ${PDF_STYLES.fontSize.lg};
       font-weight: 600;
-      color: #374151;
-      margin-bottom: 8px;
+      color: ${PDF_STYLES.colors.textSecondary};
+      margin-bottom: 2px;
     }
     
     .year {
-      font-size: 18px;
-      color: #6b7280;
+      font-size: ${PDF_STYLES.fontSize.md};
+      color: ${PDF_STYLES.colors.textMuted};
     }
     
     .meta-info {
-      margin-bottom: 30px;
-      font-size: 12px;
-      color: #6b7280;
+      margin-bottom: 8px;
+      font-size: ${PDF_STYLES.fontSize.xs};
+      color: ${PDF_STYLES.colors.textMuted};
     }
     
     .summary-box {
-      background: linear-gradient(135deg, #2962ff 0%, #1e40af 100%);
+      background: linear-gradient(135deg, ${PDF_STYLES.colors.primary} 0%, ${PDF_STYLES.colors.primaryDark} 100%);
       color: white;
-      padding: 30px;
-      border-radius: 8px;
-      margin-bottom: 40px;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
     }
     
     .summary-title {
-      font-size: 20px;
+      font-size: ${PDF_STYLES.fontSize.md};
       font-weight: 700;
-      margin-bottom: 20px;
+      margin-bottom: 8px;
     }
     
     .summary-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      gap: 8px;
     }
     
     .summary-item {
       background: rgba(255, 255, 255, 0.1);
-      padding: 15px;
-      border-radius: 6px;
+      padding: 6px;
+      border-radius: 4px;
     }
     
     .summary-label {
-      font-size: 12px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       opacity: 0.9;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
     
     .summary-value {
-      font-size: 24px;
+      font-size: ${PDF_STYLES.fontSize.lg};
       font-weight: 700;
     }
     
     .section-title {
-      font-size: 18px;
+      font-size: ${PDF_STYLES.fontSize.md};
       font-weight: 700;
-      color: #1e40af;
-      margin-bottom: 15px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #e5e7eb;
+      color: ${PDF_STYLES.colors.primaryDark};
+      margin-bottom: 5px;
+      padding-bottom: 3px;
+      border-bottom: 1px solid ${PDF_STYLES.colors.border};
     }
     
     .data-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 30px;
+      margin-bottom: 8px;
     }
     
     .data-table thead {
-      background: #f3f4f6;
+      background: ${PDF_STYLES.colors.background};
     }
     
     .data-table th {
-      padding: 12px;
+      padding: 4px 6px;
       text-align: left;
       font-weight: 600;
-      font-size: 12px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       text-transform: uppercase;
-      color: #374151;
-      border-bottom: 2px solid #e5e7eb;
+      color: ${PDF_STYLES.colors.textSecondary};
+      border-bottom: 1px solid ${PDF_STYLES.colors.border};
     }
     
     .data-table th.text-right {
@@ -954,12 +958,13 @@ export async function generateFinancialStatementPDF(data: FinancialStatementData
     }
     
     .data-table tbody tr:nth-child(even) {
-      background: #f9fafb;
+      background: ${PDF_STYLES.colors.background};
     }
     
     .data-table td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #e5e7eb;
+      padding: 3px 6px;
+      font-size: ${PDF_STYLES.fontSize.xs};
+      border-bottom: 1px solid ${PDF_STYLES.colors.border};
       word-break: break-word;
     }
     
@@ -969,25 +974,26 @@ export async function generateFinancialStatementPDF(data: FinancialStatementData
     
     .data-table tfoot {
       font-weight: 700;
-      background: #f3f4f6;
+      background: ${PDF_STYLES.colors.background};
     }
     
     .data-table tfoot td {
-      padding: 12px;
-      border-top: 2px solid #2962ff;
+      padding: 4px 6px;
+      border-top: 1px solid ${PDF_STYLES.colors.primary};
     }
     
     .footer {
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid #e5e7eb;
+      margin-top: 8px;
+      padding-top: 5px;
+      border-top: 1px solid ${PDF_STYLES.colors.border};
       text-align: center;
-      font-size: 11px;
-      color: #6b7280;
+      font-size: ${PDF_STYLES.fontSize.xs};
+      color: ${PDF_STYLES.colors.textMuted};
     }
   </style>
 </head>
 <body>
+  <div class="pdf-container">
   <div class="header">
     <div class="company-name">${escapedCompanyName}</div>
     <div class="document-title">Financial Statement</div>
@@ -1057,6 +1063,7 @@ export async function generateFinancialStatementPDF(data: FinancialStatementData
     <div>BlindSpot System (BSS) Financial Statement</div>
     <div>VAT Compliant - Saudi Arabia</div>
   </div>
+  </div>
 </body>
 </html>
   `;
@@ -1118,109 +1125,99 @@ export async function generateExpensesPDF(data: ExpensesPDFData): Promise<Buffer
 <head>
   <meta charset="UTF-8">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    ${getBasePdfStyles()}
     
     body {
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      line-height: 1.6;
-      color: #1a1a1a;
-      background: white;
-      padding: 40px;
+      font-size: ${PDF_STYLES.fontSize.sm};
+      padding: 8px;
     }
     
     .header {
       text-align: center;
-      margin-bottom: 40px;
-      border-bottom: 3px solid #dc2626;
-      padding-bottom: 20px;
+      margin-bottom: 8px;
+      border-bottom: 2px solid #dc2626;
+      padding-bottom: 6px;
     }
     
     .company-name {
-      font-size: 32px;
+      font-size: ${PDF_STYLES.fontSize.xl};
       font-weight: 700;
       color: #dc2626;
-      margin-bottom: 10px;
+      margin-bottom: 2px;
     }
     
     .document-title {
-      font-size: 24px;
+      font-size: ${PDF_STYLES.fontSize.lg};
       font-weight: 600;
       color: #374151;
-      margin-bottom: 8px;
+      margin-bottom: 2px;
     }
     
     .year {
-      font-size: 18px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       color: #6b7280;
     }
     
     .meta-info {
-      margin-bottom: 30px;
-      font-size: 12px;
+      margin-bottom: 6px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #6b7280;
     }
     
     .summary-box {
       background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
       color: white;
-      padding: 30px;
-      border-radius: 8px;
-      margin-bottom: 40px;
+      padding: 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
     }
     
     .summary-title {
-      font-size: 20px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       font-weight: 700;
-      margin-bottom: 20px;
+      margin-bottom: 6px;
     }
     
     .summary-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
+      gap: 6px;
     }
     
     .summary-item {
       background: rgba(255, 255, 255, 0.1);
-      padding: 15px;
-      border-radius: 6px;
+      padding: 4px 6px;
+      border-radius: 3px;
     }
     
     .summary-label {
-      font-size: 12px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       opacity: 0.9;
-      margin-bottom: 4px;
+      margin-bottom: 1px;
     }
     
     .summary-value {
-      font-size: 20px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       font-weight: 700;
     }
     
     .section {
-      margin-bottom: 30px;
+      margin-bottom: 6px;
     }
     
     .section-title {
-      font-size: 18px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       font-weight: 700;
       color: #991b1b;
-      margin-bottom: 15px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #e5e7eb;
+      margin-bottom: 4px;
+      padding-bottom: 2px;
+      border-bottom: 1px solid #e5e7eb;
     }
     
     .data-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 20px;
+      margin-bottom: 4px;
     }
     
     .data-table thead {
@@ -1228,13 +1225,13 @@ export async function generateExpensesPDF(data: ExpensesPDFData): Promise<Buffer
     }
     
     .data-table th {
-      padding: 12px;
+      padding: 3px 4px;
       text-align: left;
       font-weight: 600;
-      font-size: 12px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       text-transform: uppercase;
       color: #374151;
-      border-bottom: 2px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
     }
     
     .data-table th.text-right {
@@ -1246,8 +1243,9 @@ export async function generateExpensesPDF(data: ExpensesPDFData): Promise<Buffer
     }
     
     .data-table td {
-      padding: 10px 12px;
+      padding: 2px 4px;
       border-bottom: 1px solid #e5e7eb;
+      font-size: ${PDF_STYLES.fontSize.xs};
     }
     
     .data-table td.text-right {
@@ -1260,16 +1258,16 @@ export async function generateExpensesPDF(data: ExpensesPDFData): Promise<Buffer
     }
     
     .data-table tfoot td {
-      padding: 12px;
-      border-top: 2px solid #dc2626;
+      padding: 3px 4px;
+      border-top: 1px solid #dc2626;
     }
     
     .bep-box {
       background: linear-gradient(135deg, #059669 0%, #047857 100%);
       color: white;
-      padding: 25px;
-      border-radius: 8px;
-      margin-bottom: 30px;
+      padding: 8px;
+      border-radius: 4px;
+      margin-bottom: 6px;
     }
     
     .bep-box.loss {
@@ -1277,49 +1275,46 @@ export async function generateExpensesPDF(data: ExpensesPDFData): Promise<Buffer
     }
     
     .bep-title {
-      font-size: 18px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       font-weight: 700;
-      margin-bottom: 15px;
+      margin-bottom: 4px;
     }
     
     .bep-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
     }
     
     .bep-item {
       background: rgba(255, 255, 255, 0.1);
-      padding: 12px;
-      border-radius: 6px;
+      padding: 3px 4px;
+      border-radius: 3px;
     }
     
     .bep-label {
-      font-size: 11px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       opacity: 0.9;
-      margin-bottom: 4px;
+      margin-bottom: 1px;
     }
     
     .bep-value {
-      font-size: 16px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       font-weight: 700;
     }
     
     .footer {
-      margin-top: 40px;
-      padding-top: 20px;
+      margin-top: 6px;
+      padding-top: 4px;
       border-top: 1px solid #e5e7eb;
       text-align: center;
-      font-size: 11px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #6b7280;
-    }
-    
-    .page-break {
-      page-break-before: always;
     }
   </style>
 </head>
 <body>
+  <div class="pdf-container">
   <div class="header">
     <div class="company-name">${escapedCompanyName}</div>
     <div class="document-title">Expenses Report</div>
@@ -1472,6 +1467,7 @@ export async function generateExpensesPDF(data: ExpensesPDFData): Promise<Buffer
     <div>BlindSpot System (BSS) Expenses Report</div>
     <div>Generated on ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB')}</div>
   </div>
+  </div>
 </body>
 </html>
   `;
@@ -1572,59 +1568,50 @@ export async function generateSubscriptionInvoice(data: {
 <head>
   <meta charset="UTF-8">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    ${getBasePdfStyles()}
 
     body {
-      font-family: 'Inter', sans-serif;
-      background: #ffffff;
-      color: #1a1a1a;
-      line-height: 1.6;
-      padding: 40px;
+      font-size: ${PDF_STYLES.fontSize.sm};
+      padding: 6px;
     }
 
     .invoice-container {
-      max-width: 800px;
+      max-width: 100%;
       margin: 0 auto;
       background: white;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
       overflow: hidden;
     }
 
     .header {
       background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
       color: white;
-      padding: 40px;
+      padding: 10px 15px;
       text-align: center;
     }
 
     .company-name {
-      font-size: 32px;
+      font-size: ${PDF_STYLES.fontSize.lg};
       font-weight: 700;
-      margin-bottom: 8px;
+      margin-bottom: 2px;
     }
 
     .invoice-title {
-      font-size: 20px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       opacity: 0.95;
-      margin-top: 16px;
+      margin-top: 4px;
     }
 
     .content {
-      padding: 40px;
+      padding: 10px 12px;
     }
 
     .info-section {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 40px;
-      gap: 30px;
+      margin-bottom: 8px;
+      gap: 10px;
     }
 
     .info-block {
@@ -1632,17 +1619,18 @@ export async function generateSubscriptionInvoice(data: {
     }
 
     .info-block h3 {
-      font-size: 14px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #6b7280;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
+      letter-spacing: 0.3px;
+      margin-bottom: 4px;
     }
 
     .info-block p {
-      margin: 6px 0;
-      font-size: 14px;
+      margin: 2px 0;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #374151;
+      line-height: 1.3;
     }
 
     .info-block strong {
@@ -1651,54 +1639,54 @@ export async function generateSubscriptionInvoice(data: {
 
     .invoice-details {
       background: #f9fafb;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 30px;
+      padding: 6px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
     }
 
     .invoice-details-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 15px;
+      gap: 4px;
     }
 
     .detail-row {
       display: flex;
       justify-content: space-between;
-      padding: 8px 0;
+      padding: 2px 0;
     }
 
     .detail-label {
       color: #6b7280;
-      font-size: 14px;
+      font-size: ${PDF_STYLES.fontSize.xs};
     }
 
     .detail-value {
       font-weight: 600;
       color: #1f2937;
-      font-size: 14px;
+      font-size: ${PDF_STYLES.fontSize.xs};
     }
 
     .items-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 30px 0;
+      margin: 6px 0;
     }
 
     .items-table th {
       background: #f3f4f6;
-      padding: 12px;
+      padding: 4px 6px;
       text-align: left;
-      font-size: 13px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       font-weight: 600;
       color: #374151;
-      border-bottom: 2px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
     }
 
     .items-table td {
-      padding: 16px 12px;
+      padding: 4px 6px;
       border-bottom: 1px solid #e5e7eb;
-      font-size: 14px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #374151;
     }
 
@@ -1712,46 +1700,46 @@ export async function generateSubscriptionInvoice(data: {
 
     .summary {
       background: #f9fafb;
-      padding: 20px;
-      border-radius: 8px;
-      margin-top: 30px;
+      padding: 6px 8px;
+      border-radius: 4px;
+      margin-top: 6px;
     }
 
     .summary-row {
       display: flex;
       justify-content: space-between;
-      padding: 10px 0;
-      font-size: 14px;
+      padding: 3px 0;
+      font-size: ${PDF_STYLES.fontSize.xs};
     }
 
     .summary-row.total {
-      border-top: 2px solid #e5e7eb;
-      margin-top: 10px;
-      padding-top: 15px;
-      font-size: 18px;
+      border-top: 1px solid #e5e7eb;
+      margin-top: 4px;
+      padding-top: 6px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       font-weight: 700;
       color: #1e40af;
     }
 
     .qr-section {
       text-align: center;
-      margin-top: 40px;
-      padding-top: 30px;
-      border-top: 2px solid #e5e7eb;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid #e5e7eb;
     }
 
     .qr-code {
-      width: 150px;
-      height: 150px;
-      margin: 20px auto;
+      width: 60px;
+      height: 60px;
+      margin: 4px auto;
     }
 
     .footer {
       text-align: center;
-      margin-top: 40px;
-      padding-top: 20px;
+      margin-top: 6px;
+      padding-top: 4px;
       border-top: 1px solid #e5e7eb;
-      font-size: 12px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #6b7280;
     }
 
@@ -1771,69 +1759,67 @@ export async function generateSubscriptionInvoice(data: {
     .security-clause {
       background: #f9fafb;
       border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 20px;
-      margin-top: 30px;
-      page-break-inside: avoid;
+      border-radius: 4px;
+      padding: 6px 8px;
+      margin-top: 6px;
     }
 
     .security-clause h3 {
-      font-size: 14px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       font-weight: 700;
       color: #1e40af;
-      margin-bottom: 15px;
+      margin-bottom: 4px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
 
     .security-clause-content {
       display: flex;
-      gap: 20px;
+      gap: 8px;
       align-items: flex-start;
     }
 
     .security-clause-content .en,
     .security-clause-content .ar {
       flex: 1;
-      font-size: 10px;
-      line-height: 1.6;
+      font-size: ${PDF_STYLES.fontSize.xs};
+      line-height: 1.3;
       color: #374151;
     }
 
     .refund-policy {
       background: #fef3c7;
       border: 1px solid #f59e0b;
-      border-radius: 12px;
-      padding: 20px;
-      margin-top: 20px;
-      page-break-inside: avoid;
+      border-radius: 4px;
+      padding: 6px 8px;
+      margin-top: 6px;
     }
 
     .refund-policy h3 {
-      font-size: 14px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       font-weight: 700;
       color: #b45309;
-      margin-bottom: 15px;
+      margin-bottom: 4px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
 
     .refund-policy-content {
       display: flex;
-      gap: 20px;
+      gap: 8px;
       align-items: flex-start;
     }
 
     .refund-policy-content .en,
     .refund-policy-content .ar {
       flex: 1;
-      font-size: 10px;
-      line-height: 1.7;
+      font-size: ${PDF_STYLES.fontSize.xs};
+      line-height: 1.3;
       color: #78350f;
     }
 
     .refund-policy-content p {
-      margin-bottom: 8px;
+      margin-bottom: 2px;
     }
 
     .refund-policy-content p:last-child {
@@ -1842,7 +1828,7 @@ export async function generateSubscriptionInvoice(data: {
   </style>
 </head>
 <body>
-  <div class="invoice-container">
+  <div class="invoice-container pdf-container">
     <div class="header">
       <div class="company-name">${escapeHtml(companyNameEn)}</div>
       ${companyNameAr && companyNameAr !== companyNameEn ? `<div class="company-name-ar" style="font-family: 'Noto Naskh Arabic', serif; font-size: 24px; direction: rtl; opacity: 0.9; margin-top: 4px;">${escapeHtml(companyNameAr)}</div>` : ''}
@@ -2031,26 +2017,11 @@ export async function generateMonthlyVatReport(data: {
 <head>
   <meta charset="UTF-8">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
-    
-    @page {
-      size: A4;
-      margin: 0;
-    }
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    ${getBasePdfStyles()}
 
     body {
-      font-family: 'Inter', sans-serif;
-      background: #ffffff;
-      color: #1a1a1a;
-      line-height: 1.3;
-      padding: 15px;
-      font-size: 11px;
+      font-size: ${PDF_STYLES.fontSize.sm};
+      padding: 6px;
     }
 
     .invoice-container {
@@ -2058,38 +2029,38 @@ export async function generateMonthlyVatReport(data: {
       margin: 0 auto;
       background: white;
       border: 1px solid #e5e7eb;
-      border-radius: 8px;
+      border-radius: 4px;
       overflow: hidden;
     }
 
     .header {
       background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
       color: white;
-      padding: 15px 20px;
+      padding: 8px 12px;
       text-align: center;
     }
 
     .company-name {
-      font-size: 20px;
+      font-size: ${PDF_STYLES.fontSize.lg};
       font-weight: 700;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .invoice-title {
-      font-size: 13px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       opacity: 0.95;
-      margin-top: 6px;
+      margin-top: 3px;
     }
 
     .content {
-      padding: 15px 20px;
+      padding: 8px 10px;
     }
 
     .info-section {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 12px;
-      gap: 15px;
+      margin-bottom: 6px;
+      gap: 8px;
     }
 
     .info-block {
@@ -2097,17 +2068,18 @@ export async function generateMonthlyVatReport(data: {
     }
 
     .info-block h3 {
-      font-size: 10px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #6b7280;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
-      margin-bottom: 6px;
+      letter-spacing: 0.2px;
+      margin-bottom: 3px;
     }
 
     .info-block p {
-      margin: 3px 0;
-      font-size: 11px;
+      margin: 2px 0;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #374151;
+      line-height: 1.2;
     }
 
     .info-block strong {
@@ -2116,55 +2088,55 @@ export async function generateMonthlyVatReport(data: {
 
     .invoice-details {
       background: #f0fdf4;
-      padding: 10px 12px;
-      border-radius: 6px;
-      margin-bottom: 12px;
+      padding: 5px 8px;
+      border-radius: 4px;
+      margin-bottom: 6px;
       border: 1px solid #bbf7d0;
     }
 
     .invoice-details-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      gap: 4px;
     }
 
     .detail-row {
       display: flex;
       justify-content: space-between;
-      padding: 3px 0;
+      padding: 2px 0;
     }
 
     .detail-label {
       color: #6b7280;
-      font-size: 10px;
+      font-size: ${PDF_STYLES.fontSize.xs};
     }
 
     .detail-value {
       font-weight: 600;
       color: #1f2937;
-      font-size: 10px;
+      font-size: ${PDF_STYLES.fontSize.xs};
     }
 
     .items-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 12px 0;
+      margin: 6px 0;
     }
 
     .items-table th {
       background: #f3f4f6;
-      padding: 6px 8px;
+      padding: 3px 5px;
       text-align: left;
-      font-size: 10px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       font-weight: 600;
       color: #374151;
       border-bottom: 1px solid #e5e7eb;
     }
 
     .items-table td {
-      padding: 8px;
+      padding: 4px 5px;
       border-bottom: 1px solid #e5e7eb;
-      font-size: 10px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #374151;
     }
 
@@ -2178,69 +2150,69 @@ export async function generateMonthlyVatReport(data: {
 
     .summary {
       background: #f0fdf4;
-      padding: 10px 12px;
-      border-radius: 6px;
-      margin-top: 12px;
+      padding: 5px 8px;
+      border-radius: 4px;
+      margin-top: 6px;
       border: 1px solid #bbf7d0;
     }
 
     .summary-row {
       display: flex;
       justify-content: space-between;
-      padding: 5px 0;
-      font-size: 11px;
+      padding: 3px 0;
+      font-size: ${PDF_STYLES.fontSize.xs};
     }
 
     .summary-row.highlight {
       background: #dcfce7;
-      padding: 6px 8px;
-      border-radius: 4px;
-      margin: 4px 0;
+      padding: 3px 5px;
+      border-radius: 3px;
+      margin: 2px 0;
     }
 
     .summary-row.total {
-      border-top: 2px solid #16a34a;
-      margin-top: 8px;
-      padding-top: 8px;
-      font-size: 14px;
+      border-top: 1px solid #16a34a;
+      margin-top: 4px;
+      padding-top: 4px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       font-weight: 700;
       color: #16a34a;
     }
 
     .qr-section {
       text-align: center;
-      margin-top: 15px;
-      padding-top: 12px;
+      margin-top: 6px;
+      padding-top: 6px;
       border-top: 1px solid #e5e7eb;
     }
 
     .qr-code {
-      width: 80px;
-      height: 80px;
-      margin: 8px auto;
+      width: 50px;
+      height: 50px;
+      margin: 4px auto;
     }
 
     .footer {
       text-align: center;
-      margin-top: 12px;
-      padding-top: 10px;
+      margin-top: 6px;
+      padding-top: 4px;
       border-top: 1px solid #e5e7eb;
-      font-size: 9px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #6b7280;
     }
 
     .footer p {
-      margin: 2px 0;
+      margin: 1px 0;
     }
 
     .zatca-notice {
       background: #fffbeb;
       border: 1px solid #fde68a;
-      padding: 8px 10px;
-      border-radius: 4px;
-      margin: 10px 0;
+      padding: 4px 6px;
+      border-radius: 3px;
+      margin: 5px 0;
       text-align: center;
-      font-size: 10px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #92400e;
     }
 
@@ -2259,7 +2231,7 @@ export async function generateMonthlyVatReport(data: {
   </style>
 </head>
 <body>
-  <div class="invoice-container">
+  <div class="invoice-container pdf-container">
     <div class="header">
       <div class="company-name">BlindSpot System (BSS)</div>
       <div class="bilingual">
@@ -2359,7 +2331,7 @@ export async function generateMonthlyVatReport(data: {
         <p><strong>Instructions / التعليمات:</strong></p>
         <p>Submit this report to ZATCA through their portal within the prescribed deadline</p>
         <p>قم بتقديم هذا التقرير إلى هيئة الزكاة والضريبة والجمارك عبر بوابتهم ضمن المهلة المحددة</p>
-        <p style="margin-top: 15px;">This is a ZATCA-compliant VAT return certificate / هذه شهادة إقرار ضريبة القيمة المضافة متوافقة مع هيئة الزكاة</p>
+        <p style="margin-top: 4px;">This is a ZATCA-compliant VAT return certificate / هذه شهادة إقرار ضريبة القيمة المضافة متوافقة مع هيئة الزكاة</p>
       </div>
     </div>
   </div>
@@ -2481,72 +2453,58 @@ function generateInvestorStatementHTML(data: InvestorStatementData): string {
 <head>
   <meta charset="UTF-8">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: 'Inter', 'Noto Naskh Arabic', sans-serif;
-      font-size: 11px;
-      line-height: 1.5;
-      color: #1a1a1a;
-      background: white;
-    }
+    ${getBasePdfStyles()}
     
     .statement-container {
       max-width: 210mm;
       margin: 0 auto;
-      padding: 15mm;
+      padding: 4mm;
     }
     
     .header {
       background: linear-gradient(135deg, #059669 0%, #047857 100%);
       color: white;
-      padding: 20px 25px;
+      padding: 8px 12px;
       text-align: center;
-      border-radius: 8px 8px 0 0;
-      margin-bottom: 15px;
+      border-radius: 4px 4px 0 0;
+      margin-bottom: 6px;
     }
     
     .company-name {
-      font-size: 24px;
+      font-size: ${PDF_STYLES.fontSize.xl};
       font-weight: 700;
-      margin-bottom: 8px;
-      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+      letter-spacing: 0.3px;
     }
     
     .statement-badge {
       display: inline-block;
       background: white;
       color: #059669;
-      padding: 5px 18px;
-      border-radius: 15px;
+      padding: 2px 10px;
+      border-radius: 8px;
       font-weight: 700;
-      font-size: 11px;
-      margin-top: 5px;
+      font-size: ${PDF_STYLES.fontSize.xs};
+      margin-top: 2px;
     }
     
     .section {
       background: #f8f9fa;
       border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      padding: 15px;
-      margin-bottom: 15px;
+      border-radius: 3px;
+      padding: 6px 8px;
+      margin-bottom: 5px;
     }
     
     .section-title {
       font-weight: 700;
-      font-size: 12px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       color: #059669;
-      margin-bottom: 12px;
+      margin-bottom: 4px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border-bottom: 2px solid #059669;
-      padding-bottom: 6px;
+      letter-spacing: 0.3px;
+      border-bottom: 1px solid #059669;
+      padding-bottom: 2px;
     }
     
     .bilingual-header {
@@ -2564,14 +2522,15 @@ function generateInvestorStatementHTML(data: InvestorStatementData): string {
     .info-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 4px;
     }
     
     .info-row {
       display: flex;
       justify-content: space-between;
-      padding: 8px 0;
+      padding: 2px 0;
       border-bottom: 1px solid #e5e7eb;
+      font-size: ${PDF_STYLES.fontSize.xs};
     }
     
     .info-row:last-child {
@@ -2591,13 +2550,13 @@ function generateInvestorStatementHTML(data: InvestorStatementData): string {
     .highlight-value {
       color: #059669;
       font-weight: 700;
-      font-size: 14px;
+      font-size: ${PDF_STYLES.fontSize.sm};
     }
     
     .earnings-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 4px;
     }
     
     .earnings-table thead {
@@ -2606,12 +2565,12 @@ function generateInvestorStatementHTML(data: InvestorStatementData): string {
     }
     
     .earnings-table th {
-      padding: 10px 12px;
+      padding: 3px 5px;
       text-align: left;
       font-weight: 600;
-      font-size: 10px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
     }
     
     .earnings-table th.rtl {
@@ -2631,8 +2590,8 @@ function generateInvestorStatementHTML(data: InvestorStatementData): string {
     }
     
     .earnings-table td {
-      padding: 10px 12px;
-      font-size: 10px;
+      padding: 3px 5px;
+      font-size: ${PDF_STYLES.fontSize.xs};
     }
     
     .text-right {
@@ -2642,22 +2601,23 @@ function generateInvestorStatementHTML(data: InvestorStatementData): string {
     .summary-box {
       background: linear-gradient(135deg, #059669 0%, #047857 100%);
       color: white;
-      padding: 20px;
-      border-radius: 8px;
-      margin-top: 15px;
+      padding: 8px 10px;
+      border-radius: 4px;
+      margin-top: 6px;
     }
     
     .summary-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 0;
+      padding: 3px 0;
       border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: ${PDF_STYLES.fontSize.xs};
     }
     
     .summary-row:last-child {
       border-bottom: none;
-      padding-top: 12px;
+      padding-top: 4px;
     }
     
     .summary-label {
@@ -2666,31 +2626,31 @@ function generateInvestorStatementHTML(data: InvestorStatementData): string {
     
     .summary-value {
       font-weight: 700;
-      font-size: 16px;
+      font-size: ${PDF_STYLES.fontSize.sm};
     }
     
     .total-row {
-      font-size: 18px;
+      font-size: ${PDF_STYLES.fontSize.lg};
     }
     
     .footer {
       text-align: center;
-      margin-top: 20px;
-      padding-top: 15px;
-      border-top: 2px solid #e5e7eb;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid #e5e7eb;
       color: #6b7280;
-      font-size: 9px;
+      font-size: ${PDF_STYLES.fontSize.xs};
     }
     
     .footer p {
-      margin: 3px 0;
+      margin: 1px 0;
     }
     
     .signature-section {
       display: flex;
       justify-content: space-between;
-      margin-top: 30px;
-      padding-top: 20px;
+      margin-top: 10px;
+      padding-top: 8px;
     }
     
     .signature-box {
@@ -2699,7 +2659,7 @@ function generateInvestorStatementHTML(data: InvestorStatementData): string {
     }
     
     .signature-line {
-      border-bottom: 2px solid #374151;
+      border-bottom: 1px solid #374151;
       margin-bottom: 8px;
       height: 50px;
     }
@@ -2711,7 +2671,7 @@ function generateInvestorStatementHTML(data: InvestorStatementData): string {
   </style>
 </head>
 <body>
-  <div class="statement-container">
+  <div class="statement-container pdf-container">
     ${logoHTML}
     <div class="header">
       <div class="company-name">${escapedCompanyName}</div>
@@ -2976,41 +2936,27 @@ function generateBssAnalysisStatementHTML(data: BssAnalysisStatementData): strin
 <head>
   <meta charset="UTF-8">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: 'Inter', 'Noto Naskh Arabic', sans-serif;
-      font-size: 11px;
-      line-height: 1.5;
-      color: #1a1a1a;
-      background: white;
-    }
+    ${getBasePdfStyles()}
     
     .container {
       max-width: 210mm;
       margin: 0 auto;
-      padding: 15mm;
+      padding: 4mm;
     }
     
     .header {
       background: linear-gradient(135deg, #2962ff 0%, #1e40af 100%);
       color: white;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-bottom: 6px;
     }
     
     .header-top {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 15px;
+      margin-bottom: 5px;
     }
     
     .company-info {
@@ -3023,36 +2969,36 @@ function generateBssAnalysisStatementHTML(data: BssAnalysisStatementData): strin
     }
     
     .company-name {
-      font-size: 22px;
+      font-size: ${PDF_STYLES.fontSize.lg};
       font-weight: 700;
-      margin-bottom: 3px;
+      margin-bottom: 1px;
     }
     
     .company-name-ar {
-      font-size: 20px;
+      font-size: ${PDF_STYLES.fontSize.base};
       font-weight: 600;
       font-family: 'Noto Naskh Arabic', sans-serif;
     }
     
     .company-detail {
-      font-size: 10px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       opacity: 0.9;
     }
     
     .document-title {
       text-align: center;
-      padding-top: 10px;
+      padding-top: 4px;
       border-top: 1px solid rgba(255,255,255,0.3);
     }
     
     .document-title h1 {
-      font-size: 18px;
+      font-size: ${PDF_STYLES.fontSize.lg};
       font-weight: 700;
-      margin-bottom: 3px;
+      margin-bottom: 1px;
     }
     
     .document-title h2 {
-      font-size: 16px;
+      font-size: ${PDF_STYLES.fontSize.base};
       font-weight: 600;
       font-family: 'Noto Naskh Arabic', sans-serif;
     }
@@ -3060,23 +3006,23 @@ function generateBssAnalysisStatementHTML(data: BssAnalysisStatementData): strin
     .period-info {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      padding: 12px 15px;
-      margin-bottom: 20px;
+      border-radius: 3px;
+      padding: 4px 8px;
+      margin-bottom: 6px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     
     .period-label {
-      font-size: 10px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #64748b;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
     
     .period-value {
-      font-size: 12px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       font-weight: 600;
       color: #1e293b;
     }
@@ -3084,15 +3030,15 @@ function generateBssAnalysisStatementHTML(data: BssAnalysisStatementData): strin
     .metrics-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 4px;
+      margin-bottom: 6px;
     }
     
     .metric-card {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      padding: 12px;
+      border-radius: 3px;
+      padding: 4px 6px;
       text-align: center;
     }
     
@@ -3117,22 +3063,22 @@ function generateBssAnalysisStatementHTML(data: BssAnalysisStatementData): strin
     }
     
     .metric-label {
-      font-size: 9px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #64748b;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
-      margin-bottom: 4px;
+      letter-spacing: 0.2px;
+      margin-bottom: 1px;
     }
     
     .metric-label-ar {
-      font-size: 9px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #64748b;
       font-family: 'Noto Naskh Arabic', sans-serif;
       direction: rtl;
     }
     
     .metric-value {
-      font-size: 16px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       font-weight: 700;
       color: #1e293b;
     }
@@ -3143,22 +3089,22 @@ function generateBssAnalysisStatementHTML(data: BssAnalysisStatementData): strin
     .metric-value.purple { color: #7c3aed; }
     
     .metric-sub {
-      font-size: 9px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #64748b;
-      margin-top: 2px;
+      margin-top: 1px;
     }
     
     .section {
-      margin-bottom: 20px;
+      margin-bottom: 5px;
     }
     
     .section-title {
-      font-size: 13px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       font-weight: 700;
       color: #1e40af;
-      margin-bottom: 10px;
-      padding-bottom: 5px;
-      border-bottom: 2px solid #e2e8f0;
+      margin-bottom: 3px;
+      padding-bottom: 2px;
+      border-bottom: 1px solid #e2e8f0;
       display: flex;
       justify-content: space-between;
     }
@@ -3270,7 +3216,7 @@ function generateBssAnalysisStatementHTML(data: BssAnalysisStatementData): strin
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="container pdf-container">
     <div class="header">
       <div class="header-top">
         <div class="company-info">
@@ -3523,36 +3469,21 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
 <head>
   <meta charset="UTF-8">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Inter', 'Cairo', sans-serif;
-      font-size: 12px;
-      line-height: 1.5;
-      color: #1a1a1a;
-      background: white;
-      padding: 20px;
-    }
+    ${getBasePdfStyles()}
 
     .container {
-      max-width: 800px;
+      max-width: 210mm;
       margin: 0 auto;
+      padding: 4mm;
     }
 
     .header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      padding-bottom: 20px;
-      border-bottom: 3px solid #dc2626;
-      margin-bottom: 20px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #dc2626;
+      margin-bottom: 6px;
     }
 
     .header-left {
@@ -3566,50 +3497,50 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
     }
 
     .company-name {
-      font-size: 20px;
+      font-size: ${PDF_STYLES.fontSize.lg};
       font-weight: 700;
       color: #1e40af;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .company-info {
-      font-size: 10px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #6b7280;
-      line-height: 1.4;
+      line-height: 1.2;
     }
 
     .document-title {
       text-align: center;
-      margin: 20px 0;
-      padding: 15px;
+      margin: 6px 0;
+      padding: 8px 12px;
       background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
       color: white;
-      border-radius: 8px;
+      border-radius: 4px;
     }
 
     .document-title h1 {
-      font-size: 22px;
+      font-size: ${PDF_STYLES.fontSize.xl};
       font-weight: 700;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .document-title h2 {
-      font-size: 18px;
+      font-size: ${PDF_STYLES.fontSize.lg};
       font-weight: 600;
       direction: rtl;
     }
 
     .section {
-      margin-bottom: 20px;
+      margin-bottom: 6px;
     }
 
     .section-title {
-      font-size: 14px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       font-weight: 700;
       color: #1e40af;
-      margin-bottom: 10px;
-      padding-bottom: 5px;
-      border-bottom: 2px solid #e5e7eb;
+      margin-bottom: 4px;
+      padding-bottom: 2px;
+      border-bottom: 1px solid #e5e7eb;
       display: flex;
       justify-content: space-between;
     }
@@ -3622,7 +3553,7 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
     .info-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      gap: 6px;
     }
 
     .info-table {
@@ -3631,8 +3562,9 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
     }
 
     .info-table td {
-      padding: 8px 12px;
+      padding: 3px 6px;
       border-bottom: 1px solid #e5e7eb;
+      font-size: ${PDF_STYLES.fontSize.xs};
     }
 
     .info-table .label {
@@ -3647,17 +3579,17 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
 
     .calculation-box {
       background: #fef2f2;
-      border: 2px solid #dc2626;
-      border-radius: 8px;
-      padding: 20px;
-      margin: 20px 0;
+      border: 1px solid #dc2626;
+      border-radius: 4px;
+      padding: 8px 10px;
+      margin: 6px 0;
     }
 
     .calculation-title {
-      font-size: 16px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       font-weight: 700;
       color: #dc2626;
-      margin-bottom: 15px;
+      margin-bottom: 6px;
       text-align: center;
     }
 
@@ -3667,9 +3599,10 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
     }
 
     .calculation-table th {
-      padding: 10px;
+      padding: 4px 6px;
       text-align: left;
       font-weight: 600;
+      font-size: ${PDF_STYLES.fontSize.xs};
       background: #fecaca;
       border: 1px solid #dc2626;
     }
@@ -3680,8 +3613,9 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
     }
 
     .calculation-table td {
-      padding: 10px;
+      padding: 4px 6px;
       border: 1px solid #fca5a5;
+      font-size: ${PDF_STYLES.fontSize.xs};
     }
 
     .calculation-table td.value {
@@ -3696,33 +3630,33 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
 
     .calculation-table tr.total td {
       font-weight: 700;
-      font-size: 14px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       border-color: #dc2626;
     }
 
     .refund-highlight {
       background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
       color: white;
-      padding: 20px;
-      border-radius: 8px;
+      padding: 10px 12px;
+      border-radius: 4px;
       text-align: center;
-      margin: 20px 0;
+      margin: 6px 0;
     }
 
     .refund-highlight .label {
-      font-size: 14px;
-      margin-bottom: 8px;
+      font-size: ${PDF_STYLES.fontSize.sm};
+      margin-bottom: 3px;
     }
 
     .refund-highlight .amount {
-      font-size: 28px;
+      font-size: ${PDF_STYLES.fontSize.xl};
       font-weight: 700;
     }
 
     .footer {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 2px solid #e5e7eb;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid #e5e7eb;
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
@@ -3733,38 +3667,38 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
     }
 
     .qr-code {
-      width: 100px;
-      height: 100px;
+      width: 55px;
+      height: 55px;
     }
 
     .qr-label {
-      font-size: 9px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #6b7280;
-      margin-top: 5px;
+      margin-top: 2px;
     }
 
     .footer-text {
       text-align: center;
-      font-size: 10px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #6b7280;
-      margin-top: 20px;
+      margin-top: 6px;
     }
 
     .zatca-badge {
       display: inline-block;
       background: #16a34a;
       color: white;
-      padding: 5px 15px;
-      border-radius: 20px;
-      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       font-weight: 600;
-      margin-bottom: 10px;
+      margin-bottom: 3px;
     }
 
     .signature-section {
       display: flex;
       justify-content: space-between;
-      margin-top: 30px;
+      margin-top: 10px;
     }
 
     .signature-box {
@@ -3774,15 +3708,15 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
 
     .signature-line {
       border-top: 1px solid #1a1a1a;
-      margin-top: 40px;
-      padding-top: 5px;
-      font-size: 11px;
+      margin-top: 15px;
+      padding-top: 2px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       color: #374151;
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="container pdf-container">
     <div class="header">
       <div class="header-left">
         <div class="company-name">${escapeHtml(companyNameEn)}</div>
