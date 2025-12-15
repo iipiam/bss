@@ -15,7 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDevice } from "@/contexts/DeviceContext";
 import { useBusinessType } from "@/hooks/useBusinessType";
-import { GeideaPayment } from "@/components/GeideaPayment";
 import type { MenuItem, DeliveryApp, Addon } from "@shared/schema";
 
 interface CartItemAddon {
@@ -1614,16 +1613,9 @@ export default function POS() {
             </DialogDescription>
           </DialogHeader>
           {pendingOrderData && (
-            <GeideaPayment
-              amount={parseFloat(pendingOrderData.total)}
-              description={`Order ${pendingOrderData.orderNumber} - ${itemCount} items`}
-              orderId={pendingOrderData.orderNumber}
-              customerName={pendingOrderData.customerName}
-              customerPhone={pendingOrderData.customerPhone}
-              onSuccess={handlePaymentSuccess}
-              onError={handlePaymentError}
-              onCancel={handlePaymentCancel}
-            />
+            <div className="p-4 text-center text-muted-foreground">
+              Payment integration not configured
+            </div>
           )}
         </DialogContent>
       </Dialog>
