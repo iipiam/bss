@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DollarSign, ShoppingCart, Package, AlertTriangle, TrendingUp, TrendingDown, Calendar, CalendarDays, Clock, User, Phone, CreditCard, Wallet, RefreshCw } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { useQuery } from "@tanstack/react-query";
-import type { Order, ShopBill, InventoryItem } from "@shared/schema";
+import type { Order, ShopBill } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useDeviceLayout, useCompactChartConfig } from "@/lib/mobileLayout";
@@ -38,6 +38,7 @@ interface DashboardData {
   todaysSales: string;
   activeOrders: number;
   lowStockItems: number;
+  cogsTotal: number;
   recentOrders: Order[];
   performance: {
     dod: PerformanceMetric;
@@ -315,25 +316,6 @@ export default function Dashboard() {
     },
   });
 
-  // Inventory fetch is optional - gracefully handle permission errors (403)
-  const { data: inventoryItems = [] } = useQuery<InventoryItem[]>({
-    queryKey: ["/api/inventory"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/inventory");
-        if (!response.ok) {
-          // Return empty array if user lacks inventory permission
-          if (response.status === 403) return [];
-          throw new Error("Failed to fetch inventory");
-        }
-        return response.json();
-      } catch {
-        return [];
-      }
-    },
-    retry: false, // Don't retry on permission errors
-  });
-
   // Filter out foundational and one-time bills from operating expenses (only recurring costs)
   // Note: paymentPeriod can be 'one-time' or 'oneTime' depending on when data was created
   // Use explicit String() conversion to handle any type issues
@@ -344,11 +326,6 @@ export default function Dashboard() {
            paymentPeriod !== 'one-time' && 
            paymentPeriod !== 'onetime';
   });
-
-  // Calculate total inventory value
-  const totalInventoryValue = inventoryItems.reduce((sum, item) => {
-    return sum + parseFloat(item.price || "0");
-  }, 0);
 
   // Calculate monthly expense trends (last 6 months) - excluding foundational bills
   const monthlyExpensesMap = operatingBills.reduce((acc, bill) => {
@@ -371,9 +348,9 @@ export default function Dashboard() {
     .slice(-6)
     .map(({ month, expenses }) => ({ month, expenses }));
 
-  // Operating expenses = recurring bills + inventory value (matching Financial page calculation)
+  // Operating expenses = recurring bills + COGS (Cost of Goods Sold from completed orders)
   const recurringBillsTotal = operatingBills.reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
-  const totalExpenses = recurringBillsTotal + totalInventoryValue;
+  const totalExpenses = recurringBillsTotal + (dashboardData?.cogsTotal || 0);
   const pendingExpenses = operatingBills.filter(b => b.status === "pending").reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
 
   if (dashboardLoading || salesLoading || billsLoading) {

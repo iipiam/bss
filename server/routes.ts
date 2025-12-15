@@ -2530,6 +2530,35 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const transactions = await storage.getTransactions({ restaurantId, branchId });
     const inventory = await storage.getInventoryItems(restaurantId, branchId);
 
+    // Get menu items and recipes for COGS calculation
+    const menuItems = await storage.getMenuItems(restaurantId);
+    const recipes = await storage.getRecipes(restaurantId);
+
+    // Create lookup maps
+    const menuItemMap = new Map(menuItems.map(mi => [mi.id, mi]));
+    const recipeMap = new Map(recipes.map(r => [r.id, r]));
+
+    // Calculate COGS from completed orders
+    let cogsTotal = 0;
+    const validOrderStatuses = ['Completed', 'Ready', 'Preparing', 'Paid', 'Delivered'];
+    const completedOrders = orders.filter(o => validOrderStatuses.includes(o.status));
+
+    for (const order of completedOrders) {
+      if (order.items && Array.isArray(order.items)) {
+        for (const orderItem of order.items as any[]) {
+          const menuItem = menuItemMap.get(orderItem.id);
+          if (menuItem && menuItem.recipeId) {
+            const recipe = recipeMap.get(menuItem.recipeId);
+            if (recipe) {
+              const recipeCost = parseFloat(recipe.cost || "0");
+              const portionSize = parseFloat(menuItem.portionSize || "1");
+              cogsTotal += recipeCost * portionSize * (orderItem.quantity || 1);
+            }
+          }
+        }
+      }
+    }
+
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const yesterday = new Date(today);
@@ -2630,6 +2659,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       todaysSales: todaysSales.toFixed(2),
       activeOrders,
       lowStockItems,
+      cogsTotal,
       recentOrders: orders.slice(0, 4),
       performance: {
         dod: {
