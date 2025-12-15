@@ -556,17 +556,46 @@ export class DatabaseStorage implements IStorage {
 
   async updateInventoryItem(id: string, restaurantId: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined> {
     // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
-    const { restaurantId: _, ...safeData } = item;
+    const { restaurantId: _, unitPrice: _unitPrice, ...safeData } = item as any;
     const updateData = Object.fromEntries(
       Object.entries(safeData).filter(([_, value]) => value !== undefined)
     );
     if (Object.keys(updateData).length === 0) {
       return this.getInventoryItem(id, restaurantId);
     }
-    const [updated] = await db.update(inventoryItems).set(updateData)
-      .where(and(eq(inventoryItems.id, id), eq(inventoryItems.restaurantId, restaurantId)))
-      .returning();
-    return updated;
+    try {
+      const [updated] = await db.update(inventoryItems).set(updateData)
+        .where(and(eq(inventoryItems.id, id), eq(inventoryItems.restaurantId, restaurantId)))
+        .returning();
+      return updated;
+    } catch (error: any) {
+      if (error.message?.includes('unit_price')) {
+        console.log('[Inventory] updateInventoryItem: unit_price column not found, using fallback update');
+        const result = await db.execute(sql`
+          UPDATE inventory_items SET
+            name = COALESCE(${updateData.name}, name),
+            category = COALESCE(${updateData.category}, category),
+            quantity = COALESCE(${updateData.quantity}, quantity),
+            unit = COALESCE(${updateData.unit}, unit),
+            reference_quantity = COALESCE(${updateData.referenceQuantity}, reference_quantity),
+            price = COALESCE(${updateData.price}, price),
+            supplier = COALESCE(${updateData.supplier}, supplier),
+            status = COALESCE(${updateData.status}, status),
+            branch_id = COALESCE(${updateData.branchId}, branch_id),
+            sort_order = COALESCE(${updateData.sortOrder}, sort_order),
+            expiration_days = COALESCE(${updateData.expirationDays}, expiration_days),
+            purchase_date = COALESCE(${updateData.purchaseDate}, purchase_date)
+          WHERE id = ${id} AND restaurant_id = ${restaurantId}
+          RETURNING id, restaurant_id as "restaurantId", name, category, quantity, unit, 
+            reference_quantity as "referenceQuantity", price,
+            CASE WHEN CAST(quantity AS NUMERIC) > 0 THEN CAST(CAST(price AS NUMERIC) / CAST(quantity AS NUMERIC) AS DECIMAL(10,2))::text ELSE '0' END as "unitPrice",
+            supplier, status, branch_id as "branchId", sort_order as "sortOrder", 
+            expiration_days as "expirationDays", purchase_date as "purchaseDate"
+        `);
+        return (result as any).rows?.[0];
+      }
+      throw error;
+    }
   }
 
   async updateInventoryItemsSortOrder(restaurantId: string, updates: { id: string; sortOrder: number }[]): Promise<void> {
