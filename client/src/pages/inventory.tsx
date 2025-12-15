@@ -470,13 +470,8 @@ export default function Inventory() {
   const watchedQuantity = form.watch("quantity");
   const watchedUnit = form.watch("unit");
   
-  // Calculate price per unit - when editing, use stored unitPrice; when creating, calculate from price/quantity
+  // Calculate price per unit - ALWAYS calculate live from current form values for instant feedback
   const calculatedUnitPrice = (() => {
-    // When editing an existing item, use the stored unitPrice (it never changes)
-    if (editingItem && editingItem.unitPrice) {
-      return parseFloat(editingItem.unitPrice).toFixed(2);
-    }
-    // When creating new item, calculate from price/quantity
     const price = parseFloat(String(watchedPrice)) || 0;
     const quantity = parseFloat(String(watchedQuantity)) || 0;
     return quantity > 0 ? (price / quantity).toFixed(2) : "0.00";
