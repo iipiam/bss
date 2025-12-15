@@ -2658,6 +2658,37 @@ export class DatabaseStorage implements IStorage {
       fixedCostsMap.set(category, (fixedCostsMap.get(category) || 0) + monthlyAmount);
     }
 
+    // Add salaries to fixed costs (Fixed Costs = Rent + Salaries)
+    // We need to calculate the average monthly salary since salaries are recorded per pay period
+    const allSalaries = await db.select().from(salaries).where(
+      and(
+        eq(salaries.restaurantId, restaurantId),
+        gte(salaries.paymentDate, yearStart),
+        lte(salaries.paymentDate, yearEnd)
+      )
+    );
+    
+    // Group salaries by month to calculate average monthly salary expense
+    const salaryByMonth = new Map<string, number>();
+    for (const salary of allSalaries) {
+      const amount = parseFloat(salary.amount) || 0;
+      const monthKey = salary.paymentDate ? 
+        `${new Date(salary.paymentDate).getFullYear()}-${new Date(salary.paymentDate).getMonth()}` :
+        'unknown';
+      salaryByMonth.set(monthKey, (salaryByMonth.get(monthKey) || 0) + amount);
+    }
+    
+    // Calculate average monthly salary (total / number of months with salary data)
+    const monthsWithSalaryData = salaryByMonth.size || 1;
+    const totalYearlySalaries = Array.from(salaryByMonth.values()).reduce((sum, amt) => sum + amt, 0);
+    const avgMonthlySalaries = totalYearlySalaries / monthsWithSalaryData;
+    
+    // Add average monthly salaries to fixed costs and breakdown
+    if (avgMonthlySalaries > 0) {
+      fixedCosts += avgMonthlySalaries;
+      fixedCostsMap.set('salaries', (fixedCostsMap.get('salaries') || 0) + avgMonthlySalaries);
+    }
+
     const fixedCostsBreakdown = Array.from(fixedCostsMap.entries()).map(([category, amount]) => ({
       category,
       amount,
