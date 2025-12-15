@@ -137,14 +137,7 @@ export class OrderProcessingService {
         );
       }
 
-      await tx
-        .update(inventoryItems)
-        .set({
-          quantity: quantityAfter.toString(),
-          status: quantityAfter === 0 ? "Out of Stock" : quantityAfter < 10 ? "Low Stock" : "In Stock",
-        })
-        .where(eq(inventoryItems.id, inventoryItemId));
-
+      // Record the transaction before potentially deleting the item
       const transactionRecord: InsertInventoryTransaction = {
         restaurantId: currentItem[0].restaurantId,
         inventoryItemId,
@@ -153,11 +146,28 @@ export class OrderProcessingService {
         quantityChange: (-requirement.requiredQuantity).toString(),
         quantityBefore: quantityBefore.toString(),
         quantityAfter: quantityAfter.toString(),
-        notes: `Deducted for order`,
+        notes: quantityAfter === 0 ? `Deducted for order - Item depleted and removed` : `Deducted for order`,
         branchId: branchId || undefined, // Convert empty string to undefined to avoid FK constraint violation
       };
 
       await tx.insert(inventoryTransactions).values(transactionRecord);
+
+      if (quantityAfter === 0) {
+        // Delete the inventory item when quantity reaches zero
+        await tx
+          .delete(inventoryItems)
+          .where(eq(inventoryItems.id, inventoryItemId));
+        console.log(`[INVENTORY] Deleted depleted item ${inventoryItemId} (${requirement.inventoryItemName})`);
+      } else {
+        // Update quantity and status
+        await tx
+          .update(inventoryItems)
+          .set({
+            quantity: quantityAfter.toString(),
+            status: quantityAfter < 10 ? "Low Stock" : "In Stock",
+          })
+          .where(eq(inventoryItems.id, inventoryItemId));
+      }
     }
   }
 
@@ -311,14 +321,7 @@ export class OrderProcessingService {
           );
         }
 
-        await tx
-          .update(inventoryItems)
-          .set({
-            quantity: quantityAfter.toString(),
-            status: quantityAfter === 0 ? "Out of Stock" : quantityAfter < 10 ? "Low Stock" : "In Stock",
-          })
-          .where(eq(inventoryItems.id, inventoryItemId));
-
+        // Record the transaction before potentially deleting the item
         const transactionRecord: InsertInventoryTransaction = {
           restaurantId: currentItem[0].restaurantId,
           inventoryItemId,
@@ -327,11 +330,28 @@ export class OrderProcessingService {
           quantityChange: (-requirement.requiredQuantity).toString(),
           quantityBefore: quantityBefore.toString(),
           quantityAfter: quantityAfter.toString(),
-          notes: `Deducted for order`,
+          notes: quantityAfter === 0 ? `Deducted for order - Item depleted and removed` : `Deducted for order`,
           branchId: branchId || undefined, // Convert empty string to undefined to avoid FK constraint violation
         };
 
         await tx.insert(inventoryTransactions).values(transactionRecord);
+
+        if (quantityAfter === 0) {
+          // Delete the inventory item when quantity reaches zero
+          await tx
+            .delete(inventoryItems)
+            .where(eq(inventoryItems.id, inventoryItemId));
+          console.log(`[INVENTORY] Deleted depleted item ${inventoryItemId} (${requirement.inventoryItemName})`);
+        } else {
+          // Update quantity and status
+          await tx
+            .update(inventoryItems)
+            .set({
+              quantity: quantityAfter.toString(),
+              status: quantityAfter < 10 ? "Low Stock" : "In Stock",
+            })
+            .where(eq(inventoryItems.id, inventoryItemId));
+        }
       }
     });
   }
