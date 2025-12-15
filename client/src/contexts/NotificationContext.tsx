@@ -340,7 +340,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             queryClient.invalidateQueries({ queryKey: ['/api/menu'], refetchType: 'all' });
             queryClient.invalidateQueries({ queryKey: ['/api/menu/stock'], refetchType: 'all' });
             queryClient.invalidateQueries({ queryKey: ['/api/addons'], refetchType: 'all' });
-            console.log('[Notifications] Menu updated - refreshing menu data with images');
+            queryClient.invalidateQueries({ queryKey: ['/api/menu-categories'], refetchType: 'all' });
+            console.log('[Notifications] Menu updated - refreshing menu data, categories, and images');
           } else if (notification.type === 'permissions:updated') {
             // Handle permission updates - refresh user data to get updated permissions
             queryClient.invalidateQueries({ queryKey: ['/api/auth/me'], refetchType: 'all' });
