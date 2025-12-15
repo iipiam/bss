@@ -724,15 +724,39 @@ export class DatabaseStorage implements IStorage {
     
     const stock: Record<string, number> = {};
     
-    // For each menu item, calculate stock based on its recipe (if it has one)
+    // For each menu item, calculate stock based on its recipe OR direct inventory link
     for (const menuItem of allMenuItems) {
-      // If menu item has no recipe, it has infinite stock
+      // CASE 1: Menu item has a direct inventory link (no recipe needed)
+      if (menuItem.inventoryItemId && !menuItem.recipeId) {
+        const inventoryItem = inventory.find(item => item.id === menuItem.inventoryItemId);
+        
+        if (!inventoryItem) {
+          // Inventory item not found, set stock to 0
+          stock[menuItem.id] = 0;
+          continue;
+        }
+        
+        const availableQuantity = parseFloat(String(inventoryItem.quantity || '0')) || 0;
+        // stockNo is the quantity consumed per sale (e.g., 1.5 means 1.5 units per item sold)
+        // If not set, default to 1:1 ratio
+        const quantityPerSale = parseFloat(String(menuItem.stockNo || '1')) || 1;
+        
+        if (quantityPerSale > 0) {
+          const possibleSales = Math.floor(availableQuantity / quantityPerSale);
+          stock[menuItem.id] = Math.max(0, possibleSales);
+        } else {
+          stock[menuItem.id] = 999999; // No quantity per sale defined, treat as unlimited
+        }
+        continue;
+      }
+      
+      // CASE 2: Menu item has no recipe and no inventory link - infinite stock
       if (!menuItem.recipeId) {
         stock[menuItem.id] = 999999; // Effectively infinite
         continue;
       }
       
-      // Get the recipe for this menu item
+      // CASE 3: Menu item has a recipe - calculate based on recipe ingredients
       const recipe = await this.getRecipe(menuItem.recipeId, restaurantId);
       if (!recipe) {
         stock[menuItem.id] = 999999; // No recipe found, treat as infinite
