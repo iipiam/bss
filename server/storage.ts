@@ -2696,6 +2696,8 @@ export class DatabaseStorage implements IStorage {
     ticketsClosedToday: number;
     ticketsClosedThisWeek: number;
     ticketsClosedThisMonth: number;
+    statusDistribution: { name: string; value: number }[];
+    priorityBreakdown: { name: string; value: number }[];
   }> {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
