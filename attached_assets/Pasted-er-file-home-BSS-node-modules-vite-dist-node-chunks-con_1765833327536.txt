@@ -1,0 +1,49 @@
+er (file:///home/BSS/node_modules/vite/dist/node/chunks/config.js:33788:21)
+    at async PluginDriver.hookFirstAndGetPlugin (file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:22319:28)
+    at async file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:21319:33
+    at async Queue.work (file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:22547:32)
+ubuntu@ip-172-31-1-112:/home/BSS$ cd /home/BSS
+npm run build
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.2.2 building client environment for production...
+transforming (1046) ../node_modules/react/index.js
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 2062 modules transformed.
+✗ Build failed in 8.22s
+error during build:
+[vite:load-fallback] Could not load /home/BSS/client/src/components/GeideaPayment (imported by client/src/pages/payment-test.tsx): ENOENT: no such file or directory, open '/home/BSS/client/src/components/GeideaPayment'
+    at async open (node:internal/fs/promises:639:25)
+    at async Object.readFile (node:internal/fs/promises:1246:14)
+    at async Object.handler (file:///home/BSS/node_modules/vite/dist/node/chunks/config.js:33788:21)
+    at async PluginDriver.hookFirstAndGetPlugin (file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:22319:28)
+    at async file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:21319:33
+    at async Queue.work (file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:22547:32)
+ubuntu@ip-172-31-1-112:/home/BSS$ pm2 start ecosystem.config.js
+pm2 logs --lines 20
+[PM2][ERROR] File ecosystem.config.js not found
+[TAILING] Tailing last 20 lines for [all] processes (change the value with --lines option)
+/home/ubuntu/.pm2/pm2.log last 20 lines:
+PM2        | 2025-12-15T20:40:29: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2025-12-15T20:40:29: PM2 log: App [BSS:0] online
+PM2        | 2025-12-15T20:50:19: PM2 log: Stopping app:BSS id:0
+PM2        | 2025-12-15T20:50:19: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2025-12-15T20:50:19: PM2 log: pid=160056 msg=process killed
+PM2        | 2025-12-15T20:50:19: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2025-12-15T20:50:19: PM2 log: App [BSS:0] online
+PM2        | 2025-12-15T21:00:59: PM2 log: Stopping app:BSS id:0
+PM2        | 2025-12-15T21:00:59: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2025-12-15T21:00:59: PM2 log: pid=160414 msg=process killed
+PM2        | 2025-12-15T21:01:09: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2025-12-15T21:01:09: PM2 log: App [BSS:0] online
+PM2        | 2025-12-15T21:09:01: PM2 log: Stopping app:BSS id:0
+PM2        | 2025-12-15T21:09:01: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2025-12-15T21:09:01: PM2 log: pid=160707 msg=process killed
+PM2        | 2025-12-15T21:09:08: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2025-12-15T21:09:08: PM2 log: App [BSS:0] online
+PM2        | 2025-12-15T21:09:39: PM2 log: Stopping app:BSS id:0
+PM2        | 2025-12-15T21:09:39: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2025-12-15T21:09:39: PM2 log: pid=160901 msg=process killed
+
