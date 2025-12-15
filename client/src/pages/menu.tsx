@@ -79,14 +79,7 @@ export default function Menu() {
   const [isImporting, setIsImporting] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [deletingItem, setDeletingItem] = useState<MenuItem | null>(null);
-  const [categories, setCategories] = useState<string[]>([
-    "Pizza",
-    "Burgers",
-    "Sandwiches",
-    "Salads",
-    "Drinks",
-    "Desserts",
-  ]);
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [newCategory, setNewCategory] = useState("");
   const { toast } = useToast();
 
@@ -126,6 +119,17 @@ export default function Menu() {
   const { data: inventoryItems = [] } = useQuery<InventoryItem[]>({
     queryKey: ["/api/inventory"],
   });
+
+  // Derive categories dynamically from actual menu items in database
+  // Combines categories from existing items with any custom categories added by user
+  const categories = useMemo(() => {
+    const menuCategories = menuItems
+      .map(item => item.category)
+      .filter((cat): cat is string => Boolean(cat));
+    const allCategories = [...menuCategories, ...customCategories];
+    const uniqueCategories = Array.from(new Set(allCategories));
+    return uniqueCategories.sort((a, b) => a.localeCompare(b));
+  }, [menuItems, customCategories]);
 
   // Get selected recipe details and calculate stock with portion size
   const selectedRecipe = recipes.find(r => r.id === selectedRecipeId && selectedRecipeId !== "none");
@@ -599,7 +603,7 @@ export default function Menu() {
                   <Button
                     onClick={() => {
                       if (newCategory.trim() && !categories.includes(newCategory.trim())) {
-                        setCategories([...categories, newCategory.trim()]);
+                        setCustomCategories([...customCategories, newCategory.trim()]);
                         setNewCategory("");
                         toast({
                           title: "Category added",
@@ -615,29 +619,52 @@ export default function Menu() {
                   </Button>
                 </div>
                 <div className="space-y-2">
-                  {categories.map((category) => (
-                    <div
-                      key={category}
-                      className="flex items-center justify-between p-3 border rounded-lg"
-                      data-testid={`category-item-${category}`}
-                    >
-                      <span className="font-medium">{category}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setCategories(categories.filter((c) => c !== category));
-                          toast({
-                            title: "Category removed",
-                            description: `${category} has been removed from menu categories`,
-                          });
-                        }}
-                        data-testid={`button-delete-category-${category}`}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  ))}
+                  {categories.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No categories yet. Add menu items to create categories automatically.
+                    </p>
+                  ) : (
+                    categories.map((category) => {
+                      const itemCount = menuItems.filter(item => item.category === category).length;
+                      const isInUse = itemCount > 0;
+                      const isCustomOnly = customCategories.includes(category) && !isInUse;
+                      
+                      return (
+                        <div
+                          key={category}
+                          className="flex items-center justify-between p-3 border rounded-lg"
+                          data-testid={`category-item-${category}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{category}</span>
+                            {isInUse && (
+                              <Badge variant="secondary" className="text-xs">
+                                {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                              </Badge>
+                            )}
+                          </div>
+                          {isCustomOnly ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setCustomCategories(customCategories.filter((c) => c !== category));
+                                toast({
+                                  title: "Category removed",
+                                  description: `${category} has been removed from menu categories`,
+                                });
+                              }}
+                              data-testid={`button-delete-category-${category}`}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">In use</span>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             </DialogContent>
