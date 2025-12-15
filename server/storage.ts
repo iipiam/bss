@@ -733,7 +733,8 @@ export class DatabaseStorage implements IStorage {
       }
       
       // Store the stock for this menu item
-      stock[menuItem.id] = minServings === Infinity ? 0 : minServings;
+      // If minServings is still Infinity (no ingredients in recipe), treat as unlimited
+      stock[menuItem.id] = minServings === Infinity ? 999999 : minServings;
     }
     
     return stock;
