@@ -1585,8 +1585,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getShopBill(id: string): Promise<ShopBill | undefined> {
-    const [bill] = await db.select().from(shopBills).where(eq(shopBills.id, id));
-    return bill;
+    try {
+      const [bill] = await db.select().from(shopBills).where(eq(shopBills.id, id));
+      return bill;
+    } catch (error: any) {
+      if (error.message?.includes('does not exist')) {
+        console.log('[ShopBills] getShopBill: Column not found, using fallback query');
+        const result = await db.execute(sql`
+          SELECT id, restaurant_id as "restaurantId", branch_id as "branchId", bill_type as "billType", 
+                 description, amount, payment_date as "paymentDate", payment_period as "paymentPeriod", 
+                 status, employee_id as "employeeId", employee_name as "employeeName", 
+                 created_at as "createdAt", payment_month as "paymentMonth", archived,
+                 NULL as "invoiceImage", NULL as "procurementId"
+          FROM shop_bills WHERE id = ${id}
+        `);
+        return (result as any).rows?.[0];
+      }
+      throw error;
+    }
   }
 
   async createShopBill(bill: InsertShopBill): Promise<ShopBill> {
