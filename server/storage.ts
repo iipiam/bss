@@ -544,9 +544,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getInventoryItem(id: string, restaurantId: string): Promise<InventoryItem | undefined> {
-    const [item] = await db.select().from(inventoryItems)
-      .where(and(eq(inventoryItems.id, id), eq(inventoryItems.restaurantId, restaurantId)));
-    return item;
+    try {
+      const [item] = await db.select().from(inventoryItems)
+        .where(and(eq(inventoryItems.id, id), eq(inventoryItems.restaurantId, restaurantId)));
+      return item;
+    } catch (error: any) {
+      if (error.message?.includes('unit_price')) {
+        console.log('[Inventory] getInventoryItem: unit_price column not found, using fallback query');
+        const result = await db.execute(sql`
+          SELECT id, restaurant_id as "restaurantId", name, category, quantity, unit, 
+            reference_quantity as "referenceQuantity", price,
+            CASE WHEN CAST(quantity AS NUMERIC) > 0 THEN CAST(CAST(price AS NUMERIC) / CAST(quantity AS NUMERIC) AS DECIMAL(10,2))::text ELSE '0' END as "unitPrice",
+            supplier, status, branch_id as "branchId", sort_order as "sortOrder", 
+            expiration_days as "expirationDays", purchase_date as "purchaseDate"
+          FROM inventory_items WHERE id = ${id} AND restaurant_id = ${restaurantId}
+        `);
+        return (result as any).rows?.[0];
+      }
+      throw error;
+    }
   }
 
   async createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem> {
