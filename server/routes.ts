@@ -583,13 +583,19 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   // Menu Stock (based on inventory and recipes) - MUST be before /:id route
   app.get("/api/menu/stock", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId!;
-    const branchId = req.query.branchId as string | undefined;
-    const stock = await storage.getMenuItemsStock(restaurantId, branchId);
-    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
-    res.json(stock);
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const branchId = req.query.branchId as string | undefined;
+      const stock = await storage.getMenuItemsStock(restaurantId, branchId);
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      res.json(stock);
+    } catch (error) {
+      console.error('[MENU STOCK] Error calculating stock:', error);
+      // Return empty stock object on error to prevent UI crashes
+      res.json({});
+    }
   });
 
   app.get("/api/menu/:id", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {

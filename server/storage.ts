@@ -742,7 +742,14 @@ export class DatabaseStorage implements IStorage {
       // Calculate how many servings we can make based on available inventory
       let minServings = Infinity;
       
-      for (const ingredient of recipe.ingredients as any[]) {
+      // Ensure ingredients is a valid array
+      const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
+      
+      for (const ingredient of ingredients as any[]) {
+        if (!ingredient || !ingredient.inventoryItemId) {
+          continue; // Skip invalid ingredients
+        }
+        
         const inventoryItem = inventory.find(item => item.id === ingredient.inventoryItemId);
         
         if (!inventoryItem) {
@@ -751,18 +758,26 @@ export class DatabaseStorage implements IStorage {
           break;
         }
         
-        const availableQuantity = parseFloat(inventoryItem.quantity);
-        const requiredQuantity = ingredient.quantity;
+        // Safely parse quantities with fallback to 0
+        const availableQuantity = parseFloat(String(inventoryItem.quantity || '0')) || 0;
+        const requiredQuantity = parseFloat(String(ingredient.quantity || '0')) || 0;
         
-        if (requiredQuantity > 0) {
+        if (requiredQuantity > 0 && !isNaN(availableQuantity)) {
           const possibleServings = Math.floor(availableQuantity / requiredQuantity);
-          minServings = Math.min(minServings, possibleServings);
+          // Ensure we never get NaN or negative values
+          if (!isNaN(possibleServings) && possibleServings >= 0) {
+            minServings = Math.min(minServings, possibleServings);
+          } else {
+            minServings = 0; // Invalid calculation, set to 0
+          }
         }
       }
       
       // Store the stock for this menu item
       // If minServings is still Infinity (no ingredients in recipe), treat as unlimited
-      stock[menuItem.id] = minServings === Infinity ? 999999 : minServings;
+      // Ensure we never return NaN or negative values
+      const finalStock = minServings === Infinity ? 999999 : (isNaN(minServings) || minServings < 0 ? 0 : minServings);
+      stock[menuItem.id] = finalStock;
     }
     
     return stock;
