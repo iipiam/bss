@@ -243,41 +243,43 @@ export default function ProcurementPage() {
 
   const handleOpenReorderDialog = (item: Procurement) => {
     setReorderItem(item);
-    setReorderQuantity(item.quantity?.toString() || "1");
-    setReorderUnitPrice(item.unitPrice || "");
+    const qty = item.quantity?.toString() || "1";
+    const total = item.totalCost || "0";
+    setReorderQuantity(qty);
+    setReorderTotalPrice(total);
+    // Calculate Price per Unit from Total Price ÷ Quantity
+    const qtyNum = parseFloat(qty) || 1;
+    const totalNum = parseFloat(total) || 0;
+    setReorderUnitPrice(qtyNum > 0 ? (totalNum / qtyNum).toFixed(2) : "0.00");
     setReorderUnit(item.unit || "pcs");
     setReorderCategory(item.category || "inventory");
     setReorderExpirationDays((item as any).expirationDays?.toString() || "");
     setReorderSupplier(item.supplier || "");
     setReorderStatus("pending");
-    setReorderTotalPrice(item.totalCost || "");
     setIsReorderDialogOpen(true);
   };
 
   const handleReorderQuantityChange = (value: string) => {
     setReorderQuantity(value);
+    // Recalculate Price per Unit from Total Price ÷ Quantity
     const qty = parseFloat(value) || 0;
-    const unitPrice = parseFloat(reorderUnitPrice) || 0;
-    if (qty > 0 && unitPrice > 0) {
-      setReorderTotalPrice((qty * unitPrice).toFixed(2));
-    }
-  };
-
-  const handleReorderUnitPriceChange = (value: string) => {
-    setReorderUnitPrice(value);
-    const qty = parseFloat(reorderQuantity) || 0;
-    const unitPrice = parseFloat(value) || 0;
-    if (qty > 0 && unitPrice > 0) {
-      setReorderTotalPrice((qty * unitPrice).toFixed(2));
+    const total = parseFloat(reorderTotalPrice) || 0;
+    if (qty > 0) {
+      setReorderUnitPrice((total / qty).toFixed(2));
+    } else {
+      setReorderUnitPrice("0.00");
     }
   };
 
   const handleReorderTotalPriceChange = (value: string) => {
     setReorderTotalPrice(value);
+    // Recalculate Price per Unit from Total Price ÷ Quantity
     const qty = parseFloat(reorderQuantity) || 0;
     const total = parseFloat(value) || 0;
-    if (qty > 0 && total > 0) {
+    if (qty > 0) {
       setReorderUnitPrice((total / qty).toFixed(2));
+    } else {
+      setReorderUnitPrice("0.00");
     }
   };
 
@@ -1017,9 +1019,9 @@ export default function ProcurementPage() {
                                 </div>
                                 <div className="text-right">
                                   <div className="text-xl font-bold">SAR {item.totalCost}</div>
-                                  {item.quantity && item.unitPrice && (
+                                  {item.quantity && parseFloat(String(item.quantity)) > 0 && item.totalCost && (
                                     <div className="text-xs text-muted-foreground">
-                                      {item.quantity} × SAR {item.unitPrice}
+                                      {item.quantity} × SAR {(parseFloat(String(item.totalCost)) / parseFloat(String(item.quantity))).toFixed(2)}/unit
                                     </div>
                                   )}
                                 </div>
@@ -1298,12 +1300,11 @@ export default function ProcurementPage() {
               <Label htmlFor="reorder-unit-price">{t.pricePerUnit || "Price per Unit"} (SAR)</Label>
               <Input
                 id="reorder-unit-price"
-                type="number"
-                min="0"
-                step="0.01"
+                type="text"
                 value={reorderUnitPrice}
-                onChange={(e) => handleReorderUnitPriceChange(e.target.value)}
-                placeholder="0.00"
+                readOnly
+                disabled
+                className="bg-muted"
                 data-testid="input-reorder-unit-price"
               />
               <p className="text-xs text-muted-foreground">

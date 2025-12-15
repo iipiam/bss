@@ -211,7 +211,7 @@ function SortableInventoryRow({ item, onEdit, onDelete, disabled = false }: Sort
       <TableCell>{item.category}</TableCell>
       <TableCell className="font-mono">{parseFloat(item.quantity).toFixed(2)}</TableCell>
       <TableCell>{item.unit}</TableCell>
-      <TableCell className="font-mono text-primary">{parseFloat(item.unitPrice || "0").toFixed(2)} SAR</TableCell>
+      <TableCell className="font-mono text-primary">{(parseFloat(item.price || "0") / Math.max(parseFloat(item.quantity || "1"), 0.01)).toFixed(2)} SAR</TableCell>
       <TableCell className="text-muted-foreground">{item.supplier}</TableCell>
       <TableCell>{getExpirationDisplay()}</TableCell>
       <TableCell>
@@ -300,7 +300,7 @@ function SortableInventoryCard({ item, onEdit, onDelete, disabled = false }: Sor
             </div>
             <div>
               <span className="text-xs text-muted-foreground">Price/Unit:</span>
-              <p className="font-mono font-medium text-primary">{parseFloat(item.unitPrice || "0").toFixed(2)} SAR</p>
+              <p className="font-mono font-medium text-primary">{(parseFloat(item.price || "0") / Math.max(parseFloat(item.quantity || "1"), 0.01)).toFixed(2)} SAR</p>
             </div>
           </div>
           <div className="mb-3">
