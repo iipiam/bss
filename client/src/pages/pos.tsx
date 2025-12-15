@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,11 +51,8 @@ export default function POS() {
   const { device } = useDevice();
   const { isFactory } = useBusinessType();
 
-  // Create categories dynamically with translations
-  const categories = [t.all, t.categoryPizza, t.categoryBurgers, t.categorySandwiches, t.categorySalads, t.categoryDrinks];
-
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState(t.all);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [orderType, setOrderType] = useState("Dine-In");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
@@ -99,6 +96,15 @@ export default function POS() {
   const { data: allAddons = [] } = useQuery<Addon[]>({
     queryKey: ["/api/addons"],
   });
+
+  // Derive categories dynamically from actual menu items in database
+  const categories = useMemo(() => {
+    const menuCategories = menuItems
+      .map(item => item.category)
+      .filter((cat): cat is string => Boolean(cat));
+    const uniqueCategories = Array.from(new Set(menuCategories));
+    return uniqueCategories.sort((a, b) => a.localeCompare(b));
+  }, [menuItems]);
 
   // Reset earnings decrease when delivery app is deselected
   useEffect(() => {
@@ -371,7 +377,8 @@ export default function POS() {
   const total = subtotal + tax;
 
   const availableMenuItems = menuItems.filter(item => item.available);
-  const filteredItems = selectedCategory === t.all
+  // null means "All" - show all items; otherwise filter by selected category
+  const filteredItems = selectedCategory === null
     ? availableMenuItems
     : availableMenuItems.filter(item => item.category === selectedCategory);
 
@@ -517,8 +524,11 @@ export default function POS() {
                 />
               </div>
 
-              <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Tabs value={selectedCategory || "all"} onValueChange={(v) => setSelectedCategory(v === "all" ? null : v)}>
                 <TabsList className="w-full overflow-x-auto flex justify-start h-[44px]">
+                  <TabsTrigger value="all" data-testid="tab-category-all" className="whitespace-nowrap h-[44px]">
+                    {t.all}
+                  </TabsTrigger>
                   {categories.map(cat => (
                     <TabsTrigger key={cat} value={cat} data-testid={`tab-category-${cat.toLowerCase()}`} className="whitespace-nowrap h-[44px]">
                       {cat}
@@ -1007,8 +1017,11 @@ export default function POS() {
             />
           </div>
 
-          <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+          <Tabs value={selectedCategory || "all"} onValueChange={(v) => setSelectedCategory(v === "all" ? null : v)}>
             <TabsList className="w-full justify-start">
+              <TabsTrigger value="all" data-testid="tab-category-all">
+                {t.all}
+              </TabsTrigger>
               {categories.map(cat => (
                 <TabsTrigger key={cat} value={cat} data-testid={`tab-category-${cat.toLowerCase()}`}>
                   {cat}
