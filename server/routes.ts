@@ -3056,16 +3056,20 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       const userName = req.session.user!.fullName || req.session.user!.username;
       
-      // Get price, quantity, and unit from request body
-      const { quantity, unitPrice, unit } = req.body;
+      // Get price, quantity, unit, and new fields from request body
+      const { quantity, unitPrice, unit, totalPrice, category, expirationDays, supplier, status } = req.body;
       if (!quantity || quantity <= 0) {
         return res.status(400).json({ error: "Quantity is required and must be greater than 0" });
       }
-      if (!unitPrice || parseFloat(unitPrice) < 0) {
-        return res.status(400).json({ error: "Unit price is required" });
+      if (!totalPrice || parseFloat(totalPrice) < 0) {
+        return res.status(400).json({ error: "Total price is required" });
       }
       const validUnits = ['kg', 'g', 'l', 'ml', 'pcs'];
       const procurementUnit = unit && validUnits.includes(unit) ? unit : 'pcs';
+      const validStatuses = ['pending', 'approved', 'ordered', 'received', 'completed'];
+      const procurementStatus = status && validStatuses.includes(status) ? status : 'pending';
+      const validCategories = ['inventory', 'maintenance', 'installation', 'equipment'];
+      const procurementCategory = category && validCategories.includes(category) ? category : 'inventory';
       
       // Get the original procurement
       const originalProcurement = await storage.getProcurement(req.params.id, restaurantId);
@@ -3080,28 +3084,34 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       
       // Parse and validate numeric values
       const parsedQuantity = parseFloat(quantity);
-      const parsedUnitPrice = parseFloat(unitPrice);
+      const parsedTotalPrice = parseFloat(totalPrice);
+      const parsedUnitPrice = unitPrice ? parseFloat(unitPrice) : (parsedQuantity > 0 ? parsedTotalPrice / parsedQuantity : 0);
+      const parsedExpirationDays = expirationDays ? parseInt(expirationDays, 10) : null;
       
-      // Calculate total cost (unitPrice is VAT-inclusive)
-      const totalCostNum = parsedQuantity * parsedUnitPrice;
+      // Use totalPrice directly instead of calculating from unitPrice
+      const totalCostNum = parsedTotalPrice;
+      
+      // Use supplier from request or fall back to original
+      const procurementSupplier = supplier !== undefined ? supplier : originalProcurement.supplier;
       
       // Create a new procurement record based on the original with new price/quantity
       const reorderData = {
         restaurantId,
-        type: originalProcurement.type,
+        type: procurementCategory as "inventory" | "maintenance" | "installation" | "equipment",
         title: `Reorder: ${originalProcurement.title}`,
         description: originalProcurement.description,
-        supplier: originalProcurement.supplier,
-        category: originalProcurement.category,
+        supplier: procurementSupplier,
+        category: procurementCategory,
         quantity: parsedQuantity,
         unitPrice: parsedUnitPrice.toFixed(2),
         totalCost: totalCostNum.toFixed(2),
-        status: "pending" as const,
+        status: procurementStatus as "pending" | "approved" | "ordered" | "received" | "completed",
         priority: originalProcurement.priority as "low" | "medium" | "high" | "urgent",
         requestedBy: userName,
         branchId: originalProcurement.branchId,
-        notes: `Reorder of procurement ID: ${originalProcurement.id}`,
+        notes: `Reorder of procurement ID: ${originalProcurement.id}${parsedExpirationDays ? `. Expiration: ${parsedExpirationDays} days` : ''}`,
         unit: procurementUnit,
+        expirationDays: parsedExpirationDays,
       };
       
       const newProcurement = await storage.createProcurement(reorderData);
@@ -3149,7 +3159,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         orderId: null,
         procurementId: newProcurement.id,
         branchId: originalProcurement.branchId || null,
-        customerName: originalProcurement.supplier || "Supplier",
+        customerName: procurementSupplier || "Supplier",
         items: invoiceItems,
         subtotal: subtotalNum.toFixed(2),
         vatAmount: vatAmountNum.toFixed(2),
@@ -3177,7 +3187,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       
       // Query invoices where procurementId is not null
-      const allInvoices = await storage.getInvoices(restaurantId);
+      const allInvoices = await storage.getInvoices({ restaurantId });
       const procurementInvoices = allInvoices.filter(invoice => invoice.procurementId != null);
       
       // Enrich with procurement details

@@ -74,6 +74,11 @@ export default function ProcurementPage() {
   const [reorderQuantity, setReorderQuantity] = useState<string>("");
   const [reorderUnitPrice, setReorderUnitPrice] = useState<string>("");
   const [reorderUnit, setReorderUnit] = useState<string>("");
+  const [reorderCategory, setReorderCategory] = useState<string>("");
+  const [reorderExpirationDays, setReorderExpirationDays] = useState<string>("");
+  const [reorderSupplier, setReorderSupplier] = useState<string>("");
+  const [reorderStatus, setReorderStatus] = useState<string>("pending");
+  const [reorderTotalPrice, setReorderTotalPrice] = useState<string>("");
 
   const { data: procurements = [], isLoading } = useQuery<Procurement[]>({
     queryKey: [
@@ -192,11 +197,26 @@ export default function ProcurementPage() {
   });
 
   const reorderMutation = useMutation({
-    mutationFn: async (data: { id: string; quantity: number; unitPrice: string; unit: string }) => {
+    mutationFn: async (data: { 
+      id: string; 
+      quantity: number; 
+      unitPrice: string; 
+      unit: string;
+      totalPrice: string;
+      category: string;
+      expirationDays: number | null;
+      supplier: string;
+      status: string;
+    }) => {
       await apiRequest("POST", `/api/procurement/${data.id}/reorder`, {
         quantity: data.quantity,
         unitPrice: data.unitPrice,
         unit: data.unit,
+        totalPrice: data.totalPrice,
+        category: data.category,
+        expirationDays: data.expirationDays,
+        supplier: data.supplier,
+        status: data.status,
       });
     },
     onSuccess: () => {
@@ -208,6 +228,11 @@ export default function ProcurementPage() {
       setReorderQuantity("");
       setReorderUnitPrice("");
       setReorderUnit("");
+      setReorderCategory("");
+      setReorderExpirationDays("");
+      setReorderSupplier("");
+      setReorderStatus("pending");
+      setReorderTotalPrice("");
       toast({ title: t.success, description: t.reorderCreated || "Reorder request created successfully" });
     },
     onError: (error: Error) => {
@@ -221,7 +246,49 @@ export default function ProcurementPage() {
     setReorderQuantity(item.quantity?.toString() || "1");
     setReorderUnitPrice(item.unitPrice || "");
     setReorderUnit(item.unit || "pcs");
+    setReorderCategory(item.category || "inventory");
+    setReorderExpirationDays((item as any).expirationDays?.toString() || "");
+    setReorderSupplier(item.supplier || "");
+    setReorderStatus("pending");
+    setReorderTotalPrice(item.totalCost || "");
     setIsReorderDialogOpen(true);
+  };
+
+  const handleReorderQuantityChange = (value: string) => {
+    setReorderQuantity(value);
+    const qty = parseFloat(value) || 0;
+    const unitPrice = parseFloat(reorderUnitPrice) || 0;
+    if (qty > 0 && unitPrice > 0) {
+      setReorderTotalPrice((qty * unitPrice).toFixed(2));
+    }
+  };
+
+  const handleReorderUnitPriceChange = (value: string) => {
+    setReorderUnitPrice(value);
+    const qty = parseFloat(reorderQuantity) || 0;
+    const unitPrice = parseFloat(value) || 0;
+    if (qty > 0 && unitPrice > 0) {
+      setReorderTotalPrice((qty * unitPrice).toFixed(2));
+    }
+  };
+
+  const handleReorderTotalPriceChange = (value: string) => {
+    setReorderTotalPrice(value);
+    const qty = parseFloat(reorderQuantity) || 0;
+    const total = parseFloat(value) || 0;
+    if (qty > 0 && total > 0) {
+      setReorderUnitPrice((total / qty).toFixed(2));
+    }
+  };
+
+  const getReferenceQuantityDisplay = () => {
+    if (reorderUnit === "pcs") {
+      return "Not applicable for pieces";
+    }
+    if (reorderItem?.quantity) {
+      return `${reorderItem.quantity} ${reorderUnit}`;
+    }
+    return "-";
   };
 
   const handleReorderSubmit = () => {
@@ -229,7 +296,22 @@ export default function ProcurementPage() {
     const quantity = parseFloat(reorderQuantity) || 1;
     const unitPrice = reorderUnitPrice || "0";
     const unit = reorderUnit || "pcs";
-    reorderMutation.mutate({ id: reorderItem.id, quantity, unitPrice, unit });
+    const totalPrice = reorderTotalPrice || "0";
+    const category = reorderCategory || "inventory";
+    const expirationDays = reorderExpirationDays ? parseInt(reorderExpirationDays, 10) : null;
+    const supplier = reorderSupplier || "";
+    const status = reorderStatus || "pending";
+    reorderMutation.mutate({ 
+      id: reorderItem.id, 
+      quantity, 
+      unitPrice, 
+      unit,
+      totalPrice,
+      category,
+      expirationDays,
+      supplier,
+      status,
+    });
   };
 
   const handleSubmit = (data: z.infer<typeof procurementFormSchema>) => {
@@ -1145,56 +1227,150 @@ export default function ProcurementPage() {
           setReorderItem(null);
           setReorderQuantity("");
           setReorderUnitPrice("");
+          setReorderUnit("");
+          setReorderCategory("");
+          setReorderExpirationDays("");
+          setReorderSupplier("");
+          setReorderStatus("pending");
+          setReorderTotalPrice("");
         }
       }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t.reorder || "Reorder"}: {reorderItem?.title}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="reorder-quantity">{t.quantity || "Quantity"}</Label>
-              <Input
-                id="reorder-quantity"
-                type="number"
-                min="1"
-                step="1"
-                value={reorderQuantity}
-                onChange={(e) => setReorderQuantity(e.target.value)}
-                placeholder="1"
-                data-testid="input-reorder-quantity"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="reorder-category">{t.category || "Category"}</Label>
+                <Select value={reorderCategory} onValueChange={setReorderCategory}>
+                  <SelectTrigger id="reorder-category" data-testid="select-reorder-category">
+                    <SelectValue placeholder={t.selectCategory || "Select category"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="inventory">{t.inventory || "Inventory"}</SelectItem>
+                    <SelectItem value="maintenance">{t.maintenance || "Maintenance"}</SelectItem>
+                    <SelectItem value="installation">{"Installation"}</SelectItem>
+                    <SelectItem value="equipment">{t.equipment || "Equipment"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reorder-unit">{t.unit || "Unit"}</Label>
+                <Select value={reorderUnit} onValueChange={setReorderUnit}>
+                  <SelectTrigger id="reorder-unit" data-testid="select-reorder-unit">
+                    <SelectValue placeholder={t.unit || "Select Unit"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="kg">kg</SelectItem>
+                    <SelectItem value="g">g</SelectItem>
+                    <SelectItem value="l">l</SelectItem>
+                    <SelectItem value="ml">ml</SelectItem>
+                    <SelectItem value="pcs">pcs</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="reorder-quantity">{t.quantity || "Quantity"}</Label>
+                <Input
+                  id="reorder-quantity"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={reorderQuantity}
+                  onChange={(e) => handleReorderQuantityChange(e.target.value)}
+                  placeholder="1"
+                  data-testid="input-reorder-quantity"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t.referenceQuantity || "Reference Quantity"}</Label>
+                <div className="flex items-center h-9 px-3 rounded-md border bg-muted text-sm text-muted-foreground">
+                  {getReferenceQuantityDisplay()}
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="reorder-unit-price">{t.price || "Unit Price"} (SAR)</Label>
+              <Label htmlFor="reorder-unit-price">{t.pricePerUnit || "Price per Unit"} (SAR)</Label>
               <Input
                 id="reorder-unit-price"
                 type="number"
                 min="0"
                 step="0.01"
                 value={reorderUnitPrice}
-                onChange={(e) => setReorderUnitPrice(e.target.value)}
+                onChange={(e) => handleReorderUnitPriceChange(e.target.value)}
                 placeholder="0.00"
                 data-testid="input-reorder-unit-price"
               />
+              <p className="text-xs text-muted-foreground">
+                {"Automatically calculated: Total Price ÷ Quantity"}
+              </p>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="reorder-unit">{t.unit || "Unit"}</Label>
-              <Select value={reorderUnit} onValueChange={setReorderUnit}>
-                <SelectTrigger id="reorder-unit" data-testid="select-reorder-unit">
-                  <SelectValue placeholder="Select unit" />
+              <Label htmlFor="reorder-total-price">{t.totalPrice || "Total Price"} (SAR)</Label>
+              <Input
+                id="reorder-total-price"
+                type="number"
+                min="0"
+                step="0.01"
+                value={reorderTotalPrice}
+                onChange={(e) => handleReorderTotalPriceChange(e.target.value)}
+                placeholder="0.00"
+                data-testid="input-reorder-total-price"
+              />
+              <p className="text-xs text-muted-foreground">
+                {"Total price for the entire stock quantity"}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reorder-expiration-days">{t.expirationDays || "Expiration Days"}</Label>
+              <Input
+                id="reorder-expiration-days"
+                type="number"
+                min="0"
+                step="1"
+                value={reorderExpirationDays}
+                onChange={(e) => setReorderExpirationDays(e.target.value)}
+                placeholder=""
+                data-testid="input-reorder-expiration-days"
+              />
+              <p className="text-xs text-muted-foreground">
+                {"Number of days until this item expires (leave empty if no expiration)"}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reorder-supplier">{t.supplier || "Supplier"}</Label>
+              <Input
+                id="reorder-supplier"
+                type="text"
+                value={reorderSupplier}
+                onChange={(e) => setReorderSupplier(e.target.value)}
+                placeholder={t.supplier || "Enter supplier name"}
+                data-testid="input-reorder-supplier"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reorder-status">{t.status || "Status"}</Label>
+              <Select value={reorderStatus} onValueChange={setReorderStatus}>
+                <SelectTrigger id="reorder-status" data-testid="select-reorder-status">
+                  <SelectValue placeholder={t.selectStatus || "Select status"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="kg">kg</SelectItem>
-                  <SelectItem value="g">g</SelectItem>
-                  <SelectItem value="l">l</SelectItem>
-                  <SelectItem value="ml">ml</SelectItem>
-                  <SelectItem value="pcs">pcs</SelectItem>
+                  <SelectItem value="pending">{t.pending || "Pending"}</SelectItem>
+                  <SelectItem value="approved">{"Approved"}</SelectItem>
+                  <SelectItem value="ordered">{"Ordered"}</SelectItem>
+                  <SelectItem value="received">{"Received"}</SelectItem>
+                  <SelectItem value="completed">{t.completed || "Completed"}</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {t.totalCosts || "Total Cost"}: SAR {((parseFloat(reorderQuantity) || 0) * (parseFloat(reorderUnitPrice) || 0)).toFixed(2)}
             </div>
           </div>
           <div className="flex justify-end gap-2">
@@ -1207,7 +1383,7 @@ export default function ProcurementPage() {
             </Button>
             <Button
               onClick={handleReorderSubmit}
-              disabled={reorderMutation.isPending || !reorderQuantity || !reorderUnitPrice}
+              disabled={reorderMutation.isPending || !reorderQuantity || !reorderTotalPrice}
               data-testid="button-reorder-submit"
             >
               {reorderMutation.isPending ? t.processing || "Processing..." : t.reorder || "Create Reorder"}
