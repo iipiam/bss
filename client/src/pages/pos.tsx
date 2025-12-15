@@ -96,14 +96,22 @@ export default function POS() {
     queryKey: ["/api/addons"],
   });
 
+  // Fetch saved custom categories from the database
+  const { data: savedCategories = [] } = useQuery<{ id: string; name: string; restaurantId: string; sortOrder: number | null }[]>({
+    queryKey: ["/api/menu-categories"],
+  });
+
   // Derive categories dynamically from actual menu items in database
+  // Combines categories from existing items with saved custom categories from the database
   const categories = useMemo(() => {
     const menuCategories = menuItems
       .map(item => item.category)
       .filter((cat): cat is string => Boolean(cat));
-    const uniqueCategories = Array.from(new Set(menuCategories));
+    const savedCategoryNames = savedCategories.map(c => c.name);
+    const allCategories = [...menuCategories, ...savedCategoryNames];
+    const uniqueCategories = Array.from(new Set(allCategories));
     return uniqueCategories.sort((a, b) => a.localeCompare(b));
-  }, [menuItems]);
+  }, [menuItems, savedCategories]);
 
   // Reset earnings decrease when delivery app is deselected
   useEffect(() => {
