@@ -7419,6 +7419,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(404).json({ error: "Payment not found" });
       }
 
+      // SECURITY: Verify merchantReferenceId matches our stored record to prevent tampering
+      const storedMetadata = payment.metadata as { merchantReferenceId?: string; gateway?: string; restaurantId?: string } | null;
+      if (storedMetadata?.merchantReferenceId && merchantReferenceId !== storedMetadata.merchantReferenceId) {
+        console.warn(`[Geidea Webhook] Merchant reference mismatch! Expected: ${storedMetadata.merchantReferenceId}, Got: ${merchantReferenceId}`);
+        return res.status(403).json({ error: "Invalid merchant reference" });
+      }
+
       // IDEMPOTENCY: Skip if already in terminal state
       if (payment.status === 'paid' || payment.status === 'failed') {
         console.log(`[Geidea Webhook] Payment ${geideaOrderId} already in terminal state: ${payment.status}`);
@@ -7514,8 +7521,23 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.get("/api/geidea/order/:orderId", requireAuth, requireRestaurant, async (req, res) => {
     try {
+      const restaurantId = req.session.user!.restaurantId!;
+      
+      // First verify this order belongs to this restaurant by checking our payment records
+      const payment = await storage.getMoyasarPaymentByMoyasarId(req.params.orderId, restaurantId);
+      if (!payment) {
+        return res.status(404).json({ error: "Order not found for this restaurant" });
+      }
+      
       const { getOrderDetails, isPaymentSuccessful } = await import('./geidea');
       const orderDetails = await getOrderDetails(req.params.orderId);
+      
+      // SECURITY: Verify the Geidea order's merchantReferenceId matches our stored record
+      const storedMetadata = payment.metadata as { merchantReferenceId?: string } | null;
+      if (storedMetadata?.merchantReferenceId && orderDetails.order?.merchantReferenceId !== storedMetadata.merchantReferenceId) {
+        console.warn(`[Geidea] Order merchantReferenceId mismatch for restaurant ${restaurantId}`);
+        return res.status(403).json({ error: "Order verification failed" });
+      }
       
       res.json({
         ...orderDetails,
