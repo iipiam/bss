@@ -2329,14 +2329,32 @@ export class DatabaseStorage implements IStorage {
 
   // Delivery Profitability Manual Entries
   async getDeliveryProfitability(restaurantId: string, year?: number): Promise<DeliveryProfitability[]> {
-    if (year) {
+    try {
+      if (year) {
+        return await db.select().from(deliveryProfitability).where(
+          and(eq(deliveryProfitability.restaurantId, restaurantId), eq(deliveryProfitability.year, year))
+        ).orderBy(desc(deliveryProfitability.year), desc(deliveryProfitability.month));
+      }
       return await db.select().from(deliveryProfitability).where(
-        and(eq(deliveryProfitability.restaurantId, restaurantId), eq(deliveryProfitability.year, year))
+        eq(deliveryProfitability.restaurantId, restaurantId)
       ).orderBy(desc(deliveryProfitability.year), desc(deliveryProfitability.month));
+    } catch (error: any) {
+      if (error.message?.includes('column') && error.message?.includes('does not exist')) {
+        console.log('[DeliveryProfitability] Column not found, using fallback query');
+        const yearCondition = year ? `AND year = ${year}` : '';
+        const result = await pool.query(`
+          SELECT id, restaurant_id as "restaurantId", delivery_app_id as "deliveryAppId",
+                 year, month, orders, sales, revenue, commission, banking, subsidy,
+                 COALESCE(net_earnings, '0') as "netEarnings", notes, created_at as "createdAt", updated_at as "updatedAt",
+                 '0' as vat, '0' as "posFees", '0' as profit
+          FROM delivery_profitability
+          WHERE restaurant_id = $1 ${yearCondition}
+          ORDER BY year DESC, month DESC
+        `, [restaurantId]);
+        return result.rows as DeliveryProfitability[];
+      }
+      throw error;
     }
-    return await db.select().from(deliveryProfitability).where(
-      eq(deliveryProfitability.restaurantId, restaurantId)
-    ).orderBy(desc(deliveryProfitability.year), desc(deliveryProfitability.month));
   }
 
   async getDeliveryProfitabilityEntry(id: string): Promise<DeliveryProfitability | undefined> {
@@ -2459,13 +2477,32 @@ export class DatabaseStorage implements IStorage {
 
     // 1. Get fixed costs from shop bills
     // Exclude foundational bills (not operational costs) AND one-time bills (not recurring)
-    const allBills = await db.select().from(shopBills).where(
-      and(
-        eq(shopBills.restaurantId, restaurantId),
-        gte(shopBills.paymentDate, yearStart),
-        lte(shopBills.paymentDate, yearEnd)
-      )
-    );
+    let allBills: any[];
+    try {
+      allBills = await db.select().from(shopBills).where(
+        and(
+          eq(shopBills.restaurantId, restaurantId),
+          gte(shopBills.paymentDate, yearStart),
+          lte(shopBills.paymentDate, yearEnd)
+        )
+      );
+    } catch (error: any) {
+      if (error.message?.includes('column') && error.message?.includes('does not exist')) {
+        console.log('[BepMetrics] ShopBills column not found, using fallback query');
+        const result = await pool.query(`
+          SELECT id, restaurant_id as "restaurantId", bill_type as "billType", amount,
+                 payment_date as "paymentDate", payment_period as "paymentPeriod", status,
+                 description, employee_id as "employeeId", employee_name as "employeeName",
+                 payment_month as "paymentMonth", archived, branch_id as "branchId",
+                 created_at as "createdAt", NULL as "invoiceImage"
+          FROM shop_bills
+          WHERE restaurant_id = $1 AND payment_date >= $2 AND payment_date <= $3
+        `, [restaurantId, yearStart, yearEnd]);
+        allBills = result.rows;
+      } else {
+        throw error;
+      }
+    }
 
     // Filter out foundational bills AND one-time bills (fixed costs = recurring operational expenses only)
     // Note: paymentPeriod can be 'one-time' or 'oneTime' depending on when data was created
