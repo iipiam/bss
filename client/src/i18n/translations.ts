@@ -1631,6 +1631,10 @@ export interface Translations {
   date: string;
   vat: string;
   noPDF: string;
+  
+  // Permissions Notifications
+  permissionsUpdated: string;
+  permissionsUpdatedDesc: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -3258,6 +3262,10 @@ export const translations: Record<Language, Translations> = {
     date: 'Date',
     vat: 'VAT',
     noPDF: 'No PDF',
+    
+    // Permissions Notifications
+    permissionsUpdated: 'Permissions Updated',
+    permissionsUpdatedDesc: 'Your permissions have been updated. The sidebar will refresh automatically.',
   },
   
   Arabic: {
@@ -4885,6 +4893,8 @@ export const translations: Record<Language, Translations> = {
     date: 'التاريخ',
     vat: 'ضريبة القيمة المضافة',
     noPDF: 'لا يوجد ملف PDF',
+    permissionsUpdated: 'تم تحديث الصلاحيات',
+    permissionsUpdatedDesc: 'تم تحديث صلاحياتك. سيتم تحديث الشريط الجانبي تلقائيًا.',
   },
   German: {
     // Navigation
@@ -6494,6 +6504,8 @@ export const translations: Record<Language, Translations> = {
     date: 'Date',
     vat: 'VAT',
     noPDF: 'No PDF',
+    permissionsUpdated: 'Berechtigungen aktualisiert',
+    permissionsUpdatedDesc: 'Ihre Berechtigungen wurden aktualisiert. Die Seitenleiste wird automatisch aktualisiert.',
   },
   Chinese: {
     // Navigation
@@ -8103,6 +8115,8 @@ export const translations: Record<Language, Translations> = {
     date: 'Date',
     vat: 'VAT',
     noPDF: 'No PDF',
+    permissionsUpdated: '权限已更新',
+    permissionsUpdatedDesc: '您的权限已更新。侧边栏将自动刷新。',
   },
   Bengali: {
     // Navigation
@@ -9712,6 +9726,8 @@ export const translations: Record<Language, Translations> = {
     date: 'Date',
     vat: 'VAT',
     noPDF: 'No PDF',
+    permissionsUpdated: 'অনুমতি আপডেট হয়েছে',
+    permissionsUpdatedDesc: 'আপনার অনুমতি আপডেট করা হয়েছে। সাইডবার স্বয়ংক্রিয়ভাবে রিফ্রেশ হবে।',
   },
   Italian: {
     // Navigation
@@ -11321,6 +11337,8 @@ export const translations: Record<Language, Translations> = {
     date: 'Date',
     vat: 'VAT',
     noPDF: 'No PDF',
+    permissionsUpdated: 'Permessi aggiornati',
+    permissionsUpdatedDesc: 'I tuoi permessi sono stati aggiornati. La barra laterale si aggiornerà automaticamente.',
   },
 
   Hindi: {
@@ -12873,6 +12891,8 @@ export const translations: Record<Language, Translations> = {
     date: 'तारीख',
     vat: 'वैट',
     noPDF: 'कोई पीडीएफ नहीं',
+    permissionsUpdated: 'अनुमतियाँ अपडेट की गईं',
+    permissionsUpdatedDesc: 'आपकी अनुमतियाँ अपडेट कर दी गई हैं। साइडबार स्वचालित रूप से रिफ्रेश हो जाएगा।',
   },
   
   Urdu: {
@@ -14425,6 +14445,8 @@ export const translations: Record<Language, Translations> = {
     date: 'تاریخ',
     vat: 'ویٹ',
     noPDF: 'کوئی پی ڈی ایف نہیں',
+    permissionsUpdated: 'اجازتیں اپڈیٹ ہوگئیں',
+    permissionsUpdatedDesc: 'آپ کی اجازتیں اپڈیٹ ہوگئی ہیں۔ سائڈبار خود بخود ریفریش ہوجائے گا۔',
   },
   
 
@@ -15918,6 +15940,8 @@ export const translations: Record<Language, Translations> = {
     date: "Fecha",
     vat: "IVA",
     noPDF: "Sin PDF",
+    permissionsUpdated: 'Permisos actualizados',
+    permissionsUpdatedDesc: 'Tus permisos han sido actualizados. La barra lateral se actualizará automáticamente.',
   },
 
   Tagalog: {
@@ -17411,6 +17435,8 @@ export const translations: Record<Language, Translations> = {
     date: "Petsa",
     vat: "VAT",
     noPDF: "Walang PDF",
+    permissionsUpdated: 'Na-update ang mga pahintulot',
+    permissionsUpdatedDesc: 'Na-update na ang iyong mga pahintulot. Awtomatikong magre-refresh ang sidebar.',
   },
 };
 
