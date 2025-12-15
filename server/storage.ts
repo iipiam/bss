@@ -73,11 +73,14 @@ import {
   type InsertCompanyFile,
   type PendingSignup,
   type InsertPendingSignup,
+  type MenuCategory,
+  type InsertMenuCategory,
   restaurants,
   pendingSignups,
   branches,
   inventoryItems,
   menuItems,
+  menuCategories,
   addons,
   recipes,
   orders,
@@ -150,6 +153,12 @@ export interface IStorage {
   updateMenuItem(id: string, restaurantId: string, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined>;
   deleteMenuItem(id: string, restaurantId: string): Promise<boolean>;
   getMenuItemsStock(restaurantId: string, branchId?: string): Promise<Record<string, number>>;
+
+  // Menu Categories (MULTI-TENANT: requires restaurantId for all operations)
+  getMenuCategories(restaurantId: string): Promise<MenuCategory[]>;
+  createMenuCategory(category: InsertMenuCategory): Promise<MenuCategory>;
+  updateMenuCategory(id: string, restaurantId: string, category: Partial<InsertMenuCategory>): Promise<MenuCategory | undefined>;
+  deleteMenuCategory(id: string, restaurantId: string): Promise<boolean>;
 
   // Add-ons (MULTI-TENANT: requires restaurantId for all operations)
   getAddons(restaurantId: string, menuItemId?: string): Promise<Addon[]>;
@@ -757,6 +766,38 @@ export class DatabaseStorage implements IStorage {
     }
     
     return stock;
+  }
+
+  // Menu Categories (MULTI-TENANT: SQL-level restaurantId filtering)
+  async getMenuCategories(restaurantId: string): Promise<MenuCategory[]> {
+    return await db.select().from(menuCategories).where(eq(menuCategories.restaurantId, restaurantId));
+  }
+
+  async createMenuCategory(category: InsertMenuCategory): Promise<MenuCategory> {
+    const [created] = await db.insert(menuCategories).values(category).returning();
+    return created;
+  }
+
+  async updateMenuCategory(id: string, restaurantId: string, category: Partial<InsertMenuCategory>): Promise<MenuCategory | undefined> {
+    const { restaurantId: _, ...safeData } = category;
+    const updateData = Object.fromEntries(
+      Object.entries(safeData).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      const [existing] = await db.select().from(menuCategories)
+        .where(and(eq(menuCategories.id, id), eq(menuCategories.restaurantId, restaurantId)));
+      return existing;
+    }
+    const [updated] = await db.update(menuCategories).set(updateData)
+      .where(and(eq(menuCategories.id, id), eq(menuCategories.restaurantId, restaurantId)))
+      .returning();
+    return updated;
+  }
+
+  async deleteMenuCategory(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(menuCategories)
+      .where(and(eq(menuCategories.id, id), eq(menuCategories.restaurantId, restaurantId)));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
   // Add-ons (MULTI-TENANT: SQL-level restaurantId filtering)

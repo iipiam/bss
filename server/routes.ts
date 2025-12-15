@@ -664,6 +664,81 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.status(204).send();
   });
 
+  // Menu Categories - custom categories that persist across sessions
+  app.get("/api/menu-categories", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
+    const categories = await storage.getMenuCategories(restaurantId);
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.json(categories);
+  });
+
+  app.post("/api/menu-categories", requireAuth, requireRestaurant, requireAction('menu', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { name } = req.body;
+      if (!name || typeof name !== 'string' || name.trim() === '') {
+        return res.status(400).json({ error: "Category name is required" });
+      }
+      const category = await storage.createMenuCategory({ restaurantId, name: name.trim() });
+      
+      // Broadcast category update to all connected clients
+      broadcastNotification({
+        type: 'menu:updated',
+        restaurantId,
+        data: { action: 'category-created', category }
+      });
+      
+      res.status(201).json(category);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid category data" });
+    }
+  });
+
+  app.patch("/api/menu-categories/:id", requireAuth, requireRestaurant, requireAction('menu', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { name } = req.body;
+      if (!name || typeof name !== 'string' || name.trim() === '') {
+        return res.status(400).json({ error: "Category name is required" });
+      }
+      const category = await storage.updateMenuCategory(req.params.id, restaurantId, { name: name.trim() });
+      if (!category) {
+        return res.status(404).json({ error: "Category not found" });
+      }
+      
+      // Broadcast category update to all connected clients
+      broadcastNotification({
+        type: 'menu:updated',
+        restaurantId,
+        data: { action: 'category-updated', category }
+      });
+      
+      res.json(category);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid category data" });
+    }
+  });
+
+  app.delete("/api/menu-categories/:id", requireAuth, requireRestaurant, requireAction('menu', 'delete'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
+    const categoryId = req.params.id;
+    const success = await storage.deleteMenuCategory(categoryId, restaurantId);
+    if (!success) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+    
+    // Broadcast category update to all connected clients
+    broadcastNotification({
+      type: 'menu:updated',
+      restaurantId,
+      data: { action: 'category-deleted', categoryId }
+    });
+    
+    res.status(204).send();
+  });
+
   // Add-ons - disable caching for real-time updates to POS
   app.get("/api/addons", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
