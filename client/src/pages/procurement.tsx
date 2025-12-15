@@ -15,8 +15,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import type { Procurement, InsertProcurement } from "@shared/schema";
+import type { Procurement, InsertProcurement, Invoice } from "@shared/schema";
 import { insertProcurementSchema } from "@shared/schema";
+
+interface ProcurementInvoice extends Invoice {
+  procurement?: Procurement | null;
+}
 import { Plus, Package, Wrench, HardHat, Computer, Calendar, User, AlertCircle, CheckCircle2, Clock, XCircle, RefreshCw, Upload, Image, X, FileText, Eye, Download, Search, Repeat } from "lucide-react";
 import { format } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -69,18 +73,19 @@ export default function ProcurementPage() {
   const [reorderItem, setReorderItem] = useState<Procurement | null>(null);
   const [reorderQuantity, setReorderQuantity] = useState<string>("");
   const [reorderUnitPrice, setReorderUnitPrice] = useState<string>("");
+  const [reorderUnit, setReorderUnit] = useState<string>("");
 
   const { data: procurements = [], isLoading } = useQuery<Procurement[]>({
     queryKey: [
       "/api/procurement",
       {
-        type: selectedType !== "all" ? selectedType : undefined,
+        type: selectedType !== "all" && selectedType !== "invoices" ? selectedType : undefined,
         status: selectedStatus !== "all-statuses" ? selectedStatus : undefined,
       },
     ],
     queryFn: async () => {
       const queryParams = new URLSearchParams();
-      if (selectedType !== "all") queryParams.set("type", selectedType);
+      if (selectedType !== "all" && selectedType !== "invoices") queryParams.set("type", selectedType);
       if (selectedStatus !== "all-statuses") queryParams.set("status", selectedStatus);
       const queryString = queryParams.toString();
       const apiUrl = `/api/procurement${queryString ? `?${queryString}` : ""}`;
@@ -89,6 +94,12 @@ export default function ProcurementPage() {
       if (!response.ok) throw new Error("Failed to fetch procurement data");
       return response.json();
     },
+    enabled: selectedType !== "invoices",
+  });
+
+  const { data: procurementInvoices = [], isLoading: isLoadingInvoices } = useQuery<ProcurementInvoice[]>({
+    queryKey: ["/api/procurement/invoices"],
+    enabled: selectedType === "invoices",
   });
 
   const procurementFormSchema = z.object({
@@ -181,19 +192,22 @@ export default function ProcurementPage() {
   });
 
   const reorderMutation = useMutation({
-    mutationFn: async (data: { id: string; quantity: number; unitPrice: string }) => {
+    mutationFn: async (data: { id: string; quantity: number; unitPrice: string; unit: string }) => {
       await apiRequest("POST", `/api/procurement/${data.id}/reorder`, {
         quantity: data.quantity,
         unitPrice: data.unitPrice,
+        unit: data.unit,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/procurement"] });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/procurement/invoices"] });
       setIsReorderDialogOpen(false);
       setReorderItem(null);
       setReorderQuantity("");
       setReorderUnitPrice("");
+      setReorderUnit("");
       toast({ title: t.success, description: t.reorderCreated || "Reorder request created successfully" });
     },
     onError: (error: Error) => {
@@ -206,6 +220,7 @@ export default function ProcurementPage() {
     setReorderItem(item);
     setReorderQuantity(item.quantity?.toString() || "1");
     setReorderUnitPrice(item.unitPrice || "");
+    setReorderUnit(item.unit || "pcs");
     setIsReorderDialogOpen(true);
   };
 
@@ -213,7 +228,8 @@ export default function ProcurementPage() {
     if (!reorderItem) return;
     const quantity = parseFloat(reorderQuantity) || 1;
     const unitPrice = reorderUnitPrice || "0";
-    reorderMutation.mutate({ id: reorderItem.id, quantity, unitPrice });
+    const unit = reorderUnit || "pcs";
+    reorderMutation.mutate({ id: reorderItem.id, quantity, unitPrice, unit });
   };
 
   const handleSubmit = (data: z.infer<typeof procurementFormSchema>) => {
@@ -805,9 +821,79 @@ export default function ProcurementPage() {
               <TabsTrigger value="maintenance" data-testid="tab-maintenance">Maintenance</TabsTrigger>
               <TabsTrigger value="installation" data-testid="tab-installation">Installation</TabsTrigger>
               <TabsTrigger value="equipment" data-testid="tab-equipment">Equipment</TabsTrigger>
+              <TabsTrigger value="invoices" data-testid="tab-invoices">{t.invoices || "Invoices"}</TabsTrigger>
             </TabsList>
 
-            {isLoading ? (
+            {selectedType === "invoices" ? (
+              isLoadingInvoices ? (
+                <div className="text-center py-8 text-muted-foreground">Loading...</div>
+              ) : procurementInvoices.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">{t.noInvoicesYet || "No procurement invoices found"}</div>
+              ) : (
+                <div className="space-y-4">
+                  {procurementInvoices.map((invoice) => (
+                    <Card key={invoice.id} data-testid={`invoice-${invoice.id}`}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex gap-4 flex-1">
+                            <div className="p-3 rounded-lg bg-muted">
+                              <FileText className="h-6 w-6" />
+                            </div>
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-start justify-between gap-4">
+                                <div>
+                                  <h3 className="font-semibold text-lg">{invoice.invoiceNumber}</h3>
+                                  {invoice.procurement?.title && (
+                                    <p className="text-sm text-muted-foreground mt-1">{invoice.procurement.title}</p>
+                                  )}
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-xl font-bold">SAR {invoice.total}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {t.vatAmount || "VAT"}: SAR {invoice.vatAmount}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <Badge variant="outline">
+                                  <Calendar className="h-3 w-3 mr-1" />
+                                  {format(new Date(invoice.createdAt), "MMM dd, yyyy")}
+                                </Badge>
+                                {invoice.customerName && (
+                                  <Badge variant="secondary">
+                                    <User className="h-3 w-3 mr-1" />
+                                    {invoice.customerName}
+                                  </Badge>
+                                )}
+                                <Badge className="bg-blue-500/10 text-blue-700 dark:text-blue-400">
+                                  {invoice.invoiceType}
+                                </Badge>
+                              </div>
+                              <div className="flex gap-2 mt-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    if (invoice.pdfPath) {
+                                      window.open(invoice.pdfPath, '_blank');
+                                    }
+                                  }}
+                                  disabled={!invoice.pdfPath}
+                                  data-testid={`button-download-invoice-${invoice.id}`}
+                                >
+                                  <Download className="h-3 w-3 mr-1" />
+                                  {t.download || "Download"}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )
+            ) : isLoading ? (
               <div className="text-center py-8 text-muted-foreground">Loading...</div>
             ) : procurements.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">No procurement requests found</div>
@@ -1091,6 +1177,21 @@ export default function ProcurementPage() {
                 placeholder="0.00"
                 data-testid="input-reorder-unit-price"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reorder-unit">{t.unit || "Unit"}</Label>
+              <Select value={reorderUnit} onValueChange={setReorderUnit}>
+                <SelectTrigger id="reorder-unit" data-testid="select-reorder-unit">
+                  <SelectValue placeholder="Select unit" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="kg">kg</SelectItem>
+                  <SelectItem value="g">g</SelectItem>
+                  <SelectItem value="l">l</SelectItem>
+                  <SelectItem value="ml">ml</SelectItem>
+                  <SelectItem value="pcs">pcs</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="text-sm text-muted-foreground">
               {t.totalCosts || "Total Cost"}: SAR {((parseFloat(reorderQuantity) || 0) * (parseFloat(reorderUnitPrice) || 0)).toFixed(2)}

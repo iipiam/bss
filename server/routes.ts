@@ -3056,14 +3056,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       const userName = req.session.user!.fullName || req.session.user!.username;
       
-      // Get price and quantity from request body
-      const { quantity, unitPrice } = req.body;
+      // Get price, quantity, and unit from request body
+      const { quantity, unitPrice, unit } = req.body;
       if (!quantity || quantity <= 0) {
         return res.status(400).json({ error: "Quantity is required and must be greater than 0" });
       }
       if (!unitPrice || parseFloat(unitPrice) < 0) {
         return res.status(400).json({ error: "Unit price is required" });
       }
+      const validUnits = ['kg', 'g', 'l', 'ml', 'pcs'];
+      const procurementUnit = unit && validUnits.includes(unit) ? unit : 'pcs';
       
       // Get the original procurement
       const originalProcurement = await storage.getProcurement(req.params.id, restaurantId);
@@ -3099,6 +3101,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         requestedBy: userName,
         branchId: originalProcurement.branchId,
         notes: `Reorder of procurement ID: ${originalProcurement.id}`,
+        unit: procurementUnit,
       };
       
       const newProcurement = await storage.createProcurement(reorderData);
@@ -3127,21 +3130,24 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Generate invoice number
       const invoiceNumber = `REORDER-${Date.now()}`;
       
-      // Create invoice items with consistent VAT calculation
+      // Create invoice items with consistent VAT calculation (including unit)
       const invoiceItems = [{
         name: originalProcurement.title,
         quantity: parsedQuantity,
         basePrice: parseFloat(netPricePerUnit.toFixed(2)),
         vatAmount: parseFloat(vatPerUnit.toFixed(2)),
         total: parseFloat((netPricePerUnit + vatPerUnit).toFixed(2)),
+        unit: procurementUnit,
       }];
       
       // Create invoice record - ensure line items reconcile with totals
+      // Link to procurement via procurementId
       const invoiceData = {
         restaurantId,
         invoiceNumber,
         invoiceType: "standard" as const,
         orderId: null,
+        procurementId: newProcurement.id,
         branchId: originalProcurement.branchId || null,
         customerName: originalProcurement.supplier || "Supplier",
         items: invoiceItems,
@@ -3162,6 +3168,38 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("Reorder error:", error);
       res.status(400).json({ error: "Failed to create reorder" });
+    }
+  });
+
+  // Get procurement-related invoices (reorder invoices)
+  app.get("/api/procurement/invoices", requireAuth, requireRestaurant, requireAction('procurement', 'view'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      
+      // Query invoices where procurementId is not null
+      const allInvoices = await storage.getInvoices(restaurantId);
+      const procurementInvoices = allInvoices.filter(invoice => invoice.procurementId != null);
+      
+      // Enrich with procurement details
+      const enrichedInvoices = await Promise.all(
+        procurementInvoices.map(async (invoice) => {
+          const procurementDetails = invoice.procurementId 
+            ? await storage.getProcurement(invoice.procurementId, restaurantId)
+            : null;
+          return {
+            ...invoice,
+            procurement: procurementDetails,
+          };
+        })
+      );
+      
+      // Sort by creation date descending (newest first)
+      enrichedInvoices.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      res.json(enrichedInvoices);
+    } catch (error) {
+      console.error("Get procurement invoices error:", error);
+      res.status(500).json({ error: "Failed to get procurement invoices" });
     }
   });
 

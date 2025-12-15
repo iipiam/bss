@@ -389,6 +389,7 @@ export const procurement = pgTable("procurement", {
   billId: varchar("bill_id"), // Link to shop_bills for cost tracking sync
   inventoryItemId: varchar("inventory_item_id"), // Link to auto-created inventory item (for type="inventory")
   originalProcurementId: varchar("original_procurement_id"), // Link to original procurement for reorders
+  unit: text("unit"), // Unit of measurement (kg, g, l, ml, pcs)
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -527,6 +528,7 @@ export const invoices = pgTable("invoices", {
   invoiceType: text("invoice_type").notNull().default("simplified"), // "standard" (B2B), "simplified" (B2C)
   transactionId: varchar("transaction_id").references(() => transactions.id),
   orderId: varchar("order_id").references(() => orders.id),
+  procurementId: varchar("procurement_id"), // Link to procurement for reorder invoices
   branchId: varchar("branch_id").references(() => branches.id),
   customerName: text("customer_name"),
   customerVatNumber: text("customer_vat_number"), // VAT number for B2B invoices
