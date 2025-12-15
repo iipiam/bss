@@ -1,0 +1,153 @@
+ision a database?
+0|BSS      |     at server/db.ts (file:///home/BSS/dist/index.js:1436:13)
+0|BSS      |     at __init (file:///home/BSS/dist/index.js:10:56)
+0|BSS      |     at file:///home/BSS/dist/index.js:10292:1
+0|BSS      |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|BSS      |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|BSS      |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|BSS      |
+0|BSS      | Node.js v20.19.6
+
+/home/ubuntu/.pm2/logs/BSS-out.log last 10 lines:
+0|BSS      | > NODE_ENV=production node dist/index.js
+0|BSS      |
+0|BSS      |
+0|BSS      | > rest-express@1.0.0 start
+0|BSS      | > NODE_ENV=production node dist/index.js
+0|BSS      |
+0|BSS      |
+0|BSS      | > rest-express@1.0.0 start
+0|BSS      | > NODE_ENV=production node dist/index.js
+0|BSS      |
+
+1|BSS  | file:///home/BSS/dist/index.js:1436
+1|BSS  |       throw new Error(
+1|BSS  |             ^
+1|BSS  | Error: AWS_DATABASE_URL or DATABASE_URL must be set. Did you forget to provision a database?
+1|BSS  |     at server/db.ts (file:///home/BSS/dist/index.js:1436:13)
+1|BSS  |     at __init (file:///home/BSS/dist/index.js:10:56)
+1|BSS  |     at file:///home/BSS/dist/index.js:10292:1
+1|BSS  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+1|BSS  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+1|BSS  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+1|BSS  | Node.js v20.19.6
+0|BSS  | file:///home/BSS/dist/index.js:1436
+0|BSS  |       throw new Error(
+0|BSS  |             ^
+0|BSS  | Error: AWS_DATABASE_URL or DATABASE_URL must be set. Did you forget to provision a database?
+0|BSS  |     at server/db.ts (file:///home/BSS/dist/index.js:1436:13)
+0|BSS  |     at __init (file:///home/BSS/dist/index.js:10:56)
+0|BSS  |     at file:///home/BSS/dist/index.js:10292:1
+0|BSS  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|BSS  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|BSS  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|BSS  | Node.js v20.19.6
+1|BSS  | > rest-express@1.0.0 start
+1|BSS  | > NODE_ENV=production node dist/index.js
+0|BSS  | > rest-express@1.0.0 start
+0|BSS  | > NODE_ENV=production node dist/index.js
+1|BSS  | file:///home/BSS/dist/index.js:1436
+1|BSS  |       throw new Error(
+1|BSS  |             ^
+1|BSS  | Error: AWS_DATABASE_URL or DATABASE_URL must be set. Did you forget to provision a database?
+1|BSS  |     at server/db.ts (file:///home/BSS/dist/index.js:1436:13)
+1|BSS  |     at __init (file:///home/BSS/dist/index.js:10:56)
+1|BSS  |     at file:///home/BSS/dist/index.js:10292:1
+1|BSS  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+1|BSS  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+1|BSS  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+1|BSS  | Node.js v20.19.6
+0|BSS  | file:///home/BSS/dist/index.js:1436
+0|BSS  |       throw new Error(
+0|BSS  |             ^
+0|BSS  | Error: AWS_DATABASE_URL or DATABASE_URL must be set. Did you forget to provision a database?
+0|BSS  |     at server/db.ts (file:///home/BSS/dist/index.js:1436:13)
+0|BSS  |     at __init (file:///home/BSS/dist/index.js:10:56)
+0|BSS  |     at file:///home/BSS/dist/index.js:10292:1
+0|BSS  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|BSS  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|BSS  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|BSS  | Node.js v20.19.6
+1|BSS  | > rest-express@1.0.0 start
+1|BSS  | > NODE_ENV=production node dist/index.js
+0|BSS  | > rest-express@1.0.0 start
+0|BSS  | > NODE_ENV=production node dist/index.js
+0|BSS  | file:///home/BSS/dist/index.js:1436
+0|BSS  |       throw new Error(
+0|BSS  |             ^
+0|BSS  | Error: AWS_DATABASE_URL or DATABASE_URL must be set. Did you forget to provision a database?
+0|BSS  |     at server/db.ts (file:///home/BSS/dist/index.js:1436:13)
+0|BSS  |     at __init (file:///home/BSS/dist/index.js:10:56)
+0|BSS  |     at file:///home/BSS/dist/index.js:10292:1
+0|BSS  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|BSS  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|BSS  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|BSS  | Node.js v20.19.6
+1|BSS  | file:///home/BSS/dist/index.js:1436
+1|BSS  |       throw new Error(
+1|BSS  |             ^
+1|BSS  | Error: AWS_DATABASE_URL or DATABASE_URL must be set. Did you forget to provision a database?
+1|BSS  |     at server/db.ts (file:///home/BSS/dist/index.js:1436:13)
+1|BSS  |     at __init (file:///home/BSS/dist/index.js:10:56)
+1|BSS  |     at file:///home/BSS/dist/index.js:10292:1
+1|BSS  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+1|BSS  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+1|BSS  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+1|BSS  | Node.js v20.19.6
+0|BSS  | > rest-express@1.0.0 start
+0|BSS  | > NODE_ENV=production node dist/index.js
+1|BSS  | > rest-express@1.0.0 start
+1|BSS  | > NODE_ENV=production node dist/index.js
+0|BSS  | file:///home/BSS/dist/index.js:1436
+0|BSS  |       throw new Error(
+0|BSS  |             ^
+0|BSS  | Error: AWS_DATABASE_URL or DATABASE_URL must be set. Did you forget to provision a database?
+0|BSS  |     at server/db.ts (file:///home/BSS/dist/index.js:1436:13)
+0|BSS  |     at __init (file:///home/BSS/dist/index.js:10:56)
+0|BSS  |     at file:///home/BSS/dist/index.js:10292:1
+0|BSS  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|BSS  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|BSS  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|BSS  | Node.js v20.19.6
+1|BSS  | file:///home/BSS/dist/index.js:1436
+1|BSS  |       throw new Error(
+1|BSS  |             ^
+1|BSS  | Error: AWS_DATABASE_URL or DATABASE_URL must be set. Did you forget to provision a database?
+1|BSS  |     at server/db.ts (file:///home/BSS/dist/index.js:1436:13)
+1|BSS  |     at __init (file:///home/BSS/dist/index.js:10:56)
+1|BSS  |     at file:///home/BSS/dist/index.js:10292:1
+1|BSS  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+1|BSS  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+1|BSS  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+1|BSS  | Node.js v20.19.6
+0|BSS  | > rest-express@1.0.0 start
+0|BSS  | > NODE_ENV=production node dist/index.js
+1|BSS  | > rest-express@1.0.0 start
+1|BSS  | > NODE_ENV=production node dist/index.js
+1|BSS  | file:///home/BSS/dist/index.js:1436
+1|BSS  |       throw new Error(
+1|BSS  |             ^
+1|BSS  | Error: AWS_DATABASE_URL or DATABASE_URL must be set. Did you forget to provision a database?
+1|BSS  |     at server/db.ts (file:///home/BSS/dist/index.js:1436:13)
+1|BSS  |     at __init (file:///home/BSS/dist/index.js:10:56)
+1|BSS  |     at file:///home/BSS/dist/index.js:10292:1
+1|BSS  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+1|BSS  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+1|BSS  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+1|BSS  | Node.js v20.19.6
+0|BSS  | file:///home/BSS/dist/index.js:1436
+0|BSS  |       throw new Error(
+0|BSS  |             ^
+0|BSS  | Error: AWS_DATABASE_URL or DATABASE_URL must be set. Did you forget to provision a database?
+0|BSS  |     at server/db.ts (file:///home/BSS/dist/index.js:1436:13)
+0|BSS  |     at __init (file:///home/BSS/dist/index.js:10:56)
+0|BSS  |     at file:///home/BSS/dist/index.js:10292:1
+0|BSS  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|BSS  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|BSS  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|BSS  | Node.js v20.19.6
+1|BSS  | > rest-express@1.0.0 start
+1|BSS  | > NODE_ENV=production node dist/index.js
+0|BSS  | > rest-express@1.0.0 start
+0|BSS  | > NODE_ENV=production node dist/index.js
+
