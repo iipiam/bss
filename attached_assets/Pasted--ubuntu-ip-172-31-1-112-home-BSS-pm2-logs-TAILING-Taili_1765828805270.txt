@@ -1,0 +1,54 @@
+
+ubuntu@ip-172-31-1-112:/home/BSS$ pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+/home/ubuntu/.pm2/pm2.log last 15 lines:
+PM2        | 2025-12-15T19:18:15: PM2 log: Stopping app:BSS id:0
+PM2        | 2025-12-15T19:18:15: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2025-12-15T19:18:15: PM2 log: pid=158455 msg=process killed
+PM2        | 2025-12-15T19:18:15: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2025-12-15T19:18:15: PM2 log: App [BSS:0] online
+PM2        | 2025-12-15T19:56:05: PM2 log: Stopping app:BSS id:0
+PM2        | 2025-12-15T19:56:05: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2025-12-15T19:56:05: PM2 log: pid=158565 msg=process killed
+PM2        | 2025-12-15T19:56:05: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2025-12-15T19:56:05: PM2 log: App [BSS:0] online
+PM2        | 2025-12-15T19:56:19: PM2 log: Stopping app:BSS id:0
+PM2        | 2025-12-15T19:56:19: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2025-12-15T19:56:19: PM2 log: pid=158974 msg=process killed
+PM2        | 2025-12-15T19:56:19: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2025-12-15T19:56:19: PM2 log: App [BSS:0] online
+
+/home/ubuntu/.pm2/logs/BSS-error.log last 15 lines:
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+
+/home/ubuntu/.pm2/logs/BSS-out.log last 15 lines:
+0|BSS      | 7:58:14 PM [express] GET /api/auth/me 200 in 504ms :: {"user":{"id":"162a8d4d-518f-4290-aa10-fedbd9e…
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=162a8d4d-518f-4290-aa10-fedbd9eb1f52, restaurant=95a2c64c-0b3f-479a-8f36-6c2531c806d2, conversations=0
+0|BSS      | [AUTH] Permission denied for user 162a8d4d-518f-4290-aa10-fedbd9eb1f52: required branches
+0|BSS      | 7:58:17 PM [express] GET /api/branches 403 in 164ms :: {"error":"Permission denied","required":["bra…
+0|BSS      | 7:58:18 PM [express] GET /api/menu/stock 200 in 1505ms :: {"99664884-bce5-4fab-b6cc-b3b765d5dbc7":14…
+0|BSS      | [AUTH] Permission denied for user 162a8d4d-518f-4290-aa10-fedbd9eb1f52: required branches
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | 7:59:45 PM [express] POST /api/auth/logout 200 in 172ms :: {"message":"Logged out successfully"}
+0|BSS      | 7:59:45 PM [express] POST /api/auth/logout 200 in 170ms :: {"message":"Logged out successfully"}
+0|BSS      | 7:59:45 PM [express] POST /api/auth/logout 200 in 171ms :: {"message":"Logged out successfully"}
+0|BSS      | 7:59:48 PM [express] GET /api/auth/me 401 in 1ms :: {"error":"Not authenticated"}
+0|BSS      | 7:59:49 PM [express] GET /api/auth/me 401 in 1ms :: {"error":"Not authenticated"}
+0|BSS      | 7:59:49 PM [express] GET /api/auth/me 401 in 1ms :: {"error":"Not authenticated"}
+0|BSS      | 7:59:52 PM [express] GET /api/auth/me 401 in 0ms :: {"error":"Not authenticated"}
+
