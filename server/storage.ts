@@ -115,7 +115,7 @@ import {
   shopFiles,
   companyFiles,
 } from "@shared/schema";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, and, gte, lte, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
@@ -587,28 +587,52 @@ export class DatabaseStorage implements IStorage {
     } catch (error: any) {
       if (error.message?.includes('unit_price')) {
         console.log('[Inventory] updateInventoryItem: unit_price column not found, using fallback update');
-        const result = await db.execute(sql`
-          UPDATE inventory_items SET
-            name = COALESCE(${updateData.name}, name),
-            category = COALESCE(${updateData.category}, category),
-            quantity = COALESCE(${updateData.quantity}, quantity),
-            unit = COALESCE(${updateData.unit}, unit),
-            reference_quantity = COALESCE(${updateData.referenceQuantity}, reference_quantity),
-            price = COALESCE(${updateData.price}, price),
-            supplier = COALESCE(${updateData.supplier}, supplier),
-            status = COALESCE(${updateData.status}, status),
-            branch_id = COALESCE(${updateData.branchId}, branch_id),
-            sort_order = COALESCE(${updateData.sortOrder}, sort_order),
-            expiration_days = COALESCE(${updateData.expirationDays}, expiration_days),
-            purchase_date = COALESCE(${updateData.purchaseDate}, purchase_date)
-          WHERE id = ${id} AND restaurant_id = ${restaurantId}
+        
+        // Build SET clause dynamically - only include fields that exist in updateData
+        const fieldMappings: Record<string, string> = {
+          name: 'name',
+          category: 'category',
+          quantity: 'quantity',
+          unit: 'unit',
+          referenceQuantity: 'reference_quantity',
+          price: 'price',
+          supplier: 'supplier',
+          status: 'status',
+          branchId: 'branch_id',
+          sortOrder: 'sort_order',
+          expirationDays: 'expiration_days',
+          purchaseDate: 'purchase_date',
+        };
+        
+        const setClauses: string[] = [];
+        const values: any[] = [];
+        
+        for (const [jsKey, dbColumn] of Object.entries(fieldMappings)) {
+          if (updateData[jsKey] !== undefined) {
+            setClauses.push(`${dbColumn} = $${values.length + 1}`);
+            values.push(updateData[jsKey]);
+          }
+        }
+        
+        if (setClauses.length === 0) {
+          return this.getInventoryItem(id, restaurantId);
+        }
+        
+        const setClause = setClauses.join(', ');
+        values.push(id, restaurantId);
+        
+        const queryText = `
+          UPDATE inventory_items SET ${setClause}
+          WHERE id = $${values.length - 1} AND restaurant_id = $${values.length}
           RETURNING id, restaurant_id as "restaurantId", name, category, quantity, unit, 
             reference_quantity as "referenceQuantity", price,
             CASE WHEN CAST(quantity AS NUMERIC) > 0 THEN CAST(CAST(price AS NUMERIC) / CAST(quantity AS NUMERIC) AS DECIMAL(10,2))::text ELSE '0' END as "unitPrice",
             supplier, status, branch_id as "branchId", sort_order as "sortOrder", 
             expiration_days as "expirationDays", purchase_date as "purchaseDate"
-        `);
-        return (result as any).rows?.[0];
+        `;
+        
+        const result = await pool.query(queryText, values);
+        return result.rows?.[0];
       }
       throw error;
     }
