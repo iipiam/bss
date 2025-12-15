@@ -2659,14 +2659,13 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Add salaries to fixed costs (Fixed Costs = Rent + Salaries)
-    // We need to calculate the average monthly salary since salaries are recorded per pay period
+    // Get ALL salaries for this restaurant to calculate average monthly salary
+    // This ensures salaries are included even if they don't have payments in the selected year
     const allSalaries = await db.select().from(salaries).where(
-      and(
-        eq(salaries.restaurantId, restaurantId),
-        gte(salaries.paymentDate, yearStart),
-        lte(salaries.paymentDate, yearEnd)
-      )
+      eq(salaries.restaurantId, restaurantId)
     );
+    
+    console.log(`[BepMetrics] Found ${allSalaries.length} salaries for restaurant ${restaurantId}`);
     
     // Group salaries by month to calculate average monthly salary expense
     const salaryByMonth = new Map<string, number>();
@@ -2678,10 +2677,14 @@ export class DatabaseStorage implements IStorage {
       salaryByMonth.set(monthKey, (salaryByMonth.get(monthKey) || 0) + amount);
     }
     
+    console.log(`[BepMetrics] Salary months: ${salaryByMonth.size}, Total: ${Array.from(salaryByMonth.values()).reduce((sum, amt) => sum + amt, 0)}`);
+    
     // Calculate average monthly salary (total / number of months with salary data)
     const monthsWithSalaryData = salaryByMonth.size || 1;
     const totalYearlySalaries = Array.from(salaryByMonth.values()).reduce((sum, amt) => sum + amt, 0);
     const avgMonthlySalaries = totalYearlySalaries / monthsWithSalaryData;
+    
+    console.log(`[BepMetrics] Average monthly salary: ${avgMonthlySalaries}`);
     
     // Add average monthly salaries to fixed costs and breakdown
     if (avgMonthlySalaries > 0) {
