@@ -488,7 +488,8 @@ export default function Inventory() {
     if (watchedUnit === "pcs" && watchedRefQty !== 1) {
       form.setValue("referenceQuantity", 1, { shouldValidate: false });
     }
-  }, [watchedUnit, watchedRefQty]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchedUnit]);
 
   const addonFormSchema = createAddonFormSchema(t);
 

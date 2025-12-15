@@ -1151,8 +1151,62 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProcurement(procurementData: InsertProcurement): Promise<Procurement> {
-    const [created] = await db.insert(procurement).values(procurementData).returning();
-    return created;
+    try {
+      const [created] = await db.insert(procurement).values(procurementData).returning();
+      return created;
+    } catch (error: any) {
+      if (error.message?.includes('inventory_item_id') || error.message?.includes('original_procurement_id')) {
+        console.log('[Procurement] createProcurement: New columns not found, using fallback insert');
+        // Strip new columns that don't exist in AWS database
+        const { inventoryItemId: _inv, originalProcurementId: _orig, ...safeData } = procurementData as any;
+        
+        const result = await pool.query(`
+          INSERT INTO procurement (
+            id, restaurant_id, type, title, description, supplier, category,
+            quantity, unit_price, total_cost, status, priority,
+            requested_by, approved_by, branch_id,
+            order_date, expected_delivery, actual_delivery,
+            notes, invoice_image, bill_id
+          ) VALUES (
+            gen_random_uuid(), $1, $2, $3, $4, $5, $6,
+            $7, $8, $9, $10, $11,
+            $12, $13, $14,
+            $15, $16, $17,
+            $18, $19, $20
+          )
+          RETURNING id, restaurant_id as "restaurantId", type, title, description, supplier, category,
+            quantity, unit_price as "unitPrice", total_cost as "totalCost", status, priority,
+            requested_by as "requestedBy", approved_by as "approvedBy", branch_id as "branchId",
+            order_date as "orderDate", expected_delivery as "expectedDelivery", actual_delivery as "actualDelivery",
+            notes, invoice_image as "invoiceImage", bill_id as "billId",
+            NULL as "inventoryItemId", NULL as "originalProcurementId",
+            created_at as "createdAt", updated_at as "updatedAt"
+        `, [
+          safeData.restaurantId,
+          safeData.type,
+          safeData.title,
+          safeData.description || null,
+          safeData.supplier || null,
+          safeData.category || null,
+          safeData.quantity || null,
+          safeData.unitPrice || null,
+          safeData.totalCost || null,
+          safeData.status || 'pending',
+          safeData.priority || 'medium',
+          safeData.requestedBy || null,
+          safeData.approvedBy || null,
+          safeData.branchId || null,
+          safeData.orderDate || null,
+          safeData.expectedDelivery || null,
+          safeData.actualDelivery || null,
+          safeData.notes || null,
+          safeData.invoiceImage || null,
+          safeData.billId || null,
+        ]);
+        return result.rows[0];
+      }
+      throw error;
+    }
   }
 
   async updateProcurement(id: string, restaurantId: string, procurementData: Partial<InsertProcurement> & { billId?: string | null }): Promise<Procurement | undefined> {
