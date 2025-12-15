@@ -157,8 +157,7 @@ export default function POS() {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       
-      // Background tasks (fire-and-forget) - don't block checkout
-      // Invoice generation runs in background
+      // Background tasks - Invoice generation with error notification
       fetch("/api/invoices/create-and-generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -175,9 +174,22 @@ export default function POS() {
           a.click();
           window.URL.revokeObjectURL(url);
           document.body.removeChild(a);
+        } else {
+          // Show error toast so cashier knows invoice failed
+          console.error("Invoice generation failed with status:", response.status);
+          toast({
+            title: "Invoice Error",
+            description: `Invoice for ${order.orderNumber} could not be generated. Please regenerate from Orders page.`,
+            variant: "destructive",
+          });
         }
       }).catch((error) => {
         console.error("Background invoice generation failed:", error);
+        toast({
+          title: "Invoice Error", 
+          description: `Invoice for ${order.orderNumber} failed. Check Orders page to regenerate.`,
+          variant: "destructive",
+        });
       });
       
       // WhatsApp notification in background
