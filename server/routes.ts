@@ -2530,15 +2530,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const transactions = await storage.getTransactions({ restaurantId, branchId });
     const inventory = await storage.getInventoryItems(restaurantId, branchId);
 
-    // Get menu items and recipes for COGS calculation
+    // Get menu items, recipes, and inventory for COGS calculation (matching getBepMetrics logic)
     const menuItems = await storage.getMenuItems(restaurantId);
     const recipes = await storage.getRecipes(restaurantId);
 
     // Create lookup maps
     const menuItemMap = new Map(menuItems.map(mi => [mi.id, mi]));
     const recipeMap = new Map(recipes.map(r => [r.id, r]));
+    const inventoryMap = new Map(inventory.map(inv => [inv.id, inv]));
 
-    // Calculate COGS from completed orders
+    // Calculate COGS from completed orders (matching getBepMetrics approach)
     let cogsTotal = 0;
     const validOrderStatuses = ['Completed', 'Ready', 'Preparing', 'Paid', 'Delivered'];
     const completedOrders = orders.filter(o => validOrderStatuses.includes(o.status));
@@ -2546,15 +2547,35 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     for (const order of completedOrders) {
       if (order.items && Array.isArray(order.items)) {
         for (const orderItem of order.items as any[]) {
-          const menuItem = menuItemMap.get(orderItem.id);
-          if (menuItem && menuItem.recipeId) {
+          const menuItemId = orderItem.id;
+          const quantity = orderItem.quantity || 1;
+          
+          const menuItem = menuItemMap.get(menuItemId);
+          if (!menuItem) continue;
+
+          if (menuItem.recipeId) {
+            // Menu item has a recipe - use recipe cost × portionSize × quantity
             const recipe = recipeMap.get(menuItem.recipeId);
             if (recipe) {
               const recipeCost = parseFloat(recipe.cost || "0");
-              const portionSize = parseFloat(menuItem.portionSize || "1");
-              cogsTotal += recipeCost * portionSize * (orderItem.quantity || 1);
+              const portionSize = parseFloat(menuItem.portionSize || "1.0") || 1.0;
+              cogsTotal += recipeCost * portionSize * quantity;
+            }
+          } else if (menuItem.inventoryItemId) {
+            // Menu item is direct from inventory - use inventory unitPrice × quantity
+            const inventoryItem = inventoryMap.get(menuItem.inventoryItemId);
+            if (inventoryItem) {
+              // Use unitPrice if available, otherwise calculate from price/quantity
+              let unitCost = parseFloat(inventoryItem.unitPrice || "0");
+              if (unitCost === 0) {
+                const invPrice = parseFloat(inventoryItem.price || "0");
+                const invQty = parseFloat(inventoryItem.quantity || "1") || 1;
+                unitCost = invQty > 0 ? invPrice / invQty : 0;
+              }
+              cogsTotal += unitCost * quantity;
             }
           }
+          // Else: no cost data available, COGS += 0
         }
       }
     }
