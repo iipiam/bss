@@ -5,6 +5,147 @@ import { execSync } from "child_process";
 import { existsSync, readFileSync } from "fs";
 import * as path from "path";
 
+// ============================================================================
+// SHARED PDF STYLE CONSTANTS
+// Unified styling for all PDF generators to ensure consistency
+// ============================================================================
+
+const PDF_STYLES = {
+  // Font imports
+  fontImport: `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap');`,
+  
+  // Font families
+  fonts: {
+    primary: "'Inter', 'Noto Naskh Arabic', sans-serif",
+    arabic: "'Noto Naskh Arabic', 'Inter', sans-serif",
+    english: "'Inter', sans-serif",
+  },
+  
+  // Font sizes (consistent across all PDFs)
+  fontSize: {
+    xs: '8px',
+    sm: '9px',
+    base: '10px',
+    md: '11px',
+    lg: '13px',
+    xl: '16px',
+    '2xl': '20px',
+    '3xl': '24px',
+  },
+  
+  // Colors (consistent brand colors)
+  colors: {
+    primary: '#2962ff',
+    primaryDark: '#1e40af',
+    text: '#1a1a1a',
+    textSecondary: '#374151',
+    textMuted: '#6b7280',
+    border: '#e5e7eb',
+    background: '#f8f9fa',
+    backgroundAlt: '#e3f2fd',
+    white: '#ffffff',
+  },
+  
+  // Standard margins for PDF pages
+  margins: {
+    page: '10mm',
+    container: '12mm',
+  },
+  
+  // Page settings
+  pageSettings: `
+    @page {
+      size: A4;
+      margin: 10mm;
+    }
+  `,
+  
+  // Base reset styles
+  baseReset: `
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+  `,
+  
+  // Print-specific styles for proper page breaks
+  printStyles: `
+    @media print {
+      body {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+    }
+  `,
+  
+  // Table styles for consistent formatting and proper page breaks
+  tableStyles: `
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead {
+      display: table-header-group;
+    }
+    tbody {
+      display: table-row-group;
+    }
+    tr {
+      page-break-inside: avoid;
+    }
+    tfoot {
+      display: table-footer-group;
+    }
+  `,
+  
+  // Page break utilities
+  pageBreakStyles: `
+    .page-break-before { page-break-before: always; }
+    .page-break-after { page-break-after: always; }
+    .avoid-break { page-break-inside: avoid; }
+    .keep-together { page-break-inside: avoid; break-inside: avoid; }
+  `,
+};
+
+// Helper function to generate complete base CSS for PDFs
+function getBasePdfStyles(): string {
+  return `
+    ${PDF_STYLES.fontImport}
+    ${PDF_STYLES.baseReset}
+    ${PDF_STYLES.pageSettings}
+    ${PDF_STYLES.printStyles}
+    ${PDF_STYLES.tableStyles}
+    ${PDF_STYLES.pageBreakStyles}
+    
+    body {
+      font-family: ${PDF_STYLES.fonts.primary};
+      font-size: ${PDF_STYLES.fontSize.base};
+      line-height: 1.4;
+      color: ${PDF_STYLES.colors.text};
+      background: ${PDF_STYLES.colors.white};
+    }
+    
+    .arabic {
+      font-family: ${PDF_STYLES.fonts.arabic};
+    }
+    
+    .english {
+      font-family: ${PDF_STYLES.fonts.english};
+    }
+  `;
+}
+
+// Standard PDF margins for puppeteer
+const PDF_MARGINS = {
+  top: '10mm',
+  right: '10mm',
+  bottom: '10mm',
+  left: '10mm',
+};
+
+// ============================================================================
+
 interface InvoiceData {
   order: Order;
   companyName: string;
@@ -177,39 +318,30 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
 <head>
   <meta charset="UTF-8">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    ${getBasePdfStyles()}
     
     body {
-      font-family: 'Inter', 'Noto Naskh Arabic', sans-serif;
-      font-size: 11px;
-      line-height: 1.4;
-      color: #1a1a1a;
-      background: white;
+      font-size: ${PDF_STYLES.fontSize.md};
     }
     
     .invoice-container {
       max-width: 210mm;
       margin: 0 auto;
-      padding: 12mm;
+      padding: ${PDF_STYLES.margins.container};
     }
     
     .header {
-      background: linear-gradient(135deg, #2962ff 0%, #1e40af 100%);
-      color: white;
+      background: linear-gradient(135deg, ${PDF_STYLES.colors.primary} 0%, ${PDF_STYLES.colors.primaryDark} 100%);
+      color: ${PDF_STYLES.colors.white};
       padding: 15px 20px;
       text-align: center;
       border-radius: 6px 6px 0 0;
       margin-bottom: 12px;
+      page-break-inside: avoid;
     }
     
     .company-name {
-      font-size: 22px;
+      font-size: ${PDF_STYLES.fontSize['2xl']};
       font-weight: 700;
       margin-bottom: 6px;
       letter-spacing: 0.3px;
@@ -217,12 +349,12 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     
     .invoice-badge {
       display: inline-block;
-      background: white;
-      color: #2962ff;
+      background: ${PDF_STYLES.colors.white};
+      color: ${PDF_STYLES.colors.primary};
       padding: 4px 16px;
       border-radius: 12px;
       font-weight: 700;
-      font-size: 10px;
+      font-size: ${PDF_STYLES.fontSize.base};
       margin-top: 4px;
     }
     
@@ -230,29 +362,30 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
       display: flex;
       gap: 12px;
       margin-bottom: 10px;
+      page-break-inside: avoid;
     }
     
     .section-left, .section-right {
       flex: 1;
       padding: 10px 12px;
       border-radius: 4px;
-      border: 1px solid #e5e7eb;
+      border: 1px solid ${PDF_STYLES.colors.border};
     }
     
     .section-left {
-      background: #f8f9fa;
+      background: ${PDF_STYLES.colors.background};
     }
     
     .section-right {
-      background: #e3f2fd;
+      background: ${PDF_STYLES.colors.backgroundAlt};
       direction: rtl;
       text-align: right;
     }
     
     .section-title {
       font-weight: 700;
-      font-size: 9px;
-      color: #1e40af;
+      font-size: ${PDF_STYLES.fontSize.sm};
+      color: ${PDF_STYLES.colors.primaryDark};
       margin-bottom: 6px;
       text-transform: uppercase;
       letter-spacing: 0.3px;
@@ -261,7 +394,7 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     .info-row {
       display: flex;
       margin-bottom: 4px;
-      font-size: 9px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       line-height: 1.3;
     }
     
@@ -273,20 +406,21 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     .info-label {
       font-weight: 600;
       min-width: 80px;
-      color: #374151;
+      color: ${PDF_STYLES.colors.textSecondary};
     }
     
     .info-value {
-      color: #1a1a1a;
+      color: ${PDF_STYLES.colors.text};
       word-break: break-word;
     }
     
     .customer-section {
-      background: #f8f9fa;
+      background: ${PDF_STYLES.colors.background};
       padding: 8px 12px;
       border-radius: 4px;
       margin-bottom: 10px;
-      border: 1px solid #e5e7eb;
+      border: 1px solid ${PDF_STYLES.colors.border};
+      page-break-inside: avoid;
     }
     
     .customer-grid {
@@ -299,24 +433,23 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     }
     
     .items-table {
-      width: 100%;
-      border-collapse: collapse;
       margin-bottom: 10px;
-      border: 1px solid #e5e7eb;
+      border: 1px solid ${PDF_STYLES.colors.border};
       border-radius: 4px;
       overflow: hidden;
     }
     
     .items-table thead {
-      background: #2962ff;
-      color: white;
+      display: table-header-group;
+      background: ${PDF_STYLES.colors.primary};
+      color: ${PDF_STYLES.colors.white};
     }
     
     .items-table th {
       padding: 6px 8px;
       text-align: left;
       font-weight: 600;
-      font-size: 8px;
+      font-size: ${PDF_STYLES.fontSize.xs};
       text-transform: uppercase;
       letter-spacing: 0.3px;
     }
@@ -326,16 +459,17 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     }
     
     .items-table tbody tr:nth-child(even) {
-      background: #f8f9fa;
+      background: ${PDF_STYLES.colors.background};
     }
     
     .items-table tbody tr {
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid ${PDF_STYLES.colors.border};
+      page-break-inside: avoid;
     }
     
     .items-table td {
       padding: 5px 8px;
-      font-size: 9px;
+      font-size: ${PDF_STYLES.fontSize.sm};
       word-break: break-word;
       line-height: 1.3;
     }
@@ -352,27 +486,28 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
       max-width: 300px;
       margin-left: auto;
       margin-bottom: 10px;
+      page-break-inside: avoid;
     }
     
     .totals-row {
       display: flex;
       justify-content: space-between;
       padding: 4px 10px;
-      font-size: 10px;
+      font-size: ${PDF_STYLES.fontSize.base};
     }
     
     .totals-row.total {
-      background: #2962ff;
-      color: white;
+      background: ${PDF_STYLES.colors.primary};
+      color: ${PDF_STYLES.colors.white};
       font-weight: 700;
-      font-size: 13px;
+      font-size: ${PDF_STYLES.fontSize.lg};
       border-radius: 4px;
       padding: 8px 12px;
       margin-top: 6px;
     }
     
     .totals-row.subtotal {
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid ${PDF_STYLES.colors.border};
     }
     
     .qr-footer {
@@ -380,16 +515,17 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
       align-items: center;
       justify-content: space-between;
       gap: 15px;
-      background: #f8f9fa;
+      background: ${PDF_STYLES.colors.background};
       padding: 10px 15px;
       border-radius: 4px;
-      border: 1px solid #e5e7eb;
+      border: 1px solid ${PDF_STYLES.colors.border};
+      page-break-inside: avoid;
     }
     
     .qr-code {
       width: 80px;
       height: 80px;
-      border: 2px solid #e5e7eb;
+      border: 2px solid ${PDF_STYLES.colors.border};
       border-radius: 4px;
       padding: 4px;
       flex-shrink: 0;
@@ -400,45 +536,17 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     }
     
     .zatca-badge {
-      color: #2962ff;
+      color: ${PDF_STYLES.colors.primary};
       font-weight: 700;
-      font-size: 10px;
+      font-size: ${PDF_STYLES.fontSize.base};
       margin-bottom: 4px;
     }
     
     .footer-text {
-      font-size: 8px;
-      color: #6b7280;
+      font-size: ${PDF_STYLES.fontSize.xs};
+      color: ${PDF_STYLES.colors.textMuted};
       margin-bottom: 2px;
       line-height: 1.3;
-    }
-    
-    .arabic {
-      font-family: 'Noto Naskh Arabic', sans-serif;
-    }
-    
-    .english {
-      font-family: 'Inter', sans-serif;
-    }
-    
-    @media print {
-      body {
-        print-color-adjust: exact;
-        -webkit-print-color-adjust: exact;
-      }
-    }
-    
-    @page {
-      size: A4;
-      margin: 8mm;
-    }
-    
-    .header, .totals-section, .qr-footer {
-      page-break-inside: avoid;
-    }
-    
-    .items-table tbody tr {
-      page-break-inside: avoid;
     }
   </style>
 </head>
@@ -663,12 +771,7 @@ export async function generateZATCAInvoice(data: InvoiceData): Promise<{ pdfBuff
         const pdfBuffer = await page.pdf({
           format: 'A4',
           printBackground: true,
-          margin: {
-            top: '8mm',
-            right: '8mm',
-            bottom: '8mm',
-            left: '8mm'
-          }
+          margin: PDF_MARGINS
         });
 
         return { pdfBuffer: Buffer.from(pdfBuffer), qrCode: qrCodeDataURL };
@@ -967,12 +1070,7 @@ export async function generateFinancialStatementPDF(data: FinancialStatementData
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
-      margin: {
-        top: '15mm',
-        right: '15mm',
-        bottom: '15mm',
-        left: '15mm'
-      }
+      margin: PDF_MARGINS
     });
 
     return Buffer.from(pdfBuffer);
@@ -1387,12 +1485,7 @@ export async function generateExpensesPDF(data: ExpensesPDFData): Promise<Buffer
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
-      margin: {
-        top: '15mm',
-        right: '15mm',
-        bottom: '15mm',
-        left: '15mm'
-      }
+      margin: PDF_MARGINS
     });
 
     return Buffer.from(pdfBuffer);
@@ -1895,12 +1988,7 @@ export async function generateSubscriptionInvoice(data: {
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
-      margin: {
-        top: '10mm',
-        right: '10mm',
-        bottom: '10mm',
-        left: '10mm'
-      }
+      margin: PDF_MARGINS
     });
 
     return Buffer.from(pdfBuffer);
@@ -2288,12 +2376,7 @@ export async function generateMonthlyVatReport(data: {
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
-      margin: {
-        top: '10mm',
-        right: '10mm',
-        bottom: '10mm',
-        left: '10mm'
-      }
+      margin: PDF_MARGINS
     });
 
     return Buffer.from(pdfBuffer);
@@ -2810,12 +2893,7 @@ export async function generateInvestorStatementPDF(data: InvestorStatementData):
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
-      margin: {
-        top: '10mm',
-        right: '10mm',
-        bottom: '10mm',
-        left: '10mm'
-      }
+      margin: PDF_MARGINS
     });
 
     console.log('[InvestorStatement] PDF generated successfully');
@@ -3369,12 +3447,7 @@ export async function generateBssAnalysisStatementPDF(data: BssAnalysisStatement
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
-      margin: {
-        top: '10mm',
-        right: '10mm',
-        bottom: '10mm',
-        left: '10mm'
-      }
+      margin: PDF_MARGINS
     });
 
     console.log('[BssAnalysis] PDF generated successfully');
@@ -3942,12 +4015,7 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
-      margin: {
-        top: '10mm',
-        right: '10mm',
-        bottom: '10mm',
-        left: '10mm'
-      }
+      margin: PDF_MARGINS
     });
 
     console.log('[RefundClearance] PDF generated successfully');
