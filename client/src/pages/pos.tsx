@@ -76,8 +76,8 @@ export default function POS() {
 
   const { data: stock = {} } = useQuery<Record<string, number>>({
     queryKey: ["/api/menu/stock"],
-    staleTime: 0, // Always refetch when invalidated
-    refetchInterval: 30000, // Refresh every 30 seconds as backup
+    staleTime: 5000, // Consider fresh for 5 seconds (WebSocket handles real-time updates)
+    refetchInterval: 60000, // Backup poll every 60s (WebSocket is primary)
   });
 
   const { data: branches = [] } = useQuery<Branch[]>({
@@ -132,6 +132,30 @@ export default function POS() {
     mutationFn: async (orderData: any) => {
       const response = await apiRequest("POST", "/api/orders", orderData);
       return await response.json();
+    },
+    onMutate: async (orderData: any) => {
+      // Optimistic stock update for instant UI feedback
+      await queryClient.cancelQueries({ queryKey: ["/api/menu/stock"] });
+      const previousStock = queryClient.getQueryData<Record<string, number>>(["/api/menu/stock"]);
+      
+      // Optimistically decrement stock for items in the order
+      if (previousStock && orderData.items) {
+        const optimisticStock = { ...previousStock };
+        for (const item of orderData.items as any[]) {
+          if (optimisticStock[item.id] !== undefined && optimisticStock[item.id] < 999999) {
+            optimisticStock[item.id] = Math.max(0, optimisticStock[item.id] - item.quantity);
+          }
+        }
+        queryClient.setQueryData(["/api/menu/stock"], optimisticStock);
+      }
+      
+      return { previousStock };
+    },
+    onError: (_error: any, _orderData: any, context: any) => {
+      // Rollback to previous stock on error
+      if (context?.previousStock) {
+        queryClient.setQueryData(["/api/menu/stock"], context.previousStock);
+      }
     },
     onSuccess: async (order: any) => {
       // Create transaction record (fast, essential)

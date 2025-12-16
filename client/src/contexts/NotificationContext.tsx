@@ -305,11 +305,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             // Handle order notifications
             playNotificationTone(currentToneRef.current);
             
-            // Invalidate dashboard and analytics queries for real-time updates
+            // Invalidate dashboard, analytics, orders AND stock queries for real-time updates
             queryClient.invalidateQueries({ queryKey: ['/api/analytics/dashboard'] });
             queryClient.invalidateQueries({ queryKey: ['/api/analytics/sales'] });
             queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-            console.log('[Notifications] Order updated - refreshing dashboard data');
+            // Real-time stock update - refresh POS stock immediately after order
+            queryClient.invalidateQueries({ queryKey: ['/api/menu/stock'], refetchType: 'all' });
+            console.log('[Notifications] Order updated - refreshing dashboard and stock data');
 
             const title = notification.type === 'order:created' 
               ? `${t.newOrder || 'New Order'} - ${notification.orderNumber}`
