@@ -717,10 +717,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMenuItemsStock(restaurantId: string, branchId?: string): Promise<Record<string, number>> {
-    // Get all menu items
-    const allMenuItems = await this.getMenuItems(restaurantId);
-    // Get inventory items for the branch
-    const inventory = await this.getInventoryItems(restaurantId, branchId);
+    // OPTIMIZATION: Batch fetch all data upfront to avoid N+1 queries
+    const [allMenuItems, inventory, allRecipes] = await Promise.all([
+      this.getMenuItems(restaurantId),
+      this.getInventoryItems(restaurantId, branchId),
+      this.getRecipes(restaurantId)
+    ]);
+    
+    // Create lookup maps for O(1) access instead of O(n) find() calls
+    const inventoryMap = new Map(inventory.map(item => [item.id, item]));
+    const recipeMap = new Map(allRecipes.map(recipe => [recipe.id, recipe]));
     
     const stock: Record<string, number> = {};
     
@@ -728,80 +734,65 @@ export class DatabaseStorage implements IStorage {
     for (const menuItem of allMenuItems) {
       // CASE 1: Menu item has a direct inventory link (no recipe needed)
       if (menuItem.inventoryItemId && !menuItem.recipeId) {
-        const inventoryItem = inventory.find(item => item.id === menuItem.inventoryItemId);
+        const inventoryItem = inventoryMap.get(menuItem.inventoryItemId);
         
         if (!inventoryItem) {
-          // Inventory item not found, set stock to 0
           stock[menuItem.id] = 0;
           continue;
         }
         
         const availableQuantity = parseFloat(String(inventoryItem.quantity || '0')) || 0;
-        // stockNo is the quantity consumed per sale (e.g., 1.5 means 1.5 units per item sold)
-        // If not set, default to 1:1 ratio
         const quantityPerSale = parseFloat(String(menuItem.stockNo || '1')) || 1;
         
         if (quantityPerSale > 0) {
-          const possibleSales = Math.floor(availableQuantity / quantityPerSale);
-          stock[menuItem.id] = Math.max(0, possibleSales);
+          stock[menuItem.id] = Math.max(0, Math.floor(availableQuantity / quantityPerSale));
         } else {
-          stock[menuItem.id] = 999999; // No quantity per sale defined, treat as unlimited
+          stock[menuItem.id] = 999999;
         }
         continue;
       }
       
       // CASE 2: Menu item has no recipe and no inventory link - infinite stock
       if (!menuItem.recipeId) {
-        stock[menuItem.id] = 999999; // Effectively infinite
+        stock[menuItem.id] = 999999;
         continue;
       }
       
       // CASE 3: Menu item has a recipe - calculate based on recipe ingredients
-      const recipe = await this.getRecipe(menuItem.recipeId, restaurantId);
+      const recipe = recipeMap.get(menuItem.recipeId);
       if (!recipe) {
-        stock[menuItem.id] = 999999; // No recipe found, treat as infinite
+        stock[menuItem.id] = 999999;
         continue;
       }
       
       // Calculate how many servings we can make based on available inventory
       let minServings = Infinity;
-      
-      // Ensure ingredients is a valid array
       const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
       
       for (const ingredient of ingredients as any[]) {
-        if (!ingredient || !ingredient.inventoryItemId) {
-          continue; // Skip invalid ingredients
-        }
+        if (!ingredient || !ingredient.inventoryItemId) continue;
         
-        const inventoryItem = inventory.find(item => item.id === ingredient.inventoryItemId);
+        const inventoryItem = inventoryMap.get(ingredient.inventoryItemId);
         
         if (!inventoryItem) {
-          // If any ingredient is missing, we can't make this item
           minServings = 0;
           break;
         }
         
-        // Safely parse quantities with fallback to 0
         const availableQuantity = parseFloat(String(inventoryItem.quantity || '0')) || 0;
         const requiredQuantity = parseFloat(String(ingredient.quantity || '0')) || 0;
         
         if (requiredQuantity > 0 && !isNaN(availableQuantity)) {
           const possibleServings = Math.floor(availableQuantity / requiredQuantity);
-          // Ensure we never get NaN or negative values
           if (!isNaN(possibleServings) && possibleServings >= 0) {
             minServings = Math.min(minServings, possibleServings);
           } else {
-            minServings = 0; // Invalid calculation, set to 0
+            minServings = 0;
           }
         }
       }
       
-      // Store the stock for this menu item
-      // If minServings is still Infinity (no ingredients in recipe), treat as unlimited
-      // Ensure we never return NaN or negative values
-      const finalStock = minServings === Infinity ? 999999 : (isNaN(minServings) || minServings < 0 ? 0 : minServings);
-      stock[menuItem.id] = finalStock;
+      stock[menuItem.id] = minServings === Infinity ? 999999 : (isNaN(minServings) || minServings < 0 ? 0 : minServings);
     }
     
     return stock;

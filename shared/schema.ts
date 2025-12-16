@@ -282,7 +282,10 @@ export const inventoryTransactions = pgTable("inventory_transactions", {
   notes: text("notes"), // Additional details (e.g., "Sold in Order ORD-123", "Procurement PO-456")
   branchId: varchar("branch_id").references(() => branches.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  restaurantInventoryIdx: index("inv_trans_restaurant_inventory_idx").on(table.restaurantId, table.inventoryItemId),
+  restaurantCreatedAtIdx: index("inv_trans_restaurant_created_at_idx").on(table.restaurantId, table.createdAt),
+}));
 
 export const insertInventoryTransactionSchema = createInsertSchema(inventoryTransactions).omit({ id: true, createdAt: true });
 export type InsertInventoryTransaction = z.infer<typeof insertInventoryTransactionSchema>;
@@ -301,7 +304,10 @@ export const transactions = pgTable("transactions", {
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: text("payment_method").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  restaurantCreatedAtIdx: index("transactions_restaurant_created_at_idx").on(table.restaurantId, table.createdAt),
+  restaurantOrderIdx: index("transactions_restaurant_order_idx").on(table.restaurantId, table.orderId),
+}));
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true, createdAt: true });
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
