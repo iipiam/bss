@@ -231,6 +231,12 @@ export class OrderProcessingService {
     // OPTIMIZATION: Batch collect all inventory IDs to fetch restaurant IDs at once
     const inventoryIds = Array.from(stockRequirements.keys());
     
+    // Early return if no inventory to deduct
+    if (inventoryIds.length === 0) {
+      console.log('[INVENTORY] No inventory items to deduct for this order');
+      return;
+    }
+    
     // Fetch only restaurant IDs for all items in one query
     const restaurantIdResult = await tx.execute(sql`
       SELECT id, restaurant_id as "restaurantId" 
