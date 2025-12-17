@@ -59,7 +59,7 @@ export default function Customers() {
     resolver: zodResolver(customerFormSchema),
     defaultValues: {
       name: "",
-      phone: "",
+      phone: "+966",
     },
   });
 
@@ -302,8 +302,17 @@ export default function Customers() {
                       <FormControl>
                         <Input
                           data-testid="input-customer-phone"
-                          placeholder="+966 XX XXX XXXX"
+                          placeholder="+966 5XXXXXXXX"
                           {...field}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            // Ensure +966 prefix is always present
+                            if (!val.startsWith('+966')) {
+                              field.onChange('+966' + val.replace(/^\+?966?/, ''));
+                            } else {
+                              field.onChange(val);
+                            }
+                          }}
                         />
                       </FormControl>
                       <FormMessage />

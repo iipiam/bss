@@ -56,7 +56,7 @@ export default function POS() {
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("+966");
   const [customerTab, setCustomerTab] = useState("new");
   const [customerSearch, setCustomerSearch] = useState("");
   const [tableNumber, setTableNumber] = useState("");
@@ -205,7 +205,7 @@ export default function POS() {
       // Reset cart immediately for fast UX
       setCartItems([]);
       setCustomerName("");
-      setCustomerPhone("");
+      setCustomerPhone("+966");
       setTableNumber("");
       setSelectedDeliveryAppId(null);
       setEarningsDecreaseApplied(false);
@@ -392,7 +392,7 @@ export default function POS() {
   const clearCart = () => {
     setCartItems([]);
     setCustomerName("");
-    setCustomerPhone("");
+    setCustomerPhone("+966");
     setTableNumber("");
     setSelectedDeliveryAppId(null);
     setEarningsDecreaseApplied(false);
@@ -879,7 +879,7 @@ export default function POS() {
                       className="h-[44px] w-[44px]"
                       onClick={() => {
                         setCustomerName("");
-                        setCustomerPhone("");
+                        setCustomerPhone("+966");
                       }}
                       data-testid="button-remove-customer"
                     >
@@ -941,9 +941,17 @@ export default function POS() {
                             <Label htmlFor="customer-phone">{t.phone}</Label>
                             <Input
                               id="customer-phone"
-                              placeholder="+966 XX XXX XXXX"
+                              placeholder="+966 5XXXXXXXX"
                               value={customerPhone}
-                              onChange={(e) => setCustomerPhone(e.target.value)}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                // Ensure +966 prefix is always present
+                                if (!val.startsWith('+966')) {
+                                  setCustomerPhone('+966' + val.replace(/^\+?966?/, ''));
+                                } else {
+                                  setCustomerPhone(val);
+                                }
+                              }}
                               data-testid="input-pos-customer-phone"
                             />
                           </div>
@@ -1358,7 +1366,7 @@ export default function POS() {
                   className="h-6 w-6"
                   onClick={() => {
                     setCustomerName("");
-                    setCustomerPhone("");
+                    setCustomerPhone("+966");
                   }}
                   data-testid="button-remove-customer"
                 >
@@ -1418,9 +1426,17 @@ export default function POS() {
                         <Label htmlFor="customer-phone">{t.phone}</Label>
                         <Input
                           id="customer-phone"
-                          placeholder="+966 XX XXX XXXX"
+                          placeholder="+966 5XXXXXXXX"
                           value={customerPhone}
-                          onChange={(e) => setCustomerPhone(e.target.value)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            // Ensure +966 prefix is always present
+                            if (!val.startsWith('+966')) {
+                              setCustomerPhone('+966' + val.replace(/^\+?966?/, ''));
+                            } else {
+                              setCustomerPhone(val);
+                            }
+                          }}
                           data-testid="input-pos-customer-phone"
                         />
                       </div>
