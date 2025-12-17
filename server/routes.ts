@@ -5597,9 +5597,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       const period = req.query.period as string || 'month';
       
-      // Get menu items, recipes, and orders
+      // Get menu items, recipes, inventory items, and orders
       const menuItems = await storage.getMenuItems(restaurantId);
       const recipes = await storage.getRecipes(restaurantId);
+      const inventoryItems = await storage.getInventoryItems(restaurantId);
       const orders = await storage.getOrders({ restaurantId });
       
       // Filter orders by period
@@ -5626,7 +5627,22 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         const recipe = item.recipeId ? recipes.find((r) => r.id === item.recipeId) : null;
         // Apply portion size multiplier to recipe cost (1.0=full, 0.5=half, 0.25=quarter, 0.75=three-quarter)
         const portionMultiplier = item.portionSize ? parseFloat(item.portionSize) : 1.0;
-        const cost = recipe ? parseFloat(recipe.cost) * portionMultiplier : 0;
+        
+        // Calculate cost: recipe-based OR simple inventory item
+        let cost = 0;
+        if (recipe) {
+          // Recipe-based item: use recipe cost × portion multiplier
+          cost = parseFloat(recipe.cost) * portionMultiplier;
+        } else if (item.inventoryItemId && item.stockNo) {
+          // Simple inventory item (like drinks): stockNo × inventory unit price
+          const inventoryItem = inventoryItems.find((inv) => inv.id === item.inventoryItemId);
+          if (inventoryItem) {
+            const invPrice = parseFloat(inventoryItem.price || "0");
+            const refQty = parseFloat(inventoryItem.referenceQuantity || "1");
+            const unitPrice = refQty > 0 ? invPrice / refQty : invPrice;
+            cost = parseFloat(item.stockNo.toString()) * unitPrice;
+          }
+        }
         const basePrice = parseFloat(item.basePrice);
         const profit = basePrice - cost;
         const margin = basePrice > 0 ? (profit / basePrice) * 100 : 0;

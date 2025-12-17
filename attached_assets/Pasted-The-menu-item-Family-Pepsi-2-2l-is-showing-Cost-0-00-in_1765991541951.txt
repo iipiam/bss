@@ -1,0 +1,90 @@
+The menu item "Family Pepsi 2.2l" is showing Cost: 0.00 instead of calculating the actual cost from inventory. Other menu items are working correctly.
+
+ISSUE:
+Menu items need to calculate their cost based on:
+1. Recipe-based items: Sum of (ingredient quantity × ingredient unit price)
+2. Simple items: (stockNo × inventory unit price)
+
+The "Family Pepsi 2.2l" item is likely a simple item linked to inventory, but the cost is not being calculated.
+
+FIX REQUIRED:
+
+1. Check the cost calculation logic in the analytics/reports endpoint that generates this table
+2. Ensure it properly calculates cost for BOTH recipe-based and simple inventory items
+3. The calculation should be:
+
+For recipe-based items:
+```javascript
+const recipeCost = recipe.ingredients.reduce((total, ingredient) => {
+  const inventoryItem = getInventoryItem(ingredient.inventoryItemId);
+  const unitPrice = parseFloat(inventoryItem.unitPrice || inventoryItem.price / inventoryItem.referenceQuantity);
+  return total + (ingredient.quantity * unitPrice);
+}, 0);
+const itemCost = recipeCost * portionSize;
+For simple inventory items (like Pepsi):
+JavaScript
+const inventoryItem = getInventoryItem(menuItem.inventoryItemId);
+const unitPrice = parseFloat(inventoryItem.unitPrice || inventoryItem.price / inventoryItem.referenceQuantity);
+const itemCost = parseFloat(menuItem.stockNo) * unitPrice;
+Verify that the "Family Pepsi 2.2l" menu item has:
+inventoryItemId properly set
+stockNo properly set (e.g., "1" for 1 bottle per order)
+The linked inventory item has valid price and referenceQuantity
+Check the inventory item for Pepsi 2.2l:
+Ensure it has a price (e.g., 7.83 SAR)
+Ensure it has a referenceQuantity (e.g., 1 for per bottle)
+unitPrice should be calculated as price/referenceQuantity
+Debug by logging:
+JavaScript
+console.log('Menu Item:', menuItem.name);
+console.log('Inventory Item ID:', menuItem.inventoryItemId);
+console.log('Stock No:', menuItem.stockNo);
+console.log('Inventory Item:', inventoryItem);
+console.log('Unit Price:', unitPrice);
+console.log('Calculated Cost:', itemCost);
+Please fix the cost calculation logic to properly handle simple inventory items like drinks.
+Plain Text
+
+---
+
+## **Additional Context to Provide:**
+
+If Replit Agent needs more details, tell them:
+
+The cost calculation is likely in one of these endpoints:
+GET /api/analytics/menu-performance
+GET /api/analytics/profitability
+GET /api/reports/menu-items
+The issue is that simple items (non-recipe items) are not calculating their cost from inventory properly.
+Expected behavior:
+Family Pepsi 2.2l has Price: 7.83 SAR
+If inventory shows Pepsi costs 3.50 SAR per bottle
+And stockNo = 1 (one bottle per order)
+Then Cost should show: 3.50 SAR
+Not: 0.00 SAR
+Please ensure the cost calculation handles both:
+Recipe-based items (sum of ingredient costs) ✅ Working
+Simple items (stockNo × inventory unit price) ❌ NOT Working
+Plain Text
+
+---
+
+## **Quick Verification Steps:**
+
+After the fix, verify:
+
+1. **Check the menu item in database:**
+   ```sql
+   SELECT id, name, inventory_item_id, stock_no, recipe_id 
+   FROM menu_items 
+   WHERE name LIKE '%Pepsi%';
+Check the linked inventory item:
+SQL
+SELECT id, name, price, reference_quantity, unit_price 
+FROM inventory_items 
+WHERE name LIKE '%Pepsi%';
+Verify the calculation:
+If price = 7.00 and reference_quantity = 2 (for 2L bottle)
+Then unit_price = 7.00 / 2 = 3.50 per liter
+If menu item uses stockNo = 2.2 (for 2.2L)
+Then cost = 2.2 × 3.50 = 7.70 SAR
