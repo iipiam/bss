@@ -86,6 +86,8 @@ interface StockRequirement {
   availableQuantity: number;
   unit: string;
   restaurantId?: string; // Cache restaurant ID for transaction
+  unitPrice: number; // Price per unit (constant)
+  totalPrice: number; // Current total price in inventory
 }
 
 interface StockValidationResult {
@@ -241,7 +243,7 @@ export class OrderProcessingService {
 
     // Prepare batch operations
     const transactions: InsertInventoryTransaction[] = [];
-    const updates: Array<{ id: string; quantity: string; status: string }> = [];
+    const updates: Array<{ id: string; quantity: string; price: string; status: string }> = [];
     const deletes: string[] = [];
 
     for (const [inventoryItemId, requirement] of Array.from(stockRequirements.entries())) {
@@ -274,9 +276,14 @@ export class OrderProcessingService {
       if (quantityAfter === 0) {
         deletes.push(inventoryItemId);
       } else {
+        // Calculate new price: maintain constant unit price by deducting proportionally
+        // newPrice = quantityAfter × unitPrice
+        const newPrice = quantityAfter * requirement.unitPrice;
+        
         updates.push({
           id: inventoryItemId,
           quantity: quantityAfter.toString(),
+          price: newPrice.toFixed(2),
           status: quantityAfter < 10 ? "Low Stock" : "In Stock",
         });
       }
@@ -291,7 +298,7 @@ export class OrderProcessingService {
     for (const update of updates) {
       await tx
         .update(inventoryItems)
-        .set({ quantity: update.quantity, status: update.status })
+        .set({ quantity: update.quantity, price: update.price, status: update.status })
         .where(eq(inventoryItems.id, update.id));
     }
 
@@ -334,12 +341,18 @@ export class OrderProcessingService {
           throw new Error(`Inventory item ${invItem.id} (${invItem.name}) belongs to branch ${invItem.branchId} but order is for branch ${branchId}`);
         }
         
+        const availableQty = parseFloat(invItem.quantity);
+        const totalPriceVal = parseFloat(invItem.price || "0");
+        const unitPriceVal = availableQty > 0 ? totalPriceVal / availableQty : 0;
+        
         stockRequirements.set(ingredient.inventoryItemId, {
           inventoryItemId: ingredient.inventoryItemId,
           inventoryItemName: ingredient.name,
           requiredQuantity: requiredQty,
-          availableQuantity: parseFloat(invItem.quantity),
+          availableQuantity: availableQty,
           unit: ingredient.unit,
+          unitPrice: unitPriceVal,
+          totalPrice: totalPriceVal,
         });
       }
     }
@@ -377,12 +390,18 @@ export class OrderProcessingService {
     if (existing) {
       existing.requiredQuantity += requiredQty;
     } else {
+      const availableQty = parseFloat(invItem.quantity);
+      const totalPriceVal = parseFloat(invItem.price || "0");
+      const unitPriceVal = availableQty > 0 ? totalPriceVal / availableQty : 0;
+      
       stockRequirements.set(invItem.id, {
         inventoryItemId: invItem.id,
         inventoryItemName: invItem.name,
         requiredQuantity: requiredQty,
-        availableQuantity: parseFloat(invItem.quantity),
+        availableQuantity: availableQty,
         unit: invItem.unit,
+        unitPrice: unitPriceVal,
+        totalPrice: totalPriceVal,
       });
     }
   }
