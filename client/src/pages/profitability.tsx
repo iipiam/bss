@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { TrendingUp, TrendingDown, DollarSign, Percent, Package, Calculator, AlertTriangle, Target, Scale, Scissors, Download, FileText } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Percent, Package, Calculator, AlertTriangle, Target, Scale, Scissors, Download, FileText, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import type { MenuItem, Recipe, Order, ShopBill, InventoryItem } from "@shared/schema";
@@ -329,6 +330,38 @@ export default function Profitability() {
     }
   };
 
+  const handleSyncCosts = async () => {
+    // Debug: log inventory and menu items with inventory links
+    console.log("=== SYNC COSTS DEBUG ===");
+    console.log("Inventory Items count:", inventoryItems.length);
+    console.log("Menu Items count:", menuItems.length);
+    
+    // Find menu items with inventory links
+    const linkedItems = menuItems.filter((m) => m.inventoryItemId);
+    console.log("Menu items with inventoryItemId:", linkedItems.length);
+    linkedItems.forEach((item) => {
+      const inv = inventoryItems.find((i) => i.id === item.inventoryItemId);
+      console.log(`- ${item.name}: inventoryItemId=${item.inventoryItemId}, stockNo=${item.stockNo}`);
+      if (inv) {
+        console.log(`  -> Found inventory: ${inv.name}, unitPrice=${inv.unitPrice}, price=${inv.price}, refQty=${inv.referenceQuantity}`);
+      } else {
+        console.log(`  -> NO MATCHING INVENTORY FOUND!`);
+      }
+    });
+    
+    // Refresh all queries
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["/api/menu"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/recipes"] }),
+    ]);
+    
+    toast({
+      title: "Costs Synced",
+      description: "Menu and inventory data refreshed. Check browser console for debug info.",
+    });
+  };
+
   return (
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
@@ -339,6 +372,10 @@ export default function Profitability() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleSyncCosts} data-testid="button-sync-costs">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Sync Costs
+          </Button>
           <Button variant="outline" onClick={handleExportPDF} data-testid="button-export-pdf">
             <FileText className="h-4 w-4 mr-2" />
             Export PDF
