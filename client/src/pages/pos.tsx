@@ -120,6 +120,31 @@ export default function POS() {
     }
   }, [selectedDeliveryAppId]);
 
+  // Helper function for flexible phone number matching (handles +966 Saudi prefix)
+  const phoneMatches = (storedPhone: string, searchQuery: string): boolean => {
+    if (!storedPhone || !searchQuery) return false;
+    
+    // Normalize both to digits only
+    const storedDigits = storedPhone.replace(/\D/g, '');
+    const searchDigits = searchQuery.replace(/\D/g, '');
+    
+    if (!searchDigits) return false;
+    
+    // Check if search matches any part of the stored phone
+    if (storedDigits.includes(searchDigits)) return true;
+    
+    // Check if adding 966 to search matches
+    if (storedDigits.includes(`966${searchDigits}`)) return true;
+    
+    // Check if removing 966 from search matches
+    if (searchDigits.startsWith('966') && storedDigits.includes(searchDigits.substring(3))) return true;
+    
+    // Check if removing leading 0 matches (0501234567 -> 501234567)
+    if (searchDigits.startsWith('0') && storedDigits.includes(searchDigits.substring(1))) return true;
+    
+    return false;
+  };
+
   // Get available add-ons for a specific menu item
   const getAvailableAddons = (menuItemId: string) => {
     return allAddons.filter(addon =>
@@ -958,7 +983,7 @@ export default function POS() {
                               .filter(c => 
                                 customerSearch === "" ||
                                 c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-                                c.phone.includes(customerSearch)
+                                phoneMatches(c.phone, customerSearch)
                               )
                               .map(customer => (
                                 <Card
@@ -985,7 +1010,7 @@ export default function POS() {
                             {customers.filter(c => 
                               customerSearch === "" ||
                               c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-                              c.phone.includes(customerSearch)
+                              phoneMatches(c.phone, customerSearch)
                             ).length === 0 && (
                               <p className="text-center text-muted-foreground py-8">{t.noData}</p>
                             )}
@@ -1435,7 +1460,7 @@ export default function POS() {
                           .filter(c => 
                             customerSearch === "" ||
                             c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-                            c.phone.includes(customerSearch)
+                            phoneMatches(c.phone, customerSearch)
                           )
                           .map(customer => (
                             <Card
@@ -1462,7 +1487,7 @@ export default function POS() {
                         {customers.filter(c => 
                           customerSearch === "" ||
                           c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-                          c.phone.includes(customerSearch)
+                          phoneMatches(c.phone, customerSearch)
                         ).length === 0 && (
                           <p className="text-center text-muted-foreground py-8">{t.noData}</p>
                         )}
