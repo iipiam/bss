@@ -5633,14 +5633,20 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         if (recipe) {
           // Recipe-based item: use recipe cost × portion multiplier
           cost = parseFloat(recipe.cost) * portionMultiplier;
-        } else if (item.inventoryItemId && item.stockNo) {
+        } else if (item.inventoryItemId && Number(item.stockNo) > 0) {
           // Simple inventory item (like drinks): stockNo × inventory unit price
           const inventoryItem = inventoryItems.find((inv) => inv.id === item.inventoryItemId);
           if (inventoryItem) {
-            const invPrice = parseFloat(inventoryItem.price || "0");
-            const refQty = parseFloat(inventoryItem.referenceQuantity || "1");
-            const unitPrice = refQty > 0 ? invPrice / refQty : invPrice;
-            cost = parseFloat(item.stockNo.toString()) * unitPrice;
+            // Use unitPrice directly (already calculated) or calculate from price/referenceQuantity
+            let unitPrice = 0;
+            if (inventoryItem.unitPrice) {
+              unitPrice = parseFloat(inventoryItem.unitPrice.toString());
+            } else if (inventoryItem.price) {
+              const invPrice = parseFloat(inventoryItem.price.toString());
+              const refQty = parseFloat((inventoryItem.referenceQuantity || "1").toString());
+              unitPrice = refQty > 0 ? invPrice / refQty : invPrice;
+            }
+            cost = parseFloat(item.stockNo!.toString()) * unitPrice;
           }
         }
         const basePrice = parseFloat(item.basePrice);
