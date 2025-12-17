@@ -230,11 +230,17 @@ export default function POS() {
 
       return { previousStock };
     },
-    onError: (_error: any, _orderData: any, context: any) => {
+    onError: (error: any, _orderData: any, context: any) => {
       // Rollback to previous stock on error
       if (context?.previousStock) {
         queryClient.setQueryData(["/api/menu/stock"], context.previousStock);
       }
+      // Show error toast
+      toast({
+        title: t.error,
+        description: error.message || t.failedToCreateOrder,
+        variant: "destructive",
+      });
     },
     onSuccess: async (order: any) => {
       // Create transaction record (fast, essential)
@@ -361,13 +367,6 @@ export default function POS() {
             .catch(() => {});
         }
       }
-    },
-    onError: (error: any) => {
-      toast({
-        title: t.error,
-        description: error.message || t.failedToCreateOrder,
-        variant: "destructive",
-      });
     },
   });
 

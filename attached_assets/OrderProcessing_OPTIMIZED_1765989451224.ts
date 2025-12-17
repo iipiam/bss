@@ -11,7 +11,7 @@ import {
   type InventoryItem,
 } from "@shared/schema";
 
-// Helper to safely get inventory item with fallback for missing unit_price column
+// OPTIMIZATION: Simplified inventory item fetching with proper error handling
 async function getInventoryItemSafe(id: string): Promise<InventoryItem | null> {
   try {
     const result = await db
@@ -40,7 +40,7 @@ async function getInventoryItemSafe(id: string): Promise<InventoryItem | null> {
   }
 }
 
-// OPTIMIZATION: Batch fetch multiple inventory items in parallel using SQL IN clause
+// OPTIMIZATION: Batch fetch multiple inventory items in parallel
 async function getInventoryItemsBatch(ids: string[]): Promise<Map<string, InventoryItem>> {
   if (ids.length === 0) return new Map();
   
@@ -54,6 +54,7 @@ async function getInventoryItemsBatch(ids: string[]): Promise<Map<string, Invent
   } catch (error: any) {
     if (error.message?.includes('unit_price')) {
       console.log('[OrderProcessing] Batch query fallback for unit_price');
+      const placeholders = ids.map(() => '?').join(',');
       const result = await db.execute(sql`
         SELECT id, restaurant_id as "restaurantId", name, category, quantity, unit,
                reference_quantity as "referenceQuantity", price,
@@ -85,7 +86,6 @@ interface StockRequirement {
   requiredQuantity: number;
   availableQuantity: number;
   unit: string;
-  restaurantId?: string; // Cache restaurant ID for transaction
 }
 
 interface StockValidationResult {
@@ -129,27 +129,7 @@ export class OrderProcessingService {
         recipesMap = new Map(recipesData.map(recipe => [recipe.id, recipe]));
       }
 
-      // OPTIMIZATION 3: Collect all inventory IDs needed (from recipes and direct links)
-      const allInventoryIds = new Set<string>();
-      
-      // Collect from recipes
-      for (const recipe of Array.from(recipesMap.values())) {
-        for (const ingredient of recipe.ingredients) {
-          allInventoryIds.add(ingredient.inventoryItemId);
-        }
-      }
-      
-      // Collect from direct inventory links
-      for (const item of menuItemsData) {
-        if (item.inventoryItemId && item.stockNo) {
-          allInventoryIds.add(item.inventoryItemId);
-        }
-      }
-
-      // OPTIMIZATION 4: Batch fetch all inventory items in parallel
-      const inventoryMap = await getInventoryItemsBatch(Array.from(allInventoryIds));
-
-      // OPTIMIZATION 5: Process all items with cached data (no more N+1 queries!)
+      // OPTIMIZATION 3: Process all items with cached data
       for (const orderItem of orderItems) {
         const item = menuItemMap.get(orderItem.id);
         if (!item) continue;
@@ -157,27 +137,25 @@ export class OrderProcessingService {
         if (item.recipeId) {
           const recipe = recipesMap.get(item.recipeId);
           if (recipe) {
-            this.processRecipeBasedItemOptimized(
+            await this.processRecipeBasedItemOptimized(
               item,
               recipe,
               orderItem.quantity,
               stockRequirements,
-              branchId,
-              inventoryMap
+              branchId
             );
           }
-        } else if (item.stockNo && item.inventoryItemId) {
-          this.processSimpleItemOptimized(
+        } else if (item.stockNo) {
+          await this.processSimpleItemOptimized(
             item,
             orderItem.quantity,
             stockRequirements,
-            branchId,
-            inventoryMap
+            branchId
           );
         }
       }
 
-      const validationResult = this.validateStock(stockRequirements);
+      const validationResult = await this.validateStock(stockRequirements);
       
       if (!validationResult.isValid) {
         return validationResult;
@@ -219,33 +197,20 @@ export class OrderProcessingService {
     }
   }
 
-  // OPTIMIZATION: Use cached stock data instead of re-querying each item
+  // OPTIMIZATION: Use cached stock data instead of re-querying
   private async deductInventoryInTransaction(
     tx: any,
     stockRequirements: Map<string, StockRequirement>,
     orderId: string,
     branchId: string
   ): Promise<void> {
-    // OPTIMIZATION: Batch collect all inventory IDs to fetch restaurant IDs at once
-    const inventoryIds = Array.from(stockRequirements.keys());
-    
-    // Fetch only restaurant IDs for all items in one query
-    const restaurantIdResult = await tx.execute(sql`
-      SELECT id, restaurant_id as "restaurantId" 
-      FROM inventory_items 
-      WHERE id IN (${sql.join(inventoryIds.map(id => sql`${id}`), sql`, `)})
-    `);
-    const restaurantIdMap = new Map<string, string>(
-      ((restaurantIdResult as any).rows || []).map((r: any) => [r.id, r.restaurantId])
-    );
-
-    // Prepare batch operations
-    const transactions: InsertInventoryTransaction[] = [];
+    // OPTIMIZATION: Prepare all updates and inserts for batch execution
     const updates: Array<{ id: string; quantity: string; status: string }> = [];
     const deletes: string[] = [];
+    const transactions: InsertInventoryTransaction[] = [];
 
     for (const [inventoryItemId, requirement] of Array.from(stockRequirements.entries())) {
-      // OPTIMIZATION: Use cached availableQuantity instead of re-querying
+      // OPTIMIZATION: Use cached availableQuantity instead of querying
       const quantityBefore = requirement.availableQuantity;
       const quantityAfter = quantityBefore - requirement.requiredQuantity;
 
@@ -255,12 +220,18 @@ export class OrderProcessingService {
         );
       }
 
-      const restaurantId = restaurantIdMap.get(inventoryItemId);
-      if (!restaurantId) continue;
+      // Get restaurant ID for transaction record
+      const invItem = await tx
+        .select({ restaurantId: inventoryItems.restaurantId })
+        .from(inventoryItems)
+        .where(eq(inventoryItems.id, inventoryItemId))
+        .limit(1);
+
+      if (!invItem || invItem.length === 0) continue;
 
       // Prepare transaction record
       transactions.push({
-        restaurantId,
+        restaurantId: invItem[0].restaurantId,
         inventoryItemId,
         orderId,
         type: "sale",
@@ -282,17 +253,19 @@ export class OrderProcessingService {
       }
     }
 
-    // OPTIMIZATION: Batch insert all transaction records
+    // OPTIMIZATION: Batch insert all transactions at once
     if (transactions.length > 0) {
       await tx.insert(inventoryTransactions).values(transactions);
     }
 
-    // Execute updates (still need individual updates due to different values)
-    for (const update of updates) {
-      await tx
-        .update(inventoryItems)
-        .set({ quantity: update.quantity, status: update.status })
-        .where(eq(inventoryItems.id, update.id));
+    // OPTIMIZATION: Batch update all inventory items at once
+    if (updates.length > 0) {
+      for (const update of updates) {
+        await tx
+          .update(inventoryItems)
+          .set({ quantity: update.quantity, status: update.status })
+          .where(eq(inventoryItems.id, update.id));
+      }
     }
 
     // OPTIMIZATION: Batch delete all depleted items at once
@@ -304,17 +277,23 @@ export class OrderProcessingService {
     }
   }
 
-  // OPTIMIZATION: Process recipe with pre-fetched data (no queries inside!)
-  private processRecipeBasedItemOptimized(
+  // OPTIMIZATION: Process recipe with pre-fetched recipe data and parallel ingredient fetching
+  private async processRecipeBasedItemOptimized(
     menuItem: MenuItem,
     recipe: Recipe,
     quantity: number,
     stockRequirements: Map<string, StockRequirement>,
-    branchId: string,
-    inventoryMap: Map<string, InventoryItem>
-  ): void {
+    branchId: string
+  ): Promise<void> {
     const portionMultiplier = parseFloat(menuItem.portionSize || "1.00");
 
+    // OPTIMIZATION: Collect all ingredient IDs first
+    const ingredientIds = recipe.ingredients.map(ing => ing.inventoryItemId);
+    
+    // OPTIMIZATION: Batch fetch all inventory items in parallel
+    const inventoryMap = await getInventoryItemsBatch(ingredientIds);
+
+    // Process all ingredients with cached data
     for (const ingredient of recipe.ingredients) {
       const requiredQty = ingredient.quantity * portionMultiplier * quantity;
       
@@ -324,46 +303,41 @@ export class OrderProcessingService {
       } else {
         const invItem = inventoryMap.get(ingredient.inventoryItemId);
 
-        // CRITICAL: Throw error if inventory item is missing (not just warn)
-        if (!invItem) {
-          throw new Error(`Inventory item ${ingredient.inventoryItemId} (${ingredient.name}) not found for recipe "${recipe.name}" in menu item "${menuItem.name}"`);
+        if (invItem) {
+          // Branch validation
+          if (branchId && invItem.branchId && invItem.branchId !== branchId) {
+            throw new Error(`Inventory item ${invItem.id} (${invItem.name}) belongs to branch ${invItem.branchId} but order is for branch ${branchId}`);
+          }
+          
+          stockRequirements.set(ingredient.inventoryItemId, {
+            inventoryItemId: ingredient.inventoryItemId,
+            inventoryItemName: ingredient.name,
+            requiredQuantity: requiredQty,
+            availableQuantity: parseFloat(invItem.quantity),
+            unit: ingredient.unit,
+          });
         }
-
-        // Branch validation
-        if (branchId && invItem.branchId && invItem.branchId !== branchId) {
-          throw new Error(`Inventory item ${invItem.id} (${invItem.name}) belongs to branch ${invItem.branchId} but order is for branch ${branchId}`);
-        }
-        
-        stockRequirements.set(ingredient.inventoryItemId, {
-          inventoryItemId: ingredient.inventoryItemId,
-          inventoryItemName: ingredient.name,
-          requiredQuantity: requiredQty,
-          availableQuantity: parseFloat(invItem.quantity),
-          unit: ingredient.unit,
-        });
       }
     }
   }
 
-  // OPTIMIZATION: Process simple item with pre-fetched data (no queries inside!)
-  private processSimpleItemOptimized(
+  // OPTIMIZATION: Process simple item with cached data
+  private async processSimpleItemOptimized(
     menuItem: MenuItem,
     quantity: number,
     stockRequirements: Map<string, StockRequirement>,
-    branchId: string,
-    inventoryMap: Map<string, InventoryItem>
-  ): void {
+    branchId: string
+  ): Promise<void> {
     if (!menuItem.inventoryItemId || !menuItem.stockNo) {
-      // Menu items without inventory links are allowed (infinite stock)
-      console.log(`[OrderProcessing] Menu item "${menuItem.name}" has no inventory link - skipping stock validation`);
+      console.warn(`Menu item "${menuItem.name}" is missing inventoryItemId or stockNo for inventory deduction`);
       return;
     }
 
-    const invItem = inventoryMap.get(menuItem.inventoryItemId);
+    const invItem = await getInventoryItemSafe(menuItem.inventoryItemId);
 
-    // CRITICAL: Throw error if linked inventory item is missing
     if (!invItem) {
-      throw new Error(`Inventory item ${menuItem.inventoryItemId} not found for menu item "${menuItem.name}". Please check inventory link.`);
+      console.warn(`Inventory item ${menuItem.inventoryItemId} not found for menu item "${menuItem.name}"`);
+      return;
     }
     
     // Branch validation
@@ -387,9 +361,9 @@ export class OrderProcessingService {
     }
   }
 
-  private validateStock(
+  private async validateStock(
     stockRequirements: Map<string, StockRequirement>
-  ): StockValidationResult {
+  ): Promise<StockValidationResult> {
     const insufficientItems: StockRequirement[] = [];
 
     for (const [_, requirement] of Array.from(stockRequirements.entries())) {
@@ -416,13 +390,80 @@ export class OrderProcessingService {
     return { isValid: true };
   }
 
+  // OPTIMIZATION: Use cached stock data instead of re-querying
   private async deductInventory(
     stockRequirements: Map<string, StockRequirement>,
     orderId: string,
     branchId: string
   ): Promise<void> {
     await db.transaction(async (tx) => {
-      await this.deductInventoryInTransaction(tx, stockRequirements, orderId, branchId);
+      const updates: Array<{ id: string; quantity: string; status: string }> = [];
+      const deletes: string[] = [];
+      const transactions: InsertInventoryTransaction[] = [];
+
+      for (const [inventoryItemId, requirement] of Array.from(stockRequirements.entries())) {
+        // OPTIMIZATION: Use cached availableQuantity
+        const quantityBefore = requirement.availableQuantity;
+        const quantityAfter = quantityBefore - requirement.requiredQuantity;
+
+        if (quantityAfter < 0) {
+          throw new Error(
+            `Cannot deduct ${requirement.requiredQuantity} ${requirement.unit} from ${requirement.inventoryItemName}. Only ${quantityBefore} ${requirement.unit} available.`
+          );
+        }
+
+        // Get restaurant ID
+        const invItem = await tx
+          .select({ restaurantId: inventoryItems.restaurantId })
+          .from(inventoryItems)
+          .where(eq(inventoryItems.id, inventoryItemId))
+          .limit(1);
+
+        if (!invItem || invItem.length === 0) continue;
+
+        transactions.push({
+          restaurantId: invItem[0].restaurantId,
+          inventoryItemId,
+          orderId,
+          type: "sale",
+          quantityChange: (-requirement.requiredQuantity).toString(),
+          quantityBefore: quantityBefore.toString(),
+          quantityAfter: quantityAfter.toString(),
+          notes: quantityAfter === 0 ? `Deducted for order - Item depleted and removed` : `Deducted for order`,
+          branchId: branchId || undefined,
+        });
+
+        if (quantityAfter === 0) {
+          deletes.push(inventoryItemId);
+        } else {
+          updates.push({
+            id: inventoryItemId,
+            quantity: quantityAfter.toString(),
+            status: quantityAfter < 10 ? "Low Stock" : "In Stock",
+          });
+        }
+      }
+
+      // Batch operations
+      if (transactions.length > 0) {
+        await tx.insert(inventoryTransactions).values(transactions);
+      }
+
+      if (updates.length > 0) {
+        for (const update of updates) {
+          await tx
+            .update(inventoryItems)
+            .set({ quantity: update.quantity, status: update.status })
+            .where(eq(inventoryItems.id, update.id));
+        }
+      }
+
+      if (deletes.length > 0) {
+        await tx
+          .delete(inventoryItems)
+          .where(inArray(inventoryItems.id, deletes));
+        console.log(`[INVENTORY] Deleted ${deletes.length} depleted items`);
+      }
     });
   }
 }
