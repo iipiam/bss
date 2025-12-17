@@ -3,11 +3,37 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Minus, X, Search, Receipt, UtensilsCrossed, UserCircle, CreditCard, Wallet, Package, ShoppingCart, Globe } from "lucide-react";
+import {
+  Plus,
+  Minus,
+  X,
+  Search,
+  Receipt,
+  UtensilsCrossed,
+  UserCircle,
+  CreditCard,
+  Wallet,
+  Package,
+  ShoppingCart,
+  Globe,
+} from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -56,15 +82,19 @@ export default function POS() {
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("+966");
+  const [customerPhone, setCustomerPhone] = useState("+966 ");
   const [customerTab, setCustomerTab] = useState("new");
   const [customerSearch, setCustomerSearch] = useState("");
   const [tableNumber, setTableNumber] = useState("");
   const [mobileView, setMobileView] = useState<"menu" | "cart">("menu");
-  const [selectedDeliveryAppId, setSelectedDeliveryAppId] = useState<string | null>(null);
+  const [selectedDeliveryAppId, setSelectedDeliveryAppId] = useState<
+    string | null
+  >(null);
   const [earningsDecreaseApplied, setEarningsDecreaseApplied] = useState(false);
   const [addonDialogOpen, setAddonDialogOpen] = useState(false);
-  const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
+  const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(
+    null,
+  );
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [itemQuantity, setItemQuantity] = useState(1);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
@@ -97,7 +127,14 @@ export default function POS() {
   });
 
   // Fetch saved custom categories from the database
-  const { data: savedCategories = [] } = useQuery<{ id: string; name: string; restaurantId: string; sortOrder: number | null }[]>({
+  const { data: savedCategories = [] } = useQuery<
+    {
+      id: string;
+      name: string;
+      restaurantId: string;
+      sortOrder: number | null;
+    }[]
+  >({
     queryKey: ["/api/menu-categories"],
   });
 
@@ -105,9 +142,9 @@ export default function POS() {
   // Combines categories from existing items with saved custom categories from the database
   const categories = useMemo(() => {
     const menuCategories = menuItems
-      .map(item => item.category)
+      .map((item) => item.category)
       .filter((cat): cat is string => Boolean(cat));
-    const savedCategoryNames = savedCategories.map(c => c.name);
+    const savedCategoryNames = savedCategories.map((c) => c.name);
     const allCategories = [...menuCategories, ...savedCategoryNames];
     const uniqueCategories = Array.from(new Set(allCategories));
     return uniqueCategories.sort((a, b) => a.localeCompare(b));
@@ -123,33 +160,42 @@ export default function POS() {
   // Helper function for flexible phone number matching (handles +966 Saudi prefix)
   const phoneMatches = (storedPhone: string, searchQuery: string): boolean => {
     if (!storedPhone || !searchQuery) return false;
-    
+
     // Normalize both to digits only
-    const storedDigits = storedPhone.replace(/\D/g, '');
-    const searchDigits = searchQuery.replace(/\D/g, '');
-    
+    const storedDigits = storedPhone.replace(/\D/g, "");
+    const searchDigits = searchQuery.replace(/\D/g, "");
+
     if (!searchDigits) return false;
-    
+
     // Check if search matches any part of the stored phone
     if (storedDigits.includes(searchDigits)) return true;
-    
+
     // Check if adding 966 to search matches
     if (storedDigits.includes(`966${searchDigits}`)) return true;
-    
+
     // Check if removing 966 from search matches
-    if (searchDigits.startsWith('966') && storedDigits.includes(searchDigits.substring(3))) return true;
-    
+    if (
+      searchDigits.startsWith("966") &&
+      storedDigits.includes(searchDigits.substring(3))
+    )
+      return true;
+
     // Check if removing leading 0 matches (0501234567 -> 501234567)
-    if (searchDigits.startsWith('0') && storedDigits.includes(searchDigits.substring(1))) return true;
-    
+    if (
+      searchDigits.startsWith("0") &&
+      storedDigits.includes(searchDigits.substring(1))
+    )
+      return true;
+
     return false;
   };
 
   // Get available add-ons for a specific menu item
   const getAvailableAddons = (menuItemId: string) => {
-    return allAddons.filter(addon =>
-      addon.available &&
-      (addon.menuItemIds === null || addon.menuItemIds?.includes(menuItemId))
+    return allAddons.filter(
+      (addon) =>
+        addon.available &&
+        (addon.menuItemIds === null || addon.menuItemIds?.includes(menuItemId)),
     );
   };
 
@@ -161,19 +207,27 @@ export default function POS() {
     onMutate: async (orderData: any) => {
       // Optimistic stock update for instant UI feedback
       await queryClient.cancelQueries({ queryKey: ["/api/menu/stock"] });
-      const previousStock = queryClient.getQueryData<Record<string, number>>(["/api/menu/stock"]);
-      
+      const previousStock = queryClient.getQueryData<Record<string, number>>([
+        "/api/menu/stock",
+      ]);
+
       // Optimistically decrement stock for items in the order
       if (previousStock && orderData.items) {
         const optimisticStock = { ...previousStock };
         for (const item of orderData.items as any[]) {
-          if (optimisticStock[item.id] !== undefined && optimisticStock[item.id] < 999999) {
-            optimisticStock[item.id] = Math.max(0, optimisticStock[item.id] - item.quantity);
+          if (
+            optimisticStock[item.id] !== undefined &&
+            optimisticStock[item.id] < 999999
+          ) {
+            optimisticStock[item.id] = Math.max(
+              0,
+              optimisticStock[item.id] - item.quantity,
+            );
           }
         }
         queryClient.setQueryData(["/api/menu/stock"], optimisticStock);
       }
-      
+
       return { previousStock };
     },
     onError: (_error: any, _orderData: any, context: any) => {
@@ -195,21 +249,24 @@ export default function POS() {
         paymentMethod: paymentMethod,
       };
       await apiRequest("POST", "/api/transactions", transaction);
-      
+
       // Show success immediately - don't wait for PDF generation
       toast({
         title: t.orderCompleted,
-        description: t.orderCompletedDesc.replace('${order.orderNumber}', order.orderNumber),
+        description: t.orderCompletedDesc.replace(
+          "${order.orderNumber}",
+          order.orderNumber,
+        ),
       });
-      
+
       // Reset cart immediately for fast UX
       setCartItems([]);
       setCustomerName("");
-      setCustomerPhone("+966");
+      setCustomerPhone("+966 ");
       setTableNumber("");
       setSelectedDeliveryAppId(null);
       setEarningsDecreaseApplied(false);
-      
+
       // Invalidate queries immediately
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
@@ -218,78 +275,92 @@ export default function POS() {
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/financial"] });
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
-      
+
       // Background tasks - Invoice generation with error notification
       fetch("/api/invoices/create-and-generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ orderId: order.id }),
-      }).then(async (response) => {
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `invoice-${order.orderNumber}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-        } else {
-          // Show error toast so cashier knows invoice failed
-          console.error("Invoice generation failed with status:", response.status);
+      })
+        .then(async (response) => {
+          if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `invoice-${order.orderNumber}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          } else {
+            // Show error toast so cashier knows invoice failed
+            console.error(
+              "Invoice generation failed with status:",
+              response.status,
+            );
+            toast({
+              title: "Invoice Error",
+              description: `Invoice for ${order.orderNumber} could not be generated. Please regenerate from Orders page.`,
+              variant: "destructive",
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Background invoice generation failed:", error);
           toast({
             title: "Invoice Error",
-            description: `Invoice for ${order.orderNumber} could not be generated. Please regenerate from Orders page.`,
+            description: `Invoice for ${order.orderNumber} failed. Check Orders page to regenerate.`,
             variant: "destructive",
           });
-        }
-      }).catch((error) => {
-        console.error("Background invoice generation failed:", error);
-        toast({
-          title: "Invoice Error", 
-          description: `Invoice for ${order.orderNumber} failed. Check Orders page to regenerate.`,
-          variant: "destructive",
         });
-      });
-      
+
       // WhatsApp notification in background
       if (order.customerPhone && order.customerPhone.trim()) {
-        import('@/lib/whatsapp').then(async ({ isValidWhatsAppPhone, openWhatsAppWithMessage, createWhatsAppInvoiceMessage }) => {
-          if (isValidWhatsAppPhone(order.customerPhone)) {
-            try {
-              const settingsResponse = await fetch('/api/settings');
-              const settings = settingsResponse.ok ? await settingsResponse.json() : null;
-              const restaurantName = settings?.restaurantName || t.restaurant;
-              const invoiceUrl = `${window.location.origin}/public/invoice/${order.id}`;
-              const message = createWhatsAppInvoiceMessage({
-                invoiceNumber: order.orderNumber,
-                total: total.toFixed(2),
-                paymentMethod: paymentMethod,
-                invoiceUrl,
-                restaurantName,
-                customerName: order.customerName || undefined,
-              });
-              openWhatsAppWithMessage(order.customerPhone, message);
-            } catch (error) {
-              console.error("WhatsApp failed:", error);
+        import("@/lib/whatsapp").then(
+          async ({
+            isValidWhatsAppPhone,
+            openWhatsAppWithMessage,
+            createWhatsAppInvoiceMessage,
+          }) => {
+            if (isValidWhatsAppPhone(order.customerPhone)) {
+              try {
+                const settingsResponse = await fetch("/api/settings");
+                const settings = settingsResponse.ok
+                  ? await settingsResponse.json()
+                  : null;
+                const restaurantName = settings?.restaurantName || t.restaurant;
+                const invoiceUrl = `${window.location.origin}/public/invoice/${order.id}`;
+                const message = createWhatsAppInvoiceMessage({
+                  invoiceNumber: order.orderNumber,
+                  total: total.toFixed(2),
+                  paymentMethod: paymentMethod,
+                  invoiceUrl,
+                  restaurantName,
+                  customerName: order.customerName || undefined,
+                });
+                openWhatsAppWithMessage(order.customerPhone, message);
+              } catch (error) {
+                console.error("WhatsApp failed:", error);
+              }
             }
-          }
-        });
+          },
+        );
       }
-      
+
       // Customer auto-save in background
-      if ((order.customerName?.trim()) || (order.customerPhone?.trim())) {
+      if (order.customerName?.trim() || order.customerPhone?.trim()) {
         const name = order.customerName?.trim() || t.unknown;
         const phone = order.customerPhone?.trim();
         if (phone) {
           apiRequest("POST", "/api/customers?upsert=true", { name, phone })
-            .then(() => queryClient.invalidateQueries({ queryKey: ["/api/customers"] }))
+            .then(() =>
+              queryClient.invalidateQueries({ queryKey: ["/api/customers"] }),
+            )
             .catch(() => {});
         }
       }
-      
     },
     onError: (error: any) => {
       toast({
@@ -302,7 +373,7 @@ export default function POS() {
 
   const handleItemClick = (item: MenuItem) => {
     const availableAddons = getAvailableAddons(item.id);
-    
+
     // If no add-ons available, add directly to cart
     if (availableAddons.length === 0) {
       addToCartDirectly(item);
@@ -316,26 +387,35 @@ export default function POS() {
   };
 
   const addToCartDirectly = (item: MenuItem) => {
-    const existing = cartItems.find(ci => ci.id === item.id && !ci.addons?.length);
+    const existing = cartItems.find(
+      (ci) => ci.id === item.id && !ci.addons?.length,
+    );
     const basePrice = parseFloat(item.basePrice);
     const discountPercent = parseFloat(item.discount || "0");
     const discountedBase = basePrice * (1 - discountPercent / 100);
     const originalBase = basePrice;
-    
+
     if (existing) {
-      setCartItems(cartItems.map(ci =>
-        ci.id === item.id && !ci.addons?.length ? { ...ci, quantity: ci.quantity + 1 } : ci
-      ));
+      setCartItems(
+        cartItems.map((ci) =>
+          ci.id === item.id && !ci.addons?.length
+            ? { ...ci, quantity: ci.quantity + 1 }
+            : ci,
+        ),
+      );
     } else {
-      setCartItems([...cartItems, { 
-        id: item.id, 
-        name: item.name, 
-        price: discountedBase,
-        originalPrice: originalBase,
-        discount: discountPercent,
-        quantity: 1,
-        addons: []
-      }]);
+      setCartItems([
+        ...cartItems,
+        {
+          id: item.id,
+          name: item.name,
+          price: discountedBase,
+          originalPrice: originalBase,
+          discount: discountPercent,
+          quantity: 1,
+          addons: [],
+        },
+      ]);
     }
   };
 
@@ -348,22 +428,25 @@ export default function POS() {
     const originalBase = basePrice;
 
     const selectedAddonItems = allAddons
-      .filter(addon => selectedAddons.includes(addon.id))
-      .map(addon => ({
+      .filter((addon) => selectedAddons.includes(addon.id))
+      .map((addon) => ({
         id: addon.id,
         name: addon.name,
         price: parseFloat(addon.basePrice),
       }));
 
-    setCartItems([...cartItems, {
-      id: selectedMenuItem.id,
-      name: selectedMenuItem.name,
-      price: discountedBase,
-      originalPrice: originalBase,
-      discount: discountPercent,
-      quantity: itemQuantity,
-      addons: selectedAddonItems.length > 0 ? selectedAddonItems : undefined,
-    }]);
+    setCartItems([
+      ...cartItems,
+      {
+        id: selectedMenuItem.id,
+        name: selectedMenuItem.name,
+        price: discountedBase,
+        originalPrice: originalBase,
+        discount: discountPercent,
+        quantity: itemQuantity,
+        addons: selectedAddonItems.length > 0 ? selectedAddonItems : undefined,
+      },
+    ]);
 
     setAddonDialogOpen(false);
     setSelectedMenuItem(null);
@@ -372,44 +455,51 @@ export default function POS() {
   };
 
   const toggleAddon = (addonId: string) => {
-    setSelectedAddons(prev =>
+    setSelectedAddons((prev) =>
       prev.includes(addonId)
-        ? prev.filter(id => id !== addonId)
-        : [...prev, addonId]
+        ? prev.filter((id) => id !== addonId)
+        : [...prev, addonId],
     );
   };
 
   const updateQuantity = (id: string, delta: number) => {
-    setCartItems(cartItems.map(item =>
-      item.id === id ? { ...item, quantity: Math.max(0, item.quantity + delta) } : item
-    ).filter(item => item.quantity > 0));
+    setCartItems(
+      cartItems
+        .map((item) =>
+          item.id === id
+            ? { ...item, quantity: Math.max(0, item.quantity + delta) }
+            : item,
+        )
+        .filter((item) => item.quantity > 0),
+    );
   };
 
   const removeItem = (id: string) => {
-    setCartItems(cartItems.filter(item => item.id !== id));
+    setCartItems(cartItems.filter((item) => item.id !== id));
   };
 
   const clearCart = () => {
     setCartItems([]);
     setCustomerName("");
-    setCustomerPhone("+966");
+    setCustomerPhone("+966 ");
     setTableNumber("");
     setSelectedDeliveryAppId(null);
     setEarningsDecreaseApplied(false);
   };
 
   // Calculate delivery app settings if app is selected
-  const selectedDeliveryApp = selectedDeliveryAppId 
-    ? deliveryApps.find(app => app.id === selectedDeliveryAppId) 
+  const selectedDeliveryApp = selectedDeliveryAppId
+    ? deliveryApps.find((app) => app.id === selectedDeliveryAppId)
     : null;
 
   // Get mark-up percentage (0 if no delivery app)
-  const markUpPercent = selectedDeliveryApp 
-    ? parseFloat(selectedDeliveryApp.markUp || "0") 
+  const markUpPercent = selectedDeliveryApp
+    ? parseFloat(selectedDeliveryApp.markUp || "0")
     : 0;
 
   const calculateItemTotal = (item: CartItem) => {
-    const addonTotal = item.addons?.reduce((sum, addon) => sum + addon.price, 0) || 0;
+    const addonTotal =
+      item.addons?.reduce((sum, addon) => sum + addon.price, 0) || 0;
     const basePrice = (item.price + addonTotal) * item.quantity;
     // Apply mark-up if delivery app is selected
     const markUpAmount = basePrice * (markUpPercent / 100);
@@ -417,10 +507,13 @@ export default function POS() {
   };
 
   // Calculate base subtotal (items with mark-up applied)
-  const baseSubtotal = cartItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
+  const baseSubtotal = cartItems.reduce(
+    (sum, item) => sum + calculateItemTotal(item),
+    0,
+  );
 
-  const deliveryCommission = selectedDeliveryApp 
-    ? baseSubtotal * (parseFloat(selectedDeliveryApp.commission) / 100) 
+  const deliveryCommission = selectedDeliveryApp
+    ? baseSubtotal * (parseFloat(selectedDeliveryApp.commission) / 100)
     : 0;
 
   // Calculate final subtotal (base + commission)
@@ -432,11 +525,12 @@ export default function POS() {
   // Calculate total
   const total = subtotal + tax;
 
-  const availableMenuItems = menuItems.filter(item => item.available);
+  const availableMenuItems = menuItems.filter((item) => item.available);
   // null means "All" - show all items; otherwise filter by selected category
-  const filteredItems = selectedCategory === null
-    ? availableMenuItems
-    : availableMenuItems.filter(item => item.category === selectedCategory);
+  const filteredItems =
+    selectedCategory === null
+      ? availableMenuItems
+      : availableMenuItems.filter((item) => item.category === selectedCategory);
 
   const handleSaveCustomer = () => {
     if (!customerName.trim()) {
@@ -450,7 +544,7 @@ export default function POS() {
     setCustomerDialogOpen(false);
     toast({
       title: t.success,
-      description: `${t.customerName}: ${customerName}${customerPhone ? ` (${customerPhone})` : ''}`,
+      description: `${t.customerName}: ${customerName}${customerPhone ? ` (${customerPhone})` : ""}`,
     });
   };
 
@@ -476,7 +570,7 @@ export default function POS() {
       customerPhone: customerPhone.trim() || undefined,
       deliveryAppId: selectedDeliveryAppId || undefined,
       earningsDecreaseApplied,
-      items: cartItems.map(item => ({
+      items: cartItems.map((item) => ({
         id: item.id,
         name: item.name,
         quantity: item.quantity,
@@ -484,8 +578,11 @@ export default function POS() {
         addons: item.addons,
       })),
       baseSubtotal: baseSubtotal.toFixed(2),
-      deliveryCommission: deliveryCommission > 0 ? deliveryCommission.toFixed(2) : undefined,
-      deliveryCommissionRate: selectedDeliveryApp ? parseFloat(selectedDeliveryApp.commission).toFixed(2) : undefined,
+      deliveryCommission:
+        deliveryCommission > 0 ? deliveryCommission.toFixed(2) : undefined,
+      deliveryCommissionRate: selectedDeliveryApp
+        ? parseFloat(selectedDeliveryApp.commission).toFixed(2)
+        : undefined,
       subtotal: subtotal.toFixed(2),
       tax: tax.toFixed(2),
       total: total.toFixed(2),
@@ -545,7 +642,7 @@ export default function POS() {
     );
   }
 
-  const isMobile = device === 'iphone';
+  const isMobile = device === "iphone";
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   // Mobile layout for iPhone
@@ -554,13 +651,24 @@ export default function POS() {
       <div className="h-full flex flex-col">
         <div className="flex-shrink-0 p-4 border-b">
           <h1 className="text-2xl font-bold mb-3">{t.pointOfSale}</h1>
-          <Tabs value={mobileView} onValueChange={(v) => setMobileView(v as "menu" | "cart")}>
+          <Tabs
+            value={mobileView}
+            onValueChange={(v) => setMobileView(v as "menu" | "cart")}
+          >
             <TabsList className="w-full grid grid-cols-2 h-[44px]">
-              <TabsTrigger value="menu" data-testid="tab-mobile-menu" className="h-[44px]">
+              <TabsTrigger
+                value="menu"
+                data-testid="tab-mobile-menu"
+                className="h-[44px]"
+              >
                 <UtensilsCrossed className="h-4 w-4 mr-2" />
                 {t.menu}
               </TabsTrigger>
-              <TabsTrigger value="cart" data-testid="tab-mobile-cart" className="h-[44px]">
+              <TabsTrigger
+                value="cart"
+                data-testid="tab-mobile-cart"
+                className="h-[44px]"
+              >
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 {t.cart} {itemCount > 0 && `(${itemCount})`}
               </TabsTrigger>
@@ -580,13 +688,27 @@ export default function POS() {
                 />
               </div>
 
-              <Tabs value={selectedCategory || "all"} onValueChange={(v) => setSelectedCategory(v === "all" ? null : v)}>
+              <Tabs
+                value={selectedCategory || "all"}
+                onValueChange={(v) =>
+                  setSelectedCategory(v === "all" ? null : v)
+                }
+              >
                 <TabsList className="w-full overflow-x-auto flex justify-start h-[44px]">
-                  <TabsTrigger value="all" data-testid="tab-category-all" className="whitespace-nowrap h-[44px]">
+                  <TabsTrigger
+                    value="all"
+                    data-testid="tab-category-all"
+                    className="whitespace-nowrap h-[44px]"
+                  >
                     {t.all}
                   </TabsTrigger>
-                  {categories.map(cat => (
-                    <TabsTrigger key={cat} value={cat} data-testid={`tab-category-${cat.toLowerCase()}`} className="whitespace-nowrap h-[44px]">
+                  {categories.map((cat) => (
+                    <TabsTrigger
+                      key={cat}
+                      value={cat}
+                      data-testid={`tab-category-${cat.toLowerCase()}`}
+                      className="whitespace-nowrap h-[44px]"
+                    >
                       {cat}
                     </TabsTrigger>
                   ))}
@@ -595,20 +717,23 @@ export default function POS() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              {filteredItems.map(item => {
-                const hasDiscount = item.discount && parseFloat(item.discount) > 0;
+              {filteredItems.map((item) => {
+                const hasDiscount =
+                  item.discount && parseFloat(item.discount) > 0;
                 const basePrice = parseFloat(item.basePrice);
                 const originalPrice = basePrice * 1.15;
                 const discountedBase = hasDiscount
                   ? basePrice * (1 - parseFloat(item.discount) / 100)
                   : basePrice;
                 const finalPrice = discountedBase * 1.15;
-                
+
                 const stockCount = stock[item.id] ?? 0;
                 const isOutOfStock = stockCount === 0;
-                
+
                 // Display size support
-                const displaySize = (item.displaySize as "small" | "medium" | "large") || "medium";
+                const displaySize =
+                  (item.displaySize as "small" | "medium" | "large") ||
+                  "medium";
                 const sizeClasses = {
                   small: "",
                   medium: "",
@@ -619,11 +744,11 @@ export default function POS() {
                   medium: "aspect-square",
                   large: "h-32",
                 };
-                
+
                 return (
                   <Card
                     key={item.id}
-                    className={`cursor-pointer hover-elevate active-elevate-2 relative ${isOutOfStock ? 'opacity-50' : ''} ${sizeClasses[displaySize]}`}
+                    className={`cursor-pointer hover-elevate active-elevate-2 relative ${isOutOfStock ? "opacity-50" : ""} ${sizeClasses[displaySize]}`}
                     onClick={() => !isOutOfStock && handleItemClick(item)}
                     data-testid={`card-pos-item-${item.id}`}
                   >
@@ -638,27 +763,51 @@ export default function POS() {
                       </div>
                     )}
                     <CardHeader className="p-3 pb-2">
-                      <div className={`${imageClasses[displaySize]} bg-gradient-to-br from-primary/20 to-primary/5 rounded-md flex items-center justify-center mb-2 overflow-hidden`}>
+                      <div
+                        className={`${imageClasses[displaySize]} bg-gradient-to-br from-primary/20 to-primary/5 rounded-md flex items-center justify-center mb-2 overflow-hidden`}
+                      >
                         {item.imageUrl ? (
-                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                          <img
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
-                          <UtensilsCrossed className={`${displaySize === "small" ? "h-6 w-6" : displaySize === "large" ? "h-12 w-12" : "h-8 w-8"} text-primary/40`} />
+                          <UtensilsCrossed
+                            className={`${displaySize === "small" ? "h-6 w-6" : displaySize === "large" ? "h-12 w-12" : "h-8 w-8"} text-primary/40`}
+                          />
                         )}
                       </div>
                     </CardHeader>
                     <CardContent className="p-3 pt-0">
-                      <p className={`font-semibold mb-1 line-clamp-2 ${displaySize === "small" ? "text-xs" : displaySize === "large" ? "text-base" : "text-sm"}`}>{item.name}</p>
+                      <p
+                        className={`font-semibold mb-1 line-clamp-2 ${displaySize === "small" ? "text-xs" : displaySize === "large" ? "text-base" : "text-sm"}`}
+                      >
+                        {item.name}
+                      </p>
                       {hasDiscount ? (
                         <div className="space-y-0.5">
-                          <p className={`font-bold font-mono text-primary ${displaySize === "large" ? "text-lg" : "text-base"}`}>{finalPrice.toFixed(2)}</p>
-                          <p className="text-xs font-mono text-muted-foreground line-through">{originalPrice.toFixed(2)}</p>
+                          <p
+                            className={`font-bold font-mono text-primary ${displaySize === "large" ? "text-lg" : "text-base"}`}
+                          >
+                            {finalPrice.toFixed(2)}
+                          </p>
+                          <p className="text-xs font-mono text-muted-foreground line-through">
+                            {originalPrice.toFixed(2)}
+                          </p>
                         </div>
                       ) : (
-                        <p className={`font-bold font-mono text-primary ${displaySize === "large" ? "text-lg" : "text-base"}`}>{originalPrice.toFixed(2)}</p>
+                        <p
+                          className={`font-bold font-mono text-primary ${displaySize === "large" ? "text-lg" : "text-base"}`}
+                        >
+                          {originalPrice.toFixed(2)}
+                        </p>
                       )}
                       <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                         <Package className="h-3 w-3" />
-                        <span data-testid={`text-stock-${item.id}`}>{stockCount}</span>
+                        <span data-testid={`text-stock-${item.id}`}>
+                          {stockCount}
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
@@ -675,7 +824,8 @@ export default function POS() {
                   data-testid="button-view-cart"
                 >
                   <ShoppingCart className="h-5 w-5 mr-2" />
-                  {t.viewCart} ({itemCount} {t.items}) - {total.toFixed(2)} {t.sar}
+                  {t.viewCart} ({itemCount} {t.items}) - {total.toFixed(2)}{" "}
+                  {t.sar}
                 </Button>
               </div>
             )}
@@ -685,9 +835,15 @@ export default function POS() {
             <div className="p-4 border-b">
               <Tabs value={orderType} onValueChange={setOrderType}>
                 <TabsList className="w-full grid grid-cols-3">
-                  <TabsTrigger value="Dine-In" className="text-xs">{t.dineIn}</TabsTrigger>
-                  <TabsTrigger value="Takeout" className="text-xs">{t.takeout}</TabsTrigger>
-                  <TabsTrigger value="Delivery" className="text-xs">{t.deliveryOrder}</TabsTrigger>
+                  <TabsTrigger value="Dine-In" className="text-xs">
+                    {t.dineIn}
+                  </TabsTrigger>
+                  <TabsTrigger value="Takeout" className="text-xs">
+                    {t.takeout}
+                  </TabsTrigger>
+                  <TabsTrigger value="Delivery" className="text-xs">
+                    {t.deliveryOrder}
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -707,7 +863,7 @@ export default function POS() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {cartItems.map(item => (
+                  {cartItems.map((item) => (
                     <Card key={item.id} data-testid={`cart-item-${item.id}`}>
                       <CardContent className="p-3">
                         <div className="flex items-start justify-between mb-2">
@@ -715,19 +871,32 @@ export default function POS() {
                             <p className="font-semibold text-sm">{item.name}</p>
                             {item.discount > 0 ? (
                               <div className="flex items-baseline gap-1.5">
-                                <p className="text-xs font-mono text-primary">{item.price.toFixed(2)}</p>
-                                <p className="text-xs font-mono text-muted-foreground line-through">{item.originalPrice.toFixed(2)}</p>
-                                <span className="text-xs bg-green-600 text-white px-1 py-0.5 rounded">{item.discount.toFixed(0)}%</span>
+                                <p className="text-xs font-mono text-primary">
+                                  {item.price.toFixed(2)}
+                                </p>
+                                <p className="text-xs font-mono text-muted-foreground line-through">
+                                  {item.originalPrice.toFixed(2)}
+                                </p>
+                                <span className="text-xs bg-green-600 text-white px-1 py-0.5 rounded">
+                                  {item.discount.toFixed(0)}%
+                                </span>
                               </div>
                             ) : (
-                              <p className="text-xs text-muted-foreground font-mono">{item.price.toFixed(2)} {t.sar}</p>
+                              <p className="text-xs text-muted-foreground font-mono">
+                                {item.price.toFixed(2)} {t.sar}
+                              </p>
                             )}
                             {item.addons && item.addons.length > 0 && (
                               <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-muted">
-                                {item.addons.map(addon => (
-                                  <div key={addon.id} className="flex items-center justify-between text-xs text-muted-foreground">
+                                {item.addons.map((addon) => (
+                                  <div
+                                    key={addon.id}
+                                    className="flex items-center justify-between text-xs text-muted-foreground"
+                                  >
                                     <span>+ {addon.name}</span>
-                                    <span className="font-mono">+{addon.price.toFixed(2)}</span>
+                                    <span className="font-mono">
+                                      +{addon.price.toFixed(2)}
+                                    </span>
                                   </div>
                                 ))}
                               </div>
@@ -752,7 +921,9 @@ export default function POS() {
                             >
                               <Minus className="h-4 w-4" />
                             </Button>
-                            <span className="w-8 text-center font-mono font-semibold">{item.quantity}</span>
+                            <span className="w-8 text-center font-mono font-semibold">
+                              {item.quantity}
+                            </span>
                             <Button
                               variant="outline"
                               className="h-[44px] w-[44px]"
@@ -762,7 +933,9 @@ export default function POS() {
                               <Plus className="h-4 w-4" />
                             </Button>
                           </div>
-                          <p className="font-mono font-bold text-sm">{calculateItemTotal(item).toFixed(2)} {t.sar}</p>
+                          <p className="font-mono font-bold text-sm">
+                            {calculateItemTotal(item).toFixed(2)} {t.sar}
+                          </p>
                         </div>
                       </CardContent>
                     </Card>
@@ -775,35 +948,52 @@ export default function POS() {
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Items Subtotal</span>
-                  <span className="font-mono">{baseSubtotal.toFixed(2)} {t.sar}</span>
+                  <span className="font-mono">
+                    {baseSubtotal.toFixed(2)} {t.sar}
+                  </span>
                 </div>
                 {selectedDeliveryApp && deliveryCommission > 0 && (
                   <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Delivery Commission ({selectedDeliveryApp.name})</span>
-                    <span className="font-mono">+{deliveryCommission.toFixed(2)} {t.sar}</span>
+                    <span>
+                      Delivery Commission ({selectedDeliveryApp.name})
+                    </span>
+                    <span className="font-mono">
+                      +{deliveryCommission.toFixed(2)} {t.sar}
+                    </span>
                   </div>
                 )}
                 {selectedDeliveryApp && deliveryCommission > 0 && (
                   <div className="flex justify-between text-sm font-medium">
                     <span>Subtotal</span>
-                    <span className="font-mono">{subtotal.toFixed(2)} {t.sar}</span>
+                    <span className="font-mono">
+                      {subtotal.toFixed(2)} {t.sar}
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Tax (15%)</span>
-                  <span className="font-mono">{tax.toFixed(2)} {t.sar}</span>
+                  <span className="font-mono">
+                    {tax.toFixed(2)} {t.sar}
+                  </span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total</span>
-                  <span className="font-mono">{total.toFixed(2)} {t.sar}</span>
+                  <span className="font-mono">
+                    {total.toFixed(2)} {t.sar}
+                  </span>
                 </div>
               </div>
 
               <div className="mb-3">
-                <Label className="text-xs font-medium mb-1 block">{t.paymentMethod}</Label>
+                <Label className="text-xs font-medium mb-1 block">
+                  {t.paymentMethod}
+                </Label>
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <SelectTrigger data-testid="select-payment-method" className="w-full h-[44px]">
+                  <SelectTrigger
+                    data-testid="select-payment-method"
+                    className="w-full h-[44px]"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -830,18 +1020,30 @@ export default function POS() {
               </div>
 
               <div className="mb-3">
-                <Label className="text-xs font-medium mb-1 block">{t.deliveryAppOptional}</Label>
-                <Select value={selectedDeliveryAppId || "none"} onValueChange={(value) => setSelectedDeliveryAppId(value === "none" ? null : value)}>
-                  <SelectTrigger data-testid="select-delivery-app" className="w-full h-[44px]">
+                <Label className="text-xs font-medium mb-1 block">
+                  {t.deliveryAppOptional}
+                </Label>
+                <Select
+                  value={selectedDeliveryAppId || "none"}
+                  onValueChange={(value) =>
+                    setSelectedDeliveryAppId(value === "none" ? null : value)
+                  }
+                >
+                  <SelectTrigger
+                    data-testid="select-delivery-app"
+                    className="w-full h-[44px]"
+                  >
                     <SelectValue placeholder={t.selectDeliveryApp} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">{t.none}</SelectItem>
-                    {deliveryApps.filter(app => app.active).map(app => (
-                      <SelectItem key={app.id} value={app.id}>
-                        {app.name} ({parseFloat(app.commission).toFixed(0)}%)
-                      </SelectItem>
-                    ))}
+                    {deliveryApps
+                      .filter((app) => app.active)
+                      .map((app) => (
+                        <SelectItem key={app.id} value={app.id}>
+                          {app.name} ({parseFloat(app.commission).toFixed(0)}%)
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -851,7 +1053,9 @@ export default function POS() {
                   <Checkbox
                     id="earnings-decrease-mobile"
                     checked={earningsDecreaseApplied}
-                    onCheckedChange={(checked) => setEarningsDecreaseApplied(checked as boolean)}
+                    onCheckedChange={(checked) =>
+                      setEarningsDecreaseApplied(checked as boolean)
+                    }
                     data-testid="checkbox-decrease-earnings"
                     className="h-[44px] w-[44px]"
                   />
@@ -870,8 +1074,20 @@ export default function POS() {
                     <div className="flex items-center gap-2">
                       <UserCircle className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-xs font-medium" data-testid="text-customer-name">{customerName}</p>
-                        {customerPhone && <p className="text-xs text-muted-foreground" data-testid="text-customer-phone">{customerPhone}</p>}
+                        <p
+                          className="text-xs font-medium"
+                          data-testid="text-customer-name"
+                        >
+                          {customerName}
+                        </p>
+                        {customerPhone && (
+                          <p
+                            className="text-xs text-muted-foreground"
+                            data-testid="text-customer-phone"
+                          >
+                            {customerPhone}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <Button
@@ -879,7 +1095,7 @@ export default function POS() {
                       className="h-[44px] w-[44px]"
                       onClick={() => {
                         setCustomerName("");
-                        setCustomerPhone("+966");
+                        setCustomerPhone("+966 ");
                       }}
                       data-testid="button-remove-customer"
                     >
@@ -891,10 +1107,14 @@ export default function POS() {
 
               <div className="grid grid-cols-2 gap-2 mb-2">
                 <div>
-                  <Label htmlFor="table-number-mobile" className="text-xs mb-1">{isFactory ? t.truck : t.tableHash}</Label>
+                  <Label htmlFor="table-number-mobile" className="text-xs mb-1">
+                    {isFactory ? t.truck : t.tableHash}
+                  </Label>
                   <Input
                     id="table-number-mobile"
-                    placeholder={isFactory ? t.truckNumber : t.tableNumberPlaceholder}
+                    placeholder={
+                      isFactory ? t.truckNumber : t.tableNumberPlaceholder
+                    }
                     value={tableNumber}
                     onChange={(e) => setTableNumber(e.target.value)}
                     data-testid="input-table-number"
@@ -903,7 +1123,10 @@ export default function POS() {
                 </div>
                 <div className="flex flex-col">
                   <Label className="text-xs mb-1 invisible">{t.customer}</Label>
-                  <Dialog open={customerDialogOpen} onOpenChange={setCustomerDialogOpen}>
+                  <Dialog
+                    open={customerDialogOpen}
+                    onOpenChange={setCustomerDialogOpen}
+                  >
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
@@ -921,14 +1144,30 @@ export default function POS() {
                           {t.addCustomerDetails}
                         </DialogDescription>
                       </DialogHeader>
-                      <Tabs value={customerTab} onValueChange={setCustomerTab} className="w-full">
+                      <Tabs
+                        value={customerTab}
+                        onValueChange={setCustomerTab}
+                        className="w-full"
+                      >
                         <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="new" data-testid="tab-new-customer">{t.newCustomer}</TabsTrigger>
-                          <TabsTrigger value="existing" data-testid="tab-existing-customer">{t.existingCustomer}</TabsTrigger>
+                          <TabsTrigger
+                            value="new"
+                            data-testid="tab-new-customer"
+                          >
+                            {t.newCustomer}
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="existing"
+                            data-testid="tab-existing-customer"
+                          >
+                            {t.existingCustomer}
+                          </TabsTrigger>
                         </TabsList>
                         <TabsContent value="new" className="space-y-4 mt-4">
                           <div>
-                            <Label htmlFor="customer-name">{t.customerName}</Label>
+                            <Label htmlFor="customer-name">
+                              {t.customerName}
+                            </Label>
                             <Input
                               id="customer-name"
                               placeholder={t.enterCustomerName}
@@ -946,8 +1185,10 @@ export default function POS() {
                               onChange={(e) => {
                                 const val = e.target.value;
                                 // Ensure +966 prefix is always present
-                                if (!val.startsWith('+966')) {
-                                  setCustomerPhone('+966' + val.replace(/^\+?966?/, ''));
+                                if (!val.startsWith("+966 ")) {
+                                  setCustomerPhone(
+                                    "+966 " + val.replace(/^\+?966?/, ""),
+                                  );
                                 } else {
                                   setCustomerPhone(val);
                                 }
@@ -971,7 +1212,10 @@ export default function POS() {
                             </Button>
                           </div>
                         </TabsContent>
-                        <TabsContent value="existing" className="space-y-4 mt-4">
+                        <TabsContent
+                          value="existing"
+                          className="space-y-4 mt-4"
+                        >
                           <div>
                             <Label htmlFor="customer-search">{t.search}</Label>
                             <div className="relative">
@@ -980,7 +1224,9 @@ export default function POS() {
                                 id="customer-search"
                                 placeholder="Search by name or phone..."
                                 value={customerSearch}
-                                onChange={(e) => setCustomerSearch(e.target.value)}
+                                onChange={(e) =>
+                                  setCustomerSearch(e.target.value)
+                                }
                                 className="pl-9"
                                 data-testid="input-customer-search"
                               />
@@ -988,12 +1234,15 @@ export default function POS() {
                           </div>
                           <div className="max-h-60 overflow-y-auto space-y-2">
                             {customers
-                              .filter(c => 
-                                customerSearch === "" ||
-                                c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-                                phoneMatches(c.phone, customerSearch)
+                              .filter(
+                                (c) =>
+                                  customerSearch === "" ||
+                                  c.name
+                                    .toLowerCase()
+                                    .includes(customerSearch.toLowerCase()) ||
+                                  phoneMatches(c.phone, customerSearch),
                               )
-                              .map(customer => (
+                              .map((customer) => (
                                 <Card
                                   key={customer.id}
                                   className="cursor-pointer hover-elevate active-elevate-2"
@@ -1010,17 +1259,26 @@ export default function POS() {
                                   data-testid={`card-customer-${customer.id}`}
                                 >
                                   <CardContent className="p-3">
-                                    <p className="font-medium">{customer.name}</p>
-                                    <p className="text-sm text-muted-foreground">{customer.phone}</p>
+                                    <p className="font-medium">
+                                      {customer.name}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {customer.phone}
+                                    </p>
                                   </CardContent>
                                 </Card>
                               ))}
-                            {customers.filter(c => 
-                              customerSearch === "" ||
-                              c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-                              phoneMatches(c.phone, customerSearch)
+                            {customers.filter(
+                              (c) =>
+                                customerSearch === "" ||
+                                c.name
+                                  .toLowerCase()
+                                  .includes(customerSearch.toLowerCase()) ||
+                                phoneMatches(c.phone, customerSearch),
                             ).length === 0 && (
-                              <p className="text-center text-muted-foreground py-8">{t.noData}</p>
+                              <p className="text-center text-muted-foreground py-8">
+                                {t.noData}
+                              </p>
                             )}
                           </div>
                           <div className="flex justify-end">
@@ -1052,7 +1310,9 @@ export default function POS() {
                 <Button
                   className="flex-1 h-[44px]"
                   onClick={handleCheckout}
-                  disabled={cartItems.length === 0 || createOrderMutation.isPending}
+                  disabled={
+                    cartItems.length === 0 || createOrderMutation.isPending
+                  }
                   data-testid="button-checkout"
                 >
                   {createOrderMutation.isPending ? t.processing : t.checkout}
@@ -1081,13 +1341,20 @@ export default function POS() {
             />
           </div>
 
-          <Tabs value={selectedCategory || "all"} onValueChange={(v) => setSelectedCategory(v === "all" ? null : v)}>
+          <Tabs
+            value={selectedCategory || "all"}
+            onValueChange={(v) => setSelectedCategory(v === "all" ? null : v)}
+          >
             <TabsList className="w-full justify-start">
               <TabsTrigger value="all" data-testid="tab-category-all">
                 {t.all}
               </TabsTrigger>
-              {categories.map(cat => (
-                <TabsTrigger key={cat} value={cat} data-testid={`tab-category-${cat.toLowerCase()}`}>
+              {categories.map((cat) => (
+                <TabsTrigger
+                  key={cat}
+                  value={cat}
+                  data-testid={`tab-category-${cat.toLowerCase()}`}
+                >
                   {cat}
                 </TabsTrigger>
               ))}
@@ -1096,7 +1363,7 @@ export default function POS() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filteredItems.map(item => {
+          {filteredItems.map((item) => {
             const hasDiscount = item.discount && parseFloat(item.discount) > 0;
             const basePrice = parseFloat(item.basePrice);
             // Calculate original VAT-inclusive price from base price
@@ -1107,12 +1374,13 @@ export default function POS() {
               : basePrice;
             // Show final price with VAT for display purposes
             const finalPrice = discountedBase * 1.15;
-            
+
             const stockCount = stock[item.id] ?? 0;
             const isOutOfStock = stockCount === 0;
-            
+
             // Display size support
-            const displaySize = (item.displaySize as "small" | "medium" | "large") || "medium";
+            const displaySize =
+              (item.displaySize as "small" | "medium" | "large") || "medium";
             const sizeClasses = {
               small: "",
               medium: "",
@@ -1123,11 +1391,11 @@ export default function POS() {
               medium: "aspect-square",
               large: "h-48",
             };
-            
+
             return (
               <Card
                 key={item.id}
-                className={`cursor-pointer hover-elevate active-elevate-2 relative ${isOutOfStock ? 'opacity-50' : ''} ${sizeClasses[displaySize]}`}
+                className={`cursor-pointer hover-elevate active-elevate-2 relative ${isOutOfStock ? "opacity-50" : ""} ${sizeClasses[displaySize]}`}
                 onClick={() => !isOutOfStock && handleItemClick(item)}
                 data-testid={`card-pos-item-${item.id}`}
               >
@@ -1142,27 +1410,51 @@ export default function POS() {
                   </div>
                 )}
                 <CardHeader className="p-4 pb-2">
-                  <div className={`${imageClasses[displaySize]} bg-gradient-to-br from-primary/20 to-primary/5 rounded-md flex items-center justify-center mb-2 overflow-hidden`}>
+                  <div
+                    className={`${imageClasses[displaySize]} bg-gradient-to-br from-primary/20 to-primary/5 rounded-md flex items-center justify-center mb-2 overflow-hidden`}
+                  >
                     {item.imageUrl ? (
-                      <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
-                      <UtensilsCrossed className={`${displaySize === "small" ? "h-8 w-8" : displaySize === "large" ? "h-20 w-20" : "h-12 w-12"} text-primary/40`} />
+                      <UtensilsCrossed
+                        className={`${displaySize === "small" ? "h-8 w-8" : displaySize === "large" ? "h-20 w-20" : "h-12 w-12"} text-primary/40`}
+                      />
                     )}
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
-                  <p className={`font-semibold mb-1 line-clamp-2 ${displaySize === "small" ? "text-sm" : displaySize === "large" ? "text-xl" : ""}`}>{item.name}</p>
+                  <p
+                    className={`font-semibold mb-1 line-clamp-2 ${displaySize === "small" ? "text-sm" : displaySize === "large" ? "text-xl" : ""}`}
+                  >
+                    {item.name}
+                  </p>
                   {hasDiscount ? (
                     <div className="space-y-1">
-                      <p className={`font-bold font-mono text-primary ${displaySize === "large" ? "text-2xl" : "text-xl"}`}>{finalPrice.toFixed(2)} {t.sar}</p>
-                      <p className="text-sm font-mono text-muted-foreground line-through">{originalPrice.toFixed(2)} {t.sar}</p>
+                      <p
+                        className={`font-bold font-mono text-primary ${displaySize === "large" ? "text-2xl" : "text-xl"}`}
+                      >
+                        {finalPrice.toFixed(2)} {t.sar}
+                      </p>
+                      <p className="text-sm font-mono text-muted-foreground line-through">
+                        {originalPrice.toFixed(2)} {t.sar}
+                      </p>
                     </div>
                   ) : (
-                    <p className={`font-bold font-mono text-primary ${displaySize === "large" ? "text-2xl" : "text-xl"}`}>{originalPrice.toFixed(2)} {t.sar}</p>
+                    <p
+                      className={`font-bold font-mono text-primary ${displaySize === "large" ? "text-2xl" : "text-xl"}`}
+                    >
+                      {originalPrice.toFixed(2)} {t.sar}
+                    </p>
                   )}
                   <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
                     <Package className="h-3 w-3" />
-                    <span data-testid={`text-stock-${item.id}`}>{stockCount} {t.available || 'available'}</span>
+                    <span data-testid={`text-stock-${item.id}`}>
+                      {stockCount} {t.available || "available"}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
@@ -1176,9 +1468,15 @@ export default function POS() {
           <h2 className="text-2xl font-bold mb-4">{t.currentOrder}</h2>
           <Tabs value={orderType} onValueChange={setOrderType}>
             <TabsList className="w-full">
-              <TabsTrigger value="Dine-In" className="flex-1">{t.dineIn}</TabsTrigger>
-              <TabsTrigger value="Takeout" className="flex-1">{t.takeout}</TabsTrigger>
-              <TabsTrigger value="Delivery" className="flex-1">{t.deliveryOrder}</TabsTrigger>
+              <TabsTrigger value="Dine-In" className="flex-1">
+                {t.dineIn}
+              </TabsTrigger>
+              <TabsTrigger value="Takeout" className="flex-1">
+                {t.takeout}
+              </TabsTrigger>
+              <TabsTrigger value="Delivery" className="flex-1">
+                {t.deliveryOrder}
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -1191,7 +1489,7 @@ export default function POS() {
             </div>
           ) : (
             <div className="space-y-3">
-              {cartItems.map(item => (
+              {cartItems.map((item) => (
                 <Card key={item.id} data-testid={`cart-item-${item.id}`}>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-2">
@@ -1199,19 +1497,32 @@ export default function POS() {
                         <p className="font-semibold">{item.name}</p>
                         {item.discount > 0 ? (
                           <div className="flex items-baseline gap-2">
-                            <p className="text-sm font-mono text-primary">{item.price.toFixed(2)} {t.sar} ({t.base})</p>
-                            <p className="text-xs font-mono text-muted-foreground line-through">{item.originalPrice.toFixed(2)}</p>
-                            <span className="text-xs bg-green-600 text-white px-1.5 py-0.5 rounded">{item.discount.toFixed(0)}% {t.off}</span>
+                            <p className="text-sm font-mono text-primary">
+                              {item.price.toFixed(2)} {t.sar} ({t.base})
+                            </p>
+                            <p className="text-xs font-mono text-muted-foreground line-through">
+                              {item.originalPrice.toFixed(2)}
+                            </p>
+                            <span className="text-xs bg-green-600 text-white px-1.5 py-0.5 rounded">
+                              {item.discount.toFixed(0)}% {t.off}
+                            </span>
                           </div>
                         ) : (
-                          <p className="text-sm text-muted-foreground font-mono">{item.price.toFixed(2)} {t.sar} ({t.base})</p>
+                          <p className="text-sm text-muted-foreground font-mono">
+                            {item.price.toFixed(2)} {t.sar} ({t.base})
+                          </p>
                         )}
                         {item.addons && item.addons.length > 0 && (
                           <div className="mt-2 space-y-1 pl-3 border-l-2 border-muted">
-                            {item.addons.map(addon => (
-                              <div key={addon.id} className="flex items-center justify-between text-sm text-muted-foreground">
+                            {item.addons.map((addon) => (
+                              <div
+                                key={addon.id}
+                                className="flex items-center justify-between text-sm text-muted-foreground"
+                              >
                                 <span>+ {addon.name}</span>
-                                <span className="font-mono">+{addon.price.toFixed(2)} {t.sar}</span>
+                                <span className="font-mono">
+                                  +{addon.price.toFixed(2)} {t.sar}
+                                </span>
                               </div>
                             ))}
                           </div>
@@ -1238,7 +1549,9 @@ export default function POS() {
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
-                        <span className="w-8 text-center font-mono font-semibold">{item.quantity}</span>
+                        <span className="w-8 text-center font-mono font-semibold">
+                          {item.quantity}
+                        </span>
                         <Button
                           variant="outline"
                           size="icon"
@@ -1249,7 +1562,9 @@ export default function POS() {
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
-                      <p className="font-mono font-bold">{calculateItemTotal(item).toFixed(2)} {t.sar}</p>
+                      <p className="font-mono font-bold">
+                        {calculateItemTotal(item).toFixed(2)} {t.sar}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -1262,35 +1577,52 @@ export default function POS() {
           <div className="space-y-3 mb-6">
             <div className="flex justify-between text-muted-foreground">
               <span>{t.itemsSubtotal}</span>
-              <span className="font-mono">{baseSubtotal.toFixed(2)} {t.sar}</span>
+              <span className="font-mono">
+                {baseSubtotal.toFixed(2)} {t.sar}
+              </span>
             </div>
             {selectedDeliveryApp && deliveryCommission > 0 && (
               <div className="flex justify-between text-muted-foreground">
-                <span>{t.deliveryCommissionLabel} ({selectedDeliveryApp.name})</span>
-                <span className="font-mono">+{deliveryCommission.toFixed(2)} {t.sar}</span>
+                <span>
+                  {t.deliveryCommissionLabel} ({selectedDeliveryApp.name})
+                </span>
+                <span className="font-mono">
+                  +{deliveryCommission.toFixed(2)} {t.sar}
+                </span>
               </div>
             )}
             {selectedDeliveryApp && deliveryCommission > 0 && (
               <div className="flex justify-between font-medium">
                 <span>{t.subtotal}</span>
-                <span className="font-mono">{subtotal.toFixed(2)} {t.sar}</span>
+                <span className="font-mono">
+                  {subtotal.toFixed(2)} {t.sar}
+                </span>
               </div>
             )}
             <div className="flex justify-between text-muted-foreground">
               <span>{t.tax}</span>
-              <span className="font-mono">{tax.toFixed(2)} {t.sar}</span>
+              <span className="font-mono">
+                {tax.toFixed(2)} {t.sar}
+              </span>
             </div>
             <Separator />
             <div className="flex justify-between text-xl font-bold">
               <span>{t.total}</span>
-              <span className="font-mono">{total.toFixed(2)} {t.sar}</span>
+              <span className="font-mono">
+                {total.toFixed(2)} {t.sar}
+              </span>
             </div>
           </div>
 
           <div className="mb-4">
-            <Label className="text-sm font-medium mb-2 block">{t.paymentMethod}</Label>
+            <Label className="text-sm font-medium mb-2 block">
+              {t.paymentMethod}
+            </Label>
             <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-              <SelectTrigger data-testid="select-payment-method" className="w-full">
+              <SelectTrigger
+                data-testid="select-payment-method"
+                className="w-full"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -1317,18 +1649,30 @@ export default function POS() {
           </div>
 
           <div className="mb-4">
-            <Label className="text-sm font-medium mb-2 block">Delivery App (Optional)</Label>
-            <Select value={selectedDeliveryAppId || "none"} onValueChange={(value) => setSelectedDeliveryAppId(value === "none" ? null : value)}>
-              <SelectTrigger data-testid="select-delivery-app" className="w-full">
+            <Label className="text-sm font-medium mb-2 block">
+              Delivery App (Optional)
+            </Label>
+            <Select
+              value={selectedDeliveryAppId || "none"}
+              onValueChange={(value) =>
+                setSelectedDeliveryAppId(value === "none" ? null : value)
+              }
+            >
+              <SelectTrigger
+                data-testid="select-delivery-app"
+                className="w-full"
+              >
                 <SelectValue placeholder="Select delivery app" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">None</SelectItem>
-                {deliveryApps.filter(app => app.active).map(app => (
-                  <SelectItem key={app.id} value={app.id}>
-                    {app.name} ({parseFloat(app.commission).toFixed(0)}%)
-                  </SelectItem>
-                ))}
+                {deliveryApps
+                  .filter((app) => app.active)
+                  .map((app) => (
+                    <SelectItem key={app.id} value={app.id}>
+                      {app.name} ({parseFloat(app.commission).toFixed(0)}%)
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -1338,7 +1682,9 @@ export default function POS() {
               <Checkbox
                 id="earnings-decrease-desktop"
                 checked={earningsDecreaseApplied}
-                onCheckedChange={(checked) => setEarningsDecreaseApplied(checked as boolean)}
+                onCheckedChange={(checked) =>
+                  setEarningsDecreaseApplied(checked as boolean)
+                }
                 data-testid="checkbox-decrease-earnings"
               />
               <Label
@@ -1356,8 +1702,20 @@ export default function POS() {
                 <div className="flex items-center gap-2">
                   <UserCircle className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium" data-testid="text-customer-name">{customerName}</p>
-                    {customerPhone && <p className="text-xs text-muted-foreground" data-testid="text-customer-phone">{customerPhone}</p>}
+                    <p
+                      className="text-sm font-medium"
+                      data-testid="text-customer-name"
+                    >
+                      {customerName}
+                    </p>
+                    {customerPhone && (
+                      <p
+                        className="text-xs text-muted-foreground"
+                        data-testid="text-customer-phone"
+                      >
+                        {customerPhone}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <Button
@@ -1366,7 +1724,7 @@ export default function POS() {
                   className="h-6 w-6"
                   onClick={() => {
                     setCustomerName("");
-                    setCustomerPhone("+966");
+                    setCustomerPhone("+966 ");
                   }}
                   data-testid="button-remove-customer"
                 >
@@ -1378,10 +1736,14 @@ export default function POS() {
 
           <div className="grid grid-cols-2 gap-2 mb-2">
             <div>
-              <Label htmlFor="table-number-desktop" className="text-sm mb-1">{isFactory ? t.truck : t.tableHash}</Label>
+              <Label htmlFor="table-number-desktop" className="text-sm mb-1">
+                {isFactory ? t.truck : t.tableHash}
+              </Label>
               <Input
                 id="table-number-desktop"
-                placeholder={isFactory ? t.truckNumber : t.tableNumberPlaceholder}
+                placeholder={
+                  isFactory ? t.truckNumber : t.tableNumberPlaceholder
+                }
                 value={tableNumber}
                 onChange={(e) => setTableNumber(e.target.value)}
                 data-testid="input-table-number-desktop"
@@ -1389,12 +1751,12 @@ export default function POS() {
             </div>
             <div className="flex flex-col">
               <Label className="text-sm mb-1 invisible">{t.customer}</Label>
-              <Dialog open={customerDialogOpen} onOpenChange={setCustomerDialogOpen}>
+              <Dialog
+                open={customerDialogOpen}
+                onOpenChange={setCustomerDialogOpen}
+              >
                 <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    data-testid="button-add-customer"
-                  >
+                  <Button variant="outline" data-testid="button-add-customer">
                     <UserCircle className="h-4 w-4 mr-2" />
                     {customerName ? t.edit : t.customer}
                   </Button>
@@ -1406,10 +1768,21 @@ export default function POS() {
                       {t.addCustomerDetails}
                     </DialogDescription>
                   </DialogHeader>
-                  <Tabs value={customerTab} onValueChange={setCustomerTab} className="w-full">
+                  <Tabs
+                    value={customerTab}
+                    onValueChange={setCustomerTab}
+                    className="w-full"
+                  >
                     <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="new" data-testid="tab-new-customer">{t.newCustomer}</TabsTrigger>
-                      <TabsTrigger value="existing" data-testid="tab-existing-customer">{t.existingCustomer}</TabsTrigger>
+                      <TabsTrigger value="new" data-testid="tab-new-customer">
+                        {t.newCustomer}
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="existing"
+                        data-testid="tab-existing-customer"
+                      >
+                        {t.existingCustomer}
+                      </TabsTrigger>
                     </TabsList>
                     <TabsContent value="new" className="space-y-4 mt-4">
                       <div>
@@ -1431,8 +1804,10 @@ export default function POS() {
                           onChange={(e) => {
                             const val = e.target.value;
                             // Ensure +966 prefix is always present
-                            if (!val.startsWith('+966')) {
-                              setCustomerPhone('+966' + val.replace(/^\+?966?/, ''));
+                            if (!val.startsWith("+966 ")) {
+                              setCustomerPhone(
+                                "+966 " + val.replace(/^\+?966?/, ""),
+                              );
                             } else {
                               setCustomerPhone(val);
                             }
@@ -1473,12 +1848,15 @@ export default function POS() {
                       </div>
                       <div className="max-h-60 overflow-y-auto space-y-2">
                         {customers
-                          .filter(c => 
-                            customerSearch === "" ||
-                            c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-                            phoneMatches(c.phone, customerSearch)
+                          .filter(
+                            (c) =>
+                              customerSearch === "" ||
+                              c.name
+                                .toLowerCase()
+                                .includes(customerSearch.toLowerCase()) ||
+                              phoneMatches(c.phone, customerSearch),
                           )
-                          .map(customer => (
+                          .map((customer) => (
                             <Card
                               key={customer.id}
                               className="cursor-pointer hover-elevate active-elevate-2"
@@ -1496,16 +1874,23 @@ export default function POS() {
                             >
                               <CardContent className="p-3">
                                 <p className="font-medium">{customer.name}</p>
-                                <p className="text-sm text-muted-foreground">{customer.phone}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {customer.phone}
+                                </p>
                               </CardContent>
                             </Card>
                           ))}
-                        {customers.filter(c => 
-                          customerSearch === "" ||
-                          c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-                          phoneMatches(c.phone, customerSearch)
+                        {customers.filter(
+                          (c) =>
+                            customerSearch === "" ||
+                            c.name
+                              .toLowerCase()
+                              .includes(customerSearch.toLowerCase()) ||
+                            phoneMatches(c.phone, customerSearch),
                         ).length === 0 && (
-                          <p className="text-center text-muted-foreground py-8">{t.noData}</p>
+                          <p className="text-center text-muted-foreground py-8">
+                            {t.noData}
+                          </p>
                         )}
                       </div>
                       <div className="flex justify-end">
@@ -1548,39 +1933,52 @@ export default function POS() {
 
       {/* Add-on Selection Dialog */}
       <Dialog open={addonDialogOpen} onOpenChange={setAddonDialogOpen}>
-        <DialogContent className={`max-w-md ${isMobile ? 'max-h-[90vh]' : ''}`}>
+        <DialogContent className={`max-w-md ${isMobile ? "max-h-[90vh]" : ""}`}>
           <DialogHeader>
             <DialogTitle>{t.selectAddons}</DialogTitle>
             <DialogDescription>
-              {selectedMenuItem?.name} - {selectedMenuItem ? (parseFloat(selectedMenuItem.basePrice) * 1.15).toFixed(2) : '0.00'} {t.sar}
+              {selectedMenuItem?.name} -{" "}
+              {selectedMenuItem
+                ? (parseFloat(selectedMenuItem.basePrice) * 1.15).toFixed(2)
+                : "0.00"}{" "}
+              {t.sar}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-            {selectedMenuItem && getAvailableAddons(selectedMenuItem.id).length > 0 ? (
+            {selectedMenuItem &&
+            getAvailableAddons(selectedMenuItem.id).length > 0 ? (
               <>
                 <div>
-                  <Label className="text-sm font-medium mb-2 block">{t.availableAddons}</Label>
+                  <Label className="text-sm font-medium mb-2 block">
+                    {t.availableAddons}
+                  </Label>
                   <div className="space-y-2">
-                    {getAvailableAddons(selectedMenuItem.id).map(addon => (
+                    {getAvailableAddons(selectedMenuItem.id).map((addon) => (
                       <div
                         key={addon.id}
-                        className={`flex items-center space-x-3 p-3 rounded-md border ${isMobile ? 'min-h-[44px]' : ''} hover-elevate cursor-pointer`}
+                        className={`flex items-center space-x-3 p-3 rounded-md border ${isMobile ? "min-h-[44px]" : ""} hover-elevate cursor-pointer`}
                         onClick={() => toggleAddon(addon.id)}
                         data-testid={`addon-option-${addon.id}`}
                       >
                         <Checkbox
                           checked={selectedAddons.includes(addon.id)}
                           onCheckedChange={() => toggleAddon(addon.id)}
-                          className={isMobile ? 'h-[44px] w-[44px]' : ''}
+                          className={isMobile ? "h-[44px] w-[44px]" : ""}
                           data-testid={`checkbox-addon-${addon.id}`}
                         />
                         <div className="flex-1">
                           <div className="flex items-baseline justify-between">
-                            <span className="font-medium text-sm">{addon.name}</span>
-                            <span className="font-mono text-sm text-primary">+{parseFloat(addon.basePrice).toFixed(2)} {t.sar}</span>
+                            <span className="font-medium text-sm">
+                              {addon.name}
+                            </span>
+                            <span className="font-mono text-sm text-primary">
+                              +{parseFloat(addon.basePrice).toFixed(2)} {t.sar}
+                            </span>
                           </div>
-                          <p className="text-xs text-muted-foreground">{addon.category}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {addon.category}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -1590,24 +1988,33 @@ export default function POS() {
                 <Separator />
               </>
             ) : (
-              <p className="text-center text-muted-foreground py-4">{t.noAddonsAvailable}</p>
+              <p className="text-center text-muted-foreground py-4">
+                {t.noAddonsAvailable}
+              </p>
             )}
 
             <div>
-              <Label className="text-sm font-medium mb-2 block">{t.quantity}</Label>
+              <Label className="text-sm font-medium mb-2 block">
+                {t.quantity}
+              </Label>
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
-                  className={isMobile ? 'h-[44px] w-[44px]' : 'h-10 w-10'}
+                  className={isMobile ? "h-[44px] w-[44px]" : "h-10 w-10"}
                   onClick={() => setItemQuantity(Math.max(1, itemQuantity - 1))}
                   data-testid="button-decrease-quantity"
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
-                <span className="text-lg font-mono font-semibold w-12 text-center" data-testid="text-quantity">{itemQuantity}</span>
+                <span
+                  className="text-lg font-mono font-semibold w-12 text-center"
+                  data-testid="text-quantity"
+                >
+                  {itemQuantity}
+                </span>
                 <Button
                   variant="outline"
-                  className={isMobile ? 'h-[44px] w-[44px]' : 'h-10 w-10'}
+                  className={isMobile ? "h-[44px] w-[44px]" : "h-10 w-10"}
                   onClick={() => setItemQuantity(itemQuantity + 1)}
                   data-testid="button-increase-quantity"
                 >
@@ -1618,21 +2025,33 @@ export default function POS() {
 
             <div className="p-3 bg-muted rounded-md">
               <div className="flex justify-between items-center mb-1">
-                <span className="text-sm text-muted-foreground">{t.subtotal}</span>
+                <span className="text-sm text-muted-foreground">
+                  {t.subtotal}
+                </span>
                 <span className="font-mono text-sm">
-                  {selectedMenuItem ? (
-                    (parseFloat(selectedMenuItem.basePrice) * (1 - parseFloat(selectedMenuItem.discount || "0") / 100) * itemQuantity).toFixed(2)
-                  ) : '0.00'} {t.sar}
+                  {selectedMenuItem
+                    ? (
+                        parseFloat(selectedMenuItem.basePrice) *
+                        (1 -
+                          parseFloat(selectedMenuItem.discount || "0") / 100) *
+                        itemQuantity
+                      ).toFixed(2)
+                    : "0.00"}{" "}
+                  {t.sar}
                 </span>
               </div>
               {selectedAddons.length > 0 && (
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm text-muted-foreground">{t.addons}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t.addons}
+                  </span>
                   <span className="font-mono text-sm">
-                    +{allAddons
-                      .filter(a => selectedAddons.includes(a.id))
+                    +
+                    {allAddons
+                      .filter((a) => selectedAddons.includes(a.id))
                       .reduce((sum, a) => sum + parseFloat(a.basePrice), 0)
-                      .toFixed(2)} {t.sar} × {itemQuantity}
+                      .toFixed(2)}{" "}
+                    {t.sar} × {itemQuantity}
                   </span>
                 </div>
               )}
@@ -1640,33 +2059,42 @@ export default function POS() {
               <div className="flex justify-between items-center font-bold">
                 <span>{t.total}</span>
                 <span className="font-mono text-lg text-primary">
-                  {selectedMenuItem ? (
-                    (
-                      (parseFloat(selectedMenuItem.basePrice) * (1 - parseFloat(selectedMenuItem.discount || "0") / 100) +
-                        allAddons
-                          .filter(a => selectedAddons.includes(a.id))
-                          .reduce((sum, a) => sum + parseFloat(a.basePrice), 0)) *
-                      itemQuantity *
-                      1.15
-                    ).toFixed(2)
-                  ) : '0.00'} {t.sar}
+                  {selectedMenuItem
+                    ? (
+                        (parseFloat(selectedMenuItem.basePrice) *
+                          (1 -
+                            parseFloat(selectedMenuItem.discount || "0") /
+                              100) +
+                          allAddons
+                            .filter((a) => selectedAddons.includes(a.id))
+                            .reduce(
+                              (sum, a) => sum + parseFloat(a.basePrice),
+                              0,
+                            )) *
+                        itemQuantity *
+                        1.15
+                      ).toFixed(2)
+                    : "0.00"}{" "}
+                  {t.sar}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">{t.tax} (15%) included</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t.tax} (15%) included
+              </p>
             </div>
           </div>
 
           <div className="flex gap-2">
             <Button
               variant="outline"
-              className={`flex-1 ${isMobile ? 'h-[44px]' : ''}`}
+              className={`flex-1 ${isMobile ? "h-[44px]" : ""}`}
               onClick={() => setAddonDialogOpen(false)}
               data-testid="button-cancel-addons"
             >
               {t.cancel}
             </Button>
             <Button
-              className={`flex-1 ${isMobile ? 'h-[44px]' : ''}`}
+              className={`flex-1 ${isMobile ? "h-[44px]" : ""}`}
               onClick={addToCartWithAddons}
               data-testid="button-confirm-addons"
             >
@@ -1681,9 +2109,7 @@ export default function POS() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{t.completePayment}</DialogTitle>
-            <DialogDescription>
-              {t.completePaymentDesc}
-            </DialogDescription>
+            <DialogDescription>{t.completePaymentDesc}</DialogDescription>
           </DialogHeader>
           {pendingOrderData && (
             <div className="p-4 text-center text-muted-foreground">

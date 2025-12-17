@@ -2,12 +2,52 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Edit, UserCircle, Trash2, Phone, User, ChevronDown, ShoppingBag, Calendar, DollarSign, Download } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Edit,
+  UserCircle,
+  Trash2,
+  Phone,
+  User,
+  ChevronDown,
+  ShoppingBag,
+  Calendar,
+  DollarSign,
+  Download,
+} from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -45,7 +85,9 @@ export default function Customers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
-  const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(null);
+  const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(
+    null,
+  );
   const { toast } = useToast();
   const { t } = useLanguage();
   const layout = useDeviceLayout();
@@ -59,7 +101,7 @@ export default function Customers() {
     resolver: zodResolver(customerFormSchema),
     defaultValues: {
       name: "",
-      phone: "+966",
+      phone: "+966 ",
     },
   });
 
@@ -174,51 +216,67 @@ export default function Customers() {
   // Helper function for flexible phone number matching (handles +966 Saudi prefix)
   const phoneMatches = (storedPhone: string, searchQuery: string): boolean => {
     if (!storedPhone || !searchQuery) return false;
-    
+
     // Normalize both to digits only
-    const storedDigits = storedPhone.replace(/\D/g, '');
-    const searchDigits = searchQuery.replace(/\D/g, '');
-    
+    const storedDigits = storedPhone.replace(/\D/g, "");
+    const searchDigits = searchQuery.replace(/\D/g, "");
+
     if (!searchDigits) return false;
-    
+
     // Check if search matches any part of the stored phone
     if (storedDigits.includes(searchDigits)) return true;
-    
+
     // Check if adding 966 to search matches
     if (storedDigits.includes(`966${searchDigits}`)) return true;
-    
+
     // Check if removing 966 from search matches
-    if (searchDigits.startsWith('966') && storedDigits.includes(searchDigits.substring(3))) return true;
-    
+    if (
+      searchDigits.startsWith("966") &&
+      storedDigits.includes(searchDigits.substring(3))
+    )
+      return true;
+
     // Check if removing leading 0 matches (0501234567 -> 501234567)
-    if (searchDigits.startsWith('0') && storedDigits.includes(searchDigits.substring(1))) return true;
-    
+    if (
+      searchDigits.startsWith("0") &&
+      storedDigits.includes(searchDigits.substring(1))
+    )
+      return true;
+
     return false;
   };
 
-  const filteredCustomers = customers.filter((customer) =>
-    customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    phoneMatches(customer.phone, searchQuery)
+  const filteredCustomers = customers.filter(
+    (customer) =>
+      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      phoneMatches(customer.phone, searchQuery),
   );
 
   const getCustomerOrders = (customer: Customer) => {
-    return orders.filter(order => 
-      order.customerName === customer.name || order.customerPhone === customer.phone
-    ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return orders
+      .filter(
+        (order) =>
+          order.customerName === customer.name ||
+          order.customerPhone === customer.phone,
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
   };
 
   const handleExport = async () => {
     try {
-      const response = await fetch('/api/export/customers');
+      const response = await fetch("/api/export/customers");
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Export failed');
+        throw new Error(error.error || "Export failed");
       }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = 'customers.xlsx';
+      a.download = "customers.xlsx";
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -230,7 +288,8 @@ export default function Customers() {
     } catch (error) {
       toast({
         title: t.exportFailed,
-        description: error instanceof Error ? error.message : t.failedToExportCustomers,
+        description:
+          error instanceof Error ? error.message : t.failedToExportCustomers,
         variant: "destructive",
       });
     }
@@ -238,108 +297,120 @@ export default function Customers() {
 
   return (
     <div className={`${layout.padding} ${layout.spaceY}`}>
-      <div className={`flex ${layout.isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
+      <div
+        className={`flex ${layout.isMobile ? "flex-col gap-3" : "items-center justify-between"}`}
+      >
         <div className="flex items-center gap-2">
           <UserCircle className="h-8 w-8" />
           <h1 className={`${layout.text3Xl} font-bold`}>{t.customers}</h1>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button 
-            variant="outline" 
-            onClick={handleExport} 
+          <Button
+            variant="outline"
+            onClick={handleExport}
             data-testid="button-export"
-            className={layout.isMobile ? 'h-[44px]' : ''}
+            className={layout.isMobile ? "h-[44px]" : ""}
           >
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
           <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-              <Button 
+              <Button
                 data-testid="button-add-customer"
-                className={layout.isMobile ? 'h-[44px]' : ''}
+                className={layout.isMobile ? "h-[44px]" : ""}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 {t.add} {t.customers}
               </Button>
             </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingCustomer ? `${t.edit} ${t.customers}` : `${t.add} ${t.customers}`}
-              </DialogTitle>
-              <DialogDescription>
-                {editingCustomer
-                  ? "Update customer information"
-                  : "Add a new customer to your database"}
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t.customerName}</FormLabel>
-                      <FormControl>
-                        <Input
-                          data-testid="input-customer-name"
-                          placeholder="Enter customer name"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t.phone}</FormLabel>
-                      <FormControl>
-                        <Input
-                          data-testid="input-customer-phone"
-                          placeholder="+966 5XXXXXXXX"
-                          {...field}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            // Ensure +966 prefix is always present
-                            if (!val.startsWith('+966')) {
-                              field.onChange('+966' + val.replace(/^\+?966?/, ''));
-                            } else {
-                              field.onChange(val);
-                            }
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleCloseDialog}
-                    data-testid="button-cancel"
-                  >
-                    {t.cancel}
-                  </Button>
-                  <Button
-                    type="submit"
-                    data-testid="button-submit"
-                    disabled={createCustomerMutation.isPending || updateCustomerMutation.isPending}
-                  >
-                    {editingCustomer ? t.save : t.add}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {editingCustomer
+                    ? `${t.edit} ${t.customers}`
+                    : `${t.add} ${t.customers}`}
+                </DialogTitle>
+                <DialogDescription>
+                  {editingCustomer
+                    ? "Update customer information"
+                    : "Add a new customer to your database"}
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t.customerName}</FormLabel>
+                        <FormControl>
+                          <Input
+                            data-testid="input-customer-name"
+                            placeholder="Enter customer name"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t.phone}</FormLabel>
+                        <FormControl>
+                          <Input
+                            data-testid="input-customer-phone"
+                            placeholder="+966 5XXXXXXXX"
+                            {...field}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              // Ensure +966 prefix is always present
+                              if (!val.startsWith("+966 ")) {
+                                field.onChange(
+                                  "+966 " + val.replace(/^\+?966?/, ""),
+                                );
+                              } else {
+                                field.onChange(val);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCloseDialog}
+                      data-testid="button-cancel"
+                    >
+                      {t.cancel}
+                    </Button>
+                    <Button
+                      type="submit"
+                      data-testid="button-submit"
+                      disabled={
+                        createCustomerMutation.isPending ||
+                        updateCustomerMutation.isPending
+                      }
+                    >
+                      {editingCustomer ? t.save : t.add}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -366,15 +437,23 @@ export default function Customers() {
           </p>
         </div>
       ) : (
-        <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 3, tablet: 2, mobile: 1 })}`}>
+        <div
+          className={`grid ${layout.gap} ${layout.gridCols({ desktop: 3, tablet: 2, mobile: 1 })}`}
+        >
           {filteredCustomers.map((customer) => {
             const customerOrders = getCustomerOrders(customer);
             return (
-              <Card key={customer.id} data-testid={`card-customer-${customer.id}`}>
+              <Card
+                key={customer.id}
+                data-testid={`card-customer-${customer.id}`}
+              >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="font-semibold" data-testid={`text-customer-name-${customer.id}`}>
+                    <h3
+                      className="font-semibold"
+                      data-testid={`text-customer-name-${customer.id}`}
+                    >
                       {customer.name}
                     </h3>
                   </div>
@@ -400,9 +479,11 @@ export default function Customers() {
                 <CardContent className="space-y-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Phone className="h-3 w-3" />
-                    <span data-testid={`text-customer-phone-${customer.id}`}>{customer.phone}</span>
+                    <span data-testid={`text-customer-phone-${customer.id}`}>
+                      {customer.phone}
+                    </span>
                   </div>
-                  
+
                   {customerOrders.length > 0 && (
                     <Collapsible>
                       <CollapsibleTrigger asChild>
@@ -414,7 +495,10 @@ export default function Customers() {
                         >
                           <div className="flex items-center gap-2">
                             <ShoppingBag className="h-3 w-3" />
-                            <span>{customerOrders.length} {customerOrders.length === 1 ? 'Order' : 'Orders'}</span>
+                            <span>
+                              {customerOrders.length}{" "}
+                              {customerOrders.length === 1 ? "Order" : "Orders"}
+                            </span>
                           </div>
                           <ChevronDown className="h-3 w-3" />
                         </Button>
@@ -427,19 +511,33 @@ export default function Customers() {
                             data-testid={`order-${order.id}`}
                           >
                             <div className="flex items-center justify-between mb-1">
-                              <span className="font-mono font-semibold">#{order.orderNumber}</span>
-                              <Badge variant={order.status === 'Completed' ? 'default' : 'secondary'}>
+                              <span className="font-mono font-semibold">
+                                #{order.orderNumber}
+                              </span>
+                              <Badge
+                                variant={
+                                  order.status === "Completed"
+                                    ? "default"
+                                    : "secondary"
+                                }
+                              >
                                 {order.status}
                               </Badge>
                             </div>
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
-                                <span>{new Date(order.createdAt).toLocaleDateString()}</span>
+                                <span>
+                                  {new Date(
+                                    order.createdAt,
+                                  ).toLocaleDateString()}
+                                </span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <DollarSign className="h-3 w-3" />
-                                <span>{parseFloat(order.total).toFixed(2)} SAR</span>
+                                <span>
+                                  {parseFloat(order.total).toFixed(2)} SAR
+                                </span>
                               </div>
                             </div>
                             {order.items.length > 0 && (
@@ -450,7 +548,9 @@ export default function Customers() {
                                   </div>
                                 ))}
                                 {order.items.length > 2 && (
-                                  <div className="italic">+{order.items.length - 2} more items</div>
+                                  <div className="italic">
+                                    +{order.items.length - 2} more items
+                                  </div>
                                 )}
                               </div>
                             )}
@@ -460,7 +560,9 @@ export default function Customers() {
                     </Collapsible>
                   )}
                   {customerOrders.length === 0 && (
-                    <p className="text-xs text-muted-foreground italic">No orders yet</p>
+                    <p className="text-xs text-muted-foreground italic">
+                      No orders yet
+                    </p>
                   )}
                 </CardContent>
               </Card>
@@ -477,14 +579,20 @@ export default function Customers() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t.confirmDelete}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete "{deletingCustomer?.name}". This action cannot be undone.
+              This will permanently delete "{deletingCustomer?.name}". This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-cancel-delete">{t.cancel}</AlertDialogCancel>
+            <AlertDialogCancel data-testid="button-cancel-delete">
+              {t.cancel}
+            </AlertDialogCancel>
             <AlertDialogAction
               data-testid="button-confirm-delete"
-              onClick={() => deletingCustomer && deleteCustomerMutation.mutate(deletingCustomer.id)}
+              onClick={() =>
+                deletingCustomer &&
+                deleteCustomerMutation.mutate(deletingCustomer.id)
+              }
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {t.delete}
