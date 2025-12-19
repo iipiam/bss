@@ -1,0 +1,23 @@
+
+Please execute the following steps in order and provide a detailed report for each:
+1. Codebase Analysis:
+*   Code Quality Check: Analyze the entire codebase for code smells, anti-patterns, and deviations from best practices for the language [Your Application's Language, e.g., Python, JavaScript].
+*   Dependency Audit: Identify all third-party libraries and dependencies. Check for outdated or vulnerable packages.
+*   Code Complexity: Calculate the cyclomatic complexity of key functions and modules. Highlight areas that are overly complex and difficult to maintain.
+*   Documentation Review: Assess the quality and completeness of inline code comments and any existing documentation.
+2. Security Vulnerability Assessment:
+*   Static Analysis (SAST ): Scan the source code for common security vulnerabilities (e.g., SQL injection, Cross-Site Scripting (XSS), insecure deserialization).
+*   Dynamic Analysis (DAST): Interact with the live application to identify runtime vulnerabilities. Please test all input fields, forms, and API endpoints.
+*   Secrets Detection: Scan the repository for any hardcoded secrets, API keys, or credentials.
+3. Performance & Resource Utilization:
+*   Load Time Measurement: Measure the application's load time and key performance metrics (e.g., First Contentful Paint, Time to Interactive).
+*   Resource Monitoring: If possible, analyze the CPU and memory usage of the application under normal load.
+*   API Response Time: Test the response time of all major API endpoints.
+4. UX & UI Review:
+*   Functional Testing: Navigate through all user-facing features of the live application. Document any bugs, broken links, or features that do not work as expected.
+*   Usability Heuristics: Evaluate the user interface against standard usability principles. Note any areas that are confusing, inconsistent, or difficult to use.
+*   Accessibility Check: Perform an automated check for basic web accessibility (WCAG) compliance.
+5. Final Report:
+*   Compile all findings into a single, well-structured report.
+*   For each issue identified, provide a description, its severity (Critical, High, Medium, Low), and a recommendation for how to fix it.
+*   Summarize the overall health of the application and prioritize the most critical actions to take."
