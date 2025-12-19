@@ -1,19 +1,34 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Store, ShoppingBag, Truck, TrendingUp, DollarSign, Download, FileSpreadsheet } from "lucide-react";
+import { Store, ShoppingBag, Truck, TrendingUp, DollarSign, Download, FileSpreadsheet, RefreshCw } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
 import { exportToPDF, exportToExcel } from "@/lib/exportUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { queryClient } from "@/lib/queryClient";
 
 export default function SalesComparison() {
   const { toast } = useToast();
   const { t } = useLanguage();
+  const [isSyncing, setIsSyncing] = useState(false);
   const { data, isLoading } = useQuery<any>({
     queryKey: ["/api/analytics/sales-comparison"],
   });
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      await queryClient.invalidateQueries({ queryKey: ["/api/analytics/sales-comparison"] });
+      toast({ title: "Sales data synced successfully" });
+    } catch (error) {
+      toast({ title: "Failed to sync sales data", variant: "destructive" });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleExportPDF = () => {
     if (!data) return;
@@ -156,6 +171,16 @@ export default function SalesComparison() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            onClick={handleSync} 
+            variant="outline" 
+            size="default"
+            disabled={isSyncing}
+            data-testid="button-sync-sales"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Syncing...' : 'Sync'}
+          </Button>
           <Button 
             onClick={handleExportPDF} 
             variant="outline" 
