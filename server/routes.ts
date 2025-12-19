@@ -3510,6 +3510,112 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Sync all procurement items to shop bills (ensures bills match procurement status)
+  app.post("/api/procurement/sync-shop-bills", requireAuth, requireRestaurant, requireAction('procurement', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      
+      // Get all procurement items
+      const procurements = await storage.getProcurements({ restaurantId });
+      
+      let created = 0;
+      let updated = 0;
+      let deleted = 0;
+      let skipped = 0;
+      
+      for (const proc of procurements) {
+        try {
+          const totalCost = parseFloat(proc.totalCost || "0");
+          if (totalCost <= 0) {
+            skipped++;
+            continue;
+          }
+          
+          // Verify existing bill ownership if present
+          let validBillId: string | null = null;
+          if (proc.billId) {
+            const existingBill = await storage.getShopBill(proc.billId);
+            if (existingBill && existingBill.restaurantId === restaurantId) {
+              validBillId = proc.billId;
+            }
+          }
+          
+          if (proc.status === "cancelled") {
+            // Remove bill for cancelled procurements
+            if (validBillId) {
+              await storage.deleteShopBill(validBillId, restaurantId);
+              await storage.updateProcurement(proc.id, restaurantId, { billId: null });
+              deleted++;
+            } else {
+              skipped++;
+            }
+          } else if (proc.status === "completed") {
+            // Create/update bill as paid for completed
+            const billData = {
+              restaurantId,
+              billType: proc.type === "inventory" ? "foundational" : "maintenance",
+              amount: totalCost.toFixed(2),
+              paymentDate: new Date(),
+              paymentPeriod: "one-time" as const,
+              status: "paid" as const,
+              description: `Procurement: ${proc.title}${proc.supplier ? ` (${proc.supplier})` : ""}`,
+              branchId: proc.branchId || null,
+            };
+            
+            if (validBillId) {
+              await storage.updateShopBill(validBillId, restaurantId, billData);
+              updated++;
+            } else {
+              const bill = await storage.createShopBill(billData as any);
+              await storage.updateProcurement(proc.id, restaurantId, { billId: bill.id });
+              created++;
+            }
+          } else if (["pending", "approved", "ordered", "received"].includes(proc.status)) {
+            // Create/update bill as pending for in-progress statuses
+            const billData = {
+              restaurantId,
+              billType: proc.type === "inventory" ? "foundational" : "maintenance",
+              amount: totalCost.toFixed(2),
+              paymentDate: proc.expectedDelivery || new Date(),
+              paymentPeriod: "one-time" as const,
+              status: "pending" as const,
+              description: `Procurement: ${proc.title}${proc.supplier ? ` (${proc.supplier})` : ""}`,
+              branchId: proc.branchId || null,
+            };
+            
+            if (validBillId) {
+              await storage.updateShopBill(validBillId, restaurantId, billData);
+              updated++;
+            } else {
+              const bill = await storage.createShopBill(billData as any);
+              await storage.updateProcurement(proc.id, restaurantId, { billId: bill.id });
+              created++;
+            }
+          } else {
+            skipped++;
+          }
+        } catch (err) {
+          console.error(`[PROCUREMENT SYNC BILLS] Failed to sync bill for procurement ${proc.id}:`, err);
+          skipped++;
+        }
+      }
+      
+      console.log(`[PROCUREMENT SYNC BILLS] Created ${created}, updated ${updated}, deleted ${deleted}, skipped ${skipped}`);
+      res.json({ 
+        success: true, 
+        created, 
+        updated,
+        deleted,
+        skipped, 
+        total: procurements.length,
+        message: `Synced shop bills: ${created} created, ${updated} updated, ${deleted} deleted` 
+      });
+    } catch (error) {
+      console.error("[PROCUREMENT SYNC BILLS] Error syncing procurement to bills:", error);
+      res.status(500).json({ error: "Failed to sync procurement to shop bills" });
+    }
+  });
+
   // Generate B2B (Standard) Invoice for Procurement Request
   app.post("/api/procurement/:id/generate-b2b-invoice", requireAuth, requireRestaurant, requireAction('procurement', 'edit'), async (req, res) => {
     try {

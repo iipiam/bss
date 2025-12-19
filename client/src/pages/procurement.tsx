@@ -457,6 +457,26 @@ export default function ProcurementPage() {
     },
   });
 
+  // Sync procurement items to shop bills
+  const syncBillsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/procurement/sync-shop-bills");
+      return response.json();
+    },
+    onSuccess: (data: { created: number; updated: number; deleted: number; skipped: number; total: number }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/procurement"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/bills"] });
+      toast({ 
+        title: t.success, 
+        description: `Shop bills synced: ${data.created} created, ${data.updated} updated, ${data.deleted} deleted` 
+      });
+    },
+    onError: (error: Error) => {
+      console.error("Sync shop bills error:", error);
+      toast({ title: t.error, description: error.message || "Failed to sync shop bills", variant: "destructive" });
+    },
+  });
+
   const stats = {
     total: procurements.length,
     pending: procurements.filter(p => p.status === "pending").length,
@@ -473,6 +493,15 @@ export default function ProcurementPage() {
           <p className="text-muted-foreground">Manage inventory, maintenance, installations, and equipment procurement</p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => syncBillsMutation.mutate()}
+            disabled={syncBillsMutation.isPending}
+            data-testid="button-sync-shop-bills"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncBillsMutation.isPending ? 'animate-spin' : ''}`} />
+            {syncBillsMutation.isPending ? 'Syncing...' : 'Sync Shop Bills'}
+          </Button>
           <Button 
             variant="outline" 
             onClick={() => syncMutation.mutate()}
