@@ -1,20 +1,36 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, DollarSign, Package, ShoppingCart, ArrowUp, ArrowDown, Download, FileSpreadsheet } from "lucide-react";
+import { TrendingUp, DollarSign, Package, ShoppingCart, ArrowUp, ArrowDown, Download, FileSpreadsheet, RefreshCw } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { exportToPDF, exportToExcel } from "@/lib/exportUtils";
 import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 export default function DeliveryAppProfitability() {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const { data, isLoading } = useQuery<any>({
     queryKey: ["/api/delivery-apps/analytics/profitability"],
   });
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      await queryClient.invalidateQueries({ queryKey: ["/api/delivery-apps/analytics/profitability"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/delivery-profitability"] });
+      toast({ title: "Profitability data synced successfully" });
+    } catch (error) {
+      toast({ title: "Failed to sync profitability data", variant: "destructive" });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleExportPDF = () => {
     if (!data || !data.apps) return;
@@ -127,6 +143,16 @@ export default function DeliveryAppProfitability() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            onClick={handleSync} 
+            variant="outline" 
+            size="default"
+            disabled={isSyncing}
+            data-testid="button-sync-profitability"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Syncing...' : 'Sync'}
+          </Button>
           <Button 
             onClick={handleExportPDF} 
             variant="outline" 
