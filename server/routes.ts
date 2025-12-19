@@ -3523,81 +3523,83 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       let deleted = 0;
       let skipped = 0;
       
-      for (const proc of procurements) {
-        try {
-          const totalCost = parseFloat(proc.totalCost || "0");
-          if (totalCost <= 0) {
-            skipped++;
-            continue;
-          }
-          
-          // Verify existing bill ownership if present
-          let validBillId: string | null = null;
-          if (proc.billId) {
-            const existingBill = await storage.getShopBill(proc.billId);
-            if (existingBill && existingBill.restaurantId === restaurantId) {
-              validBillId = proc.billId;
+      // Process in parallel batches for speed
+      const batchSize = 5;
+      for (let i = 0; i < procurements.length; i += batchSize) {
+        const batch = procurements.slice(i, i + batchSize);
+        await Promise.all(batch.map(async (proc) => {
+          try {
+            const totalCost = parseFloat(proc.totalCost || "0");
+            if (totalCost <= 0) {
+              skipped++;
+              return;
             }
-          }
-          
-          if (proc.status === "cancelled") {
-            // Remove bill for cancelled procurements
-            if (validBillId) {
-              await storage.deleteShopBill(validBillId, restaurantId);
-              await storage.updateProcurement(proc.id, restaurantId, { billId: null });
-              deleted++;
+            
+            // Verify existing bill ownership if present
+            let validBillId: string | null = null;
+            if (proc.billId) {
+              const existingBill = await storage.getShopBill(proc.billId);
+              if (existingBill && existingBill.restaurantId === restaurantId) {
+                validBillId = proc.billId;
+              }
+            }
+            
+            if (proc.status === "cancelled") {
+              // Remove bill for cancelled procurements
+              if (validBillId) {
+                await storage.deleteShopBill(validBillId, restaurantId);
+                deleted++;
+              } else {
+                skipped++;
+              }
+            } else if (proc.status === "completed") {
+              // Create/update bill as paid for completed
+              const billData = {
+                restaurantId,
+                billType: proc.type === "inventory" ? "foundational" : "maintenance",
+                amount: totalCost.toFixed(2),
+                paymentDate: new Date(),
+                paymentPeriod: "one-time" as const,
+                status: "paid" as const,
+                description: `Procurement: ${proc.title}${proc.supplier ? ` (${proc.supplier})` : ""}`,
+                branchId: proc.branchId || null,
+              };
+              
+              if (validBillId) {
+                await storage.updateShopBill(validBillId, restaurantId, billData);
+                updated++;
+              } else {
+                await storage.createShopBill(billData as any);
+                created++;
+              }
+            } else if (["pending", "approved", "ordered", "received"].includes(proc.status)) {
+              // Create/update bill as pending for in-progress statuses
+              const billData = {
+                restaurantId,
+                billType: proc.type === "inventory" ? "foundational" : "maintenance",
+                amount: totalCost.toFixed(2),
+                paymentDate: proc.expectedDelivery || new Date(),
+                paymentPeriod: "one-time" as const,
+                status: "pending" as const,
+                description: `Procurement: ${proc.title}${proc.supplier ? ` (${proc.supplier})` : ""}`,
+                branchId: proc.branchId || null,
+              };
+              
+              if (validBillId) {
+                await storage.updateShopBill(validBillId, restaurantId, billData);
+                updated++;
+              } else {
+                await storage.createShopBill(billData as any);
+                created++;
+              }
             } else {
               skipped++;
             }
-          } else if (proc.status === "completed") {
-            // Create/update bill as paid for completed
-            const billData = {
-              restaurantId,
-              billType: proc.type === "inventory" ? "foundational" : "maintenance",
-              amount: totalCost.toFixed(2),
-              paymentDate: new Date(),
-              paymentPeriod: "one-time" as const,
-              status: "paid" as const,
-              description: `Procurement: ${proc.title}${proc.supplier ? ` (${proc.supplier})` : ""}`,
-              branchId: proc.branchId || null,
-            };
-            
-            if (validBillId) {
-              await storage.updateShopBill(validBillId, restaurantId, billData);
-              updated++;
-            } else {
-              const bill = await storage.createShopBill(billData as any);
-              await storage.updateProcurement(proc.id, restaurantId, { billId: bill.id });
-              created++;
-            }
-          } else if (["pending", "approved", "ordered", "received"].includes(proc.status)) {
-            // Create/update bill as pending for in-progress statuses
-            const billData = {
-              restaurantId,
-              billType: proc.type === "inventory" ? "foundational" : "maintenance",
-              amount: totalCost.toFixed(2),
-              paymentDate: proc.expectedDelivery || new Date(),
-              paymentPeriod: "one-time" as const,
-              status: "pending" as const,
-              description: `Procurement: ${proc.title}${proc.supplier ? ` (${proc.supplier})` : ""}`,
-              branchId: proc.branchId || null,
-            };
-            
-            if (validBillId) {
-              await storage.updateShopBill(validBillId, restaurantId, billData);
-              updated++;
-            } else {
-              const bill = await storage.createShopBill(billData as any);
-              await storage.updateProcurement(proc.id, restaurantId, { billId: bill.id });
-              created++;
-            }
-          } else {
+          } catch (err) {
+            console.error(`[PROCUREMENT SYNC BILLS] Failed to sync bill for procurement ${proc.id}:`, err);
             skipped++;
           }
-        } catch (err) {
-          console.error(`[PROCUREMENT SYNC BILLS] Failed to sync bill for procurement ${proc.id}:`, err);
-          skipped++;
-        }
+        }));
       }
       
       console.log(`[PROCUREMENT SYNC BILLS] Created ${created}, updated ${updated}, deleted ${deleted}, skipped ${skipped}`);

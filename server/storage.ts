@@ -1350,26 +1350,35 @@ export class DatabaseStorage implements IStorage {
     } catch (error: any) {
       if (error.message?.includes('inventory_item_id') || error.message?.includes('original_procurement_id')) {
         console.log('[Procurement] updateProcurement: New columns not found, using fallback update');
-        // Use simple SQL update without the new columns
-        const result = await db.execute(sql`
-          UPDATE procurement SET
-            type = COALESCE(${updateData.type}, type),
-            title = COALESCE(${updateData.title}, title),
-            description = COALESCE(${updateData.description}, description),
-            supplier = COALESCE(${updateData.supplier}, supplier),
-            category = COALESCE(${updateData.category}, category),
-            quantity = COALESCE(${updateData.quantity}, quantity),
-            unit_price = COALESCE(${updateData.unitPrice}, unit_price),
-            total_cost = COALESCE(${updateData.totalCost}, total_cost),
-            status = COALESCE(${updateData.status}, status),
-            priority = COALESCE(${updateData.priority}, priority),
-            requested_by = COALESCE(${updateData.requestedBy}, requested_by),
-            approved_by = COALESCE(${updateData.approvedBy}, approved_by),
-            notes = COALESCE(${updateData.notes}, notes),
-            invoice_image = COALESCE(${updateData.invoiceImage}, invoice_image),
-            bill_id = COALESCE(${updateData.billId}, bill_id),
-            updated_at = NOW()
-          WHERE id = ${id} AND restaurant_id = ${restaurantId}
+        // Build dynamic SET clause only for fields that are defined
+        const setClauses: string[] = [];
+        const values: any[] = [];
+        let paramIndex = 1;
+        
+        if (updateData.type !== undefined) { setClauses.push(`type = $${paramIndex++}`); values.push(updateData.type); }
+        if (updateData.title !== undefined) { setClauses.push(`title = $${paramIndex++}`); values.push(updateData.title); }
+        if (updateData.description !== undefined) { setClauses.push(`description = $${paramIndex++}`); values.push(updateData.description); }
+        if (updateData.supplier !== undefined) { setClauses.push(`supplier = $${paramIndex++}`); values.push(updateData.supplier); }
+        if (updateData.category !== undefined) { setClauses.push(`category = $${paramIndex++}`); values.push(updateData.category); }
+        if (updateData.quantity !== undefined) { setClauses.push(`quantity = $${paramIndex++}`); values.push(updateData.quantity); }
+        if (updateData.unitPrice !== undefined) { setClauses.push(`unit_price = $${paramIndex++}`); values.push(updateData.unitPrice); }
+        if (updateData.totalCost !== undefined) { setClauses.push(`total_cost = $${paramIndex++}`); values.push(updateData.totalCost); }
+        if (updateData.status !== undefined) { setClauses.push(`status = $${paramIndex++}`); values.push(updateData.status); }
+        if (updateData.priority !== undefined) { setClauses.push(`priority = $${paramIndex++}`); values.push(updateData.priority); }
+        if (updateData.requestedBy !== undefined) { setClauses.push(`requested_by = $${paramIndex++}`); values.push(updateData.requestedBy); }
+        if (updateData.approvedBy !== undefined) { setClauses.push(`approved_by = $${paramIndex++}`); values.push(updateData.approvedBy); }
+        if (updateData.notes !== undefined) { setClauses.push(`notes = $${paramIndex++}`); values.push(updateData.notes); }
+        if (updateData.invoiceImage !== undefined) { setClauses.push(`invoice_image = $${paramIndex++}`); values.push(updateData.invoiceImage); }
+        if ('billId' in updateData) { setClauses.push(`bill_id = $${paramIndex++}`); values.push(updateData.billId); }
+        
+        setClauses.push(`updated_at = NOW()`);
+        
+        const setClause = setClauses.join(', ');
+        values.push(id, restaurantId);
+        
+        const result = await pool.query(`
+          UPDATE procurement SET ${setClause}
+          WHERE id = $${paramIndex++} AND restaurant_id = $${paramIndex}
           RETURNING id, restaurant_id as "restaurantId", type, title, description, supplier, category,
             quantity, unit_price as "unitPrice", total_cost as "totalCost", status, priority,
             requested_by as "requestedBy", approved_by as "approvedBy", branch_id as "branchId",
@@ -1377,8 +1386,8 @@ export class DatabaseStorage implements IStorage {
             notes, invoice_image as "invoiceImage", bill_id as "billId",
             NULL as "inventoryItemId", NULL as "originalProcurementId",
             created_at as "createdAt", updated_at as "updatedAt"
-        `);
-        return (result as any).rows?.[0];
+        `, values);
+        return result.rows?.[0];
       }
       throw error;
     }
