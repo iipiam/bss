@@ -650,7 +650,7 @@ export default function Financial() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
-                  <Tooltip formatter={(value) => `${Number(value).toFixed(2)} SAR`} />
+                  <RechartsTooltip formatter={(value: number | string) => `${Number(value).toFixed(2)} SAR`} />
                   <Line type="monotone" dataKey="expenses" stroke="hsl(var(--destructive))" strokeWidth={2} name="Expenses (SAR)" />
                 </LineChart>
               </ResponsiveContainer>
@@ -1023,7 +1023,7 @@ export default function Financial() {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => `${Number(value).toFixed(2)} SAR`} />
+                      <RechartsTooltip formatter={(value: number | string) => `${Number(value).toFixed(2)} SAR`} />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
@@ -1068,7 +1068,6 @@ export default function Financial() {
                 </div>
               </CardContent>
             </Card>
-          </div>
 
           {/* Bills Table */}
           <Card>
