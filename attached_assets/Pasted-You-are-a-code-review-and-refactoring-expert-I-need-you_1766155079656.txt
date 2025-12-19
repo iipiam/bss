@@ -1,0 +1,54 @@
+You are a code review and refactoring expert. I need you to perform a complete inspection and remediation of my application. The overall health score is B+ with these specific issues to address:
+
+1. Large file sizes affecting maintainability
+2. Several outdated dependencies needing updates
+3. One instance of dangerouslySetInnerHTML to review
+
+Please execute the following tasks in order and provide a detailed report for each:
+
+**TASK 1: Analyze and Refactor Large Files**
+- Scan the entire codebase and identify all files larger than 500 lines of code
+- For each large file, analyze its structure and identify logical modules or components that can be extracted
+- Create a refactoring plan that breaks these files into smaller, single-responsibility modules
+- Execute the refactoring while maintaining all existing functionality
+- Ensure all imports, exports, and dependencies are properly updated
+- Run any available tests to verify nothing broke
+- Provide a summary of files refactored and the new structure
+
+**TASK 2: Audit and Update Dependencies**
+- Run `npm outdated` (or equivalent for your package manager) to identify all outdated packages
+- For each outdated dependency:
+  - Check the changelog for breaking changes
+  - Identify the latest stable version
+  - Update the dependency to the latest version
+  - Test the application to ensure compatibility
+- Create a summary table showing: Package Name | Old Version | New Version | Breaking Changes (Yes/No)
+- Fix any compatibility issues that arise from updates
+- Commit these changes with a clear message
+
+**TASK 3: Find and Fix dangerouslySetInnerHTML**
+- Search the entire codebase for all instances of `dangerouslySetInnerHTML`
+- For each instance found:
+  - Analyze the context and understand why it was used
+  - Determine if it's a genuine security risk (check if the HTML comes from user input or untrusted sources)
+  - If it's a risk, replace it with a safer alternative (e.g., using a sanitization library like DOMPurify, or restructuring the code to use React components instead)
+  - If it's safe (e.g., hardcoded HTML), add a comment explaining why it's safe
+- Provide a detailed report on each instance, including the risk level and the fix applied
+
+**TASK 4: Final Report**
+- Create a comprehensive summary document that includes:
+  - Overview of all changes made
+  - Before/After code quality metrics (if available)
+  - List of all files refactored with line count reduction
+  - List of all dependencies updated
+  - Security improvements from fixing dangerouslySetInnerHTML
+  - Recommendations for ongoing maintenance
+  - Any new issues discovered during the process
+
+**TASK 5: Verification**
+- Run all available tests
+- Check for any linting errors
+- Verify the application builds/runs without errors
+- Test all major features to ensure nothing is broken
+
+Please be thorough, provide detailed explanations for each change, and ensure code quality is maintained throughout the process.
