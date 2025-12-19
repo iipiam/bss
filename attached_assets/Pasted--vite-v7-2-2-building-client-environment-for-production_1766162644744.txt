@@ -1,0 +1,37 @@
+
+vite v7.2.2 building client environment for production...
+✓ 0 modules transformed.
+✗ Build failed in 40ms
+error during build:
+[vite:build-html] Failed to resolve /src/main.tsx from /home/BSS/client/index.html
+file: /home/BSS/client/index.html
+    at file:///home/BSS/node_modules/vite/dist/node/chunks/config.js:24536:64
+    at async Promise.all (index 0)
+    at async Object.handler (file:///home/BSS/node_modules/vite/dist/node/chunks/config.js:24633:5)
+    at async transform (file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:21149:16)
+    at async ModuleLoader.addModuleSource (file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:21363:36)
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 129  │ online    │ 0%       │ 18.3mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+ubuntu@ip-172-31-1-112:/home/BSS$ ^C
+ubuntu@ip-172-31-1-112:/home/BSS$ ls -la /home/BSS/client/src/
+total 20
+drwxr-xr-x 5 ubuntu ubuntu 4096 Dec 19 16:42 .
+drwxr-xr-x 4 ubuntu ubuntu 4096 Dec 19 16:42 ..
+drwxr-xr-x 2 ubuntu ubuntu 4096 Dec 19 16:42 assets
+drwxr-xr-x 2 ubuntu ubuntu 4096 Dec 19 16:42 lib
+drwxr-xr-x 2 ubuntu ubuntu 4096 Dec 19 16:42 pages
+ubuntu@ip-172-31-1-112:/home/BSS$ ls -la /home/BSS-backup/dist/
+ls: cannot access '/home/BSS-backup/dist/': No such file or directory
+ubuntu@ip-172-31-1-112:/home/BSS$ cp -r /home/BSS-backup/dist /home/BSS/
+pm2 restart all
+cp: cannot stat '/home/BSS-backup/dist': No such file or directory
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬─
