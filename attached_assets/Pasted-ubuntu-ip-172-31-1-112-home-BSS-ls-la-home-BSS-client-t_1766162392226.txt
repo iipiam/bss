@@ -1,0 +1,70 @@
+ubuntu@ip-172-31-1-112:/home/BSS$ ls -la /home/BSS/client/
+total 16
+drwxr-xr-x  4 ubuntu ubuntu 4096 Dec 19 16:37 .
+drwxr-xr-x 16 ubuntu ubuntu 4096 Dec 19 16:37 ..
+drwxr-xr-x  2 ubuntu ubuntu 4096 Nov 29 20:51 public
+drwxr-xr-x  5 ubuntu ubuntu 4096 Dec 19 16:37 src
+ubuntu@ip-172-31-1-112:/home/BSS$ cd /home/BSS
+git status
+On branch main
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   package-lock.json
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        .config/
+        .env
+        .local/
+        FETCH_HEAD
+        attached_assets/
+        bss-aws-deploy/
+        bss-deploy-update/
+        client/
+        deploy-favicon.sh
+        ecosystem.config.cjs
+        public/
+        regenerate-invoice.cjs
+        rest-express@1.0.0
+        scripts/
+        server/
+        sql/
+        uploads/
+        vite
+
+no changes added to commit (use "git add" and/or "git commit -a")
+ubuntu@ip-172-31-1-112:/home/BSS$ git fetch origin main
+git checkout main
+git reset --hard origin/main
+From https://github.com/iipiam/bss
+ * branch            main       -> FETCH_HEAD
+M       package-lock.json
+Already on 'main'
+HEAD is now at e9cbe80 Add files via upload
+ubuntu@ip-172-31-1-112:/home/BSS$ ls -la client/index.html
+ls: cannot access 'client/index.html': No such file or directory
+ubuntu@ip-172-31-1-112:/home/BSS$ npm run build
+pm2 restart all
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.2.2 building client environment for production...
+✓ 0 modules transformed.
+✗ Build failed in 12ms
+error during build:
+Could not resolve entry module "client/index.html".
+    at getRollupError (file:///home/BSS/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///home/BSS/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at ModuleLoader.loadEntryModule (file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:21597:20)
+    at async Promise.all (index 0)
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 83   │ online    │ 0%       │ 18.2mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+ubuntu@ip-172-31-1-112:/home/BSS$
