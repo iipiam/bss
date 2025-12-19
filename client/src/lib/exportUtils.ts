@@ -2,22 +2,71 @@ import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import { format } from "date-fns";
 
-interface ExportColumn {
+// Type definitions
+interface ExportColumn<T = Record<string, any>> {
   header: string;
-  accessor: string | ((row: any) => string | number);
+  accessor: string | ((row: T) => string | number);
   width?: number;
 }
 
-export function exportToPDF(
+interface ExportResult {
+  success: boolean;
+  fileName?: string;
+  error?: string;
+}
+
+// Helper function to sanitize file names
+const sanitizeFileName = (title: string): string => {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_|_$/g, "");
+};
+
+// Helper function to validate sheet name length
+const getValidSheetName = (name: string): string => {
+  const maxLength = 31;
+  if (name.length > maxLength) {
+    console.warn(
+      `Sheet name "${name}" exceeds 31 characters, truncating...`
+    );
+    return name.substring(0, maxLength);
+  }
+  return name;
+};
+
+/**
+ * Export data to PDF format with customizable columns and styling
+ * @param title - The title of the PDF document
+ * @param data - Array of data objects to export
+ * @param columns - Column configuration array
+ * @param options - Optional configuration (subtitle, orientation)
+ * @returns Export result with success status and file name or error
+ */
+export function exportToPDF<T = Record<string, any>>(
   title: string,
-  data: any[],
-  columns: ExportColumn[],
+  data: T[],
+  columns: ExportColumn<T>[],
   options?: {
     subtitle?: string;
     orientation?: "portrait" | "landscape";
   }
-) {
+): ExportResult {
   try {
+    // Validate input data
+    if (!data || data.length === 0) {
+      return { success: false, error: "No data provided for PDF export" };
+    }
+
+    if (!columns || columns.length === 0) {
+      return { success: false, error: "No columns configured for PDF export" };
+    }
+
+    if (!title || title.trim().length === 0) {
+      return { success: false, error: "PDF title is required" };
+    }
+
     const doc = new jsPDF({
       orientation: options?.orientation || "landscape",
       unit: "mm",
@@ -36,7 +85,7 @@ export function exportToPDF(
     yPosition += 10;
 
     // Add subtitle if provided
-    if (options?.subtitle) {
+    if (options?.subtitle && options.subtitle.trim().length > 0) {
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       doc.text(options.subtitle, margin, yPosition);
@@ -46,12 +95,23 @@ export function exportToPDF(
     // Add export date
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text(`Exported: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, margin, yPosition);
+    doc.text(
+      `Exported: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
+      margin,
+      yPosition
+    );
     yPosition += 10;
 
-    // Calculate column widths
+    // Calculate column widths with validation
     const totalWidth = pageWidth - 2 * margin;
-    const colWidths = columns.map((col) => col.width || totalWidth / columns.length);
+    let colWidths = columns.map((col) => col.width || totalWidth / columns.length);
+
+    // Validate and normalize widths if they exceed total width
+    const totalSpecified = colWidths.reduce((a, b) => a + b, 0);
+    if (totalSpecified > totalWidth) {
+      console.warn("Column widths exceed page width, normalizing...");
+      colWidths = colWidths.map((w) => (w / totalSpecified) * totalWidth);
+    }
 
     // Draw table header
     doc.setFillColor(240, 240, 240);
@@ -102,14 +162,24 @@ export function exportToPDF(
 
       xPosition = margin;
       columns.forEach((col, i) => {
-        const value =
-          typeof col.accessor === "function"
-            ? col.accessor(row)
-            : row[col.accessor];
+        let value: string | number = "";
+
+        try {
+          value =
+            typeof col.accessor === "function"
+              ? col.accessor(row)
+              : (row as any)[col.accessor] ?? "";
+        } catch (e) {
+          console.warn(`Failed to access column ${col.header}:`, e);
+          value = "";
+        }
+
         const text = value?.toString() || "";
-        doc.text(text, xPosition + 2, yPosition + 5, {
-          maxWidth: colWidths[i] - 4,
-        });
+
+        // Handle text overflow with line wrapping
+        const lines = doc.splitTextToSize(text, colWidths[i] - 4);
+        doc.text(lines, xPosition + 2, yPosition + 5);
+
         xPosition += colWidths[i];
       });
 
@@ -128,8 +198,9 @@ export function exportToPDF(
       );
     }
 
-    // Save the PDF
-    const fileName = `${title.toLowerCase().replace(/\s+/g, "_")}_${format(
+    // Save the PDF with sanitized filename
+    const sanitizedTitle = sanitizeFileName(title);
+    const fileName = `${sanitizedTitle}_${format(
       new Date(),
       "yyyyMMdd_HHmmss"
     )}.pdf`;
@@ -137,30 +208,49 @@ export function exportToPDF(
 
     return { success: true, fileName };
   } catch (error) {
-    console.error("PDF export error:", error);
-    return { success: false, error };
+    const errorMessage =
+      error instanceof Error ? error.message : String(error);
+    console.error("PDF export error:", errorMessage);
+    return { success: false, error: errorMessage };
   }
 }
 
-export function exportToExcel(
+/**
+ * Export data to Excel format with auto-sized columns
+ * @param title - The title/sheet name for the Excel file
+ * @param data - Array of data objects to export
+ * @param fileName - Optional custom file name (without extension)
+ * @param options - Optional configuration (sheetName, headers)
+ * @returns Export result with success status and file name or error
+ */
+export function exportToExcel<T = Record<string, any>>(
   title: string,
-  data: any[],
+  data: T[],
   fileName?: string,
   options?: {
     sheetName?: string;
     headers?: string[];
   }
-) {
+): ExportResult {
   try {
+    // Validate input data
+    if (!data || data.length === 0) {
+      return { success: false, error: "No data provided for Excel export" };
+    }
+
+    if (!title || title.trim().length === 0) {
+      return { success: false, error: "Excel title is required" };
+    }
+
     // Create worksheet from data
     const ws = XLSX.utils.json_to_sheet(data);
 
     // Auto-size columns
-    const colWidths = Object.keys(data[0] || {}).map((key) => {
+    const colWidths = Object.keys(data[0] as Record<string, any>).map((key) => {
       const maxLength = Math.max(
         key.length,
         ...data.map((row) => {
-          const value = row[key];
+          const value = (row as any)[key];
           return value?.toString().length || 0;
         })
       );
@@ -170,26 +260,34 @@ export function exportToExcel(
 
     // Create workbook and add worksheet
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(
-      wb,
-      ws,
+    const sheetName = getValidSheetName(
       options?.sheetName || title.substring(0, 31)
     );
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
 
-    // Generate file name
-    const finalFileName =
-      fileName ||
-      `${title.toLowerCase().replace(/\s+/g, "_")}_${format(
+    // Generate file name with proper validation
+    let finalFileName = fileName;
+    if (!finalFileName) {
+      const sanitizedTitle = sanitizeFileName(title);
+      finalFileName = `${sanitizedTitle}_${format(
         new Date(),
         "yyyyMMdd_HHmmss"
       )}.xlsx`;
+    } else {
+      // Ensure .xlsx extension
+      if (!finalFileName.endsWith(".xlsx")) {
+        finalFileName = `${finalFileName}.xlsx`;
+      }
+    }
 
     // Write file
     XLSX.writeFile(wb, finalFileName);
 
     return { success: true, fileName: finalFileName };
   } catch (error) {
-    console.error("Excel export error:", error);
-    return { success: false, error };
+    const errorMessage =
+      error instanceof Error ? error.message : String(error);
+    console.error("Excel export error:", errorMessage);
+    return { success: false, error: errorMessage };
   }
 }
