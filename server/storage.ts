@@ -2620,9 +2620,9 @@ export class DatabaseStorage implements IStorage {
     // Get all orders
     const allOrders = await db.select().from(orders).where(eq(orders.restaurantId, restaurantId));
     
-    // Categorize orders by type
-    const dineInOrders = allOrders.filter(o => o.orderType === 'Dine-in' && !o.deliveryAppId);
-    const takeAwayOrders = allOrders.filter(o => o.orderType === 'Take-away' && !o.deliveryAppId);
+    // Categorize orders by type (case-insensitive comparison)
+    const dineInOrders = allOrders.filter(o => o.orderType?.toLowerCase() === 'dine-in' && !o.deliveryAppId);
+    const takeAwayOrders = allOrders.filter(o => o.orderType?.toLowerCase() === 'take-away' && !o.deliveryAppId);
     const deliveryAppOrders = allOrders.filter(o => o.deliveryAppId !== null);
     
     // Calculate metrics for each category
