@@ -55,6 +55,7 @@ const Reports = lazy(() => import("@/pages/reports"));
 const Forecasting = lazy(() => import("@/pages/forecasting"));
 const Analysis = lazy(() => import("@/pages/analysis"));
 const Profitability = lazy(() => import("@/pages/profitability"));
+const MenuProfitability = lazy(() => import("@/pages/menu-profitability"));
 const Financial = lazy(() => import("@/pages/financial"));
 const Invoices = lazy(() => import("@/pages/invoices"));
 const VatReports = lazy(() => import("@/pages/vat-reports"));
@@ -123,6 +124,7 @@ function Router() {
         <Route path="/forecasting" component={Forecasting} />
         <Route path="/analysis" component={Analysis} />
         <Route path="/profitability" component={Profitability} />
+        <Route path="/menu-profitability" component={MenuProfitability} />
         <Route path="/financial" component={Financial} />
         <Route path="/invoices" component={Invoices} />
         <Route path="/vat-reports" component={VatReports} />
