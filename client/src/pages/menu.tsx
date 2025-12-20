@@ -431,7 +431,8 @@ export default function Menu() {
     
     // basePrice is stored as original (before discount), so calculate original VAT-inclusive price
     const basePrice = parseFloat(item.basePrice || "0");
-    const originalPrice = basePrice * 1.15; // Add 15% VAT to get original VAT-inclusive price
+    // Fix floating-point precision: round to 2 decimal places
+    const originalPrice = Math.round(basePrice * 1.15 * 100) / 100;
     
     form.reset({
       name: item.name,
