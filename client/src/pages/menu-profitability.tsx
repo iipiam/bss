@@ -6,12 +6,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle, HelpCircle, RefreshCw, Download, DollarSign, Percent, Package } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle, HelpCircle, RefreshCw, Download, FileText, DollarSign, Percent, Package } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { exportToPDF } from "@/lib/exportUtils";
 
 interface MenuProfitabilityItem {
   menuItemId: string;
@@ -101,6 +102,44 @@ export default function MenuProfitability() {
     });
   };
 
+  const handleExportPDF = () => {
+    if (!data) return;
+    
+    const columns = [
+      { header: "Menu Item", accessor: "menuItemName", width: 50 },
+      { header: "Category", accessor: (row: MenuProfitabilityItem) => row.category || "Uncategorized", width: 35 },
+      { header: "Price (SAR)", accessor: (row: MenuProfitabilityItem) => row.sellingPrice.toFixed(2), width: 25 },
+      { header: "Cost (SAR)", accessor: (row: MenuProfitabilityItem) => row.actualCost.toFixed(2), width: 25 },
+      { header: "Profit (SAR)", accessor: (row: MenuProfitabilityItem) => row.profitMargin.toFixed(2), width: 25 },
+      { header: "Margin %", accessor: (row: MenuProfitabilityItem) => row.profitMarginPercent.toFixed(1) + "%", width: 20 },
+      { header: "Status", accessor: "status", width: 25 },
+      { header: "Cost Source", accessor: "costSource", width: 25 },
+    ];
+    
+    const result = exportToPDF(
+      "Menu Profitability Analysis",
+      data.allItems,
+      columns,
+      {
+        subtitle: `Summary: ${data.summary.lossItems} Loss Items | ${data.summary.lowMarginItems} Low Margin | ${data.summary.okItems} Profitable | Total Loss/Unit: SAR ${data.summary.totalPotentialLossPerUnit.toFixed(2)}`,
+        orientation: "landscape"
+      }
+    );
+    
+    if (result.success) {
+      toast({
+        title: "Export Complete",
+        description: "Menu profitability report downloaded as PDF",
+      });
+    } else {
+      toast({
+        title: "Export Failed",
+        description: result.error || "Failed to generate PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-6 space-y-6">
@@ -155,6 +194,10 @@ export default function MenuProfitability() {
           <Button variant="outline" onClick={handleRefresh} data-testid="button-refresh">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
+          </Button>
+          <Button variant="outline" onClick={handleExportPDF} data-testid="button-export-pdf">
+            <FileText className="h-4 w-4 mr-2" />
+            Export PDF
           </Button>
           <Button onClick={handleExport} data-testid="button-export">
             <Download className="h-4 w-4 mr-2" />
