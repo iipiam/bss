@@ -769,6 +769,9 @@ export class DatabaseStorage implements IStorage {
       let minServings = Infinity;
       const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
       
+      // CRITICAL: Apply portion size multiplier (e.g., 0.25 for 1/4 portion)
+      const portionMultiplier = parseFloat(String(menuItem.portionSize || '1.00')) || 1;
+      
       for (const ingredient of ingredients as any[]) {
         if (!ingredient || !ingredient.inventoryItemId) continue;
         
@@ -780,7 +783,9 @@ export class DatabaseStorage implements IStorage {
         }
         
         const availableQuantity = parseFloat(String(inventoryItem.quantity || '0')) || 0;
-        const requiredQuantity = parseFloat(String(ingredient.quantity || '0')) || 0;
+        const baseRequiredQuantity = parseFloat(String(ingredient.quantity || '0')) || 0;
+        // Apply portion size multiplier to get actual required quantity per serving
+        const requiredQuantity = baseRequiredQuantity * portionMultiplier;
         
         if (requiredQuantity > 0 && !isNaN(availableQuantity)) {
           const possibleServings = Math.floor(availableQuantity / requiredQuantity);
