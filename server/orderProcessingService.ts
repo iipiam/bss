@@ -250,7 +250,6 @@ export class OrderProcessingService {
     // Prepare batch operations
     const transactions: InsertInventoryTransaction[] = [];
     const updates: Array<{ id: string; quantity: string; price: string; status: string }> = [];
-    const deletes: string[] = [];
 
     for (const [inventoryItemId, requirement] of Array.from(stockRequirements.entries())) {
       // OPTIMIZATION: Use cached availableQuantity instead of re-querying
@@ -275,24 +274,32 @@ export class OrderProcessingService {
         quantityChange: (-requirement.requiredQuantity).toString(),
         quantityBefore: quantityBefore.toString(),
         quantityAfter: quantityAfter.toString(),
-        notes: quantityAfter === 0 ? `Deducted for order - Item depleted and removed` : `Deducted for order`,
+        notes: quantityAfter === 0 ? `Deducted for order - Item depleted` : `Deducted for order`,
         branchId: branchId || undefined,
       });
 
+      // Calculate new price: maintain constant unit price by deducting proportionally
+      // newPrice = quantityAfter × unitPrice (will be 0 when depleted - correct for total value)
+      const newPrice = quantityAfter * requirement.unitPrice;
+      
+      // Determine status based on quantity
+      // Note: We update to "Depleted" status instead of deleting to preserve FK integrity
+      // Unit price history is preserved in inventory_transactions for reorder calculations
+      let status: string;
       if (quantityAfter === 0) {
-        deletes.push(inventoryItemId);
+        status = "Depleted";
+      } else if (quantityAfter < 10) {
+        status = "Low Stock";
       } else {
-        // Calculate new price: maintain constant unit price by deducting proportionally
-        // newPrice = quantityAfter × unitPrice
-        const newPrice = quantityAfter * requirement.unitPrice;
-        
-        updates.push({
-          id: inventoryItemId,
-          quantity: quantityAfter.toString(),
-          price: newPrice.toFixed(2),
-          status: quantityAfter < 10 ? "Low Stock" : "In Stock",
-        });
+        status = "In Stock";
       }
+      
+      updates.push({
+        id: inventoryItemId,
+        quantity: quantityAfter.toString(),
+        price: newPrice.toFixed(2),
+        status,
+      });
     }
 
     // OPTIMIZATION: Batch insert all transaction records
@@ -301,19 +308,18 @@ export class OrderProcessingService {
     }
 
     // Execute updates (still need individual updates due to different values)
+    // Note: We update items to zero quantity with "Depleted" status instead of deleting
+    // This preserves the foreign key relationship with inventory_transactions
     for (const update of updates) {
       await tx
         .update(inventoryItems)
         .set({ quantity: update.quantity, price: update.price, status: update.status })
         .where(eq(inventoryItems.id, update.id));
     }
-
-    // OPTIMIZATION: Batch delete all depleted items at once
-    if (deletes.length > 0) {
-      await tx
-        .delete(inventoryItems)
-        .where(inArray(inventoryItems.id, deletes));
-      console.log(`[INVENTORY] Deleted ${deletes.length} depleted items`);
+    
+    const depletedCount = updates.filter(u => u.status === "Depleted").length;
+    if (depletedCount > 0) {
+      console.log(`[INVENTORY] Marked ${depletedCount} items as Depleted (quantity=0)`);
     }
   }
 
