@@ -2081,6 +2081,102 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Menu Item Profitability Analysis - diagnose which items are losing money
+  app.get("/api/analytics/menu-profitability", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      
+      // Get all menu items with their recipes
+      const allMenuItems = await storage.getMenuItems(restaurantId);
+      const allRecipes = await storage.getRecipes(restaurantId);
+      const allInventory = await storage.getInventoryItems(restaurantId);
+      
+      // Create lookup maps
+      const recipeMap = new Map(allRecipes.map(r => [r.id, r]));
+      const inventoryMap = new Map(allInventory.map(inv => [inv.id, inv]));
+      
+      // Calculate profitability for each menu item
+      const profitabilityReport = allMenuItems.map(menuItem => {
+        const basePrice = parseFloat(menuItem.basePrice) || 0;
+        const portionSize = parseFloat(menuItem.portionSize || "1") || 1;
+        
+        let recipeCost = 0;
+        let costSource = "none";
+        let linkedName = "";
+        
+        // Check if linked to recipe
+        if (menuItem.recipeId) {
+          const recipe = recipeMap.get(menuItem.recipeId);
+          if (recipe) {
+            recipeCost = parseFloat(recipe.cost) || 0;
+            costSource = "recipe";
+            linkedName = recipe.name;
+          }
+        }
+        // Check if linked to inventory
+        else if (menuItem.inventoryItemId) {
+          const inventory = inventoryMap.get(menuItem.inventoryItemId);
+          if (inventory) {
+            const unitPrice = parseFloat(inventory.unitPrice || "0") || 
+                             (parseFloat(inventory.price || "0") / (parseFloat(inventory.quantity || "1") || 1));
+            recipeCost = unitPrice;
+            costSource = "inventory";
+            linkedName = inventory.name;
+          }
+        }
+        
+        const actualCost = recipeCost * portionSize;
+        const profitMargin = basePrice - actualCost;
+        const profitMarginPercent = basePrice > 0 ? (profitMargin / basePrice) * 100 : 0;
+        
+        return {
+          menuItemId: menuItem.id,
+          menuItemName: menuItem.name,
+          category: menuItem.category,
+          sellingPrice: basePrice,
+          portionSize: portionSize,
+          costSource: costSource,
+          linkedTo: linkedName,
+          unitCost: recipeCost,
+          actualCost: actualCost,
+          profitMargin: profitMargin,
+          profitMarginPercent: profitMarginPercent,
+          status: profitMargin < 0 ? "LOSS" : profitMargin < basePrice * 0.2 ? "LOW_MARGIN" : "OK"
+        };
+      });
+      
+      // Sort by profit margin (worst first)
+      profitabilityReport.sort((a, b) => a.profitMargin - b.profitMargin);
+      
+      // Summary statistics
+      const lossItems = profitabilityReport.filter(item => item.status === "LOSS");
+      const lowMarginItems = profitabilityReport.filter(item => item.status === "LOW_MARGIN");
+      const okItems = profitabilityReport.filter(item => item.status === "OK");
+      const unlinkedItems = profitabilityReport.filter(item => item.costSource === "none");
+      
+      const totalPotentialLoss = lossItems.reduce((sum, item) => sum + Math.abs(item.profitMargin), 0);
+      
+      res.json({
+        summary: {
+          totalMenuItems: profitabilityReport.length,
+          lossItems: lossItems.length,
+          lowMarginItems: lowMarginItems.length,
+          okItems: okItems.length,
+          unlinkedItems: unlinkedItems.length,
+          totalPotentialLossPerUnit: totalPotentialLoss
+        },
+        lossLeaders: lossItems,
+        lowMargin: lowMarginItems,
+        profitable: okItems,
+        unlinked: unlinkedItems,
+        allItems: profitabilityReport
+      });
+    } catch (error) {
+      console.error("[ANALYTICS] Menu profitability error:", error);
+      res.status(500).json({ error: "Failed to calculate menu profitability" });
+    }
+  });
+
   // Investors
   app.get("/api/investors", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
     try {
