@@ -4529,3 +4529,24 @@ export class DatabaseStorage implements IStorage {
 }
 
 export const storage = new DatabaseStorage();
+
+// Run database migrations for missing columns on startup
+(async function runMigrations() {
+  try {
+    // Add inventory_item_id and original_procurement_id columns to procurement table if missing
+    await pool.query(`
+      ALTER TABLE procurement 
+      ADD COLUMN IF NOT EXISTS inventory_item_id VARCHAR(255)
+    `);
+    await pool.query(`
+      ALTER TABLE procurement 
+      ADD COLUMN IF NOT EXISTS original_procurement_id VARCHAR(255)
+    `);
+    console.log('[Migration] Procurement columns verified/added: inventory_item_id, original_procurement_id');
+  } catch (error: any) {
+    // Only log if not a duplicate column error (which means columns already exist)
+    if (!error.message?.includes('already exists')) {
+      console.error('[Migration] Error adding procurement columns:', error.message);
+    }
+  }
+})();
