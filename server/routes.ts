@@ -3513,8 +3513,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       
       console.log(`[PROCUREMENT] Creating reorder with inventoryItemId: ${originalProcurement.inventoryItemId}, originalProcurementId: ${originalProcurement.id}`);
       
-      const newProcurement = await storage.createProcurement(reorderData as any);
-      console.log(`[PROCUREMENT] Reorder created with id: ${newProcurement.id}, inventoryItemId: ${newProcurement.inventoryItemId}`);
+      const newProcurement = await storage.createProcurement(reorderData);
+      console.log(`[PROCUREMENT] Reorder created with id: ${newProcurement.id}, inventoryItemId: ${newProcurement.inventoryItemId}, originalProcurementId: ${newProcurement.originalProcurementId}`);
       
       // Create an invoice for the reorder
       const settings = await storage.getSettings(restaurantId);
