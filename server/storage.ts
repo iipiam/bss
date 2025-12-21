@@ -595,8 +595,46 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem> {
-    const [created] = await db.insert(inventoryItems).values(item).returning();
-    return created;
+    try {
+      const [created] = await db.insert(inventoryItems).values(item).returning();
+      return created;
+    } catch (error: any) {
+      if (error.message?.includes('unit_price')) {
+        console.log('[Inventory] createInventoryItem: unit_price column not found, using fallback insert');
+        
+        // Calculate unit price from price and quantity
+        const quantity = parseFloat(item.quantity || '0');
+        const price = parseFloat(item.price || '0');
+        const calculatedUnitPrice = quantity > 0 ? (price / quantity).toFixed(2) : '0';
+        
+        // Insert without unit_price column
+        const newId = crypto.randomUUID();
+        const result = await db.execute(sql`
+          INSERT INTO inventory_items (
+            id, restaurant_id, name, category, quantity, unit, 
+            reference_quantity, price, supplier, status, branch_id, 
+            sort_order, expiration_days, purchase_date
+          ) VALUES (
+            ${newId}, ${item.restaurantId}, ${item.name}, ${item.category || null},
+            ${item.quantity || '0'}, ${item.unit || null}, ${item.referenceQuantity || null}, 
+            ${item.price || '0'}, ${item.supplier || null}, ${item.status || 'in_stock'}, 
+            ${item.branchId || null}, ${item.sortOrder || 0}, ${item.expirationDays || null}, 
+            ${item.purchaseDate || null}
+          )
+          RETURNING id, restaurant_id as "restaurantId", name, category, quantity, unit, 
+            reference_quantity as "referenceQuantity", price, supplier, status, 
+            branch_id as "branchId", sort_order as "sortOrder", 
+            expiration_days as "expirationDays", purchase_date as "purchaseDate"
+        `);
+        
+        const created = (result as any).rows?.[0];
+        if (created) {
+          created.unitPrice = calculatedUnitPrice;
+        }
+        return created;
+      }
+      throw error;
+    }
   }
 
   async updateInventoryItem(id: string, restaurantId: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined> {
