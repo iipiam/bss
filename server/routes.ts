@@ -3307,10 +3307,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             const addQty = parseFloat(String(safeData.quantity ?? existingProcurement.quantity ?? 0)) || 0;
             const newQty = currentQty + addQty;
             
+            const procUnitPrice = safeData.unitPrice ?? existingProcurement.unitPrice ?? "0";
+            const newTotalPrice = (newQty * parseFloat(String(procUnitPrice))).toFixed(2);
+            
             await storage.updateInventoryItem(newInventoryLink, restaurantId, {
               quantity: String(newQty),
+              price: newTotalPrice,
             });
-            console.log(`[PROCUREMENT] Status completed with inventory link - added ${addQty} to inventory ${inventoryItem.name} (new qty: ${newQty})`);
+            console.log(`[PROCUREMENT] Status completed with inventory link - added ${addQty} to inventory ${inventoryItem.name} (new qty: ${newQty}, unitPrice: ${procUnitPrice})`);
           } else {
             console.warn(`[PROCUREMENT] Inventory item ${newInventoryLink} not found`);
           }
@@ -3327,10 +3331,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             const addQty = parseFloat(String(safeData.quantity ?? existingProcurement.quantity ?? 0)) || 0;
             const newQty = currentQty + addQty;
             
+            const procUnitPrice2 = safeData.unitPrice ?? existingProcurement.unitPrice ?? "0";
+            const newTotalPrice2 = (newQty * parseFloat(String(procUnitPrice2))).toFixed(2);
+            
             await storage.updateInventoryItem(newInventoryLink, restaurantId, {
               quantity: String(newQty),
+              price: newTotalPrice2,
             });
-            console.log(`[PROCUREMENT] Newly linked completed procurement - added ${addQty} to inventory ${inventoryItem.name} (new qty: ${newQty})`);
+            console.log(`[PROCUREMENT] Newly linked completed procurement - added ${addQty} to inventory ${inventoryItem.name} (new qty: ${newQty}, unitPrice: ${procUnitPrice2})`);
           } else {
             console.warn(`[PROCUREMENT] Newly linked inventory item ${newInventoryLink} not found`);
           }
@@ -3350,10 +3358,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             const addQty = parseFloat(String(safeData.quantity ?? existingProcurement.quantity ?? 0)) || 0;
             const newQty = currentQty + addQty;
             
+            const procUnitPrice3 = safeData.unitPrice ?? existingProcurement.unitPrice ?? "0";
+            const newTotalPrice3 = (newQty * parseFloat(String(procUnitPrice3))).toFixed(2);
+            
             await storage.updateInventoryItem(existingProcurement.inventoryItemId, restaurantId, {
               quantity: String(newQty),
+              price: newTotalPrice3,
             });
-            console.log(`[PROCUREMENT] Reorder received - added ${addQty} to inventory ${inventoryItem.name} (new qty: ${newQty})`);
+            console.log(`[PROCUREMENT] Reorder received - added ${addQty} to inventory ${inventoryItem.name} (new qty: ${newQty}, unitPrice: ${procUnitPrice3})`);
           } else {
             console.warn(`[PROCUREMENT] Reorder inventory item ${existingProcurement.inventoryItemId} not found`);
           }
@@ -3371,10 +3383,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             const addQty = parseFloat(String(safeData.quantity ?? existingProcurement.quantity ?? 0)) || 0;
             const newQty = currentQty + addQty;
             
+            const procUnitPrice4 = safeData.unitPrice ?? existingProcurement.unitPrice ?? "0";
+            const newTotalPrice4 = (newQty * parseFloat(String(procUnitPrice4))).toFixed(2);
+            
             await storage.updateInventoryItem(existingProcurement.inventoryItemId!, restaurantId, {
               quantity: String(newQty),
+              price: newTotalPrice4,
             });
-            console.log(`[PROCUREMENT] Linked inventory updated - added ${addQty} to inventory ${inventoryItem.name} (new qty: ${newQty})`);
+            console.log(`[PROCUREMENT] Linked inventory updated - added ${addQty} to inventory ${inventoryItem.name} (new qty: ${newQty}, unitPrice: ${procUnitPrice4})`);
           } else {
             console.warn(`[PROCUREMENT] Linked inventory item ${existingProcurement.inventoryItemId} not found`);
           }
@@ -3525,10 +3541,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             const addQty = parsedQuantity;
             const newQty = currentQty + addQty;
             
+            const newTotalPrice5 = (newQty * parsedUnitPrice).toFixed(2);
+            
             await storage.updateInventoryItem(originalProcurement.inventoryItemId, restaurantId, {
               quantity: String(newQty),
+              price: newTotalPrice5,
             });
-            console.log(`[PROCUREMENT] Reorder completed at creation - added ${addQty} to inventory ${inventoryItem.name} (was: ${currentQty}, now: ${newQty})`);
+            console.log(`[PROCUREMENT] Reorder completed at creation - added ${addQty} to inventory ${inventoryItem.name} (was: ${currentQty}, now: ${newQty}, unitPrice: ${parsedUnitPrice})`);
           } else {
             console.warn(`[PROCUREMENT] Reorder inventory item ${originalProcurement.inventoryItemId} not found`);
           }
