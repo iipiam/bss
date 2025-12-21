@@ -1226,16 +1226,16 @@ export class DatabaseStorage implements IStorage {
       return await db.select().from(procurement).where(and(...conditions));
     } catch (error: any) {
       // Fallback if new columns (inventory_item_id, original_procurement_id) don't exist yet
-      if (error.message?.includes('inventory_item_id') || error.message?.includes('original_procurement_id')) {
+      if (error.message?.includes('inventory_item_id') || error.message?.includes('original_procurement_id') || error.message?.includes('unit')) {
         console.log('[Procurement] New columns not found, using fallback query (add columns with ALTER TABLE)');
         // Build SQL with template literals for proper parameter handling
-        // Note: Returns NULL for inventoryItemId/originalProcurementId for backward compatibility
+        // Note: Returns NULL for inventoryItemId/originalProcurementId/unit for backward compatibility
         const baseQuery = sql`SELECT id, restaurant_id as "restaurantId", type, title, description, supplier, category, 
           quantity, unit_price as "unitPrice", total_cost as "totalCost", status, priority, 
           requested_by as "requestedBy", approved_by as "approvedBy", branch_id as "branchId", 
           order_date as "orderDate", expected_delivery as "expectedDelivery", actual_delivery as "actualDelivery", 
           notes, invoice_image as "invoiceImage", bill_id as "billId", 
-          NULL as "inventoryItemId", NULL as "originalProcurementId",
+          NULL as "inventoryItemId", NULL as "originalProcurementId", NULL as "unit",
           created_at as "createdAt", updated_at as "updatedAt"
           FROM procurement WHERE restaurant_id = ${filter.restaurantId}`;
         
@@ -1263,15 +1263,15 @@ export class DatabaseStorage implements IStorage {
         .where(and(eq(procurement.id, id), eq(procurement.restaurantId, restaurantId)));
       return item;
     } catch (error: any) {
-      if (error.message?.includes('inventory_item_id') || error.message?.includes('original_procurement_id')) {
+      if (error.message?.includes('inventory_item_id') || error.message?.includes('original_procurement_id') || error.message?.includes('unit')) {
         console.log('[Procurement] getProcurement: New columns not found, using fallback query (add columns with ALTER TABLE)');
-        // Note: Returns NULL for inventoryItemId/originalProcurementId for backward compatibility
+        // Note: Returns NULL for inventoryItemId/originalProcurementId/unit for backward compatibility
         const result = await db.execute(sql`SELECT id, restaurant_id as "restaurantId", type, title, description, supplier, category, 
           quantity, unit_price as "unitPrice", total_cost as "totalCost", status, priority, 
           requested_by as "requestedBy", approved_by as "approvedBy", branch_id as "branchId", 
           order_date as "orderDate", expected_delivery as "expectedDelivery", actual_delivery as "actualDelivery", 
           notes, invoice_image as "invoiceImage", bill_id as "billId", 
-          NULL as "inventoryItemId", NULL as "originalProcurementId",
+          NULL as "inventoryItemId", NULL as "originalProcurementId", NULL as "unit",
           created_at as "createdAt", updated_at as "updatedAt"
           FROM procurement WHERE id = ${id} AND restaurant_id = ${restaurantId}`);
         return (result as any).rows?.[0];
@@ -4533,7 +4533,7 @@ export const storage = new DatabaseStorage();
 // Run database migrations for missing columns on startup
 (async function runMigrations() {
   try {
-    // Add inventory_item_id and original_procurement_id columns to procurement table if missing
+    // Add inventory_item_id, original_procurement_id, and unit columns to procurement table if missing
     await pool.query(`
       ALTER TABLE procurement 
       ADD COLUMN IF NOT EXISTS inventory_item_id VARCHAR(255)
@@ -4542,7 +4542,11 @@ export const storage = new DatabaseStorage();
       ALTER TABLE procurement 
       ADD COLUMN IF NOT EXISTS original_procurement_id VARCHAR(255)
     `);
-    console.log('[Migration] Procurement columns verified/added: inventory_item_id, original_procurement_id');
+    await pool.query(`
+      ALTER TABLE procurement 
+      ADD COLUMN IF NOT EXISTS unit TEXT
+    `);
+    console.log('[Migration] Procurement columns verified/added: inventory_item_id, original_procurement_id, unit');
   } catch (error: any) {
     // Only log if not a duplicate column error (which means columns already exist)
     if (!error.message?.includes('already exists')) {
