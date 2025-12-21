@@ -120,6 +120,7 @@ import {
   invoiceZatcaStatus,
   shopFiles,
   companyFiles,
+  inventoryTransactions,
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, gte, lte, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
@@ -674,6 +675,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteInventoryItem(id: string, restaurantId: string): Promise<boolean> {
+    // First delete related inventory transactions to avoid FK constraint violation
+    await db.delete(inventoryTransactions)
+      .where(and(eq(inventoryTransactions.inventoryItemId, id), eq(inventoryTransactions.restaurantId, restaurantId)));
+    
     const result = await db.delete(inventoryItems)
       .where(and(eq(inventoryItems.id, id), eq(inventoryItems.restaurantId, restaurantId)));
     return result.rowCount !== null && result.rowCount > 0;
