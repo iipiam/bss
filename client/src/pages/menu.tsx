@@ -141,7 +141,12 @@ export default function Menu() {
   const selectedRecipe = recipes.find(r => r.id === selectedRecipeId && selectedRecipeId !== "none");
   const portionMultiplier = parseFloat(form.watch("portionSize") || "1.00");
   const recipeStockInfo = selectedRecipe?.ingredients.map(ing => {
-    const inventoryItem = inventoryItems.find(inv => inv.id === ing.inventoryItemId);
+    // First try to find by ID, then fallback to find by name (case-insensitive)
+    let inventoryItem = inventoryItems.find(inv => inv.id === ing.inventoryItemId);
+    if (!inventoryItem && ing.name) {
+      // Fallback: find by name if ID doesn't match (handles cases where inventory was recreated)
+      inventoryItem = inventoryItems.find(inv => inv.name.toLowerCase() === ing.name.toLowerCase());
+    }
     const adjustedQuantity = ing.quantity * portionMultiplier; // Apply portion size
     return {
       ...ing,

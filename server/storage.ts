@@ -769,6 +769,8 @@ export class DatabaseStorage implements IStorage {
     
     // Create lookup maps for O(1) access instead of O(n) find() calls
     const inventoryMap = new Map(inventory.map(item => [item.id, item]));
+    // Create name-based lookup for fallback when ID doesn't match (handles recreated inventory)
+    const inventoryByNameMap = new Map(inventory.map(item => [item.name.toLowerCase(), item]));
     const recipeMap = new Map(allRecipes.map(recipe => [recipe.id, recipe]));
     
     const stock: Record<string, number> = {};
@@ -818,7 +820,11 @@ export class DatabaseStorage implements IStorage {
       for (const ingredient of ingredients as any[]) {
         if (!ingredient || !ingredient.inventoryItemId) continue;
         
-        const inventoryItem = inventoryMap.get(ingredient.inventoryItemId);
+        // First try by ID, then fallback to name (handles recreated inventory items)
+        let inventoryItem = inventoryMap.get(ingredient.inventoryItemId);
+        if (!inventoryItem && ingredient.name) {
+          inventoryItem = inventoryByNameMap.get(ingredient.name.toLowerCase());
+        }
         
         if (!inventoryItem) {
           minServings = 0;
