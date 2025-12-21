@@ -1226,7 +1226,7 @@ export class DatabaseStorage implements IStorage {
       return await db.select().from(procurement).where(and(...conditions));
     } catch (error: any) {
       // Fallback if new columns (inventory_item_id, original_procurement_id) don't exist yet
-      if (error.message?.includes('inventory_item_id') || error.message?.includes('original_procurement_id') || error.message?.includes('unit')) {
+      if (error.message?.includes('column "inventory_item_id"') || error.message?.includes('column "original_procurement_id"') || error.message?.includes('column "unit" does not exist')) {
         console.log('[Procurement] New columns not found, using fallback query (add columns with ALTER TABLE)');
         // Build SQL with template literals for proper parameter handling
         // Note: Returns NULL for inventoryItemId/originalProcurementId/unit for backward compatibility
@@ -1263,7 +1263,7 @@ export class DatabaseStorage implements IStorage {
         .where(and(eq(procurement.id, id), eq(procurement.restaurantId, restaurantId)));
       return item;
     } catch (error: any) {
-      if (error.message?.includes('inventory_item_id') || error.message?.includes('original_procurement_id') || error.message?.includes('unit')) {
+      if (error.message?.includes('column "inventory_item_id"') || error.message?.includes('column "original_procurement_id"') || error.message?.includes('column "unit" does not exist')) {
         console.log('[Procurement] getProcurement: New columns not found, using fallback query (add columns with ALTER TABLE)');
         // Note: Returns NULL for inventoryItemId/originalProcurementId/unit for backward compatibility
         const result = await db.execute(sql`SELECT id, restaurant_id as "restaurantId", type, title, description, supplier, category, 
@@ -1356,7 +1356,7 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return updated;
     } catch (error: any) {
-      if (error.message?.includes('inventory_item_id') || error.message?.includes('original_procurement_id')) {
+      if (error.message?.includes('column "inventory_item_id"') || error.message?.includes('column "original_procurement_id"') || error.message?.includes('column "unit" does not exist')) {
         console.log('[Procurement] updateProcurement: New columns not found, using fallback update');
         // Build dynamic SET clause only for fields that are defined
         const setClauses: string[] = [];
