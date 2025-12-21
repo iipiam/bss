@@ -3296,8 +3296,30 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const newInventoryLink = (safeData as any).inventoryItemId;
       const isNewlyLinking = newInventoryLink && !hasExistingInventory;
       
+      console.log(`[PROCUREMENT] Update check - type:${updatedType}, oldStatus:${oldStatus}, newStatus:${newStatus}, hasExistingInventory:${hasExistingInventory}, newInventoryLink:${newInventoryLink}, isReorder:${!!existingProcurement.originalProcurementId}`);
+      
+      // Handle case: status changes to complete AND user provides inventoryItemId in this request
+      if (updatedType === "inventory" && wasNotComplete && isNowComplete && newInventoryLink) {
+        try {
+          const inventoryItem = await storage.getInventoryItem(newInventoryLink, restaurantId);
+          if (inventoryItem) {
+            const currentQty = parseFloat(String(inventoryItem.quantity)) || 0;
+            const addQty = parseFloat(String(safeData.quantity ?? existingProcurement.quantity ?? 0)) || 0;
+            const newQty = currentQty + addQty;
+            
+            await storage.updateInventoryItem(newInventoryLink, restaurantId, {
+              quantity: String(newQty),
+            });
+            console.log(`[PROCUREMENT] Status completed with inventory link - added ${addQty} to inventory ${inventoryItem.name} (new qty: ${newQty})`);
+          } else {
+            console.warn(`[PROCUREMENT] Inventory item ${newInventoryLink} not found`);
+          }
+        } catch (invError) {
+          console.error("[PROCUREMENT] Failed to update inventory on status change:", invError);
+        }
+      }
       // Handle case: procurement is already completed AND user just linked it to inventory
-      if (updatedType === "inventory" && isAlreadyComplete && isNewlyLinking) {
+      else if (updatedType === "inventory" && isAlreadyComplete && isNewlyLinking) {
         try {
           const inventoryItem = await storage.getInventoryItem(newInventoryLink, restaurantId);
           if (inventoryItem) {
@@ -3467,6 +3489,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const procurementSupplier = supplier !== undefined ? supplier : originalProcurement.supplier;
       
       // Create a new procurement record based on the original with new price/quantity
+      // Include originalProcurementId and inventoryItemId directly in creation to ensure they're saved
       const reorderData = {
         restaurantId,
         type: procurementCategory as "inventory" | "maintenance" | "installation" | "equipment",
@@ -3484,15 +3507,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         notes: `Reorder of procurement ID: ${originalProcurement.id}${parsedExpirationDays ? `. Expiration: ${parsedExpirationDays} days` : ''}`,
         unit: procurementUnit,
         expirationDays: parsedExpirationDays,
-      };
-      
-      const newProcurement = await storage.createProcurement(reorderData);
-      
-      // Link to original and to the same inventory item
-      await storage.updateProcurement(newProcurement.id, restaurantId, {
         originalProcurementId: originalProcurement.id,
         inventoryItemId: originalProcurement.inventoryItemId,
-      } as any);
+      };
+      
+      console.log(`[PROCUREMENT] Creating reorder with inventoryItemId: ${originalProcurement.inventoryItemId}, originalProcurementId: ${originalProcurement.id}`);
+      
+      const newProcurement = await storage.createProcurement(reorderData as any);
+      console.log(`[PROCUREMENT] Reorder created with id: ${newProcurement.id}, inventoryItemId: ${newProcurement.inventoryItemId}`);
       
       // Create an invoice for the reorder
       const settings = await storage.getSettings(restaurantId);
