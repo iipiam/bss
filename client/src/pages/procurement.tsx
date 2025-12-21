@@ -84,6 +84,7 @@ export default function ProcurementPage() {
   // Fetch inventory items for linking procurement to existing inventory
   const { data: inventoryItems = [] } = useQuery<InventoryItem[]>({
     queryKey: ["/api/inventory"],
+    refetchInterval: 5000, // Refresh every 5 seconds to keep stock levels updated
   });
 
   const { data: procurements = [], isLoading } = useQuery<Procurement[]>({

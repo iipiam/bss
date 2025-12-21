@@ -501,6 +501,7 @@ export default function Inventory() {
 
   const { data: inventoryItemsData = [], isLoading } = useQuery<InventoryItem[]>({
     queryKey: ["/api/inventory"],
+    refetchInterval: 5000, // Refresh every 5 seconds to keep stock levels updated across all pages
   });
 
   const { data: addonsData = [], isLoading: isLoadingAddons } = useQuery<Addon[]>({

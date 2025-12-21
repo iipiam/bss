@@ -245,6 +245,7 @@ export default function Recipes() {
 
   const { data: inventoryItems = EMPTY_INVENTORY, isLoading: isLoadingInventory } = useQuery<InventoryItem[]>({
     queryKey: ["/api/inventory"],
+    refetchInterval: 5000, // Refresh every 5 seconds to keep stock levels updated
   });
 
   const createRecipeMutation = useMutation({

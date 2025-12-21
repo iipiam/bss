@@ -117,6 +117,7 @@ export default function Menu() {
 
   const { data: inventoryItems = [] } = useQuery<InventoryItem[]>({
     queryKey: ["/api/inventory"],
+    refetchInterval: 5000, // Refresh every 5 seconds to keep stock levels updated
   });
 
   // Fetch saved custom categories from the database
