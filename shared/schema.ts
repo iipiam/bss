@@ -412,7 +412,8 @@ export const procurement = pgTable("procurement", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const insertProcurementSchema = createInsertSchema(procurement).omit({ id: true, createdAt: true, updatedAt: true, billId: true, inventoryItemId: true, originalProcurementId: true });
+export const insertProcurementSchema = createInsertSchema(procurement).omit({ id: true, createdAt: true, updatedAt: true, billId: true, originalProcurementId: true });
+// Note: inventoryItemId is now allowed in insert to link procurement to existing inventory items
 export type InsertProcurement = z.infer<typeof insertProcurementSchema>;
 export type Procurement = typeof procurement.$inferSelect;
 
