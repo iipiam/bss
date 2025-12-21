@@ -1227,8 +1227,9 @@ export class DatabaseStorage implements IStorage {
     } catch (error: any) {
       // Fallback if new columns (inventory_item_id, original_procurement_id) don't exist yet
       if (error.message?.includes('inventory_item_id') || error.message?.includes('original_procurement_id')) {
-        console.log('[Procurement] New columns not found, using fallback query');
+        console.log('[Procurement] New columns not found, using fallback query (add columns with ALTER TABLE)');
         // Build SQL with template literals for proper parameter handling
+        // Note: Returns NULL for inventoryItemId/originalProcurementId for backward compatibility
         const baseQuery = sql`SELECT id, restaurant_id as "restaurantId", type, title, description, supplier, category, 
           quantity, unit_price as "unitPrice", total_cost as "totalCost", status, priority, 
           requested_by as "requestedBy", approved_by as "approvedBy", branch_id as "branchId", 
@@ -1263,7 +1264,8 @@ export class DatabaseStorage implements IStorage {
       return item;
     } catch (error: any) {
       if (error.message?.includes('inventory_item_id') || error.message?.includes('original_procurement_id')) {
-        console.log('[Procurement] getProcurement: New columns not found, using fallback query');
+        console.log('[Procurement] getProcurement: New columns not found, using fallback query (add columns with ALTER TABLE)');
+        // Note: Returns NULL for inventoryItemId/originalProcurementId for backward compatibility
         const result = await db.execute(sql`SELECT id, restaurant_id as "restaurantId", type, title, description, supplier, category, 
           quantity, unit_price as "unitPrice", total_cost as "totalCost", status, priority, 
           requested_by as "requestedBy", approved_by as "approvedBy", branch_id as "branchId", 
@@ -1337,11 +1339,12 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async updateProcurement(id: string, restaurantId: string, procurementData: Partial<InsertProcurement> & { billId?: string | null }): Promise<Procurement | undefined> {
+  async updateProcurement(id: string, restaurantId: string, procurementData: Partial<InsertProcurement> & { billId?: string | null; inventoryItemId?: string | null; originalProcurementId?: string | null }): Promise<Procurement | undefined> {
     // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
-    const { restaurantId: _, inventoryItemId: _inv, originalProcurementId: _orig, ...safeData } = procurementData as any;
+    // Note: inventoryItemId and originalProcurementId are now allowed for linking
+    const { restaurantId: _, ...safeData } = procurementData as any;
     const updateData = Object.fromEntries(
-      Object.entries(safeData).filter(([key, value]) => value !== undefined || key === 'billId')
+      Object.entries(safeData).filter(([key, value]) => value !== undefined || key === 'billId' || key === 'inventoryItemId')
     );
     if (Object.keys(updateData).length === 0) {
       return this.getProcurement(id, restaurantId);

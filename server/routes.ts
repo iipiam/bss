@@ -3140,10 +3140,24 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const data = insertProcurementSchema.omit({ restaurantId: true }).parse(req.body);
+      
+      // If linking to existing inventory, validate ownership
+      if (data.inventoryItemId) {
+        const existingItem = await storage.getInventoryItem(data.inventoryItemId, restaurantId);
+        if (!existingItem) {
+          return res.status(400).json({ error: "Invalid inventory item selected" });
+        }
+        console.log(`[PROCUREMENT] Linking to existing inventory item: ${existingItem.name} (${data.inventoryItemId})`);
+      }
+      
       let procurement = await storage.createProcurement({ ...data, restaurantId });
       
-      // Auto-create inventory item when procurement type is "inventory" and status is complete
-      if (procurement.type === "inventory" && ["received", "completed"].includes(procurement.status)) {
+      // Auto-create inventory item ONLY when:
+      // 1. Type is "inventory"
+      // 2. Status is complete (received/completed)
+      // 3. No existing inventory item is linked
+      const hasExistingInventoryLink = !!procurement.inventoryItemId;
+      if (procurement.type === "inventory" && ["received", "completed"].includes(procurement.status) && !hasExistingInventoryLink) {
         try {
           const inventoryData = {
             restaurantId,

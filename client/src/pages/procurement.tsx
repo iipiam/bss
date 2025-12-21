@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import type { Procurement, InsertProcurement, Invoice } from "@shared/schema";
+import type { Procurement, InsertProcurement, Invoice, InventoryItem } from "@shared/schema";
 import { insertProcurementSchema } from "@shared/schema";
 
 interface ProcurementInvoice extends Invoice {
@@ -79,6 +79,12 @@ export default function ProcurementPage() {
   const [reorderSupplier, setReorderSupplier] = useState<string>("");
   const [reorderStatus, setReorderStatus] = useState<string>("pending");
   const [reorderTotalPrice, setReorderTotalPrice] = useState<string>("");
+  const [selectedInventoryItemId, setSelectedInventoryItemId] = useState<string>("");
+
+  // Fetch inventory items for linking procurement to existing inventory
+  const { data: inventoryItems = [] } = useQuery<InventoryItem[]>({
+    queryKey: ["/api/inventory"],
+  });
 
   const { data: procurements = [], isLoading } = useQuery<Procurement[]>({
     queryKey: [
@@ -125,6 +131,7 @@ export default function ProcurementPage() {
     expectedDelivery: z.date().optional().nullable(),
     actualDelivery: z.date().optional().nullable(),
     notes: z.string().optional().nullable(),
+    inventoryItemId: z.string().optional().nullable(),
   });
 
   const form = useForm({
@@ -144,8 +151,19 @@ export default function ProcurementPage() {
       approvedBy: "",
       branchId: "",
       notes: "",
+      inventoryItemId: "",
     },
   });
+
+  // Watch the type field to show/hide inventory selector
+  const watchedType = form.watch("type");
+
+  // Clear inventoryItemId when type changes away from "inventory"
+  useEffect(() => {
+    if (watchedType !== "inventory") {
+      form.setValue("inventoryItemId", "");
+    }
+  }, [watchedType, form]);
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertProcurement) => {
@@ -321,7 +339,7 @@ export default function ProcurementPage() {
     const trimmedUnitPrice = typeof data.unitPrice === 'string' ? data.unitPrice.trim() : null;
     const trimmedBranchId = typeof data.branchId === 'string' ? data.branchId.trim() : null;
     const trimmedTotalCost = data.totalCost.trim();
-    const processedData = {
+    const processedData: any = {
       type: data.type,
       title: data.title,
       description: data.description || null,
@@ -338,6 +356,14 @@ export default function ProcurementPage() {
       notes: data.notes || null,
       invoiceImage: invoiceImage,
     };
+    // Include inventoryItemId for linking to existing inventory items (only for type="inventory")
+    // Always send inventoryItemId on edit to ensure it's cleared when type changes
+    if (data.type === "inventory" && data.inventoryItemId) {
+      processedData.inventoryItemId = data.inventoryItemId;
+    } else if (editingItem) {
+      // Explicitly clear inventoryItemId when not type="inventory" or no item selected
+      processedData.inventoryItemId = null;
+    }
     if (editingItem) {
       updateMutation.mutate({ id: editingItem.id, data: processedData });
     } else {
@@ -363,6 +389,7 @@ export default function ProcurementPage() {
       approvedBy: item.approvedBy || "",
       branchId: item.branchId || "",
       notes: item.notes || "",
+      inventoryItemId: item.inventoryItemId || "",
     } as any);
     setIsDialogOpen(true);
   };
@@ -573,6 +600,49 @@ export default function ProcurementPage() {
                     )}
                   />
                 </div>
+
+                {/* Inventory item selector - only show when type is "inventory" */}
+                {watchedType === "inventory" && (
+                  <FormField
+                    control={form.control}
+                    name="inventoryItemId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Link to Existing Inventory (Optional)</FormLabel>
+                        <Select 
+                          onValueChange={(value) => {
+                            field.onChange(value === "new" ? "" : value);
+                            // Auto-fill title and category from selected inventory item
+                            if (value && value !== "new") {
+                              const selectedItem = inventoryItems.find(item => item.id === value);
+                              if (selectedItem) {
+                                form.setValue("title", selectedItem.name);
+                                form.setValue("category", selectedItem.category || "");
+                                form.setValue("supplier", selectedItem.supplier || "");
+                              }
+                            }
+                          }} 
+                          value={field.value || "new"}
+                        >
+                          <FormControl>
+                            <SelectTrigger data-testid="select-inventory-item">
+                              <SelectValue placeholder="Create new inventory item" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="new">+ Create New Inventory Item</SelectItem>
+                            {inventoryItems.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.name} ({item.quantity} {item.unit})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <FormField
                   control={form.control}
