@@ -3291,7 +3291,31 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Only create if no inventory item has been created yet (check inventoryItemId)
       const wasNotComplete = !["received", "completed"].includes(oldStatus);
       const isNowComplete = ["received", "completed"].includes(newStatus);
+      const isAlreadyComplete = ["received", "completed"].includes(oldStatus);
       const hasExistingInventory = !!existingProcurement.inventoryItemId;
+      const newInventoryLink = (safeData as any).inventoryItemId;
+      const isNewlyLinking = newInventoryLink && !hasExistingInventory;
+      
+      // Handle case: procurement is already completed AND user just linked it to inventory
+      if (updatedType === "inventory" && isAlreadyComplete && isNewlyLinking) {
+        try {
+          const inventoryItem = await storage.getInventoryItem(newInventoryLink, restaurantId);
+          if (inventoryItem) {
+            const currentQty = parseFloat(String(inventoryItem.quantity)) || 0;
+            const addQty = parseFloat(String(safeData.quantity ?? existingProcurement.quantity ?? 0)) || 0;
+            const newQty = currentQty + addQty;
+            
+            await storage.updateInventoryItem(newInventoryLink, restaurantId, {
+              quantity: String(newQty),
+            });
+            console.log(`[PROCUREMENT] Newly linked completed procurement - added ${addQty} to inventory ${inventoryItem.name} (new qty: ${newQty})`);
+          } else {
+            console.warn(`[PROCUREMENT] Newly linked inventory item ${newInventoryLink} not found`);
+          }
+        } catch (invError) {
+          console.error("[PROCUREMENT] Failed to update newly linked inventory:", invError);
+        }
+      }
       
       // Handle reorder - when a reorder procurement is received/completed, ADD to existing inventory
       const isReorder = !!existingProcurement.originalProcurementId;
@@ -3313,6 +3337,27 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           }
         } catch (invError) {
           console.error("[PROCUREMENT] Failed to update inventory for reorder:", invError);
+        }
+      }
+      // Handle procurement linked to existing inventory (not a reorder) - ADD to existing inventory
+      else if (updatedType === "inventory" && wasNotComplete && isNowComplete && hasExistingInventory && !isReorder) {
+        try {
+          const inventoryItem = await storage.getInventoryItem(existingProcurement.inventoryItemId!, restaurantId);
+          if (inventoryItem) {
+            const currentQty = parseFloat(String(inventoryItem.quantity)) || 0;
+            // Use updated quantity if provided in this request, otherwise use existing procurement quantity
+            const addQty = parseFloat(String(safeData.quantity ?? existingProcurement.quantity ?? 0)) || 0;
+            const newQty = currentQty + addQty;
+            
+            await storage.updateInventoryItem(existingProcurement.inventoryItemId!, restaurantId, {
+              quantity: String(newQty),
+            });
+            console.log(`[PROCUREMENT] Linked inventory updated - added ${addQty} to inventory ${inventoryItem.name} (new qty: ${newQty})`);
+          } else {
+            console.warn(`[PROCUREMENT] Linked inventory item ${existingProcurement.inventoryItemId} not found`);
+          }
+        } catch (invError) {
+          console.error("[PROCUREMENT] Failed to update linked inventory:", invError);
         }
       }
       // Handle new procurement - create inventory item when first completed
