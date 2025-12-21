@@ -165,6 +165,20 @@ export default function ProcurementPage() {
     }
   }, [watchedType, form]);
 
+  // Watch quantity and totalCost to auto-calculate unitPrice
+  const watchedQuantity = form.watch("quantity");
+  const watchedTotalCost = form.watch("totalCost");
+  
+  useEffect(() => {
+    const quantity = parseFloat(String(watchedQuantity)) || 0;
+    const totalCost = parseFloat(watchedTotalCost || "0") || 0;
+    
+    if (quantity > 0 && totalCost > 0) {
+      const calculatedUnitPrice = (totalCost / quantity).toFixed(2);
+      form.setValue("unitPrice", calculatedUnitPrice);
+    }
+  }, [watchedQuantity, watchedTotalCost, form]);
+
   const createMutation = useMutation({
     mutationFn: async (data: InsertProcurement) => {
       await apiRequest("POST", "/api/procurement", data);
@@ -731,7 +745,14 @@ export default function ProcurementPage() {
                       <FormItem>
                         <FormLabel>Unit Price (SAR)</FormLabel>
                         <FormControl>
-                          <Input placeholder="0.00" {...field} value={field.value || ""} data-testid="input-unit-price" />
+                          <Input 
+                            placeholder="0.00" 
+                            {...field} 
+                            value={field.value || ""} 
+                            readOnly 
+                            className="bg-muted"
+                            data-testid="input-unit-price" 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
