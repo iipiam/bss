@@ -3516,6 +3516,27 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const newProcurement = await storage.createProcurement(reorderData);
       console.log(`[PROCUREMENT] Reorder created with id: ${newProcurement.id}, inventoryItemId: ${newProcurement.inventoryItemId}, originalProcurementId: ${newProcurement.originalProcurementId}`);
       
+      // If reorder is created with completed/received status AND has inventoryItemId, update inventory immediately
+      if (["completed", "received"].includes(procurementStatus) && originalProcurement.inventoryItemId) {
+        try {
+          const inventoryItem = await storage.getInventoryItem(originalProcurement.inventoryItemId, restaurantId);
+          if (inventoryItem) {
+            const currentQty = parseFloat(String(inventoryItem.quantity)) || 0;
+            const addQty = parsedQuantity;
+            const newQty = currentQty + addQty;
+            
+            await storage.updateInventoryItem(originalProcurement.inventoryItemId, restaurantId, {
+              quantity: String(newQty),
+            });
+            console.log(`[PROCUREMENT] Reorder completed at creation - added ${addQty} to inventory ${inventoryItem.name} (was: ${currentQty}, now: ${newQty})`);
+          } else {
+            console.warn(`[PROCUREMENT] Reorder inventory item ${originalProcurement.inventoryItemId} not found`);
+          }
+        } catch (invError) {
+          console.error("[PROCUREMENT] Failed to update inventory on reorder creation:", invError);
+        }
+      }
+      
       // Create an invoice for the reorder
       const settings = await storage.getSettings(restaurantId);
       const branch = originalProcurement.branchId ? await storage.getBranch(originalProcurement.branchId, restaurantId) : null;
