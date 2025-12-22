@@ -819,19 +819,19 @@ export default function PrinterSettings() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Printer className="h-5 w-5" />
-              Invoice Preview (Simulation)
+              ZATCA-Compliant Invoice Preview (Simulation)
             </DialogTitle>
             <DialogDescription>
-              This is how your ZATCA-compliant invoice will look when printed on a thermal receipt printer.
+              This is exactly how a simplified tax invoice will appear when printed on your thermal receipt printer – fully compliant with Saudi ZATCA e-invoicing regulations, including the mandatory QR code for customer verification.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             {/* Main Preview Image */}
-            <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
+            <div className="flex justify-center">
               <img
                 src="https://bytize.xyz/wp-content/uploads/2025/02/zatca_invoice.png"
-                alt="ZATCA compliant Saudi thermal invoice with QR code - Full preview"
-                className="w-full h-auto object-contain"
+                alt="ZATCA compliant Saudi POS thermal receipt with QR code"
+                className="max-w-full h-auto max-h-[60vh] object-contain rounded-lg shadow-lg"
                 data-testid="img-invoice-preview-main"
               />
             </div>
@@ -843,7 +843,7 @@ export default function PrinterSettings() {
                 <div className="rounded-lg border bg-white overflow-hidden shadow-sm">
                   <img
                     src="https://www.refrens.com/grow/wp-content/uploads/2024/05/ZATCA-Compliant-E-Invoices-2.png"
-                    alt="ZATCA compliant e-invoice with QR code"
+                    alt="ZATCA compliant e-invoice with QR code and VAT details"
                     className="w-full h-auto object-contain"
                     loading="lazy"
                     data-testid="img-invoice-preview-thumb-1"
@@ -851,8 +851,8 @@ export default function PrinterSettings() {
                 </div>
                 <div className="rounded-lg border bg-white overflow-hidden shadow-sm">
                   <img
-                    src="https://bimpos.com/sites/default/files/images/posts/4cc27661-79a2-4145-8089-e76c4b4fd399.jpeg"
-                    alt="ZATCA POS thermal receipt example"
+                    src="https://posbytz.com/wp-content/uploads/2023/12/Banner-01-1.png"
+                    alt="ZATCA POS thermal receipt example with bilingual text"
                     className="w-full h-auto object-contain"
                     loading="lazy"
                     data-testid="img-invoice-preview-thumb-2"
@@ -860,8 +860,8 @@ export default function PrinterSettings() {
                 </div>
                 <div className="rounded-lg border bg-white overflow-hidden shadow-sm">
                   <img
-                    src="https://lh7-rt.googleusercontent.com/docsz/AD_4nXe1_YCndfov-scKd2H3nY7IwfexsWaj54621PZkXHtEStfPBZvs7ZMNEVsYmVIlWFR-V0FWfHkitz7_l6yvjBgJezEtIU4KrkmBGccRTqzC0Hy_G-8klGJ9NzhSVyNEYLjiK58FTiJcOhfYlNsur2SHKKd4?key=RdYVsro0wRbFCVuhJZlnww"
-                    alt="ZATCA compliant invoice layout"
+                    src="https://ultimatefosters.com/wp-content/uploads/2025/06/example_of_a_compliant_pdf_invoice_with_qr_code.webp"
+                    alt="ZATCA compliant PDF invoice with QR code"
                     className="w-full h-auto object-contain"
                     loading="lazy"
                     data-testid="img-invoice-preview-thumb-3"
