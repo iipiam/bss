@@ -750,7 +750,7 @@ export default function PrinterSettings() {
               </div>
               <div className="rounded-lg border bg-card overflow-hidden">
                 <img
-                  src="https://keepmyaccount.com/storage-files/2025/07/ZATCA-On-Boarding.png"
+                  src="https://posbytz.com/wp-content/uploads/2023/12/Banner-01-1.png"
                   alt="ZATCA compliant Saudi receipt with QR code - Full layout"
                   className="w-full h-auto object-contain"
                   loading="lazy"
