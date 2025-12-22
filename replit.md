@@ -44,6 +44,7 @@ Preferred communication style: Simple, everyday language.
 - **WhatsApp Integration**: Automatic deep-link for sending ZATCA-compliant invoices via WhatsApp.
 - **Team Chat**: Internal messaging system with DMs and channels, supporting branch-level and restaurant-wide conversations.
 - **Granular Permission System**: Role-based access control with 19 granular permissions (view, add, edit, delete) enforced at backend and frontend.
+- **Employee Activity Log**: Main account (admin) can track all sub-account actions via `/activity-log` page. Logs are automatically created for orders, inventory, menu, recipes, and procurement operations. Includes filtering by employee, category, and date with real-time grouping (Today, Yesterday, This Week, Older). Non-blocking fire-and-forget logging pattern ensures no performance impact.
 - **Bills Management**: Salary bill generation with month selection.
 - **PDF Invoice Generation**: ZATCA-compliant invoices with proper page break handling and bilingual refund policy sections.
 - **Investor Statement PDF**: Downloadable bilingual (EN/AR) investor statement showing investment details, earnings breakdown, and receivables calculation. Supports Money Investors and Recipe Owners.
