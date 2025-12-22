@@ -20,7 +20,8 @@ import {
   RefreshCw,
   User,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Users
 } from "lucide-react";
 import type { EmployeeActivityLog, User as UserType } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -90,6 +91,7 @@ const translations = {
     activeEmployees: "Active Employees",
     mostActiveCategory: "Most Active Category",
     recentActivity: "Recent Activity",
+    syncEmployees: "Sync Employees",
   },
   ar: {
     title: "سجل النشاط",
@@ -118,6 +120,7 @@ const translations = {
     activeEmployees: "الموظفين النشطين",
     mostActiveCategory: "الفئة الأكثر نشاطاً",
     recentActivity: "النشاط الأخير",
+    syncEmployees: "مزامنة الموظفين",
   },
 };
 
@@ -150,7 +153,7 @@ export default function ActivityLog() {
   });
 
   // Fetch employees for filter
-  const { data: employees = [] } = useQuery<UserType[]>({
+  const { data: employees = [], refetch: refetchEmployees, isFetching: isSyncingEmployees } = useQuery<UserType[]>({
     queryKey: ["/api/users"],
   });
 
@@ -242,14 +245,25 @@ export default function ActivityLog() {
           </h1>
           <p className="text-muted-foreground">{t.description}</p>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={() => refetch()}
-          data-testid="button-refresh"
-        >
-          <RefreshCw className="h-4 w-4 mr-2" />
-          {t.refresh}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => refetchEmployees()}
+            disabled={isSyncingEmployees}
+            data-testid="button-sync-employees"
+          >
+            <Users className={`h-4 w-4 mr-2 ${isSyncingEmployees ? 'animate-spin' : ''}`} />
+            {t.syncEmployees}
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => refetch()}
+            data-testid="button-refresh"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            {t.refresh}
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
