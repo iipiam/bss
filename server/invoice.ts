@@ -197,9 +197,9 @@ function getChromiumPath(): string | undefined {
     return process.env.CHROMIUM_PATH;
   }
 
-  // 2. Try to find via which command
+  // 2. Try to find via which command (chromium, chromium-browser, google-chrome)
   try {
-    const chromiumPath = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null', { encoding: 'utf8' }).trim();
+    const chromiumPath = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null || which google-chrome 2>/dev/null || which google-chrome-stable 2>/dev/null', { encoding: 'utf8' }).trim();
     if (chromiumPath && existsSync(chromiumPath)) {
       console.log(`[Invoice] Found Chromium via which: ${chromiumPath}`);
       return chromiumPath;
@@ -208,20 +208,32 @@ function getChromiumPath(): string | undefined {
     // Continue to next fallback
   }
 
-  // 3. Common Nix store paths (Replit environment)
-  const nixPaths = [
+  // 3. Common Linux paths for Chromium/Chrome
+  const commonPaths = [
+    // Standard Linux paths
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    // Snap installations
+    '/snap/bin/chromium',
+    '/snap/bin/google-chrome',
+    // Common alternative locations
+    '/opt/google/chrome/chrome',
+    '/opt/google/chrome/google-chrome',
+    '/opt/chromium/chromium',
+    // Nix store paths (Replit environment)
     '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
-    // Add more common paths as needed
   ];
   
-  for (const path of nixPaths) {
+  for (const path of commonPaths) {
     if (existsSync(path)) {
-      console.log(`[Invoice] Using Nix Chromium: ${path}`);
+      console.log(`[Invoice] Using browser at: ${path}`);
       return path;
     }
   }
 
-  console.warn('[Invoice] No Chromium executable found, falling back to Puppeteer default');
+  console.warn('[Invoice] No Chromium/Chrome executable found, falling back to Puppeteer default');
   return undefined;
 }
 
@@ -252,14 +264,8 @@ export async function getBrowser(): Promise<Browser> {
     try {
       const chromiumPath = getChromiumPath();
       
-      if (!chromiumPath) {
-        throw new Error('Chromium executable not found. Please install Chromium or set CHROMIUM_PATH environment variable.');
-      }
-
-      console.log('[Invoice] Launching new browser instance');
-      const browser = await puppeteer.launch({
+      const launchOptions: any = {
         headless: true,
-        executablePath: chromiumPath,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -269,11 +275,24 @@ export async function getBrowser(): Promise<Browser> {
           '--single-process',
           '--no-zygote'
         ]
-      });
+      };
+
+      // Use detected chromium path, or let Puppeteer use its bundled version
+      if (chromiumPath) {
+        launchOptions.executablePath = chromiumPath;
+        console.log(`[Invoice] Launching browser with: ${chromiumPath}`);
+      } else {
+        console.log('[Invoice] Launching browser with Puppeteer bundled Chromium');
+      }
+
+      const browser = await puppeteer.launch(launchOptions);
 
       browserInstance = browser;
       console.log('[Invoice] Browser launched successfully');
       return browser;
+    } catch (launchError: any) {
+      console.error('[Invoice] Browser launch failed:', launchError.message);
+      throw new Error(`Failed to launch browser for PDF generation: ${launchError.message}. Please ensure Chromium/Google Chrome is installed.`);
     } finally {
       browserLaunchPromise = null;
     }
