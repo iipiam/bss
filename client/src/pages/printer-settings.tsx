@@ -730,7 +730,62 @@ export default function PrinterSettings() {
             printer).
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
+          {/* ZATCA Receipt Examples */}
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Simulation: Example of printed receipts compliant with Saudi ZATCA e-invoicing regulations (includes mandatory QR code for verification)
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              <div className="rounded-lg border bg-card overflow-hidden">
+                <img
+                  src="https://ultimatefosters.com/wp-content/uploads/2025/03/zacta2.png"
+                  alt="ZATCA compliant Saudi receipt with QR code - UltimatePOS"
+                  className="w-full h-auto object-contain"
+                  loading="lazy"
+                  data-testid="img-zatca-receipt-1"
+                />
+              </div>
+              <div className="rounded-lg border bg-card overflow-hidden">
+                <img
+                  src="https://keepmyaccount.com/storage-files/2025/07/ZATCA-On-Boarding.png"
+                  alt="ZATCA compliant Saudi receipt with QR code - Full layout"
+                  className="w-full h-auto object-contain"
+                  loading="lazy"
+                  data-testid="img-zatca-receipt-2"
+                />
+              </div>
+              <div className="rounded-lg border bg-card overflow-hidden">
+                <img
+                  src="https://alhassab.com/wp-content/uploads/2025/06/PNG-06-1024x778.png"
+                  alt="ZATCA compliant Saudi POS thermal receipt with QR"
+                  className="w-full h-auto object-contain"
+                  loading="lazy"
+                  data-testid="img-zatca-receipt-3"
+                />
+              </div>
+              <div className="rounded-lg border bg-card overflow-hidden">
+                <img
+                  src="https://www.refrens.com/grow/wp-content/uploads/2024/05/ZATCA-Compliant-E-Invoices-2.png"
+                  alt="ZATCA compliant e-invoice with QR code and required fields"
+                  className="w-full h-auto object-contain"
+                  loading="lazy"
+                  data-testid="img-zatca-receipt-4"
+                />
+              </div>
+              <div className="rounded-lg border bg-card overflow-hidden">
+                <img
+                  src="https://posbytz.com/wp-content/uploads/2023/12/Banner-01-1.png"
+                  alt="ZATCA-approved software receipt example"
+                  className="w-full h-auto object-contain"
+                  loading="lazy"
+                  data-testid="img-zatca-receipt-5"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
           <div className="flex gap-4">
             <Button
               onClick={handleCheckout}
