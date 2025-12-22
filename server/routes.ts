@@ -8900,7 +8900,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Performance Tracking (IT-only) - Sales per user across all restaurants
+  // Performance Tracking (IT-only) - Sales per MAIN USER (admin) across all restaurants
+  // Sub-account actions are linked to their main user via restaurantId
+  // Only shows ONE main user per restaurant to avoid double-counting
   app.get("/api/it/performance", requireAuth, requireITAccount, async (req, res) => {
     try {
       // Parse date range from query parameters (default: last 30 days)
@@ -8918,10 +8920,56 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         startDate.setDate(startDate.getDate() - 30);
       }
 
-      // Query performance data grouped by user
-      // Join users with orders via createdBy field, then join restaurants for context
-      // Filter orders by date range and only include active users
-      const performanceData = await db
+      // Step 1: Get order aggregates by restaurant
+      const orderStats = await db
+        .select({
+          restaurantId: orders.restaurantId,
+          totalSales: sql<string>`COALESCE(SUM(CAST(${orders.total} AS NUMERIC)), 0)`,
+          totalOrders: sql<string>`COUNT(${orders.id})`,
+          lastActivityAt: sql<Date>`MAX(${orders.createdAt})`,
+        })
+        .from(orders)
+        .where(and(
+          gte(orders.createdAt, startDate),
+          lte(orders.createdAt, endDate)
+        ))
+        .groupBy(orders.restaurantId);
+
+      // Create a map of restaurant ID to order stats
+      const orderStatsMap = new Map<string, { totalSales: string; totalOrders: string; lastActivityAt: Date | null }>();
+      for (const stat of orderStats) {
+        if (stat.restaurantId) {
+          orderStatsMap.set(stat.restaurantId, {
+            totalSales: stat.totalSales,
+            totalOrders: stat.totalOrders,
+            lastActivityAt: stat.lastActivityAt,
+          });
+        }
+      }
+
+      // Step 2: Get one primary admin per restaurant (using MIN(id) to pick the first/oldest admin)
+      // This prevents double-counting when a restaurant has multiple admins
+      const primaryAdmins = await db
+        .select({
+          restaurantId: users.restaurantId,
+          primaryAdminId: sql<string>`MIN(${users.id})`,
+        })
+        .from(users)
+        .where(and(
+          eq(users.active, true),
+          eq(users.role, "admin"),
+          isNotNull(users.restaurantId)
+        ))
+        .groupBy(users.restaurantId);
+
+      // Get full admin details for each primary admin
+      const primaryAdminIds = primaryAdmins.map(a => a.primaryAdminId).filter(Boolean);
+      if (primaryAdminIds.length === 0) {
+        return res.json([]);
+      }
+
+      // Step 3: Get full user and restaurant details for primary admins
+      const adminDetails = await db
         .select({
           userId: users.id,
           username: users.username,
@@ -8930,46 +8978,36 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           restaurantId: restaurants.id,
           restaurantName: restaurants.name,
           businessType: restaurants.businessType,
-          totalSales: sql<string>`COALESCE(SUM(CAST(${orders.total} AS NUMERIC)), 0)`,
-          totalOrders: sql<string>`COUNT(${orders.id})`,
-          lastActivityAt: sql<Date>`MAX(${orders.createdAt})`,
         })
         .from(users)
-        .innerJoin(orders, eq(orders.createdBy, users.id))
         .innerJoin(restaurants, eq(restaurants.id, users.restaurantId))
-        .where(and(
-          eq(users.active, true),
-          gte(orders.createdAt, startDate),
-          lte(orders.createdAt, endDate)
-        ))
-        .groupBy(users.id, users.username, users.fullName, users.role, restaurants.id, restaurants.name, restaurants.businessType)
-        .orderBy(desc(sql<string>`COALESCE(SUM(CAST(${orders.total} AS NUMERIC)), 0)`));
+        .where(sql`${users.id} = ANY(ARRAY[${sql.raw(primaryAdminIds.map(id => `'${id}'`).join(','))}]::varchar[])`);
 
-      // Calculate avgOrderValue on the fly (can't do in SQL SELECT with aggregate)
-      const results = performanceData.map((row) => {
-        const totalSales = parseFloat(row.totalSales || "0");
-        const totalOrders = parseInt(row.totalOrders || "0", 10);
+      // Combine admin details with order stats
+      const results = adminDetails.map((admin) => {
+        const stats = orderStatsMap.get(admin.restaurantId || "");
+        const totalSales = parseFloat(stats?.totalSales || "0");
+        const totalOrders = parseInt(stats?.totalOrders || "0", 10);
         const avgOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
 
         // Safely convert lastActivityAt to ISO string
         let lastActivityAtISO: string | null = null;
-        if (row.lastActivityAt) {
-          if (row.lastActivityAt instanceof Date) {
-            lastActivityAtISO = row.lastActivityAt.toISOString();
+        if (stats?.lastActivityAt) {
+          if (stats.lastActivityAt instanceof Date) {
+            lastActivityAtISO = stats.lastActivityAt.toISOString();
           } else {
-            // It's already a string (from database)
-            lastActivityAtISO = new Date(row.lastActivityAt).toISOString();
+            lastActivityAtISO = new Date(stats.lastActivityAt as any).toISOString();
           }
         }
 
         return {
-          userId: row.userId || "",
-          username: row.username || "N/A",
-          fullName: row.fullName || "N/A",
-          role: row.role || "employee",
-          restaurantId: row.restaurantId || "",
-          restaurantName: row.restaurantName || "N/A",
-          businessType: row.businessType || "restaurant",
+          userId: admin.userId || "",
+          username: admin.username || "N/A",
+          fullName: admin.fullName || "N/A",
+          role: admin.role || "admin",
+          restaurantId: admin.restaurantId || "",
+          restaurantName: admin.restaurantName || "N/A",
+          businessType: admin.businessType || "restaurant",
           totalSales: totalSales.toFixed(2),
           totalOrders,
           avgOrderValue: avgOrderValue.toFixed(2),
@@ -8977,7 +9015,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         };
       });
 
-      res.json(results);
+      // Sort by total sales descending
+      results.sort((a, b) => parseFloat(b.totalSales) - parseFloat(a.totalSales));
+
+      // Filter out restaurants with no orders in the date range
+      const filteredResults = results.filter(r => r.totalOrders > 0);
+
+      res.json(filteredResults);
     } catch (error) {
       console.error("Error fetching IT performance data:", error);
       res.status(500).json({ error: "Failed to fetch performance data" });
@@ -9022,6 +9066,137 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("Error fetching all accounts:", error);
       res.status(500).json({ error: "Failed to fetch accounts" });
+    }
+  });
+
+  // Get all IT accounts for IT management (users with null restaurantId)
+  app.get("/api/it/it-accounts", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      // Get all IT accounts (users with null restaurantId)
+      const itAccounts = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          fullName: users.fullName,
+          email: users.email,
+          phone: users.phone,
+          role: users.role,
+          active: users.active,
+          lastLoginAt: users.lastLoginAt,
+          lastActivityAt: users.lastActivityAt,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .where(isNull(users.restaurantId))
+        .orderBy(desc(users.lastActivityAt));
+
+      res.json(itAccounts);
+    } catch (error) {
+      console.error("Error fetching IT accounts:", error);
+      res.status(500).json({ error: "Failed to fetch IT accounts" });
+    }
+  });
+
+  // Create new IT account
+  app.post("/api/it/it-accounts", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { username, password, fullName, email, phone, role } = req.body;
+
+      // Validate required fields
+      if (!username || !password || !fullName) {
+        return res.status(400).json({ error: "Username, password, and full name are required" });
+      }
+
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ error: "Username already exists" });
+      }
+
+      // Create IT account (null restaurantId)
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const [newUser] = await db.insert(users)
+        .values({
+          username,
+          password: hashedPassword,
+          fullName,
+          email: email || null,
+          phone: phone || null,
+          role: role || "admin",
+          restaurantId: null, // IT accounts have null restaurantId
+          permissions: {} as any,
+          active: true,
+        })
+        .returning();
+
+      const { password: _, ...userWithoutPassword } = newUser;
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error creating IT account:", error);
+      res.status(500).json({ error: "Failed to create IT account" });
+    }
+  });
+
+  // Update IT account
+  app.patch("/api/it/it-accounts/:id", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { fullName, email, phone, active, password } = req.body;
+
+      // Verify it's an IT account
+      const existingUser = await storage.getUserById(id);
+      if (!existingUser || existingUser.restaurantId !== null) {
+        return res.status(404).json({ error: "IT account not found" });
+      }
+
+      const updateData: any = {};
+      if (fullName !== undefined) updateData.fullName = fullName;
+      if (email !== undefined) updateData.email = email;
+      if (phone !== undefined) updateData.phone = phone;
+      if (active !== undefined) updateData.active = active;
+      if (password) {
+        updateData.password = await bcrypt.hash(password, 10);
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        return res.json(existingUser);
+      }
+
+      const [updatedUser] = await db.update(users)
+        .set(updateData)
+        .where(eq(users.id, id))
+        .returning();
+
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error updating IT account:", error);
+      res.status(500).json({ error: "Failed to update IT account" });
+    }
+  });
+
+  // Delete IT account
+  app.delete("/api/it/it-accounts/:id", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const currentUserId = req.session.user!.id;
+
+      // Prevent deleting own account
+      if (id === currentUserId) {
+        return res.status(400).json({ error: "Cannot delete your own account" });
+      }
+
+      // Verify it's an IT account
+      const existingUser = await storage.getUserById(id);
+      if (!existingUser || existingUser.restaurantId !== null) {
+        return res.status(404).json({ error: "IT account not found" });
+      }
+
+      await db.delete(users).where(eq(users.id, id));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting IT account:", error);
+      res.status(500).json({ error: "Failed to delete IT account" });
     }
   });
 

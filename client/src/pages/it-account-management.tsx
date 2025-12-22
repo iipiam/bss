@@ -39,7 +39,8 @@ import {
   FolderOpen,
   Upload,
   Trash2,
-  File
+  File,
+  UserPlus
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -103,6 +104,19 @@ interface CompanyFile {
 }
 
 type FileTypeKey = 'cr_certificate' | 'vat_certificate' | 'license' | 'iban_certificate' | 'national_address';
+
+interface ITAccount {
+  id: string;
+  username: string;
+  fullName: string;
+  email: string | null;
+  phone: string | null;
+  role: string;
+  active: boolean;
+  lastLoginAt: string | null;
+  lastActivityAt: string | null;
+  createdAt: string;
+}
 
 export default function ITAccountManagement() {
   const { user, accountType, isLoading: authLoading } = useAuth();
@@ -354,7 +368,7 @@ export default function ITAccountManagement() {
     </Card>
   );
 
-  const [activeTab, setActiveTab] = useState<"accounts" | "archive" | "files">("accounts");
+  const [activeTab, setActiveTab] = useState<"accounts" | "archive" | "files" | "itAccounts">("accounts");
   const [searchQuery, setSearchQuery] = useState("");
   const [archiveSearchQuery, setArchiveSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "disabled">("all");
@@ -369,6 +383,25 @@ export default function ITAccountManagement() {
   const [fileDescription, setFileDescription] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<CompanyFile | null>(null);
+  
+  // IT Accounts state
+  const [itAccountSearchQuery, setItAccountSearchQuery] = useState("");
+  const [itAccountStatusFilter, setItAccountStatusFilter] = useState<"all" | "active" | "disabled">("all");
+  const [selectedITAccount, setSelectedITAccount] = useState<ITAccount | null>(null);
+  const [itPasswordDialogOpen, setItPasswordDialogOpen] = useState(false);
+  const [itNewPassword, setItNewPassword] = useState("");
+  const [itConfirmPassword, setItConfirmPassword] = useState("");
+  const [showItPassword, setShowItPassword] = useState(false);
+  const [createITAccountDialogOpen, setCreateITAccountDialogOpen] = useState(false);
+  const [deleteITAccountDialogOpen, setDeleteITAccountDialogOpen] = useState(false);
+  const [itAccountToDelete, setItAccountToDelete] = useState<ITAccount | null>(null);
+  const [newITAccountForm, setNewITAccountForm] = useState({
+    username: "",
+    password: "",
+    fullName: "",
+    email: "",
+    phone: "",
+  });
 
   // Security: Redirect non-IT accounts using useEffect to wait for auth to load
   useEffect(() => {
@@ -413,6 +446,12 @@ export default function ITAccountManagement() {
   // Fetch company files
   const { data: companyFiles = [], isLoading: filesLoading, refetch: refetchFiles } = useQuery<CompanyFile[]>({
     queryKey: ['/api/it/company-files'],
+    enabled: !!user && accountType === 'it',
+  });
+
+  // Fetch IT accounts
+  const { data: itAccounts = [], isLoading: itAccountsLoading, refetch: refetchITAccounts } = useQuery<ITAccount[]>({
+    queryKey: ['/api/it/it-accounts'],
     enabled: !!user && accountType === 'it',
   });
 
@@ -565,6 +604,82 @@ export default function ITAccountManagement() {
     },
   });
 
+  // IT Account mutations
+  const createITAccountMutation = useMutation({
+    mutationFn: async (data: { username: string; password: string; fullName: string; email?: string; phone?: string }) => {
+      return apiRequest("POST", "/api/it/it-accounts", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: t.success || "Success",
+        description: t.itAccountCreated || "IT account created successfully.",
+      });
+      setCreateITAccountDialogOpen(false);
+      setNewITAccountForm({ username: "", password: "", fullName: "", email: "", phone: "" });
+      queryClient.invalidateQueries({ queryKey: ['/api/it/it-accounts'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message || t.failedToCreateITAccount || "Failed to create IT account",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateITAccountMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { active?: boolean; password?: string } }) => {
+      return apiRequest("PATCH", `/api/it/it-accounts/${id}`, data);
+    },
+    onSuccess: (_, variables) => {
+      if (variables.data.active !== undefined) {
+        toast({
+          title: variables.data.active ? (t.accountEnabled || "Account Enabled") : (t.accountDisabled || "Account Disabled"),
+          description: t.itAccountStatusUpdated || "IT account status updated successfully.",
+        });
+      } else if (variables.data.password) {
+        toast({
+          title: t.passwordChanged || "Password Changed",
+          description: t.itAccountPasswordUpdated || "IT account password updated successfully.",
+        });
+        setItPasswordDialogOpen(false);
+        setItNewPassword("");
+        setItConfirmPassword("");
+        setSelectedITAccount(null);
+      }
+      queryClient.invalidateQueries({ queryKey: ['/api/it/it-accounts'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message || t.failedToUpdateITAccount || "Failed to update IT account",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteITAccountMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/it/it-accounts/${id}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: t.success || "Success",
+        description: t.itAccountDeleted || "IT account deleted successfully.",
+      });
+      setDeleteITAccountDialogOpen(false);
+      setItAccountToDelete(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/it/it-accounts'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message || t.failedToDeleteITAccount || "Failed to delete IT account",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Generate refund invoice mutation
   const generateRefundInvoiceMutation = useMutation({
     mutationFn: async ({ restaurantId, reason }: { restaurantId: string; reason: "mistake" | "client_request" }) => {
@@ -658,6 +773,80 @@ export default function ITAccountManagement() {
       (account.refundInvoice?.serialNumber?.toLowerCase().includes(archiveSearchQuery.toLowerCase()))
     );
   });
+
+  // Filter IT accounts based on search and status
+  const filteredITAccounts = itAccounts.filter(account => {
+    const matchesSearch = 
+      account.username.toLowerCase().includes(itAccountSearchQuery.toLowerCase()) ||
+      account.fullName.toLowerCase().includes(itAccountSearchQuery.toLowerCase()) ||
+      (account.email?.toLowerCase().includes(itAccountSearchQuery.toLowerCase()));
+    
+    const matchesStatus = 
+      itAccountStatusFilter === "all" ||
+      (itAccountStatusFilter === "active" && account.active) ||
+      (itAccountStatusFilter === "disabled" && !account.active);
+
+    return matchesSearch && matchesStatus;
+  });
+
+  // IT Account handlers
+  const handleToggleITAccountStatus = (account: ITAccount) => {
+    updateITAccountMutation.mutate({
+      id: account.id,
+      data: { active: !account.active },
+    });
+  };
+
+  const handleChangeITAccountPassword = () => {
+    if (!selectedITAccount) return;
+    
+    if (itNewPassword.length < 4) {
+      toast({
+        title: t.invalidPassword || "Invalid Password",
+        description: t.passwordMinLength || "Password must be at least 4 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (itNewPassword !== itConfirmPassword) {
+      toast({
+        title: t.passwordMismatch || "Password Mismatch",
+        description: t.passwordsMismatch || "Passwords do not match. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateITAccountMutation.mutate({
+      id: selectedITAccount.id,
+      data: { password: itNewPassword },
+    });
+  };
+
+  const handleCreateITAccount = () => {
+    if (!newITAccountForm.username || !newITAccountForm.password || !newITAccountForm.fullName) {
+      toast({
+        title: t.error || "Error",
+        description: t.requiredFieldsMissing || "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createITAccountMutation.mutate({
+      username: newITAccountForm.username,
+      password: newITAccountForm.password,
+      fullName: newITAccountForm.fullName,
+      email: newITAccountForm.email || undefined,
+      phone: newITAccountForm.phone || undefined,
+    });
+  };
+
+  const handleDeleteITAccount = () => {
+    if (!itAccountToDelete) return;
+    deleteITAccountMutation.mutate(itAccountToDelete.id);
+  };
 
   const handleChangePassword = () => {
     if (!selectedAccount) return;
@@ -792,6 +981,7 @@ export default function ITAccountManagement() {
             refetch();
             refetchArchive();
             refetchFiles();
+            refetchITAccounts();
           }}
           data-testid="button-refresh"
         >
@@ -800,12 +990,19 @@ export default function ITAccountManagement() {
         </Button>
       </div>
 
-      {/* Tabs for Accounts, Archive, and Company Files */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "accounts" | "archive" | "files")} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-lg">
+      {/* Tabs for Accounts, Archive, IT Accounts, and Company Files */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "accounts" | "archive" | "files" | "itAccounts")} className="w-full">
+        <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2 gap-1' : 'grid-cols-4'} max-w-2xl`}>
           <TabsTrigger value="accounts" data-testid="tab-accounts" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            {t.accounts || "Accounts"}
+            {isMobile ? (t.accounts || "Accounts") : (t.clientAccounts || "Client Accounts")}
+          </TabsTrigger>
+          <TabsTrigger value="itAccounts" data-testid="tab-it-accounts" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            {t.itAccounts || "IT Accounts"}
+            {itAccounts.length > 0 && (
+              <Badge variant="secondary" className="ml-1">{itAccounts.length}</Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger value="archive" data-testid="tab-archive" className="flex items-center gap-2">
             <Archive className="h-4 w-4" />
@@ -816,7 +1013,7 @@ export default function ITAccountManagement() {
           </TabsTrigger>
           <TabsTrigger value="files" data-testid="tab-company-files" className="flex items-center gap-2">
             <FolderOpen className="h-4 w-4" />
-            {t.companyFiles || "Company Files"}
+            {isMobile ? (t.files || "Files") : (t.companyFiles || "Company Files")}
           </TabsTrigger>
         </TabsList>
 
@@ -1293,6 +1490,634 @@ export default function ITAccountManagement() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* IT Accounts Tab */}
+        <TabsContent value="itAccounts" className="space-y-4 mt-4">
+          {/* IT Accounts Stats */}
+          <div className={`grid gap-4 ${layout.gridCols}`}>
+            <Card data-testid="card-it-total-accounts">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+                <CardTitle className="text-sm font-medium">{t.totalITAccounts || "Total IT Accounts"}</CardTitle>
+                <Shield className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{itAccounts.length}</div>
+              </CardContent>
+            </Card>
+            <Card data-testid="card-it-active-accounts">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+                <CardTitle className="text-sm font-medium">{t.activeAccounts || "Active Accounts"}</CardTitle>
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {itAccounts.filter(a => a.active).length}
+                </div>
+              </CardContent>
+            </Card>
+            <Card data-testid="card-it-disabled-accounts">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+                <CardTitle className="text-sm font-medium">{t.disabledAccounts || "Disabled Accounts"}</CardTitle>
+                <XCircle className="h-4 w-4 text-red-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  {itAccounts.filter(a => !a.active).length}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* IT Accounts List */}
+          <Card data-testid="card-it-accounts-list">
+            <CardHeader>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    {t.itAccounts || "IT Accounts"}
+                  </CardTitle>
+                  <CardDescription>
+                    {t.manageITAccounts || "Manage IT admin accounts, passwords, and access control"}
+                  </CardDescription>
+                </div>
+                {/* Create IT Account Button */}
+                <Dialog open={createITAccountDialogOpen} onOpenChange={setCreateITAccountDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button data-testid="button-create-it-account">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      {t.createITAccount || "Create IT Account"}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <UserPlus className="h-5 w-5" />
+                        {t.createITAccount || "Create IT Account"}
+                      </DialogTitle>
+                      <DialogDescription>
+                        {t.createITAccountDescription || "Create a new IT administrator account"}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="it-username">{t.username || "Username"} *</Label>
+                        <Input
+                          id="it-username"
+                          value={newITAccountForm.username}
+                          onChange={(e) => setNewITAccountForm(f => ({ ...f, username: e.target.value }))}
+                          placeholder={t.enterUsername || "Enter username"}
+                          data-testid="input-it-username"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="it-password">{t.password || "Password"} *</Label>
+                        <Input
+                          id="it-password"
+                          type="password"
+                          value={newITAccountForm.password}
+                          onChange={(e) => setNewITAccountForm(f => ({ ...f, password: e.target.value }))}
+                          placeholder={t.enterPassword || "Enter password"}
+                          data-testid="input-it-password"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="it-fullname">{t.fullName || "Full Name"} *</Label>
+                        <Input
+                          id="it-fullname"
+                          value={newITAccountForm.fullName}
+                          onChange={(e) => setNewITAccountForm(f => ({ ...f, fullName: e.target.value }))}
+                          placeholder={t.enterFullName || "Enter full name"}
+                          data-testid="input-it-fullname"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="it-email">{t.email || "Email"}</Label>
+                        <Input
+                          id="it-email"
+                          type="email"
+                          value={newITAccountForm.email}
+                          onChange={(e) => setNewITAccountForm(f => ({ ...f, email: e.target.value }))}
+                          placeholder={t.enterEmail || "Enter email (optional)"}
+                          data-testid="input-it-email"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="it-phone">{t.phone || "Phone"}</Label>
+                        <Input
+                          id="it-phone"
+                          value={newITAccountForm.phone}
+                          onChange={(e) => setNewITAccountForm(f => ({ ...f, phone: e.target.value }))}
+                          placeholder={t.enterPhone || "Enter phone (optional)"}
+                          data-testid="input-it-phone"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter className="flex-col gap-2 sm:flex-row">
+                      <Button
+                        variant="outline"
+                        onClick={() => setCreateITAccountDialogOpen(false)}
+                        className="w-full sm:w-auto"
+                        data-testid="button-cancel-create-it"
+                      >
+                        {t.cancel || "Cancel"}
+                      </Button>
+                      <Button
+                        onClick={handleCreateITAccount}
+                        disabled={createITAccountMutation.isPending || !newITAccountForm.username || !newITAccountForm.password || !newITAccountForm.fullName}
+                        className="w-full sm:w-auto"
+                        data-testid="button-submit-create-it"
+                      >
+                        {createITAccountMutation.isPending ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            {t.creating || "Creating..."}
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="h-4 w-4 mr-2" />
+                            {t.create || "Create"}
+                          </>
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              
+              <div className={`flex ${isMobile ? 'flex-col' : 'flex-wrap'} gap-4 pt-4`}>
+                <div className={`relative ${isMobile ? 'w-full' : 'flex-1 min-w-[200px]'}`}>
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={t.searchITAccounts || "Search IT accounts..."}
+                    value={itAccountSearchQuery}
+                    onChange={(e) => setItAccountSearchQuery(e.target.value)}
+                    className="pl-10"
+                    data-testid="input-it-account-search"
+                  />
+                </div>
+                <div className={`flex gap-2 ${isMobile ? 'w-full' : ''}`}>
+                  <Button
+                    variant={itAccountStatusFilter === "all" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setItAccountStatusFilter("all")}
+                    className={isMobile ? 'flex-1 text-xs' : ''}
+                    data-testid="button-it-filter-all"
+                  >
+                    {t.all || "All"}
+                  </Button>
+                  <Button
+                    variant={itAccountStatusFilter === "active" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setItAccountStatusFilter("active")}
+                    className={isMobile ? 'flex-1 text-xs' : ''}
+                    data-testid="button-it-filter-active"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    {t.active || "Active"}
+                  </Button>
+                  <Button
+                    variant={itAccountStatusFilter === "disabled" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setItAccountStatusFilter("disabled")}
+                    className={isMobile ? 'flex-1 text-xs' : ''}
+                    data-testid="button-it-filter-disabled"
+                  >
+                    <XCircle className="h-4 w-4 mr-1" />
+                    {t.disabled || "Disabled"}
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {itAccountsLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map(i => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))}
+                </div>
+              ) : isMobile ? (
+                /* Mobile Card View for IT Accounts */
+                <div className="space-y-3">
+                  {filteredITAccounts.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      {t.noITAccountsFound || "No IT accounts found"}
+                    </div>
+                  ) : (
+                    filteredITAccounts.map((account) => (
+                      <Card 
+                        key={account.id}
+                        data-testid={`card-it-account-${account.id}`}
+                        className="hover-elevate"
+                      >
+                        <CardContent className="p-4 space-y-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={account.active}
+                                onCheckedChange={() => handleToggleITAccountStatus(account)}
+                                disabled={updateITAccountMutation.isPending}
+                                data-testid={`switch-it-status-${account.id}`}
+                              />
+                              <Badge variant={account.active ? "default" : "destructive"}>
+                                {account.active ? (t.active || "Active") : (t.disabled || "Disabled")}
+                              </Badge>
+                            </div>
+                            <Badge variant="secondary">{account.role}</Badge>
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Shield className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                              <span className="font-medium">{account.fullName}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Users className="h-3 w-3 flex-shrink-0" />
+                              <span className="font-mono">{account.username}</span>
+                            </div>
+                            {account.email && (
+                              <div className="text-sm text-muted-foreground truncate">
+                                {account.email}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span className="text-xs">{formatDate(account.lastLoginAt)}</span>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Dialog 
+                              open={itPasswordDialogOpen && selectedITAccount?.id === account.id} 
+                              onOpenChange={(open) => {
+                                setItPasswordDialogOpen(open);
+                                if (!open) {
+                                  setSelectedITAccount(null);
+                                  setItNewPassword("");
+                                  setItConfirmPassword("");
+                                  setShowItPassword(false);
+                                }
+                              }}
+                            >
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1"
+                                  onClick={() => setSelectedITAccount(account)}
+                                  data-testid={`button-it-change-password-${account.id}`}
+                                >
+                                  <Key className="h-4 w-4 mr-1" />
+                                  {t.changePassword || "Change Password"}
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle className="flex items-center gap-2">
+                                    <Key className="h-5 w-5" />
+                                    {t.changePassword || "Change Password"}
+                                  </DialogTitle>
+                                  <DialogDescription>
+                                    {t.changePasswordFor || "Change password for"}: <strong>{account.username}</strong>
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                  <div className="space-y-2">
+                                    <Label htmlFor={`itNewPassword-${account.id}`}>{t.newPassword || "New Password"}</Label>
+                                    <div className="relative">
+                                      <Input
+                                        id={`itNewPassword-${account.id}`}
+                                        type={showItPassword ? "text" : "password"}
+                                        value={itNewPassword}
+                                        onChange={(e) => setItNewPassword(e.target.value)}
+                                        placeholder={t.enterNewPassword || "Enter new password"}
+                                        data-testid="input-it-new-password"
+                                      />
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute right-0 top-0 h-full px-3"
+                                        onClick={() => setShowItPassword(!showItPassword)}
+                                        data-testid="button-toggle-it-password"
+                                      >
+                                        {showItPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor={`itConfirmPassword-${account.id}`}>{t.confirmPassword || "Confirm Password"}</Label>
+                                    <Input
+                                      id={`itConfirmPassword-${account.id}`}
+                                      type={showItPassword ? "text" : "password"}
+                                      value={itConfirmPassword}
+                                      onChange={(e) => setItConfirmPassword(e.target.value)}
+                                      placeholder={t.confirmNewPassword || "Confirm new password"}
+                                      data-testid="input-it-confirm-password"
+                                    />
+                                  </div>
+                                  {itNewPassword && itConfirmPassword && itNewPassword !== itConfirmPassword && (
+                                    <p className="text-sm text-red-500">{t.passwordsMismatch || "Passwords do not match"}</p>
+                                  )}
+                                </div>
+                                <DialogFooter className="flex-col gap-2 sm:flex-row">
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => setItPasswordDialogOpen(false)}
+                                    className="w-full sm:w-auto"
+                                    data-testid="button-cancel-it-password"
+                                  >
+                                    {t.cancel || "Cancel"}
+                                  </Button>
+                                  <Button
+                                    onClick={handleChangeITAccountPassword}
+                                    disabled={updateITAccountMutation.isPending || !itNewPassword || itNewPassword !== itConfirmPassword}
+                                    className="w-full sm:w-auto"
+                                    data-testid="button-save-it-password"
+                                  >
+                                    {updateITAccountMutation.isPending ? (
+                                      <>
+                                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                        {t.saving || "Saving..."}
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Key className="h-4 w-4 mr-2" />
+                                        {t.savePassword || "Save Password"}
+                                      </>
+                                    )}
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                            
+                            {account.id !== user?.id && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  setItAccountToDelete(account);
+                                  setDeleteITAccountDialogOpen(true);
+                                }}
+                                data-testid={`button-it-delete-${account.id}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              ) : (
+                /* Desktop Table View for IT Accounts */
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t.status || "Status"}</TableHead>
+                        <TableHead>{t.username || "Username"}</TableHead>
+                        <TableHead>{t.fullName || "Full Name"}</TableHead>
+                        <TableHead>{t.email || "Email"}</TableHead>
+                        <TableHead>{t.role || "Role"}</TableHead>
+                        <TableHead>{t.lastLogin || "Last Login"}</TableHead>
+                        <TableHead className="text-right">{t.actions || "Actions"}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredITAccounts.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                            {t.noITAccountsFound || "No IT accounts found"}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredITAccounts.map((account) => (
+                          <TableRow key={account.id} data-testid={`row-it-account-${account.id}`}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  checked={account.active}
+                                  onCheckedChange={() => handleToggleITAccountStatus(account)}
+                                  disabled={updateITAccountMutation.isPending}
+                                  data-testid={`switch-it-status-${account.id}`}
+                                />
+                                <Badge variant={account.active ? "default" : "destructive"}>
+                                  {account.active ? (t.active || "Active") : (t.disabled || "Disabled")}
+                                </Badge>
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-mono font-medium">
+                              {account.username}
+                            </TableCell>
+                            <TableCell>{account.fullName}</TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {account.email || "-"}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{account.role}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                {formatDate(account.lastLoginAt)}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <Dialog 
+                                  open={itPasswordDialogOpen && selectedITAccount?.id === account.id} 
+                                  onOpenChange={(open) => {
+                                    setItPasswordDialogOpen(open);
+                                    if (!open) {
+                                      setSelectedITAccount(null);
+                                      setItNewPassword("");
+                                      setItConfirmPassword("");
+                                      setShowItPassword(false);
+                                    }
+                                  }}
+                                >
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setSelectedITAccount(account)}
+                                      data-testid={`button-it-change-password-${account.id}`}
+                                    >
+                                      <Key className="h-4 w-4 mr-1" />
+                                      {t.changePassword || "Change Password"}
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle className="flex items-center gap-2">
+                                        <Key className="h-5 w-5" />
+                                        {t.changePassword || "Change Password"}
+                                      </DialogTitle>
+                                      <DialogDescription>
+                                        {t.changePasswordFor || "Change password for"}: <strong>{account.username}</strong>
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4 py-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="itNewPassword">{t.newPassword || "New Password"}</Label>
+                                        <div className="relative">
+                                          <Input
+                                            id="itNewPassword"
+                                            type={showItPassword ? "text" : "password"}
+                                            value={itNewPassword}
+                                            onChange={(e) => setItNewPassword(e.target.value)}
+                                            placeholder={t.enterNewPassword || "Enter new password"}
+                                            data-testid="input-it-new-password"
+                                          />
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute right-0 top-0 h-full px-3"
+                                            onClick={() => setShowItPassword(!showItPassword)}
+                                            data-testid="button-toggle-it-password"
+                                          >
+                                            {showItPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                          </Button>
+                                        </div>
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="itConfirmPassword">{t.confirmPassword || "Confirm Password"}</Label>
+                                        <Input
+                                          id="itConfirmPassword"
+                                          type={showItPassword ? "text" : "password"}
+                                          value={itConfirmPassword}
+                                          onChange={(e) => setItConfirmPassword(e.target.value)}
+                                          placeholder={t.confirmNewPassword || "Confirm new password"}
+                                          data-testid="input-it-confirm-password"
+                                        />
+                                      </div>
+                                      {itNewPassword && itConfirmPassword && itNewPassword !== itConfirmPassword && (
+                                        <p className="text-sm text-red-500">{t.passwordsMismatch || "Passwords do not match"}</p>
+                                      )}
+                                    </div>
+                                    <DialogFooter>
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => setItPasswordDialogOpen(false)}
+                                        data-testid="button-cancel-it-password"
+                                      >
+                                        {t.cancel || "Cancel"}
+                                      </Button>
+                                      <Button
+                                        onClick={handleChangeITAccountPassword}
+                                        disabled={updateITAccountMutation.isPending || !itNewPassword || itNewPassword !== itConfirmPassword}
+                                        data-testid="button-save-it-password"
+                                      >
+                                        {updateITAccountMutation.isPending ? (
+                                          <>
+                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                            {t.saving || "Saving..."}
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Key className="h-4 w-4 mr-2" />
+                                            {t.savePassword || "Save Password"}
+                                          </>
+                                        )}
+                                      </Button>
+                                    </DialogFooter>
+                                  </DialogContent>
+                                </Dialog>
+                                
+                                {account.id !== user?.id && (
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => {
+                                      setItAccountToDelete(account);
+                                      setDeleteITAccountDialogOpen(true);
+                                    }}
+                                    data-testid={`button-it-delete-${account.id}`}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Delete IT Account Confirmation Dialog */}
+          <Dialog open={deleteITAccountDialogOpen} onOpenChange={setDeleteITAccountDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-destructive">
+                  <AlertCircle className="h-5 w-5" />
+                  {t.deleteITAccount || "Delete IT Account"}
+                </DialogTitle>
+                <DialogDescription>
+                  {t.deleteITAccountConfirmation || "Are you sure you want to delete this IT account? This action cannot be undone."}
+                </DialogDescription>
+              </DialogHeader>
+              {itAccountToDelete && (
+                <div className="py-4">
+                  <div className="bg-muted p-4 rounded-md space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">{itAccountToDelete.fullName}</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground font-mono">
+                      @{itAccountToDelete.username}
+                    </div>
+                    {itAccountToDelete.email && (
+                      <div className="text-sm text-muted-foreground">
+                        {itAccountToDelete.email}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              <DialogFooter className="flex-col gap-2 sm:flex-row">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDeleteITAccountDialogOpen(false);
+                    setItAccountToDelete(null);
+                  }}
+                  className="w-full sm:w-auto"
+                  data-testid="button-cancel-delete-it"
+                >
+                  {t.cancel || "Cancel"}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteITAccount}
+                  disabled={deleteITAccountMutation.isPending}
+                  className="w-full sm:w-auto"
+                  data-testid="button-confirm-delete-it"
+                >
+                  {deleteITAccountMutation.isPending ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      {t.deleting || "Deleting..."}
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {t.delete || "Delete"}
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* Company Files Tab */}
