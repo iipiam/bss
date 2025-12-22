@@ -36,6 +36,7 @@ import {
   XCircle,
   Printer,
   Shield,
+  Activity,
 } from "lucide-react";
 import logoImage from "@assets/kinzhal-eagle-logo.jpeg";
 import {
@@ -153,6 +154,11 @@ export function AppSidebar() {
     { title: t.printers || "Printers", url: "/printer-settings", icon: Printer, testId: "printer-settings", gradient: "from-teal-500 to-cyan-500", permission: 'settings' },
     { title: t.employees, url: "/employees", icon: Users, testId: "employees", gradient: "from-sky-500 to-blue-500", permission: 'users' },
     { title: "Password Manager", url: "/password-manager", icon: Key, testId: "password-manager", gradient: "from-red-500 to-rose-500" },
+  ];
+
+  // Admin-only menu items
+  const adminOnlyItems: MenuItem[] = [
+    { title: t.activityLog || "Activity Log", url: "/activity-log", icon: Activity, testId: "activity-log", gradient: "from-violet-500 to-purple-500", permission: 'users' },
   ];
 
   // IT Dashboard menu items (visible only to IT accounts)
@@ -291,6 +297,19 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {renderMenuItems(filteredSystem)}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {isAdmin && accountType !== 'it' && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs font-bold tracking-wider">
+              {t.adminTools || "Admin Tools"}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {renderMenuItems(adminOnlyItems)}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

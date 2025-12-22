@@ -85,6 +85,7 @@ const PaymentTest = lazy(() => import("@/pages/payment-test"));
 const PasswordManager = lazy(() => import("@/pages/password-manager"));
 const Licenses = lazy(() => import("@/pages/licenses"));
 const Violations = lazy(() => import("@/pages/violations"));
+const ActivityLog = lazy(() => import("@/pages/activity-log"));
 const PrinterSettings = lazy(() => import("@/pages/printer-settings"));
 const ZatcaSettings = lazy(() => import("@/pages/zatca-settings"));
 const PaymentSuccess = lazy(() => import("@/pages/payment-success"));
@@ -139,6 +140,7 @@ function Router() {
         <Route path="/printer-settings" component={PrinterSettings} />
         <Route path="/zatca-settings" component={ZatcaSettings} />
         <Route path="/employees" component={Employees} />
+        <Route path="/activity-log" component={ActivityLog} />
         <Route path="/password-manager" component={PasswordManager} />
         <Route path="/tutorial" component={Tutorial} />
         <Route path="/shop" component={Shop} />
