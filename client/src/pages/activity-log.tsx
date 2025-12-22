@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +36,7 @@ const CATEGORY_ICONS: Record<string, any> = {
   menu: Utensils,
   recipes: ChefHat,
   procurement: ClipboardList,
+  employees: Users,
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -42,6 +45,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   menu: "bg-purple-500/10 text-purple-600",
   recipes: "bg-orange-500/10 text-orange-600",
   procurement: "bg-teal-500/10 text-teal-600",
+  employees: "bg-indigo-500/10 text-indigo-600",
 };
 
 const ACTION_COLORS: Record<string, string> = {
@@ -61,6 +65,7 @@ const ACTION_COLORS: Record<string, string> = {
   created_procurement: "bg-green-500/10 text-green-600 border-green-200",
   updated_procurement: "bg-blue-500/10 text-blue-600 border-blue-200",
   deleted_procurement: "bg-red-500/10 text-red-600 border-red-200",
+  synced_employee: "bg-indigo-500/10 text-indigo-600 border-indigo-200",
 };
 
 const translations = {
@@ -77,6 +82,7 @@ const translations = {
     menu: "Menu",
     recipes: "Recipes",
     procurement: "Procurement",
+    employees: "Employees",
     noActivities: "No activities found",
     noActivitiesDesc: "Employee actions will appear here once they start using the system",
     loading: "Loading activities...",
@@ -106,6 +112,7 @@ const translations = {
     menu: "القائمة",
     recipes: "الوصفات",
     procurement: "المشتريات",
+    employees: "الموظفين",
     noActivities: "لا توجد نشاطات",
     noActivitiesDesc: "ستظهر إجراءات الموظفين هنا بمجرد بدء استخدامهم للنظام",
     loading: "جاري تحميل النشاطات...",
@@ -153,8 +160,33 @@ export default function ActivityLog() {
   });
 
   // Fetch employees for filter
-  const { data: employees = [], refetch: refetchEmployees, isFetching: isSyncingEmployees } = useQuery<UserType[]>({
+  const { data: employees = [] } = useQuery<UserType[]>({
     queryKey: ["/api/users"],
+  });
+
+  const { toast } = useToast();
+
+  // Sync employees mutation - adds all employees to activity log
+  const syncEmployeesMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/employee-activities/sync");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: t.syncEmployees,
+        description: data.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/employee-activities"] });
+      refetch();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   // Filter activities by search query
@@ -208,6 +240,7 @@ export default function ActivityLog() {
       menu: t.menu,
       recipes: t.recipes,
       procurement: t.procurement,
+      employees: t.employees,
     };
     return labels[category] || category;
   };
@@ -248,11 +281,11 @@ export default function ActivityLog() {
         <div className="flex gap-2">
           <Button 
             variant="outline" 
-            onClick={() => refetchEmployees()}
-            disabled={isSyncingEmployees}
+            onClick={() => syncEmployeesMutation.mutate()}
+            disabled={syncEmployeesMutation.isPending}
             data-testid="button-sync-employees"
           >
-            <Users className={`h-4 w-4 mr-2 ${isSyncingEmployees ? 'animate-spin' : ''}`} />
+            <Users className={`h-4 w-4 mr-2 ${syncEmployeesMutation.isPending ? 'animate-spin' : ''}`} />
             {t.syncEmployees}
           </Button>
           <Button 
@@ -343,6 +376,7 @@ export default function ActivityLog() {
                 <SelectItem value="menu">{t.menu}</SelectItem>
                 <SelectItem value="recipes">{t.recipes}</SelectItem>
                 <SelectItem value="procurement">{t.procurement}</SelectItem>
+                <SelectItem value="employees">{t.employees}</SelectItem>
               </SelectContent>
             </Select>
           </div>

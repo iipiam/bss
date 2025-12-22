@@ -5065,6 +5065,57 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Sync Employees - Add all employee accounts to activity log (Admin only)
+  app.post("/api/employee-activities/sync", requireAuth, requireRestaurant, requirePermission('users'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
+    const adminUser = req.session.user!;
+    
+    // Only admins can sync employees
+    if (adminUser.role !== "admin") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      // Get all employees for this restaurant
+      const employees = await storage.getUsers(restaurantId);
+      
+      // Create activity log entries for each employee
+      const syncedCount = await Promise.all(
+        employees.map(async (employee) => {
+          // Log the employee account sync
+          logActivity({
+            restaurantId,
+            employeeId: adminUser.id,
+            employeeName: adminUser.fullName || adminUser.username,
+            action: "synced_employee",
+            actionCategory: "employees",
+            description: `Synced employee account: ${employee.fullName || employee.username} (${employee.role})`,
+            entityType: "user",
+            entityId: employee.id,
+            newData: {
+              username: employee.username,
+              fullName: employee.fullName,
+              email: employee.email,
+              role: employee.role,
+              active: employee.active,
+              branchId: employee.branchId,
+            },
+          });
+          return 1;
+        })
+      );
+      
+      res.json({ 
+        success: true, 
+        syncedCount: syncedCount.length,
+        message: `Successfully synced ${syncedCount.length} employee accounts to activity log` 
+      });
+    } catch (error) {
+      console.error("Sync employees error:", error);
+      res.status(500).json({ error: "Failed to sync employees" });
+    }
+  });
+
   // User Profile Management
   app.get("/api/profile", requireAuth, requireRestaurant, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
