@@ -6,6 +6,7 @@ import { db } from "./db";
 import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport, generateInvestorStatementPDF, generateBssAnalysisStatementPDF, generateRefundClearanceInvoice, getBrowser } from "./invoice";
 import { PasswordResetMailer } from "./email";
 import { sanitizePatchBody } from "./utils";
+import { logActivity } from "./activityLogger";
 import { requirePermission, requireAnyPermission, requireAllPermissions, requireAction } from "./middleware/requirePermission";
 import bcrypt from "bcrypt";
 import QRCode from "qrcode";
@@ -438,6 +439,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         console.error("[INVENTORY] Failed to auto-create procurement:", procError);
       }
       
+      // Fire-and-forget activity logging
+      if (req.session.user) {
+        logActivity({
+          restaurantId,
+          employeeId: req.session.user.id,
+          employeeName: req.session.user.fullName || req.session.user.username || 'Unknown',
+          action: 'created_inventory',
+          actionCategory: 'inventory',
+          description: `Created inventory item ${item.name}`,
+          entityType: 'inventory',
+          entityId: item.id,
+          branchId: item.branchId || undefined,
+        }).catch(err => console.error('Activity log error:', err));
+      }
+      
       res.status(201).json(item);
     } catch (error) {
       console.error("Failed to create inventory item:", error);
@@ -555,6 +571,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         }
       }
       
+      // Fire-and-forget activity logging
+      if (req.session.user) {
+        logActivity({
+          restaurantId,
+          employeeId: req.session.user.id,
+          employeeName: req.session.user.fullName || req.session.user.username || 'Unknown',
+          action: 'updated_inventory',
+          actionCategory: 'inventory',
+          description: `Updated inventory item ${item.name}`,
+          entityType: 'inventory',
+          entityId: item.id,
+          branchId: item.branchId || undefined,
+        }).catch(err => console.error('Activity log error:', err));
+      }
+      
       res.json(item);
     } catch (error: any) {
       console.error('[INVENTORY PATCH] Error:', error.message || error);
@@ -564,10 +595,30 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.delete("/api/inventory/:id", requireAuth, requireRestaurant, requireAction('inventory', 'delete'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
+    
+    // Get item name before deletion for logging
+    const itemToDelete = await storage.getInventoryItem(req.params.id, restaurantId);
+    
     const success = await storage.deleteInventoryItem(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Item not found" });
     }
+    
+    // Fire-and-forget activity logging
+    if (req.session.user && itemToDelete) {
+      logActivity({
+        restaurantId,
+        employeeId: req.session.user.id,
+        employeeName: req.session.user.fullName || req.session.user.username || 'Unknown',
+        action: 'deleted_inventory',
+        actionCategory: 'inventory',
+        description: `Deleted inventory item ${itemToDelete.name}`,
+        entityType: 'inventory',
+        entityId: req.params.id,
+        branchId: itemToDelete.branchId || undefined,
+      }).catch(err => console.error('Activity log error:', err));
+    }
+    
     res.status(204).send();
   });
 
@@ -623,6 +674,20 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         data: { action: 'created', item }
       });
       
+      // Fire-and-forget activity logging
+      if (req.session.user) {
+        logActivity({
+          restaurantId,
+          employeeId: req.session.user.id,
+          employeeName: req.session.user.fullName || req.session.user.username || 'Unknown',
+          action: 'created_menu_item',
+          actionCategory: 'menu',
+          description: `Created menu item ${item.name}`,
+          entityType: 'menu_item',
+          entityId: item.id,
+        }).catch(err => console.error('Activity log error:', err));
+      }
+      
       res.status(201).json(item);
     } catch (error) {
       console.error("Menu creation validation error:", error);
@@ -648,6 +713,20 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         data: { action: 'updated', item }
       });
       
+      // Fire-and-forget activity logging
+      if (req.session.user) {
+        logActivity({
+          restaurantId,
+          employeeId: req.session.user.id,
+          employeeName: req.session.user.fullName || req.session.user.username || 'Unknown',
+          action: 'updated_menu_item',
+          actionCategory: 'menu',
+          description: `Updated menu item ${item.name}`,
+          entityType: 'menu_item',
+          entityId: item.id,
+        }).catch(err => console.error('Activity log error:', err));
+      }
+      
       res.json(item);
     } catch (error) {
       res.status(400).json({ error: "Invalid menu data" });
@@ -657,6 +736,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.delete("/api/menu/:id", requireAuth, requireRestaurant, requireAction('menu', 'delete'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const menuItemId = req.params.id;
+    
+    // Get item name before deletion for logging
+    const itemToDelete = await storage.getMenuItem(menuItemId, restaurantId);
+    
     const success = await storage.deleteMenuItem(menuItemId, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Menu item not found" });
@@ -668,6 +751,20 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       restaurantId,
       data: { action: 'deleted', itemId: menuItemId }
     });
+    
+    // Fire-and-forget activity logging
+    if (req.session.user && itemToDelete) {
+      logActivity({
+        restaurantId,
+        employeeId: req.session.user.id,
+        employeeName: req.session.user.fullName || req.session.user.username || 'Unknown',
+        action: 'deleted_menu_item',
+        actionCategory: 'menu',
+        description: `Deleted menu item ${itemToDelete.name}`,
+        entityType: 'menu_item',
+        entityId: menuItemId,
+      }).catch(err => console.error('Activity log error:', err));
+    }
     
     res.status(204).send();
   });
@@ -2486,6 +2583,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       const data = insertRecipeSchema.parse({ ...req.body, restaurantId });
       const recipe = await storage.createRecipe(data);
+      
+      // Fire-and-forget activity logging
+      if (req.session.user) {
+        logActivity({
+          restaurantId,
+          employeeId: req.session.user.id,
+          employeeName: req.session.user.fullName || req.session.user.username || 'Unknown',
+          action: 'created_recipe',
+          actionCategory: 'recipes',
+          description: `Created recipe ${recipe.name}`,
+          entityType: 'recipe',
+          entityId: recipe.id,
+        }).catch(err => console.error('Activity log error:', err));
+      }
+      
       res.status(201).json(recipe);
     } catch (error) {
       res.status(400).json({ error: "Invalid recipe data" });
@@ -2502,6 +2614,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (!recipe) {
         return res.status(404).json({ error: "Recipe not found" });
       }
+      
+      // Fire-and-forget activity logging
+      if (req.session.user) {
+        logActivity({
+          restaurantId,
+          employeeId: req.session.user.id,
+          employeeName: req.session.user.fullName || req.session.user.username || 'Unknown',
+          action: 'updated_recipe',
+          actionCategory: 'recipes',
+          description: `Updated recipe ${recipe.name}`,
+          entityType: 'recipe',
+          entityId: recipe.id,
+        }).catch(err => console.error('Activity log error:', err));
+      }
+      
       res.json(recipe);
     } catch (error) {
       res.status(400).json({ error: "Invalid recipe data" });
@@ -2510,10 +2637,29 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.delete("/api/recipes/:id", requireAuth, requireRestaurant, requireAction('recipes', 'delete'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
+    
+    // Get recipe name before deletion for logging
+    const recipeToDelete = await storage.getRecipe(req.params.id, restaurantId);
+    
     const success = await storage.deleteRecipe(req.params.id, restaurantId);
     if (!success) {
       return res.status(404).json({ error: "Recipe not found" });
     }
+    
+    // Fire-and-forget activity logging
+    if (req.session.user && recipeToDelete) {
+      logActivity({
+        restaurantId,
+        employeeId: req.session.user.id,
+        employeeName: req.session.user.fullName || req.session.user.username || 'Unknown',
+        action: 'deleted_recipe',
+        actionCategory: 'recipes',
+        description: `Deleted recipe ${recipeToDelete.name}`,
+        entityType: 'recipe',
+        entityId: req.params.id,
+      }).catch(err => console.error('Activity log error:', err));
+    }
+    
     res.status(204).send();
   });
 
@@ -2677,6 +2823,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           branchName: branch?.name,
           itemsSummary,
         });
+        
+        // Fire-and-forget activity logging
+        if (req.session.user) {
+          logActivity({
+            restaurantId,
+            employeeId: req.session.user.id,
+            employeeName: req.session.user.fullName || req.session.user.username || 'Unknown',
+            action: 'created_order',
+            actionCategory: 'orders',
+            description: `Created order ${order.orderNumber}`,
+            entityType: 'order',
+            entityId: order.id,
+            branchId: order.branchId || undefined,
+          }).catch(err => console.error('Activity log error:', err));
+        }
         
         res.status(201).json(order);
       } catch (deductionError) {
@@ -3184,6 +3345,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         }
       }
       
+      // Fire-and-forget activity logging
+      if (req.session.user) {
+        logActivity({
+          restaurantId,
+          employeeId: req.session.user.id,
+          employeeName: req.session.user.fullName || req.session.user.username || 'Unknown',
+          action: 'created_procurement',
+          actionCategory: 'procurement',
+          description: `Created procurement ${procurement.title}`,
+          entityType: 'procurement',
+          entityId: procurement.id,
+          branchId: procurement.branchId || undefined,
+        }).catch(err => console.error('Activity log error:', err));
+      }
+      
       res.status(201).json(procurement);
     } catch (error: any) {
       console.error("[Procurement] Create error:", error);
@@ -3427,6 +3603,22 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (!procurement) {
         return res.status(404).json({ error: "Procurement not found" });
       }
+      
+      // Fire-and-forget activity logging
+      if (req.session.user) {
+        logActivity({
+          restaurantId,
+          employeeId: req.session.user.id,
+          employeeName: req.session.user.fullName || req.session.user.username || 'Unknown',
+          action: 'updated_procurement',
+          actionCategory: 'procurement',
+          description: `Updated procurement ${procurement.title}`,
+          entityType: 'procurement',
+          entityId: procurement.id,
+          branchId: procurement.branchId || undefined,
+        }).catch(err => console.error('Activity log error:', err));
+      }
+      
       res.json(procurement);
     } catch (error) {
       console.error("Procurement update error:", error);
@@ -3457,6 +3649,22 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     if (!success) {
       return res.status(404).json({ error: "Procurement not found" });
     }
+    
+    // Fire-and-forget activity logging
+    if (req.session.user && existingProcurement) {
+      logActivity({
+        restaurantId,
+        employeeId: req.session.user.id,
+        employeeName: req.session.user.fullName || req.session.user.username || 'Unknown',
+        action: 'deleted_procurement',
+        actionCategory: 'procurement',
+        description: `Deleted procurement ${existingProcurement.title}`,
+        entityType: 'procurement',
+        entityId: req.params.id,
+        branchId: existingProcurement.branchId || undefined,
+      }).catch(err => console.error('Activity log error:', err));
+    }
+    
     res.status(204).send();
   });
 
