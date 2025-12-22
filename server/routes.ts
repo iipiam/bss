@@ -1985,6 +1985,114 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Print to thermal/network printer via raw TCP socket
+  app.post("/api/printers/:id/print", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { text } = req.body;
+      
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ error: "Print text is required" });
+      }
+
+      const printer = await storage.getPrinter(req.params.id, restaurantId);
+      if (!printer) {
+        return res.status(404).json({ error: "Printer not found" });
+      }
+
+      // Only network printers are supported for now
+      if (printer.connectionType !== 'network') {
+        return res.status(400).json({ 
+          error: "Only network printers are supported for direct printing. USB and Bluetooth printers require client-side printing via QZ Tray or browser print dialog." 
+        });
+      }
+
+      if (!printer.ipAddress) {
+        return res.status(400).json({ error: "Printer IP address is not configured" });
+      }
+
+      // Import net module for TCP socket
+      const net = await import('net');
+      
+      // ESC/POS commands
+      const ESC = '\x1B';
+      const GS = '\x1D';
+      const INIT = ESC + '@';           // Initialize printer
+      const ALIGN_CENTER = ESC + 'a' + '\x01';
+      const ALIGN_LEFT = ESC + 'a' + '\x00';
+      const CUT_PAPER = GS + 'V' + '\x00';  // Full cut
+      const FEED_LINES = '\n\n\n\n';    // Feed paper before cut
+      
+      // Build print data with ESC/POS commands
+      const printData = Buffer.from(
+        INIT +                    // Initialize printer
+        ALIGN_LEFT +              // Left align
+        text +                    // The actual text content
+        FEED_LINES +              // Feed paper
+        CUT_PAPER,                // Cut paper
+        'utf8'
+      );
+
+      // Send to printer via TCP socket on port 9100 (standard for thermal printers)
+      const PRINTER_PORT = 9100;
+      const TIMEOUT_MS = 10000; // 10 second timeout
+
+      await new Promise<void>((resolve, reject) => {
+        const socket = new net.Socket();
+        let resolved = false;
+
+        const cleanup = () => {
+          if (!resolved) {
+            resolved = true;
+            socket.destroy();
+          }
+        };
+
+        // Set timeout
+        socket.setTimeout(TIMEOUT_MS);
+
+        socket.on('timeout', () => {
+          cleanup();
+          reject(new Error('Connection timeout - printer may be offline or unreachable'));
+        });
+
+        socket.on('error', (err: Error) => {
+          cleanup();
+          reject(new Error(`Printer connection error: ${err.message}`));
+        });
+
+        socket.on('close', () => {
+          if (!resolved) {
+            resolved = true;
+            resolve();
+          }
+        });
+
+        // Connect to printer
+        socket.connect(PRINTER_PORT, printer.ipAddress!, () => {
+          // Send print data
+          socket.write(printData, (err) => {
+            if (err) {
+              cleanup();
+              reject(new Error(`Failed to send print data: ${err.message}`));
+            } else {
+              // Close connection after sending
+              socket.end();
+            }
+          });
+        });
+      });
+
+      console.log(`[PRINTERS] Print job sent successfully to ${printer.name} (${printer.ipAddress})`);
+      res.json({ success: true, message: "Print job sent successfully" });
+
+    } catch (error) {
+      console.error("[PRINTERS] Print error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to print";
+      res.status(500).json({ error: errorMessage });
+    }
+  });
+
   // Delivery Apps
   app.get("/api/delivery-apps", requireAuth, requireRestaurant, requirePermission('deliveryApps'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
