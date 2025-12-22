@@ -17,7 +17,8 @@ export type Permission =
   | 'bills'
   | 'deliveryApps'
   | 'licenses'
-  | 'investors';
+  | 'investors'
+  | 'activityLog';
 
 export const ALL_PERMISSIONS: Permission[] = [
   'dashboard',
@@ -39,6 +40,7 @@ export const ALL_PERMISSIONS: Permission[] = [
   'deliveryApps',
   'licenses',
   'investors',
+  'activityLog',
 ];
 
 // Granular permission actions
@@ -121,6 +123,7 @@ export const ADMIN_PERMISSIONS: PermissionSet = {
   deliveryApps: true,
   licenses: true,
   investors: true,
+  activityLog: true,
 };
 
 export const DEFAULT_EMPLOYEE_PERMISSIONS: PermissionSet = {
@@ -143,6 +146,7 @@ export const DEFAULT_EMPLOYEE_PERMISSIONS: PermissionSet = {
   deliveryApps: false,
   licenses: false,
   investors: false,
+  activityLog: false,
 };
 
 export type PermissionMode = 'any' | 'all';
