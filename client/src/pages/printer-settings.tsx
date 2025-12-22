@@ -215,6 +215,7 @@ export default function PrinterSettings() {
   const [deletingPrinter, setDeletingPrinter] = useState<PrinterType | null>(
     null,
   );
+  const [showInvoicePreview, setShowInvoicePreview] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
   const printerFormSchema = z
@@ -433,8 +434,9 @@ export default function PrinterSettings() {
       description: "The order has been successfully processed.",
     });
   };
-  // New: Handle Checkout button
+  // New: Handle Checkout button - opens invoice preview modal
   const handleCheckout = () => {
+    setShowInvoicePreview(true);
     proceedOrder();
   };
   // New: Handle Print button (proceed + print to default printer)
@@ -810,6 +812,78 @@ export default function PrinterSettings() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Invoice Preview Modal */}
+      <Dialog open={showInvoicePreview} onOpenChange={setShowInvoicePreview}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Printer className="h-5 w-5" />
+              Invoice Preview (Simulation)
+            </DialogTitle>
+            <DialogDescription>
+              This is how your ZATCA-compliant invoice will look when printed on a thermal receipt printer.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Main Preview Image */}
+            <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
+              <img
+                src="https://bytize.xyz/wp-content/uploads/2025/02/zatca_invoice.png"
+                alt="ZATCA compliant Saudi thermal invoice with QR code - Full preview"
+                className="w-full h-auto object-contain"
+                data-testid="img-invoice-preview-main"
+              />
+            </div>
+            
+            {/* Additional Example Thumbnails */}
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground font-medium">Additional ZATCA Invoice Examples:</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-lg border bg-white overflow-hidden shadow-sm">
+                  <img
+                    src="https://www.refrens.com/grow/wp-content/uploads/2024/05/ZATCA-Compliant-E-Invoices-2.png"
+                    alt="ZATCA compliant e-invoice with QR code"
+                    className="w-full h-auto object-contain"
+                    loading="lazy"
+                    data-testid="img-invoice-preview-thumb-1"
+                  />
+                </div>
+                <div className="rounded-lg border bg-white overflow-hidden shadow-sm">
+                  <img
+                    src="https://bimpos.com/sites/default/files/images/posts/4cc27661-79a2-4145-8089-e76c4b4fd399.jpeg"
+                    alt="ZATCA POS thermal receipt example"
+                    className="w-full h-auto object-contain"
+                    loading="lazy"
+                    data-testid="img-invoice-preview-thumb-2"
+                  />
+                </div>
+                <div className="rounded-lg border bg-white overflow-hidden shadow-sm">
+                  <img
+                    src="https://lh7-rt.googleusercontent.com/docsz/AD_4nXe1_YCndfov-scKd2H3nY7IwfexsWaj54621PZkXHtEStfPBZvs7ZMNEVsYmVIlWFR-V0FWfHkitz7_l6yvjBgJezEtIU4KrkmBGccRTqzC0Hy_G-8klGJ9NzhSVyNEYLjiK58FTiJcOhfYlNsur2SHKKd4?key=RdYVsro0wRbFCVuhJZlnww"
+                    alt="ZATCA compliant invoice layout"
+                    className="w-full h-auto object-contain"
+                    loading="lazy"
+                    data-testid="img-invoice-preview-thumb-3"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* Info Note */}
+            <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
+              <p className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 mt-0.5 text-green-600 flex-shrink-0" />
+                <span>
+                  All invoices include mandatory ZATCA requirements: QR code for Fatoora portal verification, 
+                  seller VAT number, invoice date/time, itemized totals with 15% VAT, and bilingual Arabic/English text.
+                </span>
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog
         open={!!deletingPrinter}
         onOpenChange={(isOpen) => !isOpen && setDeletingPrinter(null)}
