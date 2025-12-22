@@ -4830,6 +4830,33 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.status(204).send();
   });
 
+  // Employee Activity Log (Admin only - track sub-account actions)
+  app.get("/api/employee-activities", requireAuth, requireRestaurant, requirePermission('users'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
+    
+    // Only admins can view activity logs
+    if (req.session.user!.role !== "admin") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const { employeeId, category, startDate, endDate } = req.query;
+      
+      const activities = await storage.getEmployeeActivities(
+        restaurantId,
+        employeeId as string | undefined,
+        category as string | undefined,
+        startDate ? new Date(startDate as string) : undefined,
+        endDate ? new Date(endDate as string) : undefined
+      );
+      
+      res.json(activities);
+    } catch (error) {
+      console.error("Get employee activities error:", error);
+      res.status(500).json({ error: "Failed to fetch activity logs" });
+    }
+  });
+
   // User Profile Management
   app.get("/api/profile", requireAuth, requireRestaurant, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
