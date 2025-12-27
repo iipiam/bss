@@ -26,6 +26,15 @@ export interface Translations {
   settings: string;
   pos: string;
   logout: string;
+  
+  // Sidebar Items
+  profile: string;
+  teamChat: string;
+  passwordManager: string;
+  adminTools: string;
+  menuProfitability: string;
+  activityLog: string;
+  
   shop: string;  // Restaurant terminology
   factory: string;  // Factory business type: replaces "shop"
   product: string;  // Factory terminology: singular "Product" (replaces "Menu Item")
@@ -1683,6 +1692,14 @@ export const translations: Record<Language, Translations> = {
     pos: 'POS',
     logout: 'Logout',
     
+    // Sidebar Items
+    profile: 'Profile',
+    teamChat: 'Team Chat',
+    passwordManager: 'Password Manager',
+    adminTools: 'Admin Tools',
+    menuProfitability: 'Menu Profitability',
+    activityLog: 'Activity Log',
+    
     // Navigation Groups
     operations: 'Operations',
     management: 'Management',
@@ -3331,6 +3348,14 @@ export const translations: Record<Language, Translations> = {
     pos: 'نقطة البيع',
     logout: 'تسجيل الخروج',
     
+    // Sidebar Items
+    profile: 'الملف الشخصي',
+    teamChat: 'دردشة الفريق',
+    passwordManager: 'مدير كلمات المرور',
+    adminTools: 'أدوات المسؤول',
+    menuProfitability: 'ربحية القائمة',
+    activityLog: 'سجل النشاط',
+    
     // Navigation Groups
     operations: 'العمليات',
     management: 'الإدارة',
@@ -4977,6 +5002,14 @@ export const translations: Record<Language, Translations> = {
     pos: 'Kasse',
     logout: 'Abmelden',
     
+    // Sidebar Items
+    profile: 'Profil',
+    teamChat: 'Team-Chat',
+    passwordManager: 'Passwort-Manager',
+    adminTools: 'Admin-Werkzeuge',
+    menuProfitability: 'Menü-Rentabilität',
+    activityLog: 'Aktivitätsprotokoll',
+    
     // Navigation Groups
     operations: 'Betrieb',
     management: 'Verwaltung',
@@ -6605,6 +6638,14 @@ export const translations: Record<Language, Translations> = {
     settings: '设置',
     pos: '收银台',
     logout: '登出',
+    
+    // Sidebar Items
+    profile: '个人资料',
+    teamChat: '团队聊天',
+    passwordManager: '密码管理器',
+    adminTools: '管理工具',
+    menuProfitability: '菜单盈利能力',
+    activityLog: '活动日志',
     
     // Navigation Groups
     operations: '运营',
@@ -8235,6 +8276,14 @@ export const translations: Record<Language, Translations> = {
     pos: 'POS',
     logout: 'লগআউট',
     
+    // Sidebar Items
+    profile: 'প্রোফাইল',
+    teamChat: 'টিম চ্যাট',
+    passwordManager: 'পাসওয়ার্ড ম্যানেজার',
+    adminTools: 'অ্যাডমিন টুলস',
+    menuProfitability: 'মেনু লাভজনকতা',
+    activityLog: 'কার্যকলাপ লগ',
+    
     // Navigation Groups
     operations: 'অপারেশন',
     management: 'ব্যবস্থাপনা',
@@ -9863,6 +9912,14 @@ export const translations: Record<Language, Translations> = {
     settings: 'Impostazioni',
     pos: 'POS',
     logout: 'Esci',
+    
+    // Sidebar Items
+    profile: 'Profilo',
+    teamChat: 'Chat del Team',
+    passwordManager: 'Gestore Password',
+    adminTools: 'Strumenti Admin',
+    menuProfitability: 'Redditività Menu',
+    activityLog: 'Registro Attività',
     
     // Navigation Groups
     operations: 'Operazioni',
@@ -11494,6 +11551,14 @@ export const translations: Record<Language, Translations> = {
     pos: 'पीओएस',
     logout: 'लॉग आउट',
     
+    // Sidebar Items
+    profile: 'प्रोफ़ाइल',
+    teamChat: 'टीम चैट',
+    passwordManager: 'पासवर्ड मैनेजर',
+    adminTools: 'व्यवस्थापक उपकरण',
+    menuProfitability: 'मेनू लाभप्रदता',
+    activityLog: 'गतिविधि लॉग',
+    
     // Navigation Groups
     operations: 'संचालन',
     management: 'प्रबंधन',
@@ -13066,6 +13131,14 @@ export const translations: Record<Language, Translations> = {
     pos: 'پی او ایس',
     logout: 'لاگ آؤٹ',
     
+    // Sidebar Items
+    profile: 'پروفائل',
+    teamChat: 'ٹیم چیٹ',
+    passwordManager: 'پاس ورڈ مینیجر',
+    adminTools: 'ایڈمن ٹولز',
+    menuProfitability: 'مینو منافع',
+    activityLog: 'سرگرمی لاگ',
+    
     // Navigation Groups
     operations: 'آپریشنز',
     management: 'انتظام',
@@ -14637,6 +14710,15 @@ export const translations: Record<Language, Translations> = {
     settings: "Configuración",
     pos: "TPV",
     logout: "Cerrar Sesión",
+    
+    // Sidebar Items
+    profile: 'Perfil',
+    teamChat: 'Chat de Equipo',
+    passwordManager: 'Gestor de Contraseñas',
+    adminTools: 'Herramientas Admin',
+    menuProfitability: 'Rentabilidad del Menú',
+    activityLog: 'Registro de Actividad',
+    
     operations: "Operaciones",
     management: "Gestión",
     analytics: "Análisis",
@@ -16149,6 +16231,15 @@ export const translations: Record<Language, Translations> = {
     settings: "Mga Setting",
     pos: "POS",
     logout: "Mag-logout",
+    
+    // Sidebar Items
+    profile: 'Profile',
+    teamChat: 'Team Chat',
+    passwordManager: 'Password Manager',
+    adminTools: 'Admin Tools',
+    menuProfitability: 'Menu Profitability',
+    activityLog: 'Activity Log',
+    
     operations: "Operasyon",
     management: "Pamamahala",
     analytics: "Analytics",
