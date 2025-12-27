@@ -17,7 +17,7 @@ import { notificationTones, toneIds, playNotificationTone, getToneName, type Ton
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, setLanguage, language } = useLanguage();
   const { restaurant, isLoading: authLoading } = useAuth();
   const [formData, setFormData] = useState<Partial<Settings>>({});
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -267,8 +267,13 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <Label htmlFor="language">{t.language}</Label>
                 <Select
-                  value={formData.language || settings?.language || "English"}
-                  onValueChange={(value) => handleChange("language", value)}
+                  value={language}
+                  onValueChange={(value) => {
+                    // Update formData for form state
+                    handleChange("language", value);
+                    // Immediately apply language change across the app
+                    setLanguage(value as 'English' | 'Arabic' | 'German' | 'Chinese' | 'Bengali' | 'Italian' | 'Hindi' | 'Urdu' | 'Spanish' | 'Tagalog');
+                  }}
                 >
                   <SelectTrigger id="language" data-testid="select-language">
                     <SelectValue placeholder="Select language" />
@@ -281,6 +286,9 @@ export default function SettingsPage() {
                     <SelectItem value="Hindi">हिन्दी (Hindi)</SelectItem>
                     <SelectItem value="Urdu">اردو (Urdu)</SelectItem>
                     <SelectItem value="Bengali">বাংলা (Bengali)</SelectItem>
+                    <SelectItem value="Spanish">Español (Spanish)</SelectItem>
+                    <SelectItem value="Italian">Italiano (Italian)</SelectItem>
+                    <SelectItem value="Tagalog">Tagalog</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
