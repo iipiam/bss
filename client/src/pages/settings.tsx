@@ -11,7 +11,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useDevice } from "@/contexts/DeviceContext";
 import { useAuth } from "@/lib/auth";
 import type { Settings } from "@shared/schema";
-import { Save, Laptop, Tablet, Smartphone, Volume2, Bell, MessageSquare, Upload, Trash2, Image } from "lucide-react";
+import { Save, Laptop, Tablet, Smartphone, Volume2, Bell, MessageSquare, Upload, Trash2, Image, Plus, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { notificationTones, toneIds, playNotificationTone, getToneName, type ToneId } from "@/lib/notificationTones";
 
@@ -20,6 +20,7 @@ export default function SettingsPage() {
   const { t, setLanguage, language } = useLanguage();
   const { restaurant, isLoading: authLoading } = useAuth();
   const [formData, setFormData] = useState<Partial<Settings>>({});
+  const [showShift2, setShowShift2] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: settings, isLoading } = useQuery<Settings>({
@@ -32,6 +33,11 @@ export default function SettingsPage() {
   useEffect(() => {
     if (settings) {
       setFormData(settings);
+      // Show Shift 2 if there are existing values (future-proofing for when db columns exist)
+      const hasShift2Data = (settings as any).openingTime2 || (settings as any).closingTime2;
+      if (hasShift2Data) {
+        setShowShift2(true);
+      }
     }
   }, [settings]);
 
@@ -294,7 +300,7 @@ export default function SettingsPage() {
               </div>
 
               {/* Shift 1 */}
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 flex items-center justify-between">
                 <Label className="text-sm font-medium text-muted-foreground">{t.shift1 || "Shift 1"}</Label>
               </div>
               <div className="space-y-2">
@@ -321,34 +327,59 @@ export default function SettingsPage() {
                 />
               </div>
 
-              {/* Shift 2 - Will be enabled after production db:push 
-              <div className="md:col-span-2">
-                <Label className="text-sm font-medium text-muted-foreground">{t.shift2 || "Shift 2"}</Label>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="openingTime2">{t.openingTime}</Label>
-                <Input
-                  id="openingTime2"
-                  type="time"
-                  value={(formData as any).openingTime2 || (settings as any)?.openingTime2 || ""}
-                  onChange={(e) => handleChange("openingTime2" as any, e.target.value)}
-                  placeholder="19:00"
-                  data-testid="input-opening-time-2"
-                />
-              </div>
+              {/* Add Shift Button - shown when Shift 2 is hidden */}
+              {!showShift2 && (
+                <div className="md:col-span-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowShift2(true)}
+                    data-testid="button-add-shift"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t.addShift || "Add Shift"}
+                  </Button>
+                </div>
+              )}
 
-              <div className="space-y-2">
-                <Label htmlFor="closingTime2">{t.closingTime}</Label>
-                <Input
-                  id="closingTime2"
-                  type="time"
-                  value={(formData as any).closingTime2 || (settings as any)?.closingTime2 || ""}
-                  onChange={(e) => handleChange("closingTime2" as any, e.target.value)}
-                  placeholder="23:00"
-                  data-testid="input-closing-time-2"
-                />
-              </div>
-              */}
+              {/* Shift 2 - shown by choice */}
+              {showShift2 && (
+                <>
+                  <div className="md:col-span-2 flex items-center justify-between">
+                    <Label className="text-sm font-medium text-muted-foreground">{t.shift2 || "Shift 2"}</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowShift2(false)}
+                      data-testid="button-remove-shift"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      {t.removeShift || "Remove Shift"}
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="openingTime2">{t.openingTime}</Label>
+                    <Input
+                      id="openingTime2"
+                      type="time"
+                      placeholder="19:00"
+                      data-testid="input-opening-time-2"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="closingTime2">{t.closingTime}</Label>
+                    <Input
+                      id="closingTime2"
+                      type="time"
+                      placeholder="23:00"
+                      data-testid="input-closing-time-2"
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Logo Upload Section */}

@@ -466,6 +466,8 @@ export interface Translations {
   closingTime: string;
   shift1: string;
   shift2: string;
+  addShift: string;
+  removeShift: string;
   enterDiscount: string;
   
   // Authentication
@@ -2095,6 +2097,8 @@ export const translations: Record<Language, Translations> = {
     closingTime: 'Closing Time',
     shift1: 'Shift 1',
     shift2: 'Shift 2',
+    addShift: 'Add Shift',
+    removeShift: 'Remove Shift',
     enterDiscount: 'Enter discount percentage (0-100)',
     
     // Authentication
@@ -3727,6 +3731,8 @@ export const translations: Record<Language, Translations> = {
     closingTime: 'وقت الإغلاق',
     shift1: 'الفترة الأولى',
     shift2: 'الفترة الثانية',
+    addShift: 'إضافة فترة',
+    removeShift: 'إزالة الفترة',
     enterDiscount: 'أدخل نسبة الخصم (0-100)',
     
     // Authentication
@@ -5357,6 +5363,8 @@ export const translations: Record<Language, Translations> = {
     closingTime: 'Closing Time',
     shift1: 'Schicht 1',
     shift2: 'Schicht 2',
+    addShift: 'Schicht hinzufügen',
+    removeShift: 'Schicht entfernen',
     enterDiscount: 'Enter discount percentage (0-100)',
     
     // Authentication
@@ -6970,6 +6978,8 @@ export const translations: Record<Language, Translations> = {
     closingTime: 'Closing Time',
     shift1: '班次 1',
     shift2: '班次 2',
+    addShift: '添加班次',
+    removeShift: '移除班次',
     enterDiscount: 'Enter discount percentage (0-100)',
     
     // Authentication
@@ -8583,6 +8593,8 @@ export const translations: Record<Language, Translations> = {
     closingTime: 'Closing Time',
     shift1: 'শিফট ১',
     shift2: 'শিফট ২',
+    addShift: 'শিফট যোগ করুন',
+    removeShift: 'শিফট সরান',
     enterDiscount: 'Enter discount percentage (0-100)',
     
     // Authentication
@@ -10196,6 +10208,8 @@ export const translations: Record<Language, Translations> = {
     closingTime: 'Closing Time',
     shift1: 'Turno 1',
     shift2: 'Turno 2',
+    addShift: 'Aggiungi turno',
+    removeShift: 'Rimuovi turno',
     enterDiscount: 'Enter discount percentage (0-100)',
     
     // Authentication
@@ -11798,6 +11812,8 @@ export const translations: Record<Language, Translations> = {
     closingTime: 'बंद होने का समय',
     shift1: 'शिफ्ट 1',
     shift2: 'शिफ्ट 2',
+    addShift: 'शिफ्ट जोड़ें',
+    removeShift: 'शिफ्ट हटाएं',
     enterDiscount: 'छूट प्रतिशत दर्ज करें (0-100)',
     
     // Authentication
@@ -13354,6 +13370,8 @@ export const translations: Record<Language, Translations> = {
     closingTime: 'بند ہونے کا وقت',
     shift1: 'شفٹ 1',
     shift2: 'شفٹ 2',
+    addShift: 'شفٹ شامل کریں',
+    removeShift: 'شفٹ ہٹائیں',
     enterDiscount: 'رعایت کا فیصد درج کریں (0-100)',
     
     // Authentication
@@ -14870,6 +14888,8 @@ export const translations: Record<Language, Translations> = {
     closingTime: "Closing Time",
     shift1: "Turno 1",
     shift2: "Turno 2",
+    addShift: "Agregar turno",
+    removeShift: "Eliminar turno",
     enterDiscount: "Enter discount percentage (0-100)",
     login: "Iniciar Sesión",
     signup: "Sign Up",
@@ -16366,6 +16386,8 @@ export const translations: Record<Language, Translations> = {
     closingTime: "Closing Time",
     shift1: "Shift 1",
     shift2: "Shift 2",
+    addShift: "Magdagdag ng Shift",
+    removeShift: "Alisin ang Shift",
     enterDiscount: "Enter discount percentage (0-100)",
     login: "Mag-login",
     signup: "Sign Up",
