@@ -256,7 +256,7 @@ export default function Employees() {
     if (!formData.username || !formData.password || !formData.fullName) {
       toast({
         title: t.missingFields || "Missing fields",
-        description: t.fillUsernamePasswordFullName || "Please fill in username, password, and full name",
+        description: t.missingFieldsDesc || "Please fill in username, password, and full name",
         variant: "destructive",
       });
       return;
@@ -707,7 +707,7 @@ export default function Employees() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="visaFees">{t.visaFees || "Visa Fees"} (SAR)</Label>
+                    <Label htmlFor="visaFees">{t.visaFees || "Visa Fees"} ({t.sar || "SAR"})</Label>
                     <Input
                       id="visaFees"
                       type="number"
@@ -752,7 +752,7 @@ export default function Employees() {
               <TabsContent value="ticket" className="space-y-4 mt-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="ticketAmount">{t.ticketAmount || "Ticket Amount"} (SAR)</Label>
+                    <Label htmlFor="ticketAmount">{t.ticketAmount || "Ticket Amount"} ({t.sar || "SAR"})</Label>
                     <Input
                       id="ticketAmount"
                       type="number"
@@ -968,7 +968,7 @@ export default function Employees() {
                     <CardTitle>{user.fullName}</CardTitle>
                     <CardDescription>@{user.username}</CardDescription>
                     {user.employeeNumber && (
-                      <p className="text-xs text-muted-foreground mt-1">ID: {user.employeeNumber}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{t.employeeId || "ID"}: {user.employeeNumber}</p>
                     )}
                   </div>
                   <Badge variant={user.active ? "default" : "secondary"}>
@@ -981,7 +981,7 @@ export default function Employees() {
                   <div className="flex items-center gap-2">
                     <Briefcase className="h-4 w-4 text-muted-foreground" />
                     <span className="text-muted-foreground">{t.role || "Role"}:</span>
-                    <Badge variant="outline" className="capitalize">{user.role}</Badge>
+                    <Badge variant="outline" className="capitalize">{user.role === 'admin' ? (t.admin || "Admin") : (t.employee || "Employee")}</Badge>
                   </div>
                   {user.hireDate && (
                     <div className="flex items-center gap-2">
@@ -1004,7 +1004,10 @@ export default function Employees() {
                       <Badge 
                         variant={user.visaStatus === 'valid' ? 'default' : user.visaStatus === 'expired' ? 'destructive' : 'secondary'}
                       >
-                        {user.visaStatus}
+                        {user.visaStatus === 'valid' ? (t.valid || "Valid") : 
+                         user.visaStatus === 'expired' ? (t.expired || "Expired") : 
+                         user.visaStatus === 'pending' ? (t.pending || "Pending") : 
+                         (t.notApplicable || "Not Applicable")}
                       </Badge>
                     </div>
                   )}
@@ -1334,7 +1337,7 @@ export default function Employees() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-visaFees">{t.visaFees || "Visa Fees"} (SAR)</Label>
+                  <Label htmlFor="edit-visaFees">{t.visaFees || "Visa Fees"} ({t.sar || "SAR"})</Label>
                   <Input
                     id="edit-visaFees"
                     type="number"
@@ -1379,7 +1382,7 @@ export default function Employees() {
             <TabsContent value="ticket" className="space-y-4 mt-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-ticketAmount">{t.ticketAmount || "Ticket Amount"} (SAR)</Label>
+                  <Label htmlFor="edit-ticketAmount">{t.ticketAmount || "Ticket Amount"} ({t.sar || "SAR"})</Label>
                   <Input
                     id="edit-ticketAmount"
                     type="number"

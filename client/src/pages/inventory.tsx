@@ -367,7 +367,7 @@ function SortableAddonRow({ addon, menuItemNames, onEdit, onDelete }: SortableAd
       <TableCell className="text-muted-foreground">{menuItemNames}</TableCell>
       <TableCell>
         <Badge variant={addon.available ? "secondary" : "outline"}>
-          {addon.available ? t.available : t.unavailable}
+          {addon.available ? (t.available || "Available") : (t.unavailable || "Unavailable")}
         </Badge>
       </TableCell>
       <TableCell className="text-right">
@@ -401,12 +401,12 @@ function SortableAddonCard({ addon, menuItemNames, onEdit, onDelete }: SortableA
             <p className="text-xs text-muted-foreground">{addon.category}</p>
           </div>
           <Badge variant={addon.available ? "secondary" : "outline"} className="text-xs">
-            {addon.available ? t.available : t.unavailable}
+            {addon.available ? (t.available || "Available") : (t.unavailable || "Unavailable")}
           </Badge>
         </div>
         <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
           <div>
-            <span className="text-xs text-muted-foreground">{t.price}:</span>
+            <span className="text-xs text-muted-foreground">{t.price || "Price"}:</span>
             <p className="font-mono font-medium text-primary">{parseFloat(addon.price).toFixed(2)} SAR</p>
           </div>
           <div>
@@ -422,7 +422,7 @@ function SortableAddonCard({ addon, menuItemNames, onEdit, onDelete }: SortableA
             data-testid={`button-edit-addon-${addon.id}`}
           >
             <Edit className="h-4 w-4 mr-1" />
-            {t.edit}
+            {t.edit || "Edit"}
           </Button>
           <Button
             variant="outline"
@@ -431,7 +431,7 @@ function SortableAddonCard({ addon, menuItemNames, onEdit, onDelete }: SortableA
             data-testid={`button-delete-addon-${addon.id}`}
           >
             <Trash2 className="h-4 w-4 mr-1 text-destructive" />
-            {t.delete}
+            {t.delete || "Delete"}
           </Button>
         </div>
       </CardContent>
@@ -1050,7 +1050,7 @@ export default function Inventory() {
     return (
       <div className={layout.padding}>
         <h1 className={`${layout.text3Xl} font-bold mb-2`}>{t.inventoryManagement || "Inventory Management"}</h1>
-        <p className="text-muted-foreground">{t.loading}...</p>
+        <p className="text-muted-foreground">{t.loading || "Loading"}...</p>
       </div>
     );
   }
@@ -1522,12 +1522,12 @@ export default function Inventory() {
           <div className={`flex gap-2 ${layout.isMobile ? 'flex-wrap' : ''}`}>
             <Button onClick={() => setAddonOpen(true)} data-testid="button-add-addon">
               <Plus className="h-4 w-4 mr-2" />
-              {t.addAddon}
+              {t.addAddon || "Add Add-on"}
             </Button>
             <Dialog open={addonOpen} onOpenChange={handleOpenAddonChange}>
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>{editingAddon ? t.editAddon : t.addAddon}</DialogTitle>
+                  <DialogTitle>{editingAddon ? (t.editAddon || "Edit Add-on") : (t.addAddon || "Add Add-on")}</DialogTitle>
                   <DialogDescription>
                     {editingAddon ? (t.updateAddonDetails || "Update the add-on details") : (t.addNewAddonToMenu || "Add a new add-on to your menu")}
                   </DialogDescription>
@@ -1539,7 +1539,7 @@ export default function Inventory() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t.addonName}</FormLabel>
+                          <FormLabel>{t.addonName || "Add-on Name"}</FormLabel>
                           <FormControl>
                             <Input {...field} placeholder={t.addonNamePlaceholder || "e.g., Extra Cheese"} data-testid="input-addon-name" />
                           </FormControl>
@@ -1552,7 +1552,7 @@ export default function Inventory() {
                       name="category"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t.addonCategory}</FormLabel>
+                          <FormLabel>{t.addonCategory || "Add-on Category"}</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger data-testid="select-addon-category">
@@ -1576,7 +1576,7 @@ export default function Inventory() {
                       name="price"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t.addonPrice} ({t.sarInclVat || "SAR, incl. VAT"})</FormLabel>
+                          <FormLabel>{t.addonPrice || "Add-on Price"} ({t.sarInclVat || "SAR, incl. VAT"})</FormLabel>
                           <FormControl>
                             <Input {...field} type="number" step="0.01" placeholder="0.00" data-testid="input-addon-price" />
                           </FormControl>
@@ -1605,7 +1605,7 @@ export default function Inventory() {
                                       : field.value.length === 2
                                         ? menuItems.filter(item => field.value!.includes(item.id)).map(item => item.name).join(", ")
                                         : `${field.value.length} ${t.itemsSelected || "items selected"}`
-                                    : t.all}
+                                    : (t.all || "All")}
                                   <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                                 </Button>
                               </FormControl>
@@ -1626,7 +1626,7 @@ export default function Inventory() {
                                       checked={!field.value || field.value.length === 0}
                                       className="mr-2"
                                     />
-                                    <span>{t.all}</span>
+                                    <span>{t.all || "All"}</span>
                                   </CommandItem>
                                   {menuItems.map((item) => (
                                     <CommandItem
@@ -1662,7 +1662,7 @@ export default function Inventory() {
                       render={({ field }) => (
                         <FormItem className="flex items-center justify-between rounded-md border p-3">
                           <div>
-                            <FormLabel className="text-base">{t.available}</FormLabel>
+                            <FormLabel className="text-base">{t.available || "Available"}</FormLabel>
                             <p className="text-xs text-muted-foreground">{t.makeAddonAvailableForOrders || "Make this add-on available for orders"}</p>
                           </div>
                           <FormControl>
@@ -1677,10 +1677,10 @@ export default function Inventory() {
                     />
                     <div className="flex justify-end gap-2 pt-4">
                       <Button type="button" variant="outline" onClick={handleCloseAddonDialog} data-testid="button-cancel-addon">
-                        {t.cancel}
+                        {t.cancel || "Cancel"}
                       </Button>
                       <Button type="submit" data-testid="button-save-addon" disabled={createAddonMutation.isPending || updateAddonMutation.isPending}>
-                        {editingAddon ? t.save : t.add}
+                        {editingAddon ? (t.save || "Save") : (t.add || "Add")}
                       </Button>
                     </div>
                   </form>
@@ -1720,11 +1720,11 @@ export default function Inventory() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{t.addonName}</TableHead>
-                    <TableHead>{t.category}</TableHead>
-                    <TableHead>{t.price}</TableHead>
+                    <TableHead>{t.addonName || "Add-on Name"}</TableHead>
+                    <TableHead>{t.category || "Category"}</TableHead>
+                    <TableHead>{t.price || "Price"}</TableHead>
                     <TableHead>{t.menuItem || "Menu Item"}</TableHead>
-                    <TableHead>{t.status}</TableHead>
+                    <TableHead>{t.status || "Status"}</TableHead>
                     <TableHead className="text-right">{t.actions || "Actions"}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1732,7 +1732,7 @@ export default function Inventory() {
                   {filteredAddons.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center text-muted-foreground">
-                        {t.noAddonsAvailable}
+                        {t.noAddonsAvailable || "No add-ons available"}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -1744,7 +1744,7 @@ export default function Inventory() {
                               .filter(item => addon.menuItemIds!.includes(item.id))
                               .map(item => item.name)
                               .join(", ")
-                        : t.all;
+                        : (t.all || "All");
                       return (
                         <SortableAddonRow
                           key={addon.id}
@@ -1762,7 +1762,7 @@ export default function Inventory() {
               <div className="space-y-3">
                 {filteredAddons.length === 0 ? (
                   <div className="text-center text-muted-foreground py-8">
-                    {t.noAddonsAvailable}
+                    {t.noAddonsAvailable || "No add-ons available"}
                   </div>
                 ) : (
                   filteredAddons.map((addon) => {
@@ -1773,7 +1773,7 @@ export default function Inventory() {
                             .filter(item => addon.menuItemIds!.includes(item.id))
                             .map(item => item.name)
                             .join(", ")
-                      : t.all;
+                      : (t.all || "All");
                     return (
                       <SortableAddonCard
                         key={addon.id}
@@ -1798,9 +1798,9 @@ export default function Inventory() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel data-testid="button-cancel-delete-addon">{t.cancel}</AlertDialogCancel>
+                <AlertDialogCancel data-testid="button-cancel-delete-addon">{t.cancel || "Cancel"}</AlertDialogCancel>
                 <AlertDialogAction onClick={confirmAddonDelete} data-testid="button-confirm-delete-addon">
-                  {t.delete}
+                  {t.delete || "Delete"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

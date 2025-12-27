@@ -1083,7 +1083,7 @@ export default function Menu() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder={`Search ${labels.menuItems.toLowerCase()}...`}
+          placeholder={t.searchItemsPlaceholder || `${t.search || "Search"} ${labels.menuItems.toLowerCase()}...`}
           className="pl-10 max-w-md"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
