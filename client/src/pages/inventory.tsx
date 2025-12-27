@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -103,11 +103,12 @@ const formatToast = (template: string | undefined, label: string | undefined): s
   return template.includes('%s') ? template.replace('%s', label ?? '') : template;
 };
 
-const formSchema = insertInventoryItemSchema.omit({ restaurantId: true, purchaseDate: true }).extend({
-  quantity: z.coerce.number().positive("Quantity must be a positive number"),
-  referenceQuantity: z.coerce.number().positive("Reference quantity must be a positive number"),
-  price: z.coerce.number().min(0, "Price must be zero or positive"),
-  expirationDays: z.coerce.number().min(0, "Expiration days must be zero or positive").nullable().optional(),
+// Factory function for creating localized inventory form schema
+const createFormSchema = (t: any) => insertInventoryItemSchema.omit({ restaurantId: true, purchaseDate: true }).extend({
+  quantity: z.coerce.number().positive(t.quantityPositive || "Quantity must be a positive number"),
+  referenceQuantity: z.coerce.number().positive(t.referenceQuantityPositive || "Reference quantity must be a positive number"),
+  price: z.coerce.number().min(0, t.priceMustBeZeroOrPositive || "Price must be zero or positive"),
+  expirationDays: z.coerce.number().min(0, t.expirationDaysMustBeZeroOrPositive || "Expiration days must be zero or positive").nullable().optional(),
 });
 
 // Helper function to calculate days remaining until expiration
@@ -125,7 +126,7 @@ const createAddonFormSchema = (t: any) => {
   const addonFormSchemaInput = z.object({
     name: z.string().min(1, t.nameRequired),
     category: z.string().min(1, t.categoryRequired),
-    price: z.coerce.number().positive("Price must be a positive number"),
+    price: z.coerce.number().positive(t.priceMustBePositive || "Price must be a positive number"),
     available: z.boolean().default(true),
     menuItemIds: z.array(z.string()).nullable().default(null),
   });
@@ -465,7 +466,10 @@ export default function Inventory() {
   const [addAsAddon, setAddAsAddon] = useState(false);
   const [addonPrice, setAddonPrice] = useState("");
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  // Create localized form schema
+  const formSchema = useMemo(() => createFormSchema(t), [t]);
+
+  const form = useForm<z.infer<ReturnType<typeof createFormSchema>>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
