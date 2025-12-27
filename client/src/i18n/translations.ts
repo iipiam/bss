@@ -109,6 +109,24 @@ export interface Translations {
   optional: string;
   uploading: string;
   
+  // Days of the week
+  sunday: string;
+  monday: string;
+  tuesday: string;
+  wednesday: string;
+  thursday: string;
+  friday: string;
+  saturday: string;
+  
+  // Schedule
+  schedule: string;
+  weeklySchedule: string;
+  scheduleDescription: string;
+  working: string;
+  dayOff: string;
+  daysOff: string;
+  noDaysOff: string;
+  
   // License File Upload
   licenseDocument: string;
   licenseNumberRequired: string;
@@ -1739,6 +1757,21 @@ export const translations: Record<Language, Translations> = {
     actionCannotBeUndone: 'This action cannot be undone',
     optional: 'Optional',
     uploading: 'Uploading...',
+    view: 'View',
+    sunday: 'Sunday',
+    monday: 'Monday',
+    tuesday: 'Tuesday',
+    wednesday: 'Wednesday',
+    thursday: 'Thursday',
+    friday: 'Friday',
+    saturday: 'Saturday',
+    schedule: 'Schedule',
+    weeklySchedule: 'Weekly Schedule',
+    scheduleDescription: 'Set working days for this employee',
+    working: 'Working',
+    dayOff: 'Day Off',
+    daysOff: 'Days Off',
+    noDaysOff: 'No days off',
     
     // License File Upload
     licenseDocument: 'License Document',
@@ -2164,7 +2197,6 @@ export const translations: Record<Language, Translations> = {
     invoiceDownloadFailedDesc: 'You can download your invoice later from the Invoices page.',
     invoiceImage: 'Invoice Image',
     downloadInvoice: 'Download Invoice',
-    view: 'View',
     subscriptionPlan: 'Subscription Plan',
     billedMonthly: 'Billed monthly',
     billedYearly: 'Billed yearly',
@@ -3373,6 +3405,21 @@ export const translations: Record<Language, Translations> = {
     actionCannotBeUndone: 'لا يمكن التراجع عن هذا الإجراء',
     optional: 'اختياري',
     uploading: 'جاري الرفع...',
+    view: 'عرض',
+    sunday: 'الأحد',
+    monday: 'الإثنين',
+    tuesday: 'الثلاثاء',
+    wednesday: 'الأربعاء',
+    thursday: 'الخميس',
+    friday: 'الجمعة',
+    saturday: 'السبت',
+    schedule: 'الجدول',
+    weeklySchedule: 'الجدول الأسبوعي',
+    scheduleDescription: 'تعيين أيام العمل لهذا الموظف',
+    working: 'عامل',
+    dayOff: 'يوم إجازة',
+    daysOff: 'أيام الإجازة',
+    noDaysOff: 'لا يوجد أيام إجازة',
     
     // License File Upload
     licenseDocument: 'مستند الترخيص',
@@ -3798,7 +3845,6 @@ export const translations: Record<Language, Translations> = {
     invoiceDownloadFailedDesc: 'يمكنك تنزيل فاتورتك لاحقاً من صفحة الفواتير.',
     invoiceImage: 'صورة الفاتورة',
     downloadInvoice: 'تحميل الفاتورة',
-    view: 'عرض',
     subscriptionPlan: 'خطة الاشتراك',
     billedMonthly: 'يتم الدفع شهرياً',
     billedYearly: 'يتم الدفع سنوياً',
@@ -5005,6 +5051,21 @@ export const translations: Record<Language, Translations> = {
     actionCannotBeUndone: 'This action cannot be undone',
     optional: 'Optional',
     uploading: 'Wird hochgeladen...',
+    view: 'Ansehen',
+    sunday: 'Sonntag',
+    monday: 'Montag',
+    tuesday: 'Dienstag',
+    wednesday: 'Mittwoch',
+    thursday: 'Donnerstag',
+    friday: 'Freitag',
+    saturday: 'Samstag',
+    schedule: 'Zeitplan',
+    weeklySchedule: 'Wochenplan',
+    scheduleDescription: 'Arbeitstage für diesen Mitarbeiter festlegen',
+    working: 'Arbeiten',
+    dayOff: 'Freier Tag',
+    daysOff: 'Freie Tage',
+    noDaysOff: 'Keine freien Tage',
     
     // License File Upload
     licenseDocument: 'Lizenzdokument',
@@ -5430,7 +5491,6 @@ export const translations: Record<Language, Translations> = {
     invoiceDownloadFailedDesc: 'You can download your invoice later from the Invoices page.',
     invoiceImage: 'Rechnungsbild',
     downloadInvoice: 'Rechnung herunterladen',
-    view: 'Ansehen',
     subscriptionPlan: 'Subscription Plan',
     billedMonthly: 'Billed monthly',
     billedYearly: 'Billed yearly',
@@ -6620,6 +6680,21 @@ export const translations: Record<Language, Translations> = {
     actionCannotBeUndone: 'This action cannot be undone',
     optional: '可选',
     uploading: '上传中...',
+    view: '查看',
+    sunday: '星期日',
+    monday: '星期一',
+    tuesday: '星期二',
+    wednesday: '星期三',
+    thursday: '星期四',
+    friday: '星期五',
+    saturday: '星期六',
+    schedule: '日程',
+    weeklySchedule: '周计划',
+    scheduleDescription: '设置此员工的工作日',
+    working: '工作',
+    dayOff: '休息日',
+    daysOff: '休息日',
+    noDaysOff: '没有休息日',
     
     // License File Upload
     licenseDocument: '许可证文件',
@@ -7045,7 +7120,6 @@ export const translations: Record<Language, Translations> = {
     invoiceDownloadFailedDesc: 'You can download your invoice later from the Invoices page.',
     invoiceImage: '发票图片',
     downloadInvoice: '下载发票',
-    view: '查看',
     subscriptionPlan: 'Subscription Plan',
     billedMonthly: 'Billed monthly',
     billedYearly: 'Billed yearly',
@@ -8235,6 +8309,21 @@ export const translations: Record<Language, Translations> = {
     actionCannotBeUndone: 'This action cannot be undone',
     optional: 'ঐচ্ছিক',
     uploading: 'আপলোড হচ্ছে...',
+    view: 'দেখুন',
+    sunday: 'রবিবার',
+    monday: 'সোমবার',
+    tuesday: 'মঙ্গলবার',
+    wednesday: 'বুধবার',
+    thursday: 'বৃহস্পতিবার',
+    friday: 'শুক্রবার',
+    saturday: 'শনিবার',
+    schedule: 'সময়সূচি',
+    weeklySchedule: 'সাপ্তাহিক সময়সূচি',
+    scheduleDescription: 'এই কর্মচারীর জন্য কাজের দিন সেট করুন',
+    working: 'কাজ করছে',
+    dayOff: 'ছুটির দিন',
+    daysOff: 'ছুটির দিন',
+    noDaysOff: 'কোন ছুটি নেই',
     
     // License File Upload
     licenseDocument: 'লাইসেন্স ডকুমেন্ট',
@@ -8660,7 +8749,6 @@ export const translations: Record<Language, Translations> = {
     invoiceDownloadFailedDesc: 'You can download your invoice later from the Invoices page.',
     invoiceImage: 'চালান ছবি',
     downloadInvoice: 'চালান ডাউনলোড করুন',
-    view: 'দেখুন',
     subscriptionPlan: 'Subscription Plan',
     billedMonthly: 'Billed monthly',
     billedYearly: 'Billed yearly',
@@ -9850,6 +9938,21 @@ export const translations: Record<Language, Translations> = {
     actionCannotBeUndone: 'This action cannot be undone',
     optional: 'Opzionale',
     uploading: 'Caricamento...',
+    view: 'Visualizza',
+    sunday: 'Domenica',
+    monday: 'Lunedì',
+    tuesday: 'Martedì',
+    wednesday: 'Mercoledì',
+    thursday: 'Giovedì',
+    friday: 'Venerdì',
+    saturday: 'Sabato',
+    schedule: 'Programma',
+    weeklySchedule: 'Programma Settimanale',
+    scheduleDescription: 'Imposta i giorni lavorativi per questo dipendente',
+    working: 'Lavorando',
+    dayOff: 'Giorno Libero',
+    daysOff: 'Giorni Liberi',
+    noDaysOff: 'Nessun giorno libero',
     
     // License File Upload
     licenseDocument: 'Documento di licenza',
@@ -10275,7 +10378,6 @@ export const translations: Record<Language, Translations> = {
     invoiceDownloadFailedDesc: 'You can download your invoice later from the Invoices page.',
     invoiceImage: 'Immagine Fattura',
     downloadInvoice: 'Scarica Fattura',
-    view: 'Visualizza',
     subscriptionPlan: 'Subscription Plan',
     billedMonthly: 'Billed monthly',
     billedYearly: 'Billed yearly',
@@ -11466,6 +11568,21 @@ export const translations: Record<Language, Translations> = {
     actionCannotBeUndone: 'यह क्रिया पूर्ववत नहीं की जा सकती',
     optional: 'वैकल्पिक',
     uploading: 'अपलोड हो रहा है...',
+    view: 'देखें',
+    sunday: 'रविवार',
+    monday: 'सोमवार',
+    tuesday: 'मंगलवार',
+    wednesday: 'बुधवार',
+    thursday: 'गुरुवार',
+    friday: 'शुक्रवार',
+    saturday: 'शनिवार',
+    schedule: 'अनुसूची',
+    weeklySchedule: 'साप्ताहिक अनुसूची',
+    scheduleDescription: 'इस कर्मचारी के लिए कार्य दिवस सेट करें',
+    working: 'काम कर रहा है',
+    dayOff: 'छुट्टी का दिन',
+    daysOff: 'छुट्टी के दिन',
+    noDaysOff: 'कोई छुट्टी नहीं',
     
     // License File Upload
     licenseDocument: 'लाइसेंस दस्तावेज़',
@@ -11879,7 +11996,6 @@ export const translations: Record<Language, Translations> = {
     invoiceDownloadFailedDesc: 'आप अपने चालान को बाद में चालान पृष्ठ से डाउनलोड कर सकते हैं।',
     invoiceImage: 'चालान छवि',
     downloadInvoice: 'चालान डाउनलोड करें',
-    view: 'देखें',
     subscriptionPlan: 'सदस्यता योजना',
     billedMonthly: 'मासिक बिल',
     billedYearly: 'वार्षिक बिल',
@@ -13024,6 +13140,21 @@ export const translations: Record<Language, Translations> = {
     actionCannotBeUndone: 'یہ عمل کالعدم نہیں کیا جا سکتا',
     optional: 'اختیاری',
     uploading: 'اپلوڈ ہو رہا ہے...',
+    view: 'دیکھیں',
+    sunday: 'اتوار',
+    monday: 'پیر',
+    tuesday: 'منگل',
+    wednesday: 'بدھ',
+    thursday: 'جمعرات',
+    friday: 'جمعہ',
+    saturday: 'ہفتہ',
+    schedule: 'شیڈول',
+    weeklySchedule: 'ہفتہ وار شیڈول',
+    scheduleDescription: 'اس ملازم کے لیے کام کے دن مقرر کریں',
+    working: 'کام کر رہا ہے',
+    dayOff: 'چھٹی کا دن',
+    daysOff: 'چھٹی کے دن',
+    noDaysOff: 'کوئی چھٹی نہیں',
     
     // License File Upload
     licenseDocument: 'لائسنس دستاویز',
@@ -13437,7 +13568,6 @@ export const translations: Record<Language, Translations> = {
     invoiceDownloadFailedDesc: 'آپ اپنا انوائس بعد میں انوائس صفحہ سے ڈاؤن لوڈ کر سکتے ہیں۔',
     invoiceImage: 'انوائس تصویر',
     downloadInvoice: 'انوائس ڈاؤن لوڈ کریں',
-    view: 'دیکھیں',
     subscriptionPlan: 'سبسکرپشن منصوبہ',
     billedMonthly: 'ماہانہ بل',
     billedYearly: 'سالانہ بل',
@@ -14568,6 +14698,21 @@ export const translations: Record<Language, Translations> = {
     actionCannotBeUndone: "This action cannot be undone",
     optional: "Opcional",
     uploading: "Subiendo...",
+    view: 'Ver',
+    sunday: 'Domingo',
+    monday: 'Lunes',
+    tuesday: 'Martes',
+    wednesday: 'Miércoles',
+    thursday: 'Jueves',
+    friday: 'Viernes',
+    saturday: 'Sábado',
+    schedule: 'Horario',
+    weeklySchedule: 'Horario Semanal',
+    scheduleDescription: 'Establecer días laborales para este empleado',
+    working: 'Trabajando',
+    dayOff: 'Día Libre',
+    daysOff: 'Días Libres',
+    noDaysOff: 'Sin días libres',
     
     // License File Upload
     licenseDocument: "Documento de licencia",
@@ -14953,7 +15098,6 @@ export const translations: Record<Language, Translations> = {
     invoiceDownloadFailedDesc: "You can download your invoice later from the Invoices page.",
     invoiceImage: 'Imagen de Factura',
     downloadInvoice: 'Descargar Factura',
-    view: 'Ver',
     subscriptionPlan: "Subscription Plan",
     billedMonthly: "Billed monthly",
     billedYearly: "Billed yearly",
@@ -16066,6 +16210,21 @@ export const translations: Record<Language, Translations> = {
     actionCannotBeUndone: "This action cannot be undone",
     optional: "Opsyonal",
     uploading: "Ina-upload...",
+    view: 'Tingnan',
+    sunday: 'Linggo',
+    monday: 'Lunes',
+    tuesday: 'Martes',
+    wednesday: 'Miyerkules',
+    thursday: 'Huwebes',
+    friday: 'Biyernes',
+    saturday: 'Sabado',
+    schedule: 'Iskedyul',
+    weeklySchedule: 'Lingguhang Iskedyul',
+    scheduleDescription: 'Itakda ang mga araw ng trabaho para sa empleyadong ito',
+    working: 'Nagtatrabaho',
+    dayOff: 'Araw ng Pahinga',
+    daysOff: 'Mga Araw ng Pahinga',
+    noDaysOff: 'Walang araw ng pahinga',
     
     // License File Upload
     licenseDocument: "Dokumento ng Lisensya",
@@ -16451,7 +16610,6 @@ export const translations: Record<Language, Translations> = {
     invoiceDownloadFailedDesc: "You can download your invoice later from the Invoices page.",
     invoiceImage: 'Larawan ng Invoice',
     downloadInvoice: 'I-download ang Invoice',
-    view: 'Tingnan',
     subscriptionPlan: "Subscription Plan",
     billedMonthly: "Billed monthly",
     billedYearly: "Billed yearly",

@@ -30,38 +30,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeviceLayout } from "@/lib/mobileLayout";
 import { Checkbox } from "@/components/ui/checkbox";
 
-// Permission labels matching sidebar features
-const PERMISSION_LABELS: Record<Permission, string> = {
-  dashboard: "Dashboard",
-  inventory: "Inventory",
-  menu: "Menu / Products",
-  recipes: "Recipes",
-  branches: "Branches",
-  procurement: "Procurement",
-  pos: "POS (Point of Sale)",
-  orders: "Orders",
-  kitchen: "Kitchen / Workshop",
-  sales: "Sales",
-  reports: "Reports & Analytics",
-  customers: "Customers",
-  settings: "Settings",
-  users: "Employees",
-  workingHours: "Shop / Working Hours",
-  bills: "Bills",
-  deliveryApps: "Delivery Apps",
-  licenses: "Licenses",
-  investors: "Investors",
-  activityLog: "Activity Log",
-};
-
-// Action labels for granular permissions
-const ACTION_LABELS: Record<PermissionAction, string> = {
-  view: "View",
-  add: "Add",
-  edit: "Edit",
-  delete: "Delete",
-};
-
 // Default weekly schedule (Saudi weekend: Friday off)
 const DEFAULT_WEEKLY_SCHEDULE = {
   sunday: true,
@@ -73,20 +41,64 @@ const DEFAULT_WEEKLY_SCHEDULE = {
   saturday: true,
 };
 
-// Day labels for schedule display
-const DAY_LABELS = {
-  sunday: "Sunday",
-  monday: "Monday",
-  tuesday: "Tuesday",
-  wednesday: "Wednesday",
-  thursday: "Thursday",
-  friday: "Friday",
-  saturday: "Saturday",
-};
+// Helper function to get permission labels using translations
+function getPermissionLabels(t: any): Record<Permission, string> {
+  return {
+    dashboard: t.dashboard || "Dashboard",
+    inventory: t.inventory || "Inventory",
+    menu: `${t.menu || "Menu"} / ${t.products || "Products"}`,
+    recipes: t.recipes || "Recipes",
+    branches: t.branches || "Branches",
+    procurement: t.procurement || "Procurement",
+    pos: t.pos || "POS",
+    orders: t.orders || "Orders",
+    kitchen: `${t.kitchen || "Kitchen"} / ${t.workshop || "Workshop"}`,
+    sales: t.sales || "Sales",
+    reports: `${t.reports || "Reports"} & ${t.analytics || "Analytics"}`,
+    customers: t.customers || "Customers",
+    settings: t.settings || "Settings",
+    users: t.employees || "Employees",
+    workingHours: `${t.shop || "Shop"} / ${t.workingHours || "Working Hours"}`,
+    bills: t.bills || "Bills",
+    deliveryApps: t.deliveryApps || "Delivery Apps",
+    licenses: t.licenses || "Licenses",
+    investors: t.investors || "Investors",
+    activityLog: t.activityLog || "Activity Log",
+  };
+}
+
+// Helper function to get action labels using translations
+function getActionLabels(t: any): Record<PermissionAction, string> {
+  return {
+    view: t.view || "View",
+    add: t.add || "Add",
+    edit: t.edit || "Edit",
+    delete: t.delete || "Delete",
+  };
+}
+
+// Helper function to get day labels using translations
+function getDayLabels(t: any) {
+  return {
+    sunday: t.sunday || "Sunday",
+    monday: t.monday || "Monday",
+    tuesday: t.tuesday || "Tuesday",
+    wednesday: t.wednesday || "Wednesday",
+    thursday: t.thursday || "Thursday",
+    friday: t.friday || "Friday",
+    saturday: t.saturday || "Saturday",
+  };
+}
 
 export default function Employees() {
   const { t } = useLanguage();
   const layout = useDeviceLayout();
+  
+  // Get translated labels
+  const PERMISSION_LABELS = getPermissionLabels(t);
+  const ACTION_LABELS = getActionLabels(t);
+  const DAY_LABELS = getDayLabels(t);
+  
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
