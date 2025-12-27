@@ -1195,18 +1195,64 @@ export class DatabaseStorage implements IStorage {
     // Get existing settings for this restaurant
     const existing = await this.getSettings(restaurantId);
     
-    if (existing) {
-      const [updated] = await db.update(settings)
-        .set(safeData as any)
-        .where(and(eq(settings.id, existing.id), eq(settings.restaurantId, restaurantId)))
-        .returning();
-      return updated;
-    } else {
-      // Create new settings for this restaurant
-      const [created] = await db.insert(settings)
-        .values([{ ...safeData, restaurantId } as any])
-        .returning();
-      return created;
+    try {
+      if (existing) {
+        const [updated] = await db.update(settings)
+          .set(safeData as any)
+          .where(and(eq(settings.id, existing.id), eq(settings.restaurantId, restaurantId)))
+          .returning();
+        return updated;
+      } else {
+        // Create new settings for this restaurant
+        const [created] = await db.insert(settings)
+          .values([{ ...safeData, restaurantId } as any])
+          .returning();
+        return created;
+      }
+    } catch (error: any) {
+      // Handle case where b2b_invoice_sequence column doesn't exist yet (pre-migration)
+      if (error.message?.includes('b2b_invoice_sequence')) {
+        console.warn('[Settings] b2b_invoice_sequence column not found, using fallback update');
+        
+        if (existing) {
+          // Build dynamic UPDATE for columns that exist in production
+          const updateParts: string[] = [];
+          const columnMap: Record<string, string> = {
+            restaurantName: 'restaurant_name',
+            vatNumber: 'vat_number',
+            address: 'address',
+            email: 'email',
+            phone: 'phone',
+            language: 'language',
+            openingTime: 'opening_time',
+            closingTime: 'closing_time',
+            logoPath: 'logo_path',
+            notificationTone: 'notification_tone',
+            chatNotificationDefaults: 'chat_notification_defaults',
+          };
+          
+          Object.entries(safeData).forEach(([key, value]) => {
+            if (value !== undefined && columnMap[key]) {
+              const colName = columnMap[key];
+              const escapedValue = typeof value === 'string' 
+                ? `'${value.replace(/'/g, "''")}'` 
+                : value === null ? 'NULL' : JSON.stringify(value);
+              updateParts.push(`${colName} = ${escapedValue}`);
+            }
+          });
+          
+          if (updateParts.length > 0) {
+            await db.execute(sql.raw(
+              `UPDATE settings SET ${updateParts.join(', ')} WHERE id = '${existing.id}' AND restaurant_id = '${restaurantId}'`
+            ));
+          }
+        }
+        
+        // Return updated settings using the fallback getSettings
+        const updated = await this.getSettings(restaurantId);
+        return updated!;
+      }
+      throw error;
     }
   }
 
