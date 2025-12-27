@@ -38,6 +38,7 @@ function isValidLanguage(lang: string): lang is Language {
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const [hasInitializedFromBackend, setHasInitializedFromBackend] = useState(false);
   
   // Initialize language from localStorage or default to English
   const [language, setLanguageState] = useState<Language>(() => {
@@ -60,14 +61,26 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     retry: false,
   });
 
-  // Sync language from backend settings when user logs in
+  // Sync language from backend settings ONLY on first load (not on every settings change)
   useEffect(() => {
-    if (settings?.language) {
+    if (settings?.language && !hasInitializedFromBackend) {
       const backendLanguage = settings.language as Language;
-      setLanguageState(backendLanguage);
-      localStorage.setItem(LANGUAGE_STORAGE_KEY, backendLanguage);
+      // Only update if different from current localStorage value
+      const storedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+      if (!storedLang || storedLang !== backendLanguage) {
+        setLanguageState(backendLanguage);
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, backendLanguage);
+      }
+      setHasInitializedFromBackend(true);
     }
-  }, [settings]);
+  }, [settings, hasInitializedFromBackend]);
+  
+  // Reset initialization flag when user changes (logout/login)
+  useEffect(() => {
+    if (!user) {
+      setHasInitializedFromBackend(false);
+    }
+  }, [user]);
 
   // Update document direction for RTL languages
   useEffect(() => {
