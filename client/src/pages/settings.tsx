@@ -321,7 +321,7 @@ export default function SettingsPage() {
                 />
               </div>
 
-              {/* Shift 2 */}
+              {/* Shift 2 - Will be enabled after production db:push 
               <div className="md:col-span-2">
                 <Label className="text-sm font-medium text-muted-foreground">{t.shift2 || "Shift 2"}</Label>
               </div>
@@ -330,8 +330,8 @@ export default function SettingsPage() {
                 <Input
                   id="openingTime2"
                   type="time"
-                  value={formData.openingTime2 || settings?.openingTime2 || ""}
-                  onChange={(e) => handleChange("openingTime2", e.target.value)}
+                  value={(formData as any).openingTime2 || (settings as any)?.openingTime2 || ""}
+                  onChange={(e) => handleChange("openingTime2" as any, e.target.value)}
                   placeholder="19:00"
                   data-testid="input-opening-time-2"
                 />
@@ -342,12 +342,13 @@ export default function SettingsPage() {
                 <Input
                   id="closingTime2"
                   type="time"
-                  value={formData.closingTime2 || settings?.closingTime2 || ""}
-                  onChange={(e) => handleChange("closingTime2", e.target.value)}
+                  value={(formData as any).closingTime2 || (settings as any)?.closingTime2 || ""}
+                  onChange={(e) => handleChange("closingTime2" as any, e.target.value)}
                   placeholder="23:00"
                   data-testid="input-closing-time-2"
                 />
               </div>
+              */}
             </div>
 
             {/* Logo Upload Section */}
