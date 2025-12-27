@@ -293,6 +293,10 @@ export default function SettingsPage() {
                 </Select>
               </div>
 
+              {/* Shift 1 */}
+              <div className="md:col-span-2">
+                <Label className="text-sm font-medium text-muted-foreground">{t.shift1 || "Shift 1"}</Label>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="openingTime">{t.openingTime}</Label>
                 <Input
@@ -300,7 +304,7 @@ export default function SettingsPage() {
                   type="time"
                   value={formData.openingTime || settings?.openingTime || ""}
                   onChange={(e) => handleChange("openingTime", e.target.value)}
-                  placeholder="09:00"
+                  placeholder="11:00"
                   data-testid="input-opening-time"
                 />
               </div>
@@ -312,8 +316,36 @@ export default function SettingsPage() {
                   type="time"
                   value={formData.closingTime || settings?.closingTime || ""}
                   onChange={(e) => handleChange("closingTime", e.target.value)}
-                  placeholder="22:00"
+                  placeholder="17:00"
                   data-testid="input-closing-time"
+                />
+              </div>
+
+              {/* Shift 2 */}
+              <div className="md:col-span-2">
+                <Label className="text-sm font-medium text-muted-foreground">{t.shift2 || "Shift 2"}</Label>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="openingTime2">{t.openingTime}</Label>
+                <Input
+                  id="openingTime2"
+                  type="time"
+                  value={formData.openingTime2 || settings?.openingTime2 || ""}
+                  onChange={(e) => handleChange("openingTime2", e.target.value)}
+                  placeholder="19:00"
+                  data-testid="input-opening-time-2"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="closingTime2">{t.closingTime}</Label>
+                <Input
+                  id="closingTime2"
+                  type="time"
+                  value={formData.closingTime2 || settings?.closingTime2 || ""}
+                  onChange={(e) => handleChange("closingTime2", e.target.value)}
+                  placeholder="23:00"
+                  data-testid="input-closing-time-2"
                 />
               </div>
             </div>

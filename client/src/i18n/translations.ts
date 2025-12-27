@@ -464,6 +464,8 @@ export interface Translations {
   enterAddress: string;
   openingTime: string;
   closingTime: string;
+  shift1: string;
+  shift2: string;
   enterDiscount: string;
   
   // Authentication
@@ -2091,6 +2093,8 @@ export const translations: Record<Language, Translations> = {
     enterAddress: 'Enter full address',
     openingTime: 'Opening Time',
     closingTime: 'Closing Time',
+    shift1: 'Shift 1',
+    shift2: 'Shift 2',
     enterDiscount: 'Enter discount percentage (0-100)',
     
     // Authentication
@@ -3721,6 +3725,8 @@ export const translations: Record<Language, Translations> = {
     enterAddress: 'أدخل العنوان الكامل',
     openingTime: 'وقت الفتح',
     closingTime: 'وقت الإغلاق',
+    shift1: 'الفترة الأولى',
+    shift2: 'الفترة الثانية',
     enterDiscount: 'أدخل نسبة الخصم (0-100)',
     
     // Authentication
@@ -5349,6 +5355,8 @@ export const translations: Record<Language, Translations> = {
     enterAddress: 'Enter full address',
     openingTime: 'Opening Time',
     closingTime: 'Closing Time',
+    shift1: 'Schicht 1',
+    shift2: 'Schicht 2',
     enterDiscount: 'Enter discount percentage (0-100)',
     
     // Authentication
@@ -6960,6 +6968,8 @@ export const translations: Record<Language, Translations> = {
     enterAddress: 'Enter full address',
     openingTime: 'Opening Time',
     closingTime: 'Closing Time',
+    shift1: '班次 1',
+    shift2: '班次 2',
     enterDiscount: 'Enter discount percentage (0-100)',
     
     // Authentication
@@ -8571,6 +8581,8 @@ export const translations: Record<Language, Translations> = {
     enterAddress: 'Enter full address',
     openingTime: 'Opening Time',
     closingTime: 'Closing Time',
+    shift1: 'শিফট ১',
+    shift2: 'শিফট ২',
     enterDiscount: 'Enter discount percentage (0-100)',
     
     // Authentication
@@ -10182,6 +10194,8 @@ export const translations: Record<Language, Translations> = {
     enterAddress: 'Enter full address',
     openingTime: 'Opening Time',
     closingTime: 'Closing Time',
+    shift1: 'Turno 1',
+    shift2: 'Turno 2',
     enterDiscount: 'Enter discount percentage (0-100)',
     
     // Authentication
@@ -11782,6 +11796,8 @@ export const translations: Record<Language, Translations> = {
     enterAddress: 'पूरा पता दर्ज करें',
     openingTime: 'खुलने का समय',
     closingTime: 'बंद होने का समय',
+    shift1: 'शिफ्ट 1',
+    shift2: 'शिफ्ट 2',
     enterDiscount: 'छूट प्रतिशत दर्ज करें (0-100)',
     
     // Authentication
@@ -13336,6 +13352,8 @@ export const translations: Record<Language, Translations> = {
     enterAddress: 'مکمل پتہ درج کریں',
     openingTime: 'کھلنے کا وقت',
     closingTime: 'بند ہونے کا وقت',
+    shift1: 'شفٹ 1',
+    shift2: 'شفٹ 2',
     enterDiscount: 'رعایت کا فیصد درج کریں (0-100)',
     
     // Authentication
@@ -14850,6 +14868,8 @@ export const translations: Record<Language, Translations> = {
     enterAddress: "Enter full address",
     openingTime: "Opening Time",
     closingTime: "Closing Time",
+    shift1: "Turno 1",
+    shift2: "Turno 2",
     enterDiscount: "Enter discount percentage (0-100)",
     login: "Iniciar Sesión",
     signup: "Sign Up",
@@ -16344,6 +16364,8 @@ export const translations: Record<Language, Translations> = {
     enterAddress: "Enter full address",
     openingTime: "Opening Time",
     closingTime: "Closing Time",
+    shift1: "Shift 1",
+    shift2: "Shift 2",
     enterDiscount: "Enter discount percentage (0-100)",
     login: "Mag-login",
     signup: "Sign Up",
