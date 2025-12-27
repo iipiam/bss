@@ -1670,6 +1670,36 @@ export interface Translations {
   // Permissions Notifications
   permissionsUpdated: string;
   permissionsUpdatedDesc: string;
+
+  // Additional Inventory Page Keys
+  priceUnit: string;
+  addItem: string;
+  importLabel: string;
+  exportLabel: string;
+  templateLabel: string;
+  downloadTemplate: string;
+  noInventoryItems: string;
+  daysRemaining: string;
+
+  // Additional Menu Page Keys
+  newCategoryAddedSuccessfully: string;
+  searchItemsPlaceholder: string;
+  displaySize: string;
+  small: string;
+  medium: string;
+  large: string;
+  manageCategories: string;
+  addCategory: string;
+
+  // Additional Employee Page Keys
+  employeeId: string;
+  fillUsernamePasswordFullName: string;
+  basicInfo: string;
+  permissionsDescription: string;
+  feature: string;
+
+  // Additional Settings Page Keys
+  tablet: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -3331,6 +3361,36 @@ export const translations: Record<Language, Translations> = {
     // Permissions Notifications
     permissionsUpdated: 'Permissions Updated',
     permissionsUpdatedDesc: 'Your permissions have been updated. The sidebar will refresh automatically.',
+
+    // Additional Inventory Page Keys
+    priceUnit: 'Price/Unit',
+    addItem: 'Add Item',
+    importLabel: 'Import',
+    exportLabel: 'Export',
+    templateLabel: 'Template',
+    downloadTemplate: 'Download Template',
+    noInventoryItems: 'No inventory items found',
+    daysRemaining: 'Days Remaining',
+
+    // Additional Menu Page Keys
+    newCategoryAddedSuccessfully: 'New category added successfully',
+    searchItemsPlaceholder: 'Search items...',
+    displaySize: 'Display Size',
+    small: 'Small',
+    medium: 'Medium',
+    large: 'Large',
+    manageCategories: 'Manage Categories',
+    addCategory: 'Add Category',
+
+    // Additional Employee Page Keys
+    employeeId: 'Employee ID',
+    fillUsernamePasswordFullName: 'Please fill in username, password, and full name',
+    basicInfo: 'Basic Info',
+    permissionsDescription: 'Configure which features this employee can access',
+    feature: 'Feature',
+
+    // Additional Settings Page Keys
+    tablet: 'Tablet',
   },
   
   Arabic: {
@@ -4990,6 +5050,36 @@ export const translations: Record<Language, Translations> = {
     noPDF: 'لا يوجد ملف PDF',
     permissionsUpdated: 'تم تحديث الصلاحيات',
     permissionsUpdatedDesc: 'تم تحديث صلاحياتك. سيتم تحديث الشريط الجانبي تلقائيًا.',
+
+    // Additional Inventory Page Keys
+    priceUnit: 'السعر/الوحدة',
+    addItem: 'إضافة صنف',
+    importLabel: 'استيراد',
+    exportLabel: 'تصدير',
+    templateLabel: 'القالب',
+    downloadTemplate: 'تحميل القالب',
+    noInventoryItems: 'لا توجد أصناف في المخزون',
+    daysRemaining: 'الأيام المتبقية',
+
+    // Additional Menu Page Keys
+    newCategoryAddedSuccessfully: 'تمت إضافة الفئة الجديدة بنجاح',
+    searchItemsPlaceholder: 'البحث عن الأصناف...',
+    displaySize: 'حجم العرض',
+    small: 'صغير',
+    medium: 'متوسط',
+    large: 'كبير',
+    manageCategories: 'إدارة الفئات',
+    addCategory: 'إضافة فئة',
+
+    // Additional Employee Page Keys
+    employeeId: 'رقم الموظف',
+    fillUsernamePasswordFullName: 'يرجى ملء اسم المستخدم وكلمة المرور والاسم الكامل',
+    basicInfo: 'المعلومات الأساسية',
+    permissionsDescription: 'تحديد الميزات التي يمكن لهذا الموظف الوصول إليها',
+    feature: 'الميزة',
+
+    // Additional Settings Page Keys
+    tablet: 'جهاز لوحي',
   },
   German: {
     // Navigation
@@ -6631,6 +6721,36 @@ export const translations: Record<Language, Translations> = {
     noPDF: 'No PDF',
     permissionsUpdated: 'Berechtigungen aktualisiert',
     permissionsUpdatedDesc: 'Ihre Berechtigungen wurden aktualisiert. Die Seitenleiste wird automatisch aktualisiert.',
+
+    // Additional Inventory Page Keys
+    priceUnit: 'Preis/Einheit',
+    addItem: 'Artikel hinzufügen',
+    importLabel: 'Importieren',
+    exportLabel: 'Exportieren',
+    templateLabel: 'Vorlage',
+    downloadTemplate: 'Vorlage herunterladen',
+    noInventoryItems: 'Keine Inventarartikel gefunden',
+    daysRemaining: 'Verbleibende Tage',
+
+    // Additional Menu Page Keys
+    newCategoryAddedSuccessfully: 'Neue Kategorie erfolgreich hinzugefügt',
+    searchItemsPlaceholder: 'Artikel suchen...',
+    displaySize: 'Anzeigegröße',
+    small: 'Klein',
+    medium: 'Mittel',
+    large: 'Groß',
+    manageCategories: 'Kategorien verwalten',
+    addCategory: 'Kategorie hinzufügen',
+
+    // Additional Employee Page Keys
+    employeeId: 'Mitarbeiter-ID',
+    fillUsernamePasswordFullName: 'Bitte Benutzername, Passwort und vollständigen Namen ausfüllen',
+    basicInfo: 'Grundlegende Infos',
+    permissionsDescription: 'Konfigurieren Sie, auf welche Funktionen dieser Mitarbeiter zugreifen kann',
+    feature: 'Funktion',
+
+    // Additional Settings Page Keys
+    tablet: 'Tablet',
   },
   Chinese: {
     // Navigation
@@ -8272,6 +8392,36 @@ export const translations: Record<Language, Translations> = {
     noPDF: 'No PDF',
     permissionsUpdated: '权限已更新',
     permissionsUpdatedDesc: '您的权限已更新。侧边栏将自动刷新。',
+
+    // Additional Inventory Page Keys
+    priceUnit: '价格/单位',
+    addItem: '添加商品',
+    importLabel: '导入',
+    exportLabel: '导出',
+    templateLabel: '模板',
+    downloadTemplate: '下载模板',
+    noInventoryItems: '未找到库存商品',
+    daysRemaining: '剩余天数',
+
+    // Additional Menu Page Keys
+    newCategoryAddedSuccessfully: '新分类添加成功',
+    searchItemsPlaceholder: '搜索商品...',
+    displaySize: '显示大小',
+    small: '小',
+    medium: '中',
+    large: '大',
+    manageCategories: '管理分类',
+    addCategory: '添加分类',
+
+    // Additional Employee Page Keys
+    employeeId: '员工ID',
+    fillUsernamePasswordFullName: '请填写用户名、密码和全名',
+    basicInfo: '基本信息',
+    permissionsDescription: '配置此员工可以访问的功能',
+    feature: '功能',
+
+    // Additional Settings Page Keys
+    tablet: '平板电脑',
   },
   Bengali: {
     // Navigation
@@ -9913,6 +10063,36 @@ export const translations: Record<Language, Translations> = {
     noPDF: 'No PDF',
     permissionsUpdated: 'অনুমতি আপডেট হয়েছে',
     permissionsUpdatedDesc: 'আপনার অনুমতি আপডেট করা হয়েছে। সাইডবার স্বয়ংক্রিয়ভাবে রিফ্রেশ হবে।',
+
+    // Additional Inventory Page Keys
+    priceUnit: 'মূল্য/ইউনিট',
+    addItem: 'আইটেম যোগ করুন',
+    importLabel: 'ইম্পোর্ট',
+    exportLabel: 'এক্সপোর্ট',
+    templateLabel: 'টেমপ্লেট',
+    downloadTemplate: 'টেমপ্লেট ডাউনলোড করুন',
+    noInventoryItems: 'কোনো ইনভেন্টরি আইটেম পাওয়া যায়নি',
+    daysRemaining: 'বাকি দিন',
+
+    // Additional Menu Page Keys
+    newCategoryAddedSuccessfully: 'নতুন বিভাগ সফলভাবে যোগ করা হয়েছে',
+    searchItemsPlaceholder: 'আইটেম খুঁজুন...',
+    displaySize: 'প্রদর্শন আকার',
+    small: 'ছোট',
+    medium: 'মাঝারি',
+    large: 'বড়',
+    manageCategories: 'বিভাগ পরিচালনা করুন',
+    addCategory: 'বিভাগ যোগ করুন',
+
+    // Additional Employee Page Keys
+    employeeId: 'কর্মচারী আইডি',
+    fillUsernamePasswordFullName: 'ব্যবহারকারীর নাম, পাসওয়ার্ড এবং পুরো নাম পূরণ করুন',
+    basicInfo: 'মৌলিক তথ্য',
+    permissionsDescription: 'এই কর্মচারী কোন বৈশিষ্ট্যগুলিতে অ্যাক্সেস করতে পারবে তা কনফিগার করুন',
+    feature: 'বৈশিষ্ট্য',
+
+    // Additional Settings Page Keys
+    tablet: 'ট্যাবলেট',
   },
   Italian: {
     // Navigation
@@ -11554,6 +11734,36 @@ export const translations: Record<Language, Translations> = {
     noPDF: 'No PDF',
     permissionsUpdated: 'Permessi aggiornati',
     permissionsUpdatedDesc: 'I tuoi permessi sono stati aggiornati. La barra laterale si aggiornerà automaticamente.',
+
+    // Additional Inventory Page Keys
+    priceUnit: 'Prezzo/Unità',
+    addItem: 'Aggiungi articolo',
+    importLabel: 'Importa',
+    exportLabel: 'Esporta',
+    templateLabel: 'Modello',
+    downloadTemplate: 'Scarica modello',
+    noInventoryItems: 'Nessun articolo di inventario trovato',
+    daysRemaining: 'Giorni rimanenti',
+
+    // Additional Menu Page Keys
+    newCategoryAddedSuccessfully: 'Nuova categoria aggiunta con successo',
+    searchItemsPlaceholder: 'Cerca articoli...',
+    displaySize: 'Dimensione visualizzazione',
+    small: 'Piccolo',
+    medium: 'Medio',
+    large: 'Grande',
+    manageCategories: 'Gestisci categorie',
+    addCategory: 'Aggiungi categoria',
+
+    // Additional Employee Page Keys
+    employeeId: 'ID dipendente',
+    fillUsernamePasswordFullName: 'Inserisci nome utente, password e nome completo',
+    basicInfo: 'Informazioni base',
+    permissionsDescription: 'Configura quali funzionalità questo dipendente può accedere',
+    feature: 'Funzionalità',
+
+    // Additional Settings Page Keys
+    tablet: 'Tablet',
   },
 
   Hindi: {
@@ -13138,6 +13348,36 @@ export const translations: Record<Language, Translations> = {
     noPDF: 'कोई पीडीएफ नहीं',
     permissionsUpdated: 'अनुमतियाँ अपडेट की गईं',
     permissionsUpdatedDesc: 'आपकी अनुमतियाँ अपडेट कर दी गई हैं। साइडबार स्वचालित रूप से रिफ्रेश हो जाएगा।',
+
+    // Additional Inventory Page Keys
+    priceUnit: 'मूल्य/इकाई',
+    addItem: 'आइटम जोड़ें',
+    importLabel: 'आयात करें',
+    exportLabel: 'निर्यात करें',
+    templateLabel: 'टेम्पलेट',
+    downloadTemplate: 'टेम्पलेट डाउनलोड करें',
+    noInventoryItems: 'कोई इन्वेंटरी आइटम नहीं मिला',
+    daysRemaining: 'शेष दिन',
+
+    // Additional Menu Page Keys
+    newCategoryAddedSuccessfully: 'नई श्रेणी सफलतापूर्वक जोड़ी गई',
+    searchItemsPlaceholder: 'आइटम खोजें...',
+    displaySize: 'प्रदर्शन आकार',
+    small: 'छोटा',
+    medium: 'मध्यम',
+    large: 'बड़ा',
+    manageCategories: 'श्रेणियाँ प्रबंधित करें',
+    addCategory: 'श्रेणी जोड़ें',
+
+    // Additional Employee Page Keys
+    employeeId: 'कर्मचारी आईडी',
+    fillUsernamePasswordFullName: 'कृपया उपयोगकर्ता नाम, पासवर्ड और पूरा नाम भरें',
+    basicInfo: 'मूल जानकारी',
+    permissionsDescription: 'इस कर्मचारी की पहुंच वाली सुविधाओं को कॉन्फ़िगर करें',
+    feature: 'सुविधा',
+
+    // Additional Settings Page Keys
+    tablet: 'टैबलेट',
   },
   
   Urdu: {
@@ -14722,6 +14962,36 @@ export const translations: Record<Language, Translations> = {
     noPDF: 'کوئی پی ڈی ایف نہیں',
     permissionsUpdated: 'اجازتیں اپڈیٹ ہوگئیں',
     permissionsUpdatedDesc: 'آپ کی اجازتیں اپڈیٹ ہوگئی ہیں۔ سائڈبار خود بخود ریفریش ہوجائے گا۔',
+
+    // Additional Inventory Page Keys
+    priceUnit: 'قیمت/یونٹ',
+    addItem: 'آئٹم شامل کریں',
+    importLabel: 'درآمد کریں',
+    exportLabel: 'برآمد کریں',
+    templateLabel: 'ٹیمپلیٹ',
+    downloadTemplate: 'ٹیمپلیٹ ڈاؤن لوڈ کریں',
+    noInventoryItems: 'کوئی انوینٹری آئٹم نہیں ملا',
+    daysRemaining: 'باقی دن',
+
+    // Additional Menu Page Keys
+    newCategoryAddedSuccessfully: 'نیا زمرہ کامیابی سے شامل ہوگیا',
+    searchItemsPlaceholder: 'آئٹمز تلاش کریں...',
+    displaySize: 'ڈسپلے سائز',
+    small: 'چھوٹا',
+    medium: 'درمیانہ',
+    large: 'بڑا',
+    manageCategories: 'زمرے منظم کریں',
+    addCategory: 'زمرہ شامل کریں',
+
+    // Additional Employee Page Keys
+    employeeId: 'ملازم آئی ڈی',
+    fillUsernamePasswordFullName: 'براہ کرم صارف نام، پاس ورڈ اور پورا نام بھریں',
+    basicInfo: 'بنیادی معلومات',
+    permissionsDescription: 'یہ ملازم کن خصوصیات تک رسائی حاصل کر سکتا ہے اسے ترتیب دیں',
+    feature: 'خصوصیت',
+
+    // Additional Settings Page Keys
+    tablet: 'ٹیبلٹ',
   },
   
 
@@ -16248,6 +16518,36 @@ export const translations: Record<Language, Translations> = {
     noPDF: "Sin PDF",
     permissionsUpdated: 'Permisos actualizados',
     permissionsUpdatedDesc: 'Tus permisos han sido actualizados. La barra lateral se actualizará automáticamente.',
+
+    // Additional Inventory Page Keys
+    priceUnit: 'Precio/Unidad',
+    addItem: 'Agregar artículo',
+    importLabel: 'Importar',
+    exportLabel: 'Exportar',
+    templateLabel: 'Plantilla',
+    downloadTemplate: 'Descargar plantilla',
+    noInventoryItems: 'No se encontraron artículos de inventario',
+    daysRemaining: 'Días restantes',
+
+    // Additional Menu Page Keys
+    newCategoryAddedSuccessfully: 'Nueva categoría agregada exitosamente',
+    searchItemsPlaceholder: 'Buscar artículos...',
+    displaySize: 'Tamaño de pantalla',
+    small: 'Pequeño',
+    medium: 'Mediano',
+    large: 'Grande',
+    manageCategories: 'Gestionar categorías',
+    addCategory: 'Agregar categoría',
+
+    // Additional Employee Page Keys
+    employeeId: 'ID de empleado',
+    fillUsernamePasswordFullName: 'Por favor complete nombre de usuario, contraseña y nombre completo',
+    basicInfo: 'Información básica',
+    permissionsDescription: 'Configurar a qué funciones puede acceder este empleado',
+    feature: 'Función',
+
+    // Additional Settings Page Keys
+    tablet: 'Tableta',
   },
 
   Tagalog: {
@@ -17774,6 +18074,36 @@ export const translations: Record<Language, Translations> = {
     noPDF: "Walang PDF",
     permissionsUpdated: 'Na-update ang mga pahintulot',
     permissionsUpdatedDesc: 'Na-update na ang iyong mga pahintulot. Awtomatikong magre-refresh ang sidebar.',
+
+    // Additional Inventory Page Keys
+    priceUnit: 'Presyo/Yunit',
+    addItem: 'Magdagdag ng Item',
+    importLabel: 'Mag-import',
+    exportLabel: 'Mag-export',
+    templateLabel: 'Template',
+    downloadTemplate: 'I-download ang Template',
+    noInventoryItems: 'Walang nahanap na mga item sa imbentaryo',
+    daysRemaining: 'Natitirang Araw',
+
+    // Additional Menu Page Keys
+    newCategoryAddedSuccessfully: 'Matagumpay na naidagdag ang bagong kategorya',
+    searchItemsPlaceholder: 'Maghanap ng mga item...',
+    displaySize: 'Laki ng Display',
+    small: 'Maliit',
+    medium: 'Katamtaman',
+    large: 'Malaki',
+    manageCategories: 'Pamahalaan ang mga Kategorya',
+    addCategory: 'Magdagdag ng Kategorya',
+
+    // Additional Employee Page Keys
+    employeeId: 'ID ng Empleyado',
+    fillUsernamePasswordFullName: 'Pakipunan ang username, password at buong pangalan',
+    basicInfo: 'Pangunahing Impormasyon',
+    permissionsDescription: 'I-configure kung aling mga feature ang maa-access ng empleyadong ito',
+    feature: 'Feature',
+
+    // Additional Settings Page Keys
+    tablet: 'Tablet',
   },
 };
 
