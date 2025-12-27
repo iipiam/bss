@@ -163,19 +163,19 @@ export default function SettingsPage() {
       <div className="p-8 space-y-6">
         <div>
           <h1 className="text-3xl font-bold mb-2">{t.settings}</h1>
-          <p className="text-muted-foreground">IT Account Settings</p>
+          <p className="text-muted-foreground">{t.itAccountSettings || "IT Account Settings"}</p>
         </div>
         
         <Card>
           <CardHeader>
-            <CardTitle>IT Account</CardTitle>
+            <CardTitle>{t.itAccount || "IT Account"}</CardTitle>
             <CardDescription>
-              IT accounts don't have restaurant-specific settings. These settings are managed per restaurant.
+              {t.itAccountNoRestaurantSettings || "IT accounts don't have restaurant-specific settings. These settings are managed per restaurant."}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              To configure restaurant settings, please log in with a client account.
+              {t.loginWithClientAccount || "To configure restaurant settings, please log in with a client account."}
             </p>
           </CardContent>
         </Card>
@@ -282,7 +282,7 @@ export default function SettingsPage() {
                   }}
                 >
                   <SelectTrigger id="language" data-testid="select-language">
-                    <SelectValue placeholder="Select language" />
+                    <SelectValue placeholder={t.selectLanguage || "Select language"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="English">English</SelectItem>
@@ -400,7 +400,7 @@ export default function SettingsPage() {
                         <div className="relative w-32 h-32 border rounded-md overflow-hidden bg-muted flex items-center justify-center">
                           <img 
                             src={settings.logoPath} 
-                            alt="Business Logo" 
+                            alt={t.businessLogo || "Business Logo"} 
                             className="max-w-full max-h-full object-contain"
                             data-testid="img-logo-preview"
                           />
@@ -429,7 +429,7 @@ export default function SettingsPage() {
                           <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                             <img 
                               src={settings.logoPath} 
-                              alt="Business Logo" 
+                              alt={t.businessLogo || "Business Logo"} 
                               style={{ 
                                 maxWidth: '150px', 
                                 maxHeight: '80px', 
@@ -687,13 +687,13 @@ function NotificationToneSection() {
       queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       toast({
         title: t.success || "Success",
-        description: "Notification tone updated for all accounts",
+        description: t.notificationToneUpdated || "Notification tone updated for all accounts",
       });
     },
     onError: () => {
       toast({
         title: t.error || "Error",
-        description: "Failed to update notification tone",
+        description: t.failedToUpdateNotificationTone || "Failed to update notification tone",
         variant: "destructive",
       });
     },

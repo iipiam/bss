@@ -255,8 +255,8 @@ export default function Employees() {
   const handleCreate = () => {
     if (!formData.username || !formData.password || !formData.fullName) {
       toast({
-        title: "Missing fields",
-        description: "Please fill in username, password, and full name",
+        title: t.missingFields || "Missing fields",
+        description: t.fillUsernamePasswordFullName || "Please fill in username, password, and full name",
         variant: "destructive",
       });
       return;
@@ -429,7 +429,7 @@ export default function Employees() {
   const vacationDaysRemaining = (formData.vacationDaysTotal || 0) - (formData.vacationDaysUsed || 0);
 
   if (isLoading) {
-    return <div className={layout.padding}>Loading...</div>;
+    return <div className={layout.padding}>{t.loading || "Loading..."}</div>;
   }
 
   return (
@@ -542,17 +542,17 @@ export default function Employees() {
                 <div className="space-y-4">
                   <h3 className="font-semibold">{t.permissions || "Permissions"}</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Control what actions sub-accounts can perform in each feature
+                    {t.permissionsDescription || "Control what actions sub-accounts can perform in each feature"}
                   </p>
                   
                   {/* Header row */}
                   <div className="grid grid-cols-[1fr,repeat(4,60px),40px] gap-2 items-center pb-2 border-b text-xs font-medium text-muted-foreground">
-                    <div>Feature</div>
-                    <div className="text-center">View</div>
-                    <div className="text-center">Add</div>
-                    <div className="text-center">Edit</div>
-                    <div className="text-center">Delete</div>
-                    <div className="text-center">All</div>
+                    <div>{t.feature || "Feature"}</div>
+                    <div className="text-center">{t.view || "View"}</div>
+                    <div className="text-center">{t.add || "Add"}</div>
+                    <div className="text-center">{t.edit || "Edit"}</div>
+                    <div className="text-center">{t.delete || "Delete"}</div>
+                    <div className="text-center">{t.all || "All"}</div>
                   </div>
                   
                   {/* Permission rows */}
@@ -902,9 +902,9 @@ export default function Employees() {
               <Info className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-lg">Employee Account Quick Guide</CardTitle>
+              <CardTitle className="text-lg">{t.employeeAccountQuickGuide || "Employee Account Quick Guide"}</CardTitle>
               <CardDescription className="mt-2">
-                Follow these simple steps to manage employee accounts
+                {t.followStepsToManageEmployees || "Follow these simple steps to manage employee accounts"}
               </CardDescription>
             </div>
           </div>
@@ -914,30 +914,30 @@ export default function Employees() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-semibold">
                 <div className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-xs">1</div>
-                <span>Create Employee Account</span>
+                <span>{t.createEmployeeAccount || "Create Employee Account"}</span>
               </div>
               <p className="text-sm text-muted-foreground pl-8">
-                Click "Add Employee" button above. Fill in their name, username, and password. Save the credentials to share with them.
+                {t.createEmployeeAccountDesc || 'Click "Add Employee" button above. Fill in their name, username, and password. Save the credentials to share with them.'}
               </p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-semibold">
                 <div className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-xs">2</div>
                 <LogIn className="h-4 w-4" />
-                <span>Employee Login</span>
+                <span>{t.employeeLogin || "Employee Login"}</span>
               </div>
               <p className="text-sm text-muted-foreground pl-8">
-                Employees can log in using their <strong>username</strong> and password (not email). They use the same login page as admins.
+                {t.employeeLoginDesc || "Employees can log in using their username and password (not email). They use the same login page as admins."}
               </p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-semibold">
                 <div className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-xs">3</div>
                 <Key className="h-4 w-4" />
-                <span>Reset Password</span>
+                <span>{t.resetPassword || "Reset Password"}</span>
               </div>
               <p className="text-sm text-muted-foreground pl-8">
-                Forgot a password? Go to <strong>Password Manager</strong> in the sidebar to reset any account password instantly.
+                {t.resetPasswordDesc || "Forgot a password? Go to Password Manager in the sidebar to reset any account password instantly."}
               </p>
             </div>
           </div>
@@ -1169,17 +1169,17 @@ export default function Employees() {
               <div className="space-y-4">
                 <h3 className="font-semibold">{t.permissions || "Permissions"}</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Control what actions sub-accounts can perform in each feature
+                  {t.permissionsDescription || "Control what actions sub-accounts can perform in each feature"}
                 </p>
                 
                 {/* Header row */}
                 <div className="grid grid-cols-[1fr,repeat(4,60px),40px] gap-2 items-center pb-2 border-b text-xs font-medium text-muted-foreground">
-                  <div>Feature</div>
-                  <div className="text-center">View</div>
-                  <div className="text-center">Add</div>
-                  <div className="text-center">Edit</div>
-                  <div className="text-center">Delete</div>
-                  <div className="text-center">All</div>
+                  <div>{t.feature || "Feature"}</div>
+                  <div className="text-center">{t.view || "View"}</div>
+                  <div className="text-center">{t.add || "Add"}</div>
+                  <div className="text-center">{t.edit || "Edit"}</div>
+                  <div className="text-center">{t.delete || "Delete"}</div>
+                  <div className="text-center">{t.all || "All"}</div>
                 </div>
                 
                 {/* Permission rows */}

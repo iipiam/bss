@@ -165,6 +165,7 @@ interface SortableInventoryRowProps {
 }
 
 function SortableInventoryRow({ item, onEdit, onDelete, disabled = false }: SortableInventoryRowProps) {
+  const { t } = useLanguage();
   const {
     attributes,
     listeners,
@@ -184,10 +185,17 @@ function SortableInventoryRow({ item, onEdit, onDelete, disabled = false }: Sort
 
   const getExpirationDisplay = () => {
     if (daysRemaining === null) return <span className="text-muted-foreground">-</span>;
-    if (daysRemaining <= 0) return <Badge variant="destructive">Expired</Badge>;
-    if (daysRemaining <= 7) return <Badge variant="destructive">{daysRemaining}d</Badge>;
-    if (daysRemaining <= 30) return <Badge variant="outline" className="border-yellow-500 text-yellow-600">{daysRemaining}d</Badge>;
-    return <span className="text-muted-foreground">{daysRemaining}d</span>;
+    if (daysRemaining <= 0) return <Badge variant="destructive">{t.expired || "Expired"}</Badge>;
+    if (daysRemaining <= 7) return <Badge variant="destructive">{daysRemaining}{t.daysShort || "d"}</Badge>;
+    if (daysRemaining <= 30) return <Badge variant="outline" className="border-yellow-500 text-yellow-600">{daysRemaining}{t.daysShort || "d"}</Badge>;
+    return <span className="text-muted-foreground">{daysRemaining}{t.daysShort || "d"}</span>;
+  };
+
+  const getStatusDisplay = () => {
+    if (item.status === "Low Stock") return t.lowStock || "Low Stock";
+    if (item.status === "In Stock") return t.inStock || "In Stock";
+    if (item.status === "Out of Stock") return t.outOfStock || "Out of Stock";
+    return item.status;
   };
 
   return (
@@ -216,7 +224,7 @@ function SortableInventoryRow({ item, onEdit, onDelete, disabled = false }: Sort
       <TableCell>{getExpirationDisplay()}</TableCell>
       <TableCell>
         <Badge variant={item.status === "Low Stock" ? "destructive" : "secondary"}>
-          {item.status}
+          {getStatusDisplay()}
         </Badge>
       </TableCell>
       <TableCell className="text-right">
@@ -239,6 +247,7 @@ function SortableInventoryRow({ item, onEdit, onDelete, disabled = false }: Sort
 }
 
 function SortableInventoryCard({ item, onEdit, onDelete, disabled = false }: SortableInventoryRowProps) {
+  const { t } = useLanguage();
   const {
     attributes,
     listeners,
@@ -258,10 +267,17 @@ function SortableInventoryCard({ item, onEdit, onDelete, disabled = false }: Sor
 
   const getExpirationDisplay = () => {
     if (daysRemaining === null) return null;
-    if (daysRemaining <= 0) return <Badge variant="destructive" className="text-xs">Expired</Badge>;
-    if (daysRemaining <= 7) return <Badge variant="destructive" className="text-xs">{daysRemaining}d left</Badge>;
-    if (daysRemaining <= 30) return <Badge variant="outline" className="border-yellow-500 text-yellow-600 text-xs">{daysRemaining}d left</Badge>;
-    return <span className="text-xs text-muted-foreground">{daysRemaining}d left</span>;
+    if (daysRemaining <= 0) return <Badge variant="destructive" className="text-xs">{t.expired || "Expired"}</Badge>;
+    if (daysRemaining <= 7) return <Badge variant="destructive" className="text-xs">{daysRemaining}{t.daysLeft || "d left"}</Badge>;
+    if (daysRemaining <= 30) return <Badge variant="outline" className="border-yellow-500 text-yellow-600 text-xs">{daysRemaining}{t.daysLeft || "d left"}</Badge>;
+    return <span className="text-xs text-muted-foreground">{daysRemaining}{t.daysLeft || "d left"}</span>;
+  };
+
+  const getStatusDisplay = () => {
+    if (item.status === "Low Stock") return t.lowStock || "Low Stock";
+    if (item.status === "In Stock") return t.inStock || "In Stock";
+    if (item.status === "Out of Stock") return t.outOfStock || "Out of Stock";
+    return item.status;
   };
 
   return (
@@ -288,23 +304,23 @@ function SortableInventoryCard({ item, onEdit, onDelete, disabled = false }: Sor
             </div>
             <div className="flex flex-col items-end gap-1">
               <Badge variant={item.status === "Low Stock" ? "destructive" : "secondary"} className="text-xs">
-                {item.status}
+                {getStatusDisplay()}
               </Badge>
               {getExpirationDisplay()}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
             <div>
-              <span className="text-xs text-muted-foreground">Quantity:</span>
+              <span className="text-xs text-muted-foreground">{t.quantity || "Quantity"}:</span>
               <p className="font-mono font-medium">{parseFloat(item.quantity).toFixed(2)} {item.unit}</p>
             </div>
             <div>
-              <span className="text-xs text-muted-foreground">Price/Unit:</span>
+              <span className="text-xs text-muted-foreground">{t.pricePerUnit || "Price/Unit"}:</span>
               <p className="font-mono font-medium text-primary">{(parseFloat(item.price || "0") / Math.max(parseFloat(item.quantity || "1"), 0.01)).toFixed(2)} SAR</p>
             </div>
           </div>
           <div className="mb-3">
-            <span className="text-xs text-muted-foreground">Supplier:</span>
+            <span className="text-xs text-muted-foreground">{t.supplier || "Supplier"}:</span>
             <p className="text-sm">{item.supplier}</p>
           </div>
           <div className="flex gap-2 pt-2 border-t">
@@ -315,7 +331,7 @@ function SortableInventoryCard({ item, onEdit, onDelete, disabled = false }: Sor
               data-testid={`button-edit-${item.id}`}
             >
               <Edit className="h-4 w-4 mr-1" />
-              Edit
+              {t.edit || "Edit"}
             </Button>
             <Button
               variant="outline"
@@ -324,7 +340,7 @@ function SortableInventoryCard({ item, onEdit, onDelete, disabled = false }: Sor
               data-testid={`button-delete-${item.id}`}
             >
               <Trash2 className="h-4 w-4 mr-1 text-destructive" />
-              Delete
+              {t.delete || "Delete"}
             </Button>
           </div>
         </CardContent>
@@ -394,7 +410,7 @@ function SortableAddonCard({ addon, menuItemNames, onEdit, onDelete }: SortableA
             <p className="font-mono font-medium text-primary">{parseFloat(addon.price).toFixed(2)} SAR</p>
           </div>
           <div>
-            <span className="text-xs text-muted-foreground">Menu Items:</span>
+            <span className="text-xs text-muted-foreground">{t.menuItems || "Menu Items"}:</span>
             <p className="text-sm">{menuItemNames}</p>
           </div>
         </div>
@@ -547,7 +563,7 @@ export default function Inventory() {
     onError: (error: any) => {
       toast({
         title: t.failedToUpdateOrder,
-        description: error.message || "Could not save new order",
+        description: error.message || t.couldNotSaveNewOrder || "Could not save new order",
         variant: "destructive",
       });
     },
@@ -603,7 +619,7 @@ export default function Inventory() {
     onError: (error: Error) => {
       toast({
         title: t.failedToCreateItem,
-        description: error.message || "An error occurred while creating the inventory item",
+        description: error.message || t.errorCreatingInventoryItem || "An error occurred while creating the inventory item",
         variant: "destructive",
       });
     },
@@ -636,7 +652,7 @@ export default function Inventory() {
     onError: (error: Error) => {
       toast({
         title: t.failedToUpdateItem,
-        description: error.message || "An error occurred while updating the inventory item",
+        description: error.message || t.errorUpdatingInventoryItem || "An error occurred while updating the inventory item",
         variant: "destructive",
       });
     },
@@ -666,7 +682,7 @@ export default function Inventory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/addons"] });
       toast({
-        title: "Add-on created",
+        title: t.addonCreated || "Add-on created",
         description: t.addonAdded || "Add-on has been added successfully",
       });
       handleCloseAddonDialog();
@@ -674,7 +690,7 @@ export default function Inventory() {
     onError: (error: Error) => {
       toast({
         title: t.failedToCreateAddon,
-        description: error.message || "An error occurred while creating the add-on",
+        description: error.message || t.errorCreatingAddon || "An error occurred while creating the add-on",
         variant: "destructive",
       });
     },
@@ -687,7 +703,7 @@ export default function Inventory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/addons"] });
       toast({
-        title: "Add-on updated",
+        title: t.addonUpdatedTitle || "Add-on updated",
         description: t.addonUpdated || "Add-on has been updated successfully",
       });
       handleCloseAddonDialog();
@@ -695,7 +711,7 @@ export default function Inventory() {
     onError: (error: Error) => {
       toast({
         title: t.failedToUpdateAddon,
-        description: error.message || "An error occurred while updating the add-on",
+        description: error.message || t.errorUpdatingAddon || "An error occurred while updating the add-on",
         variant: "destructive",
       });
     },
@@ -708,7 +724,7 @@ export default function Inventory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/addons"] });
       toast({
-        title: "Add-on deleted",
+        title: t.addonDeletedTitle || "Add-on deleted",
         description: t.addonDeleted || "Add-on has been removed successfully",
       });
       setAddonDeleteDialogOpen(false);
@@ -740,8 +756,8 @@ export default function Inventory() {
     const referenceQuantity = parseFloat(item.referenceQuantity || "1");
     if (isNaN(quantity)) {
       toast({
-        title: "Invalid data",
-        description: "Unable to edit item - invalid quantity value",
+        title: t.invalidData || "Invalid data",
+        description: t.unableToEditItemInvalidQuantity || "Unable to edit item - invalid quantity value",
         variant: "destructive",
       });
       return;
@@ -821,13 +837,13 @@ export default function Inventory() {
           
           toast({
             title: t.itemCreatedTitle || "Item created",
-            description: "Inventory item and add-on have been added",
+            description: t.inventoryItemAndAddonAdded || "Inventory item and add-on have been added",
           });
           handleCloseDialog();
         } catch (error: any) {
           toast({
             title: t.failedToCreateItem || "Failed to create item",
-            description: error.message || "An error occurred",
+            description: error.message || t.anErrorOccurred || "An error occurred",
             variant: "destructive",
           });
         }
@@ -868,8 +884,8 @@ export default function Inventory() {
     const price = parseFloat(addon.price);
     if (isNaN(price)) {
       toast({
-        title: "Invalid data",
-        description: "Unable to edit add-on - invalid price value",
+        title: t.invalidData || "Invalid data",
+        description: t.unableToEditAddonInvalidPrice || "Unable to edit add-on - invalid price value",
         variant: "destructive",
       });
       return;
@@ -923,12 +939,12 @@ export default function Inventory() {
       document.body.removeChild(a);
       toast({
         title: t.exportSuccessful,
-        description: "Inventory data exported to Excel",
+        description: t.inventoryDataExported || "Inventory data exported to Excel",
       });
     } catch (error) {
       toast({
         title: t.exportFailed,
-        description: error instanceof Error ? error.message : "Failed to export inventory data",
+        description: error instanceof Error ? error.message : t.failedToExportInventoryData || "Failed to export inventory data",
         variant: "destructive",
       });
     }
@@ -951,13 +967,13 @@ export default function Inventory() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast({
-        title: "Template downloaded",
-        description: "Fill in the template and import it",
+        title: t.templateDownloaded || "Template downloaded",
+        description: t.fillTemplateAndImport || "Fill in the template and import it",
       });
     } catch (error) {
       toast({
         title: t.downloadFailed,
-        description: error instanceof Error ? error.message : "Failed to download template",
+        description: error instanceof Error ? error.message : t.failedToDownloadTemplate || "Failed to download template",
         variant: "destructive",
       });
     }
@@ -986,12 +1002,12 @@ export default function Inventory() {
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
         title: t.importSuccessful,
-        description: result.message || "Inventory data imported from Excel",
+        description: result.message || t.inventoryDataImported || "Inventory data imported from Excel",
       });
     } catch (error) {
       toast({
         title: t.importFailed,
-        description: error instanceof Error ? error.message : "Failed to import inventory data",
+        description: error instanceof Error ? error.message : t.failedToImportInventoryData || "Failed to import inventory data",
         variant: "destructive",
       });
     } finally {
@@ -1033,7 +1049,7 @@ export default function Inventory() {
   if (isLoading || isLoadingAddons) {
     return (
       <div className={layout.padding}>
-        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Inventory Management</h1>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>{t.inventoryManagement || "Inventory Management"}</h1>
         <p className="text-muted-foreground">{t.loading}...</p>
       </div>
     );
@@ -1043,18 +1059,18 @@ export default function Inventory() {
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div className={`flex ${layout.isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
         <div>
-          <h1 className={`${layout.text3Xl} font-bold mb-2`}>Inventory Management</h1>
-          <p className="text-muted-foreground text-sm">Track and manage your stock levels and add-ons</p>
+          <h1 className={`${layout.text3Xl} font-bold mb-2`}>{t.inventoryManagement || "Inventory Management"}</h1>
+          <p className="text-muted-foreground text-sm">{t.trackAndManageStock || "Track and manage your stock levels and add-ons"}</p>
         </div>
       </div>
 
       <Tabs defaultValue="inventory" className="w-full">
         <TabsList className="w-full justify-start" data-testid="tabs-inventory">
           <TabsTrigger value="inventory" data-testid="tab-trigger-inventory">
-            {t.inventory}
+            {t.items || "Items"}
           </TabsTrigger>
           <TabsTrigger value="addons" data-testid="tab-trigger-addons">
-            {t.addons}
+            {t.addons || "Add-ons"}
           </TabsTrigger>
         </TabsList>
 
@@ -1104,16 +1120,16 @@ export default function Inventory() {
           <div className={`flex gap-2 ${layout.isMobile ? 'flex-wrap' : ''}`}>
             <Button variant="outline" onClick={handleDownloadTemplate} data-testid="button-download-template">
               <FileDown className="h-4 w-4 mr-2" />
-              Template
+              {t.template || "Template"}
             </Button>
             <Button variant="outline" onClick={handleExport} data-testid="button-export">
               <Download className="h-4 w-4 mr-2" />
-              Export
+              {t.export || "Export"}
             </Button>
             <Button variant="outline" asChild disabled={isImporting}>
               <label htmlFor="import-inventory" className="cursor-pointer" data-testid="button-import">
                 <Upload className="h-4 w-4 mr-2" />
-                {isImporting ? "Importing..." : "Import"}
+                {isImporting ? (t.importing || "Importing...") : (t.import || "Import")}
                 <input
                   id="import-inventory"
                   type="file"
@@ -1126,14 +1142,14 @@ export default function Inventory() {
             </Button>
             <Button onClick={() => setOpen(true)} data-testid="button-add-item">
               <Plus className="h-4 w-4 mr-2" />
-              Add Item
+              {t.addItem || "Add Item"}
             </Button>
             <Dialog open={open} onOpenChange={handleOpenChange}>
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>{editingItem ? "Edit Inventory Item" : "Add New Inventory Item"}</DialogTitle>
+                  <DialogTitle>{editingItem ? (t.editInventoryItem || "Edit Inventory Item") : (t.addNewInventoryItem || "Add New Inventory Item")}</DialogTitle>
                   <DialogDescription>
-                    {editingItem ? "Update the inventory item details" : "Add a new item to your inventory"}
+                    {editingItem ? (t.updateInventoryItemDetails || "Update the inventory item details") : (t.addNewItemToInventory || "Add a new item to your inventory")}
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -1143,9 +1159,9 @@ export default function Inventory() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Item Name</FormLabel>
+                          <FormLabel>{t.itemName || "Item Name"}</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="e.g., Tomatoes" data-testid="input-item-name" />
+                            <Input {...field} placeholder={t.itemNamePlaceholder || "e.g., Tomatoes"} data-testid="input-item-name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1157,21 +1173,21 @@ export default function Inventory() {
                         name="category"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Category</FormLabel>
+                            <FormLabel>{t.category || "Category"}</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger data-testid="select-item-category">
-                                  <SelectValue placeholder="Select category" />
+                                  <SelectValue placeholder={t.selectCategory || "Select category"} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="Vegetables">Vegetables</SelectItem>
-                                <SelectItem value="Meat">Meat</SelectItem>
-                                <SelectItem value="Dairy">Dairy</SelectItem>
-                                <SelectItem value="Grains">Grains</SelectItem>
-                                <SelectItem value="Oils">Oils</SelectItem>
-                                <SelectItem value="Spices">Spices</SelectItem>
-                                <SelectItem value="Packaging">Packaging</SelectItem>
+                                <SelectItem value="Vegetables">{t.vegetables || "Vegetables"}</SelectItem>
+                                <SelectItem value="Meat">{t.meat || "Meat"}</SelectItem>
+                                <SelectItem value="Dairy">{t.dairy || "Dairy"}</SelectItem>
+                                <SelectItem value="Grains">{t.grains || "Grains"}</SelectItem>
+                                <SelectItem value="Oils">{t.oils || "Oils"}</SelectItem>
+                                <SelectItem value="Spices">{t.spices || "Spices"}</SelectItem>
+                                <SelectItem value="Packaging">{t.packaging || "Packaging"}</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -1183,19 +1199,19 @@ export default function Inventory() {
                         name="unit"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Unit</FormLabel>
+                            <FormLabel>{t.unit || "Unit"}</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger data-testid="select-item-unit">
-                                  <SelectValue placeholder="Select unit" />
+                                  <SelectValue placeholder={t.selectUnit || "Select unit"} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="kg">kg</SelectItem>
-                                <SelectItem value="g">g</SelectItem>
-                                <SelectItem value="l">l</SelectItem>
-                                <SelectItem value="ml">ml</SelectItem>
-                                <SelectItem value="pcs">pcs</SelectItem>
+                                <SelectItem value="kg">{t.kg || "kg"}</SelectItem>
+                                <SelectItem value="g">{t.g || "g"}</SelectItem>
+                                <SelectItem value="l">{t.l || "l"}</SelectItem>
+                                <SelectItem value="ml">{t.ml || "ml"}</SelectItem>
+                                <SelectItem value="pcs">{t.pcs || "pcs"}</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -1309,9 +1325,9 @@ export default function Inventory() {
                       name="supplier"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Supplier</FormLabel>
+                          <FormLabel>{t.supplier || "Supplier"}</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="e.g., ABC Suppliers" data-testid="input-item-supplier" />
+                            <Input {...field} placeholder={t.supplierPlaceholder || "e.g., ABC Suppliers"} data-testid="input-item-supplier" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1322,17 +1338,17 @@ export default function Inventory() {
                       name="status"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Status</FormLabel>
+                          <FormLabel>{t.status || "Status"}</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger data-testid="select-item-status">
-                                <SelectValue placeholder="Select status" />
+                                <SelectValue placeholder={t.selectStatus || "Select status"} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="In Stock">In Stock</SelectItem>
-                              <SelectItem value="Low Stock">Low Stock</SelectItem>
-                              <SelectItem value="Out of Stock">Out of Stock</SelectItem>
+                              <SelectItem value="In Stock">{t.inStock || "In Stock"}</SelectItem>
+                              <SelectItem value="Low Stock">{t.lowStock || "Low Stock"}</SelectItem>
+                              <SelectItem value="Out of Stock">{t.outOfStock || "Out of Stock"}</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -1380,10 +1396,10 @@ export default function Inventory() {
                     
                     <div className="flex justify-end gap-2 pt-4">
                       <Button type="button" variant="outline" onClick={handleCloseDialog} data-testid="button-cancel">
-                        Cancel
+                        {t.cancel || "Cancel"}
                       </Button>
                       <Button type="submit" data-testid="button-save-item" disabled={createMutation.isPending || updateMutation.isPending}>
-                        {editingItem ? "Update Item" : "Create Item"}
+                        {editingItem ? (t.updateItem || "Update Item") : (t.createItem || "Create Item")}
                       </Button>
                     </div>
                   </form>
@@ -1397,7 +1413,7 @@ export default function Inventory() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search items..."
+                  placeholder={t.searchItems || "Search items..."}
                   className="pl-10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -1406,27 +1422,27 @@ export default function Inventory() {
               </div>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className={layout.isMobile ? "w-full" : "w-48"} data-testid="select-category">
-                  <SelectValue placeholder="Category" />
+                  <SelectValue placeholder={t.category || "Category"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="vegetables">Vegetables</SelectItem>
-                  <SelectItem value="meat">Meat</SelectItem>
-                  <SelectItem value="dairy">Dairy</SelectItem>
-                  <SelectItem value="grains">Grains</SelectItem>
-                  <SelectItem value="oils">Oils</SelectItem>
-                  <SelectItem value="packaging">Packaging</SelectItem>
+                  <SelectItem value="all">{t.allCategories || "All Categories"}</SelectItem>
+                  <SelectItem value="vegetables">{t.vegetables || "Vegetables"}</SelectItem>
+                  <SelectItem value="meat">{t.meat || "Meat"}</SelectItem>
+                  <SelectItem value="dairy">{t.dairy || "Dairy"}</SelectItem>
+                  <SelectItem value="grains">{t.grains || "Grains"}</SelectItem>
+                  <SelectItem value="oils">{t.oils || "Oils"}</SelectItem>
+                  <SelectItem value="packaging">{t.packaging || "Packaging"}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className={layout.isMobile ? "w-full" : "w-48"} data-testid="select-status">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder={t.status || "Status"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="in-stock">In Stock</SelectItem>
-                  <SelectItem value="low-stock">Low Stock</SelectItem>
-                  <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                  <SelectItem value="all">{t.allStatus || "All Status"}</SelectItem>
+                  <SelectItem value="in-stock">{t.inStock || "In Stock"}</SelectItem>
+                  <SelectItem value="low-stock">{t.lowStock || "Low Stock"}</SelectItem>
+                  <SelectItem value="out-of-stock">{t.outOfStock || "Out of Stock"}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1444,15 +1460,15 @@ export default function Inventory() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Item Name</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Quantity</TableHead>
-                        <TableHead>Unit</TableHead>
-                        <TableHead>Price/Unit</TableHead>
-                        <TableHead>Supplier</TableHead>
-                        <TableHead>Expires</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead>{t.itemName || "Item Name"}</TableHead>
+                        <TableHead>{t.category || "Category"}</TableHead>
+                        <TableHead>{t.quantity || "Quantity"}</TableHead>
+                        <TableHead>{t.unit || "Unit"}</TableHead>
+                        <TableHead>{t.pricePerUnit || "Price/Unit"}</TableHead>
+                        <TableHead>{t.supplier || "Supplier"}</TableHead>
+                        <TableHead>{t.expires || "Expires"}</TableHead>
+                        <TableHead>{t.status || "Status"}</TableHead>
+                        <TableHead className="text-right">{t.actions || "Actions"}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1487,16 +1503,15 @@ export default function Inventory() {
           <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogTitle>{t.areYouSure || "Are you sure?"}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will permanently delete <strong>{itemToDelete?.name}</strong> from your inventory.
-                  This action cannot be undone.
+                  {t.permanentlyDeleteFromInventory || "This will permanently delete"} <strong>{itemToDelete?.name}</strong> {t.fromYourInventory || "from your inventory."} {t.actionCannotBeUndone || "This action cannot be undone."}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+                <AlertDialogCancel data-testid="button-cancel-delete">{t.cancel || "Cancel"}</AlertDialogCancel>
                 <AlertDialogAction onClick={confirmDelete} data-testid="button-confirm-delete">
-                  Delete
+                  {t.delete || "Delete"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -1514,7 +1529,7 @@ export default function Inventory() {
                 <DialogHeader>
                   <DialogTitle>{editingAddon ? t.editAddon : t.addAddon}</DialogTitle>
                   <DialogDescription>
-                    {editingAddon ? "Update the add-on details" : "Add a new add-on to your menu"}
+                    {editingAddon ? (t.updateAddonDetails || "Update the add-on details") : (t.addNewAddonToMenu || "Add a new add-on to your menu")}
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...addonForm}>
@@ -1526,7 +1541,7 @@ export default function Inventory() {
                         <FormItem>
                           <FormLabel>{t.addonName}</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="e.g., Extra Cheese" data-testid="input-addon-name" />
+                            <Input {...field} placeholder={t.addonNamePlaceholder || "e.g., Extra Cheese"} data-testid="input-addon-name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1541,15 +1556,15 @@ export default function Inventory() {
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger data-testid="select-addon-category">
-                                <SelectValue placeholder="Select category" />
+                                <SelectValue placeholder={t.selectCategory || "Select category"} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Toppings">Toppings</SelectItem>
-                              <SelectItem value="Sides">Sides</SelectItem>
-                              <SelectItem value="Sauces">Sauces</SelectItem>
-                              <SelectItem value="Extras">Extras</SelectItem>
-                              <SelectItem value="Drinks">Drinks</SelectItem>
+                              <SelectItem value="Toppings">{t.toppings || "Toppings"}</SelectItem>
+                              <SelectItem value="Sides">{t.sides || "Sides"}</SelectItem>
+                              <SelectItem value="Sauces">{t.sauces || "Sauces"}</SelectItem>
+                              <SelectItem value="Extras">{t.extras || "Extras"}</SelectItem>
+                              <SelectItem value="Drinks">{t.drinks || "Drinks"}</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -1561,12 +1576,12 @@ export default function Inventory() {
                       name="price"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t.addonPrice} (SAR, incl. VAT)</FormLabel>
+                          <FormLabel>{t.addonPrice} ({t.sarInclVat || "SAR, incl. VAT"})</FormLabel>
                           <FormControl>
                             <Input {...field} type="number" step="0.01" placeholder="0.00" data-testid="input-addon-price" />
                           </FormControl>
                           <FormMessage />
-                          <p className="text-xs text-muted-foreground">VAT (15%) will be calculated automatically</p>
+                          <p className="text-xs text-muted-foreground">{t.vatCalculatedAutomatically || "VAT (15%) will be calculated automatically"}</p>
                         </FormItem>
                       )}
                     />
@@ -1575,7 +1590,7 @@ export default function Inventory() {
                       name="menuItemIds"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Link to Menu Items (Optional)</FormLabel>
+                          <FormLabel>{t.linkToMenuItems || "Link to Menu Items"} ({t.optional || "Optional"})</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
@@ -1586,10 +1601,10 @@ export default function Inventory() {
                                 >
                                   {field.value && field.value.length > 0
                                     ? field.value.length === 1
-                                      ? menuItems.find(item => item.id === field.value![0])?.name || `1 item selected`
+                                      ? menuItems.find(item => item.id === field.value![0])?.name || (t.oneItemSelected || "1 item selected")
                                       : field.value.length === 2
                                         ? menuItems.filter(item => field.value!.includes(item.id)).map(item => item.name).join(", ")
-                                        : `${field.value.length} items selected`
+                                        : `${field.value.length} ${t.itemsSelected || "items selected"}`
                                     : t.all}
                                   <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                                 </Button>
@@ -1597,8 +1612,8 @@ export default function Inventory() {
                             </PopoverTrigger>
                             <PopoverContent className="w-full p-0" align="start">
                               <Command>
-                                <CommandInput placeholder="Search menu items..." data-testid="input-search-menu-items" />
-                                <CommandEmpty>No menu items found.</CommandEmpty>
+                                <CommandInput placeholder={t.searchMenuItems || "Search menu items..."} data-testid="input-search-menu-items" />
+                                <CommandEmpty>{t.noMenuItemsFound || "No menu items found."}</CommandEmpty>
                                 <CommandGroup className="max-h-64 overflow-auto">
                                   <CommandItem
                                     onSelect={() => {
@@ -1648,7 +1663,7 @@ export default function Inventory() {
                         <FormItem className="flex items-center justify-between rounded-md border p-3">
                           <div>
                             <FormLabel className="text-base">{t.available}</FormLabel>
-                            <p className="text-xs text-muted-foreground">Make this add-on available for orders</p>
+                            <p className="text-xs text-muted-foreground">{t.makeAddonAvailableForOrders || "Make this add-on available for orders"}</p>
                           </div>
                           <FormControl>
                             <Switch
@@ -1679,7 +1694,7 @@ export default function Inventory() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search add-ons..."
+                  placeholder={t.searchAddons || "Search add-ons..."}
                   className="pl-10"
                   value={addonSearchQuery}
                   onChange={(e) => setAddonSearchQuery(e.target.value)}
@@ -1688,15 +1703,15 @@ export default function Inventory() {
               </div>
               <Select value={addonCategoryFilter} onValueChange={setAddonCategoryFilter}>
                 <SelectTrigger className={layout.isMobile ? "w-full" : "w-48"} data-testid="select-addon-category-filter">
-                  <SelectValue placeholder="Category" />
+                  <SelectValue placeholder={t.category || "Category"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="Toppings">Toppings</SelectItem>
-                  <SelectItem value="Sides">Sides</SelectItem>
-                  <SelectItem value="Sauces">Sauces</SelectItem>
-                  <SelectItem value="Extras">Extras</SelectItem>
-                  <SelectItem value="Drinks">Drinks</SelectItem>
+                  <SelectItem value="all">{t.allCategories || "All Categories"}</SelectItem>
+                  <SelectItem value="Toppings">{t.toppings || "Toppings"}</SelectItem>
+                  <SelectItem value="Sides">{t.sides || "Sides"}</SelectItem>
+                  <SelectItem value="Sauces">{t.sauces || "Sauces"}</SelectItem>
+                  <SelectItem value="Extras">{t.extras || "Extras"}</SelectItem>
+                  <SelectItem value="Drinks">{t.drinks || "Drinks"}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1708,9 +1723,9 @@ export default function Inventory() {
                     <TableHead>{t.addonName}</TableHead>
                     <TableHead>{t.category}</TableHead>
                     <TableHead>{t.price}</TableHead>
-                    <TableHead>Menu Item</TableHead>
+                    <TableHead>{t.menuItem || "Menu Item"}</TableHead>
                     <TableHead>{t.status}</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="text-right">{t.actions || "Actions"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1724,7 +1739,7 @@ export default function Inventory() {
                     filteredAddons.map((addon) => {
                       const linkedMenuItemNames = addon.menuItemIds && addon.menuItemIds.length > 0
                         ? addon.menuItemIds.length > 2
-                          ? `${addon.menuItemIds.length} items`
+                          ? `${addon.menuItemIds.length} ${t.itemsCount || "items"}`
                           : menuItems
                               .filter(item => addon.menuItemIds!.includes(item.id))
                               .map(item => item.name)
@@ -1753,7 +1768,7 @@ export default function Inventory() {
                   filteredAddons.map((addon) => {
                     const linkedMenuItemNames = addon.menuItemIds && addon.menuItemIds.length > 0
                       ? addon.menuItemIds.length > 2
-                        ? `${addon.menuItemIds.length} items`
+                        ? `${addon.menuItemIds.length} ${t.itemsCount || "items"}`
                         : menuItems
                             .filter(item => addon.menuItemIds!.includes(item.id))
                             .map(item => item.name)
@@ -1777,10 +1792,9 @@ export default function Inventory() {
           <AlertDialog open={addonDeleteDialogOpen} onOpenChange={setAddonDeleteDialogOpen}>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogTitle>{t.areYouSure || "Are you sure?"}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will permanently delete <strong>{addonToDelete?.name}</strong> from your add-ons.
-                  This action cannot be undone.
+                  {t.permanentlyDeleteFromAddons || "This will permanently delete"} <strong>{addonToDelete?.name}</strong> {t.fromYourAddons || "from your add-ons."} {t.actionCannotBeUndone || "This action cannot be undone."}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

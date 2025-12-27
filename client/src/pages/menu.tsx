@@ -318,14 +318,14 @@ export default function Menu() {
       queryClient.invalidateQueries({ queryKey: ["/api/menu-categories"] });
       setNewCategory("");
       toast({
-        title: "Category added",
-        description: "New category has been added successfully",
+        title: t.categoryAdded || "Category added",
+        description: t.categoryAddedDesc || "New category has been added successfully",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to add category",
-        description: error.message || "Could not add category",
+        title: t.failedToAddCategory || "Failed to add category",
+        description: error.message || t.couldNotAddCategory || "Could not add category",
         variant: "destructive",
       });
     },
@@ -338,14 +338,14 @@ export default function Menu() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/menu-categories"] });
       toast({
-        title: "Category removed",
-        description: "Category has been removed from menu categories",
+        title: t.categoryRemoved || "Category removed",
+        description: t.categoryRemovedDesc || "Category has been removed from menu categories",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to remove category",
-        description: error.message || "Could not remove category",
+        title: t.failedToRemoveCategory || "Failed to remove category",
+        description: error.message || t.couldNotRemoveCategory || "Could not remove category",
         variant: "destructive",
       });
     },
@@ -399,8 +399,8 @@ export default function Menu() {
     } catch (error) {
       console.error('Image upload error:', error);
       toast({
-        title: t.imageUploadFailed,
-        description: "Could not upload image. Please try again.",
+        title: t.imageUploadFailed || "Image upload failed",
+        description: t.couldNotUploadImage || "Could not upload image. Please try again.",
         variant: "destructive",
       });
       return null;
@@ -493,13 +493,13 @@ export default function Menu() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast({
-        title: "Template downloaded",
-        description: "Fill in the template and import it",
+        title: t.templateDownloaded || "Template downloaded",
+        description: t.fillInTemplateAndImport || "Fill in the template and import it",
       });
     } catch (error) {
       toast({
-        title: t.downloadFailed,
-        description: error instanceof Error ? error.message : "Failed to download template",
+        title: t.downloadFailed || "Download failed",
+        description: error instanceof Error ? error.message : (t.failedToDownloadTemplate || "Failed to download template"),
         variant: "destructive",
       });
     }
@@ -522,13 +522,13 @@ export default function Menu() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast({
-        title: t.exportSuccessful,
-        description: "Menu data exported to Excel",
+        title: t.exportSuccessful || "Export successful",
+        description: t.menuDataExported || "Menu data exported to Excel",
       });
     } catch (error) {
       toast({
-        title: t.exportFailed,
-        description: error instanceof Error ? error.message : "Failed to export menu data",
+        title: t.exportFailed || "Export failed",
+        description: error instanceof Error ? error.message : (t.failedToExportMenuData || "Failed to export menu data"),
         variant: "destructive",
       });
     }
@@ -556,13 +556,13 @@ export default function Menu() {
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
       toast({
-        title: t.importSuccessful,
-        description: result.message || "Menu data imported from Excel",
+        title: t.importSuccessful || "Import successful",
+        description: result.message || t.menuDataImported || "Menu data imported from Excel",
       });
     } catch (error) {
       toast({
-        title: t.importFailed,
-        description: error instanceof Error ? error.message : "Failed to import menu data",
+        title: t.importFailed || "Import failed",
+        description: error instanceof Error ? error.message : (t.failedToImportMenuData || "Failed to import menu data"),
         variant: "destructive",
       });
     } finally {
@@ -578,8 +578,8 @@ export default function Menu() {
   if (isLoading) {
     return (
       <div className={layout.padding}>
-        <h1 className={`${layout.text3Xl} font-bold mb-2`}>{labels.menu} Management</h1>
-        <p className="text-muted-foreground">Loading...</p>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>{labels.menu} {t.management || "Management"}</h1>
+        <p className="text-muted-foreground">{t.loading || "Loading..."}</p>
       </div>
     );
   }
@@ -588,8 +588,8 @@ export default function Menu() {
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div className={layout.isMobile ? 'space-y-4' : 'flex items-center justify-between'}>
         <div>
-          <h1 className={`${layout.text3Xl} font-bold mb-2`}>{labels.menu} Management</h1>
-          <p className="text-muted-foreground text-sm">Manage your {labels.menuItems.toLowerCase()} and pricing</p>
+          <h1 className={`${layout.text3Xl} font-bold mb-2`}>{labels.menu} {t.management || "Management"}</h1>
+          <p className="text-muted-foreground text-sm">{t.manageYourItemsAndPricing || `Manage your ${labels.menuItems.toLowerCase()} and pricing`}</p>
         </div>
         <div className={`flex gap-2 ${layout.isMobile ? 'flex-col' : ''}`}>
           <Button 
@@ -599,7 +599,7 @@ export default function Menu() {
             data-testid="button-download-template"
           >
             <FileDown className="h-4 w-4 mr-2" />
-            Template
+            {t.template || "Template"}
           </Button>
           <Button 
             variant="outline" 
@@ -608,7 +608,7 @@ export default function Menu() {
             data-testid="button-export"
           >
             <Download className="h-4 w-4 mr-2" />
-            Export
+            {t.export || "Export"}
           </Button>
           <Button 
             variant="outline" 
@@ -618,7 +618,7 @@ export default function Menu() {
           >
             <label htmlFor="import-menu" className={`cursor-pointer ${layout.isMobile ? 'justify-start' : ''}`} data-testid="button-import">
               <Upload className="h-4 w-4 mr-2" />
-              {isImporting ? "Importing..." : "Import"}
+              {isImporting ? (t.importing || "Importing...") : (t.import || "Import")}
               <input
                 id="import-menu"
                 type="file"
@@ -637,18 +637,18 @@ export default function Menu() {
                 data-testid="button-manage-categories"
               >
                 <Settings2 className="h-4 w-4 mr-2" />
-                Manage Categories
+                {t.manageCategories || "Manage Categories"}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Manage Menu Categories</DialogTitle>
-                <DialogDescription>Add, edit, or remove menu categories</DialogDescription>
+                <DialogTitle>{t.manageMenuCategories || "Manage Menu Categories"}</DialogTitle>
+                <DialogDescription>{t.addEditRemoveCategories || "Add, edit, or remove menu categories"}</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div className={`flex gap-2 ${layout.isMobile ? 'flex-col' : ''}`}>
                   <Input
-                    placeholder="New category name..."
+                    placeholder={t.newCategoryName || "New category name..."}
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
                     className={layout.isMobile ? 'w-full' : ''}
@@ -665,13 +665,13 @@ export default function Menu() {
                     data-testid="button-add-category"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    {createCategoryMutation.isPending ? "Adding..." : "Add"}
+                    {createCategoryMutation.isPending ? (t.adding || "Adding...") : (t.add || "Add")}
                   </Button>
                 </div>
                 <div className="space-y-2">
                   {categories.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-4">
-                      No categories yet. Add menu items to create categories automatically.
+                      {t.noCategoriesYet || "No categories yet. Add menu items to create categories automatically."}
                     </p>
                   ) : (
                     categories.map((category) => {
@@ -691,7 +691,7 @@ export default function Menu() {
                             <span className="font-medium">{category}</span>
                             {isInUse && (
                               <Badge variant="secondary" className="text-xs">
-                                {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                                {itemCount} {itemCount === 1 ? (t.item || 'item') : (t.items || 'items')}
                               </Badge>
                             )}
                           </div>
@@ -708,7 +708,7 @@ export default function Menu() {
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           ) : (
-                            <span className="text-xs text-muted-foreground">In use</span>
+                            <span className="text-xs text-muted-foreground">{t.inUse || "In use"}</span>
                           )}
                         </div>
                       );
@@ -725,14 +725,14 @@ export default function Menu() {
                 data-testid="button-add-menu-item"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add {labels.menuItem}
+                {t.add || "Add"} {labels.menuItem}
               </Button>
             </DialogTrigger>
           <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingItem ? `Edit ${labels.menuItem}` : `Add New ${labels.menuItem}`}</DialogTitle>
+              <DialogTitle>{editingItem ? `${t.edit || "Edit"} ${labels.menuItem}` : `${t.addNew || "Add New"} ${labels.menuItem}`}</DialogTitle>
               <DialogDescription>
-                {editingItem ? `Update the ${labels.menuItem.toLowerCase()} details` : `Create a new item for your ${labels.menu.toLowerCase()} with VAT-inclusive pricing`}
+                {editingItem ? (t.updateItemDetails || `Update the ${labels.menuItem.toLowerCase()} details`) : (t.createNewItemDesc || `Create a new item for your ${labels.menu.toLowerCase()} with VAT-inclusive pricing`)}
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -742,11 +742,11 @@ export default function Menu() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Item Name</FormLabel>
+                      <FormLabel>{t.itemName || "Item Name"}</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          placeholder="e.g., Margherita Pizza"
+                          placeholder={t.itemNamePlaceholder || "e.g., Margherita Pizza"}
                           data-testid="input-menu-name"
                         />
                       </FormControl>
@@ -759,11 +759,11 @@ export default function Menu() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>{t.description || "Description"}</FormLabel>
                       <FormControl>
                         <Textarea
                           {...field}
-                          placeholder={`Describe the ${labels.menuItem.toLowerCase()}...`}
+                          placeholder={t.describeTheItem || `Describe the ${labels.menuItem.toLowerCase()}...`}
                           rows={3}
                           data-testid="input-menu-description"
                         />
@@ -773,13 +773,13 @@ export default function Menu() {
                   )}
                 />
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Item Image (Optional)</label>
+                  <label className="text-sm font-medium">{t.itemImageOptional || "Item Image (Optional)"}</label>
                   <div className="flex gap-3 items-start">
                     {imagePreview && (
                       <div className="relative w-24 h-24 rounded-lg overflow-hidden border">
                         <img
                           src={imagePreview}
-                          alt="Preview"
+                          alt={t.preview || "Preview"}
                           className="w-full h-full object-cover"
                         />
                         <Button
@@ -808,7 +808,7 @@ export default function Menu() {
                         data-testid="input-menu-image"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Upload an image for this {labels.menuItem.toLowerCase()} (max 5MB)
+                        {t.uploadImageForItem || `Upload an image for this ${labels.menuItem.toLowerCase()} (max 5MB)`}
                       </p>
                     </div>
                   </div>
@@ -818,12 +818,12 @@ export default function Menu() {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel>{t.category || "Category"}</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           list="category-suggestions"
-                          placeholder="Enter or select category"
+                          placeholder={t.enterOrSelectCategory || "Enter or select category"}
                           data-testid="input-menu-category"
                         />
                       </FormControl>
@@ -841,7 +841,7 @@ export default function Menu() {
                   name="recipeId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Recipe (Optional)</FormLabel>
+                      <FormLabel>{t.recipeOptional || "Recipe (Optional)"}</FormLabel>
                       <Select 
                         onValueChange={(value) => {
                           field.onChange(value);
@@ -851,11 +851,11 @@ export default function Menu() {
                       >
                         <FormControl>
                           <SelectTrigger data-testid="select-menu-recipe">
-                            <SelectValue placeholder="Select a recipe" />
+                            <SelectValue placeholder={t.selectRecipe || "Select a recipe"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="none">No Recipe</SelectItem>
+                          <SelectItem value="none">{t.noRecipe || "No Recipe"}</SelectItem>
                           {recipes.map((recipe) => (
                             <SelectItem key={recipe.id} value={recipe.id}>
                               {recipe.name}
@@ -873,21 +873,21 @@ export default function Menu() {
                     name="portionSize"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Portion Size</FormLabel>
+                        <FormLabel>{t.portionSize || "Portion Size"}</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger data-testid="select-menu-portion">
-                              <SelectValue placeholder="Select portion size" />
+                              <SelectValue placeholder={t.selectPortionSize || "Select portion size"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="1.00">Whole (1x)</SelectItem>
-                            <SelectItem value="0.75">3/4 Portion (0.75x)</SelectItem>
-                            <SelectItem value="0.50">1/2 Portion (0.5x)</SelectItem>
-                            <SelectItem value="0.25">1/4 Portion (0.25x)</SelectItem>
+                            <SelectItem value="1.00">{t.wholePortion || "Whole (1x)"}</SelectItem>
+                            <SelectItem value="0.75">{t.threeQuarterPortion || "3/4 Portion (0.75x)"}</SelectItem>
+                            <SelectItem value="0.50">{t.halfPortion || "1/2 Portion (0.5x)"}</SelectItem>
+                            <SelectItem value="0.25">{t.quarterPortion || "1/4 Portion (0.25x)"}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -897,7 +897,7 @@ export default function Menu() {
                 )}
                 {selectedRecipeId && recipeStockInfo && recipeStockInfo.length > 0 && (
                   <div className="rounded-lg border p-4 space-y-3 bg-muted/30">
-                    <h4 className="text-sm font-semibold">Ingredient Stock Availability</h4>
+                    <h4 className="text-sm font-semibold">{t.ingredientStockAvailability || "Ingredient Stock Availability"}</h4>
                     <div className="space-y-2">
                       {recipeStockInfo.map((ingredient, index) => (
                         <div key={index} className="flex items-center justify-between text-sm">
@@ -907,10 +907,10 @@ export default function Menu() {
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="text-xs text-muted-foreground">
-                              Need: {ingredient.quantity} {ingredient.unit}
+                              {t.need || "Need"}: {ingredient.quantity} {ingredient.unit}
                             </span>
                             <Badge variant={ingredient.inStock ? "default" : "destructive"} className="text-xs">
-                              Stock: {ingredient.availableStock} {ingredient.unit}
+                              {t.stock || "Stock"}: {ingredient.availableStock} {ingredient.unit}
                             </Badge>
                           </div>
                         </div>
@@ -918,7 +918,7 @@ export default function Menu() {
                     </div>
                     {recipeStockInfo.some(ing => !ing.inStock) && (
                       <p className="text-xs text-destructive mt-2">
-                        ⚠️ Some ingredients are low in stock
+                        ⚠️ {t.someIngredientsLowStock || "Some ingredients are low in stock"}
                       </p>
                     )}
                   </div>
@@ -930,18 +930,18 @@ export default function Menu() {
                       name="inventoryItemId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Link to Inventory Item (Optional)</FormLabel>
+                          <FormLabel>{t.linkToInventoryItem || "Link to Inventory Item (Optional)"}</FormLabel>
                           <Select
                             onValueChange={field.onChange}
                             value={field.value}
                           >
                             <FormControl>
                               <SelectTrigger data-testid="select-menu-inventory">
-                                <SelectValue placeholder="Select inventory item for stock tracking" />
+                                <SelectValue placeholder={t.selectInventoryItemForStock || "Select inventory item for stock tracking"} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="none">None</SelectItem>
+                              <SelectItem value="none">{t.none || "None"}</SelectItem>
                               {inventoryItems.map((item) => (
                                 <SelectItem key={item.id} value={item.id}>
                                   {item.name} ({item.quantity} {item.unit})
@@ -958,13 +958,13 @@ export default function Menu() {
                       name="stockNo"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Stock Quantity Per Item (Optional)</FormLabel>
+                          <FormLabel>{t.stockQuantityPerItem || "Stock Quantity Per Item (Optional)"}</FormLabel>
                           <FormControl>
                             <Input
                               {...field}
                               type="number"
                               step="0.01"
-                              placeholder="e.g., 1.5 (amount deducted per sale)"
+                              placeholder={t.stockQuantityPlaceholder || "e.g., 1.5 (amount deducted per sale)"}
                               data-testid="input-menu-stockno"
                             />
                           </FormControl>
@@ -979,20 +979,20 @@ export default function Menu() {
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Price (SAR, incl. VAT)</FormLabel>
+                      <FormLabel>{t.priceInclVAT || "Price (SAR, incl. VAT)"}</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           type="number"
                           step="0.01"
-                          placeholder="e.g., 28.75"
+                          placeholder={t.pricePlaceholder || "e.g., 28.75"}
                           data-testid="input-menu-price"
                         />
                       </FormControl>
                       {field.value && (
                         <p className="text-xs text-muted-foreground mt-1 font-mono">
-                          Base: {(field.value / 1.15).toFixed(2)} SAR | 
-                          VAT (15%): {(field.value - field.value / 1.15).toFixed(2)} SAR
+                          {t.base || "Base"}: {(field.value / 1.15).toFixed(2)} SAR | 
+                          {t.vatPercent || "VAT (15%)"}: {(field.value - field.value / 1.15).toFixed(2)} SAR
                         </p>
                       )}
                       <FormMessage />
@@ -1004,7 +1004,7 @@ export default function Menu() {
                   name="discount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Discount %</FormLabel>
+                      <FormLabel>{t.discountPercent || "Discount %"}</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -1012,14 +1012,14 @@ export default function Menu() {
                           step="0.01"
                           min="0"
                           max="100"
-                          placeholder="e.g., 10"
+                          placeholder={t.discountPlaceholder || "e.g., 10"}
                           data-testid="input-menu-discount"
                         />
                       </FormControl>
                       {field.value && parseFloat(field.value) > 0 && form.watch("price") && (
                         <p className="text-xs text-muted-foreground mt-1 font-mono">
-                          Discounted Price: {(form.watch("price") * (1 - parseFloat(field.value) / 100)).toFixed(2)} SAR | 
-                          Base (after discount): {((form.watch("price") * (1 - parseFloat(field.value) / 100)) / 1.15).toFixed(2)} SAR
+                          {t.discountedPrice || "Discounted Price"}: {(form.watch("price") * (1 - parseFloat(field.value) / 100)).toFixed(2)} SAR | 
+                          {t.baseAfterDiscount || "Base (after discount)"}: {((form.watch("price") * (1 - parseFloat(field.value) / 100)) / 1.15).toFixed(2)} SAR
                         </p>
                       )}
                       <FormMessage />
@@ -1031,21 +1031,21 @@ export default function Menu() {
                   name="displaySize"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Display Size (POS/Menu)</FormLabel>
+                      <FormLabel>{t.displaySizePosMenu || "Display Size (POS/Menu)"}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-display-size">
-                            <SelectValue placeholder="Select display size" />
+                            <SelectValue placeholder={t.selectDisplaySize || "Select display size"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="small">Small</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="large">Large</SelectItem>
+                          <SelectItem value="small">{t.small || "Small"}</SelectItem>
+                          <SelectItem value="medium">{t.medium || "Medium"}</SelectItem>
+                          <SelectItem value="large">{t.large || "Large"}</SelectItem>
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground">
-                        Controls the card size in POS and Menu views
+                        {t.controlsCardSize || "Controls the card size in POS and Menu views"}
                       </p>
                       <FormMessage />
                     </FormItem>
@@ -1059,7 +1059,7 @@ export default function Menu() {
                     className={layout.isMobile ? 'w-full h-[44px]' : ''}
                     data-testid="button-cancel"
                   >
-                    Cancel
+                    {t.cancel || "Cancel"}
                   </Button>
                   <Button 
                     type="submit" 
@@ -1068,8 +1068,8 @@ export default function Menu() {
                     data-testid="button-save-menu"
                   >
                     {editingItem 
-                      ? (updateMenuItemMutation.isPending ? "Updating..." : `Update ${labels.menuItem}`)
-                      : (createMenuItemMutation.isPending ? "Creating..." : `Create ${labels.menuItem}`)
+                      ? (updateMenuItemMutation.isPending ? (t.updating || "Updating...") : `${t.update || "Update"} ${labels.menuItem}`)
+                      : (createMenuItemMutation.isPending ? (t.creating || "Creating...") : `${t.create || "Create"} ${labels.menuItem}`)
                     }
                   </Button>
                 </div>
@@ -1111,7 +1111,7 @@ export default function Menu() {
                       <Badge variant="secondary" className="text-xs">{item.category}</Badge>
                       {item.discount && parseFloat(item.discount) > 0 && (
                         <Badge className="bg-green-600 text-white text-xs" data-testid={`badge-discount-${item.id}`}>
-                          {parseFloat(item.discount).toFixed(0)}% OFF
+                          {parseFloat(item.discount).toFixed(0)}% {t.off || "OFF"}
                         </Badge>
                       )}
                     </div>
@@ -1133,7 +1133,7 @@ export default function Menu() {
                       }
                       data-testid={`switch-available-${item.id}`}
                     />
-                    <span className="text-sm">{item.available ? "Available" : "Unavailable"}</span>
+                    <span className="text-sm">{item.available ? (t.available || "Available") : (t.unavailable || "Unavailable")}</span>
                   </div>
                   <div className="flex gap-2">
                     <Button 
@@ -1143,7 +1143,7 @@ export default function Menu() {
                       data-testid={`button-edit-menu-${item.id}`}
                     >
                       <Edit className="h-4 w-4 mr-2" />
-                      Edit
+                      {t.edit || "Edit"}
                     </Button>
                     <Button 
                       variant="ghost"
@@ -1152,7 +1152,7 @@ export default function Menu() {
                       data-testid={`button-delete-menu-${item.id}`}
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
+                      {t.delete || "Delete"}
                     </Button>
                   </div>
                 </div>
@@ -1192,7 +1192,7 @@ export default function Menu() {
                       <Badge variant="secondary">{item.category}</Badge>
                       {item.discount && parseFloat(item.discount) > 0 && (
                         <Badge className="bg-green-600 text-white" data-testid={`badge-discount-${item.id}`}>
-                          {parseFloat(item.discount).toFixed(0)}% OFF
+                          {parseFloat(item.discount).toFixed(0)}% {t.off || "OFF"}
                         </Badge>
                       )}
                     </div>
@@ -1212,15 +1212,15 @@ export default function Menu() {
                       </div>
                       <div className="text-xs text-muted-foreground font-mono">
                         <div className="flex justify-between">
-                          <span>Original Base:</span>
+                          <span>{t.originalBase || "Original Base"}:</span>
                           <span>{parseFloat(item.basePrice).toFixed(2)} SAR</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Discounted Base:</span>
+                          <span>{t.discountedBase || "Discounted Base"}:</span>
                           <span>{(parseFloat(item.basePrice) * (1 - parseFloat(item.discount) / 100)).toFixed(2)} SAR</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>VAT (15%):</span>
+                          <span>{t.vatPercent || "VAT (15%)"}:</span>
                           <span>+{(parseFloat(item.basePrice) * (1 - parseFloat(item.discount) / 100) * 0.15).toFixed(2)} SAR</span>
                         </div>
                       </div>
@@ -1230,11 +1230,11 @@ export default function Menu() {
                       <p className="text-2xl font-bold font-mono text-primary">{parseFloat(item.price).toFixed(2)} SAR</p>
                       <div className="text-xs text-muted-foreground font-mono">
                         <div className="flex justify-between">
-                          <span>Base Price:</span>
+                          <span>{t.basePrice || "Base Price"}:</span>
                           <span>{parseFloat(item.basePrice).toFixed(2)} SAR</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>VAT (15%):</span>
+                          <span>{t.vatPercent || "VAT (15%)"}:</span>
                           <span>+{parseFloat(item.vatAmount).toFixed(2)} SAR</span>
                         </div>
                       </div>
@@ -1251,7 +1251,7 @@ export default function Menu() {
                     }
                     data-testid={`switch-available-${item.id}`}
                   />
-                  <span className="text-sm">{item.available ? "Available" : "Unavailable"}</span>
+                  <span className="text-sm">{item.available ? (t.available || "Available") : (t.unavailable || "Unavailable")}</span>
                 </div>
                 <div className="flex gap-1">
                   <Button 
@@ -1281,20 +1281,20 @@ export default function Menu() {
       <AlertDialog open={!!deletingItem} onOpenChange={(open) => !open && setDeletingItem(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {labels.menuItem}</AlertDialogTitle>
+            <AlertDialogTitle>{t.delete || "Delete"} {labels.menuItem}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this {labels.menuItem.toLowerCase()}? This action cannot be undone.
+              {t.confirmDeleteItem || `Are you sure you want to delete this ${labels.menuItem.toLowerCase()}?`} {t.actionCannotBeUndone || "This action cannot be undone."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogCancel data-testid="button-cancel-delete">{t.cancel || "Cancel"}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deletingItem && deleteMenuItemMutation.mutate(deletingItem.id)}
               disabled={deleteMenuItemMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               data-testid="button-confirm-delete"
             >
-              {deleteMenuItemMutation.isPending ? "Deleting..." : "Delete"}
+              {deleteMenuItemMutation.isPending ? (t.deleting || "Deleting...") : (t.delete || "Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
