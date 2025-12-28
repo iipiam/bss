@@ -4605,6 +4605,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         deliveryApps: true,
         workingHours: true,
         investors: true,
+        activityLog: true,
       };
       
       // Create the IT user (no restaurantId for IT accounts)
