@@ -361,8 +361,9 @@ export const settings = pgTable("settings", {
   language: text("language").notNull().default("English"),
   openingTime: text("opening_time"),
   closingTime: text("closing_time"),
-  openingTime2: text("opening_time_2"), // Second shift opening time
-  closingTime2: text("closing_time_2"), // Second shift closing time
+  // Shift 2 fields - uncomment these AND run `npm run db:push` on AWS server to enable
+  // openingTime2: text("opening_time_2"), // Second shift opening time
+  // closingTime2: text("closing_time_2"), // Second shift closing time
   logoPath: text("logo_path"), // Path to uploaded logo for invoices (e.g., "uploads/logos/abc123.png")
   notificationTone: text("notification_tone").notNull().default("tone1"), // Admin-selected notification tone (tone1-tone15)
   chatNotificationDefaults: jsonb("chat_notification_defaults").$type<{
