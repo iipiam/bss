@@ -364,6 +364,8 @@ export default function SettingsPage() {
                     <Input
                       id="openingTime2"
                       type="time"
+                      value={(formData as any).openingTime2 || (settings as any)?.openingTime2 || ""}
+                      onChange={(e) => handleChange("openingTime2" as keyof Settings, e.target.value)}
                       placeholder="19:00"
                       data-testid="input-opening-time-2"
                     />
@@ -374,6 +376,8 @@ export default function SettingsPage() {
                     <Input
                       id="closingTime2"
                       type="time"
+                      value={(formData as any).closingTime2 || (settings as any)?.closingTime2 || ""}
+                      onChange={(e) => handleChange("closingTime2" as keyof Settings, e.target.value)}
                       placeholder="23:00"
                       data-testid="input-closing-time-2"
                     />
