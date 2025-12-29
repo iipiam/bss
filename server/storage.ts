@@ -2246,67 +2246,198 @@ export class DatabaseStorage implements IStorage {
   }
 
   async generateSalaryBills(restaurantId: string, paymentMonth: string): Promise<{ created: number; skipped: number; bills: ShopBill[] }> {
-    // Get all active employees with a salary for this restaurant
-    const employees = await db.select().from(users).where(
-      and(
-        eq(users.restaurantId, restaurantId),
-        eq(users.active, true),
-        isNotNull(users.salary)
-      )
-    );
+    try {
+      // Get all active employees with a salary for this restaurant
+      const employees = await db.select().from(users).where(
+        and(
+          eq(users.restaurantId, restaurantId),
+          eq(users.active, true),
+          isNotNull(users.salary)
+        )
+      );
 
-    // Check for existing salary bills for this month
-    const existingBills = await db.select().from(shopBills).where(
-      and(
-        eq(shopBills.restaurantId, restaurantId),
-        eq(shopBills.billType, "salary"),
-        eq(shopBills.paymentMonth, paymentMonth)
-      )
-    );
+      // Check for existing salary bills for this month
+      const existingBills = await db.select().from(shopBills).where(
+        and(
+          eq(shopBills.restaurantId, restaurantId),
+          eq(shopBills.billType, "salary"),
+          eq(shopBills.paymentMonth, paymentMonth)
+        )
+      );
 
-    const existingEmployeeIds = new Set(existingBills.map(bill => bill.employeeId).filter(Boolean));
+      const existingEmployeeIds = new Set(existingBills.map(bill => bill.employeeId).filter(Boolean));
 
-    let created = 0;
-    let skipped = 0;
-    const createdBills: ShopBill[] = [];
+      let created = 0;
+      let skipped = 0;
+      const createdBills: ShopBill[] = [];
 
-    // Create salary bills for employees who don't have one yet
-    for (const employee of employees) {
-      if (existingEmployeeIds.has(employee.id)) {
-        skipped++;
-        continue;
+      // Create salary bills for employees who don't have one yet
+      for (const employee of employees) {
+        if (existingEmployeeIds.has(employee.id)) {
+          skipped++;
+          continue;
+        }
+
+        if (!employee.salary || parseFloat(employee.salary) <= 0) {
+          skipped++;
+          continue;
+        }
+
+        // Create first day of the month as payment date
+        const [year, month] = paymentMonth.split('-');
+        const paymentDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+
+        const billData: InsertShopBill = {
+          restaurantId,
+          billType: "salary",
+          amount: employee.salary,
+          paymentDate,
+          paymentPeriod: "monthly",
+          status: "pending",
+          employeeId: employee.id,
+          employeeName: employee.fullName,
+          paymentMonth,
+          description: `Monthly salary for ${employee.fullName}${employee.position ? ` (${employee.position})` : ''}`,
+          branchId: employee.branchId || null,
+          archived: false,
+        };
+
+        const [bill] = await db.insert(shopBills).values(billData).returning();
+        createdBills.push(bill);
+        created++;
       }
 
-      if (!employee.salary || parseFloat(employee.salary) <= 0) {
-        skipped++;
-        continue;
+      return { created, skipped, bills: createdBills };
+    } catch (error: any) {
+      // Check if error is due to missing columns - use fallback SQL
+      if (error.message?.includes('column') || error.code === '42703') {
+        console.log('[SalaryBills] Column not found, using fallback query');
+        
+        try {
+          // Fallback: Use raw SQL that only references core columns that definitely exist
+          const employeesResult = await db.execute(sql`
+            SELECT id, full_name as "fullName", salary, position, branch_id as "branchId"
+            FROM users 
+            WHERE restaurant_id = ${restaurantId} 
+            AND active = true 
+            AND salary IS NOT NULL
+          `);
+          const employees = employeesResult.rows as any[];
+          
+          // Get existing salary bills - check if payment_month column exists
+          let existingEmployeeIds = new Set<string>();
+          try {
+            const existingResult = await db.execute(sql`
+              SELECT employee_id as "employeeId" FROM shop_bills 
+              WHERE restaurant_id = ${restaurantId} 
+              AND bill_type = 'salary' 
+              AND payment_month = ${paymentMonth}
+            `);
+            existingEmployeeIds = new Set((existingResult.rows as any[]).map(r => r.employeeId).filter(Boolean));
+          } catch {
+            // payment_month column might not exist, check by date range instead
+            const [year, month] = paymentMonth.split('-');
+            const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+            const endDate = new Date(parseInt(year), parseInt(month), 0);
+            const existingResult = await db.execute(sql`
+              SELECT employee_id as "employeeId" FROM shop_bills 
+              WHERE restaurant_id = ${restaurantId} 
+              AND bill_type = 'salary' 
+              AND payment_date >= ${startDate}
+              AND payment_date <= ${endDate}
+            `);
+            existingEmployeeIds = new Set((existingResult.rows as any[]).map(r => r.employeeId).filter(Boolean));
+          }
+          
+          let created = 0;
+          let skipped = 0;
+          const createdBills: ShopBill[] = [];
+          
+          for (const employee of employees) {
+            if (existingEmployeeIds.has(employee.id)) {
+              skipped++;
+              continue;
+            }
+            
+            const salaryVal = parseFloat(employee.salary);
+            if (!salaryVal || salaryVal <= 0) {
+              skipped++;
+              continue;
+            }
+            
+            const [year, month] = paymentMonth.split('-');
+            const paymentDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+            const description = `Monthly salary for ${employee.fullName}${employee.position ? ` (${employee.position})` : ''}`;
+            
+            // Insert with only columns guaranteed to exist in base schema
+            try {
+              // Try full insert first
+              const insertResult = await db.execute(sql`
+                INSERT INTO shop_bills (
+                  id, restaurant_id, bill_type, amount, payment_date, 
+                  payment_period, status, employee_id, employee_name, 
+                  payment_month, description, branch_id, archived, created_at
+                ) VALUES (
+                  gen_random_uuid(), ${restaurantId}, 'salary', ${employee.salary}, ${paymentDate},
+                  'monthly', 'pending', ${employee.id}, ${employee.fullName},
+                  ${paymentMonth}, ${description}, ${employee.branchId || null}, false, NOW()
+                ) RETURNING 
+                  id, 
+                  restaurant_id as "restaurantId", 
+                  bill_type as "billType", 
+                  amount, 
+                  payment_date as "paymentDate",
+                  payment_period as "paymentPeriod", 
+                  status, 
+                  employee_id as "employeeId", 
+                  employee_name as "employeeName",
+                  payment_month as "paymentMonth", 
+                  description, 
+                  branch_id as "branchId", 
+                  archived, 
+                  created_at as "createdAt"
+              `);
+              
+              if (insertResult.rows[0]) {
+                createdBills.push(insertResult.rows[0] as ShopBill);
+                created++;
+              }
+            } catch {
+              // Minimal insert with only core columns
+              const insertResult = await db.execute(sql`
+                INSERT INTO shop_bills (
+                  id, restaurant_id, bill_type, amount, payment_date, 
+                  payment_period, status, description, created_at
+                ) VALUES (
+                  gen_random_uuid(), ${restaurantId}, 'salary', ${employee.salary}, ${paymentDate},
+                  'monthly', 'pending', ${description}, NOW()
+                ) RETURNING 
+                  id, 
+                  restaurant_id as "restaurantId", 
+                  bill_type as "billType", 
+                  amount, 
+                  payment_date as "paymentDate",
+                  payment_period as "paymentPeriod", 
+                  status, 
+                  description, 
+                  created_at as "createdAt"
+              `);
+              
+              if (insertResult.rows[0]) {
+                createdBills.push(insertResult.rows[0] as ShopBill);
+                created++;
+              }
+            }
+          }
+          
+          return { created, skipped, bills: createdBills };
+        } catch (fallbackError: any) {
+          console.error('[SalaryBills] Fallback also failed:', fallbackError.message);
+          throw new Error(`Failed to generate salary bills: Database schema may need updating. Run 'npm run db:push' on the server.`);
+        }
       }
-
-      // Create first day of the month as payment date
-      const [year, month] = paymentMonth.split('-');
-      const paymentDate = new Date(parseInt(year), parseInt(month) - 1, 1);
-
-      const billData: InsertShopBill = {
-        restaurantId,
-        billType: "salary",
-        amount: employee.salary,
-        paymentDate,
-        paymentPeriod: "monthly",
-        status: "pending",
-        employeeId: employee.id,
-        employeeName: employee.fullName,
-        paymentMonth,
-        description: `Monthly salary for ${employee.fullName}${employee.position ? ` (${employee.position})` : ''}`,
-        branchId: employee.branchId || null,
-        archived: false,
-      };
-
-      const [bill] = await db.insert(shopBills).values(billData).returning();
-      createdBills.push(bill);
-      created++;
+      throw error;
     }
-
-    return { created, skipped, bills: createdBills };
   }
 
   // Violations (MULTI-TENANT: filters by restaurantId)

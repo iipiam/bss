@@ -1332,7 +1332,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       res.json(result);
     } catch (error: any) {
       console.error("Failed to generate salary bills:", error);
-      res.status(500).json({ error: "Failed to generate salary bills" });
+      const errorMessage = error.message || "Failed to generate salary bills";
+      res.status(500).json({ error: errorMessage });
     }
   });
 
