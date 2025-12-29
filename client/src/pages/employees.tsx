@@ -120,6 +120,7 @@ export default function Employees() {
     recruitmentSource: "",
     probationEndDate: "",
     contractType: "",
+    salary: "",
     // Vacation Days
     vacationDaysTotal: 0,
     vacationDaysUsed: 0,
@@ -232,6 +233,7 @@ export default function Employees() {
       recruitmentSource: "",
       probationEndDate: "",
       contractType: "",
+      salary: "",
       vacationDaysTotal: 0,
       vacationDaysUsed: 0,
       visaNumber: "",
@@ -270,6 +272,7 @@ export default function Employees() {
       visaFees: formData.visaFees ? parseFloat(formData.visaFees.toString()).toFixed(2) : null,
       ticketAmount: formData.ticketAmount ? parseFloat(formData.ticketAmount.toString()).toFixed(2) : null,
       performanceRating: formData.performanceRating ? parseFloat(formData.performanceRating.toString()).toFixed(2) : null,
+      salary: formData.salary ? parseFloat(formData.salary.toString()).toFixed(2) : null,
       employeeNumber: formData.employeeNumber || null,
       hireDate: formData.hireDate || null,
       recruitmentSource: formData.recruitmentSource || null,
@@ -306,6 +309,7 @@ export default function Employees() {
       recruitmentSource: user.recruitmentSource || "",
       probationEndDate: user.probationEndDate ? new Date(user.probationEndDate).toISOString().split('T')[0] : "",
       contractType: user.contractType || "",
+      salary: user.salary != null ? String(user.salary) : "",
       vacationDaysTotal: user.vacationDaysTotal || 0,
       vacationDaysUsed: user.vacationDaysUsed || 0,
       visaNumber: user.visaNumber || "",
@@ -343,6 +347,7 @@ export default function Employees() {
       recruitmentSource: formData.recruitmentSource || null,
       probationEndDate: formData.probationEndDate || null,
       contractType: formData.contractType || null,
+      salary: formData.salary ? parseFloat(formData.salary.toString()).toFixed(2) : null,
       vacationDaysTotal: formData.vacationDaysTotal ? parseInt(formData.vacationDaysTotal.toString()) : 0,
       vacationDaysUsed: formData.vacationDaysUsed ? parseInt(formData.vacationDaysUsed.toString()) : 0,
       visaNumber: formData.visaNumber || null,
@@ -642,16 +647,32 @@ export default function Employees() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="probationEndDate">{t.probationEndDate || "Probation End Date"}</Label>
-                  <Input
-                    id="probationEndDate"
-                    type="date"
-                    className="h-[44px]"
-                    value={formData.probationEndDate}
-                    onChange={(e) => setFormData({ ...formData, probationEndDate: e.target.value })}
-                    data-testid="input-probation-end-date"
-                  />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="probationEndDate">{t.probationEndDate || "Probation End Date"}</Label>
+                    <Input
+                      id="probationEndDate"
+                      type="date"
+                      className="h-[44px]"
+                      value={formData.probationEndDate}
+                      onChange={(e) => setFormData({ ...formData, probationEndDate: e.target.value })}
+                      data-testid="input-probation-end-date"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="salary">{t.monthlySalary || "Monthly Salary"} ({t.sar || "SAR"})</Label>
+                    <Input
+                      id="salary"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      className="h-[44px]"
+                      placeholder="0.00"
+                      value={formData.salary}
+                      onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
+                      data-testid="input-salary"
+                    />
+                  </div>
                 </div>
               </TabsContent>
 
@@ -1272,16 +1293,32 @@ export default function Employees() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="edit-probationEndDate">{t.probationEndDate || "Probation End Date"}</Label>
-                <Input
-                  id="edit-probationEndDate"
-                  type="date"
-                  className="h-[44px]"
-                  value={formData.probationEndDate}
-                  onChange={(e) => setFormData({ ...formData, probationEndDate: e.target.value })}
-                  data-testid="input-edit-probation-end-date"
-                />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-probationEndDate">{t.probationEndDate || "Probation End Date"}</Label>
+                  <Input
+                    id="edit-probationEndDate"
+                    type="date"
+                    className="h-[44px]"
+                    value={formData.probationEndDate}
+                    onChange={(e) => setFormData({ ...formData, probationEndDate: e.target.value })}
+                    data-testid="input-edit-probation-end-date"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-salary">{t.monthlySalary || "Monthly Salary"} ({t.sar || "SAR"})</Label>
+                  <Input
+                    id="edit-salary"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className="h-[44px]"
+                    placeholder="0.00"
+                    value={formData.salary}
+                    onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
+                    data-testid="input-edit-salary"
+                  />
+                </div>
               </div>
             </TabsContent>
 
