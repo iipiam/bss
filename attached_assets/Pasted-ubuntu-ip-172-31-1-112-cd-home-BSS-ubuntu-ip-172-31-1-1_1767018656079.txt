@@ -1,0 +1,165 @@
+ubuntu@ip-172-31-1-112:~$ cd /home/BSS
+ubuntu@ip-172-31-1-112:/home/BSS$ sudo apt-get update
+sudo apt-get install -y chromium-browser libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2
+Hit:1 http://me-south-1.ec2.archive.ubuntu.com/ubuntu noble InRelease
+Hit:2 https://deb.nodesource.com/node_20.x nodistro InRelease
+Get:3 http://me-south-1.ec2.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+Get:4 http://me-south-1.ec2.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+Get:5 http://security.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+Get:6 http://me-south-1.ec2.archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [175 kB]
+Get:7 http://me-south-1.ec2.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [378 kB]
+Get:8 http://me-south-1.ec2.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Components [212 B]
+Get:9 http://me-south-1.ec2.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
+Get:10 http://me-south-1.ec2.archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [7284 B]
+Get:11 http://me-south-1.ec2.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [10.5 kB]
+Get:12 http://me-south-1.ec2.archive.ubuntu.com/ubuntu noble-backports/restricted amd64 Components [216 B]
+Get:13 http://me-south-1.ec2.archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Components [212 B]
+Get:14 http://security.ubuntu.com/ubuntu noble-security/main amd64 Components [21.5 kB]
+Get:15 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Components [71.5 kB]
+Get:16 http://security.ubuntu.com/ubuntu noble-security/restricted amd64 Components [212 B]
+Get:17 http://security.ubuntu.com/ubuntu noble-security/multiverse amd64 Components [212 B]
+Fetched 1044 kB in 1s (1059 kB/s)
+Reading package lists... Done
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+Note, selecting 'libatk1.0-0t64' instead of 'libatk1.0-0'
+Note, selecting 'libatk-bridge2.0-0t64' instead of 'libatk-bridge2.0-0'
+Note, selecting 'libcups2t64' instead of 'libcups2'
+Package libasound2 is a virtual package provided by:
+  libasound2t64 1.2.11-1ubuntu0.1 (= 1.2.11-1ubuntu0.1)
+  liboss4-salsa-asound2 4.2-build2020-1ubuntu3
+You should explicitly select one to install.
+
+E: Package 'libasound2' has no installation candidate
+ubuntu@ip-172-31-1-112:/home/BSS$ pm2 set BSS:CHROMIUM_PATH /usr/bin/chromium-browser
+[PM2] Module BSS restarted
+[PM2] Setting changed
+Module: BSS
+$ pm2 set BSS:CHROMIUM_PATH /usr/bin/chromium-browser
+ubuntu@ip-172-31-1-112:/home/BSS$ export DISPLAY=:99
+Xvfb :99 &
+[1] 276808
+ubuntu@ip-172-31-1-112:/home/BSS$ The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Could not resolve keysym XF86CameraAccessEnable
+> Warning:          Could not resolve keysym XF86CameraAccessDisable
+> Warning:          Could not resolve keysym XF86CameraAccessToggle
+> Warning:          Could not resolve keysym XF86NextElement
+> Warning:          Could not resolve keysym XF86PreviousElement
+> Warning:          Could not resolve keysym XF86AutopilotEngageToggle
+> Warning:          Could not resolve keysym XF86MarkWaypoint
+> Warning:          Could not resolve keysym XF86Sos
+> Warning:          Could not resolve keysym XF86NavChart
+> Warning:          Could not resolve keysym XF86FishingChart
+> Warning:          Could not resolve keysym XF86SingleRangeRadar
+> Warning:          Could not resolve keysym XF86DualRangeRadar
+> Warning:          Could not resolve keysym XF86RadarOverlay
+> Warning:          Could not resolve keysym XF86TraditionalSonar
+> Warning:          Could not resolve keysym XF86ClearvuSonar
+> Warning:          Could not resolve keysym XF86SidevuSonar
+> Warning:          Could not resolve keysym XF86NavInfo
+Errors from xkbcomp are not fatal to the X server
+pm2 logs BSS --lines 100
+[TAILING] Tailing last 100 lines for [BSS] process (change the value with --lines option)
+/home/ubuntu/.pm2/logs/BSS-error.log last 100 lines:
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [MenuCategories] Table does not exist, returning empty array
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Invoices] procurement_id column not found, using fallback query for public access
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Invoices] procurement_id column not found, using fallback query for public access
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [MenuCategories] Table does not exist, returning empty array
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Invoices] procurement_id column not found, using fallback INSERT
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Invoices] procurement_id column not found, using fallback UPDATE
+0|BSS      | [Invoices] procurement_id column not found, using fallback query for public access
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | [Invoices] procurement_id column not found, using fallback query
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [MenuCategories] Table does not exist, returning empty array
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Inventory] unit_price column not found, using fallback query with calculated unitPrice
+0|BSS      | [Settings] b2b_invoice_sequence column not found, using fallback query
+0|BSS      | Error: AWS_DATABASE_URL or DATABASE_URL must be set. Did you forget to provision a database?
+0|BSS      |     at server/db.ts (file:///home/BSS/dist/index.js:1445:13)
+0|BSS      |     at __init (file:///home/BSS/dist/index.js:10:56)
+0|BSS      |     at file:///home/BSS/dist/index.js:10473:1
+0|BSS      |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|BSS      |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+
