@@ -1332,8 +1332,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       res.json(result);
     } catch (error: any) {
       console.error("Failed to generate salary bills:", error);
-      const errorMessage = error.message || "Failed to generate salary bills";
-      res.status(500).json({ error: errorMessage });
+      // Return safe error message without exposing internal details
+      const isSchemaError = error.message?.includes('does not exist') || error.message?.includes('column');
+      const safeMessage = isSchemaError 
+        ? "Database schema needs update. Please run 'npm run db:push' on the server."
+        : "Failed to generate salary bills. Please try again.";
+      res.status(500).json({ error: safeMessage });
     }
   });
 
@@ -8383,10 +8387,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         branchId: validatedBranchId,
       });
 
+      // Extract redirect URL from Geidea response (may be in different locations)
+      const redirectUrl = sessionResponse.session.paymentUrl || 
+                          sessionResponse.session.paymentIntent?.redirectUrl || 
+                          null;
+      
       res.json({
         success: true,
         sessionId: sessionResponse.session.id,
-        redirectUrl: sessionResponse.session.paymentUrl,
+        redirectUrl,
         paymentId: geideaPayment.id,
         payment: geideaPayment,
       });

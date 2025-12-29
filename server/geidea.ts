@@ -13,6 +13,9 @@ interface SessionResponse {
   session: {
     id: string;
     paymentUrl?: string;
+    paymentIntent?: {
+      redirectUrl?: string;
+    };
   };
 }
 
