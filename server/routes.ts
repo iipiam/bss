@@ -1160,8 +1160,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const data = sanitizePatchBody(req.body, insertSalarySchema.partial());
       const salary = await storage.updateSalary(req.params.id, data);
       res.json(salary);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid salary data" });
+    } catch (error: any) {
+      console.error("[SALARY PATCH] Error:", error);
+      const isSchemaError = error.message?.includes('does not exist') || error.message?.includes('column');
+      const safeMessage = isSchemaError 
+        ? "Database schema needs update. Please run 'npm run db:push' on the server."
+        : "Invalid salary data";
+      res.status(400).json({ error: safeMessage });
     }
   });
 

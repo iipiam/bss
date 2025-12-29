@@ -2033,11 +2033,35 @@ export class DatabaseStorage implements IStorage {
     if (Object.keys(updateData).length === 0) {
       return this.getSalary(id);
     }
-    const [updated] = await db.update(salaries)
-      .set(updateData)
-      .where(eq(salaries.id, id))
-      .returning();
-    return updated;
+    try {
+      const [updated] = await db.update(salaries)
+        .set(updateData)
+        .where(eq(salaries.id, id))
+        .returning();
+      return updated;
+    } catch (error: any) {
+      // Handle missing columns with raw SQL fallback
+      if (error.message?.includes('does not exist') || error.code === '42703') {
+        console.log('[Salary] Column not found, using fallback update');
+        // Use simple SQL update with core columns only
+        const result = await db.execute(sql`
+          UPDATE salaries 
+          SET employee_name = COALESCE(${updateData.employeeName}, employee_name),
+              position = COALESCE(${updateData.position}, position),
+              amount = COALESCE(${updateData.amount}, amount),
+              payment_date = COALESCE(${updateData.paymentDate}, payment_date),
+              status = COALESCE(${updateData.status}, status),
+              branch_id = COALESCE(${updateData.branchId}, branch_id)
+          WHERE id = ${id}
+          RETURNING id, restaurant_id as "restaurantId", employee_name as "employeeName", 
+                    position, amount, payment_date as "paymentDate", status, 
+                    branch_id as "branchId", created_at as "createdAt"
+        `);
+        
+        return result.rows[0] as Salary;
+      }
+      throw error;
+    }
   }
 
   async deleteSalary(id: string): Promise<boolean> {
