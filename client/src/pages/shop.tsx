@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertSalarySchema, insertShopBillSchema, type Salary, type ShopBill } from "@shared/schema";
 import { z } from "zod";
-import { Plus, Pencil, Trash2, DollarSign, FileText, Search, Sparkles, Upload, Download, FolderOpen, Eye, X } from "lucide-react";
+import { Plus, Pencil, Trash2, DollarSign, FileText, Search, Sparkles, Upload, Download, FolderOpen, Eye, X, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -252,6 +252,22 @@ export default function Shop() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/shop/salaries"] });
       toast({ title: t.salaryDeleted });
+    },
+    onError: () => {
+      toast({ title: t.salaryError, variant: "destructive" });
+    },
+  });
+
+  const syncSalariesMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/shop/salaries/sync", {});
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/salaries"] });
+      toast({ 
+        title: t.salariesSynced || "Salaries synced",
+        description: `${data.created} created, ${data.updated} updated`
+      });
     },
     onError: () => {
       toast({ title: t.salaryError, variant: "destructive" });
@@ -517,8 +533,16 @@ export default function Shop() {
                   <CardTitle>{t.employeeSalaries}</CardTitle>
                   <CardDescription>{t.manageSalaries}</CardDescription>
                 </div>
+                <Button 
+                  onClick={() => syncSalariesMutation.mutate()} 
+                  disabled={syncSalariesMutation.isPending}
+                  data-testid="button-sync-salaries"
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${syncSalariesMutation.isPending ? 'animate-spin' : ''}`} />
+                  {t.syncSalaries || "Sync Salaries"}
+                </Button>
                 <Dialog open={salaryDialogOpen} onOpenChange={setSalaryDialogOpen}>
-                  <DialogTrigger asChild>
+                  <DialogTrigger asChild className="hidden">
                     <Button onClick={() => setEditingSalary(null)} data-testid="button-add-salary">
                       <Plus className="w-4 h-4 mr-2" />
                       {t.addSalary}

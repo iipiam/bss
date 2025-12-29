@@ -1131,6 +1131,8 @@ export interface Translations {
   salaryUpdated: string;
   salaryDeleted: string;
   salaryError: string;
+  syncSalaries: string;
+  salariesSynced: string;
   shopBills: string;
   manageBills: string;
   billType: string;
@@ -2831,6 +2833,8 @@ export const translations: Record<Language, Translations> = {
     salaryUpdated: 'Salary updated successfully',
     salaryDeleted: 'Salary deleted successfully',
     salaryError: 'Error processing salary',
+    syncSalaries: 'Sync Salaries',
+    salariesSynced: 'Salaries synced successfully',
     shopBills: 'Shop Bills',
     manageBills: 'Manage shop bills and expenses',
     billType: 'Bill Type',
@@ -4543,6 +4547,8 @@ export const translations: Record<Language, Translations> = {
     salaryUpdated: 'تم تحديث الراتب بنجاح',
     salaryDeleted: 'تم حذف الراتب بنجاح',
     salaryError: 'خطأ في معالجة الراتب',
+    syncSalaries: 'مزامنة الرواتب',
+    salariesSynced: 'تمت مزامنة الرواتب بنجاح',
     manageBills: 'إدارة فواتير ومصاريف المتجر',
     internet: 'إنترنت',
     maintenance: 'صيانة',
@@ -6219,6 +6225,8 @@ export const translations: Record<Language, Translations> = {
     salaryUpdated: 'Salary updated successfully',
     salaryDeleted: 'Salary deleted successfully',
     salaryError: 'Error processing salary',
+    syncSalaries: 'Gehälter synchronisieren',
+    salariesSynced: 'Gehälter erfolgreich synchronisiert',
     shopBills: 'Shop Bills',
     manageBills: 'Manage shop bills and expenses',
     billType: 'Bill Type',
@@ -7895,6 +7903,8 @@ export const translations: Record<Language, Translations> = {
     salaryUpdated: 'Salary updated successfully',
     salaryDeleted: 'Salary deleted successfully',
     salaryError: 'Error processing salary',
+    syncSalaries: '同步工资',
+    salariesSynced: '工资同步成功',
     shopBills: 'Shop Bills',
     manageBills: 'Manage shop bills and expenses',
     billType: 'Bill Type',
@@ -9571,6 +9581,8 @@ export const translations: Record<Language, Translations> = {
     salaryUpdated: 'Salary updated successfully',
     salaryDeleted: 'Salary deleted successfully',
     salaryError: 'Error processing salary',
+    syncSalaries: 'বেতন সিঙ্ক করুন',
+    salariesSynced: 'বেতন সফলভাবে সিঙ্ক হয়েছে',
     shopBills: 'Shop Bills',
     manageBills: 'Manage shop bills and expenses',
     billType: 'Bill Type',
@@ -11247,6 +11259,8 @@ export const translations: Record<Language, Translations> = {
     salaryUpdated: 'Salary updated successfully',
     salaryDeleted: 'Salary deleted successfully',
     salaryError: 'Error processing salary',
+    syncSalaries: 'Sincronizza stipendi',
+    salariesSynced: 'Stipendi sincronizzati con successo',
     shopBills: 'Shop Bills',
     manageBills: 'Manage shop bills and expenses',
     billType: 'Bill Type',
@@ -12915,6 +12929,8 @@ export const translations: Record<Language, Translations> = {
     salaryUpdated: 'वेतन सफलतापूर्वक अपडेट किया गया',
     salaryDeleted: 'वेतन सफलतापूर्वक हटाया गया',
     salaryError: 'वेतन संसाधित करने में त्रुटि',
+    syncSalaries: 'वेतन सिंक करें',
+    salariesSynced: 'वेतन सफलतापूर्वक सिंक हुआ',
     manageBills: 'दुकान बिल और व्यय प्रबंधित करें',
     internet: 'इंटरनेट',
     maintenance: 'रखरखाव',
@@ -14534,6 +14550,8 @@ export const translations: Record<Language, Translations> = {
     salaryUpdated: 'تنخواہ کامیابی سے اپ ڈیٹ کی گئی',
     salaryDeleted: 'تنخواہ کامیابی سے حذف کی گئی',
     salaryError: 'تنخواہ پر کارروائی میں خرابی',
+    syncSalaries: 'تنخواہیں ہم آہنگ کریں',
+    salariesSynced: 'تنخواہیں کامیابی سے ہم آہنگ ہوگئیں',
     manageBills: 'دکان کے بل اور اخراجات کا انتظام کریں',
     internet: 'انٹرنیٹ',
     maintenance: 'دیکھ بھال',
@@ -16081,6 +16099,8 @@ export const translations: Record<Language, Translations> = {
     salaryUpdated: "Salary updated successfully",
     salaryDeleted: "Salary deleted successfully",
     salaryError: "Error processing salary",
+    syncSalaries: "Sincronizar salarios",
+    salariesSynced: "Salarios sincronizados exitosamente",
     shopBills: "Shop Bills",
     manageBills: "Manage shop bills and expenses",
     billType: "Bill Type",
@@ -17642,6 +17662,8 @@ export const translations: Record<Language, Translations> = {
     salaryUpdated: "Salary updated successfully",
     salaryDeleted: "Salary deleted successfully",
     salaryError: "Error processing salary",
+    syncSalaries: "I-sync ang mga sahod",
+    salariesSynced: "Matagumpay na na-sync ang mga sahod",
     shopBills: "Shop Bills",
     manageBills: "Manage shop bills and expenses",
     billType: "Bill Type",

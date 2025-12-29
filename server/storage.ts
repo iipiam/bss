@@ -291,6 +291,7 @@ export interface IStorage {
   createSalary(salary: InsertSalary): Promise<Salary>;
   updateSalary(id: string, salary: Partial<InsertSalary>): Promise<Salary | undefined>;
   deleteSalary(id: string): Promise<boolean>;
+  syncSalariesFromEmployees(restaurantId: string): Promise<{ synced: number; created: number; updated: number }>;
 
   // Shop Bills (MULTI-TENANT: requires restaurantId)
   getShopBills(restaurantId: string, branchId?: string, startDate?: Date, endDate?: Date, includeArchived?: boolean): Promise<ShopBill[]>;
@@ -2067,6 +2068,69 @@ export class DatabaseStorage implements IStorage {
   async deleteSalary(id: string): Promise<boolean> {
     const result = await db.delete(salaries).where(eq(salaries.id, id));
     return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async syncSalariesFromEmployees(restaurantId: string): Promise<{ synced: number; created: number; updated: number }> {
+    try {
+      // Get all active employees with a salary for this restaurant
+      const employees = await db.select().from(users).where(
+        and(
+          eq(users.restaurantId, restaurantId),
+          eq(users.active, true),
+          isNotNull(users.salary)
+        )
+      );
+
+      // Get existing salary records
+      const existingSalaries = await this.getSalaries(restaurantId);
+      
+      // Create a map of existing salaries by employee name
+      const salaryMap = new Map<string, Salary>();
+      for (const sal of existingSalaries) {
+        salaryMap.set(sal.employeeName, sal);
+      }
+
+      let created = 0;
+      let updated = 0;
+      const today = new Date();
+
+      for (const employee of employees) {
+        if (!employee.salary || parseFloat(employee.salary) <= 0) {
+          continue;
+        }
+
+        const existing = salaryMap.get(employee.fullName);
+        
+        if (existing) {
+          // Update existing salary record if amount changed
+          if (existing.amount !== employee.salary) {
+            await this.updateSalary(existing.id, {
+              amount: employee.salary,
+              position: employee.position || 'Employee',
+              branchId: employee.branchId || undefined,
+            });
+            updated++;
+          }
+        } else {
+          // Create new salary record
+          await this.createSalary({
+            restaurantId,
+            employeeName: employee.fullName,
+            position: employee.position || 'Employee',
+            amount: employee.salary,
+            paymentDate: today,
+            status: 'pending',
+            branchId: employee.branchId || undefined,
+          });
+          created++;
+        }
+      }
+
+      return { synced: employees.length, created, updated };
+    } catch (error: any) {
+      console.error('[SyncSalaries] Error:', error);
+      throw error;
+    }
   }
 
   // Shop Bills (MULTI-TENANT: filters by restaurantId)

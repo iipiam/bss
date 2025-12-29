@@ -1183,6 +1183,25 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.status(204).send();
   });
 
+  // Sync Salaries from Employee profiles
+  app.post("/api/shop/salaries/sync", requireAuth, requireRestaurant, requireAction('bills', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const result = await storage.syncSalariesFromEmployees(restaurantId);
+      
+      // Broadcast real-time update
+      broadcastNotification({
+        type: 'salaries:updated',
+        restaurantId,
+      });
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error("[SALARY SYNC] Error:", error);
+      res.status(500).json({ error: "Failed to sync salaries" });
+    }
+  });
+
   // Shop Bills
   app.get("/api/shop/bills", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
