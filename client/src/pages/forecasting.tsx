@@ -86,6 +86,7 @@ export default function Forecasting() {
     // Create a map to store demand data for each menu item
     const itemDemandMap = new Map<string, {
       name: string;
+      price: number;
       historicalDemand: number[];
       avgDailyDemand: number;
       forecastedDemand: number;
@@ -97,6 +98,7 @@ export default function Forecasting() {
     menuItems.forEach(item => {
       itemDemandMap.set(item.id, {
         name: item.name,
+        price: parseFloat(item.price) || 0,
         historicalDemand: new Array(30).fill(0),
         avgDailyDemand: 0,
         forecastedDemand: 0,
@@ -124,12 +126,17 @@ export default function Forecasting() {
     const itemForecasts: Array<{
       id: string;
       name: string;
+      price: number;
       avgDailyDemand: number;
       forecastedDemand: number;
+      forecastedRevenue: number;
+      forecastedRevenuePeriod: number;
       trend: 'up' | 'down' | 'stable';
       trendPercentage: number;
       last7DaysDemand: number;
       prev7DaysDemand: number;
+      last7DaysRevenue: number;
+      prev7DaysRevenue: number;
     }> = [];
 
     itemDemandMap.forEach((data, itemId) => {
@@ -158,12 +165,17 @@ export default function Forecasting() {
         itemForecasts.push({
           id: itemId,
           name: data.name,
+          price: data.price,
           avgDailyDemand: parseFloat(data.avgDailyDemand.toFixed(1)),
           forecastedDemand: data.forecastedDemand,
+          forecastedRevenue: data.forecastedDemand * data.price,
+          forecastedRevenuePeriod: data.forecastedDemand * data.price * parseInt(forecastPeriod),
           trend: data.trendPercentage > 5 ? 'up' : data.trendPercentage < -5 ? 'down' : 'stable',
           trendPercentage: parseFloat(data.trendPercentage.toFixed(1)),
           last7DaysDemand: last7,
           prev7DaysDemand: prev7,
+          last7DaysRevenue: last7 * data.price,
+          prev7DaysRevenue: prev7 * data.price,
         });
       }
     });
@@ -173,6 +185,17 @@ export default function Forecasting() {
   };
 
   const itemDemandForecasts = calculateItemDemand();
+  
+  // Calculate Item Sales Prediction totals
+  const totalForecastedItemRevenue = itemDemandForecasts.reduce((sum, item) => sum + item.forecastedRevenuePeriod, 0);
+  const totalLast7Revenue = itemDemandForecasts.reduce((sum, item) => sum + item.last7DaysRevenue, 0);
+  const totalPrev7Revenue = itemDemandForecasts.reduce((sum, item) => sum + item.prev7DaysRevenue, 0);
+  const itemRevenueTrendPercentage = totalPrev7Revenue > 0 
+    ? ((totalLast7Revenue - totalPrev7Revenue) / totalPrev7Revenue) * 100 
+    : 0;
+  
+  // Sort by forecasted revenue for the Items Sales Prediction table
+  const itemSalesForecasts = [...itemDemandForecasts].sort((a, b) => b.forecastedRevenuePeriod - a.forecastedRevenuePeriod);
 
   return (
     <div className="p-6 space-y-6">
@@ -311,6 +334,138 @@ export default function Forecasting() {
               </LineChart>
             </ResponsiveContainer>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Items Sales Prediction Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                {t.itemsSalesPrediction || "Items Sales Prediction"}
+              </CardTitle>
+              <CardDescription className="mt-2">
+                {t.itemsSalesPredictionDesc || `Predicted revenue per menu item for the next ${forecastPeriod} days`}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {itemSalesForecasts.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>{t.noSalesDataYet || "No sales data available yet"}</p>
+              <p className="text-sm mt-1">{t.startSellingToSeePredictions || "Start selling items to see sales predictions"}</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <Card className="bg-muted/50">
+                  <CardHeader className="pb-3">
+                    <CardDescription>{t.totalPredictedRevenue || "Total Predicted Revenue"}</CardDescription>
+                    <CardTitle className="text-2xl font-bold font-mono">
+                      {totalForecastedItemRevenue.toFixed(2)} SAR
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-sm text-muted-foreground">
+                      {t.nextDays?.replace("{days}", forecastPeriod) || `Next ${forecastPeriod} days`}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-muted/50">
+                  <CardHeader className="pb-3">
+                    <CardDescription>{t.last7DaysRevenue || "Last 7 Days Revenue"}</CardDescription>
+                    <CardTitle className="text-2xl font-bold font-mono">
+                      {totalLast7Revenue.toFixed(2)} SAR
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
+                <Card className="bg-muted/50">
+                  <CardHeader className="pb-3">
+                    <CardDescription>{t.revenueTrend || "Revenue Trend"}</CardDescription>
+                    <CardTitle className={`text-2xl font-bold font-mono ${itemRevenueTrendPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {itemRevenueTrendPercentage >= 0 ? '+' : ''}{itemRevenueTrendPercentage.toFixed(1)}%
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      {itemRevenueTrendPercentage >= 0 ? (
+                        <TrendingUp className="h-3 w-3 text-green-600" />
+                      ) : (
+                        <TrendingDown className="h-3 w-3 text-red-600" />
+                      )}
+                      {t.vsPreviousWeek || "vs previous week"}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[200px]">{t.menuItem || "Menu Item"}</TableHead>
+                      <TableHead className="text-right">{t.unitPrice || "Unit Price"}</TableHead>
+                      <TableHead className="text-center">{`${t.forecastedUnits || "Forecasted Units"} (${forecastPeriod}d)`}</TableHead>
+                      <TableHead className="text-right">{t.dailyRevenue || "Daily Revenue"}</TableHead>
+                      <TableHead className="text-right">{`${t.periodRevenue || "Period Revenue"} (${forecastPeriod}d)`}</TableHead>
+                      <TableHead className="text-center">{t.trendAnalysis || "Trend"}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {itemSalesForecasts.slice(0, 15).map((item) => (
+                      <TableRow key={item.id} data-testid={`row-item-sales-${item.id}`}>
+                        <TableCell className="font-medium" data-testid={`text-item-sales-name-${item.id}`}>
+                          {item.name}
+                        </TableCell>
+                        <TableCell className="text-right font-mono" data-testid={`text-item-price-${item.id}`}>
+                          {item.price.toFixed(2)} SAR
+                        </TableCell>
+                        <TableCell className="text-center font-mono" data-testid={`text-item-forecast-units-${item.id}`}>
+                          {item.forecastedDemand * parseInt(forecastPeriod)}
+                        </TableCell>
+                        <TableCell className="text-right font-mono" data-testid={`text-item-daily-revenue-${item.id}`}>
+                          {item.forecastedRevenue.toFixed(2)} SAR
+                        </TableCell>
+                        <TableCell className="text-right font-mono font-bold" data-testid={`text-item-period-revenue-${item.id}`}>
+                          {item.forecastedRevenuePeriod.toFixed(2)} SAR
+                        </TableCell>
+                        <TableCell className="text-center" data-testid={`text-item-sales-trend-${item.id}`}>
+                          <div className="flex items-center justify-center">
+                            {item.trend === 'up' ? (
+                              <Badge variant="default" className="bg-green-600 hover:bg-green-700">
+                                <ArrowUp className="h-3 w-3 mr-1" />
+                                +{item.trendPercentage}%
+                              </Badge>
+                            ) : item.trend === 'down' ? (
+                              <Badge variant="destructive">
+                                <ArrowDown className="h-3 w-3 mr-1" />
+                                {item.trendPercentage}%
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary">
+                                <Minus className="h-3 w-3 mr-1" />
+                                {item.trendPercentage}%
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {itemSalesForecasts.length > 15 && (
+                <div className="text-sm text-muted-foreground text-center py-2">
+                  {t.showingTopItems?.replace("{count}", "15") || "Showing top 15 items by predicted revenue"}
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

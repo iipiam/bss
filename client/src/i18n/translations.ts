@@ -74,6 +74,20 @@ export interface Translations {
   forecastPeriod: string;
   predictedSales: string;
   totalSales: string;
+  itemsSalesPrediction: string;
+  itemsSalesPredictionDesc: string;
+  noSalesDataYet: string;
+  startSellingToSeePredictions: string;
+  totalPredictedRevenue: string;
+  last7DaysRevenue: string;
+  revenueTrend: string;
+  vsPreviousWeek: string;
+  unitPrice: string;
+  forecastedUnits: string;
+  dailyRevenue: string;
+  periodRevenue: string;
+  showingTopItems: string;
+  nextDays: string;
   
   // Performance Analysis
   performanceAnalysis: string;
@@ -1772,6 +1786,20 @@ export const translations: Record<Language, Translations> = {
     forecastPeriod: 'Forecast Period',
     predictedSales: 'Predicted Sales',
     totalSales: 'Total Sales',
+    itemsSalesPrediction: 'Items Sales Prediction',
+    itemsSalesPredictionDesc: 'Predicted revenue per menu item for the selected period',
+    noSalesDataYet: 'No sales data available yet',
+    startSellingToSeePredictions: 'Start selling items to see sales predictions',
+    totalPredictedRevenue: 'Total Predicted Revenue',
+    last7DaysRevenue: 'Last 7 Days Revenue',
+    revenueTrend: 'Revenue Trend',
+    vsPreviousWeek: 'vs previous week',
+    unitPrice: 'Unit Price',
+    forecastedUnits: 'Forecasted Units',
+    dailyRevenue: 'Daily Revenue',
+    periodRevenue: 'Period Revenue',
+    showingTopItems: 'Showing top {count} items by predicted revenue',
+    nextDays: 'Next {days} days',
     
     // Performance Analysis
     performanceAnalysis: 'Performance Analysis',
@@ -3469,6 +3497,20 @@ export const translations: Record<Language, Translations> = {
     forecastPeriod: 'فترة التنبؤ',
     predictedSales: 'المبيعات المتوقعة',
     totalSales: 'إجمالي المبيعات',
+    itemsSalesPrediction: 'توقع مبيعات الأصناف',
+    itemsSalesPredictionDesc: 'الإيرادات المتوقعة لكل صنف للفترة المحددة',
+    noSalesDataYet: 'لا توجد بيانات مبيعات بعد',
+    startSellingToSeePredictions: 'ابدأ البيع لرؤية توقعات المبيعات',
+    totalPredictedRevenue: 'إجمالي الإيرادات المتوقعة',
+    last7DaysRevenue: 'إيرادات آخر 7 أيام',
+    revenueTrend: 'اتجاه الإيرادات',
+    vsPreviousWeek: 'مقارنة بالأسبوع السابق',
+    unitPrice: 'سعر الوحدة',
+    forecastedUnits: 'الوحدات المتوقعة',
+    dailyRevenue: 'الإيرادات اليومية',
+    periodRevenue: 'إيرادات الفترة',
+    showingTopItems: 'عرض أفضل {count} صنف حسب الإيرادات المتوقعة',
+    nextDays: 'الـ {days} أيام القادمة',
     
     // Performance Analysis
     performanceAnalysis: 'تحليل الأداء',
@@ -5164,6 +5206,20 @@ export const translations: Record<Language, Translations> = {
     forecastPeriod: 'Forecast Period',
     predictedSales: 'Predicted Sales',
     totalSales: 'Total Sales',
+    itemsSalesPrediction: 'Artikelumsatzprognose',
+    itemsSalesPredictionDesc: 'Prognostizierter Umsatz pro Menüpunkt für den gewählten Zeitraum',
+    noSalesDataYet: 'Noch keine Verkaufsdaten verfügbar',
+    startSellingToSeePredictions: 'Beginnen Sie mit dem Verkauf, um Umsatzprognosen zu sehen',
+    totalPredictedRevenue: 'Gesamter prognostizierter Umsatz',
+    last7DaysRevenue: 'Umsatz der letzten 7 Tage',
+    revenueTrend: 'Umsatztrend',
+    vsPreviousWeek: 'ggü. Vorwoche',
+    unitPrice: 'Stückpreis',
+    forecastedUnits: 'Prognostizierte Einheiten',
+    dailyRevenue: 'Tagesumsatz',
+    periodRevenue: 'Zeitraumumsatz',
+    showingTopItems: 'Zeige Top {count} Artikel nach prognostiziertem Umsatz',
+    nextDays: 'Nächste {days} Tage',
     
     // Performance Analysis
     performanceAnalysis: 'Performance Analysis',
@@ -6842,6 +6898,20 @@ export const translations: Record<Language, Translations> = {
     forecastPeriod: 'Forecast Period',
     predictedSales: 'Predicted Sales',
     totalSales: 'Total Sales',
+    itemsSalesPrediction: '商品销售预测',
+    itemsSalesPredictionDesc: '选定期间内各菜单项的预测收入',
+    noSalesDataYet: '暂无销售数据',
+    startSellingToSeePredictions: '开始销售以查看销售预测',
+    totalPredictedRevenue: '预测总收入',
+    last7DaysRevenue: '过去7天收入',
+    revenueTrend: '收入趋势',
+    vsPreviousWeek: '与上周相比',
+    unitPrice: '单价',
+    forecastedUnits: '预测销量',
+    dailyRevenue: '日收入',
+    periodRevenue: '期间收入',
+    showingTopItems: '按预测收入显示前 {count} 个商品',
+    nextDays: '未来 {days} 天',
     
     // Performance Analysis
     performanceAnalysis: 'Performance Analysis',
@@ -8520,6 +8590,20 @@ export const translations: Record<Language, Translations> = {
     forecastPeriod: 'Forecast Period',
     predictedSales: 'Predicted Sales',
     totalSales: 'Total Sales',
+    itemsSalesPrediction: 'আইটেম বিক্রয় পূর্বাভাস',
+    itemsSalesPredictionDesc: 'নির্বাচিত সময়ের জন্য প্রতিটি মেনু আইটেমের আনুমানিক আয়',
+    noSalesDataYet: 'এখনও কোনো বিক্রয় তথ্য নেই',
+    startSellingToSeePredictions: 'বিক্রয় পূর্বাভাস দেখতে বিক্রি শুরু করুন',
+    totalPredictedRevenue: 'মোট আনুমানিক আয়',
+    last7DaysRevenue: 'গত ৭ দিনের আয়',
+    revenueTrend: 'আয়ের প্রবণতা',
+    vsPreviousWeek: 'গত সপ্তাহের তুলনায়',
+    unitPrice: 'একক মূল্য',
+    forecastedUnits: 'আনুমানিক ইউনিট',
+    dailyRevenue: 'দৈনিক আয়',
+    periodRevenue: 'সময়কাল আয়',
+    showingTopItems: 'আনুমানিক আয় অনুসারে শীর্ষ {count} আইটেম দেখানো হচ্ছে',
+    nextDays: 'পরবর্তী {days} দিন',
     
     // Performance Analysis
     performanceAnalysis: 'Performance Analysis',
@@ -10198,6 +10282,20 @@ export const translations: Record<Language, Translations> = {
     forecastPeriod: 'Forecast Period',
     predictedSales: 'Predicted Sales',
     totalSales: 'Total Sales',
+    itemsSalesPrediction: 'Previsione Vendite Articoli',
+    itemsSalesPredictionDesc: 'Ricavi previsti per ogni articolo del menu per il periodo selezionato',
+    noSalesDataYet: 'Nessun dato di vendita disponibile',
+    startSellingToSeePredictions: 'Inizia a vendere per vedere le previsioni di vendita',
+    totalPredictedRevenue: 'Ricavi Totali Previsti',
+    last7DaysRevenue: 'Ricavi Ultimi 7 Giorni',
+    revenueTrend: 'Tendenza Ricavi',
+    vsPreviousWeek: 'vs settimana precedente',
+    unitPrice: 'Prezzo Unitario',
+    forecastedUnits: 'Unità Previste',
+    dailyRevenue: 'Ricavi Giornalieri',
+    periodRevenue: 'Ricavi Periodo',
+    showingTopItems: 'Mostrando i primi {count} articoli per ricavi previsti',
+    nextDays: 'Prossimi {days} giorni',
     
     // Performance Analysis
     performanceAnalysis: 'Performance Analysis',
@@ -11877,6 +11975,20 @@ export const translations: Record<Language, Translations> = {
     forecastPeriod: 'पूर्वानुमान अवधि',
     predictedSales: 'अनुमानित बिक्री',
     totalSales: 'कुल बिक्री',
+    itemsSalesPrediction: 'आइटम बिक्री पूर्वानुमान',
+    itemsSalesPredictionDesc: 'चयनित अवधि के लिए प्रति मेनू आइटम अनुमानित राजस्व',
+    noSalesDataYet: 'अभी तक कोई बिक्री डेटा उपलब्ध नहीं है',
+    startSellingToSeePredictions: 'बिक्री पूर्वानुमान देखने के लिए बेचना शुरू करें',
+    totalPredictedRevenue: 'कुल अनुमानित राजस्व',
+    last7DaysRevenue: 'पिछले 7 दिनों का राजस्व',
+    revenueTrend: 'राजस्व रुझान',
+    vsPreviousWeek: 'पिछले सप्ताह की तुलना में',
+    unitPrice: 'इकाई मूल्य',
+    forecastedUnits: 'अनुमानित इकाइयाँ',
+    dailyRevenue: 'दैनिक राजस्व',
+    periodRevenue: 'अवधि राजस्व',
+    showingTopItems: 'अनुमानित राजस्व के अनुसार शीर्ष {count} आइटम दिखा रहे हैं',
+    nextDays: 'अगले {days} दिन',
     
     // Performance Analysis
     performanceAnalysis: 'प्रदर्शन विश्लेषण',
@@ -13498,6 +13610,20 @@ export const translations: Record<Language, Translations> = {
     forecastPeriod: 'پیش گوئی کی مدت',
     predictedSales: 'متوقع فروخت',
     totalSales: 'کل فروخت',
+    itemsSalesPrediction: 'اشیاء کی فروخت کی پیش گوئی',
+    itemsSalesPredictionDesc: 'منتخب مدت کے لیے فی مینو آئٹم متوقع آمدنی',
+    noSalesDataYet: 'ابھی تک کوئی فروخت کا ڈیٹا دستیاب نہیں',
+    startSellingToSeePredictions: 'فروخت کی پیش گوئی دیکھنے کے لیے فروخت شروع کریں',
+    totalPredictedRevenue: 'کل متوقع آمدنی',
+    last7DaysRevenue: 'پچھلے 7 دنوں کی آمدنی',
+    revenueTrend: 'آمدنی کا رجحان',
+    vsPreviousWeek: 'گزشتہ ہفتے کے مقابلے میں',
+    unitPrice: 'یونٹ قیمت',
+    forecastedUnits: 'متوقع یونٹس',
+    dailyRevenue: 'روزانہ آمدنی',
+    periodRevenue: 'مدت کی آمدنی',
+    showingTopItems: 'متوقع آمدنی کے لحاظ سے سرفہرست {count} اشیاء دکھا رہے ہیں',
+    nextDays: 'اگلے {days} دن',
     
     // Performance Analysis
     performanceAnalysis: 'کارکردگی کا تجزیہ',
@@ -15112,6 +15238,20 @@ export const translations: Record<Language, Translations> = {
     forecastPeriod: "Forecast Period",
     predictedSales: "Predicted Sales",
     totalSales: "Ventas Totales",
+    itemsSalesPrediction: "Predicción de Ventas por Artículo",
+    itemsSalesPredictionDesc: "Ingresos previstos por artículo del menú para el período seleccionado",
+    noSalesDataYet: "Aún no hay datos de ventas disponibles",
+    startSellingToSeePredictions: "Comience a vender para ver las predicciones de ventas",
+    totalPredictedRevenue: "Ingresos Totales Previstos",
+    last7DaysRevenue: "Ingresos Últimos 7 Días",
+    revenueTrend: "Tendencia de Ingresos",
+    vsPreviousWeek: "vs semana anterior",
+    unitPrice: "Precio Unitario",
+    forecastedUnits: "Unidades Previstas",
+    dailyRevenue: "Ingresos Diarios",
+    periodRevenue: "Ingresos del Período",
+    showingTopItems: "Mostrando los {count} principales artículos por ingresos previstos",
+    nextDays: "Próximos {days} días",
     performanceAnalysis: "Performance Analysis",
     performanceAnalysisDesc: "Compare sales across different time periods",
     dod: "Day-over-Day (DoD)",
@@ -16674,6 +16814,20 @@ export const translations: Record<Language, Translations> = {
     forecastPeriod: "Forecast Period",
     predictedSales: "Predicted Sales",
     totalSales: "Kabuuang Benta",
+    itemsSalesPrediction: "Prediksyon ng Benta ng Mga Item",
+    itemsSalesPredictionDesc: "Inaasahang kita sa bawat menu item para sa napiling panahon",
+    noSalesDataYet: "Wala pang available na datos ng benta",
+    startSellingToSeePredictions: "Magsimulang magbenta upang makita ang mga prediksyon ng benta",
+    totalPredictedRevenue: "Kabuuang Inaasahang Kita",
+    last7DaysRevenue: "Kita sa Nakaraang 7 Araw",
+    revenueTrend: "Trend ng Kita",
+    vsPreviousWeek: "vs nakaraang linggo",
+    unitPrice: "Presyo ng Yunit",
+    forecastedUnits: "Inaasahang Mga Yunit",
+    dailyRevenue: "Araw-araw na Kita",
+    periodRevenue: "Kita sa Panahon",
+    showingTopItems: "Ipinapakita ang nangungunang {count} na item ayon sa inaasahang kita",
+    nextDays: "Susunod na {days} araw",
     performanceAnalysis: "Performance Analysis",
     performanceAnalysisDesc: "Compare sales across different time periods",
     dod: "Day-over-Day (DoD)",
