@@ -8386,7 +8386,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       res.json({
         success: true,
         sessionId: sessionResponse.session.id,
-        redirectUrl: sessionResponse.session.redirectUrl,
+        redirectUrl: sessionResponse.session.paymentUrl,
         paymentId: geideaPayment.id,
         payment: geideaPayment,
       });
