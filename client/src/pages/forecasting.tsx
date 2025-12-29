@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { Transaction, Order, MenuItem } from "@shared/schema";
+import type { Transaction, Order, MenuItem, Recipe, InventoryItem } from "@shared/schema";
 
 export default function Forecasting() {
   const { t } = useLanguage();
@@ -23,6 +23,14 @@ export default function Forecasting() {
 
   const { data: menuItems = [] } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu-items"],
+  });
+
+  const { data: recipes = [] } = useQuery<Recipe[]>({
+    queryKey: ["/api/recipes"],
+  });
+
+  const { data: inventoryItems = [] } = useQuery<InventoryItem[]>({
+    queryKey: ["/api/inventory"],
   });
 
   // Prepare historical sales data (last 30 days)
@@ -196,6 +204,92 @@ export default function Forecasting() {
   
   // Sort by forecasted revenue for the Items Sales Prediction table
   const itemSalesForecasts = [...itemDemandForecasts].sort((a, b) => b.forecastedRevenuePeriod - a.forecastedRevenuePeriod);
+
+  // Calculate Inventory Forecasting based on menu item sales predictions
+  const calculateInventoryForecast = () => {
+    // Map to aggregate inventory requirements
+    const inventoryRequirements = new Map<string, {
+      inventoryItemId: string;
+      name: string;
+      unit: string;
+      currentStock: number;
+      requiredQuantity: number;
+      shortfall: number;
+      status: 'sufficient' | 'low' | 'critical';
+    }>();
+
+    // Create a lookup map for menu item -> recipe
+    const menuItemRecipeMap = new Map<string, Recipe>();
+    menuItems.forEach(item => {
+      if (item.recipeId) {
+        const recipe = recipes.find(r => r.id === item.recipeId);
+        if (recipe) {
+          menuItemRecipeMap.set(item.id, recipe);
+        }
+      }
+    });
+
+    // Create an inventory lookup map
+    const inventoryLookup = new Map<string, InventoryItem>();
+    inventoryItems.forEach(item => {
+      inventoryLookup.set(item.id, item);
+    });
+
+    // For each menu item forecast, calculate inventory requirements
+    itemDemandForecasts.forEach(forecast => {
+      const recipe = menuItemRecipeMap.get(forecast.id);
+      if (!recipe || !recipe.ingredients) return;
+
+      // Calculate total units needed for the forecast period
+      const totalUnitsNeeded = forecast.forecastedDemand * parseInt(forecastPeriod);
+
+      // For each ingredient in the recipe, calculate requirements
+      const ingredients = recipe.ingredients as Array<{ 
+        inventoryItemId: string; 
+        name: string; 
+        quantity: number; 
+        unit: string; 
+        unitPrice: number 
+      }>;
+
+      ingredients.forEach(ingredient => {
+        const inventoryItem = inventoryLookup.get(ingredient.inventoryItemId);
+        if (!inventoryItem) return;
+
+        const requiredQty = ingredient.quantity * totalUnitsNeeded;
+        const currentStock = parseFloat(inventoryItem.quantity) || 0;
+
+        if (inventoryRequirements.has(ingredient.inventoryItemId)) {
+          const existing = inventoryRequirements.get(ingredient.inventoryItemId)!;
+          existing.requiredQuantity += requiredQty;
+          existing.shortfall = Math.max(0, existing.requiredQuantity - existing.currentStock);
+          existing.status = existing.shortfall === 0 ? 'sufficient' : 
+                           existing.shortfall > existing.currentStock * 0.5 ? 'critical' : 'low';
+        } else {
+          const shortfall = Math.max(0, requiredQty - currentStock);
+          inventoryRequirements.set(ingredient.inventoryItemId, {
+            inventoryItemId: ingredient.inventoryItemId,
+            name: inventoryItem.name,
+            unit: inventoryItem.unit || ingredient.unit,
+            currentStock,
+            requiredQuantity: requiredQty,
+            shortfall,
+            status: shortfall === 0 ? 'sufficient' : 
+                   shortfall > currentStock * 0.5 ? 'critical' : 'low',
+          });
+        }
+      });
+    });
+
+    // Convert to array and sort by shortfall (critical first)
+    return Array.from(inventoryRequirements.values())
+      .sort((a, b) => b.shortfall - a.shortfall);
+  };
+
+  const inventoryForecasts = calculateInventoryForecast();
+  const criticalItems = inventoryForecasts.filter(i => i.status === 'critical').length;
+  const lowItems = inventoryForecasts.filter(i => i.status === 'low').length;
+  const sufficientItems = inventoryForecasts.filter(i => i.status === 'sufficient').length;
 
   return (
     <div className="p-6 space-y-6">
@@ -462,6 +556,129 @@ export default function Forecasting() {
               {itemSalesForecasts.length > 15 && (
                 <div className="text-sm text-muted-foreground text-center py-2">
                   {t.showingTopItems?.replace("{count}", "15") || "Showing top 15 items by predicted revenue"}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Inventory Forecasting Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                {t.inventoryForecast || "Inventory Forecast"}
+              </CardTitle>
+              <CardDescription className="mt-2">
+                {t.inventoryForecastDesc || `Predicted inventory requirements for the next ${forecastPeriod} days based on sales forecast`}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {inventoryForecasts.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>{t.noInventoryData || "No inventory data available"}</p>
+              <p className="text-sm mt-1">{t.linkRecipesToMenuItems || "Link recipes to menu items to see inventory forecasts"}</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <Card className="bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900">
+                  <CardHeader className="pb-3">
+                    <CardDescription className="text-red-600 dark:text-red-400">{t.criticalStock || "Critical Stock"}</CardDescription>
+                    <CardTitle className="text-2xl font-bold text-red-600 dark:text-red-400">
+                      {criticalItems}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-sm text-red-600/80 dark:text-red-400/80">
+                      {t.needsImmediateReorder || "Needs immediate reorder"}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-900">
+                  <CardHeader className="pb-3">
+                    <CardDescription className="text-yellow-600 dark:text-yellow-400">{t.lowStock || "Low Stock"}</CardDescription>
+                    <CardTitle className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                      {lowItems}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-sm text-yellow-600/80 dark:text-yellow-400/80">
+                      {t.reorderSoon || "Consider reordering soon"}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-900">
+                  <CardHeader className="pb-3">
+                    <CardDescription className="text-green-600 dark:text-green-400">{t.sufficientStock || "Sufficient Stock"}</CardDescription>
+                    <CardTitle className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {sufficientItems}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-sm text-green-600/80 dark:text-green-400/80">
+                      {t.stockLevelOk || "Stock levels are adequate"}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Inventory Table */}
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[200px]">{t.inventoryItem || "Inventory Item"}</TableHead>
+                      <TableHead className="text-right">{t.currentStock || "Current Stock"}</TableHead>
+                      <TableHead className="text-right">{`${t.requiredQuantity || "Required"} (${forecastPeriod}d)`}</TableHead>
+                      <TableHead className="text-right">{t.shortfall || "Shortfall"}</TableHead>
+                      <TableHead className="text-center">{t.status || "Status"}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {inventoryForecasts.slice(0, 20).map((item) => (
+                      <TableRow key={item.inventoryItemId} data-testid={`row-inventory-forecast-${item.inventoryItemId}`}>
+                        <TableCell className="font-medium" data-testid={`text-inventory-name-${item.inventoryItemId}`}>
+                          {item.name}
+                        </TableCell>
+                        <TableCell className="text-right font-mono" data-testid={`text-current-stock-${item.inventoryItemId}`}>
+                          {item.currentStock.toFixed(2)} {item.unit}
+                        </TableCell>
+                        <TableCell className="text-right font-mono" data-testid={`text-required-qty-${item.inventoryItemId}`}>
+                          {item.requiredQuantity.toFixed(2)} {item.unit}
+                        </TableCell>
+                        <TableCell className="text-right font-mono font-bold" data-testid={`text-shortfall-${item.inventoryItemId}`}>
+                          {item.shortfall > 0 ? (
+                            <span className="text-red-600 dark:text-red-400">-{item.shortfall.toFixed(2)} {item.unit}</span>
+                          ) : (
+                            <span className="text-green-600 dark:text-green-400">0 {item.unit}</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center" data-testid={`text-inventory-status-${item.inventoryItemId}`}>
+                          {item.status === 'critical' ? (
+                            <Badge variant="destructive">{t.critical || "Critical"}</Badge>
+                          ) : item.status === 'low' ? (
+                            <Badge variant="outline" className="border-yellow-500 text-yellow-600 dark:text-yellow-400">{t.low || "Low"}</Badge>
+                          ) : (
+                            <Badge variant="outline" className="border-green-500 text-green-600 dark:text-green-400">{t.sufficient || "Sufficient"}</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {inventoryForecasts.length > 20 && (
+                <div className="text-sm text-muted-foreground text-center py-2">
+                  {t.showingTopInventory?.replace("{count}", "20") || "Showing top 20 inventory items by shortfall"}
                 </div>
               )}
             </div>
