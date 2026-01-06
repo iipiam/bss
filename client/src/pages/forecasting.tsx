@@ -220,22 +220,40 @@ export default function Forecasting() {
 
     // Create a lookup map for menu item -> recipe
     const menuItemRecipeMap = new Map<string, Recipe>();
+    let menuItemsWithRecipes = 0;
     menuItems.forEach(item => {
       if (item.recipeId) {
         const recipe = recipes.find(r => r.id === item.recipeId);
         if (recipe) {
           menuItemRecipeMap.set(item.id, recipe);
+          menuItemsWithRecipes++;
         }
       }
     });
 
-    // Create an inventory lookup map
+    // Create inventory lookup maps (by ID and by name for fallback)
     const inventoryLookup = new Map<string, InventoryItem>();
+    const inventoryByName = new Map<string, InventoryItem>();
     inventoryItems.forEach(item => {
       inventoryLookup.set(item.id, item);
+      inventoryByName.set(item.name.toLowerCase().trim(), item);
     });
 
+    // Debug logging (only in development)
+    if (import.meta.env.DEV) {
+      console.log('[Inventory Forecast] Data Summary:', {
+        menuItems: menuItems.length,
+        menuItemsWithRecipes,
+        recipes: recipes.length,
+        inventoryItems: inventoryItems.length,
+        itemDemandForecasts: itemDemandForecasts.length,
+      });
+    }
+
     // For each menu item forecast, calculate inventory requirements
+    let processedIngredients = 0;
+    let matchedByName = 0;
+    
     itemDemandForecasts.forEach(forecast => {
       const recipe = menuItemRecipeMap.get(forecast.id);
       if (!recipe || !recipe.ingredients) return;
@@ -245,30 +263,48 @@ export default function Forecasting() {
 
       // For each ingredient in the recipe, calculate requirements
       const ingredients = recipe.ingredients as Array<{ 
-        inventoryItemId: string; 
+        inventoryItemId?: string; 
         name: string; 
         quantity: number; 
         unit: string; 
-        unitPrice: number 
+        unitPrice?: number 
       }>;
 
       ingredients.forEach(ingredient => {
-        const inventoryItem = inventoryLookup.get(ingredient.inventoryItemId);
-        if (!inventoryItem) return;
+        processedIngredients++;
+        
+        // Try to find inventory item by ID first, then fallback to name match
+        let inventoryItem = ingredient.inventoryItemId 
+          ? inventoryLookup.get(ingredient.inventoryItemId) 
+          : undefined;
+        
+        // Fallback: match by ingredient name if no inventoryItemId or item not found
+        if (!inventoryItem && ingredient.name) {
+          inventoryItem = inventoryByName.get(ingredient.name.toLowerCase().trim());
+          if (inventoryItem) matchedByName++;
+        }
+        
+        if (!inventoryItem) {
+          if (import.meta.env.DEV) {
+            console.log('[Inventory Forecast] No match for ingredient:', ingredient.name);
+          }
+          return;
+        }
 
         const requiredQty = ingredient.quantity * totalUnitsNeeded;
         const currentStock = parseFloat(inventoryItem.quantity) || 0;
+        const itemKey = inventoryItem.id;
 
-        if (inventoryRequirements.has(ingredient.inventoryItemId)) {
-          const existing = inventoryRequirements.get(ingredient.inventoryItemId)!;
+        if (inventoryRequirements.has(itemKey)) {
+          const existing = inventoryRequirements.get(itemKey)!;
           existing.requiredQuantity += requiredQty;
           existing.shortfall = Math.max(0, existing.requiredQuantity - existing.currentStock);
           existing.status = existing.shortfall === 0 ? 'sufficient' : 
                            existing.shortfall > existing.currentStock * 0.5 ? 'critical' : 'low';
         } else {
           const shortfall = Math.max(0, requiredQty - currentStock);
-          inventoryRequirements.set(ingredient.inventoryItemId, {
-            inventoryItemId: ingredient.inventoryItemId,
+          inventoryRequirements.set(itemKey, {
+            inventoryItemId: itemKey,
             name: inventoryItem.name,
             unit: inventoryItem.unit || ingredient.unit,
             currentStock,
@@ -280,6 +316,14 @@ export default function Forecasting() {
         }
       });
     });
+
+    if (import.meta.env.DEV) {
+      console.log('[Inventory Forecast] Processing Summary:', {
+        processedIngredients,
+        matchedByName,
+        inventoryRequirements: inventoryRequirements.size,
+      });
+    }
 
     // Convert to array and sort by shortfall (critical first)
     return Array.from(inventoryRequirements.values())
