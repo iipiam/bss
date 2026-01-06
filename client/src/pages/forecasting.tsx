@@ -22,7 +22,7 @@ export default function Forecasting() {
   });
 
   const { data: menuItems = [] } = useQuery<MenuItem[]>({
-    queryKey: ["/api/menu-items"],
+    queryKey: ["/api/menu"],
   });
 
   const { data: recipes = [] } = useQuery<Recipe[]>({
