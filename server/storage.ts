@@ -4861,6 +4861,13 @@ export const storage = new DatabaseStorage();
       ADD COLUMN IF NOT EXISTS unit TEXT
     `);
     console.log('[Migration] Procurement columns verified/added: inventory_item_id, original_procurement_id, unit');
+    
+    // Add national_id column to investors table if missing
+    await pool.query(`
+      ALTER TABLE investors 
+      ADD COLUMN IF NOT EXISTS national_id TEXT
+    `);
+    console.log('[Migration] Investors column verified/added: national_id');
   } catch (error: any) {
     // Only log if not a duplicate column error (which means columns already exist)
     if (!error.message?.includes('already exists')) {
