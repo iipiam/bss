@@ -2765,6 +2765,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         investor: {
           id: investor.id,
           name: investor.name,
+          nationalId: investor.nationalId || '',
+          contactNumber: investor.contactNumber || '',
           amountInvested: investor.amountInvested,
           interestPercentage: investor.interestPercentage,
           notes: investor.notes,

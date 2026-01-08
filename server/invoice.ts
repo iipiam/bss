@@ -2381,6 +2381,8 @@ interface InvestorStatementData {
   investor: {
     id: string;
     name: string;
+    nationalId?: string; // National ID or Iqama number
+    contactNumber?: string; // Phone number
     amountInvested: string;
     interestPercentage: string;
     notes?: string | null;
@@ -2736,6 +2738,18 @@ function generateInvestorStatementHTML(data: InvestorStatementData): string {
             <span class="info-label">Investor Name / اسم المستثمر:</span>
             <span class="info-value">${escapedInvestorName}</span>
           </div>
+          ${investor.nationalId ? `
+          <div class="info-row">
+            <span class="info-label">ID (National/Iqama) / الهوية:</span>
+            <span class="info-value">${escapeHtml(investor.nationalId)}</span>
+          </div>
+          ` : ''}
+          ${investor.contactNumber ? `
+          <div class="info-row">
+            <span class="info-label">Contact Number / رقم التواصل:</span>
+            <span class="info-value">${escapeHtml(investor.contactNumber)}</span>
+          </div>
+          ` : ''}
           <div class="info-row">
             <span class="info-label">Investor Type / نوع المستثمر:</span>
             <span class="info-value">${investor.investorType === 'recipe' ? 'Recipe Owner / صاحب وصفة' : 'Money Investor / مستثمر مالي'}</span>
