@@ -2423,6 +2423,138 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Monthly Investor Earnings Report - Must come before :id route
+  app.get("/api/investors/monthly-report", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { month, year } = req.query;
+      
+      // Parse month/year or default to current month
+      const now = new Date();
+      const targetMonth = parseInt(month as string) || (now.getMonth() + 1); // 1-indexed
+      const targetYear = parseInt(year as string) || now.getFullYear();
+      
+      // Get all active investors
+      const investors = await storage.getInvestors(restaurantId);
+      const activeInvestors = investors.filter((i: any) => i.active !== false);
+      
+      // Get financial data for the specific month
+      const startDate = new Date(targetYear, targetMonth - 1, 1);
+      const endDate = new Date(targetYear, targetMonth, 0, 23, 59, 59);
+      
+      const transactions = await storage.getTransactions({ restaurantId });
+      const orders = await storage.getOrders({ restaurantId });
+      const menuItems = await storage.getMenuItems(restaurantId);
+      const recipes = await storage.getRecipes(restaurantId);
+      const salaries = await storage.getSalaries(restaurantId);
+      const shopBills = await storage.getShopBills(restaurantId);
+      
+      // Filter transactions and orders for the target month
+      const monthlyTransactions = transactions.filter((t: any) => {
+        const txDate = new Date(t.createdAt);
+        return txDate >= startDate && txDate <= endDate;
+      });
+      
+      const validOrderStatuses = ['Completed', 'Ready', 'Preparing', 'Paid'];
+      const monthlyOrders = orders.filter((o: any) => {
+        const orderDate = new Date(o.createdAt);
+        return orderDate >= startDate && orderDate <= endDate && validOrderStatuses.includes(o.status);
+      });
+      
+      // Calculate total revenue from monthly transactions
+      const totalRevenue = monthlyTransactions.reduce((sum: number, t: any) => sum + parseFloat(t.total || "0"), 0);
+      
+      // Calculate COGS from monthly orders
+      let totalCOGS = 0;
+      monthlyOrders.forEach((order: any) => {
+        if (order.items && Array.isArray(order.items)) {
+          order.items.forEach((item: any) => {
+            const menuItem = menuItems.find((m: any) => m.id === item.id);
+            if (menuItem && menuItem.recipeId) {
+              const recipe = recipes.find((r: any) => r.id === menuItem.recipeId);
+              if (recipe) {
+                const recipeCost = parseFloat(recipe.cost || "0");
+                const portionSize = parseFloat(menuItem.portionSize || "1");
+                const itemCost = recipeCost * portionSize;
+                totalCOGS += itemCost * (item.quantity || 1);
+              }
+            }
+          });
+        }
+      });
+      
+      // Calculate total salaries
+      const totalSalaries = salaries.reduce((sum: number, s: any) => sum + parseFloat(s.amount || "0"), 0);
+      
+      // Calculate recurring bills (prorated to monthly)
+      const recurringBills = shopBills.filter((b: any) => {
+        const billType = String(b.billType || '').toLowerCase();
+        const paymentPeriod = String(b.paymentPeriod || '').toLowerCase();
+        return billType !== 'foundational' && 
+               paymentPeriod !== 'one-time' && 
+               paymentPeriod !== 'onetime';
+      });
+      
+      const getMonthlyAmount = (amount: number, period: string): number => {
+        const normalized = String(period || 'monthly').toLowerCase();
+        switch (normalized) {
+          case 'weekly': return amount * 4.33;
+          case 'monthly': return amount;
+          case 'quarterly': return amount / 3;
+          case 'semi-annually':
+          case 'semiannually':
+          case 'semi-annual': return amount / 6;
+          case 'yearly':
+          case 'annually': return amount / 12;
+          default: return amount;
+        }
+      };
+      
+      const totalBills = recurringBills.reduce((sum: number, b: any) => {
+        const rawAmount = parseFloat(b.amount || "0");
+        return sum + getMonthlyAmount(rawAmount, b.paymentPeriod || 'monthly');
+      }, 0);
+      
+      // Calculate net profit
+      const netProfit = totalRevenue - totalCOGS - totalSalaries - totalBills;
+      
+      // Calculate earnings for each investor
+      const investorEarnings = activeInvestors.map((investor: any) => {
+        const interestPercentage = parseFloat(investor.interestPercentage || "0");
+        const calculatedEarnings = (netProfit * interestPercentage) / 100;
+        const earnings = Math.max(0, calculatedEarnings);
+        
+        return {
+          id: investor.id,
+          name: investor.name,
+          investorType: investor.investorType || 'money',
+          interestPercentage: investor.interestPercentage,
+          earnings: earnings.toFixed(2),
+          amountInvested: investor.amountInvested,
+        };
+      });
+      
+      // Month names for display
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+      
+      res.json({
+        month: targetMonth,
+        year: targetYear,
+        monthName: monthNames[targetMonth - 1],
+        netProfit: netProfit.toFixed(2),
+        totalRevenue: totalRevenue.toFixed(2),
+        totalCOGS: totalCOGS.toFixed(2),
+        totalSalaries: totalSalaries.toFixed(2),
+        totalBills: totalBills.toFixed(2),
+        investors: investorEarnings,
+      });
+    } catch (error) {
+      console.error("[INVESTORS] Monthly report error:", error);
+      res.status(500).json({ error: "Failed to generate monthly report" });
+    }
+  });
+
   app.get("/api/investors/:id", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;

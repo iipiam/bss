@@ -7,7 +7,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Edit, UserCircle, Trash2, DollarSign, TrendingUp, FileDown, Banknote, ChefHat, FileText, Upload, Eye, X } from "lucide-react";
+import { Plus, Search, Edit, UserCircle, Trash2, DollarSign, TrendingUp, FileDown, Banknote, ChefHat, FileText, Upload, Eye, X, Calendar, Download } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -532,6 +533,111 @@ export default function Investors() {
     const interestPercentage = parseFloat(investor.interestPercentage || "0");
     const monthlyEarnings = (netProfit * interestPercentage) / 100;
     return monthlyEarnings;
+  };
+
+  // Monthly Report State
+  const currentDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+  const [downloadingReport, setDownloadingReport] = useState(false);
+
+  interface MonthlyReport {
+    month: number;
+    year: number;
+    monthName: string;
+    netProfit: string;
+    totalRevenue: string;
+    totalCOGS: string;
+    totalSalaries: string;
+    totalBills: string;
+    investors: Array<{
+      id: string;
+      name: string;
+      investorType: string;
+      interestPercentage: string;
+      earnings: string;
+      amountInvested: string;
+    }>;
+  }
+
+  const { data: monthlyReport, isLoading: isLoadingReport } = useQuery<MonthlyReport>({
+    queryKey: ["/api/investors/monthly-report", selectedMonth, selectedYear],
+    queryFn: async () => {
+      const response = await fetch(`/api/investors/monthly-report?month=${selectedMonth}&year=${selectedYear}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch monthly report');
+      return response.json();
+    },
+  });
+
+  // Download monthly report as PDF
+  const handleDownloadMonthlyReport = async () => {
+    if (!monthlyReport || monthlyReport.investors.length === 0) return;
+    
+    try {
+      setDownloadingReport(true);
+      
+      // Generate PDF using jspdf
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+      
+      // Title
+      doc.setFontSize(18);
+      doc.text(`Investor Earnings Report - ${monthlyReport.monthName} ${monthlyReport.year}`, 14, 20);
+      
+      // Summary
+      doc.setFontSize(12);
+      doc.text(`Net Profit: SAR ${parseFloat(monthlyReport.netProfit).toLocaleString()}`, 14, 35);
+      
+      // Table header
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      const startY = 50;
+      doc.text('Investor Name', 14, startY);
+      doc.text('Interest %', 80, startY);
+      doc.text('Earnings (SAR)', 130, startY);
+      
+      // Table rows
+      doc.setFont('helvetica', 'normal');
+      let y = startY + 10;
+      monthlyReport.investors.forEach((inv) => {
+        doc.text(inv.name, 14, y);
+        doc.text(`${inv.interestPercentage}%`, 80, y);
+        doc.text(parseFloat(inv.earnings).toLocaleString(), 130, y);
+        y += 8;
+        
+        // Add new page if needed
+        if (y > 280) {
+          doc.addPage();
+          y = 20;
+        }
+      });
+      
+      // Total earnings
+      const totalEarnings = monthlyReport.investors.reduce((sum, inv) => sum + parseFloat(inv.earnings), 0);
+      y += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Total:', 14, y);
+      doc.text(totalEarnings.toLocaleString(), 130, y);
+      
+      // Save the PDF
+      doc.save(`investor-earnings-${monthlyReport.monthName}-${monthlyReport.year}.pdf`);
+      
+      toast({
+        title: t.reportDownloaded || "Report Downloaded",
+        description: t.reportDownloadedDesc || "Monthly earnings report has been downloaded.",
+      });
+    } catch (error) {
+      console.error("Error generating report:", error);
+      toast({
+        title: t.reportDownloadFailed || "Download Failed",
+        description: t.reportDownloadFailedDesc || "Could not download the report.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingReport(false);
+    }
   };
 
   // Download investor statement PDF
@@ -1175,6 +1281,160 @@ export default function Investors() {
           })
         )}
       </div>
+
+      {/* Monthly Investor Earnings Card */}
+      <Card className="mt-6">
+        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-4">
+          <div>
+            <h2 className={`${layout.textXl} font-bold flex items-center gap-2`}>
+              <Calendar className="h-5 w-5" />
+              {t.monthlyInvestorEarnings || "Monthly Investor Earnings"}
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              {t.monthlyInvestorEarningsDesc || "View earnings breakdown for each investor by month"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select
+              value={selectedMonth.toString()}
+              onValueChange={(val) => setSelectedMonth(parseInt(val))}
+            >
+              <SelectTrigger className="w-[140px] h-[44px]" data-testid="select-month">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">{t.january || "January"}</SelectItem>
+                <SelectItem value="2">{t.february || "February"}</SelectItem>
+                <SelectItem value="3">{t.march || "March"}</SelectItem>
+                <SelectItem value="4">{t.april || "April"}</SelectItem>
+                <SelectItem value="5">{t.may || "May"}</SelectItem>
+                <SelectItem value="6">{t.june || "June"}</SelectItem>
+                <SelectItem value="7">{t.july || "July"}</SelectItem>
+                <SelectItem value="8">{t.august || "August"}</SelectItem>
+                <SelectItem value="9">{t.september || "September"}</SelectItem>
+                <SelectItem value="10">{t.october || "October"}</SelectItem>
+                <SelectItem value="11">{t.november || "November"}</SelectItem>
+                <SelectItem value="12">{t.december || "December"}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={selectedYear.toString()}
+              onValueChange={(val) => setSelectedYear(parseInt(val))}
+            >
+              <SelectTrigger className="w-[100px] h-[44px]" data-testid="select-year">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[...Array(5)].map((_, i) => {
+                  const year = currentDate.getFullYear() - 2 + i;
+                  return (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              onClick={handleDownloadMonthlyReport}
+              disabled={downloadingReport || !monthlyReport?.investors?.length}
+              data-testid="button-download-monthly-report"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {downloadingReport ? (t.downloading || "Downloading...") : (t.downloadPdf || "Download PDF")}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoadingReport ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-muted-foreground">{t.loading || "Loading..."}</div>
+            </div>
+          ) : monthlyReport ? (
+            <>
+              {/* Summary */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="bg-muted/50 p-3 rounded-lg">
+                  <div className="text-sm text-muted-foreground">{t.netProfit || "Net Profit"}</div>
+                  <div className={`text-lg font-bold ${parseFloat(monthlyReport.netProfit) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    SAR {parseFloat(monthlyReport.netProfit).toLocaleString()}
+                  </div>
+                </div>
+                <div className="bg-muted/50 p-3 rounded-lg">
+                  <div className="text-sm text-muted-foreground">{t.totalRevenue || "Total Revenue"}</div>
+                  <div className="text-lg font-bold">SAR {parseFloat(monthlyReport.totalRevenue).toLocaleString()}</div>
+                </div>
+                <div className="bg-muted/50 p-3 rounded-lg">
+                  <div className="text-sm text-muted-foreground">{t.totalCOGS || "Total COGS"}</div>
+                  <div className="text-lg font-bold">SAR {parseFloat(monthlyReport.totalCOGS).toLocaleString()}</div>
+                </div>
+                <div className="bg-muted/50 p-3 rounded-lg">
+                  <div className="text-sm text-muted-foreground">{t.totalExpenses || "Total Expenses"}</div>
+                  <div className="text-lg font-bold">
+                    SAR {(parseFloat(monthlyReport.totalSalaries) + parseFloat(monthlyReport.totalBills)).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Earnings Table */}
+              {monthlyReport.investors.length > 0 ? (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t.investorName || "Investor Name"}</TableHead>
+                        <TableHead className="text-center">{t.type || "Type"}</TableHead>
+                        <TableHead className="text-right">{t.interestPercentage || "Interest %"}</TableHead>
+                        <TableHead className="text-right">{t.monthlyEarnings || "Monthly Earnings"}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {monthlyReport.investors.map((inv) => (
+                        <TableRow key={inv.id} data-testid={`row-investor-earnings-${inv.id}`}>
+                          <TableCell className="font-medium">{inv.name}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="secondary" className="text-xs">
+                              {inv.investorType === 'money' ? (
+                                <><Banknote className="h-3 w-3 mr-1" />{t.money || "Money"}</>
+                              ) : (
+                                <><ChefHat className="h-3 w-3 mr-1" />{t.recipe || "Recipe"}</>
+                              )}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">{inv.interestPercentage}%</TableCell>
+                          <TableCell className="text-right font-medium">
+                            <span className={parseFloat(inv.earnings) > 0 ? 'text-green-600' : ''}>
+                              SAR {parseFloat(inv.earnings).toLocaleString()}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {/* Total Row */}
+                      <TableRow className="bg-muted/50 font-bold">
+                        <TableCell colSpan={3} className="text-right">{t.total || "Total"}:</TableCell>
+                        <TableCell className="text-right">
+                          <span className="text-green-600">
+                            SAR {monthlyReport.investors.reduce((sum, inv) => sum + parseFloat(inv.earnings), 0).toLocaleString()}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  {t.noActiveInvestors || "No active investors found"}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              {t.selectMonthToViewEarnings || "Select a month to view earnings"}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Delete Document Confirmation Dialog */}
       <AlertDialog open={!!deletingDocumentFor} onOpenChange={() => setDeletingDocumentFor(null)}>

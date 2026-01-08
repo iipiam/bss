@@ -762,6 +762,35 @@ export interface Translations {
   documentDownloadFailed: string;
   preview: string;
   transactionDocument: string;
+  
+  // Monthly Investor Earnings
+  monthlyInvestorEarnings: string;
+  monthlyInvestorEarningsDesc: string;
+  january: string;
+  february: string;
+  march: string;
+  april: string;
+  may: string;
+  june: string;
+  july: string;
+  august: string;
+  september: string;
+  october: string;
+  november: string;
+  december: string;
+  downloading: string;
+  downloadPdf: string;
+  totalCOGS: string;
+  totalExpenses: string;
+  type: string;
+  money: string;
+  recipe: string;
+  noActiveInvestors: string;
+  selectMonthToViewEarnings: string;
+  reportDownloaded: string;
+  reportDownloadedDesc: string;
+  reportDownloadFailed: string;
+  reportDownloadFailedDesc: string;
   selectPdf: string;
   transactionDocumentHelp: string;
   
@@ -2514,6 +2543,35 @@ export const translations: Record<Language, Translations> = {
     documentDownloaded: 'Document downloaded successfully',
     documentDownloadFailed: 'Failed to download document',
     preview: 'Preview',
+    
+    // Monthly Investor Earnings
+    monthlyInvestorEarnings: 'Monthly Investor Earnings',
+    monthlyInvestorEarningsDesc: 'View earnings breakdown for each investor by month',
+    january: 'January',
+    february: 'February',
+    march: 'March',
+    april: 'April',
+    may: 'May',
+    june: 'June',
+    july: 'July',
+    august: 'August',
+    september: 'September',
+    october: 'October',
+    november: 'November',
+    december: 'December',
+    downloading: 'Downloading...',
+    downloadPdf: 'Download PDF',
+    totalCOGS: 'Total COGS',
+    totalExpenses: 'Total Expenses',
+    type: 'Type',
+    money: 'Money',
+    recipe: 'Recipe',
+    noActiveInvestors: 'No active investors found',
+    selectMonthToViewEarnings: 'Select a month to view earnings',
+    reportDownloaded: 'Report Downloaded',
+    reportDownloadedDesc: 'Monthly earnings report has been downloaded.',
+    reportDownloadFailed: 'Download Failed',
+    reportDownloadFailedDesc: 'Could not download the report.',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -4268,6 +4326,35 @@ export const translations: Record<Language, Translations> = {
     documentDownloadFailed: 'فشل في تحميل المستند',
     preview: 'معاينة',
     
+    // Monthly Investor Earnings
+    monthlyInvestorEarnings: 'أرباح المستثمرين الشهرية',
+    monthlyInvestorEarningsDesc: 'عرض تفاصيل الأرباح لكل مستثمر حسب الشهر',
+    january: 'يناير',
+    february: 'فبراير',
+    march: 'مارس',
+    april: 'أبريل',
+    may: 'مايو',
+    june: 'يونيو',
+    july: 'يوليو',
+    august: 'أغسطس',
+    september: 'سبتمبر',
+    october: 'أكتوبر',
+    november: 'نوفمبر',
+    december: 'ديسمبر',
+    downloading: 'جاري التحميل...',
+    downloadPdf: 'تحميل PDF',
+    totalCOGS: 'إجمالي تكلفة البضاعة المباعة',
+    totalExpenses: 'إجمالي المصروفات',
+    type: 'النوع',
+    money: 'مالي',
+    recipe: 'وصفة',
+    noActiveInvestors: 'لا يوجد مستثمرون نشطون',
+    selectMonthToViewEarnings: 'اختر شهراً لعرض الأرباح',
+    reportDownloaded: 'تم تحميل التقرير',
+    reportDownloadedDesc: 'تم تحميل تقرير الأرباح الشهرية.',
+    reportDownloadFailed: 'فشل التحميل',
+    reportDownloadFailedDesc: 'تعذر تحميل التقرير.',
+    
     // Employee Management
     employeeManagement: 'إدارة الموظفين',
     manageEmployees: 'إدارة الموظفين ومعلوماتهم',
@@ -6019,6 +6106,35 @@ export const translations: Record<Language, Translations> = {
     documentDownloadFailed: 'Failed to download document',
     preview: 'Preview',
     
+    // Monthly Investor Earnings
+    monthlyInvestorEarnings: 'Monthly Investor Earnings',
+    monthlyInvestorEarningsDesc: 'View earnings breakdown for each investor by month',
+    january: 'January',
+    february: 'February',
+    march: 'March',
+    april: 'April',
+    may: 'May',
+    june: 'June',
+    july: 'July',
+    august: 'August',
+    september: 'September',
+    october: 'October',
+    november: 'November',
+    december: 'December',
+    downloading: 'Downloading...',
+    downloadPdf: 'Download PDF',
+    totalCOGS: 'Total COGS',
+    totalExpenses: 'Total Expenses',
+    type: 'Type',
+    money: 'Money',
+    recipe: 'Recipe',
+    noActiveInvestors: 'No active investors found',
+    selectMonthToViewEarnings: 'Select a month to view earnings',
+    reportDownloaded: 'Report Downloaded',
+    reportDownloadedDesc: 'Monthly earnings report has been downloaded.',
+    reportDownloadFailed: 'Download Failed',
+    reportDownloadFailedDesc: 'Could not download the report.',
+    
     // Employee Management
     employeeManagement: 'Employee Management',
     manageEmployees: 'Manage employees and their information',
@@ -7752,6 +7868,35 @@ export const translations: Record<Language, Translations> = {
     documentDownloaded: 'Document downloaded successfully',
     documentDownloadFailed: 'Failed to download document',
     preview: 'Preview',
+    
+    // Monthly Investor Earnings
+    monthlyInvestorEarnings: 'Monthly Investor Earnings',
+    monthlyInvestorEarningsDesc: 'View earnings breakdown for each investor by month',
+    january: 'January',
+    february: 'February',
+    march: 'March',
+    april: 'April',
+    may: 'May',
+    june: 'June',
+    july: 'July',
+    august: 'August',
+    september: 'September',
+    october: 'October',
+    november: 'November',
+    december: 'December',
+    downloading: 'Downloading...',
+    downloadPdf: 'Download PDF',
+    totalCOGS: 'Total COGS',
+    totalExpenses: 'Total Expenses',
+    type: 'Type',
+    money: 'Money',
+    recipe: 'Recipe',
+    noActiveInvestors: 'No active investors found',
+    selectMonthToViewEarnings: 'Select a month to view earnings',
+    reportDownloaded: 'Report Downloaded',
+    reportDownloadedDesc: 'Monthly earnings report has been downloaded.',
+    reportDownloadFailed: 'Download Failed',
+    reportDownloadFailedDesc: 'Could not download the report.',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -9487,6 +9632,35 @@ export const translations: Record<Language, Translations> = {
     documentDownloadFailed: 'Failed to download document',
     preview: 'Preview',
     
+    // Monthly Investor Earnings
+    monthlyInvestorEarnings: 'Monthly Investor Earnings',
+    monthlyInvestorEarningsDesc: 'View earnings breakdown for each investor by month',
+    january: 'January',
+    february: 'February',
+    march: 'March',
+    april: 'April',
+    may: 'May',
+    june: 'June',
+    july: 'July',
+    august: 'August',
+    september: 'September',
+    october: 'October',
+    november: 'November',
+    december: 'December',
+    downloading: 'Downloading...',
+    downloadPdf: 'Download PDF',
+    totalCOGS: 'Total COGS',
+    totalExpenses: 'Total Expenses',
+    type: 'Type',
+    money: 'Money',
+    recipe: 'Recipe',
+    noActiveInvestors: 'No active investors found',
+    selectMonthToViewEarnings: 'Select a month to view earnings',
+    reportDownloaded: 'Report Downloaded',
+    reportDownloadedDesc: 'Monthly earnings report has been downloaded.',
+    reportDownloadFailed: 'Download Failed',
+    reportDownloadFailedDesc: 'Could not download the report.',
+    
     // Employee Management
     employeeManagement: 'Employee Management',
     manageEmployees: 'Manage employees and their information',
@@ -11221,6 +11395,35 @@ export const translations: Record<Language, Translations> = {
     documentDownloadFailed: 'Failed to download document',
     preview: 'Preview',
     
+    // Monthly Investor Earnings
+    monthlyInvestorEarnings: 'Monthly Investor Earnings',
+    monthlyInvestorEarningsDesc: 'View earnings breakdown for each investor by month',
+    january: 'January',
+    february: 'February',
+    march: 'March',
+    april: 'April',
+    may: 'May',
+    june: 'June',
+    july: 'July',
+    august: 'August',
+    september: 'September',
+    october: 'October',
+    november: 'November',
+    december: 'December',
+    downloading: 'Downloading...',
+    downloadPdf: 'Download PDF',
+    totalCOGS: 'Total COGS',
+    totalExpenses: 'Total Expenses',
+    type: 'Type',
+    money: 'Money',
+    recipe: 'Recipe',
+    noActiveInvestors: 'No active investors found',
+    selectMonthToViewEarnings: 'Select a month to view earnings',
+    reportDownloaded: 'Report Downloaded',
+    reportDownloadedDesc: 'Monthly earnings report has been downloaded.',
+    reportDownloadFailed: 'Download Failed',
+    reportDownloadFailedDesc: 'Could not download the report.',
+    
     // Employee Management
     employeeManagement: 'Employee Management',
     manageEmployees: 'Manage employees and their information',
@@ -12944,6 +13147,35 @@ export const translations: Record<Language, Translations> = {
     documentDownloadFailed: 'दस्तावेज़ डाउनलोड करने में विफल',
     preview: 'पूर्वावलोकन',
     
+    // Monthly Investor Earnings
+    monthlyInvestorEarnings: 'मासिक निवेशक आय',
+    monthlyInvestorEarningsDesc: 'प्रत्येक निवेशक की मासिक आय का विवरण देखें',
+    january: 'जनवरी',
+    february: 'फरवरी',
+    march: 'मार्च',
+    april: 'अप्रैल',
+    may: 'मई',
+    june: 'जून',
+    july: 'जुलाई',
+    august: 'अगस्त',
+    september: 'सितंबर',
+    october: 'अक्टूबर',
+    november: 'नवंबर',
+    december: 'दिसंबर',
+    downloading: 'डाउनलोड हो रहा है...',
+    downloadPdf: 'PDF डाउनलोड करें',
+    totalCOGS: 'कुल बिक्री लागत',
+    totalExpenses: 'कुल खर्च',
+    type: 'प्रकार',
+    money: 'धन',
+    recipe: 'रेसिपी',
+    noActiveInvestors: 'कोई सक्रिय निवेशक नहीं मिला',
+    selectMonthToViewEarnings: 'आय देखने के लिए महीना चुनें',
+    reportDownloaded: 'रिपोर्ट डाउनलोड हुई',
+    reportDownloadedDesc: 'मासिक आय रिपोर्ट डाउनलोड हो गई।',
+    reportDownloadFailed: 'डाउनलोड विफल',
+    reportDownloadFailedDesc: 'रिपोर्ट डाउनलोड नहीं हो सकी।',
+    
     // Employee Management
     employeeManagement: 'कर्मचारी प्रबंधन',
     manageEmployees: 'कर्मचारियों और उनकी जानकारी का प्रबंधन करें',
@@ -14621,6 +14853,35 @@ export const translations: Record<Language, Translations> = {
     documentDownloadFailed: 'دستاویز ڈاؤن لوڈ کرنے میں ناکام',
     preview: 'پیش نظارہ',
     
+    // Monthly Investor Earnings
+    monthlyInvestorEarnings: 'ماہانہ سرمایہ کاروں کی آمدنی',
+    monthlyInvestorEarningsDesc: 'ہر سرمایہ کار کی ماہانہ آمدنی کی تفصیلات دیکھیں',
+    january: 'جنوری',
+    february: 'فروری',
+    march: 'مارچ',
+    april: 'اپریل',
+    may: 'مئی',
+    june: 'جون',
+    july: 'جولائی',
+    august: 'اگست',
+    september: 'ستمبر',
+    october: 'اکتوبر',
+    november: 'نومبر',
+    december: 'دسمبر',
+    downloading: 'ڈاؤن لوڈ ہو رہا ہے...',
+    downloadPdf: 'PDF ڈاؤن لوڈ کریں',
+    totalCOGS: 'کل فروخت شدہ سامان کی لاگت',
+    totalExpenses: 'کل اخراجات',
+    type: 'قسم',
+    money: 'رقم',
+    recipe: 'ریسیپی',
+    noActiveInvestors: 'کوئی فعال سرمایہ کار نہیں ملا',
+    selectMonthToViewEarnings: 'آمدنی دیکھنے کے لیے مہینہ منتخب کریں',
+    reportDownloaded: 'رپورٹ ڈاؤن لوڈ ہوئی',
+    reportDownloadedDesc: 'ماہانہ آمدنی کی رپورٹ ڈاؤن لوڈ ہو گئی۔',
+    reportDownloadFailed: 'ڈاؤن لوڈ ناکام',
+    reportDownloadFailedDesc: 'رپورٹ ڈاؤن لوڈ نہیں ہو سکی۔',
+    
     // Employee Management
     employeeManagement: 'ملازمین کی انتظامیہ',
     manageEmployees: 'ملازمین اور ان کی معلومات کا انتظام کریں',
@@ -16250,6 +16511,36 @@ export const translations: Record<Language, Translations> = {
     documentDownloaded: "Documento descargado correctamente",
     documentDownloadFailed: "Error al descargar el documento",
     preview: "Vista Previa",
+    
+    // Monthly Investor Earnings
+    monthlyInvestorEarnings: "Ganancias Mensuales de Inversores",
+    monthlyInvestorEarningsDesc: "Ver desglose de ganancias por inversor por mes",
+    january: "Enero",
+    february: "Febrero",
+    march: "Marzo",
+    april: "Abril",
+    may: "Mayo",
+    june: "Junio",
+    july: "Julio",
+    august: "Agosto",
+    september: "Septiembre",
+    october: "Octubre",
+    november: "Noviembre",
+    december: "Diciembre",
+    downloading: "Descargando...",
+    downloadPdf: "Descargar PDF",
+    totalCOGS: "Costo Total de Ventas",
+    totalExpenses: "Gastos Totales",
+    type: "Tipo",
+    money: "Dinero",
+    recipe: "Receta",
+    noActiveInvestors: "No hay inversores activos",
+    selectMonthToViewEarnings: "Seleccione un mes para ver las ganancias",
+    reportDownloaded: "Informe Descargado",
+    reportDownloadedDesc: "El informe de ganancias mensuales se ha descargado.",
+    reportDownloadFailed: "Error al Descargar",
+    reportDownloadFailedDesc: "No se pudo descargar el informe.",
+    
     employeeManagement: "Employee Management",
     manageEmployees: "Manage employees and their information",
     addEmployee: "Añadir Empleado",
@@ -17868,6 +18159,36 @@ export const translations: Record<Language, Translations> = {
     documentDownloaded: "Matagumpay na na-download ang dokumento",
     documentDownloadFailed: "Nabigo ang pag-download ng dokumento",
     preview: "Preview",
+    
+    // Monthly Investor Earnings
+    monthlyInvestorEarnings: "Buwanang Kita ng mga Investor",
+    monthlyInvestorEarningsDesc: "Tingnan ang breakdown ng kita para sa bawat investor sa bawat buwan",
+    january: "Enero",
+    february: "Pebrero",
+    march: "Marso",
+    april: "Abril",
+    may: "Mayo",
+    june: "Hunyo",
+    july: "Hulyo",
+    august: "Agosto",
+    september: "Setyembre",
+    october: "Oktubre",
+    november: "Nobyembre",
+    december: "Disyembre",
+    downloading: "Nagda-download...",
+    downloadPdf: "I-download ang PDF",
+    totalCOGS: "Kabuuang Gastos sa Benta",
+    totalExpenses: "Kabuuang Gastusin",
+    type: "Uri",
+    money: "Pera",
+    recipe: "Recipe",
+    noActiveInvestors: "Walang aktibong investor na nahanap",
+    selectMonthToViewEarnings: "Pumili ng buwan para makita ang kita",
+    reportDownloaded: "Na-download ang Ulat",
+    reportDownloadedDesc: "Na-download na ang ulat ng buwanang kita.",
+    reportDownloadFailed: "Nabigo ang Pag-download",
+    reportDownloadFailedDesc: "Hindi ma-download ang ulat.",
+    
     employeeManagement: "Employee Management",
     manageEmployees: "Manage employees and their information",
     addEmployee: "Magdagdag ng Empleyado",
