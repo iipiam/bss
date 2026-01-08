@@ -21,6 +21,8 @@ import { useDeviceLayout } from "@/lib/mobileLayout";
 interface Investor {
   id: string;
   name: string;
+  nationalId?: string | null;
+  contactNumber?: string | null;
   investorType: string; // "money" or "recipe"
   recipeId?: string | null;
   amountInvested: string;
@@ -67,6 +69,8 @@ interface ShopBill {
 
 type InvestorFormValues = {
   name: string;
+  nationalId?: string;
+  contactNumber?: string;
   investorType: string;
   recipeId?: string;
   amountInvested: string;
@@ -85,6 +89,8 @@ export default function Investors() {
 
   const investorFormSchema = z.object({
     name: z.string().min(1, t.investorNameRequired),
+    nationalId: z.string().optional(),
+    contactNumber: z.string().optional(),
     investorType: z.enum(["money", "recipe"]),
     recipeId: z.string().optional(),
     amountInvested: z.string().refine(
@@ -125,6 +131,8 @@ export default function Investors() {
     resolver: zodResolver(investorFormSchema),
     defaultValues: {
       name: "",
+      nationalId: "",
+      contactNumber: "+966",
       investorType: "money",
       recipeId: "",
       amountInvested: "",
@@ -173,6 +181,8 @@ export default function Investors() {
     mutationFn: async (data: InvestorFormValues) => {
       const payload = {
         name: data.name,
+        nationalId: data.nationalId || null,
+        contactNumber: data.contactNumber || null,
         investorType: data.investorType,
         recipeId: data.investorType === "recipe" ? data.recipeId : null,
         amountInvested: data.investorType === "recipe" ? "0.00" : parseFloat(data.amountInvested || "0").toFixed(2),
@@ -203,6 +213,8 @@ export default function Investors() {
     mutationFn: async (data: InvestorFormValues & { id: string }) => {
       return await apiRequest("PATCH", `/api/investors/${data.id}`, {
         name: data.name,
+        nationalId: data.nationalId || null,
+        contactNumber: data.contactNumber || null,
         investorType: data.investorType,
         recipeId: data.investorType === "recipe" ? data.recipeId : null,
         amountInvested: data.investorType === "recipe" ? "0.00" : parseFloat(data.amountInvested || "0").toFixed(2),
@@ -262,6 +274,8 @@ export default function Investors() {
     setEditingInvestor(investor);
     form.reset({
       name: investor.name,
+      nationalId: investor.nationalId || "",
+      contactNumber: investor.contactNumber || "+966",
       investorType: investor.investorType || "money",
       recipeId: investor.recipeId || "",
       amountInvested: investor.amountInvested,
@@ -430,6 +444,44 @@ export default function Investors() {
                           {...field}
                           className="h-[44px]"
                           data-testid="input-investor-name"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="nationalId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t.investorNationalId || "ID (National/Iqama)"}</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={t.enterNationalId || "Enter ID number"}
+                          {...field}
+                          className="h-[44px]"
+                          data-testid="input-investor-national-id"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="contactNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t.investorContactNumber || "Contact Number"}</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="+966 5XXXXXXXX"
+                          {...field}
+                          className="h-[44px]"
+                          data-testid="input-investor-contact-number"
                         />
                       </FormControl>
                       <FormMessage />

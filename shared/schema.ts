@@ -681,6 +681,8 @@ export const investors = pgTable("investors", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   name: text("name").notNull(),
+  nationalId: text("national_id"), // National ID or Iqama number
+  contactNumber: text("contact_number"), // Phone number with +966 prefix
   investorType: text("investor_type").notNull().default("money"), // "money" for cash investor, "recipe" for recipe owner
   recipeId: varchar("recipe_id").references(() => recipes.id), // Only used when investorType is "recipe"
   amountInvested: decimal("amount_invested", { precision: 12, scale: 2 }).notNull(), // Amount invested in SAR (0 for recipe owners)
