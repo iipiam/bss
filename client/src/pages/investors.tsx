@@ -360,9 +360,70 @@ export default function Investors() {
     uploadDocumentMutation.mutate({ investorId, file });
   };
 
-  const handleViewDocument = (investor: Investor) => {
+  const handlePreviewDocument = async (investor: Investor) => {
     if (investor.documentPath) {
-      window.open(`/api/investors/${investor.id}/document`, "_blank");
+      try {
+        const response = await fetch(`/api/investors/${investor.id}/document?mode=inline`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch document');
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+        }, 5000);
+      } catch (error) {
+        console.error("Error previewing document:", error);
+        toast({
+          title: t.error || "Error",
+          description: t.documentPreviewFailed || "Could not preview the document.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleDownloadDocument = async (investor: Investor) => {
+    if (investor.documentPath) {
+      try {
+        const response = await fetch(`/api/investors/${investor.id}/document`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch document');
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${investor.name.replace(/[^a-zA-Z0-9]/g, '_')}_document.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        toast({
+          title: t.success || "Success",
+          description: t.documentDownloaded || "Document downloaded successfully.",
+        });
+      } catch (error) {
+        console.error("Error downloading document:", error);
+        toast({
+          title: t.error || "Error",
+          description: t.documentDownloadFailed || "Could not download the document.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -1039,12 +1100,24 @@ export default function Investors() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleViewDocument(investor)}
+                            onClick={() => handlePreviewDocument(investor)}
                             className="h-8"
-                            data-testid={`button-view-document-${investor.id}`}
+                            data-testid={`button-preview-document-${investor.id}`}
+                            title={t.previewDocument || "Preview Document"}
                           >
                             <Eye className="h-3 w-3 mr-1" />
-                            {t.view || "View"}
+                            {t.preview || "Preview"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDownloadDocument(investor)}
+                            className="h-8"
+                            data-testid={`button-download-document-${investor.id}`}
+                            title={t.downloadDocument || "Download Document"}
+                          >
+                            <FileDown className="h-3 w-3 mr-1" />
+                            {t.download || "Download"}
                           </Button>
                           <Button
                             size="sm"

@@ -755,6 +755,12 @@ export interface Translations {
   maxFileSize10MB: string;
   confirmDeleteDocument: string;
   confirmDeleteDocumentDesc: string;
+  previewDocument: string;
+  downloadDocument: string;
+  documentPreviewFailed: string;
+  documentDownloaded: string;
+  documentDownloadFailed: string;
+  preview: string;
   transactionDocument: string;
   selectPdf: string;
   transactionDocumentHelp: string;
@@ -2502,6 +2508,12 @@ export const translations: Record<Language, Translations> = {
     maxFileSize10MB: 'Maximum file size is 10MB',
     confirmDeleteDocument: 'Delete Document',
     confirmDeleteDocumentDesc: 'Are you sure you want to delete this document?',
+    previewDocument: 'Preview Document',
+    downloadDocument: 'Download Document',
+    documentPreviewFailed: 'Failed to preview document',
+    documentDownloaded: 'Document downloaded successfully',
+    documentDownloadFailed: 'Failed to download document',
+    preview: 'Preview',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -4249,6 +4261,12 @@ export const translations: Record<Language, Translations> = {
     maxFileSize10MB: 'الحد الأقصى لحجم الملف 10 ميجابايت',
     confirmDeleteDocument: 'حذف المستند',
     confirmDeleteDocumentDesc: 'هل أنت متأكد من حذف هذا المستند؟',
+    previewDocument: 'معاينة المستند',
+    downloadDocument: 'تحميل المستند',
+    documentPreviewFailed: 'فشل في معاينة المستند',
+    documentDownloaded: 'تم تحميل المستند بنجاح',
+    documentDownloadFailed: 'فشل في تحميل المستند',
+    preview: 'معاينة',
     
     // Employee Management
     employeeManagement: 'إدارة الموظفين',
@@ -5994,6 +6012,12 @@ export const translations: Record<Language, Translations> = {
     maxFileSize10MB: 'Maximum file size is 10MB',
     confirmDeleteDocument: 'Delete Document',
     confirmDeleteDocumentDesc: 'Are you sure you want to delete this document?',
+    previewDocument: 'Preview Document',
+    downloadDocument: 'Download Document',
+    documentPreviewFailed: 'Failed to preview document',
+    documentDownloaded: 'Document downloaded successfully',
+    documentDownloadFailed: 'Failed to download document',
+    preview: 'Preview',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -7722,6 +7746,12 @@ export const translations: Record<Language, Translations> = {
     maxFileSize10MB: 'Maximum file size is 10MB',
     confirmDeleteDocument: 'Delete Document',
     confirmDeleteDocumentDesc: 'Are you sure you want to delete this document?',
+    previewDocument: 'Preview Document',
+    downloadDocument: 'Download Document',
+    documentPreviewFailed: 'Failed to preview document',
+    documentDownloaded: 'Document downloaded successfully',
+    documentDownloadFailed: 'Failed to download document',
+    preview: 'Preview',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -9450,6 +9480,12 @@ export const translations: Record<Language, Translations> = {
     maxFileSize10MB: 'Maximum file size is 10MB',
     confirmDeleteDocument: 'Delete Document',
     confirmDeleteDocumentDesc: 'Are you sure you want to delete this document?',
+    previewDocument: 'Preview Document',
+    downloadDocument: 'Download Document',
+    documentPreviewFailed: 'Failed to preview document',
+    documentDownloaded: 'Document downloaded successfully',
+    documentDownloadFailed: 'Failed to download document',
+    preview: 'Preview',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -11178,6 +11214,12 @@ export const translations: Record<Language, Translations> = {
     maxFileSize10MB: 'Maximum file size is 10MB',
     confirmDeleteDocument: 'Delete Document',
     confirmDeleteDocumentDesc: 'Are you sure you want to delete this document?',
+    previewDocument: 'Preview Document',
+    downloadDocument: 'Download Document',
+    documentPreviewFailed: 'Failed to preview document',
+    documentDownloaded: 'Document downloaded successfully',
+    documentDownloadFailed: 'Failed to download document',
+    preview: 'Preview',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -12895,6 +12937,12 @@ export const translations: Record<Language, Translations> = {
     maxFileSize10MB: 'अधिकतम फ़ाइल आकार 10MB है',
     confirmDeleteDocument: 'दस्तावेज़ हटाएं',
     confirmDeleteDocumentDesc: 'क्या आप वाकई इस दस्तावेज़ को हटाना चाहते हैं?',
+    previewDocument: 'दस्तावेज़ का पूर्वावलोकन',
+    downloadDocument: 'दस्तावेज़ डाउनलोड करें',
+    documentPreviewFailed: 'दस्तावेज़ का पूर्वावलोकन करने में विफल',
+    documentDownloaded: 'दस्तावेज़ सफलतापूर्वक डाउनलोड हुआ',
+    documentDownloadFailed: 'दस्तावेज़ डाउनलोड करने में विफल',
+    preview: 'पूर्वावलोकन',
     
     // Employee Management
     employeeManagement: 'कर्मचारी प्रबंधन',
@@ -14566,6 +14614,12 @@ export const translations: Record<Language, Translations> = {
     maxFileSize10MB: 'زیادہ سے زیادہ فائل کا سائز 10MB ہے',
     confirmDeleteDocument: 'دستاویز حذف کریں',
     confirmDeleteDocumentDesc: 'کیا آپ واقعی اس دستاویز کو حذف کرنا چاہتے ہیں؟',
+    previewDocument: 'دستاویز کا پیش نظارہ',
+    downloadDocument: 'دستاویز ڈاؤن لوڈ کریں',
+    documentPreviewFailed: 'دستاویز کا پیش نظارہ کرنے میں ناکام',
+    documentDownloaded: 'دستاویز کامیابی سے ڈاؤن لوڈ ہوئی',
+    documentDownloadFailed: 'دستاویز ڈاؤن لوڈ کرنے میں ناکام',
+    preview: 'پیش نظارہ',
     
     // Employee Management
     employeeManagement: 'ملازمین کی انتظامیہ',
@@ -16190,6 +16244,12 @@ export const translations: Record<Language, Translations> = {
     maxFileSize10MB: "El tamaño máximo del archivo es 10MB",
     confirmDeleteDocument: "Eliminar Documento",
     confirmDeleteDocumentDesc: "¿Está seguro de que desea eliminar este documento?",
+    previewDocument: "Vista Previa del Documento",
+    downloadDocument: "Descargar Documento",
+    documentPreviewFailed: "Error al previsualizar el documento",
+    documentDownloaded: "Documento descargado correctamente",
+    documentDownloadFailed: "Error al descargar el documento",
+    preview: "Vista Previa",
     employeeManagement: "Employee Management",
     manageEmployees: "Manage employees and their information",
     addEmployee: "Añadir Empleado",
@@ -17802,6 +17862,12 @@ export const translations: Record<Language, Translations> = {
     maxFileSize10MB: "Maximum na laki ng file ay 10MB",
     confirmDeleteDocument: "Burahin ang Dokumento",
     confirmDeleteDocumentDesc: "Sigurado ka bang gusto mong burahin ang dokumentong ito?",
+    previewDocument: "I-preview ang Dokumento",
+    downloadDocument: "I-download ang Dokumento",
+    documentPreviewFailed: "Nabigo ang preview ng dokumento",
+    documentDownloaded: "Matagumpay na na-download ang dokumento",
+    documentDownloadFailed: "Nabigo ang pag-download ng dokumento",
+    preview: "Preview",
     employeeManagement: "Employee Management",
     manageEmployees: "Manage employees and their information",
     addEmployee: "Magdagdag ng Empleyado",

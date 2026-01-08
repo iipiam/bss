@@ -2558,6 +2558,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const investorId = req.params.id;
+      const mode = req.query.mode as string;
 
       const investor = await storage.getInvestor(investorId);
       if (!investor || investor.restaurantId !== restaurantId) {
@@ -2572,6 +2573,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: "Document file not found" });
       }
+
+      // Set Content-Disposition based on mode (inline for preview, attachment for download)
+      const filename = `${investor.name.replace(/[^a-zA-Z0-9]/g, '_')}_document.pdf`;
+      if (mode === 'inline') {
+        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      } else {
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      }
+      res.setHeader('Content-Type', 'application/pdf');
 
       res.sendFile(filePath);
     } catch (error) {
