@@ -4862,12 +4862,28 @@ export const storage = new DatabaseStorage();
     `);
     console.log('[Migration] Procurement columns verified/added: inventory_item_id, original_procurement_id, unit');
     
-    // Add national_id column to investors table if missing
+    // Add missing columns to investors table
     await pool.query(`
       ALTER TABLE investors 
       ADD COLUMN IF NOT EXISTS national_id TEXT
     `);
-    console.log('[Migration] Investors column verified/added: national_id');
+    await pool.query(`
+      ALTER TABLE investors 
+      ADD COLUMN IF NOT EXISTS contact_number TEXT
+    `);
+    await pool.query(`
+      ALTER TABLE investors 
+      ADD COLUMN IF NOT EXISTS investor_type TEXT DEFAULT 'money'
+    `);
+    await pool.query(`
+      ALTER TABLE investors 
+      ADD COLUMN IF NOT EXISTS recipe_id VARCHAR(255)
+    `);
+    await pool.query(`
+      ALTER TABLE investors 
+      ADD COLUMN IF NOT EXISTS document_path TEXT
+    `);
+    console.log('[Migration] Investors columns verified/added: national_id, contact_number, investor_type, recipe_id, document_path');
   } catch (error: any) {
     // Only log if not a duplicate column error (which means columns already exist)
     if (!error.message?.includes('already exists')) {
