@@ -740,6 +740,18 @@ export interface Translations {
   recipeSales: string;
   profitShare: string;
   unknownRecipe: string;
+  investorDocument: string;
+  documentUploaded: string;
+  documentUploadedDesc: string;
+  failedToUploadDocument: string;
+  documentDeleted: string;
+  documentDeletedDesc: string;
+  failedToDeleteDocument: string;
+  invalidFileType: string;
+  onlyPdfAllowed: string;
+  maxFileSize10MB: string;
+  confirmDeleteDocument: string;
+  confirmDeleteDocumentDesc: string;
   
   // Employee Management
   employeeManagement: string;
@@ -2469,6 +2481,18 @@ export const translations: Record<Language, Translations> = {
     recipeSales: 'Recipe Sales',
     profitShare: 'Profit Share',
     unknownRecipe: 'Unknown Recipe',
+    investorDocument: 'Document',
+    documentUploaded: 'Document Uploaded',
+    documentUploadedDesc: 'Document has been uploaded successfully.',
+    failedToUploadDocument: 'Failed to Upload Document',
+    documentDeleted: 'Document Deleted',
+    documentDeletedDesc: 'Document has been removed successfully.',
+    failedToDeleteDocument: 'Failed to Delete Document',
+    invalidFileType: 'Invalid File Type',
+    onlyPdfAllowed: 'Only PDF files are allowed',
+    maxFileSize10MB: 'Maximum file size is 10MB',
+    confirmDeleteDocument: 'Delete Document',
+    confirmDeleteDocumentDesc: 'Are you sure you want to delete this document?',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -4201,6 +4225,18 @@ export const translations: Record<Language, Translations> = {
     recipeSales: 'مبيعات الوصفة',
     profitShare: 'حصة الربح',
     unknownRecipe: 'وصفة غير معروفة',
+    investorDocument: 'المستند',
+    documentUploaded: 'تم رفع المستند',
+    documentUploadedDesc: 'تم رفع المستند بنجاح.',
+    failedToUploadDocument: 'فشل رفع المستند',
+    documentDeleted: 'تم حذف المستند',
+    documentDeletedDesc: 'تم حذف المستند بنجاح.',
+    failedToDeleteDocument: 'فشل حذف المستند',
+    invalidFileType: 'نوع ملف غير صالح',
+    onlyPdfAllowed: 'يُسمح فقط بملفات PDF',
+    maxFileSize10MB: 'الحد الأقصى لحجم الملف 10 ميجابايت',
+    confirmDeleteDocument: 'حذف المستند',
+    confirmDeleteDocumentDesc: 'هل أنت متأكد من حذف هذا المستند؟',
     
     // Employee Management
     employeeManagement: 'إدارة الموظفين',
@@ -5931,6 +5967,18 @@ export const translations: Record<Language, Translations> = {
     recipeSales: 'Recipe Sales',
     profitShare: 'Profit Share',
     unknownRecipe: 'Unknown Recipe',
+    investorDocument: 'Document',
+    documentUploaded: 'Document Uploaded',
+    documentUploadedDesc: 'Document has been uploaded successfully.',
+    failedToUploadDocument: 'Failed to Upload Document',
+    documentDeleted: 'Document Deleted',
+    documentDeletedDesc: 'Document has been removed successfully.',
+    failedToDeleteDocument: 'Failed to Delete Document',
+    invalidFileType: 'Invalid File Type',
+    onlyPdfAllowed: 'Only PDF files are allowed',
+    maxFileSize10MB: 'Maximum file size is 10MB',
+    confirmDeleteDocument: 'Delete Document',
+    confirmDeleteDocumentDesc: 'Are you sure you want to delete this document?',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -7644,6 +7692,18 @@ export const translations: Record<Language, Translations> = {
     recipeSales: 'Recipe Sales',
     profitShare: 'Profit Share',
     unknownRecipe: 'Unknown Recipe',
+    investorDocument: 'Document',
+    documentUploaded: 'Document Uploaded',
+    documentUploadedDesc: 'Document has been uploaded successfully.',
+    failedToUploadDocument: 'Failed to Upload Document',
+    documentDeleted: 'Document Deleted',
+    documentDeletedDesc: 'Document has been removed successfully.',
+    failedToDeleteDocument: 'Failed to Delete Document',
+    invalidFileType: 'Invalid File Type',
+    onlyPdfAllowed: 'Only PDF files are allowed',
+    maxFileSize10MB: 'Maximum file size is 10MB',
+    confirmDeleteDocument: 'Delete Document',
+    confirmDeleteDocumentDesc: 'Are you sure you want to delete this document?',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -9357,6 +9417,18 @@ export const translations: Record<Language, Translations> = {
     recipeSales: 'Recipe Sales',
     profitShare: 'Profit Share',
     unknownRecipe: 'Unknown Recipe',
+    investorDocument: 'Document',
+    documentUploaded: 'Document Uploaded',
+    documentUploadedDesc: 'Document has been uploaded successfully.',
+    failedToUploadDocument: 'Failed to Upload Document',
+    documentDeleted: 'Document Deleted',
+    documentDeletedDesc: 'Document has been removed successfully.',
+    failedToDeleteDocument: 'Failed to Delete Document',
+    invalidFileType: 'Invalid File Type',
+    onlyPdfAllowed: 'Only PDF files are allowed',
+    maxFileSize10MB: 'Maximum file size is 10MB',
+    confirmDeleteDocument: 'Delete Document',
+    confirmDeleteDocumentDesc: 'Are you sure you want to delete this document?',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -11070,6 +11142,18 @@ export const translations: Record<Language, Translations> = {
     recipeSales: 'Recipe Sales',
     profitShare: 'Profit Share',
     unknownRecipe: 'Unknown Recipe',
+    investorDocument: 'Document',
+    documentUploaded: 'Document Uploaded',
+    documentUploadedDesc: 'Document has been uploaded successfully.',
+    failedToUploadDocument: 'Failed to Upload Document',
+    documentDeleted: 'Document Deleted',
+    documentDeletedDesc: 'Document has been removed successfully.',
+    failedToDeleteDocument: 'Failed to Delete Document',
+    invalidFileType: 'Invalid File Type',
+    onlyPdfAllowed: 'Only PDF files are allowed',
+    maxFileSize10MB: 'Maximum file size is 10MB',
+    confirmDeleteDocument: 'Delete Document',
+    confirmDeleteDocumentDesc: 'Are you sure you want to delete this document?',
     
     // Employee Management
     employeeManagement: 'Employee Management',
@@ -12772,6 +12856,18 @@ export const translations: Record<Language, Translations> = {
     recipeSales: 'Recipe Sales',
     profitShare: 'Profit Share',
     unknownRecipe: 'Unknown Recipe',
+    investorDocument: 'दस्तावेज़',
+    documentUploaded: 'दस्तावेज़ अपलोड हुआ',
+    documentUploadedDesc: 'दस्तावेज़ सफलतापूर्वक अपलोड हो गया है।',
+    failedToUploadDocument: 'दस्तावेज़ अपलोड करने में विफल',
+    documentDeleted: 'दस्तावेज़ हटाया गया',
+    documentDeletedDesc: 'दस्तावेज़ सफलतापूर्वक हटा दिया गया है।',
+    failedToDeleteDocument: 'दस्तावेज़ हटाने में विफल',
+    invalidFileType: 'अमान्य फ़ाइल प्रकार',
+    onlyPdfAllowed: 'केवल PDF फ़ाइलें अनुमत हैं',
+    maxFileSize10MB: 'अधिकतम फ़ाइल आकार 10MB है',
+    confirmDeleteDocument: 'दस्तावेज़ हटाएं',
+    confirmDeleteDocumentDesc: 'क्या आप वाकई इस दस्तावेज़ को हटाना चाहते हैं?',
     
     // Employee Management
     employeeManagement: 'कर्मचारी प्रबंधन',
@@ -14428,6 +14524,18 @@ export const translations: Record<Language, Translations> = {
     recipeSales: 'Recipe Sales',
     profitShare: 'Profit Share',
     unknownRecipe: 'Unknown Recipe',
+    investorDocument: 'دستاویز',
+    documentUploaded: 'دستاویز اپ لوڈ ہوگئی',
+    documentUploadedDesc: 'دستاویز کامیابی سے اپ لوڈ ہوگئی ہے۔',
+    failedToUploadDocument: 'دستاویز اپ لوڈ کرنے میں ناکام',
+    documentDeleted: 'دستاویز حذف ہوگئی',
+    documentDeletedDesc: 'دستاویز کامیابی سے ہٹا دی گئی ہے۔',
+    failedToDeleteDocument: 'دستاویز حذف کرنے میں ناکام',
+    invalidFileType: 'غلط فائل کی قسم',
+    onlyPdfAllowed: 'صرف PDF فائلوں کی اجازت ہے',
+    maxFileSize10MB: 'زیادہ سے زیادہ فائل کا سائز 10MB ہے',
+    confirmDeleteDocument: 'دستاویز حذف کریں',
+    confirmDeleteDocumentDesc: 'کیا آپ واقعی اس دستاویز کو حذف کرنا چاہتے ہیں؟',
     
     // Employee Management
     employeeManagement: 'ملازمین کی انتظامیہ',
@@ -16037,6 +16145,18 @@ export const translations: Record<Language, Translations> = {
     recipeSales: "Recipe Sales",
     profitShare: "Profit Share",
     unknownRecipe: "Unknown Recipe",
+    investorDocument: "Documento",
+    documentUploaded: "Documento Subido",
+    documentUploadedDesc: "El documento se ha subido correctamente.",
+    failedToUploadDocument: "Error al Subir Documento",
+    documentDeleted: "Documento Eliminado",
+    documentDeletedDesc: "El documento se ha eliminado correctamente.",
+    failedToDeleteDocument: "Error al Eliminar Documento",
+    invalidFileType: "Tipo de Archivo Inválido",
+    onlyPdfAllowed: "Solo se permiten archivos PDF",
+    maxFileSize10MB: "El tamaño máximo del archivo es 10MB",
+    confirmDeleteDocument: "Eliminar Documento",
+    confirmDeleteDocumentDesc: "¿Está seguro de que desea eliminar este documento?",
     employeeManagement: "Employee Management",
     manageEmployees: "Manage employees and their information",
     addEmployee: "Añadir Empleado",
@@ -17634,6 +17754,18 @@ export const translations: Record<Language, Translations> = {
     recipeSales: "Recipe Sales",
     profitShare: "Profit Share",
     unknownRecipe: "Unknown Recipe",
+    investorDocument: "Dokumento",
+    documentUploaded: "Na-upload ang Dokumento",
+    documentUploadedDesc: "Matagumpay na na-upload ang dokumento.",
+    failedToUploadDocument: "Nabigo ang Pag-upload ng Dokumento",
+    documentDeleted: "Nabura ang Dokumento",
+    documentDeletedDesc: "Matagumpay na nabura ang dokumento.",
+    failedToDeleteDocument: "Nabigo ang Pagbura ng Dokumento",
+    invalidFileType: "Hindi Valid na Uri ng File",
+    onlyPdfAllowed: "PDF files lamang ang pinapayagan",
+    maxFileSize10MB: "Maximum na laki ng file ay 10MB",
+    confirmDeleteDocument: "Burahin ang Dokumento",
+    confirmDeleteDocumentDesc: "Sigurado ka bang gusto mong burahin ang dokumentong ito?",
     employeeManagement: "Employee Management",
     manageEmployees: "Manage employees and their information",
     addEmployee: "Magdagdag ng Empleyado",
