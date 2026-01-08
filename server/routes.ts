@@ -2483,6 +2483,134 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Investor document upload configuration
+  const investorDocStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      const uploadPath = path.join(process.cwd(), 'uploads', 'investor-documents');
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+      cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+      const restaurantId = (req as any).session?.user?.restaurantId;
+      const investorId = req.params.id;
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, `${restaurantId}_${investorId}_${uniqueSuffix}${ext}`);
+    }
+  });
+
+  const uploadInvestorDoc = multer({
+    storage: investorDocStorage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: (req: any, file: any, cb: any) => {
+      const allowedTypes = ['application/pdf'];
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only PDF files are allowed'));
+      }
+    }
+  });
+
+  // Upload document for investor
+  app.post("/api/investors/:id/document", requireAuth, requireRestaurant, requireAction('investors', 'edit'), uploadInvestorDoc.single('document'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const investorId = req.params.id;
+
+      // Verify investor exists and belongs to this restaurant
+      const investor = await storage.getInvestor(investorId);
+      if (!investor || investor.restaurantId !== restaurantId) {
+        // Delete uploaded file if investor not found
+        if (req.file) {
+          fs.unlinkSync(req.file.path);
+        }
+        return res.status(404).json({ error: "Investor not found" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      // Delete old document if exists
+      if (investor.documentPath) {
+        const oldPath = path.join(process.cwd(), investor.documentPath);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
+
+      // Update investor with new document path
+      const documentPath = `uploads/investor-documents/${req.file.filename}`;
+      const updated = await storage.updateInvestor(investorId, { documentPath });
+
+      res.json({ success: true, documentPath, investor: updated });
+    } catch (error) {
+      console.error("[INVESTORS] Document upload error:", error);
+      res.status(500).json({ error: "Failed to upload document" });
+    }
+  });
+
+  // Download/view investor document
+  app.get("/api/investors/:id/document", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const investorId = req.params.id;
+
+      const investor = await storage.getInvestor(investorId);
+      if (!investor || investor.restaurantId !== restaurantId) {
+        return res.status(404).json({ error: "Investor not found" });
+      }
+
+      if (!investor.documentPath) {
+        return res.status(404).json({ error: "No document found" });
+      }
+
+      const filePath = path.join(process.cwd(), investor.documentPath);
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: "Document file not found" });
+      }
+
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error("[INVESTORS] Document download error:", error);
+      res.status(500).json({ error: "Failed to download document" });
+    }
+  });
+
+  // Delete investor document
+  app.delete("/api/investors/:id/document", requireAuth, requireRestaurant, requireAction('investors', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const investorId = req.params.id;
+
+      const investor = await storage.getInvestor(investorId);
+      if (!investor || investor.restaurantId !== restaurantId) {
+        return res.status(404).json({ error: "Investor not found" });
+      }
+
+      if (!investor.documentPath) {
+        return res.status(404).json({ error: "No document to delete" });
+      }
+
+      // Delete file from disk
+      const filePath = path.join(process.cwd(), investor.documentPath);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+
+      // Update investor to remove document path
+      await storage.updateInvestor(investorId, { documentPath: null });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[INVESTORS] Document delete error:", error);
+      res.status(500).json({ error: "Failed to delete document" });
+    }
+  });
+
   // Investor Statement PDF Generation
   app.get("/api/investors/:id/statement", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
     try {
