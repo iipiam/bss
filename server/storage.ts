@@ -4884,6 +4884,13 @@ export const storage = new DatabaseStorage();
       ADD COLUMN IF NOT EXISTS document_path TEXT
     `);
     console.log('[Migration] Investors columns verified/added: national_id, contact_number, investor_type, recipe_id, document_path');
+    
+    // Add weekly_schedule column to settings table for per-day shift configuration
+    await pool.query(`
+      ALTER TABLE settings 
+      ADD COLUMN IF NOT EXISTS weekly_schedule JSONB
+    `);
+    console.log('[Migration] Settings column verified/added: weekly_schedule');
   } catch (error: any) {
     // Only log if not a duplicate column error (which means columns already exist)
     if (!error.message?.includes('already exists')) {

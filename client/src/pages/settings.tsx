@@ -11,9 +11,45 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useDevice } from "@/contexts/DeviceContext";
 import { useAuth } from "@/lib/auth";
 import type { Settings } from "@shared/schema";
-import { Save, Laptop, Tablet, Smartphone, Volume2, Bell, MessageSquare, Upload, Trash2, Image, Plus, X } from "lucide-react";
+import { Save, Laptop, Tablet, Smartphone, Volume2, Bell, MessageSquare, Upload, Trash2, Image, Plus, X, Calendar, Clock } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { notificationTones, toneIds, playNotificationTone, getToneName, type ToneId } from "@/lib/notificationTones";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+type DaySchedule = {
+  enabled: boolean;
+  shift1: { open: string; close: string };
+  shift2: { enabled: boolean; open: string; close: string };
+};
+
+type WeeklySchedule = {
+  sunday: DaySchedule;
+  monday: DaySchedule;
+  tuesday: DaySchedule;
+  wednesday: DaySchedule;
+  thursday: DaySchedule;
+  friday: DaySchedule;
+  saturday: DaySchedule;
+};
+
+// Deep clone helper to avoid shared references
+const createDefaultDaySchedule = (enabled: boolean = true): DaySchedule => ({
+  enabled,
+  shift1: { open: enabled ? "09:00" : "", close: enabled ? "17:00" : "" },
+  shift2: { enabled: false, open: "", close: "" }
+});
+
+const createDefaultWeeklySchedule = (): WeeklySchedule => ({
+  sunday: createDefaultDaySchedule(true),
+  monday: createDefaultDaySchedule(true),
+  tuesday: createDefaultDaySchedule(true),
+  wednesday: createDefaultDaySchedule(true),
+  thursday: createDefaultDaySchedule(true),
+  friday: createDefaultDaySchedule(false), // Friday off by default
+  saturday: createDefaultDaySchedule(true),
+});
+
+const DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -21,6 +57,8 @@ export default function SettingsPage() {
   const { restaurant, isLoading: authLoading } = useAuth();
   const [formData, setFormData] = useState<Partial<Settings>>({});
   const [showShift2, setShowShift2] = useState(false);
+  const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule>(createDefaultWeeklySchedule());
+  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: settings, isLoading } = useQuery<Settings>({
@@ -38,8 +76,60 @@ export default function SettingsPage() {
       if (hasShift2Data) {
         setShowShift2(true);
       }
+      // Load weekly schedule from settings if available (deep clone to avoid reference issues)
+      if (settings.weeklySchedule) {
+        setWeeklySchedule(JSON.parse(JSON.stringify(settings.weeklySchedule)) as WeeklySchedule);
+      } else {
+        setWeeklySchedule(createDefaultWeeklySchedule());
+      }
     }
   }, [settings]);
+
+  // Helper function to get translated day name
+  const getDayName = (day: string): string => {
+    const dayTranslations: Record<string, string> = {
+      sunday: t.sunday || 'Sunday',
+      monday: t.monday || 'Monday',
+      tuesday: t.tuesday || 'Tuesday',
+      wednesday: t.wednesday || 'Wednesday',
+      thursday: t.thursday || 'Thursday',
+      friday: t.friday || 'Friday',
+      saturday: t.saturday || 'Saturday',
+    };
+    return dayTranslations[day] || day;
+  };
+
+  // Update a specific day's schedule
+  const updateDaySchedule = (day: keyof WeeklySchedule, updates: Partial<DaySchedule>) => {
+    setWeeklySchedule(prev => ({
+      ...prev,
+      [day]: { ...prev[day], ...updates }
+    }));
+  };
+
+  // Update shift times for a specific day
+  const updateShiftTime = (day: keyof WeeklySchedule, shift: 'shift1' | 'shift2', field: 'open' | 'close', value: string) => {
+    setWeeklySchedule(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [shift]: { ...prev[day][shift], [field]: value }
+      }
+    }));
+  };
+
+  // Toggle day expansion
+  const toggleDayExpanded = (day: string) => {
+    setExpandedDays(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(day)) {
+        newSet.delete(day);
+      } else {
+        newSet.add(day);
+      }
+      return newSet;
+    });
+  };
 
   const updateMutation = useMutation({
     mutationFn: async (data: Partial<Settings>) => {
@@ -109,7 +199,8 @@ export default function SettingsPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateMutation.mutate(formData);
+    // Include weekly schedule in the form data
+    updateMutation.mutate({ ...formData, weeklySchedule });
   };
 
   const handleChange = (field: keyof Settings, value: string) => {
@@ -515,6 +606,141 @@ export default function SettingsPage() {
                       {removeLogoMutation.isPending ? t.loading : t.removeLogo}
                     </Button>
                   )}
+                </div>
+              </div>
+            </div>
+
+            {/* Weekly Schedule Section */}
+            <div className="pt-6 border-t">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <Label className="text-base font-semibold">{t.weeklySchedule || "Weekly Schedule"}</Label>
+                    <p className="text-sm text-muted-foreground">{t.weeklyScheduleDesc || "Configure operating hours for each day of the week"}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {DAYS_OF_WEEK.map((day) => {
+                    const daySchedule = weeklySchedule[day];
+                    const isExpanded = expandedDays.has(day);
+                    
+                    return (
+                      <div 
+                        key={day} 
+                        className="border rounded-lg overflow-hidden"
+                        data-testid={`schedule-day-${day}`}
+                      >
+                        {/* Day Header */}
+                        <div 
+                          className="flex items-center justify-between p-3 bg-muted/30 cursor-pointer hover-elevate"
+                          onClick={() => toggleDayExpanded(day)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Switch
+                              checked={daySchedule.enabled}
+                              onCheckedChange={(checked) => {
+                                updateDaySchedule(day, { enabled: checked });
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              data-testid={`switch-day-${day}`}
+                            />
+                            <span className={`font-medium ${!daySchedule.enabled ? 'text-muted-foreground' : ''}`}>
+                              {getDayName(day)}
+                            </span>
+                            {daySchedule.enabled && (
+                              <span className="text-sm text-muted-foreground">
+                                {daySchedule.shift1.open && daySchedule.shift1.close 
+                                  ? `${daySchedule.shift1.open} - ${daySchedule.shift1.close}`
+                                  : t.notConfigured || 'Not configured'}
+                                {daySchedule.shift2.enabled && daySchedule.shift2.open && daySchedule.shift2.close && (
+                                  <>, {daySchedule.shift2.open} - {daySchedule.shift2.close}</>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            {isExpanded ? <X className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                          </Button>
+                        </div>
+
+                        {/* Expanded Day Schedule */}
+                        {isExpanded && daySchedule.enabled && (
+                          <div className="p-4 space-y-4 border-t bg-background">
+                            {/* Shift 1 */}
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium text-muted-foreground">{t.shift1 || "Shift 1"}</Label>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                  <Label className="text-xs">{t.openingTime}</Label>
+                                  <Input
+                                    type="time"
+                                    value={daySchedule.shift1.open}
+                                    onChange={(e) => updateShiftTime(day, 'shift1', 'open', e.target.value)}
+                                    data-testid={`input-${day}-shift1-open`}
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs">{t.closingTime}</Label>
+                                  <Input
+                                    type="time"
+                                    value={daySchedule.shift1.close}
+                                    onChange={(e) => updateShiftTime(day, 'shift1', 'close', e.target.value)}
+                                    data-testid={`input-${day}-shift1-close`}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Shift 2 Toggle */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  checked={daySchedule.shift2.enabled}
+                                  onCheckedChange={(checked) => {
+                                    setWeeklySchedule(prev => ({
+                                      ...prev,
+                                      [day]: {
+                                        ...prev[day],
+                                        shift2: { ...prev[day].shift2, enabled: checked }
+                                      }
+                                    }));
+                                  }}
+                                  data-testid={`switch-${day}-shift2`}
+                                />
+                                <Label className="text-sm">{t.shift2 || "Shift 2"}</Label>
+                              </div>
+                            </div>
+
+                            {/* Shift 2 Times */}
+                            {daySchedule.shift2.enabled && (
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                  <Label className="text-xs">{t.openingTime}</Label>
+                                  <Input
+                                    type="time"
+                                    value={daySchedule.shift2.open}
+                                    onChange={(e) => updateShiftTime(day, 'shift2', 'open', e.target.value)}
+                                    data-testid={`input-${day}-shift2-open`}
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs">{t.closingTime}</Label>
+                                  <Input
+                                    type="time"
+                                    value={daySchedule.shift2.close}
+                                    onChange={(e) => updateShiftTime(day, 'shift2', 'close', e.target.value)}
+                                    data-testid={`input-${day}-shift2-close`}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>

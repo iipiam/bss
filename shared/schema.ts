@@ -366,6 +366,16 @@ export const settings = pgTable("settings", {
   // closingTime2: text("closing_time_2"),
   logoPath: text("logo_path"), // Path to uploaded logo for invoices (e.g., "uploads/logos/abc123.png")
   notificationTone: text("notification_tone").notNull().default("tone1"), // Admin-selected notification tone (tone1-tone15)
+  // Weekly schedule with per-day shift configuration
+  weeklySchedule: jsonb("weekly_schedule").$type<{
+    sunday: { enabled: boolean; shift1: { open: string; close: string }; shift2: { enabled: boolean; open: string; close: string } };
+    monday: { enabled: boolean; shift1: { open: string; close: string }; shift2: { enabled: boolean; open: string; close: string } };
+    tuesday: { enabled: boolean; shift1: { open: string; close: string }; shift2: { enabled: boolean; open: string; close: string } };
+    wednesday: { enabled: boolean; shift1: { open: string; close: string }; shift2: { enabled: boolean; open: string; close: string } };
+    thursday: { enabled: boolean; shift1: { open: string; close: string }; shift2: { enabled: boolean; open: string; close: string } };
+    friday: { enabled: boolean; shift1: { open: string; close: string }; shift2: { enabled: boolean; open: string; close: string } };
+    saturday: { enabled: boolean; shift1: { open: string; close: string }; shift2: { enabled: boolean; open: string; close: string } };
+  }>(),
   chatNotificationDefaults: jsonb("chat_notification_defaults").$type<{
     notificationsEnabled: boolean;
     soundEnabled: boolean;
