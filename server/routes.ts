@@ -2792,8 +2792,17 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       });
       
       // Send PDF response
+      const mode = req.query.mode as string;
+      const filename = `investor-statement-${investor.name.replace(/\s+/g, '-')}-${now.toISOString().split('T')[0]}.pdf`;
+      
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="investor-statement-${investor.name.replace(/\s+/g, '-')}-${now.toISOString().split('T')[0]}.pdf"`);
+      if (mode === 'inline') {
+        // Preview mode: display in browser
+        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      } else {
+        // Download mode: force download
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      }
       res.send(pdfBuffer);
       
     } catch (error) {
