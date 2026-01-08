@@ -518,6 +518,52 @@ export default function Investors() {
     }
   };
 
+  // Preview investor statement PDF
+  const [previewingStatement, setPreviewingStatement] = useState<string | null>(null);
+  const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
+  const [previewInvestorName, setPreviewInvestorName] = useState<string>("");
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  
+  const handlePreviewStatement = async (investor: Investor) => {
+    try {
+      setLoadingPreview(true);
+      setPreviewInvestorName(investor.name);
+      
+      const response = await fetch(`/api/investors/${investor.id}/statement?mode=inline`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate statement');
+      }
+      
+      // Get the PDF blob and create object URL
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      setPreviewPdfUrl(url);
+      setPreviewingStatement(investor.id);
+    } catch (error) {
+      console.error("Error previewing statement:", error);
+      toast({
+        title: t.statementPreviewFailed || "Preview Failed",
+        description: "Could not preview the investor statement.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const closePreviewDialog = () => {
+    if (previewPdfUrl) {
+      window.URL.revokeObjectURL(previewPdfUrl);
+    }
+    setPreviewPdfUrl(null);
+    setPreviewingStatement(null);
+    setPreviewInvestorName("");
+  };
+
   const netProfit = calculateNetProfit();
 
   if (isLoading) {
@@ -906,6 +952,17 @@ export default function Investors() {
                         <Button
                           size="icon"
                           variant="ghost"
+                          onClick={() => handlePreviewStatement(investor)}
+                          disabled={loadingPreview && previewInvestorName === investor.name}
+                          className="h-[44px] w-[44px] shrink-0 text-blue-600 hover:text-blue-700"
+                          data-testid={`button-preview-statement-${investor.id}`}
+                          title={t.previewStatement || "Preview Statement"}
+                        >
+                          <Eye className={`h-4 w-4 ${loadingPreview && previewInvestorName === investor.name ? 'animate-pulse' : ''}`} />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
                           onClick={() => handleDownloadStatement(investor)}
                           disabled={downloadingStatement === investor.id}
                           className="h-[44px] w-[44px] shrink-0 text-primary hover:text-primary"
@@ -1100,6 +1157,31 @@ export default function Investors() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* PDF Preview Dialog */}
+      <Dialog open={!!previewingStatement} onOpenChange={closePreviewDialog}>
+        <DialogContent className="max-w-4xl w-[95vw] h-[90vh] p-0">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              {t.investorStatement || "Investor Statement"} - {previewInvestorName}
+            </DialogTitle>
+            <DialogDescription>
+              {t.previewStatementDesc || "Preview the investor statement PDF below"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 p-4 pt-2 overflow-hidden">
+            {previewPdfUrl && (
+              <iframe
+                src={previewPdfUrl}
+                className="w-full h-full border rounded-lg"
+                title={`Statement for ${previewInvestorName}`}
+                data-testid="iframe-statement-preview"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
