@@ -519,8 +519,6 @@ export default function Investors() {
   };
 
   // Preview investor statement PDF
-  const [previewingStatement, setPreviewingStatement] = useState<string | null>(null);
-  const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
   const [previewInvestorName, setPreviewInvestorName] = useState<string>("");
   const [loadingPreview, setLoadingPreview] = useState(false);
   
@@ -538,11 +536,15 @@ export default function Investors() {
         throw new Error('Failed to generate statement');
       }
       
-      // Get the PDF blob and create object URL
+      // Get the PDF blob and open in new tab (more reliable than iframe embedding)
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      setPreviewPdfUrl(url);
-      setPreviewingStatement(investor.id);
+      window.open(url, '_blank');
+      
+      // Clean up the blob URL after a short delay (give browser time to load)
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 5000);
     } catch (error) {
       console.error("Error previewing statement:", error);
       toast({
@@ -553,15 +555,6 @@ export default function Investors() {
     } finally {
       setLoadingPreview(false);
     }
-  };
-
-  const closePreviewDialog = () => {
-    if (previewPdfUrl) {
-      window.URL.revokeObjectURL(previewPdfUrl);
-    }
-    setPreviewPdfUrl(null);
-    setPreviewingStatement(null);
-    setPreviewInvestorName("");
   };
 
   const netProfit = calculateNetProfit();
@@ -1158,30 +1151,6 @@ export default function Investors() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* PDF Preview Dialog */}
-      <Dialog open={!!previewingStatement} onOpenChange={closePreviewDialog}>
-        <DialogContent className="max-w-4xl w-[95vw] h-[90vh] p-0">
-          <DialogHeader className="p-4 pb-0">
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              {t.investorStatement || "Investor Statement"} - {previewInvestorName}
-            </DialogTitle>
-            <DialogDescription>
-              {t.previewStatementDesc || "Preview the investor statement PDF below"}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 p-4 pt-2 overflow-hidden">
-            {previewPdfUrl && (
-              <iframe
-                src={previewPdfUrl}
-                className="w-full h-full border rounded-lg"
-                title={`Statement for ${previewInvestorName}`}
-                data-testid="iframe-statement-preview"
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
