@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Edit, UserCircle, Trash2, DollarSign, TrendingUp, FileDown, Banknote, ChefHat } from "lucide-react";
+import { Plus, Search, Edit, UserCircle, Trash2, DollarSign, TrendingUp, FileDown, Banknote, ChefHat, FileText, Upload, Eye, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -30,6 +30,7 @@ interface Investor {
   monthlyEarnings?: string; // Calculated field based on net profit
   active: boolean;
   notes?: string;
+  documentPath?: string | null;
   createdAt: string;
 }
 
@@ -83,6 +84,9 @@ export default function Investors() {
   const [open, setOpen] = useState(false);
   const [editingInvestor, setEditingInvestor] = useState<Investor | null>(null);
   const [deletingInvestor, setDeletingInvestor] = useState<Investor | null>(null);
+  const [uploadingDocumentFor, setUploadingDocumentFor] = useState<string | null>(null);
+  const [deletingDocumentFor, setDeletingDocumentFor] = useState<Investor | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { t } = useLanguage();
   const layout = useDeviceLayout();
@@ -261,6 +265,86 @@ export default function Investors() {
       });
     },
   });
+
+  const uploadDocumentMutation = useMutation({
+    mutationFn: async ({ investorId, file }: { investorId: string; file: File }) => {
+      const formData = new FormData();
+      formData.append("document", file);
+      const response = await fetch(`/api/investors/${investorId}/document`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Upload failed");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/investors"] });
+      setUploadingDocumentFor(null);
+      toast({
+        title: t.documentUploaded || "Document Uploaded",
+        description: t.documentUploadedDesc || "Document has been uploaded successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.failedToUploadDocument || "Failed to Upload Document",
+        description: error.message || "Could not upload document",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteDocumentMutation = useMutation({
+    mutationFn: async (investorId: string) => {
+      await apiRequest("DELETE", `/api/investors/${investorId}/document`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/investors"] });
+      setDeletingDocumentFor(null);
+      toast({
+        title: t.documentDeleted || "Document Deleted",
+        description: t.documentDeletedDesc || "Document has been removed successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.failedToDeleteDocument || "Failed to Delete Document",
+        description: error.message || "Could not delete document",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFileUpload = (investorId: string, file: File) => {
+    if (file.type !== "application/pdf") {
+      toast({
+        title: t.invalidFileType || "Invalid File Type",
+        description: t.onlyPdfAllowed || "Only PDF files are allowed",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: t.fileTooLarge || "File Too Large",
+        description: t.maxFileSize10MB || "Maximum file size is 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+    setUploadingDocumentFor(investorId);
+    uploadDocumentMutation.mutate({ investorId, file });
+  };
+
+  const handleViewDocument = (investor: Investor) => {
+    if (investor.documentPath) {
+      window.open(`/api/investors/${investor.id}/document`, "_blank");
+    }
+  };
 
   const onSubmit = (data: InvestorFormValues) => {
     if (editingInvestor) {
@@ -797,6 +881,80 @@ export default function Investors() {
                         <p className="text-sm text-muted-foreground">{investor.notes}</p>
                       </div>
                     )}
+
+                    {/* Document Section */}
+                    <div className="pt-2 border-t">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium flex items-center gap-1">
+                          <FileText className="h-4 w-4" />
+                          {t.investorDocument || "Document"}
+                        </span>
+                      </div>
+                      {investor.documentPath ? (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <FileText className="h-3 w-3" />
+                            PDF
+                          </Badge>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewDocument(investor)}
+                            className="h-8"
+                            data-testid={`button-view-document-${investor.id}`}
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            {t.view || "View"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setDeletingDocumentFor(investor)}
+                            className="h-8 text-destructive hover:text-destructive"
+                            data-testid={`button-delete-document-${investor.id}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div>
+                          <input
+                            type="file"
+                            accept=".pdf"
+                            className="hidden"
+                            id={`file-upload-${investor.id}`}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleFileUpload(investor.id, file);
+                              }
+                              e.target.value = "";
+                            }}
+                            data-testid={`input-file-${investor.id}`}
+                          />
+                          <label htmlFor={`file-upload-${investor.id}`}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 cursor-pointer"
+                              disabled={uploadingDocumentFor === investor.id}
+                              asChild
+                            >
+                              <span>
+                                {uploadingDocumentFor === investor.id ? (
+                                  <>{t.uploading || "Uploading..."}</>
+                                ) : (
+                                  <>
+                                    <Upload className="h-3 w-3 mr-1" />
+                                    {t.uploadPdf || "Upload PDF"}
+                                  </>
+                                )}
+                              </span>
+                            </Button>
+                          </label>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -804,6 +962,30 @@ export default function Investors() {
           })
         )}
       </div>
+
+      {/* Delete Document Confirmation Dialog */}
+      <AlertDialog open={!!deletingDocumentFor} onOpenChange={() => setDeletingDocumentFor(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.confirmDeleteDocument || "Delete Document"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t.confirmDeleteDocumentDesc || `Are you sure you want to delete the document for ${deletingDocumentFor?.name}?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-[44px]" data-testid="button-cancel-delete-document">
+              {t.cancel || "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingDocumentFor && deleteDocumentMutation.mutate(deletingDocumentFor.id)}
+              className="h-[44px] bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete-document"
+            >
+              {t.delete || "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deletingInvestor} onOpenChange={() => setDeletingInvestor(null)}>
