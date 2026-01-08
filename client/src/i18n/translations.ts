@@ -752,6 +752,9 @@ export interface Translations {
   maxFileSize10MB: string;
   confirmDeleteDocument: string;
   confirmDeleteDocumentDesc: string;
+  transactionDocument: string;
+  selectPdf: string;
+  transactionDocumentHelp: string;
   
   // Employee Management
   employeeManagement: string;

@@ -86,7 +86,9 @@ export default function Investors() {
   const [deletingInvestor, setDeletingInvestor] = useState<Investor | null>(null);
   const [uploadingDocumentFor, setUploadingDocumentFor] = useState<string | null>(null);
   const [deletingDocumentFor, setDeletingDocumentFor] = useState<Investor | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const formFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { t } = useLanguage();
   const layout = useDeviceLayout();
@@ -195,10 +197,28 @@ export default function Investors() {
       };
       return await apiRequest("POST", "/api/investors", payload);
     },
-    onSuccess: () => {
+    onSuccess: async (response: any) => {
+      // If there's a pending file, upload it
+      if (pendingFile && response?.id) {
+        try {
+          const formData = new FormData();
+          formData.append("document", pendingFile);
+          const uploadResponse = await fetch(`/api/investors/${response.id}/document`, {
+            method: "POST",
+            body: formData,
+            credentials: "include",
+          });
+          if (!uploadResponse.ok) {
+            console.error("Failed to upload document");
+          }
+        } catch (err) {
+          console.error("Document upload error:", err);
+        }
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/investors"] });
       setOpen(false);
       form.reset();
+      setPendingFile(null);
       toast({
         title: t.investorCreated || "Investor Created",
         description: t.investorCreatedDesc || "New investor has been added successfully.",
@@ -381,6 +401,30 @@ export default function Investors() {
     setOpen(false);
     setEditingInvestor(null);
     form.reset();
+    setPendingFile(null);
+  };
+
+  const handleFormFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.type !== "application/pdf") {
+      toast({
+        title: t.invalidFileType || "Invalid File Type",
+        description: t.onlyPdfAllowed || "Only PDF files are allowed",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: t.fileTooLarge || "File Too Large",
+        description: t.maxFileSize10MB || "Maximum file size is 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+    setPendingFile(file);
   };
 
   const filteredInvestors = investors.filter((investor) =>
@@ -699,6 +743,52 @@ export default function Investors() {
                     </FormItem>
                   )}
                 />
+
+                {/* Transaction Document Upload */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    {t.transactionDocument || "Transaction Document"} ({t.optional || "Optional"})
+                  </label>
+                  <input
+                    ref={formFileInputRef}
+                    type="file"
+                    accept="application/pdf"
+                    onChange={handleFormFileSelect}
+                    className="hidden"
+                    data-testid="input-transaction-document"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => formFileInputRef.current?.click()}
+                      className="h-[44px]"
+                      data-testid="button-select-document"
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      {t.selectPdf || "Select PDF"}
+                    </Button>
+                    {pendingFile && (
+                      <div className="flex items-center gap-2 flex-1 bg-muted/50 rounded-md px-3 py-2">
+                        <FileText className="h-4 w-4 text-primary" />
+                        <span className="text-sm truncate flex-1">{pendingFile.name}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => setPendingFile(null)}
+                          data-testid="button-remove-selected-file"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t.transactionDocumentHelp || "Upload a PDF of the transaction proof (max 10MB)"}
+                  </p>
+                </div>
 
                 <div className="flex gap-3 pt-4">
                   <Button
