@@ -326,7 +326,9 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
   let logoHTML = '';
   if (data.logoPath) {
     try {
-      const logoFullPath = path.join(process.cwd(), data.logoPath);
+      // Logo is stored as "/uploads/logos/..." but files are in "public/uploads/logos/..."
+      const relativePath = data.logoPath.replace(/^\/+/, '');
+      const logoFullPath = path.join(process.cwd(), 'public', relativePath);
       if (existsSync(logoFullPath)) {
         const logoBuffer = readFileSync(logoFullPath);
         const logoExt = path.extname(data.logoPath).substring(1);
@@ -2449,7 +2451,9 @@ function generateInvestorStatementHTML(data: InvestorStatementData): string {
   let logoHTML = '';
   if (data.logoPath) {
     try {
-      const logoFullPath = path.join(process.cwd(), data.logoPath);
+      // Logo is stored as "/uploads/logos/..." but files are in "public/uploads/logos/..."
+      const relativePath = data.logoPath.replace(/^\/+/, '');
+      const logoFullPath = path.join(process.cwd(), 'public', relativePath);
       if (existsSync(logoFullPath)) {
         const logoBuffer = readFileSync(logoFullPath);
         const logoExt = path.extname(data.logoPath).substring(1);
