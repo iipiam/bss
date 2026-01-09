@@ -145,14 +145,23 @@ export default function ZatcaSettingsPage() {
     queryKey: ["/api/zatca/settings", selectedRestaurantId],
     queryFn: async () => {
       if (!selectedRestaurantId) return null;
-      const res = await fetch(`/api/zatca/settings?restaurantId=${selectedRestaurantId}`, {
-        credentials: "include"
-      });
-      if (!res.ok) {
-        if (res.status === 403) throw new Error("Access denied. IT account required.");
-        throw new Error("Failed to fetch settings");
+      try {
+        const res = await fetch(`/api/zatca/settings?restaurantId=${selectedRestaurantId}`, {
+          credentials: "include"
+        });
+        if (!res.ok) {
+          if (res.status === 403) throw new Error("Access denied. IT account required.");
+          if (res.status === 404) return null;
+          console.warn("Failed to fetch ZATCA settings:", res.status);
+          return null;
+        }
+        const text = await res.text();
+        if (!text || text.trim() === "") return null;
+        return JSON.parse(text);
+      } catch (error) {
+        console.warn("Error parsing ZATCA settings:", error);
+        return null;
       }
-      return res.json();
     },
     enabled: !authLoading && !!isITAccount && !!selectedRestaurantId,
     retry: false,
@@ -162,11 +171,21 @@ export default function ZatcaSettingsPage() {
     queryKey: ["/api/zatca/invoices", selectedRestaurantId],
     queryFn: async () => {
       if (!selectedRestaurantId) return [];
-      const res = await fetch(`/api/zatca/invoices?restaurantId=${selectedRestaurantId}`, {
-        credentials: "include"
-      });
-      if (!res.ok) throw new Error("Failed to fetch invoices");
-      return res.json();
+      try {
+        const res = await fetch(`/api/zatca/invoices?restaurantId=${selectedRestaurantId}`, {
+          credentials: "include"
+        });
+        if (!res.ok) {
+          console.warn("Failed to fetch ZATCA invoices:", res.status);
+          return [];
+        }
+        const text = await res.text();
+        if (!text || text.trim() === "") return [];
+        return JSON.parse(text);
+      } catch (error) {
+        console.warn("Error parsing ZATCA invoices:", error);
+        return [];
+      }
     },
     enabled: !authLoading && !!isITAccount && !!selectedRestaurantId,
     retry: false,
