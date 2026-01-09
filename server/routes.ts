@@ -4587,7 +4587,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           invoiceId: createdInvoice.id,
           invoiceNumber,
           invoiceType: "standard", // B2B - Standard Tax Invoice (requires clearance)
-          paymentMethod: (procurement.paymentMethod as "cash" | "card" | "bank_transfer") || "bank_transfer",
+          paymentMethod: "bank_transfer",
           subtotal: totalCost / 1.15,
           vatAmount: totalCost - (totalCost / 1.15),
           total: totalCost,
@@ -4598,7 +4598,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             unitPrice: item.basePrice,
             totalAmount: item.total
           })),
-          customerName: procurement.supplierName || undefined
+          customerName: procurementRecord.supplier || undefined
         });
 
         if (zatcaResult.success) {
@@ -4729,7 +4729,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           subtotal: parseFloat(order.subtotal),
           vatAmount: parseFloat(order.tax),
           total: parseFloat(order.total),
-          discount: parseFloat(order.discount || "0"),
+          discount: 0,
           items: order.items.map((item: any) => ({
             name: item.name,
             quantity: item.quantity,
