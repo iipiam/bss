@@ -9,7 +9,8 @@ export const restaurants = pgTable("restaurants", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   nationalId: text("national_id").notNull(), // National ID or Company Name (10 digits)
-  taxNumber: text("tax_number").notNull(), // Unified Tax Number
+  hasVatRegistration: boolean("has_vat_registration").notNull().default(true), // Whether client has VAT registration
+  taxNumber: text("tax_number"), // Unified Tax Number (nullable - only required if hasVatRegistration is true)
   commercialRegistration: text("commercial_registration").notNull(), // Commercial Registration (10 digits)
   businessType: text("business_type").notNull().default("restaurant"), // "restaurant" or "factory"
   type: text("type").notNull(), // Business subtype (e.g., "Cloud Kitchen", "Restaurant", "Coffee Shop" for restaurant; "Manufacturing", "Production" for factory)
