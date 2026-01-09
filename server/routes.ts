@@ -12072,8 +12072,18 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.json(null);
       }
       
-      const safeSettings = {
+      // Map database field names to frontend field names
+      const safeSettings: Record<string, any> = {
         ...settings,
+        // Map seller-prefixed fields to short names for frontend
+        streetName: settings.sellerStreetName,
+        buildingNumber: settings.sellerBuildingNumber,
+        citySubdivision: settings.sellerCitySubdivision,
+        city: settings.sellerCity,
+        postalZone: settings.sellerPostalZone,
+        countryCode: settings.csrCountryName,
+        crNumber: settings.sellerCrNumber,
+        // Mask sensitive values
         privateKey: settings.privateKey ? "[CONFIGURED]" : null,
         complianceCsid: settings.complianceCsid ? "[CONFIGURED]" : null,
         complianceCsidSecret: settings.complianceCsidSecret ? "[CONFIGURED]" : null,
@@ -12091,10 +12101,31 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // Create or update ZATCA settings (IT only)
   app.post("/api/zatca/settings", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const { restaurantId: targetRestaurantId, ...settingsData } = req.body;
+      const { restaurantId: targetRestaurantId, ...rawSettingsData } = req.body;
       if (!targetRestaurantId) {
         return res.status(400).json({ error: "Restaurant ID required in request body" });
       }
+      
+      // Map frontend field names to database column names (seller prefix for address fields)
+      const settingsData: Record<string, any> = { ...rawSettingsData };
+      const fieldMappings: Record<string, string> = {
+        streetName: "sellerStreetName",
+        buildingNumber: "sellerBuildingNumber",
+        citySubdivision: "sellerCitySubdivision",
+        city: "sellerCity",
+        postalZone: "sellerPostalZone",
+        crNumber: "sellerCrNumber",
+      };
+      
+      for (const [frontendKey, dbKey] of Object.entries(fieldMappings)) {
+        if (frontendKey in settingsData) {
+          settingsData[dbKey] = settingsData[frontendKey];
+          delete settingsData[frontendKey];
+        }
+      }
+      
+      // Remove any unknown fields that don't exist in schema
+      delete settingsData.countryCode; // This is handled by csrCountryName
       
       const existingSettings = await storage.getZatcaSettings(targetRestaurantId);
       
@@ -12104,6 +12135,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       } else {
         const created = await storage.createZatcaSettings({
           restaurantId: targetRestaurantId,
+          environment: settingsData.environment || "sandbox",
           ...settingsData
         });
         res.status(201).json(created);
