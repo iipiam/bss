@@ -4579,6 +4579,37 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         pdfPath: `/invoices/${pdfFilename}`,
       });
       
+      // Process invoice through ZATCA if enabled (B2B Standard Invoice - requires clearance)
+      try {
+        const { processInvoiceForZatca } = await import("./zatca/service");
+        const zatcaResult = await processInvoiceForZatca({
+          restaurantId,
+          invoiceId: createdInvoice.id,
+          invoiceNumber,
+          invoiceType: "standard", // B2B - Standard Tax Invoice (requires clearance)
+          paymentMethod: (procurement.paymentMethod as "cash" | "card" | "bank_transfer") || "bank_transfer",
+          subtotal: totalCost / 1.15,
+          vatAmount: totalCost - (totalCost / 1.15),
+          total: totalCost,
+          discount: 0,
+          items: invoiceItems.map((item: any) => ({
+            name: item.name,
+            quantity: item.quantity,
+            unitPrice: item.basePrice,
+            totalAmount: item.total
+          })),
+          customerName: procurement.supplierName || undefined
+        });
+
+        if (zatcaResult.success) {
+          console.log(`[ZATCA] B2B Invoice ${invoiceNumber} processed: ${zatcaResult.submissionStatus}`);
+        } else if (zatcaResult.errors && zatcaResult.errors.length > 0) {
+          console.log(`[ZATCA] B2B Invoice ${invoiceNumber} not submitted (ZATCA disabled or not configured)`);
+        }
+      } catch (zatcaError) {
+        console.error("[ZATCA] Non-blocking error processing B2B invoice:", zatcaError);
+      }
+      
       // Broadcast sales update for real-time BEP tracking
       broadcastNotification({
         type: 'sales:updated',
@@ -4685,6 +4716,38 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         qrCode,
         pdfPath: `/invoices/${pdfFilename}`,
       });
+
+      // Process invoice through ZATCA if enabled (async, non-blocking)
+      try {
+        const { processInvoiceForZatca } = await import("./zatca/service");
+        const zatcaResult = await processInvoiceForZatca({
+          restaurantId,
+          invoiceId: createdInvoice.id,
+          invoiceNumber,
+          invoiceType: "simplified", // B2C - Simplified Tax Invoice
+          paymentMethod: (order.paymentMethod as "cash" | "card" | "bank_transfer") || "cash",
+          subtotal: parseFloat(order.subtotal),
+          vatAmount: parseFloat(order.tax),
+          total: parseFloat(order.total),
+          discount: parseFloat(order.discount || "0"),
+          items: order.items.map((item: any) => ({
+            name: item.name,
+            quantity: item.quantity,
+            unitPrice: item.price,
+            totalAmount: item.quantity * item.price
+          })),
+          customerName: order.customerName || undefined
+        });
+
+        if (zatcaResult.success) {
+          console.log(`[ZATCA] Invoice ${invoiceNumber} processed successfully: ${zatcaResult.submissionStatus}`);
+        } else if (zatcaResult.errors && zatcaResult.errors.length > 0) {
+          console.log(`[ZATCA] Invoice ${invoiceNumber} not submitted (ZATCA disabled or not configured)`);
+        }
+      } catch (zatcaError) {
+        console.error("[ZATCA] Non-blocking error processing invoice:", zatcaError);
+        // Continue - ZATCA processing is non-blocking
+      }
 
       // Broadcast sales update for real-time BEP tracking
       broadcastNotification({
