@@ -1,0 +1,60 @@
+ZATCA Phase 2 XML Integration - Step by Step
+Step 1: Register Your System with ZATCA
+•	Go to ZATCA's Fatoora Portal (online)
+•	Register your POS/ERP system as an "EGS" (E-Invoice Generation Solution)
+•	Get an OTP (one-time password) for authentication
+________________________________________
+Step 2: Generate Security Keys
+•	Create a pair of encryption keys (public + private)
+•	Private key = stays secret on your server
+•	Public key = shared with ZATCA
+•	Generate a CSR (Certificate Signing Request)
+________________________________________
+Step 3: Get Your Certificate (CSID)
+•	Submit CSR to ZATCA
+•	First you get a "Compliance CSID" for testing
+•	After passing tests, you get a "Production CSID" for real invoices
+•	This certificate proves your invoices are authentic
+________________________________________
+Step 4: Build the XML Invoice
+When a sale happens, your system must create an XML file with:
+•	Header: Invoice number, date, type, UUID
+•	Seller info: Your business name, VAT number, address
+•	Buyer info: Customer details (for B2B invoices)
+•	Line items: Each product/service with price, quantity, VAT
+•	Totals: Subtotal, VAT amount, grand total
+•	Previous Invoice Hash: Links to your last invoice (creates a chain)
+________________________________________
+Step 5: Sign the Invoice
+•	Calculate a "hash" (unique fingerprint) of the invoice
+•	Sign this hash with your private key
+•	Add the digital signature to the XML
+•	Generate the 9-tag QR code
+________________________________________
+Step 6: Send to ZATCA
+For B2B invoices (Standard):
+1.	Send XML to ZATCA API
+2.	Wait for approval (real-time)
+3.	ZATCA adds their stamp
+4.	You get back the approved invoice
+5.	Then give to customer
+For B2C invoices (Simplified):
+1.	Generate invoice locally with signature
+2.	Give to customer immediately
+3.	Send copy to ZATCA within 24 hours
+________________________________________
+Step 7: Store Everything
+•	Keep all invoices for 6 years
+•	Cannot delete or modify them
+•	Must be digitally accessible
+________________________________________
+What You Need to Build
+Component	Purpose
+Key Manager	Store encryption keys securely
+XML Generator	Convert invoice data to UBL 2.1 XML
+Hash Calculator	SHA-256 hash of each invoice
+Digital Signer	Sign invoices with ECDSA
+QR Generator	Create 9-tag TLV QR codes
+ZATCA API Client	Send/receive from ZATCA servers
+Invoice Chain	Track previous invoice hashes
+
