@@ -1309,6 +1309,8 @@ export const zatcaSettings = pgTable("zatca_settings", {
   productionCsid: text("production_csid"), // Production CSID
   productionCsidSecret: text("production_csid_secret"), // Production CSID secret
   csidExpiresAt: timestamp("csid_expires_at"),
+  // Onboarding status tracking
+  onboardingStatus: text("onboarding_status").default("not_started"), // "not_started", "csr_generated", "compliance_received", "compliance_passed", "production_ready"
   // Certificate chain
   certificate: text("certificate"), // X.509 certificate from ZATCA
   // Invoice counters

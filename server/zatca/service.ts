@@ -42,7 +42,7 @@ async function signInvoiceManually(
         .replace(/\s/g, '');
       
       const certHash = require("crypto").createHash("sha256")
-        .update(Buffer.from(certificateBase64, "base64"))
+        .update(Buffer.from(certificateBase64!, "base64"))
         .digest("base64");
       
       const signingTime = now.toISOString();
