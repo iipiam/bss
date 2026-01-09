@@ -5,7 +5,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Shield, AlertCircle, CheckCircle2, Settings, KeyRound, FileText, RefreshCw, Clock, XCircle, Info, Eye, EyeOff, Copy, Download, Building2 } from "lucide-react";
+import { Loader2, Shield, AlertCircle, CheckCircle2, Settings, KeyRound, FileText, RefreshCw, Clock, XCircle, Info, Eye, EyeOff, Copy, Download, Building2, ChevronDown, Upload } from "lucide-react";
 
 interface Restaurant {
   restaurantId: string;
@@ -78,6 +80,16 @@ export default function ZatcaSettingsPage() {
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const [showComplianceCsid, setShowComplianceCsid] = useState(false);
   const [showProductionCsid, setShowProductionCsid] = useState(false);
+  
+  // Manual credential entry state
+  const [manualCredentials, setManualCredentials] = useState({
+    privateKey: "",
+    complianceCsid: "",
+    complianceCsidSecret: "",
+    productionCsid: "",
+    productionCsidSecret: "",
+  });
+  const [showManualEntry, setShowManualEntry] = useState(false);
   
   // Check if user is IT account (restaurantId is null)
   const isITAccount = user && user.restaurantId === null;
@@ -267,6 +279,48 @@ export default function ZatcaSettingsPage() {
       toast({
         title: t.success || "Success",
         description: `Processed ${data.processed} invoices. ${data.successful} successful, ${data.failed} failed.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const saveManualCredentialsMutation = useMutation({
+    mutationFn: async () => {
+      const credentialData: Record<string, any> = { restaurantId: selectedRestaurantId };
+      if (manualCredentials.privateKey) credentialData.privateKey = manualCredentials.privateKey;
+      if (manualCredentials.complianceCsid) credentialData.complianceCsid = manualCredentials.complianceCsid;
+      if (manualCredentials.complianceCsidSecret) credentialData.complianceCsidSecret = manualCredentials.complianceCsidSecret;
+      if (manualCredentials.productionCsid) credentialData.productionCsid = manualCredentials.productionCsid;
+      if (manualCredentials.productionCsidSecret) credentialData.productionCsidSecret = manualCredentials.productionCsidSecret;
+      
+      if (manualCredentials.productionCsid && manualCredentials.productionCsidSecret) {
+        credentialData.onboardingStatus = "production_ready";
+        credentialData.isEnabled = true;
+      } else if (manualCredentials.complianceCsid && manualCredentials.complianceCsidSecret) {
+        credentialData.onboardingStatus = "compliance_received";
+      }
+      
+      return await apiRequest("POST", "/api/zatca/settings", credentialData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings", selectedRestaurantId] });
+      setManualCredentials({
+        privateKey: "",
+        complianceCsid: "",
+        complianceCsidSecret: "",
+        productionCsid: "",
+        productionCsidSecret: "",
+      });
+      setShowManualEntry(false);
+      toast({
+        title: t.success || "Success",
+        description: (t as any).credentialsSaved || "ZATCA credentials saved successfully. Integration is now active.",
       });
     },
     onError: (error: Error) => {
@@ -851,6 +905,146 @@ export default function ZatcaSettingsPage() {
                     )}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            <Separator className="my-6" />
+
+            <Card className="border-dashed">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="h-5 w-5" />
+                  {(t as any).manualCredentialEntry || "Manual Credential Entry"}
+                </CardTitle>
+                <CardDescription>
+                  {(t as any).manualCredentialDescription || "Already have your ZATCA credentials? Enter them here to activate e-invoicing without going through the onboarding flow."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Collapsible open={showManualEntry} onOpenChange={setShowManualEntry}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" className="w-full mb-4" data-testid="button-toggle-manual-entry">
+                      <ChevronDown className={`h-4 w-4 mr-2 transition-transform ${showManualEntry ? "rotate-180" : ""}`} />
+                      {showManualEntry 
+                        ? ((t as any).hideCredentialForm || "Hide Credential Form")
+                        : ((t as any).showCredentialForm || "Show Credential Form")}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="space-y-4">
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>{(t as any).importCredentials || "Import Existing Credentials"}</AlertTitle>
+                        <AlertDescription>
+                          {(t as any).importCredentialsDesc || "If you already obtained your CSID from the ZATCA portal (fatoora.zatca.gov.sa), you can enter the credentials here."}
+                        </AlertDescription>
+                      </Alert>
+
+                      <div className="space-y-2">
+                        <Label>{t.privateKey || "Private Key"} (PEM format)</Label>
+                        <Textarea
+                          value={manualCredentials.privateKey}
+                          onChange={(e) => setManualCredentials(prev => ({ ...prev, privateKey: e.target.value }))}
+                          placeholder={"-----BEGIN EC PRIVATE KEY-----\n...\n-----END EC PRIVATE KEY-----"}
+                          className="font-mono text-xs min-h-[100px]"
+                          data-testid="textarea-private-key"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {(t as any).privateKeyHint || "The ECDSA private key used for signing invoices (secp256k1)"}
+                        </p>
+                      </div>
+
+                      <Separator />
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>{(t as any).complianceCsidLabel || "Compliance CSID (Binary Security Token)"}</Label>
+                          <Textarea
+                            value={manualCredentials.complianceCsid}
+                            onChange={(e) => setManualCredentials(prev => ({ ...prev, complianceCsid: e.target.value }))}
+                            placeholder={(t as any).enterComplianceCsid || "Paste the binarySecurityToken from ZATCA response..."}
+                            className="font-mono text-xs min-h-[80px]"
+                            data-testid="textarea-compliance-csid"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>{(t as any).complianceCsidSecretLabel || "Compliance CSID Secret"}</Label>
+                          <Input
+                            type="password"
+                            value={manualCredentials.complianceCsidSecret}
+                            onChange={(e) => setManualCredentials(prev => ({ ...prev, complianceCsidSecret: e.target.value }))}
+                            placeholder={(t as any).enterSecret || "Secret from ZATCA response"}
+                            className="font-mono"
+                            data-testid="input-compliance-csid-secret"
+                          />
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>{(t as any).productionCsidLabel || "Production CSID (Binary Security Token)"}</Label>
+                          <Textarea
+                            value={manualCredentials.productionCsid}
+                            onChange={(e) => setManualCredentials(prev => ({ ...prev, productionCsid: e.target.value }))}
+                            placeholder={(t as any).enterProductionCsid || "Paste the production binarySecurityToken..."}
+                            className="font-mono text-xs min-h-[80px]"
+                            data-testid="textarea-production-csid"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>{(t as any).productionCsidSecretLabel || "Production CSID Secret"}</Label>
+                          <Input
+                            type="password"
+                            value={manualCredentials.productionCsidSecret}
+                            onChange={(e) => setManualCredentials(prev => ({ ...prev, productionCsidSecret: e.target.value }))}
+                            placeholder={(t as any).enterSecret || "Secret from ZATCA response"}
+                            className="font-mono"
+                            data-testid="input-production-csid-secret"
+                          />
+                        </div>
+                      </div>
+
+                      <Alert className="bg-yellow-50 border-yellow-200">
+                        <AlertCircle className="h-4 w-4 text-yellow-600" />
+                        <AlertTitle className="text-yellow-800">{t.securityWarning || "Security Warning"}</AlertTitle>
+                        <AlertDescription className="text-yellow-700">
+                          {(t as any).credentialSecurityWarning || "These credentials will be securely stored and used for signing and submitting invoices to ZATCA. Never share them with unauthorized parties."}
+                        </AlertDescription>
+                      </Alert>
+
+                      <div className="flex justify-end gap-4">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setManualCredentials({
+                              privateKey: "",
+                              complianceCsid: "",
+                              complianceCsidSecret: "",
+                              productionCsid: "",
+                              productionCsidSecret: "",
+                            });
+                          }}
+                          data-testid="button-clear-credentials"
+                        >
+                          {t.clear || "Clear"}
+                        </Button>
+                        <Button
+                          onClick={() => saveManualCredentialsMutation.mutate()}
+                          disabled={
+                            saveManualCredentialsMutation.isPending ||
+                            (!manualCredentials.complianceCsid && !manualCredentials.productionCsid)
+                          }
+                          data-testid="button-save-credentials"
+                        >
+                          {saveManualCredentialsMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                          {(t as any).saveCredentials || "Save Credentials"}
+                        </Button>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </CardContent>
             </Card>
           </div>

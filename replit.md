@@ -30,7 +30,15 @@ Preferred communication style: Simple, everyday language.
 
 ### Feature Specifications
 - **Analytics & Reporting**: Dashboard with DoD, WoW, MoM, YoY metrics, daily demand forecasting, peak hours analysis, and detailed BEP calculator with sensitivity analysis. **Menu Profitability Analysis**: Dedicated dashboard at `/menu-profitability` showing profit margins for each menu item, categorizing items as LOSS (selling below cost), LOW_MARGIN (<20%), or OK (≥20%), with CSV export functionality.
-- **ZATCA Compliance**: Bilingual PDF invoice generation (Arabic/English) with QR codes. ZATCA Phase 2 E-Invoicing settings are IT-only, allowing centralized management of client e-invoicing configurations.
+- **ZATCA Compliance**: Complete ZATCA Phase 2 e-invoicing integration including:
+  - **UBL 2.1 XML Generation**: ZATCA-compliant invoice XML with proper namespaces and structure
+  - **Digital Signing**: ECDSA (secp256k1) signatures with XAdES-T format
+  - **9-Tag QR Codes**: TLV-encoded QR codes with invoice hash, signature, and public key
+  - **API Integration**: Full support for compliance CSID, production CSID, clearance (B2B), and reporting (B2C)
+  - **IT Settings Page**: Located at `/zatca-settings`, IT-only access for managing client e-invoicing configurations
+  - **Manual Credential Entry**: Support for importing existing ZATCA credentials (CSID, secret, private key) for clients who obtained them externally
+  - **Invoice Status Tracking**: Real-time tracking of invoice submission status (pending, cleared, reported, rejected)
+  - **Bilingual PDF Invoices**: Arabic/English invoice generation with ZATCA QR codes
 - **Financial Management**: Delivery app cost calculation, PDF export for financial statements, Excel import/export. Enhanced BEP calculator uses true COGS from invoice items via orders, menu items, and recipes with portion size multipliers. Includes manual delivery profitability entry with VAT and Profit tracking fields. **Bill Proration**: Recurring bills are automatically prorated to monthly amounts for all financial calculations (quarterly÷3, semi-annual÷6, yearly÷12, weekly×4.33).
 - **Management Modules**: CRUD for Customer, Menu Item (with discount, optional stock, configurable display sizes), Inventory (Excel import/export, expiration tracking, add-on creation), Recipe (inventory-linked costing, portion sizes).
 - **Menu Item Display Sizes**: Menu items support configurable display sizes (small, medium, large) that control how items appear in POS and Menu grids - large items span 2 columns for better visibility.
