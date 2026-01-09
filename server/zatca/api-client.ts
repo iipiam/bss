@@ -103,15 +103,43 @@ export class ZatcaApiClient {
         body: body ? JSON.stringify(body) : undefined
       });
 
-      const data = await response.json();
+      // Handle empty responses gracefully
+      const text = await response.text();
+      let data: any = null;
+      
+      if (text && text.trim()) {
+        try {
+          data = JSON.parse(text);
+        } catch (parseError) {
+          return {
+            success: false,
+            error: {
+              code: "PARSE_ERROR",
+              message: "Invalid response from ZATCA API",
+              details: text.substring(0, 500)
+            }
+          };
+        }
+      }
 
       if (!response.ok) {
         return {
           success: false,
           error: {
-            code: data.code || response.status.toString(),
-            message: data.message || "ZATCA API request failed",
-            details: JSON.stringify(data)
+            code: data?.code || response.status.toString(),
+            message: data?.message || `ZATCA API request failed with status ${response.status}`,
+            details: data ? JSON.stringify(data) : `HTTP ${response.status}`
+          }
+        };
+      }
+
+      if (!data) {
+        return {
+          success: false,
+          error: {
+            code: "EMPTY_RESPONSE",
+            message: "ZATCA API returned an empty response",
+            details: "No data received from ZATCA"
           }
         };
       }
