@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn, UserPlus, Check, Languages, Play, Video, Mail, HelpCircle, MessageCircle } from "lucide-react";
+import { LogIn, UserPlus, Check, Languages, Play, Video, Mail, HelpCircle, MessageCircle, Upload, FileText, X } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
@@ -51,6 +51,12 @@ export default function Login() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showWelcomeVideo, setShowWelcomeVideo] = useState(false);
   const [legalAcknowledgementChecked, setLegalAcknowledgementChecked] = useState(false);
+  
+  // Document upload fields
+  const [crCertificate, setCrCertificate] = useState<File | null>(null);
+  const [vatCertificate, setVatCertificate] = useState<File | null>(null);
+  const [ibanCertificate, setIbanCertificate] = useState<File | null>(null);
+  const [nationalAddress, setNationalAddress] = useState<File | null>(null);
   
   // IT Signup fields
   const [itSignupUsername, setItSignupUsername] = useState("");
@@ -109,11 +115,33 @@ export default function Login() {
       restaurantType: string;
       subscriptionPlan: string;
       branchesCount: number;
+      crCertificate?: File | null;
+      vatCertificate?: File | null;
+      ibanCertificate?: File | null;
+      nationalAddress?: File | null;
     }) => {
+      const formData = new FormData();
+      formData.append("username", data.username);
+      formData.append("password", data.password);
+      formData.append("name", data.name);
+      formData.append("email", data.email);
+      formData.append("commercialRegistration", data.commercialRegistration);
+      formData.append("restaurantName", data.restaurantName);
+      formData.append("nationalId", data.nationalId);
+      formData.append("taxNumber", data.taxNumber);
+      formData.append("businessType", data.businessType);
+      formData.append("restaurantType", data.restaurantType);
+      formData.append("subscriptionPlan", data.subscriptionPlan);
+      formData.append("branchesCount", data.branchesCount.toString());
+      
+      if (data.crCertificate) formData.append("crCertificate", data.crCertificate);
+      if (data.vatCertificate) formData.append("vatCertificate", data.vatCertificate);
+      if (data.ibanCertificate) formData.append("ibanCertificate", data.ibanCertificate);
+      if (data.nationalAddress) formData.append("nationalAddress", data.nationalAddress);
+      
       const response = await fetch("/api/auth/signup", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: formData,
       });
       
       if (!response.ok) {
@@ -296,6 +324,10 @@ export default function Login() {
       restaurantType: signupRestaurantType,
       subscriptionPlan: subscriptionPlan,
       branchesCount: branchesCount,
+      crCertificate,
+      vatCertificate,
+      ibanCertificate,
+      nationalAddress,
     });
   };
 
@@ -602,6 +634,160 @@ export default function Login() {
                   />
                   <p className="text-xs text-muted-foreground">{t.commercialRegMustBe10Digits}</p>
                 </div>
+                
+                {/* Document Upload Section */}
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <Label className="text-sm font-semibold">{t.businessDocuments || "Business Documents"} ({t.optional || "Optional"})</Label>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t.uploadBusinessDocumentsDesc || "Upload your business documents (PDF only, max 10MB each). These can also be uploaded later."}
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* CR Certificate */}
+                    <div className="space-y-2">
+                      <Label htmlFor="cr-certificate" className="text-sm">{t.crCertificate || "CR Certificate"}</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="cr-certificate"
+                          type="file"
+                          accept=".pdf"
+                          onChange={(e) => setCrCertificate(e.target.files?.[0] || null)}
+                          className="hidden"
+                          data-testid="input-cr-certificate"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => document.getElementById('cr-certificate')?.click()}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          {crCertificate ? crCertificate.name.substring(0, 20) + "..." : t.uploadFile || "Upload File"}
+                        </Button>
+                        {crCertificate && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setCrCertificate(null)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* VAT Certificate */}
+                    <div className="space-y-2">
+                      <Label htmlFor="vat-certificate" className="text-sm">{t.vatCertificate || "VAT Certificate"}</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="vat-certificate"
+                          type="file"
+                          accept=".pdf"
+                          onChange={(e) => setVatCertificate(e.target.files?.[0] || null)}
+                          className="hidden"
+                          data-testid="input-vat-certificate"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => document.getElementById('vat-certificate')?.click()}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          {vatCertificate ? vatCertificate.name.substring(0, 20) + "..." : t.uploadFile || "Upload File"}
+                        </Button>
+                        {vatCertificate && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setVatCertificate(null)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* IBAN Certificate */}
+                    <div className="space-y-2">
+                      <Label htmlFor="iban-certificate" className="text-sm">{t.ibanCertificate || "IBAN Certificate"}</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="iban-certificate"
+                          type="file"
+                          accept=".pdf"
+                          onChange={(e) => setIbanCertificate(e.target.files?.[0] || null)}
+                          className="hidden"
+                          data-testid="input-iban-certificate"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => document.getElementById('iban-certificate')?.click()}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          {ibanCertificate ? ibanCertificate.name.substring(0, 20) + "..." : t.uploadFile || "Upload File"}
+                        </Button>
+                        {ibanCertificate && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setIbanCertificate(null)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* National Address */}
+                    <div className="space-y-2">
+                      <Label htmlFor="national-address" className="text-sm">{t.nationalAddress || "National Address"}</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="national-address"
+                          type="file"
+                          accept=".pdf"
+                          onChange={(e) => setNationalAddress(e.target.files?.[0] || null)}
+                          className="hidden"
+                          data-testid="input-national-address"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => document.getElementById('national-address')?.click()}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          {nationalAddress ? nationalAddress.name.substring(0, 20) + "..." : t.uploadFile || "Upload File"}
+                        </Button>
+                        {nationalAddress && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setNationalAddress(null)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
                 <div className="space-y-2">
                   <Label htmlFor="signup-branches">{t.numberOfBranchesLabel} *</Label>
                   <Input

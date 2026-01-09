@@ -402,6 +402,10 @@ export default function ITAccountManagement() {
     email: "",
     phone: "",
   });
+  
+  // Client Documents state
+  const [clientDocsDialogOpen, setClientDocsDialogOpen] = useState(false);
+  const [selectedClientForDocs, setSelectedClientForDocs] = useState<Account | null>(null);
 
   // Security: Redirect non-IT accounts using useEffect to wait for auth to load
   useEffect(() => {
@@ -453,6 +457,12 @@ export default function ITAccountManagement() {
   const { data: itAccounts = [], isLoading: itAccountsLoading, refetch: refetchITAccounts } = useQuery<ITAccount[]>({
     queryKey: ['/api/it/it-accounts'],
     enabled: !!user && accountType === 'it',
+  });
+
+  // Fetch client documents when a client is selected
+  const { data: clientDocs = [], isLoading: clientDocsLoading } = useQuery<CompanyFile[]>({
+    queryKey: ['/api/it/client-files', selectedClientForDocs?.restaurantId],
+    enabled: !!selectedClientForDocs?.restaurantId && clientDocsDialogOpen,
   });
 
   // File type configuration
@@ -1186,29 +1196,47 @@ export default function ITAccountManagement() {
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Dialog 
-                              open={passwordDialogOpen && selectedAccount?.id === account.id} 
-                              onOpenChange={(open) => {
-                                setPasswordDialogOpen(open);
-                                if (!open) {
-                                  setSelectedAccount(null);
-                                  setNewPassword("");
-                                  setConfirmPassword("");
-                                  setShowPassword(false);
-                                }
-                              }}
-                            >
-                              <DialogTrigger asChild>
+                            <div className="flex items-center justify-end gap-2">
+                              {/* View Documents Button */}
+                              {account.restaurantId && (
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => setSelectedAccount(account)}
-                                  data-testid={`button-change-password-${account.id}`}
+                                  onClick={() => {
+                                    setSelectedClientForDocs(account);
+                                    setClientDocsDialogOpen(true);
+                                  }}
+                                  data-testid={`button-view-docs-${account.id}`}
                                 >
-                                  <Key className="h-4 w-4 mr-1" />
-                                  {t.changePassword || "Change Password"}
+                                  <FolderOpen className="h-4 w-4 mr-1" />
+                                  {t.documents || "Documents"}
                                 </Button>
-                              </DialogTrigger>
+                              )}
+                              
+                              {/* Change Password Dialog */}
+                              <Dialog 
+                                open={passwordDialogOpen && selectedAccount?.id === account.id} 
+                                onOpenChange={(open) => {
+                                  setPasswordDialogOpen(open);
+                                  if (!open) {
+                                    setSelectedAccount(null);
+                                    setNewPassword("");
+                                    setConfirmPassword("");
+                                    setShowPassword(false);
+                                  }
+                                }}
+                              >
+                                <DialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setSelectedAccount(account)}
+                                    data-testid={`button-change-password-${account.id}`}
+                                  >
+                                    <Key className="h-4 w-4 mr-1" />
+                                    {t.changePassword || "Change Password"}
+                                  </Button>
+                                </DialogTrigger>
                               <DialogContent>
                                 <DialogHeader>
                                   <DialogTitle className="flex items-center gap-2">
@@ -1296,6 +1324,7 @@ export default function ITAccountManagement() {
                                 </DialogFooter>
                               </DialogContent>
                             </Dialog>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
@@ -1306,6 +1335,97 @@ export default function ITAccountManagement() {
               )}
             </CardContent>
           </Card>
+
+          {/* Client Documents Dialog */}
+          <Dialog 
+            open={clientDocsDialogOpen} 
+            onOpenChange={(open) => {
+              setClientDocsDialogOpen(open);
+              if (!open) {
+                setSelectedClientForDocs(null);
+              }
+            }}
+          >
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <FolderOpen className="h-5 w-5" />
+                  {t.clientDocuments || "Client Documents"}
+                </DialogTitle>
+                <DialogDescription>
+                  {selectedClientForDocs?.restaurantName || "Client"} - {t.uploadedDocuments || "Uploaded Documents"}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                {clientDocsLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                ) : clientDocs.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>{t.noDocumentsUploaded || "No documents uploaded by this client"}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {clientDocs.map((doc) => {
+                      const fileTypeLabel = {
+                        cr_certificate: t.crCertificate || "CR Certificate",
+                        vat_certificate: t.vatCertificate || "VAT Certificate",
+                        iban_certificate: t.ibanCertificate || "IBAN Certificate",
+                        national_address: t.nationalAddress || "National Address",
+                      }[doc.fileType] || doc.fileType;
+                      
+                      return (
+                        <div 
+                          key={doc.id} 
+                          className="flex items-center justify-between p-3 border rounded-lg"
+                          data-testid={`client-doc-${doc.id}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <File className="h-8 w-8 text-red-500" />
+                            <div>
+                              <p className="font-medium text-sm">{fileTypeLabel}</p>
+                              <p className="text-xs text-muted-foreground">{doc.fileName}</p>
+                              {doc.fileSize && (
+                                <p className="text-xs text-muted-foreground">
+                                  {(doc.fileSize / 1024).toFixed(1)} KB
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              window.open(
+                                `/api/it/client-files/${selectedClientForDocs?.restaurantId}/${doc.id}/download`,
+                                '_blank'
+                              );
+                            }}
+                            data-testid={`download-client-doc-${doc.id}`}
+                          >
+                            <Download className="h-4 w-4 mr-1" />
+                            {t.download || "Download"}
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setClientDocsDialogOpen(false)}
+                >
+                  {t.close || "Close"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* Archive Tab */}

@@ -1396,6 +1396,27 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Multer config for signup file uploads (same storage as shop files)
+  const uploadSignupFiles = multer({
+    storage: shopFileStorage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: function (req, file, cb) {
+      const allowedTypes = /pdf/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const allowedMimetypes = ['application/pdf'];
+      const mimetype = allowedMimetypes.includes(file.mimetype);
+      if (mimetype && extname) {
+        return cb(null, true);
+      }
+      cb(new Error('Only PDF documents are allowed!'));
+    }
+  }).fields([
+    { name: 'crCertificate', maxCount: 1 },
+    { name: 'vatCertificate', maxCount: 1 },
+    { name: 'ibanCertificate', maxCount: 1 },
+    { name: 'nationalAddress', maxCount: 1 }
+  ]);
+
   // Get all shop files for a restaurant
   app.get("/api/shop/files", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
     try {
@@ -4766,13 +4787,19 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Public endpoint for user signup
-  app.post("/api/auth/signup", async (req, res) => {
+  // Public endpoint for user signup (with file upload support)
+  app.post("/api/auth/signup", uploadSignupFiles, async (req, res) => {
     try {
       const { username, password, name, email, commercialRegistration, restaurantName, nationalId, taxNumber, businessType, restaurantType, subscriptionPlan, branchesCount } = req.body;
       
       console.log("[SIGNUP] Received signup request for username:", username);
       console.log("[SIGNUP] Request body:", { username, name, email, restaurantName, nationalId, taxNumber, businessType, restaurantType, subscriptionPlan, branchesCount });
+      
+      // Get uploaded files
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+      if (files) {
+        console.log("[SIGNUP] Uploaded files:", Object.keys(files));
+      }
       
       if (!username || !password || !name || !email || !commercialRegistration || !restaurantName || !nationalId || !taxNumber || !businessType || !restaurantType || !subscriptionPlan || !branchesCount) {
         console.log("[SIGNUP] Missing required fields");
@@ -4826,6 +4853,41 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       };
 
       const user = await storage.createUser(userData);
+
+      // Save uploaded documents to shop_files table
+      const uploadedFiles = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+      if (uploadedFiles) {
+        const fileTypeMapping: { [key: string]: string } = {
+          crCertificate: "cr_certificate",
+          vatCertificate: "vat_certificate",
+          ibanCertificate: "iban_certificate",
+          nationalAddress: "national_address"
+        };
+        
+        for (const [fieldName, files] of Object.entries(uploadedFiles)) {
+          if (files && files.length > 0) {
+            const file = files[0];
+            const fileType = fileTypeMapping[fieldName];
+            if (fileType) {
+              try {
+                await storage.createShopFile({
+                  restaurantId: restaurant.id,
+                  fileType: fileType as "cr_certificate" | "vat_certificate" | "iban_certificate" | "national_address",
+                  fileName: file.originalname,
+                  filePath: `uploads/shop-files/${file.filename}`,
+                  fileSize: file.size,
+                  mimeType: file.mimetype,
+                  uploadedBy: user.id,
+                });
+                console.log(`[SIGNUP] Saved ${fileType} document for restaurant ${restaurant.id}`);
+              } catch (fileError) {
+                console.error(`[SIGNUP] Failed to save ${fileType} document:`, fileError);
+                // Continue - don't fail signup if file save fails
+              }
+            }
+          }
+        }
+      }
 
       // Generate subscription invoice
       try {
@@ -9384,6 +9446,42 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("Error fetching client accounts activity:", error);
       res.status(500).json({ error: "Failed to fetch client accounts activity" });
+    }
+  });
+
+  // IT-only: Get shop files for a specific client
+  app.get("/api/it/client-files/:restaurantId", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { restaurantId } = req.params;
+      const files = await storage.getShopFiles(restaurantId);
+      res.json(files);
+    } catch (error) {
+      console.error("Error fetching client files:", error);
+      res.status(500).json({ error: "Failed to fetch client files" });
+    }
+  });
+
+  // IT-only: Download a client's shop file
+  app.get("/api/it/client-files/:restaurantId/:fileId/download", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { restaurantId, fileId } = req.params;
+      const file = await storage.getShopFile(fileId, restaurantId);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      const filePath = path.join(process.cwd(), file.filePath);
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: "File not found on disk" });
+      }
+
+      res.setHeader('Content-Type', file.mimeType || 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${file.fileName}"`);
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error("Error downloading client file:", error);
+      res.status(500).json({ error: "Failed to download file" });
     }
   });
 
