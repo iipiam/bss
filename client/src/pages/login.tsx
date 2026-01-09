@@ -42,6 +42,7 @@ export default function Login() {
   const [signupCommercialReg, setSignupCommercialReg] = useState("");
   const [signupRestaurantName, setSignupRestaurantName] = useState("");
   const [signupNationalId, setSignupNationalId] = useState("");
+  const [hasVatRegistration, setHasVatRegistration] = useState<boolean | null>(null); // null = not selected yet
   const [signupTaxNumber, setSignupTaxNumber] = useState("");
   const [signupBusinessType, setSignupBusinessType] = useState<BusinessType>("restaurant"); // "restaurant" or "factory"
   const [signupRestaurantType, setSignupRestaurantType] = useState(""); // Specific subtype (e.g., "Cloud Kitchen", "Restaurant", etc.)
@@ -110,6 +111,7 @@ export default function Login() {
       commercialRegistration: string;
       restaurantName: string;
       nationalId: string;
+      hasVatRegistration: boolean;
       taxNumber: string;
       businessType: string;
       restaurantType: string;
@@ -128,14 +130,18 @@ export default function Login() {
       formData.append("commercialRegistration", data.commercialRegistration);
       formData.append("restaurantName", data.restaurantName);
       formData.append("nationalId", data.nationalId);
-      formData.append("taxNumber", data.taxNumber);
+      formData.append("hasVatRegistration", data.hasVatRegistration.toString());
+      if (data.hasVatRegistration && data.taxNumber) {
+        formData.append("taxNumber", data.taxNumber);
+      }
       formData.append("businessType", data.businessType);
       formData.append("restaurantType", data.restaurantType);
       formData.append("subscriptionPlan", data.subscriptionPlan);
       formData.append("branchesCount", data.branchesCount.toString());
       
       if (data.crCertificate) formData.append("crCertificate", data.crCertificate);
-      if (data.vatCertificate) formData.append("vatCertificate", data.vatCertificate);
+      // VAT certificate is only required when hasVatRegistration is true
+      if (data.hasVatRegistration && data.vatCertificate) formData.append("vatCertificate", data.vatCertificate);
       if (data.ibanCertificate) formData.append("ibanCertificate", data.ibanCertificate);
       if (data.nationalAddress) formData.append("nationalAddress", data.nationalAddress);
       
@@ -280,10 +286,39 @@ export default function Login() {
     }
     
     // Validate required fields
-    if (!signupRestaurantName || !signupNationalId || !signupTaxNumber || !signupRestaurantType) {
+    if (!signupRestaurantName || !signupNationalId || !signupRestaurantType) {
       toast({
         title: t.missingRequiredFields,
         description: t.fillAllRequiredFields,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate VAT registration selection
+    if (hasVatRegistration === null) {
+      toast({
+        title: t.missingRequiredFields,
+        description: t.selectVatRegistrationStatus || "Please select whether you have VAT registration",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // If VAT registration is yes, require tax number and VAT certificate
+    if (hasVatRegistration && !signupTaxNumber) {
+      toast({
+        title: t.missingRequiredFields,
+        description: t.taxNumberRequired || "Tax number is required when you have VAT registration",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (hasVatRegistration && !vatCertificate) {
+      toast({
+        title: t.missingRequiredFields,
+        description: t.vatCertificateRequired || "VAT certificate is required when you have VAT registration",
         variant: "destructive",
       });
       return;
@@ -319,6 +354,7 @@ export default function Login() {
       commercialRegistration: signupCommercialReg,
       restaurantName: signupRestaurantName,
       nationalId: signupNationalId,
+      hasVatRegistration: hasVatRegistration!, // Already validated above
       taxNumber: signupTaxNumber,
       businessType: signupBusinessType,
       restaurantType: signupRestaurantType,
@@ -550,18 +586,50 @@ export default function Login() {
                   />
                   <p className="text-xs text-muted-foreground">{t.nationalIdMustBe10Digits}</p>
                 </div>
+                {/* VAT Registration Question */}
                 <div className="space-y-2">
-                  <Label htmlFor="signup-tax-number">{t.taxNumberLabel} *</Label>
-                  <Input
-                    id="signup-tax-number"
-                    type="text"
-                    placeholder={t.enterTaxNumberPlaceholder}
-                    value={signupTaxNumber}
-                    onChange={(e) => setSignupTaxNumber(e.target.value)}
-                    required
-                    data-testid="input-signup-tax-number"
-                  />
+                  <Label>{t.doYouHaveVatRegistration || "Do you have VAT Registration?"} *</Label>
+                  <div className="flex gap-4">
+                    <Button
+                      type="button"
+                      variant={hasVatRegistration === true ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setHasVatRegistration(true)}
+                      data-testid="button-vat-yes"
+                    >
+                      {t.yes || "Yes"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={hasVatRegistration === false ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setHasVatRegistration(false);
+                        setSignupTaxNumber(""); // Clear tax number when No is selected
+                        setVatCertificate(null); // Clear VAT certificate when No is selected
+                      }}
+                      data-testid="button-vat-no"
+                    >
+                      {t.no || "No"}
+                    </Button>
+                  </div>
                 </div>
+                
+                {/* Tax Number - Only shown when VAT registration is Yes */}
+                {hasVatRegistration === true && (
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-tax-number">{t.taxNumberLabel} *</Label>
+                    <Input
+                      id="signup-tax-number"
+                      type="text"
+                      placeholder={t.enterTaxNumberPlaceholder}
+                      value={signupTaxNumber}
+                      onChange={(e) => setSignupTaxNumber(e.target.value)}
+                      required
+                      data-testid="input-signup-tax-number"
+                    />
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="signup-business-type">{t.businessTypeLabel} *</Label>
                   <Select
@@ -681,40 +749,42 @@ export default function Login() {
                       </div>
                     </div>
                     
-                    {/* VAT Certificate */}
-                    <div className="space-y-2">
-                      <Label htmlFor="vat-certificate" className="text-sm">{t.vatCertificate || "VAT Certificate"}</Label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          id="vat-certificate"
-                          type="file"
-                          accept=".pdf"
-                          onChange={(e) => setVatCertificate(e.target.files?.[0] || null)}
-                          className="hidden"
-                          data-testid="input-vat-certificate"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => document.getElementById('vat-certificate')?.click()}
-                        >
-                          <Upload className="h-4 w-4 mr-2" />
-                          {vatCertificate ? vatCertificate.name.substring(0, 20) + "..." : t.uploadFile || "Upload File"}
-                        </Button>
-                        {vatCertificate && (
+                    {/* VAT Certificate - Only shown when hasVatRegistration is true */}
+                    {hasVatRegistration === true && (
+                      <div className="space-y-2">
+                        <Label htmlFor="vat-certificate" className="text-sm">{t.vatCertificate || "VAT Certificate"} *</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            id="vat-certificate"
+                            type="file"
+                            accept=".pdf"
+                            onChange={(e) => setVatCertificate(e.target.files?.[0] || null)}
+                            className="hidden"
+                            data-testid="input-vat-certificate"
+                          />
                           <Button
                             type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setVatCertificate(null)}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => document.getElementById('vat-certificate')?.click()}
                           >
-                            <X className="h-4 w-4" />
+                            <Upload className="h-4 w-4 mr-2" />
+                            {vatCertificate ? vatCertificate.name.substring(0, 20) + "..." : t.uploadFile || "Upload File"}
                           </Button>
-                        )}
+                          {vatCertificate && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setVatCertificate(null)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                     
                     {/* IBAN Certificate */}
                     <div className="space-y-2">

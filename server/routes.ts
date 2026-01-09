@@ -4790,10 +4790,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // Public endpoint for user signup (with file upload support)
   app.post("/api/auth/signup", uploadSignupFiles, async (req, res) => {
     try {
-      const { username, password, name, email, commercialRegistration, restaurantName, nationalId, taxNumber, businessType, restaurantType, subscriptionPlan, branchesCount } = req.body;
+      const { username, password, name, email, commercialRegistration, restaurantName, nationalId, hasVatRegistration, taxNumber, businessType, restaurantType, subscriptionPlan, branchesCount } = req.body;
       
       console.log("[SIGNUP] Received signup request for username:", username);
-      console.log("[SIGNUP] Request body:", { username, name, email, restaurantName, nationalId, taxNumber, businessType, restaurantType, subscriptionPlan, branchesCount });
+      console.log("[SIGNUP] Request body:", { username, name, email, restaurantName, nationalId, hasVatRegistration, taxNumber, businessType, restaurantType, subscriptionPlan, branchesCount });
       
       // Get uploaded files
       const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
@@ -4801,9 +4801,25 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         console.log("[SIGNUP] Uploaded files:", Object.keys(files));
       }
       
-      if (!username || !password || !name || !email || !commercialRegistration || !restaurantName || !nationalId || !taxNumber || !businessType || !restaurantType || !subscriptionPlan || !branchesCount) {
+      // Parse hasVatRegistration boolean from form data
+      const hasVatReg = hasVatRegistration === 'true' || hasVatRegistration === true;
+      
+      // Validate required fields (taxNumber only required if hasVatRegistration is true)
+      if (!username || !password || !name || !email || !commercialRegistration || !restaurantName || !nationalId || !businessType || !restaurantType || !subscriptionPlan || !branchesCount) {
         console.log("[SIGNUP] Missing required fields");
-        return res.status(400).json({ error: "All fields are required including Restaurant Name, National ID, Tax Number, Business Type, Restaurant Type, Commercial Registration, subscription plan, and number of branches" });
+        return res.status(400).json({ error: "All fields are required including Restaurant Name, National ID, Business Type, Restaurant Type, Commercial Registration, subscription plan, and number of branches" });
+      }
+      
+      // If VAT registration is true, require tax number and VAT certificate
+      if (hasVatReg && !taxNumber) {
+        console.log("[SIGNUP] Missing tax number for VAT registered business");
+        return res.status(400).json({ error: "Tax Number is required when you have VAT registration" });
+      }
+      
+      // Check for VAT certificate when hasVatRegistration is true
+      if (hasVatReg && (!files || !files.vatCertificate || files.vatCertificate.length === 0)) {
+        console.log("[SIGNUP] Missing VAT certificate for VAT registered business");
+        return res.status(400).json({ error: "VAT Certificate is required when you have VAT registration" });
       }
 
       // Validate subscription plan based on business type
@@ -4829,7 +4845,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantData = insertRestaurantSchema.parse({
         name: restaurantName,
         nationalId,
-        taxNumber,
+        hasVatRegistration: hasVatReg,
+        taxNumber: hasVatReg ? taxNumber : null, // Only store taxNumber if VAT registered
         commercialRegistration,
         businessType, // Will be validated by z.enum(["restaurant", "factory"])
         type: restaurantType, // Specific subtype (e.g., "Cloud Kitchen", "Manufacturing")
