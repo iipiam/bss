@@ -2886,7 +2886,6 @@ export const translations: Record<Language, Translations> = {
     fromDate: 'From Date',
     toDate: 'To Date',
     calculateVat: 'Calculate VAT',
-    downloadPdf: 'Download PDF',
     downloadExcel: 'Download Excel',
     clientName: 'Client Name',
     clientEmail: 'Client Email',
@@ -3333,7 +3332,6 @@ export const translations: Record<Language, Translations> = {
     inventoryDataExported: 'Inventory data exported to Excel',
     templateDownloaded: 'Template downloaded',
     templateDownloadedDesc: 'Fill in the template and import it',
-    reportDownloaded: 'Report Downloaded',
     
     // Profile & Settings Toast Messages
     profileUpdated: 'Profile Updated',
@@ -3486,7 +3484,6 @@ export const translations: Record<Language, Translations> = {
     // Invoices & Financial
     loadingInvoices: 'Loading invoices...',
     viewAndDownload: 'View and download your subscription invoices',
-    totalExpenses: 'Total Expenses',
     totalCosts: 'Total Costs',
     totalSalesLabel: 'Total Sales',
     loadingFinancialData: 'Loading financial data...',
@@ -4680,7 +4677,6 @@ export const translations: Record<Language, Translations> = {
     fromDate: 'من تاريخ',
     toDate: 'إلى تاريخ',
     calculateVat: 'حساب الضريبة',
-    downloadPdf: 'تحميل PDF',
     downloadExcel: 'تحميل Excel',
     clientName: 'اسم العميل',
     clientEmail: 'بريد العميل',
@@ -5127,7 +5123,6 @@ export const translations: Record<Language, Translations> = {
     inventoryDataExported: 'تم تصدير بيانات المخزون إلى Excel',
     templateDownloaded: 'تم تنزيل النموذج',
     templateDownloadedDesc: 'املأ النموذج واستورده',
-    reportDownloaded: 'تم تنزيل التقرير',
     
     // Profile & Settings Toast Messages
     profileUpdated: 'تم تحديث الملف الشخصي',
@@ -5280,7 +5275,6 @@ export const translations: Record<Language, Translations> = {
     // Invoices & Financial
     loadingInvoices: 'جارٍ تحميل الفواتير...',
     viewAndDownload: 'عرض وتحميل فواتير الاشتراك الخاصة بك',
-    totalExpenses: 'إجمالي المصروفات',
     totalCosts: 'إجمالي التكاليف',
     totalSalesLabel: 'إجمالي المبيعات',
     loadingFinancialData: 'جارٍ تحميل البيانات المالية...',
@@ -6470,7 +6464,6 @@ export const translations: Record<Language, Translations> = {
     fromDate: 'Von Datum',
     toDate: 'Bis Datum',
     calculateVat: 'MwSt. berechnen',
-    downloadPdf: 'PDF herunterladen',
     downloadExcel: 'Excel herunterladen',
     clientName: 'Kundenname',
     clientEmail: 'Kunden-E-Mail',
@@ -6901,7 +6894,6 @@ export const translations: Record<Language, Translations> = {
     inventoryDataExported: 'Inventory data exported to Excel',
     templateDownloaded: 'Template downloaded',
     templateDownloadedDesc: 'Fill in the template and import it',
-    reportDownloaded: 'Report Downloaded',
     
     // Profile & Settings Toast Messages
     profileUpdated: 'Profile Updated',
@@ -7054,7 +7046,6 @@ export const translations: Record<Language, Translations> = {
     // Invoices & Financial
     loadingInvoices: 'Loading invoices...',
     viewAndDownload: 'View and download your subscription invoices',
-    totalExpenses: 'Total Expenses',
     totalCosts: 'Total Costs',
     totalSalesLabel: 'Total Sales',
     loadingFinancialData: 'Loading financial data...',
@@ -8244,7 +8235,6 @@ export const translations: Record<Language, Translations> = {
     fromDate: '开始日期',
     toDate: '结束日期',
     calculateVat: '计算增值税',
-    downloadPdf: '下载PDF',
     downloadExcel: '下载Excel',
     clientName: '客户名称',
     clientEmail: '客户邮箱',
@@ -8675,7 +8665,6 @@ export const translations: Record<Language, Translations> = {
     inventoryDataExported: 'Inventory data exported to Excel',
     templateDownloaded: 'Template downloaded',
     templateDownloadedDesc: 'Fill in the template and import it',
-    reportDownloaded: 'Report Downloaded',
     
     // Profile & Settings Toast Messages
     profileUpdated: 'Profile Updated',
@@ -8828,7 +8817,6 @@ export const translations: Record<Language, Translations> = {
     // Invoices & Financial
     loadingInvoices: 'Loading invoices...',
     viewAndDownload: 'View and download your subscription invoices',
-    totalExpenses: 'Total Expenses',
     totalCosts: 'Total Costs',
     totalSalesLabel: 'Total Sales',
     loadingFinancialData: 'Loading financial data...',
@@ -10018,7 +10006,6 @@ export const translations: Record<Language, Translations> = {
     fromDate: 'শুরুর তারিখ',
     toDate: 'শেষ তারিখ',
     calculateVat: 'ভ্যাট হিসাব করুন',
-    downloadPdf: 'পিডিএফ ডাউনলোড',
     downloadExcel: 'এক্সেল ডাউনলোড',
     clientName: 'গ্রাহকের নাম',
     clientEmail: 'গ্রাহকের ইমেইল',
@@ -10449,7 +10436,6 @@ export const translations: Record<Language, Translations> = {
     inventoryDataExported: 'Inventory data exported to Excel',
     templateDownloaded: 'Template downloaded',
     templateDownloadedDesc: 'Fill in the template and import it',
-    reportDownloaded: 'Report Downloaded',
     
     // Profile & Settings Toast Messages
     profileUpdated: 'Profile Updated',
@@ -10602,7 +10588,6 @@ export const translations: Record<Language, Translations> = {
     // Invoices & Financial
     loadingInvoices: 'Loading invoices...',
     viewAndDownload: 'View and download your subscription invoices',
-    totalExpenses: 'Total Expenses',
     totalCosts: 'Total Costs',
     totalSalesLabel: 'Total Sales',
     loadingFinancialData: 'Loading financial data...',
@@ -11792,7 +11777,6 @@ export const translations: Record<Language, Translations> = {
     fromDate: 'Data Inizio',
     toDate: 'Data Fine',
     calculateVat: 'Calcola IVA',
-    downloadPdf: 'Scarica PDF',
     downloadExcel: 'Scarica Excel',
     clientName: 'Nome Cliente',
     clientEmail: 'Email Cliente',
@@ -12223,7 +12207,6 @@ export const translations: Record<Language, Translations> = {
     inventoryDataExported: 'Inventory data exported to Excel',
     templateDownloaded: 'Template downloaded',
     templateDownloadedDesc: 'Fill in the template and import it',
-    reportDownloaded: 'Report Downloaded',
     
     // Profile & Settings Toast Messages
     profileUpdated: 'Profile Updated',
@@ -12376,7 +12359,6 @@ export const translations: Record<Language, Translations> = {
     // Invoices & Financial
     loadingInvoices: 'Loading invoices...',
     viewAndDownload: 'View and download your subscription invoices',
-    totalExpenses: 'Total Expenses',
     totalCosts: 'Total Costs',
     totalSalesLabel: 'Total Sales',
     loadingFinancialData: 'Loading financial data...',
@@ -13542,7 +13524,6 @@ export const translations: Record<Language, Translations> = {
     fromDate: 'आरंभ तिथि',
     toDate: 'समाप्ति तिथि',
     calculateVat: 'वैट की गणना करें',
-    downloadPdf: 'पीडीएफ डाउनलोड करें',
     downloadExcel: 'एक्सेल डाउनलोड करें',
     clientName: 'ग्राहक का नाम',
     clientEmail: 'ग्राहक ईमेल',
@@ -13954,7 +13935,6 @@ export const translations: Record<Language, Translations> = {
     inventoryDataExported: 'इन्वेंटरी डेटा Excel में निर्यात किया गया',
     templateDownloaded: 'टेम्पलेट डाउनलोड',
     templateDownloadedDesc: 'टेम्पलेट भरें और आयात करें',
-    reportDownloaded: 'रिपोर्ट डाउनलोड',
     
     // Profile & Settings Toast Messages
     profileUpdated: 'प्रोफाइल अपडेट',
@@ -14093,7 +14073,6 @@ export const translations: Record<Language, Translations> = {
     // Invoices & Financial
     loadingInvoices: 'चालान लोड हो रहे हैं...',
     viewAndDownload: 'अपने सदस्यता चालान देखें और डाउनलोड करें',
-    totalExpenses: 'कुल खर्च',
     totalCosts: 'कुल लागत',
     totalSalesLabel: 'कुल बिक्री',
     loadingFinancialData: 'वित्तीय डेटा लोड हो रहा है...',
@@ -15259,7 +15238,6 @@ export const translations: Record<Language, Translations> = {
     fromDate: 'تاریخ سے',
     toDate: 'تاریخ تک',
     calculateVat: 'VAT کا حساب لگائیں',
-    downloadPdf: 'PDF ڈاؤن لوڈ کریں',
     downloadExcel: 'Excel ڈاؤن لوڈ کریں',
     clientName: 'کلائنٹ کا نام',
     clientEmail: 'کلائنٹ ای میل',
@@ -15671,7 +15649,6 @@ export const translations: Record<Language, Translations> = {
     inventoryDataExported: 'انوینٹری ڈیٹا Excel میں برآمد کیا گیا',
     templateDownloaded: 'ٹیمپلیٹ ڈاؤن لوڈ',
     templateDownloadedDesc: 'ٹیمپلیٹ بھریں اور درآمد کریں',
-    reportDownloaded: 'رپورٹ ڈاؤن لوڈ',
     
     // Profile & Settings Toast Messages
     profileUpdated: 'پروفائل اپ ڈیٹ',
@@ -15810,7 +15787,6 @@ export const translations: Record<Language, Translations> = {
     // Invoices & Financial
     loadingInvoices: 'رسیدیں لوڈ ہو رہی ہیں...',
     viewAndDownload: 'اپنی سبسکرپشن رسیدیں دیکھیں اور ڈاؤن لوڈ کریں',
-    totalExpenses: 'کل اخراجات',
     totalCosts: 'کل لاگت',
     totalSalesLabel: 'کل فروخت',
     loadingFinancialData: 'مالیاتی ڈیٹا لوڈ ہو رہا ہے...',
@@ -16922,7 +16898,6 @@ export const translations: Record<Language, Translations> = {
     fromDate: 'Fecha Desde',
     toDate: 'Fecha Hasta',
     calculateVat: 'Calcular IVA',
-    downloadPdf: 'Descargar PDF',
     downloadExcel: 'Descargar Excel',
     clientName: 'Nombre del Cliente',
     clientEmail: 'Email del Cliente',
@@ -17317,7 +17292,6 @@ export const translations: Record<Language, Translations> = {
     inventoryDataExported: "Datos de inventario exportados a Excel",
     templateDownloaded: "Plantilla descargada",
     templateDownloadedDesc: "Completa la plantilla e impórtala",
-    reportDownloaded: "Informe descargado",
     
     // Profile & Settings Toast Messages
     profileUpdated: "Perfil Actualizado",
@@ -17470,7 +17444,6 @@ export const translations: Record<Language, Translations> = {
     // Invoices & Financial
     loadingInvoices: "Cargando facturas...",
     viewAndDownload: "Ver y descargar tus facturas de suscripción",
-    totalExpenses: "Gastos totales",
     totalCosts: "Costos totales",
     totalSalesLabel: "Ventas totales",
     loadingFinancialData: "Cargando datos financieros...",
@@ -18582,7 +18555,6 @@ export const translations: Record<Language, Translations> = {
     fromDate: 'Mula sa Petsa',
     toDate: 'Hanggang sa Petsa',
     calculateVat: 'Kalkulahin ang VAT',
-    downloadPdf: 'I-download ang PDF',
     downloadExcel: 'I-download ang Excel',
     clientName: 'Pangalan ng Kliyente',
     clientEmail: 'Email ng Kliyente',
@@ -18977,7 +18949,6 @@ export const translations: Record<Language, Translations> = {
     inventoryDataExported: "Na-export ang datos ng imbentaryo sa Excel",
     templateDownloaded: "Na-download ang template",
     templateDownloadedDesc: "Punan ang template at i-import",
-    reportDownloaded: "Na-download ang ulat",
     
     // Profile & Settings Toast Messages
     profileUpdated: "Na-update ang Profile",
@@ -19130,7 +19101,6 @@ export const translations: Record<Language, Translations> = {
     // Invoices & Financial
     loadingInvoices: "Naglo-load ng mga invoice...",
     viewAndDownload: "Tingnan at i-download ang iyong mga subscription invoice",
-    totalExpenses: "Kabuuang gastos",
     totalCosts: "Kabuuang halaga",
     totalSalesLabel: "Kabuuang benta",
     loadingFinancialData: "Naglo-load ng financial data...",
