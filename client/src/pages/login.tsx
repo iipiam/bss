@@ -346,6 +346,34 @@ export default function Login() {
       return;
     }
     
+    // Validate required business documents
+    if (!crCertificate) {
+      toast({
+        title: t.missingRequiredFields,
+        description: t.crCertificateRequired || "CR Certificate is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!ibanCertificate) {
+      toast({
+        title: t.missingRequiredFields,
+        description: t.ibanCertificateRequired || "IBAN Certificate is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!nationalAddress) {
+      toast({
+        title: t.missingRequiredFields,
+        description: t.nationalAddressRequired || "National Address certificate is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     signupMutation.mutate({
       username: signupUsername,
       password: signupPassword,
@@ -707,16 +735,16 @@ export default function Login() {
                 <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
                   <div className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-primary" />
-                    <Label className="text-sm font-semibold">{t.businessDocuments || "Business Documents"} ({t.optional || "Optional"})</Label>
+                    <Label className="text-sm font-semibold">{t.businessDocuments || "Business Documents"} *</Label>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {t.uploadBusinessDocumentsDesc || "Upload your business documents (PDF only, max 10MB each). These can also be uploaded later."}
+                    {t.uploadBusinessDocumentsRequiredDesc || "Upload your business documents (PDF only, max 10MB each)"}
                   </p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* CR Certificate */}
                     <div className="space-y-2">
-                      <Label htmlFor="cr-certificate" className="text-sm">{t.crCertificate || "CR Certificate"}</Label>
+                      <Label htmlFor="cr-certificate" className="text-sm">{t.crCertificate || "CR Certificate"} *</Label>
                       <div className="flex items-center gap-2">
                         <Input
                           id="cr-certificate"
@@ -788,7 +816,7 @@ export default function Login() {
                     
                     {/* IBAN Certificate */}
                     <div className="space-y-2">
-                      <Label htmlFor="iban-certificate" className="text-sm">{t.ibanCertificate || "IBAN Certificate"}</Label>
+                      <Label htmlFor="iban-certificate" className="text-sm">{t.ibanCertificate || "IBAN Certificate"} *</Label>
                       <div className="flex items-center gap-2">
                         <Input
                           id="iban-certificate"
@@ -823,7 +851,7 @@ export default function Login() {
                     
                     {/* National Address */}
                     <div className="space-y-2">
-                      <Label htmlFor="national-address" className="text-sm">{t.nationalAddress || "National Address"}</Label>
+                      <Label htmlFor="national-address" className="text-sm">{t.nationalAddress || "National Address"} *</Label>
                       <div className="flex items-center gap-2">
                         <Input
                           id="national-address"

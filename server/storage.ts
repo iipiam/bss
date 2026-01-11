@@ -75,7 +75,10 @@ import {
   type InsertPendingSignup,
   type MenuCategory,
   type InsertMenuCategory,
+  type DeviceSerialNumber,
+  type InsertDeviceSerialNumber,
   restaurants,
+  deviceSerialNumbers,
   pendingSignups,
   branches,
   inventoryItems,
@@ -125,6 +128,7 @@ import {
 import { db, pool } from "./db";
 import { eq, and, gte, lte, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 
 export interface IStorage {
   // Restaurants (Multi-tenant isolation)
@@ -138,6 +142,12 @@ export interface IStorage {
   createBranch(branch: InsertBranch): Promise<Branch>;
   updateBranch(id: string, restaurantId: string, branch: Partial<InsertBranch>): Promise<Branch | undefined>;
   deleteBranch(id: string, restaurantId: string): Promise<boolean>;
+
+  // Device Serial Numbers (EGS for ZATCA)
+  getDeviceSerialNumbers(restaurantId: string): Promise<DeviceSerialNumber[]>;
+  getDeviceSerialNumber(id: string, restaurantId: string): Promise<DeviceSerialNumber | undefined>;
+  createDeviceSerialNumber(serial: InsertDeviceSerialNumber): Promise<DeviceSerialNumber>;
+  generateDeviceSerialNumbers(restaurantId: string, branchesCount: number, commercialRegistration: string): Promise<DeviceSerialNumber[]>;
 
   // Inventory (MULTI-TENANT: requires restaurantId for all operations)
   getInventoryItems(restaurantId: string, branchId?: string): Promise<InventoryItem[]>;
@@ -542,6 +552,57 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(branches)
       .where(and(eq(branches.id, id), eq(branches.restaurantId, restaurantId)));
     return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Device Serial Numbers (EGS for ZATCA)
+  async getDeviceSerialNumbers(restaurantId: string): Promise<DeviceSerialNumber[]> {
+    return await db.select().from(deviceSerialNumbers).where(eq(deviceSerialNumbers.restaurantId, restaurantId)).orderBy(deviceSerialNumbers.branchNumber);
+  }
+
+  async getDeviceSerialNumber(id: string, restaurantId: string): Promise<DeviceSerialNumber | undefined> {
+    const [serial] = await db.select().from(deviceSerialNumbers).where(and(eq(deviceSerialNumbers.id, id), eq(deviceSerialNumbers.restaurantId, restaurantId)));
+    return serial;
+  }
+
+  async createDeviceSerialNumber(serial: InsertDeviceSerialNumber): Promise<DeviceSerialNumber> {
+    const [created] = await db.insert(deviceSerialNumbers).values(serial).returning();
+    return created;
+  }
+
+  async generateDeviceSerialNumbers(restaurantId: string, branchesCount: number, commercialRegistration: string): Promise<DeviceSerialNumber[]> {
+    // Generate all serial numbers according to ZATCA EGS specification
+    // Format: 1-{CR}|2-{Model-Version}|3-{UUID}
+    // - Segment 1: Commercial Registration number (identifies the taxpayer)
+    // - Segment 2: Certified device model/version (fixed for all branches)
+    // - Segment 3: Unique UUID for each device instance
+    // Branch association is stored in branchNumber column, NOT in the serial
+    
+    const certifiedModel = "Standard";
+    const certifiedVersion = "1.0";
+    const solutionName = "BSS-POS"; // Certified product name
+    
+    const serialsToInsert = [];
+    
+    for (let i = 1; i <= branchesCount; i++) {
+      const uuid = crypto.randomUUID();
+      // ZATCA compliant EGS Serial Number format
+      const serialNumber = `1-${commercialRegistration}|2-${certifiedModel}-${certifiedVersion}|3-${uuid}`;
+      
+      serialsToInsert.push({
+        restaurantId,
+        branchId: null, // Will be linked when branch is created
+        branchNumber: i,
+        serialNumber,
+        solutionName,
+        model: certifiedModel,
+        version: certifiedVersion,
+        isActive: true,
+      });
+    }
+    
+    // Bulk insert all serial numbers in a single statement (atomic operation)
+    const created = await db.insert(deviceSerialNumbers).values(serialsToInsert).returning();
+    return created;
   }
 
   // Inventory (MULTI-TENANT: filters by restaurantId)

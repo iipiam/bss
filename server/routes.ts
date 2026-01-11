@@ -379,6 +379,32 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.status(204).send();
   });
 
+  // Device Serial Numbers (EGS for ZATCA) - Admin only access
+  app.get("/api/device-serial-numbers", requireAuth, requireRestaurant, async (req, res) => {
+    // Only admin users can access device serial numbers
+    if (req.session.user!.role !== 'admin') {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    const restaurantId = req.session.user!.restaurantId!;
+    const serials = await storage.getDeviceSerialNumbers(restaurantId);
+    res.json(serials);
+  });
+
+  // IT-only endpoint to get device serial numbers for any restaurant
+  app.get("/api/it/device-serial-numbers/:restaurantId", requireAuth, async (req, res) => {
+    // Only IT accounts (restaurantId = null) can access this
+    if (req.session.user!.restaurantId !== null) {
+      return res.status(403).json({ error: "IT access only" });
+    }
+    // Validate restaurant ID is provided and valid format
+    const targetRestaurantId = req.params.restaurantId;
+    if (!targetRestaurantId || targetRestaurantId.length < 10) {
+      return res.status(400).json({ error: "Invalid restaurant ID" });
+    }
+    const serials = await storage.getDeviceSerialNumbers(targetRestaurantId);
+    res.json(serials);
+  });
+
   // Inventory
   app.get("/api/inventory", requireAuth, requireRestaurant, requirePermission('inventory'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
@@ -4822,6 +4848,22 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "VAT Certificate is required when you have VAT registration" });
       }
 
+      // Validate required business documents (all are now mandatory)
+      if (!files || !files.crCertificate || files.crCertificate.length === 0) {
+        console.log("[SIGNUP] Missing CR certificate");
+        return res.status(400).json({ error: "CR Certificate is required" });
+      }
+      
+      if (!files || !files.ibanCertificate || files.ibanCertificate.length === 0) {
+        console.log("[SIGNUP] Missing IBAN certificate");
+        return res.status(400).json({ error: "IBAN Certificate is required" });
+      }
+      
+      if (!files || !files.nationalAddress || files.nationalAddress.length === 0) {
+        console.log("[SIGNUP] Missing National Address certificate");
+        return res.status(400).json({ error: "National Address certificate is required" });
+      }
+
       // Validate subscription plan based on business type
       // Factory businesses can only have monthly or yearly plans (no weekly)
       if (businessType === 'factory' && subscriptionPlan === 'weekly') {
@@ -4856,6 +4898,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       });
 
       const restaurant = await storage.createRestaurant(restaurantData);
+
+      // Step 1.5: Generate Device Serial Numbers (EGS) for ZATCA - one per branch
+      // This is a critical step - if it fails, we abort the signup
+      const deviceSerials = await storage.generateDeviceSerialNumbers(
+        restaurant.id,
+        branches,
+        commercialRegistration
+      );
+      console.log(`[SIGNUP] Generated ${deviceSerials.length} device serial numbers for restaurant ${restaurant.id}`);
 
       // Step 2: Create admin user linked to restaurant
       const userData = {

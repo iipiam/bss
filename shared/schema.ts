@@ -51,6 +51,26 @@ export const insertBranchSchema = createInsertSchema(branches).omit({ id: true }
 export type InsertBranch = z.infer<typeof insertBranchSchema>;
 export type Branch = typeof branches.$inferSelect;
 
+// Device Serial Numbers (EGS - E-invoicing Generation Solution) for ZATCA compliance
+// One serial number per branch as required by ZATCA Phase 2
+export const deviceSerialNumbers = pgTable("device_serial_numbers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  branchId: varchar("branch_id").references(() => branches.id), // null for first/main branch created during signup
+  branchNumber: integer("branch_number").notNull(), // 1, 2, 3, etc. - which branch this serial is for
+  serialNumber: text("serial_number").notNull().unique(), // Format: 1-CR|2-SERIAL|3-UUID
+  // Components of the serial number (for CSR generation)
+  solutionName: text("solution_name").notNull().default("BSS-POS"), // 1- Solution Name
+  model: text("model").notNull().default("Standard"), // Optional model identifier
+  version: text("version").notNull().default("1.0"), // Software version
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertDeviceSerialNumberSchema = createInsertSchema(deviceSerialNumbers).omit({ id: true, createdAt: true });
+export type InsertDeviceSerialNumber = z.infer<typeof insertDeviceSerialNumberSchema>;
+export type DeviceSerialNumber = typeof deviceSerialNumbers.$inferSelect;
+
 // Inventory Items
 export const inventoryItems = pgTable("inventory_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
