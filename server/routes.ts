@@ -4938,7 +4938,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           userEmail: user.email ?? "",
           restaurantName: restaurant.name,
           nationalId: restaurant.nationalId,
-          taxNumber: restaurant.taxNumber,
+          taxNumber: restaurant.taxNumber ?? "",
           commercialRegistration: restaurant.commercialRegistration,
           subscriptionPlan: restaurant.subscriptionPlan,
           branchesCount: restaurant.branchesCount,
