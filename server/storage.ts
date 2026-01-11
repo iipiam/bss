@@ -4908,6 +4908,13 @@ export const storage = new DatabaseStorage();
 // Run database migrations for missing columns on startup
 (async function runMigrations() {
   try {
+    // Add has_vat_registration column to restaurants table if missing
+    await pool.query(`
+      ALTER TABLE restaurants 
+      ADD COLUMN IF NOT EXISTS has_vat_registration BOOLEAN DEFAULT true
+    `);
+    console.log('[Migration] Restaurants column verified/added: has_vat_registration');
+    
     // Add inventory_item_id, original_procurement_id, and unit columns to procurement table if missing
     await pool.query(`
       ALTER TABLE procurement 
