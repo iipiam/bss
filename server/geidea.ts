@@ -5,7 +5,9 @@ interface CreateSessionParams {
   amount: number;
   merchantReferenceId: string;
   callbackUrl: string;
+  currency?: string;
   customerEmail?: string;
+  customerName?: string;
   language?: string;
   cardOnFile?: boolean;
   initiatedBy?: 'Internet' | 'Merchant';

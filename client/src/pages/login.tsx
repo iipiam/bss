@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,6 +70,57 @@ export default function Login() {
   const { login } = useAuth();
   const { toast } = useToast();
   const { language, setLanguage, t } = useLanguage();
+  const [location] = useLocation();
+
+  // Handle URL parameters for signup success/error from Geidea callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const signupSuccess = params.get('signup');
+    const signupError = params.get('error');
+    const username = params.get('username');
+    
+    if (signupSuccess === 'success') {
+      toast({
+        title: "Account Created Successfully!",
+        description: username 
+          ? `Your account "${username}" has been created. Please sign in.`
+          : "Please sign in with your credentials.",
+      });
+      // Clear URL params
+      window.history.replaceState({}, '', '/login');
+    } else if (signupError) {
+      let errorMessage = "An error occurred during signup.";
+      switch (signupError) {
+        case 'payment_failed':
+          errorMessage = "Payment was not completed. Please try again.";
+          break;
+        case 'payment_pending':
+          errorMessage = "Payment is still pending. Please try again.";
+          break;
+        case 'signup_not_found':
+          errorMessage = "Signup session expired. Please try again.";
+          break;
+        case 'account_creation_failed':
+          errorMessage = "Account could not be created. Please contact support.";
+          break;
+        case 'missing_order':
+        case 'callback_error':
+          errorMessage = "Payment processing error. Please try again.";
+          break;
+        case 'verification_failed':
+        case 'amount_mismatch':
+          errorMessage = "Payment verification failed. Please contact support if payment was deducted.";
+          break;
+      }
+      toast({
+        title: "Signup Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      // Clear URL params
+      window.history.replaceState({}, '', '/login');
+    }
+  }, [toast]);
 
   // Calculate total price with branches (VAT-inclusive)
   const calculateTotalPrice = () => {
@@ -163,6 +215,21 @@ export default function Login() {
       return response.json();
     },
     onSuccess: async (data: any) => {
+      // Check if response contains a redirect URL (Geidea payment flow)
+      if (data.redirectUrl) {
+        toast({
+          title: "Redirecting to Payment",
+          description: `Please complete your subscription payment of ${data.amount} SAR`,
+        });
+        
+        // Redirect to Geidea payment page
+        setTimeout(() => {
+          window.location.href = data.redirectUrl;
+        }, 1500);
+        return;
+      }
+      
+      // Fallback for direct account creation (legacy flow)
       toast({
         title: t.accountCreated,
         description: t.accountCreatedDesc,

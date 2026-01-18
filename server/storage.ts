@@ -4989,6 +4989,39 @@ export const storage = new DatabaseStorage();
       )
     `);
     console.log('[Migration] Table verified/created: device_serial_numbers');
+    
+    // Create pending_signups table for Geidea payment flow
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS pending_signups (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        geidea_session_id TEXT NOT NULL UNIQUE,
+        merchant_reference_id TEXT NOT NULL,
+        username TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        full_name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        restaurant_name TEXT NOT NULL,
+        national_id TEXT NOT NULL,
+        has_vat_registration BOOLEAN NOT NULL DEFAULT true,
+        tax_number TEXT,
+        commercial_registration TEXT NOT NULL,
+        business_type TEXT NOT NULL,
+        restaurant_type TEXT NOT NULL,
+        subscription_plan TEXT NOT NULL,
+        branches_count INTEGER NOT NULL,
+        amount DECIMAL(10, 2) NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        uploaded_files JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        expires_at TIMESTAMP NOT NULL
+      )
+    `);
+    // Add missing columns to pending_signups if table already exists
+    await pool.query(`ALTER TABLE pending_signups ALTER COLUMN tax_number DROP NOT NULL`);
+    await pool.query(`ALTER TABLE pending_signups ADD COLUMN IF NOT EXISTS has_vat_registration BOOLEAN DEFAULT true`);
+    await pool.query(`ALTER TABLE pending_signups ADD COLUMN IF NOT EXISTS uploaded_files JSONB`);
+    await pool.query(`ALTER TABLE pending_signups ADD COLUMN IF NOT EXISTS merchant_reference_id TEXT`);
+    console.log('[Migration] Table verified/created: pending_signups');
   } catch (error: any) {
     // Only log if not a duplicate column error (which means columns already exist)
     if (!error.message?.includes('already exists')) {

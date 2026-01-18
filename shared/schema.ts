@@ -1447,13 +1447,15 @@ export type CompanyFile = typeof companyFiles.$inferSelect;
 export const pendingSignups = pgTable("pending_signups", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   geideaSessionId: text("geidea_session_id").notNull().unique(),
+  merchantReferenceId: text("merchant_reference_id").notNull(), // For security validation in callback
   username: text("username").notNull(),
   passwordHash: text("password_hash").notNull(),
   fullName: text("full_name").notNull(),
   email: text("email").notNull(),
   restaurantName: text("restaurant_name").notNull(),
   nationalId: text("national_id").notNull(),
-  taxNumber: text("tax_number").notNull(),
+  hasVatRegistration: boolean("has_vat_registration").notNull().default(true),
+  taxNumber: text("tax_number"), // Nullable - only required if hasVatRegistration is true
   commercialRegistration: text("commercial_registration").notNull(),
   businessType: text("business_type").notNull(),
   restaurantType: text("restaurant_type").notNull(),
@@ -1461,6 +1463,7 @@ export const pendingSignups = pgTable("pending_signups", {
   branchesCount: integer("branches_count").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   status: text("status").notNull().default("pending"), // pending, paid, failed, expired
+  uploadedFiles: jsonb("uploaded_files"), // Store file paths as JSON for later association
   createdAt: timestamp("created_at").notNull().defaultNow(),
   expiresAt: timestamp("expires_at").notNull(),
 });
