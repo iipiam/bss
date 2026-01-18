@@ -1,5 +1,8 @@
-// Geidea Payment Gateway Integration
+// Geidea Payment Gateway Integration for KSA (Saudi Arabia)
 // Documentation: https://docs.geidea.net/
+// KSA Merchant API Base: https://api.ksamerchant.geidea.net
+
+const GEIDEA_KSA_BASE_URL = 'https://api.ksamerchant.geidea.net';
 
 interface CreateSessionParams {
   amount: number;
@@ -80,7 +83,7 @@ export async function createPaymentSession(params: CreateSessionParams): Promise
     requestBody.initiatedBy = params.initiatedBy || 'Internet';
   }
   
-  const response = await fetch('https://api.merchant.geidea.net/pgw/api/v1/direct/session', {
+  const response = await fetch(`${GEIDEA_KSA_BASE_URL}/payment-intent/api/v2/direct/session`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -113,7 +116,7 @@ export async function chargeWithToken(params: ChargeWithTokenParams): Promise<Pa
 
   console.log(`[Geidea] Charging token ${params.tokenId} for ${params.amount} ${params.currency || 'SAR'}`);
   
-  const response = await fetch('https://api.merchant.geidea.net/pgw/api/v1/direct/pay/token', {
+  const response = await fetch(`${GEIDEA_KSA_BASE_URL}/pgw/api/v2/direct/pay/token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -136,7 +139,7 @@ export async function chargeWithToken(params: ChargeWithTokenParams): Promise<Pa
 export async function getOrderDetails(orderId: string): Promise<any> {
   const credentials = getCredentials();
   
-  const response = await fetch(`https://api.merchant.geidea.net/pgw/api/v1/direct/order/${orderId}`, {
+  const response = await fetch(`${GEIDEA_KSA_BASE_URL}/pgw/api/v2/direct/order/${orderId}`, {
     method: 'GET',
     headers: {
       'Authorization': `Basic ${credentials}`,
