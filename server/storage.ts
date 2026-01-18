@@ -4972,6 +4972,23 @@ export const storage = new DatabaseStorage();
       ADD COLUMN IF NOT EXISTS weekly_schedule JSONB
     `);
     console.log('[Migration] Settings column verified/added: weekly_schedule');
+    
+    // Create device_serial_numbers table if it doesn't exist (for ZATCA compliance)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS device_serial_numbers (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        branch_id VARCHAR(255) REFERENCES branches(id),
+        branch_number INTEGER NOT NULL,
+        serial_number TEXT NOT NULL UNIQUE,
+        solution_name TEXT NOT NULL DEFAULT 'BSS-POS',
+        model TEXT NOT NULL DEFAULT 'Standard',
+        version TEXT NOT NULL DEFAULT '1.0',
+        is_active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('[Migration] Table verified/created: device_serial_numbers');
   } catch (error: any) {
     // Only log if not a duplicate column error (which means columns already exist)
     if (!error.message?.includes('already exists')) {
