@@ -1115,6 +1115,35 @@ export default function Login() {
                   )}
                 </div>
 
+                {/* Refund Policy */}
+                <div className="space-y-3 p-4 border rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800" data-testid="refund-policy-section">
+                  <div className="text-center border-b border-amber-300 dark:border-amber-700 pb-2">
+                    <h4 className="text-sm font-bold text-amber-800 dark:text-amber-200">
+                      REFUND POLICY / سياسة استرداد الأموال
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    {/* English */}
+                    <div className="space-y-2 text-left">
+                      <p className="text-muted-foreground leading-relaxed">
+                        <span className="font-semibold">1-</span> When canceling the subscription before the expiration of the specified period, the financial balance will be calculated at the value of one month's subscription of 199 Saudi Riyals only, only when subscribing annually, while there is a discount applied by the company that owns the application.
+                      </p>
+                      <p className="text-muted-foreground leading-relaxed">
+                        <span className="font-semibold">2-</span> If the subscription is canceled with several months and a few days, the value of the days will be calculated by dividing the value of the monthly subscription by the number of days of the month (30 days).
+                      </p>
+                    </div>
+                    {/* Arabic */}
+                    <div className="space-y-2 text-right" dir="rtl">
+                      <p className="text-muted-foreground leading-relaxed">
+                        <span className="font-semibold">١-</span> عند إلغاء الاشتراك قبل انتهاء المدة المحددة يتم احتساب المتبقي المالي بقيمة الشهر الواحد البالغ ١٩٩ ريال سعودي فقط لا غير عند الاشتراك سنوياً وذلك لوجود خصم مطبق من قبل الشركة المالكة للتطبيق.
+                      </p>
+                      <p className="text-muted-foreground leading-relaxed">
+                        <span className="font-semibold">٢-</span> في حال إلغاء الاشتراك مع وجود عدة أشهر وبضعة أيام سيتم احتساب قيمة الأيام بتقسيم قيمة الاشتراك الشهري على عدد أيام الشهر (٣٠ يوماً).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <Button 
                   type="submit" 
                   className="w-full h-[44px] bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow-lg shadow-primary/20 transition-all" 
