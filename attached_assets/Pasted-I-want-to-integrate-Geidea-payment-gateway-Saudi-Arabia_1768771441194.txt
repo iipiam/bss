@@ -1,0 +1,58 @@
+I want to integrate **Geidea** payment gateway (Saudi Arabia) for one-time payments + recurring subscriptions using saved cards/tokenization in my web app.
+
+I already have:
+- Public Key (merchantPublicKey): pk_live_xxxxxxxxxxxxxxx   ← use on frontend for session creation
+- API Password / Secret Key: xxxxxxxxxxxxxxxx   ← use on backend only (Basic Auth)
+
+My app is [describe your stack, e.g.: Next.js / React frontend + Node.js/Express backend OR simple HTML/JS + Node backend OR Python/Flask]. It has user authentication and I want to add a subscription/checkout page.
+
+Please implement the full Geidea integration step-by-step:
+
+1. **Secrets handling** (very important for security):
+   - Add two Secrets in Replit:
+     - GEIDEA_PUBLIC_KEY = [paste your Public Key]
+     - GEIDEA_API_PASSWORD = [paste your API Password]
+   - Use process.env.GEIDEA_PUBLIC_KEY and process.env.GEIDEA_API_PASSWORD in code
+
+2. **Frontend (card collection / checkout)**:
+   - Create a subscription/checkout page.
+   - Use Geidea's Hosted Payment Page (easiest & PCI compliant):
+     - Call backend to create a SESSION (POST /payment-intent/api/v2/direct/session)
+     - On success, get sessionId and redirect to Geidea HPP: https://hosted.test.geidea.net/payment?sessionId=xxx (or live: https://hosted.geidea.net/payment?sessionId=xxx)
+   - Add "cardOnFile": true in session creation for first payment (to enable saving card for recurring)
+   - After successful payment, Geidea redirects to your callbackUrl with tokenId (saved card token)
+
+3. **Backend (Node.js/Express or Python/Flask)**:
+   - POST endpoint: /api/create-geidea-session
+     - Authenticate with Basic Auth: username = public key (or merchant ID), password = API Password
+     - Body example: { amount: 49.00, currency: "SAR", callbackUrl: "https://yourapp.com/payment-callback", merchantReferenceId: "sub-123", cardOnFile: true, recurring: true (if supported), language: "ar" }
+     - Use axios or requests to call: https://api.test.geidea.net/payment-intent/api/v2/direct/session (test) or live https://api.geidea.net/...
+   - POST endpoint: /api/charge-subscription (for recurring payments)
+     - Use saved tokenId from first payment
+     - Call Geidea API to charge using tokenId (see tokenization docs)
+   - Handle callback: /payment-callback → save tokenId to database for the user, show success page
+
+4. **Recurring / Subscriptions flow**:
+   - First payment: Create session with cardOnFile: true → get tokenId on callback
+   - Save tokenId per user in your DB
+   - For future charges (monthly): Call charge API with tokenId, amount, etc. (merchant-initiated transaction)
+   - Use cron job / scheduled task (e.g., node-cron) to auto-charge subscriptions
+
+5. **Test mode first**:
+   - Use test endpoints: api.test.geidea.net, hosted.test.geidea.net
+   - Use Geidea test cards from docs (e.g., 4111111111111111, expiry future, CVC 123)
+
+6. **Webhook (optional but recommended)**:
+   - Add /webhook endpoint for Geidea events (success, failure)
+   - Configure webhook URL in Geidea merchant dashboard
+
+7. **Generate/update code files**:
+   - Add checkout page (React component or HTML)
+   - Server routes for session creation & callback
+   - Install needed packages (axios/fetch for Node, requests for Python)
+   - Show full code changes
+
+Security: NEVER expose API Password in frontend!
+Use HTTPS, validate callbacks with signature if provided.
+
+Start now – ask if you need my current code structure or more details.
