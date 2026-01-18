@@ -8850,7 +8850,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.post("/api/geidea/create-session", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      const { orderId, amount, description, customerEmail, customerName, customerPhone, branchId, language } = req.body;
+      const { orderId, amount, description, customerEmail, customerName, customerPhone, branchId, language, cardOnFile } = req.body;
       
       // SECURITY: For POS payments with orderId, validate order ownership and use server-side amount
       let validatedAmount: number;
@@ -8897,6 +8897,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         callbackUrl,
         customerEmail,
         language: language || 'en',
+        cardOnFile: cardOnFile || false,
+        initiatedBy: 'Internet',
       });
 
       // Save payment record to database (reusing moyasarPayments table for now)
@@ -8985,7 +8987,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
 
       // Map Geidea status to internal status
-      const { isPaymentSuccessful, isPaymentFailed } = await import('./geidea');
+      const { isPaymentSuccessful, isPaymentFailed, extractTokenFromOrder } = await import('./geidea');
       let internalStatus = status.toLowerCase();
       if (isPaymentSuccessful(status)) {
         internalStatus = 'paid';
@@ -8996,6 +8998,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Get card details from transactions if available
       let cardBrand = null;
       let cardLast4 = null;
+      let tokenId = null;
       if (order.transactions && order.transactions.length > 0) {
         const lastTx = order.transactions[order.transactions.length - 1];
         if (lastTx.paymentMethod) {
@@ -9005,12 +9008,25 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         }
       }
 
+      // Extract token from order for recurring payments (cardOnFile)
+      tokenId = extractTokenFromOrder(order);
+      if (tokenId) {
+        console.log(`[Geidea Webhook] Extracted token for recurring payments: ${tokenId}`);
+      }
+
+      // Build updated metadata with tokenId if extracted
+      const updatedMetadata = {
+        ...(storedMetadata || {}),
+        ...(tokenId ? { tokenId } : {}),
+      } as Record<string, any>;
+
       // Update payment in database
       await storage.updateMoyasarPayment(payment.id, payment.restaurantId, {
         status: internalStatus,
         cardBrand,
         cardLast4,
         paymentMethod: 'geidea-card',
+        metadata: updatedMetadata,
       });
 
       // If payment is successful and linked to an order, update order status
@@ -9119,6 +9135,95 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("[Geidea] Error fetching payments:", error);
       res.status(500).json({ error: "Failed to fetch payments" });
+    }
+  });
+
+  // Geidea recurring subscription charge using saved token
+  // SECURITY: Token must be retrieved from a stored payment belonging to this restaurant
+  app.post("/api/geidea/charge-subscription", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { paymentId, amount, subscriptionId, description, customerName, customerEmail } = req.body;
+
+      // SECURITY: Require paymentId instead of raw tokenId to prevent cross-tenant token theft
+      if (!paymentId) {
+        return res.status(400).json({ error: "Original payment ID is required for subscription charges" });
+      }
+
+      if (!amount || parseFloat(amount) <= 0) {
+        return res.status(400).json({ error: "Valid amount is required" });
+      }
+
+      // SECURITY: Look up the original payment and verify it belongs to this restaurant
+      const originalPayment = await storage.getMoyasarPayment(paymentId);
+      if (!originalPayment) {
+        return res.status(404).json({ error: "Original payment not found" });
+      }
+      
+      // SECURITY: Verify tenant ownership
+      if (originalPayment.restaurantId !== restaurantId) {
+        console.warn(`[Geidea] Attempted cross-tenant token access: restaurant ${restaurantId} tried to use payment from ${originalPayment.restaurantId}`);
+        return res.status(403).json({ error: "Payment not found for this restaurant" });
+      }
+
+      // Extract tokenId from stored metadata
+      const metadata = originalPayment.metadata as { tokenId?: string } | null;
+      const tokenId = metadata?.tokenId;
+
+      if (!tokenId) {
+        return res.status(400).json({ error: "No saved card token found for this payment. The original payment must use cardOnFile:true" });
+      }
+
+      const { chargeWithToken } = await import('./geidea');
+
+      const merchantReferenceId = subscriptionId || `SUB-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      const result = await chargeWithToken({
+        tokenId,
+        amount: parseFloat(amount),
+        merchantReferenceId,
+      });
+
+      // Save payment record
+      const payment = await storage.createMoyasarPayment({
+        restaurantId,
+        moyasarId: result.order?.orderId || merchantReferenceId,
+        orderId: subscriptionId || null,
+        transactionId: null,
+        amount: parseFloat(amount).toFixed(2),
+        amountHalalas: Math.round(parseFloat(amount) * 100),
+        currency: 'SAR',
+        status: result.order?.status === 'Success' || result.order?.status === 'Captured' ? 'paid' : 'pending',
+        paymentMethod: 'geidea-recurring',
+        cardBrand: null,
+        cardLast4: null,
+        fee: null,
+        refundedAmount: "0",
+        description: description || 'Subscription charge',
+        customerName: customerName || null,
+        customerEmail: customerEmail || null,
+        customerPhone: null,
+        callbackUrl: null,
+        metadata: { merchantReferenceId, gateway: 'geidea', tokenId, type: 'recurring', restaurantId } as Record<string, any>,
+        errorMessage: null,
+        branchId: null,
+      });
+
+      console.log(`[Geidea] Subscription charge successful for restaurant ${restaurantId}: ${result.order?.orderId}`);
+
+      res.json({
+        success: true,
+        orderId: result.order?.orderId,
+        status: result.order?.status,
+        paymentId: payment.id,
+        payment,
+      });
+    } catch (error: any) {
+      console.error("[Geidea] Subscription charge error:", error);
+      res.status(500).json({
+        error: "Subscription charge failed",
+        message: error.message,
+      });
     }
   });
 

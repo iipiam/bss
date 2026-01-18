@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,19 +10,11 @@ import { useLanguage } from "@/contexts/LanguageContext";
 export default function PaymentTest() {
   const { t } = useLanguage();
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [amount, setAmount] = useState(t.testPaymentAmount);
-  const [description, setDescription] = useState(t.testPaymentDescription);
-  const [customerName, setCustomerName] = useState(t.testCustomerName);
-  const [customerPhone, setCustomerPhone] = useState(t.testCustomerPhone);
+  const [amount, setAmount] = useState("100.00");
+  const [description, setDescription] = useState("Test Payment");
+  const [customerName, setCustomerName] = useState("Test Customer");
+  const [customerPhone, setCustomerPhone] = useState("+966500000000");
   const { toast } = useToast();
-
-  // Update state when language changes
-  useEffect(() => {
-    setAmount(t.testPaymentAmount);
-    setDescription(t.testPaymentDescription);
-    setCustomerName(t.testCustomerName);
-    setCustomerPhone(t.testCustomerPhone);
-  }, [t.testPaymentAmount, t.testPaymentDescription, t.testCustomerName, t.testCustomerPhone]);
 
   const handlePaymentSuccess = (paymentId: string) => {
     toast({
@@ -69,7 +61,7 @@ export default function PaymentTest() {
     <div className="max-w-2xl mx-auto p-6">
       <Card>
         <CardHeader>
-          <CardTitle>{t.geideaPaymentTest || 'Geidea Payment Test'}</CardTitle>
+          <CardTitle>Geidea Payment Test</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
