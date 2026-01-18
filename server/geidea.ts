@@ -64,8 +64,11 @@ function getCredentials(): string {
 export async function createPaymentSession(params: CreateSessionParams): Promise<SessionResponse> {
   const credentials = getCredentials();
   
+  // Round amount to 2 decimal places to avoid floating point issues
+  const roundedAmount = Math.round(params.amount * 100) / 100;
+  
   const requestBody: any = {
-    amount: params.amount,
+    amount: roundedAmount,
     currency: 'SAR',
     merchantReferenceId: params.merchantReferenceId,
     callbackUrl: params.callbackUrl,
@@ -104,9 +107,12 @@ export async function createPaymentSession(params: CreateSessionParams): Promise
 export async function chargeWithToken(params: ChargeWithTokenParams): Promise<PayByTokenResponse> {
   const credentials = getCredentials();
   
+  // Round amount to 2 decimal places to avoid floating point issues
+  const roundedAmount = Math.round(params.amount * 100) / 100;
+  
   const requestBody = {
     tokenId: params.tokenId,
-    amount: params.amount,
+    amount: roundedAmount,
     currency: params.currency || 'SAR',
     merchantReferenceId: params.merchantReferenceId,
     initiatedBy: 'Merchant',
