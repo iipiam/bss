@@ -2693,7 +2693,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Upload document for investor
+  // Upload document for investor - stores as base64 in database for persistence
   app.post("/api/investors/:id/document", requireAuth, requireRestaurant, requireAction('investors', 'edit'), uploadInvestorDoc.single('document'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
@@ -2713,26 +2713,42 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      // Delete old document if exists
+      // Read the file and convert to base64 for persistent database storage
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const documentContent = fileBuffer.toString('base64');
+      const documentFilename = req.file.originalname;
+
+      // Delete the temp file after reading
+      fs.unlinkSync(req.file.path);
+
+      // Delete old filesystem document if exists (legacy cleanup)
       if (investor.documentPath) {
         const oldPath = path.join(process.cwd(), investor.documentPath);
         if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath);
+          try {
+            fs.unlinkSync(oldPath);
+          } catch (e) {
+            // Ignore cleanup errors
+          }
         }
       }
 
-      // Update investor with new document path
-      const documentPath = `uploads/investor-documents/${req.file.filename}`;
-      const updated = await storage.updateInvestor(investorId, { documentPath });
+      // Update investor with base64 content stored in database (persistent)
+      const updated = await storage.updateInvestor(investorId, { 
+        documentContent,
+        documentFilename,
+        documentPath: null // Clear legacy path since we're using database storage
+      });
 
-      res.json({ success: true, documentPath, investor: updated });
+      console.log(`[INVESTORS] Document uploaded and stored in database for investor ${investorId}, filename: ${documentFilename}`);
+      res.json({ success: true, documentFilename, investor: updated });
     } catch (error) {
       console.error("[INVESTORS] Document upload error:", error);
       res.status(500).json({ error: "Failed to upload document" });
     }
   });
 
-  // Download/view investor document
+  // Download/view investor document - serves from database content
   app.get("/api/investors/:id/document", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
@@ -2744,32 +2760,45 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(404).json({ error: "Investor not found" });
       }
 
-      if (!investor.documentPath) {
-        return res.status(404).json({ error: "No document found" });
+      // Check for document content in database (new persistent storage)
+      if (investor.documentContent) {
+        // Serve from database content
+        const filename = investor.documentFilename || `${investor.name.replace(/[^a-zA-Z0-9]/g, '_')}_document.pdf`;
+        if (mode === 'inline') {
+          res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+        } else {
+          res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        }
+        res.setHeader('Content-Type', 'application/pdf');
+        
+        // Convert base64 back to buffer and send
+        const buffer = Buffer.from(investor.documentContent, 'base64');
+        return res.send(buffer);
       }
 
-      const filePath = path.join(process.cwd(), investor.documentPath);
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ error: "Document file not found" });
+      // Fallback: Check for legacy filesystem document
+      if (investor.documentPath) {
+        const filePath = path.join(process.cwd(), investor.documentPath);
+        if (fs.existsSync(filePath)) {
+          const filename = `${investor.name.replace(/[^a-zA-Z0-9]/g, '_')}_document.pdf`;
+          if (mode === 'inline') {
+            res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+          } else {
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+          }
+          res.setHeader('Content-Type', 'application/pdf');
+          return res.sendFile(filePath);
+        }
       }
 
-      // Set Content-Disposition based on mode (inline for preview, attachment for download)
-      const filename = `${investor.name.replace(/[^a-zA-Z0-9]/g, '_')}_document.pdf`;
-      if (mode === 'inline') {
-        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-      } else {
-        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      }
-      res.setHeader('Content-Type', 'application/pdf');
-
-      res.sendFile(filePath);
+      return res.status(404).json({ error: "No document found" });
     } catch (error) {
       console.error("[INVESTORS] Document download error:", error);
       res.status(500).json({ error: "Failed to download document" });
     }
   });
 
-  // Delete investor document
+  // Delete investor document - clears from database and filesystem
   app.delete("/api/investors/:id/document", requireAuth, requireRestaurant, requireAction('investors', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
@@ -2780,18 +2809,28 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(404).json({ error: "Investor not found" });
       }
 
-      if (!investor.documentPath) {
+      if (!investor.documentContent && !investor.documentPath) {
         return res.status(404).json({ error: "No document to delete" });
       }
 
-      // Delete file from disk
-      const filePath = path.join(process.cwd(), investor.documentPath);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      // Delete legacy file from disk if exists
+      if (investor.documentPath) {
+        const filePath = path.join(process.cwd(), investor.documentPath);
+        if (fs.existsSync(filePath)) {
+          try {
+            fs.unlinkSync(filePath);
+          } catch (e) {
+            // Ignore cleanup errors
+          }
+        }
       }
 
-      // Update investor to remove document path
-      await storage.updateInvestor(investorId, { documentPath: null });
+      // Clear document from database (both path and content)
+      await storage.updateInvestor(investorId, { 
+        documentPath: null,
+        documentContent: null,
+        documentFilename: null
+      });
 
       res.json({ success: true });
     } catch (error) {

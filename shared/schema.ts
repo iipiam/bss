@@ -720,7 +720,9 @@ export const investors = pgTable("investors", {
   interestPercentage: decimal("interest_percentage", { precision: 5, scale: 2 }).notNull(), // Percentage of net profit (e.g., 10.00 for 10%)
   active: boolean("active").notNull().default(true),
   notes: text("notes"),
-  documentPath: text("document_path"), // Path to uploaded PDF document
+  documentPath: text("document_path"), // Path to uploaded PDF document (legacy - kept for compatibility)
+  documentContent: text("document_content"), // Base64 encoded PDF content for persistent storage
+  documentFilename: text("document_filename"), // Original filename of the uploaded document
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

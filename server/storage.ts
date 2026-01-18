@@ -4951,7 +4951,15 @@ export const storage = new DatabaseStorage();
       ALTER TABLE investors 
       ADD COLUMN IF NOT EXISTS document_path TEXT
     `);
-    console.log('[Migration] Investors columns verified/added: national_id, contact_number, investor_type, recipe_id, document_path');
+    await pool.query(`
+      ALTER TABLE investors 
+      ADD COLUMN IF NOT EXISTS document_content TEXT
+    `);
+    await pool.query(`
+      ALTER TABLE investors 
+      ADD COLUMN IF NOT EXISTS document_filename TEXT
+    `);
+    console.log('[Migration] Investors columns verified/added: national_id, contact_number, investor_type, recipe_id, document_path, document_content, document_filename');
     
     // Add weekly_schedule column to settings table for per-day shift configuration
     await pool.query(`
