@@ -4913,7 +4913,12 @@ export const storage = new DatabaseStorage();
       ALTER TABLE restaurants 
       ADD COLUMN IF NOT EXISTS has_vat_registration BOOLEAN DEFAULT true
     `);
-    console.log('[Migration] Restaurants column verified/added: has_vat_registration');
+    // Make tax_number nullable (not all businesses have VAT registration)
+    await pool.query(`
+      ALTER TABLE restaurants 
+      ALTER COLUMN tax_number DROP NOT NULL
+    `);
+    console.log('[Migration] Restaurants column verified/added: has_vat_registration, tax_number made nullable');
     
     // Add inventory_item_id, original_procurement_id, and unit columns to procurement table if missing
     await pool.query(`
