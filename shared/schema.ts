@@ -579,6 +579,9 @@ export const invoices = pgTable("invoices", {
   restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   invoiceNumber: text("invoice_number").notNull().unique(),
   invoiceType: text("invoice_type").notNull().default("simplified"), // "standard" (B2B), "simplified" (B2C)
+  documentType: text("document_type").notNull().default("invoice"), // "invoice", "credit_note", "debit_note"
+  referencedInvoiceId: varchar("referenced_invoice_id"), // For credit/debit notes, links to original invoice
+  adjustmentReason: text("adjustment_reason"), // Reason for credit/debit note
   transactionId: varchar("transaction_id").references(() => transactions.id),
   orderId: varchar("order_id").references(() => orders.id),
   procurementId: varchar("procurement_id"), // Link to procurement for reorder invoices

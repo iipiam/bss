@@ -1840,12 +1840,14 @@ export class DatabaseStorage implements IStorage {
       
       return await db.select().from(invoices).where(and(...conditions));
     } catch (error: any) {
-      // Handle case where procurement_id column doesn't exist yet (pre-migration)
-      if (error.message?.includes('procurement_id')) {
-        console.warn('[Invoices] procurement_id column not found, using fallback query');
+      // Handle case where columns don't exist yet (pre-migration)
+      if (error.message?.includes('column') && error.message?.includes('does not exist')) {
+        console.warn('[Invoices] Column not found, using fallback query');
         const result = await db.execute(sql`
           SELECT id, restaurant_id as "restaurantId", invoice_number as "invoiceNumber",
-                 invoice_type as "invoiceType", transaction_id as "transactionId",
+                 invoice_type as "invoiceType", 'invoice' as "documentType",
+                 NULL as "referencedInvoiceId", NULL as "adjustmentReason",
+                 transaction_id as "transactionId",
                  order_id as "orderId", NULL as "procurementId", branch_id as "branchId",
                  customer_name as "customerName", customer_vat_number as "customerVatNumber",
                  items, subtotal, vat_amount as "vatAmount", total,
@@ -1865,11 +1867,13 @@ export class DatabaseStorage implements IStorage {
         .where(and(eq(invoices.id, id), eq(invoices.restaurantId, restaurantId)));
       return invoice;
     } catch (error: any) {
-      if (error.message?.includes('procurement_id')) {
-        console.warn('[Invoices] procurement_id column not found, using fallback query');
+      if (error.message?.includes('column') && error.message?.includes('does not exist')) {
+        console.warn('[Invoices] Column not found, using fallback query');
         const result = await db.execute(sql`
           SELECT id, restaurant_id as "restaurantId", invoice_number as "invoiceNumber",
-                 invoice_type as "invoiceType", transaction_id as "transactionId",
+                 invoice_type as "invoiceType", 'invoice' as "documentType",
+                 NULL as "referencedInvoiceId", NULL as "adjustmentReason",
+                 transaction_id as "transactionId",
                  order_id as "orderId", NULL as "procurementId", branch_id as "branchId",
                  customer_name as "customerName", customer_vat_number as "customerVatNumber",
                  items, subtotal, vat_amount as "vatAmount", total,
@@ -1893,12 +1897,14 @@ export class DatabaseStorage implements IStorage {
       const [invoiceById] = await db.select().from(invoices).where(eq(invoices.id, orderIdOrInvoiceId));
       return invoiceById;
     } catch (error: any) {
-      if (error.message?.includes('procurement_id')) {
-        console.warn('[Invoices] procurement_id column not found, using fallback query for public access');
+      if (error.message?.includes('column') && error.message?.includes('does not exist')) {
+        console.warn('[Invoices] Column not found, using fallback query for public access');
         // Try by orderId first
         let result = await db.execute(sql`
           SELECT id, restaurant_id as "restaurantId", invoice_number as "invoiceNumber",
-                 invoice_type as "invoiceType", transaction_id as "transactionId",
+                 invoice_type as "invoiceType", 'invoice' as "documentType",
+                 NULL as "referencedInvoiceId", NULL as "adjustmentReason",
+                 transaction_id as "transactionId",
                  order_id as "orderId", NULL as "procurementId", branch_id as "branchId",
                  customer_name as "customerName", customer_vat_number as "customerVatNumber",
                  items, subtotal, vat_amount as "vatAmount", total,
@@ -1911,7 +1917,9 @@ export class DatabaseStorage implements IStorage {
         // Try by invoice id
         result = await db.execute(sql`
           SELECT id, restaurant_id as "restaurantId", invoice_number as "invoiceNumber",
-                 invoice_type as "invoiceType", transaction_id as "transactionId",
+                 invoice_type as "invoiceType", 'invoice' as "documentType",
+                 NULL as "referencedInvoiceId", NULL as "adjustmentReason",
+                 transaction_id as "transactionId",
                  order_id as "orderId", NULL as "procurementId", branch_id as "branchId",
                  customer_name as "customerName", customer_vat_number as "customerVatNumber",
                  items, subtotal, vat_amount as "vatAmount", total,
@@ -1929,22 +1937,24 @@ export class DatabaseStorage implements IStorage {
       const [created] = await db.insert(invoices).values(invoice as any).returning();
       return created;
     } catch (error: any) {
-      // Handle case where procurement_id column doesn't exist yet
-      if (error.message?.includes('procurement_id')) {
-        console.warn('[Invoices] procurement_id column not found, using fallback INSERT');
-        const { procurementId, ...invoiceWithoutProcurement } = invoice as any;
+      // Handle case where columns don't exist yet (pre-migration)
+      if (error.message?.includes('column') && error.message?.includes('does not exist')) {
+        console.warn('[Invoices] Column not found, using fallback INSERT');
+        const { procurementId, documentType, referencedInvoiceId, adjustmentReason, ...invoiceBase } = invoice as any;
         const result = await db.execute(sql`
           INSERT INTO invoices (restaurant_id, invoice_number, invoice_type, transaction_id, order_id, branch_id,
                                customer_name, customer_vat_number, items, subtotal, vat_amount, total, qr_code, pdf_path)
-          VALUES (${invoiceWithoutProcurement.restaurantId}, ${invoiceWithoutProcurement.invoiceNumber}, 
-                  ${invoiceWithoutProcurement.invoiceType || 'simplified'}, ${invoiceWithoutProcurement.transactionId || null},
-                  ${invoiceWithoutProcurement.orderId || null}, ${invoiceWithoutProcurement.branchId || null},
-                  ${invoiceWithoutProcurement.customerName || null}, ${invoiceWithoutProcurement.customerVatNumber || null},
-                  ${JSON.stringify(invoiceWithoutProcurement.items)}, ${invoiceWithoutProcurement.subtotal},
-                  ${invoiceWithoutProcurement.vatAmount}, ${invoiceWithoutProcurement.total},
-                  ${invoiceWithoutProcurement.qrCode || ''}, ${invoiceWithoutProcurement.pdfPath || ''})
+          VALUES (${invoiceBase.restaurantId}, ${invoiceBase.invoiceNumber}, 
+                  ${invoiceBase.invoiceType || 'simplified'}, ${invoiceBase.transactionId || null},
+                  ${invoiceBase.orderId || null}, ${invoiceBase.branchId || null},
+                  ${invoiceBase.customerName || null}, ${invoiceBase.customerVatNumber || null},
+                  ${JSON.stringify(invoiceBase.items)}, ${invoiceBase.subtotal},
+                  ${invoiceBase.vatAmount}, ${invoiceBase.total},
+                  ${invoiceBase.qrCode || ''}, ${invoiceBase.pdfPath || ''})
           RETURNING id, restaurant_id as "restaurantId", invoice_number as "invoiceNumber",
-                    invoice_type as "invoiceType", transaction_id as "transactionId",
+                    invoice_type as "invoiceType", 'invoice' as "documentType",
+                    NULL as "referencedInvoiceId", NULL as "adjustmentReason",
+                    transaction_id as "transactionId",
                     order_id as "orderId", NULL as "procurementId", branch_id as "branchId",
                     customer_name as "customerName", customer_vat_number as "customerVatNumber",
                     items, subtotal, vat_amount as "vatAmount", total,
@@ -1972,27 +1982,17 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return updated;
     } catch (error: any) {
-      // Handle case where procurement_id column doesn't exist yet
-      if (error.message?.includes('procurement_id')) {
-        console.warn('[Invoices] procurement_id column not found, using fallback UPDATE');
-        // Build dynamic UPDATE query for only the fields we have
-        const setClauses: string[] = [];
-        const values: any[] = [];
-        if (updateData.qrCode !== undefined) { setClauses.push('qr_code = $' + (values.push(updateData.qrCode))); }
-        if (updateData.pdfPath !== undefined) { setClauses.push('pdf_path = $' + (values.push(updateData.pdfPath))); }
-        if (updateData.customerName !== undefined) { setClauses.push('customer_name = $' + (values.push(updateData.customerName))); }
-        if (updateData.customerVatNumber !== undefined) { setClauses.push('customer_vat_number = $' + (values.push(updateData.customerVatNumber))); }
-        
-        if (setClauses.length === 0) {
-          return this.getInvoice(id, restaurantId);
-        }
-        
+      // Handle case where columns don't exist yet (pre-migration)
+      if (error.message?.includes('column') && error.message?.includes('does not exist')) {
+        console.warn('[Invoices] Column not found, using fallback UPDATE');
         // Simple update for common fields
         const result = await db.execute(sql`
           UPDATE invoices SET qr_code = ${updateData.qrCode || null}, pdf_path = ${updateData.pdfPath || null}
           WHERE id = ${id} AND restaurant_id = ${restaurantId}
           RETURNING id, restaurant_id as "restaurantId", invoice_number as "invoiceNumber",
-                    invoice_type as "invoiceType", transaction_id as "transactionId",
+                    invoice_type as "invoiceType", 'invoice' as "documentType",
+                    NULL as "referencedInvoiceId", NULL as "adjustmentReason",
+                    transaction_id as "transactionId",
                     order_id as "orderId", NULL as "procurementId", branch_id as "branchId",
                     customer_name as "customerName", customer_vat_number as "customerVatNumber",
                     items, subtotal, vat_amount as "vatAmount", total,
@@ -5022,10 +5022,16 @@ export const storage = new DatabaseStorage();
     await pool.query(`ALTER TABLE pending_signups ADD COLUMN IF NOT EXISTS uploaded_files JSONB`);
     await pool.query(`ALTER TABLE pending_signups ADD COLUMN IF NOT EXISTS merchant_reference_id TEXT`);
     console.log('[Migration] Table verified/created: pending_signups');
+    
+    // Add credit/debit note columns to invoices table for ZATCA compliance
+    await pool.query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS document_type TEXT DEFAULT 'invoice'`);
+    await pool.query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS referenced_invoice_id VARCHAR(255)`);
+    await pool.query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS adjustment_reason TEXT`);
+    console.log('[Migration] Invoices columns verified/added: document_type, referenced_invoice_id, adjustment_reason');
   } catch (error: any) {
     // Only log if not a duplicate column error (which means columns already exist)
     if (!error.message?.includes('already exists')) {
-      console.error('[Migration] Error adding procurement columns:', error.message);
+      console.error('[Migration] Error adding columns:', error.message);
     }
   }
 })();
