@@ -178,7 +178,11 @@ interface InvoiceData {
 }
 
 // HTML escaping function to prevent injection
-function escapeHtml(text: string): string {
+function escapeHtml(text: string | undefined | null): string {
+  if (text === undefined || text === null) {
+    return '';
+  }
+  const str = String(text);
   const map: { [key: string]: string } = {
     '&': '&amp;',
     '<': '&lt;',
@@ -186,7 +190,7 @@ function escapeHtml(text: string): string {
     '"': '&quot;',
     "'": '&#039;'
   };
-  return text.replace(/[&<>"']/g, (m) => map[m]);
+  return str.replace(/[&<>"']/g, (m) => map[m]);
 }
 
 // Detect Chromium executable path with fallbacks
