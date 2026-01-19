@@ -216,7 +216,17 @@ export default function Invoices() {
                   <TableCell className="font-mono font-semibold">{parseFloat(invoice.total).toFixed(2)} SAR</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      {invoice.pdfPath ? (
+                      {getInvoiceType(invoice) === "standard" || (invoice as any).customerVatNumber ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownload(invoice)}
+                          data-testid={`button-download-pdf-${invoice.id}`}
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          PDF
+                        </Button>
+                      ) : invoice.pdfPath ? (
                         <Button
                           variant="ghost"
                           size="sm"
