@@ -740,15 +740,21 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
         </tr>
       </thead>
       <tbody>
-        ${order.items.map(item => `
+        ${(order.items || []).map(item => {
+          const itemName = escapeHtml(item?.name || 'Unknown Item');
+          const itemQty = item?.quantity !== undefined && item?.quantity !== null ? Number(item.quantity) : 0;
+          const rawPrice = item?.price !== undefined && item?.price !== null ? item.price : 0;
+          const itemPrice = isNaN(Number(rawPrice)) ? 0 : Number(rawPrice);
+          const itemTotal = (itemQty * itemPrice).toFixed(2);
+          return `
           <tr>
-            <td class="english">${escapeHtml(item.name)}</td>
-            <td class="text-right arabic">${escapeHtml(item.name)}</td>
-            <td class="text-center">${item.quantity}</td>
-            <td class="text-center">${parseFloat(item.price.toString()).toFixed(2)}</td>
-            <td class="text-center">${(item.quantity * parseFloat(item.price.toString())).toFixed(2)}</td>
+            <td class="english">${itemName}</td>
+            <td class="text-right arabic">${itemName}</td>
+            <td class="text-center">${itemQty}</td>
+            <td class="text-center">${itemPrice.toFixed(2)}</td>
+            <td class="text-center">${itemTotal}</td>
           </tr>
-        `).join('')}
+        `}).join('')}
       </tbody>
     </table>
     
