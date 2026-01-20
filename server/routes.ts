@@ -7321,9 +7321,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Create Credit or Debit Note against an existing B2B invoice
-  app.post("/api/invoices/:id/adjustment-note", requireAuth, requireRestaurant, async (req, res) => {
+  // Allows both restaurant accounts (for their own invoices) and IT accounts (for any client invoice)
+  app.post("/api/invoices/:id/adjustment-note", requireAuth, async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const sessionRestaurantId = req.session.user?.restaurantId;
+      const isITAccount = !sessionRestaurantId;
       const originalInvoiceId = req.params.id;
       const { noteType, reason, items: adjustmentItems } = req.body;
       
@@ -7341,10 +7343,25 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "Reason is too long (max 500 characters)" });
       }
       
-      // Get the original invoice
-      const originalInvoice = await storage.getInvoice(originalInvoiceId, restaurantId);
+      // For IT accounts, we need to get the invoice without a restaurantId filter
+      // For restaurant accounts, filter by their restaurantId for security
+      let originalInvoice;
+      if (isITAccount) {
+        // IT account: get invoice from any restaurant using public lookup
+        originalInvoice = await storage.getInvoicePublic(originalInvoiceId);
+      } else {
+        // Restaurant account: only their own invoices
+        originalInvoice = await storage.getInvoice(originalInvoiceId, sessionRestaurantId);
+      }
+      
       if (!originalInvoice) {
         return res.status(404).json({ error: "Original invoice not found" });
+      }
+      
+      // Get the restaurantId from the invoice itself
+      const restaurantId = originalInvoice.restaurantId;
+      if (!restaurantId) {
+        return res.status(400).json({ error: "Invoice does not have a valid restaurant" });
       }
       
       // Only allow adjustment notes for B2B (standard) invoices
