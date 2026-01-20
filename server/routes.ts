@@ -15,7 +15,8 @@ import multer from "multer";
 import * as fs from "fs";
 import * as path from "path";
 import { z } from "zod";
-import { sql, eq, and, gte, lte, isNull, isNotNull, desc } from "drizzle-orm";
+import { sql, eq, and, gte, lte, isNull, isNotNull, desc, ne } from "drizzle-orm";
+import * as XLSX from 'xlsx';
 import {
   insertRestaurantSchema,
   insertBranchSchema,
@@ -50,6 +51,7 @@ import {
   companyBills,
   businessInfo,
   procurement,
+  deviceSerialNumbers,
 } from "@shared/schema";
 import { getPlanPricing, type SubscriptionPlan, type BusinessType } from "@shared/subscriptionPricing";
 import { ADMIN_PERMISSIONS, type PermissionSet } from "@shared/permissions";
@@ -10772,6 +10774,190 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("Error updating account status:", error);
       res.status(500).json({ error: "Failed to update account status" });
+    }
+  });
+
+  // ==========================================
+  // IT Client Export Routes (IT-only)
+  // ==========================================
+
+  // Export client accounts to Excel
+  app.get("/api/it/export-clients/excel", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      console.log("[IT EXPORT] Generating Excel export of client accounts");
+
+      // Get all accounts with restaurant info
+      const allAccounts = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          fullName: users.fullName,
+          email: users.email,
+          phone: users.phone,
+          role: users.role,
+          active: users.active,
+          restaurantId: users.restaurantId,
+          restaurantName: restaurants.name,
+          businessType: restaurants.businessType,
+          subscriptionStatus: restaurants.subscriptionStatus,
+          lastLoginAt: users.lastLoginAt,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .leftJoin(restaurants, eq(users.restaurantId, restaurants.id))
+        .where(and(
+          isNotNull(users.restaurantId),
+          ne(restaurants.subscriptionStatus, 'cancelled')
+        ));
+
+      // Get all device serial numbers
+      const allSerials = await db.select().from(deviceSerialNumbers);
+
+      // Group serials by restaurantId
+      const serialsByRestaurant = allSerials.reduce((acc, s) => {
+        if (!acc[s.restaurantId]) acc[s.restaurantId] = [];
+        acc[s.restaurantId].push(s.serialNumber);
+        return acc;
+      }, {} as Record<string, string[]>);
+
+      // Create Excel workbook
+      const workbook = XLSX.utils.book_new();
+      const wsData = [
+        ['Account ID', 'Username', 'Full Name', 'Email', 'Phone', 'Role', 'Status', 'Restaurant ID', 'Restaurant Name', 'Business Type', 'Subscription', 'Created', 'Last Login', 'Device Serial Numbers'],
+        ...allAccounts.map(a => [
+          a.id,
+          a.username,
+          a.fullName || '',
+          a.email || '',
+          a.phone || '',
+          a.role || 'user',
+          a.active ? 'Active' : 'Inactive',
+          a.restaurantId || '',
+          a.restaurantName || '',
+          a.businessType || '',
+          a.subscriptionStatus || '',
+          a.createdAt ? new Date(a.createdAt).toISOString().split('T')[0] : '',
+          a.lastLoginAt ? new Date(a.lastLoginAt).toISOString().split('T')[0] : '',
+          a.restaurantId ? (serialsByRestaurant[a.restaurantId]?.join(', ') || 'None') : 'None'
+        ])
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      XLSX.utils.book_append_sheet(workbook, ws, 'Client Accounts');
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+      console.log(`[IT EXPORT] Excel export generated with ${allAccounts.length} accounts`);
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="client-accounts.xlsx"');
+      res.send(buffer);
+    } catch (error) {
+      console.error("[IT EXPORT] Excel export error:", error);
+      res.status(500).json({ error: "Failed to generate Excel export" });
+    }
+  });
+
+  // Export client accounts to PDF
+  app.get("/api/it/export-clients/pdf", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      console.log("[IT EXPORT] Generating PDF export of client accounts");
+
+      // Get all accounts with restaurant info
+      const allAccounts = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          fullName: users.fullName,
+          email: users.email,
+          phone: users.phone,
+          role: users.role,
+          active: users.active,
+          restaurantId: users.restaurantId,
+          restaurantName: restaurants.name,
+          businessType: restaurants.businessType,
+          subscriptionStatus: restaurants.subscriptionStatus,
+          lastLoginAt: users.lastLoginAt,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .leftJoin(restaurants, eq(users.restaurantId, restaurants.id))
+        .where(and(
+          isNotNull(users.restaurantId),
+          ne(restaurants.subscriptionStatus, 'cancelled')
+        ));
+
+      // Get all device serial numbers
+      const allSerials = await db.select().from(deviceSerialNumbers);
+
+      // Group serials by restaurantId
+      const serialsByRestaurant = allSerials.reduce((acc, s) => {
+        if (!acc[s.restaurantId]) acc[s.restaurantId] = [];
+        acc[s.restaurantId].push(s.serialNumber);
+        return acc;
+      }, {} as Record<string, string[]>);
+
+      // Create HTML for PDF
+      const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h1 { text-align: center; color: #333; }
+    table { width: 100%; border-collapse: collapse; font-size: 10px; }
+    th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+    th { background: #4a90d9; color: white; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .date { text-align: right; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>BSS Client Accounts Report</h1>
+    <p class="date">Generated: ${new Date().toLocaleDateString()}</p>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Full Name</th>
+        <th>Restaurant</th>
+        <th>Status</th>
+        <th>Subscription</th>
+        <th>Device Serial Numbers</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${allAccounts.map(a => `
+        <tr>
+          <td>${a.username}</td>
+          <td>${a.fullName || '-'}</td>
+          <td>${a.restaurantName || '-'}</td>
+          <td>${a.active ? 'Active' : 'Inactive'}</td>
+          <td>${a.subscriptionStatus || '-'}</td>
+          <td>${a.restaurantId ? (serialsByRestaurant[a.restaurantId]?.join(', ') || 'None') : 'None'}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+</body>
+</html>
+`;
+
+      const browser = await getBrowser();
+      const page = await browser.newPage();
+      await page.setContent(html);
+      const pdfBuffer = await page.pdf({ format: 'A4', landscape: true, printBackground: true });
+      await browser.close();
+
+      console.log(`[IT EXPORT] PDF export generated with ${allAccounts.length} accounts`);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="client-accounts.pdf"');
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("[IT EXPORT] PDF export error:", error);
+      res.status(500).json({ error: "Failed to generate PDF export" });
     }
   });
 
