@@ -175,6 +175,9 @@ interface InvoiceData {
   logoPath?: string; // Optional logo path
   invoiceType?: "standard" | "simplified"; // B2B (standard) or B2C (simplified)
   customerVatNumber?: string; // Required for B2B Standard invoices
+  documentType?: "invoice" | "credit_note" | "debit_note"; // Document type for ZATCA
+  referencedInvoiceNumber?: string; // Original invoice number for credit/debit notes
+  adjustmentReason?: string; // Reason for credit/debit note
 }
 
 // HTML escaping function to prevent injection
@@ -311,6 +314,14 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
   // Determine invoice type: B2B (standard) vs B2C (simplified)
   const isB2B = data.invoiceType === "standard";
   const escapedCustomerVAT = data.customerVatNumber ? escapeHtml(data.customerVatNumber) : "";
+  
+  // Determine document type for credit/debit notes
+  const documentType = data.documentType || "invoice";
+  const isCreditNote = documentType === "credit_note";
+  const isDebitNote = documentType === "debit_note";
+  const isAdjustmentNote = isCreditNote || isDebitNote;
+  const escapedReferencedInvoice = data.referencedInvoiceNumber ? escapeHtml(data.referencedInvoiceNumber) : "";
+  const escapedAdjustmentReason = data.adjustmentReason ? escapeHtml(data.adjustmentReason) : "";
   
   // Escape all user inputs
   const escapedCompanyName = escapeHtml(companyName);
@@ -590,7 +601,11 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     <div class="header">
       ${logoHTML}
       <div class="company-name english">${escapedCompanyName}</div>
-      ${isB2B 
+      ${isCreditNote 
+        ? '<div class="invoice-badge" style="background: #dc2626; color: white;">CREDIT NOTE | إشعار دائن</div>'
+        : isDebitNote
+        ? '<div class="invoice-badge" style="background: #ea580c; color: white;">DEBIT NOTE | إشعار مدين</div>'
+        : isB2B 
         ? '<div class="invoice-badge">STANDARD TAX INVOICE | فاتورة ضريبية قياسية</div>'
         : '<div class="invoice-badge">SIMPLIFIED TAX INVOICE | فاتورة ضريبية مبسطة</div>'}
     </div>
@@ -659,6 +674,41 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
           <div class="info-value">${escapedCustomerVAT}</div>
           <div class="info-label">:الرقم الضريبي للمشتري</div>
         </div>
+      </div>
+    </div>
+    ` : ''}
+    
+    ${isAdjustmentNote && escapedReferencedInvoice ? `
+    <!-- Referenced Invoice - Credit/Debit Notes Only -->
+    <div class="bilingual-section">
+      <!-- English Left -->
+      <div class="section-left english" style="background: ${isCreditNote ? '#fef2f2' : '#fff7ed'}; border-color: ${isCreditNote ? '#fecaca' : '#fed7aa'};">
+        <div class="section-title" style="color: ${isCreditNote ? '#dc2626' : '#ea580c'};">${isCreditNote ? 'Credit Note Reference' : 'Debit Note Reference'}</div>
+        <div class="info-row">
+          <div class="info-label">Original Invoice:</div>
+          <div class="info-value">${escapedReferencedInvoice}</div>
+        </div>
+        ${escapedAdjustmentReason ? `
+        <div class="info-row">
+          <div class="info-label">Reason:</div>
+          <div class="info-value">${escapedAdjustmentReason}</div>
+        </div>
+        ` : ''}
+      </div>
+      
+      <!-- Arabic Right -->
+      <div class="section-right arabic" style="background: ${isCreditNote ? '#fef2f2' : '#fff7ed'}; border-color: ${isCreditNote ? '#fecaca' : '#fed7aa'};">
+        <div class="section-title" style="color: ${isCreditNote ? '#dc2626' : '#ea580c'};">${isCreditNote ? 'مرجع إشعار الدائن' : 'مرجع إشعار المدين'}</div>
+        <div class="info-row">
+          <div class="info-value">${escapedReferencedInvoice}</div>
+          <div class="info-label">:الفاتورة الأصلية</div>
+        </div>
+        ${escapedAdjustmentReason ? `
+        <div class="info-row">
+          <div class="info-value">${escapedAdjustmentReason}</div>
+          <div class="info-label">:السبب</div>
+        </div>
+        ` : ''}
       </div>
     </div>
     ` : ''}

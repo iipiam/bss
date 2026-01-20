@@ -7318,6 +7318,191 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Create Credit or Debit Note against an existing B2B invoice
+  app.post("/api/invoices/:id/adjustment-note", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const originalInvoiceId = req.params.id;
+      const { noteType, reason, items: adjustmentItems } = req.body;
+      
+      // Validate note type
+      if (!noteType || !['credit_note', 'debit_note'].includes(noteType)) {
+        return res.status(400).json({ error: "noteType must be 'credit_note' or 'debit_note'" });
+      }
+      
+      // Validate reason
+      if (!reason || typeof reason !== 'string' || reason.trim().length < 3) {
+        return res.status(400).json({ error: "A valid reason is required for the adjustment note (at least 3 characters)" });
+      }
+      
+      if (reason.trim().length > 500) {
+        return res.status(400).json({ error: "Reason is too long (max 500 characters)" });
+      }
+      
+      // Get the original invoice
+      const originalInvoice = await storage.getInvoice(originalInvoiceId, restaurantId);
+      if (!originalInvoice) {
+        return res.status(404).json({ error: "Original invoice not found" });
+      }
+      
+      // Only allow adjustment notes for B2B (standard) invoices
+      if (originalInvoice.invoiceType !== 'standard') {
+        return res.status(400).json({ error: "Adjustment notes can only be created for B2B (standard) invoices" });
+      }
+      
+      // Prevent creating adjustment notes against other adjustment notes
+      const originalDocType = (originalInvoice as any).documentType;
+      if (originalDocType === 'credit_note' || originalDocType === 'debit_note') {
+        return res.status(400).json({ error: "Cannot create adjustment notes against other credit or debit notes" });
+      }
+      
+      // Reject partial adjustments - only full invoice reversal is supported for ZATCA compliance
+      if (adjustmentItems && Array.isArray(adjustmentItems) && adjustmentItems.length > 0) {
+        return res.status(400).json({ error: "Partial adjustments are not currently supported. Credit/debit notes must be for the full invoice amount." });
+      }
+      
+      // Parse original invoice items with defensive checks
+      const originalItems = originalInvoice.items as Array<{ name: string; quantity: number; basePrice: number; vatAmount: number; total: number }>;
+      if (!Array.isArray(originalItems) || originalItems.length === 0) {
+        return res.status(400).json({ error: "Original invoice has no valid items" });
+      }
+      
+      // Helper function for precise 2-decimal rounding
+      const toTwoDecimals = (num: number): number => Math.round(num * 100) / 100;
+      
+      // Full reversal - use original invoice items and their exact VAT values with 2-decimal precision
+      const noteItems = originalItems.map(item => {
+        const basePrice = toTwoDecimals(typeof item.basePrice === 'number' ? item.basePrice : parseFloat(String(item.basePrice)) || 0);
+        const vatAmount = toTwoDecimals(typeof item.vatAmount === 'number' ? item.vatAmount : parseFloat(String(item.vatAmount)) || 0);
+        const total = toTwoDecimals(typeof item.total === 'number' ? item.total : parseFloat(String(item.total)) || 0);
+        const quantity = typeof item.quantity === 'number' ? item.quantity : parseInt(String(item.quantity)) || 1;
+        const name = String(item.name || 'Item');
+        
+        return { name, quantity, basePrice, vatAmount, total };
+      });
+      
+      // Use original invoice totals with 2-decimal precision for ZATCA compliance
+      const adjustmentSubtotal = toTwoDecimals(parseFloat(originalInvoice.subtotal) || 0);
+      const adjustmentVatAmount = toTwoDecimals(parseFloat(originalInvoice.vatAmount) || 0);
+      const adjustmentTotal = toTwoDecimals(parseFloat(originalInvoice.total) || 0);
+      
+      // Verify items sum to match invoice totals (reconciliation guard)
+      const itemsSubtotal = toTwoDecimals(noteItems.reduce((sum, item) => sum + item.basePrice, 0));
+      const itemsVatAmount = toTwoDecimals(noteItems.reduce((sum, item) => sum + item.vatAmount, 0));
+      const itemsTotal = toTwoDecimals(noteItems.reduce((sum, item) => sum + item.total, 0));
+      
+      // Allow small tolerance for rounding differences (1 SAR)
+      const tolerance = 1.0;
+      if (Math.abs(itemsSubtotal - adjustmentSubtotal) > tolerance ||
+          Math.abs(itemsVatAmount - adjustmentVatAmount) > tolerance ||
+          Math.abs(itemsTotal - adjustmentTotal) > tolerance) {
+        console.error(`[Adjustment Note] Reconciliation failed: Items (${itemsSubtotal}/${itemsVatAmount}/${itemsTotal}) vs Invoice (${adjustmentSubtotal}/${adjustmentVatAmount}/${adjustmentTotal})`);
+        return res.status(422).json({ 
+          error: "Invoice data reconciliation failed - line item totals do not match invoice totals. Please contact support.",
+          details: { itemsSubtotal, itemsVatAmount, itemsTotal, invoiceSubtotal: adjustmentSubtotal, invoiceVatAmount: adjustmentVatAmount, invoiceTotal: adjustmentTotal }
+        });
+      }
+      
+      // Generate unique note number
+      const settings = await storage.getSettings(restaurantId);
+      const notePrefix = noteType === 'credit_note' ? 'CN' : 'DN';
+      const noteSequence = (settings?.b2bInvoiceSequence || 1) + 1;
+      const noteNumber = `${notePrefix}-${new Date().getFullYear()}-${noteSequence.toString().padStart(6, '0')}`;
+      
+      // Update the B2B sequence
+      if (settings) {
+        await storage.updateSettings(restaurantId, { b2bInvoiceSequence: noteSequence } as any);
+      }
+      
+      // Create the adjustment note
+      const newNote = await storage.createInvoice({
+        restaurantId,
+        invoiceNumber: noteNumber,
+        invoiceType: 'standard', // Same as original (B2B)
+        documentType: noteType,
+        referencedInvoiceId: originalInvoiceId,
+        adjustmentReason: reason.trim(),
+        transactionId: null,
+        orderId: originalInvoice.orderId || null,
+        procurementId: originalInvoice.procurementId || null,
+        branchId: originalInvoice.branchId || null,
+        customerName: originalInvoice.customerName,
+        customerVatNumber: originalInvoice.customerVatNumber,
+        items: noteItems,
+        subtotal: adjustmentSubtotal.toFixed(2),
+        vatAmount: adjustmentVatAmount.toFixed(2),
+        total: adjustmentTotal.toFixed(2),
+        qrCode: null,
+        pdfPath: null,
+      } as any);
+      
+      // Generate PDF for the note
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const restaurant = await storage.getRestaurant(restaurantId);
+      const branch = originalInvoice.branchId ? await storage.getBranch(originalInvoice.branchId, restaurantId) : null;
+      
+      const pdfData = {
+        order: {
+          orderNumber: noteNumber,
+          items: noteItems.map(item => ({ name: item.name, quantity: item.quantity, price: item.basePrice / item.quantity })),
+          subtotal: adjustmentSubtotal.toString(),
+          tax: adjustmentVatAmount.toString(),
+          total: adjustmentTotal.toString(),
+          customerName: originalInvoice.customerName || "Customer",
+          orderType: noteType === 'credit_note' ? 'Credit Note' : 'Debit Note',
+          createdAt: new Date(),
+        } as any,
+        companyName: restaurant?.name || settings?.restaurantName || "Restaurant",
+        companyVAT: restaurant?.taxNumber || settings?.vatNumber || "300000000000003",
+        branchAddress: branch?.location || settings?.address || "Main Location",
+        companyEmail: settings?.email || "",
+        companyPhone: settings?.phone || "",
+        invoiceNumber: noteNumber,
+        invoiceDate: new Date(),
+        invoiceId: newNote.id,
+        baseUrl,
+        logoPath: settings?.logoPath || undefined,
+        invoiceType: 'standard' as const,
+        customerVatNumber: originalInvoice.customerVatNumber || undefined,
+        documentType: noteType as 'credit_note' | 'debit_note',
+        referencedInvoiceNumber: originalInvoice.invoiceNumber,
+        adjustmentReason: reason.trim(),
+      };
+      
+      const { pdfBuffer, qrCode } = await generateZATCAInvoice(pdfData);
+      
+      // Save PDF to disk
+      const invoicesDir = path.join(process.cwd(), "public", "invoices");
+      if (!fs.existsSync(invoicesDir)) {
+        fs.mkdirSync(invoicesDir, { recursive: true });
+      }
+      const pdfFilename = `${noteNumber.replace(/\//g, '-')}.pdf`;
+      const pdfPath = path.join(invoicesDir, pdfFilename);
+      fs.writeFileSync(pdfPath, pdfBuffer);
+      
+      // Update invoice record with PDF path and QR code
+      await storage.updateInvoice(newNote.id, restaurantId, {
+        qrCode: qrCode,
+        pdfPath: `/invoices/${pdfFilename}`,
+      });
+      
+      res.json({
+        success: true,
+        note: {
+          ...newNote,
+          pdfPath: `/invoices/${pdfFilename}`,
+          qrCode,
+        },
+        message: noteType === 'credit_note' 
+          ? `Credit note ${noteNumber} created successfully`
+          : `Debit note ${noteNumber} created successfully`,
+      });
+    } catch (error) {
+      console.error("Adjustment note creation error:", error);
+      res.status(500).json({ error: "Failed to create adjustment note" });
+    }
+  });
+
   // Import routes with file upload (using static multer import from top of file)
   const upload = multer({ storage: multer.memoryStorage() });
 

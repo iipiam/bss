@@ -13,6 +13,9 @@ interface ZatcaInvoiceData {
   invoiceNumber: string;
   invoiceType: "standard" | "simplified";
   invoiceSubType: "01" | "02";
+  documentType?: "invoice" | "credit_note" | "debit_note";
+  referencedInvoiceNumber?: string;
+  adjustmentReason?: string;
   paymentMethod: "cash" | "card" | "bank_transfer";
   subtotal: number;
   vatAmount: number;
@@ -153,7 +156,19 @@ export function generatePhase1QrCode(
   return Buffer.concat(tlvParts).toString("base64");
 }
 
-export function generateInvoiceTypeCode(invoiceType: "standard" | "simplified", invoiceSubType: "01" | "02"): string {
+export function generateInvoiceTypeCode(
+  invoiceType: "standard" | "simplified", 
+  invoiceSubType: "01" | "02",
+  documentType?: "invoice" | "credit_note" | "debit_note"
+): string {
+  // Credit notes: 381, Debit notes: 383, Regular invoices: 388
+  if (documentType === "credit_note") {
+    return "381";
+  }
+  if (documentType === "debit_note") {
+    return "383";
+  }
+  // For backwards compatibility: self-billing invoices (subtype 02)
   if (invoiceSubType === "02") {
     return invoiceType === "standard" ? "383" : "381";
   }
@@ -224,14 +239,18 @@ export function generateSignedInvoiceXml(
   credentials?: SigningCredentials
 ): string {
   const { 
-    invoiceNumber, invoiceType, invoiceSubType, paymentMethod,
-    subtotal, vatAmount, total, discount,
+    invoiceNumber, invoiceType, invoiceSubType, documentType, 
+    referencedInvoiceNumber, adjustmentReason,
+    paymentMethod, subtotal, vatAmount, total, discount,
     items, invoiceCounter, previousInvoiceHash, uuid, 
     issueDate, issueTime, sellerInfo, buyerInfo
   } = data;
   
-  const invoiceTypeCode = generateInvoiceTypeCode(invoiceType, invoiceSubType);
+  const invoiceTypeCode = generateInvoiceTypeCode(invoiceType, invoiceSubType, documentType);
   const invoiceTypeCodeName = generateInvoiceTypeCodeName(invoiceType);
+  
+  // For credit/debit notes, we need to include the billing reference
+  const isCreditOrDebitNote = documentType === "credit_note" || documentType === "debit_note";
   const formattedVat = formatVatNumber(sellerInfo.vatNumber);
   const timestamp = `${issueDate}T${issueTime}Z`;
   const signingTime = new Date().toISOString().replace(/\.\d{3}Z$/, "");
@@ -314,6 +333,17 @@ export function generateSignedInvoiceXml(
   </cac:AccountingCustomerParty>`;
   }
 
+  // Build billing reference for credit/debit notes (required by ZATCA)
+  let billingReferenceXml = "";
+  if (isCreditOrDebitNote && referencedInvoiceNumber) {
+    billingReferenceXml = `
+  <cac:BillingReference>
+    <cac:InvoiceDocumentReference>
+      <cbc:ID>${escapeXml(referencedInvoiceNumber)}</cbc:ID>
+    </cac:InvoiceDocumentReference>
+  </cac:BillingReference>`;
+  }
+  
   const baseInvoiceXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2">
   <cbc:ProfileID>reporting:1.0</cbc:ProfileID>
@@ -323,7 +353,7 @@ export function generateSignedInvoiceXml(
   <cbc:IssueTime>${escapeXml(issueTime)}</cbc:IssueTime>
   <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>
   <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
-  <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>
+  <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>${billingReferenceXml}
   <cac:AdditionalDocumentReference>
     <cbc:ID>ICV</cbc:ID>
     <cbc:UUID>${invoiceCounter}</cbc:UUID>
