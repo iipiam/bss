@@ -40,7 +40,8 @@ import {
   Upload,
   Trash2,
   File,
-  UserPlus
+  UserPlus,
+  FileSpreadsheet
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -1115,6 +1116,32 @@ export default function ITAccountManagement() {
                   >
                     <XCircle className="h-4 w-4 mr-1" />
                     {t.disabled || "Disabled"}
+                  </Button>
+                </div>
+                <div className={`flex gap-2 ${isMobile ? 'w-full' : 'ml-auto'}`}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      window.open('/api/it/export-clients/excel', '_blank');
+                    }}
+                    className={isMobile ? 'flex-1 text-xs' : ''}
+                    data-testid="button-export-excel"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 mr-1" />
+                    {t.exportExcel || "Export Excel"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      window.open('/api/it/export-clients/pdf', '_blank');
+                    }}
+                    className={isMobile ? 'flex-1 text-xs' : ''}
+                    data-testid="button-export-pdf"
+                  >
+                    <FileText className="h-4 w-4 mr-1" />
+                    {t.exportPdf || "Export PDF"}
                   </Button>
                 </div>
               </div>
