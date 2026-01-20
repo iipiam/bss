@@ -1845,7 +1845,7 @@ export class DatabaseStorage implements IStorage {
         console.warn('[Invoices] Column not found, using fallback query');
         const result = await db.execute(sql`
           SELECT id, restaurant_id as "restaurantId", invoice_number as "invoiceNumber",
-                 invoice_type as "invoiceType", 'invoice' as "documentType",
+                 invoice_type as "invoiceType", NULL as "documentType",
                  NULL as "referencedInvoiceId", NULL as "adjustmentReason",
                  transaction_id as "transactionId",
                  order_id as "orderId", NULL as "procurementId", branch_id as "branchId",
@@ -1871,7 +1871,7 @@ export class DatabaseStorage implements IStorage {
         console.warn('[Invoices] Column not found, using fallback query');
         const result = await db.execute(sql`
           SELECT id, restaurant_id as "restaurantId", invoice_number as "invoiceNumber",
-                 invoice_type as "invoiceType", 'invoice' as "documentType",
+                 invoice_type as "invoiceType", NULL as "documentType",
                  NULL as "referencedInvoiceId", NULL as "adjustmentReason",
                  transaction_id as "transactionId",
                  order_id as "orderId", NULL as "procurementId", branch_id as "branchId",
