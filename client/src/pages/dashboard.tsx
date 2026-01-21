@@ -417,12 +417,14 @@ export default function Dashboard() {
     useQuery<DashboardData>({
       queryKey: ["/api/analytics/dashboard"],
       refetchInterval: 30000, // Auto-refresh every 30 seconds for real-time updates
+      staleTime: 0, // Ensure instant updates
     });
 
   const { data: salesData, isLoading: salesLoading } = useQuery<
     SalesChartData[]
   >({
     queryKey: ["/api/analytics/sales"],
+    staleTime: 0, // Ensure instant updates
   });
 
   const { data: bills = [], isLoading: billsLoading } = useQuery<ShopBill[]>({
@@ -432,6 +434,7 @@ export default function Dashboard() {
       if (!response.ok) throw new Error(t.failedToFetchBills);
       return response.json();
     },
+    staleTime: 0, // Ensure instant updates
   });
 
   // Filter out foundational and one-time bills from operating expenses (only recurring costs)
