@@ -5,7 +5,8 @@
 import crypto from 'crypto';
 
 const GEIDEA_KSA_BASE_URL = 'https://api.ksamerchant.geidea.net';
-const GEIDEA_KSA_HPP_URL = 'https://www.ksamerchant.geidea.net/hpp/checkout';
+// Use standard merchant HPP URL (works for all regions)
+const GEIDEA_HPP_URL = 'https://www.merchant.geidea.net/hpp/checkout';
 
 // Generate HMAC-SHA256 signature for Geidea API requests
 function generateSignature(
@@ -157,8 +158,9 @@ export async function createPaymentSession(params: CreateSessionParams): Promise
   // Some responses have 'session' wrapper, others have the data directly
   if (responseData.session) {
     // Construct the HPP checkout URL using the session ID
+    // Format: https://www.merchant.geidea.net/hpp/checkout/?{sessionId}
     const sessionId = responseData.session.id;
-    responseData.session.paymentUrl = `${GEIDEA_KSA_HPP_URL}?sessionId=${sessionId}`;
+    responseData.session.paymentUrl = `${GEIDEA_HPP_URL}/?${sessionId}`;
     return responseData;
   } else if (responseData.id || responseData.sessionId) {
     // If the session data is at the root level, wrap it
@@ -166,7 +168,7 @@ export async function createPaymentSession(params: CreateSessionParams): Promise
     return {
       session: {
         id: sessionId,
-        paymentUrl: `${GEIDEA_KSA_HPP_URL}?sessionId=${sessionId}`,
+        paymentUrl: `${GEIDEA_HPP_URL}/?${sessionId}`,
         paymentIntent: responseData.paymentIntent,
       }
     };
