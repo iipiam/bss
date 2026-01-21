@@ -435,29 +435,33 @@ export default function ITAccountManagement() {
     return null;
   }
 
-  // Fetch all accounts
+  // Fetch all accounts - staleTime: 0 ensures instant updates after mutations
   const { data: accounts = [], isLoading, refetch } = useQuery<Account[]>({
     queryKey: ['/api/it/all-accounts'],
     enabled: !!user && accountType === 'it',
     refetchInterval: 30000,
+    staleTime: 0,
   });
 
   // Fetch archived accounts
   const { data: archivedAccounts = [], isLoading: archiveLoading, refetch: refetchArchive } = useQuery<ArchivedAccount[]>({
     queryKey: ['/api/it/archived-accounts'],
     enabled: !!user && accountType === 'it',
+    staleTime: 0,
   });
 
   // Fetch company files
   const { data: companyFiles = [], isLoading: filesLoading, refetch: refetchFiles } = useQuery<CompanyFile[]>({
     queryKey: ['/api/it/company-files'],
     enabled: !!user && accountType === 'it',
+    staleTime: 0,
   });
 
   // Fetch IT accounts
   const { data: itAccounts = [], isLoading: itAccountsLoading, refetch: refetchITAccounts } = useQuery<ITAccount[]>({
     queryKey: ['/api/it/it-accounts'],
     enabled: !!user && accountType === 'it',
+    staleTime: 0,
   });
 
   // Fetch client documents when a client is selected
