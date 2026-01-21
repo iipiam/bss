@@ -3593,12 +3593,17 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       peakHoursData[0]
     );
 
+    // Sort orders by creation date (newest first) for recent orders display
+    const sortedOrders = [...orders].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    
     res.json({
       todaysSales: todaysSales.toFixed(2),
       activeOrders,
       lowStockItems,
       cogsTotal,
-      recentOrders: orders.slice(0, 4),
+      recentOrders: sortedOrders.slice(0, 4),
       performance: {
         dod: {
           current: todaysSales,
