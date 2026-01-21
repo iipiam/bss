@@ -1,9 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, CheckCircle2, XCircle, CreditCard } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+
+declare global {
+  interface Window {
+    GeideaCheckout: any;
+  }
+}
 
 interface GeideaPaymentProps {
   amount: number;
@@ -32,7 +38,8 @@ export function GeideaPayment({
 }: GeideaPaymentProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'redirecting' | 'success' | 'failed'>('idle');
+  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'checkout' | 'success' | 'failed'>('idle');
+  const checkoutRef = useRef<HTMLDivElement>(null);
 
   const handlePayNow = async () => {
     setIsLoading(true);
@@ -56,11 +63,45 @@ export function GeideaPayment({
         throw new Error(result.message || result.error || 'Failed to create payment session');
       }
 
-      if (result.redirectUrl) {
-        setPaymentStatus('redirecting');
-        window.location.href = result.redirectUrl;
+      if (!result.sessionId) {
+        throw new Error('No session ID received from payment gateway');
+      }
+
+      setPaymentStatus('checkout');
+
+      if (typeof window.GeideaCheckout !== 'undefined') {
+        const onPaymentSuccess = (response: any) => {
+          console.log('[Geidea] Payment success:', response);
+          setPaymentStatus('success');
+          onSuccess(response.orderId || response.order?.orderId || result.sessionId);
+        };
+
+        const onPaymentError = (response: any) => {
+          console.error('[Geidea] Payment error:', response);
+          const errorMessage = response?.responseMessage || response?.detailedResponseMessage || 'Payment failed';
+          setError(errorMessage);
+          setPaymentStatus('failed');
+          onError(errorMessage);
+        };
+
+        const onPaymentCancel = () => {
+          console.log('[Geidea] Payment cancelled');
+          setPaymentStatus('idle');
+          if (onCancel) {
+            onCancel();
+          }
+        };
+
+        const payment = new window.GeideaCheckout(onPaymentSuccess, onPaymentError, onPaymentCancel);
+        
+        payment.startPayment(result.sessionId);
       } else {
-        throw new Error('No redirect URL received from payment gateway');
+        console.warn('[Geidea] SDK not loaded, falling back to redirect');
+        if (result.redirectUrl) {
+          window.location.href = result.redirectUrl;
+        } else {
+          throw new Error('Payment SDK not available and no redirect URL');
+        }
       }
     } catch (err: any) {
       console.error('[Geidea] Payment error:', err);
@@ -96,10 +137,12 @@ export function GeideaPayment({
           </div>
         )}
 
-        {paymentStatus === 'redirecting' && (
+        {paymentStatus === 'checkout' && (
           <div className="flex flex-col items-center gap-3 py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Redirecting to payment gateway...</p>
+            <p className="text-sm text-muted-foreground">Payment form loading...</p>
+            <p className="text-xs text-muted-foreground">A popup window should appear</p>
+            <div ref={checkoutRef} id="geidea-checkout-container" />
           </div>
         )}
 
@@ -147,7 +190,7 @@ export function GeideaPayment({
             </div>
 
             <p className="text-xs text-muted-foreground text-center mt-4">
-              You will be redirected to a secure payment page
+              Secure payment powered by Geidea
             </p>
           </>
         )}
