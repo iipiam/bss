@@ -1,0 +1,83 @@
+
+
+I want to fully integrate the Geidea payment gateway (Saudi Arabia) into my Node.js web app using Express for one-time payments + recurring subscriptions via card tokenization.
+
+I already have my test credentials:
+- Public Key (merchantPublicKey): [f369cd70-39a6-4841-9544-0081adf7eaab]
+- API Password: [1347f63a-5515-48e2-a03d-59faa687b09f]
+
+The app is a Node.js + Express backend (possibly with a simple HTML/JS frontend or React if already present). Use test mode for now.
+
+Please implement the complete integration securely as follows:
+
+1. **Handle Secrets Securely** (critical for security):
+   - Add two Replit Secrets (via the lock icon in the sidebar):
+     - GEIDEA_PUBLIC_KEY = [paste Public Key value]
+     - GEIDEA_API_PASSWORD = [paste API Password value]
+   - Access them only in backend code using process.env.GEIDEA_PUBLIC_KEY and process.env.GEIDEA_API_PASSWORD.
+   - Never expose the API Password in frontend code or logs.
+
+2. **Install Required Packages**:
+   - Add/update package.json with: express, axios, dotenv, cors, body-parser (if not already present).
+   - Use npm install if needed.
+
+3. **Backend Setup (Express in server.js or app.js)**:
+   - Load dotenv for environment variables.
+   - Create a function for Basic Auth header:
+     const getAuthHeader = () => {
+       const auth = Buffer.from(`${process.env.GEIDEA_PUBLIC_KEY}:${process.env.GEIDEA_API_PASSWORD}`).toString('base64');
+       return `Basic ${auth}`;
+     };
+
+   - POST endpoint: /api/create-geidea-session
+     - Accepts JSON body: { amount (number), merchantReferenceId (optional string), description (optional string) }
+     - Sends POST to https://api.test.geidea.net/payment-intent/api/v2/direct/session
+     - Body example:
+       {
+         "amount": amount,
+         "currency": "SAR",
+         "callbackUrl": "https://your-replit-app-url/payment/callback",  // use Replit's actual URL
+         "merchantReferenceId": merchantReferenceId || "order-" + Date.now(),
+         "cardOnFile": true,  // essential for tokenization/recurring
+         "language": "ar",
+         "description": description || "Subscription"
+       }
+     - Headers: Authorization: getAuthHeader(), Content-Type: application/json
+     - On success, return JSON: { success: true, sessionId, paymentUrl: `https://hosted.test.geidea.net/payment?sessionId=${sessionId}` }
+     - Handle errors gracefully and return { success: false, error }
+
+   - GET endpoint: /payment/callback (handle redirect from Geidea)
+     - Read query params: responseCode, responseMessage, tokenId, orderId, merchantReferenceId, etc.
+     - If responseCode === "000" → log success + tokenId (for now console.log; later save to DB)
+     - Redirect to /success?orderId=... or show simple success message
+     - Otherwise redirect to /failure with message
+
+   - POST endpoint: /api/charge-recurring (for future subscription charges)
+     - Accepts JSON body: { tokenId (string), amount (number) }
+     - Sends POST to https://api.test.geidea.net/pgw/api/v2/direct/pay
+     - Body example:
+       {
+         "tokenId": tokenId,
+         "amount": amount,
+         "currency": "SAR",
+         "source": "Recurring",
+         "merchantReferenceId": "rec-" + Date.now()
+       }
+     - Headers same as above
+     - Return success or error
+
+4. **Simple Frontend (if not already present, create one)**:
+   - Create checkout.html or index.html with a form/button for amount.
+   - On submit: fetch('/api/create-geidea-session', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({amount: 49.00}) })
+   - On response: if success, window.location.href = paymentUrl
+   - Add basic success.html and failure.html pages (or just text responses).
+
+5. **Additional Features**:
+   - Use test mode only (api.test.geidea.net and hosted.test.geidea.net)
+   - Add basic error handling and logging.
+   - (Optional) Add a simple in-memory store or console.log for saving tokenId per user after first payment.
+
+6. **Testing Instructions**:
+   - After generating code, tell me how to run it, test the session creation (via Postman or browser), and use Geidea test cards (e.g. Visa 4111111111111111, expiry future, CVV 123).
+
+Please update/generate the files (server.js/app.js, package.json, any HTML/JS), show the code changes, and explain next steps for testing and going live later.
