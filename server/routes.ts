@@ -3674,10 +3674,22 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const branchId = req.query.branchId as string | undefined;
     const transactions = await storage.getTransactions({ restaurantId, branchId });
 
+    // Calculate start of current week (Sunday)
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay()); // Go back to Sunday
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    // Filter transactions to only include current week
+    const thisWeekTransactions = transactions.filter(t => {
+      const transactionDate = new Date(t.createdAt);
+      return transactionDate >= startOfWeek;
+    });
+
     const salesByDay: Record<string, number> = {};
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-    transactions.forEach(t => {
+    thisWeekTransactions.forEach(t => {
       const date = new Date(t.createdAt);
       const dayName = days[date.getDay()];
       salesByDay[dayName] = (salesByDay[dayName] || 0) + parseFloat(t.total);
