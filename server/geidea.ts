@@ -1,9 +1,30 @@
 // Geidea Payment Gateway Integration
 // Documentation: https://docs.geidea.net/
-// Merchant API Base: https://api.merchant.geidea.net (Egypt/Test)
-// KSA Production: https://api.ksamerchant.geidea.net
+// KSA Merchant API: https://api.ksamerchant.geidea.net
 
-const GEIDEA_KSA_BASE_URL = 'https://api.merchant.geidea.net';
+import crypto from 'crypto';
+
+const GEIDEA_KSA_BASE_URL = 'https://api.ksamerchant.geidea.net';
+
+// Generate HMAC-SHA256 signature for Geidea API requests
+function generateSignature(
+  merchantPublicKey: string,
+  amount: number,
+  currency: string,
+  merchantReferenceId: string,
+  timestamp: string,
+  apiPassword: string
+): string {
+  // Format amount with exactly 2 decimal places
+  const amountStr = amount.toFixed(2);
+  // Concatenate in the exact order required by Geidea
+  const data = `${merchantPublicKey}${amountStr}${currency}${merchantReferenceId}${timestamp}`;
+  // Create HMAC-SHA256 hash using API password
+  const hmac = crypto.createHmac('sha256', apiPassword);
+  hmac.update(data);
+  // Return base64 encoded signature
+  return hmac.digest('base64');
+}
 
 interface CreateSessionParams {
   amount: number;
@@ -63,10 +84,30 @@ function getCredentials(): string {
 }
 
 export async function createPaymentSession(params: CreateSessionParams): Promise<SessionResponse> {
-  const credentials = getCredentials();
+  const publicKey = process.env.GEIDEA_PUBLIC_KEY;
+  const apiPassword = process.env.GEIDEA_API_PASSWORD;
+  
+  if (!publicKey || !apiPassword) {
+    throw new Error('Geidea credentials not configured (GEIDEA_PUBLIC_KEY, GEIDEA_API_PASSWORD)');
+  }
+  
+  const credentials = Buffer.from(`${publicKey}:${apiPassword}`).toString('base64');
   
   // Round amount to 2 decimal places to avoid floating point issues
   const roundedAmount = Math.round(params.amount * 100) / 100;
+  
+  // Generate timestamp in ISO format
+  const timestamp = new Date().toISOString();
+  
+  // Generate signature using HMAC-SHA256
+  const signature = generateSignature(
+    publicKey,
+    roundedAmount,
+    'SAR',
+    params.merchantReferenceId,
+    timestamp,
+    apiPassword
+  );
   
   const requestBody: any = {
     amount: roundedAmount,
@@ -75,6 +116,8 @@ export async function createPaymentSession(params: CreateSessionParams): Promise
     callbackUrl: params.callbackUrl,
     returnUrl: params.callbackUrl,
     language: params.language || 'en',
+    timestamp: timestamp,
+    signature: signature,
   };
   
   // Log the request for debugging
