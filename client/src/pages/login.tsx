@@ -16,7 +16,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
-import kinzhalLogo from "@assets/kinzhal-eagle-logo.jpeg";
+import kinzhalLogo from "@assets/Kinzhal_logo_1768960890639.png";
 import { Language, supportedLanguages } from "@/i18n/translations";
 import {
   Select,

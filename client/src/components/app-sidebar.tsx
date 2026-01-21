@@ -38,7 +38,7 @@ import {
   Shield,
   Activity,
 } from "lucide-react";
-import logoImage from "@assets/kinzhal-eagle-logo.jpeg";
+import logoImage from "@assets/Kinzhal_logo_1768960890639.png";
 import {
   Sidebar,
   SidebarContent,

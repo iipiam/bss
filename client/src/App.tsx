@@ -42,7 +42,7 @@ import {
 import { LogOut, User as UserIcon, CreditCard, Edit, XCircle, X } from "lucide-react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import type { User } from "@shared/schema";
-import kinzhalLogo from "@assets/kinzhal-eagle-logo.jpeg";
+import kinzhalLogo from "@assets/Kinzhal_logo_1768960890639.png";
 
 // Lazy-loaded pages for code splitting - reduces initial bundle size
 const Dashboard = lazy(() => import("@/pages/dashboard"));
