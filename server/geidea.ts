@@ -96,13 +96,33 @@ export async function createPaymentSession(params: CreateSessionParams): Promise
     body: JSON.stringify(requestBody),
   });
   
+  const responseData = await response.json();
+  
+  // Log the full response for debugging
+  console.log('[Geidea] Session response:', JSON.stringify(responseData, null, 2));
+  
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error('[Geidea] Session creation failed:', errorText);
-    throw new Error(`Geidea API error: ${response.status}`);
+    console.error('[Geidea] Session creation failed:', responseData);
+    throw new Error(responseData.detailedResponseMessage || responseData.responseMessage || `Geidea API error: ${response.status}`);
   }
   
-  return response.json();
+  // Handle different response structures from Geidea API
+  // Some responses have 'session' wrapper, others have the data directly
+  if (responseData.session) {
+    return responseData;
+  } else if (responseData.id || responseData.sessionId) {
+    // If the session data is at the root level, wrap it
+    return {
+      session: {
+        id: responseData.sessionId || responseData.id,
+        paymentUrl: responseData.redirectUrl || responseData.paymentUrl,
+        paymentIntent: responseData.paymentIntent,
+      }
+    };
+  } else {
+    console.error('[Geidea] Unexpected response structure:', responseData);
+    throw new Error(responseData.detailedResponseMessage || responseData.responseMessage || 'Invalid Geidea response structure');
+  }
 }
 
 export async function chargeWithToken(params: ChargeWithTokenParams): Promise<PayByTokenResponse> {
