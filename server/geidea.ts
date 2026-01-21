@@ -76,6 +76,9 @@ export async function createPaymentSession(params: CreateSessionParams): Promise
     returnUrl: params.callbackUrl,
     language: params.language || 'en',
   };
+  
+  // Log the request for debugging
+  console.log('[Geidea] Creating session with request:', JSON.stringify(requestBody, null, 2));
 
   if (params.customerEmail) {
     requestBody.customer = { email: params.customerEmail };
