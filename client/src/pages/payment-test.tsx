@@ -46,7 +46,6 @@ export default function PaymentTest() {
         <GeideaPayment
           amount={parseFloat(amount)}
           description={description}
-          orderId="TEST-ORDER-001"
           customerName={customerName}
           customerPhone={customerPhone}
           onSuccess={handlePaymentSuccess}
