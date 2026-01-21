@@ -116,6 +116,8 @@ export default function Kitchen() {
   
   const { data: orders = [], isLoading, isError, error, refetch } = useQuery<Order[]>({
     queryKey: [ordersEndpoint],
+    staleTime: 0,
+    refetchInterval: 15000, // Auto-refresh every 15 seconds for kitchen display
   });
 
   // Show toast on error
@@ -138,6 +140,8 @@ export default function Kitchen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [ordersEndpoint] });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/sales"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       toast({
         title: t.orderUpdated,
         description: t.theOrderStatusChanged,

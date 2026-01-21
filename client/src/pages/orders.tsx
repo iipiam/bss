@@ -37,6 +37,7 @@ export default function Orders() {
   
   const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
+    staleTime: 0,
   });
 
   const updateStatusMutation = useMutation({
@@ -46,6 +47,7 @@ export default function Orders() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/sales"] });
       toast({
         title: t.orderStatusUpdated,
         description: t.theOrderStatusChanged,
