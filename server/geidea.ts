@@ -1,8 +1,9 @@
 // Geidea Payment Gateway Integration for KSA (Saudi Arabia)
 // Documentation: https://docs.geidea.net/
-// Test Mode API Base: https://api.test.geidea.net
+// KSA Merchant API Base: https://api.ksamerchant.geidea.net
+// Note: Test vs Production is determined by credentials, not URL
 
-const GEIDEA_KSA_BASE_URL = 'https://api.test.geidea.net';
+const GEIDEA_KSA_BASE_URL = 'https://api.ksamerchant.geidea.net';
 
 interface CreateSessionParams {
   amount: number;
