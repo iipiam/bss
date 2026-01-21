@@ -587,7 +587,7 @@ export default function POS() {
       tax: tax.toFixed(2),
       total: total.toFixed(2),
       paymentMethod: paymentMethod,
-      status: t.pending,
+      status: "Pending", // Always save English status for server-side filtering
     };
 
     // If online payment is selected, show payment dialog
@@ -607,8 +607,8 @@ export default function POS() {
     const orderDataWithPayment = {
       ...pendingOrderData,
       moyasarPaymentId: paymentId,
-      status: t.completed, // Mark order as completed since payment is successful
-      paymentStatus: t.paid, // Add explicit payment status
+      status: "Completed", // Always save English status for server-side filtering
+      paymentStatus: "Paid", // Always save English status for server-side filtering
     };
 
     // Create the order
