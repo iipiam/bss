@@ -158,7 +158,7 @@ export async function createPaymentSession(params: CreateSessionParams): Promise
   // Some responses have 'session' wrapper, others have the data directly
   if (responseData.session) {
     // Construct the HPP checkout URL using the session ID
-    // Format: https://www.merchant.geidea.net/hpp/checkout/?{sessionId}
+    // KSA Format: https://www.ksamerchant.geidea.net/hpp/checkout/?{sessionId}
     const sessionId = responseData.session.id;
     responseData.session.paymentUrl = `${GEIDEA_HPP_URL}/?${sessionId}`;
     return responseData;
