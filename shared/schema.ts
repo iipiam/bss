@@ -726,6 +726,8 @@ export const investors = pgTable("investors", {
   documentPath: text("document_path"), // Path to uploaded PDF document (legacy - kept for compatibility)
   documentContent: text("document_content"), // Base64 encoded PDF content for persistent storage
   documentFilename: text("document_filename"), // Original filename of the uploaded document
+  iban: text("iban"), // IBAN account number for bank transfers
+  bankName: text("bank_name"), // Name of the bank (Saudi banks)
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

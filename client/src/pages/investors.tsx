@@ -32,8 +32,26 @@ interface Investor {
   active: boolean;
   notes?: string;
   documentPath?: string | null;
+  iban?: string | null;
+  bankName?: string | null;
   createdAt: string;
 }
+
+const SAUDI_BANKS = [
+  { value: "snb", label: "Saudi National Bank (SNB)", labelAr: "البنك الأهلي السعودي" },
+  { value: "alrajhi", label: "Al Rajhi Bank", labelAr: "مصرف الراجحي" },
+  { value: "riyad", label: "Riyad Bank", labelAr: "بنك الرياض" },
+  { value: "sabb", label: "Saudi British Bank (SABB)", labelAr: "البنك السعودي البريطاني" },
+  { value: "bsf", label: "Banque Saudi Fransi", labelAr: "البنك السعودي الفرنسي" },
+  { value: "anb", label: "Arab National Bank", labelAr: "البنك العربي الوطني" },
+  { value: "alinma", label: "Alinma Bank", labelAr: "مصرف الإنماء" },
+  { value: "aljazira", label: "Bank AlJazira", labelAr: "بنك الجزيرة" },
+  { value: "albilad", label: "Bank AlBilad", labelAr: "بنك البلاد" },
+  { value: "gib", label: "Gulf International Bank", labelAr: "بنك الخليج الدولي" },
+  { value: "saib", label: "Saudi Investment Bank", labelAr: "البنك السعودي للاستثمار" },
+  { value: "fab", label: "First Abu Dhabi Bank (FAB)", labelAr: "بنك أبوظبي الأول" },
+  { value: "enbd", label: "Emirates NBD", labelAr: "الإمارات دبي الوطني" },
+];
 
 interface Transaction {
   id: number;
@@ -78,6 +96,8 @@ type InvestorFormValues = {
   amountInvested: string;
   interestPercentage: string;
   notes?: string;
+  iban?: string;
+  bankName?: string;
 };
 
 export default function Investors() {
@@ -115,6 +135,8 @@ export default function Investors() {
       { message: t.interestRateMustBeBetween0And100 }
     ),
     notes: z.string().optional(),
+    iban: z.string().optional(),
+    bankName: z.string().optional(),
   }).refine(
     (data) => {
       // If recipe type, recipeId is required
@@ -145,6 +167,8 @@ export default function Investors() {
       amountInvested: "",
       interestPercentage: "",
       notes: "",
+      iban: "",
+      bankName: "",
     },
   });
   
@@ -195,6 +219,8 @@ export default function Investors() {
         amountInvested: data.investorType === "recipe" ? "0.00" : parseFloat(data.amountInvested || "0").toFixed(2),
         interestPercentage: parseFloat(data.interestPercentage).toFixed(2),
         notes: data.notes,
+        iban: data.iban || null,
+        bankName: data.bankName || null,
       };
       return await apiRequest("POST", "/api/investors", payload);
     },
@@ -245,6 +271,8 @@ export default function Investors() {
         amountInvested: data.investorType === "recipe" ? "0.00" : parseFloat(data.amountInvested || "0").toFixed(2),
         interestPercentage: parseFloat(data.interestPercentage).toFixed(2),
         notes: data.notes,
+        iban: data.iban || null,
+        bankName: data.bankName || null,
       });
     },
     onSuccess: () => {
@@ -447,6 +475,8 @@ export default function Investors() {
       amountInvested: investor.amountInvested,
       interestPercentage: investor.interestPercentage,
       notes: investor.notes || "",
+      iban: investor.iban || "",
+      bankName: investor.bankName || "",
     });
     setOpen(true);
   };
@@ -946,6 +976,53 @@ export default function Investors() {
                         />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="bankName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t.bankName || "Bank Name"} ({t.optional || "Optional"})</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger className="h-[44px]" data-testid="select-bank-name">
+                            <SelectValue placeholder={t.selectBank || "Select a bank"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {SAUDI_BANKS.map((bank) => (
+                            <SelectItem key={bank.value} value={bank.label}>
+                              {bank.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="iban"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t.ibanAccount || "IBAN Account"} ({t.optional || "Optional"})</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="SA0000000000000000000000"
+                          {...field}
+                          className="h-[44px] font-mono"
+                          data-testid="input-iban"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <p className="text-sm text-muted-foreground">
+                        {t.ibanHelp || "Saudi IBAN format: SA followed by 22 digits"}
+                      </p>
                     </FormItem>
                   )}
                 />

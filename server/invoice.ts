@@ -2451,6 +2451,8 @@ interface InvestorStatementData {
     createdAt: Date;
     investorType?: string; // "money" or "recipe"
     recipeName?: string; // Name of the recipe for recipe-type investors
+    iban?: string | null; // IBAN account number
+    bankName?: string | null; // Bank name
   };
   companyName: string;
   companyVAT: string;
@@ -2845,6 +2847,23 @@ function generateInvestorStatementHTML(data: InvestorStatementData): string {
       <div class="info-row" style="margin-top: 10px;">
         <span class="info-label">Notes / ملاحظات:</span>
         <span class="info-value">${escapeHtml(investor.notes)}</span>
+      </div>
+      ` : ''}
+      ${investor.bankName || investor.iban ? `
+      <div style="margin-top: 10px; padding: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px;">
+        <div style="font-weight: 600; color: #059669; margin-bottom: 4px; font-size: 11px;">Bank Details / تفاصيل البنك</div>
+        ${investor.bankName ? `
+        <div class="info-row">
+          <span class="info-label">Bank Name / اسم البنك:</span>
+          <span class="info-value">${escapeHtml(investor.bankName)}</span>
+        </div>
+        ` : ''}
+        ${investor.iban ? `
+        <div class="info-row">
+          <span class="info-label">IBAN / رقم الآيبان:</span>
+          <span class="info-value" style="font-family: monospace; letter-spacing: 1px;">${escapeHtml(investor.iban)}</span>
+        </div>
+        ` : ''}
       </div>
       ` : ''}
     </div>
