@@ -3361,14 +3361,90 @@ export class DatabaseStorage implements IStorage {
 
   // Investors (MULTI-TENANT: filters by restaurantId)
   async getInvestors(restaurantId: string): Promise<Investor[]> {
-    return await db.select().from(investors).where(
-      and(eq(investors.restaurantId, restaurantId), eq(investors.active, true))
-    ).orderBy(investors.createdAt);
+    try {
+      return await db.select().from(investors).where(
+        and(eq(investors.restaurantId, restaurantId), eq(investors.active, true))
+      ).orderBy(investors.createdAt);
+    } catch (error: any) {
+      // Handle missing columns (backward compatibility for schema migrations)
+      if (error.message?.includes('does not exist')) {
+        console.log('[Investors] Column not found, using fallback query');
+        const result = await db.execute(sql`
+          SELECT id, restaurant_id, name, national_id, contact_number, investor_type,
+                 recipe_id, amount_invested, interest_percentage, notes, active,
+                 document_path, document_content, document_filename, created_at
+          FROM investors 
+          WHERE restaurant_id = ${restaurantId} AND active = true
+          ORDER BY created_at
+        `);
+        return (result.rows || []).map((row: any) => ({
+          id: row.id,
+          restaurantId: row.restaurant_id,
+          name: row.name,
+          nationalId: row.national_id,
+          contactNumber: row.contact_number,
+          investorType: row.investor_type,
+          recipeId: row.recipe_id,
+          amountInvested: row.amount_invested,
+          interestPercentage: row.interest_percentage,
+          notes: row.notes,
+          active: row.active,
+          documentPath: row.document_path,
+          documentContent: row.document_content,
+          documentFilename: row.document_filename,
+          createdAt: row.created_at,
+          iban: null, // Column may not exist yet
+          bankName: null, // Column may not exist yet
+          ibanCertificateContent: null, // Column may not exist yet
+          ibanCertificateFilename: null, // Column may not exist yet
+        })) as Investor[];
+      }
+      throw error;
+    }
   }
 
   async getInvestor(id: string): Promise<Investor | undefined> {
-    const [investor] = await db.select().from(investors).where(eq(investors.id, id));
-    return investor;
+    try {
+      const [investor] = await db.select().from(investors).where(eq(investors.id, id));
+      return investor;
+    } catch (error: any) {
+      // Handle missing columns (backward compatibility for schema migrations)
+      if (error.message?.includes('does not exist')) {
+        console.log('[Investors] Column not found, using fallback query for single investor');
+        const result = await db.execute(sql`
+          SELECT id, restaurant_id, name, national_id, contact_number, investor_type,
+                 recipe_id, amount_invested, interest_percentage, notes, active,
+                 document_path, document_content, document_filename, created_at
+          FROM investors 
+          WHERE id = ${id}
+          LIMIT 1
+        `);
+        if (!result.rows || result.rows.length === 0) return undefined;
+        const row = result.rows[0] as any;
+        return {
+          id: row.id,
+          restaurantId: row.restaurant_id,
+          name: row.name,
+          nationalId: row.national_id,
+          contactNumber: row.contact_number,
+          investorType: row.investor_type,
+          recipeId: row.recipe_id,
+          amountInvested: row.amount_invested,
+          interestPercentage: row.interest_percentage,
+          notes: row.notes,
+          active: row.active,
+          documentPath: row.document_path,
+          documentContent: row.document_content,
+          documentFilename: row.document_filename,
+          createdAt: row.created_at,
+          iban: null, // Column may not exist yet
+          bankName: null, // Column may not exist yet
+          ibanCertificateContent: null, // Column may not exist yet
+          ibanCertificateFilename: null, // Column may not exist yet
+        } as Investor;
+      }
+      throw error;
+    }
   }
 
   async createInvestor(investor: InsertInvestor): Promise<Investor> {
