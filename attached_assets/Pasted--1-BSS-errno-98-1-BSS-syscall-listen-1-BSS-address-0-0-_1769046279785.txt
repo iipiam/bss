@@ -1,0 +1,1074 @@
+
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }
+1|BSS  | ✅ AWS RDS SSL enabled with CA bundle (development mode)
+1|BSS  | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+1|BSS  |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS  |     at listenInCluster (node:net:1965:12)
+1|BSS  |     at doListen (node:net:2139:7)
+1|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+1|BSS  |   code: 'EADDRINUSE',
+1|BSS  |   errno: -98,
+1|BSS  |   syscall: 'listen',
+1|BSS  |   address: '0.0.0.0',
+1|BSS  |   port: 5000
+1|BSS  | }

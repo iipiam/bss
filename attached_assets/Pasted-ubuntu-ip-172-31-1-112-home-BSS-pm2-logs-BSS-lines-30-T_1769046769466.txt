@@ -1,0 +1,66 @@
+ubuntu@ip-172-31-1-112:/home/BSS$ pm2 logs BSS --lines 30
+[TAILING] Tailing last 30 lines for [BSS] process (change the value with --lines option)
+/home/ubuntu/.pm2/logs/BSS-error.log last 30 lines:
+0|BSS      | Signup error: Error: Geidea credentials not configured (GEIDEA_PUBLIC_KEY, GEIDEA_API_PASSWORD)
+0|BSS      |     at createPaymentSession (file:///home/BSS/dist/index.js:10626:11)
+0|BSS      |     at file:///home/BSS/dist/index.js:15531:35
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | [Geidea] Unexpected response structure: {
+0|BSS      |   responseMessage: 'HPP Integration error',
+0|BSS      |   detailedResponseMessage: 'Invalid cardOnFile parameter',
+0|BSS      |   language: 'EN',
+0|BSS      |   responseCode: '110',
+0|BSS      |   detailedResponseCode: '028',
+0|BSS      |   signature: 'Iwmyh2J4gHmHH50FJSpjDsNjfaZ1NH/Z1aD5EJqHxlg='
+0|BSS      | }
+0|BSS      | Signup error: Error: Invalid cardOnFile parameter
+0|BSS      |     at createPaymentSession (file:///home/BSS/dist/index.js:10686:11)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      |     at async file:///home/BSS/dist/index.js:15531:29
+0|BSS      | [Geidea] Unexpected response structure: {
+0|BSS      |   responseMessage: 'HPP Integration error',
+0|BSS      |   detailedResponseMessage: 'Invalid cardOnFile parameter',
+0|BSS      |   language: 'EN',
+0|BSS      |   responseCode: '110',
+0|BSS      |   detailedResponseCode: '028',
+0|BSS      |   signature: 'Iwmyh2J4gHmHH50FJSpjDsNjfaZ1NH/Z1aD5EJqHxlg='
+0|BSS      | }
+0|BSS      | Signup error: Error: Invalid cardOnFile parameter
+0|BSS      |     at createPaymentSession (file:///home/BSS/dist/index.js:10686:11)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      |     at async file:///home/BSS/dist/index.js:15531:29
+
+/home/ubuntu/.pm2/logs/BSS-out.log last 30 lines:
+0|BSS      |   restaurantName: '1234567895',
+0|BSS      |   nationalId: '1234567891',
+0|BSS      |   hasVatRegistration: 'false',
+0|BSS      |   taxNumber: undefined,
+0|BSS      |   businessType: 'restaurant',
+0|BSS      |   restaurantType: 'Cloud Kitchen',
+0|BSS      |   subscriptionPlan: 'weekly',
+0|BSS      |   branchesCount: '1'
+0|BSS      | }
+0|BSS      | [SIGNUP] Uploaded files: [ 'crCertificate', 'ibanCertificate', 'nationalAddress' ]
+0|BSS      | [SIGNUP] Calculated subscription amount: 66.33 SAR for weekly plan, 1 branch(es)
+0|BSS      | [Geidea] Creating session with request: {
+0|BSS      |   "amount": 66.33,
+0|BSS      |   "currency": "SAR",
+0|BSS      |   "merchantReferenceId": "SIGNUP-1769046740908-5f0ao7272",
+0|BSS      |   "callbackUrl": "https://kinbss.com/api/geidea/signup-callback",
+0|BSS      |   "returnUrl": "https://kinbss.com/api/geidea/signup-callback",
+0|BSS      |   "language": "en",
+0|BSS      |   "timestamp": "2026-01-22T01:52:20.908Z",
+0|BSS      |   "signature": "m8L9oOj4tbTMWZ9dP1p9up9R7FzCjHCVmRsbTt7HWPQ="
+0|BSS      | }
+0|BSS      | [Geidea] Session response: {
+0|BSS      |   "responseMessage": "HPP Integration error",
+0|BSS      |   "detailedResponseMessage": "Invalid cardOnFile parameter",
+0|BSS      |   "language": "EN",
+0|BSS      |   "responseCode": "110",
+0|BSS      |   "detailedResponseCode": "028",
+0|BSS      |   "signature": "Iwmyh2J4gHmHH50FJSpjDsNjfaZ1NH/Z1aD5EJqHxlg="
+0|BSS      | }
+0|BSS      | 1:52:22 AM [express] POST /api/auth/signup 500 in 2799ms :: {"error":"Failed to create account"}
+
