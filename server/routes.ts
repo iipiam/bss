@@ -4985,7 +4985,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         merchantReferenceId,
         customerEmail: email,
         customerName: name,
-        cardOnFile: true, // Enable tokenization for recurring subscription payments
+        cardOnFile: false, // Tokenization requires special merchant approval
         initiatedBy: 'Internet', // Customer-initiated payment via web
       });
 
@@ -5958,7 +5958,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         merchantReferenceId,
         customerEmail: user.email || undefined,
         customerName: user.fullName || undefined,
-        cardOnFile: true,
+        cardOnFile: false, // Tokenization requires special merchant approval
         initiatedBy: 'Internet',
       });
       
