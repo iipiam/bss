@@ -1,0 +1,54 @@
+ubuntu@ip-172-31-1-112:/home/BSS$ # 1. Restart the app
+pm2 restart BSS
+
+# 2. Add new database columns (REQUIRED)
+npm run db:push
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [BSS](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 8    │ online    │ 0%       │ 18.3mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+
+> rest-express@1.0.0 db:push
+> drizzle-kit push
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/home/BSS/drizzle.config.ts'
+Using 'pg' driver for database querying
+[⣟] Pulling schema from database...
+error: no pg_hba.conf entry for host "157.175.146.88", user "postgres", database "bss_production", no encryption
+    at /home/BSS/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Object.query (/home/BSS/node_modules/drizzle-kit/bin.cjs:80601:26)
+    at async fromDatabase2 (/home/BSS/node_modules/drizzle-kit/bin.cjs:19253:25) {
+  length: 168,
+  severity: 'FATAL',
+  code: '28000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'auth.c',
+  line: '541',
+  routine: 'ClientAuthentication'
+}
+ubuntu@ip-172-31-1-112:/home/BSS$ pm2 restart BSS
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [BSS](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 9    │ online    │ 0%       │ 18.4mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+ubuntu@ip-172-31-1-112:/home/BSS$
