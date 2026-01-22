@@ -5,8 +5,8 @@
 import crypto from 'crypto';
 
 const GEIDEA_KSA_BASE_URL = 'https://api.ksamerchant.geidea.net';
-// Use standard merchant HPP URL (works for all regions)
-const GEIDEA_HPP_URL = 'https://www.merchant.geidea.net/hpp/checkout';
+// Use KSA-specific HPP URL for KSA merchants
+const GEIDEA_HPP_URL = 'https://ksamerchant.geidea.net/hpp/checkout';
 
 // Generate HMAC-SHA256 signature for Geidea API requests
 function generateSignature(
