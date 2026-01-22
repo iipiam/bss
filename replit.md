@@ -15,6 +15,7 @@ Preferred communication style: Simple, everyday language.
 - **Branding**: BSS eagle logo, "Business Management System" subtitle, and "Made By Kinzhal LTD Co." in the footer. Tagline: "Empowering businesses with smart management solutions".
 - **Internationalization**: Comprehensive multi-language support for 10 languages (English, Arabic, German, Chinese, Bengali, Italian, Hindi, Urdu, Spanish, Tagalog) with full RTL support for Arabic/Urdu, with fallback to English.
 - **Responsive Design**: Device-specific layouts (Laptop, iPad, iPhone) with WCAG AAA compliance.
+- **Device Selector**: Toggle button group in header (beside theme toggle) allows users to switch between Desktop, iPhone, and iPad layouts. Selection is persisted to user profile via DeviceContext.
 
 ### Technical Implementation
 - **Backend Runtime**: Node.js with Express.js.
