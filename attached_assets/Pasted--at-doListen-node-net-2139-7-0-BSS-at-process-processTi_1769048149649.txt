@@ -1,0 +1,203 @@
+    |     at doListen (node:net:2139:7)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+0|BSS      |   code: 'EADDRINUSE',
+0|BSS      |   errno: -98,
+0|BSS      |   syscall: 'listen',
+0|BSS      |   address: '0.0.0.0',
+0|BSS      |   port: 5000
+0|BSS      | }
+0|BSS      | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+0|BSS      |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+0|BSS      |     at listenInCluster (node:net:1965:12)
+0|BSS      |     at doListen (node:net:2139:7)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+0|BSS      |   code: 'EADDRINUSE',
+0|BSS      |   errno: -98,
+0|BSS      |   syscall: 'listen',
+0|BSS      |   address: '0.0.0.0',
+0|BSS      |   port: 5000
+0|BSS      | }
+0|BSS      | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+0|BSS      |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+0|BSS      |     at listenInCluster (node:net:1965:12)
+0|BSS      |     at doListen (node:net:2139:7)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+0|BSS      |   code: 'EADDRINUSE',
+0|BSS      |   errno: -98,
+0|BSS      |   syscall: 'listen',
+0|BSS      |   address: '0.0.0.0',
+0|BSS      |   port: 5000
+0|BSS      | }
+0|BSS      | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+0|BSS      |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+0|BSS      |     at listenInCluster (node:net:1965:12)
+0|BSS      |     at doListen (node:net:2139:7)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+0|BSS      |   code: 'EADDRINUSE',
+0|BSS      |   errno: -98,
+0|BSS      |   syscall: 'listen',
+0|BSS      |   address: '0.0.0.0',
+0|BSS      |   port: 5000
+0|BSS      | }
+0|BSS      | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+0|BSS      |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+0|BSS      |     at listenInCluster (node:net:1965:12)
+0|BSS      |     at doListen (node:net:2139:7)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+0|BSS      |   code: 'EADDRINUSE',
+0|BSS      |   errno: -98,
+0|BSS      |   syscall: 'listen',
+0|BSS      |   address: '0.0.0.0',
+0|BSS      |   port: 5000
+0|BSS      | }
+0|BSS      | Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+0|BSS      |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+0|BSS      |     at listenInCluster (node:net:1965:12)
+0|BSS      |     at doListen (node:net:2139:7)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+0|BSS      |   code: 'EADDRINUSE',
+0|BSS      |   errno: -98,
+0|BSS      |   syscall: 'listen',
+0|BSS      |   address: '0.0.0.0',
+0|BSS      |   port: 5000
+0|BSS      | }
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | Signup error: Error: Geidea credentials not configured (GEIDEA_PUBLIC_KEY, GEIDEA_API_PASSWORD)
+0|BSS      |     at createPaymentSession (file:///home/BSS/dist/index.js:10626:11)
+0|BSS      |     at file:///home/BSS/dist/index.js:15531:35
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | [Geidea] Unexpected response structure: {
+0|BSS      |   responseMessage: 'HPP Integration error',
+0|BSS      |   detailedResponseMessage: 'Invalid cardOnFile parameter',
+0|BSS      |   language: 'EN',
+0|BSS      |   responseCode: '110',
+0|BSS      |   detailedResponseCode: '028',
+0|BSS      |   signature: 'Iwmyh2J4gHmHH50FJSpjDsNjfaZ1NH/Z1aD5EJqHxlg='
+0|BSS      | }
+0|BSS      | Signup error: Error: Invalid cardOnFile parameter
+0|BSS      |     at createPaymentSession (file:///home/BSS/dist/index.js:10686:11)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      |     at async file:///home/BSS/dist/index.js:15531:29
+0|BSS      | [Geidea] Unexpected response structure: {
+0|BSS      |   responseMessage: 'HPP Integration error',
+0|BSS      |   detailedResponseMessage: 'Invalid cardOnFile parameter',
+0|BSS      |   language: 'EN',
+0|BSS      |   responseCode: '110',
+0|BSS      |   detailedResponseCode: '028',
+0|BSS      |   signature: 'Iwmyh2J4gHmHH50FJSpjDsNjfaZ1NH/Z1aD5EJqHxlg='
+0|BSS      | }
+0|BSS      | Signup error: Error: Invalid cardOnFile parameter
+0|BSS      |     at createPaymentSession (file:///home/BSS/dist/index.js:10686:11)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      |     at async file:///home/BSS/dist/index.js:15531:29
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | ⚠️  WARNING: Using default SESSION_SECRET in production. Set SESSION_SECRET environment variable for security.
+0|BSS      | [Geidea Signup Callback] SECURITY: Invalid verification response - no order data
+0|BSS      | [Geidea Signup Callback] Could not cleanup file: uploads/shop-1769047400018-725588049.pdf
+0|BSS      | [Geidea Signup Callback] Could not cleanup file: uploads/shop-1769047400030-556856752.pdf
+0|BSS      | [Geidea Signup Callback] Could not cleanup file: uploads/shop-1769047400032-474175251.pdf
+
+/home/ubuntu/.pm2/logs/BSS-out.log last 100 lines:
+0|BSS      |     "paymentOptions": null,
+0|BSS      |     "recurrence": null,
+0|BSS      |     "order": null,
+0|BSS      |     "items": null,
+0|BSS      |     "appearance": null,
+0|BSS      |     "metadata": {
+0|BSS      |       "custom": null
+0|BSS      |     },
+0|BSS      |     "subscription": null,
+0|BSS      |     "acceptTabbyPaymentMethod": false,
+0|BSS      |     "acceptTamaraPaymentMethod": false,
+0|BSS      |     "expressCheckouts": [],
+0|BSS      |     "hideWallets": [],
+0|BSS      |     "splitPayoutDetails": [],
+0|BSS      |     "caf": {
+0|BSS      |       "extraChargesLabel": null,
+0|BSS      |       "extraChargesType": "",
+0|BSS      |       "extraCharges": null,
+0|BSS      |       "addOnFeesLabel": null,
+0|BSS      |       "addOnFeesType": "",
+0|BSS      |       "addOnFees": null
+0|BSS      |     },
+0|BSS      |     "originalAmount": 66.33,
+0|BSS      |     "addOnFeesAmount": 0,
+0|BSS      |     "extraChargesAmount": 0,
+0|BSS      |     "termsAndConditions": null,
+0|BSS      |     "token": null,
+0|BSS      |     "networkToken": null,
+0|BSS      |     "isNTPayment": false,
+0|BSS      |     "cardTokenId": null,
+0|BSS      |     "processingInformation": {
+0|BSS      |       "commerceIndicator": null,
+0|BSS      |       "feeProgramIndicator": null
+0|BSS      |     }
+0|BSS      |   },
+0|BSS      |   "merchantNameEn": null,
+0|BSS      |   "merchantNameAr": null,
+0|BSS      |   "paymentIntent": null,
+0|BSS      |   "termsAndConditions": null,
+0|BSS      |   "responseMessage": "Success",
+0|BSS      |   "detailedResponseMessage": "The operation was successful",
+0|BSS      |   "language": "en",
+0|BSS      |   "responseCode": "000",
+0|BSS      |   "detailedResponseCode": "000",
+0|BSS      |   "signature": "IgEQWiI6uDG455oTZ9hObKRxDheIkkl/HHZ67yg7S/4="
+0|BSS      | }
+0|BSS      | [SIGNUP] Created Geidea session: 7c223e27-8705-4013-f4b8-08de56de7f46
+0|BSS      | [SIGNUP] Created pending signup for username: test22, Geidea session: 7c223e27-8705-4013-f4b8-08de56de7f46
+0|BSS      | 2:03:23 AM [express] POST /api/auth/signup 200 in 3142ms :: {"redirectUrl":"https://ksamerchant.geid…
+0|BSS      | 2:11:42 AM [express] GET /api/geidea/signup-callback 200 in 3ms
+0|BSS      | 2:11:42 AM [express] GET /api/auth/me 401 in 1ms :: {"error":"Not authenticated"}
+0|BSS      | [Geidea Signup Callback] Received callback for order cc062c3a-1ddc-4815-d28e-08de4e644344, session 7c223e27-8705-4013-f4b8-08de56de7f46, status: Success
+0|BSS      | [Geidea Signup Callback] Verifying order cc062c3a-1ddc-4815-d28e-08de4e644344 with Geidea API...
+0|BSS      | [Geidea Signup Callback] Verified order status: undefined, amount: undefined
+0|BSS      | 2:11:44 AM [express] POST /api/geidea/signup-callback 302 in 1896ms
+0|BSS      | [AUTH] Login attempt for username: test22 accountType: client
+0|BSS      | [AUTH] User found: No
+0|BSS      | [AUTH] User not found in database
+0|BSS      | 2:11:57 AM [express] POST /api/auth/login 401 in 1360ms :: {"error":"Invalid credentials"}
+0|BSS      | [AUTH] Login attempt for username: test22 accountType: client
+0|BSS      | [AUTH] User found: No
+0|BSS      | [AUTH] User not found in database
+0|BSS      | 2:12:06 AM [express] POST /api/auth/login 401 in 170ms :: {"error":"Invalid credentials"}
+0|BSS      | [AUTH] Login attempt for username: test22 accountType: client
+0|BSS      | [AUTH] User found: No
+0|BSS      | [AUTH] User not found in database
+0|BSS      | 2:12:14 AM [express] POST /api/auth/login 401 in 170ms :: {"error":"Invalid credentials"}
+0|BSS      | [AUTH] Login attempt for username: test22 accountType: client
+0|BSS      | [AUTH] User found: No
+0|BSS      | [AUTH] User not found in database
+0|BSS      | 2:12:29 AM [express] POST /api/auth/login 401 in 1389ms :: {"error":"Invalid credentials"}
+0|BSS      | [AUTH] Login attempt for username: N13 accountType: client
+0|BSS      | [AUTH] User found: Yes (id: a45a3619-1d88-483e-871e-07351b525e07, active: true, restaurantId: null)
+0|BSS      | [AUTH] Comparing password hash
+0|BSS      | [AUTH] Password match: true
+0|BSS      | [AUTH] Auto-detected accountType: it (based on restaurantId: null )
+0|BSS      | [AUTH] Session created for user: a45a3619-1d88-483e-871e-07351b525e07 restaurant: null accountType: it
+0|BSS      | [AUTH] Login successful
+0|BSS      | 2:12:32 AM [express] POST /api/auth/login 200 in 758ms :: {"user":{"id":"a45a3619-1d88-483e-871e-073…
+0|BSS      | [WebSocket] Client connected: user=a45a3619-1d88-483e-871e-07351b525e07, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS      | 2:12:33 AM [express] GET /api/settings 403 in 165ms :: {"error":"This endpoint requires a restaurant…
+0|BSS      | 2:12:34 AM [express] GET /api/branches 403 in 174ms :: {"error":"This endpoint requires a restaurant…
+0|BSS      | 2:12:36 AM [express] GET /api/it/company-files 200 in 329ms :: [{"id":"39febecc-f270-44ac-8ebd-50ccc…
+0|BSS      | 2:12:36 AM [express] GET /api/it/all-accounts 200 in 338ms :: [{"id":"a45a3619-1d88-483e-871e-07351b…
+0|BSS      | 2:12:36 AM [express] GET /api/it/it-accounts 200 in 339ms :: [{"id":"a45a3619-1d88-483e-871e-07351b5…
+0|BSS      | 2:12:38 AM [express] GET /api/it/archived-accounts 200 in 1826ms :: [{"id":"7dd93efa-1671-4cd6-88d4-…
+0|BSS      | 2:13:02 AM [express] GET /api/it/performance 200 in 694ms :: [{"userId":"e0874d14-d47b-42df-8fb8-cab…
+0|BSS      | 2:13:17 AM [express] GET /api/it/all-accounts 200 in 1545ms :: [{"id":"a45a3619-1d88-483e-871e-07351…
+0|BSS      | 2:13:17 AM [express] GET /api/it/company-files 200 in 1885ms :: [{"id":"39febecc-f270-44ac-8ebd-50cc…
+0|BSS      | 2:13:17 AM [express] GET /api/it/it-accounts 200 in 1840ms :: [{"id":"a45a3619-1d88-483e-871e-07351b…
+0|BSS      | 2:13:19 AM [express] GET /api/it/archived-accounts 200 in 3828ms :: [{"id":"7dd93efa-1671-4cd6-88d4-…
+0|BSS      | 2:13:25 AM [express] GET /api/it/business-operations/bills 200 in 342ms :: [{"id":"5b060b38-81ea-4c1…
+0|BSS      | 2:13:25 AM [express] GET /api/it/business-management/clients 200 in 348ms :: [{"restaurantId":"a0b70…
+0|BSS      | 2:13:25 AM [express] GET /api/it/business-operations/summary 200 in 336ms :: {"totalExpenses":"18905…
+0|BSS      | 2:13:25 AM [express] GET /api/it/business-management/vat-summary 200 in 337ms :: {"totalSubscription…
+0|BSS      | 2:13:26 AM [express] GET /api/it/business-management/invoices 304 in 340ms :: [{"id":"6196bfe3-e421-…
+0|BSS      | 2:13:26 AM [express] GET /api/it/business-info 200 in 343ms :: {"id":"61de6beb-4449-4c20-9f76-3c4bed…
+0|BSS      | 2:13:27 AM [express] GET /api/it/bss-analysis/revenue-trends 200 in 2145ms :: [{"month":"2025-02","r…
+0|BSS      | 2:13:28 AM [express] GET /api/it/bss-analysis/bep 200 in 2020ms :: {"fixedCosts":0,"variableCosts":0…
+0|BSS      | 2:13:28 AM [express] GET /api/it/bss-analysis/overview 200 in 2555ms :: {"subscriptionRevenue":"692.…
+

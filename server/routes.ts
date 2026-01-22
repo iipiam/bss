@@ -9472,7 +9472,342 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Geidea callback for signup payments - completes account creation on success
+  // Geidea GET redirect for signup payments - user is redirected here after payment
+  app.get("/api/geidea/signup-callback", async (req, res) => {
+    const baseUrl = (process.env.NODE_ENV === 'production' ? 'https' : req.protocol) + '://' + req.get('host');
+    
+    try {
+      // Geidea redirects with orderId in query params after payment
+      const { orderId } = req.query;
+      
+      console.log(`[Geidea Signup GET] Received redirect with orderId: ${orderId}`);
+      console.log(`[Geidea Signup GET] Full query params:`, req.query);
+      
+      if (!orderId || typeof orderId !== 'string') {
+        console.warn('[Geidea Signup GET] Missing orderId in redirect');
+        return res.redirect(`${baseUrl}/signup?error=missing_order`);
+      }
+      
+      // Get order details from Geidea API
+      const { getOrderDetails, isPaymentSuccessful, isPaymentFailed, extractTokenFromOrder } = await import('./geidea');
+      
+      let orderDetails: any;
+      try {
+        console.log(`[Geidea Signup GET] Fetching order details for: ${orderId}`);
+        orderDetails = await getOrderDetails(orderId);
+        console.log(`[Geidea Signup GET] Order details:`, JSON.stringify(orderDetails, null, 2));
+      } catch (err: any) {
+        console.error(`[Geidea Signup GET] Failed to get order details:`, err);
+        return res.redirect(`${baseUrl}/signup?error=verification_failed`);
+      }
+      
+      if (!orderDetails?.order) {
+        console.error('[Geidea Signup GET] Invalid order response');
+        return res.redirect(`${baseUrl}/signup?error=invalid_order`);
+      }
+      
+      const { sessionId, status, merchantReferenceId, totalAmount, currency } = orderDetails.order;
+      
+      console.log(`[Geidea Signup GET] Order status: ${status}, sessionId: ${sessionId}, merchantRef: ${merchantReferenceId}`);
+      
+      // Find pending signup by session ID
+      const pendingSignup = await storage.getPendingSignupBySessionId(sessionId);
+      
+      if (!pendingSignup) {
+        console.warn(`[Geidea Signup GET] Pending signup not found for session: ${sessionId}`);
+        return res.redirect(`${baseUrl}/signup?error=signup_not_found`);
+      }
+      
+      // Check if already processed (idempotency)
+      if (pendingSignup.status === 'paid') {
+        console.log(`[Geidea Signup GET] Signup already completed for session: ${sessionId}`);
+        return res.redirect(`${baseUrl}/login?signup=success`);
+      }
+      
+      if (pendingSignup.status === 'failed') {
+        console.log(`[Geidea Signup GET] Signup already failed for session: ${sessionId}`);
+        return res.redirect(`${baseUrl}/signup?error=payment_failed`);
+      }
+      
+      // Helper to cleanup uploaded files on failure
+      const cleanupUploadedFiles = async () => {
+        const fs = await import('fs').then(m => m.promises);
+        const uploadedFiles = pendingSignup.uploadedFiles as Record<string, { filename: string }> | null;
+        if (uploadedFiles) {
+          for (const [key, file] of Object.entries(uploadedFiles)) {
+            try {
+              await fs.unlink(`uploads/${file.filename}`);
+              console.log(`[Geidea Signup GET] Cleaned up file: uploads/${file.filename}`);
+            } catch (cleanupErr) {
+              console.warn(`[Geidea Signup GET] Could not cleanup file: uploads/${file.filename}`);
+            }
+          }
+        }
+      };
+      
+      // SECURITY: Validate merchantReferenceId matches (prevent cross-order replay attacks)
+      if (merchantReferenceId && merchantReferenceId !== pendingSignup.merchantReferenceId) {
+        console.error(`[Geidea Signup GET] SECURITY: Merchant Reference mismatch! Expected: ${pendingSignup.merchantReferenceId}, Got: ${merchantReferenceId}`);
+        await storage.updatePendingSignupStatus(pendingSignup.id, 'failed');
+        await cleanupUploadedFiles();
+        return res.redirect(`${baseUrl}/signup?error=verification_failed`);
+      }
+      
+      // SECURITY: Validate currency is SAR
+      if (currency && currency !== 'SAR') {
+        console.error(`[Geidea Signup GET] SECURITY: Currency mismatch! Expected: SAR, Got: ${currency}`);
+        await storage.updatePendingSignupStatus(pendingSignup.id, 'failed');
+        await cleanupUploadedFiles();
+        return res.redirect(`${baseUrl}/signup?error=verification_failed`);
+      }
+      
+      // SECURITY: Validate amount matches (with rounding tolerance)
+      const expectedAmount = parseFloat(pendingSignup.amount);
+      if (totalAmount) {
+        const amountDiff = Math.abs(totalAmount - expectedAmount);
+        if (amountDiff > 0.01) {
+          console.error(`[Geidea Signup GET] SECURITY: Amount mismatch! Expected: ${expectedAmount}, Got: ${totalAmount}`);
+          await storage.updatePendingSignupStatus(pendingSignup.id, 'failed');
+          await cleanupUploadedFiles();
+          return res.redirect(`${baseUrl}/signup?error=amount_mismatch`);
+        }
+      }
+      
+      // Check if payment failed
+      if (isPaymentFailed(status)) {
+        console.log(`[Geidea Signup GET] Payment failed with status: ${status}`);
+        await storage.updatePendingSignupStatus(pendingSignup.id, 'failed');
+        await cleanupUploadedFiles();
+        return res.redirect(`${baseUrl}/signup?error=payment_failed`);
+      }
+      
+      // Check if payment is not yet successful
+      if (!isPaymentSuccessful(status)) {
+        console.log(`[Geidea Signup GET] Payment not yet successful, status: ${status}`);
+        return res.redirect(`${baseUrl}/signup?error=payment_pending`);
+      }
+      
+      // SECURITY: Mark as processing to prevent race conditions (double processing)
+      // If another request has already started processing, status will not be 'pending'
+      if (pendingSignup.status !== 'pending') {
+        console.log(`[Geidea Signup GET] Already being processed, status: ${pendingSignup.status}`);
+        if (pendingSignup.status === 'paid') {
+          return res.redirect(`${baseUrl}/login?signup=success`);
+        }
+        return res.redirect(`${baseUrl}/signup?error=already_processing`);
+      }
+      
+      // Payment is successful and verified - create the account
+      console.log(`[Geidea Signup GET] Payment verified successful with all security checks passed, creating account...`);
+      
+      // Extract token if available
+      const tokenId = extractTokenFromOrder(orderDetails.order);
+      if (tokenId) {
+        console.log(`[Geidea Signup GET] Extracted token: ${tokenId}`);
+      }
+      
+      try {
+        // Step 1: Create restaurant
+        const restaurantData = insertRestaurantSchema.parse({
+          name: pendingSignup.restaurantName,
+          nationalId: pendingSignup.nationalId,
+          hasVatRegistration: pendingSignup.hasVatRegistration,
+          taxNumber: pendingSignup.hasVatRegistration ? pendingSignup.taxNumber : null,
+          commercialRegistration: pendingSignup.commercialRegistration,
+          businessType: pendingSignup.businessType,
+          type: pendingSignup.restaurantType,
+          subscriptionPlan: pendingSignup.subscriptionPlan,
+          branchesCount: pendingSignup.branchesCount,
+          subscriptionStatus: "active" as const,
+        });
+
+        const restaurant = await storage.createRestaurant(restaurantData);
+        console.log(`[Geidea Signup GET] Created restaurant: ${restaurant.id}`);
+
+        // Step 2: Generate Device Serial Numbers
+        const deviceSerials = await storage.generateDeviceSerialNumbers(
+          restaurant.id,
+          pendingSignup.branchesCount,
+          pendingSignup.commercialRegistration
+        );
+        console.log(`[Geidea Signup GET] Generated ${deviceSerials.length} device serials`);
+
+        // Step 3: Create admin user
+        const userData = {
+          restaurantId: restaurant.id,
+          username: pendingSignup.username,
+          passwordHash: pendingSignup.passwordHash,
+          fullName: pendingSignup.fullName,
+          email: pendingSignup.email,
+          role: "admin" as const,
+          active: true,
+          permissions: ADMIN_PERMISSIONS,
+        };
+
+        const user = await storage.createUserWithHashedPassword(userData);
+        console.log(`[Geidea Signup GET] Created user: ${user.id}`);
+
+        // Step 4: Associate uploaded files with restaurant
+        const uploadedFiles = pendingSignup.uploadedFiles as Record<string, { filename: string; originalname: string; mimetype: string; size: number }> | null;
+        if (uploadedFiles) {
+          const fileTypeMapping: { [key: string]: string } = {
+            crCertificate: "cr_certificate",
+            vatCertificate: "vat_certificate",
+            ibanCertificate: "iban_certificate",
+            nationalAddress: "national_address"
+          };
+          
+          for (const [fieldName, fileInfo] of Object.entries(uploadedFiles)) {
+            const fileType = fileTypeMapping[fieldName];
+            if (fileType && fileInfo) {
+              try {
+                await storage.createShopFile({
+                  restaurantId: restaurant.id,
+                  fileType: fileType as "cr_certificate" | "vat_certificate" | "iban_certificate" | "national_address",
+                  fileName: fileInfo.originalname,
+                  filePath: `uploads/shop-files/${fileInfo.filename}`,
+                  fileSize: fileInfo.size,
+                  mimeType: fileInfo.mimetype,
+                  uploadedBy: user.id,
+                });
+                console.log(`[Geidea Signup GET] Associated ${fileType} with restaurant ${restaurant.id}`);
+              } catch (fileError) {
+                console.error(`[Geidea Signup GET] Failed to associate ${fileType}:`, fileError);
+              }
+            }
+          }
+        }
+
+        // Step 5: Generate subscription invoice
+        try {
+          const branches = pendingSignup.branchesCount;
+          const pricing = getPlanPricing(
+            pendingSignup.subscriptionPlan as SubscriptionPlan, 
+            branches, 
+            pendingSignup.businessType as BusinessType
+          );
+          
+          const basePlanPricing = getPlanPricing(
+            pendingSignup.subscriptionPlan as SubscriptionPlan, 
+            1, 
+            pendingSignup.businessType as BusinessType
+          );
+          const basePlanPrice = basePlanPricing.netAmount;
+          const additionalBranchesPrice = branches > 1 ? pricing.netAmount - basePlanPrice : 0;
+          
+          const subtotal = pricing.netAmount;
+          const vatAmount = pricing.vatAmount;
+          const total = pricing.grossAmount;
+
+          const serialNumber = await storage.getNextSubscriptionInvoiceSerialNumber();
+          const businessInfo = await storage.getBusinessInfo();
+
+          const pdfBuffer = await generateSubscriptionInvoice({
+            serialNumber,
+            userFullName: user.fullName,
+            userEmail: user.email ?? "",
+            restaurantName: restaurant.name,
+            nationalId: restaurant.nationalId,
+            taxNumber: restaurant.taxNumber ?? "",
+            commercialRegistration: restaurant.commercialRegistration,
+            subscriptionPlan: restaurant.subscriptionPlan,
+            branchesCount: restaurant.branchesCount,
+            basePlanPrice,
+            additionalBranchesPrice,
+            subtotal,
+            vatAmount,
+            total,
+            invoiceDate: new Date(),
+            businessInfo,
+          });
+
+          const invoicesDir = path.join(process.cwd(), 'public', 'subscription-invoices');
+          if (!fs.existsSync(invoicesDir)) {
+            fs.mkdirSync(invoicesDir, { recursive: true });
+          }
+
+          const pdfFilename = `subscription-${serialNumber}.pdf`;
+          const pdfPath = path.join(invoicesDir, pdfFilename);
+          fs.writeFileSync(pdfPath, pdfBuffer);
+
+          const QRCode = await import('qrcode');
+          const qrData = `Invoice: ${serialNumber}\nDate: ${new Date().toLocaleDateString('en-GB')}\nTotal: ${total.toFixed(2)} SAR\nVAT: ${vatAmount.toFixed(2)} SAR`;
+          const qrCode = await QRCode.toDataURL(qrData);
+
+          await storage.createSubscriptionInvoice({
+            userId: user.id,
+            serialNumber,
+            subscriptionPlan: restaurant.subscriptionPlan ?? "",
+            branchesCount: restaurant.branchesCount,
+            basePlanPrice: basePlanPrice.toString(),
+            additionalBranchesPrice: additionalBranchesPrice.toString(),
+            subtotal: subtotal.toString(),
+            vatAmount: vatAmount.toString(),
+            total: total.toString(),
+            pdfPath: `/subscription-invoices/${pdfFilename}`,
+            qrCode,
+          });
+
+          console.log(`[Geidea Signup GET] Generated subscription invoice: ${serialNumber}`);
+        } catch (invoiceError) {
+          console.error("[Geidea Signup GET] Failed to generate subscription invoice:", invoiceError);
+          // Don't fail signup if invoice generation fails
+        }
+
+        // Step 6: Store payment record
+        try {
+          await storage.createMoyasarPayment({
+            restaurantId: restaurant.id,
+            moyasarId: orderId,
+            orderId: null,
+            amount: pendingSignup.amount,
+            amountHalalas: Math.round(parseFloat(pendingSignup.amount) * 100),
+            currency: 'SAR',
+            status: 'paid',
+            paymentMethod: 'geidea-card',
+            cardBrand: orderDetails.order.transactions?.[0]?.paymentMethod?.brand || null,
+            cardLast4: orderDetails.order.transactions?.[0]?.paymentMethod?.maskedCardNumber?.slice(-4) || null,
+            fee: null,
+            refundedAmount: "0",
+            description: `Subscription payment for ${pendingSignup.subscriptionPlan} plan`,
+            customerName: pendingSignup.fullName,
+            customerEmail: pendingSignup.email,
+            customerPhone: null,
+            callbackUrl: null,
+            metadata: { 
+              gateway: 'geidea', 
+              type: 'signup_subscription',
+              tokenId: tokenId || null,
+            } as Record<string, any>,
+            errorMessage: null,
+            branchId: null,
+          });
+          console.log(`[Geidea Signup GET] Stored payment record`);
+        } catch (paymentError) {
+          console.error("[Geidea Signup GET] Failed to store payment record:", paymentError);
+          // Don't fail signup if payment record storage fails
+        }
+
+        // Step 6: Mark pending signup as paid
+        await storage.updatePendingSignupStatus(pendingSignup.id, 'paid');
+
+        console.log(`[Geidea Signup GET] Signup completed successfully for user: ${pendingSignup.username}`);
+        return res.redirect(`${baseUrl}/login?signup=success`);
+
+      } catch (accountError: any) {
+        console.error(`[Geidea Signup GET] Error creating account:`, accountError);
+        await storage.updatePendingSignupStatus(pendingSignup.id, 'failed');
+        await cleanupUploadedFiles();
+        return res.redirect(`${baseUrl}/signup?error=account_creation_failed`);
+      }
+      
+    } catch (error: any) {
+      console.error('[Geidea Signup GET] Unexpected error:', error);
+      return res.redirect(`${baseUrl}/signup?error=unexpected_error`);
+    }
+  });
+
+  // Geidea callback for signup payments - completes account creation on success (POST from Geidea server)
   app.post("/api/geidea/signup-callback", async (req, res) => {
     const baseUrl = (process.env.NODE_ENV === 'production' ? 'https' : req.protocol) + '://' + req.get('host');
     
