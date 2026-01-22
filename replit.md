@@ -44,11 +44,12 @@ Preferred communication style: Simple, everyday language.
 - **Menu Item Display Sizes**: Menu items support configurable display sizes (small, medium, large) that control how items appear in POS and Menu grids - large items span 2 columns for better visibility.
 - **Stock Management**: Real-time stock calculation and deduction on POS orders.
 - **Authentication & Subscriptions**: Subscription-based authentication with Commercial Registration, secure password recovery, and authenticated subscription invoice downloads. Centralized VAT-inclusive pricing.
-- **Geidea Payment Integration**: Complete payment gateway integration for signup flow:
+- **Geidea Payment Integration**: Complete payment gateway integration for signup and subscription management:
   - **Signup Payment Flow**: User submits signup form → pending_signups record created → Geidea payment session initiated → user redirected to Geidea payment page → callback completes account creation
+  - **Subscription Update Flow**: User selects new plan/branches → POST `/api/subscription/update-payment` → Geidea payment session → callback at `/api/geidea/subscription-update-callback` → updates restaurant subscription + generates invoice
   - **Security Measures**: Server-to-server verification via getOrderDetails(), validation of sessionId/merchantReferenceId/currency/amount, failed status updates on all verification failures, automatic file cleanup on failure paths
   - **Token Storage**: Card tokenization enabled for recurring subscription payments
-  - **Callback Handling**: `/api/geidea/signup-callback` endpoint handles payment completion, creates restaurant, user, device serials, and subscription invoice
+  - **Callback Handling**: `/api/geidea/signup-callback` handles signup completion, `/api/geidea/subscription-update-callback` handles plan updates with invoice generation
 - **Subscription Management**: Interactive dialogs for plan changes, dynamic pricing, and plan comparison.
 - **Branch Management**: Dynamic selection system.
 - **Multi-Shift Support**: Settings page supports optional second shift. Shift 1 is always visible; users can click "Add Shift" to reveal Shift 2 fields, or "Remove Shift" to hide them. Translations available in all 10 languages. Note: Database columns for Shift 2 (openingTime2, closingTime2) need to be added to production via `npm run db:push` when ready.

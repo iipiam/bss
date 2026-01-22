@@ -5881,6 +5881,283 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // In-memory store for pending subscription updates (for production, use Redis or database)
+  const pendingSubscriptionUpdates = new Map<string, {
+    restaurantId: string;
+    userId: string;
+    newPlan: string;
+    newBranchesCount: number;
+    amount: number;
+    merchantReferenceId: string;
+    createdAt: string;
+  }>();
+
+  // Subscription Plan Update with Payment
+  app.post("/api/subscription/update-payment", requireAuth, requireRestaurant, async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
+    const userId = req.session.user!.id;
+    
+    try {
+      const { plan, branchesCount } = req.body as { plan: 'weekly' | 'monthly' | 'yearly'; branchesCount: number };
+      
+      if (!plan || !['weekly', 'monthly', 'yearly'].includes(plan)) {
+        return res.status(400).json({ error: "Invalid plan. Must be 'weekly', 'monthly', or 'yearly'" });
+      }
+      
+      const branches = parseInt(String(branchesCount)) || 1;
+      if (branches < 1) {
+        return res.status(400).json({ error: "Number of branches must be at least 1" });
+      }
+      
+      const restaurant = await storage.getRestaurant(restaurantId);
+      if (!restaurant) {
+        return res.status(404).json({ error: "Restaurant not found" });
+      }
+      
+      const user = await storage.getUser(userId, restaurantId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Factory businesses cannot have weekly plans
+      if (restaurant.businessType === 'factory' && plan === 'weekly') {
+        return res.status(400).json({ error: "Factory businesses can only have monthly or yearly subscription plans" });
+      }
+      
+      // Calculate new subscription amount
+      const pricing = getPlanPricing(plan as SubscriptionPlan, branches, (restaurant.businessType || 'restaurant') as BusinessType);
+      const totalAmount = pricing.grossAmount;
+      
+      console.log(`[SUBSCRIPTION UPDATE] User ${userId} updating to ${plan} plan with ${branches} branches, amount: ${totalAmount} SAR`);
+      
+      // Generate callback URL
+      const protocol = process.env.NODE_ENV === 'production' ? 'https' : req.protocol;
+      const host = req.get('host') || 'localhost:5000';
+      const baseUrl = `${protocol}://${host}`;
+      const callbackUrl = `${baseUrl}/api/geidea/subscription-update-callback`;
+      
+      const merchantReferenceId = `SUB-UPDATE-${restaurantId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Store the pending subscription update
+      pendingSubscriptionUpdates.set(merchantReferenceId, {
+        restaurantId,
+        userId,
+        newPlan: plan,
+        newBranchesCount: branches,
+        amount: totalAmount,
+        merchantReferenceId,
+        createdAt: new Date().toISOString(),
+      });
+      
+      // Create Geidea payment session
+      const { createPaymentSession } = await import('./geidea');
+      const geideaSession = await createPaymentSession({
+        amount: totalAmount,
+        currency: 'SAR',
+        callbackUrl,
+        merchantReferenceId,
+        customerEmail: user.email || undefined,
+        customerName: user.fullName || undefined,
+        cardOnFile: true,
+        initiatedBy: 'Internet',
+      });
+      
+      if (!geideaSession.session?.id) {
+        console.error("[SUBSCRIPTION UPDATE] Failed to create Geidea session:", geideaSession);
+        return res.status(500).json({ error: "Failed to initialize payment. Please try again." });
+      }
+      
+      console.log(`[SUBSCRIPTION UPDATE] Created Geidea session: ${geideaSession.session.id} for ${merchantReferenceId}`);
+      
+      res.json({
+        redirectUrl: geideaSession.session.paymentUrl,
+        sessionId: geideaSession.session.id,
+        amount: totalAmount,
+        message: "Redirecting to payment...",
+      });
+    } catch (error: any) {
+      console.error("[SUBSCRIPTION UPDATE] Error:", error);
+      res.status(500).json({ error: "Failed to initiate subscription update payment" });
+    }
+  });
+
+  // Geidea callback for subscription update payments
+  app.post("/api/geidea/subscription-update-callback", async (req, res) => {
+    const baseUrl = (process.env.NODE_ENV === 'production' ? 'https' : req.protocol) + '://' + req.get('host');
+    
+    try {
+      const { order } = req.body;
+      
+      if (!order) {
+        console.error("[Geidea Subscription Update Callback] Missing order in callback");
+        return res.redirect(`${baseUrl}/dashboard?error=payment_failed`);
+      }
+      
+      const { orderId: geideaOrderId, status, merchantReferenceId, amount, currency } = order;
+      
+      console.log(`[Geidea Subscription Update Callback] Received callback:`, {
+        geideaOrderId,
+        status,
+        merchantReferenceId,
+        amount,
+        currency,
+      });
+      
+      // Get pending update from memory
+      const pendingUpdate = pendingSubscriptionUpdates.get(merchantReferenceId);
+      
+      if (!pendingUpdate) {
+        console.error(`[Geidea Subscription Update Callback] No pending update found for ${merchantReferenceId}`);
+        return res.redirect(`${baseUrl}/dashboard?error=update_not_found`);
+      }
+      
+      // Verify payment with Geidea
+      const { getOrderDetails, isPaymentSuccessful } = await import('./geidea');
+      let verifiedOrder;
+      try {
+        verifiedOrder = await getOrderDetails(geideaOrderId);
+      } catch (verifyError: any) {
+        console.error(`[Geidea Subscription Update Callback] Failed to verify order:`, verifyError);
+        pendingSubscriptionUpdates.delete(merchantReferenceId);
+        return res.redirect(`${baseUrl}/dashboard?error=verification_failed`);
+      }
+      
+      // Check payment status
+      const paymentStatus = verifiedOrder?.order?.status || status;
+      if (!isPaymentSuccessful(paymentStatus)) {
+        console.log(`[Geidea Subscription Update Callback] Payment not successful: ${paymentStatus}`);
+        pendingSubscriptionUpdates.delete(merchantReferenceId);
+        return res.redirect(`${baseUrl}/dashboard?error=payment_failed`);
+      }
+      
+      // Verify merchantReferenceId matches
+      const verifiedMerchantReferenceId = verifiedOrder?.order?.merchantReferenceId;
+      if (verifiedMerchantReferenceId !== merchantReferenceId) {
+        console.error(`[Geidea Subscription Update Callback] MerchantReferenceId mismatch: expected ${merchantReferenceId}, got ${verifiedMerchantReferenceId}`);
+        pendingSubscriptionUpdates.delete(merchantReferenceId);
+        return res.redirect(`${baseUrl}/dashboard?error=verification_failed`);
+      }
+      
+      // Verify currency matches
+      const verifiedCurrency = verifiedOrder?.order?.currency || currency;
+      if (verifiedCurrency !== 'SAR') {
+        console.error(`[Geidea Subscription Update Callback] Currency mismatch: expected SAR, got ${verifiedCurrency}`);
+        pendingSubscriptionUpdates.delete(merchantReferenceId);
+        return res.redirect(`${baseUrl}/dashboard?error=currency_mismatch`);
+      }
+      
+      // Verify amount matches
+      const verifiedAmount = parseFloat(verifiedOrder?.order?.amount || amount);
+      if (Math.abs(verifiedAmount - pendingUpdate.amount) > 0.01) {
+        console.error(`[Geidea Subscription Update Callback] Amount mismatch: expected ${pendingUpdate.amount}, got ${verifiedAmount}`);
+        pendingSubscriptionUpdates.delete(merchantReferenceId);
+        return res.redirect(`${baseUrl}/dashboard?error=amount_mismatch`);
+      }
+      
+      // Check if pending update has expired (15 minutes max)
+      const createdAt = new Date(pendingUpdate.createdAt);
+      const now = new Date();
+      const expiryMs = 15 * 60 * 1000; // 15 minutes
+      if (now.getTime() - createdAt.getTime() > expiryMs) {
+        console.error(`[Geidea Subscription Update Callback] Pending update expired for ${merchantReferenceId}`);
+        pendingSubscriptionUpdates.delete(merchantReferenceId);
+        return res.redirect(`${baseUrl}/dashboard?error=update_expired`);
+      }
+      
+      // Update the restaurant's subscription
+      const { restaurantId, newPlan, newBranchesCount, userId } = pendingUpdate;
+      
+      try {
+        // Update restaurant subscription
+        await db.update(restaurants)
+          .set({
+            subscriptionPlan: newPlan,
+            branchesCount: newBranchesCount,
+            subscriptionStatus: 'active',
+            subscriptionStartDate: new Date(),
+          })
+          .where(eq(restaurants.id, restaurantId));
+        
+        console.log(`[Geidea Subscription Update Callback] Updated restaurant ${restaurantId} to ${newPlan} plan with ${newBranchesCount} branches`);
+        
+        // Generate subscription invoice
+        const restaurant = await storage.getRestaurant(restaurantId);
+        const user = await storage.getUser(userId, restaurantId);
+        
+        if (restaurant && user) {
+          // Get business info for invoice
+          const bi = await storage.getBusinessInfo();
+          
+          // Generate invoice serial number
+          const serialNumber = await storage.getNextSubscriptionInvoiceSerialNumber();
+          
+          // Calculate pricing details
+          const pricing = getPlanPricing(newPlan as SubscriptionPlan, newBranchesCount, (restaurant.businessType || 'restaurant') as BusinessType);
+          const additionalBranches = Math.max(0, newBranchesCount - 1);
+          const additionalBranchesPrice = pricing.perBranchPrice * additionalBranches;
+          
+          // Generate PDF invoice using the correct function
+          const pdfBuffer = await generateSubscriptionInvoice({
+            serialNumber,
+            userFullName: user.fullName,
+            userEmail: user.email ?? "",
+            restaurantName: restaurant.name,
+            nationalId: restaurant.nationalId,
+            taxNumber: restaurant.taxNumber ?? "",
+            commercialRegistration: restaurant.commercialRegistration,
+            subscriptionPlan: newPlan,
+            branchesCount: newBranchesCount,
+            basePlanPrice: pricing.basePrice,
+            additionalBranchesPrice: additionalBranchesPrice,
+            subtotal: pricing.netAmount,
+            vatAmount: pricing.vatAmount,
+            total: pricing.grossAmount,
+            invoiceDate: new Date(),
+            businessInfo: bi,
+          });
+          
+          // Save invoice to database with correct column names
+          const invoicesDir = path.join(process.cwd(), 'public', 'subscription-invoices');
+          if (!fs.existsSync(invoicesDir)) {
+            fs.mkdirSync(invoicesDir, { recursive: true });
+          }
+          
+          const pdfFilename = `subscription-${serialNumber}.pdf`;
+          const pdfPath = path.join(invoicesDir, pdfFilename);
+          fs.writeFileSync(pdfPath, pdfBuffer);
+          
+          await db.insert(subscriptionInvoices).values({
+            userId: userId,
+            serialNumber,
+            subscriptionPlan: newPlan,
+            branchesCount: newBranchesCount,
+            basePlanPrice: pricing.basePrice.toString(),
+            additionalBranchesPrice: additionalBranchesPrice.toString(),
+            subtotal: pricing.netAmount.toString(),
+            vatAmount: pricing.vatAmount.toString(),
+            total: pricing.grossAmount.toString(),
+            pdfPath: `/subscription-invoices/${pdfFilename}`,
+          });
+          
+          console.log(`[Geidea Subscription Update Callback] Generated subscription invoice ${serialNumber}`);
+        }
+        
+        // Clean up pending update
+        pendingSubscriptionUpdates.delete(merchantReferenceId);
+        
+        // Redirect to dashboard with success
+        return res.redirect(`${baseUrl}/dashboard?subscription_updated=true`);
+      } catch (updateError: any) {
+        console.error(`[Geidea Subscription Update Callback] Failed to update subscription:`, updateError);
+        pendingSubscriptionUpdates.delete(merchantReferenceId);
+        return res.redirect(`${baseUrl}/dashboard?error=update_failed`);
+      }
+    } catch (error: any) {
+      console.error("[Geidea Subscription Update Callback] Error:", error);
+      return res.redirect(`${baseUrl}/dashboard?error=callback_error`);
+    }
+  });
+
   // Financial Analytics
   app.get("/api/analytics/financial", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;

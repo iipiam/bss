@@ -39,7 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User as UserIcon, CreditCard, Edit, XCircle, X } from "lucide-react";
+import { LogOut, User as UserIcon, CreditCard, Edit, XCircle, X, Loader2 } from "lucide-react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import type { User } from "@shared/schema";
 import kinzhalLogo from "@assets/Kinzhal_logo_1768960890639.png";
@@ -177,6 +177,7 @@ function AppContent() {
   const [selectedPlan, setSelectedPlan] = useState(restaurant?.subscriptionPlan || 'monthly');
   const [branchesCount, setBranchesCount] = useState(restaurant?.branchesCount || 1);
   const [expiryAlertDismissed, setExpiryAlertDismissed] = useState(false);
+  const [isUpdatingSubscription, setIsUpdatingSubscription] = useState(false);
 
   const cancelSubscriptionMutation = useMutation({
     mutationFn: async (reason: "mistake" | "client_request") => {
@@ -498,14 +499,43 @@ function AppContent() {
                             {t.cancelSubscription}
                           </Button>
                           <Button
-                            onClick={() => {
-                              alert(t.subscriptionUpdated.replace('{plan}', selectedPlan).replace('{branches}', branchesCount.toString()));
-                              setSubscriptionDialogOpen(false);
+                            onClick={async () => {
+                              if (isUpdatingSubscription) return;
+                              setIsUpdatingSubscription(true);
+                              try {
+                                const response = await apiRequest("POST", "/api/subscription/update-payment", {
+                                  plan: selectedPlan,
+                                  branchesCount: branchesCount,
+                                });
+                                const data = await response.json();
+                                if (data.redirectUrl) {
+                                  window.location.href = data.redirectUrl;
+                                } else {
+                                  toast({
+                                    title: t.error || "Error",
+                                    description: data.error || "Failed to initiate payment",
+                                    variant: "destructive",
+                                  });
+                                  setIsUpdatingSubscription(false);
+                                }
+                              } catch (error: any) {
+                                toast({
+                                  title: t.error || "Error",
+                                  description: error.message || "Failed to update subscription",
+                                  variant: "destructive",
+                                });
+                                setIsUpdatingSubscription(false);
+                              }
                             }}
+                            disabled={isUpdatingSubscription}
                             data-testid="button-update-subscription"
                           >
-                            <Edit className="mr-2 h-4 w-4" />
-                            {t.updatePlan}
+                            {isUpdatingSubscription ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <Edit className="mr-2 h-4 w-4" />
+                            )}
+                            {isUpdatingSubscription ? (t.loading || "Processing...") : t.updatePlan}
                           </Button>
                         </DialogFooter>
                       </DialogContent>
