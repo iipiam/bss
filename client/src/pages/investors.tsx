@@ -34,6 +34,7 @@ interface Investor {
   documentPath?: string | null;
   iban?: string | null;
   bankName?: string | null;
+  ibanCertificateFilename?: string | null;
   createdAt: string;
 }
 
@@ -107,8 +108,11 @@ export default function Investors() {
   const [deletingInvestor, setDeletingInvestor] = useState<Investor | null>(null);
   const [uploadingDocumentFor, setUploadingDocumentFor] = useState<string | null>(null);
   const [deletingDocumentFor, setDeletingDocumentFor] = useState<Investor | null>(null);
+  const [uploadingIbanCertFor, setUploadingIbanCertFor] = useState<string | null>(null);
+  const [deletingIbanCertFor, setDeletingIbanCertFor] = useState<Investor | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const ibanCertInputRef = useRef<HTMLInputElement>(null);
   const formFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -367,6 +371,144 @@ export default function Investors() {
       });
     },
   });
+
+  // IBAN Certificate Mutations
+  const uploadIbanCertMutation = useMutation({
+    mutationFn: async ({ investorId, file }: { investorId: string; file: File }) => {
+      const formData = new FormData();
+      formData.append("document", file);
+      const response = await fetch(`/api/investors/${investorId}/iban-certificate`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Upload failed");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/investors"] });
+      setUploadingIbanCertFor(null);
+      toast({
+        title: t.ibanCertUploaded || "IBAN Certificate Uploaded",
+        description: t.ibanCertUploadedDesc || "IBAN certificate has been uploaded successfully.",
+      });
+    },
+    onError: (error: any) => {
+      setUploadingIbanCertFor(null);
+      toast({
+        title: t.failedToUploadIbanCert || "Failed to Upload IBAN Certificate",
+        description: error.message || "Could not upload IBAN certificate",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteIbanCertMutation = useMutation({
+    mutationFn: async (investorId: string) => {
+      await apiRequest("DELETE", `/api/investors/${investorId}/iban-certificate`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/investors"] });
+      setDeletingIbanCertFor(null);
+      toast({
+        title: t.ibanCertDeleted || "IBAN Certificate Deleted",
+        description: t.ibanCertDeletedDesc || "IBAN certificate has been removed successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.failedToDeleteIbanCert || "Failed to Delete IBAN Certificate",
+        description: error.message || "Could not delete IBAN certificate",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleIbanCertUpload = (investorId: string, file: File) => {
+    if (file.type !== "application/pdf") {
+      toast({
+        title: t.invalidFileType || "Invalid File Type",
+        description: t.onlyPdfAllowed || "Only PDF files are allowed",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: t.fileTooLarge || "File Too Large",
+        description: t.maxFileSize10MB || "Maximum file size is 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+    setUploadingIbanCertFor(investorId);
+    uploadIbanCertMutation.mutate({ investorId, file });
+  };
+
+  const handlePreviewIbanCert = async (investor: Investor) => {
+    if (investor.ibanCertificateFilename) {
+      try {
+        const response = await fetch(`/api/investors/${investor.id}/iban-certificate?mode=inline`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch IBAN certificate');
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+        }, 5000);
+      } catch (error) {
+        console.error("Error previewing IBAN certificate:", error);
+        toast({
+          title: t.error || "Error",
+          description: t.ibanCertPreviewFailed || "Could not preview the IBAN certificate.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleDownloadIbanCert = async (investor: Investor) => {
+    if (investor.ibanCertificateFilename) {
+      try {
+        const response = await fetch(`/api/investors/${investor.id}/iban-certificate`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to download IBAN certificate');
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = investor.ibanCertificateFilename || 'iban_certificate.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error("Error downloading IBAN certificate:", error);
+        toast({
+          title: t.error || "Error",
+          description: t.ibanCertDownloadFailed || "Could not download the IBAN certificate.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   const handleFileUpload = (investorId: string, file: File) => {
     if (file.type !== "application/pdf") {
@@ -1352,6 +1494,88 @@ export default function Investors() {
                       )}
                     </div>
                   </div>
+
+                  {/* IBAN Certificate Section */}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">{t.ibanCertificate || "IBAN Certificate"}</span>
+                    </div>
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {investor.ibanCertificateFilename ? (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handlePreviewIbanCert(investor)}
+                            className="h-8"
+                            data-testid={`button-preview-iban-cert-${investor.id}`}
+                            title={t.previewIbanCert || "Preview IBAN Certificate"}
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            {t.preview || "Preview"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDownloadIbanCert(investor)}
+                            className="h-8"
+                            data-testid={`button-download-iban-cert-${investor.id}`}
+                            title={t.downloadIbanCert || "Download IBAN Certificate"}
+                          >
+                            <FileDown className="h-3 w-3 mr-1" />
+                            {t.download || "Download"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setDeletingIbanCertFor(investor)}
+                            className="h-8 text-destructive hover:text-destructive"
+                            data-testid={`button-delete-iban-cert-${investor.id}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div>
+                          <input
+                            type="file"
+                            accept=".pdf"
+                            className="hidden"
+                            id={`iban-cert-upload-${investor.id}`}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleIbanCertUpload(investor.id, file);
+                              }
+                              e.target.value = "";
+                            }}
+                            data-testid={`input-iban-cert-${investor.id}`}
+                          />
+                          <label htmlFor={`iban-cert-upload-${investor.id}`}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 cursor-pointer"
+                              disabled={uploadingIbanCertFor === investor.id}
+                              asChild
+                            >
+                              <span>
+                                {uploadingIbanCertFor === investor.id ? (
+                                  <>{t.uploading || "Uploading..."}</>
+                                ) : (
+                                  <>
+                                    <Upload className="h-3 w-3 mr-1" />
+                                    {t.uploadIbanCert || "Upload Certificate"}
+                                  </>
+                                )}
+                              </span>
+                            </Button>
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             );
@@ -1530,6 +1754,30 @@ export default function Investors() {
               onClick={() => deletingDocumentFor && deleteDocumentMutation.mutate(deletingDocumentFor.id)}
               className="h-[44px] bg-destructive text-destructive-foreground hover:bg-destructive/90"
               data-testid="button-confirm-delete-document"
+            >
+              {t.delete || "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete IBAN Certificate Confirmation Dialog */}
+      <AlertDialog open={!!deletingIbanCertFor} onOpenChange={() => setDeletingIbanCertFor(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.confirmDeleteIbanCert || "Delete IBAN Certificate"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t.confirmDeleteIbanCertDesc || `Are you sure you want to delete the IBAN certificate for ${deletingIbanCertFor?.name}?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-[44px]" data-testid="button-cancel-delete-iban-cert">
+              {t.cancel || "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingIbanCertFor && deleteIbanCertMutation.mutate(deletingIbanCertFor.id)}
+              className="h-[44px] bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete-iban-cert"
             >
               {t.delete || "Delete"}
             </AlertDialogAction>

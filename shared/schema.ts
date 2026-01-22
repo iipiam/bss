@@ -728,6 +728,8 @@ export const investors = pgTable("investors", {
   documentFilename: text("document_filename"), // Original filename of the uploaded document
   iban: text("iban"), // IBAN account number for bank transfers
   bankName: text("bank_name"), // Name of the bank (Saudi banks)
+  ibanCertificateContent: text("iban_certificate_content"), // Base64 encoded IBAN certificate PDF
+  ibanCertificateFilename: text("iban_certificate_filename"), // Original filename of the IBAN certificate
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

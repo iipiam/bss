@@ -2841,6 +2841,110 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Upload IBAN Certificate for investor
+  app.post("/api/investors/:id/iban-certificate", requireAuth, requireRestaurant, requireAction('investors', 'edit'), uploadInvestorDoc.single('document'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const investorId = req.params.id;
+
+      // Verify investor exists and belongs to this restaurant
+      const investor = await storage.getInvestor(investorId);
+      if (!investor || investor.restaurantId !== restaurantId) {
+        if (req.file) {
+          fs.unlinkSync(req.file.path);
+        }
+        return res.status(404).json({ error: "Investor not found" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      // Read the file and convert to base64 for persistent database storage
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const ibanCertificateContent = fileBuffer.toString('base64');
+      const ibanCertificateFilename = req.file.originalname;
+
+      // Delete the temp file after reading
+      fs.unlinkSync(req.file.path);
+
+      // Update investor with IBAN certificate
+      const updatedInvestor = await storage.updateInvestor(investorId, {
+        ibanCertificateContent,
+        ibanCertificateFilename,
+      });
+
+      res.json({ 
+        success: true, 
+        filename: ibanCertificateFilename,
+        investor: updatedInvestor
+      });
+    } catch (error) {
+      console.error("[INVESTORS] IBAN certificate upload error:", error);
+      res.status(500).json({ error: "Failed to upload IBAN certificate" });
+    }
+  });
+
+  // Get/Download IBAN Certificate
+  app.get("/api/investors/:id/iban-certificate", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const investorId = req.params.id;
+      const mode = req.query.mode as string;
+
+      const investor = await storage.getInvestor(investorId);
+      if (!investor || investor.restaurantId !== restaurantId) {
+        return res.status(404).json({ error: "Investor not found" });
+      }
+
+      if (!investor.ibanCertificateContent) {
+        return res.status(404).json({ error: "No IBAN certificate found" });
+      }
+
+      const filename = investor.ibanCertificateFilename || `${investor.name.replace(/[^a-zA-Z0-9]/g, '_')}_iban_certificate.pdf`;
+      
+      if (mode === 'inline') {
+        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      } else {
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      }
+      res.setHeader('Content-Type', 'application/pdf');
+      
+      const buffer = Buffer.from(investor.ibanCertificateContent, 'base64');
+      return res.send(buffer);
+    } catch (error) {
+      console.error("[INVESTORS] IBAN certificate download error:", error);
+      res.status(500).json({ error: "Failed to download IBAN certificate" });
+    }
+  });
+
+  // Delete IBAN Certificate
+  app.delete("/api/investors/:id/iban-certificate", requireAuth, requireRestaurant, requireAction('investors', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const investorId = req.params.id;
+
+      const investor = await storage.getInvestor(investorId);
+      if (!investor || investor.restaurantId !== restaurantId) {
+        return res.status(404).json({ error: "Investor not found" });
+      }
+
+      if (!investor.ibanCertificateContent) {
+        return res.status(404).json({ error: "No IBAN certificate to delete" });
+      }
+
+      await storage.updateInvestor(investorId, { 
+        ibanCertificateContent: null,
+        ibanCertificateFilename: null
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[INVESTORS] IBAN certificate delete error:", error);
+      res.status(500).json({ error: "Failed to delete IBAN certificate" });
+    }
+  });
+
   // Investor Statement PDF Generation
   app.get("/api/investors/:id/statement", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
     try {
