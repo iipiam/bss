@@ -242,6 +242,11 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+
+  /* Hide main content scroll when dialog/sheet is open to prevent double scrollbars */
+  body[data-scroll-locked] main {
+    overflow: hidden !important;
+  }
 }
 
 /**
