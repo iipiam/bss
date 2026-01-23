@@ -474,7 +474,45 @@
   .device-iphone .card,
   .device-iphone [class*="Card"] {
     max-width: 100% !important;
-    overflow-x: hidden !important;
+  }
+  
+  /* Make tabs horizontally scrollable on mobile */
+  .device-iphone [role="tablist"],
+  .device-ipad [role="tablist"] {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .device-iphone [role="tablist"]::-webkit-scrollbar,
+  .device-ipad [role="tablist"]::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Make filter/control rows stack on mobile */
+  .device-iphone .flex-wrap {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  
+  .device-iphone .flex-wrap > * {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Input widths on mobile */
+  .device-iphone input,
+  .device-iphone select,
+  .device-iphone [role="combobox"] {
+    max-width: 100% !important;
+  }
+  
+  .device-iphone .w-48,
+  .device-iphone .w-40 {
+    width: 100% !important;
   }
 }
 
