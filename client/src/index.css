@@ -243,19 +243,6 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 
-  /* Hide main content scroll when dialog/sheet is open to prevent double scrollbars */
-  /* Radix adds data-scroll-locked to body when modal is open */
-  body[data-scroll-locked] main,
-  html[data-scroll-locked] main,
-  body[data-scroll-locked="1"] main,
-  body[data-scroll-locked=""] main {
-    overflow: hidden !important;
-  }
-  
-  /* Also target when Radix overlay is present */
-  body:has([data-state="open"][role="dialog"]) main {
-    overflow: hidden !important;
-  }
 }
 
 /**
