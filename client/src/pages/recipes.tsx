@@ -612,6 +612,7 @@ export default function Recipes() {
               <Button 
                 data-testid="button-add-recipe"
                 className={layout.isMobile ? 'h-[44px]' : ''}
+                onClick={() => setEditingRecipe(null)}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Recipe
