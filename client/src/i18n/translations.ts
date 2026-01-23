@@ -317,6 +317,11 @@ export interface Translations {
   enterBankingFees: string;
   enterSubsidy: string;
   enterPosFees: string;
+  markUp: string;
+  enterMarkUp: string;
+  deliveryAppNameRequired: string;
+  minAmountMustBeZeroOrHigher: string;
+  maxAmountMustBeGreaterThanMin: string;
   
   // Dashboard
   totalRevenue: string;
@@ -2129,6 +2134,11 @@ export const translations: Record<Language, Translations> = {
     enterBankingFees: 'Enter banking fees percentage',
     enterSubsidy: 'Enter subsidy amount in SAR',
     enterPosFees: 'Enter POS fees in SAR',
+    markUp: 'Mark-Up %',
+    enterMarkUp: 'Enter mark-up percentage',
+    deliveryAppNameRequired: 'Delivery app name is required',
+    minAmountMustBeZeroOrHigher: 'Minimum amount must be 0 or higher',
+    maxAmountMustBeGreaterThanMin: 'Maximum amount must be greater than minimum',
     
     // Dashboard
     totalRevenue: 'Total Revenue',
@@ -3937,6 +3947,11 @@ export const translations: Record<Language, Translations> = {
     enterBankingFees: 'أدخل نسبة رسوم البنك',
     enterSubsidy: 'أدخل مبلغ الدعم بالريال',
     enterPosFees: 'أدخل رسوم نقاط البيع بالريال',
+    markUp: 'نسبة الزيادة %',
+    enterMarkUp: 'أدخل نسبة الزيادة',
+    deliveryAppNameRequired: 'اسم تطبيق التوصيل مطلوب',
+    minAmountMustBeZeroOrHigher: 'الحد الأدنى يجب أن يكون 0 أو أعلى',
+    maxAmountMustBeGreaterThanMin: 'الحد الأقصى يجب أن يكون أكبر من الحد الأدنى',
     
     // Dashboard
     totalRevenue: 'إجمالي الإيرادات',
@@ -5744,6 +5759,11 @@ export const translations: Record<Language, Translations> = {
     enterBankingFees: 'Enter banking fees percentage',
     enterSubsidy: 'Enter subsidy amount in SAR',
     enterPosFees: 'Enter POS fees in SAR',
+    markUp: 'Aufschlag %',
+    enterMarkUp: 'Aufschlag-Prozentsatz eingeben',
+    deliveryAppNameRequired: 'Name der Liefer-App ist erforderlich',
+    minAmountMustBeZeroOrHigher: 'Mindestbetrag muss 0 oder höher sein',
+    maxAmountMustBeGreaterThanMin: 'Höchstbetrag muss größer als Mindestbetrag sein',
     
     // Dashboard
     totalRevenue: 'Total Revenue',
@@ -7533,6 +7553,11 @@ export const translations: Record<Language, Translations> = {
     enterBankingFees: 'Enter banking fees percentage',
     enterSubsidy: 'Enter subsidy amount in SAR',
     enterPosFees: 'Enter POS fees in SAR',
+    markUp: '加价 %',
+    enterMarkUp: '输入加价百分比',
+    deliveryAppNameRequired: '配送应用名称必填',
+    minAmountMustBeZeroOrHigher: '最低金额必须为0或更高',
+    maxAmountMustBeGreaterThanMin: '最高金额必须大于最低金额',
     
     // Dashboard
     totalRevenue: 'Total Revenue',
@@ -9322,6 +9347,11 @@ export const translations: Record<Language, Translations> = {
     enterBankingFees: 'Enter banking fees percentage',
     enterSubsidy: 'Enter subsidy amount in SAR',
     enterPosFees: 'Enter POS fees in SAR',
+    markUp: 'মার্ক-আপ %',
+    enterMarkUp: 'মার্ক-আপ শতাংশ লিখুন',
+    deliveryAppNameRequired: 'ডেলিভারি অ্যাপের নাম প্রয়োজন',
+    minAmountMustBeZeroOrHigher: 'ন্যূনতম পরিমাণ ০ বা তার বেশি হতে হবে',
+    maxAmountMustBeGreaterThanMin: 'সর্বোচ্চ পরিমাণ ন্যূনতমের চেয়ে বেশি হতে হবে',
     
     // Dashboard
     totalRevenue: 'Total Revenue',
@@ -11111,6 +11141,11 @@ export const translations: Record<Language, Translations> = {
     enterBankingFees: 'Enter banking fees percentage',
     enterSubsidy: 'Enter subsidy amount in SAR',
     enterPosFees: 'Enter POS fees in SAR',
+    markUp: 'Ricarico %',
+    enterMarkUp: 'Inserisci la percentuale di ricarico',
+    deliveryAppNameRequired: 'Nome app di consegna richiesto',
+    minAmountMustBeZeroOrHigher: 'L\'importo minimo deve essere 0 o superiore',
+    maxAmountMustBeGreaterThanMin: 'L\'importo massimo deve essere maggiore del minimo',
     
     // Dashboard
     totalRevenue: 'Total Revenue',
@@ -12901,6 +12936,11 @@ export const translations: Record<Language, Translations> = {
     enterBankingFees: 'Enter banking fees percentage',
     enterSubsidy: 'Enter subsidy amount in SAR',
     enterPosFees: 'Enter POS fees in SAR',
+    markUp: 'मार्क-अप %',
+    enterMarkUp: 'मार्क-अप प्रतिशत दर्ज करें',
+    deliveryAppNameRequired: 'डिलीवरी ऐप का नाम आवश्यक है',
+    minAmountMustBeZeroOrHigher: 'न्यूनतम राशि 0 या उससे अधिक होनी चाहिए',
+    maxAmountMustBeGreaterThanMin: 'अधिकतम राशि न्यूनतम से अधिक होनी चाहिए',
     
     // Dashboard
     totalRevenue: 'कुल राजस्व',
@@ -14634,6 +14674,11 @@ export const translations: Record<Language, Translations> = {
     enterBankingFees: 'Enter banking fees percentage',
     enterSubsidy: 'Enter subsidy amount in SAR',
     enterPosFees: 'Enter POS fees in SAR',
+    markUp: 'مارک اپ %',
+    enterMarkUp: 'مارک اپ فیصد درج کریں',
+    deliveryAppNameRequired: 'ڈیلیوری ایپ کا نام درکار ہے',
+    minAmountMustBeZeroOrHigher: 'کم از کم رقم 0 یا اس سے زیادہ ہونی چاہیے',
+    maxAmountMustBeGreaterThanMin: 'زیادہ سے زیادہ رقم کم از کم سے زیادہ ہونی چاہیے',
     
     // Dashboard
     totalRevenue: 'کل آمدنی',
@@ -16354,6 +16399,11 @@ export const translations: Record<Language, Translations> = {
     enterBankingFees: "Enter banking fees percentage",
     enterSubsidy: "Enter subsidy amount in SAR",
     enterPosFees: "Enter POS fees in SAR",
+    markUp: 'Margen %',
+    enterMarkUp: 'Ingrese el porcentaje de margen',
+    deliveryAppNameRequired: 'Se requiere el nombre de la app de entrega',
+    minAmountMustBeZeroOrHigher: 'El monto mínimo debe ser 0 o mayor',
+    maxAmountMustBeGreaterThanMin: 'El monto máximo debe ser mayor que el mínimo',
     totalRevenue: "Ingresos Totales",
     totalOrders: "Pedidos Totales",
     totalCustomers: "Clientes Totales",
@@ -18028,6 +18078,11 @@ export const translations: Record<Language, Translations> = {
     enterBankingFees: "Enter banking fees percentage",
     enterSubsidy: "Enter subsidy amount in SAR",
     enterPosFees: "Enter POS fees in SAR",
+    markUp: 'Mark-Up %',
+    enterMarkUp: 'Ilagay ang mark-up percentage',
+    deliveryAppNameRequired: 'Kinakailangan ang pangalan ng delivery app',
+    minAmountMustBeZeroOrHigher: 'Ang minimum na halaga ay dapat 0 o mas mataas',
+    maxAmountMustBeGreaterThanMin: 'Ang maximum na halaga ay dapat mas mataas kaysa sa minimum',
     totalRevenue: "Kabuuang Kita",
     totalOrders: "Kabuuang Mga Order",
     totalCustomers: "Kabuuang Mga Customer",
