@@ -292,8 +292,8 @@ function AppContent() {
 
   const style = getDeviceStyles();
   
-  // Apply device-specific container styles
-  const containerMaxWidth = device === 'iphone' ? '430px' : device === 'ipad' ? '820px' : '100%';
+  // Apply device-specific container styles - use 100% for mobile to fit any screen
+  const containerMaxWidth = '100%';
 
   // Handle public routes (forgot-password, reset-password, emergency-reset) before checking authentication
   if (location === "/forgot-password") {
