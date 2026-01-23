@@ -239,13 +239,14 @@
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
+  html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
   }
 
-  /* Prevent scrollbar from causing layout shifts */
-  main {
-    scrollbar-gutter: stable;
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    overflow: hidden;
   }
 }
 
