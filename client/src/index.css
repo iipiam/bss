@@ -498,16 +498,40 @@
     flex-wrap: wrap !important;
   }
   
-  /* Stack specific button groups vertically on mobile/tablet */
+  /* Stack all button groups vertically on mobile/tablet */
   .device-iphone .mobile-stack,
-  .device-ipad .mobile-stack {
+  .device-ipad .mobile-stack,
+  .device-iphone .flex.gap-2:has(button),
+  .device-ipad .flex.gap-2:has(button),
+  .device-iphone .flex.gap-4:has(button),
+  .device-ipad .flex.gap-4:has(button) {
     flex-direction: column !important;
     align-items: stretch !important;
   }
   
   .device-iphone .mobile-stack > *,
-  .device-ipad .mobile-stack > * {
+  .device-ipad .mobile-stack > *,
+  .device-iphone .flex.gap-2:has(button) > *,
+  .device-ipad .flex.gap-2:has(button) > *,
+  .device-iphone .flex.gap-4:has(button) > *,
+  .device-ipad .flex.gap-4:has(button) > * {
     width: 100% !important;
+  }
+  
+  /* Keep header and certain inline elements horizontal */
+  .device-iphone header .flex,
+  .device-ipad header .flex,
+  .device-iphone .inline-buttons,
+  .device-ipad .inline-buttons {
+    flex-direction: row !important;
+    align-items: center !important;
+  }
+  
+  .device-iphone header .flex > *,
+  .device-ipad header .flex > *,
+  .device-iphone .inline-buttons > *,
+  .device-ipad .inline-buttons > * {
+    width: auto !important;
   }
   
   /* Input widths on mobile */
