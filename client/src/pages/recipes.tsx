@@ -788,6 +788,7 @@ export default function Recipes() {
                     checked={addToInventory}
                     onCheckedChange={(checked) => setAddToInventory(checked === true)}
                     data-testid="checkbox-add-to-inventory"
+                    className="border-2 bg-background"
                   />
                   <Label htmlFor="addToInventory" className="text-sm font-medium cursor-pointer">
                     {t.addRecipeAsInventoryItem || "Also add this recipe as an inventory item"}
