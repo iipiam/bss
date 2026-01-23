@@ -492,15 +492,29 @@
     display: none;
   }
   
-  /* Make filter/control rows stack on mobile */
-  .device-iphone .flex-wrap {
+  /* Make filter/control rows and button groups stack vertically on mobile */
+  .device-iphone .flex-wrap,
+  .device-iphone .flex.gap-2,
+  .device-iphone .flex.gap-4 {
     flex-direction: column !important;
-    align-items: flex-start !important;
+    align-items: stretch !important;
   }
   
-  .device-iphone .flex-wrap > * {
+  .device-iphone .flex-wrap > *,
+  .device-iphone .flex.gap-2 > *,
+  .device-iphone .flex.gap-4 > * {
     width: 100% !important;
     max-width: 100% !important;
+  }
+  
+  /* Keep header row horizontal */
+  .device-iphone header .flex {
+    flex-direction: row !important;
+    align-items: center !important;
+  }
+  
+  .device-iphone header .flex > * {
+    width: auto !important;
   }
   
   /* Input widths on mobile */
