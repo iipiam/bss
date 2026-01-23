@@ -243,6 +243,10 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 
+  /* Prevent scrollbar from causing layout shifts */
+  main {
+    scrollbar-gutter: stable;
+  }
 }
 
 /**
