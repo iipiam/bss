@@ -782,13 +782,13 @@ export default function Recipes() {
               </div>
 
               {!editingRecipe && (
-                <div className="flex items-center space-x-2 p-3 border rounded-md bg-muted/50">
+                <div className="flex items-center space-x-3 p-4 border-2 border-primary rounded-md bg-primary/10">
                   <Checkbox
                     id="addToInventory"
                     checked={addToInventory}
                     onCheckedChange={(checked) => setAddToInventory(checked === true)}
                     data-testid="checkbox-add-to-inventory"
-                    className="border-2 bg-background"
+                    className="h-5 w-5 border-2 border-primary bg-background data-[state=checked]:bg-primary"
                   />
                   <Label htmlFor="addToInventory" className="text-sm font-medium cursor-pointer">
                     {t.addRecipeAsInventoryItem || "Also add this recipe as an inventory item"}
