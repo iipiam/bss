@@ -329,7 +329,7 @@ function AppContent() {
       <div className="flex h-screen w-full justify-center bg-background">
         <div className={`flex h-screen w-full ${isRTL ? 'flex-row-reverse' : ''}`} style={{ maxWidth: containerMaxWidth }}>
           <AppSidebar />
-          <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex flex-col flex-1 min-h-0">
             <header className="flex items-center justify-between p-4 border-b h-16 flex-shrink-0">
               <div className="flex items-center gap-4">
                 <SidebarTrigger data-testid="button-sidebar-toggle" />
