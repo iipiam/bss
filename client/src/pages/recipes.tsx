@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, ChefHat, Trash2, Download, Upload, FileDown, GripVertical, Edit, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -158,6 +159,7 @@ export default function Recipes() {
   const [servings, setServings] = useState("");
   const [ingredients, setIngredients] = useState([{ inventoryItemId: "", name: "", quantity: "", unit: "", unitPrice: 0 }]);
   const [steps, setSteps] = useState([""]);
+  const [addToInventory, setAddToInventory] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
   
@@ -368,6 +370,7 @@ export default function Recipes() {
     setIngredients([{ inventoryItemId: "", name: "", quantity: "", unit: "", unitPrice: 0 }]);
     setSteps([""]);
     setEditingRecipe(null);
+    setAddToInventory(false);
   };
 
   const addIngredient = () => {
@@ -445,6 +448,7 @@ export default function Recipes() {
         unitPrice: i.unitPrice,
       })),
       steps: steps.filter(s => s.trim() !== ""),
+      addToInventory: !editingRecipe && addToInventory,
     };
 
     if (editingRecipe) {
@@ -776,6 +780,20 @@ export default function Recipes() {
                   </div>
                 ))}
               </div>
+
+              {!editingRecipe && (
+                <div className="flex items-center space-x-2 p-3 border rounded-md bg-muted/50">
+                  <Checkbox
+                    id="addToInventory"
+                    checked={addToInventory}
+                    onCheckedChange={(checked) => setAddToInventory(checked === true)}
+                    data-testid="checkbox-add-to-inventory"
+                  />
+                  <Label htmlFor="addToInventory" className="text-sm font-medium cursor-pointer">
+                    {t.addRecipeAsInventoryItem || "Also add this recipe as an inventory item"}
+                  </Label>
+                </div>
+              )}
 
               <div className="flex justify-end gap-3">
                 <Button type="button" variant="outline" onClick={() => setOpen(false)} data-testid="button-cancel">

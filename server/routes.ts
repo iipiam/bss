@@ -3191,8 +3191,28 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.post("/api/recipes", requireAuth, requireRestaurant, requireAction('recipes', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      const data = insertRecipeSchema.parse({ ...req.body, restaurantId });
+      const { addToInventory, ...recipeBody } = req.body;
+      const data = insertRecipeSchema.parse({ ...recipeBody, restaurantId });
       const recipe = await storage.createRecipe(data);
+      
+      // If addToInventory flag is set, create an inventory item from the recipe
+      if (addToInventory) {
+        try {
+          const inventoryData = {
+            restaurantId,
+            name: recipe.name,
+            category: 'Prepared',
+            quantity: '0',
+            unit: 'pcs',
+            price: recipe.cost || '0',
+            supplier: 'In-House',
+          };
+          await storage.createInventoryItem(inventoryData);
+        } catch (inventoryError) {
+          console.error('Failed to create inventory item from recipe:', inventoryError);
+          // Don't fail the recipe creation if inventory creation fails
+        }
+      }
       
       // Fire-and-forget activity logging
       if (req.session.user) {
@@ -3202,7 +3222,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           employeeName: req.session.user.fullName || req.session.user.username || 'Unknown',
           action: 'created_recipe',
           actionCategory: 'recipes',
-          description: `Created recipe ${recipe.name}`,
+          description: `Created recipe ${recipe.name}${addToInventory ? ' (also added to inventory)' : ''}`,
           entityType: 'recipe',
           entityId: recipe.id,
         }).catch(err => console.error('Activity log error:', err));

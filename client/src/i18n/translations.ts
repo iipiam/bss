@@ -672,6 +672,7 @@ export interface Translations {
   recipeCreated: string;
   recipeUpdated: string;
   recipeDeleted: string;
+  addRecipeAsInventoryItem: string;
   employeeCreatedDesc: string;
   employeeUpdatedDesc: string;
   employeeDeletedDesc: string;
@@ -2482,6 +2483,7 @@ export const translations: Record<Language, Translations> = {
     recipeCreated: 'Recipe created',
     recipeUpdated: 'Recipe updated',
     recipeDeleted: 'Recipe deleted',
+    addRecipeAsInventoryItem: 'Also add this recipe as an inventory item',
     employeeCreatedDesc: 'The employee has been created successfully',
     employeeUpdatedDesc: 'The employee has been updated successfully',
     employeeDeletedDesc: 'The employee has been deleted successfully',
@@ -4289,6 +4291,7 @@ export const translations: Record<Language, Translations> = {
     recipeCreated: 'تم إنشاء الوصفة',
     recipeUpdated: 'تم تحديث الوصفة',
     recipeDeleted: 'تم حذف الوصفة',
+    addRecipeAsInventoryItem: 'إضافة هذه الوصفة كعنصر مخزون أيضاً',
     employeeCreatedDesc: 'تم إنشاء الموظف بنجاح',
     employeeUpdatedDesc: 'تم تحديث الموظف بنجاح',
     employeeDeletedDesc: 'تم حذف الموظف بنجاح',
@@ -6095,6 +6098,7 @@ export const translations: Record<Language, Translations> = {
     recipeCreated: 'Recipe created',
     recipeUpdated: 'Recipe updated',
     recipeDeleted: 'Recipe deleted',
+    addRecipeAsInventoryItem: 'Dieses Rezept auch als Lagerartikel hinzufügen',
     employeeCreatedDesc: 'The employee has been created successfully',
     employeeUpdatedDesc: 'The employee has been updated successfully',
     employeeDeletedDesc: 'The employee has been deleted successfully',
@@ -7883,6 +7887,7 @@ export const translations: Record<Language, Translations> = {
     recipeCreated: 'Recipe created',
     recipeUpdated: 'Recipe updated',
     recipeDeleted: 'Recipe deleted',
+    addRecipeAsInventoryItem: '同时将此配方添加为库存项目',
     employeeCreatedDesc: 'The employee has been created successfully',
     employeeUpdatedDesc: 'The employee has been updated successfully',
     employeeDeletedDesc: 'The employee has been deleted successfully',
@@ -9671,6 +9676,7 @@ export const translations: Record<Language, Translations> = {
     recipeCreated: 'Recipe created',
     recipeUpdated: 'Recipe updated',
     recipeDeleted: 'Recipe deleted',
+    addRecipeAsInventoryItem: 'এই রেসিপিটি ইনভেন্টরি আইটেম হিসাবেও যোগ করুন',
     employeeCreatedDesc: 'The employee has been created successfully',
     employeeUpdatedDesc: 'The employee has been updated successfully',
     employeeDeletedDesc: 'The employee has been deleted successfully',
@@ -11459,6 +11465,7 @@ export const translations: Record<Language, Translations> = {
     recipeCreated: 'Recipe created',
     recipeUpdated: 'Recipe updated',
     recipeDeleted: 'Recipe deleted',
+    addRecipeAsInventoryItem: 'Aggiungi anche questa ricetta come articolo di inventario',
     employeeCreatedDesc: 'The employee has been created successfully',
     employeeUpdatedDesc: 'The employee has been updated successfully',
     employeeDeletedDesc: 'The employee has been deleted successfully',
@@ -13236,6 +13243,7 @@ export const translations: Record<Language, Translations> = {
     recipeCreated: 'व्यंजन विधि बनाई गई',
     recipeUpdated: 'व्यंजन विधि अपडेट की गई',
     recipeDeleted: 'व्यंजन विधि हटाई गई',
+    addRecipeAsInventoryItem: 'इस रेसिपी को इन्वेंटरी आइटम के रूप में भी जोड़ें',
     employeeCreatedDesc: 'कर्मचारी सफलतापूर्वक बनाया गया है',
     employeeUpdatedDesc: 'कर्मचारी सफलतापूर्वक अपडेट किया गया है',
     employeeDeletedDesc: 'कर्मचारी सफलतापूर्वक हटाया गया है',
@@ -14968,6 +14976,7 @@ export const translations: Record<Language, Translations> = {
     recipeCreated: 'ترکیب بنائی گئی',
     recipeUpdated: 'ترکیب اپ ڈیٹ کی گئی',
     recipeDeleted: 'ترکیب حذف کی گئی',
+    addRecipeAsInventoryItem: 'اس ترکیب کو انوینٹری آئٹم کے طور پر بھی شامل کریں',
     employeeCreatedDesc: 'ملازم کامیابی سے بنایا گیا ہے',
     employeeUpdatedDesc: 'ملازم کامیابی سے اپ ڈیٹ کیا گیا ہے',
     employeeDeletedDesc: 'ملازم کامیابی سے حذف کیا گیا ہے',
@@ -16657,6 +16666,7 @@ export const translations: Record<Language, Translations> = {
     recipeCreated: "Recipe created",
     recipeUpdated: "Recipe updated",
     recipeDeleted: "Recipe deleted",
+    addRecipeAsInventoryItem: "También agregar esta receta como artículo de inventario",
     employeeCreatedDesc: "The employee has been created successfully",
     employeeUpdatedDesc: "The employee has been updated successfully",
     employeeDeletedDesc: "The employee has been deleted successfully",
@@ -18330,6 +18340,7 @@ export const translations: Record<Language, Translations> = {
     recipeCreated: "Recipe created",
     recipeUpdated: "Recipe updated",
     recipeDeleted: "Recipe deleted",
+    addRecipeAsInventoryItem: "Idagdag din ang recipe na ito bilang inventory item",
     employeeCreatedDesc: "The employee has been created successfully",
     employeeUpdatedDesc: "The employee has been updated successfully",
     employeeDeletedDesc: "The employee has been deleted successfully",
