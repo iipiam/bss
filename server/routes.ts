@@ -3202,10 +3202,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             restaurantId,
             name: recipe.name,
             category: 'Prepared',
-            quantity: '0',
+            quantity: '1',
             unit: 'pcs',
             price: recipe.cost || '0',
             supplier: 'In-House',
+            referenceQuantity: '1',
           };
           await storage.createInventoryItem(inventoryData);
         } catch (inventoryError) {
@@ -3253,10 +3254,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             restaurantId,
             name: recipe.name,
             category: 'Prepared',
-            quantity: '0',
+            quantity: '1',
             unit: 'pcs',
             price: recipe.cost || '0',
             supplier: 'In-House',
+            referenceQuantity: '1',
           };
           await storage.createInventoryItem(inventoryData);
         } catch (inventoryError) {
