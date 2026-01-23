@@ -3204,13 +3204,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             category: 'Prepared',
             quantity: '1',
             unit: 'pcs',
-            price: recipe.cost || '0',
+            price: String(recipe.cost || '0'),
             supplier: 'In-House',
             referenceQuantity: '1',
           };
-          await storage.createInventoryItem(inventoryData);
+          console.log('[Recipe-to-Inventory] Creating inventory item:', inventoryData);
+          const createdItem = await storage.createInventoryItem(inventoryData);
+          console.log('[Recipe-to-Inventory] Successfully created inventory item:', createdItem?.id, createdItem?.name);
         } catch (inventoryError) {
-          console.error('Failed to create inventory item from recipe:', inventoryError);
+          console.error('[Recipe-to-Inventory] Failed to create inventory item from recipe:', inventoryError);
           // Don't fail the recipe creation if inventory creation fails
         }
       }
@@ -3256,13 +3258,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             category: 'Prepared',
             quantity: '1',
             unit: 'pcs',
-            price: recipe.cost || '0',
+            price: String(recipe.cost || '0'),
             supplier: 'In-House',
             referenceQuantity: '1',
           };
-          await storage.createInventoryItem(inventoryData);
+          console.log('[Recipe-to-Inventory] Creating inventory item:', inventoryData);
+          const createdItem = await storage.createInventoryItem(inventoryData);
+          console.log('[Recipe-to-Inventory] Successfully created inventory item:', createdItem?.id, createdItem?.name);
         } catch (inventoryError) {
-          console.error('Failed to create inventory item from recipe:', inventoryError);
+          console.error('[Recipe-to-Inventory] Failed to create inventory item from recipe:', inventoryError);
         }
       }
       
