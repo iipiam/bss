@@ -492,28 +492,36 @@
     display: none;
   }
   
-  /* Make filter/control rows and button groups stack vertically on mobile */
+  /* Make filter/control rows and button groups stack vertically on mobile/tablet */
   .device-iphone .flex-wrap,
   .device-iphone .flex.gap-2,
-  .device-iphone .flex.gap-4 {
+  .device-iphone .flex.gap-4,
+  .device-ipad .flex-wrap,
+  .device-ipad .flex.gap-2,
+  .device-ipad .flex.gap-4 {
     flex-direction: column !important;
     align-items: stretch !important;
   }
   
   .device-iphone .flex-wrap > *,
   .device-iphone .flex.gap-2 > *,
-  .device-iphone .flex.gap-4 > * {
+  .device-iphone .flex.gap-4 > *,
+  .device-ipad .flex-wrap > *,
+  .device-ipad .flex.gap-2 > *,
+  .device-ipad .flex.gap-4 > * {
     width: 100% !important;
     max-width: 100% !important;
   }
   
   /* Keep header row horizontal */
-  .device-iphone header .flex {
+  .device-iphone header .flex,
+  .device-ipad header .flex {
     flex-direction: row !important;
     align-items: center !important;
   }
   
-  .device-iphone header .flex > * {
+  .device-iphone header .flex > *,
+  .device-ipad header .flex > * {
     width: auto !important;
   }
   
