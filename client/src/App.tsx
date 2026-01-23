@@ -672,7 +672,7 @@ function AppContent() {
               }
               return null;
             })()}
-            <main className={`flex-1 overflow-auto device-${device}`} data-device={device}>
+            <main className={`flex-1 overflow-y-scroll device-${device}`} data-device={device}>
               <Router />
             </main>
             <footer className="border-t py-3 px-4 flex-shrink-0 branding-slide" data-testid="branding-footer">
