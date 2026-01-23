@@ -3107,6 +3107,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           createdAt: investor.createdAt,
           investorType: investor.investorType || 'money',
           recipeName: recipeName,
+          iban: investor.iban,
+          bankName: investor.bankName,
         },
         companyName: settings.restaurantName || 'Company',
         companyVAT: settings.vatNumber || '',
