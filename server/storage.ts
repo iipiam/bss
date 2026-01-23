@@ -3320,7 +3320,26 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    // 5. Calculate BEP metrics
+    // 5. Add delivery profitability data
+    // Delivery revenue counts toward total revenue, delivery costs (commission, banking, vat, posFees) count as variable costs
+    const deliveryEntries = await this.getDeliveryProfitability(restaurantId, year);
+    
+    let deliveryRevenue = 0;
+    let deliveryVariableCosts = 0;
+    
+    for (const entry of deliveryEntries) {
+      // Revenue from delivery apps (sales figure)
+      deliveryRevenue += parseFloat(String(entry.sales || '0'));
+      
+      // Variable costs: commission, banking, VAT, POS fees
+      deliveryVariableCosts += parseFloat(String(entry.commission || '0'));
+      deliveryVariableCosts += parseFloat(String(entry.banking || '0'));
+      deliveryVariableCosts += parseFloat(String(entry.vat || '0'));
+      deliveryVariableCosts += parseFloat(String(entry.posFees || '0'));
+    }
+    
+    // 6. Calculate BEP metrics (POS-only basis for consistency)
+    // Per-unit metrics based on POS/dine-in data only
     const avgSellingPrice = unitsSold > 0 ? revenue / unitsSold : 0;
     const avgVariableCostPerUnit = unitsSold > 0 ? cogsTotal / unitsSold : 0;
     const contributionMarginPerUnit = avgSellingPrice - avgVariableCostPerUnit;
@@ -3334,20 +3353,26 @@ export class DatabaseStorage implements IStorage {
       ? fixedCosts / contributionMarginRatio 
       : 0;
     
-    // Margin of safety: (Actual Revenue - BEP Revenue) / Actual Revenue × 100
+    // Margin of safety based on POS revenue only (for consistency)
     const marginOfSafety = revenue > 0 && bepRevenue > 0 
       ? ((revenue - bepRevenue) / revenue) * 100 
       : 0;
     
-    // Is the business profitable? (Revenue > BEP Revenue)
+    // Is the business profitable? (POS Revenue > BEP Revenue)
     const isProfitable = revenue > bepRevenue && bepRevenue > 0;
+    
+    // Calculate combined totals for reference (POS + Delivery)
+    const totalRevenue = revenue + deliveryRevenue;
+
+    // Delivery profit = revenue - variable costs (net contribution from delivery apps)
+    const deliveryNetProfit = deliveryRevenue - deliveryVariableCosts;
 
     return {
       fixedCosts,
       fixedCostsBreakdown,
-      cogsTotal,
-      revenue,
-      unitsSold,
+      cogsTotal, // COGS from menu items/recipes (POS orders)
+      revenue, // POS revenue only (for BEP consistency)
+      unitsSold, // POS/dine-in units only
       avgSellingPrice,
       avgVariableCostPerUnit,
       contributionMarginPerUnit,
@@ -3356,6 +3381,10 @@ export class DatabaseStorage implements IStorage {
       bepRevenue,
       marginOfSafety,
       isProfitable,
+      // Delivery app breakdown (tracked separately from POS)
+      deliveryRevenue,
+      deliveryVariableCosts,
+      deliveryNetProfit,
     };
   }
 

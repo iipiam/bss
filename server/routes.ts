@@ -2564,8 +2564,23 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return sum + getMonthlyAmount(rawAmount, b.paymentPeriod || 'monthly');
       }, 0);
       
-      // Calculate net profit
-      const netProfit = totalRevenue - totalCOGS - totalSalaries - totalBills;
+      // Get delivery profitability for this month (delivery is a separate revenue stream)
+      const deliveryEntries = await storage.getDeliveryProfitability(restaurantId, targetYear);
+      const monthlyDeliveryEntries = deliveryEntries.filter((e: any) => e.month === targetMonth);
+      
+      let deliveryRevenue = 0;
+      let deliveryFees = 0;
+      
+      for (const entry of monthlyDeliveryEntries) {
+        deliveryRevenue += parseFloat(String(entry.sales || '0'));
+        deliveryFees += parseFloat(String(entry.commission || '0'));
+        deliveryFees += parseFloat(String(entry.banking || '0'));
+        deliveryFees += parseFloat(String(entry.vat || '0'));
+        deliveryFees += parseFloat(String(entry.posFees || '0'));
+      }
+      
+      // Calculate net profit: POS revenue + delivery revenue - COGS - salaries - bills - delivery fees
+      const netProfit = (totalRevenue + deliveryRevenue) - totalCOGS - totalSalaries - totalBills - deliveryFees;
       
       // Calculate earnings for each investor
       const investorEarnings = activeInvestors.map((investor: any) => {
@@ -2592,10 +2607,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         year: targetYear,
         monthName: monthNames[targetMonth - 1],
         netProfit: netProfit.toFixed(2),
-        totalRevenue: totalRevenue.toFixed(2),
+        totalRevenue: (totalRevenue + deliveryRevenue).toFixed(2),
+        posRevenue: totalRevenue.toFixed(2),
         totalCOGS: totalCOGS.toFixed(2),
         totalSalaries: totalSalaries.toFixed(2),
         totalBills: totalBills.toFixed(2),
+        deliveryRevenue: deliveryRevenue.toFixed(2),
+        deliveryFees: deliveryFees.toFixed(2),
         investors: investorEarnings,
       });
     } catch (error) {
@@ -3078,6 +3096,29 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           const rawAmount = parseFloat(b.amount || "0");
           return sum + getMonthlyAmount(rawAmount, b.paymentPeriod || 'monthly');
         }, 0);
+        
+        // Add delivery profitability for money investors (delivery is a separate revenue stream)
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1;
+        const deliveryEntries = await storage.getDeliveryProfitability(restaurantId, currentYear);
+        const monthlyDeliveryEntries = deliveryEntries.filter((e: any) => e.month === currentMonth);
+        
+        let deliveryRevenue = 0;
+        let deliveryFees = 0;
+        
+        for (const entry of monthlyDeliveryEntries) {
+          deliveryRevenue += parseFloat(String(entry.sales || '0'));
+          deliveryFees += parseFloat(String(entry.commission || '0'));
+          deliveryFees += parseFloat(String(entry.banking || '0'));
+          deliveryFees += parseFloat(String(entry.vat || '0'));
+          deliveryFees += parseFloat(String(entry.posFees || '0'));
+        }
+        
+        // Add delivery net contribution to revenue (delivery revenue - delivery fees)
+        totalRevenue += deliveryRevenue;
+        // Delivery fees are not COGS but separate operational costs
+        totalBills += deliveryFees;
       }
       
       // Net profit
@@ -3748,6 +3789,34 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const sortedOrders = [...orders].sort((a, b) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
+
+    // Add delivery profitability data
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const deliveryEntries = await storage.getDeliveryProfitability(restaurantId, currentYear);
+    
+    // Calculate delivery totals
+    let deliveryTotalRevenue = 0;
+    let deliveryTotalProfit = 0;
+    let deliveryTotalOrders = 0;
+    let deliveryMonthRevenue = 0;
+    let deliveryMonthProfit = 0;
+    
+    for (const entry of deliveryEntries) {
+      const sales = parseFloat(String(entry.sales || '0'));
+      const profit = parseFloat(String(entry.profit || entry.netEarnings || '0'));
+      const entryOrders = parseInt(String(entry.orders || '0'));
+      
+      deliveryTotalRevenue += sales;
+      deliveryTotalProfit += profit;
+      deliveryTotalOrders += entryOrders;
+      
+      // Current month data
+      if (entry.month === currentMonth) {
+        deliveryMonthRevenue += sales;
+        deliveryMonthProfit += profit;
+      }
+    }
     
     res.json({
       todaysSales: todaysSales.toFixed(2),
@@ -3781,6 +3850,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         hourlyData: peakHoursData,
         peakHour: peakHour.hour,
         peakSales: peakHour.sales,
+      },
+      delivery: {
+        yearRevenue: deliveryTotalRevenue,
+        yearProfit: deliveryTotalProfit,
+        yearOrders: deliveryTotalOrders,
+        monthRevenue: deliveryMonthRevenue,
+        monthProfit: deliveryMonthProfit,
       },
     });
   });
@@ -6340,6 +6416,46 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const yearlyRevenue = transactions.reduce((sum, t) => sum + parseFloat(t.total), 0);
     const yearlyVAT = transactions.reduce((sum, t) => sum + parseFloat(t.tax), 0);
     
+    // Get delivery profitability data
+    const targetYear = Number(year) || new Date().getFullYear();
+    const deliveryEntries = await storage.getDeliveryProfitability(restaurantId, targetYear);
+    
+    // Calculate delivery totals
+    let deliveryTotalRevenue = 0;
+    let deliveryTotalProfit = 0;
+    let deliveryTotalOrders = 0;
+    let deliveryTotalCosts = 0;
+    
+    for (const entry of deliveryEntries) {
+      deliveryTotalRevenue += parseFloat(String(entry.sales || '0'));
+      deliveryTotalProfit += parseFloat(String(entry.profit || entry.netEarnings || '0'));
+      deliveryTotalOrders += parseInt(String(entry.orders || '0'));
+      deliveryTotalCosts += parseFloat(String(entry.commission || '0'));
+      deliveryTotalCosts += parseFloat(String(entry.banking || '0'));
+      deliveryTotalCosts += parseFloat(String(entry.vat || '0'));
+      deliveryTotalCosts += parseFloat(String(entry.posFees || '0'));
+    }
+    
+    // Monthly delivery breakdown
+    const deliveryMonthlyData = Array.from({ length: 12 }, (_, i) => {
+      const monthNum = i + 1;
+      const monthEntries = deliveryEntries.filter(e => e.month === monthNum);
+      
+      let revenue = 0;
+      let profit = 0;
+      
+      for (const entry of monthEntries) {
+        revenue += parseFloat(String(entry.sales || '0'));
+        profit += parseFloat(String(entry.profit || entry.netEarnings || '0'));
+      }
+      
+      return {
+        month: new Date(targetYear, i, 1).toLocaleString('en-US', { month: 'short' }),
+        revenue: revenue.toFixed(2),
+        profit: profit.toFixed(2),
+      };
+    });
+    
     res.json({
       monthly: monthlyData,
       yearly: {
@@ -6348,6 +6464,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         transactions: transactions.length,
         invoices: invoices.length,
       },
+      delivery: {
+        yearly: {
+          revenue: deliveryTotalRevenue.toFixed(2),
+          profit: deliveryTotalProfit.toFixed(2),
+          costs: deliveryTotalCosts.toFixed(2),
+          orders: deliveryTotalOrders,
+        },
+        monthly: deliveryMonthlyData,
+      },
+      combinedRevenue: (yearlyRevenue + deliveryTotalRevenue).toFixed(2),
     });
   });
 

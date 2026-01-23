@@ -1205,6 +1205,9 @@ export type BepMetrics = {
   bepRevenue: number;
   marginOfSafety: number;
   isProfitable: boolean;
+  deliveryRevenue?: number;
+  deliveryVariableCosts?: number;
+  deliveryNetProfit?: number;
 };
 
 // Violations - Client store violations from authorities
