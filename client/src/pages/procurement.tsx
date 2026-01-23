@@ -534,7 +534,7 @@ export default function ProcurementPage() {
           <h1 className="text-3xl font-bold mb-2">Procurement Management</h1>
           <p className="text-muted-foreground">Manage inventory, maintenance, installations, and equipment procurement</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 mobile-stack">
           <Button 
             variant="outline" 
             onClick={() => syncBillsMutation.mutate()}

@@ -498,6 +498,18 @@
     flex-wrap: wrap !important;
   }
   
+  /* Stack specific button groups vertically on mobile/tablet */
+  .device-iphone .mobile-stack,
+  .device-ipad .mobile-stack {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  
+  .device-iphone .mobile-stack > *,
+  .device-ipad .mobile-stack > * {
+    width: 100% !important;
+  }
+  
   /* Input widths on mobile */
   .device-iphone input,
   .device-iphone select,
