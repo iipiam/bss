@@ -448,7 +448,7 @@ export default function Recipes() {
         unitPrice: i.unitPrice,
       })),
       steps: steps.filter(s => s.trim() !== ""),
-      addToInventory: !editingRecipe && addToInventory,
+      addToInventory: addToInventory,
     };
 
     if (editingRecipe) {
@@ -782,8 +782,7 @@ export default function Recipes() {
                 ))}
               </div>
 
-              {!editingRecipe && (
-                <div className="flex items-center space-x-3 p-4 border-2 border-primary rounded-md bg-primary/10">
+              <div className="flex items-center space-x-3 p-4 border-2 border-primary rounded-md bg-primary/10">
                   <Checkbox
                     id="addToInventory"
                     checked={addToInventory}
@@ -795,7 +794,6 @@ export default function Recipes() {
                     {t.addRecipeAsInventoryItem || "Also add this recipe as an inventory item"}
                   </Label>
                 </div>
-              )}
 
               <div className="flex justify-end gap-3">
                 <Button type="button" variant="outline" onClick={() => setOpen(false)} data-testid="button-cancel">

@@ -3237,12 +3237,31 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.patch("/api/recipes/:id", requireAuth, requireRestaurant, requireAction('recipes', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      const data = sanitizePatchBody(req.body, insertRecipeSchema.partial());
+      const { addToInventory, ...recipeBody } = req.body;
+      const data = sanitizePatchBody(recipeBody, insertRecipeSchema.partial());
       // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
       const { restaurantId: _, ...safeData } = data;
       const recipe = await storage.updateRecipe(req.params.id, restaurantId, safeData);
       if (!recipe) {
         return res.status(404).json({ error: "Recipe not found" });
+      }
+      
+      // If addToInventory flag is set, create an inventory item from the recipe
+      if (addToInventory) {
+        try {
+          const inventoryData = {
+            restaurantId,
+            name: recipe.name,
+            category: 'Prepared',
+            quantity: '0',
+            unit: 'pcs',
+            price: recipe.cost || '0',
+            supplier: 'In-House',
+          };
+          await storage.createInventoryItem(inventoryData);
+        } catch (inventoryError) {
+          console.error('Failed to create inventory item from recipe:', inventoryError);
+        }
       }
       
       // Fire-and-forget activity logging
@@ -3253,7 +3272,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           employeeName: req.session.user.fullName || req.session.user.username || 'Unknown',
           action: 'updated_recipe',
           actionCategory: 'recipes',
-          description: `Updated recipe ${recipe.name}`,
+          description: `Updated recipe ${recipe.name}${addToInventory ? ' (also added to inventory)' : ''}`,
           entityType: 'recipe',
           entityId: recipe.id,
         }).catch(err => console.error('Activity log error:', err));
