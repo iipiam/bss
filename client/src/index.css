@@ -241,19 +241,20 @@
 
   html {
     height: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     height: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
   }
   
   /* Main app container should handle scrolling */
   #root {
     height: 100%;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 }
 
