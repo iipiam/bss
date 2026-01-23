@@ -240,12 +240,19 @@
   }
 
   html {
-    overflow-y: scroll;
-    scrollbar-gutter: stable;
+    height: 100%;
+    overflow: hidden;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  /* Main app container should handle scrolling */
+  #root {
+    height: 100%;
     overflow: hidden;
   }
 }

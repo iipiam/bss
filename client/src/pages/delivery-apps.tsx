@@ -485,8 +485,11 @@ export default function DeliveryApps() {
   // Profitability form schema
   const profitabilityFormSchema = z.object({
     deliveryAppId: z.string().min(1, "Delivery app is required"),
+    periodType: z.enum(["daily", "weekly", "monthly"]),
     year: z.coerce.number().min(2020, "Year must be 2020 or later").max(2100, "Year must be 2100 or earlier"),
     month: z.coerce.number().min(1, "Month is required").max(12, "Month must be 1-12"),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
     orders: z.coerce.number().min(0, "Orders must be 0 or higher"),
     sales: z.coerce.number().min(0, "Sales must be 0 or higher"),
     revenue: z.coerce.number().min(0, "Revenue must be 0 or higher"),
@@ -506,8 +509,11 @@ export default function DeliveryApps() {
     resolver: zodResolver(profitabilityFormSchema),
     defaultValues: {
       deliveryAppId: "",
+      periodType: "monthly",
       year: new Date().getFullYear(),
       month: new Date().getMonth() + 1,
+      startDate: "",
+      endDate: "",
       orders: 0,
       sales: 0,
       revenue: 0,
@@ -521,6 +527,8 @@ export default function DeliveryApps() {
       notes: "",
     },
   });
+  
+  const watchPeriodType = profitabilityForm.watch("periodType");
 
   // Fetch profitability entries
   const { data: profitabilityEntries = [], isLoading: isLoadingProfitability } = useQuery<DeliveryProfitability[]>({
@@ -537,6 +545,8 @@ export default function DeliveryApps() {
     mutationFn: async (data: ProfitabilityFormValues) => {
       return await apiRequest("POST", "/api/delivery-profitability", {
         ...data,
+        startDate: data.startDate || null,
+        endDate: data.endDate || null,
         sales: data.sales.toFixed(2),
         revenue: data.revenue.toFixed(2),
         commission: data.commission.toFixed(2),
@@ -571,8 +581,11 @@ export default function DeliveryApps() {
     mutationFn: async (data: ProfitabilityFormValues & { id: string }) => {
       return await apiRequest("PATCH", `/api/delivery-profitability/${data.id}`, {
         deliveryAppId: data.deliveryAppId,
+        periodType: data.periodType,
         year: data.year,
         month: data.month,
+        startDate: data.startDate || null,
+        endDate: data.endDate || null,
         orders: data.orders,
         sales: data.sales.toFixed(2),
         revenue: data.revenue.toFixed(2),
@@ -639,8 +652,11 @@ export default function DeliveryApps() {
     setEditingProfitability(entry);
     profitabilityForm.reset({
       deliveryAppId: entry.deliveryAppId,
+      periodType: (entry.periodType as "daily" | "weekly" | "monthly") || "monthly",
       year: entry.year,
       month: entry.month,
+      startDate: entry.startDate || "",
+      endDate: entry.endDate || "",
       orders: entry.orders,
       sales: parseFloat(entry.sales),
       revenue: parseFloat(entry.revenue),
@@ -1065,7 +1081,7 @@ export default function DeliveryApps() {
                 </DialogHeader>
                 <Form {...profitabilityForm}>
                   <form onSubmit={profitabilityForm.handleSubmit(handleProfitabilitySubmit)} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={profitabilityForm.control}
                         name="deliveryAppId"
@@ -1090,33 +1106,20 @@ export default function DeliveryApps() {
                       />
                       <FormField
                         control={profitabilityForm.control}
-                        name="year"
+                        name="periodType"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Year</FormLabel>
-                            <FormControl>
-                              <Input type="number" {...field} data-testid="input-profitability-year" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={profitabilityForm.control}
-                        name="month"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Month</FormLabel>
-                            <Select onValueChange={(val) => field.onChange(parseInt(val))} value={field.value?.toString()}>
+                            <FormLabel>Period Type</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger data-testid="select-month">
-                                  <SelectValue placeholder="Select month" />
+                                <SelectTrigger data-testid="select-period-type">
+                                  <SelectValue placeholder="Select period" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {monthNames.map((name, index) => (
-                                  <SelectItem key={index + 1} value={(index + 1).toString()}>{name}</SelectItem>
-                                ))}
+                                <SelectItem value="daily">Daily (Date Range)</SelectItem>
+                                <SelectItem value="weekly">Weekly</SelectItem>
+                                <SelectItem value="monthly">Monthly</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -1124,6 +1127,75 @@ export default function DeliveryApps() {
                         )}
                       />
                     </div>
+                    
+                    {watchPeriodType === "monthly" ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={profitabilityForm.control}
+                          name="year"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Year</FormLabel>
+                              <FormControl>
+                                <Input type="number" {...field} data-testid="input-profitability-year" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={profitabilityForm.control}
+                          name="month"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Month</FormLabel>
+                              <Select onValueChange={(val) => field.onChange(parseInt(val))} value={field.value?.toString()}>
+                                <FormControl>
+                                  <SelectTrigger data-testid="select-month">
+                                    <SelectValue placeholder="Select month" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {monthNames.map((name, index) => (
+                                    <SelectItem key={index + 1} value={(index + 1).toString()}>{name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={profitabilityForm.control}
+                          name="startDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Start Date</FormLabel>
+                              <FormControl>
+                                <Input type="date" {...field} data-testid="input-start-date" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={profitabilityForm.control}
+                          name="endDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>End Date</FormLabel>
+                              <FormControl>
+                                <Input type="date" {...field} data-testid="input-end-date" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
@@ -1325,7 +1397,18 @@ export default function DeliveryApps() {
                           {getDeliveryAppName(entry.deliveryAppId)}
                         </TableCell>
                         <TableCell data-testid={`text-period-${entry.id}`}>
-                          {monthNames[entry.month - 1]} {entry.year}
+                          {entry.periodType === "monthly" || !entry.periodType ? (
+                            <span>{monthNames[entry.month - 1]} {entry.year}</span>
+                          ) : (
+                            <span className="text-sm">
+                              <Badge variant="outline" className="mr-1">{entry.periodType}</Badge>
+                              {entry.startDate && entry.endDate ? (
+                                <span>{new Date(entry.startDate).toLocaleDateString()} - {new Date(entry.endDate).toLocaleDateString()}</span>
+                              ) : (
+                                <span>{monthNames[entry.month - 1]} {entry.year}</span>
+                              )}
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell className="text-right" data-testid={`text-orders-${entry.id}`}>
                           {entry.orders.toLocaleString()}

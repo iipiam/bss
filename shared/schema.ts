@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, decimal, boolean, timestamp, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, decimal, boolean, timestamp, jsonb, index, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import type { PermissionSet } from "./permissions";
@@ -687,7 +687,10 @@ export const deliveryProfitability = pgTable("delivery_profitability", {
   restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   deliveryAppId: varchar("delivery_app_id").references(() => deliveryApps.id, { onDelete: "cascade" }).notNull(),
   year: integer("year").notNull(),
-  month: integer("month").notNull(), // 1-12
+  month: integer("month").notNull(), // 1-12 (for backward compatibility and filtering)
+  periodType: text("period_type").notNull().default("monthly"), // "daily", "weekly", "monthly"
+  startDate: date("start_date"), // Start of period (required for daily/weekly)
+  endDate: date("end_date"), // End of period (required for daily/weekly)
   orders: integer("orders").notNull().default(0),
   sales: decimal("sales", { precision: 12, scale: 2 }).notNull().default("0"),
   revenue: decimal("revenue", { precision: 12, scale: 2 }).notNull().default("0"),
