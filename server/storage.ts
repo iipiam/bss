@@ -126,7 +126,7 @@ import {
   inventoryTransactions,
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, and, gte, lte, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
+import { eq, and, gte, lte, lt, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 
@@ -5005,6 +5005,23 @@ export class DatabaseStorage implements IStorage {
 
   async deletePendingSignup(id: string): Promise<void> {
     await db.delete(pendingSignups).where(eq(pendingSignups.id, id));
+  }
+
+  // Get all pending signups for IT management
+  async getAllPendingSignups(): Promise<PendingSignup[]> {
+    return await db.select().from(pendingSignups).orderBy(desc(pendingSignups.createdAt));
+  }
+
+  // Delete expired pending signups (older than expiry date)
+  async deleteExpiredPendingSignups(): Promise<number> {
+    const now = new Date();
+    const result = await db.delete(pendingSignups).where(
+      and(
+        eq(pendingSignups.status, 'pending'),
+        lt(pendingSignups.expiresAt, now)
+      )
+    );
+    return result.rowCount || 0;
   }
 }
 

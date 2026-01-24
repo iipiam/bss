@@ -11268,6 +11268,40 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Get all pending signups for IT management
+  app.get("/api/it/pending-signups", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const pendingSignups = await storage.getAllPendingSignups();
+      res.json(pendingSignups);
+    } catch (error) {
+      console.error("Error fetching pending signups:", error);
+      res.status(500).json({ error: "Failed to fetch pending signups" });
+    }
+  });
+
+  // Delete a pending signup (IT only)
+  app.delete("/api/it/pending-signups/:id", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deletePendingSignup(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting pending signup:", error);
+      res.status(500).json({ error: "Failed to delete pending signup" });
+    }
+  });
+
+  // Clean up expired pending signups (IT only)
+  app.post("/api/it/pending-signups/cleanup", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const deletedCount = await storage.deleteExpiredPendingSignups();
+      res.json({ deletedCount });
+    } catch (error) {
+      console.error("Error cleaning up expired signups:", error);
+      res.status(500).json({ error: "Failed to cleanup expired signups" });
+    }
+  });
+
   // Get all IT accounts for IT management (users with null restaurantId)
   app.get("/api/it/it-accounts", requireAuth, requireITAccount, async (req, res) => {
     try {
