@@ -115,16 +115,16 @@ export default function ProcurementPage() {
   });
 
   const procurementFormSchema = z.object({
-    type: z.string().min(1, "Type is required"),
-    title: z.string().min(1, "Title is required"),
+    type: z.string().min(1, t.typeRequired),
+    title: z.string().min(1, t.titleRequired),
     description: z.string().optional().nullable(),
     supplier: z.string().optional().nullable(),
     category: z.string().optional().nullable(),
     quantity: z.coerce.number().optional().nullable(),
     unitPrice: z.string().optional().nullable(),
-    totalCost: z.string().min(1, t.priceRequired || "Total cost is required"),
-    status: z.string().min(1, "Status is required"),
-    priority: z.string().min(1, "Priority is required"),
+    totalCost: z.string().min(1, t.priceRequired),
+    status: z.string().min(1, t.statusRequired),
+    priority: z.string().min(1, t.priorityRequired),
     requestedBy: z.string().optional().nullable(),
     approvedBy: z.string().optional().nullable(),
     branchId: z.string().optional().nullable(),
@@ -192,7 +192,7 @@ export default function ProcurementPage() {
     },
     onError: (error: Error) => {
       console.error("Create procurement error:", error);
-      toast({ title: t.error, description: error.message || "Failed to create procurement request", variant: "destructive" });
+      toast({ title: t.error, description: error.message || t.failedToCreateProcurement, variant: "destructive" });
     },
   });
 
@@ -210,7 +210,7 @@ export default function ProcurementPage() {
     },
     onError: (error: Error) => {
       console.error("Update procurement error:", error);
-      toast({ title: t.error, description: error.message || "Failed to update procurement request", variant: "destructive" });
+      toast({ title: t.error, description: error.message || t.failedToUpdateProcurement, variant: "destructive" });
     },
   });
 
@@ -225,7 +225,7 @@ export default function ProcurementPage() {
     },
     onError: (error: Error) => {
       console.error("Delete procurement error:", error);
-      toast({ title: t.error, description: error.message || "Failed to delete procurement request", variant: "destructive" });
+      toast({ title: t.error, description: error.message || t.failedToDeleteProcurement, variant: "destructive" });
     },
   });
 
@@ -266,11 +266,11 @@ export default function ProcurementPage() {
       setReorderSupplier("");
       setReorderStatus("pending");
       setReorderTotalPrice("");
-      toast({ title: t.success, description: t.reorderCreated || "Reorder request created successfully" });
+      toast({ title: t.success, description: t.reorderCreated });
     },
     onError: (error: Error) => {
       console.error("Reorder procurement error:", error);
-      toast({ title: t.error, description: error.message || "Failed to create reorder request", variant: "destructive" });
+      toast({ title: t.error, description: error.message || t.failedToReorderProcurement, variant: "destructive" });
     },
   });
 
@@ -318,7 +318,7 @@ export default function ProcurementPage() {
 
   const getReferenceQuantityDisplay = () => {
     if (reorderUnit === "pcs") {
-      return "Not applicable for pieces";
+      return t.referenceQuantityNotApplicable;
     }
     if (reorderItem?.quantity) {
       return `${reorderItem.quantity} ${reorderUnit}`;
@@ -434,10 +434,10 @@ export default function ProcurementPage() {
       
       const data = await response.json();
       setInvoiceImage(data.imageUrl);
-      toast({ title: t.success, description: "Invoice image uploaded successfully" });
+      toast({ title: t.success, description: t.invoiceUploaded });
     } catch (error) {
       console.error("Invoice upload error:", error);
-      toast({ title: t.error, description: "Failed to upload invoice image", variant: "destructive" });
+      toast({ title: t.error, description: t.invoiceUploadError, variant: "destructive" });
     } finally {
       setIsUploading(false);
     }
@@ -472,7 +472,7 @@ export default function ProcurementPage() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
       
-      toast({ title: t.success, description: t.invoiceDownloaded || "Invoice downloaded successfully" });
+      toast({ title: t.success, description: t.invoiceDownloaded });
     } catch (error) {
       console.error("Invoice download error:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to download invoice";
@@ -490,12 +490,12 @@ export default function ProcurementPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/procurement"] });
       toast({ 
         title: t.success, 
-        description: `Synced ${data.created} inventory items to procurement (${data.skipped} already existed)` 
+        description: t.inventorySynced
       });
     },
     onError: (error: Error) => {
       console.error("Sync inventory error:", error);
-      toast({ title: t.error, description: error.message || "Failed to sync inventory", variant: "destructive" });
+      toast({ title: t.error, description: error.message || t.failedToSyncInventory, variant: "destructive" });
     },
   });
 
@@ -510,12 +510,12 @@ export default function ProcurementPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/shop/bills"] });
       toast({ 
         title: t.success, 
-        description: `Shop bills synced: ${data.created} created, ${data.updated} updated, ${data.deleted} deleted` 
+        description: t.shopBillsSynced
       });
     },
     onError: (error: Error) => {
       console.error("Sync shop bills error:", error);
-      toast({ title: t.error, description: error.message || "Failed to sync shop bills", variant: "destructive" });
+      toast({ title: t.error, description: error.message || t.failedToSyncShopBills, variant: "destructive" });
     },
   });
 
@@ -531,8 +531,8 @@ export default function ProcurementPage() {
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Procurement Management</h1>
-          <p className="text-muted-foreground">Manage inventory, maintenance, installations, and equipment procurement</p>
+          <h1 className="text-3xl font-bold mb-2">{t.procurementManagement}</h1>
+          <p className="text-muted-foreground">{t.procurementDescription}</p>
         </div>
         <div className="flex gap-2 mobile-stack">
           <Button 
@@ -542,7 +542,7 @@ export default function ProcurementPage() {
             data-testid="button-sync-shop-bills"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${syncBillsMutation.isPending ? 'animate-spin' : ''}`} />
-            {syncBillsMutation.isPending ? 'Syncing...' : 'Sync Shop Bills'}
+            {syncBillsMutation.isPending ? t.syncing : t.syncShopBills}
           </Button>
           <Button 
             variant="outline" 
@@ -551,18 +551,18 @@ export default function ProcurementPage() {
             data-testid="button-sync-inventory"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
-            {syncMutation.isPending ? 'Syncing...' : 'Sync Inventory'}
+            {syncMutation.isPending ? t.syncing : t.syncInventory}
           </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => { setEditingItem(null); form.reset(); setInvoiceImage(null); }} data-testid="button-add-procurement">
                 <Plus className="h-4 w-4 mr-2" />
-                New Request
+                {t.newRequest}
               </Button>
             </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingItem ? "Edit Procurement" : "New Procurement Request"}</DialogTitle>
+              <DialogTitle>{editingItem ? t.editProcurement : t.newProcurementRequest}</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit, (errors) => console.log("[Procurement] Form validation errors:", errors))} className="space-y-4">
@@ -572,18 +572,18 @@ export default function ProcurementPage() {
                     name="type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Type</FormLabel>
+                        <FormLabel>{t.type}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-type">
-                              <SelectValue placeholder="Select type" />
+                              <SelectValue placeholder={t.selectType} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="inventory">Inventory</SelectItem>
-                            <SelectItem value="maintenance">Maintenance</SelectItem>
-                            <SelectItem value="installation">Installation</SelectItem>
-                            <SelectItem value="equipment">Equipment</SelectItem>
+                            <SelectItem value="inventory">{t.inventory}</SelectItem>
+                            <SelectItem value="maintenance">{t.maintenance}</SelectItem>
+                            <SelectItem value="installation">{t.installation}</SelectItem>
+                            <SelectItem value="equipment">{t.equipment}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -596,18 +596,18 @@ export default function ProcurementPage() {
                     name="priority"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Priority</FormLabel>
+                        <FormLabel>{t.priority}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-priority">
-                              <SelectValue placeholder="Select priority" />
+                              <SelectValue placeholder={t.selectPriority} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                            <SelectItem value="urgent">Urgent</SelectItem>
+                            <SelectItem value="low">{t.low}</SelectItem>
+                            <SelectItem value="medium">{t.medium}</SelectItem>
+                            <SelectItem value="high">{t.high}</SelectItem>
+                            <SelectItem value="urgent">{t.urgent}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -623,7 +623,7 @@ export default function ProcurementPage() {
                     name="inventoryItemId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Link to Existing Inventory (Optional)</FormLabel>
+                        <FormLabel>{t.linkToExistingInventory}</FormLabel>
                         <Select 
                           onValueChange={(value) => {
                             field.onChange(value === "new" ? "" : value);
@@ -641,11 +641,11 @@ export default function ProcurementPage() {
                         >
                           <FormControl>
                             <SelectTrigger data-testid="select-inventory-item">
-                              <SelectValue placeholder="Create new inventory item" />
+                              <SelectValue placeholder={t.createNewInventoryItem} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="new">+ Create New Inventory Item</SelectItem>
+                            <SelectItem value="new">+ {t.createNewInventoryItem}</SelectItem>
                             {inventoryItems.map((item) => (
                               <SelectItem key={item.id} value={item.id}>
                                 {item.name} ({item.quantity} {item.unit})
@@ -664,9 +664,9 @@ export default function ProcurementPage() {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title</FormLabel>
+                      <FormLabel>{t.title}</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter title" {...field} data-testid="input-title" />
+                        <Input placeholder={t.enterTitle} {...field} data-testid="input-title" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -678,9 +678,9 @@ export default function ProcurementPage() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>{t.description}</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="Enter description" {...field} value={field.value || ""} data-testid="input-description" />
+                        <Textarea placeholder={t.enterDescription} {...field} value={field.value || ""} data-testid="input-description" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -693,9 +693,9 @@ export default function ProcurementPage() {
                     name="supplier"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Supplier</FormLabel>
+                        <FormLabel>{t.supplier}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Supplier name" {...field} value={field.value || ""} data-testid="input-supplier" />
+                          <Input placeholder={t.supplierName} {...field} value={field.value || ""} data-testid="input-supplier" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -707,9 +707,9 @@ export default function ProcurementPage() {
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Category</FormLabel>
+                        <FormLabel>{t.category}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Category" {...field} value={field.value || ""} data-testid="input-category" />
+                          <Input placeholder={t.selectCategory} {...field} value={field.value || ""} data-testid="input-category" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -723,7 +723,7 @@ export default function ProcurementPage() {
                     name="quantity"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Quantity</FormLabel>
+                        <FormLabel>{t.quantity}</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -744,7 +744,7 @@ export default function ProcurementPage() {
                     name="unitPrice"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Unit Price (SAR)</FormLabel>
+                        <FormLabel>{t.pricePerUnit} (SAR)</FormLabel>
                         <FormControl>
                           <Input 
                             placeholder="0.00" 
@@ -765,7 +765,7 @@ export default function ProcurementPage() {
                     name="totalCost"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Total Cost (SAR)</FormLabel>
+                        <FormLabel>{t.totalCost} (SAR)</FormLabel>
                         <FormControl>
                           <Input placeholder="0.00" {...field} data-testid="input-total-cost" />
                         </FormControl>
@@ -781,9 +781,9 @@ export default function ProcurementPage() {
                     name="requestedBy"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Requested By</FormLabel>
+                        <FormLabel>{t.requestedBy}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Name" {...field} value={field.value || ""} data-testid="input-requested-by" />
+                          <Input placeholder={t.name} {...field} value={field.value || ""} data-testid="input-requested-by" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -795,20 +795,20 @@ export default function ProcurementPage() {
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Status</FormLabel>
+                        <FormLabel>{t.status}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-status">
-                              <SelectValue placeholder="Select status" />
+                              <SelectValue placeholder={t.selectStatus} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="approved">Approved</SelectItem>
-                            <SelectItem value="ordered">Ordered</SelectItem>
-                            <SelectItem value="received">Received</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                            <SelectItem value="pending">{t.pending}</SelectItem>
+                            <SelectItem value="approved">{t.approved}</SelectItem>
+                            <SelectItem value="ordered">{t.ordered}</SelectItem>
+                            <SelectItem value="received">{t.received}</SelectItem>
+                            <SelectItem value="completed">{t.completed}</SelectItem>
+                            <SelectItem value="cancelled">{t.cancelled}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -819,7 +819,7 @@ export default function ProcurementPage() {
 
                                 {/* Invoice Image Upload */}
                 <div className="space-y-2">
-                  <Label>Invoice Image</Label>
+                  <Label>{t.invoiceImage}</Label>
                   <div 
                     className={`border-2 border-dashed rounded-lg p-4 transition-colors ${
                       isUploading ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'
@@ -844,7 +844,7 @@ export default function ProcurementPage() {
                           />
                         )}
                         <div className="flex-1">
-                          <p className="text-sm font-medium">Invoice uploaded</p>
+                          <p className="text-sm font-medium">{t.invoiceUploaded}</p>
                           <p className="text-xs text-muted-foreground truncate max-w-[200px]">
                             {invoiceImage.split('/').pop()}
                           </p>
@@ -881,16 +881,16 @@ export default function ProcurementPage() {
                         {isUploading ? (
                           <>
                             <RefreshCw className="h-8 w-8 text-primary animate-spin" />
-                            <span className="text-sm text-muted-foreground">Uploading...</span>
+                            <span className="text-sm text-muted-foreground">{t.loading}...</span>
                           </>
                         ) : (
                           <>
                             <Upload className="h-8 w-8 text-muted-foreground" />
                             <span className="text-sm text-muted-foreground">
-                              Drag & drop or click to upload invoice
+                              {t.dragDropOrClickToUpload}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              JPEG, PNG, GIF, WebP, PDF (max 10MB)
+                              {t.supportedFileTypes}
                             </span>
                           </>
                         )}
@@ -915,9 +915,9 @@ export default function ProcurementPage() {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes</FormLabel>
+                      <FormLabel>{t.notes}</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="Additional notes" {...field} value={field.value || ""} data-testid="input-notes" />
+                        <Textarea placeholder={t.additionalNotes} {...field} value={field.value || ""} data-testid="input-notes" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -926,10 +926,10 @@ export default function ProcurementPage() {
 
                 <div className="flex gap-2 pt-4">
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending} data-testid="button-submit">
-                    {createMutation.isPending || updateMutation.isPending ? "Saving..." : editingItem ? "Update" : "Create"}
+                    {createMutation.isPending || updateMutation.isPending ? t.saving : editingItem ? t.update : t.create}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); setEditingItem(null); form.reset(); setInvoiceImage(null); }}>
-                    Cancel
+                    {t.cancel}
                   </Button>
                 </div>
               </form>
@@ -942,7 +942,7 @@ export default function ProcurementPage() {
       <div className="grid md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.totalRequests}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
@@ -950,7 +950,7 @@ export default function ProcurementPage() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.pending}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
@@ -958,7 +958,7 @@ export default function ProcurementPage() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Approved</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.approved}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{stats.approved}</div>
@@ -966,7 +966,7 @@ export default function ProcurementPage() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.inProgress}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">{stats.inProgress}</div>
@@ -974,7 +974,7 @@ export default function ProcurementPage() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.completed}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
@@ -985,15 +985,15 @@ export default function ProcurementPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <CardTitle>Procurement Requests</CardTitle>
+            <CardTitle>{t.procurementRequests}</CardTitle>
             <div className="flex gap-2 items-center flex-wrap">
               <div className="flex items-center gap-2">
-                <Label htmlFor="search-procurement" className="text-sm font-medium">{t.search || "Search"}:</Label>
+                <Label htmlFor="search-procurement" className="text-sm font-medium">{t.search}:</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="search-procurement"
-                    placeholder={t.searchProcurement || "Search procurement..."}
+                    placeholder={t.searchProcurement}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 w-48"
@@ -1003,16 +1003,16 @@ export default function ProcurementPage() {
               </div>
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                 <SelectTrigger className="w-40" data-testid="filter-status">
-                  <SelectValue placeholder="Filter by status" />
+                  <SelectValue placeholder={t.filterByStatus} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all-statuses">All Statuses</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="ordered">Ordered</SelectItem>
-                  <SelectItem value="received">Received</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="all-statuses">{t.allStatuses}</SelectItem>
+                  <SelectItem value="pending">{t.pending}</SelectItem>
+                  <SelectItem value="approved">{t.approved}</SelectItem>
+                  <SelectItem value="ordered">{t.ordered}</SelectItem>
+                  <SelectItem value="received">{t.received}</SelectItem>
+                  <SelectItem value="completed">{t.completed}</SelectItem>
+                  <SelectItem value="cancelled">{t.cancelled}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1021,19 +1021,19 @@ export default function ProcurementPage() {
         <CardContent>
           <Tabs value={selectedType} onValueChange={setSelectedType}>
             <TabsList className="mb-4">
-              <TabsTrigger value="all" data-testid="tab-all">All</TabsTrigger>
-              <TabsTrigger value="inventory" data-testid="tab-inventory">Inventory</TabsTrigger>
-              <TabsTrigger value="maintenance" data-testid="tab-maintenance">Maintenance</TabsTrigger>
-              <TabsTrigger value="installation" data-testid="tab-installation">Installation</TabsTrigger>
-              <TabsTrigger value="equipment" data-testid="tab-equipment">Equipment</TabsTrigger>
-              <TabsTrigger value="invoices" data-testid="tab-invoices">{t.invoices || "Invoices"}</TabsTrigger>
+              <TabsTrigger value="all" data-testid="tab-all">{t.all}</TabsTrigger>
+              <TabsTrigger value="inventory" data-testid="tab-inventory">{t.inventory}</TabsTrigger>
+              <TabsTrigger value="maintenance" data-testid="tab-maintenance">{t.maintenance}</TabsTrigger>
+              <TabsTrigger value="installation" data-testid="tab-installation">{t.installation}</TabsTrigger>
+              <TabsTrigger value="equipment" data-testid="tab-equipment">{t.equipment}</TabsTrigger>
+              <TabsTrigger value="invoices" data-testid="tab-invoices">{t.invoices}</TabsTrigger>
             </TabsList>
 
             {selectedType === "invoices" ? (
               isLoadingInvoices ? (
-                <div className="text-center py-8 text-muted-foreground">Loading...</div>
+                <div className="text-center py-8 text-muted-foreground">{t.loading}...</div>
               ) : procurementInvoices.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">{t.noInvoicesYet || "No procurement invoices found"}</div>
+                <div className="text-center py-8 text-muted-foreground">{t.noProcurementFound}</div>
               ) : (
                 <div className="space-y-4">
                   {procurementInvoices.map((invoice) => (
@@ -1055,7 +1055,7 @@ export default function ProcurementPage() {
                                 <div className="text-right">
                                   <div className="text-xl font-bold">SAR {invoice.total}</div>
                                   <div className="text-xs text-muted-foreground">
-                                    {t.vatAmount || "VAT"}: SAR {invoice.vatAmount}
+                                    {t.vatAmount}: SAR {invoice.vatAmount}
                                   </div>
                                 </div>
                               </div>
@@ -1087,7 +1087,7 @@ export default function ProcurementPage() {
                                   data-testid={`button-download-invoice-${invoice.id}`}
                                 >
                                   <Download className="h-3 w-3 mr-1" />
-                                  {t.download || "Download"}
+                                  {t.download}
                                 </Button>
                               </div>
                             </div>
@@ -1099,9 +1099,9 @@ export default function ProcurementPage() {
                 </div>
               )
             ) : isLoading ? (
-              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+              <div className="text-center py-8 text-muted-foreground">{t.loading}...</div>
             ) : procurements.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">No procurement requests found</div>
+              <div className="text-center py-8 text-muted-foreground">{t.noProcurementFound}</div>
             ) : (
               <div className="space-y-4">
                 {procurements
@@ -1166,7 +1166,7 @@ export default function ProcurementPage() {
                                 {item.billId && (
                                   <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
                                     <CheckCircle2 className="h-3 w-3 mr-1" />
-                                    {t.syncedToBills || "Synced to Bills"}
+                                    {t.syncedToBills}
                                   </Badge>
                                 )}
                               </div>
@@ -1187,7 +1187,7 @@ export default function ProcurementPage() {
                                 {item.expectedDelivery && (
                                   <div className="flex items-center gap-2 text-muted-foreground">
                                     <Calendar className="h-4 w-4" />
-                                    <span>Expected: {format(new Date(item.expectedDelivery), "MMM dd, yyyy")}</span>
+                                    <span>{t.expectedDelivery}: {format(new Date(item.expectedDelivery), "MMM dd, yyyy")}</span>
                                   </div>
                                 )}
                               </div>
@@ -1203,7 +1203,7 @@ export default function ProcurementPage() {
                                   {item.invoiceImage.endsWith('.pdf') ? (
                                     <div className="flex items-center gap-2 p-2 bg-muted rounded">
                                       <FileText className="h-5 w-5 text-red-500" />
-                                      <span className="text-sm">Invoice PDF</span>
+                                      <span className="text-sm">{t.invoicePdf}</span>
                                       <Button 
                                         size="sm" 
                                         variant="ghost"
@@ -1211,7 +1211,7 @@ export default function ProcurementPage() {
                                         data-testid={`button-view-invoice-${item.id}`}
                                       >
                                         <Eye className="h-4 w-4 mr-1" />
-                                        {t.view || "View"}
+                                        {t.view}
                                       </Button>
                                       <Button 
                                         size="sm" 
@@ -1220,7 +1220,7 @@ export default function ProcurementPage() {
                                         data-testid={`button-download-invoice-${item.id}`}
                                       >
                                         <Download className="h-4 w-4 mr-1" />
-                                        {t.download || "Download"}
+                                        {t.download}
                                       </Button>
                                     </div>
                                   ) : (
@@ -1231,7 +1231,7 @@ export default function ProcurementPage() {
                                         className="h-12 w-12 object-cover rounded border cursor-pointer hover:opacity-80"
                                         onClick={() => { setViewImageUrl(item.invoiceImage); setViewingProcurementId(item.id); }}
                                       />
-                                      <span className="text-sm text-muted-foreground">Invoice Image</span>
+                                      <span className="text-sm text-muted-foreground">{t.invoiceImage}</span>
                                       <Button 
                                         size="sm" 
                                         variant="ghost"
@@ -1239,7 +1239,7 @@ export default function ProcurementPage() {
                                         data-testid={`button-view-invoice-${item.id}`}
                                       >
                                         <Eye className="h-4 w-4 mr-1" />
-                                        {t.view || "View"}
+                                        {t.view}
                                       </Button>
                                       <Button 
                                         size="sm" 
@@ -1248,7 +1248,7 @@ export default function ProcurementPage() {
                                         data-testid={`button-download-invoice-${item.id}`}
                                       >
                                         <Download className="h-4 w-4 mr-1" />
-                                        {t.download || "Download"}
+                                        {t.download}
                                       </Button>
                                     </div>
                                   )}
@@ -1257,26 +1257,26 @@ export default function ProcurementPage() {
 
                               <div className="flex gap-2 pt-2">
                                 <Button size="sm" variant="outline" onClick={() => handleEdit(item)} data-testid={`button-edit-${item.id}`}>
-                                  Edit
+                                  {t.edit}
                                 </Button>
                                 {item.status === "pending" && (
                                   <Button size="sm" variant="outline" onClick={() => handleStatusChange(item.id, "approved")}>
-                                    Approve
+                                    {t.approve}
                                   </Button>
                                 )}
                                 {item.status === "approved" && (
                                   <Button size="sm" variant="outline" onClick={() => handleStatusChange(item.id, "ordered")}>
-                                    Mark as Ordered
+                                    {t.markAsOrdered}
                                   </Button>
                                 )}
                                 {item.status === "ordered" && (
                                   <Button size="sm" variant="outline" onClick={() => handleStatusChange(item.id, "received")}>
-                                    Mark as Received
+                                    {t.markAsReceived}
                                   </Button>
                                 )}
                                 {item.status === "received" && (
                                   <Button size="sm" variant="outline" onClick={() => handleStatusChange(item.id, "completed")}>
-                                    Mark as Completed
+                                    {t.markAsCompleted}
                                   </Button>
                                 )}
                                 {item.type === "inventory" && ["received", "completed"].includes(item.status) && (
@@ -1287,20 +1287,20 @@ export default function ProcurementPage() {
                                     data-testid={`button-reorder-${item.id}`}
                                   >
                                     <Repeat className="h-3 w-3 mr-1" />
-                                    {t.reorder || "Reorder"}
+                                    {t.reorder}
                                   </Button>
                                 )}
                                 <Button 
                                   size="sm" 
                                   variant="destructive" 
                                   onClick={() => {
-                                    if (confirm("Are you sure you want to delete this procurement request?")) {
+                                    if (confirm(t.deleteProcurementConfirm)) {
                                       deleteMutation.mutate(item.id);
                                     }
                                   }}
                                   data-testid={`button-delete-${item.id}`}
                                 >
-                                  Delete
+                                  {t.delete}
                                 </Button>
                               </div>
                             </div>
@@ -1320,7 +1320,7 @@ export default function ProcurementPage() {
       <Dialog open={!!viewImageUrl} onOpenChange={() => { setViewImageUrl(null); setViewingProcurementId(null); }}>
         <DialogContent className="max-w-4xl max-h-[90vh]">
           <DialogHeader>
-            <DialogTitle>{t.invoiceImage || "Invoice Image"}</DialogTitle>
+            <DialogTitle>{t.invoiceImage}</DialogTitle>
           </DialogHeader>
           {viewImageUrl && (
             <div className="flex flex-col items-center gap-4">
@@ -1335,7 +1335,7 @@ export default function ProcurementPage() {
                   data-testid="button-download-invoice-viewer"
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  {t.downloadInvoice || "Download Invoice"}
+                  {t.download}
                 </Button>
               )}
             </div>
@@ -1360,29 +1360,29 @@ export default function ProcurementPage() {
       }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{t.reorder || "Reorder"}: {reorderItem?.title}</DialogTitle>
+            <DialogTitle>{t.reorder}: {reorderItem?.title}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="reorder-category">{t.category || "Category"}</Label>
+                <Label htmlFor="reorder-category">{t.category}</Label>
                 <Select value={reorderCategory} onValueChange={setReorderCategory}>
                   <SelectTrigger id="reorder-category" data-testid="select-reorder-category">
-                    <SelectValue placeholder={t.selectCategory || "Select category"} />
+                    <SelectValue placeholder={t.selectCategory} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="inventory">{t.inventory || "Inventory"}</SelectItem>
-                    <SelectItem value="maintenance">{t.maintenance || "Maintenance"}</SelectItem>
-                    <SelectItem value="installation">{"Installation"}</SelectItem>
-                    <SelectItem value="equipment">{t.equipment || "Equipment"}</SelectItem>
+                    <SelectItem value="inventory">{t.inventory}</SelectItem>
+                    <SelectItem value="maintenance">{t.maintenance}</SelectItem>
+                    <SelectItem value="installation">{t.installation}</SelectItem>
+                    <SelectItem value="equipment">{t.equipment}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="reorder-unit">{t.unit || "Unit"}</Label>
+                <Label htmlFor="reorder-unit">{t.unit}</Label>
                 <Select value={reorderUnit} onValueChange={setReorderUnit}>
                   <SelectTrigger id="reorder-unit" data-testid="select-reorder-unit">
-                    <SelectValue placeholder={t.unit || "Select Unit"} />
+                    <SelectValue placeholder={t.unit} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="kg">kg</SelectItem>
@@ -1397,7 +1397,7 @@ export default function ProcurementPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="reorder-quantity">{t.quantity || "Quantity"}</Label>
+                <Label htmlFor="reorder-quantity">{t.quantity}</Label>
                 <Input
                   id="reorder-quantity"
                   type="number"
@@ -1410,7 +1410,7 @@ export default function ProcurementPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>{t.referenceQuantity || "Reference Quantity"}</Label>
+                <Label>{t.referenceQuantity}</Label>
                 <div className="flex items-center h-9 px-3 rounded-md border bg-muted text-sm text-muted-foreground">
                   {getReferenceQuantityDisplay()}
                 </div>
@@ -1418,7 +1418,7 @@ export default function ProcurementPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reorder-unit-price">{t.pricePerUnit || "Price per Unit"} (SAR)</Label>
+              <Label htmlFor="reorder-unit-price">{t.pricePerUnit} (SAR)</Label>
               <Input
                 id="reorder-unit-price"
                 type="text"
@@ -1429,12 +1429,12 @@ export default function ProcurementPage() {
                 data-testid="input-reorder-unit-price"
               />
               <p className="text-xs text-muted-foreground">
-                {"Automatically calculated: Total Price ÷ Quantity"}
+                {t.automaticallyCalculated}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reorder-total-price">{t.totalPrice || "Total Price"} (SAR)</Label>
+              <Label htmlFor="reorder-total-price">{t.totalPrice} (SAR)</Label>
               <Input
                 id="reorder-total-price"
                 type="number"
@@ -1446,12 +1446,12 @@ export default function ProcurementPage() {
                 data-testid="input-reorder-total-price"
               />
               <p className="text-xs text-muted-foreground">
-                {"Total price for the entire stock quantity"}
+                {t.totalPriceForEntireStock}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reorder-expiration-days">{t.expirationDays || "Expiration Days"}</Label>
+              <Label htmlFor="reorder-expiration-days">{t.expirationDays}</Label>
               <Input
                 id="reorder-expiration-days"
                 type="number"
@@ -1462,35 +1462,32 @@ export default function ProcurementPage() {
                 placeholder=""
                 data-testid="input-reorder-expiration-days"
               />
-              <p className="text-xs text-muted-foreground">
-                {"Number of days until this item expires (leave empty if no expiration)"}
-              </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reorder-supplier">{t.supplier || "Supplier"}</Label>
+              <Label htmlFor="reorder-supplier">{t.supplier}</Label>
               <Input
                 id="reorder-supplier"
                 type="text"
                 value={reorderSupplier}
                 onChange={(e) => setReorderSupplier(e.target.value)}
-                placeholder={t.supplier || "Enter supplier name"}
+                placeholder={t.supplierName}
                 data-testid="input-reorder-supplier"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reorder-status">{t.status || "Status"}</Label>
+              <Label htmlFor="reorder-status">{t.status}</Label>
               <Select value={reorderStatus} onValueChange={setReorderStatus}>
                 <SelectTrigger id="reorder-status" data-testid="select-reorder-status">
-                  <SelectValue placeholder={t.selectStatus || "Select status"} />
+                  <SelectValue placeholder={t.selectStatus} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pending">{t.pending || "Pending"}</SelectItem>
-                  <SelectItem value="approved">{"Approved"}</SelectItem>
-                  <SelectItem value="ordered">{"Ordered"}</SelectItem>
-                  <SelectItem value="received">{"Received"}</SelectItem>
-                  <SelectItem value="completed">{t.completed || "Completed"}</SelectItem>
+                  <SelectItem value="pending">{t.pending}</SelectItem>
+                  <SelectItem value="approved">{t.approved}</SelectItem>
+                  <SelectItem value="ordered">{t.ordered}</SelectItem>
+                  <SelectItem value="received">{t.received}</SelectItem>
+                  <SelectItem value="completed">{t.completed}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1501,14 +1498,14 @@ export default function ProcurementPage() {
               onClick={() => setIsReorderDialogOpen(false)}
               data-testid="button-reorder-cancel"
             >
-              {t.cancel || "Cancel"}
+              {t.cancel}
             </Button>
             <Button
               onClick={handleReorderSubmit}
               disabled={reorderMutation.isPending || !reorderQuantity || !reorderTotalPrice}
               data-testid="button-reorder-submit"
             >
-              {reorderMutation.isPending ? t.processing || "Processing..." : t.reorder || "Create Reorder"}
+              {reorderMutation.isPending ? t.saving : t.create}
             </Button>
           </div>
         </DialogContent>
