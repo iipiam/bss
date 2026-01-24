@@ -81,39 +81,39 @@ export default function Login() {
     
     if (signupSuccess === 'success') {
       toast({
-        title: "Account Created Successfully!",
+        title: t.accountCreatedSuccessfully,
         description: username 
-          ? `Your account "${username}" has been created. Please sign in.`
-          : "Please sign in with your credentials.",
+          ? t.accountCreatedWithUsername.replace('{username}', username)
+          : t.accountCreatedDesc,
       });
       // Clear URL params
       window.history.replaceState({}, '', '/login');
     } else if (signupError) {
-      let errorMessage = "An error occurred during signup.";
+      let errorMessage = t.anErrorOccurredDuringSignup;
       switch (signupError) {
         case 'payment_failed':
-          errorMessage = "Payment was not completed. Please try again.";
+          errorMessage = t.paymentNotCompleted;
           break;
         case 'payment_pending':
-          errorMessage = "Payment is still pending. Please try again.";
+          errorMessage = t.paymentStillPending;
           break;
         case 'signup_not_found':
-          errorMessage = "Signup session expired. Please try again.";
+          errorMessage = t.signupSessionExpired;
           break;
         case 'account_creation_failed':
-          errorMessage = "Account could not be created. Please contact support.";
+          errorMessage = t.accountCouldNotBeCreated;
           break;
         case 'missing_order':
         case 'callback_error':
-          errorMessage = "Payment processing error. Please try again.";
+          errorMessage = t.paymentProcessingError;
           break;
         case 'verification_failed':
         case 'amount_mismatch':
-          errorMessage = "Payment verification failed. Please contact support if payment was deducted.";
+          errorMessage = t.paymentVerificationFailed;
           break;
       }
       toast({
-        title: "Signup Failed",
+        title: t.signUpFailed,
         description: errorMessage,
         variant: "destructive",
       });
@@ -218,8 +218,8 @@ export default function Login() {
       // Check if response contains a redirect URL (Geidea payment flow)
       if (data.redirectUrl) {
         toast({
-          title: "Redirecting to Payment",
-          description: `Please complete your subscription payment of ${data.amount} SAR`,
+          title: t.redirectingToPayment,
+          description: t.pleaseCompleteSubscriptionPayment.replace('{amount}', data.amount),
         });
         
         // Redirect to Geidea payment page
@@ -296,8 +296,8 @@ export default function Login() {
     
     if (!itSignupUsername || !itSignupPassword || !itSignupFullName || !itSignupEmail || !itSignupSecretKey) {
       toast({
-        title: "Missing Required Fields",
-        description: "Please fill in all fields including the secret key",
+        title: t.error,
+        description: t.pleaseIncludeSecretKey,
         variant: "destructive",
       });
       return;
@@ -323,8 +323,8 @@ export default function Login() {
       }
       
       toast({
-        title: "IT Account Created",
-        description: "Your IT account has been created successfully. Please login with your credentials.",
+        title: t.itAccountCreated,
+        description: t.itAccountCreatedDesc,
       });
       
       // Auto-login after IT signup
@@ -332,8 +332,8 @@ export default function Login() {
       
     } catch (error: any) {
       toast({
-        title: t.itSignupFailed,
-        description: error.message || "Failed to create IT account",
+        title: t.failedToCreateItAccount,
+        description: error.message || t.failedToCreateItAccount,
         variant: "destructive",
       });
     }
