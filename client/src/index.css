@@ -519,6 +519,14 @@
     width: 100% !important;
   }
   
+  /* Header specific styling for mobile/tablet */
+  .device-iphone header,
+  .device-ipad header {
+    min-height: 3.5rem !important;
+    height: auto !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+  
   /* Keep header and certain inline elements horizontal */
   .device-iphone header .flex,
   .device-ipad header .flex,
