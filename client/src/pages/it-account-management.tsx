@@ -119,6 +119,28 @@ interface ITAccount {
   createdAt: string;
 }
 
+interface PendingSignup {
+  id: string;
+  geideaSessionId: string;
+  merchantReferenceId: string;
+  username: string;
+  fullName: string;
+  email: string;
+  restaurantName: string;
+  nationalId: string;
+  hasVatRegistration: boolean;
+  taxNumber: string | null;
+  commercialRegistration: string;
+  businessType: string;
+  restaurantType: string;
+  subscriptionPlan: string;
+  branchesCount: number;
+  amount: string;
+  status: string;
+  createdAt: string;
+  expiresAt: string;
+}
+
 export default function ITAccountManagement() {
   const { user, accountType, isLoading: authLoading } = useAuth();
   const { t } = useLanguage();
@@ -369,7 +391,7 @@ export default function ITAccountManagement() {
     </Card>
   );
 
-  const [activeTab, setActiveTab] = useState<"accounts" | "archive" | "files" | "itAccounts">("accounts");
+  const [activeTab, setActiveTab] = useState<"accounts" | "archive" | "files" | "itAccounts" | "pendingSignups">("accounts");
   const [searchQuery, setSearchQuery] = useState("");
   const [archiveSearchQuery, setArchiveSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "disabled">("all");
@@ -407,6 +429,10 @@ export default function ITAccountManagement() {
   // Client Documents state
   const [clientDocsDialogOpen, setClientDocsDialogOpen] = useState(false);
   const [selectedClientForDocs, setSelectedClientForDocs] = useState<Account | null>(null);
+  
+  // Pending Signups state
+  const [deletePendingDialogOpen, setDeletePendingDialogOpen] = useState(false);
+  const [pendingSignupToDelete, setPendingSignupToDelete] = useState<PendingSignup | null>(null);
 
   // Security: Redirect non-IT accounts using useEffect to wait for auth to load
   useEffect(() => {
@@ -460,6 +486,13 @@ export default function ITAccountManagement() {
   // Fetch IT accounts
   const { data: itAccounts = [], isLoading: itAccountsLoading, refetch: refetchITAccounts } = useQuery<ITAccount[]>({
     queryKey: ['/api/it/it-accounts'],
+    enabled: !!user && accountType === 'it',
+    staleTime: 0,
+  });
+
+  // Fetch pending signups
+  const { data: pendingSignups = [], isLoading: pendingSignupsLoading, refetch: refetchPendingSignups } = useQuery<PendingSignup[]>({
+    queryKey: ['/api/it/pending-signups'],
     enabled: !!user && accountType === 'it',
     staleTime: 0,
   });
@@ -690,6 +723,50 @@ export default function ITAccountManagement() {
       toast({
         title: t.error || "Error",
         description: error.message || t.failedToDeleteITAccount || "Failed to delete IT account",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete pending signup mutation
+  const deletePendingSignupMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/it/pending-signups/${id}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: t.success || "Success",
+        description: t.pendingSignupDeleted || "Pending signup deleted successfully.",
+      });
+      setDeletePendingDialogOpen(false);
+      setPendingSignupToDelete(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/it/pending-signups'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message || t.failedToDeletePendingSignup || "Failed to delete pending signup",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Cleanup expired pending signups mutation
+  const cleanupExpiredMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/it/pending-signups/cleanup");
+    },
+    onSuccess: (result: any) => {
+      toast({
+        title: t.success || "Success",
+        description: `${result.deletedCount || 0} ${t.expiredSignupsCleanedUp || "expired signups cleaned up successfully."}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/it/pending-signups'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message || t.failedToCleanupExpired || "Failed to cleanup expired signups",
         variant: "destructive",
       });
     },
@@ -1005,9 +1082,9 @@ export default function ITAccountManagement() {
         </Button>
       </div>
 
-      {/* Tabs for Accounts, Archive, IT Accounts, and Company Files */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "accounts" | "archive" | "files" | "itAccounts")} className="w-full">
-        <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2 gap-1' : 'grid-cols-4'} max-w-2xl`}>
+      {/* Tabs for Accounts, Archive, IT Accounts, Pending Signups, and Company Files */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "accounts" | "archive" | "files" | "itAccounts" | "pendingSignups")} className="w-full">
+        <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2 gap-1' : 'grid-cols-5'} max-w-3xl`}>
           <TabsTrigger value="accounts" data-testid="tab-accounts" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             {isMobile ? (t.accounts || "Accounts") : (t.clientAccounts || "Client Accounts")}
@@ -1017,6 +1094,13 @@ export default function ITAccountManagement() {
             {t.itAccounts || "IT Accounts"}
             {itAccounts.length > 0 && (
               <Badge variant="secondary" className="ml-1">{itAccounts.length}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="pendingSignups" data-testid="tab-pending-signups" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            {t.pendingSignups || "Pending Signups"}
+            {pendingSignups.length > 0 && (
+              <Badge variant="secondary" className="ml-1">{pendingSignups.length}</Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="archive" data-testid="tab-archive" className="flex items-center gap-2">
@@ -1453,6 +1537,311 @@ export default function ITAccountManagement() {
                   onClick={() => setClientDocsDialogOpen(false)}
                 >
                   {t.close || "Close"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
+
+        {/* Pending Signups Tab */}
+        <TabsContent value="pendingSignups" className="space-y-4 mt-4">
+          {/* Pending Signups Stats */}
+          <div className={`grid gap-4 ${layout.gridCols}`}>
+            <Card data-testid="card-total-pending">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+                <CardTitle className="text-sm font-medium">{t.totalPending || "Total Pending"}</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{pendingSignups.length}</div>
+              </CardContent>
+            </Card>
+            <Card data-testid="card-expired-count">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+                <CardTitle className="text-sm font-medium">{t.expiredCount || "Expired"}</CardTitle>
+                <AlertCircle className="h-4 w-4 text-red-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  {pendingSignups.filter(s => s.status === 'expired' || new Date(s.expiresAt) < new Date()).length}
+                </div>
+              </CardContent>
+            </Card>
+            <Card data-testid="card-pending-amount">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+                <CardTitle className="text-sm font-medium">{t.pendingAmount || "Total Amount"}</CardTitle>
+                <FileText className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {pendingSignups.reduce((sum, s) => sum + parseFloat(s.amount || "0"), 0).toFixed(2)} SAR
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Pending Signups Table */}
+          <Card data-testid="card-pending-signups-list">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                {t.pendingSignups || "Pending Signups"}
+              </CardTitle>
+              <CardDescription>
+                {t.pendingSignupsDescription || "Accounts in the payment process awaiting completion"}
+              </CardDescription>
+              
+              <div className={`flex ${isMobile ? 'flex-col' : 'flex-wrap items-center justify-end'} gap-4 pt-4`}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => cleanupExpiredMutation.mutate()}
+                  disabled={cleanupExpiredMutation.isPending}
+                  data-testid="button-cleanup-expired"
+                >
+                  {cleanupExpiredMutation.isPending ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 mr-2" />
+                  )}
+                  {t.cleanupExpired || "Clean Up Expired"}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {pendingSignupsLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map(i => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))}
+                </div>
+              ) : isMobile ? (
+                /* Mobile Card View for Pending Signups */
+                <div className="space-y-3">
+                  {pendingSignups.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      {t.noPendingSignups || "No pending signups found"}
+                    </div>
+                  ) : (
+                    pendingSignups.map((signup) => {
+                      const isExpired = signup.status === 'expired' || new Date(signup.expiresAt) < new Date();
+                      const statusVariant = signup.status === 'paid' ? 'default' : 
+                                           signup.status === 'failed' ? 'destructive' : 
+                                           isExpired ? 'secondary' : 'outline';
+                      const statusLabel = signup.status === 'paid' ? (t.paid || 'Paid') :
+                                         signup.status === 'failed' ? (t.paymentFailed || 'Failed') :
+                                         isExpired ? (t.paymentExpired || 'Expired') : (t.paymentPending || 'Pending');
+                      
+                      return (
+                        <Card 
+                          key={signup.id}
+                          data-testid={`card-pending-signup-${signup.id}`}
+                          className="hover-elevate"
+                        >
+                          <CardContent className="p-4 space-y-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                <span className="font-medium truncate">{signup.restaurantName}</span>
+                              </div>
+                              <Badge variant={statusVariant} className={signup.status === 'pending' && !isExpired ? 'bg-yellow-500 text-white' : ''}>
+                                {statusLabel}
+                              </Badge>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">{t.username || "Username"}:</span>
+                                <p className="font-mono">{signup.username}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">{t.subscriptionPlan || "Plan"}:</span>
+                                <p><Badge variant="secondary">{signup.subscriptionPlan}</Badge></p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">{t.businessType || "Type"}:</span>
+                                <p>{signup.businessType}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">{t.amount || "Amount"}:</span>
+                                <p className="font-medium text-green-600">{parseFloat(signup.amount).toFixed(2)} SAR</p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Calendar className="h-3 w-3" />
+                              <span>{t.expiresAt || "Expires"}: {new Date(signup.expiresAt).toLocaleDateString()}</span>
+                            </div>
+
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="w-full"
+                              onClick={() => {
+                                setPendingSignupToDelete(signup);
+                                setDeletePendingDialogOpen(true);
+                              }}
+                              data-testid={`button-delete-pending-${signup.id}`}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              {t.delete || "Delete"}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      );
+                    })
+                  )}
+                </div>
+              ) : (
+                /* Desktop Table View for Pending Signups */
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t.restaurant || "Restaurant"}</TableHead>
+                        <TableHead>{t.username || "Username"}</TableHead>
+                        <TableHead>{t.email || "Email"}</TableHead>
+                        <TableHead>{t.businessType || "Type"}</TableHead>
+                        <TableHead>{t.plan || "Plan"}</TableHead>
+                        <TableHead>{t.branches || "Branches"}</TableHead>
+                        <TableHead>{t.amount || "Amount"}</TableHead>
+                        <TableHead>{t.status || "Status"}</TableHead>
+                        <TableHead>{t.created || "Created"}</TableHead>
+                        <TableHead>{t.expiresAt || "Expires"}</TableHead>
+                        <TableHead className="text-right">{t.actions || "Actions"}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pendingSignups.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
+                            {t.noPendingSignups || "No pending signups found"}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        pendingSignups.map((signup) => {
+                          const isExpired = signup.status === 'expired' || new Date(signup.expiresAt) < new Date();
+                          const statusVariant = signup.status === 'paid' ? 'default' : 
+                                               signup.status === 'failed' ? 'destructive' : 
+                                               isExpired ? 'secondary' : 'outline';
+                          const statusLabel = signup.status === 'paid' ? (t.paid || 'Paid') :
+                                             signup.status === 'failed' ? (t.paymentFailed || 'Failed') :
+                                             isExpired ? (t.paymentExpired || 'Expired') : (t.paymentPending || 'Pending');
+                          
+                          return (
+                            <TableRow key={signup.id} data-testid={`row-pending-signup-${signup.id}`}>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                                  <span className="font-medium">{signup.restaurantName}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="font-mono">{signup.username}</TableCell>
+                              <TableCell className="text-muted-foreground">{signup.email}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{signup.businessType}</Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="secondary">{signup.subscriptionPlan}</Badge>
+                              </TableCell>
+                              <TableCell>{signup.branchesCount}</TableCell>
+                              <TableCell className="font-medium text-green-600">
+                                {parseFloat(signup.amount).toFixed(2)} SAR
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={statusVariant} className={signup.status === 'pending' && !isExpired ? 'bg-yellow-500 text-white' : ''}>
+                                  {statusLabel}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground text-sm">
+                                {new Date(signup.createdAt).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell className="text-muted-foreground text-sm">
+                                {new Date(signup.expiresAt).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => {
+                                    setPendingSignupToDelete(signup);
+                                    setDeletePendingDialogOpen(true);
+                                  }}
+                                  data-testid={`button-delete-pending-${signup.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Delete Pending Signup Confirmation Dialog */}
+          <Dialog open={deletePendingDialogOpen} onOpenChange={setDeletePendingDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-destructive">
+                  <AlertCircle className="h-5 w-5" />
+                  {t.deletePendingSignup || "Delete Pending Signup"}
+                </DialogTitle>
+                <DialogDescription>
+                  {t.deletePendingSignupConfirmation || "Are you sure you want to delete this pending signup? This action cannot be undone."}
+                </DialogDescription>
+              </DialogHeader>
+              {pendingSignupToDelete && (
+                <div className="py-4">
+                  <div className="bg-muted p-4 rounded-md space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">{pendingSignupToDelete.restaurantName}</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      <span className="font-mono">{pendingSignupToDelete.username}</span> • {pendingSignupToDelete.email}
+                    </div>
+                    <div className="text-sm">
+                      {t.amount || "Amount"}: <span className="font-medium text-green-600">{parseFloat(pendingSignupToDelete.amount).toFixed(2)} SAR</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <DialogFooter className="flex-col gap-2 sm:flex-row">
+                <Button
+                  variant="outline"
+                  onClick={() => setDeletePendingDialogOpen(false)}
+                  className="w-full sm:w-auto"
+                  data-testid="button-cancel-delete-pending"
+                >
+                  {t.cancel || "Cancel"}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (pendingSignupToDelete) {
+                      deletePendingSignupMutation.mutate(pendingSignupToDelete.id);
+                    }
+                  }}
+                  disabled={deletePendingSignupMutation.isPending}
+                  className="w-full sm:w-auto"
+                  data-testid="button-confirm-delete-pending"
+                >
+                  {deletePendingSignupMutation.isPending ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      {t.deleting || "Deleting..."}
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {t.delete || "Delete"}
+                    </>
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>
