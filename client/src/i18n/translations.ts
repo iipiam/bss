@@ -340,6 +340,15 @@ export interface Translations {
   salesThisWeek: string;
   errorLoadingCustomerOrders: string;
   
+  // Sales
+  salesTracking: string;
+  salesDescription: string;
+  allTime: string;
+  transactions: string;
+  totalCount: string;
+  avgOrderValue: string;
+  perTransaction: string;
+  
   // Inventory
   itemName: string;
   category: string;
@@ -414,6 +423,11 @@ export interface Translations {
   cancelled: string;
   
   // Financial
+  financialStatements: string;
+  financialDescription: string;
+  loadingFinancialData: string;
+  invoicesGenerated: string;
+  year: string;
   revenue: string;
   expenses: string;
   profit: string;
@@ -653,6 +667,44 @@ export interface Translations {
   businessManagementSystem: string;
   vatDisclaimer: string;
   
+  // Account Type & Login Options
+  accountType: string;
+  clientAccount: string;
+  itAccount: string;
+  itSignup: string;
+  createItAccount: string;
+  secretKey: string;
+  enterSecretKey: string;
+  secretKeyHint: string;
+  
+  // Business Types
+  restaurantFoodService: string;
+  factoryManufacturing: string;
+  
+  // Restaurant Types
+  cloudKitchen: string;
+  coffeeShop: string;
+  teaShop: string;
+  sweets: string;
+  bakery: string;
+  
+  // Factory Types
+  manufacturing: string;
+  assembly: string;
+  processing: string;
+  
+  // Billing Period Labels
+  billedWeekly: string;
+  perWeekVatIncluded: string;
+  
+  // Yes/No Options
+  yes: string;
+  no: string;
+  
+  // Refund & Policy
+  refundPolicy: string;
+  refundPolicySectionTitle: string;
+  
   // Messages
   success: string;
   error: string;
@@ -682,6 +734,12 @@ export interface Translations {
   recipeUpdated: string;
   recipeDeleted: string;
   addRecipeAsInventoryItem: string;
+  prepTime: string;
+  cookTime: string;
+  servings: string;
+  costPerServing: string;
+  ingredients: string;
+  instructions: string;
   employeeCreatedDesc: string;
   employeeUpdatedDesc: string;
   employeeDeletedDesc: string;
@@ -2215,6 +2273,15 @@ export const translations: Record<Language, Translations> = {
     salesThisWeek: 'Sales This Week',
     errorLoadingCustomerOrders: 'Error loading customer orders',
     
+    // Sales
+    salesTracking: 'Sales Tracking',
+    salesDescription: 'View transaction history and summaries',
+    allTime: 'All time',
+    transactions: 'Transactions',
+    totalCount: 'Total count',
+    avgOrderValue: 'Avg. Order Value',
+    perTransaction: 'Per transaction',
+    
     // Inventory
     itemName: 'Item Name',
     category: 'Category',
@@ -2289,6 +2356,11 @@ export const translations: Record<Language, Translations> = {
     cancelled: 'Cancelled',
     
     // Financial
+    financialStatements: 'Financial Statements',
+    financialDescription: 'Monthly and yearly financial reports with ZATCA VAT invoices',
+    loadingFinancialData: 'Loading financial data...',
+    invoicesGenerated: 'Invoices Generated',
+    year: 'Year',
     revenue: 'Revenue',
     expenses: 'Expenses',
     profit: 'Profit',
@@ -2527,6 +2599,44 @@ export const translations: Record<Language, Translations> = {
     businessManagementSystem: 'Business Management System',
     vatDisclaimer: 'All prices include 15% VAT as required by Saudi law',
     
+    // Account Type & Login Options
+    accountType: 'Account Type',
+    clientAccount: 'Client Account',
+    itAccount: 'IT Account',
+    itSignup: 'IT Signup',
+    createItAccount: 'Create IT Account',
+    secretKey: 'Secret Key',
+    enterSecretKey: 'Enter the IT secret key',
+    secretKeyHint: 'Contact your IT administrator for the secret key',
+    
+    // Business Types
+    restaurantFoodService: 'Restaurant / Food Service',
+    factoryManufacturing: 'Factory / Manufacturing',
+    
+    // Restaurant Types
+    cloudKitchen: 'Cloud Kitchen',
+    coffeeShop: 'Coffee Shop',
+    teaShop: 'Tea Shop',
+    sweets: 'Sweets',
+    bakery: 'Bakery',
+    
+    // Factory Types
+    manufacturing: 'Manufacturing',
+    assembly: 'Assembly',
+    processing: 'Processing',
+    
+    // Billing Period Labels
+    billedWeekly: 'Billed weekly',
+    perWeekVatIncluded: 'per week (VAT included)',
+    
+    // Yes/No Options
+    yes: 'Yes',
+    no: 'No',
+    
+    // Refund & Policy
+    refundPolicy: 'I acknowledge the refund policy and terms of service',
+    refundPolicySectionTitle: 'REFUND POLICY / سياسة استرداد الأموال',
+    
     // Messages
     success: 'Success',
     error: 'Error',
@@ -2556,6 +2666,12 @@ export const translations: Record<Language, Translations> = {
     recipeUpdated: 'Recipe updated',
     recipeDeleted: 'Recipe deleted',
     addRecipeAsInventoryItem: 'Also add this recipe as an inventory item',
+    prepTime: 'Prep Time',
+    cookTime: 'Cook Time',
+    servings: 'Servings',
+    costPerServing: 'Cost per Serving',
+    ingredients: 'Ingredients',
+    instructions: 'Instructions',
     employeeCreatedDesc: 'The employee has been created successfully',
     employeeUpdatedDesc: 'The employee has been updated successfully',
     employeeDeletedDesc: 'The employee has been deleted successfully',
@@ -4086,6 +4202,15 @@ export const translations: Record<Language, Translations> = {
     salesThisWeek: 'مبيعات هذا الأسبوع',
     errorLoadingCustomerOrders: 'خطأ في تحميل طلبات العملاء',
     
+    // Sales
+    salesTracking: 'تتبع المبيعات',
+    salesDescription: 'عرض سجل وملخصات المعاملات',
+    allTime: 'طوال الوقت',
+    transactions: 'المعاملات',
+    totalCount: 'إجمالي العدد',
+    avgOrderValue: 'متوسط قيمة الطلب',
+    perTransaction: 'لكل معاملة',
+    
     // Inventory
     itemName: 'اسم الصنف',
     category: 'الفئة',
@@ -4160,6 +4285,11 @@ export const translations: Record<Language, Translations> = {
     cancelled: 'ملغي',
     
     // Financial
+    financialStatements: 'البيانات المالية',
+    financialDescription: 'التقارير المالية الشهرية والسنوية مع فواتير ضريبة القيمة المضافة من هيئة الزكاة',
+    loadingFinancialData: 'جارٍ تحميل البيانات المالية...',
+    invoicesGenerated: 'الفواتير المُنشأة',
+    year: 'السنة',
     revenue: 'الإيرادات',
     expenses: 'المصروفات',
     profit: 'الربح',
@@ -4398,6 +4528,44 @@ export const translations: Record<Language, Translations> = {
     businessManagementSystem: 'نظام إدارة الأعمال',
     vatDisclaimer: 'جميع الأسعار تشمل ضريبة القيمة المضافة 15٪ كما يتطلب القانون السعودي',
     
+    // Account Type & Login Options
+    accountType: 'نوع الحساب',
+    clientAccount: 'حساب عميل',
+    itAccount: 'حساب تكنولوجيا المعلومات',
+    itSignup: 'تسجيل تكنولوجيا المعلومات',
+    createItAccount: 'إنشاء حساب تكنولوجيا المعلومات',
+    secretKey: 'مفتاح سري',
+    enterSecretKey: 'أدخل مفتاح تكنولوجيا المعلومات السري',
+    secretKeyHint: 'اتصل بمسؤول تكنولوجيا المعلومات الخاص بك للحصول على المفتاح السري',
+    
+    // Business Types
+    restaurantFoodService: 'مطعم / خدمة غذائية',
+    factoryManufacturing: 'مصنع / تصنيع',
+    
+    // Restaurant Types
+    cloudKitchen: 'مطبخ سحابي',
+    coffeeShop: 'مقهى',
+    teaShop: 'محل شاي',
+    sweets: 'حلويات',
+    bakery: 'مخبزة',
+    
+    // Factory Types
+    manufacturing: 'التصنيع',
+    assembly: 'التجميع',
+    processing: 'المعالجة',
+    
+    // Billing Period Labels
+    billedWeekly: 'تُحسب أسبوعياً',
+    perWeekVatIncluded: 'في الأسبوع (تشمل الضريبة)',
+    
+    // Yes/No Options
+    yes: 'نعم',
+    no: 'لا',
+    
+    // Refund & Policy
+    refundPolicy: 'أوافق على سياسة استرداد الأموال وشروط الخدمة',
+    refundPolicySectionTitle: 'REFUND POLICY / سياسة استرداد الأموال',
+    
     // Messages
     success: 'نجح',
     error: 'خطأ',
@@ -4427,6 +4595,12 @@ export const translations: Record<Language, Translations> = {
     recipeUpdated: 'تم تحديث الوصفة',
     recipeDeleted: 'تم حذف الوصفة',
     addRecipeAsInventoryItem: 'إضافة هذه الوصفة كعنصر مخزون أيضاً',
+    prepTime: 'وقت التحضير',
+    cookTime: 'وقت الطهي',
+    servings: 'عدد الحصص',
+    costPerServing: 'التكلفة لكل حصة',
+    ingredients: 'المكونات',
+    instructions: 'التعليمات',
     employeeCreatedDesc: 'تم إنشاء الموظف بنجاح',
     employeeUpdatedDesc: 'تم تحديث الموظف بنجاح',
     employeeDeletedDesc: 'تم حذف الموظف بنجاح',
@@ -5956,6 +6130,15 @@ export const translations: Record<Language, Translations> = {
     salesThisWeek: 'Sales This Week',
     errorLoadingCustomerOrders: 'Error loading customer orders',
     
+    // Sales
+    salesTracking: 'Sales Tracking',
+    salesDescription: 'View transaction history and summaries',
+    allTime: 'All time',
+    transactions: 'Transactions',
+    totalCount: 'Total count',
+    avgOrderValue: 'Avg. Order Value',
+    perTransaction: 'Per transaction',
+    
     // Inventory
     itemName: 'Item Name',
     category: 'Category',
@@ -6027,22 +6210,27 @@ export const translations: Record<Language, Translations> = {
     ready: 'Ready',
     completed: 'Completed',
     delivered: 'Delivered',
-    cancelled: 'Cancelled',
+    cancelled: 'Abgebrochen',
     
     // Financial
-    revenue: 'Revenue',
-    expenses: 'Expenses',
-    profit: 'Profit',
-    margin: 'Margin',
-    vatReports: 'VAT Reports',
-    zatcaInvoices: 'ZATCA Invoices',
-    invoiceNumber: 'Invoice Number',
-    invoiceDate: 'Invoice Date',
+    financialStatements: 'Finanzberichte',
+    financialDescription: 'Monatliche und jährliche Finanzberichte mit ZATCA-MwSt.-Rechnungen',
+    loadingFinancialData: 'Finanzdaten werden geladen...',
+    invoicesGenerated: 'Rechnungen erstellt',
+    year: 'Jahr',
+    revenue: 'Umsatz',
+    expenses: 'Ausgaben',
+    profit: 'Gewinn',
+    margin: 'Marge',
+    vatReports: 'Mehrwertsteuerberichte',
+    zatcaInvoices: 'ZATCA-Rechnungen',
+    invoiceNumber: 'Rechnungsnummer',
+    invoiceDate: 'Rechnungsdatum',
     
     // Settings
-    restaurantName: 'Restaurant Name',
-    businessNameLabel: 'Business Name According to Commercial Registration',
-    vatNumber: 'VAT Number',
+    restaurantName: 'Restaurantname',
+    businessNameLabel: 'Geschäftsname gemäß Handelsregister',
+    vatNumber: 'Steuernummer',
     email: 'E-Mail',
     phone: 'Telefon',
     address: 'Address',
@@ -6268,6 +6456,44 @@ export const translations: Record<Language, Translations> = {
     businessManagementSystem: 'Geschäftsmanagementsystem',
     vatDisclaimer: 'All prices include 15% VAT as required by Saudi law',
     
+    // Account Type & Login Options
+    accountType: 'Kontotyp',
+    clientAccount: 'Kundenkonto',
+    itAccount: 'IT-Konto',
+    itSignup: 'IT-Registrierung',
+    createItAccount: 'IT-Konto erstellen',
+    secretKey: 'Geheimer Schlüssel',
+    enterSecretKey: 'Geben Sie den geheimen IT-Schlüssel ein',
+    secretKeyHint: 'Wenden Sie sich an Ihren IT-Administrator, um den geheimen Schlüssel zu erhalten',
+    
+    // Business Types
+    restaurantFoodService: 'Restaurant / Lebensmittelservice',
+    factoryManufacturing: 'Fabrik / Herstellung',
+    
+    // Restaurant Types
+    cloudKitchen: 'Cloud-Küche',
+    coffeeShop: 'Coffeeshop',
+    teaShop: 'Teestube',
+    sweets: 'Süßigkeiten',
+    bakery: 'Bäckerei',
+    
+    // Factory Types
+    manufacturing: 'Herstellung',
+    assembly: 'Montage',
+    processing: 'Verarbeitung',
+    
+    // Billing Period Labels
+    billedWeekly: 'Wöchentlich abgerechnet',
+    perWeekVatIncluded: 'pro Woche (MwSt. inbegriffen)',
+    
+    // Yes/No Options
+    yes: 'Ja',
+    no: 'Nein',
+    
+    // Refund & Policy
+    refundPolicy: 'Ich stimme der Rückerstattungsrichtlinie und den Nutzungsbedingungen zu',
+    refundPolicySectionTitle: 'RÜCKGABERICHTLINIE / سياسة استرداد الأموال',
+    
     // Messages
     success: 'Erfolg',
     error: 'Fehler',
@@ -6297,6 +6523,12 @@ export const translations: Record<Language, Translations> = {
     recipeUpdated: 'Recipe updated',
     recipeDeleted: 'Recipe deleted',
     addRecipeAsInventoryItem: 'Dieses Rezept auch als Lagerartikel hinzufügen',
+    prepTime: 'Zubereitungszeit',
+    cookTime: 'Kochzeit',
+    servings: 'Portionen',
+    costPerServing: 'Kosten pro Portion',
+    ingredients: 'Zutaten',
+    instructions: 'Anweisungen',
     employeeCreatedDesc: 'The employee has been created successfully',
     employeeUpdatedDesc: 'The employee has been updated successfully',
     employeeDeletedDesc: 'The employee has been deleted successfully',
@@ -7808,6 +8040,15 @@ export const translations: Record<Language, Translations> = {
     salesThisWeek: 'Sales This Week',
     errorLoadingCustomerOrders: 'Error loading customer orders',
     
+    // Sales
+    salesTracking: 'Sales Tracking',
+    salesDescription: 'View transaction history and summaries',
+    allTime: 'All time',
+    transactions: 'Transactions',
+    totalCount: 'Total count',
+    avgOrderValue: 'Avg. Order Value',
+    perTransaction: 'Per transaction',
+    
     // Inventory
     itemName: 'Item Name',
     category: 'Category',
@@ -7879,22 +8120,27 @@ export const translations: Record<Language, Translations> = {
     ready: 'Ready',
     completed: 'Completed',
     delivered: 'Delivered',
-    cancelled: 'Cancelled',
+    cancelled: '已取消',
     
     // Financial
-    revenue: 'Revenue',
-    expenses: 'Expenses',
-    profit: 'Profit',
-    margin: 'Margin',
-    vatReports: 'VAT Reports',
-    zatcaInvoices: 'ZATCA Invoices',
-    invoiceNumber: 'Invoice Number',
-    invoiceDate: 'Invoice Date',
+    financialStatements: '财务报表',
+    financialDescription: '带有 ZATCA 增值税发票的月度和年度财务报告',
+    loadingFinancialData: '正在加载财务数据...',
+    invoicesGenerated: '已生成发票',
+    year: '年份',
+    revenue: '收入',
+    expenses: '支出',
+    profit: '利润',
+    margin: '利润率',
+    vatReports: '增值税报告',
+    zatcaInvoices: 'ZATCA 发票',
+    invoiceNumber: '发票号码',
+    invoiceDate: '发票日期',
     
     // Settings
-    restaurantName: 'Restaurant Name',
-    businessNameLabel: 'Business Name According to Commercial Registration',
-    vatNumber: 'VAT Number',
+    restaurantName: '餐厅名称',
+    businessNameLabel: '商业登记名称',
+    vatNumber: '增值税号',
     email: '邮箱',
     phone: '电话',
     address: 'Address',
@@ -8120,6 +8366,44 @@ export const translations: Record<Language, Translations> = {
     businessManagementSystem: '企业管理系统',
     vatDisclaimer: 'All prices include 15% VAT as required by Saudi law',
     
+    // Account Type & Login Options
+    accountType: '账户类型',
+    clientAccount: '客户账户',
+    itAccount: 'IT账户',
+    itSignup: 'IT注册',
+    createItAccount: '创建IT账户',
+    secretKey: '密钥',
+    enterSecretKey: '输入IT密钥',
+    secretKeyHint: '请联系您的IT管理员获取密钥',
+    
+    // Business Types
+    restaurantFoodService: '餐厅/食品服务',
+    factoryManufacturing: '工厂/制造',
+    
+    // Restaurant Types
+    cloudKitchen: '云厨房',
+    coffeeShop: '咖啡店',
+    teaShop: '茶馆',
+    sweets: '糖果',
+    bakery: '面包店',
+    
+    // Factory Types
+    manufacturing: '制造',
+    assembly: '组装',
+    processing: '处理',
+    
+    // Billing Period Labels
+    billedWeekly: '按周计费',
+    perWeekVatIncluded: '每周（含税）',
+    
+    // Yes/No Options
+    yes: '是',
+    no: '否',
+    
+    // Refund & Policy
+    refundPolicy: '我同意退款政策和服务条款',
+    refundPolicySectionTitle: 'REFUND POLICY / سياسة استرداد الأموال',
+    
     // Messages
     success: '成功',
     error: '错误',
@@ -8149,6 +8433,12 @@ export const translations: Record<Language, Translations> = {
     recipeUpdated: 'Recipe updated',
     recipeDeleted: 'Recipe deleted',
     addRecipeAsInventoryItem: '同时将此配方添加为库存项目',
+    prepTime: '准备时间',
+    cookTime: '烹饪时间',
+    servings: '份量',
+    costPerServing: '每份成本',
+    ingredients: '配料',
+    instructions: '说明',
     employeeCreatedDesc: 'The employee has been created successfully',
     employeeUpdatedDesc: 'The employee has been updated successfully',
     employeeDeletedDesc: 'The employee has been deleted successfully',
@@ -9660,6 +9950,15 @@ export const translations: Record<Language, Translations> = {
     salesThisWeek: 'Sales This Week',
     errorLoadingCustomerOrders: 'Error loading customer orders',
     
+    // Sales
+    salesTracking: 'Sales Tracking',
+    salesDescription: 'View transaction history and summaries',
+    allTime: 'All time',
+    transactions: 'Transactions',
+    totalCount: 'Total count',
+    avgOrderValue: 'Avg. Order Value',
+    perTransaction: 'Per transaction',
+    
     // Inventory
     itemName: 'Item Name',
     category: 'Category',
@@ -9731,22 +10030,27 @@ export const translations: Record<Language, Translations> = {
     ready: 'Ready',
     completed: 'Completed',
     delivered: 'Delivered',
-    cancelled: 'Cancelled',
+    cancelled: 'বাতিল',
     
     // Financial
-    revenue: 'Revenue',
-    expenses: 'Expenses',
-    profit: 'Profit',
-    margin: 'Margin',
-    vatReports: 'VAT Reports',
-    zatcaInvoices: 'ZATCA Invoices',
-    invoiceNumber: 'Invoice Number',
-    invoiceDate: 'Invoice Date',
+    financialStatements: 'আর্থিক বিবৃতি',
+    financialDescription: 'ZATCA ভ্যাট ইনভয়েস সহ মাসিক এবং বার্ষিক আর্থিক প্রতিবেদন',
+    loadingFinancialData: 'আর্থিক ডেটা লোড হচ্ছে...',
+    invoicesGenerated: 'উত্পাদিত চালান',
+    year: 'বছর',
+    revenue: 'রাজস্ব',
+    expenses: 'খরচ',
+    profit: 'মুনাফা',
+    margin: 'মার্জিন',
+    vatReports: 'ভ্যাট রিপোর্ট',
+    zatcaInvoices: 'ZATCA চালান',
+    invoiceNumber: 'চালান নম্বর',
+    invoiceDate: 'চালান তারিখ',
     
     // Settings
-    restaurantName: 'Restaurant Name',
-    businessNameLabel: 'Business Name According to Commercial Registration',
-    vatNumber: 'VAT Number',
+    restaurantName: 'রেস্তোরাঁর নাম',
+    businessNameLabel: 'বাণিজ্যিক নিবন্ধন অনুযায়ী ব্যবসার নাম',
+    vatNumber: 'ভ্যাট নম্বর',
     email: 'ইমেইল',
     phone: 'ফোন',
     address: 'Address',
@@ -9972,6 +10276,44 @@ export const translations: Record<Language, Translations> = {
     businessManagementSystem: 'ব্যবসা ব্যবস্থাপনা সিস্টেম',
     vatDisclaimer: 'All prices include 15% VAT as required by Saudi law',
     
+    // Account Type & Login Options
+    accountType: 'অ্যাকাউন্ট ধরন',
+    clientAccount: 'ক্লায়েন্ট অ্যাকাউন্ট',
+    itAccount: 'আইটি অ্যাকাউন্ট',
+    itSignup: 'আইটি সাইনআপ',
+    createItAccount: 'আইটি অ্যাকাউন্ট তৈরি করুন',
+    secretKey: 'গোপন চাবি',
+    enterSecretKey: 'আইটি গোপন চাবি প্রবেশ করুন',
+    secretKeyHint: 'গোপন চাবির জন্য আপনার আইটি প্রশাসকের সাথে যোগাযোগ করুন',
+    
+    // Business Types
+    restaurantFoodService: 'রেস্তোরাঁ / খাদ্য সেবা',
+    factoryManufacturing: 'কারখানা / উৎপাদন',
+    
+    // Restaurant Types
+    cloudKitchen: 'ক্লাউড রসোই',
+    coffeeShop: 'কফি শপ',
+    teaShop: 'চা দোকান',
+    sweets: 'মিষ্টি',
+    bakery: 'বেকারি',
+    
+    // Factory Types
+    manufacturing: 'উৎপাদন',
+    assembly: 'সমাবেশ',
+    processing: 'প্রক্রিয়াকরণ',
+    
+    // Billing Period Labels
+    billedWeekly: 'সাপ্তাহিক বিলিং',
+    perWeekVatIncluded: 'প্রতি সপ্তাহে (ভ্যাট অন্তর্ভুক্ত)',
+    
+    // Yes/No Options
+    yes: 'হ্যাঁ',
+    no: 'না',
+    
+    // Refund & Policy
+    refundPolicy: 'আমি রিফান্ড নীতি এবং সেবার শর্তাবলী স্বীকার করি',
+    refundPolicySectionTitle: 'REFUND POLICY / سياسة استرداد الأموال',
+    
     // Messages
     success: 'সফল',
     error: 'ত্রুটি',
@@ -10001,6 +10343,12 @@ export const translations: Record<Language, Translations> = {
     recipeUpdated: 'Recipe updated',
     recipeDeleted: 'Recipe deleted',
     addRecipeAsInventoryItem: 'এই রেসিপিটি ইনভেন্টরি আইটেম হিসাবেও যোগ করুন',
+    prepTime: 'প্রস্তুতির সময়',
+    cookTime: 'রান্নার সময়',
+    servings: 'সার্ভিং',
+    costPerServing: 'প্রতি সার্ভিংয়ের খরচ',
+    ingredients: 'উপাদান',
+    instructions: 'নির্দেশাবলী',
     employeeCreatedDesc: 'The employee has been created successfully',
     employeeUpdatedDesc: 'The employee has been updated successfully',
     employeeDeletedDesc: 'The employee has been deleted successfully',
@@ -11512,6 +11860,15 @@ export const translations: Record<Language, Translations> = {
     salesThisWeek: 'Sales This Week',
     errorLoadingCustomerOrders: 'Error loading customer orders',
     
+    // Sales
+    salesTracking: 'Sales Tracking',
+    salesDescription: 'View transaction history and summaries',
+    allTime: 'All time',
+    transactions: 'Transactions',
+    totalCount: 'Total count',
+    avgOrderValue: 'Avg. Order Value',
+    perTransaction: 'Per transaction',
+    
     // Inventory
     itemName: 'Item Name',
     category: 'Category',
@@ -11583,22 +11940,27 @@ export const translations: Record<Language, Translations> = {
     ready: 'Ready',
     completed: 'Completed',
     delivered: 'Delivered',
-    cancelled: 'Cancelled',
+    cancelled: 'Annullato',
     
     // Financial
-    revenue: 'Revenue',
-    expenses: 'Expenses',
-    profit: 'Profit',
-    margin: 'Margin',
-    vatReports: 'VAT Reports',
-    zatcaInvoices: 'ZATCA Invoices',
-    invoiceNumber: 'Invoice Number',
-    invoiceDate: 'Invoice Date',
+    financialStatements: 'Rendiconti finanziari',
+    financialDescription: 'Rapporti finanziari mensili e annuali con fatture IVA ZATCA',
+    loadingFinancialData: 'Caricamento dati finanziari in corso...',
+    invoicesGenerated: 'Fatture generate',
+    year: 'Anno',
+    revenue: 'Entrate',
+    expenses: 'Spese',
+    profit: 'Profitto',
+    margin: 'Margine',
+    vatReports: 'Rapporti IVA',
+    zatcaInvoices: 'Fatture ZATCA',
+    invoiceNumber: 'Numero fattura',
+    invoiceDate: 'Data fattura',
     
     // Settings
-    restaurantName: 'Restaurant Name',
-    businessNameLabel: 'Business Name According to Commercial Registration',
-    vatNumber: 'VAT Number',
+    restaurantName: 'Nome ristorante',
+    businessNameLabel: 'Nome aziendale secondo il Registro commerciale',
+    vatNumber: 'Numero IVA',
     email: 'Email',
     phone: 'Telefono',
     address: 'Address',
@@ -11824,6 +12186,44 @@ export const translations: Record<Language, Translations> = {
     businessManagementSystem: 'Sistema di Gestione Aziendale',
     vatDisclaimer: 'All prices include 15% VAT as required by Saudi law',
     
+    // Account Type & Login Options
+    accountType: 'Tipo di Account',
+    clientAccount: 'Account Cliente',
+    itAccount: 'Account IT',
+    itSignup: 'Registrazione IT',
+    createItAccount: 'Crea Account IT',
+    secretKey: 'Chiave Segreta',
+    enterSecretKey: 'Inserisci la chiave segreta IT',
+    secretKeyHint: 'Contatta il tuo amministratore IT per la chiave segreta',
+    
+    // Business Types
+    restaurantFoodService: 'Ristorante / Servizio Ristorazione',
+    factoryManufacturing: 'Fabbrica / Produzione',
+    
+    // Restaurant Types
+    cloudKitchen: 'Cucina Cloud',
+    coffeeShop: 'Bar Caffè',
+    teaShop: 'Sala da Tè',
+    sweets: 'Dolciumi',
+    bakery: 'Panificio',
+    
+    // Factory Types
+    manufacturing: 'Produzione',
+    assembly: 'Montaggio',
+    processing: 'Lavorazione',
+    
+    // Billing Period Labels
+    billedWeekly: 'Fatturato settimanalmente',
+    perWeekVatIncluded: 'a settimana (IVA inclusa)',
+    
+    // Yes/No Options
+    yes: 'Sì',
+    no: 'No',
+    
+    // Refund & Policy
+    refundPolicy: 'Accetto la politica di rimborso e i termini di servizio',
+    refundPolicySectionTitle: 'POLITICA DI RIMBORSO / سياسة استرداد الأموال',
+    
     // Messages
     success: 'Successo',
     error: 'Errore',
@@ -11853,6 +12253,12 @@ export const translations: Record<Language, Translations> = {
     recipeUpdated: 'Recipe updated',
     recipeDeleted: 'Recipe deleted',
     addRecipeAsInventoryItem: 'Aggiungi anche questa ricetta come articolo di inventario',
+    prepTime: 'Tempo di preparazione',
+    cookTime: 'Tempo di cottura',
+    servings: 'Porzioni',
+    costPerServing: 'Costo per porzione',
+    ingredients: 'Ingredienti',
+    instructions: 'Istruzioni',
     employeeCreatedDesc: 'The employee has been created successfully',
     employeeUpdatedDesc: 'The employee has been updated successfully',
     employeeDeletedDesc: 'The employee has been deleted successfully',
@@ -13365,6 +13771,15 @@ export const translations: Record<Language, Translations> = {
     salesThisWeek: 'इस सप्ताह की बिक्री',
     errorLoadingCustomerOrders: 'ग्राहक ऑर्डर लोड करने में त्रुटि',
     
+    // Sales
+    salesTracking: 'बिक्री ट्रैकिंग',
+    salesDescription: 'लेनदेन इतिहास और सारांश देखें',
+    allTime: 'सभी समय',
+    transactions: 'लेनदेन',
+    totalCount: 'कुल गिनती',
+    avgOrderValue: 'औसत ऑर्डर मूल्य',
+    perTransaction: 'प्रति लेनदेन',
+    
     // Inventory
     itemName: 'आइटम का नाम',
     category: 'श्रेणी',
@@ -13427,6 +13842,11 @@ export const translations: Record<Language, Translations> = {
     cancelled: 'रद्द',
     
     // Financial
+    financialStatements: 'वित्तीय विवरण',
+    financialDescription: 'ZATCA VAT चालानों के साथ मासिक और वार्षिक वित्तीय रिपोर्ट',
+    loadingFinancialData: 'वित्तीय डेटा लोड हो रहा है...',
+    invoicesGenerated: 'चालान उत्पन्न',
+    year: 'साल',
     revenue: 'राजस्व',
     expenses: 'व्यय',
     profit: 'लाभ',
@@ -13665,6 +14085,44 @@ export const translations: Record<Language, Translations> = {
     businessManagementSystem: 'व्यवसाय प्रबंधन प्रणाली',
     vatDisclaimer: 'सभी कीमतों में सऊदी कानून के अनुसार 15% वैट शामिल है',
     
+    // Account Type & Login Options
+    accountType: 'खाता प्रकार',
+    clientAccount: 'क्लायंट खाता',
+    itAccount: 'आईटी खाता',
+    itSignup: 'आईटी साइन अप',
+    createItAccount: 'आईटी खाता बनाएं',
+    secretKey: 'गुप्त कुंजी',
+    enterSecretKey: 'आईटी गुप्त कुंजी दर्ज करें',
+    secretKeyHint: 'गुप्त कुंजी के लिए अपने आईटी प्रशासक से संपर्क करें',
+    
+    // Business Types
+    restaurantFoodService: 'रेस्तरां / खाद्य सेवा',
+    factoryManufacturing: 'कारखाना / निर्माण',
+    
+    // Restaurant Types
+    cloudKitchen: 'क्लाउड रसोई',
+    coffeeShop: 'कॉफी की दुकान',
+    teaShop: 'चाय की दुकान',
+    sweets: 'मिठाई',
+    bakery: 'बेकरी',
+    
+    // Factory Types
+    manufacturing: 'निर्माण',
+    assembly: 'असेंबली',
+    processing: 'प्रसंस्करण',
+    
+    // Billing Period Labels
+    billedWeekly: 'साप्ताहिक बिलिंग',
+    perWeekVatIncluded: 'प्रति सप्ताह (वैट शामिल)',
+    
+    // Yes/No Options
+    yes: 'हाँ',
+    no: 'नहीं',
+    
+    // Refund & Policy
+    refundPolicy: 'मैं रिफंड नीति और सेवा की शर्तों से सहमत हूं',
+    refundPolicySectionTitle: 'REFUND POLICY / سياسة استرداد الأموال',
+    
     // Messages
     success: 'सफलता',
     error: 'त्रुटि',
@@ -13694,6 +14152,12 @@ export const translations: Record<Language, Translations> = {
     recipeUpdated: 'व्यंजन विधि अपडेट की गई',
     recipeDeleted: 'व्यंजन विधि हटाई गई',
     addRecipeAsInventoryItem: 'इस रेसिपी को इन्वेंटरी आइटम के रूप में भी जोड़ें',
+    prepTime: 'तैयारी का समय',
+    cookTime: 'पकाने का समय',
+    servings: 'सर्विंग्स',
+    costPerServing: 'प्रति सर्विंग लागत',
+    ingredients: 'सामग्री',
+    instructions: 'निर्देश',
     employeeCreatedDesc: 'कर्मचारी सफलतापूर्वक बनाया गया है',
     employeeUpdatedDesc: 'कर्मचारी सफलतापूर्वक अपडेट किया गया है',
     employeeDeletedDesc: 'कर्मचारी सफलतापूर्वक हटाया गया है',
@@ -15161,6 +15625,15 @@ export const translations: Record<Language, Translations> = {
     salesThisWeek: 'اس ہفتے کی فروخت',
     errorLoadingCustomerOrders: 'کسٹمر آرڈرز لوڈ کرنے میں خرابی',
     
+    // Sales
+    salesTracking: 'فروخت کی نگرانی',
+    salesDescription: 'ٹرانزیکشن ہسٹری اور خلاصے دیکھیں',
+    allTime: 'ہمیشہ',
+    transactions: 'ٹرانزیکشن',
+    totalCount: 'کل تعداد',
+    avgOrderValue: 'اوسط آرڈر قیمت',
+    perTransaction: 'فی ٹرانزیکشن',
+    
     // Inventory
     itemName: 'آئٹم کا نام',
     category: 'زمرہ',
@@ -15223,6 +15696,11 @@ export const translations: Record<Language, Translations> = {
     cancelled: 'منسوخ',
     
     // Financial
+    financialStatements: 'مالیاتی بیانات',
+    financialDescription: 'ZATCA ویٹ انوائسز کے ساتھ ماہانہ اور سالانہ مالیاتی رپورٹیں',
+    loadingFinancialData: 'مالیاتی ڈیٹا لوڈ ہو رہا ہے...',
+    invoicesGenerated: 'انوائسز تیار',
+    year: 'سال',
     revenue: 'آمدنی',
     expenses: 'اخراجات',
     profit: 'منافع',
@@ -15461,6 +15939,44 @@ export const translations: Record<Language, Translations> = {
     businessManagementSystem: 'کاروباری انتظامی نظام',
     vatDisclaimer: 'تمام قیمتوں میں سعودی قانون کے مطابق 15% VAT شامل ہے',
     
+    // Account Type & Login Options
+    accountType: 'اکاؤنٹ کی قسم',
+    clientAccount: 'کلائنٹ اکاؤنٹ',
+    itAccount: 'آئی ٹی اکاؤنٹ',
+    itSignup: 'آئی ٹی سائن اپ',
+    createItAccount: 'آئی ٹی اکاؤنٹ بنائیں',
+    secretKey: 'خفیہ کلید',
+    enterSecretKey: 'آئی ٹی خفیہ کلید درج کریں',
+    secretKeyHint: 'خفیہ کلید کے لیے اپنے آئی ٹی منتظم سے رابطہ کریں',
+    
+    // Business Types
+    restaurantFoodService: 'ریستوراں / کھانے کی خدمت',
+    factoryManufacturing: 'فیکٹری / مینوفیکچرنگ',
+    
+    // Restaurant Types
+    cloudKitchen: 'کلاؤڈ رسوئی',
+    coffeeShop: 'کافی شاپ',
+    teaShop: 'چائے کی دکان',
+    sweets: 'مٹھائی',
+    bakery: 'بیکری',
+    
+    // Factory Types
+    manufacturing: 'مینوفیکچرنگ',
+    assembly: 'اسمبلی',
+    processing: 'پروسیسنگ',
+    
+    // Billing Period Labels
+    billedWeekly: 'ہفتہ وار بل کاری',
+    perWeekVatIncluded: 'فی ہفتہ (ویٹ شامل)',
+    
+    // Yes/No Options
+    yes: 'جی',
+    no: 'نہیں',
+    
+    // Refund & Policy
+    refundPolicy: 'میں رقم واپسی کی پالیسی اور سروس کی شرائط سے متفق ہوں',
+    refundPolicySectionTitle: 'REFUND POLICY / سياسة استرداد الأموال',
+    
     // Messages
     success: 'کامیابی',
     error: 'خرابی',
@@ -15490,6 +16006,12 @@ export const translations: Record<Language, Translations> = {
     recipeUpdated: 'ترکیب اپ ڈیٹ کی گئی',
     recipeDeleted: 'ترکیب حذف کی گئی',
     addRecipeAsInventoryItem: 'اس ترکیب کو انوینٹری آئٹم کے طور پر بھی شامل کریں',
+    prepTime: 'تیاری کا وقت',
+    cookTime: 'کھانا پکانے کا وقت',
+    servings: 'سرونگ',
+    costPerServing: 'فی سرونگ لاگت',
+    ingredients: 'اجزاء',
+    instructions: 'ہدایات',
     employeeCreatedDesc: 'ملازم کامیابی سے بنایا گیا ہے',
     employeeUpdatedDesc: 'ملازم کامیابی سے اپ ڈیٹ کیا گیا ہے',
     employeeDeletedDesc: 'ملازم کامیابی سے حذف کیا گیا ہے',
@@ -16992,12 +17514,19 @@ export const translations: Record<Language, Translations> = {
     completed: "Completado",
     delivered: "Entregado",
     cancelled: "Cancelado",
+    
+    // Financial
+    financialStatements: 'Estados financieros',
+    financialDescription: 'Informes financieros mensuales y anuales con facturas de IVA ZATCA',
+    loadingFinancialData: 'Cargando datos financieros...',
+    invoicesGenerated: 'Facturas generadas',
+    year: 'Año',
     revenue: "Ingresos",
-    expenses: "Expenses",
+    expenses: "Gastos",
     profit: "Ganancia",
-    margin: "Margin",
-    vatReports: "VAT Reports",
-    zatcaInvoices: "ZATCA Invoices",
+    margin: "Margen",
+    vatReports: "Reportes de IVA",
+    zatcaInvoices: "Facturas ZATCA",
     invoiceNumber: "Número de Factura",
     invoiceDate: "Fecha de Factura",
     restaurantName: "Nombre del Restaurante",
@@ -17211,6 +17740,45 @@ export const translations: Record<Language, Translations> = {
     restaurantManagementSystem: "Restaurant management system",
     businessManagementSystem: "Business Management System",
     vatDisclaimer: "All prices include 15% VAT as required by Saudi law",
+    
+    // Account Type & Login Options
+    accountType: "Tipo de Cuenta",
+    clientAccount: "Cuenta de Cliente",
+    itAccount: "Cuenta de TI",
+    itSignup: "Registro de TI",
+    createItAccount: "Crear Cuenta de TI",
+    secretKey: "Clave Secreta",
+    enterSecretKey: "Ingrese la Clave Secreta de TI",
+    secretKeyHint: "Comuníquese con su Administrador de TI para obtener la clave secreta",
+    
+    // Business Types
+    restaurantFoodService: "Restaurante / Servicio de Alimentos",
+    factoryManufacturing: "Fábrica / Manufactura",
+    
+    // Restaurant Types
+    cloudKitchen: "Cocina en la Nube",
+    coffeeShop: "Cafetería",
+    teaShop: "Salón de Té",
+    sweets: "Dulces",
+    bakery: "Panadería",
+    
+    // Factory Types
+    manufacturing: "Manufactura",
+    assembly: "Ensamblaje",
+    processing: "Procesamiento",
+    
+    // Billing Period Labels
+    billedWeekly: "Facturación Semanal",
+    perWeekVatIncluded: "por semana (IVA incluido)",
+    
+    // Yes/No Options
+    yes: "Sí",
+    no: "No",
+    
+    // Refund & Policy
+    refundPolicy: "Acepto la Política de Reembolso y los Términos de Servicio",
+    refundPolicySectionTitle: "REFUND POLICY / سياسة استرداد الأموال",
+    
     success: "Success",
     error: "Error",
     confirmDelete: "¿Estás seguro de que quieres eliminar?",
@@ -17239,6 +17807,12 @@ export const translations: Record<Language, Translations> = {
     recipeUpdated: "Recipe updated",
     recipeDeleted: "Recipe deleted",
     addRecipeAsInventoryItem: "También agregar esta receta como artículo de inventario",
+    prepTime: "Tiempo de preparación",
+    cookTime: "Tiempo de cocción",
+    servings: "Porciones",
+    costPerServing: "Costo por porción",
+    ingredients: "Ingredientes",
+    instructions: "Instrucciones",
     employeeCreatedDesc: "The employee has been created successfully",
     employeeUpdatedDesc: "The employee has been updated successfully",
     employeeDeletedDesc: "The employee has been deleted successfully",
@@ -18725,14 +19299,21 @@ export const translations: Record<Language, Translations> = {
     completed: "Nakumpleto",
     delivered: "Naideliver",
     cancelled: "Kinansela",
+    
+    // Financial
+    financialStatements: 'Mga Pahayag sa Pananalapi',
+    financialDescription: 'Buwanang at taunang ulat sa pananalapi kasama ang mga ZATCA VAT invoice',
+    loadingFinancialData: 'Nagkakarga ng financial data...',
+    invoicesGenerated: 'Mga Invoice na Nabuo',
+    year: 'Taon',
     revenue: "Kita",
-    expenses: "Expenses",
+    expenses: "Gastos",
     profit: "Tubo",
     margin: "Margin",
-    vatReports: "VAT Reports",
-    zatcaInvoices: "ZATCA Invoices",
-    invoiceNumber: "Numero ng Resibo",
-    invoiceDate: "Petsa ng Resibo",
+    vatReports: "Mga VAT Report",
+    zatcaInvoices: "Mga ZATCA Invoice",
+    invoiceNumber: "Numero ng Invoice",
+    invoiceDate: "Petsa ng Invoice",
     restaurantName: "Pangalan ng Restaurant",
     businessNameLabel: "Pangalan ng Negosyo Ayon sa Komersyal na Rehistrasyon",
     vatNumber: "Numero ng VAT",
@@ -18944,6 +19525,45 @@ export const translations: Record<Language, Translations> = {
     restaurantManagementSystem: "Restaurant management system",
     businessManagementSystem: "Business Management System",
     vatDisclaimer: "All prices include 15% VAT as required by Saudi law",
+    
+    // Account Type & Login Options
+    accountType: "Uri ng Account",
+    clientAccount: "Client Account",
+    itAccount: "IT Account",
+    itSignup: "IT Signup",
+    createItAccount: "Lumikha ng IT Account",
+    secretKey: "Secret Key",
+    enterSecretKey: "Ipasok ang IT Secret Key",
+    secretKeyHint: "Makipag-ugnayan sa iyong IT Administrator para sa secret key",
+    
+    // Business Types
+    restaurantFoodService: "Restaurant / Food Service",
+    factoryManufacturing: "Factory / Manufacturing",
+    
+    // Restaurant Types
+    cloudKitchen: "Cloud Kitchen",
+    coffeeShop: "Coffee Shop",
+    teaShop: "Tea Shop",
+    sweets: "Sweets",
+    bakery: "Bakery",
+    
+    // Factory Types
+    manufacturing: "Manufacturing",
+    assembly: "Assembly",
+    processing: "Processing",
+    
+    // Billing Period Labels
+    billedWeekly: "Weekly Billing",
+    perWeekVatIncluded: "per week (VAT included)",
+    
+    // Yes/No Options
+    yes: "Oo",
+    no: "Hindi",
+    
+    // Refund & Policy
+    refundPolicy: "Sumusunod ako sa Refund Policy at Terms of Service",
+    refundPolicySectionTitle: "REFUND POLICY / سياسة استرداد الأموال",
+    
     success: "Success",
     error: "Error",
     confirmDelete: "Sigurado ka bang gusto mong tanggalin?",
@@ -18972,6 +19592,12 @@ export const translations: Record<Language, Translations> = {
     recipeUpdated: "Recipe updated",
     recipeDeleted: "Recipe deleted",
     addRecipeAsInventoryItem: "Idagdag din ang recipe na ito bilang inventory item",
+    prepTime: "Panahon ng Paghahanda",
+    cookTime: "Panahon ng Pagluluto",
+    servings: "Serbisyo",
+    costPerServing: "Gastos bawat Serbisyo",
+    ingredients: "Sangkap",
+    instructions: "Mga Tagubilin",
     employeeCreatedDesc: "The employee has been created successfully",
     employeeUpdatedDesc: "The employee has been updated successfully",
     employeeDeletedDesc: "The employee has been deleted successfully",

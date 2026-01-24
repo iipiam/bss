@@ -190,8 +190,8 @@ export default function Financial() {
   if (financialLoading || invoicesLoading || billsLoading || inventoryLoading || deliveryLoading || bepLoading) {
     return (
       <div className="p-8">
-        <h1 className="text-3xl font-bold mb-2">Financial Statements</h1>
-        <p className="text-muted-foreground">Loading financial data...</p>
+        <h1 className="text-3xl font-bold mb-2">{t.financialStatements}</h1>
+        <p className="text-muted-foreground">{t.loadingFinancialData}</p>
       </div>
     );
   }
@@ -436,8 +436,8 @@ export default function Financial() {
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Financial Statements</h1>
-          <p className="text-muted-foreground">Monthly and yearly financial reports with ZATCA VAT invoices</p>
+          <h1 className="text-3xl font-bold mb-2">{t.financialStatements}</h1>
+          <p className="text-muted-foreground">{t.financialDescription}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExport} data-testid="button-export-excel">
@@ -465,12 +465,12 @@ export default function Financial() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.totalRevenue}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono">{parseFloat(yearlyData.revenue).toFixed(2)} SAR</div>
-            <p className="text-xs text-muted-foreground">Year {selectedYear}</p>
+            <p className="text-xs text-muted-foreground">{t.year} {selectedYear}</p>
           </CardContent>
         </Card>
 
@@ -487,18 +487,18 @@ export default function Financial() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Transactions</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.transactions}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono">{yearlyData.transactions}</div>
-            <p className="text-xs text-muted-foreground">Total sales</p>
+            <p className="text-xs text-muted-foreground">{t.totalSales}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Invoices Generated</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.invoicesGenerated}</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -510,9 +510,9 @@ export default function Financial() {
 
       <Tabs defaultValue="statements" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="statements" data-testid="tab-statements">Financial Statements</TabsTrigger>
-          <TabsTrigger value="expenses" data-testid="tab-expenses">Expenses</TabsTrigger>
-          <TabsTrigger value="invoices" data-testid="tab-invoices">ZATCA Invoices</TabsTrigger>
+          <TabsTrigger value="statements" data-testid="tab-statements">{t.financialStatements}</TabsTrigger>
+          <TabsTrigger value="expenses" data-testid="tab-expenses">{t.expenses}</TabsTrigger>
+          <TabsTrigger value="invoices" data-testid="tab-invoices">{t.zatcaInvoices}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="statements" className="space-y-4">

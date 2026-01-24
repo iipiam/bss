@@ -106,8 +106,8 @@ export default function Sales() {
   if (isLoading) {
     return (
       <div className="p-8">
-        <h1 className="text-3xl font-bold mb-2">Sales Tracking</h1>
-        <p className="text-muted-foreground">Loading...</p>
+        <h1 className="text-3xl font-bold mb-2">{t.salesTracking}</h1>
+        <p className="text-muted-foreground">{t.loading}</p>
       </div>
     );
   }
@@ -116,8 +116,8 @@ export default function Sales() {
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Sales Tracking</h1>
-          <p className="text-muted-foreground">View transaction history and summaries</p>
+          <h1 className="text-3xl font-bold mb-2">{t.salesTracking}</h1>
+          <p className="text-muted-foreground">{t.salesDescription}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleExportPDF} data-testid="button-export-pdf">
@@ -134,29 +134,29 @@ export default function Sales() {
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Sales</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t.totalSales}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold font-mono">{todaysSales.toFixed(2)} SAR</p>
-            <p className="text-sm text-green-600 mt-2">All time</p>
+            <p className="text-sm text-green-600 mt-2">{t.allTime}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Transactions</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t.transactions}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold font-mono">{transactions.length}</p>
-            <p className="text-sm text-muted-foreground mt-2">Total count</p>
+            <p className="text-sm text-muted-foreground mt-2">{t.totalCount}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Order Value</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t.avgOrderValue}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold font-mono">{avgOrderValue.toFixed(2)} SAR</p>
-            <p className="text-sm text-muted-foreground mt-2">Per transaction</p>
+            <p className="text-sm text-muted-foreground mt-2">{t.perTransaction}</p>
           </CardContent>
         </Card>
       </div>

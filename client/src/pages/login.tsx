@@ -545,7 +545,7 @@ export default function Login() {
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="login" data-testid="tab-login">{t.login}</TabsTrigger>
               <TabsTrigger value="signup" data-testid="tab-signup">{t.signup}</TabsTrigger>
-              <TabsTrigger value="it-signup" data-testid="tab-it-signup">IT Signup</TabsTrigger>
+              <TabsTrigger value="it-signup" data-testid="tab-it-signup">{t.itSignup}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login" className="space-y-5 pt-2">
@@ -577,7 +577,7 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Account Type</Label>
+                  <Label className="text-sm font-medium">{t.accountType}</Label>
                   <RadioGroup
                     value={accountType}
                     onValueChange={(value: "client" | "it") => setAccountType(value)}
@@ -587,13 +587,13 @@ export default function Login() {
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="client" id="account-client" data-testid="radio-account-client" />
                       <Label htmlFor="account-client" className="font-normal cursor-pointer">
-                        Client Account
+                        {t.clientAccount}
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="it" id="account-it" data-testid="radio-account-it" />
                       <Label htmlFor="account-it" className="font-normal cursor-pointer">
-                        IT Account
+                        {t.itAccount}
                       </Label>
                     </div>
                   </RadioGroup>
@@ -742,8 +742,8 @@ export default function Login() {
                       <SelectValue placeholder={t.selectBusinessTypePlaceholder} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="restaurant">Restaurant / Food Service</SelectItem>
-                      <SelectItem value="factory">Factory / Manufacturing</SelectItem>
+                      <SelectItem value="restaurant">{t.restaurantFoodService}</SelectItem>
+                      <SelectItem value="factory">{t.factoryManufacturing}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -763,19 +763,19 @@ export default function Login() {
                       <SelectContent>
                         {signupBusinessType === "restaurant" ? (
                           <>
-                            <SelectItem value="Cloud Kitchen">Cloud Kitchen</SelectItem>
-                            <SelectItem value="Restaurant">Restaurant</SelectItem>
-                            <SelectItem value="Coffee Shop">Coffee Shop</SelectItem>
-                            <SelectItem value="Tea Shop">Tea Shop</SelectItem>
-                            <SelectItem value="Sweets">Sweets</SelectItem>
-                            <SelectItem value="Bakery">Bakery</SelectItem>
+                            <SelectItem value="Cloud Kitchen">{t.cloudKitchen}</SelectItem>
+                            <SelectItem value="Restaurant">{t.restaurant || "Restaurant"}</SelectItem>
+                            <SelectItem value="Coffee Shop">{t.coffeeShop}</SelectItem>
+                            <SelectItem value="Tea Shop">{t.teaShop}</SelectItem>
+                            <SelectItem value="Sweets">{t.sweets}</SelectItem>
+                            <SelectItem value="Bakery">{t.bakery}</SelectItem>
                           </>
                         ) : (
                           <>
-                            <SelectItem value="Manufacturing">Manufacturing</SelectItem>
-                            <SelectItem value="Production">Production</SelectItem>
-                            <SelectItem value="Assembly">Assembly</SelectItem>
-                            <SelectItem value="Processing">Processing</SelectItem>
+                            <SelectItem value="Manufacturing">{t.manufacturing}</SelectItem>
+                            <SelectItem value="Production">{t.processing}</SelectItem>
+                            <SelectItem value="Assembly">{t.assembly}</SelectItem>
+                            <SelectItem value="Processing">{t.processing}</SelectItem>
                           </>
                         )}
                       </SelectContent>
@@ -1010,8 +1010,8 @@ export default function Login() {
                         <Label htmlFor="weekly" className="flex-1 cursor-pointer">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="font-semibold">Weekly</p>
-                              <p className="text-sm text-muted-foreground">Billed weekly</p>
+                              <p className="font-semibold">{t.weekly || "Weekly"}</p>
+                              <p className="text-sm text-muted-foreground">{t.billedWeekly}</p>
                               {branchesCount > 1 && (
                                 <p className="text-xs text-muted-foreground mt-1">
                                   {branchesCount} branches
@@ -1020,7 +1020,7 @@ export default function Login() {
                             </div>
                             <div className="text-right">
                               <p className="text-xl font-bold">{getPlanPricing('weekly', branchesCount, signupBusinessType).grossAmount.toFixed(2)} {t.sar}</p>
-                              <p className="text-xs text-muted-foreground">per week (VAT included)</p>
+                              <p className="text-xs text-muted-foreground">{t.perWeekVatIncluded}</p>
                             </div>
                           </div>
                         </Label>
@@ -1119,7 +1119,7 @@ export default function Login() {
                 <div className="space-y-3 p-4 border rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800" data-testid="refund-policy-section">
                   <div className="text-center border-b border-amber-300 dark:border-amber-700 pb-2">
                     <h4 className="text-sm font-bold text-amber-800 dark:text-amber-200">
-                      REFUND POLICY / سياسة استرداد الأموال
+                      {t.refundPolicySectionTitle}
                     </h4>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
@@ -1168,11 +1168,11 @@ export default function Login() {
             <TabsContent value="it-signup" className="space-y-4 pt-2">
               <form onSubmit={handleITSignup} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="it-signup-fullname">Full Name *</Label>
+                  <Label htmlFor="it-signup-fullname">{t.fullName} *</Label>
                   <Input
                     id="it-signup-fullname"
                     type="text"
-                    placeholder="Enter your full name"
+                    placeholder={t.enterFullName}
                     value={itSignupFullName}
                     onChange={(e) => setItSignupFullName(e.target.value)}
                     required
@@ -1180,11 +1180,11 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="it-signup-email">Email *</Label>
+                  <Label htmlFor="it-signup-email">{t.email} *</Label>
                   <Input
                     id="it-signup-email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder={t.enterEmail}
                     value={itSignupEmail}
                     onChange={(e) => setItSignupEmail(e.target.value)}
                     required
@@ -1192,11 +1192,11 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="it-signup-username">Username *</Label>
+                  <Label htmlFor="it-signup-username">{t.username} *</Label>
                   <Input
                     id="it-signup-username"
                     type="text"
-                    placeholder="Choose a username"
+                    placeholder={t.chooseUsername}
                     value={itSignupUsername}
                     onChange={(e) => setItSignupUsername(e.target.value)}
                     required
@@ -1204,11 +1204,11 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="it-signup-password">Password *</Label>
+                  <Label htmlFor="it-signup-password">{t.password} *</Label>
                   <Input
                     id="it-signup-password"
                     type="password"
-                    placeholder="Choose a strong password"
+                    placeholder={t.choosePassword}
                     value={itSignupPassword}
                     onChange={(e) => setItSignupPassword(e.target.value)}
                     required
@@ -1216,18 +1216,18 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="it-signup-secret">Secret Key *</Label>
+                  <Label htmlFor="it-signup-secret">{t.secretKey} *</Label>
                   <Input
                     id="it-signup-secret"
                     type="password"
-                    placeholder="Enter the IT secret key"
+                    placeholder={t.enterSecretKey}
                     value={itSignupSecretKey}
                     onChange={(e) => setItSignupSecretKey(e.target.value)}
                     required
                     data-testid="input-it-signup-secret"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Contact your IT administrator for the secret key
+                    {t.secretKeyHint}
                   </p>
                 </div>
                 
@@ -1237,7 +1237,7 @@ export default function Login() {
                   data-testid="button-it-signup"
                 >
                   <UserPlus className="mr-2 h-5 w-5" />
-                  Create IT Account
+                  {t.createItAccount}
                 </Button>
               </form>
             </TabsContent>

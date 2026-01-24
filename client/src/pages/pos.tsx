@@ -947,7 +947,7 @@ export default function POS() {
             <div className="border-t p-4">
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Items Subtotal</span>
+                  <span>{t.itemsSubtotal}</span>
                   <span className="font-mono">
                     {baseSubtotal.toFixed(2)} {t.sar}
                   </span>
@@ -955,7 +955,7 @@ export default function POS() {
                 {selectedDeliveryApp && deliveryCommission > 0 && (
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>
-                      Delivery Commission ({selectedDeliveryApp.name})
+                      {t.deliveryCommissionLabel} ({selectedDeliveryApp.name})
                     </span>
                     <span className="font-mono">
                       +{deliveryCommission.toFixed(2)} {t.sar}
@@ -964,21 +964,21 @@ export default function POS() {
                 )}
                 {selectedDeliveryApp && deliveryCommission > 0 && (
                   <div className="flex justify-between text-sm font-medium">
-                    <span>Subtotal</span>
+                    <span>{t.subtotal}</span>
                     <span className="font-mono">
                       {subtotal.toFixed(2)} {t.sar}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Tax (15%)</span>
+                  <span>{t.tax} (15%)</span>
                   <span className="font-mono">
                     {tax.toFixed(2)} {t.sar}
                   </span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
-                  <span>Total</span>
+                  <span>{t.total}</span>
                   <span className="font-mono">
                     {total.toFixed(2)} {t.sar}
                   </span>
@@ -1600,7 +1600,7 @@ export default function POS() {
               </div>
             )}
             <div className="flex justify-between text-muted-foreground">
-              <span>{t.tax}</span>
+              <span>{t.tax} (15%)</span>
               <span className="font-mono">
                 {tax.toFixed(2)} {t.sar}
               </span>
@@ -1641,7 +1641,7 @@ export default function POS() {
                 <SelectItem value="Online" data-testid="option-online">
                   <div className="flex items-center gap-2">
                     <Globe className="h-4 w-4" />
-                    Online Payment
+                    {t.onlinePayment}
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -1650,7 +1650,7 @@ export default function POS() {
 
           <div className="mb-4">
             <Label className="text-sm font-medium mb-2 block">
-              Delivery App (Optional)
+              {t.deliveryAppOptional}
             </Label>
             <Select
               value={selectedDeliveryAppId || "none"}
@@ -1662,10 +1662,10 @@ export default function POS() {
                 data-testid="select-delivery-app"
                 className="w-full"
               >
-                <SelectValue placeholder="Select delivery app" />
+                <SelectValue placeholder={t.selectDeliveryApp} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="none">{t.none}</SelectItem>
                 {deliveryApps
                   .filter((app) => app.active)
                   .map((app) => (

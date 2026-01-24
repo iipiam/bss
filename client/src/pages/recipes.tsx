@@ -80,9 +80,9 @@ function SortableRecipeCard({ recipe, onEdit, onDelete }: SortableRecipeCardProp
               <div>
                 <CardTitle className="text-2xl mb-2">{recipe.name}</CardTitle>
                 <div className="flex gap-4 text-sm text-muted-foreground">
-                  <span>Prep: {recipe.prepTime}</span>
-                  <span>Cook: {recipe.cookTime}</span>
-                  <span>Servings: {recipe.servings}</span>
+                  <span>{t.prepTime}: {recipe.prepTime}</span>
+                  <span>{t.cookTime}: {recipe.cookTime}</span>
+                  <span>{t.servings}: {recipe.servings}</span>
                 </div>
               </div>
             </div>
@@ -105,7 +105,7 @@ function SortableRecipeCard({ recipe, onEdit, onDelete }: SortableRecipeCardProp
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
               </div>
-              <p className="text-sm text-muted-foreground mb-1">Cost per Serving</p>
+              <p className="text-sm text-muted-foreground mb-1">{t.costPerServing}</p>
               <p className="text-2xl font-bold font-mono text-primary">{(parseFloat(recipe.cost) / (recipe.servings || 1)).toFixed(2)} SAR</p>
             </div>
           </div>
@@ -114,7 +114,7 @@ function SortableRecipeCard({ recipe, onEdit, onDelete }: SortableRecipeCardProp
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <h4 className="font-semibold mb-3 flex items-center gap-2">
-                <Badge variant="secondary">Ingredients</Badge>
+                <Badge variant="secondary">{t.ingredients}</Badge>
               </h4>
               <ul className="space-y-2">
                 {recipe.ingredients.map((ingredient, idx) => (
@@ -129,7 +129,7 @@ function SortableRecipeCard({ recipe, onEdit, onDelete }: SortableRecipeCardProp
             </div>
             <div>
               <h4 className="font-semibold mb-3 flex items-center gap-2">
-                <Badge variant="secondary">Instructions</Badge>
+                <Badge variant="secondary">{t.instructions}</Badge>
               </h4>
               <ol className="space-y-2 list-decimal list-inside">
                 {recipe.steps.map((step, idx) => (
@@ -556,8 +556,8 @@ export default function Recipes() {
   if (isLoading) {
     return (
       <div className={layout.padding}>
-        <h1 className={`${layout.text3Xl} font-bold mb-2`}>Recipes</h1>
-        <p className="text-muted-foreground">Loading...</p>
+        <h1 className={`${layout.text3Xl} font-bold mb-2`}>{t.recipes}</h1>
+        <p className="text-muted-foreground">{t.loading}</p>
       </div>
     );
   }
@@ -566,7 +566,7 @@ export default function Recipes() {
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div className={`flex ${layout.isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
         <div>
-          <h1 className={`${layout.text3Xl} font-bold mb-2`}>Recipes</h1>
+          <h1 className={`${layout.text3Xl} font-bold mb-2`}>{t.recipes}</h1>
           <p className="text-muted-foreground">Manage recipes and preparation instructions</p>
         </div>
         <div className="flex gap-2 flex-wrap">
