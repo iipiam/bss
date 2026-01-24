@@ -1056,7 +1056,10 @@ export default function ITAccountManagement() {
   }
 
   return (
-    <div className={`${layout.padding} ${layout.spaceY} ${(isMobile || isTablet) ? 'pt-4' : ''}`}>
+    <div 
+      className={`${layout.padding} ${layout.spaceY}`}
+      style={(isMobile || isTablet) ? { paddingTop: '1.5rem' } : undefined}
+    >
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex-1 min-w-[200px]">
