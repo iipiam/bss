@@ -368,11 +368,12 @@
   /* Device-specific responsive styles */
   
   /* Mobile/Tablet scrolling fix */
-  .device-iphone main,
-  .device-ipad main {
+  main.device-iphone,
+  main.device-ipad {
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
+    padding-top: 0.5rem;
   }
 
   .device-iphone {

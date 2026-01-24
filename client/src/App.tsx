@@ -672,7 +672,11 @@ function AppContent() {
               }
               return null;
             })()}
-            <main className={`flex-1 overflow-y-scroll device-${device}`} data-device={device}>
+            <main 
+              className={`flex-1 overflow-y-scroll device-${device}`} 
+              data-device={device}
+              style={(device === 'iphone' || device === 'ipad') ? { paddingTop: '0.5rem' } : undefined}
+            >
               <Router />
             </main>
             <footer className="border-t py-3 px-4 flex-shrink-0 branding-slide" data-testid="branding-footer">
