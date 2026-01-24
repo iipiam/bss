@@ -463,7 +463,7 @@ export default function Login() {
   };
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen bg-gradient-to-br from-primary via-primary/90 to-primary/80 dark:from-primary/30 dark:via-primary/20 dark:to-primary/10">
+    <div className="relative flex items-start justify-center min-h-screen py-8 bg-gradient-to-br from-primary via-primary/90 to-primary/80 dark:from-primary/30 dark:via-primary/20 dark:to-primary/10" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Animated Background Shapes */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-white/10 dark:bg-primary/30 rounded-full blur-3xl animate-pulse"></div>
@@ -476,7 +476,7 @@ export default function Login() {
         <ThemeToggle />
       </div>
 
-      <div className="flex flex-col items-center gap-6 w-full max-w-md mx-4 mt-16">
+      <div className="flex flex-col items-center gap-6 w-full max-w-md mx-4 mt-8 mb-8">
         <Card className="relative w-full border-none shadow-2xl backdrop-blur-sm bg-card">
         <CardHeader className="space-y-6 text-center pb-6">
           <div className="mx-auto relative">
