@@ -150,6 +150,7 @@ export default function ITAccountManagement() {
   
   // Device-specific layout settings
   const isMobile = device === 'iphone';
+  const isTablet = device === 'ipad';
   const layout = {
     padding: device === 'iphone' ? 'p-3' : device === 'ipad' ? 'p-4' : 'p-6',
     spaceY: device === 'iphone' ? 'space-y-3' : device === 'ipad' ? 'space-y-4' : 'space-y-6',
@@ -1084,35 +1085,35 @@ export default function ITAccountManagement() {
 
       {/* Tabs for Accounts, Archive, IT Accounts, Pending Signups, and Company Files */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "accounts" | "archive" | "files" | "itAccounts" | "pendingSignups")} className="w-full">
-        <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2 gap-1' : 'grid-cols-5'} max-w-3xl`}>
-          <TabsTrigger value="accounts" data-testid="tab-accounts" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            {isMobile ? (t.accounts || "Accounts") : (t.clientAccounts || "Client Accounts")}
+        <TabsList className={`flex flex-wrap w-full gap-1 h-auto p-1 ${isMobile ? 'flex-col' : isTablet ? 'flex-row' : ''}`}>
+          <TabsTrigger value="accounts" data-testid="tab-accounts" className={`flex items-center gap-2 ${isMobile ? 'w-full justify-start' : 'flex-1 min-w-fit'}`}>
+            <Users className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">{isMobile || isTablet ? (t.accounts || "Accounts") : (t.clientAccounts || "Client Accounts")}</span>
           </TabsTrigger>
-          <TabsTrigger value="itAccounts" data-testid="tab-it-accounts" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            {t.itAccounts || "IT Accounts"}
+          <TabsTrigger value="itAccounts" data-testid="tab-it-accounts" className={`flex items-center gap-2 ${isMobile ? 'w-full justify-start' : 'flex-1 min-w-fit'}`}>
+            <Shield className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">{isMobile || isTablet ? "IT" : (t.itAccounts || "IT Accounts")}</span>
             {itAccounts.length > 0 && (
-              <Badge variant="secondary" className="ml-1">{itAccounts.length}</Badge>
+              <Badge variant="secondary" className="ml-1 flex-shrink-0">{itAccounts.length}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="pendingSignups" data-testid="tab-pending-signups" className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            {t.pendingSignups || "Pending Signups"}
+          <TabsTrigger value="pendingSignups" data-testid="tab-pending-signups" className={`flex items-center gap-2 ${isMobile ? 'w-full justify-start' : 'flex-1 min-w-fit'}`}>
+            <Clock className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">{isMobile || isTablet ? (t.pending || "Pending") : (t.pendingSignups || "Pending Signups")}</span>
             {pendingSignups.length > 0 && (
-              <Badge variant="secondary" className="ml-1">{pendingSignups.length}</Badge>
+              <Badge variant="secondary" className="ml-1 flex-shrink-0">{pendingSignups.length}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="archive" data-testid="tab-archive" className="flex items-center gap-2">
-            <Archive className="h-4 w-4" />
-            {t.archive || "Archive"}
+          <TabsTrigger value="archive" data-testid="tab-archive" className={`flex items-center gap-2 ${isMobile ? 'w-full justify-start' : 'flex-1 min-w-fit'}`}>
+            <Archive className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">{t.archive || "Archive"}</span>
             {archivedAccounts.length > 0 && (
-              <Badge variant="secondary" className="ml-1">{archivedAccounts.length}</Badge>
+              <Badge variant="secondary" className="ml-1 flex-shrink-0">{archivedAccounts.length}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="files" data-testid="tab-company-files" className="flex items-center gap-2">
-            <FolderOpen className="h-4 w-4" />
-            {isMobile ? (t.files || "Files") : (t.companyFiles || "Company Files")}
+          <TabsTrigger value="files" data-testid="tab-company-files" className={`flex items-center gap-2 ${isMobile ? 'w-full justify-start' : 'flex-1 min-w-fit'}`}>
+            <FolderOpen className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">{isMobile || isTablet ? (t.files || "Files") : (t.companyFiles || "Company Files")}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1235,8 +1236,8 @@ export default function ITAccountManagement() {
               </div>
             </CardHeader>
             <CardContent>
-              {/* Mobile Card View */}
-              {isMobile ? (
+              {/* Mobile/Tablet Card View */}
+              {(isMobile || isTablet) ? (
                 <div className="space-y-3">
                   {filteredAccounts.length === 0 ? (
                     <div className="text-center text-muted-foreground py-8">
@@ -1615,8 +1616,8 @@ export default function ITAccountManagement() {
                     <Skeleton key={i} className="h-16 w-full" />
                   ))}
                 </div>
-              ) : isMobile ? (
-                /* Mobile Card View for Pending Signups */
+              ) : (isMobile || isTablet) ? (
+                /* Mobile/Tablet Card View for Pending Signups */
                 <div className="space-y-3">
                   {pendingSignups.length === 0 ? (
                     <div className="text-center text-muted-foreground py-8">
@@ -1916,8 +1917,8 @@ export default function ITAccountManagement() {
                     <Skeleton key={i} className="h-16 w-full" />
                   ))}
                 </div>
-              ) : isMobile ? (
-                /* Mobile Card View for Archive */
+              ) : (isMobile || isTablet) ? (
+                /* Mobile/Tablet Card View for Archive */
                 <div className="space-y-3">
                   {filteredArchivedAccounts.length === 0 ? (
                     <div className="text-center text-muted-foreground py-8">
@@ -2237,8 +2238,8 @@ export default function ITAccountManagement() {
                     <Skeleton key={i} className="h-16 w-full" />
                   ))}
                 </div>
-              ) : isMobile ? (
-                /* Mobile Card View for IT Accounts */
+              ) : (isMobile || isTablet) ? (
+                /* Mobile/Tablet Card View for IT Accounts */
                 <div className="space-y-3">
                   {filteredITAccounts.length === 0 ? (
                     <div className="text-center text-muted-foreground py-8">
