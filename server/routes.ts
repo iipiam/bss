@@ -11302,6 +11302,230 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Update pending signup status (IT only)
+  app.patch("/api/it/pending-signups/:id", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      if (!status || !['pending', 'paid', 'failed', 'expired'].includes(status)) {
+        return res.status(400).json({ error: "Invalid status. Must be one of: pending, paid, failed, expired" });
+      }
+      
+      const pendingSignup = await storage.getPendingSignupById(id);
+      if (!pendingSignup) {
+        return res.status(404).json({ error: "Pending signup not found" });
+      }
+      
+      await storage.updatePendingSignupStatus(id, status);
+      res.json({ success: true, status });
+    } catch (error) {
+      console.error("Error updating pending signup status:", error);
+      res.status(500).json({ error: "Failed to update pending signup status" });
+    }
+  });
+
+  // Activate pending signup and create active account (IT only)
+  app.post("/api/it/pending-signups/:id/activate", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const pendingSignup = await storage.getPendingSignupById(id);
+      if (!pendingSignup) {
+        return res.status(404).json({ error: "Pending signup not found" });
+      }
+      
+      // Check if already processed
+      if (pendingSignup.status === 'paid') {
+        return res.status(400).json({ error: "This signup has already been activated" });
+      }
+      
+      console.log(`[IT Activate] Activating pending signup: ${id}`);
+      
+      // Step 1: Create restaurant
+      const restaurantData = insertRestaurantSchema.parse({
+        name: pendingSignup.restaurantName,
+        nationalId: pendingSignup.nationalId,
+        hasVatRegistration: pendingSignup.hasVatRegistration,
+        taxNumber: pendingSignup.hasVatRegistration ? pendingSignup.taxNumber : null,
+        commercialRegistration: pendingSignup.commercialRegistration,
+        businessType: pendingSignup.businessType,
+        type: pendingSignup.restaurantType,
+        subscriptionPlan: pendingSignup.subscriptionPlan,
+        branchesCount: pendingSignup.branchesCount,
+        subscriptionStatus: "active" as const,
+      });
+
+      const restaurant = await storage.createRestaurant(restaurantData);
+      console.log(`[IT Activate] Created restaurant: ${restaurant.id}`);
+
+      // Step 2: Generate Device Serial Numbers
+      const deviceSerials = await storage.generateDeviceSerialNumbers(
+        restaurant.id,
+        pendingSignup.branchesCount,
+        pendingSignup.commercialRegistration
+      );
+      console.log(`[IT Activate] Generated ${deviceSerials.length} device serials`);
+
+      // Step 3: Create admin user
+      const userData = {
+        restaurantId: restaurant.id,
+        username: pendingSignup.username,
+        passwordHash: pendingSignup.passwordHash,
+        fullName: pendingSignup.fullName,
+        email: pendingSignup.email,
+        role: "admin" as const,
+        active: true,
+        permissions: ADMIN_PERMISSIONS,
+      };
+
+      const user = await storage.createUserWithHashedPassword(userData);
+      console.log(`[IT Activate] Created user: ${user.id}`);
+
+      // Step 4: Associate uploaded files with restaurant
+      const uploadedFiles = pendingSignup.uploadedFiles as Record<string, { filename: string; originalname: string; mimetype: string; size: number }> | null;
+      if (uploadedFiles) {
+        const fileTypeMapping: { [key: string]: string } = {
+          crCertificate: "cr_certificate",
+          vatCertificate: "vat_certificate",
+          ibanCertificate: "iban_certificate",
+          nationalAddress: "national_address"
+        };
+        
+        for (const [fieldName, fileInfo] of Object.entries(uploadedFiles)) {
+          const fileType = fileTypeMapping[fieldName];
+          if (fileType && fileInfo) {
+            try {
+              await storage.createShopFile({
+                restaurantId: restaurant.id,
+                fileType: fileType as "cr_certificate" | "vat_certificate" | "iban_certificate" | "national_address",
+                fileName: fileInfo.originalname,
+                filePath: `uploads/shop-files/${fileInfo.filename}`,
+                fileSize: fileInfo.size,
+                mimeType: fileInfo.mimetype,
+                uploadedBy: user.id,
+              });
+              console.log(`[IT Activate] Associated ${fileType} with restaurant ${restaurant.id}`);
+            } catch (fileError) {
+              console.error(`[IT Activate] Failed to associate ${fileType}:`, fileError);
+            }
+          }
+        }
+      }
+
+      // Step 5: Generate subscription invoice
+      try {
+        const branches = pendingSignup.branchesCount;
+        const pricing = getPlanPricing(
+          pendingSignup.subscriptionPlan as SubscriptionPlan, 
+          branches, 
+          pendingSignup.businessType as BusinessType
+        );
+        
+        const basePlanPricing = getPlanPricing(
+          pendingSignup.subscriptionPlan as SubscriptionPlan, 
+          1, 
+          pendingSignup.businessType as BusinessType
+        );
+        const basePlanPrice = basePlanPricing.netAmount;
+        const additionalBranchesPrice = branches > 1 ? pricing.netAmount - basePlanPrice : 0;
+        
+        const subtotal = pricing.netAmount;
+        const vatAmount = pricing.vatAmount;
+        const total = pricing.grossAmount;
+
+        const serialNumber = await storage.getNextSubscriptionInvoiceSerialNumber();
+        const businessInfo = await storage.getBusinessInfo();
+
+        const pdfBuffer = await generateSubscriptionInvoice({
+          serialNumber,
+          userFullName: user.fullName,
+          userEmail: user.email ?? "",
+          restaurantName: restaurant.name,
+          nationalId: restaurant.nationalId,
+          taxNumber: restaurant.taxNumber ?? "",
+          commercialRegistration: restaurant.commercialRegistration,
+          subscriptionPlan: restaurant.subscriptionPlan,
+          branchesCount: restaurant.branchesCount,
+          basePlanPrice,
+          additionalBranchesPrice,
+          subtotal,
+          vatAmount,
+          total,
+          invoiceDate: new Date(),
+          businessInfo,
+        });
+
+        const invoicesDir = path.join(process.cwd(), 'public', 'subscription-invoices');
+        if (!fs.existsSync(invoicesDir)) {
+          fs.mkdirSync(invoicesDir, { recursive: true });
+        }
+
+        const pdfFilename = `subscription-${serialNumber}.pdf`;
+        const pdfPath = path.join(invoicesDir, pdfFilename);
+        fs.writeFileSync(pdfPath, pdfBuffer);
+
+        const QRCode = await import('qrcode');
+        const qrData = `Invoice: ${serialNumber}\nDate: ${new Date().toLocaleDateString('en-GB')}\nTotal: ${total.toFixed(2)} SAR\nVAT: ${vatAmount.toFixed(2)} SAR`;
+        const qrCode = await QRCode.toDataURL(qrData);
+
+        await storage.createSubscriptionInvoice({
+          userId: user.id,
+          serialNumber,
+          subscriptionPlan: restaurant.subscriptionPlan ?? "",
+          branchesCount: restaurant.branchesCount,
+          basePlanPrice: basePlanPrice.toString(),
+          additionalBranchesPrice: additionalBranchesPrice.toString(),
+          subtotal: subtotal.toString(),
+          vatAmount: vatAmount.toString(),
+          total: total.toString(),
+          pdfPath: `/subscription-invoices/${pdfFilename}`,
+          qrCode,
+        });
+
+        console.log(`[IT Activate] Generated subscription invoice: ${serialNumber}`);
+      } catch (invoiceError) {
+        console.error("[IT Activate] Failed to generate subscription invoice:", invoiceError);
+      }
+
+      // Step 6: Mark pending signup as paid
+      await storage.updatePendingSignupStatus(id, 'paid');
+      console.log(`[IT Activate] Marked pending signup as paid`);
+
+      res.json({ 
+        success: true, 
+        restaurantId: restaurant.id,
+        userId: user.id,
+        message: "Account activated successfully"
+      });
+    } catch (error) {
+      console.error("Error activating pending signup:", error);
+      res.status(500).json({ error: "Failed to activate pending signup" });
+    }
+  });
+
+  // Check and suspend expired subscriptions (IT only)
+  app.post("/api/it/check-expired-subscriptions", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const expiredSubscriptions = await storage.getExpiredSubscriptions();
+      let suspendedCount = 0;
+      
+      for (const restaurant of expiredSubscriptions) {
+        await storage.updateRestaurantSubscriptionStatus(restaurant.id, 'expired');
+        console.log(`[Subscription Check] Suspended expired subscription for restaurant: ${restaurant.id} (${restaurant.name})`);
+        suspendedCount++;
+      }
+      
+      res.json({ 
+        suspendedCount, 
+        expiredRestaurants: expiredSubscriptions.map(r => ({ id: r.id, name: r.name }))
+      });
+    } catch (error) {
+      console.error("Error checking expired subscriptions:", error);
+      res.status(500).json({ error: "Failed to check expired subscriptions" });
+    }
+  });
+
   // Get all IT accounts for IT management (users with null restaurantId)
   app.get("/api/it/it-accounts", requireAuth, requireITAccount, async (req, res) => {
     try {

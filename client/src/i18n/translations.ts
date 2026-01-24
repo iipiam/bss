@@ -1684,6 +1684,18 @@ export interface Translations {
   failedToDeletePendingSignup: string;
   expiredSignupsCleanedUp: string;
   failedToCleanupExpired: string;
+  activateAccount: string;
+  activateAccountConfirmation: string;
+  accountActivated: string;
+  accountActivatedDesc: string;
+  failedToActivateAccount: string;
+  changeStatus: string;
+  selectStatus: string;
+  statusUpdated: string;
+  failedToUpdateStatus: string;
+  checkExpiredSubscriptions: string;
+  subscriptionsSuspended: string;
+  noExpiredSubscriptions: string;
 
   // Menu & Inventory Toast Messages
   imageUploadFailed: string;
@@ -3941,6 +3953,18 @@ export const translations: Record<Language, Translations> = {
     failedToDeletePendingSignup: "Failed to delete pending signup",
     expiredSignupsCleanedUp: "expired signups cleaned up",
     failedToCleanupExpired: "Failed to clean up expired signups",
+    activateAccount: "Activate Account",
+    activateAccountConfirmation: "Are you sure you want to activate this account? This will create a full account with all subscription features.",
+    accountActivated: "Account Activated",
+    accountActivatedDesc: "The pending signup has been converted to an active account.",
+    failedToActivateAccount: "Failed to activate account",
+    changeStatus: "Change Status",
+    selectStatus: "Select status",
+    statusUpdated: "Status Updated",
+    failedToUpdateStatus: "Failed to update status",
+    checkExpiredSubscriptions: "Check Expired Subscriptions",
+    subscriptionsSuspended: "subscriptions suspended",
+    noExpiredSubscriptions: "No expired subscriptions found",
   },
   
   Arabic: {
@@ -5901,6 +5925,18 @@ export const translations: Record<Language, Translations> = {
     failedToDeletePendingSignup: "فشل في حذف التسجيل المعلق",
     expiredSignupsCleanedUp: "تم تنظيف التسجيلات المنتهية",
     failedToCleanupExpired: "فشل في تنظيف التسجيلات المنتهية",
+    activateAccount: "تفعيل الحساب",
+    activateAccountConfirmation: "هل أنت متأكد من تفعيل هذا الحساب؟ سيؤدي ذلك إلى إنشاء حساب كامل مع جميع ميزات الاشتراك.",
+    accountActivated: "تم تفعيل الحساب",
+    accountActivatedDesc: "تم تحويل التسجيل المعلق إلى حساب نشط.",
+    failedToActivateAccount: "فشل في تفعيل الحساب",
+    changeStatus: "تغيير الحالة",
+    selectStatus: "اختر الحالة",
+    statusUpdated: "تم تحديث الحالة",
+    failedToUpdateStatus: "فشل في تحديث الحالة",
+    checkExpiredSubscriptions: "التحقق من الاشتراكات المنتهية",
+    subscriptionsSuspended: "اشتراكات معلقة",
+    noExpiredSubscriptions: "لم يتم العثور على اشتراكات منتهية",
   },
   German: {
     // Navigation
@@ -7842,6 +7878,18 @@ export const translations: Record<Language, Translations> = {
     failedToDeletePendingSignup: "Fehler beim Löschen der ausstehenden Anmeldung",
     expiredSignupsCleanedUp: "abgelaufene Anmeldungen bereinigt",
     failedToCleanupExpired: "Fehler beim Bereinigen abgelaufener Anmeldungen",
+    activateAccount: "Konto aktivieren",
+    activateAccountConfirmation: "Sind Sie sicher, dass Sie dieses Konto aktivieren möchten? Dadurch wird ein vollständiges Konto mit allen Abonnementfunktionen erstellt.",
+    accountActivated: "Konto aktiviert",
+    accountActivatedDesc: "Die ausstehende Anmeldung wurde in ein aktives Konto umgewandelt.",
+    failedToActivateAccount: "Konto konnte nicht aktiviert werden",
+    changeStatus: "Status ändern",
+    selectStatus: "Status auswählen",
+    statusUpdated: "Status aktualisiert",
+    failedToUpdateStatus: "Status konnte nicht aktualisiert werden",
+    checkExpiredSubscriptions: "Abgelaufene Abonnements prüfen",
+    subscriptionsSuspended: "Abonnements ausgesetzt",
+    noExpiredSubscriptions: "Keine abgelaufenen Abonnements gefunden",
   },
   Chinese: {
     // Navigation
@@ -9783,6 +9831,18 @@ export const translations: Record<Language, Translations> = {
     failedToDeletePendingSignup: "删除待处理注册失败",
     expiredSignupsCleanedUp: "个过期注册已清理",
     failedToCleanupExpired: "清理过期注册失败",
+    activateAccount: "激活账户",
+    activateAccountConfirmation: "您确定要激活此账户吗？这将创建一个具有所有订阅功能的完整账户。",
+    accountActivated: "账户已激活",
+    accountActivatedDesc: "待处理的注册已转换为活跃账户。",
+    failedToActivateAccount: "激活账户失败",
+    changeStatus: "更改状态",
+    selectStatus: "选择状态",
+    statusUpdated: "状态已更新",
+    failedToUpdateStatus: "更新状态失败",
+    checkExpiredSubscriptions: "检查过期订阅",
+    subscriptionsSuspended: "个订阅已暂停",
+    noExpiredSubscriptions: "未找到过期订阅",
   },
   Bengali: {
     // Navigation
@@ -11724,6 +11784,18 @@ export const translations: Record<Language, Translations> = {
     failedToDeletePendingSignup: "মুলতুবি সাইনআপ মুছতে ব্যর্থ",
     expiredSignupsCleanedUp: "টি মেয়াদোত্তীর্ণ সাইনআপ পরিষ্কার করা হয়েছে",
     failedToCleanupExpired: "মেয়াদোত্তীর্ণ সাইনআপ পরিষ্কার করতে ব্যর্থ",
+    activateAccount: "অ্যাকাউন্ট সক্রিয় করুন",
+    activateAccountConfirmation: "আপনি কি নিশ্চিত এই অ্যাকাউন্ট সক্রিয় করতে চান? এটি সমস্ত সাবস্ক্রিপশন বৈশিষ্ট্য সহ একটি সম্পূর্ণ অ্যাকাউন্ট তৈরি করবে।",
+    accountActivated: "অ্যাকাউন্ট সক্রিয় হয়েছে",
+    accountActivatedDesc: "মুলতুবি সাইনআপটি সক্রিয় অ্যাকাউন্টে রূপান্তরিত হয়েছে।",
+    failedToActivateAccount: "অ্যাকাউন্ট সক্রিয় করতে ব্যর্থ",
+    changeStatus: "স্ট্যাটাস পরিবর্তন করুন",
+    selectStatus: "স্ট্যাটাস নির্বাচন করুন",
+    statusUpdated: "স্ট্যাটাস আপডেট হয়েছে",
+    failedToUpdateStatus: "স্ট্যাটাস আপডেট করতে ব্যর্থ",
+    checkExpiredSubscriptions: "মেয়াদোত্তীর্ণ সাবস্ক্রিপশন পরীক্ষা করুন",
+    subscriptionsSuspended: "টি সাবস্ক্রিপশন স্থগিত",
+    noExpiredSubscriptions: "কোনো মেয়াদোত্তীর্ণ সাবস্ক্রিপশন পাওয়া যায়নি",
   },
   Italian: {
     // Navigation
@@ -13665,6 +13737,18 @@ export const translations: Record<Language, Translations> = {
     failedToDeletePendingSignup: "Impossibile eliminare l'iscrizione in sospeso",
     expiredSignupsCleanedUp: "iscrizioni scadute eliminate",
     failedToCleanupExpired: "Impossibile pulire le iscrizioni scadute",
+    activateAccount: "Attiva Account",
+    activateAccountConfirmation: "Sei sicuro di voler attivare questo account? Verrà creato un account completo con tutte le funzionalità di abbonamento.",
+    accountActivated: "Account Attivato",
+    accountActivatedDesc: "L'iscrizione in sospeso è stata convertita in un account attivo.",
+    failedToActivateAccount: "Impossibile attivare l'account",
+    changeStatus: "Cambia Stato",
+    selectStatus: "Seleziona stato",
+    statusUpdated: "Stato Aggiornato",
+    failedToUpdateStatus: "Impossibile aggiornare lo stato",
+    checkExpiredSubscriptions: "Controlla Abbonamenti Scaduti",
+    subscriptionsSuspended: "abbonamenti sospesi",
+    noExpiredSubscriptions: "Nessun abbonamento scaduto trovato",
   },
 
   Hindi: {
@@ -15550,6 +15634,18 @@ export const translations: Record<Language, Translations> = {
     failedToDeletePendingSignup: "लंबित साइनअप हटाने में विफल",
     expiredSignupsCleanedUp: "समाप्त साइनअप साफ किए गए",
     failedToCleanupExpired: "समाप्त साइनअप साफ करने में विफल",
+    activateAccount: "खाता सक्रिय करें",
+    activateAccountConfirmation: "क्या आप इस खाते को सक्रिय करना चाहते हैं? यह सभी सदस्यता सुविधाओं के साथ एक पूर्ण खाता बनाएगा।",
+    accountActivated: "खाता सक्रिय हो गया",
+    accountActivatedDesc: "लंबित साइनअप को सक्रिय खाते में बदल दिया गया है।",
+    failedToActivateAccount: "खाता सक्रिय करने में विफल",
+    changeStatus: "स्थिति बदलें",
+    selectStatus: "स्थिति चुनें",
+    statusUpdated: "स्थिति अपडेट हो गई",
+    failedToUpdateStatus: "स्थिति अपडेट करने में विफल",
+    checkExpiredSubscriptions: "समाप्त सदस्यता जांचें",
+    subscriptionsSuspended: "सदस्यता निलंबित",
+    noExpiredSubscriptions: "कोई समाप्त सदस्यता नहीं मिली",
   },
   
   Urdu: {
@@ -17435,6 +17531,18 @@ export const translations: Record<Language, Translations> = {
     failedToDeletePendingSignup: "زیر التواء سائن اپ حذف کرنے میں ناکام",
     expiredSignupsCleanedUp: "ختم شدہ سائن اپس صاف کر دیے گئے",
     failedToCleanupExpired: "ختم شدہ سائن اپس صاف کرنے میں ناکام",
+    activateAccount: "اکاؤنٹ فعال کریں",
+    activateAccountConfirmation: "کیا آپ واقعی اس اکاؤنٹ کو فعال کرنا چاہتے ہیں؟ یہ تمام سبسکرپشن خصوصیات کے ساتھ ایک مکمل اکاؤنٹ بنائے گا۔",
+    accountActivated: "اکاؤنٹ فعال ہو گیا",
+    accountActivatedDesc: "زیر التواء سائن اپ کو فعال اکاؤنٹ میں تبدیل کر دیا گیا ہے۔",
+    failedToActivateAccount: "اکاؤنٹ فعال کرنے میں ناکام",
+    changeStatus: "حیثیت تبدیل کریں",
+    selectStatus: "حیثیت منتخب کریں",
+    statusUpdated: "حیثیت اپڈیٹ ہو گئی",
+    failedToUpdateStatus: "حیثیت اپڈیٹ کرنے میں ناکام",
+    checkExpiredSubscriptions: "ختم شدہ سبسکرپشنز چیک کریں",
+    subscriptionsSuspended: "سبسکرپشنز معطل",
+    noExpiredSubscriptions: "کوئی ختم شدہ سبسکرپشن نہیں ملی",
   },
   
 
@@ -19252,6 +19360,18 @@ export const translations: Record<Language, Translations> = {
     failedToDeletePendingSignup: "Error al eliminar registro pendiente",
     expiredSignupsCleanedUp: "registros expirados limpiados",
     failedToCleanupExpired: "Error al limpiar registros expirados",
+    activateAccount: "Activar Cuenta",
+    activateAccountConfirmation: "¿Está seguro de que desea activar esta cuenta? Esto creará una cuenta completa con todas las funciones de suscripción.",
+    accountActivated: "Cuenta Activada",
+    accountActivatedDesc: "El registro pendiente se ha convertido en una cuenta activa.",
+    failedToActivateAccount: "Error al activar la cuenta",
+    changeStatus: "Cambiar Estado",
+    selectStatus: "Seleccionar estado",
+    statusUpdated: "Estado Actualizado",
+    failedToUpdateStatus: "Error al actualizar el estado",
+    checkExpiredSubscriptions: "Verificar Suscripciones Expiradas",
+    subscriptionsSuspended: "suscripciones suspendidas",
+    noExpiredSubscriptions: "No se encontraron suscripciones expiradas",
   },
 
   Tagalog: {
@@ -21069,6 +21189,18 @@ export const translations: Record<Language, Translations> = {
     failedToDeletePendingSignup: "Nabigo sa pagbura ng nakaabang na signup",
     expiredSignupsCleanedUp: "expired na signup ang nalinis",
     failedToCleanupExpired: "Nabigo sa paglinis ng expired na signup",
+    activateAccount: "I-activate ang Account",
+    activateAccountConfirmation: "Sigurado ka bang gusto mong i-activate ang account na ito? Gagawa ito ng buong account na may lahat ng subscription features.",
+    accountActivated: "Na-activate ang Account",
+    accountActivatedDesc: "Ang nakaabang na signup ay na-convert na sa isang aktibong account.",
+    failedToActivateAccount: "Nabigo sa pag-activate ng account",
+    changeStatus: "Palitan ang Status",
+    selectStatus: "Pumili ng status",
+    statusUpdated: "Na-update ang Status",
+    failedToUpdateStatus: "Nabigo sa pag-update ng status",
+    checkExpiredSubscriptions: "Suriin ang Expired na Subscriptions",
+    subscriptionsSuspended: "mga subscription na na-suspend",
+    noExpiredSubscriptions: "Walang nahanap na expired na subscription",
   },
 };
 

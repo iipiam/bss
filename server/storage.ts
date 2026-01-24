@@ -405,8 +405,13 @@ export interface IStorage {
   // Pending Signups (for Geidea payment flow)
   createPendingSignup(signup: InsertPendingSignup): Promise<PendingSignup>;
   getPendingSignupBySessionId(geideaSessionId: string): Promise<PendingSignup | undefined>;
+  getPendingSignupById(id: string): Promise<PendingSignup | undefined>;
   updatePendingSignupStatus(id: string, status: string): Promise<void>;
   deletePendingSignup(id: string): Promise<void>;
+  
+  // Subscription status management
+  getExpiredSubscriptions(): Promise<Restaurant[]>;
+  updateRestaurantSubscriptionStatus(id: string, status: string): Promise<void>;
 
   // Analytics (MULTI-TENANT: requires restaurantId)
   getSalesComparison(restaurantId: string): Promise<any>;
@@ -4998,9 +5003,29 @@ export class DatabaseStorage implements IStorage {
     const [result] = await db.select().from(pendingSignups).where(eq(pendingSignups.geideaSessionId, geideaSessionId));
     return result;
   }
+  
+  async getPendingSignupById(id: string): Promise<PendingSignup | undefined> {
+    const [result] = await db.select().from(pendingSignups).where(eq(pendingSignups.id, id));
+    return result;
+  }
 
   async updatePendingSignupStatus(id: string, status: string): Promise<void> {
     await db.update(pendingSignups).set({ status }).where(eq(pendingSignups.id, id));
+  }
+  
+  // Subscription status management
+  async getExpiredSubscriptions(): Promise<Restaurant[]> {
+    const now = new Date();
+    return await db.select().from(restaurants).where(
+      and(
+        eq(restaurants.subscriptionStatus, 'active'),
+        lt(restaurants.subscriptionEndDate, now)
+      )
+    );
+  }
+  
+  async updateRestaurantSubscriptionStatus(id: string, status: string): Promise<void> {
+    await db.update(restaurants).set({ subscriptionStatus: status }).where(eq(restaurants.id, id));
   }
 
   async deletePendingSignup(id: string): Promise<void> {

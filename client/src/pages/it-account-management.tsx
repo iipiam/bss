@@ -17,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Users, 
   Key, 
@@ -434,6 +435,11 @@ export default function ITAccountManagement() {
   // Pending Signups state
   const [deletePendingDialogOpen, setDeletePendingDialogOpen] = useState(false);
   const [pendingSignupToDelete, setPendingSignupToDelete] = useState<PendingSignup | null>(null);
+  const [activatePendingDialogOpen, setActivatePendingDialogOpen] = useState(false);
+  const [pendingSignupToActivate, setPendingSignupToActivate] = useState<PendingSignup | null>(null);
+  const [statusChangeDialogOpen, setStatusChangeDialogOpen] = useState(false);
+  const [pendingSignupToChangeStatus, setPendingSignupToChangeStatus] = useState<PendingSignup | null>(null);
+  const [newPendingStatus, setNewPendingStatus] = useState<string>("");
 
   // Security: Redirect non-IT accounts using useEffect to wait for auth to load
   useEffect(() => {
@@ -768,6 +774,84 @@ export default function ITAccountManagement() {
       toast({
         title: t.error || "Error",
         description: error.message || t.failedToCleanupExpired || "Failed to cleanup expired signups",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Activate pending signup mutation
+  const activatePendingSignupMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("POST", `/api/it/pending-signups/${id}/activate`);
+    },
+    onSuccess: () => {
+      toast({
+        title: t.accountActivated || "Account Activated",
+        description: t.accountActivatedDesc || "The pending signup has been converted to an active account.",
+      });
+      setActivatePendingDialogOpen(false);
+      setPendingSignupToActivate(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/it/pending-signups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/it/all-accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/it/client-accounts'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message || t.failedToActivateAccount || "Failed to activate account",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update pending signup status mutation
+  const updatePendingStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      return apiRequest("PATCH", `/api/it/pending-signups/${id}`, { status });
+    },
+    onSuccess: () => {
+      toast({
+        title: t.statusUpdated || "Status Updated",
+        description: t.success || "Status updated successfully.",
+      });
+      setStatusChangeDialogOpen(false);
+      setPendingSignupToChangeStatus(null);
+      setNewPendingStatus("");
+      queryClient.invalidateQueries({ queryKey: ['/api/it/pending-signups'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message || t.failedToUpdateStatus || "Failed to update status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Check expired subscriptions mutation
+  const checkExpiredSubscriptionsMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/it/check-expired-subscriptions");
+    },
+    onSuccess: (result: any) => {
+      if (result.suspendedCount > 0) {
+        toast({
+          title: t.success || "Success",
+          description: `${result.suspendedCount} ${t.subscriptionsSuspended || "subscriptions suspended"}`,
+        });
+        queryClient.invalidateQueries({ queryKey: ['/api/it/all-accounts'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/it/client-accounts'] });
+      } else {
+        toast({
+          title: t.success || "Success",
+          description: t.noExpiredSubscriptions || "No expired subscriptions found",
+        });
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message || "Failed to check expired subscriptions",
         variant: "destructive",
       });
     },
@@ -1599,6 +1683,20 @@ export default function ITAccountManagement() {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => checkExpiredSubscriptionsMutation.mutate()}
+                  disabled={checkExpiredSubscriptionsMutation.isPending}
+                  data-testid="button-check-expired-subscriptions"
+                >
+                  {checkExpiredSubscriptionsMutation.isPending ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Clock className="h-4 w-4 mr-2" />
+                  )}
+                  {t.checkExpiredSubscriptions || "Check Expired Subscriptions"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => cleanupExpiredMutation.mutate()}
                   disabled={cleanupExpiredMutation.isPending}
                   data-testid="button-cleanup-expired"
@@ -1677,19 +1775,50 @@ export default function ITAccountManagement() {
                               <span>{t.expiresAt || "Expires"}: {new Date(signup.expiresAt).toLocaleDateString()}</span>
                             </div>
 
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              className="w-full"
-                              onClick={() => {
-                                setPendingSignupToDelete(signup);
-                                setDeletePendingDialogOpen(true);
-                              }}
-                              data-testid={`button-delete-pending-${signup.id}`}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              {t.delete || "Delete"}
-                            </Button>
+                            <div className="flex flex-col gap-2">
+                              {signup.status !== 'paid' && (
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  className="w-full"
+                                  onClick={() => {
+                                    setPendingSignupToActivate(signup);
+                                    setActivatePendingDialogOpen(true);
+                                  }}
+                                  data-testid={`button-activate-pending-mobile-${signup.id}`}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  {t.activateAccount || "Activate Account"}
+                                </Button>
+                              )}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full"
+                                onClick={() => {
+                                  setPendingSignupToChangeStatus(signup);
+                                  setNewPendingStatus(signup.status);
+                                  setStatusChangeDialogOpen(true);
+                                }}
+                                data-testid={`button-status-pending-mobile-${signup.id}`}
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                {t.changeStatus || "Change Status"}
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="w-full"
+                                onClick={() => {
+                                  setPendingSignupToDelete(signup);
+                                  setDeletePendingDialogOpen(true);
+                                }}
+                                data-testid={`button-delete-pending-mobile-${signup.id}`}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                {t.delete || "Delete"}
+                              </Button>
+                            </div>
                           </CardContent>
                         </Card>
                       );
@@ -1764,17 +1893,44 @@ export default function ITAccountManagement() {
                                 {new Date(signup.expiresAt).toLocaleDateString()}
                               </TableCell>
                               <TableCell className="text-right">
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => {
-                                    setPendingSignupToDelete(signup);
-                                    setDeletePendingDialogOpen(true);
-                                  }}
-                                  data-testid={`button-delete-pending-${signup.id}`}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                <div className="flex items-center justify-end gap-1">
+                                  {signup.status !== 'paid' && (
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      onClick={() => {
+                                        setPendingSignupToActivate(signup);
+                                        setActivatePendingDialogOpen(true);
+                                      }}
+                                      data-testid={`button-activate-pending-${signup.id}`}
+                                    >
+                                      <CheckCircle className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setPendingSignupToChangeStatus(signup);
+                                      setNewPendingStatus(signup.status);
+                                      setStatusChangeDialogOpen(true);
+                                    }}
+                                    data-testid={`button-status-pending-${signup.id}`}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => {
+                                      setPendingSignupToDelete(signup);
+                                      setDeletePendingDialogOpen(true);
+                                    }}
+                                    data-testid={`button-delete-pending-${signup.id}`}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </TableCell>
                             </TableRow>
                           );
@@ -1844,6 +2000,151 @@ export default function ITAccountManagement() {
                     <>
                       <Trash2 className="h-4 w-4 mr-2" />
                       {t.delete || "Delete"}
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Activate Pending Signup Confirmation Dialog */}
+          <Dialog open={activatePendingDialogOpen} onOpenChange={setActivatePendingDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-primary">
+                  <CheckCircle className="h-5 w-5" />
+                  {t.activateAccount || "Activate Account"}
+                </DialogTitle>
+                <DialogDescription>
+                  {t.activateAccountConfirmation || "Are you sure you want to activate this account? This will create a full account with all subscription features."}
+                </DialogDescription>
+              </DialogHeader>
+              {pendingSignupToActivate && (
+                <div className="py-4">
+                  <div className="bg-muted p-4 rounded-md space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">{pendingSignupToActivate.restaurantName}</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      <span className="font-mono">{pendingSignupToActivate.username}</span> • {pendingSignupToActivate.email}
+                    </div>
+                    <div className="text-sm">
+                      {t.subscriptionPlan || "Plan"}: <Badge variant="secondary">{pendingSignupToActivate.subscriptionPlan}</Badge>
+                    </div>
+                    <div className="text-sm">
+                      {t.amount || "Amount"}: <span className="font-medium text-green-600">{parseFloat(pendingSignupToActivate.amount).toFixed(2)} SAR</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <DialogFooter className="flex-col gap-2 sm:flex-row">
+                <Button
+                  variant="outline"
+                  onClick={() => setActivatePendingDialogOpen(false)}
+                  className="w-full sm:w-auto"
+                  data-testid="button-cancel-activate-pending"
+                >
+                  {t.cancel || "Cancel"}
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    if (pendingSignupToActivate) {
+                      activatePendingSignupMutation.mutate(pendingSignupToActivate.id);
+                    }
+                  }}
+                  disabled={activatePendingSignupMutation.isPending}
+                  className="w-full sm:w-auto"
+                  data-testid="button-confirm-activate-pending"
+                >
+                  {activatePendingSignupMutation.isPending ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      {t.activating || "Activating..."}
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      {t.activateAccount || "Activate Account"}
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Change Pending Status Dialog */}
+          <Dialog open={statusChangeDialogOpen} onOpenChange={setStatusChangeDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Edit className="h-5 w-5" />
+                  {t.changeStatus || "Change Status"}
+                </DialogTitle>
+                <DialogDescription>
+                  {t.selectStatus || "Select the new status for this pending signup."}
+                </DialogDescription>
+              </DialogHeader>
+              {pendingSignupToChangeStatus && (
+                <div className="py-4 space-y-4">
+                  <div className="bg-muted p-4 rounded-md space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">{pendingSignupToChangeStatus.restaurantName}</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      <span className="font-mono">{pendingSignupToChangeStatus.username}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">{t.status || "Status"}</label>
+                    <Select value={newPendingStatus} onValueChange={setNewPendingStatus}>
+                      <SelectTrigger data-testid="select-pending-status">
+                        <SelectValue placeholder={t.selectStatus || "Select status"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">{t.paymentPending || "Pending"}</SelectItem>
+                        <SelectItem value="paid">{t.paid || "Paid"}</SelectItem>
+                        <SelectItem value="failed">{t.paymentFailed || "Failed"}</SelectItem>
+                        <SelectItem value="expired">{t.paymentExpired || "Expired"}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+              <DialogFooter className="flex-col gap-2 sm:flex-row">
+                <Button
+                  variant="outline"
+                  onClick={() => setStatusChangeDialogOpen(false)}
+                  className="w-full sm:w-auto"
+                  data-testid="button-cancel-status-change"
+                >
+                  {t.cancel || "Cancel"}
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    if (pendingSignupToChangeStatus && newPendingStatus) {
+                      updatePendingStatusMutation.mutate({
+                        id: pendingSignupToChangeStatus.id,
+                        status: newPendingStatus,
+                      });
+                    }
+                  }}
+                  disabled={updatePendingStatusMutation.isPending || !newPendingStatus}
+                  className="w-full sm:w-auto"
+                  data-testid="button-confirm-status-change"
+                >
+                  {updatePendingStatusMutation.isPending ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      {t.updating || "Updating..."}
+                    </>
+                  ) : (
+                    <>
+                      <Edit className="h-4 w-4 mr-2" />
+                      {t.update || "Update"}
                     </>
                   )}
                 </Button>
