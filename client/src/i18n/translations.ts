@@ -1667,6 +1667,24 @@ export interface Translations {
   invalidPassword: string;
   invalidPasswordDesc: string;
   
+  // Pending Signups (IT Account)
+  pendingSignups: string;
+  pendingSignupsDescription: string;
+  totalPending: string;
+  expiredCount: string;
+  pendingAmount: string;
+  cleanupExpired: string;
+  noPendingSignups: string;
+  paymentPending: string;
+  paymentExpired: string;
+  expiresAt: string;
+  deletePendingSignup: string;
+  deletePendingSignupConfirmation: string;
+  pendingSignupDeleted: string;
+  failedToDeletePendingSignup: string;
+  expiredSignupsCleanedUp: string;
+  failedToCleanupExpired: string;
+
   // Menu & Inventory Toast Messages
   imageUploadFailed: string;
   imageUploadFailedDesc: string;
@@ -3907,6 +3925,22 @@ export const translations: Record<Language, Translations> = {
     additionalNotes: 'Additional notes',
     invoicePdf: 'Invoice PDF',
     name: 'Name',
+    pendingSignups: "Pending Signups",
+    pendingSignupsDescription: "Signup accounts awaiting payment completion",
+    totalPending: "Total Pending",
+    expiredCount: "Expired Count",
+    pendingAmount: "Pending Amount",
+    cleanupExpired: "Clean Up Expired",
+    noPendingSignups: "No pending signups found",
+    paymentPending: "Payment Pending",
+    paymentExpired: "Expired",
+    expiresAt: "Expires At",
+    deletePendingSignup: "Delete Pending Signup",
+    deletePendingSignupConfirmation: "Are you sure you want to delete this pending signup? This action cannot be undone.",
+    pendingSignupDeleted: "Pending signup deleted successfully",
+    failedToDeletePendingSignup: "Failed to delete pending signup",
+    expiredSignupsCleanedUp: "expired signups cleaned up",
+    failedToCleanupExpired: "Failed to clean up expired signups",
   },
   
   Arabic: {
@@ -5851,6 +5885,22 @@ export const translations: Record<Language, Translations> = {
     additionalNotes: 'ملاحظات إضافية',
     invoicePdf: 'فاتورة PDF',
     name: 'الاسم',
+    pendingSignups: "تسجيلات قيد الانتظار",
+    pendingSignupsDescription: "حسابات التسجيل في انتظار إكمال الدفع",
+    totalPending: "إجمالي الانتظار",
+    expiredCount: "عدد المنتهية",
+    pendingAmount: "المبلغ المعلق",
+    cleanupExpired: "تنظيف المنتهية",
+    noPendingSignups: "لا توجد تسجيلات قيد الانتظار",
+    paymentPending: "الدفع قيد الانتظار",
+    paymentExpired: "منتهي الصلاحية",
+    expiresAt: "ينتهي في",
+    deletePendingSignup: "حذف التسجيل المعلق",
+    deletePendingSignupConfirmation: "هل أنت متأكد من حذف هذا التسجيل المعلق؟ لا يمكن التراجع عن هذا الإجراء.",
+    pendingSignupDeleted: "تم حذف التسجيل المعلق بنجاح",
+    failedToDeletePendingSignup: "فشل في حذف التسجيل المعلق",
+    expiredSignupsCleanedUp: "تم تنظيف التسجيلات المنتهية",
+    failedToCleanupExpired: "فشل في تنظيف التسجيلات المنتهية",
   },
   German: {
     // Navigation
@@ -7776,6 +7826,22 @@ export const translations: Record<Language, Translations> = {
     additionalNotes: 'Zusätzliche Notizen',
     invoicePdf: 'Rechnung PDF',
     name: 'Name',
+    pendingSignups: "Ausstehende Anmeldungen",
+    pendingSignupsDescription: "Anmeldekonten warten auf Zahlungsabschluss",
+    totalPending: "Gesamt ausstehend",
+    expiredCount: "Abgelaufene Anzahl",
+    pendingAmount: "Ausstehender Betrag",
+    cleanupExpired: "Abgelaufene bereinigen",
+    noPendingSignups: "Keine ausstehenden Anmeldungen gefunden",
+    paymentPending: "Zahlung ausstehend",
+    paymentExpired: "Abgelaufen",
+    expiresAt: "Läuft ab am",
+    deletePendingSignup: "Ausstehende Anmeldung löschen",
+    deletePendingSignupConfirmation: "Sind Sie sicher, dass Sie diese ausstehende Anmeldung löschen möchten?",
+    pendingSignupDeleted: "Ausstehende Anmeldung erfolgreich gelöscht",
+    failedToDeletePendingSignup: "Fehler beim Löschen der ausstehenden Anmeldung",
+    expiredSignupsCleanedUp: "abgelaufene Anmeldungen bereinigt",
+    failedToCleanupExpired: "Fehler beim Bereinigen abgelaufener Anmeldungen",
   },
   Chinese: {
     // Navigation
@@ -9701,6 +9767,22 @@ export const translations: Record<Language, Translations> = {
     additionalNotes: '附加说明',
     invoicePdf: '发票 PDF',
     name: '名称',
+    pendingSignups: "待处理注册",
+    pendingSignupsDescription: "等待付款完成的注册账户",
+    totalPending: "待处理总数",
+    expiredCount: "已过期数量",
+    pendingAmount: "待付金额",
+    cleanupExpired: "清理过期",
+    noPendingSignups: "未找到待处理的注册",
+    paymentPending: "待付款",
+    paymentExpired: "已过期",
+    expiresAt: "过期时间",
+    deletePendingSignup: "删除待处理注册",
+    deletePendingSignupConfirmation: "确定要删除此待处理注册吗？此操作无法撤销。",
+    pendingSignupDeleted: "待处理注册已成功删除",
+    failedToDeletePendingSignup: "删除待处理注册失败",
+    expiredSignupsCleanedUp: "个过期注册已清理",
+    failedToCleanupExpired: "清理过期注册失败",
   },
   Bengali: {
     // Navigation
@@ -11626,6 +11708,22 @@ export const translations: Record<Language, Translations> = {
     additionalNotes: 'অতিরিক্ত নোট',
     invoicePdf: 'ইনভয়েস PDF',
     name: 'নাম',
+    pendingSignups: "মুলতুবি সাইনআপ",
+    pendingSignupsDescription: "পেমেন্ট সম্পূর্ণ হওয়ার অপেক্ষায় সাইনআপ অ্যাকাউন্ট",
+    totalPending: "মোট মুলতুবি",
+    expiredCount: "মেয়াদোত্তীর্ণ সংখ্যা",
+    pendingAmount: "মুলতুবি পরিমাণ",
+    cleanupExpired: "মেয়াদোত্তীর্ণ পরিষ্কার করুন",
+    noPendingSignups: "কোন মুলতুবি সাইনআপ পাওয়া যায়নি",
+    paymentPending: "পেমেন্ট মুলতুবি",
+    paymentExpired: "মেয়াদ শেষ",
+    expiresAt: "মেয়াদ শেষের সময়",
+    deletePendingSignup: "মুলতুবি সাইনআপ মুছুন",
+    deletePendingSignupConfirmation: "আপনি কি নিশ্চিত এই মুলতুবি সাইনআপ মুছে ফেলতে চান?",
+    pendingSignupDeleted: "মুলতুবি সাইনআপ সফলভাবে মুছে ফেলা হয়েছে",
+    failedToDeletePendingSignup: "মুলতুবি সাইনআপ মুছতে ব্যর্থ",
+    expiredSignupsCleanedUp: "টি মেয়াদোত্তীর্ণ সাইনআপ পরিষ্কার করা হয়েছে",
+    failedToCleanupExpired: "মেয়াদোত্তীর্ণ সাইনআপ পরিষ্কার করতে ব্যর্থ",
   },
   Italian: {
     // Navigation
@@ -13551,6 +13649,22 @@ export const translations: Record<Language, Translations> = {
     additionalNotes: 'Note aggiuntive',
     invoicePdf: 'Fattura PDF',
     name: 'Nome',
+    pendingSignups: "Iscrizioni in sospeso",
+    pendingSignupsDescription: "Account di iscrizione in attesa di completamento del pagamento",
+    totalPending: "Totale in sospeso",
+    expiredCount: "Conteggio scaduti",
+    pendingAmount: "Importo in sospeso",
+    cleanupExpired: "Pulisci scaduti",
+    noPendingSignups: "Nessuna iscrizione in sospeso trovata",
+    paymentPending: "Pagamento in sospeso",
+    paymentExpired: "Scaduto",
+    expiresAt: "Scade il",
+    deletePendingSignup: "Elimina iscrizione in sospeso",
+    deletePendingSignupConfirmation: "Sei sicuro di voler eliminare questa iscrizione in sospeso?",
+    pendingSignupDeleted: "Iscrizione in sospeso eliminata con successo",
+    failedToDeletePendingSignup: "Impossibile eliminare l'iscrizione in sospeso",
+    expiredSignupsCleanedUp: "iscrizioni scadute eliminate",
+    failedToCleanupExpired: "Impossibile pulire le iscrizioni scadute",
   },
 
   Hindi: {
@@ -15420,6 +15534,22 @@ export const translations: Record<Language, Translations> = {
     additionalNotes: 'अतिरिक्त नोट्स',
     invoicePdf: 'इनवॉइस PDF',
     name: 'नाम',
+    pendingSignups: "लंबित साइनअप",
+    pendingSignupsDescription: "भुगतान पूर्ण होने की प्रतीक्षा में साइनअप खाते",
+    totalPending: "कुल लंबित",
+    expiredCount: "समाप्त संख्या",
+    pendingAmount: "लंबित राशि",
+    cleanupExpired: "समाप्त साफ करें",
+    noPendingSignups: "कोई लंबित साइनअप नहीं मिला",
+    paymentPending: "भुगतान लंबित",
+    paymentExpired: "समाप्त",
+    expiresAt: "समाप्ति समय",
+    deletePendingSignup: "लंबित साइनअप हटाएं",
+    deletePendingSignupConfirmation: "क्या आप इस लंबित साइनअप को हटाना चाहते हैं?",
+    pendingSignupDeleted: "लंबित साइनअप सफलतापूर्वक हटाया गया",
+    failedToDeletePendingSignup: "लंबित साइनअप हटाने में विफल",
+    expiredSignupsCleanedUp: "समाप्त साइनअप साफ किए गए",
+    failedToCleanupExpired: "समाप्त साइनअप साफ करने में विफल",
   },
   
   Urdu: {
@@ -17289,6 +17419,22 @@ export const translations: Record<Language, Translations> = {
     additionalNotes: 'اضافی نوٹس',
     invoicePdf: 'انوائس PDF',
     name: 'نام',
+    pendingSignups: "زیر التواء سائن اپس",
+    pendingSignupsDescription: "ادائیگی مکمل ہونے کے انتظار میں سائن اپ اکاؤنٹس",
+    totalPending: "کل زیر التواء",
+    expiredCount: "ختم شدہ تعداد",
+    pendingAmount: "زیر التواء رقم",
+    cleanupExpired: "ختم شدہ صاف کریں",
+    noPendingSignups: "کوئی زیر التواء سائن اپ نہیں ملا",
+    paymentPending: "ادائیگی زیر التواء",
+    paymentExpired: "میعاد ختم",
+    expiresAt: "ختم ہونے کا وقت",
+    deletePendingSignup: "زیر التواء سائن اپ حذف کریں",
+    deletePendingSignupConfirmation: "کیا آپ واقعی اس زیر التواء سائن اپ کو حذف کرنا چاہتے ہیں؟",
+    pendingSignupDeleted: "زیر التواء سائن اپ کامیابی سے حذف ہو گیا",
+    failedToDeletePendingSignup: "زیر التواء سائن اپ حذف کرنے میں ناکام",
+    expiredSignupsCleanedUp: "ختم شدہ سائن اپس صاف کر دیے گئے",
+    failedToCleanupExpired: "ختم شدہ سائن اپس صاف کرنے میں ناکام",
   },
   
 
@@ -19090,6 +19236,22 @@ export const translations: Record<Language, Translations> = {
     additionalNotes: 'Notas adicionales',
     invoicePdf: 'Factura PDF',
     name: 'Nombre',
+    pendingSignups: "Registros Pendientes",
+    pendingSignupsDescription: "Cuentas de registro esperando completar el pago",
+    totalPending: "Total Pendiente",
+    expiredCount: "Cantidad Expirada",
+    pendingAmount: "Monto Pendiente",
+    cleanupExpired: "Limpiar Expirados",
+    noPendingSignups: "No se encontraron registros pendientes",
+    paymentPending: "Pago Pendiente",
+    paymentExpired: "Expirado",
+    expiresAt: "Expira el",
+    deletePendingSignup: "Eliminar Registro Pendiente",
+    deletePendingSignupConfirmation: "¿Está seguro de eliminar este registro pendiente?",
+    pendingSignupDeleted: "Registro pendiente eliminado exitosamente",
+    failedToDeletePendingSignup: "Error al eliminar registro pendiente",
+    expiredSignupsCleanedUp: "registros expirados limpiados",
+    failedToCleanupExpired: "Error al limpiar registros expirados",
   },
 
   Tagalog: {
@@ -20891,6 +21053,22 @@ export const translations: Record<Language, Translations> = {
     additionalNotes: 'Mga karagdagang tala',
     invoicePdf: 'Invoice PDF',
     name: 'Pangalan',
+    pendingSignups: "Nakaabang na Signup",
+    pendingSignupsDescription: "Mga signup account na naghihintay sa pagkumpleto ng bayad",
+    totalPending: "Kabuuang Nakaabang",
+    expiredCount: "Bilang ng Expired",
+    pendingAmount: "Halaga ng Nakaabang",
+    cleanupExpired: "Linisin ang Expired",
+    noPendingSignups: "Walang nahanap na nakaabang na signup",
+    paymentPending: "Nakaabang ang Bayad",
+    paymentExpired: "Expired na",
+    expiresAt: "Mag-e-expire sa",
+    deletePendingSignup: "Burahin ang Nakaabang na Signup",
+    deletePendingSignupConfirmation: "Sigurado ka bang gusto mong burahin ang nakaabang na signup na ito?",
+    pendingSignupDeleted: "Matagumpay na nabura ang nakaabang na signup",
+    failedToDeletePendingSignup: "Nabigo sa pagbura ng nakaabang na signup",
+    expiredSignupsCleanedUp: "expired na signup ang nalinis",
+    failedToCleanupExpired: "Nabigo sa paglinis ng expired na signup",
   },
 };
 
