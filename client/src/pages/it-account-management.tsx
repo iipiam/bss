@@ -42,7 +42,8 @@ import {
   Trash2,
   File,
   UserPlus,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Edit
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
