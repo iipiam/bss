@@ -44,6 +44,7 @@ interface SortableRecipeCardProps {
 }
 
 function SortableRecipeCard({ recipe, onEdit, onDelete }: SortableRecipeCardProps) {
+  const { t } = useLanguage();
   const {
     attributes,
     listeners,
