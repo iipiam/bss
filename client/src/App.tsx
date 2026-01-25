@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { BranchSelector } from "@/components/branch-selector";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageToggle } from "@/components/language-toggle";
 import { DeviceSelector } from "@/components/device-selector";
 import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
 import { DeviceProvider, useDevice } from "@/contexts/DeviceContext";
@@ -337,6 +338,7 @@ function AppContent() {
               </div>
               <div className="flex items-center gap-2">
                 <DeviceSelector />
+                <LanguageToggle />
                 <ThemeToggle />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
