@@ -2960,22 +2960,46 @@ export async function generateInvestorStatementPDF(data: InvestorStatementData):
   
   const html = generateInvestorStatementHTML(data);
   
-  const browser = await getBrowser();
-  const page = await browser.newPage();
+  const chromiumPath = getChromiumPath();
+  const launchOptions: any = {
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--disable-software-rasterizer',
+      '--single-process',
+      '--no-zygote'
+    ]
+  };
 
+  if (chromiumPath) {
+    launchOptions.executablePath = chromiumPath;
+    console.log('[InvestorStatement] Launching fresh browser with:', chromiumPath);
+  }
+
+  const browser = await puppeteer.launch(launchOptions);
+  
   try {
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: PDF_MARGINS
-    });
+    const page = await browser.newPage();
 
-    console.log('[InvestorStatement] PDF generated successfully');
-    return Buffer.from(pdfBuffer);
+    try {
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: PDF_MARGINS
+      });
+
+      console.log('[InvestorStatement] PDF generated successfully');
+      return Buffer.from(pdfBuffer);
+    } finally {
+      await page.close().catch(e => console.log('[InvestorStatement] Page close error:', e.message));
+    }
   } finally {
-    await page.close();
+    await browser.close().catch(e => console.log('[InvestorStatement] Browser close error:', e.message));
   }
 }
 
