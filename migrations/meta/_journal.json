@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1763539112772,
-      "tag": "0000_legal_greymalkin",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1763647504078,
-      "tag": "0001_curious_corsair",
+      "when": 1770854783214,
+      "tag": "0000_motionless_zaran",
       "breakpoints": true
     }
   ]
