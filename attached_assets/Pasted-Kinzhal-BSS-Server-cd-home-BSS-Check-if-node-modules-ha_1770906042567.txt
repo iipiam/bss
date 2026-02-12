@@ -1,0 +1,131 @@
+Kinzhal@BSS-Server:~$ cd /home/BSS
+
+# Check if node_modules has drizzle-orm
+ls /home/BSS/node_modules/drizzle-orm
+
+# If not found, install it in the right directory
+npm install drizzle-orm --legacy-peer-deps
+
+# Install dotenv to load .env file
+npm install dotenv --legacy-peer-deps
+
+# Restart the app with .env loading
+pm2 stop BSS
+pm2 delete BSS
+pm2 start dist/index.js --name BSS --node-args="-r dotenv/config"
+pm2 logs BSS --lines 20
+README.md               entity.d.cts         mysql-proxy             runnable-query.cjs       table.utils.cjs.map
+alias.cjs               entity.d.ts          mysql2                  runnable-query.cjs.map   table.utils.d.cts
+alias.cjs.map           entity.js            neon                    runnable-query.d.cts     table.utils.d.ts
+alias.d.cts             entity.js.map        neon-http               runnable-query.d.ts      table.utils.js
+alias.d.ts              errors.cjs           neon-serverless         runnable-query.js        table.utils.js.map
+alias.js                errors.cjs.map       node-postgres           runnable-query.js.map    tidb-serverless
+alias.js.map            errors.d.cts         op-sqlite               selection-proxy.cjs      tracing-utils.cjs
+aws-data-api            errors.d.ts          operations.cjs          selection-proxy.cjs.map  tracing-utils.cjs.map
+batch.cjs               errors.js            operations.cjs.map      selection-proxy.d.cts    tracing-utils.d.cts
+batch.cjs.map           errors.js.map        operations.d.cts        selection-proxy.d.ts     tracing-utils.d.ts
+batch.d.cts             expo-sqlite          operations.d.ts         selection-proxy.js       tracing-utils.js
+batch.d.ts              expressions.cjs      operations.js           selection-proxy.js.map   tracing-utils.js.map
+batch.js                expressions.cjs.map  operations.js.map       session.cjs              tracing.cjs
+batch.js.map            expressions.d.cts    package.json            session.cjs.map          tracing.cjs.map
+better-sqlite3          expressions.d.ts     pg-core                 session.d.cts            tracing.d.cts
+bun-sql                 expressions.js       pg-proxy                session.d.ts             tracing.d.ts
+bun-sqlite              expressions.js.map   pglite                  session.js               tracing.js
+casing.cjs              index.cjs            planetscale-serverless  session.js.map           tracing.js.map
+casing.cjs.map          index.cjs.map        postgres-js             singlestore              utils.cjs
+casing.d.cts            index.d.cts          primary-key.cjs         singlestore-core         utils.cjs.map
+casing.d.ts             index.d.ts           primary-key.cjs.map     singlestore-proxy        utils.d.cts
+casing.js               index.js             primary-key.d.cts       sql                      utils.d.ts
+casing.js.map           index.js.map         primary-key.d.ts        sql-js                   utils.js
+column-builder.cjs      knex                 primary-key.js          sqlite-core              utils.js.map
+column-builder.cjs.map  kysely               primary-key.js.map      sqlite-proxy             vercel-postgres
+column-builder.d.cts    libsql               prisma                  subquery.cjs             version.cjs
+column-builder.d.ts     logger.cjs           query-builders          subquery.cjs.map         version.cjs.map
+column-builder.js       logger.cjs.map       query-promise.cjs       subquery.d.cts           version.d.cts
+column-builder.js.map   logger.d.cts         query-promise.cjs.map   subquery.d.ts            version.d.ts
+column.cjs              logger.d.ts          query-promise.d.cts     subquery.js              version.js
+column.cjs.map          logger.js            query-promise.d.ts      subquery.js.map          version.js.map
+column.d.cts            logger.js.map        query-promise.js        supabase                 view-common.cjs
+column.d.ts             migrator.cjs         query-promise.js.map    table.cjs                view-common.cjs.map
+column.js               migrator.cjs.map     relations.cjs           table.cjs.map            view-common.d.cts
+column.js.map           migrator.d.cts       relations.cjs.map       table.d.cts              view-common.d.ts
+d1                      migrator.d.ts        relations.d.cts         table.d.ts               view-common.js
+durable-sqlite          migrator.js          relations.d.ts          table.js                 view-common.js.map
+entity.cjs              migrator.js.map      relations.js            table.js.map             xata-http
+entity.cjs.map          mysql-core           relations.js.map        table.utils.cjs
+
+changed 1 package, and audited 789 packages in 5s
+
+79 packages are looking for funding
+  run `npm fund` for details
+
+35 vulnerabilities (1 low, 8 moderate, 23 high, 3 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+
+added 1 package, and audited 790 packages in 3s
+
+80 packages are looking for funding
+  run `npm fund` for details
+
+35 vulnerabilities (1 low, 8 moderate, 23 high, 3 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+[PM2][ERROR] Process or Namespace BSS not found
+[PM2][ERROR] Process or Namespace BSS not found
+[PM2] Starting /home/BSS/dist/index.js in fork_mode (1 instance)
+[PM2] Done.
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 0    │ online    │ 0%       │ 18.9mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[TAILING] Tailing last 20 lines for [BSS] process (change the value with --lines option)
+/home/Kinzhal/.pm2/logs/BSS-out.log last 20 lines:
+/home/Kinzhal/.pm2/logs/BSS-error.log last 20 lines:
+0|BSS      |   code: 'ERR_MODULE_NOT_FOUND'
+0|BSS      | }
+0|BSS      | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'drizzle-orm' imported from /home/BSS/dist/index.js
+0|BSS      |     at packageResolve (node:internal/modules/esm/resolve:873:9)
+0|BSS      |     at moduleResolve (node:internal/modules/esm/resolve:946:18)
+0|BSS      |     at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+0|BSS      |     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:708:12)
+0|BSS      |     at #cachedDefaultResolve (node:internal/modules/esm/loader:657:25)
+0|BSS      |     at ModuleLoader.resolve (node:internal/modules/esm/loader:640:38)
+0|BSS      |     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:264:38)
+0|BSS      |     at ModuleJob._link (node:internal/modules/esm/module_job:168:49) {
+0|BSS      |   code: 'ERR_MODULE_NOT_FOUND'
+0|BSS      | }
+0|BSS      | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|BSS      |     at getDatabaseUrl (file:///home/BSS/dist/index.js:1517:9)
+0|BSS      |     at server/db.ts (file:///home/BSS/dist/index.js:1525:19)
+0|BSS      |     at __init (file:///home/BSS/dist/index.js:10:56)
+0|BSS      |     at file:///home/BSS/dist/index.js:11293:1
+0|BSS      |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|BSS      |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+
+0|BSS  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|BSS  |     at getDatabaseUrl (file:///home/BSS/dist/index.js:1517:9)
+0|BSS  |     at server/db.ts (file:///home/BSS/dist/index.js:1525:19)
+0|BSS  |     at __init (file:///home/BSS/dist/index.js:10:56)
+0|BSS  |     at file:///home/BSS/dist/index.js:11293:1
+0|BSS  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|BSS  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
