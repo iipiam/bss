@@ -1,0 +1,74 @@
+Kinzhal@BSS-Server:~$ cd /home/BSS && pm2 restart BSS
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [BSS](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 2    │ online    │ 0%       │ 18.4mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+Kinzhal@BSS-Server:/home/BSS$ pm2 logs BSS --lines 30
+[TAILING] Tailing last 30 lines for [BSS] process (change the value with --lines option)
+/home/Kinzhal/.pm2/logs/BSS-out.log last 30 lines:
+0|BSS      |   nationalId: '1090355007',
+0|BSS      |   hasVatRegistration: 'false',
+0|BSS      |   taxNumber: undefined,
+0|BSS      |   businessType: 'restaurant',
+0|BSS      |   restaurantType: 'Restaurant',
+0|BSS      |   subscriptionPlan: 'weekly',
+0|BSS      |   branchesCount: '1'
+0|BSS      | }
+0|BSS      | [SIGNUP] Uploaded files: [ 'crCertificate', 'ibanCertificate', 'nationalAddress' ]
+0|BSS      | 6:30:40 PM [express] POST /api/auth/signup 500 in 46ms :: {"error":"Failed to create account"}
+0|BSS      | ✅ Database connected to localhost
+0|BSS      | 6:33:08 PM [express] serving on port 3000
+0|BSS      | 6:33:09 PM [express] GET /api/auth/me 401 in 7ms :: {"error":"Not authenticated"}
+0|BSS      | 6:33:10 PM [express] GET /api/auth/me 401 in 1ms :: {"error":"Not authenticated"}
+0|BSS      | [SIGNUP] Received signup request for username: mwcdt
+0|BSS      | [SIGNUP] Request body: {
+0|BSS      |   username: 'mwcdt',
+0|BSS      |   name: 'amjad alqahtani',
+0|BSS      |   email: 'akaqahtani@gmail.com',
+0|BSS      |   restaurantName: 'مضغوط حكيم الجبل',
+0|BSS      |   nationalId: '1090355007',
+0|BSS      |   hasVatRegistration: 'false',
+0|BSS      |   taxNumber: undefined,
+0|BSS      |   businessType: 'restaurant',
+0|BSS      |   restaurantType: 'Restaurant',
+0|BSS      |   subscriptionPlan: 'weekly',
+0|BSS      |   branchesCount: '1'
+0|BSS      | }
+0|BSS      | [SIGNUP] Uploaded files: [ 'crCertificate', 'ibanCertificate', 'nationalAddress' ]
+0|BSS      | 6:33:49 PM [express] POST /api/auth/signup 500 in 54ms :: {"error":"Failed to create account"}
+
+/home/Kinzhal/.pm2/logs/BSS-error.log last 30 lines:
+0|BSS      |   constraint: undefined,
+0|BSS      |   file: 'auth.c',
+0|BSS      |   line: '331',
+0|BSS      |   routine: 'auth_failed'
+0|BSS      | }
+0|BSS      | [Migration] Error adding columns: password authentication failed for user "bssadmin"
+0|BSS      | Signup error: error: password authentication failed for user "bssadmin"
+0|BSS      |     at /home/BSS/node_modules/pg-pool/index.js:45:11
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      |     at async file:///home/BSS/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|BSS      |     at async DatabaseStorage.getUserByUsername (file:///home/BSS/dist/index.js:2433:25)
+0|BSS      |     at async file:///home/BSS/dist/index.js:15934:28 {
+0|BSS      |   length: 104,
+0|BSS      |   severity: 'FATAL',
+0|BSS      |   code: '28P01',
+0|BSS      |   detail: undefined,
+0|BSS      |   hint: undefined,
+0|BSS      |   position: undefined,
+0|BSS      |   internalPosition: undefined,
+0|BSS      |   internalQuery: undefined,
+0|BSS      |   where: undefined,
+0|BSS      |   schema: undefined,
+0|BSS      |   table: undefined,
+0|BSS      |   column: undefined,
+0|BSS      |   dataType: undefined,
+0|BSS      |   constraint: undefined,
+0|BSS      |   file: 'auth.c',
+0|BSS      |   line: '331',
+0|BSS      |   routine: 'auth_failed'
+0|BSS      | }
