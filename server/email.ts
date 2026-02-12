@@ -419,7 +419,7 @@ export function generatePasswordResetEmail(data: PasswordResetTemplateData): { h
     <!-- Footer -->
     <div class="footer">
       <p>BlindSpot System (BSS) - Business Management Platform</p>
-      <p>IT@kinbss.com</p>
+      <p>IT@kinbss.org</p>
       <!-- TODO: Update sender email domain when new domain is available -->
       <p>This is an automated email, please do not reply / هذا بريد إلكتروني تلقائي، يرجى عدم الرد</p>
     </div>
@@ -462,7 +462,7 @@ ${resetLink}
 ---
 
 BlindSpot System (BSS) - Business Management Platform
-IT@kinbss.com
+IT@kinbss.org
 
 This is an automated email, please do not reply.
 هذا بريد إلكتروني تلقائي، يرجى عدم الرد.
@@ -487,7 +487,7 @@ export class PasswordResetMailer {
       return credentials.fromEmail;
     }
     // Fall back to environment variables
-    return process.env.EMAIL_FROM || process.env.IT_EMAIL || 'IT@kinbss.com';
+    return process.env.EMAIL_FROM || process.env.IT_EMAIL || 'IT@kinbss.org';
   }
 
   async sendPasswordResetEmail(

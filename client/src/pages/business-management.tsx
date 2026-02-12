@@ -341,7 +341,7 @@ export default function BusinessManagement() {
     vatNumber: "",
     crNumber: "",
     nationalId: "",
-    email: "IT@kinbss.com",
+    email: "IT@kinbss.org",
     phone: "",
     website: "",
     addressEn: "Saudi Arabia",
@@ -2696,7 +2696,7 @@ export default function BusinessManagement() {
                           type="email"
                           value={businessInfoForm.email}
                           onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, email: e.target.value }))}
-                          placeholder="IT@kinbss.com"
+                          placeholder="IT@kinbss.org"
                           data-testid="input-email"
                         />
                       </div>
@@ -2716,7 +2716,7 @@ export default function BusinessManagement() {
                           id="website"
                           value={businessInfoForm.website}
                           onChange={(e) => setBusinessInfoForm(prev => ({ ...prev, website: e.target.value }))}
-                          placeholder="https://kinbss.com"
+                          placeholder="https://kinbss.org"
                           data-testid="input-website"
                         />
                       </div>

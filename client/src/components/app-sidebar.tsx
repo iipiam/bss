@@ -385,7 +385,7 @@ export function AppSidebar() {
                     </DialogHeader>
                     <div className="space-y-4 mt-4">
                       <a
-                        href="mailto:it@kinbss.com"
+                        href="mailto:it@kinbss.org"
                         data-testid="link-email"
                         className="flex items-center gap-3 p-4 rounded-lg border border-border hover-elevate active-elevate-2"
                       >
@@ -394,7 +394,7 @@ export function AppSidebar() {
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-semibold text-foreground">{t.email}</p>
-                          <p className="text-sm text-muted-foreground">it@kinbss.com</p>
+                          <p className="text-sm text-muted-foreground">it@kinbss.org</p>
                         </div>
                       </a>
                     </div>

@@ -13506,7 +13506,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           vatNumber: "",
           crNumber: "",
           nationalId: "",
-          email: "IT@kinbss.com",
+          email: "IT@kinbss.org",
           phone: "",
           website: "",
           addressEn: "Saudi Arabia",

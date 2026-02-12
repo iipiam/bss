@@ -1611,9 +1611,9 @@ export async function generateSubscriptionInvoice(data: {
   const bi = data.businessInfo || {};
   const companyNameEn = bi.companyNameEn || "BlindSpot System (BSS)";
   const companyNameAr = bi.companyNameAr || "نظام بلايند سبوت";
-  const companyEmail = bi.email || "IT@kinbss.com";
+  const companyEmail = bi.email || "IT@kinbss.org";
   const companyPhone = bi.phone || "";
-  const companyWebsite = bi.website || "https://kinbss.com";
+  const companyWebsite = bi.website || "https://kinbss.org";
   const companyAddressEn = bi.addressEn || "Saudi Arabia";
   const companyAddressAr = bi.addressAr || "المملكة العربية السعودية";
   const companyCity = bi.city || "";
@@ -3044,7 +3044,7 @@ function generateBssAnalysisStatementHTML(data: BssAnalysisStatementData): strin
   const bi = data.businessInfo || {};
   const companyNameEn = bi.companyNameEn || "BlindSpot System (BSS)";
   const companyNameAr = bi.companyNameAr || "نظام بلايند سبوت";
-  const companyEmail = bi.email || "IT@kinbss.com";
+  const companyEmail = bi.email || "IT@kinbss.org";
   const companyPhone = bi.phone || "";
   const companyAddress = bi.addressEn || "Saudi Arabia";
   const companyVat = bi.vatNumber || "";
@@ -3576,7 +3576,7 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
   const bi = data.businessInfo || {};
   const companyNameEn = bi.companyNameEn || "BlindSpot System (BSS)";
   const companyNameAr = bi.companyNameAr || "نظام بلايند سبوت";
-  const companyEmail = bi.email || "IT@kinbss.com";
+  const companyEmail = bi.email || "IT@kinbss.org";
   const companyPhone = bi.phone || "";
   const companyAddressEn = bi.addressEn || "Saudi Arabia";
   const companyAddressAr = bi.addressAr || "المملكة العربية السعودية";
