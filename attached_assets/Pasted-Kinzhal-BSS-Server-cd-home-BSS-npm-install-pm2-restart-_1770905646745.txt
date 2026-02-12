@@ -1,0 +1,65 @@
+Kinzhal@BSS-Server:~$ cd /home/BSS
+npm install
+pm2 restart BSS
+pm2 logs BSS --lines 20
+npm error code ERESOLVE
+npm error ERESOLVE could not resolve
+npm error
+npm error While resolving: @tailwindcss/vite@4.1.3
+npm error Found: vite@7.2.2
+npm error node_modules/vite
+npm error   vite@"^7.2.2" from the root project
+npm error   peer vite@"^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0" from @vitejs/plugin-react@5.1.1
+npm error   node_modules/@vitejs/plugin-react
+npm error     @vitejs/plugin-react@"^5.1.1" from the root project
+npm error
+npm error Could not resolve dependency:
+npm error peer vite@"^5.2.0 || ^6" from @tailwindcss/vite@4.1.3
+npm error node_modules/@tailwindcss/vite
+npm error   dev @tailwindcss/vite@"^4.1.3" from the root project
+npm error
+npm error Conflicting peer dependency: vite@6.4.1
+npm error node_modules/vite
+npm error   peer vite@"^5.2.0 || ^6" from @tailwindcss/vite@4.1.3
+npm error   node_modules/@tailwindcss/vite
+npm error     dev @tailwindcss/vite@"^4.1.3" from the root project
+npm error
+npm error Fix the upstream dependency conflict, or retry
+npm error this command with --force or --legacy-peer-deps
+npm error to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error /home/Kinzhal/.npm/_logs/2026-02-12T14_13_49_556Z-eresolve-report.txt
+npm error A complete log of this run can be found in: /home/Kinzhal/.npm/_logs/2026-02-12T14_13_49_556Z-debug-0.log
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [BSS](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 1    │ online    │ 0%       │ 19.2mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[TAILING] Tailing last 20 lines for [BSS] process (change the value with --lines option)
+/home/Kinzhal/.pm2/logs/BSS-out.log last 20 lines:
+/home/Kinzhal/.pm2/logs/BSS-error.log last 20 lines:
+0|BSS      |     at moduleResolve (node:internal/modules/esm/resolve:946:18)
+0|BSS      |     at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+0|BSS      |     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:708:12)
+0|BSS      |     at #cachedDefaultResolve (node:internal/modules/esm/loader:657:25)
+0|BSS      |     at ModuleLoader.resolve (node:internal/modules/esm/loader:640:38)
+0|BSS      |     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:264:38)
+0|BSS      |     at ModuleJob._link (node:internal/modules/esm/module_job:168:49) {
+0|BSS      |   code: 'ERR_MODULE_NOT_FOUND'
+0|BSS      | }
+0|BSS      | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'drizzle-orm' imported from /home/BSS/dist/index.js
+0|BSS      |     at packageResolve (node:internal/modules/esm/resolve:873:9)
+0|BSS      |     at moduleResolve (node:internal/modules/esm/resolve:946:18)
+0|BSS      |     at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+0|BSS      |     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:708:12)
+0|BSS      |     at #cachedDefaultResolve (node:internal/modules/esm/loader:657:25)
+0|BSS      |     at ModuleLoader.resolve (node:internal/modules/esm/loader:640:38)
+0|BSS      |     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:264:38)
+0|BSS      |     at ModuleJob._link (node:internal/modules/esm/module_job:168:49) {
+0|BSS      |   code: 'ERR_MODULE_NOT_FOUND'
+0|BSS      | }
