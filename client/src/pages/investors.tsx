@@ -922,7 +922,7 @@ export default function Investors() {
               {t.addInvestor || "Add Investor"}
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingInvestor
