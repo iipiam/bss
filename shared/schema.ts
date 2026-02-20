@@ -548,6 +548,9 @@ export const users = pgTable("users", {
     };
   }>(),
   
+  // Per-user language preference (so sub-accounts can set their own language)
+  language: text("language").default("English"),
+  
   // Activity Tracking (for IT Dashboard real-time monitoring)
   lastActivityAt: timestamp("last_activity_at"), // Last API request timestamp
   lastLoginAt: timestamp("last_login_at"), // Last successful login timestamp

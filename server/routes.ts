@@ -5614,18 +5614,28 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const accountType = req.session.accountType || "client";
       const restaurantId = req.session.user!.restaurantId!;
-      const { devicePreference } = req.body;
+      const { devicePreference, language } = req.body;
       
       // Validate device preference
       if (devicePreference && !['laptop', 'ipad', 'iphone'].includes(devicePreference)) {
         return res.status(400).json({ error: "Invalid device preference. Must be 'laptop', 'ipad', or 'iphone'" });
       }
 
+      // Validate language preference
+      const validLanguages = ['English', 'Arabic', 'German', 'Chinese', 'Bengali', 'Italian', 'Hindi', 'Urdu', 'Spanish', 'Tagalog'];
+      if (language && !validLanguages.includes(language)) {
+        return res.status(400).json({ error: "Invalid language preference" });
+      }
+
+      const updateData: Record<string, any> = {};
+      if (devicePreference) updateData.devicePreference = devicePreference;
+      if (language) updateData.language = language;
+
       // For IT accounts, update user without restaurantId
       // For client accounts, update user with restaurantId for multi-tenant isolation
       const updatedUser = restaurantId 
-        ? await storage.updateUser(req.session.userId!, restaurantId, { devicePreference })
-        : await storage.updateUserById(req.session.userId!, { devicePreference });
+        ? await storage.updateUser(req.session.userId!, restaurantId, updateData)
+        : await storage.updateUserById(req.session.userId!, updateData);
       
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });

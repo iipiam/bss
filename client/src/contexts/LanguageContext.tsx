@@ -1,9 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Language, translations, Translations, supportedLanguages } from '@/i18n/translations';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useAuth } from '@/lib/auth';
-import type { Settings } from '@shared/schema';
 
 interface LanguageContextType {
   language: Language;
@@ -13,7 +12,6 @@ interface LanguageContextType {
   isUpdating: boolean;
 }
 
-// Mapping from Language names to ISO 639-1 codes for accessibility
 const languageToLocaleCode: Record<Language, string> = {
   English: 'en',
   Arabic: 'ar',
@@ -31,54 +29,44 @@ const LANGUAGE_STORAGE_KEY = 'bss-language';
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-// Helper function to validate language
 function isValidLanguage(lang: string): lang is Language {
   return supportedLanguages.includes(lang as Language);
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [hasInitializedFromBackend, setHasInitializedFromBackend] = useState(false);
+  const [hasInitializedFromUser, setHasInitializedFromUser] = useState(false);
   
-  // Initialize language from localStorage or default to English
   const [language, setLanguageState] = useState<Language>(() => {
     const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    // Validate stored language - if invalid, fallback to English
     if (stored && isValidLanguage(stored)) {
       return stored as Language;
     }
-    // Clear invalid language from storage
     if (stored) {
       localStorage.removeItem(LANGUAGE_STORAGE_KEY);
     }
     return 'English';
   });
 
-  // Only fetch settings when user is authenticated
-  const { data: settings } = useQuery<Settings>({
-    queryKey: ['/api/settings'],
-    enabled: !!user,
-    retry: false,
-  });
-
-  // Sync language from backend settings ONLY on first load (not on every settings change)
+  // Sync language from user profile on first load
   useEffect(() => {
-    if (settings?.language && !hasInitializedFromBackend) {
-      const backendLanguage = settings.language as Language;
-      // Only update if different from current localStorage value
-      const storedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-      if (!storedLang || storedLang !== backendLanguage) {
-        setLanguageState(backendLanguage);
-        localStorage.setItem(LANGUAGE_STORAGE_KEY, backendLanguage);
+    if (user && !hasInitializedFromUser) {
+      const userLanguage = (user as any).language as string;
+      if (userLanguage && isValidLanguage(userLanguage)) {
+        const storedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+        if (!storedLang || storedLang !== userLanguage) {
+          setLanguageState(userLanguage as Language);
+          localStorage.setItem(LANGUAGE_STORAGE_KEY, userLanguage);
+        }
       }
-      setHasInitializedFromBackend(true);
+      setHasInitializedFromUser(true);
     }
-  }, [settings, hasInitializedFromBackend]);
+  }, [user, hasInitializedFromUser]);
   
   // Reset initialization flag when user changes (logout/login)
   useEffect(() => {
     if (!user) {
-      setHasInitializedFromBackend(false);
+      setHasInitializedFromUser(false);
     }
   }, [user]);
 
@@ -89,27 +77,25 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = languageToLocaleCode[language];
   }, [language]);
 
+  // Save language to user profile (works for all accounts, no settings permission needed)
   const updateLanguageMutation = useMutation({
     mutationFn: async (newLanguage: Language) => {
-      await apiRequest("PATCH", "/api/settings", { language: newLanguage });
+      await apiRequest("PATCH", "/api/auth/me", { language: newLanguage });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
     },
   });
 
   const setLanguage = (newLanguage: Language) => {
     const previousLanguage = language;
     
-    // Always update localStorage immediately
     localStorage.setItem(LANGUAGE_STORAGE_KEY, newLanguage);
     setLanguageState(newLanguage);
     
-    // Only save to backend if authenticated
     if (user) {
       updateLanguageMutation.mutate(newLanguage, {
         onError: () => {
-          // Rollback on error
           localStorage.setItem(LANGUAGE_STORAGE_KEY, previousLanguage);
           setLanguageState(previousLanguage);
         }
