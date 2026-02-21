@@ -15451,12 +15451,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       });
       const page = await browser.newPage();
       await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-      const pdf = await page.pdf({ format: 'A4', margin: { top: '20mm', right: '15mm', bottom: '20mm', left: '15mm' }, printBackground: true });
+      const pdfData = await page.pdf({ format: 'A4', margin: { top: '20mm', right: '15mm', bottom: '20mm', left: '15mm' }, printBackground: true });
       await browser.close();
+      const pdfBuffer = Buffer.from(pdfData);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="quotation-${quotation.quotationNumber}.pdf"`);
-      res.send(pdf);
+      res.send(pdfBuffer);
     } catch (error: any) {
       console.error("Quotation PDF error:", error);
       res.status(500).json({ message: error.message });
@@ -15690,12 +15691,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       });
       const page = await browser.newPage();
       await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-      const pdf = await page.pdf({ format: 'A4', margin: { top: '15mm', right: '10mm', bottom: '15mm', left: '10mm' }, printBackground: true });
+      const pdfData = await page.pdf({ format: 'A4', margin: { top: '15mm', right: '10mm', bottom: '15mm', left: '10mm' }, printBackground: true });
       await browser.close();
+      const pdfBuffer = Buffer.from(pdfData);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="project-dossier-${project.projectNumber}.pdf"`);
-      res.send(pdf);
+      res.send(pdfBuffer);
     } catch (error: any) {
       console.error("Project dossier PDF error:", error);
       res.status(500).json({ message: error.message });

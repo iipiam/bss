@@ -120,6 +120,20 @@ function PageLoader() {
   );
 }
 
+const SERVICE_BUSINESS_TYPES = ['design_services', 'installation_services', 'it_services'];
+
+function BusinessTypeGuard({ allowedTypes, children }: { allowedTypes: string[]; children: React.ReactNode }) {
+  const { restaurant } = useAuth();
+  const [, setLocation] = useLocation();
+  const businessType = (restaurant as any)?.businessType || 'restaurant';
+  const isAllowed = allowedTypes.includes(businessType);
+  useEffect(() => {
+    if (!isAllowed) setLocation("/");
+  }, [isAllowed, setLocation]);
+  if (!isAllowed) return <PageLoader />;
+  return <>{children}</>;
+}
+
 function Router() {
   return (
     <Suspense fallback={<PageLoader />}>
@@ -155,8 +169,8 @@ function Router() {
         <Route path="/tutorial" component={Tutorial} />
         <Route path="/shop" component={Shop} />
         <Route path="/profile" component={Profile} />
-        <Route path="/delivery-apps" component={DeliveryApps} />
-        <Route path="/delivery-app-profitability" component={DeliveryAppProfitability} />
+        <Route path="/delivery-apps">{() => <BusinessTypeGuard allowedTypes={['restaurant']}><DeliveryApps /></BusinessTypeGuard>}</Route>
+        <Route path="/delivery-app-profitability">{() => <BusinessTypeGuard allowedTypes={['restaurant']}><DeliveryAppProfitability /></BusinessTypeGuard>}</Route>
         <Route path="/sales-comparison" component={SalesComparison} />
         <Route path="/investors" component={Investors} />
         <Route path="/support" component={Support} />
