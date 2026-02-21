@@ -1625,6 +1625,7 @@ export const quotations = pgTable("quotations", {
   status: text("status").notNull().default("draft"), // "draft", "sent", "approved", "declined", "expired"
   validUntil: timestamp("valid_until"),
   notes: text("notes"),
+  declineReason: text("decline_reason"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -1649,3 +1650,109 @@ export const paymentSchedules = pgTable("payment_schedules", {
 export const insertPaymentScheduleSchema = createInsertSchema(paymentSchedules).omit({ id: true, createdAt: true });
 export type InsertPaymentSchedule = z.infer<typeof insertPaymentScheduleSchema>;
 export type PaymentSchedule = typeof paymentSchedules.$inferSelect;
+
+// Project Services (links services from catalog to specific projects)
+export const projectServices = pgTable("project_services", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  projectId: varchar("project_id").references(() => serviceProjects.id).notNull(),
+  serviceCatalogId: varchar("service_catalog_id").references(() => serviceCatalog.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  pricingMethod: text("pricing_method").notNull().default("lump_sum"),
+  unitPrice: decimal("unit_price", { precision: 12, scale: 2 }).notNull(),
+  quantity: decimal("quantity", { precision: 12, scale: 2 }).notNull().default("1"),
+  unit: text("unit"),
+  totalPrice: decimal("total_price", { precision: 12, scale: 2 }).notNull(),
+  status: text("status").notNull().default("pending"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertProjectServiceSchema = createInsertSchema(projectServices).omit({ id: true, createdAt: true });
+export type InsertProjectService = z.infer<typeof insertProjectServiceSchema>;
+export type ProjectService = typeof projectServices.$inferSelect;
+
+// Project Bills (bills associated with specific projects)
+export const projectBills = pgTable("project_bills", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  projectId: varchar("project_id").references(() => serviceProjects.id).notNull(),
+  description: text("description").notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  category: text("category"),
+  vendor: text("vendor"),
+  billDate: timestamp("bill_date").notNull().defaultNow(),
+  dueDate: timestamp("due_date"),
+  status: text("status").notNull().default("pending"),
+  paidDate: timestamp("paid_date"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertProjectBillSchema = createInsertSchema(projectBills).omit({ id: true, createdAt: true });
+export type InsertProjectBill = z.infer<typeof insertProjectBillSchema>;
+export type ProjectBill = typeof projectBills.$inferSelect;
+
+// Project Procurements (procurement purchases linked to projects)
+export const projectProcurements = pgTable("project_procurements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  projectId: varchar("project_id").references(() => serviceProjects.id).notNull(),
+  itemName: text("item_name").notNull(),
+  description: text("description"),
+  quantity: decimal("quantity", { precision: 12, scale: 2 }).notNull().default("1"),
+  unitPrice: decimal("unit_price", { precision: 12, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 12, scale: 2 }).notNull(),
+  vendor: text("vendor"),
+  purchaseDate: timestamp("purchase_date").notNull().defaultNow(),
+  deliveryDate: timestamp("delivery_date"),
+  status: text("status").notNull().default("ordered"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertProjectProcurementSchema = createInsertSchema(projectProcurements).omit({ id: true, createdAt: true });
+export type InsertProjectProcurement = z.infer<typeof insertProjectProcurementSchema>;
+export type ProjectProcurement = typeof projectProcurements.$inferSelect;
+
+// Project Tasks (for CPM scheduling)
+export const projectTasks = pgTable("project_tasks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  projectId: varchar("project_id").references(() => serviceProjects.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  duration: integer("duration").notNull().default(1),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  dependencies: text("dependencies").array(),
+  status: text("status").notNull().default("pending"),
+  isCritical: boolean("is_critical").default(false),
+  earlyStart: integer("early_start"),
+  earlyFinish: integer("early_finish"),
+  lateStart: integer("late_start"),
+  lateFinish: integer("late_finish"),
+  slack: integer("slack"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertProjectTaskSchema = createInsertSchema(projectTasks).omit({ id: true, createdAt: true });
+export type InsertProjectTask = z.infer<typeof insertProjectTaskSchema>;
+export type ProjectTask = typeof projectTasks.$inferSelect;
+
+// Quotation Decisions (approve/decline workflow)
+export const quotationDecisions = pgTable("quotation_decisions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  quotationId: varchar("quotation_id").references(() => quotations.id).notNull(),
+  decision: text("decision").notNull(),
+  reason: text("reason"),
+  decidedBy: text("decided_by"),
+  decidedAt: timestamp("decided_at").notNull().defaultNow(),
+});
+
+export const insertQuotationDecisionSchema = createInsertSchema(quotationDecisions).omit({ id: true });
+export type InsertQuotationDecision = z.infer<typeof insertQuotationDecisionSchema>;
+export type QuotationDecision = typeof quotationDecisions.$inferSelect;
