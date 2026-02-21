@@ -1,7 +1,7 @@
 # BlindSpot System (BSS) - Business Management System
 
 ## Overview
-BlindSpot System (BSS) is a ZATCA-compliant business management system designed for Saudi Arabian Restaurant and Factory businesses. It offers integrated Point of Sale (POS), inventory, menu/recipe or product/license management, multi-branch operations, order processing, kitchen/workshop display, and advanced analytics. BSS aims to boost operational efficiency, ensure regulatory compliance, optimize profitability, and support strategic decision-making through features like sales analytics, business reporting, and demand forecasting.
+BlindSpot System (BSS) is a ZATCA-compliant business management system for Saudi Arabian Restaurant and Factory businesses. It integrates POS, inventory, menu/product management, multi-branch operations, order processing, and advanced analytics. BSS aims to enhance operational efficiency, ensure regulatory compliance, optimize profitability, and support strategic decision-making through features like sales analytics, business reporting, and demand forecasting. It offers comprehensive management solutions to empower businesses.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -9,70 +9,54 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### UI/UX
-- **Frontend Framework**: React with TypeScript (Vite).
-- **UI Library**: Shadcn UI (New York style) based on Radix UI and Tailwind CSS, adhering to Material Design principles.
-- **Styling**: Tailwind CSS with custom design tokens, responsive layouts, modern gradient designs, and smooth animations.
-- **Branding**: BSS eagle logo, "Business Management System" subtitle, and "Made By Kinzhal LTD Co." in the footer. Tagline: "Empowering businesses with smart management solutions".
-- **Internationalization**: Comprehensive multi-language support for 10 languages (English, Arabic, German, Chinese, Bengali, Italian, Hindi, Urdu, Spanish, Tagalog) with full RTL support for Arabic/Urdu, with fallback to English.
-- **Responsive Design**: Device-specific layouts (Laptop, iPad, iPhone) with WCAG AAA compliance.
-- **Device Selector**: Toggle button group in header (beside theme toggle) allows users to switch between Desktop, iPhone, and iPad layouts. Selection is persisted to user profile via DeviceContext.
+- **Frontend**: React with TypeScript (Vite), utilizing Shadcn UI (New York style) based on Radix UI and Tailwind CSS, adhering to Material Design principles.
+- **Styling**: Tailwind CSS, responsive layouts, modern gradients, and animations.
+- **Branding**: BSS eagle logo, "Business Management System" subtitle, "Made By Kinzhal LTD Co." footer, tagline: "Empowering businesses with smart management solutions".
+- **Internationalization**: Full multi-language support for 10 languages (English, Arabic, German, Chinese, Bengali, Italian, Hindi, Urdu, Spanish, Tagalog) with RTL support for Arabic/Urdu, with English fallback.
+- **Responsive Design**: WCAG AAA compliant, device-specific layouts (Laptop, iPad, iPhone) with a persistent device selector.
 
 ### Technical Implementation
-- **Backend Runtime**: Node.js with Express.js.
-- **API Design**: RESTful API, domain-organized, with shared Zod schemas for validation.
-- **Authentication**: Bcrypt for hashing, session-based, supporting client (restaurantId required) and IT (restaurantId=null) account types.
-- **Multi-tenant Architecture**: Complete data isolation using `restaurantId` with dedicated IT account system for cross-tenant support.
-- **Device Preference System**: Users can select iPhone/iPad/Laptop layouts with persistent settings.
-- **Business Type Support**: Dual architecture for Restaurant and Factory operations with type-specific features and terminology.
-- **Real-Time Communication**: WebSocket-based system for employee notifications, support ticket updates, instant menu updates to POS, real-time recipe cost updates, inventory-to-recipe sync (unit changes auto-refresh recipes), and automatic BEP (Break Even Point) calculation updates.
-- **Data Storage**: AWS RDS PostgreSQL (Production) with SSL/TLS encryption, using `node-postgres` and Drizzle ORM.
-- **Schema Design**: Central `restaurants` table with `restaurantId` foreign key across 22 domain tables.
+- **Backend**: Node.js with Express.js, RESTful API with Zod schemas for validation.
+- **Authentication**: Bcrypt for hashing, session-based, supporting client and IT account types.
+- **Multi-tenant Architecture**: Data isolation using `restaurantId`; dedicated IT account system for cross-tenant support.
+- **Business Type Support**: Dual architecture for Restaurant and Factory operations with type-specific features.
+- **Real-Time Communication**: WebSocket-based system for notifications, instant updates (menu, recipes, inventory), and automatic BEP calculations.
+- **Data Storage**: AWS RDS PostgreSQL (Production) with SSL/TLS encryption, `node-postgres`, and Drizzle ORM.
+- **Schema Design**: Central `restaurants` table with `restaurantId` foreign key across domain tables.
 - **Database Migrations**: Drizzle Kit with custom AWS RDS migration script.
+- **Performance Optimizations**: Database indexes, code splitting with React.lazy and Suspense, and React Query tuning.
 
 ### Feature Specifications
-- **Analytics & Reporting**: Dashboard with DoD, WoW, MoM, YoY metrics, daily demand forecasting, peak hours analysis, and detailed BEP calculator with sensitivity analysis. **Menu Profitability Analysis**: Dedicated dashboard at `/menu-profitability` showing profit margins for each menu item, categorizing items as LOSS (selling below cost), LOW_MARGIN (<20%), or OK (≥20%), with CSV export functionality.
-- **ZATCA Compliance**: Complete ZATCA Phase 2 e-invoicing integration including:
-  - **UBL 2.1 XML Generation**: ZATCA-compliant invoice XML with proper namespaces and structure
-  - **Digital Signing**: ECDSA (secp256k1) signatures with XAdES-T format
-  - **9-Tag QR Codes**: TLV-encoded QR codes with invoice hash, signature, and public key
-  - **API Integration**: Full support for compliance CSID, production CSID, clearance (B2B), and reporting (B2C)
-  - **IT Settings Page**: Located at `/zatca-settings`, IT-only access for managing client e-invoicing configurations
-  - **Manual Credential Entry**: Support for importing existing ZATCA credentials (CSID, secret, private key) for clients who obtained them externally
-  - **Invoice Status Tracking**: Real-time tracking of invoice submission status (pending, cleared, reported, rejected)
-  - **Bilingual PDF Invoices**: Arabic/English invoice generation with ZATCA QR codes
-- **Financial Management**: Delivery app cost calculation, PDF export for financial statements, Excel import/export. Enhanced BEP calculator uses true COGS from invoice items via orders, menu items, and recipes with portion size multipliers. Includes manual delivery profitability entry with VAT and Profit tracking fields. **Bill Proration**: Recurring bills are automatically prorated to monthly amounts for all financial calculations (quarterly÷3, semi-annual÷6, yearly÷12, weekly×4.33).
-- **Management Modules**: CRUD for Customer, Menu Item (with discount, optional stock, configurable display sizes), Inventory (Excel import/export, expiration tracking, add-on creation), Recipe (inventory-linked costing, portion sizes).
-- **Menu Item Display Sizes**: Menu items support configurable display sizes (small, medium, large) that control how items appear in POS and Menu grids - large items span 2 columns for better visibility.
+- **Analytics & Reporting**: Dashboard with key metrics (DoD, WoW, MoM, YoY), daily demand forecasting, peak hours analysis, detailed BEP calculator with sensitivity analysis, and Menu Profitability Analysis.
+- **ZATCA Compliance**: Complete ZATCA Phase 2 e-invoicing integration including UBL 2.1 XML generation, ECDSA digital signing (XAdES-T), 9-Tag QR Codes, API integration for CSID, clearance, and reporting. Features IT settings page, manual credential entry, invoice status tracking, and bilingual PDF invoices.
+- **Financial Management**: Delivery app cost calculation, PDF export for financial statements, Excel import/export, enhanced BEP calculator, manual delivery profitability entry, and automatic bill proration.
+- **Management Modules**: CRUD for Customer, Menu Item (with configurable display sizes), Inventory (Excel import/export, expiration tracking, add-ons), Recipe (inventory-linked costing, portion sizes).
 - **Stock Management**: Real-time stock calculation and deduction on POS orders.
-- **Authentication & Subscriptions**: Subscription-based authentication with Commercial Registration, secure password recovery, and authenticated subscription invoice downloads. Centralized VAT-inclusive pricing.
-- **Geidea Payment Integration**: Complete payment gateway integration for signup and subscription management:
-  - **Signup Payment Flow**: User submits signup form → pending_signups record created → Geidea payment session initiated → user redirected to Geidea payment page → callback completes account creation
-  - **Subscription Update Flow**: User selects new plan/branches → POST `/api/subscription/update-payment` → Geidea payment session → callback at `/api/geidea/subscription-update-callback` → updates restaurant subscription + generates invoice
-  - **Security Measures**: Server-to-server verification via getOrderDetails(), validation of sessionId/merchantReferenceId/currency/amount, failed status updates on all verification failures, automatic file cleanup on failure paths
-  - **Token Storage**: Card tokenization enabled for recurring subscription payments
-  - **Callback Handling**: `/api/geidea/signup-callback` handles signup completion, `/api/geidea/subscription-update-callback` handles plan updates with invoice generation
-- **Subscription Management**: Interactive dialogs for plan changes, dynamic pricing, and plan comparison.
+- **Authentication & Subscriptions**: Subscription-based authentication with Commercial Registration, secure password recovery, authenticated invoice downloads, and centralized VAT-inclusive pricing.
+- **Geidea Payment Integration**: Full payment gateway integration for signup and subscription management, including secure tokenization, server-to-server verification, and callback handling.
+- **Subscription Management**: Interactive dialogs for plan changes, dynamic pricing, and comparison.
 - **Branch Management**: Dynamic selection system.
-- **Multi-Shift Support**: Settings page supports optional second shift. Shift 1 is always visible; users can click "Add Shift" to reveal Shift 2 fields, or "Remove Shift" to hide them. Translations available in all 10 languages. Note: Database columns for Shift 2 (openingTime2, closingTime2) need to be added to production via `npm run db:push` when ready.
-- **Ticketing System & IT Support**: Comprehensive ticket management with real-time chat and IT-only dashboard with cross-tenant visibility.
-- **IT Account Management**: IT accounts can manage all client accounts, including password changes, access control, searching, filtering, and viewing account statistics. Includes an Archive tab for cancelled accounts with reasons and refund details.
-- **IT Business Management**: IT accounts can view client subscriptions, contact details, invoices, and generate ZATCA-compliant VAT statements. Features include subscription suspend/activate, company expense tracking, BSS analysis (revenue, profit, accounts breakdown), and IT company details management for invoice generation. Includes subscription cancellation with prorated refund calculation. IT BEP Analysis calculates break-even point using paid bills as fixed costs, year-scoped active clients derived from subscription invoices via user→restaurant mapping, with margin of safety and profitability indicators.
-- **WhatsApp Integration**: Automatic deep-link for sending ZATCA-compliant invoices via WhatsApp.
-- **Team Chat**: Internal messaging system with DMs and channels, supporting branch-level and restaurant-wide conversations.
-- **Granular Permission System**: Role-based access control with 19 granular permissions (view, add, edit, delete) enforced at backend and frontend.
-- **Employee Activity Log**: Main account (admin) can track all sub-account actions via `/activity-log` page. Logs are automatically created for orders, inventory, menu, recipes, and procurement operations. Includes filtering by employee, category, and date with real-time grouping (Today, Yesterday, This Week, Older). Non-blocking fire-and-forget logging pattern ensures no performance impact.
-- **Bills Management**: Salary bill generation with month selection.
-- **PDF Invoice Generation**: ZATCA-compliant invoices with proper page break handling and bilingual refund policy sections.
-- **Investor Statement PDF**: Downloadable bilingual (EN/AR) investor statement showing investment details, earnings breakdown, and receivables calculation. Supports Money Investors and Recipe Owners.
+- **Multi-Shift Support**: Optional second shift configuration with multilingual translations.
+- **Ticketing System & IT Support**: Comprehensive ticket management with real-time chat and IT-only dashboard.
+- **IT Account Management**: IT accounts can manage all client accounts, including password changes, access control, and account archiving.
+- **IT Business Management**: IT accounts can view client subscriptions, generate ZATCA-compliant VAT statements, manage company expenses, and perform BSS analysis with IT BEP analysis and subscription cancellation with prorated refunds.
+- **WhatsApp Integration**: Automatic deep-link for sending ZATCA-compliant invoices.
+- **Team Chat**: Internal messaging system with DMs and channels.
+- **Granular Permission System**: Role-based access control with 19 granular permissions enforced at backend and frontend.
+- **Employee Activity Log**: Tracks sub-account actions (orders, inventory, menu, recipes, procurement) with filtering, grouping, and non-blocking logging.
+- **Service Business Project Management (BizFlow Manager)**: Full project lifecycle management for design, installation, and IT services. Includes project CRUD, sub-resources (services, bills, procurements, tasks, payment schedules), CPM scheduling, quotation workflow (bilingual PDF generation), company settings (agreement templates), PDF generation (quotations, project dossier), milestone-based payment schedules, and project-level financial tracking.
+- **Bills Management**: Salary bill generation.
+- **PDF Invoice Generation**: ZATCA-compliant invoices with page break handling and bilingual refund policies.
+- **Investor Statement PDF**: Downloadable bilingual investor statement for Money Investors and Recipe Owners.
 - **Recipe Import**: Flexible column mapping for ingredient/step parsing.
-- **License Document Upload**: Secure file upload for license documents (PDF, JPEG, PNG, GIF, WebP) with 10MB limit, authenticated access, and drag-and-drop UI.
+- **License Document Upload**: Secure file upload (PDF, JPEG, PNG, GIF, WebP) with 10MB limit, authenticated access, and drag-and-drop UI.
 - **License Fees**: Optional fee tracking for each license.
-- **Procurement Invoice Image Upload**: Drag-and-drop upload for invoice images (JPEG, PNG, GIF, WebP) and PDFs with 10MB limit, secure storage, and authentication-based access.
-- **Procurement-to-Bills Sync**: Automatic synchronization between procurement status and shop bills (creates/updates/deletes bills based on procurement status) with full tenant isolation.
-- **Procurement-to-Inventory Sync**: Automatic inventory item creation when procurement requests of type "inventory" are created or updated to complete status ("received" or "completed"). Uses `inventoryItemId` field on procurement to prevent duplicate creation.
-- **Procurement Reorder**: One-click reorder for completed/received inventory procurements. Creates new procurement linked to original via `originalProcurementId`. When reorder is received/completed, quantity is added to existing inventory item (not creating new item). UI shows Reorder button for eligible procurements.
-- **Violations Management**: Track government authority violations (Municipality, ZATCA, Police, Ministry of Commerce) with PDF/image document uploads, status tracking (pending, paid, disputed), and automatic bill creation for violation payments. Includes statistics dashboard with counts and amounts by status. Violation References feature allows uploading PDF reference documents per authority type for storing regulations, guidelines, and reference materials with multi-tenant isolation.
-- **Printer Configuration**: Multi-tenant printer settings with support for thermal receipt printers (Epson, Star Micronics, Brother, Zebra, BIXOLON). Supports IP-based network printers with QZ Tray integration for direct printing and browser fallback. Per-branch printer configuration with default printer selection.
+- **Procurement Invoice Image Upload**: Drag-and-drop upload for invoice images (JPEG, PNG, GIF, WebP) and PDFs with 10MB limit, secure storage, and authentication.
+- **Procurement-to-Bills Sync**: Automatic synchronization between procurement status and shop bills with tenant isolation.
+- **Procurement-to-Inventory Sync**: Automatic inventory item creation from "inventory" type procurements when completed.
+- **Procurement Reorder**: One-click reorder for completed/received inventory procurements, adding quantity to existing inventory items.
+- **Violations Management**: Track government violations with document uploads, status tracking, automatic bill creation, statistics dashboard, and a reference document feature for regulations.
+- **Printer Configuration**: Multi-tenant printer settings with support for thermal receipt printers (Epson, Star Micronics, Brother, Zebra, BIXOLON), IP-based network printers with QZ Tray integration, and per-branch default printer selection.
 
 ## External Dependencies
 
@@ -97,9 +81,3 @@ Preferred communication style: Simple, everyday language.
 - **express-session**: Session middleware.
 - **date-fns**: Date manipulation.
 - **xlsx**: Excel generation and parsing.
-
-### Performance Optimizations
-- **Database Indexes**: Composite indexes on high-traffic tables (orders, invoices, inventoryItems, shopBills, supportTickets, deliveryProfitability) targeting (restaurantId, timestamp/status) for efficient multi-tenant queries.
-- **Code Splitting**: React.lazy and Suspense for all 40+ page components, reducing initial bundle size and improving Time to Interactive. Auth pages (Login, ForgotPassword, ResetPassword, EmergencyReset) are eagerly loaded to avoid Suspense issues.
-- **React Query Tuning**: staleTime=2min (data freshness), gcTime=5min (cache garbage collection), refetchOnWindowFocus=true for volatile data refresh.
-- **Deployment Note**: Database indexes require `npm run db:push` on production server after deployment.
