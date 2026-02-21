@@ -213,14 +213,14 @@ export default function Chat() {
       channelForm.reset();
       toast({
         title: t.success || "Success",
-        description: "Channel created successfully",
+        description: t.channelCreatedDesc || "Channel created successfully",
       });
     },
     onError: () => {
       toast({
         variant: "destructive",
         title: t.error || "Error",
-        description: "Failed to create channel",
+        description: t.failedToCreateChannel || "Failed to create channel",
       });
     },
   });
@@ -239,14 +239,14 @@ export default function Chat() {
       setSelectedConversation(response.id);
       toast({
         title: t.success || "Success",
-        description: "Direct message started",
+        description: t.directMessageStartedDesc || "Direct message started",
       });
     },
     onError: () => {
       toast({
         variant: "destructive",
         title: t.error || "Error",
-        description: "Failed to start direct message",
+        description: t.failedToStartDirectMessage || "Failed to start direct message",
       });
     },
   });
@@ -266,7 +266,7 @@ export default function Chat() {
       toast({
         variant: "destructive",
         title: t.error || "Error",
-        description: "Failed to send message",
+        description: t.failedToSendMessage || "Failed to send message",
       });
     },
   });
@@ -336,7 +336,7 @@ export default function Chat() {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-xl flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
-            Team Chat
+            {t.teamChat}
           </CardTitle>
           <div className="flex gap-1">
             <Button
@@ -361,7 +361,7 @@ export default function Chat() {
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search conversations..."
+              placeholder={(t as any).searchConversations || "Search conversations..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8"
@@ -379,7 +379,7 @@ export default function Chat() {
 
               {!conversationsLoading && filteredConversations.length === 0 && (
                 <div className="text-center text-sm text-muted-foreground py-8">
-                  No conversations yet
+                  {(t as any).noConversationsYet || "No conversations yet"}
                 </div>
               )}
 
@@ -444,7 +444,7 @@ export default function Chat() {
                   </CardTitle>
                   {selectedConv.type === 'channel' && (
                     <p className="text-xs text-muted-foreground">
-                      {selectedConv.scope === 'branch' ? 'Branch Channel' : 'Restaurant-wide'}
+                      {selectedConv.scope === 'branch' ? ((t as any).branchChannel || 'Branch Channel') : ((t as any).restaurantWide || 'Restaurant-wide')}
                     </p>
                   )}
                 </div>
@@ -463,7 +463,7 @@ export default function Chat() {
 
                 {!messagesLoading && messages && messages.length === 0 && (
                   <div className="text-center text-sm text-muted-foreground py-8">
-                    No messages yet. Start the conversation!
+                    {t.noMessages || "No messages yet. Start the conversation!"}
                   </div>
                 )}
 
@@ -512,7 +512,7 @@ export default function Chat() {
               <div className="p-4">
                 <div className="flex gap-2">
                   <Textarea
-                    placeholder="Type a message..."
+                    placeholder={t.typeMessage || "Type a message..."}
                     value={messageContent}
                     onChange={(e) => setMessageContent(e.target.value)}
                     onKeyDown={handleKeyPress}
@@ -535,7 +535,7 @@ export default function Chat() {
           <CardContent className="flex-1 flex items-center justify-center">
             <div className="text-center text-muted-foreground">
               <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Select a conversation to start chatting</p>
+              <p>{t.selectConversation || "Select a conversation to start chatting"}</p>
             </div>
           </CardContent>
         )}
@@ -545,9 +545,9 @@ export default function Chat() {
       <Dialog open={isChannelDialogOpen} onOpenChange={setIsChannelDialogOpen}>
         <DialogContent data-testid="dialog-new-channel">
           <DialogHeader>
-            <DialogTitle>Create Channel</DialogTitle>
+            <DialogTitle>{t.createChannel || "Create Channel"}</DialogTitle>
             <DialogDescription>
-              Create a new channel for team communication
+              {(t as any).createChannelDesc || "Create a new channel for team communication"}
             </DialogDescription>
           </DialogHeader>
           <Form {...channelForm}>
@@ -557,7 +557,7 @@ export default function Chat() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Channel Name</FormLabel>
+                    <FormLabel>{(t as any).channelName || "Channel Name"}</FormLabel>
                     <FormControl>
                       <Input {...field} placeholder="#general" data-testid="input-channel-name" />
                     </FormControl>
@@ -571,7 +571,7 @@ export default function Chat() {
                 name="scope"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Scope</FormLabel>
+                    <FormLabel>{(t as any).scope || "Scope"}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-channel-scope">
@@ -579,8 +579,8 @@ export default function Chat() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="restaurant">Restaurant-wide</SelectItem>
-                        <SelectItem value="branch">Branch only</SelectItem>
+                        <SelectItem value="restaurant">{(t as any).restaurantWide || "Restaurant-wide"}</SelectItem>
+                        <SelectItem value="branch">{(t as any).branchOnly || "Branch only"}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -593,11 +593,11 @@ export default function Chat() {
                 name="branchId"
                 render={({ field }) => (
                   <FormItem className={channelForm.watch('scope') === 'restaurant' ? 'hidden' : ''}>
-                    <FormLabel>Branch</FormLabel>
+                    <FormLabel>{t.branch}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-branch">
-                          <SelectValue placeholder="Select branch..." />
+                          <SelectValue placeholder={(t as any).selectBranch || "Select branch..."} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -615,7 +615,7 @@ export default function Chat() {
 
               <DialogFooter>
                 <Button type="submit" disabled={createChannelMutation.isPending} data-testid="button-create-channel">
-                  {createChannelMutation.isPending ? (t.creating || "Creating...") : "Create"}
+                  {createChannelMutation.isPending ? (t.creating || "Creating...") : (t.create || "Create")}
                 </Button>
               </DialogFooter>
             </form>
@@ -627,9 +627,9 @@ export default function Chat() {
       <Dialog open={isDMDialogOpen} onOpenChange={setIsDMDialogOpen}>
         <DialogContent data-testid="dialog-new-dm">
           <DialogHeader>
-            <DialogTitle>New Direct Message</DialogTitle>
+            <DialogTitle>{(t as any).newDirectMessage || "New Direct Message"}</DialogTitle>
             <DialogDescription>
-              Start a direct conversation with a team member
+              {(t as any).newDirectMessageDesc || "Start a direct conversation with a team member"}
             </DialogDescription>
           </DialogHeader>
           <Form {...dmForm}>
@@ -639,11 +639,11 @@ export default function Chat() {
                 name="userId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Select User</FormLabel>
+                    <FormLabel>{t.selectUser || "Select User"}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-user">
-                          <SelectValue placeholder="Choose a user..." />
+                          <SelectValue placeholder={(t as any).chooseUser || "Choose a user..."} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -661,7 +661,7 @@ export default function Chat() {
 
               <DialogFooter>
                 <Button type="submit" disabled={createDMMutation.isPending} data-testid="button-create-dm">
-                  {createDMMutation.isPending ? "Starting..." : "Start Chat"}
+                  {createDMMutation.isPending ? ((t as any).starting || "Starting...") : ((t as any).startChat || "Start Chat")}
                 </Button>
               </DialogFooter>
             </form>

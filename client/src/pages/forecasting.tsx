@@ -349,9 +349,9 @@ export default function Forecasting() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7" data-testid="option-7-days">7 Days</SelectItem>
-              <SelectItem value="14" data-testid="option-14-days">14 Days</SelectItem>
-              <SelectItem value="30" data-testid="option-30-days">30 Days</SelectItem>
+              <SelectItem value="7" data-testid="option-7-days">{(t as any).days7 || "7 Days"}</SelectItem>
+              <SelectItem value="14" data-testid="option-14-days">{(t as any).days14 || "14 Days"}</SelectItem>
+              <SelectItem value="30" data-testid="option-30-days">{(t as any).days30 || "30 Days"}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -368,14 +368,14 @@ export default function Forecasting() {
           <CardContent>
             <div className="flex items-center gap-2 text-sm">
               <DollarSign className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Last 30 days</span>
+              <span className="text-muted-foreground">{(t as any).last30Days || "Last 30 days"}</span>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Average Daily Sales</CardDescription>
+            <CardDescription>{(t as any).averageDailySales || "Average Daily Sales"}</CardDescription>
             <CardTitle className="text-3xl font-bold font-mono">
               {avgDailySales.toFixed(2)} SAR
             </CardTitle>
@@ -383,7 +383,7 @@ export default function Forecasting() {
           <CardContent>
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Per day average</span>
+              <span className="text-muted-foreground">{(t as any).perDayAverage || "Per day average"}</span>
             </div>
           </CardContent>
         </Card>
@@ -398,7 +398,7 @@ export default function Forecasting() {
           <CardContent>
             <div className="flex items-center gap-2 text-sm">
               <TrendingUp className="h-4 w-4 text-green-600" />
-              <span className="text-muted-foreground">Next {forecastPeriod} days</span>
+              <span className="text-muted-foreground">{t.nextDays?.replace("{days}", forecastPeriod) || `Next ${forecastPeriod} days`}</span>
             </div>
           </CardContent>
         </Card>
@@ -417,7 +417,7 @@ export default function Forecasting() {
               ) : (
                 <TrendingDown className="h-4 w-4 text-red-600" />
               )}
-              <span className="text-muted-foreground">vs previous week</span>
+              <span className="text-muted-foreground">{t.vsPreviousWeek || "vs previous week"}</span>
             </div>
           </CardContent>
         </Card>
@@ -427,7 +427,7 @@ export default function Forecasting() {
         <CardHeader>
           <CardTitle>{t.salesPrediction}</CardTitle>
           <CardDescription>
-            Historical sales data and future predictions based on trend analysis
+            {(t as any).salesPredictionDesc || "Historical sales data and future predictions based on trend analysis"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -457,7 +457,7 @@ export default function Forecasting() {
                   dataKey="sales" 
                   stroke="hsl(var(--primary))" 
                   strokeWidth={2}
-                  name="Historical Sales (SAR)"
+                  name={(t as any).historicalSales || "Historical Sales (SAR)"}
                   dot={{ fill: 'hsl(var(--primary))' }}
                 />
                 <Line 
@@ -466,7 +466,7 @@ export default function Forecasting() {
                   stroke="hsl(var(--chart-2))" 
                   strokeWidth={2}
                   strokeDasharray="5 5"
-                  name="Predicted Sales (SAR)"
+                  name={(t as any).predictedSalesLabel || "Predicted Sales (SAR)"}
                   dot={{ fill: 'hsl(var(--chart-2))' }}
                 />
               </LineChart>
@@ -732,9 +732,9 @@ export default function Forecasting() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Transaction Volume</CardTitle>
+          <CardTitle>{(t as any).transactionVolume || "Transaction Volume"}</CardTitle>
           <CardDescription>
-            Number of transactions per day over the last 30 days
+            {(t as any).transactionVolumeDesc || "Number of transactions per day over the last 30 days"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -761,7 +761,7 @@ export default function Forecasting() {
                 <Bar 
                   dataKey="transactions" 
                   fill="hsl(var(--chart-3))" 
-                  name="Transactions"
+                  name={t.transactions || "Transactions"}
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
@@ -776,10 +776,10 @@ export default function Forecasting() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5" />
-                Daily Demand Forecasting per Menu Item
+                {(t as any).dailyDemandForecasting || "Daily Demand Forecasting per Menu Item"}
               </CardTitle>
               <CardDescription className="mt-2">
-                Predicted daily demand for each menu item based on last 30 days of sales data
+                {(t as any).dailyDemandForecastingDesc || "Predicted daily demand for each menu item based on last 30 days of sales data"}
               </CardDescription>
             </div>
           </div>
@@ -788,15 +788,15 @@ export default function Forecasting() {
           {itemDemandForecasts.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No sales data available yet</p>
-              <p className="text-sm mt-1">Start selling items to see demand forecasts</p>
+              <p>{t.noSalesDataYet || "No sales data available yet"}</p>
+              <p className="text-sm mt-1">{(t as any).startSellingToSeeDemandForecasts || "Start selling items to see demand forecasts"}</p>
             </div>
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <Card className="bg-muted/50">
                   <CardHeader className="pb-3">
-                    <CardDescription>Total Items Tracked</CardDescription>
+                    <CardDescription>{(t as any).totalItemsTracked || "Total Items Tracked"}</CardDescription>
                     <CardTitle className="text-2xl font-bold">
                       {itemDemandForecasts.length}
                     </CardTitle>
@@ -804,7 +804,7 @@ export default function Forecasting() {
                 </Card>
                 <Card className="bg-muted/50">
                   <CardHeader className="pb-3">
-                    <CardDescription>Trending Up</CardDescription>
+                    <CardDescription>{(t as any).trendingUp || "Trending Up"}</CardDescription>
                     <CardTitle className="text-2xl font-bold text-green-600">
                       {itemDemandForecasts.filter(i => i.trend === 'up').length}
                     </CardTitle>
@@ -812,7 +812,7 @@ export default function Forecasting() {
                 </Card>
                 <Card className="bg-muted/50">
                   <CardHeader className="pb-3">
-                    <CardDescription>Trending Down</CardDescription>
+                    <CardDescription>{(t as any).trendingDown || "Trending Down"}</CardDescription>
                     <CardTitle className="text-2xl font-bold text-red-600">
                       {itemDemandForecasts.filter(i => i.trend === 'down').length}
                     </CardTitle>
@@ -824,12 +824,12 @@ export default function Forecasting() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[250px]">Menu Item</TableHead>
-                      <TableHead className="text-center">Avg Daily Demand (30d)</TableHead>
-                      <TableHead className="text-center">Last 7 Days</TableHead>
-                      <TableHead className="text-center">Prev 7 Days</TableHead>
-                      <TableHead className="text-center">Trend</TableHead>
-                      <TableHead className="text-center">Forecasted Daily Demand</TableHead>
+                      <TableHead className="w-[250px]">{t.menuItem || "Menu Item"}</TableHead>
+                      <TableHead className="text-center">{(t as any).avgDailyDemand30d || "Avg Daily Demand (30d)"}</TableHead>
+                      <TableHead className="text-center">{(t as any).last7Days || "Last 7 Days"}</TableHead>
+                      <TableHead className="text-center">{(t as any).prev7Days || "Prev 7 Days"}</TableHead>
+                      <TableHead className="text-center">{t.trendAnalysis || "Trend"}</TableHead>
+                      <TableHead className="text-center">{(t as any).forecastedDailyDemand || "Forecasted Daily Demand"}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -878,7 +878,7 @@ export default function Forecasting() {
                             {item.forecastedDemand}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            units/day
+                            {(t as any).unitsPerDay || "units/day"}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -888,12 +888,12 @@ export default function Forecasting() {
               </div>
 
               <div className="text-sm text-muted-foreground mt-4 p-4 bg-muted/50 rounded-lg">
-                <p className="font-medium mb-2">How to use this forecast:</p>
+                <p className="font-medium mb-2">{(t as any).howToUseForecast || "How to use this forecast:"}</p>
                 <ul className="space-y-1 ml-4 list-disc">
-                  <li>Use the "Forecasted Daily Demand" column to plan inventory and ingredient procurement</li>
-                  <li>Items trending <span className="text-green-600 font-medium">up ↑</span> may need increased stock preparation</li>
-                  <li>Items trending <span className="text-red-600 font-medium">down ↓</span> may need promotional efforts</li>
-                  <li>Forecasts are based on moving average and trend analysis of the last 14 days</li>
+                  <li>{(t as any).forecastTip1 || "Use the \"Forecasted Daily Demand\" column to plan inventory and ingredient procurement"}</li>
+                  <li>{(t as any).forecastTip2 || "Items trending up may need increased stock preparation"}</li>
+                  <li>{(t as any).forecastTip3 || "Items trending down may need promotional efforts"}</li>
+                  <li>{(t as any).forecastTip4 || "Forecasts are based on moving average and trend analysis of the last 14 days"}</li>
                 </ul>
               </div>
             </div>

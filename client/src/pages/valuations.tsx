@@ -139,14 +139,14 @@ export default function Valuations() {
       setOpen(false);
       form.reset();
       toast({
-        title: "Valuation Created",
-        description: "Property valuation has been created successfully.",
+        title: (t as any).valuationCreated || "Valuation Created",
+        description: (t as any).valuationCreatedDesc || "Property valuation has been created successfully.",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to create valuation",
-        description: error.message || "Could not create valuation",
+        title: (t as any).failedToCreateValuation || "Failed to create valuation",
+        description: error.message || ((t as any).couldNotCreateValuation || "Could not create valuation"),
         variant: "destructive",
       });
     },
@@ -175,14 +175,14 @@ export default function Valuations() {
       setEditingValuation(null);
       form.reset();
       toast({
-        title: "Valuation Updated",
-        description: "Property valuation has been updated successfully.",
+        title: (t as any).valuationUpdated || "Valuation Updated",
+        description: (t as any).valuationUpdatedDesc || "Property valuation has been updated successfully.",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to update valuation",
-        description: error.message || "Could not update valuation",
+        title: (t as any).failedToUpdateValuation || "Failed to update valuation",
+        description: error.message || ((t as any).couldNotUpdateValuation || "Could not update valuation"),
         variant: "destructive",
       });
     },
@@ -196,14 +196,14 @@ export default function Valuations() {
       queryClient.invalidateQueries({ queryKey: ["/api/valuations"] });
       setDeletingValuation(null);
       toast({
-        title: "Valuation Deleted",
-        description: "Property valuation has been deleted successfully.",
+        title: (t as any).valuationDeleted || "Valuation Deleted",
+        description: (t as any).valuationDeletedDesc || "Property valuation has been deleted successfully.",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to delete valuation",
-        description: error.message || "Could not delete valuation",
+        title: (t as any).failedToDeleteValuation || "Failed to delete valuation",
+        description: error.message || ((t as any).couldNotDeleteValuation || "Could not delete valuation"),
         variant: "destructive",
       });
     },
@@ -285,11 +285,11 @@ export default function Valuations() {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "pending":
-        return "Pending";
+        return t.pending;
       case "in_progress":
-        return "In Progress";
+        return t.inProgress;
       case "completed":
-        return "Completed";
+        return t.completed;
       default:
         return status;
     }
@@ -298,13 +298,13 @@ export default function Valuations() {
   const getPropertyTypeLabel = (type: string) => {
     switch (type) {
       case "residential":
-        return "Residential";
+        return (t as any).residential || "Residential";
       case "commercial":
-        return "Commercial";
+        return (t as any).commercial || "Commercial";
       case "land":
-        return "Land";
+        return (t as any).land || "Land";
       case "industrial":
-        return "Industrial";
+        return (t as any).industrial || "Industrial";
       default:
         return type;
     }
@@ -313,13 +313,13 @@ export default function Valuations() {
   const getValuationTypeLabel = (type: string) => {
     switch (type) {
       case "market":
-        return "Market";
+        return (t as any).market || "Market";
       case "investment":
-        return "Investment";
+        return (t as any).investment || "Investment";
       case "insurance":
-        return "Insurance";
+        return (t as any).insurance || "Insurance";
       case "tax":
-        return "Tax";
+        return (t as any).tax || "Tax";
       default:
         return type;
     }
@@ -345,18 +345,18 @@ export default function Valuations() {
               className={layout.isMobile ? "h-[44px]" : ""}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Valuation
+              {(t as any).addValuation || "Add Valuation"}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingValuation ? "Edit Valuation" : "Add Valuation"}
+                {editingValuation ? ((t as any).editValuation || "Edit Valuation") : ((t as any).addValuation || "Add Valuation")}
               </DialogTitle>
               <DialogDescription>
                 {editingValuation
-                  ? "Update property valuation information"
-                  : "Add a new property valuation assessment"}
+                  ? ((t as any).updateValuationInfo || "Update property valuation information")
+                  : ((t as any).addNewValuationAssessment || "Add a new property valuation assessment")}
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -369,11 +369,11 @@ export default function Valuations() {
                   name="propertyName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Property Name</FormLabel>
+                      <FormLabel>{(t as any).propertyName || "Property Name"}</FormLabel>
                       <FormControl>
                         <Input
                           data-testid="input-property-name"
-                          placeholder="Enter property name"
+                          placeholder={(t as any).propertyNamePlaceholder || "Enter property name"}
                           {...field}
                         />
                       </FormControl>
@@ -387,18 +387,18 @@ export default function Valuations() {
                   name="propertyType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Property Type</FormLabel>
+                      <FormLabel>{(t as any).propertyType || "Property Type"}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-property-type">
-                            <SelectValue placeholder="Select type" />
+                            <SelectValue placeholder={(t as any).selectType || "Select type"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="residential">Residential</SelectItem>
-                          <SelectItem value="commercial">Commercial</SelectItem>
-                          <SelectItem value="land">Land</SelectItem>
-                          <SelectItem value="industrial">Industrial</SelectItem>
+                          <SelectItem value="residential">{(t as any).residential || "Residential"}</SelectItem>
+                          <SelectItem value="commercial">{(t as any).commercial || "Commercial"}</SelectItem>
+                          <SelectItem value="land">{(t as any).land || "Land"}</SelectItem>
+                          <SelectItem value="industrial">{(t as any).industrial || "Industrial"}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -411,11 +411,11 @@ export default function Valuations() {
                   name="location"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Location</FormLabel>
+                      <FormLabel>{t.location}</FormLabel>
                       <FormControl>
                         <Input
                           data-testid="input-location"
-                          placeholder="Enter property location"
+                          placeholder={(t as any).enterPropertyLocation || "Enter property location"}
                           {...field}
                         />
                       </FormControl>
@@ -430,12 +430,12 @@ export default function Valuations() {
                     name="area"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Area</FormLabel>
+                        <FormLabel>{(t as any).area || "Area"}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-area"
                             type="number"
-                            placeholder="Enter area"
+                            placeholder={(t as any).enterArea || "Enter area"}
                             {...field}
                           />
                         </FormControl>
@@ -449,11 +449,11 @@ export default function Valuations() {
                     name="areaUnit"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Area Unit</FormLabel>
+                        <FormLabel>{(t as any).areaUnit || "Area Unit"}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-area-unit">
-                              <SelectValue placeholder="Select unit" />
+                              <SelectValue placeholder={(t as any).selectUnit || "Select unit"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -473,12 +473,12 @@ export default function Valuations() {
                     name="estimatedValue"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Estimated Value (SAR)</FormLabel>
+                        <FormLabel>{(t as any).estimatedValueSAR || "Estimated Value (SAR)"}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-estimated-value"
                             type="number"
-                            placeholder="Enter estimated value"
+                            placeholder={(t as any).enterEstimatedValue || "Enter estimated value"}
                             {...field}
                           />
                         </FormControl>
@@ -492,12 +492,12 @@ export default function Valuations() {
                     name="marketValue"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Market Value (SAR)</FormLabel>
+                        <FormLabel>{(t as any).marketValueSAR || "Market Value (SAR)"}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-market-value"
                             type="number"
-                            placeholder="Enter market value"
+                            placeholder={(t as any).enterMarketValue || "Enter market value"}
                             {...field}
                           />
                         </FormControl>
@@ -512,7 +512,7 @@ export default function Valuations() {
                   name="assessmentDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Assessment Date</FormLabel>
+                      <FormLabel>{(t as any).assessmentDate || "Assessment Date"}</FormLabel>
                       <FormControl>
                         <Input
                           data-testid="input-assessment-date"
@@ -530,18 +530,18 @@ export default function Valuations() {
                   name="valuationType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Valuation Type</FormLabel>
+                      <FormLabel>{(t as any).valuationType || "Valuation Type"}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-valuation-type">
-                            <SelectValue placeholder="Select valuation type" />
+                            <SelectValue placeholder={(t as any).selectValuationType || "Select valuation type"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="market">Market</SelectItem>
-                          <SelectItem value="investment">Investment</SelectItem>
-                          <SelectItem value="insurance">Insurance</SelectItem>
-                          <SelectItem value="tax">Tax</SelectItem>
+                          <SelectItem value="market">{(t as any).market || "Market"}</SelectItem>
+                          <SelectItem value="investment">{(t as any).investment || "Investment"}</SelectItem>
+                          <SelectItem value="insurance">{(t as any).insurance || "Insurance"}</SelectItem>
+                          <SelectItem value="tax">{(t as any).tax || "Tax"}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -554,17 +554,17 @@ export default function Valuations() {
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Status</FormLabel>
+                      <FormLabel>{t.status}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-status">
-                            <SelectValue placeholder="Select status" />
+                            <SelectValue placeholder={(t as any).selectStatus || "Select status"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="in_progress">In Progress</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="pending">{t.pending}</SelectItem>
+                          <SelectItem value="in_progress">{t.inProgress}</SelectItem>
+                          <SelectItem value="completed">{t.completed}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -577,11 +577,11 @@ export default function Valuations() {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes</FormLabel>
+                      <FormLabel>{t.notes}</FormLabel>
                       <FormControl>
                         <Textarea
                           data-testid="input-notes"
-                          placeholder="Add any additional notes..."
+                          placeholder={(t as any).additionalNotes || "Add any additional notes..."}
                           {...field}
                         />
                       </FormControl>
@@ -604,7 +604,7 @@ export default function Valuations() {
                     data-testid="button-submit"
                     disabled={createMutation.isPending || updateMutation.isPending}
                   >
-                    {editingValuation ? "Save" : "Add"}
+                    {editingValuation ? t.save : t.add}
                   </Button>
                 </div>
               </form>
@@ -632,7 +632,7 @@ export default function Valuations() {
             <div className="flex items-center gap-3">
               <Calculator className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-muted-foreground">Total Valuations</p>
+                <p className="text-sm text-muted-foreground">{(t as any).totalValuations || "Total Valuations"}</p>
                 <p className="text-2xl font-bold" data-testid="text-total-valuations">
                   {totalValuations}
                 </p>
@@ -645,7 +645,7 @@ export default function Valuations() {
             <div className="flex items-center gap-3">
               <Clock className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-muted-foreground">Pending</p>
+                <p className="text-sm text-muted-foreground">{t.pending}</p>
                 <p className="text-2xl font-bold" data-testid="text-pending-count">
                   {pendingCount}
                 </p>
@@ -658,7 +658,7 @@ export default function Valuations() {
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-muted-foreground">Completed</p>
+                <p className="text-sm text-muted-foreground">{t.completed}</p>
                 <p className="text-2xl font-bold" data-testid="text-completed-count">
                   {completedCount}
                 </p>
@@ -671,7 +671,7 @@ export default function Valuations() {
             <div className="flex items-center gap-3">
               <TrendingUp className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-muted-foreground">Average Value</p>
+                <p className="text-sm text-muted-foreground">{(t as any).averageValue || "Average Value"}</p>
                 <p className="text-2xl font-bold" data-testid="text-average-value">
                   {parseFloat(averageValue.toFixed(0)).toLocaleString()} SAR
                 </p>
@@ -683,15 +683,15 @@ export default function Valuations() {
 
       {isLoading ? (
         <div className="flex items-center justify-center p-12">
-          <p>Loading...</p>
+          <p>{t.loading}</p>
         </div>
       ) : filteredValuations.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 text-center">
           <Calculator className="h-16 w-16 text-muted-foreground/30 mb-4" />
           <p className="text-muted-foreground">
             {searchQuery
-              ? "No valuations found matching your search"
-              : "No valuations yet. Add your first property valuation."}
+              ? ((t as any).noValuationsFoundSearch || "No valuations found matching your search")
+              : ((t as any).noValuationsYet || "No valuations yet. Add your first property valuation.")}
           </p>
         </div>
       ) : (
@@ -750,14 +750,14 @@ export default function Valuations() {
 
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Estimated Value</span>
+                    <span className="text-muted-foreground">{(t as any).estimatedValue || "Estimated Value"}</span>
                     <span className="font-semibold" data-testid={`text-estimated-value-${valuation.id}`}>
                       {parseFloat(valuation.estimatedValue).toLocaleString()} SAR
                     </span>
                   </div>
                   {valuation.marketValue && (
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Market Value</span>
+                      <span className="text-muted-foreground">{(t as any).marketValue || "Market Value"}</span>
                       <span className="font-semibold" data-testid={`text-market-value-${valuation.id}`}>
                         {parseFloat(valuation.marketValue).toLocaleString()} SAR
                       </span>
@@ -765,7 +765,7 @@ export default function Valuations() {
                   )}
                   {valuation.area && (
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Area</span>
+                      <span className="text-muted-foreground">{(t as any).area || "Area"}</span>
                       <span data-testid={`text-area-${valuation.id}`}>
                         {valuation.area} {valuation.areaUnit || "sqm"}
                       </span>
@@ -802,10 +802,9 @@ export default function Valuations() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+            <AlertDialogTitle>{t.confirmDelete}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete "{deletingValuation?.propertyName}". This
-              action cannot be undone.
+              {(t as any).deleteValuationConfirm || `This will permanently delete "${deletingValuation?.propertyName}".`} {t.actionCannotBeUndone}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

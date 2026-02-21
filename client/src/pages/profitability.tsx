@@ -189,7 +189,7 @@ export default function Profitability() {
   }, [] as Array<{ category: string; revenue: number; profit: number }>);
 
   const handleExportPDF = () => {
-    const periodLabel = period === "week" ? "This Week" : period === "month" ? "This Month" : period === "quarter" ? "This Quarter" : "This Year";
+    const periodLabel = period === "week" ? ((t as any).thisWeek || "This Week") : period === "month" ? ((t as any).thisMonth || "This Month") : period === "quarter" ? ((t as any).thisQuarter || "This Quarter") : ((t as any).thisYear || "This Year");
     
     const exportData = profitabilityData
       .sort((a, b) => b.totalProfit - a.totalProfit)
@@ -226,19 +226,19 @@ export default function Profitability() {
     if (result.success) {
       toast({
         title: t.pdfExportSuccessful,
-        description: "Profitability report exported to PDF",
+        description: (t as any).profitabilityReportExported || "Profitability report exported to PDF",
       });
     } else {
       toast({
         title: t.exportFailed,
-        description: "Failed to export profitability report to PDF",
+        description: (t as any).failedToExportProfitabilityPdf || "Failed to export profitability report to PDF",
         variant: "destructive",
       });
     }
   };
 
   const handleExportStrategicPDF = () => {
-    const periodLabel = period === "week" ? "This Week" : period === "month" ? "This Month" : period === "quarter" ? "This Quarter" : "This Year";
+    const periodLabel = period === "week" ? ((t as any).thisWeek || "This Week") : period === "month" ? ((t as any).thisMonth || "This Month") : period === "quarter" ? ((t as any).thisQuarter || "This Quarter") : ((t as any).thisYear || "This Year");
     
     const strategicData = [
       { section: "--- TOP PERFORMERS BY PROFIT ---", name: "", category: "", profit: "", margin: "" },
@@ -294,12 +294,12 @@ export default function Profitability() {
     if (result.success) {
       toast({
         title: t.pdfExportSuccessful,
-        description: "Strategic overview exported to PDF",
+        description: (t as any).strategicOverviewExported || "Strategic overview exported to PDF",
       });
     } else {
       toast({
         title: t.exportFailed,
-        description: "Failed to export strategic overview to PDF",
+        description: (t as any).failedToExportStrategicPdf || "Failed to export strategic overview to PDF",
         variant: "destructive",
       });
     }
@@ -323,7 +323,7 @@ export default function Profitability() {
       document.body.removeChild(a);
       toast({
         title: t.pdfExportSuccessful,
-        description: "Profitability data exported to Excel",
+        description: (t as any).profitabilityExportedExcel || "Profitability data exported to Excel",
       });
     } catch (error) {
       toast({
@@ -361,8 +361,8 @@ export default function Profitability() {
     ]);
     
     toast({
-      title: "Costs Synced",
-      description: "Menu and inventory data refreshed. Check browser console for debug info.",
+      title: (t as any).costsSynced || "Costs Synced",
+      description: (t as any).menuInventoryRefreshed || "Menu and inventory data refreshed. Check browser console for debug info.",
     });
   };
 
@@ -370,33 +370,33 @@ export default function Profitability() {
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Profitability Analysis</h1>
+          <h1 className="text-3xl font-bold mb-2">{t.profitability}</h1>
           <p className="text-muted-foreground">
-            Analyze profit margins, costs, and revenue by item and category (pre-VAT)
+            {(t as any).analyzeProfitMargins || "Analyze profit margins, costs, and revenue by item and category (pre-VAT)"}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleSyncCosts} data-testid="button-sync-costs">
             <RefreshCw className="h-4 w-4 mr-2" />
-            Sync Costs
+            {(t as any).syncCosts || "Sync Costs"}
           </Button>
           <Button variant="outline" onClick={handleExportPDF} data-testid="button-export-pdf">
             <FileText className="h-4 w-4 mr-2" />
-            Export PDF
+            {(t as any).exportPdf || "Export PDF"}
           </Button>
           <Button variant="outline" onClick={handleExport} data-testid="button-export-excel">
             <Download className="h-4 w-4 mr-2" />
-            Export Excel
+            {(t as any).exportExcel || "Export Excel"}
           </Button>
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-40" data-testid="select-period">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="week">This Week</SelectItem>
-              <SelectItem value="month">This Month</SelectItem>
-              <SelectItem value="quarter">This Quarter</SelectItem>
-              <SelectItem value="year">This Year</SelectItem>
+              <SelectItem value="week">{(t as any).thisWeek || "This Week"}</SelectItem>
+              <SelectItem value="month">{(t as any).thisMonth || "This Month"}</SelectItem>
+              <SelectItem value="quarter">{(t as any).thisQuarter || "This Quarter"}</SelectItem>
+              <SelectItem value="year">{(t as any).thisYear || "This Year"}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -437,19 +437,19 @@ export default function Profitability() {
           <TabsList>
             <TabsTrigger value="strategic" data-testid="tab-strategic">
               <Target className="h-4 w-4 mr-2" />
-              Strategic Overview
+              {(t as any).strategicOverview || "Strategic Overview"}
             </TabsTrigger>
             <TabsTrigger value="pricing" data-testid="tab-pricing">
               <DollarSign className="h-4 w-4 mr-2" />
-              Pricing Analysis
+              {(t as any).pricingAnalysis || "Pricing Analysis"}
             </TabsTrigger>
             <TabsTrigger value="scaling" data-testid="tab-scaling">
               <Scale className="h-4 w-4 mr-2" />
-              Scaling Viability
+              {(t as any).scalingViability || "Scaling Viability"}
             </TabsTrigger>
             <TabsTrigger value="cost-management" data-testid="tab-cost">
               <Scissors className="h-4 w-4 mr-2" />
-              Cost Management
+              {(t as any).costManagement || "Cost Management"}
             </TabsTrigger>
           </TabsList>
 
@@ -458,56 +458,56 @@ export default function Profitability() {
           <div className="flex justify-end mb-4">
             <Button variant="outline" onClick={handleExportStrategicPDF} data-testid="button-export-strategic-pdf">
               <Download className="h-4 w-4 mr-2" />
-              Export PDF
+              {(t as any).exportPdf || "Export PDF"}
             </Button>
           </div>
           {/* Overview Cards */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card data-testid="card-total-revenue">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.totalRevenue}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono">{totalRevenue.toFixed(2)} SAR</div>
-            <p className="text-xs text-muted-foreground">From {profitabilityData.reduce((sum, i) => sum + i.salesVolume, 0)} items sold</p>
+            <p className="text-xs text-muted-foreground">{(t as any).fromItemsSold || "From"} {profitabilityData.reduce((sum, i) => sum + i.salesVolume, 0)} {(t as any).itemsSold || "items sold"}</p>
           </CardContent>
         </Card>
 
         <Card data-testid="card-total-profit">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Profit</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).totalProfit || "Total Profit"}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono text-green-600 dark:text-green-500">
               {totalProfit.toFixed(2)} SAR
             </div>
-            <p className="text-xs text-muted-foreground">After recipe costs</p>
+            <p className="text-xs text-muted-foreground">{(t as any).afterRecipeCosts || "After recipe costs"}</p>
           </CardContent>
         </Card>
 
         <Card data-testid="card-avg-margin">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Profit Margin</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).avgProfitMargin || "Avg Profit Margin"}</CardTitle>
             <Percent className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono">{avgMargin.toFixed(1)}%</div>
-            <p className="text-xs text-muted-foreground">Across all items</p>
+            <p className="text-xs text-muted-foreground">{(t as any).acrossAllItems || "Across all items"}</p>
           </CardContent>
         </Card>
 
         <Card data-testid="card-total-cost">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Costs</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).totalCosts || "Total Costs"}</CardTitle>
             <Calculator className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono text-red-600 dark:text-red-500">
               {totalCost.toFixed(2)} SAR
             </div>
-            <p className="text-xs text-muted-foreground">Recipe ingredient costs</p>
+            <p className="text-xs text-muted-foreground">{(t as any).recipeIngredientCosts || "Recipe ingredient costs"}</p>
           </CardContent>
         </Card>
       </div>
@@ -517,8 +517,8 @@ export default function Profitability() {
         {/* Top Items by Profit */}
         <Card data-testid="card-top-profit">
           <CardHeader>
-            <CardTitle>Top Items by Profit</CardTitle>
-            <CardDescription>Highest profit-generating menu items</CardDescription>
+            <CardTitle>{(t as any).topItemsByProfit || "Top Items by Profit"}</CardTitle>
+            <CardDescription>{(t as any).highestProfitItems || "Highest profit-generating menu items"}</CardDescription>
           </CardHeader>
           <CardContent>
             {topByProfit.length > 0 ? (
@@ -528,14 +528,14 @@ export default function Profitability() {
                   <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
                   <YAxis />
                   <Tooltip formatter={(value: number) => `${value.toFixed(2)} SAR`} />
-                  <Bar dataKey="totalProfit" fill="#10b981" name="Profit" />
+                  <Bar dataKey="totalProfit" fill="#10b981" name={(t as any).profit || "Profit"} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
               <div className="h-[300px] flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No sales data available</p>
+                  <p>{(t as any).noSalesDataAvailable || "No sales data available"}</p>
                 </div>
               </div>
             )}
@@ -545,8 +545,8 @@ export default function Profitability() {
         {/* Top Items by Margin */}
         <Card data-testid="card-top-margin">
           <CardHeader>
-            <CardTitle>Top Items by Margin</CardTitle>
-            <CardDescription>Highest profit margin percentages</CardDescription>
+            <CardTitle>{(t as any).topItemsByMargin || "Top Items by Margin"}</CardTitle>
+            <CardDescription>{(t as any).highestMarginPercentages || "Highest profit margin percentages"}</CardDescription>
           </CardHeader>
           <CardContent>
             {topByMargin.length > 0 ? (
@@ -556,14 +556,14 @@ export default function Profitability() {
                   <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
                   <YAxis />
                   <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
-                  <Bar dataKey="margin" fill="#3b82f6" name="Margin %" />
+                  <Bar dataKey="margin" fill="#3b82f6" name={(t as any).marginPercent || "Margin %"} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
               <div className="h-[300px] flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No sales data available</p>
+                  <p>{(t as any).noSalesDataAvailable || "No sales data available"}</p>
                 </div>
               </div>
             )}
@@ -573,8 +573,8 @@ export default function Profitability() {
         {/* Category Breakdown */}
         <Card data-testid="card-category-profit">
           <CardHeader>
-            <CardTitle>Profit by Category</CardTitle>
-            <CardDescription>Revenue and profit distribution across categories</CardDescription>
+            <CardTitle>{(t as any).profitByCategory || "Profit by Category"}</CardTitle>
+            <CardDescription>{(t as any).revenueAndProfitDistribution || "Revenue and profit distribution across categories"}</CardDescription>
           </CardHeader>
           <CardContent>
             {categoryData.length > 0 && categoryData.some(c => c.revenue > 0) ? (
@@ -600,7 +600,7 @@ export default function Profitability() {
               <div className="h-[300px] flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No category data available</p>
+                  <p>{(t as any).noCategoryDataAvailable || "No category data available"}</p>
                 </div>
               </div>
             )}
@@ -610,8 +610,8 @@ export default function Profitability() {
         {/* Low Performers */}
         <Card data-testid="card-low-margin">
           <CardHeader>
-            <CardTitle>Low Margin Items</CardTitle>
-            <CardDescription>Items with lowest profit margins</CardDescription>
+            <CardTitle>{(t as any).lowMarginItems || "Low Margin Items"}</CardTitle>
+            <CardDescription>{(t as any).itemsWithLowestMargins || "Items with lowest profit margins"}</CardDescription>
           </CardHeader>
           <CardContent>
             {lowPerformers.length > 0 ? (
@@ -634,7 +634,7 @@ export default function Profitability() {
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground font-mono">
-                        {item.profit.toFixed(2)} SAR profit/item
+                        {item.profit.toFixed(2)} SAR {(t as any).profitPerItem || "profit/item"}
                       </p>
                     </div>
                   </div>
@@ -644,7 +644,7 @@ export default function Profitability() {
               <div className="h-[300px] flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No low-margin items found</p>
+                  <p>{(t as any).noLowMarginItems || "No low-margin items found"}</p>
                 </div>
               </div>
             )}
@@ -655,22 +655,22 @@ export default function Profitability() {
       {/* Detailed Table */}
       <Card data-testid="card-detailed-table">
         <CardHeader>
-          <CardTitle>All Items Profitability</CardTitle>
-          <CardDescription>Complete breakdown of all menu items</CardDescription>
+          <CardTitle>{(t as any).allItemsProfitability || "All Items Profitability"}</CardTitle>
+          <CardDescription>{(t as any).completeBreakdownAllItems || "Complete breakdown of all menu items"}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/50">
                 <tr>
-                  <th className="p-3 text-left font-medium">Item</th>
-                  <th className="p-3 text-left font-medium">Category</th>
-                  <th className="p-3 text-right font-medium">Price</th>
-                  <th className="p-3 text-right font-medium">Cost</th>
-                  <th className="p-3 text-right font-medium">Profit/Unit</th>
-                  <th className="p-3 text-right font-medium">Margin %</th>
-                  <th className="p-3 text-right font-medium">Sales Vol.</th>
-                  <th className="p-3 text-right font-medium">Total Profit</th>
+                  <th className="p-3 text-left font-medium">{(t as any).item || "Item"}</th>
+                  <th className="p-3 text-left font-medium">{t.category}</th>
+                  <th className="p-3 text-right font-medium">{t.price}</th>
+                  <th className="p-3 text-right font-medium">{(t as any).cost || "Cost"}</th>
+                  <th className="p-3 text-right font-medium">{(t as any).profitPerUnit || "Profit/Unit"}</th>
+                  <th className="p-3 text-right font-medium">{(t as any).marginPercent || "Margin %"}</th>
+                  <th className="p-3 text-right font-medium">{(t as any).salesVolume || "Sales Vol."}</th>
+                  <th className="p-3 text-right font-medium">{(t as any).totalProfit || "Total Profit"}</th>
                 </tr>
               </thead>
               <tbody>
@@ -766,6 +766,7 @@ export default function Profitability() {
 
 // Pricing Analysis Tab Component
 function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] }) {
+  const { t } = useLanguage();
   // Items below cost (negative margin)
   const belowCostItems = profitabilityData.filter(item => item.margin < 0);
   
@@ -802,51 +803,51 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
       <div className="flex justify-end mb-4">
         <Button variant="outline" onClick={handleExportPDF} data-testid="button-export-pricing-pdf">
           <Download className="h-4 w-4 mr-2" />
-          Export PDF
+          {(t as any).exportPdf || "Export PDF"}
         </Button>
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Below Cost</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).belowCost || "Below Cost"}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{belowCostItems.length}</div>
-            <p className="text-xs text-muted-foreground">Items losing money</p>
+            <p className="text-xs text-muted-foreground">{(t as any).itemsLosingMoney || "Items losing money"}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Margin</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).lowMargin || "Low Margin"}</CardTitle>
             <TrendingDown className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{lowMarginItems.length}</div>
-            <p className="text-xs text-muted-foreground">0-20% margin</p>
+            <p className="text-xs text-muted-foreground">{(t as any).zeroToTwentyMargin || "0-20% margin"}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Healthy Margin</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).healthyMargin || "Healthy Margin"}</CardTitle>
             <DollarSign className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{healthyMarginItems.length}</div>
-            <p className="text-xs text-muted-foreground">20-40% margin</p>
+            <p className="text-xs text-muted-foreground">{(t as any).twentyToFortyMargin || "20-40% margin"}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Premium Margin</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).premiumMargin || "Premium Margin"}</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{highMarginItems.length}</div>
-            <p className="text-xs text-muted-foreground">40%+ margin</p>
+            <p className="text-xs text-muted-foreground">{(t as any).fortyPlusMargin || "40%+ margin"}</p>
           </CardContent>
         </Card>
       </div>
@@ -854,9 +855,9 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
       {belowCostItems.length > 0 && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Critical Pricing Issues</AlertTitle>
+          <AlertTitle>{(t as any).criticalPricingIssues || "Critical Pricing Issues"}</AlertTitle>
           <AlertDescription>
-            {belowCostItems.length} item(s) are priced below cost. Immediate price adjustment recommended.
+            {belowCostItems.length} {(t as any).itemsPricedBelowCost || "item(s) are priced below cost. Immediate price adjustment recommended."}
           </AlertDescription>
         </Alert>
       )}
@@ -864,8 +865,8 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Price Coverage Analysis</CardTitle>
-            <CardDescription>Items by margin category</CardDescription>
+            <CardTitle>{(t as any).priceCoverageAnalysis || "Price Coverage Analysis"}</CardTitle>
+            <CardDescription>{(t as any).itemsByMarginCategory || "Items by margin category"}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -892,8 +893,8 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
 
         <Card>
           <CardHeader>
-            <CardTitle>Pricing Recommendations</CardTitle>
-            <CardDescription>Action items to optimize pricing</CardDescription>
+            <CardTitle>{(t as any).pricingRecommendations || "Pricing Recommendations"}</CardTitle>
+            <CardDescription>{(t as any).actionItemsToOptimize || "Action items to optimize pricing"}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {belowCostItems.length > 0 && (
@@ -901,9 +902,9 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-500 mt-0.5" />
                   <div>
-                    <h4 className="font-semibold text-red-900 dark:text-red-100">Immediate Action Required</h4>
+                    <h4 className="font-semibold text-red-900 dark:text-red-100">{(t as any).immediateActionRequired || "Immediate Action Required"}</h4>
                     <p className="text-sm text-red-800 dark:text-red-200 mt-1">
-                      Increase prices on {belowCostItems.length} items currently below cost
+                      {(t as any).increasePricesOn || "Increase prices on"} {belowCostItems.length} {(t as any).itemsBelowCost || "items currently below cost"}
                     </p>
                   </div>
                 </div>
@@ -915,9 +916,9 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
                 <div className="flex items-start gap-3">
                   <TrendingDown className="h-5 w-5 text-orange-600 dark:text-orange-500 mt-0.5" />
                   <div>
-                    <h4 className="font-semibold text-orange-900 dark:text-orange-100">Consider Price Increase</h4>
+                    <h4 className="font-semibold text-orange-900 dark:text-orange-100">{(t as any).considerPriceIncrease || "Consider Price Increase"}</h4>
                     <p className="text-sm text-orange-800 dark:text-orange-200 mt-1">
-                      {lowMarginItems.length} items have low margins. Consider 10-15% price increase
+                      {lowMarginItems.length} {(t as any).itemsLowMarginsConsider || "items have low margins. Consider 10-15% price increase"}
                     </p>
                   </div>
                 </div>
@@ -929,9 +930,9 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
                 <div className="flex items-start gap-3">
                   <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-500 mt-0.5" />
                   <div>
-                    <h4 className="font-semibold text-green-900 dark:text-green-100">Pricing Strength</h4>
+                    <h4 className="font-semibold text-green-900 dark:text-green-100">{(t as any).pricingStrength || "Pricing Strength"}</h4>
                     <p className="text-sm text-green-800 dark:text-green-200 mt-1">
-                      {highMarginItems.length} items have excellent margins. Monitor competition
+                      {highMarginItems.length} {(t as any).itemsExcellentMargins || "items have excellent margins. Monitor competition"}
                     </p>
                   </div>
                 </div>
@@ -944,26 +945,26 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Detailed Item Analysis by Margin Category</CardTitle>
-            <CardDescription>Comprehensive breakdown of all menu items across margin categories</CardDescription>
+            <CardTitle>{(t as any).detailedItemAnalysis || "Detailed Item Analysis by Margin Category"}</CardTitle>
+            <CardDescription>{(t as any).comprehensiveBreakdown || "Comprehensive breakdown of all menu items across margin categories"}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {belowCostItems.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5 text-red-500" />
-                  <h4 className="font-semibold text-lg">Below Cost Items ({belowCostItems.length})</h4>
+                  <h4 className="font-semibold text-lg">{(t as any).belowCostItems || "Below Cost Items"} ({belowCostItems.length})</h4>
                 </div>
                 <div className="rounded-md border border-red-200 dark:border-red-900">
                   <table className="w-full text-sm">
                     <thead className="border-b bg-red-50 dark:bg-red-950">
                       <tr>
-                        <th className="p-3 text-left font-medium">Item</th>
-                        <th className="p-3 text-right font-medium">Price</th>
-                        <th className="p-3 text-right font-medium">Cost</th>
-                        <th className="p-3 text-right font-medium">Loss</th>
-                        <th className="p-3 text-right font-medium">Margin</th>
-                        <th className="p-3 text-right font-medium">Suggested Price</th>
+                        <th className="p-3 text-left font-medium">{(t as any).item || "Item"}</th>
+                        <th className="p-3 text-right font-medium">{t.price}</th>
+                        <th className="p-3 text-right font-medium">{(t as any).cost || "Cost"}</th>
+                        <th className="p-3 text-right font-medium">{(t as any).loss || "Loss"}</th>
+                        <th className="p-3 text-right font-medium">{(t as any).margin || "Margin"}</th>
+                        <th className="p-3 text-right font-medium">{(t as any).suggestedPrice || "Suggested Price"}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -995,18 +996,18 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <TrendingDown className="h-5 w-5 text-orange-500" />
-                  <h4 className="font-semibold text-lg">Low Margin Items (0-20%) ({lowMarginItems.length})</h4>
+                  <h4 className="font-semibold text-lg">{(t as any).lowMarginItemsRange || "Low Margin Items (0-20%)"} ({lowMarginItems.length})</h4>
                 </div>
                 <div className="rounded-md border border-orange-200 dark:border-orange-900">
                   <table className="w-full text-sm">
                     <thead className="border-b bg-orange-50 dark:bg-orange-950">
                       <tr>
-                        <th className="p-3 text-left font-medium">Item</th>
-                        <th className="p-3 text-right font-medium">Price</th>
-                        <th className="p-3 text-right font-medium">Cost</th>
-                        <th className="p-3 text-right font-medium">Profit</th>
-                        <th className="p-3 text-right font-medium">Margin</th>
-                        <th className="p-3 text-right font-medium">Suggested Price</th>
+                        <th className="p-3 text-left font-medium">{(t as any).item || "Item"}</th>
+                        <th className="p-3 text-right font-medium">{t.price}</th>
+                        <th className="p-3 text-right font-medium">{(t as any).cost || "Cost"}</th>
+                        <th className="p-3 text-right font-medium">{(t as any).profit || "Profit"}</th>
+                        <th className="p-3 text-right font-medium">{(t as any).margin || "Margin"}</th>
+                        <th className="p-3 text-right font-medium">{(t as any).suggestedPrice || "Suggested Price"}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1038,17 +1039,17 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5 text-blue-500" />
-                  <h4 className="font-semibold text-lg">Healthy Margin Items (20-40%) ({healthyMarginItems.length})</h4>
+                  <h4 className="font-semibold text-lg">{(t as any).healthyMarginItemsRange || "Healthy Margin Items (20-40%)"} ({healthyMarginItems.length})</h4>
                 </div>
                 <div className="rounded-md border border-blue-200 dark:border-blue-900">
                   <table className="w-full text-sm">
                     <thead className="border-b bg-blue-50 dark:bg-blue-950">
                       <tr>
-                        <th className="p-3 text-left font-medium">Item</th>
-                        <th className="p-3 text-right font-medium">Price</th>
-                        <th className="p-3 text-right font-medium">Cost</th>
-                        <th className="p-3 text-right font-medium">Profit</th>
-                        <th className="p-3 text-right font-medium">Margin</th>
+                        <th className="p-3 text-left font-medium">{(t as any).item || "Item"}</th>
+                        <th className="p-3 text-right font-medium">{t.price}</th>
+                        <th className="p-3 text-right font-medium">{(t as any).cost || "Cost"}</th>
+                        <th className="p-3 text-right font-medium">{(t as any).profit || "Profit"}</th>
+                        <th className="p-3 text-right font-medium">{(t as any).margin || "Margin"}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1076,17 +1077,17 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-green-500" />
-                  <h4 className="font-semibold text-lg">Premium Margin Items (40%+) ({highMarginItems.length})</h4>
+                  <h4 className="font-semibold text-lg">{(t as any).premiumMarginItemsRange || "Premium Margin Items (40%+)"} ({highMarginItems.length})</h4>
                 </div>
                 <div className="rounded-md border border-green-200 dark:border-green-900">
                   <table className="w-full text-sm">
                     <thead className="border-b bg-green-50 dark:bg-green-950">
                       <tr>
-                        <th className="p-3 text-left font-medium">Item</th>
-                        <th className="p-3 text-right font-medium">Price</th>
-                        <th className="p-3 text-right font-medium">Cost</th>
-                        <th className="p-3 text-right font-medium">Profit</th>
-                        <th className="p-3 text-right font-medium">Margin</th>
+                        <th className="p-3 text-left font-medium">{(t as any).item || "Item"}</th>
+                        <th className="p-3 text-right font-medium">{t.price}</th>
+                        <th className="p-3 text-right font-medium">{(t as any).cost || "Cost"}</th>
+                        <th className="p-3 text-right font-medium">{(t as any).profit || "Profit"}</th>
+                        <th className="p-3 text-right font-medium">{(t as any).margin || "Margin"}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1118,6 +1119,7 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
 
 // Scaling Analysis Tab Component
 function ScalingAnalysisTab({ profitabilityData, totalRevenue, totalProfit }: { profitabilityData: any[], totalRevenue: number, totalProfit: number }) {
+  const { t } = useLanguage();
   const itemsWithSales = profitabilityData.filter(item => item.salesVolume > 0);
   const avgUnitsSold = itemsWithSales.reduce((sum, item) => sum + item.salesVolume, 0) / itemsWithSales.length || 0;
   const avgProfitPerUnit = totalProfit / itemsWithSales.reduce((sum, item) => sum + item.salesVolume, 0) || 0;
@@ -1144,60 +1146,59 @@ function ScalingAnalysisTab({ profitabilityData, totalRevenue, totalProfit }: { 
       <div className="flex justify-end mb-4">
         <Button variant="outline" onClick={handleExportPDF} data-testid="button-export-scaling-pdf">
           <Download className="h-4 w-4 mr-2" />
-          Export PDF
+          {(t as any).exportPdf || "Export PDF"}
         </Button>
       </div>
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Profit/Unit</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).avgProfitPerUnit || "Avg Profit/Unit"}</CardTitle>
             <Calculator className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono">{avgProfitPerUnit.toFixed(2)} SAR</div>
-            <p className="text-xs text-muted-foreground">Per item sold</p>
+            <p className="text-xs text-muted-foreground">{(t as any).perItemSold || "Per item sold"}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Break-Even Units</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).breakEvenUnits || "Break-Even Units"}</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{Math.ceil(avgUnitsSold)}</div>
-            <p className="text-xs text-muted-foreground">Average per item</p>
+            <p className="text-xs text-muted-foreground">{(t as any).averagePerItem || "Average per item"}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Profit Margin</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).profitMarginLabel || "Profit Margin"}</CardTitle>
             <Percent className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0}%
             </div>
-            <p className="text-xs text-muted-foreground">Overall profitability</p>
+            <p className="text-xs text-muted-foreground">{(t as any).overallProfitability || "Overall profitability"}</p>
           </CardContent>
         </Card>
       </div>
 
       <Alert>
         <Scale className="h-4 w-4" />
-        <AlertTitle>Scaling Viability Assessment</AlertTitle>
+        <AlertTitle>{(t as any).scalingViabilityAssessment || "Scaling Viability Assessment"}</AlertTitle>
         <AlertDescription>
-          With an average profit of {avgProfitPerUnit.toFixed(2)} SAR per unit, you can invest up to this amount in customer acquisition while maintaining profitability. 
-          Higher margin items provide more room for marketing and growth investments.
+          {(t as any).scalingViabilityDesc || `With an average profit of ${avgProfitPerUnit.toFixed(2)} SAR per unit, you can invest up to this amount in customer acquisition while maintaining profitability. Higher margin items provide more room for marketing and growth investments.`}
         </AlertDescription>
       </Alert>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Unit Economics by Volume</CardTitle>
-            <CardDescription>High-volume items and their profitability</CardDescription>
+            <CardTitle>{(t as any).unitEconomicsByVolume || "Unit Economics by Volume"}</CardTitle>
+            <CardDescription>{(t as any).highVolumeItemsProfitability || "High-volume items and their profitability"}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -1208,8 +1209,8 @@ function ScalingAnalysisTab({ profitabilityData, totalRevenue, totalProfit }: { 
                 <YAxis yAxisId="right" orientation="right" stroke="#10b981" />
                 <Tooltip />
                 <Legend />
-                <Bar yAxisId="left" dataKey="salesVolume" fill="#3b82f6" name="Units Sold" />
-                <Bar yAxisId="right" dataKey="profit" fill="#10b981" name="Profit/Unit (SAR)" />
+                <Bar yAxisId="left" dataKey="salesVolume" fill="#3b82f6" name={(t as any).unitsSold || "Units Sold"} />
+                <Bar yAxisId="right" dataKey="profit" fill="#10b981" name={(t as any).profitPerUnitSar || "Profit/Unit (SAR)"} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -1217,18 +1218,17 @@ function ScalingAnalysisTab({ profitabilityData, totalRevenue, totalProfit }: { 
 
         <Card>
           <CardHeader>
-            <CardTitle>Scaling Recommendations</CardTitle>
-            <CardDescription>Investment opportunities by item</CardDescription>
+            <CardTitle>{(t as any).scalingRecommendations || "Scaling Recommendations"}</CardTitle>
+            <CardDescription>{(t as any).investmentOpportunities || "Investment opportunities by item"}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-900">
               <div className="flex items-start gap-3">
                 <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-500 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-blue-900 dark:text-blue-100">High-Margin Scaling</h4>
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-100">{(t as any).highMarginScaling || "High-Margin Scaling"}</h4>
                   <p className="text-sm text-blue-800 dark:text-blue-200 mt-1">
-                    Items with 40%+ margins can support aggressive customer acquisition. 
-                    Consider spending up to 20% of unit profit on marketing.
+                    {(t as any).highMarginScalingDesc || "Items with 40%+ margins can support aggressive customer acquisition. Consider spending up to 20% of unit profit on marketing."}
                   </p>
                 </div>
               </div>
@@ -1238,10 +1238,9 @@ function ScalingAnalysisTab({ profitabilityData, totalRevenue, totalProfit }: { 
               <div className="flex items-start gap-3">
                 <Scale className="h-5 w-5 text-green-600 dark:text-green-500 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-green-900 dark:text-green-100">Volume Opportunities</h4>
+                  <h4 className="font-semibold text-green-900 dark:text-green-100">{(t as any).volumeOpportunities || "Volume Opportunities"}</h4>
                   <p className="text-sm text-green-800 dark:text-green-200 mt-1">
-                    High-volume items with healthy margins are ideal for promotions. 
-                    Small discounts can drive significant volume increases.
+                    {(t as any).volumeOpportunitiesDesc || "High-volume items with healthy margins are ideal for promotions. Small discounts can drive significant volume increases."}
                   </p>
                 </div>
               </div>
@@ -1251,10 +1250,9 @@ function ScalingAnalysisTab({ profitabilityData, totalRevenue, totalProfit }: { 
               <div className="flex items-start gap-3">
                 <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-500 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-orange-900 dark:text-orange-100">Limited Scaling Potential</h4>
+                  <h4 className="font-semibold text-orange-900 dark:text-orange-100">{(t as any).limitedScalingPotential || "Limited Scaling Potential"}</h4>
                   <p className="text-sm text-orange-800 dark:text-orange-200 mt-1">
-                    Items with margins below 20% have limited room for marketing investment. 
-                    Focus on cost reduction before scaling.
+                    {(t as any).limitedScalingDesc || "Items with margins below 20% have limited room for marketing investment. Focus on cost reduction before scaling."}
                   </p>
                 </div>
               </div>
@@ -1265,20 +1263,20 @@ function ScalingAnalysisTab({ profitabilityData, totalRevenue, totalProfit }: { 
 
       <Card>
         <CardHeader>
-          <CardTitle>Investment Capacity by Item</CardTitle>
-          <CardDescription>Maximum sustainable customer acquisition cost per item</CardDescription>
+          <CardTitle>{(t as any).investmentCapacity || "Investment Capacity by Item"}</CardTitle>
+          <CardDescription>{(t as any).maxSustainableCac || "Maximum sustainable customer acquisition cost per item"}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/50">
                 <tr>
-                  <th className="p-3 text-left font-medium">Item</th>
-                  <th className="p-3 text-right font-medium">Profit/Unit</th>
-                  <th className="p-3 text-right font-medium">Margin %</th>
-                  <th className="p-3 text-right font-medium">Sales Volume</th>
-                  <th className="p-3 text-right font-medium">Max CAC</th>
-                  <th className="p-3 text-right font-medium">Scaling Potential</th>
+                  <th className="p-3 text-left font-medium">{(t as any).item || "Item"}</th>
+                  <th className="p-3 text-right font-medium">{(t as any).profitPerUnit || "Profit/Unit"}</th>
+                  <th className="p-3 text-right font-medium">{(t as any).marginPercent || "Margin %"}</th>
+                  <th className="p-3 text-right font-medium">{(t as any).salesVolume || "Sales Volume"}</th>
+                  <th className="p-3 text-right font-medium">{(t as any).maxCac || "Max CAC"}</th>
+                  <th className="p-3 text-right font-medium">{(t as any).scalingPotential || "Scaling Potential"}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1320,6 +1318,7 @@ function ScalingAnalysisTab({ profitabilityData, totalRevenue, totalProfit }: { 
 
 // Cost Management Tab Component
 function CostManagementTab({ profitabilityData, bills }: { profitabilityData: any[]; bills: ShopBill[] }) {
+  const { t } = useLanguage();
   // Identify cost reduction opportunities
   const highCostItems = profitabilityData
     .filter(item => item.cost > 0)
@@ -1416,41 +1415,41 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
       <div className="flex justify-end mb-4">
         <Button variant="outline" onClick={handleExportPDF} data-testid="button-export-cost-pdf">
           <Download className="h-4 w-4 mr-2" />
-          Export PDF
+          {(t as any).exportPdf || "Export PDF"}
         </Button>
       </div>
       {/* Operating Expenses Summary */}
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Operating Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).operatingExpenses || "Operating Expenses"}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono text-orange-600">{totalOperatingExpenses.toFixed(2)} SAR</div>
-            <p className="text-xs text-muted-foreground">Recurring expenses (excludes one-time & foundational)</p>
+            <p className="text-xs text-muted-foreground">{(t as any).recurringExpensesExcludes || "Recurring expenses (excludes one-time & foundational)"}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Paid Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).paidExpenses || "Paid Expenses"}</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono text-green-600">{paidExpenses.toFixed(2)} SAR</div>
-            <p className="text-xs text-muted-foreground">{((paidExpenses / totalOperatingExpenses) * 100 || 0).toFixed(1)}% of total</p>
+            <p className="text-xs text-muted-foreground">{((paidExpenses / totalOperatingExpenses) * 100 || 0).toFixed(1)}% {(t as any).ofTotal || "of total"}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).pendingExpenses || "Pending Expenses"}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono text-orange-600">{pendingExpenses.toFixed(2)} SAR</div>
-            <p className="text-xs text-muted-foreground">{((pendingExpenses / totalOperatingExpenses) * 100 || 0).toFixed(1)}% of total</p>
+            <p className="text-xs text-muted-foreground">{((pendingExpenses / totalOperatingExpenses) * 100 || 0).toFixed(1)}% {(t as any).ofTotal || "of total"}</p>
           </CardContent>
         </Card>
       </div>
@@ -1458,8 +1457,8 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
       {/* Operating Expenses Breakdown */}
       <Card>
         <CardHeader>
-          <CardTitle>Operating Expenses by Category</CardTitle>
-          <CardDescription>Recurring expenses breakdown (excludes one-time & foundational)</CardDescription>
+          <CardTitle>{(t as any).operatingExpensesByCategory || "Operating Expenses by Category"}</CardTitle>
+          <CardDescription>{(t as any).recurringExpensesBreakdown || "Recurring expenses breakdown (excludes one-time & foundational)"}</CardDescription>
         </CardHeader>
         <CardContent>
           {expenseTypeData.length > 0 ? (
@@ -1469,12 +1468,12 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
                 <YAxis />
                 <Tooltip formatter={(value: number) => `${value.toFixed(2)} SAR`} />
-                <Bar dataKey="value" fill="hsl(var(--destructive))" name="Expense Amount" />
+                <Bar dataKey="value" fill="hsl(var(--destructive))" name={(t as any).expenseAmount || "Expense Amount"} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
-              No operating expense data available for this period
+              {(t as any).noOperatingExpenseData || "No operating expense data available for this period"}
             </div>
           )}
         </CardContent>
@@ -1482,18 +1481,17 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
 
       <Alert>
         <Scissors className="h-4 w-4" />
-        <AlertTitle>Cost Reduction Strategy</AlertTitle>
+        <AlertTitle>{(t as any).costReductionStrategy || "Cost Reduction Strategy"}</AlertTitle>
         <AlertDescription>
-          Reducing costs by just 10% on high-cost items can significantly improve margins without changing prices. 
-          Focus on ingredient substitutions, supplier negotiations, portion control, and operating expense optimization.
+          {(t as any).costReductionDesc || "Reducing costs by just 10% on high-cost items can significantly improve margins without changing prices. Focus on ingredient substitutions, supplier negotiations, portion control, and operating expense optimization."}
         </AlertDescription>
       </Alert>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Highest Cost Items</CardTitle>
-            <CardDescription>Items with largest cost per unit</CardDescription>
+            <CardTitle>{(t as any).highestCostItems || "Highest Cost Items"}</CardTitle>
+            <CardDescription>{(t as any).itemsLargestCost || "Items with largest cost per unit"}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -1502,7 +1500,7 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
                 <YAxis />
                 <Tooltip formatter={(value: number) => `${value.toFixed(2)} SAR`} />
-                <Bar dataKey="cost" fill="#ef4444" name="Cost/Unit" />
+                <Bar dataKey="cost" fill="#ef4444" name={(t as any).costPerUnit || "Cost/Unit"} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -1510,8 +1508,8 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
 
         <Card>
           <CardHeader>
-            <CardTitle>Cost Reduction Impact</CardTitle>
-            <CardDescription>Potential margin improvement from 10% cost reduction</CardDescription>
+            <CardTitle>{(t as any).costReductionImpact || "Cost Reduction Impact"}</CardTitle>
+            <CardDescription>{(t as any).potentialMarginImprovement || "Potential margin improvement from 10% cost reduction"}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {highCostItems.slice(0, 5).map((item) => {
@@ -1541,20 +1539,20 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
 
       <Card>
         <CardHeader>
-          <CardTitle>Priority Cost Reduction Targets</CardTitle>
-          <CardDescription>High-cost items with low margins</CardDescription>
+          <CardTitle>{(t as any).priorityCostReduction || "Priority Cost Reduction Targets"}</CardTitle>
+          <CardDescription>{(t as any).highCostLowMargin || "High-cost items with low margins"}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/50">
                 <tr>
-                  <th className="p-3 text-left font-medium">Item</th>
-                  <th className="p-3 text-right font-medium">Current Cost</th>
-                  <th className="p-3 text-right font-medium">Current Margin</th>
-                  <th className="p-3 text-right font-medium">Target Cost (-10%)</th>
-                  <th className="p-3 text-right font-medium">New Margin</th>
-                  <th className="p-3 text-right font-medium">Priority</th>
+                  <th className="p-3 text-left font-medium">{(t as any).item || "Item"}</th>
+                  <th className="p-3 text-right font-medium">{(t as any).currentCost || "Current Cost"}</th>
+                  <th className="p-3 text-right font-medium">{(t as any).currentMargin || "Current Margin"}</th>
+                  <th className="p-3 text-right font-medium">{(t as any).targetCost || "Target Cost (-10%)"}</th>
+                  <th className="p-3 text-right font-medium">{(t as any).newMargin || "New Margin"}</th>
+                  <th className="p-3 text-right font-medium">{(t as any).priority || "Priority"}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1598,46 +1596,46 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle>Supplier Negotiation</CardTitle>
+            <CardTitle>{(t as any).supplierNegotiation || "Supplier Negotiation"}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Review contracts with suppliers for high-cost items. Bulk purchasing and long-term contracts can reduce costs by 5-15%.
+              {(t as any).supplierNegotiationDesc || "Review contracts with suppliers for high-cost items. Bulk purchasing and long-term contracts can reduce costs by 5-15%."}
             </p>
             <div className="text-2xl font-bold text-green-600 dark:text-green-500">
               5-15%
             </div>
-            <p className="text-xs text-muted-foreground">Potential savings</p>
+            <p className="text-xs text-muted-foreground">{(t as any).potentialSavings || "Potential savings"}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Ingredient Substitution</CardTitle>
+            <CardTitle>{(t as any).ingredientSubstitution || "Ingredient Substitution"}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Explore alternative ingredients that maintain quality while reducing costs. Even small changes can improve margins.
+              {(t as any).ingredientSubstitutionDesc || "Explore alternative ingredients that maintain quality while reducing costs. Even small changes can improve margins."}
             </p>
             <div className="text-2xl font-bold text-green-600 dark:text-green-500">
               10-20%
             </div>
-            <p className="text-xs text-muted-foreground">Potential savings</p>
+            <p className="text-xs text-muted-foreground">{(t as any).potentialSavings || "Potential savings"}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Portion Control</CardTitle>
+            <CardTitle>{(t as any).portionControl || "Portion Control"}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Standardize portions to reduce waste and ensure consistent costs. Digital scales and training can help.
+              {(t as any).portionControlDesc || "Standardize portions to reduce waste and ensure consistent costs. Digital scales and training can help."}
             </p>
             <div className="text-2xl font-bold text-green-600 dark:text-green-500">
               5-10%
             </div>
-            <p className="text-xs text-muted-foreground">Potential savings</p>
+            <p className="text-xs text-muted-foreground">{(t as any).potentialSavings || "Potential savings"}</p>
           </CardContent>
         </Card>
       </div>

@@ -49,19 +49,16 @@ export default function Performance() {
   const [dateRange, setDateRange] = useState<string>("30");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // SECURITY: Redirect non-IT accounts immediately
   useEffect(() => {
     if (accountType && accountType !== 'it') {
       navigate('/');
     }
   }, [accountType, navigate]);
 
-  // SECURITY: Early return if not IT account (prevents flash of content)
   if (accountType !== 'it') {
     return null;
   }
 
-  // Fetch performance data with date range filter
   const { data: performanceData = [], isLoading } = useQuery<PerformanceData[]>({
     queryKey: ["/api/it/performance", dateRange],
     queryFn: async () => {
@@ -75,11 +72,10 @@ export default function Performance() {
       }
       return response.json();
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
     enabled: !!user && accountType === 'it',
   });
 
-  // Filter data based on search query (username, full name, or restaurant name)
   const filteredData = performanceData.filter((item) => {
     const query = searchQuery.toLowerCase();
     return (
@@ -94,11 +90,11 @@ export default function Performance() {
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return "No activity";
+    if (!dateString) return (t as any).noActivity || "No activity";
     try {
       return format(new Date(dateString), "MMM dd, yyyy HH:mm");
     } catch {
-      return "Invalid Date";
+      return (t as any).invalidDate || "Invalid Date";
     }
   };
 
@@ -108,52 +104,50 @@ export default function Performance() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex-1 min-w-[200px]">
           <h1 className={`${layout.text3Xl} font-bold mb-2`} data-testid="text-page-title">
-            Performance Tracking
+            {(t as any).performanceTracking || "Performance Tracking"}
           </h1>
-          <p className="text-muted-foreground">Monitor sales performance by user across all accounts</p>
+          <p className="text-muted-foreground">{(t as any).monitorSalesPerformance || "Monitor sales performance by user across all accounts"}</p>
         </div>
         <Badge variant="outline" className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4" />
-          {filteredData.length} {filteredData.length === 1 ? "User" : "Users"}
+          {filteredData.length} {filteredData.length === 1 ? ((t as any).user || "User") : ((t as any).users || "Users")}
         </Badge>
       </div>
 
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Filters</CardTitle>
+          <CardTitle className="text-lg">{t.filters}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
-            {/* Date Range Filter */}
             <div className="space-y-2">
               <label className="text-sm font-medium flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                Date Range
+                {(t as any).dateRange || "Date Range"}
               </label>
               <Select value={dateRange} onValueChange={setDateRange}>
                 <SelectTrigger data-testid="select-date-range">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="7">Last 7 days</SelectItem>
-                  <SelectItem value="30">Last 30 days</SelectItem>
-                  <SelectItem value="60">Last 60 days</SelectItem>
-                  <SelectItem value="90">Last 90 days</SelectItem>
-                  <SelectItem value="180">Last 6 months</SelectItem>
-                  <SelectItem value="365">Last year</SelectItem>
+                  <SelectItem value="7">{(t as any).last7Days || "Last 7 days"}</SelectItem>
+                  <SelectItem value="30">{(t as any).last30Days || "Last 30 days"}</SelectItem>
+                  <SelectItem value="60">{(t as any).last60Days || "Last 60 days"}</SelectItem>
+                  <SelectItem value="90">{(t as any).last90Days || "Last 90 days"}</SelectItem>
+                  <SelectItem value="180">{(t as any).last6Months || "Last 6 months"}</SelectItem>
+                  <SelectItem value="365">{(t as any).lastYear || "Last year"}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Search Filter */}
             <div className="space-y-2">
               <label className="text-sm font-medium flex items-center gap-2">
                 <Search className="h-4 w-4" />
-                Search
+                {t.search}
               </label>
               <Input
-                placeholder="Search by username, name, or restaurant..."
+                placeholder={(t as any).searchByUsernameNameRestaurant || "Search by username, name, or restaurant..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 data-testid="input-search"
@@ -166,9 +160,9 @@ export default function Performance() {
       {/* Performance Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Sales Performance by User</CardTitle>
+          <CardTitle>{(t as any).salesPerformanceByUser || "Sales Performance by User"}</CardTitle>
           <CardDescription>
-            Showing {filteredData.length} of {performanceData.length} active users with sales
+            {(t as any).showingOfActiveUsers || `Showing ${filteredData.length} of ${performanceData.length} active users with sales`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -181,11 +175,11 @@ export default function Performance() {
           ) : filteredData.length === 0 ? (
             <div className="text-center py-12" data-testid="empty-state">
               <TrendingUp className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Performance Data</h3>
+              <h3 className="text-lg font-semibold mb-2">{(t as any).noPerformanceData || "No Performance Data"}</h3>
               <p className="text-muted-foreground">
                 {searchQuery
-                  ? "No users match your search criteria"
-                  : "No users with sales data for the selected date range"}
+                  ? ((t as any).noUsersMatchSearch || "No users match your search criteria")
+                  : ((t as any).noUsersWithSalesData || "No users with sales data for the selected date range")}
               </p>
             </div>
           ) : (
@@ -193,15 +187,15 @@ export default function Performance() {
               <Table data-testid="table-performance">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Username</TableHead>
-                    <TableHead>Full Name</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Restaurant</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead className="text-right">Total Sales (SAR)</TableHead>
-                    <TableHead className="text-right">Total Orders</TableHead>
-                    <TableHead className="text-right">Avg Order (SAR)</TableHead>
-                    <TableHead>Last Activity</TableHead>
+                    <TableHead>{t.username}</TableHead>
+                    <TableHead>{t.fullName}</TableHead>
+                    <TableHead>{t.role}</TableHead>
+                    <TableHead>{t.restaurant}</TableHead>
+                    <TableHead>{(t as any).type || "Type"}</TableHead>
+                    <TableHead className="text-right">{t.totalSales} (SAR)</TableHead>
+                    <TableHead className="text-right">{t.totalOrders}</TableHead>
+                    <TableHead className="text-right">{(t as any).avgOrder || "Avg Order"} (SAR)</TableHead>
+                    <TableHead>{(t as any).lastActivity || "Last Activity"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -226,12 +220,12 @@ export default function Performance() {
                           {item.businessType === "factory" ? (
                             <>
                               <Factory className="h-3 w-3" />
-                              Factory
+                              {t.factory}
                             </>
                           ) : (
                             <>
                               <Building2 className="h-3 w-3" />
-                              Restaurant
+                              {t.restaurant}
                             </>
                           )}
                         </Badge>

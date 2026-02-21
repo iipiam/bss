@@ -37,8 +37,8 @@ export default function VatReports() {
       setSelectedMonth("");
       setSelectedYear("");
       toast({
-        title: "VAT Report Generated",
-        description: "Monthly VAT report has been successfully generated",
+        title: t.vatReportGenerated || "VAT Report Generated",
+        description: t.vatReportGeneratedDesc || "Monthly VAT report has been successfully generated",
       });
     },
     onError: (error) => {
@@ -53,8 +53,8 @@ export default function VatReports() {
   const handleGenerate = () => {
     if (!selectedMonth || !selectedYear) {
       toast({
-        title: "Invalid Input",
-        description: "Please select both month and year",
+        title: t.invalidInput || "Invalid Input",
+        description: t.invalidInputDesc || "Please select both month and year",
         variant: "destructive",
       });
       return;
@@ -83,8 +83,8 @@ export default function VatReports() {
       document.body.removeChild(a);
 
       toast({
-        title: "Report Downloaded",
-        description: `VAT Report ${report.serialNumber} has been downloaded`,
+        title: t.reportDownloaded || "Report Downloaded",
+        description: (t as any).vatReportDownloadedDesc || `VAT Report ${report.serialNumber} has been downloaded`,
       });
     } catch (error) {
       toast({
@@ -151,31 +151,31 @@ export default function VatReports() {
     <div className="p-8 space-y-6">
       <div className="flex justify-between items-start gap-4 flex-wrap">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Monthly VAT Reports</h1>
-          <p className="text-muted-foreground">Generate and download ZATCA-compliant monthly VAT reports for tax filing</p>
+          <h1 className="text-3xl font-bold mb-2">{(t as any).monthlyVatReports || "Monthly VAT Reports"}</h1>
+          <p className="text-muted-foreground">{(t as any).vatReportsSubtitle || "Generate and download ZATCA-compliant monthly VAT reports for tax filing"}</p>
         </div>
         
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button data-testid="button-generate-report">
               <Plus className="h-4 w-4 mr-2" />
-              Generate Report
+              {(t as any).generateReport || "Generate Report"}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Generate Monthly VAT Report</DialogTitle>
+              <DialogTitle>{(t as any).generateMonthlyVatReport || "Generate Monthly VAT Report"}</DialogTitle>
               <DialogDescription>
-                Select the month and year for which you want to generate a VAT report
+                {(t as any).selectMonthAndYearDesc || "Select the month and year for which you want to generate a VAT report"}
               </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="month">Month</Label>
+                <Label htmlFor="month">{(t as any).month || "Month"}</Label>
                 <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                   <SelectTrigger id="month" data-testid="select-month">
-                    <SelectValue placeholder="Select month" />
+                    <SelectValue placeholder={(t as any).selectMonth || "Select month"} />
                   </SelectTrigger>
                   <SelectContent>
                     {months.map((month) => (
@@ -188,10 +188,10 @@ export default function VatReports() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="year">Year</Label>
+                <Label htmlFor="year">{t.year || "Year"}</Label>
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
                   <SelectTrigger id="year" data-testid="select-year">
-                    <SelectValue placeholder="Select year" />
+                    <SelectValue placeholder={(t as any).selectYear || "Select year"} />
                   </SelectTrigger>
                   <SelectContent>
                     {years.map((year) => (
@@ -210,7 +210,7 @@ export default function VatReports() {
                 onClick={() => setDialogOpen(false)}
                 data-testid="button-cancel"
               >
-                Cancel
+                {t.cancel}
               </Button>
               <Button 
                 onClick={handleGenerate}
@@ -220,10 +220,10 @@ export default function VatReports() {
                 {generateMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generating...
+                    {t.generating || "Generating..."}
                   </>
                 ) : (
-                  "Generate Report"
+                  (t as any).generateReport || "Generate Report"
                 )}
               </Button>
             </DialogFooter>
@@ -250,44 +250,44 @@ export default function VatReports() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card data-testid="card-total-reports">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-              <CardTitle className="text-sm font-medium">Total Reports</CardTitle>
+              <CardTitle className="text-sm font-medium">{(t as any).totalReports || "Total Reports"}</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{summaryStats.totalReports}</div>
-              <p className="text-xs text-muted-foreground">Generated reports</p>
+              <p className="text-xs text-muted-foreground">{(t as any).generatedReports || "Generated reports"}</p>
             </CardContent>
           </Card>
 
           <Card data-testid="card-total-sales">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-              <CardTitle className="text-sm font-medium">Total Sales VAT</CardTitle>
+              <CardTitle className="text-sm font-medium">{(t as any).totalSalesVat || "Total Sales VAT"}</CardTitle>
               <TrendingUp className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold font-mono text-green-600 dark:text-green-500">
                 {summaryStats.totalSales.toFixed(2)} SAR
               </div>
-              <p className="text-xs text-muted-foreground">Output VAT collected</p>
+              <p className="text-xs text-muted-foreground">{(t as any).outputVatCollected || "Output VAT collected"}</p>
             </CardContent>
           </Card>
 
           <Card data-testid="card-total-purchases">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-              <CardTitle className="text-sm font-medium">Total Purchases VAT</CardTitle>
+              <CardTitle className="text-sm font-medium">{(t as any).totalPurchasesVat || "Total Purchases VAT"}</CardTitle>
               <TrendingDown className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold font-mono text-red-600 dark:text-red-500">
                 {summaryStats.totalPurchases.toFixed(2)} SAR
               </div>
-              <p className="text-xs text-muted-foreground">Input VAT paid</p>
+              <p className="text-xs text-muted-foreground">{(t as any).inputVatPaid || "Input VAT paid"}</p>
             </CardContent>
           </Card>
 
           <Card data-testid="card-net-vat">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-              <CardTitle className="text-sm font-medium">Net VAT Payable</CardTitle>
+              <CardTitle className="text-sm font-medium">{(t as any).netVatPayable || "Net VAT Payable"}</CardTitle>
               <Calculator className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -295,7 +295,7 @@ export default function VatReports() {
                 {summaryStats.totalVatPayable.toFixed(2)} SAR
               </div>
               <p className="text-xs text-muted-foreground">
-                {summaryStats.totalVatPayable >= 0 ? 'Amount owed to ZATCA' : 'Credit balance'}
+                {summaryStats.totalVatPayable >= 0 ? ((t as any).amountOwedToZatca || 'Amount owed to ZATCA') : ((t as any).creditBalance || 'Credit balance')}
               </p>
             </CardContent>
           </Card>
@@ -307,12 +307,12 @@ export default function VatReports() {
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <Receipt className="h-5 w-5 text-muted-foreground" />
-              <CardTitle>VAT Report History</CardTitle>
+              <CardTitle>{(t as any).vatReportHistory || "VAT Report History"}</CardTitle>
             </div>
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by serial number, month, or year..."
+                placeholder={(t as any).searchBySerialMonthYear || "Search by serial number, month, or year..."}
                 className="pl-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -331,13 +331,13 @@ export default function VatReports() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Serial Number</TableHead>
-                    <TableHead>Period</TableHead>
-                    <TableHead className="text-right">Sales VAT</TableHead>
-                    <TableHead className="text-right">Purchases VAT</TableHead>
-                    <TableHead className="text-right">Net Payable</TableHead>
-                    <TableHead>Generated</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{(t as any).serialNumber || "Serial Number"}</TableHead>
+                    <TableHead>{(t as any).period || "Period"}</TableHead>
+                    <TableHead className="text-right">{(t as any).salesVat || "Sales VAT"}</TableHead>
+                    <TableHead className="text-right">{(t as any).purchasesVat || "Purchases VAT"}</TableHead>
+                    <TableHead className="text-right">{(t as any).netPayable || "Net Payable"}</TableHead>
+                    <TableHead>{(t as any).generated || "Generated"}</TableHead>
+                    <TableHead className="text-right">{t.actions || "Actions"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -347,11 +347,11 @@ export default function VatReports() {
                         <div className="flex flex-col items-center gap-2">
                           <FileText className="h-12 w-12 text-muted-foreground opacity-50" />
                           <p className="text-muted-foreground">
-                            {searchQuery ? "No VAT reports found matching your search" : "No VAT reports yet"}
+                            {searchQuery ? ((t as any).noVatReportsMatchingSearch || "No VAT reports found matching your search") : ((t as any).noVatReportsYet || "No VAT reports yet")}
                           </p>
                           {!searchQuery && (
                             <p className="text-sm text-muted-foreground">
-                              Click 'Generate Report' to create your first VAT report
+                              {(t as any).clickGenerateReport || "Click 'Generate Report' to create your first VAT report"}
                             </p>
                           )}
                         </div>
@@ -401,7 +401,7 @@ export default function VatReports() {
                                 data-testid={`button-download-${report.id}`}
                               >
                                 <Download className="h-4 w-4 mr-1" />
-                                Download
+                                {t.download}
                               </Button>
                             </TableCell>
                           </TableRow>

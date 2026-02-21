@@ -177,14 +177,14 @@ export default function Contracts() {
       setOpen(false);
       form.reset();
       toast({
-        title: "Contract Created",
-        description: "Contract has been created successfully",
+        title: (t as any).contractCreated || "Contract Created",
+        description: (t as any).contractCreatedDesc || "Contract has been created successfully",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Create Contract",
-        description: error.message || "Could not create contract",
+        title: (t as any).failedToCreateContract || "Failed to Create Contract",
+        description: error.message || ((t as any).couldNotCreateContract || "Could not create contract"),
         variant: "destructive",
       });
     },
@@ -214,14 +214,14 @@ export default function Contracts() {
       setEditingContract(null);
       form.reset();
       toast({
-        title: "Contract Updated",
-        description: "Contract has been updated successfully",
+        title: (t as any).contractUpdated || "Contract Updated",
+        description: (t as any).contractUpdatedDesc || "Contract has been updated successfully",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Update Contract",
-        description: error.message || "Could not update contract",
+        title: (t as any).failedToUpdateContract || "Failed to Update Contract",
+        description: error.message || ((t as any).couldNotUpdateContract || "Could not update contract"),
         variant: "destructive",
       });
     },
@@ -235,14 +235,14 @@ export default function Contracts() {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
       setDeletingContract(null);
       toast({
-        title: "Contract Deleted",
-        description: "Contract has been deleted successfully",
+        title: (t as any).contractDeleted || "Contract Deleted",
+        description: (t as any).contractDeletedDesc || "Contract has been deleted successfully",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Delete Contract",
-        description: error.message || "Could not delete contract",
+        title: (t as any).failedToDeleteContract || "Failed to Delete Contract",
+        description: error.message || ((t as any).couldNotDeleteContract || "Could not delete contract"),
         variant: "destructive",
       });
     },
@@ -376,18 +376,18 @@ export default function Contracts() {
               onClick={handleAddNew}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Contract
+              {(t as any).addContract || "Add Contract"}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingContract ? "Edit Contract" : "Add Contract"}
+                {editingContract ? ((t as any).editContract || "Edit Contract") : ((t as any).addContract || "Add Contract")}
               </DialogTitle>
               <DialogDescription>
                 {editingContract
-                  ? "Update contract information"
-                  : "Add a new property contract"}
+                  ? ((t as any).updateContractInfo || "Update contract information")
+                  : ((t as any).addNewPropertyContract || "Add a new property contract")}
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -401,7 +401,7 @@ export default function Contracts() {
                     name="contractNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contract Number</FormLabel>
+                        <FormLabel>{(t as any).contractNumber || "Contract Number"}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-contract-number"
@@ -418,11 +418,11 @@ export default function Contracts() {
                     name="propertyName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Property Name</FormLabel>
+                        <FormLabel>{(t as any).propertyName || "Property Name"}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-property-name"
-                            placeholder="Enter property name"
+                            placeholder={(t as any).propertyNamePlaceholder || "Enter property name"}
                             {...field}
                           />
                         </FormControl>
@@ -437,11 +437,11 @@ export default function Contracts() {
                   name="clientName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Client Name</FormLabel>
+                      <FormLabel>{t.clientName}</FormLabel>
                       <FormControl>
                         <Input
                           data-testid="input-client-name"
-                          placeholder="Enter client name"
+                          placeholder={(t as any).enterClientName || "Enter client name"}
                           {...field}
                         />
                       </FormControl>
@@ -456,7 +456,7 @@ export default function Contracts() {
                     name="clientPhone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Client Phone</FormLabel>
+                        <FormLabel>{t.clientPhone}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-client-phone"
@@ -473,7 +473,7 @@ export default function Contracts() {
                     name="clientEmail"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Client Email</FormLabel>
+                        <FormLabel>{t.clientEmail}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-client-email"
@@ -494,11 +494,11 @@ export default function Contracts() {
                     name="contractType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contract Type</FormLabel>
+                        <FormLabel>{t.contractType}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-contract-type">
-                              <SelectValue placeholder="Select type" />
+                              <SelectValue placeholder={(t as any).selectType || "Select type"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -516,19 +516,19 @@ export default function Contracts() {
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Status</FormLabel>
+                        <FormLabel>{t.status}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-contract-status">
-                              <SelectValue placeholder="Select status" />
+                              <SelectValue placeholder={(t as any).selectStatus || "Select status"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                            <SelectItem value="expired">Expired</SelectItem>
+                            <SelectItem value="draft">{t.draft}</SelectItem>
+                            <SelectItem value="active">{t.active}</SelectItem>
+                            <SelectItem value="completed">{t.completed}</SelectItem>
+                            <SelectItem value="cancelled">{t.cancelled}</SelectItem>
+                            <SelectItem value="expired">{t.expired}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -543,7 +543,7 @@ export default function Contracts() {
                     name="startDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Start Date</FormLabel>
+                        <FormLabel>{t.startDate}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-start-date"
@@ -560,7 +560,7 @@ export default function Contracts() {
                     name="endDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>End Date</FormLabel>
+                        <FormLabel>{t.endDate}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-end-date"
@@ -580,7 +580,7 @@ export default function Contracts() {
                     name="value"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Value (SAR)</FormLabel>
+                        <FormLabel>{(t as any).valueSAR || "Value (SAR)"}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-contract-value"
@@ -598,7 +598,7 @@ export default function Contracts() {
                     name="commissionRate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Commission Rate (%)</FormLabel>
+                        <FormLabel>{(t as any).commissionRatePercent || "Commission Rate (%)"}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-commission-rate"
@@ -619,11 +619,11 @@ export default function Contracts() {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes</FormLabel>
+                      <FormLabel>{t.notes}</FormLabel>
                       <FormControl>
                         <Textarea
                           data-testid="input-contract-notes"
-                          placeholder="Additional notes..."
+                          placeholder={(t as any).additionalNotes || "Additional notes..."}
                           className="resize-none"
                           {...field}
                         />
@@ -650,7 +650,7 @@ export default function Contracts() {
                       updateContractMutation.isPending
                     }
                   >
-                    {editingContract ? "Save" : "Add"}
+                    {editingContract ? t.save : t.add}
                   </Button>
                 </div>
               </form>
@@ -677,7 +677,7 @@ export default function Contracts() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <FileText className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Total Contracts</p>
+              <p className="text-sm text-muted-foreground">{(t as any).totalContracts || "Total Contracts"}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-total-contracts">
               {contracts.length}
@@ -688,7 +688,7 @@ export default function Contracts() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Active</p>
+              <p className="text-sm text-muted-foreground">{t.active}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-active-contracts">
               {activeContracts.length}
@@ -699,7 +699,7 @@ export default function Contracts() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <Handshake className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Completed</p>
+              <p className="text-sm text-muted-foreground">{t.completed}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-completed-contracts">
               {completedContracts.length}
@@ -710,7 +710,7 @@ export default function Contracts() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Total Value</p>
+              <p className="text-sm text-muted-foreground">{(t as any).totalValue || "Total Value"}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-total-value">
               {totalValue.toLocaleString()} SAR
@@ -721,15 +721,15 @@ export default function Contracts() {
 
       {isLoading ? (
         <div className="flex items-center justify-center p-12">
-          <p>Loading...</p>
+          <p>{t.loading}</p>
         </div>
       ) : filteredContracts.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 text-center">
           <Handshake className="h-16 w-16 text-muted-foreground/30 mb-4" />
           <p className="text-muted-foreground">
             {searchQuery
-              ? "No contracts found matching your search"
-              : "No contracts yet. Add your first contract to get started."}
+              ? ((t as any).noContractsFoundSearch || "No contracts found matching your search")
+              : ((t as any).noContractsYet || "No contracts yet. Add your first contract to get started.")}
           </p>
         </div>
       ) : (
@@ -776,7 +776,7 @@ export default function Contracts() {
                     {getTypeLabel(contract.contractType)}
                   </Badge>
                   <Badge variant={getStatusBadgeVariant(contract.status)}>
-                    {contract.status.charAt(0).toUpperCase() + contract.status.slice(1)}
+                    {contract.status === "active" ? t.active : contract.status === "draft" ? t.draft : contract.status === "completed" ? t.completed : contract.status === "cancelled" ? t.cancelled : contract.status === "expired" ? t.expired : contract.status}
                   </Badge>
                 </div>
 
@@ -816,7 +816,7 @@ export default function Contracts() {
                   </div>
                   {contract.commissionRate && (
                     <span className="text-xs text-muted-foreground">
-                      {contract.commissionRate}% commission
+                      {contract.commissionRate}% {t.commission}
                     </span>
                   )}
                 </div>
@@ -841,10 +841,9 @@ export default function Contracts() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+            <AlertDialogTitle>{t.confirmDelete}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete contract "{deletingContract?.contractNumber}". This
-              action cannot be undone.
+              {(t as any).deleteContractConfirm || `This will permanently delete contract "${deletingContract?.contractNumber}".`} {t.actionCannotBeUndone}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

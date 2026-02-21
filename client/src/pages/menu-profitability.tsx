@@ -65,8 +65,8 @@ export default function MenuProfitability() {
   const handleRefresh = () => {
     refetch();
     toast({
-      title: "Refreshing data",
-      description: "Fetching latest profitability analysis...",
+      title: (t as any).refreshingData || "Refreshing data",
+      description: (t as any).fetchingLatestAnalysis || "Fetching latest profitability analysis...",
     });
   };
 
@@ -74,10 +74,10 @@ export default function MenuProfitability() {
     if (!data) return;
     
     const csvContent = [
-      ["Menu Item", "Category", "Selling Price", "Cost", "Profit Margin", "Margin %", "Status", "Cost Source", "Linked To"].join(","),
+      [(t as any).menuItemLabel || "Menu Item", t.category, (t as any).sellingPrice || "Selling Price", (t as any).cost || "Cost", (t as any).profitMarginLabel || "Profit Margin", (t as any).marginPercent || "Margin %", t.status, (t as any).costSource || "Cost Source", (t as any).linkedTo || "Linked To"].join(","),
       ...data.allItems.map(item => [
         `"${item.menuItemName}"`,
-        `"${item.category || 'Uncategorized'}"`,
+        `"${item.category || ((t as any).uncategorized || 'Uncategorized')}"`,
         item.sellingPrice.toFixed(2),
         item.actualCost.toFixed(2),
         item.profitMargin.toFixed(2),
@@ -97,8 +97,8 @@ export default function MenuProfitability() {
     URL.revokeObjectURL(url);
     
     toast({
-      title: "Export Complete",
-      description: "Menu profitability report downloaded as CSV",
+      title: (t as any).exportComplete || "Export Complete",
+      description: (t as any).menuProfitabilityReportCSV || "Menu profitability report downloaded as CSV",
     });
   };
 
@@ -106,35 +106,35 @@ export default function MenuProfitability() {
     if (!data) return;
     
     const columns = [
-      { header: "Menu Item", accessor: "menuItemName", width: 50 },
-      { header: "Category", accessor: (row: MenuProfitabilityItem) => row.category || "Uncategorized", width: 35 },
-      { header: "Price (SAR)", accessor: (row: MenuProfitabilityItem) => row.sellingPrice.toFixed(2), width: 25 },
-      { header: "Cost (SAR)", accessor: (row: MenuProfitabilityItem) => row.actualCost.toFixed(2), width: 25 },
-      { header: "Profit (SAR)", accessor: (row: MenuProfitabilityItem) => row.profitMargin.toFixed(2), width: 25 },
-      { header: "Margin %", accessor: (row: MenuProfitabilityItem) => row.profitMarginPercent.toFixed(1) + "%", width: 20 },
-      { header: "Status", accessor: "status", width: 25 },
-      { header: "Cost Source", accessor: "costSource", width: 25 },
+      { header: (t as any).menuItemLabel || "Menu Item", accessor: "menuItemName", width: 50 },
+      { header: t.category, accessor: (row: MenuProfitabilityItem) => row.category || ((t as any).uncategorized || "Uncategorized"), width: 35 },
+      { header: `${t.price} (SAR)`, accessor: (row: MenuProfitabilityItem) => row.sellingPrice.toFixed(2), width: 25 },
+      { header: `${(t as any).cost || "Cost"} (SAR)`, accessor: (row: MenuProfitabilityItem) => row.actualCost.toFixed(2), width: 25 },
+      { header: `${t.profit} (SAR)`, accessor: (row: MenuProfitabilityItem) => row.profitMargin.toFixed(2), width: 25 },
+      { header: (t as any).marginPercent || "Margin %", accessor: (row: MenuProfitabilityItem) => row.profitMarginPercent.toFixed(1) + "%", width: 20 },
+      { header: t.status, accessor: "status", width: 25 },
+      { header: (t as any).costSource || "Cost Source", accessor: "costSource", width: 25 },
     ];
     
     const result = exportToPDF(
-      "Menu Profitability Analysis",
+      (t as any).menuProfitabilityAnalysis || "Menu Profitability Analysis",
       data.allItems,
       columns,
       {
-        subtitle: `Summary: ${data.summary.lossItems} Loss Items | ${data.summary.lowMarginItems} Low Margin | ${data.summary.okItems} Profitable | Total Loss/Unit: SAR ${data.summary.totalPotentialLossPerUnit.toFixed(2)}`,
+        subtitle: `${(t as any).summaryLabel || "Summary"}: ${data.summary.lossItems} ${(t as any).lossItemsLabel || "Loss Items"} | ${data.summary.lowMarginItems} ${(t as any).lowMarginLabel || "Low Margin"} | ${data.summary.okItems} ${(t as any).profitableLabel || "Profitable"} | ${(t as any).totalLossPerUnit || "Total Loss/Unit"}: SAR ${data.summary.totalPotentialLossPerUnit.toFixed(2)}`,
         orientation: "landscape"
       }
     );
     
     if (result.success) {
       toast({
-        title: "Export Complete",
-        description: "Menu profitability report downloaded as PDF",
+        title: (t as any).exportComplete || "Export Complete",
+        description: (t as any).menuProfitabilityReportPDF || "Menu profitability report downloaded as PDF",
       });
     } else {
       toast({
-        title: "Export Failed",
-        description: result.error || "Failed to generate PDF",
+        title: (t as any).exportFailed || "Export Failed",
+        description: result.error || ((t as any).failedToGeneratePDF || "Failed to generate PDF"),
         variant: "destructive",
       });
     }
@@ -162,9 +162,9 @@ export default function MenuProfitability() {
       <div className="p-6">
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Error Loading Data</AlertTitle>
+          <AlertTitle>{(t as any).errorLoadingData || "Error Loading Data"}</AlertTitle>
           <AlertDescription>
-            Failed to load menu profitability data. Please try again.
+            {(t as any).failedToLoadMenuProfitability || "Failed to load menu profitability data. Please try again."}
           </AlertDescription>
         </Alert>
       </div>
@@ -172,9 +172,9 @@ export default function MenuProfitability() {
   }
 
   const pieData = [
-    { name: "Loss Items", value: data.summary.lossItems, color: COLORS.loss },
-    { name: "Low Margin", value: data.summary.lowMarginItems, color: COLORS.lowMargin },
-    { name: "Profitable", value: data.summary.okItems, color: COLORS.ok },
+    { name: (t as any).lossItemsLabel || "Loss Items", value: data.summary.lossItems, color: COLORS.loss },
+    { name: (t as any).lowMarginLabel || "Low Margin", value: data.summary.lowMarginItems, color: COLORS.lowMargin },
+    { name: (t as any).profitableLabel || "Profitable", value: data.summary.okItems, color: COLORS.ok },
   ].filter(item => item.value > 0);
 
   const topLossItems = data.lossLeaders.slice(0, 10).map(item => ({
@@ -187,21 +187,21 @@ export default function MenuProfitability() {
     <div className="p-6 space-y-6">
       <div className="flex flex-wrap justify-between items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold" data-testid="text-page-title">Menu Profitability Analysis</h1>
-          <p className="text-muted-foreground">Identify which menu items are losing money</p>
+          <h1 className="text-2xl font-bold" data-testid="text-page-title">{(t as any).menuProfitabilityAnalysis || "Menu Profitability Analysis"}</h1>
+          <p className="text-muted-foreground">{(t as any).identifyLosingItems || "Identify which menu items are losing money"}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleRefresh} data-testid="button-refresh">
             <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+            {t.refresh}
           </Button>
           <Button variant="outline" onClick={handleExportPDF} data-testid="button-export-pdf">
             <FileText className="h-4 w-4 mr-2" />
-            Export PDF
+            {(t as any).exportPDF || "Export PDF"}
           </Button>
           <Button onClick={handleExport} data-testid="button-export">
             <Download className="h-4 w-4 mr-2" />
-            Export CSV
+            {(t as any).exportCSV || "Export CSV"}
           </Button>
         </div>
       </div>
@@ -209,10 +209,9 @@ export default function MenuProfitability() {
       {data.summary.lossItems > 0 && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Critical: {data.summary.lossItems} items selling below cost!</AlertTitle>
+          <AlertTitle>{(t as any).criticalItemsBelowCost || `Critical: ${data.summary.lossItems} items selling below cost!`}</AlertTitle>
           <AlertDescription>
-            You're losing SAR {data.summary.totalPotentialLossPerUnit.toFixed(2)} per unit on loss-making items.
-            Review these items immediately and either increase prices or reduce costs.
+            {(t as any).losingPerUnit || `You're losing SAR ${data.summary.totalPotentialLossPerUnit.toFixed(2)} per unit on loss-making items. Review these items immediately and either increase prices or reduce costs.`}
           </AlertDescription>
         </Alert>
       )}
@@ -220,45 +219,45 @@ export default function MenuProfitability() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">Total Menu Items</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).totalMenuItems || "Total Menu Items"}</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold" data-testid="text-total-items">{data.summary.totalMenuItems}</div>
-            <p className="text-xs text-muted-foreground">Analyzed for profitability</p>
+            <p className="text-xs text-muted-foreground">{(t as any).analyzedForProfitability || "Analyzed for profitability"}</p>
           </CardContent>
         </Card>
 
         <Card className="border-red-200 dark:border-red-900">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium text-red-600">Loss Items</CardTitle>
+            <CardTitle className="text-sm font-medium text-red-600">{(t as any).lossItemsLabel || "Loss Items"}</CardTitle>
             <TrendingDown className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600" data-testid="text-loss-items">{data.summary.lossItems}</div>
-            <p className="text-xs text-muted-foreground">Selling below cost</p>
+            <p className="text-xs text-muted-foreground">{(t as any).sellingBelowCost || "Selling below cost"}</p>
           </CardContent>
         </Card>
 
         <Card className="border-yellow-200 dark:border-yellow-900">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium text-yellow-600">Low Margin</CardTitle>
+            <CardTitle className="text-sm font-medium text-yellow-600">{(t as any).lowMarginLabel || "Low Margin"}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600" data-testid="text-low-margin-items">{data.summary.lowMarginItems}</div>
-            <p className="text-xs text-muted-foreground">Less than 20% margin</p>
+            <p className="text-xs text-muted-foreground">{(t as any).lessThan20Margin || "Less than 20% margin"}</p>
           </CardContent>
         </Card>
 
         <Card className="border-green-200 dark:border-green-900">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium text-green-600">Profitable</CardTitle>
+            <CardTitle className="text-sm font-medium text-green-600">{(t as any).profitableLabel || "Profitable"}</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600" data-testid="text-profitable-items">{data.summary.okItems}</div>
-            <p className="text-xs text-muted-foreground">Healthy margin (20%+)</p>
+            <p className="text-xs text-muted-foreground">{(t as any).healthyMargin || "Healthy margin (20%+)"}</p>
           </CardContent>
         </Card>
       </div>
@@ -266,28 +265,27 @@ export default function MenuProfitability() {
       {data.summary.unlinkedItems > 0 && (
         <Alert>
           <HelpCircle className="h-4 w-4" />
-          <AlertTitle>{data.summary.unlinkedItems} items without cost data</AlertTitle>
+          <AlertTitle>{(t as any).itemsWithoutCostData || `${data.summary.unlinkedItems} items without cost data`}</AlertTitle>
           <AlertDescription>
-            These menu items are not linked to recipes or inventory, so their costs are unknown (defaulting to 0).
-            Link them to recipes or inventory items for accurate profitability tracking.
+            {(t as any).unlinkedItemsDescription || "These menu items are not linked to recipes or inventory, so their costs are unknown (defaulting to 0). Link them to recipes or inventory items for accurate profitability tracking."}
           </AlertDescription>
         </Alert>
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
+          <TabsTrigger value="overview" data-testid="tab-overview">{(t as any).overview || "Overview"}</TabsTrigger>
           <TabsTrigger value="loss" data-testid="tab-loss">
-            Loss Items ({data.summary.lossItems})
+            {(t as any).lossItemsLabel || "Loss Items"} ({data.summary.lossItems})
           </TabsTrigger>
           <TabsTrigger value="lowmargin" data-testid="tab-lowmargin">
-            Low Margin ({data.summary.lowMarginItems})
+            {(t as any).lowMarginLabel || "Low Margin"} ({data.summary.lowMarginItems})
           </TabsTrigger>
           <TabsTrigger value="profitable" data-testid="tab-profitable">
-            Profitable ({data.summary.okItems})
+            {(t as any).profitableLabel || "Profitable"} ({data.summary.okItems})
           </TabsTrigger>
           <TabsTrigger value="unlinked" data-testid="tab-unlinked">
-            Unlinked ({data.summary.unlinkedItems})
+            {(t as any).unlinkedLabel || "Unlinked"} ({data.summary.unlinkedItems})
           </TabsTrigger>
         </TabsList>
 
@@ -295,8 +293,8 @@ export default function MenuProfitability() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Item Status Distribution</CardTitle>
-                <CardDescription>Breakdown of menu items by profitability status</CardDescription>
+                <CardTitle>{(t as any).itemStatusDistribution || "Item Status Distribution"}</CardTitle>
+                <CardDescription>{(t as any).breakdownByProfitability || "Breakdown of menu items by profitability status"}</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -324,8 +322,8 @@ export default function MenuProfitability() {
             {topLossItems.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-red-600">Top Loss-Making Items</CardTitle>
-                  <CardDescription>Items with the highest per-unit losses</CardDescription>
+                  <CardTitle className="text-red-600">{(t as any).topLossMakingItems || "Top Loss-Making Items"}</CardTitle>
+                  <CardDescription>{(t as any).highestPerUnitLosses || "Items with the highest per-unit losses"}</CardDescription>
                 </CardHeader>
                 <CardContent className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
@@ -334,10 +332,10 @@ export default function MenuProfitability() {
                       <XAxis type="number" />
                       <YAxis type="category" dataKey="name" width={100} />
                       <Tooltip 
-                        formatter={(value: number) => [`SAR ${value.toFixed(2)}`, "Loss per unit"]}
+                        formatter={(value: number) => [`SAR ${value.toFixed(2)}`, (t as any).lossPerUnit || "Loss per unit"]}
                         labelFormatter={(label) => topLossItems.find(i => i.name === label)?.fullName || label}
                       />
-                      <Bar dataKey="loss" fill={COLORS.loss} name="Loss per Unit" />
+                      <Bar dataKey="loss" fill={COLORS.loss} name={(t as any).lossPerUnit || "Loss per Unit"} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -349,13 +347,13 @@ export default function MenuProfitability() {
         <TabsContent value="loss">
           <Card>
             <CardHeader>
-              <CardTitle className="text-red-600">Loss-Making Items</CardTitle>
+              <CardTitle className="text-red-600">{(t as any).lossMakingItems || "Loss-Making Items"}</CardTitle>
               <CardDescription>
-                These items are being sold BELOW cost. Each sale results in a loss.
+                {(t as any).lossMakingItemsDesc || "These items are being sold BELOW cost. Each sale results in a loss."}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ItemsTable items={data.lossLeaders} />
+              <ItemsTable items={data.lossLeaders} t={t} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -363,13 +361,13 @@ export default function MenuProfitability() {
         <TabsContent value="lowmargin">
           <Card>
             <CardHeader>
-              <CardTitle className="text-yellow-600">Low Margin Items</CardTitle>
+              <CardTitle className="text-yellow-600">{(t as any).lowMarginItems || "Low Margin Items"}</CardTitle>
               <CardDescription>
-                These items have less than 20% profit margin. Consider price increases.
+                {(t as any).lowMarginItemsDesc || "These items have less than 20% profit margin. Consider price increases."}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ItemsTable items={data.lowMargin} />
+              <ItemsTable items={data.lowMargin} t={t} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -377,13 +375,13 @@ export default function MenuProfitability() {
         <TabsContent value="profitable">
           <Card>
             <CardHeader>
-              <CardTitle className="text-green-600">Profitable Items</CardTitle>
+              <CardTitle className="text-green-600">{(t as any).profitableItems || "Profitable Items"}</CardTitle>
               <CardDescription>
-                These items have healthy profit margins (20% or more).
+                {(t as any).profitableItemsDesc || "These items have healthy profit margins (20% or more)."}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ItemsTable items={data.profitable} />
+              <ItemsTable items={data.profitable} t={t} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -391,13 +389,13 @@ export default function MenuProfitability() {
         <TabsContent value="unlinked">
           <Card>
             <CardHeader>
-              <CardTitle>Unlinked Items</CardTitle>
+              <CardTitle>{(t as any).unlinkedItems || "Unlinked Items"}</CardTitle>
               <CardDescription>
-                These items don't have recipes or inventory linked. Their cost is unknown.
+                {(t as any).unlinkedItemsDesc || "These items don't have recipes or inventory linked. Their cost is unknown."}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ItemsTable items={data.unlinked} showLinkWarning />
+              <ItemsTable items={data.unlinked} showLinkWarning t={t} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -406,11 +404,11 @@ export default function MenuProfitability() {
   );
 }
 
-function ItemsTable({ items, showLinkWarning = false }: { items: MenuProfitabilityItem[], showLinkWarning?: boolean }) {
+function ItemsTable({ items, showLinkWarning = false, t }: { items: MenuProfitabilityItem[], showLinkWarning?: boolean, t: any }) {
   if (items.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        No items in this category
+        {(t as any).noItemsInCategory || "No items in this category"}
       </div>
     );
   }
@@ -420,31 +418,31 @@ function ItemsTable({ items, showLinkWarning = false }: { items: MenuProfitabili
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Menu Item</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead className="text-right">Selling Price</TableHead>
-            <TableHead className="text-right">Cost</TableHead>
-            <TableHead className="text-right">Profit/Loss</TableHead>
-            <TableHead className="text-right">Margin %</TableHead>
-            <TableHead>Cost Source</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>{(t as any).menuItemLabel || "Menu Item"}</TableHead>
+            <TableHead>{t.category}</TableHead>
+            <TableHead className="text-right">{(t as any).sellingPrice || "Selling Price"}</TableHead>
+            <TableHead className="text-right">{(t as any).cost || "Cost"}</TableHead>
+            <TableHead className="text-right">{(t as any).profitLoss || "Profit/Loss"}</TableHead>
+            <TableHead className="text-right">{(t as any).marginPercent || "Margin %"}</TableHead>
+            <TableHead>{(t as any).costSource || "Cost Source"}</TableHead>
+            <TableHead>{t.status}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {items.map((item) => (
             <TableRow key={item.menuItemId} data-testid={`row-menu-item-${item.menuItemId}`}>
               <TableCell className="font-medium">{item.menuItemName}</TableCell>
-              <TableCell>{item.category || "Uncategorized"}</TableCell>
+              <TableCell>{item.category || ((t as any).uncategorized || "Uncategorized")}</TableCell>
               <TableCell className="text-right">SAR {item.sellingPrice.toFixed(2)}</TableCell>
               <TableCell className="text-right">
                 {item.costSource === "none" ? (
-                  <span className="text-muted-foreground">Unknown</span>
+                  <span className="text-muted-foreground">{(t as any).unknown || "Unknown"}</span>
                 ) : (
                   <>SAR {item.actualCost.toFixed(2)}</>
                 )}
                 {item.portionSize !== 1 && (
                   <span className="text-xs text-muted-foreground ml-1">
-                    (×{item.portionSize})
+                    (x{item.portionSize})
                   </span>
                 )}
               </TableCell>
@@ -457,29 +455,29 @@ function ItemsTable({ items, showLinkWarning = false }: { items: MenuProfitabili
               <TableCell>
                 {item.costSource === "recipe" && (
                   <Badge variant="outline" className="text-blue-600 border-blue-300">
-                    Recipe: {item.linkedTo.length > 20 ? item.linkedTo.substring(0, 20) + "..." : item.linkedTo}
+                    {(t as any).recipeLabel || "Recipe"}: {item.linkedTo.length > 20 ? item.linkedTo.substring(0, 20) + "..." : item.linkedTo}
                   </Badge>
                 )}
                 {item.costSource === "inventory" && (
                   <Badge variant="outline" className="text-purple-600 border-purple-300">
-                    Inventory: {item.linkedTo.length > 15 ? item.linkedTo.substring(0, 15) + "..." : item.linkedTo}
+                    {t.inventory}: {item.linkedTo.length > 15 ? item.linkedTo.substring(0, 15) + "..." : item.linkedTo}
                   </Badge>
                 )}
                 {item.costSource === "none" && (
                   <Badge variant="outline" className="text-gray-500 border-gray-300">
-                    {showLinkWarning ? "⚠️ Not Linked" : "Not Linked"}
+                    {(t as any).notLinked || "Not Linked"}
                   </Badge>
                 )}
               </TableCell>
               <TableCell>
                 {item.status === "LOSS" && (
-                  <Badge variant="destructive">LOSS</Badge>
+                  <Badge variant="destructive">{(t as any).loss || "LOSS"}</Badge>
                 )}
                 {item.status === "LOW_MARGIN" && (
-                  <Badge className="bg-yellow-500 hover:bg-yellow-600">LOW MARGIN</Badge>
+                  <Badge className="bg-yellow-500 hover:bg-yellow-600">{(t as any).lowMarginBadge || "LOW MARGIN"}</Badge>
                 )}
                 {item.status === "OK" && (
-                  <Badge className="bg-green-500 hover:bg-green-600">PROFITABLE</Badge>
+                  <Badge className="bg-green-500 hover:bg-green-600">{(t as any).profitableBadge || "PROFITABLE"}</Badge>
                 )}
               </TableCell>
             </TableRow>

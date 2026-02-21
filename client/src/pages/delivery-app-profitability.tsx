@@ -24,9 +24,9 @@ export default function DeliveryAppProfitability() {
     try {
       await queryClient.invalidateQueries({ queryKey: ["/api/delivery-apps/analytics/profitability"] });
       await queryClient.invalidateQueries({ queryKey: ["/api/delivery-profitability"] });
-      toast({ title: "Profitability data synced successfully" });
+      toast({ title: (t as any).profitabilityDataSynced || "Profitability data synced successfully" });
     } catch (error) {
-      toast({ title: "Failed to sync profitability data", variant: "destructive" });
+      toast({ title: (t as any).failedToSyncProfitability || "Failed to sync profitability data", variant: "destructive" });
     } finally {
       setIsSyncing(false);
     }
@@ -137,9 +137,9 @@ export default function DeliveryAppProfitability() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Delivery App Profitability Analysis</h1>
+          <h1 className="text-3xl font-bold">{(t as any).deliveryAppProfitabilityAnalysis || "Delivery App Profitability Analysis"}</h1>
           <p className="text-muted-foreground mt-1">
-            Compare delivery app performance, costs, and profitability
+            {(t as any).compareDeliveryAppPerformance || "Compare delivery app performance, costs, and profitability"}
           </p>
         </div>
         <div className="flex gap-2">
@@ -151,7 +151,7 @@ export default function DeliveryAppProfitability() {
             data-testid="button-sync-profitability"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-            {isSyncing ? 'Syncing...' : 'Sync'}
+            {isSyncing ? ((t as any).syncing || 'Syncing...') : ((t as any).sync || 'Sync')}
           </Button>
           <Button 
             onClick={handleExportPDF} 
@@ -160,7 +160,7 @@ export default function DeliveryAppProfitability() {
             data-testid="button-export-pdf"
           >
             <Download className="h-4 w-4 mr-2" />
-            Export PDF
+            {(t as any).exportPdf || "Export PDF"}
           </Button>
           <Button 
             onClick={handleExportExcel} 
@@ -169,7 +169,7 @@ export default function DeliveryAppProfitability() {
             data-testid="button-export-excel"
           >
             <FileSpreadsheet className="h-4 w-4 mr-2" />
-            Export Excel
+            {(t as any).exportExcel || "Export Excel"}
           </Button>
         </div>
       </div>
@@ -178,33 +178,33 @@ export default function DeliveryAppProfitability() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).totalOrders || "Total Orders"}</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary.totalOrders || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Across all delivery apps
+              {(t as any).acrossAllDeliveryApps || "Across all delivery apps"}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Gross Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).grossRevenue || "Gross Revenue"}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary.totalGrossRevenue?.toFixed(2) || "0.00"} SAR</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Total sales
+              {t.totalSales}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Total Costs</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).totalCosts || "Total Costs"}</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -212,14 +212,14 @@ export default function DeliveryAppProfitability() {
               {(summary.totalCommissionCost + summary.totalBankingFeesCost + summary.totalSubsidy + summary.totalVat + summary.totalPosFees + summary.totalItemCosts || 0).toFixed(2)} SAR
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              All Costs + VAT
+              {(t as any).allCostsPlusVat || "All Costs + VAT"}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
+            <CardTitle className="text-sm font-medium">{(t as any).netProfit || "Net Profit"}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -227,7 +227,7 @@ export default function DeliveryAppProfitability() {
               {summary.profit?.toFixed(2) || "0.00"} SAR
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {summary.profitMargin?.toFixed(1) || "0.0"}% margin
+              {summary.profitMargin?.toFixed(1) || "0.0"}% {(t as any).margin || "margin"}
             </p>
           </CardContent>
         </Card>
@@ -236,42 +236,42 @@ export default function DeliveryAppProfitability() {
       {/* Cost Breakdown Summary */}
       <Card>
         <CardHeader>
-          <CardTitle>Cost Breakdown</CardTitle>
+          <CardTitle>{(t as any).costBreakdown || "Cost Breakdown"}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Commission</p>
+              <p className="text-sm text-muted-foreground">{(t as any).commission || "Commission"}</p>
               <p className="text-lg font-semibold text-red-600 dark:text-red-400">
                 -{summary.totalCommissionCost?.toFixed(2) || "0.00"} SAR
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Banking Fees</p>
+              <p className="text-sm text-muted-foreground">{(t as any).bankingFees || "Banking Fees"}</p>
               <p className="text-lg font-semibold text-red-600 dark:text-red-400">
                 -{summary.totalBankingFeesCost?.toFixed(2) || "0.00"} SAR
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Subsidy</p>
+              <p className="text-sm text-muted-foreground">{(t as any).subsidy || "Subsidy"}</p>
               <p className="text-lg font-semibold text-red-600 dark:text-red-400">
                 -{summary.totalSubsidy?.toFixed(2) || "0.00"} SAR
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">VAT (15%)</p>
+              <p className="text-sm text-muted-foreground">{(t as any).vatFifteenPercent || "VAT (15%)"}</p>
               <p className="text-lg font-semibold text-red-600 dark:text-red-400">
                 -{summary.totalVat?.toFixed(2) || "0.00"} SAR
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">POS Fees</p>
+              <p className="text-sm text-muted-foreground">{(t as any).posFees || "POS Fees"}</p>
               <p className="text-lg font-semibold text-red-600 dark:text-red-400">
                 -{summary.totalPosFees?.toFixed(2) || "0.00"} SAR
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Item Costs (COGS)</p>
+              <p className="text-sm text-muted-foreground">{(t as any).itemCostsCogs || "Item Costs (COGS)"}</p>
               <p className="text-lg font-semibold text-red-600 dark:text-red-400">
                 -{summary.totalItemCosts?.toFixed(2) || "0.00"} SAR
               </p>
@@ -285,7 +285,7 @@ export default function DeliveryAppProfitability() {
         {/* Revenue vs Costs Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Revenue vs Costs by App</CardTitle>
+            <CardTitle>{(t as any).revenueCostsByApp || "Revenue vs Costs by App"}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -295,10 +295,10 @@ export default function DeliveryAppProfitability() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="revenue" fill="#10b981" name="Revenue" />
-                <Bar dataKey="costs" fill="#ef4444" name="Fees" />
-                <Bar dataKey="itemCosts" fill="#f59e0b" name="Item Costs" />
-                <Bar dataKey="profit" fill="#8b5cf6" name="Profit" />
+                <Bar dataKey="revenue" fill="#10b981" name={(t as any).revenue || "Revenue"} />
+                <Bar dataKey="costs" fill="#ef4444" name={(t as any).fees || "Fees"} />
+                <Bar dataKey="itemCosts" fill="#f59e0b" name={(t as any).itemCostsLabel || "Item Costs"} />
+                <Bar dataKey="profit" fill="#8b5cf6" name={(t as any).profit || "Profit"} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -307,7 +307,7 @@ export default function DeliveryAppProfitability() {
         {/* Profit Distribution Pie Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Profit Distribution</CardTitle>
+            <CardTitle>{(t as any).profitDistribution || "Profit Distribution"}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -336,23 +336,23 @@ export default function DeliveryAppProfitability() {
       {/* Detailed Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Detailed Breakdown by Delivery App</CardTitle>
+          <CardTitle>{(t as any).detailedBreakdownByApp || "Detailed Breakdown by Delivery App"}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="text-sm font-medium text-left p-2">App Name</th>
-                  <th className="text-sm font-medium text-right p-2">Orders</th>
-                  <th className="text-sm font-medium text-right p-2">Revenue</th>
-                  <th className="text-sm font-medium text-right p-2">Commission</th>
-                  <th className="text-sm font-medium text-right p-2">Banking</th>
-                  <th className="text-sm font-medium text-right p-2">Subsidy</th>
-                  <th className="text-sm font-medium text-right p-2">VAT</th>
-                  <th className="text-sm font-medium text-right p-2">Item Cost</th>
-                  <th className="text-sm font-medium text-right p-2">Profit</th>
-                  <th className="text-sm font-medium text-right p-2">Margin %</th>
+                  <th className="text-sm font-medium text-left p-2">{(t as any).appName || "App Name"}</th>
+                  <th className="text-sm font-medium text-right p-2">{(t as any).orders || "Orders"}</th>
+                  <th className="text-sm font-medium text-right p-2">{(t as any).revenue || "Revenue"}</th>
+                  <th className="text-sm font-medium text-right p-2">{(t as any).commission || "Commission"}</th>
+                  <th className="text-sm font-medium text-right p-2">{(t as any).banking || "Banking"}</th>
+                  <th className="text-sm font-medium text-right p-2">{(t as any).subsidy || "Subsidy"}</th>
+                  <th className="text-sm font-medium text-right p-2">{(t as any).vat || "VAT"}</th>
+                  <th className="text-sm font-medium text-right p-2">{(t as any).itemCostLabel || "Item Cost"}</th>
+                  <th className="text-sm font-medium text-right p-2">{(t as any).profit || "Profit"}</th>
+                  <th className="text-sm font-medium text-right p-2">{(t as any).marginPercent || "Margin %"}</th>
                 </tr>
               </thead>
               <tbody>

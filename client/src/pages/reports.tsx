@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const salesByBranch = [
   { branch: "Main - Riyadh", sales: 45200 },
@@ -36,60 +37,62 @@ const inventoryByCategory = [
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
 export default function Reports() {
+  const { t } = useLanguage();
+
   return (
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Reports</h1>
-          <p className="text-muted-foreground">Comprehensive business reports and analytics</p>
+          <h1 className="text-3xl font-bold mb-2">{(t as any).reports || "Reports"}</h1>
+          <p className="text-muted-foreground">{(t as any).comprehensiveReports || "Comprehensive business reports and analytics"}</p>
         </div>
         <Button data-testid="button-export-reports">
           <Download className="h-4 w-4 mr-2" />
-          Export All Reports
+          {(t as any).exportAllReports || "Export All Reports"}
         </Button>
       </div>
 
       <Tabs defaultValue="sales" className="space-y-6">
         <TabsList data-testid="tabs-reports">
-          <TabsTrigger value="sales" data-testid="tab-sales">Sales Reports</TabsTrigger>
-          <TabsTrigger value="inventory" data-testid="tab-inventory">Inventory Reports</TabsTrigger>
-          <TabsTrigger value="performance" data-testid="tab-performance">Performance</TabsTrigger>
+          <TabsTrigger value="sales" data-testid="tab-sales">{(t as any).salesReports || "Sales Reports"}</TabsTrigger>
+          <TabsTrigger value="inventory" data-testid="tab-inventory">{(t as any).inventoryReports || "Inventory Reports"}</TabsTrigger>
+          <TabsTrigger value="performance" data-testid="tab-performance">{t.performanceAnalysis}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="sales" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-3">
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t.totalRevenue}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold font-mono">116,500 SAR</p>
-                <p className="text-sm text-muted-foreground mt-2">This month</p>
+                <p className="text-sm text-muted-foreground mt-2">{(t as any).thisMonth || "This month"}</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total Orders</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t.totalOrders}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold font-mono">847</p>
-                <p className="text-sm text-green-600 mt-2">+15.3% from last month</p>
+                <p className="text-sm text-green-600 mt-2">{(t as any).plusFromLastMonth || "+15.3% from last month"}</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Order Value</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t.avgOrderValue}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold font-mono">138 SAR</p>
-                <p className="text-sm text-muted-foreground mt-2">Per order</p>
+                <p className="text-sm text-muted-foreground mt-2">{(t as any).perOrder || "Per order"}</p>
               </CardContent>
             </Card>
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>Sales by Branch</CardTitle>
+              <CardTitle>{(t as any).salesByBranch || "Sales by Branch"}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -108,7 +111,7 @@ export default function Reports() {
         <TabsContent value="inventory" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Inventory Distribution by Category</CardTitle>
+              <CardTitle>{(t as any).inventoryDistributionByCategory || "Inventory Distribution by Category"}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -136,29 +139,29 @@ export default function Reports() {
           <div className="grid gap-6 md:grid-cols-3">
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total Items</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t.totalItems}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold font-mono">127</p>
-                <p className="text-sm text-muted-foreground mt-2">In inventory</p>
+                <p className="text-sm text-muted-foreground mt-2">{(t as any).inInventory || "In inventory"}</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">Low Stock Items</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t.lowStockItems}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold font-mono text-orange-600">7</p>
-                <p className="text-sm text-muted-foreground mt-2">Need restocking</p>
+                <p className="text-sm text-muted-foreground mt-2">{(t as any).needRestocking || "Need restocking"}</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">Inventory Value</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{(t as any).inventoryValue || "Inventory Value"}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold font-mono">28,450 SAR</p>
-                <p className="text-sm text-muted-foreground mt-2">Total value</p>
+                <p className="text-sm text-muted-foreground mt-2">{(t as any).totalValue || "Total value"}</p>
               </CardContent>
             </Card>
           </div>
@@ -168,7 +171,7 @@ export default function Reports() {
           <div className="grid gap-6 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Top Performing Items</CardTitle>
+                <CardTitle>{(t as any).topPerformingItems || "Top Performing Items"}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -195,7 +198,7 @@ export default function Reports() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Underperforming Items</CardTitle>
+                <CardTitle>{(t as any).underperformingItems || "Underperforming Items"}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
