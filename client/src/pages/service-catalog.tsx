@@ -86,12 +86,15 @@ const serviceFormSchema = z.object({
 
 type ServiceFormValues = z.infer<typeof serviceFormSchema>;
 
-const pricingMethodLabels: Record<string, string> = {
-  per_piece: "Per Piece",
-  per_length: "Per Length (m)",
-  per_area: "Per Area (sqm)",
-  per_hour: "Per Hour",
-  lump_sum: "Lump Sum",
+const getPricingMethodLabel = (method: string, t: any): string => {
+  const labels: Record<string, string> = {
+    per_piece: t.perPiece,
+    per_length: t.perLength,
+    per_area: t.perArea,
+    per_hour: t.perHour,
+    lump_sum: t.lumpSum,
+  };
+  return labels[method] || method;
 };
 
 function getStatusBadgeVariant(status: string): "default" | "secondary" {
@@ -148,14 +151,14 @@ export default function ServiceCatalog() {
       setOpen(false);
       form.reset();
       toast({
-        title: "Service Created",
-        description: "Service has been created successfully",
+        title: t.serviceCreated,
+        description: t.serviceCreatedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Create Service",
-        description: error.message || "Could not create service",
+        title: t.failedToCreateService,
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -181,14 +184,14 @@ export default function ServiceCatalog() {
       setEditingService(null);
       form.reset();
       toast({
-        title: "Service Updated",
-        description: "Service has been updated successfully",
+        title: t.serviceUpdated,
+        description: t.serviceUpdatedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Update Service",
-        description: error.message || "Could not update service",
+        title: t.failedToUpdateService,
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -202,14 +205,14 @@ export default function ServiceCatalog() {
       queryClient.invalidateQueries({ queryKey: ["/api/service-catalog"] });
       setDeletingService(null);
       toast({
-        title: "Service Deleted",
-        description: "Service has been deleted successfully",
+        title: t.serviceDeleted,
+        description: t.serviceDeletedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Delete Service",
-        description: error.message || "Could not delete service",
+        title: t.failedToDeleteService,
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -306,11 +309,11 @@ export default function ServiceCatalog() {
           <div className="flex items-center gap-2">
             <Wrench className="h-8 w-8" />
             <h1 className={`${layout.text3Xl} font-bold`} data-testid="text-service-catalog-title">
-              Service Catalog
+              {t.serviceCatalogPage}
             </h1>
           </div>
           <p className="text-muted-foreground text-sm mt-1">
-            Manage your service offerings and pricing
+            {t.serviceCatalogDescription}
           </p>
         </div>
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -321,18 +324,18 @@ export default function ServiceCatalog() {
               onClick={handleAddNew}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Service
+              {t.addService}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingService ? "Edit Service" : "Add Service"}
+                {editingService ? t.editService : t.addService}
               </DialogTitle>
               <DialogDescription>
                 {editingService
-                  ? "Update service information"
-                  : "Add a new service to your catalog"}
+                  ? t.updateServiceInfo
+                  : t.addNewService}
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -345,7 +348,7 @@ export default function ServiceCatalog() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Service Name</FormLabel>
+                      <FormLabel>{t.serviceName}</FormLabel>
                       <FormControl>
                         <Input
                           data-testid="input-service-name"
@@ -363,7 +366,7 @@ export default function ServiceCatalog() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>{t.description}</FormLabel>
                       <FormControl>
                         <Textarea
                           data-testid="input-service-description"
@@ -383,7 +386,7 @@ export default function ServiceCatalog() {
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Category</FormLabel>
+                        <FormLabel>{t.category}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-service-category"
@@ -400,7 +403,7 @@ export default function ServiceCatalog() {
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Status</FormLabel>
+                        <FormLabel>{t.status}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-service-status">
@@ -408,8 +411,8 @@ export default function ServiceCatalog() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="inactive">Inactive</SelectItem>
+                            <SelectItem value="active">{t.active}</SelectItem>
+                            <SelectItem value="inactive">{t.inactive}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -424,7 +427,7 @@ export default function ServiceCatalog() {
                     name="pricingMethod"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Pricing Method</FormLabel>
+                        <FormLabel>{t.pricingMethod}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-pricing-method">
@@ -432,11 +435,11 @@ export default function ServiceCatalog() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="per_piece">Per Piece</SelectItem>
-                            <SelectItem value="per_length">Per Length (m)</SelectItem>
-                            <SelectItem value="per_area">Per Area (sqm)</SelectItem>
-                            <SelectItem value="per_hour">Per Hour</SelectItem>
-                            <SelectItem value="lump_sum">Lump Sum</SelectItem>
+                            <SelectItem value="per_piece">{t.perPiece}</SelectItem>
+                            <SelectItem value="per_length">{t.perLength}</SelectItem>
+                            <SelectItem value="per_area">{t.perArea}</SelectItem>
+                            <SelectItem value="per_hour">{t.perHour}</SelectItem>
+                            <SelectItem value="lump_sum">{t.lumpSum}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -448,7 +451,7 @@ export default function ServiceCatalog() {
                     name="unitPrice"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Unit Price (SAR)</FormLabel>
+                        <FormLabel>{t.price}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-unit-price"
@@ -469,7 +472,7 @@ export default function ServiceCatalog() {
                     name="unit"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Unit</FormLabel>
+                        <FormLabel>{t.unit}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-service-unit"
@@ -486,7 +489,7 @@ export default function ServiceCatalog() {
                     name="estimatedDuration"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Estimated Duration</FormLabel>
+                        <FormLabel>{t.estimatedDuration}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-estimated-duration"
@@ -517,7 +520,7 @@ export default function ServiceCatalog() {
                       updateServiceMutation.isPending
                     }
                   >
-                    {editingService ? "Save" : "Add"}
+                    {editingService ? t.save : t.add}
                   </Button>
                 </div>
               </form>
@@ -530,7 +533,7 @@ export default function ServiceCatalog() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           data-testid="input-search-services"
-          placeholder="Search services..."
+          placeholder={`${t.search} ${t.serviceCatalogPage.toLowerCase()}...`}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
@@ -544,7 +547,7 @@ export default function ServiceCatalog() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <Wrench className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Total Services</p>
+              <p className="text-sm text-muted-foreground">{t.totalServices}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-total-services">
               {services.length}
@@ -555,7 +558,7 @@ export default function ServiceCatalog() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Active</p>
+              <p className="text-sm text-muted-foreground">{t.activeServices}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-active-services">
               {activeServices.length}
@@ -566,7 +569,7 @@ export default function ServiceCatalog() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Avg. Price</p>
+              <p className="text-sm text-muted-foreground">{t.avgPrice}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-average-price">
               {avgPrice.toFixed(2)} SAR
@@ -577,7 +580,7 @@ export default function ServiceCatalog() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <Layers className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Categories</p>
+              <p className="text-sm text-muted-foreground">{t.categories}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-total-categories">
               {totalCategories}
@@ -588,15 +591,15 @@ export default function ServiceCatalog() {
 
       {isLoading ? (
         <div className="flex items-center justify-center p-12">
-          <p>Loading...</p>
+          <p>{t.loading}...</p>
         </div>
       ) : filteredServices.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 text-center">
           <Wrench className="h-16 w-16 text-muted-foreground/30 mb-4" />
           <p className="text-muted-foreground">
             {searchQuery
-              ? "No services found matching your search"
-              : "No services yet. Add your first service to get started."}
+              ? t.noServicesFound
+              : t.noServicesYet}
           </p>
         </div>
       ) : (
@@ -642,10 +645,10 @@ export default function ServiceCatalog() {
                   <Badge variant={getStatusBadgeVariant(service.status)}
                     className={service.status === "active" ? "bg-green-600 text-white no-default-hover-elevate" : ""}
                   >
-                    {service.status.charAt(0).toUpperCase() + service.status.slice(1)}
+                    {service.status === "active" ? t.active : service.status === "inactive" ? t.inactive : t.draft}
                   </Badge>
                   <Badge variant="outline">
-                    {pricingMethodLabels[service.pricingMethod] || service.pricingMethod}
+                    {getPricingMethodLabel(service.pricingMethod, t)}
                   </Badge>
                 </div>
 
@@ -689,7 +692,7 @@ export default function ServiceCatalog() {
                 </div>
 
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <span>Added {formatDate(service.createdAt)}</span>
+                  <span>{formatDate(service.createdAt)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -703,10 +706,9 @@ export default function ServiceCatalog() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+            <AlertDialogTitle>{t.confirmDelete}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete service "{deletingService?.name}". This
-              action cannot be undone.
+              {t.deleteServiceConfirm}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

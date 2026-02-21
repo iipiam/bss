@@ -172,14 +172,14 @@ export default function ContractorsPage() {
       setOpen(false);
       form.reset();
       toast({
-        title: "Contractor Created",
-        description: "Contractor has been created successfully",
+        title: t.contractorCreated,
+        description: t.contractorCreatedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Create Contractor",
-        description: error.message || "Could not create contractor",
+        title: t.failedToCreateContractor,
+        description: error.message || t.failedToCreateContractor,
         variant: "destructive",
       });
     },
@@ -206,14 +206,14 @@ export default function ContractorsPage() {
       setEditingContractor(null);
       form.reset();
       toast({
-        title: "Contractor Updated",
-        description: "Contractor has been updated successfully",
+        title: t.contractorUpdated,
+        description: t.contractorUpdatedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Update Contractor",
-        description: error.message || "Could not update contractor",
+        title: t.failedToUpdateContractor,
+        description: error.message || t.failedToUpdateContractor,
         variant: "destructive",
       });
     },
@@ -227,14 +227,14 @@ export default function ContractorsPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/contractors"] });
       setDeletingContractor(null);
       toast({
-        title: "Contractor Deleted",
-        description: "Contractor has been deleted successfully",
+        title: t.contractorDeleted,
+        description: t.contractorDeletedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Delete Contractor",
-        description: error.message || "Could not delete contractor",
+        title: t.failedToDeleteContractor,
+        description: error.message || t.failedToDeleteContractor,
         variant: "destructive",
       });
     },
@@ -338,11 +338,11 @@ export default function ContractorsPage() {
           <div className="flex items-center gap-2">
             <HardHat className="h-8 w-8" />
             <h1 className={`${layout.text3Xl} font-bold`} data-testid="text-contractors-title">
-              Contractors
+              {t.contractorsPage}
             </h1>
           </div>
           <p className="text-muted-foreground text-sm mt-1">
-            Manage your contractors and service providers
+            {t.contractorsDescription}
           </p>
         </div>
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -353,18 +353,18 @@ export default function ContractorsPage() {
               onClick={handleAddNew}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Contractor
+              {t.addContractor}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingContractor ? "Edit Contractor" : "Add Contractor"}
+                {editingContractor ? t.editContractor : t.addContractor}
               </DialogTitle>
               <DialogDescription>
                 {editingContractor
-                  ? "Update contractor information"
-                  : "Add a new contractor or service provider"}
+                  ? t.updateContractorInfo
+                  : t.addNewContractor}
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -377,7 +377,7 @@ export default function ContractorsPage() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name</FormLabel>
+                      <FormLabel>{t.contractorName}</FormLabel>
                       <FormControl>
                         <Input
                           data-testid="input-contractor-name"
@@ -396,7 +396,7 @@ export default function ContractorsPage() {
                     name="company"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Company</FormLabel>
+                        <FormLabel>{t.company}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-contractor-company"
@@ -413,7 +413,7 @@ export default function ContractorsPage() {
                     name="specialization"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Specialization</FormLabel>
+                        <FormLabel>{t.specialization}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-contractor-specialization"
@@ -433,7 +433,7 @@ export default function ContractorsPage() {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone</FormLabel>
+                        <FormLabel>{t.phone}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-contractor-phone"
@@ -450,7 +450,7 @@ export default function ContractorsPage() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>{t.email}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-contractor-email"
@@ -471,7 +471,7 @@ export default function ContractorsPage() {
                     name="licenseNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>License Number</FormLabel>
+                        <FormLabel>{t.licenseNumber}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-contractor-license"
@@ -488,7 +488,7 @@ export default function ContractorsPage() {
                     name="rating"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Rating (1-5)</FormLabel>
+                        <FormLabel>{t.rating} (1-5)</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-contractor-rating"
@@ -511,7 +511,7 @@ export default function ContractorsPage() {
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Status</FormLabel>
+                      <FormLabel>{t.status}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-contractor-status">
@@ -519,8 +519,8 @@ export default function ContractorsPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="inactive">Inactive</SelectItem>
+                          <SelectItem value="active">{t.active}</SelectItem>
+                          <SelectItem value="inactive">{t.inactive}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -533,7 +533,7 @@ export default function ContractorsPage() {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes</FormLabel>
+                      <FormLabel>{t.notes}</FormLabel>
                       <FormControl>
                         <Textarea
                           data-testid="input-contractor-notes"
@@ -564,7 +564,7 @@ export default function ContractorsPage() {
                       updateContractorMutation.isPending
                     }
                   >
-                    {editingContractor ? "Save" : "Add"}
+                    {editingContractor ? t.save : t.add}
                   </Button>
                 </div>
               </form>
@@ -577,7 +577,7 @@ export default function ContractorsPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           data-testid="input-search-contractors"
-          placeholder={`${t.search} contractors...`}
+          placeholder={`${t.search} ${t.contractorsPage.toLowerCase()}...`}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
@@ -591,7 +591,7 @@ export default function ContractorsPage() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <Users className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Total Contractors</p>
+              <p className="text-sm text-muted-foreground">{t.totalContractors}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-total-contractors">
               {contractors.length}
@@ -602,7 +602,7 @@ export default function ContractorsPage() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Active</p>
+              <p className="text-sm text-muted-foreground">{t.activeContractors}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-active-contractors">
               {activeContractors.length}
@@ -613,7 +613,7 @@ export default function ContractorsPage() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <Star className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Avg Rating</p>
+              <p className="text-sm text-muted-foreground">{t.avgRating}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-average-rating">
               {averageRating}
@@ -624,7 +624,7 @@ export default function ContractorsPage() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <Wrench className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Specializations</p>
+              <p className="text-sm text-muted-foreground">{t.specializations}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-specializations-count">
               {specializations.size}
@@ -635,15 +635,15 @@ export default function ContractorsPage() {
 
       {isLoading ? (
         <div className="flex items-center justify-center p-12">
-          <p>Loading...</p>
+          <p>{t.loading}...</p>
         </div>
       ) : filteredContractors.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 text-center">
           <HardHat className="h-16 w-16 text-muted-foreground/30 mb-4" />
           <p className="text-muted-foreground">
             {searchQuery
-              ? "No contractors found matching your search"
-              : "No contractors yet. Add your first contractor to get started."}
+              ? t.noContractorsFound
+              : t.noContractorsYet}
           </p>
         </div>
       ) : (
@@ -754,10 +754,9 @@ export default function ContractorsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+            <AlertDialogTitle>{t.confirmDelete}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete contractor "{deletingContractor?.name}". This
-              action cannot be undone.
+              {t.deleteContractorConfirm}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

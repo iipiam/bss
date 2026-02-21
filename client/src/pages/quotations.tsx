@@ -178,14 +178,14 @@ export default function Quotations() {
       setOpen(false);
       form.reset();
       toast({
-        title: "Quotation Created",
-        description: "Quotation has been created successfully",
+        title: t.quotationCreated,
+        description: t.quotationCreatedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Create Quotation",
-        description: error.message || "Could not create quotation",
+        title: t.failedToCreateQuotation,
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -215,14 +215,14 @@ export default function Quotations() {
       setEditingQuotation(null);
       form.reset();
       toast({
-        title: "Quotation Updated",
-        description: "Quotation has been updated successfully",
+        title: t.quotationUpdated,
+        description: t.quotationUpdatedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Update Quotation",
-        description: error.message || "Could not update quotation",
+        title: t.failedToUpdateQuotation,
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -236,14 +236,14 @@ export default function Quotations() {
       queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
       setDeletingQuotation(null);
       toast({
-        title: "Quotation Deleted",
-        description: "Quotation has been deleted successfully",
+        title: t.quotationDeleted,
+        description: t.quotationDeletedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Delete Quotation",
-        description: error.message || "Could not delete quotation",
+        title: t.failedToDeleteQuotation,
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -350,11 +350,11 @@ export default function Quotations() {
           <div className="flex items-center gap-2">
             <FileText className="h-8 w-8" />
             <h1 className={`${layout.text3Xl} font-bold`} data-testid="text-quotations-title">
-              {(t as any).quotations || "Quotations"}
+              {t.quotationsPage}
             </h1>
           </div>
           <p className="text-muted-foreground text-sm mt-1">
-            {(t as any).quotationsDescription || "Manage your quotations and proposals"}
+            {t.quotationsDescription}
           </p>
         </div>
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -365,18 +365,18 @@ export default function Quotations() {
               onClick={handleAddNew}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Quotation
+              {t.addQuotation}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingQuotation ? "Edit Quotation" : "Add Quotation"}
+                {editingQuotation ? t.editQuotation : t.addQuotation}
               </DialogTitle>
               <DialogDescription>
                 {editingQuotation
-                  ? "Update quotation information"
-                  : "Add a new quotation"}
+                  ? t.updateQuotationInfo
+                  : t.addNewQuotation}
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -390,7 +390,7 @@ export default function Quotations() {
                     name="quotationNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Quotation Number</FormLabel>
+                        <FormLabel>{t.quotationNumber}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-quotation-number"
@@ -407,7 +407,7 @@ export default function Quotations() {
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Status</FormLabel>
+                        <FormLabel>{t.status}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-quotation-status">
@@ -415,11 +415,11 @@ export default function Quotations() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="sent">Sent</SelectItem>
-                            <SelectItem value="approved">Approved</SelectItem>
-                            <SelectItem value="declined">Declined</SelectItem>
-                            <SelectItem value="expired">Expired</SelectItem>
+                            <SelectItem value="draft">{t.draft}</SelectItem>
+                            <SelectItem value="sent">{t.sent}</SelectItem>
+                            <SelectItem value="approved">{t.approved}</SelectItem>
+                            <SelectItem value="declined">{t.declined}</SelectItem>
+                            <SelectItem value="expired">{t.expired}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -433,7 +433,7 @@ export default function Quotations() {
                   name="clientName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Client Name</FormLabel>
+                      <FormLabel>{t.clientName}</FormLabel>
                       <FormControl>
                         <Input
                           data-testid="input-client-name"
@@ -452,7 +452,7 @@ export default function Quotations() {
                     name="clientPhone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Client Phone</FormLabel>
+                        <FormLabel>{t.clientPhone}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-client-phone"
@@ -469,7 +469,7 @@ export default function Quotations() {
                     name="clientEmail"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Client Email</FormLabel>
+                        <FormLabel>{t.clientEmail}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-client-email"
@@ -489,7 +489,7 @@ export default function Quotations() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>{t.description}</FormLabel>
                       <FormControl>
                         <Textarea
                           data-testid="input-quotation-description"
@@ -509,7 +509,7 @@ export default function Quotations() {
                     name="subtotal"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Subtotal (SAR)</FormLabel>
+                        <FormLabel>{t.subtotal}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-subtotal"
@@ -527,7 +527,7 @@ export default function Quotations() {
                     name="vatRate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>VAT Rate (%)</FormLabel>
+                        <FormLabel>{t.vatRate}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-vat-rate"
@@ -548,7 +548,7 @@ export default function Quotations() {
                     name="vatAmount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>VAT Amount (SAR)</FormLabel>
+                        <FormLabel>{t.vatAmount}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-vat-amount"
@@ -566,7 +566,7 @@ export default function Quotations() {
                     name="totalAmount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Total Amount (SAR)</FormLabel>
+                        <FormLabel>{t.totalAmount}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-total-amount"
@@ -586,7 +586,7 @@ export default function Quotations() {
                   name="validUntil"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Valid Until</FormLabel>
+                      <FormLabel>{t.validUntil}</FormLabel>
                       <FormControl>
                         <Input
                           data-testid="input-valid-until"
@@ -604,7 +604,7 @@ export default function Quotations() {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes</FormLabel>
+                      <FormLabel>{t.notes}</FormLabel>
                       <FormControl>
                         <Textarea
                           data-testid="input-quotation-notes"
@@ -635,7 +635,7 @@ export default function Quotations() {
                       updateQuotationMutation.isPending
                     }
                   >
-                    {editingQuotation ? "Save" : "Add"}
+                    {editingQuotation ? t.save : t.add}
                   </Button>
                 </div>
               </form>
@@ -648,7 +648,7 @@ export default function Quotations() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           data-testid="input-search-quotations"
-          placeholder={`${t.search} quotations...`}
+          placeholder={`${t.search} ${t.quotationsPage.toLowerCase()}...`}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
@@ -662,7 +662,7 @@ export default function Quotations() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <FileText className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Total Quotations</p>
+              <p className="text-sm text-muted-foreground">{t.totalQuotations}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-total-quotations">
               {quotations.length}
@@ -673,7 +673,7 @@ export default function Quotations() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <Clock className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Pending</p>
+              <p className="text-sm text-muted-foreground">{t.pendingQuotations}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-pending-quotations">
               {pendingQuotations.length}
@@ -684,7 +684,7 @@ export default function Quotations() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Approved</p>
+              <p className="text-sm text-muted-foreground">{t.approvedQuotations}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-approved-quotations">
               {approvedQuotations.length}
@@ -695,7 +695,7 @@ export default function Quotations() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Approved Amount</p>
+              <p className="text-sm text-muted-foreground">{t.approvedAmount}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-approved-amount">
               {totalApprovedAmount.toLocaleString()} SAR
@@ -713,8 +713,8 @@ export default function Quotations() {
           <FileText className="h-16 w-16 text-muted-foreground/30 mb-4" />
           <p className="text-muted-foreground">
             {searchQuery
-              ? "No quotations found matching your search"
-              : "No quotations yet. Add your first quotation to get started."}
+              ? t.noQuotationsFound
+              : t.noQuotationsYet}
           </p>
         </div>
       ) : (
@@ -788,7 +788,7 @@ export default function Quotations() {
 
                 <div className="flex items-center justify-between gap-2 pt-2 border-t">
                   <div className="flex items-center gap-1 text-sm">
-                    <span className="text-muted-foreground">Subtotal:</span>
+                    <span className="text-muted-foreground">{t.subtotal}:</span>
                     <span data-testid={`text-subtotal-${quotation.id}`}>
                       {parseFloat(quotation.subtotal).toLocaleString()} SAR
                     </span>
@@ -810,7 +810,7 @@ export default function Quotations() {
                 {quotation.validUntil && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Calendar className="h-3 w-3" />
-                    <span>Valid until: {formatDate(quotation.validUntil)}</span>
+                    <span>{t.validUntil}: {formatDate(quotation.validUntil)}</span>
                   </div>
                 )}
               </CardContent>
@@ -825,10 +825,9 @@ export default function Quotations() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+            <AlertDialogTitle>{t.confirmDelete}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete quotation "{deletingQuotation?.quotationNumber}". This
-              action cannot be undone.
+              {t.deleteQuotationConfirm}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

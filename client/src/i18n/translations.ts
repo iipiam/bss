@@ -2029,6 +2029,8 @@ export interface Translations {
   additionalNotes: string;
   invoicePdf: string;
   name: string;
+  company: string;
+  licenseNumber: string;
   // Service Business Pages
   serviceProjects: string;
   serviceProjectsDescription: string;
@@ -4183,6 +4185,8 @@ export const translations: Record<Language, Translations> = {
     checkExpiredSubscriptions: "Check Expired Subscriptions",
     subscriptionsSuspended: "subscriptions suspended",
     noExpiredSubscriptions: "No expired subscriptions found",
+    company: 'Company',
+    licenseNumber: 'License Number',
     // Service Business Pages
     serviceProjects: 'Service Projects',
     serviceProjectsDescription: 'Manage your service projects and track progress',
@@ -6330,6 +6334,8 @@ export const translations: Record<Language, Translations> = {
     checkExpiredSubscriptions: "التحقق من الاشتراكات المنتهية",
     subscriptionsSuspended: "اشتراكات معلقة",
     noExpiredSubscriptions: "لم يتم العثور على اشتراكات منتهية",
+    company: 'الشركة',
+    licenseNumber: 'رقم الرخصة',
     // Service Business Pages
     serviceProjects: 'مشاريع الخدمات',
     serviceProjectsDescription: 'إدارة مشاريع الخدمات وتتبع التقدم',
@@ -8458,6 +8464,8 @@ export const translations: Record<Language, Translations> = {
     checkExpiredSubscriptions: "Abgelaufene Abonnements prüfen",
     subscriptionsSuspended: "Abonnements ausgesetzt",
     noExpiredSubscriptions: "Keine abgelaufenen Abonnements gefunden",
+    company: 'Unternehmen',
+    licenseNumber: 'Lizenznummer',
     // Service Business Pages
     serviceProjects: 'Serviceprojekte',
     serviceProjectsDescription: 'Verwalten Sie Ihre Serviceprojekte und verfolgen Sie den Fortschritt',
@@ -10586,6 +10594,8 @@ export const translations: Record<Language, Translations> = {
     checkExpiredSubscriptions: "检查过期订阅",
     subscriptionsSuspended: "个订阅已暂停",
     noExpiredSubscriptions: "未找到过期订阅",
+    company: 'Company',
+    licenseNumber: 'License Number',
     // Service Business Pages
     serviceProjects: 'Service Projects',
     serviceProjectsDescription: 'Manage your service projects and track progress',
@@ -12714,6 +12724,8 @@ export const translations: Record<Language, Translations> = {
     checkExpiredSubscriptions: "মেয়াদোত্তীর্ণ সাবস্ক্রিপশন পরীক্ষা করুন",
     subscriptionsSuspended: "টি সাবস্ক্রিপশন স্থগিত",
     noExpiredSubscriptions: "কোনো মেয়াদোত্তীর্ণ সাবস্ক্রিপশন পাওয়া যায়নি",
+    company: 'Company',
+    licenseNumber: 'License Number',
     // Service Business Pages
     serviceProjects: 'Service Projects',
     serviceProjectsDescription: 'Manage your service projects and track progress',
@@ -14842,6 +14854,8 @@ export const translations: Record<Language, Translations> = {
     checkExpiredSubscriptions: "Controlla Abbonamenti Scaduti",
     subscriptionsSuspended: "abbonamenti sospesi",
     noExpiredSubscriptions: "Nessun abbonamento scaduto trovato",
+    company: 'Company',
+    licenseNumber: 'License Number',
     // Service Business Pages
     serviceProjects: 'Service Projects',
     serviceProjectsDescription: 'Manage your service projects and track progress',
@@ -16914,6 +16928,8 @@ export const translations: Record<Language, Translations> = {
     checkExpiredSubscriptions: "समाप्त सदस्यता जांचें",
     subscriptionsSuspended: "सदस्यता निलंबित",
     noExpiredSubscriptions: "कोई समाप्त सदस्यता नहीं मिली",
+    company: 'Company',
+    licenseNumber: 'License Number',
     // Service Business Pages
     serviceProjects: 'Service Projects',
     serviceProjectsDescription: 'Manage your service projects and track progress',
@@ -18986,6 +19002,8 @@ export const translations: Record<Language, Translations> = {
     checkExpiredSubscriptions: "ختم شدہ سبسکرپشنز چیک کریں",
     subscriptionsSuspended: "سبسکرپشنز معطل",
     noExpiredSubscriptions: "کوئی ختم شدہ سبسکرپشن نہیں ملی",
+    company: 'Company',
+    licenseNumber: 'License Number',
     // Service Business Pages
     serviceProjects: 'Service Projects',
     serviceProjectsDescription: 'Manage your service projects and track progress',
@@ -20990,6 +21008,8 @@ export const translations: Record<Language, Translations> = {
     checkExpiredSubscriptions: "Verificar Suscripciones Expiradas",
     subscriptionsSuspended: "suscripciones suspendidas",
     noExpiredSubscriptions: "No se encontraron suscripciones expiradas",
+    company: 'Company',
+    licenseNumber: 'License Number',
     // Service Business Pages
     serviceProjects: 'Service Projects',
     serviceProjectsDescription: 'Manage your service projects and track progress',
@@ -22994,6 +23014,8 @@ export const translations: Record<Language, Translations> = {
     checkExpiredSubscriptions: "Suriin ang Expired na Subscriptions",
     subscriptionsSuspended: "mga subscription na na-suspend",
     noExpiredSubscriptions: "Walang nahanap na expired na subscription",
+    company: 'Company',
+    licenseNumber: 'License Number',
     // Service Business Pages
     serviceProjects: 'Service Projects',
     serviceProjectsDescription: 'Manage your service projects and track progress',

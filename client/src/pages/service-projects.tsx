@@ -149,37 +149,6 @@ function getPriorityClassName(priority: string): string {
   return "";
 }
 
-function getStatusLabel(status: string): string {
-  switch (status) {
-    case "draft":
-      return "Draft";
-    case "in_progress":
-      return "In Progress";
-    case "on_hold":
-      return "On Hold";
-    case "completed":
-      return "Completed";
-    case "cancelled":
-      return "Cancelled";
-    default:
-      return status;
-  }
-}
-
-function getPriorityLabel(priority: string): string {
-  switch (priority) {
-    case "low":
-      return "Low";
-    case "medium":
-      return "Medium";
-    case "high":
-      return "High";
-    case "urgent":
-      return "Urgent";
-    default:
-      return priority;
-  }
-}
 
 export default function ServiceProjects() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -189,6 +158,26 @@ export default function ServiceProjects() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const layout = useDeviceLayout();
+
+  const getStatusLabel = (status: string): string => {
+    switch (status) {
+      case "draft": return t.draft;
+      case "in_progress": return t.inProgress;
+      case "on_hold": return t.onHold;
+      case "completed": return t.completed;
+      case "cancelled": return t.cancelled;
+      default: return status;
+    }
+  };
+  const getPriorityLabel = (priority: string): string => {
+    switch (priority) {
+      case "low": return t.low;
+      case "medium": return t.medium;
+      case "high": return t.high;
+      case "urgent": return t.urgent;
+      default: return priority;
+    }
+  };
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectFormSchema),
@@ -233,13 +222,13 @@ export default function ServiceProjects() {
       setOpen(false);
       form.reset();
       toast({
-        title: "Project Created",
-        description: "Project has been created successfully",
+        title: t.projectCreated,
+        description: t.projectCreatedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Create Project",
+        title: t.failedToCreateProject,
         description: error.message || "Could not create project",
         variant: "destructive",
       });
@@ -271,13 +260,13 @@ export default function ServiceProjects() {
       setEditingProject(null);
       form.reset();
       toast({
-        title: "Project Updated",
-        description: "Project has been updated successfully",
+        title: t.projectUpdated,
+        description: t.projectUpdatedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Update Project",
+        title: t.failedToUpdateProject,
         description: error.message || "Could not update project",
         variant: "destructive",
       });
@@ -292,13 +281,13 @@ export default function ServiceProjects() {
       queryClient.invalidateQueries({ queryKey: ["/api/service-projects"] });
       setDeletingProject(null);
       toast({
-        title: "Project Deleted",
-        description: "Project has been deleted successfully",
+        title: t.projectDeleted,
+        description: t.projectDeletedDesc,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Delete Project",
+        title: t.failedToDeleteProject,
         description: error.message || "Could not delete project",
         variant: "destructive",
       });
@@ -412,11 +401,11 @@ export default function ServiceProjects() {
           <div className="flex items-center gap-2">
             <FolderKanban className="h-8 w-8" />
             <h1 className={`${layout.text3Xl} font-bold`} data-testid="text-projects-title">
-              Service Projects
+              {t.serviceProjects}
             </h1>
           </div>
           <p className="text-muted-foreground text-sm mt-1">
-            Manage your service projects and track progress
+            {t.serviceProjectsDescription}
           </p>
         </div>
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -427,18 +416,18 @@ export default function ServiceProjects() {
               onClick={handleAddNew}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Project
+              {t.addProject}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingProject ? "Edit Project" : "Add Project"}
+                {editingProject ? t.editProject : t.addProject}
               </DialogTitle>
               <DialogDescription>
                 {editingProject
-                  ? "Update project information"
-                  : "Add a new service project"}
+                  ? t.updateProjectInfo
+                  : t.addNewProject}
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -452,7 +441,7 @@ export default function ServiceProjects() {
                     name="projectNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Project Number</FormLabel>
+                        <FormLabel>{t.projectNumber}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-project-number"
@@ -469,11 +458,11 @@ export default function ServiceProjects() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Project Name</FormLabel>
+                        <FormLabel>{t.projectName}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-project-name"
-                            placeholder="Enter project name"
+                            placeholder={t.enterProjectName}
                             {...field}
                           />
                         </FormControl>
@@ -488,11 +477,11 @@ export default function ServiceProjects() {
                   name="clientName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Client Name</FormLabel>
+                      <FormLabel>{t.clientName}</FormLabel>
                       <FormControl>
                         <Input
                           data-testid="input-client-name"
-                          placeholder="Enter client name"
+                          placeholder={t.enterClientName}
                           {...field}
                         />
                       </FormControl>
@@ -507,7 +496,7 @@ export default function ServiceProjects() {
                     name="clientPhone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Client Phone</FormLabel>
+                        <FormLabel>{t.clientPhone}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-client-phone"
@@ -524,7 +513,7 @@ export default function ServiceProjects() {
                     name="clientEmail"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Client Email</FormLabel>
+                        <FormLabel>{t.clientEmail}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-client-email"
@@ -544,11 +533,11 @@ export default function ServiceProjects() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>{t.description}</FormLabel>
                       <FormControl>
                         <Textarea
                           data-testid="input-project-description"
-                          placeholder="Project description..."
+                          placeholder={t.projectDescription}
                           className="resize-none"
                           {...field}
                         />
@@ -563,11 +552,11 @@ export default function ServiceProjects() {
                   name="location"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Location</FormLabel>
+                      <FormLabel>{t.location}</FormLabel>
                       <FormControl>
                         <Input
                           data-testid="input-project-location"
-                          placeholder="Project location"
+                          placeholder={t.projectLocation}
                           {...field}
                         />
                       </FormControl>
@@ -582,19 +571,19 @@ export default function ServiceProjects() {
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Status</FormLabel>
+                        <FormLabel>{t.status}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-project-status">
-                              <SelectValue placeholder="Select status" />
+                              <SelectValue placeholder={t.selectStatus} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="in_progress">In Progress</SelectItem>
-                            <SelectItem value="on_hold">On Hold</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                            <SelectItem value="draft">{t.draft}</SelectItem>
+                            <SelectItem value="in_progress">{t.inProgress}</SelectItem>
+                            <SelectItem value="on_hold">{t.onHold}</SelectItem>
+                            <SelectItem value="completed">{t.completed}</SelectItem>
+                            <SelectItem value="cancelled">{t.cancelled}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -606,18 +595,18 @@ export default function ServiceProjects() {
                     name="priority"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Priority</FormLabel>
+                        <FormLabel>{t.priority}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-project-priority">
-                              <SelectValue placeholder="Select priority" />
+                              <SelectValue placeholder={t.selectPriority} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                            <SelectItem value="urgent">Urgent</SelectItem>
+                            <SelectItem value="low">{t.low}</SelectItem>
+                            <SelectItem value="medium">{t.medium}</SelectItem>
+                            <SelectItem value="high">{t.high}</SelectItem>
+                            <SelectItem value="urgent">{t.urgent}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -632,7 +621,7 @@ export default function ServiceProjects() {
                     name="startDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Start Date</FormLabel>
+                        <FormLabel>{t.startDate}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-start-date"
@@ -649,7 +638,7 @@ export default function ServiceProjects() {
                     name="endDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>End Date</FormLabel>
+                        <FormLabel>{t.endDate}</FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-end-date"
@@ -668,7 +657,7 @@ export default function ServiceProjects() {
                   name="estimatedBudget"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Estimated Budget (SAR)</FormLabel>
+                      <FormLabel>{t.estimatedBudget}</FormLabel>
                       <FormControl>
                         <Input
                           data-testid="input-estimated-budget"
@@ -687,11 +676,11 @@ export default function ServiceProjects() {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes</FormLabel>
+                      <FormLabel>{t.notes}</FormLabel>
                       <FormControl>
                         <Textarea
                           data-testid="input-project-notes"
-                          placeholder="Additional notes..."
+                          placeholder={t.notes}
                           className="resize-none"
                           {...field}
                         />
@@ -718,7 +707,7 @@ export default function ServiceProjects() {
                       updateProjectMutation.isPending
                     }
                   >
-                    {editingProject ? "Save" : "Add"}
+                    {editingProject ? t.save : t.add}
                   </Button>
                 </div>
               </form>
@@ -731,7 +720,7 @@ export default function ServiceProjects() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           data-testid="input-search-projects"
-          placeholder={`${t.search} projects...`}
+          placeholder={`${t.search} ${t.serviceProjects.toLowerCase()}...`}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
@@ -745,7 +734,7 @@ export default function ServiceProjects() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <FileText className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Total Projects</p>
+              <p className="text-sm text-muted-foreground">{t.totalProjects}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-total-projects">
               {projects.length}
@@ -756,7 +745,7 @@ export default function ServiceProjects() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <Clock className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Active</p>
+              <p className="text-sm text-muted-foreground">{t.activeProjects}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-active-projects">
               {activeProjects.length}
@@ -767,7 +756,7 @@ export default function ServiceProjects() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Completed</p>
+              <p className="text-sm text-muted-foreground">{t.completedProjects}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-completed-projects">
               {completedProjects.length}
@@ -778,7 +767,7 @@ export default function ServiceProjects() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Total Budget</p>
+              <p className="text-sm text-muted-foreground">{t.totalBudget}</p>
             </div>
             <p className="text-2xl font-bold" data-testid="text-total-budget">
               {totalEstimatedBudget.toLocaleString()} SAR
@@ -796,8 +785,8 @@ export default function ServiceProjects() {
           <FolderKanban className="h-16 w-16 text-muted-foreground/30 mb-4" />
           <p className="text-muted-foreground">
             {searchQuery
-              ? "No projects found matching your search"
-              : "No projects yet. Add your first project to get started."}
+              ? t.noProjectsFound
+              : t.noProjectsYet}
           </p>
         </div>
       ) : (
@@ -928,10 +917,9 @@ export default function ServiceProjects() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+            <AlertDialogTitle>{t.confirmDelete}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete project "{deletingProject?.projectNumber}". This
-              action cannot be undone.
+              {t.deleteProjectConfirm}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
