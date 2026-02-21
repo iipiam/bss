@@ -10,7 +10,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { FileText, Building2, ScrollText, Save, FolderOpen, Info } from "lucide-react";
+import { FileText, Building2, ScrollText, Save, FolderOpen, Info, Upload, Download, Trash2 } from "lucide-react";
 
 export default function CompanySettingsPage() {
   const { t } = useLanguage();
@@ -22,6 +22,7 @@ export default function CompanySettingsPage() {
   const [companyAddress, setCompanyAddress] = useState("");
   const [agreementTemplate, setAgreementTemplate] = useState("");
   const [termsAndConditions, setTermsAndConditions] = useState("");
+  const [dragActive, setDragActive] = useState(false);
 
   const { data: settings, isLoading } = useQuery<any>({
     queryKey: ["/api/company-settings"],
@@ -69,6 +70,81 @@ export default function CompanySettingsPage() {
   const handleSaveTerms = () => {
     saveMutation.mutate({ termsAndConditions });
   };
+
+  const uploadDocMutation = useMutation({
+    mutationFn: async (file: File) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          try {
+            const result = await apiRequest("POST", "/api/company-settings/documents", {
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              content: reader.result as string,
+            });
+            resolve(result);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/company-settings"] });
+      toast({
+        title: (t as any).documentUploaded || "Document Uploaded",
+        description: (t as any).documentUploadedDesc || "Document has been uploaded successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({ title: t.error, description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteDocMutation = useMutation({
+    mutationFn: async (docId: string) => {
+      return await apiRequest("DELETE", `/api/company-settings/documents/${docId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/company-settings"] });
+      toast({
+        title: (t as any).documentDeleted || "Document Deleted",
+        description: (t as any).documentDeletedDesc || "Document has been removed.",
+      });
+    },
+    onError: (error: any) => {
+      toast({ title: t.error, description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleFileUpload = (files: FileList | null) => {
+    if (!files) return;
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!allowedTypes.includes(file.type)) {
+        toast({ title: t.error, description: `Invalid file type: ${file.name}`, variant: "destructive" });
+        continue;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast({ title: t.error, description: `File too large: ${file.name} (max 10MB)`, variant: "destructive" });
+        continue;
+      }
+      uploadDocMutation.mutate(file);
+    }
+  };
+
+  const downloadDocument = (doc: any) => {
+    const link = document.createElement("a");
+    link.href = doc.content;
+    link.download = doc.name;
+    link.click();
+  };
+
+  const documents = Array.isArray(settings?.companyDocuments) ? settings.companyDocuments : [];
 
   const placeholders = [
     { key: "{{clientName}}", desc: "Client name" },
@@ -289,23 +365,66 @@ export default function CompanySettingsPage() {
         <TabsContent value="documents">
           <Card>
             <CardHeader>
-              <CardTitle>{(t as any).companyDocuments || "Company Documents"}</CardTitle>
-              <CardDescription>
-                {(t as any).companyDocumentsDesc || "Upload and manage company documents such as logos, letterheads, and certificates."}
-              </CardDescription>
+              <CardTitle className="flex items-center gap-2"><FolderOpen className="h-5 w-5" />{(t as any).companyDocuments || "Company Documents"}</CardTitle>
+              <CardDescription>{(t as any).companyDocumentsDesc || "Upload and manage company logos, letterheads, and certificates."}</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-3 p-6 rounded-lg border border-dashed border-border text-center" data-testid="text-documents-coming-soon">
-                <FolderOpen className="h-8 w-8 text-muted-foreground" />
-                <div className="text-left">
-                  <p className="font-medium text-foreground">
-                    {(t as any).documentUploadComingSoon || "Document upload coming soon"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {(t as any).documentUploadComingSoonDesc || "This feature is under development. You will be able to upload company logos, letterheads, and certificates."}
-                  </p>
-                </div>
+            <CardContent className="space-y-6">
+              <div
+                className={`border-2 border-dashed rounded-md p-8 text-center transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'}`}
+                onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={(e) => { e.preventDefault(); setDragActive(false); handleFileUpload(e.dataTransfer.files); }}
+                data-testid="dropzone-documents"
+              >
+                <Upload className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
+                <p className="text-sm font-medium">{(t as any).dragDropFiles || "Drag & drop files here"}</p>
+                <p className="text-xs text-muted-foreground mt-1">{(t as any).supportedFormats || "PDF, JPEG, PNG, GIF, WebP (max 10MB)"}</p>
+                <Button
+                  variant="outline"
+                  className="mt-3"
+                  onClick={() => document.getElementById('doc-upload-input')?.click()}
+                  data-testid="button-browse-files"
+                >
+                  {(t as any).browseFiles || "Browse Files"}
+                </Button>
+                <input
+                  id="doc-upload-input"
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
+                  multiple
+                  onChange={(e) => handleFileUpload(e.target.files)}
+                  data-testid="input-file-upload"
+                />
               </div>
+
+              {documents.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">{(t as any).uploadedDocuments || "Uploaded Documents"} ({documents.length})</h4>
+                  {documents.map((doc: any) => (
+                    <div key={doc.id} className="flex items-center justify-between gap-2 p-3 border rounded-md" data-testid={`document-${doc.id}`}>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{doc.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {doc.size ? `${(doc.size / 1024).toFixed(1)} KB` : ''} 
+                            {doc.uploadedAt ? ` • ${new Date(doc.uploadedAt).toLocaleDateString()}` : ''}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => downloadDocument(doc)} data-testid={`button-download-doc-${doc.id}`}>
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => deleteDocMutation.mutate(doc.id)} data-testid={`button-delete-doc-${doc.id}`}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

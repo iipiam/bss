@@ -1769,6 +1769,7 @@ export const companySettings = pgTable("company_settings", {
   agreementTemplate: text("agreement_template"),
   agreementPlaceholders: jsonb("agreement_placeholders"),
   termsAndConditions: text("terms_and_conditions"),
+  companyDocuments: jsonb("company_documents").default([]),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 

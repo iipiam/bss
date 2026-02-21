@@ -5578,6 +5578,189 @@ export const storage = new DatabaseStorage();
     await pool.query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS referenced_invoice_id VARCHAR(255)`);
     await pool.query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS adjustment_reason TEXT`);
     console.log('[Migration] Invoices columns verified/added: document_type, referenced_invoice_id, adjustment_reason');
+    
+    // BizFlow Manager: Create service_projects table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS service_projects (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        project_number TEXT NOT NULL,
+        name TEXT NOT NULL,
+        client_name TEXT NOT NULL,
+        client_phone TEXT,
+        client_email TEXT,
+        description TEXT,
+        status TEXT NOT NULL DEFAULT 'draft',
+        priority TEXT NOT NULL DEFAULT 'medium',
+        start_date TIMESTAMP,
+        end_date TIMESTAMP,
+        estimated_budget DECIMAL(12, 2),
+        location TEXT,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    // BizFlow Manager: Create quotations table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS quotations (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        quotation_number TEXT NOT NULL,
+        project_id VARCHAR(255) REFERENCES service_projects(id),
+        client_name TEXT NOT NULL,
+        client_phone TEXT,
+        client_email TEXT,
+        description TEXT,
+        items JSONB DEFAULT '[]',
+        subtotal DECIMAL(12, 2) NOT NULL,
+        vat_rate DECIMAL(5, 2) DEFAULT 15,
+        vat_amount DECIMAL(12, 2) NOT NULL,
+        total_amount DECIMAL(12, 2) NOT NULL,
+        status TEXT NOT NULL DEFAULT 'draft',
+        valid_until TIMESTAMP,
+        notes TEXT,
+        decline_reason TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    // Add decline_reason column if table already exists but column is missing
+    await pool.query(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS decline_reason TEXT`);
+
+    // BizFlow Manager: Create payment_schedules table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS payment_schedules (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        project_id VARCHAR(255) NOT NULL REFERENCES service_projects(id),
+        milestone_name TEXT NOT NULL,
+        amount DECIMAL(12, 2) NOT NULL,
+        percentage DECIMAL(5, 2),
+        due_date TIMESTAMP,
+        status TEXT NOT NULL DEFAULT 'pending',
+        paid_date TIMESTAMP,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    // BizFlow Manager: Create project_services table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS project_services (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        project_id VARCHAR(255) NOT NULL REFERENCES service_projects(id),
+        service_catalog_id VARCHAR(255),
+        name TEXT NOT NULL,
+        description TEXT,
+        pricing_method TEXT NOT NULL DEFAULT 'lump_sum',
+        unit_price DECIMAL(12, 2) NOT NULL,
+        quantity DECIMAL(12, 2) NOT NULL DEFAULT 1,
+        unit TEXT,
+        total_price DECIMAL(12, 2) NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    // BizFlow Manager: Create project_bills table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS project_bills (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        project_id VARCHAR(255) NOT NULL REFERENCES service_projects(id),
+        description TEXT NOT NULL,
+        amount DECIMAL(12, 2) NOT NULL,
+        category TEXT,
+        vendor TEXT,
+        bill_date TIMESTAMP NOT NULL DEFAULT NOW(),
+        due_date TIMESTAMP,
+        status TEXT NOT NULL DEFAULT 'pending',
+        paid_date TIMESTAMP,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    // BizFlow Manager: Create project_procurements table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS project_procurements (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        project_id VARCHAR(255) NOT NULL REFERENCES service_projects(id),
+        item_name TEXT NOT NULL,
+        description TEXT,
+        quantity DECIMAL(12, 2) NOT NULL DEFAULT 1,
+        unit_price DECIMAL(12, 2) NOT NULL,
+        total_price DECIMAL(12, 2) NOT NULL,
+        vendor TEXT,
+        purchase_date TIMESTAMP NOT NULL DEFAULT NOW(),
+        delivery_date TIMESTAMP,
+        status TEXT NOT NULL DEFAULT 'ordered',
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    // BizFlow Manager: Create project_tasks table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS project_tasks (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        project_id VARCHAR(255) NOT NULL REFERENCES service_projects(id),
+        name TEXT NOT NULL,
+        description TEXT,
+        duration INTEGER NOT NULL DEFAULT 1,
+        start_date TIMESTAMP,
+        end_date TIMESTAMP,
+        dependencies TEXT[],
+        status TEXT NOT NULL DEFAULT 'pending',
+        is_critical BOOLEAN DEFAULT false,
+        early_start INTEGER,
+        early_finish INTEGER,
+        late_start INTEGER,
+        late_finish INTEGER,
+        slack INTEGER,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    // BizFlow Manager: Create quotation_decisions table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS quotation_decisions (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        quotation_id VARCHAR(255) NOT NULL REFERENCES quotations(id),
+        decision TEXT NOT NULL,
+        reason TEXT,
+        decided_by TEXT,
+        decided_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    // BizFlow Manager: Create company_settings table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS company_settings (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        company_name TEXT,
+        company_email TEXT,
+        company_phone TEXT,
+        company_address TEXT,
+        company_logo TEXT,
+        agreement_template TEXT,
+        agreement_placeholders JSONB,
+        terms_and_conditions TEXT,
+        company_documents JSONB DEFAULT '[]',
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`ALTER TABLE company_settings ADD COLUMN IF NOT EXISTS company_documents JSONB DEFAULT '[]'`);
+
+    console.log('[Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings');
   } catch (error: any) {
     // Only log if not a duplicate column error (which means columns already exist)
     if (!error.message?.includes('already exists')) {

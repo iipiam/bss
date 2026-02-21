@@ -15248,7 +15248,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
       
-      const allowedFields = ['companyName', 'companyEmail', 'companyPhone', 'companyAddress', 'companyLogo', 'agreementTemplate', 'agreementPlaceholders', 'termsAndConditions'];
+      const allowedFields = ['companyName', 'companyEmail', 'companyPhone', 'companyAddress', 'companyLogo', 'agreementTemplate', 'agreementPlaceholders', 'termsAndConditions', 'companyDocuments'];
       const sanitized: any = {};
       for (const key of allowedFields) {
         if (req.body[key] !== undefined) {
@@ -15258,6 +15258,54 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       
       const settings = await storage.upsertCompanySettings(restaurantId, sanitized);
       res.json(settings);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/company-settings/documents", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      
+      const { name, type, content, size } = req.body;
+      if (!name || !content) return res.status(400).json({ message: "Name and content required" });
+      if (size && size > 10 * 1024 * 1024) return res.status(400).json({ message: "File too large (max 10MB)" });
+      const allowedMimeTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (type && !allowedMimeTypes.includes(type)) return res.status(400).json({ message: "Invalid file type. Allowed: PDF, JPEG, PNG, GIF, WebP" });
+      const contentLength = typeof content === 'string' ? Buffer.byteLength(content, 'utf8') : 0;
+      if (contentLength > 15 * 1024 * 1024) return res.status(400).json({ message: "Content too large" });
+      
+      const settings = await storage.getCompanySettings(restaurantId);
+      const documents = Array.isArray(settings?.companyDocuments) ? [...settings.companyDocuments as any[]] : [];
+      const newDoc = {
+        id: Date.now().toString(36) + Math.random().toString(36).substr(2, 9),
+        name,
+        type: type || 'application/octet-stream',
+        size: size || 0,
+        content,
+        uploadedAt: new Date().toISOString(),
+      };
+      documents.push(newDoc);
+      
+      await storage.upsertCompanySettings(restaurantId, { companyDocuments: documents });
+      res.json(newDoc);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/company-settings/documents/:docId", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      
+      const settings = await storage.getCompanySettings(restaurantId);
+      const documents = Array.isArray(settings?.companyDocuments) ? (settings.companyDocuments as any[]) : [];
+      const filtered = documents.filter((d: any) => d.id !== req.params.docId);
+      
+      await storage.upsertCompanySettings(restaurantId, { companyDocuments: filtered });
+      res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
