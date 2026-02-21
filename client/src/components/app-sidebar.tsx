@@ -74,7 +74,7 @@ interface MenuItem {
   testId: string;
   gradient: string;
   permission?: Permission;
-  businessTypes?: ('restaurant' | 'factory')[]; // If specified, only show for these business types
+  businessTypes?: ('restaurant' | 'factory' | 'real_estate')[]; // If specified, only show for these business types
 }
 
 export function AppSidebar() {
@@ -86,7 +86,7 @@ export function AppSidebar() {
   const { hasPermission, isAdmin } = usePermissions();
   
   // Get businessType from restaurant data (defaults to 'restaurant' for existing accounts)
-  const businessType: 'restaurant' | 'factory' = (restaurant?.businessType as 'restaurant' | 'factory') || 'restaurant';
+  const businessType: 'restaurant' | 'factory' | 'real_estate' = (restaurant?.businessType as 'restaurant' | 'factory' | 'real_estate') || 'restaurant';
 
   const handleLogout = async () => {
     try {
@@ -112,16 +112,16 @@ export function AppSidebar() {
 
   // Declarative menu configuration with business type guards
   const allOperations: MenuItem[] = [
-    { title: t.pos, url: "/pos", icon: ShoppingCart, testId: "pos", gradient: "from-emerald-500 to-teal-500", permission: 'pos' },
-    { title: t.orders, url: "/orders", icon: ClipboardList, testId: "orders", gradient: "from-blue-500 to-cyan-500", permission: 'orders' },
-    { title: businessType === 'factory' ? t.workshop : t.kitchen, url: "/kitchen", icon: Flame, testId: "kitchen", gradient: "from-orange-500 to-red-500", permission: 'kitchen' },
+    { title: t.pos, url: "/pos", icon: ShoppingCart, testId: "pos", gradient: "from-emerald-500 to-teal-500", permission: 'pos', businessTypes: ['restaurant', 'factory'] },
+    { title: t.orders, url: "/orders", icon: ClipboardList, testId: "orders", gradient: "from-blue-500 to-cyan-500", permission: 'orders', businessTypes: ['restaurant', 'factory'] },
+    { title: businessType === 'factory' ? t.workshop : businessType === 'real_estate' ? ((t as any).officeOperations || 'Office Operations') : t.kitchen, url: "/kitchen", icon: Flame, testId: "kitchen", gradient: "from-orange-500 to-red-500", permission: 'kitchen', businessTypes: ['restaurant', 'factory'] },
     { title: t.deliveryApps, url: "/delivery-apps", icon: Truck, testId: "delivery-apps", gradient: "from-violet-500 to-purple-500", permission: 'deliveryApps', businessTypes: ['restaurant'] },
   ];
 
   const allManagement: MenuItem[] = [
     { title: t.dashboard, url: "/", icon: LayoutDashboard, testId: "dashboard", gradient: "from-purple-500 to-pink-500", permission: 'dashboard' },
-    { title: t.inventory, url: "/inventory", icon: Package, testId: "inventory", gradient: "from-blue-500 to-indigo-500", permission: 'inventory' },
-    { title: businessType === 'factory' ? t.products : t.menu, url: "/menu", icon: UtensilsCrossed, testId: "menu", gradient: "from-green-500 to-emerald-500", permission: 'menu' },
+    { title: t.inventory, url: "/inventory", icon: Package, testId: "inventory", gradient: "from-blue-500 to-indigo-500", permission: 'inventory', businessTypes: ['restaurant', 'factory'] },
+    { title: businessType === 'factory' ? t.products : businessType === 'real_estate' ? ((t as any).properties || 'Properties') : t.menu, url: "/menu", icon: UtensilsCrossed, testId: "menu", gradient: "from-green-500 to-emerald-500", permission: 'menu', businessTypes: ['restaurant', 'factory'] },
     { title: t.recipes, url: "/recipes", icon: ChefHat, testId: "recipes", gradient: "from-yellow-500 to-orange-500", permission: 'recipes', businessTypes: ['restaurant'] },
     { title: t.licenses || "Licenses", url: "/licenses", icon: FileKey, testId: "licenses", gradient: "from-amber-500 to-yellow-500", permission: 'licenses' },
     { title: t.customers, url: "/customers", icon: UserCircle, testId: "customers", gradient: "from-cyan-500 to-blue-500", permission: 'customers' },
@@ -134,7 +134,7 @@ export function AppSidebar() {
     { title: t.sales, url: "/sales", icon: DollarSign, testId: "sales", gradient: "from-green-500 to-teal-500", permission: 'sales' },
     { title: t.financial, url: "/financial", icon: Receipt, testId: "financial", gradient: "from-blue-500 to-purple-500", permission: 'reports' },
     { title: t.profitability, url: "/profitability", icon: Calculator, testId: "profitability", gradient: "from-amber-500 to-orange-500", permission: 'reports' },
-    { title: t.menuProfitability, url: "/menu-profitability", icon: TrendingUp, testId: "menu-profitability", gradient: "from-red-500 to-rose-500", permission: 'reports' },
+    { title: t.menuProfitability, url: "/menu-profitability", icon: TrendingUp, testId: "menu-profitability", gradient: "from-red-500 to-rose-500", permission: 'reports', businessTypes: ['restaurant', 'factory'] },
     { title: t.deliveryProfitability, url: "/delivery-app-profitability", icon: Truck, testId: "delivery-profitability", gradient: "from-green-500 to-emerald-500", permission: 'reports', businessTypes: ['restaurant'] },
     { title: t.salesComparison, url: "/sales-comparison", icon: BarChart3, testId: "sales-comparison", gradient: "from-purple-500 to-pink-500", permission: 'reports' },
     { title: t.forecasting, url: "/forecasting", icon: TrendingUp, testId: "forecasting", gradient: "from-cyan-500 to-sky-500", permission: 'reports' },
@@ -146,7 +146,7 @@ export function AppSidebar() {
 
   const allSystem: MenuItem[] = [
     { title: t.tutorial, url: "/tutorial", icon: BookOpen, testId: "tutorial", gradient: "from-purple-500 to-violet-500" },
-    { title: businessType === 'factory' ? t.factory : t.shop, url: "/shop", icon: Store, testId: "shop", gradient: "from-pink-500 to-fuchsia-500", permission: 'workingHours' },
+    { title: businessType === 'factory' ? t.factory : businessType === 'real_estate' ? ((t as any).office || 'Office') : t.shop, url: "/shop", icon: Store, testId: "shop", gradient: "from-pink-500 to-fuchsia-500", permission: 'workingHours' },
     { title: t.profile, url: "/profile", icon: UserCircle, testId: "profile", gradient: "from-indigo-500 to-purple-500" },
     { title: t.teamChat, url: "/chat", icon: MessageCircle, testId: "chat", gradient: "from-blue-500 to-cyan-500" },
     { title: t.support || "Support", url: "/support", icon: HeadphonesIcon, testId: "support", gradient: "from-emerald-500 to-teal-500" },

@@ -2,43 +2,35 @@ import { useMemo } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-/**
- * Custom hook to access business type and provide conditional terminology
- * for factory vs restaurant accounts across the application
- */
+export type BusinessTypeValue = 'restaurant' | 'factory' | 'real_estate';
+
 export function useBusinessType() {
   const { restaurant } = useAuth();
   const { t } = useLanguage();
 
-  // Get businessType from restaurant data (defaults to 'restaurant')
-  const businessType: 'restaurant' | 'factory' = (restaurant?.businessType as 'restaurant' | 'factory') || 'restaurant';
+  const businessType: BusinessTypeValue = (restaurant?.businessType as BusinessTypeValue) || 'restaurant';
   const isFactory = businessType === 'factory';
   const isRestaurant = businessType === 'restaurant';
+  const isRealEstate = businessType === 'real_estate';
 
-  // Memoized labels for conditional terminology
   const labels = useMemo(() => ({
-    // Kitchen / Workshop
-    kitchen: isFactory ? t.workshop : t.kitchen,
+    kitchen: isFactory ? t.workshop : isRealEstate ? (t as any).officeOperations || 'Office Operations' : t.kitchen,
     
-    // Menu / Products
-    menu: isFactory ? t.products : t.menu,
+    menu: isFactory ? t.products : isRealEstate ? (t as any).properties || 'Properties' : t.menu,
     
-    // Shop / Factory
-    shop: isFactory ? t.factory : t.shop,
+    shop: isFactory ? t.factory : isRealEstate ? (t as any).office || 'Office' : t.shop,
     
-    // Location Type (for descriptions like "restaurant locations" or "factory locations")
-    // Uses dedicated lowercase translations for "restaurant" and "factory"
-    locationType: isFactory ? t.factoryLowercase : t.restaurant,
+    locationType: isFactory ? t.factoryLowercase : isRealEstate ? (t as any).realEstateLowercase || 'real estate office' : t.restaurant,
     
-    // Additional derived labels (singular and plural forms)
-    menuItem: isFactory ? t.product : t.menuItem,
-    menuItems: isFactory ? t.products : t.menuItems,  // Proper plural forms for both modes
-  }), [isFactory, t]);
+    menuItem: isFactory ? t.product : isRealEstate ? (t as any).property || 'Property' : t.menuItem,
+    menuItems: isFactory ? t.products : isRealEstate ? (t as any).properties || 'Properties' : t.menuItems,
+  }), [isFactory, isRealEstate, t]);
 
   return {
     businessType,
     isFactory,
     isRestaurant,
+    isRealEstate,
     labels,
     restaurant,
   };

@@ -1,7 +1,7 @@
 export const VAT_RATE = 0.15;
 
 export type SubscriptionPlan = 'weekly' | 'monthly' | 'yearly';
-export type BusinessType = 'restaurant' | 'factory';
+export type BusinessType = 'restaurant' | 'factory' | 'real_estate';
 
 export interface PricingBreakdown {
   basePrice: number;
@@ -41,14 +41,39 @@ const GROSS_PER_BRANCH_PRICES_FACTORY: Record<SubscriptionPlan, number> = {
   yearly: FACTORY_MONTHLY_PER_BRANCH * 12   // Auto-calculated: 2,400 × 12 = 28,800 SAR/year per branch
 };
 
+// GROSS prices (VAT-inclusive) for base plan (1 branch) - REAL ESTATE
+const GROSS_BASE_PRICES_REAL_ESTATE: Record<SubscriptionPlan, number> = {
+  weekly: 299,
+  monthly: 399,
+  yearly: 2499
+};
+
+// GROSS prices (VAT-inclusive) per additional branch - REAL ESTATE
+const GROSS_PER_BRANCH_PRICES_REAL_ESTATE: Record<SubscriptionPlan, number> = {
+  weekly: 59.80,   // ~20% of base weekly price per additional branch
+  monthly: 79.80,  // ~20% of base monthly price per additional branch
+  yearly: 499.80   // ~20% of base yearly price per additional branch
+};
+
+function getBasePrices(businessType: BusinessType): Record<SubscriptionPlan, number> {
+  switch (businessType) {
+    case 'factory': return GROSS_BASE_PRICES_FACTORY;
+    case 'real_estate': return GROSS_BASE_PRICES_REAL_ESTATE;
+    default: return GROSS_BASE_PRICES_RESTAURANT;
+  }
+}
+
+function getBranchPrices(businessType: BusinessType): Record<SubscriptionPlan, number> {
+  switch (businessType) {
+    case 'factory': return GROSS_PER_BRANCH_PRICES_FACTORY;
+    case 'real_estate': return GROSS_PER_BRANCH_PRICES_REAL_ESTATE;
+    default: return GROSS_PER_BRANCH_PRICES_RESTAURANT;
+  }
+}
+
 export function getPlanPricing(plan: SubscriptionPlan, branchesCount: number = 1, businessType: BusinessType = 'restaurant'): PricingBreakdown {
-  // Select pricing tables based on business type
-  const GROSS_BASE_PRICES = businessType === 'factory' 
-    ? GROSS_BASE_PRICES_FACTORY 
-    : GROSS_BASE_PRICES_RESTAURANT;
-  const GROSS_PER_BRANCH_PRICES = businessType === 'factory' 
-    ? GROSS_PER_BRANCH_PRICES_FACTORY 
-    : GROSS_PER_BRANCH_PRICES_RESTAURANT;
+  const GROSS_BASE_PRICES = getBasePrices(businessType);
+  const GROSS_PER_BRANCH_PRICES = getBranchPrices(businessType);
   
   const grossBasePrice = GROSS_BASE_PRICES[plan];
   const grossPerBranchPrice = GROSS_PER_BRANCH_PRICES[plan];

@@ -695,6 +695,18 @@ export interface Translations {
   // Business Types
   restaurantFoodService: string;
   factoryManufacturing: string;
+  realEstateBrokerage: string;
+  realEstateTypeLabel: string;
+  selectRealEstateTypePlaceholder: string;
+  brokerageOffice: string;
+  propertyManagement: string;
+  realEstateMarketing: string;
+  auctionManagement: string;
+  properties: string;
+  property: string;
+  office: string;
+  officeOperations: string;
+  realEstateLowercase: string;
   
   // Restaurant Types
   cloudKitchen: string;
@@ -2672,6 +2684,18 @@ export const translations: Record<Language, Translations> = {
     // Business Types
     restaurantFoodService: 'Restaurant / Food Service',
     factoryManufacturing: 'Factory / Manufacturing',
+    realEstateBrokerage: 'Real Estate Brokerage',
+    realEstateTypeLabel: 'Office Type',
+    selectRealEstateTypePlaceholder: 'Select office type',
+    brokerageOffice: 'Brokerage Office',
+    propertyManagement: 'Property Management',
+    realEstateMarketing: 'Real Estate Marketing',
+    auctionManagement: 'Auction Management',
+    properties: 'Properties',
+    property: 'Property',
+    office: 'Office',
+    officeOperations: 'Office Operations',
+    realEstateLowercase: 'real estate office',
     
     // Restaurant Types
     cloudKitchen: 'Cloud Kitchen',
@@ -4644,6 +4668,18 @@ export const translations: Record<Language, Translations> = {
     // Business Types
     restaurantFoodService: 'مطعم / خدمة غذائية',
     factoryManufacturing: 'مصنع / تصنيع',
+    realEstateBrokerage: 'وساطة عقارية',
+    realEstateTypeLabel: 'نوع المكتب',
+    selectRealEstateTypePlaceholder: 'اختر نوع المكتب',
+    brokerageOffice: 'مكتب وساطة',
+    propertyManagement: 'إدارة أملاك',
+    realEstateMarketing: 'تسويق عقاري',
+    auctionManagement: 'إدارة مزادات',
+    properties: 'عقارات',
+    property: 'عقار',
+    office: 'المكتب',
+    officeOperations: 'عمليات المكتب',
+    realEstateLowercase: 'مكتب عقاري',
     
     // Restaurant Types
     cloudKitchen: 'مطبخ سحابي',
@@ -6615,6 +6651,18 @@ export const translations: Record<Language, Translations> = {
     // Business Types
     restaurantFoodService: 'Restaurant / Lebensmittelservice',
     factoryManufacturing: 'Fabrik / Herstellung',
+    realEstateBrokerage: 'Immobilienmakler',
+    realEstateTypeLabel: 'Bürotyp',
+    selectRealEstateTypePlaceholder: 'Bürotyp auswählen',
+    brokerageOffice: 'Maklerbüro',
+    propertyManagement: 'Immobilienverwaltung',
+    realEstateMarketing: 'Immobilienmarketing',
+    auctionManagement: 'Auktionsmanagement',
+    properties: 'Immobilien',
+    property: 'Immobilie',
+    office: 'Büro',
+    officeOperations: 'Bürobetrieb',
+    realEstateLowercase: 'immobilienbüro',
     
     // Restaurant Types
     cloudKitchen: 'Cloud-Küche',
@@ -8568,6 +8616,18 @@ export const translations: Record<Language, Translations> = {
     // Business Types
     restaurantFoodService: '餐厅/食品服务',
     factoryManufacturing: '工厂/制造',
+    realEstateBrokerage: '房地产经纪',
+    realEstateTypeLabel: '办公类型',
+    selectRealEstateTypePlaceholder: '选择办公类型',
+    brokerageOffice: '经纪事务所',
+    propertyManagement: '物业管理',
+    realEstateMarketing: '房地产营销',
+    auctionManagement: '拍卖管理',
+    properties: '房产',
+    property: '房产',
+    office: '办公室',
+    officeOperations: '办公运营',
+    realEstateLowercase: '房地产事务所',
     
     // Restaurant Types
     cloudKitchen: '云厨房',
@@ -10521,6 +10581,18 @@ export const translations: Record<Language, Translations> = {
     // Business Types
     restaurantFoodService: 'রেস্তোরাঁ / খাদ্য সেবা',
     factoryManufacturing: 'কারখানা / উৎপাদন',
+    realEstateBrokerage: 'রিয়েল এস্টেট ব্রোকারেজ',
+    realEstateTypeLabel: 'অফিসের ধরন',
+    selectRealEstateTypePlaceholder: 'অফিসের ধরন নির্বাচন করুন',
+    brokerageOffice: 'ব্রোকারেজ অফিস',
+    propertyManagement: 'সম্পত্তি ব্যবস্থাপনা',
+    realEstateMarketing: 'রিয়েল এস্টেট মার্কেটিং',
+    auctionManagement: 'নিলাম ব্যবস্থাপনা',
+    properties: 'সম্পত্তি',
+    property: 'সম্পত্তি',
+    office: 'অফিস',
+    officeOperations: 'অফিস কার্যক্রম',
+    realEstateLowercase: 'রিয়েল এস্টেট অফিস',
     
     // Restaurant Types
     cloudKitchen: 'ক্লাউড রসোই',
@@ -12474,6 +12546,18 @@ export const translations: Record<Language, Translations> = {
     // Business Types
     restaurantFoodService: 'Ristorante / Servizio Ristorazione',
     factoryManufacturing: 'Fabbrica / Produzione',
+    realEstateBrokerage: 'Intermediazione Immobiliare',
+    realEstateTypeLabel: 'Tipo di Ufficio',
+    selectRealEstateTypePlaceholder: 'Seleziona tipo di ufficio',
+    brokerageOffice: 'Ufficio di Intermediazione',
+    propertyManagement: 'Gestione Immobiliare',
+    realEstateMarketing: 'Marketing Immobiliare',
+    auctionManagement: 'Gestione Aste',
+    properties: 'Immobili',
+    property: 'Immobile',
+    office: 'Ufficio',
+    officeOperations: "Operazioni d'Ufficio",
+    realEstateLowercase: 'ufficio immobiliare',
     
     // Restaurant Types
     cloudKitchen: 'Cucina Cloud',
@@ -14416,6 +14500,18 @@ export const translations: Record<Language, Translations> = {
     // Business Types
     restaurantFoodService: 'रेस्तरां / खाद्य सेवा',
     factoryManufacturing: 'कारखाना / निर्माण',
+    realEstateBrokerage: 'रियल एस्टेट ब्रोकरेज',
+    realEstateTypeLabel: 'कार्यालय प्रकार',
+    selectRealEstateTypePlaceholder: 'कार्यालय प्रकार चुनें',
+    brokerageOffice: 'ब्रोकरेज कार्यालय',
+    propertyManagement: 'संपत्ति प्रबंधन',
+    realEstateMarketing: 'रियल एस्टेट मार्केटिंग',
+    auctionManagement: 'नीलामी प्रबंधन',
+    properties: 'संपत्तियां',
+    property: 'संपत्ति',
+    office: 'कार्यालय',
+    officeOperations: 'कार्यालय संचालन',
+    realEstateLowercase: 'रियल एस्टेट कार्यालय',
     
     // Restaurant Types
     cloudKitchen: 'क्लाउड रसोई',
@@ -16313,6 +16409,18 @@ export const translations: Record<Language, Translations> = {
     // Business Types
     restaurantFoodService: 'ریستوراں / کھانے کی خدمت',
     factoryManufacturing: 'فیکٹری / مینوفیکچرنگ',
+    realEstateBrokerage: 'رئیل اسٹیٹ بروکریج',
+    realEstateTypeLabel: 'دفتر کی قسم',
+    selectRealEstateTypePlaceholder: 'دفتر کی قسم منتخب کریں',
+    brokerageOffice: 'بروکریج دفتر',
+    propertyManagement: 'جائیداد کا انتظام',
+    realEstateMarketing: 'رئیل اسٹیٹ مارکیٹنگ',
+    auctionManagement: 'نیلامی کا انتظام',
+    properties: 'جائیدادیں',
+    property: 'جائیداد',
+    office: 'دفتر',
+    officeOperations: 'دفتری کارروائیاں',
+    realEstateLowercase: 'رئیل اسٹیٹ دفتر',
     
     // Restaurant Types
     cloudKitchen: 'کلاؤڈ رسوئی',
@@ -18158,6 +18266,18 @@ export const translations: Record<Language, Translations> = {
     // Business Types
     restaurantFoodService: "Restaurante / Servicio de Alimentos",
     factoryManufacturing: "Fábrica / Manufactura",
+    realEstateBrokerage: "Corretaje Inmobiliario",
+    realEstateTypeLabel: "Tipo de Oficina",
+    selectRealEstateTypePlaceholder: "Seleccionar tipo de oficina",
+    brokerageOffice: "Oficina de Corretaje",
+    propertyManagement: "Gestión de Propiedades",
+    realEstateMarketing: "Marketing Inmobiliario",
+    auctionManagement: "Gestión de Subastas",
+    properties: "Propiedades",
+    property: "Propiedad",
+    office: "Oficina",
+    officeOperations: "Operaciones de Oficina",
+    realEstateLowercase: "oficina inmobiliaria",
     
     // Restaurant Types
     cloudKitchen: "Cocina en la Nube",
@@ -19986,6 +20106,18 @@ export const translations: Record<Language, Translations> = {
     // Business Types
     restaurantFoodService: "Restaurant / Food Service",
     factoryManufacturing: "Factory / Manufacturing",
+    realEstateBrokerage: "Real Estate Brokerage",
+    realEstateTypeLabel: "Uri ng Opisina",
+    selectRealEstateTypePlaceholder: "Pumili ng uri ng opisina",
+    brokerageOffice: "Opisina ng Brokerage",
+    propertyManagement: "Pamamahala ng Ari-arian",
+    realEstateMarketing: "Marketing ng Real Estate",
+    auctionManagement: "Pamamahala ng Auction",
+    properties: "Mga Ari-arian",
+    property: "Ari-arian",
+    office: "Opisina",
+    officeOperations: "Operasyon ng Opisina",
+    realEstateLowercase: "opisina ng real estate",
     
     // Restaurant Types
     cloudKitchen: "Cloud Kitchen",

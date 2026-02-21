@@ -744,6 +744,7 @@ export default function Login() {
                     <SelectContent>
                       <SelectItem value="restaurant">{t.restaurantFoodService}</SelectItem>
                       <SelectItem value="factory">{t.factoryManufacturing}</SelectItem>
+                      <SelectItem value="real_estate">{(t as any).realEstateBrokerage || "Real Estate Brokerage"}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -751,14 +752,14 @@ export default function Login() {
                 {signupBusinessType && (
                   <div className="space-y-2">
                     <Label htmlFor="signup-restaurant-type">
-                      {signupBusinessType === "factory" ? `${t.factoryTypeLabel} *` : `${t.restaurantTypeLabel} *`}
+                      {signupBusinessType === "factory" ? `${t.factoryTypeLabel} *` : signupBusinessType === "real_estate" ? `${(t as any).realEstateTypeLabel || "Office Type"} *` : `${t.restaurantTypeLabel} *`}
                     </Label>
                     <Select
                       value={signupRestaurantType}
                       onValueChange={setSignupRestaurantType}
                     >
                       <SelectTrigger id="signup-restaurant-type" data-testid="select-signup-restaurant-type">
-                        <SelectValue placeholder={signupBusinessType === "factory" ? t.selectFactoryTypePlaceholder : t.selectRestaurantTypePlaceholder} />
+                        <SelectValue placeholder={signupBusinessType === "factory" ? t.selectFactoryTypePlaceholder : signupBusinessType === "real_estate" ? ((t as any).selectRealEstateTypePlaceholder || "Select office type") : t.selectRestaurantTypePlaceholder} />
                       </SelectTrigger>
                       <SelectContent>
                         {signupBusinessType === "restaurant" ? (
@@ -770,12 +771,19 @@ export default function Login() {
                             <SelectItem value="Sweets">{t.sweets}</SelectItem>
                             <SelectItem value="Bakery">{t.bakery}</SelectItem>
                           </>
-                        ) : (
+                        ) : signupBusinessType === "factory" ? (
                           <>
                             <SelectItem value="Manufacturing">{t.manufacturing}</SelectItem>
                             <SelectItem value="Production">{t.processing}</SelectItem>
                             <SelectItem value="Assembly">{t.assembly}</SelectItem>
                             <SelectItem value="Processing">{t.processing}</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="Brokerage Office">{(t as any).brokerageOffice || "Brokerage Office"}</SelectItem>
+                            <SelectItem value="Property Management">{(t as any).propertyManagement || "Property Management"}</SelectItem>
+                            <SelectItem value="Real Estate Marketing">{(t as any).realEstateMarketing || "Real Estate Marketing"}</SelectItem>
+                            <SelectItem value="Auction Management">{(t as any).auctionManagement || "Auction Management"}</SelectItem>
                           </>
                         )}
                       </SelectContent>

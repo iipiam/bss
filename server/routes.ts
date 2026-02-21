@@ -5239,7 +5239,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         hasVatRegistration: hasVatReg,
         taxNumber: hasVatReg ? taxNumber : null,
         commercialRegistration,
-        businessType: businessType as "restaurant" | "factory",
+        businessType: businessType as "restaurant" | "factory" | "real_estate",
         restaurantType,
         subscriptionPlan: subscriptionPlan as "weekly" | "monthly" | "yearly",
         branchesCount: branches,
@@ -13101,7 +13101,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         );
 
         // Get plan pricing
-        const businessType = (rest.businessType === 'factory' ? 'factory' : 'restaurant') as 'restaurant' | 'factory';
+        const businessType = rest.businessType as 'restaurant' | 'factory' | 'real_estate';
         const planType = rest.subscriptionPlan as 'weekly' | 'monthly' | 'yearly';
         const pricing = getPlanPricing(planType, 1, businessType);
         
@@ -14029,7 +14029,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         })
         .from(restaurants);
 
-      const byType = {
+      const byType: Record<string, { total: number; active: number; expired: number; cancelled: number; byPlan: Record<string, number> }> = {
         restaurant: {
           total: 0,
           active: 0,
@@ -14044,10 +14044,17 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           cancelled: 0,
           byPlan: { weekly: 0, monthly: 0, yearly: 0 },
         },
+        real_estate: {
+          total: 0,
+          active: 0,
+          expired: 0,
+          cancelled: 0,
+          byPlan: { weekly: 0, monthly: 0, yearly: 0 },
+        },
       };
 
       for (const r of allRestaurants) {
-        const type = r.businessType as 'restaurant' | 'factory';
+        const type = r.businessType as string;
         if (!byType[type]) continue;
 
         byType[type].total++;
