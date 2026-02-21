@@ -114,13 +114,13 @@ export function AppSidebar() {
 
   // Declarative menu configuration with business type guards
   const allOperations: MenuItem[] = [
-    { title: t.pos, url: "/pos", icon: ShoppingCart, testId: "pos", gradient: "from-emerald-500 to-teal-500", permission: 'pos', businessTypes: ['restaurant', 'factory'] },
+    { title: businessType === 'real_estate' ? (t as any).dealProcessing : t.pos, url: "/pos", icon: ShoppingCart, testId: "pos", gradient: "from-emerald-500 to-teal-500", permission: 'pos' },
     { title: t.orders, url: "/orders", icon: ClipboardList, testId: "orders", gradient: "from-blue-500 to-cyan-500", permission: 'orders', businessTypes: ['restaurant', 'factory'] },
     { title: businessType === 'factory' ? t.workshop : t.kitchen, url: "/kitchen", icon: Flame, testId: "kitchen", gradient: "from-orange-500 to-red-500", permission: 'kitchen', businessTypes: ['restaurant', 'factory'] },
     { title: t.deliveryApps, url: "/delivery-apps", icon: Truck, testId: "delivery-apps", gradient: "from-violet-500 to-purple-500", permission: 'deliveryApps', businessTypes: ['restaurant'] },
-    { title: (t as any).propertyListings || 'Property Listings', url: "/menu", icon: Home, testId: "property-listings", gradient: "from-emerald-500 to-teal-500", permission: 'menu', businessTypes: ['real_estate'] },
-    { title: (t as any).clientInquiries || 'Client Inquiries', url: "/orders", icon: ClipboardList, testId: "client-inquiries", gradient: "from-blue-500 to-cyan-500", permission: 'orders', businessTypes: ['real_estate'] },
-    { title: (t as any).contracts || 'Contracts', url: "/contracts", icon: Handshake, testId: "contracts", gradient: "from-orange-500 to-red-500", permission: 'orders', businessTypes: ['real_estate'] },
+    { title: (t as any).propertyListings, url: "/menu", icon: Home, testId: "property-listings", gradient: "from-emerald-500 to-teal-500", permission: 'menu', businessTypes: ['real_estate'] },
+    { title: (t as any).clientInquiries, url: "/orders", icon: ClipboardList, testId: "client-inquiries", gradient: "from-blue-500 to-cyan-500", permission: 'orders', businessTypes: ['real_estate'] },
+    { title: (t as any).contracts, url: "/contracts", icon: Handshake, testId: "contracts", gradient: "from-orange-500 to-red-500", permission: 'orders', businessTypes: ['real_estate'] },
   ];
 
   const allManagement: MenuItem[] = [
@@ -131,13 +131,13 @@ export function AppSidebar() {
     { title: t.licenses || "Licenses", url: "/licenses", icon: FileKey, testId: "licenses", gradient: "from-amber-500 to-yellow-500", permission: 'licenses' },
     { title: t.customers, url: "/customers", icon: UserCircle, testId: "customers", gradient: "from-cyan-500 to-blue-500", permission: 'customers' },
     { title: t.investors, url: "/investors", icon: TrendingUp, testId: "investors", gradient: "from-emerald-500 to-green-500", permission: 'reports' },
-    { title: businessType === 'real_estate' ? ((t as any).offices || 'Offices') : t.branches, url: "/branches", icon: Building2, testId: "branches", gradient: "from-indigo-500 to-purple-500", permission: 'branches' },
+    { title: businessType === 'real_estate' ? (t as any).offices : t.branches, url: "/branches", icon: Building2, testId: "branches", gradient: "from-indigo-500 to-purple-500", permission: 'branches' },
     { title: t.procurement, url: "/procurement", icon: ShoppingBag, testId: "procurement", gradient: "from-pink-500 to-rose-500", permission: 'procurement', businessTypes: ['restaurant', 'factory'] },
-    { title: (t as any).valuations || 'Valuations', url: "/valuations", icon: Calculator, testId: "valuations", gradient: "from-teal-500 to-cyan-500", permission: 'reports', businessTypes: ['real_estate'] },
+    { title: (t as any).valuations, url: "/valuations", icon: Calculator, testId: "valuations", gradient: "from-teal-500 to-cyan-500", permission: 'reports', businessTypes: ['real_estate'] },
   ];
 
   const allAnalytics: MenuItem[] = [
-    { title: businessType === 'real_estate' ? ((t as any).commissions || 'Commissions') : t.sales, url: "/sales", icon: DollarSign, testId: "sales", gradient: "from-green-500 to-teal-500", permission: 'sales' },
+    { title: businessType === 'real_estate' ? (t as any).commissions : t.sales, url: "/sales", icon: DollarSign, testId: "sales", gradient: "from-green-500 to-teal-500", permission: 'sales' },
     { title: t.financial, url: "/financial", icon: Receipt, testId: "financial", gradient: "from-blue-500 to-purple-500", permission: 'reports' },
     { title: t.profitability, url: "/profitability", icon: Calculator, testId: "profitability", gradient: "from-amber-500 to-orange-500", permission: 'reports', businessTypes: ['restaurant', 'factory'] },
     { title: t.menuProfitability, url: "/menu-profitability", icon: TrendingUp, testId: "menu-profitability", gradient: "from-red-500 to-rose-500", permission: 'reports', businessTypes: ['restaurant', 'factory'] },
@@ -152,7 +152,7 @@ export function AppSidebar() {
 
   const allSystem: MenuItem[] = [
     { title: t.tutorial, url: "/tutorial", icon: BookOpen, testId: "tutorial", gradient: "from-purple-500 to-violet-500" },
-    { title: businessType === 'factory' ? t.factory : businessType === 'real_estate' ? ((t as any).office || 'Office') : t.shop, url: "/shop", icon: Store, testId: "shop", gradient: "from-pink-500 to-fuchsia-500", permission: 'workingHours' },
+    { title: businessType === 'factory' ? t.factory : businessType === 'real_estate' ? (t as any).office : t.shop, url: "/shop", icon: Store, testId: "shop", gradient: "from-pink-500 to-fuchsia-500", permission: 'workingHours' },
     { title: t.profile, url: "/profile", icon: UserCircle, testId: "profile", gradient: "from-indigo-500 to-purple-500" },
     { title: t.teamChat, url: "/chat", icon: MessageCircle, testId: "chat", gradient: "from-blue-500 to-cyan-500" },
     { title: t.support || "Support", url: "/support", icon: HeadphonesIcon, testId: "support", gradient: "from-emerald-500 to-teal-500" },

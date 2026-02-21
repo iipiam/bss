@@ -746,7 +746,7 @@ export default function Menu() {
                       <FormControl>
                         <Input
                           {...field}
-                          placeholder={isRealEstate ? ((t as any).propertyNamePlaceholder || "e.g., Villa in Riyadh") : (t.itemNamePlaceholder || "e.g., Margherita Pizza")}
+                          placeholder={isRealEstate ? (t as any).propertyNamePlaceholder : (t.itemNamePlaceholder || "e.g., Margherita Pizza")}
                           data-testid="input-menu-name"
                         />
                       </FormControl>

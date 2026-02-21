@@ -74,7 +74,7 @@ export default function POS() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const { device } = useDevice();
-  const { isFactory } = useBusinessType();
+  const { isFactory, isRealEstate } = useBusinessType();
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -156,6 +156,13 @@ export default function POS() {
       setEarningsDecreaseApplied(false);
     }
   }, [selectedDeliveryAppId]);
+
+  // Set default order type for real estate
+  useEffect(() => {
+    if (isRealEstate) {
+      setOrderType("Sale");
+    }
+  }, [isRealEstate]);
 
   // Helper function for flexible phone number matching (handles +966 Saudi prefix)
   const phoneMatches = (storedPhone: string, searchQuery: string): boolean => {
@@ -257,9 +264,11 @@ export default function POS() {
       await apiRequest("POST", "/api/transactions", transaction);
 
       // Show success immediately - don't wait for PDF generation
+      const toastTitle = isRealEstate ? (t as any).dealCompleted : t.orderCompleted;
+      const toastDesc = isRealEstate ? (t as any).dealCompletedDesc : t.orderCompletedDesc;
       toast({
-        title: t.orderCompleted,
-        description: t.orderCompletedDesc.replace(
+        title: toastTitle,
+        description: toastDesc.replace(
           "${order.orderNumber}",
           order.orderNumber,
         ),
@@ -650,7 +659,7 @@ export default function POS() {
     return (
       <div className="h-full flex flex-col">
         <div className="flex-shrink-0 p-4 border-b">
-          <h1 className="text-2xl font-bold mb-3">{t.pointOfSale}</h1>
+          <h1 className="text-2xl font-bold mb-3">{isRealEstate ? (t as any).dealProcessing : t.pointOfSale}</h1>
           <Tabs
             value={mobileView}
             onValueChange={(v) => setMobileView(v as "menu" | "cart")}
@@ -835,15 +844,31 @@ export default function POS() {
             <div className="p-4 border-b">
               <Tabs value={orderType} onValueChange={setOrderType}>
                 <TabsList className="w-full grid grid-cols-3">
-                  <TabsTrigger value="Dine-In" className="text-xs">
-                    {t.dineIn}
-                  </TabsTrigger>
-                  <TabsTrigger value="Takeout" className="text-xs">
-                    {t.takeout}
-                  </TabsTrigger>
-                  <TabsTrigger value="Delivery" className="text-xs">
-                    {t.deliveryOrder}
-                  </TabsTrigger>
+                  {isRealEstate ? (
+                    <>
+                      <TabsTrigger value="Sale" className="text-xs">
+                        {(t as any).sale}
+                      </TabsTrigger>
+                      <TabsTrigger value="Lease" className="text-xs">
+                        {(t as any).lease}
+                      </TabsTrigger>
+                      <TabsTrigger value="Rental" className="text-xs">
+                        {(t as any).rental}
+                      </TabsTrigger>
+                    </>
+                  ) : (
+                    <>
+                      <TabsTrigger value="Dine-In" className="text-xs">
+                        {t.dineIn}
+                      </TabsTrigger>
+                      <TabsTrigger value="Takeout" className="text-xs">
+                        {t.takeout}
+                      </TabsTrigger>
+                      <TabsTrigger value="Delivery" className="text-xs">
+                        {t.deliveryOrder}
+                      </TabsTrigger>
+                    </>
+                  )}
                 </TabsList>
               </Tabs>
             </div>
@@ -858,7 +883,7 @@ export default function POS() {
                     className="mt-4"
                     onClick={() => setMobileView("menu")}
                   >
-                    {t.browseMenu}
+                    {isRealEstate ? (t as any).browseProperties : t.browseMenu}
                   </Button>
                 </div>
               ) : (
@@ -1019,36 +1044,38 @@ export default function POS() {
                 </Select>
               </div>
 
-              <div className="mb-3">
-                <Label className="text-xs font-medium mb-1 block">
-                  {t.deliveryAppOptional}
-                </Label>
-                <Select
-                  value={selectedDeliveryAppId || "none"}
-                  onValueChange={(value) =>
-                    setSelectedDeliveryAppId(value === "none" ? null : value)
-                  }
-                >
-                  <SelectTrigger
-                    data-testid="select-delivery-app"
-                    className="w-full h-[44px]"
+              {!isRealEstate && (
+                <div className="mb-3">
+                  <Label className="text-xs font-medium mb-1 block">
+                    {t.deliveryAppOptional}
+                  </Label>
+                  <Select
+                    value={selectedDeliveryAppId || "none"}
+                    onValueChange={(value) =>
+                      setSelectedDeliveryAppId(value === "none" ? null : value)
+                    }
                   >
-                    <SelectValue placeholder={t.selectDeliveryApp} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">{t.none}</SelectItem>
-                    {deliveryApps
-                      .filter((app) => app.active)
-                      .map((app) => (
-                        <SelectItem key={app.id} value={app.id}>
-                          {app.name} ({parseFloat(app.commission).toFixed(0)}%)
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                    <SelectTrigger
+                      data-testid="select-delivery-app"
+                      className="w-full h-[44px]"
+                    >
+                      <SelectValue placeholder={t.selectDeliveryApp} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">{t.none}</SelectItem>
+                      {deliveryApps
+                        .filter((app) => app.active)
+                        .map((app) => (
+                          <SelectItem key={app.id} value={app.id}>
+                            {app.name} ({parseFloat(app.commission).toFixed(0)}%)
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-              {selectedDeliveryAppId && (
+              {!isRealEstate && selectedDeliveryAppId && (
                 <div className="mb-3 flex items-center space-x-2">
                   <Checkbox
                     id="earnings-decrease-mobile"
@@ -1106,21 +1133,23 @@ export default function POS() {
               )}
 
               <div className="grid grid-cols-2 gap-2 mb-2">
-                <div>
-                  <Label htmlFor="table-number-mobile" className="text-xs mb-1">
-                    {isFactory ? t.truck : t.tableHash}
-                  </Label>
-                  <Input
-                    id="table-number-mobile"
-                    placeholder={
-                      isFactory ? t.truckNumber : t.tableNumberPlaceholder
-                    }
-                    value={tableNumber}
-                    onChange={(e) => setTableNumber(e.target.value)}
-                    data-testid="input-table-number"
-                    className="h-[44px]"
-                  />
-                </div>
+                {!isRealEstate && (
+                  <div>
+                    <Label htmlFor="table-number-mobile" className="text-xs mb-1">
+                      {isFactory ? t.truck : t.tableHash}
+                    </Label>
+                    <Input
+                      id="table-number-mobile"
+                      placeholder={
+                        isFactory ? t.truckNumber : t.tableNumberPlaceholder
+                      }
+                      value={tableNumber}
+                      onChange={(e) => setTableNumber(e.target.value)}
+                      data-testid="input-table-number"
+                      className="h-[44px]"
+                    />
+                  </div>
+                )}
                 <div className="flex flex-col">
                   <Label className="text-xs mb-1 invisible">{t.customer}</Label>
                   <Dialog
@@ -1329,7 +1358,7 @@ export default function POS() {
   return (
     <div className="h-screen flex">
       <div className="flex-1 p-6 overflow-auto">
-        <h1 className="text-3xl font-bold mb-6">{t.pointOfSale}</h1>
+        <h1 className="text-3xl font-bold mb-6">{isRealEstate ? (t as any).dealProcessing : t.pointOfSale}</h1>
 
         <div className="mb-6">
           <div className="relative mb-4">
@@ -1468,15 +1497,31 @@ export default function POS() {
           <h2 className="text-2xl font-bold mb-4">{t.currentOrder}</h2>
           <Tabs value={orderType} onValueChange={setOrderType}>
             <TabsList className="w-full">
-              <TabsTrigger value="Dine-In" className="flex-1">
-                {t.dineIn}
-              </TabsTrigger>
-              <TabsTrigger value="Takeout" className="flex-1">
-                {t.takeout}
-              </TabsTrigger>
-              <TabsTrigger value="Delivery" className="flex-1">
-                {t.deliveryOrder}
-              </TabsTrigger>
+              {isRealEstate ? (
+                <>
+                  <TabsTrigger value="Sale" className="flex-1">
+                    {(t as any).sale}
+                  </TabsTrigger>
+                  <TabsTrigger value="Lease" className="flex-1">
+                    {(t as any).lease}
+                  </TabsTrigger>
+                  <TabsTrigger value="Rental" className="flex-1">
+                    {(t as any).rental}
+                  </TabsTrigger>
+                </>
+              ) : (
+                <>
+                  <TabsTrigger value="Dine-In" className="flex-1">
+                    {t.dineIn}
+                  </TabsTrigger>
+                  <TabsTrigger value="Takeout" className="flex-1">
+                    {t.takeout}
+                  </TabsTrigger>
+                  <TabsTrigger value="Delivery" className="flex-1">
+                    {t.deliveryOrder}
+                  </TabsTrigger>
+                </>
+              )}
             </TabsList>
           </Tabs>
         </div>
@@ -1648,36 +1693,38 @@ export default function POS() {
             </Select>
           </div>
 
-          <div className="mb-4">
-            <Label className="text-sm font-medium mb-2 block">
-              {t.deliveryAppOptional}
-            </Label>
-            <Select
-              value={selectedDeliveryAppId || "none"}
-              onValueChange={(value) =>
-                setSelectedDeliveryAppId(value === "none" ? null : value)
-              }
-            >
-              <SelectTrigger
-                data-testid="select-delivery-app"
-                className="w-full"
+          {!isRealEstate && (
+            <div className="mb-4">
+              <Label className="text-sm font-medium mb-2 block">
+                {t.deliveryAppOptional}
+              </Label>
+              <Select
+                value={selectedDeliveryAppId || "none"}
+                onValueChange={(value) =>
+                  setSelectedDeliveryAppId(value === "none" ? null : value)
+                }
               >
-                <SelectValue placeholder={t.selectDeliveryApp} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">{t.none}</SelectItem>
-                {deliveryApps
-                  .filter((app) => app.active)
-                  .map((app) => (
-                    <SelectItem key={app.id} value={app.id}>
-                      {app.name} ({parseFloat(app.commission).toFixed(0)}%)
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
+                <SelectTrigger
+                  data-testid="select-delivery-app"
+                  className="w-full"
+                >
+                  <SelectValue placeholder={t.selectDeliveryApp} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t.none}</SelectItem>
+                  {deliveryApps
+                    .filter((app) => app.active)
+                    .map((app) => (
+                      <SelectItem key={app.id} value={app.id}>
+                        {app.name} ({parseFloat(app.commission).toFixed(0)}%)
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
-          {selectedDeliveryAppId && (
+          {!isRealEstate && selectedDeliveryAppId && (
             <div className="mb-4 flex items-center space-x-2">
               <Checkbox
                 id="earnings-decrease-desktop"
@@ -1735,20 +1782,22 @@ export default function POS() {
           )}
 
           <div className="grid grid-cols-2 gap-2 mb-2">
-            <div>
-              <Label htmlFor="table-number-desktop" className="text-sm mb-1">
-                {isFactory ? t.truck : t.tableHash}
-              </Label>
-              <Input
-                id="table-number-desktop"
-                placeholder={
-                  isFactory ? t.truckNumber : t.tableNumberPlaceholder
-                }
-                value={tableNumber}
-                onChange={(e) => setTableNumber(e.target.value)}
-                data-testid="input-table-number-desktop"
-              />
-            </div>
+            {!isRealEstate && (
+              <div>
+                <Label htmlFor="table-number-desktop" className="text-sm mb-1">
+                  {isFactory ? t.truck : t.tableHash}
+                </Label>
+                <Input
+                  id="table-number-desktop"
+                  placeholder={
+                    isFactory ? t.truckNumber : t.tableNumberPlaceholder
+                  }
+                  value={tableNumber}
+                  onChange={(e) => setTableNumber(e.target.value)}
+                  data-testid="input-table-number-desktop"
+                />
+              </div>
+            )}
             <div className="flex flex-col">
               <Label className="text-sm mb-1 invisible">{t.customer}</Label>
               <Dialog

@@ -556,7 +556,7 @@ export default function Dashboard() {
           )}
         </h1>
         <p className="text-muted-foreground text-sm">
-          {t.dashboardOverview || (businessType === 'real_estate' ? "Overview of your brokerage performance" : "Overview of your restaurant performance")}
+          {businessType === 'real_estate' ? (t as any).brokerageOverview : (t.dashboardOverview || "Overview of your restaurant performance")}
         </p>
       </div>
       <div

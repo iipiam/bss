@@ -14,6 +14,7 @@ import type { Settings } from "@shared/schema";
 import { Save, Laptop, Tablet, Smartphone, Volume2, Bell, MessageSquare, Upload, Trash2, Image, Plus, X, Calendar, Clock } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { notificationTones, toneIds, playNotificationTone, getToneName, type ToneId } from "@/lib/notificationTones";
+import { useBusinessType } from "@/hooks/useBusinessType";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 type DaySchedule = {
@@ -55,6 +56,7 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const { t, setLanguage, language } = useLanguage();
   const { restaurant, isLoading: authLoading } = useAuth();
+  const { labels, isRealEstate } = useBusinessType();
   const [formData, setFormData] = useState<Partial<Settings>>({});
   const [showShift2, setShowShift2] = useState(false);
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule>(createDefaultWeeklySchedule());
@@ -261,12 +263,12 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle>{t.itAccount || "IT Account"}</CardTitle>
             <CardDescription>
-              {t.itAccountNoRestaurantSettings || "IT accounts don't have restaurant-specific settings. These settings are managed per restaurant."}
+              {t.itAccountNoRestaurantSettings || "IT accounts don't have client-specific settings. These settings are managed per client."}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              {t.loginWithClientAccount || "To configure restaurant settings, please log in with a client account."}
+              {t.loginWithClientAccount || "To configure settings, please log in with a client account."}
             </p>
           </CardContent>
         </Card>
@@ -290,23 +292,23 @@ export default function SettingsPage() {
     <div className="p-8 space-y-6">
       <div>
         <h1 className="text-3xl font-bold mb-2">{t.settings}</h1>
-        <p className="text-muted-foreground">{t.settingsDescription}</p>
+        <p className="text-muted-foreground">{isRealEstate ? (t as any).settingsDescriptionRealEstate : t.settingsDescription}</p>
       </div>
 
       <form onSubmit={handleSubmit}>
         <Card>
           <CardHeader>
-            <CardTitle>{t.restaurantInformation}</CardTitle>
+            <CardTitle>{isRealEstate ? (t as any).brokerageInformation : t.restaurantInformation}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="restaurantName">{t.restaurantName}</Label>
+                <Label htmlFor="restaurantName">{isRealEstate ? (t as any).brokerageName : t.restaurantName}</Label>
                 <Input
                   id="restaurantName"
                   value={formData.restaurantName || settings?.restaurantName || ""}
                   onChange={(e) => handleChange("restaurantName", e.target.value)}
-                  placeholder={t.enterRestaurantName}
+                  placeholder={isRealEstate ? (t as any).enterBrokerageName : t.enterRestaurantName}
                   data-testid="input-restaurant-name"
                   required
                 />

@@ -719,6 +719,19 @@ export interface Translations {
   valuationsDescription: string;
   valuationsComingSoon: string;
   valuationsComingSoonDesc: string;
+  brokerageOverview: string;
+  brokerageInformation: string;
+  brokerageName: string;
+  enterBrokerageName: string;
+  settingsDescriptionRealEstate: string;
+  dealProcessing: string;
+  sale: string;
+  lease: string;
+  rental: string;
+  browseProperties: string;
+  dealCompleted: string;
+  dealCompletedDesc: string;
+  propertyNamePlaceholder: string;
   
   // Restaurant Types
   cloudKitchen: string;
@@ -2720,6 +2733,19 @@ export const translations: Record<Language, Translations> = {
     valuationsDescription: 'Property valuation assessments and reports',
     valuationsComingSoon: 'Property Valuations Coming Soon',
     valuationsComingSoonDesc: 'Conduct property valuations, generate assessment reports, and track market values.',
+    brokerageOverview: 'Overview of your brokerage performance',
+    brokerageInformation: 'Brokerage Information',
+    brokerageName: 'Brokerage Name',
+    enterBrokerageName: 'Enter brokerage name',
+    settingsDescriptionRealEstate: 'Configure brokerage information and preferences',
+    dealProcessing: 'Deal Processing',
+    sale: 'Sale',
+    lease: 'Lease',
+    rental: 'Rental',
+    browseProperties: 'Browse Properties',
+    dealCompleted: 'Deal Completed',
+    dealCompletedDesc: 'Deal ${order.orderNumber} has been processed successfully',
+    propertyNamePlaceholder: 'e.g., Villa in Riyadh',
     
     // Restaurant Types
     cloudKitchen: 'Cloud Kitchen',
@@ -4716,6 +4742,19 @@ export const translations: Record<Language, Translations> = {
     valuationsDescription: 'تقييمات العقارات والتقارير',
     valuationsComingSoon: 'تقييمات العقارات قريباً',
     valuationsComingSoonDesc: 'إجراء تقييمات العقارات وإنشاء تقارير التقييم وتتبع قيم السوق.',
+    brokerageOverview: 'نظرة عامة على أداء الوساطة',
+    brokerageInformation: 'معلومات الوساطة',
+    brokerageName: 'اسم الوساطة',
+    enterBrokerageName: 'أدخل اسم الوساطة',
+    settingsDescriptionRealEstate: 'تكوين معلومات الوساطة والتفضيلات',
+    dealProcessing: 'معالجة الصفقات',
+    sale: 'بيع',
+    lease: 'تأجير',
+    rental: 'إيجار',
+    browseProperties: 'تصفح العقارات',
+    dealCompleted: 'تمت الصفقة',
+    dealCompletedDesc: 'تمت معالجة الصفقة ${order.orderNumber} بنجاح',
+    propertyNamePlaceholder: 'مثال: فيلا في الرياض',
     
     // Restaurant Types
     cloudKitchen: 'مطبخ سحابي',
@@ -6711,6 +6750,19 @@ export const translations: Record<Language, Translations> = {
     valuationsDescription: 'Immobilienbewertungen und Berichte',
     valuationsComingSoon: 'Immobilienbewertungen kommen bald',
     valuationsComingSoonDesc: 'Führen Sie Immobilienbewertungen durch, erstellen Sie Bewertungsberichte und verfolgen Sie Marktwerte.',
+    brokerageOverview: 'Übersicht über Ihre Maklerleistung',
+    brokerageInformation: 'Maklerinformationen',
+    brokerageName: 'Maklername',
+    enterBrokerageName: 'Maklernamen eingeben',
+    settingsDescriptionRealEstate: 'Maklerinformationen und Einstellungen konfigurieren',
+    dealProcessing: 'Geschäftsabwicklung',
+    sale: 'Verkauf',
+    lease: 'Pacht',
+    rental: 'Miete',
+    browseProperties: 'Immobilien durchsuchen',
+    dealCompleted: 'Geschäft abgeschlossen',
+    dealCompletedDesc: 'Geschäft ${order.orderNumber} wurde erfolgreich bearbeitet',
+    propertyNamePlaceholder: 'z.B., Villa in Riad',
     
     // Restaurant Types
     cloudKitchen: 'Cloud-Küche',
@@ -8688,6 +8740,19 @@ export const translations: Record<Language, Translations> = {
     valuationsDescription: '房产估值评估和报告',
     valuationsComingSoon: '房产估值即将推出',
     valuationsComingSoonDesc: '进行房产估值、生成评估报告并跟踪市场价值。',
+    brokerageOverview: '经纪业绩概览',
+    brokerageInformation: '经纪信息',
+    brokerageName: '经纪公司名称',
+    enterBrokerageName: '输入经纪公司名称',
+    settingsDescriptionRealEstate: '配置经纪信息和偏好设置',
+    dealProcessing: '交易处理',
+    sale: '出售',
+    lease: '租赁',
+    rental: '出租',
+    browseProperties: '浏览房产',
+    dealCompleted: '交易完成',
+    dealCompletedDesc: '交易 ${order.orderNumber} 已成功处理',
+    propertyNamePlaceholder: '例如：利雅得别墅',
     
     // Restaurant Types
     cloudKitchen: '云厨房',
@@ -10665,6 +10730,19 @@ export const translations: Record<Language, Translations> = {
     valuationsDescription: 'সম্পত্তি মূল্যায়ন এবং প্রতিবেদন',
     valuationsComingSoon: 'সম্পত্তি মূল্যায়ন শীঘ্রই আসছে',
     valuationsComingSoonDesc: 'সম্পত্তি মূল্যায়ন পরিচালনা করুন, মূল্যায়ন প্রতিবেদন তৈরি করুন এবং বাজার মূল্য ট্র্যাক করুন।',
+    brokerageOverview: 'আপনার ব্রোকারেজ কর্মক্ষমতার সংক্ষিপ্ত বিবরণ',
+    brokerageInformation: 'ব্রোকারেজ তথ্য',
+    brokerageName: 'ব্রোকারেজ নাম',
+    enterBrokerageName: 'ব্রোকারেজ নাম লিখুন',
+    settingsDescriptionRealEstate: 'ব্রোকারেজ তথ্য এবং পছন্দ কনফিগার করুন',
+    dealProcessing: 'ডিল প্রক্রিয়াকরণ',
+    sale: 'বিক্রয়',
+    lease: 'লিজ',
+    rental: 'ভাড়া',
+    browseProperties: 'সম্পত্তি ব্রাউজ করুন',
+    dealCompleted: 'ডিল সম্পন্ন',
+    dealCompletedDesc: 'ডিল ${order.orderNumber} সফলভাবে প্রক্রিয়া করা হয়েছে',
+    propertyNamePlaceholder: 'যেমন: রিয়াদে ভিলা',
     
     // Restaurant Types
     cloudKitchen: 'ক্লাউড রসোই',
@@ -12642,6 +12720,19 @@ export const translations: Record<Language, Translations> = {
     valuationsDescription: 'Valutazioni immobiliari e rapporti',
     valuationsComingSoon: 'Valutazioni Immobiliari in arrivo',
     valuationsComingSoonDesc: 'Effettua valutazioni immobiliari, genera rapporti di valutazione e monitora i valori di mercato.',
+    brokerageOverview: 'Panoramica delle prestazioni di intermediazione',
+    brokerageInformation: 'Informazioni Intermediazione',
+    brokerageName: 'Nome Intermediazione',
+    enterBrokerageName: 'Inserisci nome intermediazione',
+    settingsDescriptionRealEstate: 'Configura informazioni e preferenze di intermediazione',
+    dealProcessing: 'Elaborazione Trattative',
+    sale: 'Vendita',
+    lease: 'Locazione',
+    rental: 'Affitto',
+    browseProperties: 'Sfoglia Proprietà',
+    dealCompleted: 'Trattativa Completata',
+    dealCompletedDesc: 'Trattativa ${order.orderNumber} elaborata con successo',
+    propertyNamePlaceholder: 'es., Villa a Riyadh',
     
     // Restaurant Types
     cloudKitchen: 'Cucina Cloud',
@@ -14608,6 +14699,19 @@ export const translations: Record<Language, Translations> = {
     valuationsDescription: 'संपत्ति मूल्यांकन और रिपोर्ट',
     valuationsComingSoon: 'संपत्ति मूल्यांकन जल्द आ रहा है',
     valuationsComingSoonDesc: 'संपत्ति मूल्यांकन करें, मूल्यांकन रिपोर्ट तैयार करें और बाजार मूल्यों को ट्रैक करें।',
+    brokerageOverview: 'आपके ब्रोकरेज प्रदर्शन का अवलोकन',
+    brokerageInformation: 'ब्रोकरेज जानकारी',
+    brokerageName: 'ब्रोकरेज नाम',
+    enterBrokerageName: 'ब्रोकरेज नाम दर्ज करें',
+    settingsDescriptionRealEstate: 'ब्रोकरेज जानकारी और प्राथमिकताएं कॉन्फ़िगर करें',
+    dealProcessing: 'डील प्रोसेसिंग',
+    sale: 'बिक्री',
+    lease: 'लीज़',
+    rental: 'किराया',
+    browseProperties: 'प्रॉपर्टी ब्राउज़ करें',
+    dealCompleted: 'डील पूरी हुई',
+    dealCompletedDesc: 'डील ${order.orderNumber} सफलतापूर्वक प्रोसेस हो गई',
+    propertyNamePlaceholder: 'उदा., रियाध में विला',
     
     // Restaurant Types
     cloudKitchen: 'क्लाउड रसोई',
@@ -16529,6 +16633,19 @@ export const translations: Record<Language, Translations> = {
     valuationsDescription: 'جائیداد کی تشخیصات اور رپورٹیں',
     valuationsComingSoon: 'جائیداد کی تشخیصات جلد آ رہی ہیں',
     valuationsComingSoonDesc: 'جائیداد کی تشخیصات کریں، تشخیصی رپورٹیں بنائیں اور مارکیٹ اقدار کو ٹریک کریں۔',
+    brokerageOverview: 'آپ کی بروکریج کارکردگی کا جائزہ',
+    brokerageInformation: 'بروکریج معلومات',
+    brokerageName: 'بروکریج نام',
+    enterBrokerageName: 'بروکریج نام درج کریں',
+    settingsDescriptionRealEstate: 'بروکریج معلومات اور ترجیحات ترتیب دیں',
+    dealProcessing: 'ڈیل پروسیسنگ',
+    sale: 'فروخت',
+    lease: 'لیز',
+    rental: 'کرایہ',
+    browseProperties: 'جائیدادیں براؤز کریں',
+    dealCompleted: 'ڈیل مکمل',
+    dealCompletedDesc: 'ڈیل ${order.orderNumber} کامیابی سے پروسیس ہو گئی',
+    propertyNamePlaceholder: 'مثال: ریاض میں ولا',
     
     // Restaurant Types
     cloudKitchen: 'کلاؤڈ رسوئی',
@@ -18398,6 +18515,19 @@ export const translations: Record<Language, Translations> = {
     valuationsDescription: 'Evaluaciones y reportes de propiedades',
     valuationsComingSoon: 'Valoraciones de Propiedades Próximamente',
     valuationsComingSoonDesc: 'Realiza valoraciones de propiedades, genera informes de evaluación y rastrea valores de mercado.',
+    brokerageOverview: 'Resumen del rendimiento de corretaje',
+    brokerageInformation: 'Información de Corretaje',
+    brokerageName: 'Nombre de Corretaje',
+    enterBrokerageName: 'Ingrese nombre de corretaje',
+    settingsDescriptionRealEstate: 'Configurar información y preferencias de corretaje',
+    dealProcessing: 'Procesamiento de Transacciones',
+    sale: 'Venta',
+    lease: 'Arrendamiento',
+    rental: 'Alquiler',
+    browseProperties: 'Explorar Propiedades',
+    dealCompleted: 'Transacción Completada',
+    dealCompletedDesc: 'Transacción ${order.orderNumber} procesada exitosamente',
+    propertyNamePlaceholder: 'ej., Villa en Riad',
     
     // Restaurant Types
     cloudKitchen: "Cocina en la Nube",
@@ -20250,6 +20380,19 @@ export const translations: Record<Language, Translations> = {
     valuationsDescription: 'Mga pagtatasa at ulat ng ari-arian',
     valuationsComingSoon: 'Mga Pagpapahalaga ng Ari-arian Malapit Na',
     valuationsComingSoonDesc: 'Magsagawa ng pagpapahalaga ng ari-arian, bumuo ng mga ulat ng pagtatasa, at subaybayan ang mga halaga sa merkado.',
+    brokerageOverview: 'Pangkalahatang-ideya ng pagganap ng brokerage',
+    brokerageInformation: 'Impormasyon ng Brokerage',
+    brokerageName: 'Pangalan ng Brokerage',
+    enterBrokerageName: 'Ilagay ang pangalan ng brokerage',
+    settingsDescriptionRealEstate: 'I-configure ang impormasyon at mga kagustuhan ng brokerage',
+    dealProcessing: 'Pagproseso ng Deal',
+    sale: 'Benta',
+    lease: 'Upa',
+    rental: 'Arkila',
+    browseProperties: 'Mag-browse ng Mga Ari-arian',
+    dealCompleted: 'Nakumpleto ang Deal',
+    dealCompletedDesc: 'Matagumpay na naproseso ang deal ${order.orderNumber}',
+    propertyNamePlaceholder: 'hal., Villa sa Riyadh',
     
     // Restaurant Types
     cloudKitchen: "Cloud Kitchen",
