@@ -733,7 +733,7 @@ export default function Login() {
                       setSignupBusinessType(value);
                       setSignupRestaurantType(""); // Reset subtype when business type changes
                       // Reset to monthly for factory (no weekly option)
-                      if (value === "factory" && subscriptionPlan === "weekly") {
+                      if ((value === "factory" || value === "design_services" || value === "installation_services" || value === "it_services") && subscriptionPlan === "weekly") {
                         setSubscriptionPlan("monthly");
                       }
                     }}
@@ -745,6 +745,9 @@ export default function Login() {
                       <SelectItem value="restaurant">{t.restaurantFoodService}</SelectItem>
                       <SelectItem value="factory">{t.factoryManufacturing}</SelectItem>
                       <SelectItem value="real_estate">{(t as any).realEstateBrokerage || "Real Estate Brokerage"}</SelectItem>
+                      <SelectItem value="design_services">{(t as any).designServices || "Design Services"}</SelectItem>
+                      <SelectItem value="installation_services">{(t as any).installationServices || "Installation Services"}</SelectItem>
+                      <SelectItem value="it_services">{(t as any).itServices || "IT Services"}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -752,14 +755,14 @@ export default function Login() {
                 {signupBusinessType && (
                   <div className="space-y-2">
                     <Label htmlFor="signup-restaurant-type">
-                      {signupBusinessType === "factory" ? `${t.factoryTypeLabel} *` : signupBusinessType === "real_estate" ? `${(t as any).realEstateTypeLabel || "Office Type"} *` : `${t.restaurantTypeLabel} *`}
+                      {signupBusinessType === "factory" ? `${t.factoryTypeLabel} *` : signupBusinessType === "real_estate" ? `${(t as any).realEstateTypeLabel || "Office Type"} *` : signupBusinessType === "design_services" || signupBusinessType === "installation_services" || signupBusinessType === "it_services" ? `${(t as any).serviceTypeLabel || "Service Type"} *` : `${t.restaurantTypeLabel} *`}
                     </Label>
                     <Select
                       value={signupRestaurantType}
                       onValueChange={setSignupRestaurantType}
                     >
                       <SelectTrigger id="signup-restaurant-type" data-testid="select-signup-restaurant-type">
-                        <SelectValue placeholder={signupBusinessType === "factory" ? t.selectFactoryTypePlaceholder : signupBusinessType === "real_estate" ? ((t as any).selectRealEstateTypePlaceholder || "Select office type") : t.selectRestaurantTypePlaceholder} />
+                        <SelectValue placeholder={signupBusinessType === "factory" ? t.selectFactoryTypePlaceholder : signupBusinessType === "real_estate" ? ((t as any).selectRealEstateTypePlaceholder || "Select office type") : signupBusinessType === "design_services" || signupBusinessType === "installation_services" || signupBusinessType === "it_services" ? ((t as any).selectServiceTypePlaceholder || "Select service type") : t.selectRestaurantTypePlaceholder} />
                       </SelectTrigger>
                       <SelectContent>
                         {signupBusinessType === "restaurant" ? (
@@ -778,14 +781,35 @@ export default function Login() {
                             <SelectItem value="Assembly">{t.assembly}</SelectItem>
                             <SelectItem value="Processing">{t.processing}</SelectItem>
                           </>
-                        ) : (
+                        ) : signupBusinessType === "real_estate" ? (
                           <>
                             <SelectItem value="Brokerage Office">{(t as any).brokerageOffice || "Brokerage Office"}</SelectItem>
                             <SelectItem value="Property Management">{(t as any).propertyManagement || "Property Management"}</SelectItem>
                             <SelectItem value="Real Estate Marketing">{(t as any).realEstateMarketing || "Real Estate Marketing"}</SelectItem>
                             <SelectItem value="Auction Management">{(t as any).auctionManagement || "Auction Management"}</SelectItem>
                           </>
-                        )}
+                        ) : signupBusinessType === "design_services" ? (
+                          <>
+                            <SelectItem value="Interior Design">{(t as any).interiorDesign || "Interior Design"}</SelectItem>
+                            <SelectItem value="Architectural Design">{(t as any).architecturalDesign || "Architectural Design"}</SelectItem>
+                            <SelectItem value="Graphic Design">{(t as any).graphicDesign || "Graphic Design"}</SelectItem>
+                            <SelectItem value="Landscape Design">{(t as any).landscapeDesign || "Landscape Design"}</SelectItem>
+                          </>
+                        ) : signupBusinessType === "installation_services" ? (
+                          <>
+                            <SelectItem value="HVAC Installation">{(t as any).hvacInstallation || "HVAC Installation"}</SelectItem>
+                            <SelectItem value="Electrical Installation">{(t as any).electricalInstallation || "Electrical Installation"}</SelectItem>
+                            <SelectItem value="Plumbing Installation">{(t as any).plumbingInstallation || "Plumbing Installation"}</SelectItem>
+                            <SelectItem value="General Contracting">{(t as any).generalContracting || "General Contracting"}</SelectItem>
+                          </>
+                        ) : signupBusinessType === "it_services" ? (
+                          <>
+                            <SelectItem value="Software Development">{(t as any).softwareDevelopment || "Software Development"}</SelectItem>
+                            <SelectItem value="IT Consulting">{(t as any).itConsulting || "IT Consulting"}</SelectItem>
+                            <SelectItem value="Network Services">{(t as any).networkServices || "Network Services"}</SelectItem>
+                            <SelectItem value="Cloud Services">{(t as any).cloudServices || "Cloud Services"}</SelectItem>
+                          </>
+                        ) : null}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1010,7 +1034,7 @@ export default function Login() {
                 <div className="space-y-3">
                   <Label>{t.subscriptionPlan}</Label>
                   <RadioGroup value={subscriptionPlan} onValueChange={setSubscriptionPlan} data-testid="radiogroup-subscription">
-                    {signupBusinessType === "restaurant" && (
+                    {(signupBusinessType === "restaurant" || signupBusinessType === "real_estate") && (
                       <div className={`flex items-center space-x-2 p-4 rounded-lg border-2 transition-colors ${
                         subscriptionPlan === 'weekly' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
                       }`}>

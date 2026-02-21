@@ -14597,6 +14597,308 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // ==================== SERVICE CATALOG ====================
+  app.get("/api/service-catalog", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const items = await storage.getServiceCatalogItems(restaurantId);
+      res.json(items);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/service-catalog/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const item = await storage.getServiceCatalogItem(req.params.id, restaurantId);
+      if (!item) return res.status(404).json({ message: "Service not found" });
+      res.json(item);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/service-catalog", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body, restaurantId };
+      const item = await storage.createServiceCatalogItem(data);
+      res.status(201).json(item);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/service-catalog/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const item = await storage.updateServiceCatalogItem(req.params.id, restaurantId, req.body);
+      if (!item) return res.status(404).json({ message: "Service not found" });
+      res.json(item);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/service-catalog/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const deleted = await storage.deleteServiceCatalogItem(req.params.id, restaurantId);
+      if (!deleted) return res.status(404).json({ message: "Service not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ==================== CONTRACTORS ====================
+  app.get("/api/contractors", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const allContractors = await storage.getContractors(restaurantId);
+      res.json(allContractors);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/contractors/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const contractor = await storage.getContractor(req.params.id, restaurantId);
+      if (!contractor) return res.status(404).json({ message: "Contractor not found" });
+      res.json(contractor);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/contractors", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body, restaurantId };
+      const contractor = await storage.createContractor(data);
+      res.status(201).json(contractor);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/contractors/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const contractor = await storage.updateContractor(req.params.id, restaurantId, req.body);
+      if (!contractor) return res.status(404).json({ message: "Contractor not found" });
+      res.json(contractor);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/contractors/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const deleted = await storage.deleteContractor(req.params.id, restaurantId);
+      if (!deleted) return res.status(404).json({ message: "Contractor not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ==================== SERVICE PROJECTS ====================
+  app.get("/api/service-projects", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const projects = await storage.getServiceProjects(restaurantId);
+      res.json(projects);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/service-projects/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const project = await storage.getServiceProject(req.params.id, restaurantId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      res.json(project);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/service-projects", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body, restaurantId };
+      if (data.startDate) data.startDate = new Date(data.startDate);
+      if (data.endDate) data.endDate = new Date(data.endDate);
+      const project = await storage.createServiceProject(data);
+      res.status(201).json(project);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/service-projects/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body };
+      if (data.startDate) data.startDate = new Date(data.startDate);
+      if (data.endDate) data.endDate = new Date(data.endDate);
+      const project = await storage.updateServiceProject(req.params.id, restaurantId, data);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      res.json(project);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/service-projects/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const deleted = await storage.deleteServiceProject(req.params.id, restaurantId);
+      if (!deleted) return res.status(404).json({ message: "Project not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ==================== QUOTATIONS ====================
+  app.get("/api/quotations", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const allQuotations = await storage.getQuotations(restaurantId);
+      res.json(allQuotations);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/quotations/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const quotation = await storage.getQuotation(req.params.id, restaurantId);
+      if (!quotation) return res.status(404).json({ message: "Quotation not found" });
+      res.json(quotation);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/quotations", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body, restaurantId };
+      if (data.validUntil) data.validUntil = new Date(data.validUntil);
+      const quotation = await storage.createQuotation(data);
+      res.status(201).json(quotation);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/quotations/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body };
+      if (data.validUntil) data.validUntil = new Date(data.validUntil);
+      const quotation = await storage.updateQuotation(req.params.id, restaurantId, data);
+      if (!quotation) return res.status(404).json({ message: "Quotation not found" });
+      res.json(quotation);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/quotations/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const deleted = await storage.deleteQuotation(req.params.id, restaurantId);
+      if (!deleted) return res.status(404).json({ message: "Quotation not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ==================== PAYMENT SCHEDULES ====================
+  app.get("/api/payment-schedules", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const projectId = req.query.projectId as string | undefined;
+      const schedules = await storage.getPaymentSchedules(restaurantId, projectId);
+      res.json(schedules);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/payment-schedules", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body, restaurantId };
+      if (data.dueDate) data.dueDate = new Date(data.dueDate);
+      if (data.paidDate) data.paidDate = new Date(data.paidDate);
+      const schedule = await storage.createPaymentSchedule(data);
+      res.status(201).json(schedule);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/payment-schedules/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body };
+      if (data.dueDate) data.dueDate = new Date(data.dueDate);
+      if (data.paidDate) data.paidDate = new Date(data.paidDate);
+      const schedule = await storage.updatePaymentSchedule(req.params.id, restaurantId, data);
+      if (!schedule) return res.status(404).json({ message: "Payment schedule not found" });
+      res.json(schedule);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/payment-schedules/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const deleted = await storage.deletePaymentSchedule(req.params.id, restaurantId);
+      if (!deleted) return res.status(404).json({ message: "Payment schedule not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Setup WebSocket server for real-time notifications on specific path to avoid conflicts with Vite HMR

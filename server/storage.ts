@@ -130,6 +130,21 @@ import {
   inventoryTransactions,
   contracts,
   valuations,
+  type ServiceCatalogItem,
+  type InsertServiceCatalogItem,
+  serviceCatalog,
+  type Contractor,
+  type InsertContractor,
+  contractors,
+  type ServiceProject,
+  type InsertServiceProject,
+  serviceProjects,
+  type Quotation,
+  type InsertQuotation,
+  quotations,
+  type PaymentSchedule,
+  type InsertPaymentSchedule,
+  paymentSchedules,
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, gte, lte, lt, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
@@ -517,6 +532,41 @@ export interface IStorage {
   createValuation(valuation: InsertValuation): Promise<Valuation>;
   updateValuation(id: string, restaurantId: string, valuation: Partial<InsertValuation>): Promise<Valuation | undefined>;
   deleteValuation(id: string, restaurantId: string): Promise<boolean>;
+
+  // Service Catalog (MULTI-TENANT: requires restaurantId for all operations)
+  getServiceCatalogItems(restaurantId: string): Promise<ServiceCatalogItem[]>;
+  getServiceCatalogItem(id: string, restaurantId: string): Promise<ServiceCatalogItem | undefined>;
+  createServiceCatalogItem(item: InsertServiceCatalogItem): Promise<ServiceCatalogItem>;
+  updateServiceCatalogItem(id: string, restaurantId: string, item: Partial<InsertServiceCatalogItem>): Promise<ServiceCatalogItem | undefined>;
+  deleteServiceCatalogItem(id: string, restaurantId: string): Promise<boolean>;
+
+  // Contractors (MULTI-TENANT: requires restaurantId for all operations)
+  getContractors(restaurantId: string): Promise<Contractor[]>;
+  getContractor(id: string, restaurantId: string): Promise<Contractor | undefined>;
+  createContractor(contractor: InsertContractor): Promise<Contractor>;
+  updateContractor(id: string, restaurantId: string, contractor: Partial<InsertContractor>): Promise<Contractor | undefined>;
+  deleteContractor(id: string, restaurantId: string): Promise<boolean>;
+
+  // Service Projects (MULTI-TENANT: requires restaurantId for all operations)
+  getServiceProjects(restaurantId: string): Promise<ServiceProject[]>;
+  getServiceProject(id: string, restaurantId: string): Promise<ServiceProject | undefined>;
+  createServiceProject(project: InsertServiceProject): Promise<ServiceProject>;
+  updateServiceProject(id: string, restaurantId: string, project: Partial<InsertServiceProject>): Promise<ServiceProject | undefined>;
+  deleteServiceProject(id: string, restaurantId: string): Promise<boolean>;
+
+  // Quotations (MULTI-TENANT: requires restaurantId for all operations)
+  getQuotations(restaurantId: string): Promise<Quotation[]>;
+  getQuotation(id: string, restaurantId: string): Promise<Quotation | undefined>;
+  createQuotation(quotation: InsertQuotation): Promise<Quotation>;
+  updateQuotation(id: string, restaurantId: string, quotation: Partial<InsertQuotation>): Promise<Quotation | undefined>;
+  deleteQuotation(id: string, restaurantId: string): Promise<boolean>;
+
+  // Payment Schedules (MULTI-TENANT: requires restaurantId for all operations)
+  getPaymentSchedules(restaurantId: string, projectId?: string): Promise<PaymentSchedule[]>;
+  getPaymentSchedule(id: string, restaurantId: string): Promise<PaymentSchedule | undefined>;
+  createPaymentSchedule(schedule: InsertPaymentSchedule): Promise<PaymentSchedule>;
+  updatePaymentSchedule(id: string, restaurantId: string, schedule: Partial<InsertPaymentSchedule>): Promise<PaymentSchedule | undefined>;
+  deletePaymentSchedule(id: string, restaurantId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -5116,6 +5166,134 @@ export class DatabaseStorage implements IStorage {
 
   async deleteValuation(id: string, restaurantId: string): Promise<boolean> {
     const result = await db.delete(valuations).where(and(eq(valuations.id, id), eq(valuations.restaurantId, restaurantId)));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Service Catalog
+  async getServiceCatalogItems(restaurantId: string): Promise<ServiceCatalogItem[]> {
+    return await db.select().from(serviceCatalog).where(eq(serviceCatalog.restaurantId, restaurantId)).orderBy(desc(serviceCatalog.createdAt));
+  }
+
+  async getServiceCatalogItem(id: string, restaurantId: string): Promise<ServiceCatalogItem | undefined> {
+    const [item] = await db.select().from(serviceCatalog).where(and(eq(serviceCatalog.id, id), eq(serviceCatalog.restaurantId, restaurantId)));
+    return item;
+  }
+
+  async createServiceCatalogItem(item: InsertServiceCatalogItem): Promise<ServiceCatalogItem> {
+    const [created] = await db.insert(serviceCatalog).values(item).returning();
+    return created;
+  }
+
+  async updateServiceCatalogItem(id: string, restaurantId: string, item: Partial<InsertServiceCatalogItem>): Promise<ServiceCatalogItem | undefined> {
+    const [updated] = await db.update(serviceCatalog).set(item).where(and(eq(serviceCatalog.id, id), eq(serviceCatalog.restaurantId, restaurantId))).returning();
+    return updated;
+  }
+
+  async deleteServiceCatalogItem(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(serviceCatalog).where(and(eq(serviceCatalog.id, id), eq(serviceCatalog.restaurantId, restaurantId)));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Contractors
+  async getContractors(restaurantId: string): Promise<Contractor[]> {
+    return await db.select().from(contractors).where(eq(contractors.restaurantId, restaurantId)).orderBy(desc(contractors.createdAt));
+  }
+
+  async getContractor(id: string, restaurantId: string): Promise<Contractor | undefined> {
+    const [contractor] = await db.select().from(contractors).where(and(eq(contractors.id, id), eq(contractors.restaurantId, restaurantId)));
+    return contractor;
+  }
+
+  async createContractor(contractor: InsertContractor): Promise<Contractor> {
+    const [created] = await db.insert(contractors).values(contractor).returning();
+    return created;
+  }
+
+  async updateContractor(id: string, restaurantId: string, contractor: Partial<InsertContractor>): Promise<Contractor | undefined> {
+    const [updated] = await db.update(contractors).set(contractor).where(and(eq(contractors.id, id), eq(contractors.restaurantId, restaurantId))).returning();
+    return updated;
+  }
+
+  async deleteContractor(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(contractors).where(and(eq(contractors.id, id), eq(contractors.restaurantId, restaurantId)));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Service Projects
+  async getServiceProjects(restaurantId: string): Promise<ServiceProject[]> {
+    return await db.select().from(serviceProjects).where(eq(serviceProjects.restaurantId, restaurantId)).orderBy(desc(serviceProjects.createdAt));
+  }
+
+  async getServiceProject(id: string, restaurantId: string): Promise<ServiceProject | undefined> {
+    const [project] = await db.select().from(serviceProjects).where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId)));
+    return project;
+  }
+
+  async createServiceProject(project: InsertServiceProject): Promise<ServiceProject> {
+    const [created] = await db.insert(serviceProjects).values(project).returning();
+    return created;
+  }
+
+  async updateServiceProject(id: string, restaurantId: string, project: Partial<InsertServiceProject>): Promise<ServiceProject | undefined> {
+    const [updated] = await db.update(serviceProjects).set(project).where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId))).returning();
+    return updated;
+  }
+
+  async deleteServiceProject(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(serviceProjects).where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId)));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Quotations
+  async getQuotations(restaurantId: string): Promise<Quotation[]> {
+    return await db.select().from(quotations).where(eq(quotations.restaurantId, restaurantId)).orderBy(desc(quotations.createdAt));
+  }
+
+  async getQuotation(id: string, restaurantId: string): Promise<Quotation | undefined> {
+    const [quotation] = await db.select().from(quotations).where(and(eq(quotations.id, id), eq(quotations.restaurantId, restaurantId)));
+    return quotation;
+  }
+
+  async createQuotation(quotation: InsertQuotation): Promise<Quotation> {
+    const [created] = await db.insert(quotations).values(quotation).returning();
+    return created;
+  }
+
+  async updateQuotation(id: string, restaurantId: string, quotation: Partial<InsertQuotation>): Promise<Quotation | undefined> {
+    const [updated] = await db.update(quotations).set(quotation).where(and(eq(quotations.id, id), eq(quotations.restaurantId, restaurantId))).returning();
+    return updated;
+  }
+
+  async deleteQuotation(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(quotations).where(and(eq(quotations.id, id), eq(quotations.restaurantId, restaurantId)));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Payment Schedules
+  async getPaymentSchedules(restaurantId: string, projectId?: string): Promise<PaymentSchedule[]> {
+    if (projectId) {
+      return await db.select().from(paymentSchedules).where(and(eq(paymentSchedules.restaurantId, restaurantId), eq(paymentSchedules.projectId, projectId))).orderBy(desc(paymentSchedules.createdAt));
+    }
+    return await db.select().from(paymentSchedules).where(eq(paymentSchedules.restaurantId, restaurantId)).orderBy(desc(paymentSchedules.createdAt));
+  }
+
+  async getPaymentSchedule(id: string, restaurantId: string): Promise<PaymentSchedule | undefined> {
+    const [schedule] = await db.select().from(paymentSchedules).where(and(eq(paymentSchedules.id, id), eq(paymentSchedules.restaurantId, restaurantId)));
+    return schedule;
+  }
+
+  async createPaymentSchedule(schedule: InsertPaymentSchedule): Promise<PaymentSchedule> {
+    const [created] = await db.insert(paymentSchedules).values(schedule).returning();
+    return created;
+  }
+
+  async updatePaymentSchedule(id: string, restaurantId: string, schedule: Partial<InsertPaymentSchedule>): Promise<PaymentSchedule | undefined> {
+    const [updated] = await db.update(paymentSchedules).set(schedule).where(and(eq(paymentSchedules.id, id), eq(paymentSchedules.restaurantId, restaurantId))).returning();
+    return updated;
+  }
+
+  async deletePaymentSchedule(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(paymentSchedules).where(and(eq(paymentSchedules.id, id), eq(paymentSchedules.restaurantId, restaurantId)));
     return (result.rowCount ?? 0) > 0;
   }
 }

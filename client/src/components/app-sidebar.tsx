@@ -39,6 +39,11 @@ import {
   Printer,
   Shield,
   Activity,
+  Briefcase,
+  FileSpreadsheet,
+  Wrench,
+  HardHat,
+  Calendar,
 } from "lucide-react";
 import logoImage from "@assets/Kinzhal_logo_1768960890639.png";
 import {
@@ -76,7 +81,7 @@ interface MenuItem {
   testId: string;
   gradient: string;
   permission?: Permission;
-  businessTypes?: ('restaurant' | 'factory' | 'real_estate')[]; // If specified, only show for these business types
+  businessTypes?: ('restaurant' | 'factory' | 'real_estate' | 'design_services' | 'installation_services' | 'it_services')[]; // If specified, only show for these business types
 }
 
 export function AppSidebar() {
@@ -88,7 +93,8 @@ export function AppSidebar() {
   const { hasPermission, isAdmin } = usePermissions();
   
   // Get businessType from restaurant data (defaults to 'restaurant' for existing accounts)
-  const businessType: 'restaurant' | 'factory' | 'real_estate' = (restaurant?.businessType as 'restaurant' | 'factory' | 'real_estate') || 'restaurant';
+  const businessType: 'restaurant' | 'factory' | 'real_estate' | 'design_services' | 'installation_services' | 'it_services' = (restaurant?.businessType as any) || 'restaurant';
+  const isServiceBusiness = businessType === 'design_services' || businessType === 'installation_services' || businessType === 'it_services';
 
   const handleLogout = async () => {
     try {
@@ -114,13 +120,15 @@ export function AppSidebar() {
 
   // Declarative menu configuration with business type guards
   const allOperations: MenuItem[] = [
-    { title: businessType === 'real_estate' ? (t as any).dealProcessing : t.pos, url: "/pos", icon: ShoppingCart, testId: "pos", gradient: "from-emerald-500 to-teal-500", permission: 'pos' },
+    { title: businessType === 'real_estate' ? (t as any).dealProcessing : isServiceBusiness ? (t as any).serviceDesk || "Service Desk" : t.pos, url: "/pos", icon: ShoppingCart, testId: "pos", gradient: "from-emerald-500 to-teal-500", permission: 'pos', businessTypes: ['restaurant', 'factory', 'real_estate'] },
     { title: t.orders, url: "/orders", icon: ClipboardList, testId: "orders", gradient: "from-blue-500 to-cyan-500", permission: 'orders', businessTypes: ['restaurant', 'factory'] },
     { title: businessType === 'factory' ? t.workshop : t.kitchen, url: "/kitchen", icon: Flame, testId: "kitchen", gradient: "from-orange-500 to-red-500", permission: 'kitchen', businessTypes: ['restaurant', 'factory'] },
     { title: t.deliveryApps, url: "/delivery-apps", icon: Truck, testId: "delivery-apps", gradient: "from-violet-500 to-purple-500", permission: 'deliveryApps', businessTypes: ['restaurant'] },
     { title: (t as any).propertyListings, url: "/menu", icon: Home, testId: "property-listings", gradient: "from-emerald-500 to-teal-500", permission: 'menu', businessTypes: ['real_estate'] },
     { title: (t as any).clientInquiries, url: "/orders", icon: ClipboardList, testId: "client-inquiries", gradient: "from-blue-500 to-cyan-500", permission: 'orders', businessTypes: ['real_estate'] },
     { title: (t as any).contracts, url: "/contracts", icon: Handshake, testId: "contracts", gradient: "from-orange-500 to-red-500", permission: 'orders', businessTypes: ['real_estate'] },
+    { title: (t as any).projects || "Projects", url: "/service-projects", icon: Briefcase, testId: "service-projects", gradient: "from-blue-500 to-indigo-500", permission: 'orders', businessTypes: ['design_services', 'installation_services', 'it_services'] },
+    { title: (t as any).quotations || "Quotations", url: "/quotations", icon: FileSpreadsheet, testId: "quotations", gradient: "from-emerald-500 to-teal-500", permission: 'orders', businessTypes: ['design_services', 'installation_services', 'it_services'] },
   ];
 
   const allManagement: MenuItem[] = [
@@ -134,6 +142,8 @@ export function AppSidebar() {
     { title: businessType === 'real_estate' ? (t as any).offices : t.branches, url: "/branches", icon: Building2, testId: "branches", gradient: "from-indigo-500 to-purple-500", permission: 'branches' },
     { title: t.procurement, url: "/procurement", icon: ShoppingBag, testId: "procurement", gradient: "from-pink-500 to-rose-500", permission: 'procurement', businessTypes: ['restaurant', 'factory'] },
     { title: (t as any).valuations, url: "/valuations", icon: Calculator, testId: "valuations", gradient: "from-teal-500 to-cyan-500", permission: 'reports', businessTypes: ['real_estate'] },
+    { title: (t as any).serviceCatalog || "Service Catalog", url: "/service-catalog", icon: Wrench, testId: "service-catalog", gradient: "from-green-500 to-emerald-500", permission: 'menu', businessTypes: ['design_services', 'installation_services', 'it_services'] },
+    { title: (t as any).contractors || "Contractors", url: "/contractors", icon: HardHat, testId: "contractors", gradient: "from-orange-500 to-amber-500", permission: 'customers', businessTypes: ['design_services', 'installation_services', 'it_services'] },
   ];
 
   const allAnalytics: MenuItem[] = [
@@ -152,7 +162,7 @@ export function AppSidebar() {
 
   const allSystem: MenuItem[] = [
     { title: t.tutorial, url: "/tutorial", icon: BookOpen, testId: "tutorial", gradient: "from-purple-500 to-violet-500" },
-    { title: businessType === 'factory' ? t.factory : businessType === 'real_estate' ? (t as any).office : t.shop, url: "/shop", icon: Store, testId: "shop", gradient: "from-pink-500 to-fuchsia-500", permission: 'workingHours' },
+    { title: businessType === 'factory' ? t.factory : businessType === 'real_estate' ? (t as any).office : isServiceBusiness ? (t as any).company || "Company" : t.shop, url: "/shop", icon: Store, testId: "shop", gradient: "from-pink-500 to-fuchsia-500", permission: 'workingHours' },
     { title: t.profile, url: "/profile", icon: UserCircle, testId: "profile", gradient: "from-indigo-500 to-purple-500" },
     { title: t.teamChat, url: "/chat", icon: MessageCircle, testId: "chat", gradient: "from-blue-500 to-cyan-500" },
     { title: t.support || "Support", url: "/support", icon: HeadphonesIcon, testId: "support", gradient: "from-emerald-500 to-teal-500" },

@@ -1541,3 +1541,111 @@ export const valuations = pgTable("valuations", {
 export const insertValuationSchema = createInsertSchema(valuations).omit({ id: true, createdAt: true });
 export type InsertValuation = z.infer<typeof insertValuationSchema>;
 export type Valuation = typeof valuations.$inferSelect;
+
+// Service Catalog (for service business types - MULTI-TENANT)
+export const serviceCatalog = pgTable("service_catalog", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  category: text("category"),
+  pricingMethod: text("pricing_method").notNull().default("lump_sum"), // "per_piece", "per_length", "per_area", "per_hour", "lump_sum"
+  unitPrice: decimal("unit_price", { precision: 12, scale: 2 }).notNull(),
+  unit: text("unit"), // "piece", "meter", "sqm", "hour", etc.
+  estimatedDuration: text("estimated_duration"),
+  status: text("status").notNull().default("active"), // "active", "inactive"
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertServiceCatalogSchema = createInsertSchema(serviceCatalog).omit({ id: true, createdAt: true });
+export type InsertServiceCatalogItem = z.infer<typeof insertServiceCatalogSchema>;
+export type ServiceCatalogItem = typeof serviceCatalog.$inferSelect;
+
+// Contractors (for service business types - MULTI-TENANT)
+export const contractors = pgTable("contractors", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  name: text("name").notNull(),
+  company: text("company"),
+  phone: text("phone"),
+  email: text("email"),
+  specialization: text("specialization"),
+  licenseNumber: text("license_number"),
+  rating: decimal("rating", { precision: 3, scale: 1 }),
+  status: text("status").notNull().default("active"), // "active", "inactive"
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertContractorSchema = createInsertSchema(contractors).omit({ id: true, createdAt: true });
+export type InsertContractor = z.infer<typeof insertContractorSchema>;
+export type Contractor = typeof contractors.$inferSelect;
+
+// Projects (for service business types - MULTI-TENANT)
+export const serviceProjects = pgTable("service_projects", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  projectNumber: text("project_number").notNull(),
+  name: text("name").notNull(),
+  clientName: text("client_name").notNull(),
+  clientPhone: text("client_phone"),
+  clientEmail: text("client_email"),
+  description: text("description"),
+  location: text("location"),
+  status: text("status").notNull().default("draft"), // "draft", "in_progress", "on_hold", "completed", "cancelled"
+  priority: text("priority").notNull().default("medium"), // "low", "medium", "high", "urgent"
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  estimatedBudget: decimal("estimated_budget", { precision: 12, scale: 2 }),
+  actualCost: decimal("actual_cost", { precision: 12, scale: 2 }),
+  contractorId: varchar("contractor_id").references(() => contractors.id),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertServiceProjectSchema = createInsertSchema(serviceProjects).omit({ id: true, createdAt: true });
+export type InsertServiceProject = z.infer<typeof insertServiceProjectSchema>;
+export type ServiceProject = typeof serviceProjects.$inferSelect;
+
+// Quotations (for service business types - MULTI-TENANT)
+export const quotations = pgTable("quotations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  quotationNumber: text("quotation_number").notNull(),
+  projectId: varchar("project_id").references(() => serviceProjects.id),
+  clientName: text("client_name").notNull(),
+  clientPhone: text("client_phone"),
+  clientEmail: text("client_email"),
+  description: text("description"),
+  items: jsonb("items").default([]), // Array of {serviceId, name, quantity, unitPrice, total}
+  subtotal: decimal("subtotal", { precision: 12, scale: 2 }).notNull(),
+  vatRate: decimal("vat_rate", { precision: 5, scale: 2 }).default("15"),
+  vatAmount: decimal("vat_amount", { precision: 12, scale: 2 }).notNull(),
+  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
+  status: text("status").notNull().default("draft"), // "draft", "sent", "approved", "declined", "expired"
+  validUntil: timestamp("valid_until"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertQuotationSchema = createInsertSchema(quotations).omit({ id: true, createdAt: true });
+export type InsertQuotation = z.infer<typeof insertQuotationSchema>;
+export type Quotation = typeof quotations.$inferSelect;
+
+// Payment Schedules (for service project payments - MULTI-TENANT)
+export const paymentSchedules = pgTable("payment_schedules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  projectId: varchar("project_id").references(() => serviceProjects.id).notNull(),
+  milestoneName: text("milestone_name").notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  dueDate: timestamp("due_date"),
+  status: text("status").notNull().default("pending"), // "pending", "invoiced", "paid", "overdue"
+  paidDate: timestamp("paid_date"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+})
+
+export const insertPaymentScheduleSchema = createInsertSchema(paymentSchedules).omit({ id: true, createdAt: true });
+export type InsertPaymentSchedule = z.infer<typeof insertPaymentScheduleSchema>;
+export type PaymentSchedule = typeof paymentSchedules.$inferSelect;

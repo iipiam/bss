@@ -1,0 +1,731 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Wrench,
+  CheckCircle,
+  DollarSign,
+  Tag,
+  Clock,
+  Layers,
+} from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useDeviceLayout } from "@/lib/mobileLayout";
+import { format } from "date-fns";
+
+interface ServiceCatalogItem {
+  id: string;
+  restaurantId: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  pricingMethod: string;
+  unitPrice: string;
+  unit: string | null;
+  estimatedDuration: string | null;
+  status: string;
+  createdAt: string;
+}
+
+const serviceFormSchema = z.object({
+  name: z.string().min(1, "Service name is required"),
+  description: z.string().optional().default(""),
+  category: z.string().optional().default(""),
+  pricingMethod: z.string().min(1, "Pricing method is required"),
+  unitPrice: z.string().min(1, "Unit price is required"),
+  unit: z.string().optional().default(""),
+  estimatedDuration: z.string().optional().default(""),
+  status: z.string().min(1, "Status is required"),
+});
+
+type ServiceFormValues = z.infer<typeof serviceFormSchema>;
+
+const pricingMethodLabels: Record<string, string> = {
+  per_piece: "Per Piece",
+  per_length: "Per Length (m)",
+  per_area: "Per Area (sqm)",
+  per_hour: "Per Hour",
+  lump_sum: "Lump Sum",
+};
+
+function getStatusBadgeVariant(status: string): "default" | "secondary" {
+  switch (status) {
+    case "active":
+      return "default";
+    case "inactive":
+      return "secondary";
+    default:
+      return "secondary";
+  }
+}
+
+export default function ServiceCatalog() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [editingService, setEditingService] = useState<ServiceCatalogItem | null>(null);
+  const [deletingService, setDeletingService] = useState<ServiceCatalogItem | null>(null);
+  const { toast } = useToast();
+  const { t } = useLanguage();
+  const layout = useDeviceLayout();
+
+  const form = useForm<ServiceFormValues>({
+    resolver: zodResolver(serviceFormSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      category: "",
+      pricingMethod: "per_piece",
+      unitPrice: "",
+      unit: "",
+      estimatedDuration: "",
+      status: "active",
+    },
+  });
+
+  const { data: services = [], isLoading } = useQuery<ServiceCatalogItem[]>({
+    queryKey: ["/api/service-catalog"],
+  });
+
+  const createServiceMutation = useMutation({
+    mutationFn: async (data: ServiceFormValues) => {
+      const payload = {
+        ...data,
+        description: data.description || null,
+        category: data.category || null,
+        unit: data.unit || null,
+        estimatedDuration: data.estimatedDuration || null,
+      };
+      return await apiRequest("POST", "/api/service-catalog", payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/service-catalog"] });
+      setOpen(false);
+      form.reset();
+      toast({
+        title: "Service Created",
+        description: "Service has been created successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Create Service",
+        description: error.message || "Could not create service",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateServiceMutation = useMutation({
+    mutationFn: async (data: ServiceFormValues & { id: string }) => {
+      const payload = {
+        name: data.name,
+        description: data.description || null,
+        category: data.category || null,
+        pricingMethod: data.pricingMethod,
+        unitPrice: data.unitPrice,
+        unit: data.unit || null,
+        estimatedDuration: data.estimatedDuration || null,
+        status: data.status,
+      };
+      return await apiRequest("PATCH", `/api/service-catalog/${data.id}`, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/service-catalog"] });
+      setOpen(false);
+      setEditingService(null);
+      form.reset();
+      toast({
+        title: "Service Updated",
+        description: "Service has been updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Update Service",
+        description: error.message || "Could not update service",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteServiceMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/service-catalog/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/service-catalog"] });
+      setDeletingService(null);
+      toast({
+        title: "Service Deleted",
+        description: "Service has been deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Delete Service",
+        description: error.message || "Could not delete service",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: ServiceFormValues) => {
+    const payload = {
+      ...data,
+      description: data.description || null,
+      category: data.category || null,
+      unit: data.unit || null,
+      estimatedDuration: data.estimatedDuration || null,
+    };
+    if (editingService) {
+      updateServiceMutation.mutate({ ...payload, id: editingService.id });
+    } else {
+      createServiceMutation.mutate(payload);
+    }
+  };
+
+  const handleEdit = (service: ServiceCatalogItem) => {
+    setEditingService(service);
+    form.reset({
+      name: service.name,
+      description: service.description || "",
+      category: service.category || "",
+      pricingMethod: service.pricingMethod,
+      unitPrice: service.unitPrice,
+      unit: service.unit || "",
+      estimatedDuration: service.estimatedDuration || "",
+      status: service.status,
+    });
+    setOpen(true);
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      setEditingService(null);
+      form.reset();
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setOpen(false);
+    setEditingService(null);
+    form.reset();
+  };
+
+  const handleAddNew = () => {
+    form.reset({
+      name: "",
+      description: "",
+      category: "",
+      pricingMethod: "per_piece",
+      unitPrice: "",
+      unit: "",
+      estimatedDuration: "",
+      status: "active",
+    });
+    setEditingService(null);
+    setOpen(true);
+  };
+
+  const filteredServices = services.filter(
+    (service) =>
+      service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (service.description || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (service.category || "").toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  const activeServices = services.filter((s) => s.status === "active");
+  const avgPrice =
+    services.length > 0
+      ? services.reduce((sum, s) => sum + parseFloat(s.unitPrice || "0"), 0) / services.length
+      : 0;
+  const totalCategories = new Set(services.map((s) => s.category).filter(Boolean)).size;
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return "-";
+    try {
+      return format(new Date(dateStr), "MMM dd, yyyy");
+    } catch {
+      return dateStr;
+    }
+  };
+
+  return (
+    <div className={`${layout.padding} ${layout.spaceY}`}>
+      <div
+        className={`flex ${layout.isMobile ? "flex-col gap-3" : "items-center justify-between"}`}
+      >
+        <div>
+          <div className="flex items-center gap-2">
+            <Wrench className="h-8 w-8" />
+            <h1 className={`${layout.text3Xl} font-bold`} data-testid="text-service-catalog-title">
+              Service Catalog
+            </h1>
+          </div>
+          <p className="text-muted-foreground text-sm mt-1">
+            Manage your service offerings and pricing
+          </p>
+        </div>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
+          <DialogTrigger asChild>
+            <Button
+              data-testid="button-add-service"
+              className={layout.isMobile ? "h-[44px]" : ""}
+              onClick={handleAddNew}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Service
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editingService ? "Edit Service" : "Add Service"}
+              </DialogTitle>
+              <DialogDescription>
+                {editingService
+                  ? "Update service information"
+                  : "Add a new service to your catalog"}
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Service Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          data-testid="input-service-name"
+                          placeholder="Enter service name"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          data-testid="input-service-description"
+                          placeholder="Service description..."
+                          className="resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <FormControl>
+                          <Input
+                            data-testid="input-service-category"
+                            placeholder="e.g., Installation"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-service-status">
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="inactive">Inactive</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="pricingMethod"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Pricing Method</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-pricing-method">
+                              <SelectValue placeholder="Select method" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="per_piece">Per Piece</SelectItem>
+                            <SelectItem value="per_length">Per Length (m)</SelectItem>
+                            <SelectItem value="per_area">Per Area (sqm)</SelectItem>
+                            <SelectItem value="per_hour">Per Hour</SelectItem>
+                            <SelectItem value="lump_sum">Lump Sum</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="unitPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Unit Price (SAR)</FormLabel>
+                        <FormControl>
+                          <Input
+                            data-testid="input-unit-price"
+                            type="number"
+                            placeholder="0"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="unit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Unit</FormLabel>
+                        <FormControl>
+                          <Input
+                            data-testid="input-service-unit"
+                            placeholder="e.g., meter, sqm, hour"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="estimatedDuration"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Estimated Duration</FormLabel>
+                        <FormControl>
+                          <Input
+                            data-testid="input-estimated-duration"
+                            placeholder="e.g., 2 hours, 1 day"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCloseDialog}
+                    data-testid="button-cancel"
+                  >
+                    {t.cancel}
+                  </Button>
+                  <Button
+                    type="submit"
+                    data-testid="button-submit"
+                    disabled={
+                      createServiceMutation.isPending ||
+                      updateServiceMutation.isPending
+                    }
+                  >
+                    {editingService ? "Save" : "Add"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          data-testid="input-search-services"
+          placeholder="Search services..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      <div
+        className={`grid ${layout.gap} ${layout.gridCols({ desktop: 4, tablet: 2, mobile: 2 })}`}
+      >
+        <Card>
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Wrench className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Total Services</p>
+            </div>
+            <p className="text-2xl font-bold" data-testid="text-total-services">
+              {services.length}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Active</p>
+            </div>
+            <p className="text-2xl font-bold" data-testid="text-active-services">
+              {activeServices.length}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Avg. Price</p>
+            </div>
+            <p className="text-2xl font-bold" data-testid="text-average-price">
+              {avgPrice.toFixed(2)} SAR
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Layers className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Categories</p>
+            </div>
+            <p className="text-2xl font-bold" data-testid="text-total-categories">
+              {totalCategories}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center p-12">
+          <p>Loading...</p>
+        </div>
+      ) : filteredServices.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-12 text-center">
+          <Wrench className="h-16 w-16 text-muted-foreground/30 mb-4" />
+          <p className="text-muted-foreground">
+            {searchQuery
+              ? "No services found matching your search"
+              : "No services yet. Add your first service to get started."}
+          </p>
+        </div>
+      ) : (
+        <div
+          className={`grid ${layout.gap} ${layout.gridCols({ desktop: 3, tablet: 2, mobile: 1 })}`}
+        >
+          {filteredServices.map((service) => (
+            <Card
+              key={service.id}
+              data-testid={`card-service-${service.id}`}
+            >
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Wrench className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <h3
+                    className="font-semibold truncate"
+                    data-testid={`text-service-name-${service.id}`}
+                  >
+                    {service.name}
+                  </h3>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEdit(service)}
+                    data-testid={`button-edit-${service.id}`}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setDeletingService(service)}
+                    data-testid={`button-delete-${service.id}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant={getStatusBadgeVariant(service.status)}
+                    className={service.status === "active" ? "bg-green-600 text-white no-default-hover-elevate" : ""}
+                  >
+                    {service.status.charAt(0).toUpperCase() + service.status.slice(1)}
+                  </Badge>
+                  <Badge variant="outline">
+                    {pricingMethodLabels[service.pricingMethod] || service.pricingMethod}
+                  </Badge>
+                </div>
+
+                {service.description && (
+                  <p className="text-sm text-muted-foreground line-clamp-2" data-testid={`text-service-description-${service.id}`}>
+                    {service.description}
+                  </p>
+                )}
+
+                <div className="space-y-1.5">
+                  {service.category && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Tag className="h-3 w-3 text-muted-foreground shrink-0" />
+                      <span className="truncate" data-testid={`text-service-category-${service.id}`}>
+                        {service.category}
+                      </span>
+                    </div>
+                  )}
+                  {service.estimatedDuration && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock className="h-3 w-3 shrink-0" />
+                      <span className="truncate" data-testid={`text-service-duration-${service.id}`}>
+                        {service.estimatedDuration}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pt-2 border-t">
+                  <div className="flex items-center gap-1 text-sm font-semibold">
+                    <DollarSign className="h-3 w-3" />
+                    <span data-testid={`text-service-price-${service.id}`}>
+                      {parseFloat(service.unitPrice).toLocaleString()} SAR
+                    </span>
+                  </div>
+                  {service.unit && (
+                    <span className="text-xs text-muted-foreground">
+                      / {service.unit}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span>Added {formatDate(service.createdAt)}</span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <AlertDialog
+        open={!!deletingService}
+        onOpenChange={(open) => !open && setDeletingService(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete service "{deletingService?.name}". This
+              action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">
+              {t.cancel}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="button-confirm-delete"
+              onClick={() =>
+                deletingService &&
+                deleteServiceMutation.mutate(deletingService.id)
+              }
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t.delete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

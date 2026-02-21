@@ -94,6 +94,10 @@ const PaymentSuccess = lazy(() => import("@/pages/payment-success"));
 const PaymentFailed = lazy(() => import("@/pages/payment-failed"));
 const Contracts = lazy(() => import("@/pages/contracts"));
 const Valuations = lazy(() => import("@/pages/valuations"));
+const ServiceProjects = lazy(() => import("@/pages/service-projects"));
+const Quotations = lazy(() => import("@/pages/quotations"));
+const ServiceCatalogPage = lazy(() => import("@/pages/service-catalog"));
+const Contractors = lazy(() => import("@/pages/contractors"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Auth pages loaded eagerly to avoid Suspense issues with AuthProvider
@@ -165,6 +169,10 @@ function Router() {
         <Route path="/payment-failed" component={PaymentFailed} />
         <Route path="/contracts" component={Contracts} />
         <Route path="/valuations" component={Valuations} />
+        <Route path="/service-projects" component={ServiceProjects} />
+        <Route path="/quotations" component={Quotations} />
+        <Route path="/service-catalog" component={ServiceCatalogPage} />
+        <Route path="/contractors" component={Contractors} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>
