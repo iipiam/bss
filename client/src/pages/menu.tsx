@@ -72,7 +72,7 @@ const formatToast = (template: string | undefined, label: string | undefined): s
 export default function Menu() {
   const layout = useDeviceLayout();
   const { t } = useLanguage();
-  const { labels } = useBusinessType();
+  const { labels, isRealEstate } = useBusinessType();
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
@@ -746,7 +746,7 @@ export default function Menu() {
                       <FormControl>
                         <Input
                           {...field}
-                          placeholder={t.itemNamePlaceholder || "e.g., Margherita Pizza"}
+                          placeholder={isRealEstate ? ((t as any).propertyNamePlaceholder || "e.g., Villa in Riyadh") : (t.itemNamePlaceholder || "e.g., Margherita Pizza")}
                           data-testid="input-menu-name"
                         />
                       </FormControl>
@@ -836,115 +836,31 @@ export default function Menu() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="recipeId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t.recipeOptional || "Recipe (Optional)"}</FormLabel>
-                      <Select 
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          setSelectedRecipeId(value);
-                        }} 
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger data-testid="select-menu-recipe">
-                            <SelectValue placeholder={t.selectRecipe || "Select a recipe"} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">{t.noRecipe || "No Recipe"}</SelectItem>
-                          {recipes.map((recipe) => (
-                            <SelectItem key={recipe.id} value={recipe.id}>
-                              {recipe.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {selectedRecipeId && selectedRecipeId !== "none" && (
-                  <FormField
-                    control={form.control}
-                    name="portionSize"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t.portionSize || "Portion Size"}</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger data-testid="select-menu-portion">
-                              <SelectValue placeholder={t.selectPortionSize || "Select portion size"} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="1.00">{t.wholePortion || "Whole (1x)"}</SelectItem>
-                            <SelectItem value="0.75">{t.threeQuarterPortion || "3/4 Portion (0.75x)"}</SelectItem>
-                            <SelectItem value="0.50">{t.halfPortion || "1/2 Portion (0.5x)"}</SelectItem>
-                            <SelectItem value="0.25">{t.quarterPortion || "1/4 Portion (0.25x)"}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-                {selectedRecipeId && recipeStockInfo && recipeStockInfo.length > 0 && (
-                  <div className="rounded-lg border p-4 space-y-3 bg-muted/30">
-                    <h4 className="text-sm font-semibold">{t.ingredientStockAvailability || "Ingredient Stock Availability"}</h4>
-                    <div className="space-y-2">
-                      {recipeStockInfo.map((ingredient, index) => (
-                        <div key={index} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2">
-                            <div className={`h-2 w-2 rounded-full ${ingredient.inStock ? 'bg-green-500' : 'bg-red-500'}`} />
-                            <span className="text-muted-foreground">{ingredient.name}</span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs text-muted-foreground">
-                              {t.need || "Need"}: {ingredient.quantity} {ingredient.unit}
-                            </span>
-                            <Badge variant={ingredient.inStock ? "default" : "destructive"} className="text-xs">
-                              {t.stock || "Stock"}: {ingredient.availableStock} {ingredient.unit}
-                            </Badge>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    {recipeStockInfo.some(ing => !ing.inStock) && (
-                      <p className="text-xs text-destructive mt-2">
-                        ⚠️ {t.someIngredientsLowStock || "Some ingredients are low in stock"}
-                      </p>
-                    )}
-                  </div>
-                )}
-                {(!selectedRecipeId || selectedRecipeId === "none") && (
+                {!isRealEstate && (
                   <>
                     <FormField
                       control={form.control}
-                      name="inventoryItemId"
+                      name="recipeId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t.linkToInventoryItem || "Link to Inventory Item (Optional)"}</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
+                          <FormLabel>{t.recipeOptional || "Recipe (Optional)"}</FormLabel>
+                          <Select 
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              setSelectedRecipeId(value);
+                            }} 
                             value={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger data-testid="select-menu-inventory">
-                                <SelectValue placeholder={t.selectInventoryItemForStock || "Select inventory item for stock tracking"} />
+                              <SelectTrigger data-testid="select-menu-recipe">
+                                <SelectValue placeholder={t.selectRecipe || "Select a recipe"} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="none">{t.none || "None"}</SelectItem>
-                              {inventoryItems.map((item) => (
-                                <SelectItem key={item.id} value={item.id}>
-                                  {item.name} ({item.quantity} {item.unit})
+                              <SelectItem value="none">{t.noRecipe || "No Recipe"}</SelectItem>
+                              {recipes.map((recipe) => (
+                                <SelectItem key={recipe.id} value={recipe.id}>
+                                  {recipe.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -953,25 +869,113 @@ export default function Menu() {
                         </FormItem>
                       )}
                     />
-                    <FormField
-                      control={form.control}
-                      name="stockNo"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t.stockQuantityPerItem || "Stock Quantity Per Item (Optional)"}</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              type="number"
-                              step="0.01"
-                              placeholder={t.stockQuantityPlaceholder || "e.g., 1.5 (amount deducted per sale)"}
-                              data-testid="input-menu-stockno"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    {selectedRecipeId && selectedRecipeId !== "none" && (
+                      <FormField
+                        control={form.control}
+                        name="portionSize"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t.portionSize || "Portion Size"}</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger data-testid="select-menu-portion">
+                                  <SelectValue placeholder={t.selectPortionSize || "Select portion size"} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="1.00">{t.wholePortion || "Whole (1x)"}</SelectItem>
+                                <SelectItem value="0.75">{t.threeQuarterPortion || "3/4 Portion (0.75x)"}</SelectItem>
+                                <SelectItem value="0.50">{t.halfPortion || "1/2 Portion (0.5x)"}</SelectItem>
+                                <SelectItem value="0.25">{t.quarterPortion || "1/4 Portion (0.25x)"}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    {selectedRecipeId && recipeStockInfo && recipeStockInfo.length > 0 && (
+                      <div className="rounded-lg border p-4 space-y-3 bg-muted/30">
+                        <h4 className="text-sm font-semibold">{t.ingredientStockAvailability || "Ingredient Stock Availability"}</h4>
+                        <div className="space-y-2">
+                          {recipeStockInfo.map((ingredient, index) => (
+                            <div key={index} className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2">
+                                <div className={`h-2 w-2 rounded-full ${ingredient.inStock ? 'bg-green-500' : 'bg-red-500'}`} />
+                                <span className="text-muted-foreground">{ingredient.name}</span>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs text-muted-foreground">
+                                  {t.need || "Need"}: {ingredient.quantity} {ingredient.unit}
+                                </span>
+                                <Badge variant={ingredient.inStock ? "default" : "destructive"} className="text-xs">
+                                  {t.stock || "Stock"}: {ingredient.availableStock} {ingredient.unit}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        {recipeStockInfo.some(ing => !ing.inStock) && (
+                          <p className="text-xs text-destructive mt-2">
+                            {t.someIngredientsLowStock || "Some ingredients are low in stock"}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    {(!selectedRecipeId || selectedRecipeId === "none") && (
+                      <>
+                        <FormField
+                          control={form.control}
+                          name="inventoryItemId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t.linkToInventoryItem || "Link to Inventory Item (Optional)"}</FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger data-testid="select-menu-inventory">
+                                    <SelectValue placeholder={t.selectInventoryItemForStock || "Select inventory item for stock tracking"} />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="none">{t.none || "None"}</SelectItem>
+                                  {inventoryItems.map((item) => (
+                                    <SelectItem key={item.id} value={item.id}>
+                                      {item.name} ({item.quantity} {item.unit})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="stockNo"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t.stockQuantityPerItem || "Stock Quantity Per Item (Optional)"}</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  placeholder={t.stockQuantityPlaceholder || "e.g., 1.5 (amount deducted per sale)"}
+                                  data-testid="input-menu-stockno"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </>
+                    )}
                   </>
                 )}
                 <FormField
