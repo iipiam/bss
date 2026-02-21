@@ -5151,9 +5151,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
 
       // Validate subscription plan based on business type
-      // Factory businesses can only have monthly or yearly plans (no weekly)
-      if (businessType === 'factory' && subscriptionPlan === 'weekly') {
-        return res.status(400).json({ error: "Factory businesses can only have monthly or yearly subscription plans" });
+      // Factory and service businesses can only have monthly or yearly plans (no weekly)
+      const noWeeklyTypes = ['factory', 'design_services', 'installation_services', 'it_services'];
+      if (noWeeklyTypes.includes(businessType) && subscriptionPlan === 'weekly') {
+        return res.status(400).json({ error: "This business type can only have monthly or yearly subscription plans" });
       }
 
       // Validate branches count

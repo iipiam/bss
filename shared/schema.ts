@@ -12,7 +12,7 @@ export const restaurants = pgTable("restaurants", {
   hasVatRegistration: boolean("has_vat_registration").notNull().default(true), // Whether client has VAT registration
   taxNumber: text("tax_number"), // Unified Tax Number (nullable - only required if hasVatRegistration is true)
   commercialRegistration: text("commercial_registration").notNull(), // Commercial Registration (10 digits)
-  businessType: text("business_type").notNull().default("restaurant"), // "restaurant", "factory", or "real_estate"
+  businessType: text("business_type").notNull().default("restaurant"), // "restaurant", "factory", "real_estate", "design_services", "installation_services", "it_services"
   type: text("type").notNull(), // Business subtype (e.g., "Cloud Kitchen", "Restaurant", "Coffee Shop" for restaurant; "Manufacturing", "Production" for factory)
   subscriptionPlan: text("subscription_plan").notNull(), // "weekly", "monthly", "yearly"
   branchesCount: integer("branches_count").notNull().default(1),
