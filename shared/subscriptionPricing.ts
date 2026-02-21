@@ -1,7 +1,7 @@
 export const VAT_RATE = 0.15;
 
 export type SubscriptionPlan = 'weekly' | 'monthly' | 'yearly';
-export type BusinessType = 'restaurant' | 'factory' | 'real_estate';
+export type BusinessType = 'restaurant' | 'factory' | 'real_estate' | 'design_services' | 'installation_services' | 'it_services';
 
 export interface PricingBreakdown {
   basePrice: number;
@@ -55,10 +55,28 @@ const GROSS_PER_BRANCH_PRICES_REAL_ESTATE: Record<SubscriptionPlan, number> = {
   yearly: 499.80   // ~20% of base yearly price per additional branch
 };
 
+// GROSS prices (VAT-inclusive) for base plan (1 branch) - SERVICE BUSINESSES
+const GROSS_BASE_PRICES_SERVICES: Record<SubscriptionPlan, number> = {
+  weekly: 0,       // Not available for service businesses
+  monthly: 399,
+  yearly: 2499
+};
+
+// GROSS prices (VAT-inclusive) per additional branch - SERVICE BUSINESSES
+const GROSS_PER_BRANCH_PRICES_SERVICES: Record<SubscriptionPlan, number> = {
+  weekly: 0,       // Not available for service businesses
+  monthly: 79.80,  // ~20% of base monthly price per additional branch
+  yearly: 499.80   // ~20% of base yearly price per additional branch
+};
+
 function getBasePrices(businessType: BusinessType): Record<SubscriptionPlan, number> {
   switch (businessType) {
     case 'factory': return GROSS_BASE_PRICES_FACTORY;
     case 'real_estate': return GROSS_BASE_PRICES_REAL_ESTATE;
+    case 'design_services':
+    case 'installation_services':
+    case 'it_services':
+      return GROSS_BASE_PRICES_SERVICES;
     default: return GROSS_BASE_PRICES_RESTAURANT;
   }
 }
@@ -67,6 +85,10 @@ function getBranchPrices(businessType: BusinessType): Record<SubscriptionPlan, n
   switch (businessType) {
     case 'factory': return GROSS_PER_BRANCH_PRICES_FACTORY;
     case 'real_estate': return GROSS_PER_BRANCH_PRICES_REAL_ESTATE;
+    case 'design_services':
+    case 'installation_services':
+    case 'it_services':
+      return GROSS_PER_BRANCH_PRICES_SERVICES;
     default: return GROSS_PER_BRANCH_PRICES_RESTAURANT;
   }
 }

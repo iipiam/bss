@@ -29,7 +29,7 @@ export const restaurants = pgTable("restaurants", {
 export const insertRestaurantSchema = createInsertSchema(restaurants)
   .omit({ id: true, createdAt: true })
   .extend({
-    businessType: z.enum(["restaurant", "factory", "real_estate"]),
+    businessType: z.enum(["restaurant", "factory", "real_estate", "design_services", "installation_services", "it_services"]),
     subscriptionPlan: z.enum(["weekly", "monthly", "yearly"]),
   });
 export type InsertRestaurant = z.infer<typeof insertRestaurantSchema>;
@@ -1487,7 +1487,7 @@ export const pendingSignups = pgTable("pending_signups", {
 export const insertPendingSignupSchema = createInsertSchema(pendingSignups)
   .omit({ id: true, createdAt: true })
   .extend({
-    businessType: z.enum(["restaurant", "factory", "real_estate"]),
+    businessType: z.enum(["restaurant", "factory", "real_estate", "design_services", "installation_services", "it_services"]),
     subscriptionPlan: z.enum(["weekly", "monthly", "yearly"]),
     status: z.enum(["pending", "paid", "failed", "expired"]).default("pending"),
   });
