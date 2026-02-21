@@ -1493,3 +1493,51 @@ export const insertPendingSignupSchema = createInsertSchema(pendingSignups)
   });
 export type InsertPendingSignup = z.infer<typeof insertPendingSignupSchema>;
 export type PendingSignup = typeof pendingSignups.$inferSelect;
+
+// Contracts (Real Estate - MULTI-TENANT)
+export const contracts = pgTable("contracts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  contractNumber: text("contract_number").notNull(),
+  propertyId: varchar("property_id").references(() => menuItems.id),
+  propertyName: text("property_name").notNull(),
+  clientName: text("client_name").notNull(),
+  clientPhone: text("client_phone"),
+  clientEmail: text("client_email"),
+  contractType: text("contract_type").notNull(), // "sale", "lease", "rental"
+  status: text("status").notNull().default("draft"), // "draft", "active", "completed", "cancelled", "expired"
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  value: decimal("value", { precision: 12, scale: 2 }).notNull(),
+  commission: decimal("commission", { precision: 10, scale: 2 }),
+  commissionRate: decimal("commission_rate", { precision: 5, scale: 2 }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertContractSchema = createInsertSchema(contracts).omit({ id: true, createdAt: true });
+export type InsertContract = z.infer<typeof insertContractSchema>;
+export type Contract = typeof contracts.$inferSelect;
+
+// Valuations (Real Estate - MULTI-TENANT)
+export const valuations = pgTable("valuations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  propertyId: varchar("property_id").references(() => menuItems.id),
+  propertyName: text("property_name").notNull(),
+  propertyType: text("property_type").notNull(), // "residential", "commercial", "land", "industrial"
+  location: text("location").notNull(),
+  area: decimal("area", { precision: 10, scale: 2 }),
+  areaUnit: text("area_unit").default("sqm"), // "sqm", "sqft"
+  estimatedValue: decimal("estimated_value", { precision: 12, scale: 2 }).notNull(),
+  marketValue: decimal("market_value", { precision: 12, scale: 2 }),
+  assessmentDate: timestamp("assessment_date").notNull().defaultNow(),
+  valuationType: text("valuation_type").notNull().default("market"), // "market", "investment", "insurance", "tax"
+  status: text("status").notNull().default("pending"), // "pending", "in_progress", "completed"
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertValuationSchema = createInsertSchema(valuations).omit({ id: true, createdAt: true });
+export type InsertValuation = z.infer<typeof insertValuationSchema>;
+export type Valuation = typeof valuations.$inferSelect;
