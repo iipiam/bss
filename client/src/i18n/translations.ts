@@ -707,6 +707,12 @@ export interface Translations {
   office: string;
   officeOperations: string;
   realEstateLowercase: string;
+  propertyListings: string;
+  clientInquiries: string;
+  contracts: string;
+  valuations: string;
+  commissions: string;
+  offices: string;
   
   // Restaurant Types
   cloudKitchen: string;
@@ -2696,6 +2702,12 @@ export const translations: Record<Language, Translations> = {
     office: 'Office',
     officeOperations: 'Office Operations',
     realEstateLowercase: 'real estate office',
+    propertyListings: 'Property Listings',
+    clientInquiries: 'Client Inquiries',
+    contracts: 'Contracts',
+    valuations: 'Valuations',
+    commissions: 'Commissions',
+    offices: 'Offices',
     
     // Restaurant Types
     cloudKitchen: 'Cloud Kitchen',
@@ -4680,6 +4692,12 @@ export const translations: Record<Language, Translations> = {
     office: 'المكتب',
     officeOperations: 'عمليات المكتب',
     realEstateLowercase: 'مكتب عقاري',
+    propertyListings: 'قوائم العقارات',
+    clientInquiries: 'استفسارات العملاء',
+    contracts: 'العقود',
+    valuations: 'التقييمات',
+    commissions: 'العمولات',
+    offices: 'المكاتب',
     
     // Restaurant Types
     cloudKitchen: 'مطبخ سحابي',
@@ -6663,6 +6681,12 @@ export const translations: Record<Language, Translations> = {
     office: 'Büro',
     officeOperations: 'Bürobetrieb',
     realEstateLowercase: 'immobilienbüro',
+    propertyListings: 'Immobilienangebote',
+    clientInquiries: 'Kundenanfragen',
+    contracts: 'Verträge',
+    valuations: 'Bewertungen',
+    commissions: 'Provisionen',
+    offices: 'Büros',
     
     // Restaurant Types
     cloudKitchen: 'Cloud-Küche',
@@ -8628,6 +8652,12 @@ export const translations: Record<Language, Translations> = {
     office: '办公室',
     officeOperations: '办公运营',
     realEstateLowercase: '房地产事务所',
+    propertyListings: '房产列表',
+    clientInquiries: '客户咨询',
+    contracts: '合同',
+    valuations: '估值',
+    commissions: '佣金',
+    offices: '办事处',
     
     // Restaurant Types
     cloudKitchen: '云厨房',
@@ -10593,6 +10623,12 @@ export const translations: Record<Language, Translations> = {
     office: 'অফিস',
     officeOperations: 'অফিস কার্যক্রম',
     realEstateLowercase: 'রিয়েল এস্টেট অফিস',
+    propertyListings: 'সম্পত্তি তালিকা',
+    clientInquiries: 'ক্লায়েন্ট অনুসন্ধান',
+    contracts: 'চুক্তি',
+    valuations: 'মূল্যায়ন',
+    commissions: 'কমিশন',
+    offices: 'অফিস',
     
     // Restaurant Types
     cloudKitchen: 'ক্লাউড রসোই',
@@ -12558,6 +12594,12 @@ export const translations: Record<Language, Translations> = {
     office: 'Ufficio',
     officeOperations: "Operazioni d'Ufficio",
     realEstateLowercase: 'ufficio immobiliare',
+    propertyListings: 'Annunci Immobiliari',
+    clientInquiries: 'Richieste Clienti',
+    contracts: 'Contratti',
+    valuations: 'Valutazioni',
+    commissions: 'Commissioni',
+    offices: 'Uffici',
     
     // Restaurant Types
     cloudKitchen: 'Cucina Cloud',
@@ -14512,6 +14554,12 @@ export const translations: Record<Language, Translations> = {
     office: 'कार्यालय',
     officeOperations: 'कार्यालय संचालन',
     realEstateLowercase: 'रियल एस्टेट कार्यालय',
+    propertyListings: 'संपत्ति सूची',
+    clientInquiries: 'ग्राहक पूछताछ',
+    contracts: 'अनुबंध',
+    valuations: 'मूल्यांकन',
+    commissions: 'कमीशन',
+    offices: 'कार्यालय',
     
     // Restaurant Types
     cloudKitchen: 'क्लाउड रसोई',
@@ -16421,6 +16469,12 @@ export const translations: Record<Language, Translations> = {
     office: 'دفتر',
     officeOperations: 'دفتری کارروائیاں',
     realEstateLowercase: 'رئیل اسٹیٹ دفتر',
+    propertyListings: 'جائیداد کی فہرستیں',
+    clientInquiries: 'کلائنٹ انکوائریاں',
+    contracts: 'معاہدے',
+    valuations: 'تشخیصات',
+    commissions: 'کمیشن',
+    offices: 'دفاتر',
     
     // Restaurant Types
     cloudKitchen: 'کلاؤڈ رسوئی',
@@ -18278,6 +18332,12 @@ export const translations: Record<Language, Translations> = {
     office: "Oficina",
     officeOperations: "Operaciones de Oficina",
     realEstateLowercase: "oficina inmobiliaria",
+    propertyListings: 'Listados de Propiedades',
+    clientInquiries: 'Consultas de Clientes',
+    contracts: 'Contratos',
+    valuations: 'Valoraciones',
+    commissions: 'Comisiones',
+    offices: 'Oficinas',
     
     // Restaurant Types
     cloudKitchen: "Cocina en la Nube",
@@ -20118,6 +20178,12 @@ export const translations: Record<Language, Translations> = {
     office: "Opisina",
     officeOperations: "Operasyon ng Opisina",
     realEstateLowercase: "opisina ng real estate",
+    propertyListings: 'Mga Listahan ng Ari-arian',
+    clientInquiries: 'Mga Katanungan ng Kliyente',
+    contracts: 'Mga Kontrata',
+    valuations: 'Mga Pagpapahalaga',
+    commissions: 'Mga Komisyon',
+    offices: 'Mga Opisina',
     
     // Restaurant Types
     cloudKitchen: "Cloud Kitchen",
