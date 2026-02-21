@@ -92,6 +92,8 @@ const PrinterSettings = lazy(() => import("@/pages/printer-settings"));
 const ZatcaSettings = lazy(() => import("@/pages/zatca-settings"));
 const PaymentSuccess = lazy(() => import("@/pages/payment-success"));
 const PaymentFailed = lazy(() => import("@/pages/payment-failed"));
+const Contracts = lazy(() => import("@/pages/contracts"));
+const Valuations = lazy(() => import("@/pages/valuations"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Auth pages loaded eagerly to avoid Suspense issues with AuthProvider
@@ -161,6 +163,8 @@ function Router() {
         <Route path="/payment-test" component={PaymentTest} />
         <Route path="/payment-success" component={PaymentSuccess} />
         <Route path="/payment-failed" component={PaymentFailed} />
+        <Route path="/contracts" component={Contracts} />
+        <Route path="/valuations" component={Valuations} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>

@@ -713,6 +713,12 @@ export interface Translations {
   valuations: string;
   commissions: string;
   offices: string;
+  contractsDescription: string;
+  contractsComingSoon: string;
+  contractsComingSoonDesc: string;
+  valuationsDescription: string;
+  valuationsComingSoon: string;
+  valuationsComingSoonDesc: string;
   
   // Restaurant Types
   cloudKitchen: string;
@@ -2708,6 +2714,12 @@ export const translations: Record<Language, Translations> = {
     valuations: 'Valuations',
     commissions: 'Commissions',
     offices: 'Offices',
+    contractsDescription: 'Manage your real estate contracts and deals',
+    contractsComingSoon: 'Contracts Management Coming Soon',
+    contractsComingSoonDesc: 'Track and manage all your property contracts, lease agreements, and sales deals in one place.',
+    valuationsDescription: 'Property valuation assessments and reports',
+    valuationsComingSoon: 'Property Valuations Coming Soon',
+    valuationsComingSoonDesc: 'Conduct property valuations, generate assessment reports, and track market values.',
     
     // Restaurant Types
     cloudKitchen: 'Cloud Kitchen',
@@ -4698,6 +4710,12 @@ export const translations: Record<Language, Translations> = {
     valuations: 'التقييمات',
     commissions: 'العمولات',
     offices: 'المكاتب',
+    contractsDescription: 'إدارة عقود العقارات والصفقات',
+    contractsComingSoon: 'إدارة العقود قريباً',
+    contractsComingSoonDesc: 'تتبع وإدارة جميع عقود العقارات واتفاقيات الإيجار وصفقات البيع في مكان واحد.',
+    valuationsDescription: 'تقييمات العقارات والتقارير',
+    valuationsComingSoon: 'تقييمات العقارات قريباً',
+    valuationsComingSoonDesc: 'إجراء تقييمات العقارات وإنشاء تقارير التقييم وتتبع قيم السوق.',
     
     // Restaurant Types
     cloudKitchen: 'مطبخ سحابي',
@@ -6687,6 +6705,12 @@ export const translations: Record<Language, Translations> = {
     valuations: 'Bewertungen',
     commissions: 'Provisionen',
     offices: 'Büros',
+    contractsDescription: 'Verwalten Sie Ihre Immobilienverträge und Geschäfte',
+    contractsComingSoon: 'Vertragsverwaltung kommt bald',
+    contractsComingSoonDesc: 'Verfolgen und verwalten Sie alle Ihre Immobilienverträge, Mietverträge und Kaufgeschäfte an einem Ort.',
+    valuationsDescription: 'Immobilienbewertungen und Berichte',
+    valuationsComingSoon: 'Immobilienbewertungen kommen bald',
+    valuationsComingSoonDesc: 'Führen Sie Immobilienbewertungen durch, erstellen Sie Bewertungsberichte und verfolgen Sie Marktwerte.',
     
     // Restaurant Types
     cloudKitchen: 'Cloud-Küche',
@@ -8658,6 +8682,12 @@ export const translations: Record<Language, Translations> = {
     valuations: '估值',
     commissions: '佣金',
     offices: '办事处',
+    contractsDescription: '管理您的房地产合同和交易',
+    contractsComingSoon: '合同管理即将推出',
+    contractsComingSoonDesc: '在一个地方跟踪和管理您所有的房产合同、租赁协议和销售交易。',
+    valuationsDescription: '房产估值评估和报告',
+    valuationsComingSoon: '房产估值即将推出',
+    valuationsComingSoonDesc: '进行房产估值、生成评估报告并跟踪市场价值。',
     
     // Restaurant Types
     cloudKitchen: '云厨房',
@@ -10629,6 +10659,12 @@ export const translations: Record<Language, Translations> = {
     valuations: 'মূল্যায়ন',
     commissions: 'কমিশন',
     offices: 'অফিস',
+    contractsDescription: 'আপনার রিয়েল এস্টেট চুক্তি এবং ডিল পরিচালনা করুন',
+    contractsComingSoon: 'চুক্তি ব্যবস্থাপনা শীঘ্রই আসছে',
+    contractsComingSoonDesc: 'আপনার সমস্ত সম্পত্তি চুক্তি, লিজ চুক্তি এবং বিক্রয় ডিল এক জায়গায় ট্র্যাক এবং পরিচালনা করুন।',
+    valuationsDescription: 'সম্পত্তি মূল্যায়ন এবং প্রতিবেদন',
+    valuationsComingSoon: 'সম্পত্তি মূল্যায়ন শীঘ্রই আসছে',
+    valuationsComingSoonDesc: 'সম্পত্তি মূল্যায়ন পরিচালনা করুন, মূল্যায়ন প্রতিবেদন তৈরি করুন এবং বাজার মূল্য ট্র্যাক করুন।',
     
     // Restaurant Types
     cloudKitchen: 'ক্লাউড রসোই',
@@ -12600,6 +12636,12 @@ export const translations: Record<Language, Translations> = {
     valuations: 'Valutazioni',
     commissions: 'Commissioni',
     offices: 'Uffici',
+    contractsDescription: 'Gestisci i tuoi contratti immobiliari e le trattative',
+    contractsComingSoon: 'Gestione Contratti in arrivo',
+    contractsComingSoonDesc: 'Traccia e gestisci tutti i tuoi contratti immobiliari, accordi di locazione e trattative di vendita in un unico posto.',
+    valuationsDescription: 'Valutazioni immobiliari e rapporti',
+    valuationsComingSoon: 'Valutazioni Immobiliari in arrivo',
+    valuationsComingSoonDesc: 'Effettua valutazioni immobiliari, genera rapporti di valutazione e monitora i valori di mercato.',
     
     // Restaurant Types
     cloudKitchen: 'Cucina Cloud',
@@ -14560,6 +14602,12 @@ export const translations: Record<Language, Translations> = {
     valuations: 'मूल्यांकन',
     commissions: 'कमीशन',
     offices: 'कार्यालय',
+    contractsDescription: 'अपने रियल एस्टेट अनुबंध और सौदे प्रबंधित करें',
+    contractsComingSoon: 'अनुबंध प्रबंधन जल्द आ रहा है',
+    contractsComingSoonDesc: 'अपने सभी संपत्ति अनुबंध, लीज समझौते और बिक्री सौदे एक ही स्थान पर ट्रैक और प्रबंधित करें।',
+    valuationsDescription: 'संपत्ति मूल्यांकन और रिपोर्ट',
+    valuationsComingSoon: 'संपत्ति मूल्यांकन जल्द आ रहा है',
+    valuationsComingSoonDesc: 'संपत्ति मूल्यांकन करें, मूल्यांकन रिपोर्ट तैयार करें और बाजार मूल्यों को ट्रैक करें।',
     
     // Restaurant Types
     cloudKitchen: 'क्लाउड रसोई',
@@ -16475,6 +16523,12 @@ export const translations: Record<Language, Translations> = {
     valuations: 'تشخیصات',
     commissions: 'کمیشن',
     offices: 'دفاتر',
+    contractsDescription: 'اپنے رئیل اسٹیٹ معاہدے اور سودے منظم کریں',
+    contractsComingSoon: 'معاہدات کا انتظام جلد آ رہا ہے',
+    contractsComingSoonDesc: 'اپنے تمام جائیداد کے معاہدے، لیز معاہدے اور فروخت کے سودے ایک جگہ پر ٹریک اور منظم کریں۔',
+    valuationsDescription: 'جائیداد کی تشخیصات اور رپورٹیں',
+    valuationsComingSoon: 'جائیداد کی تشخیصات جلد آ رہی ہیں',
+    valuationsComingSoonDesc: 'جائیداد کی تشخیصات کریں، تشخیصی رپورٹیں بنائیں اور مارکیٹ اقدار کو ٹریک کریں۔',
     
     // Restaurant Types
     cloudKitchen: 'کلاؤڈ رسوئی',
@@ -18338,6 +18392,12 @@ export const translations: Record<Language, Translations> = {
     valuations: 'Valoraciones',
     commissions: 'Comisiones',
     offices: 'Oficinas',
+    contractsDescription: 'Gestiona tus contratos y acuerdos inmobiliarios',
+    contractsComingSoon: 'Gestión de Contratos Próximamente',
+    contractsComingSoonDesc: 'Rastrea y gestiona todos tus contratos de propiedad, acuerdos de arrendamiento y acuerdos de venta en un solo lugar.',
+    valuationsDescription: 'Evaluaciones y reportes de propiedades',
+    valuationsComingSoon: 'Valoraciones de Propiedades Próximamente',
+    valuationsComingSoonDesc: 'Realiza valoraciones de propiedades, genera informes de evaluación y rastrea valores de mercado.',
     
     // Restaurant Types
     cloudKitchen: "Cocina en la Nube",
@@ -20184,6 +20244,12 @@ export const translations: Record<Language, Translations> = {
     valuations: 'Mga Pagpapahalaga',
     commissions: 'Mga Komisyon',
     offices: 'Mga Opisina',
+    contractsDescription: 'Pamahalaan ang iyong mga kontrata at kasunduan sa real estate',
+    contractsComingSoon: 'Pamamahala ng Kontrata Malapit Na',
+    contractsComingSoonDesc: 'Subaybayan at pamahalaan ang lahat ng iyong mga kontrata sa ari-arian, kasunduan sa pag-upa, at mga deal sa pagbebenta sa isang lugar.',
+    valuationsDescription: 'Mga pagtatasa at ulat ng ari-arian',
+    valuationsComingSoon: 'Mga Pagpapahalaga ng Ari-arian Malapit Na',
+    valuationsComingSoonDesc: 'Magsagawa ng pagpapahalaga ng ari-arian, bumuo ng mga ulat ng pagtatasa, at subaybayan ang mga halaga sa merkado.',
     
     // Restaurant Types
     cloudKitchen: "Cloud Kitchen",

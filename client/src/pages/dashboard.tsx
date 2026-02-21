@@ -46,6 +46,7 @@ import type { Order, ShopBill } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useDeviceLayout, useCompactChartConfig } from "@/lib/mobileLayout";
+import { useAuth } from "@/lib/auth";
 import { useState, useEffect } from "react";
 import { queryClient } from "@/lib/queryClient";
 
@@ -382,6 +383,8 @@ export default function Dashboard() {
   const layout = useDeviceLayout();
   const chartConfig = useCompactChartConfig();
   const { lastNotification, isConnected } = useNotifications();
+  const { restaurant } = useAuth();
+  const businessType = restaurant?.businessType || 'restaurant';
 
   // Real-time updates: Refresh dashboard data when sales/order/inventory/bills updates come in
   useEffect(() => {
@@ -553,7 +556,7 @@ export default function Dashboard() {
           )}
         </h1>
         <p className="text-muted-foreground text-sm">
-          {t.dashboardOverview || "Overview of your restaurant performance"}
+          {t.dashboardOverview || (businessType === 'real_estate' ? "Overview of your brokerage performance" : "Overview of your restaurant performance")}
         </p>
       </div>
       <div
@@ -565,18 +568,22 @@ export default function Dashboard() {
           icon={DollarSign}
           trend={{ value: 12.5, direction: "up" }}
         />
-        <MetricCard
-          title={t.activeOrders}
-          value={dashboardData?.activeOrders || 0}
-          icon={ShoppingCart}
-          trend={{ value: 8.2, direction: "up" }}
-        />
-        <MetricCard
-          title={t.lowStockItems}
-          value={dashboardData?.lowStockItems || 0}
-          icon={Package}
-          trend={{ value: 3.1, direction: "down" }}
-        />
+        {businessType !== 'real_estate' && (
+          <MetricCard
+            title={t.activeOrders}
+            value={dashboardData?.activeOrders || 0}
+            icon={ShoppingCart}
+            trend={{ value: 8.2, direction: "up" }}
+          />
+        )}
+        {businessType !== 'real_estate' && (
+          <MetricCard
+            title={t.lowStockItems}
+            value={dashboardData?.lowStockItems || 0}
+            icon={Package}
+            trend={{ value: 3.1, direction: "down" }}
+          />
+        )}
       </div>
 
       {/* Performance Analysis Section */}
@@ -732,56 +739,58 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className={layout.cardHeaderPadding}>
-            <CardTitle className={layout.isMobile ? "text-base" : ""}>
-              {t.recentOrders}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className={layout.cardPadding}>
-            <div className={layout.isMobile ? "space-y-2" : "space-y-4"}>
-              {dashboardData?.recentOrders?.map((order) => (
-                <div
-                  key={order.id}
-                  className={`flex items-center justify-between hover-elevate ${layout.isMobile ? "p-2" : "p-3"} rounded-md`}
-                >
-                  <div className="flex-1">
-                    <p
-                      className={`font-mono font-semibold ${layout.isMobile ? "text-sm" : ""}`}
-                    >
-                      #{order.orderNumber}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(order.createdAt).toLocaleTimeString()} •{" "}
-                      {order.items.length} {t.items}
-                    </p>
-                  </div>
+        {businessType !== 'real_estate' && (
+          <Card>
+            <CardHeader className={layout.cardHeaderPadding}>
+              <CardTitle className={layout.isMobile ? "text-base" : ""}>
+                {t.recentOrders}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className={layout.cardPadding}>
+              <div className={layout.isMobile ? "space-y-2" : "space-y-4"}>
+                {dashboardData?.recentOrders?.map((order) => (
                   <div
-                    className={`text-right ${layout.isMobile ? "mr-2" : "mr-4"}`}
+                    key={order.id}
+                    className={`flex items-center justify-between hover-elevate ${layout.isMobile ? "p-2" : "p-3"} rounded-md`}
                   >
-                    <p
-                      className={`font-mono font-semibold ${layout.isMobile ? "text-sm" : ""}`}
+                    <div className="flex-1">
+                      <p
+                        className={`font-mono font-semibold ${layout.isMobile ? "text-sm" : ""}`}
+                      >
+                        #{order.orderNumber}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(order.createdAt).toLocaleTimeString()} •{" "}
+                        {order.items.length} {t.items}
+                      </p>
+                    </div>
+                    <div
+                      className={`text-right ${layout.isMobile ? "mr-2" : "mr-4"}`}
                     >
-                      {parseFloat(order.total).toFixed(2)} SAR
-                    </p>
-                    <p
-                      className={`text-xs ${
-                        order.status === "Completed" ||
-                        order.status === "Delivered"
-                          ? "text-green-600"
-                          : order.status === "Ready"
-                            ? "text-blue-600"
-                            : "text-orange-600"
-                      }`}
-                    >
-                      {order.status}
-                    </p>
+                      <p
+                        className={`font-mono font-semibold ${layout.isMobile ? "text-sm" : ""}`}
+                      >
+                        {parseFloat(order.total).toFixed(2)} SAR
+                      </p>
+                      <p
+                        className={`text-xs ${
+                          order.status === "Completed" ||
+                          order.status === "Delivered"
+                            ? "text-green-600"
+                            : order.status === "Ready"
+                              ? "text-blue-600"
+                              : "text-orange-600"
+                        }`}
+                      >
+                        {order.status}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
