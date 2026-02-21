@@ -145,6 +145,24 @@ import {
   type PaymentSchedule,
   type InsertPaymentSchedule,
   paymentSchedules,
+  type ProjectService,
+  type InsertProjectService,
+  projectServices,
+  type ProjectBill,
+  type InsertProjectBill,
+  projectBills,
+  type ProjectProcurement,
+  type InsertProjectProcurement,
+  projectProcurements,
+  type ProjectTask,
+  type InsertProjectTask,
+  projectTasks,
+  type QuotationDecision,
+  type InsertQuotationDecision,
+  quotationDecisions,
+  type CompanySettings,
+  type InsertCompanySettings,
+  companySettings,
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, gte, lte, lt, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
@@ -567,6 +585,38 @@ export interface IStorage {
   createPaymentSchedule(schedule: InsertPaymentSchedule): Promise<PaymentSchedule>;
   updatePaymentSchedule(id: string, restaurantId: string, schedule: Partial<InsertPaymentSchedule>): Promise<PaymentSchedule | undefined>;
   deletePaymentSchedule(id: string, restaurantId: string): Promise<boolean>;
+
+  // Project Services
+  getProjectServices(restaurantId: string, projectId: string): Promise<ProjectService[]>;
+  createProjectService(service: InsertProjectService): Promise<ProjectService>;
+  updateProjectService(id: string, restaurantId: string, data: Partial<InsertProjectService>): Promise<ProjectService | undefined>;
+  deleteProjectService(id: string, restaurantId: string): Promise<boolean>;
+
+  // Project Bills
+  getProjectBills(restaurantId: string, projectId: string): Promise<ProjectBill[]>;
+  createProjectBill(bill: InsertProjectBill): Promise<ProjectBill>;
+  updateProjectBill(id: string, restaurantId: string, data: Partial<InsertProjectBill>): Promise<ProjectBill | undefined>;
+  deleteProjectBill(id: string, restaurantId: string): Promise<boolean>;
+
+  // Project Procurements
+  getProjectProcurements(restaurantId: string, projectId: string): Promise<ProjectProcurement[]>;
+  createProjectProcurement(procurement: InsertProjectProcurement): Promise<ProjectProcurement>;
+  updateProjectProcurement(id: string, restaurantId: string, data: Partial<InsertProjectProcurement>): Promise<ProjectProcurement | undefined>;
+  deleteProjectProcurement(id: string, restaurantId: string): Promise<boolean>;
+
+  // Project Tasks
+  getProjectTasks(restaurantId: string, projectId: string): Promise<ProjectTask[]>;
+  createProjectTask(task: InsertProjectTask): Promise<ProjectTask>;
+  updateProjectTask(id: string, restaurantId: string, data: Partial<InsertProjectTask>): Promise<ProjectTask | undefined>;
+  deleteProjectTask(id: string, restaurantId: string): Promise<boolean>;
+
+  // Quotation Decisions
+  getQuotationDecisions(restaurantId: string, quotationId: string): Promise<QuotationDecision[]>;
+  createQuotationDecision(decision: InsertQuotationDecision): Promise<QuotationDecision>;
+
+  // Company Settings
+  getCompanySettings(restaurantId: string): Promise<CompanySettings | undefined>;
+  upsertCompanySettings(restaurantId: string, data: Partial<InsertCompanySettings>): Promise<CompanySettings>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -5295,6 +5345,111 @@ export class DatabaseStorage implements IStorage {
   async deletePaymentSchedule(id: string, restaurantId: string): Promise<boolean> {
     const result = await db.delete(paymentSchedules).where(and(eq(paymentSchedules.id, id), eq(paymentSchedules.restaurantId, restaurantId)));
     return (result.rowCount ?? 0) > 0;
+  }
+
+  // Project Services
+  async getProjectServices(restaurantId: string, projectId: string): Promise<ProjectService[]> {
+    return db.select().from(projectServices).where(and(eq(projectServices.restaurantId, restaurantId), eq(projectServices.projectId, projectId))).orderBy(projectServices.createdAt);
+  }
+
+  async createProjectService(service: InsertProjectService): Promise<ProjectService> {
+    const [result] = await db.insert(projectServices).values(service).returning();
+    return result;
+  }
+
+  async updateProjectService(id: string, restaurantId: string, data: Partial<InsertProjectService>): Promise<ProjectService | undefined> {
+    const [result] = await db.update(projectServices).set(data).where(and(eq(projectServices.id, id), eq(projectServices.restaurantId, restaurantId))).returning();
+    return result;
+  }
+
+  async deleteProjectService(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(projectServices).where(and(eq(projectServices.id, id), eq(projectServices.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+
+  // Project Bills
+  async getProjectBills(restaurantId: string, projectId: string): Promise<ProjectBill[]> {
+    return db.select().from(projectBills).where(and(eq(projectBills.restaurantId, restaurantId), eq(projectBills.projectId, projectId))).orderBy(projectBills.createdAt);
+  }
+
+  async createProjectBill(bill: InsertProjectBill): Promise<ProjectBill> {
+    const [result] = await db.insert(projectBills).values(bill).returning();
+    return result;
+  }
+
+  async updateProjectBill(id: string, restaurantId: string, data: Partial<InsertProjectBill>): Promise<ProjectBill | undefined> {
+    const [result] = await db.update(projectBills).set(data).where(and(eq(projectBills.id, id), eq(projectBills.restaurantId, restaurantId))).returning();
+    return result;
+  }
+
+  async deleteProjectBill(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(projectBills).where(and(eq(projectBills.id, id), eq(projectBills.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+
+  // Project Procurements
+  async getProjectProcurements(restaurantId: string, projectId: string): Promise<ProjectProcurement[]> {
+    return db.select().from(projectProcurements).where(and(eq(projectProcurements.restaurantId, restaurantId), eq(projectProcurements.projectId, projectId))).orderBy(projectProcurements.createdAt);
+  }
+
+  async createProjectProcurement(procurement: InsertProjectProcurement): Promise<ProjectProcurement> {
+    const [result] = await db.insert(projectProcurements).values(procurement).returning();
+    return result;
+  }
+
+  async updateProjectProcurement(id: string, restaurantId: string, data: Partial<InsertProjectProcurement>): Promise<ProjectProcurement | undefined> {
+    const [result] = await db.update(projectProcurements).set(data).where(and(eq(projectProcurements.id, id), eq(projectProcurements.restaurantId, restaurantId))).returning();
+    return result;
+  }
+
+  async deleteProjectProcurement(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(projectProcurements).where(and(eq(projectProcurements.id, id), eq(projectProcurements.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+
+  // Project Tasks
+  async getProjectTasks(restaurantId: string, projectId: string): Promise<ProjectTask[]> {
+    return db.select().from(projectTasks).where(and(eq(projectTasks.restaurantId, restaurantId), eq(projectTasks.projectId, projectId))).orderBy(projectTasks.createdAt);
+  }
+
+  async createProjectTask(task: InsertProjectTask): Promise<ProjectTask> {
+    const [result] = await db.insert(projectTasks).values(task).returning();
+    return result;
+  }
+
+  async updateProjectTask(id: string, restaurantId: string, data: Partial<InsertProjectTask>): Promise<ProjectTask | undefined> {
+    const [result] = await db.update(projectTasks).set(data).where(and(eq(projectTasks.id, id), eq(projectTasks.restaurantId, restaurantId))).returning();
+    return result;
+  }
+
+  async deleteProjectTask(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(projectTasks).where(and(eq(projectTasks.id, id), eq(projectTasks.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+
+  // Quotation Decisions
+  async getQuotationDecisions(restaurantId: string, quotationId: string): Promise<QuotationDecision[]> {
+    return db.select().from(quotationDecisions).where(and(eq(quotationDecisions.restaurantId, restaurantId), eq(quotationDecisions.quotationId, quotationId))).orderBy(quotationDecisions.decidedAt);
+  }
+
+  async createQuotationDecision(decision: InsertQuotationDecision): Promise<QuotationDecision> {
+    const [result] = await db.insert(quotationDecisions).values(decision).returning();
+    return result;
+  }
+
+  async getCompanySettings(restaurantId: string): Promise<CompanySettings | undefined> {
+    const [result] = await db.select().from(companySettings).where(eq(companySettings.restaurantId, restaurantId));
+    return result;
+  }
+
+  async upsertCompanySettings(restaurantId: string, data: Partial<InsertCompanySettings>): Promise<CompanySettings> {
+    const existing = await this.getCompanySettings(restaurantId);
+    if (existing) {
+      const [result] = await db.update(companySettings).set({ ...data, updatedAt: new Date() }).where(eq(companySettings.restaurantId, restaurantId)).returning();
+      return result;
+    }
+    const [result] = await db.insert(companySettings).values({ ...data, restaurantId }).returning();
+    return result;
   }
 }
 

@@ -1756,3 +1756,22 @@ export const quotationDecisions = pgTable("quotation_decisions", {
 export const insertQuotationDecisionSchema = createInsertSchema(quotationDecisions).omit({ id: true });
 export type InsertQuotationDecision = z.infer<typeof insertQuotationDecisionSchema>;
 export type QuotationDecision = typeof quotationDecisions.$inferSelect;
+
+// Company Settings (agreement templates, terms, company info for service businesses)
+export const companySettings = pgTable("company_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  companyName: text("company_name"),
+  companyEmail: text("company_email"),
+  companyPhone: text("company_phone"),
+  companyAddress: text("company_address"),
+  companyLogo: text("company_logo"),
+  agreementTemplate: text("agreement_template"),
+  agreementPlaceholders: jsonb("agreement_placeholders"),
+  termsAndConditions: text("terms_and_conditions"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertCompanySettingsSchema = createInsertSchema(companySettings).omit({ id: true, updatedAt: true });
+export type InsertCompanySettings = z.infer<typeof insertCompanySettingsSchema>;
+export type CompanySettings = typeof companySettings.$inferSelect;

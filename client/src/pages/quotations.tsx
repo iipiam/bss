@@ -50,6 +50,10 @@ import {
   Mail,
   User,
   Clock,
+  ThumbsUp,
+  ThumbsDown,
+  MessageSquare,
+  Download,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -87,6 +91,7 @@ interface Quotation {
   validUntil: string | null;
   notes: string | null;
   createdAt: string;
+  declineReason: string | null;
 }
 
 const quotationFormSchema = z.object({
@@ -135,6 +140,10 @@ export default function Quotations() {
   const [open, setOpen] = useState(false);
   const [editingQuotation, setEditingQuotation] = useState<Quotation | null>(null);
   const [deletingQuotation, setDeletingQuotation] = useState<Quotation | null>(null);
+  const [approveQuotation, setApproveQuotation] = useState<Quotation | null>(null);
+  const [declineQuotation, setDeclineQuotation] = useState<Quotation | null>(null);
+  const [declineReason, setDeclineReason] = useState("");
+  const [viewDecisionsQuotation, setViewDecisionsQuotation] = useState<Quotation | null>(null);
   const { toast } = useToast();
   const { t } = useLanguage();
   const layout = useDeviceLayout();
@@ -159,6 +168,17 @@ export default function Quotations() {
 
   const { data: quotations = [], isLoading } = useQuery<Quotation[]>({
     queryKey: ["/api/quotations"],
+  });
+
+  const { data: decisions = [] } = useQuery<any[]>({
+    queryKey: ["/api/quotation-decisions", viewDecisionsQuotation?.id],
+    queryFn: async () => {
+      if (!viewDecisionsQuotation) return [];
+      const res = await fetch(`/api/quotation-decisions?quotationId=${viewDecisionsQuotation.id}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed');
+      return res.json();
+    },
+    enabled: !!viewDecisionsQuotation,
   });
 
   const createQuotationMutation = useMutation({
@@ -243,6 +263,67 @@ export default function Quotations() {
     onError: (error: any) => {
       toast({
         title: t.failedToDeleteQuotation,
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const approveQuotationMutation = useMutation({
+    mutationFn: async (quotation: Quotation) => {
+      await apiRequest("POST", "/api/quotation-decisions", {
+        restaurantId: quotation.restaurantId,
+        quotationId: quotation.id,
+        decision: "approved",
+        decidedBy: "admin",
+      });
+      await apiRequest("PATCH", `/api/quotations/${quotation.id}`, {
+        status: "approved",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+      setApproveQuotation(null);
+      toast({
+        title: (t as any).quotationApproved || "Quotation Approved",
+        description: (t as any).quotationApprovedDesc || "The quotation has been approved successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.error,
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const declineQuotationMutation = useMutation({
+    mutationFn: async ({ quotation, reason }: { quotation: Quotation; reason: string }) => {
+      await apiRequest("POST", "/api/quotation-decisions", {
+        restaurantId: quotation.restaurantId,
+        quotationId: quotation.id,
+        decision: "declined",
+        reason: reason,
+        decidedBy: "admin",
+      });
+      await apiRequest("PATCH", `/api/quotations/${quotation.id}`, {
+        status: "declined",
+        declineReason: reason,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+      setDeclineQuotation(null);
+      setDeclineReason("");
+      toast({
+        title: (t as any).quotationDeclined || "Quotation Declined",
+        description: (t as any).quotationDeclinedDesc || "The quotation has been declined.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.error,
         description: error.message,
         variant: "destructive",
       });
@@ -740,6 +821,14 @@ export default function Quotations() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={() => window.open(`/api/quotations/${quotation.id}/download-pdf`, '_blank')}
+                    data-testid={`button-download-pdf-${quotation.id}`}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleEdit(quotation)}
                     data-testid={`button-edit-${quotation.id}`}
                   >
@@ -753,6 +842,38 @@ export default function Quotations() {
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
+                  {(quotation.status === "draft" || quotation.status === "sent") && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setApproveQuotation(quotation)}
+                        data-testid={`button-approve-${quotation.id}`}
+                        className="text-green-600"
+                      >
+                        <ThumbsUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setDeclineQuotation(quotation)}
+                        data-testid={`button-decline-${quotation.id}`}
+                        className="text-red-600"
+                      >
+                        <ThumbsDown className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                  {(quotation.status === "approved" || quotation.status === "declined") && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setViewDecisionsQuotation(quotation)}
+                      data-testid={`button-view-decisions-${quotation.id}`}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -764,6 +885,13 @@ export default function Quotations() {
                     {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
                   </Badge>
                 </div>
+
+                {quotation.status === "declined" && (quotation as any).declineReason && (
+                  <div className="text-xs text-destructive mt-1">
+                    <span className="font-medium">{(t as any).declineReason || "Reason"}: </span>
+                    {(quotation as any).declineReason}
+                  </div>
+                )}
 
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2 text-sm">
@@ -847,6 +975,109 @@ export default function Quotations() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog
+        open={!!approveQuotation}
+        onOpenChange={(open) => !open && setApproveQuotation(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{(t as any).approveQuotation || "Approve Quotation"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {(t as any).approveQuotationConfirm || "Are you sure you want to approve this quotation?"} ({approveQuotation?.quotationNumber})
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-approve">{t.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="button-confirm-approve"
+              onClick={() => approveQuotation && approveQuotationMutation.mutate(approveQuotation)}
+              className="bg-green-600 text-white hover:bg-green-700"
+            >
+              {t.approved || "Approve"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog
+        open={!!declineQuotation}
+        onOpenChange={(open) => { if (!open) { setDeclineQuotation(null); setDeclineReason(""); } }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{(t as any).declineQuotation || "Decline Quotation"}</DialogTitle>
+            <DialogDescription>
+              {(t as any).declineQuotationDesc || "Please provide a reason for declining this quotation."} ({declineQuotation?.quotationNumber})
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">{(t as any).declineReason || "Reason"}</label>
+              <Textarea
+                data-testid="input-decline-reason"
+                placeholder={(t as any).enterDeclineReason || "Enter reason for declining..."}
+                value={declineReason}
+                onChange={(e) => setDeclineReason(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setDeclineQuotation(null); setDeclineReason(""); }} data-testid="button-cancel-decline">
+                {t.cancel}
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => declineQuotation && declineQuotationMutation.mutate({ quotation: declineQuotation, reason: declineReason })}
+                disabled={!declineReason.trim()}
+                data-testid="button-confirm-decline"
+              >
+                {t.declined || "Decline"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!viewDecisionsQuotation}
+        onOpenChange={(open) => !open && setViewDecisionsQuotation(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{(t as any).decisionHistory || "Decision History"}</DialogTitle>
+            <DialogDescription>
+              {viewDecisionsQuotation?.quotationNumber}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            {decisions.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{(t as any).noDecisions || "No decisions recorded."}</p>
+            ) : (
+              decisions.map((decision: any) => (
+                <Card key={decision.id}>
+                  <CardContent className="pt-3 pb-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant={decision.decision === "approved" ? "default" : "destructive"} className={decision.decision === "approved" ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20" : ""}>
+                        {decision.decision === "approved" ? (t.approved || "Approved") : (t.declined || "Declined")}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {decision.decidedBy && `by ${decision.decidedBy}`}
+                      </span>
+                    </div>
+                    {decision.reason && (
+                      <p className="text-sm mt-1">{decision.reason}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {decision.decidedAt ? format(new Date(decision.decidedAt), "MMM dd, yyyy HH:mm") : ""}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

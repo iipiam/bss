@@ -63,6 +63,7 @@ import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeviceLayout } from "@/lib/mobileLayout";
 import { format } from "date-fns";
+import { Link } from "wouter";
 
 interface ServiceProject {
   id: string;
@@ -809,6 +810,15 @@ export default function ServiceProjects() {
                   </h3>
                 </div>
                 <div className="flex gap-1 shrink-0">
+                  <Link href={`/service-projects/${project.id}`}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      data-testid={`button-view-${project.id}`}
+                    >
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                  </Link>
                   <Button
                     variant="ghost"
                     size="icon"

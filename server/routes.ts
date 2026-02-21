@@ -14900,6 +14900,760 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // ==================== PROJECT SERVICES ====================
+  app.get("/api/project-services", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const projectId = req.query.projectId as string;
+      if (!projectId) return res.status(400).json({ message: "projectId is required" });
+      const services = await storage.getProjectServices(restaurantId, projectId);
+      res.json(services);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/project-services", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body, restaurantId };
+      const service = await storage.createProjectService(data);
+      res.status(201).json(service);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/project-services/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body };
+      const service = await storage.updateProjectService(req.params.id, restaurantId, data);
+      if (!service) return res.status(404).json({ message: "Project service not found" });
+      res.json(service);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/project-services/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const deleted = await storage.deleteProjectService(req.params.id, restaurantId);
+      if (!deleted) return res.status(404).json({ message: "Project service not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ==================== PROJECT BILLS ====================
+  app.get("/api/project-bills", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const projectId = req.query.projectId as string;
+      if (!projectId) return res.status(400).json({ message: "projectId is required" });
+      const bills = await storage.getProjectBills(restaurantId, projectId);
+      res.json(bills);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/project-bills", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body, restaurantId };
+      if (data.billDate) data.billDate = new Date(data.billDate);
+      if (data.dueDate) data.dueDate = new Date(data.dueDate);
+      if (data.paidDate) data.paidDate = new Date(data.paidDate);
+      const bill = await storage.createProjectBill(data);
+      res.status(201).json(bill);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/project-bills/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body };
+      if (data.billDate) data.billDate = new Date(data.billDate);
+      if (data.dueDate) data.dueDate = new Date(data.dueDate);
+      if (data.paidDate) data.paidDate = new Date(data.paidDate);
+      const bill = await storage.updateProjectBill(req.params.id, restaurantId, data);
+      if (!bill) return res.status(404).json({ message: "Project bill not found" });
+      res.json(bill);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/project-bills/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const deleted = await storage.deleteProjectBill(req.params.id, restaurantId);
+      if (!deleted) return res.status(404).json({ message: "Project bill not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ==================== PROJECT PROCUREMENTS ====================
+  app.get("/api/project-procurements", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const projectId = req.query.projectId as string;
+      if (!projectId) return res.status(400).json({ message: "projectId is required" });
+      const procurements = await storage.getProjectProcurements(restaurantId, projectId);
+      res.json(procurements);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/project-procurements", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body, restaurantId };
+      if (data.purchaseDate) data.purchaseDate = new Date(data.purchaseDate);
+      if (data.deliveryDate) data.deliveryDate = new Date(data.deliveryDate);
+      const procurement = await storage.createProjectProcurement(data);
+      res.status(201).json(procurement);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/project-procurements/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body };
+      if (data.purchaseDate) data.purchaseDate = new Date(data.purchaseDate);
+      if (data.deliveryDate) data.deliveryDate = new Date(data.deliveryDate);
+      const procurement = await storage.updateProjectProcurement(req.params.id, restaurantId, data);
+      if (!procurement) return res.status(404).json({ message: "Project procurement not found" });
+      res.json(procurement);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/project-procurements/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const deleted = await storage.deleteProjectProcurement(req.params.id, restaurantId);
+      if (!deleted) return res.status(404).json({ message: "Project procurement not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ==================== PROJECT TASKS ====================
+  app.get("/api/project-tasks", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const projectId = req.query.projectId as string;
+      if (!projectId) return res.status(400).json({ message: "projectId is required" });
+      const tasks = await storage.getProjectTasks(restaurantId, projectId);
+      res.json(tasks);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/project-tasks", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body, restaurantId };
+      if (data.startDate) data.startDate = new Date(data.startDate);
+      if (data.endDate) data.endDate = new Date(data.endDate);
+      const task = await storage.createProjectTask(data);
+      res.status(201).json(task);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/project-tasks/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body };
+      if (data.startDate) data.startDate = new Date(data.startDate);
+      if (data.endDate) data.endDate = new Date(data.endDate);
+      const task = await storage.updateProjectTask(req.params.id, restaurantId, data);
+      if (!task) return res.status(404).json({ message: "Project task not found" });
+      res.json(task);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/project-tasks/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const deleted = await storage.deleteProjectTask(req.params.id, restaurantId);
+      if (!deleted) return res.status(404).json({ message: "Project task not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ==================== CPM ALGORITHM ====================
+  app.post("/api/project-tasks/calculate-cpm", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const { projectId } = req.body;
+      if (!projectId) return res.status(400).json({ message: "projectId is required" });
+
+      const tasks = await storage.getProjectTasks(restaurantId, projectId);
+      if (tasks.length === 0) return res.json([]);
+
+      const taskMap = new Map(tasks.map(t => [t.id, { ...t }]));
+
+      for (const task of tasks) {
+        const deps = (task.dependencies || []).filter(d => taskMap.has(d));
+        const earlyStart = deps.length === 0 ? 0 : Math.max(...deps.map(d => taskMap.get(d)!.earlyFinish || 0));
+        const earlyFinish = earlyStart + task.duration;
+        taskMap.get(task.id)!.earlyStart = earlyStart;
+        taskMap.get(task.id)!.earlyFinish = earlyFinish;
+      }
+
+      const projectDuration = Math.max(...Array.from(taskMap.values()).map(t => t.earlyFinish || 0));
+
+      const reverseTasks = [...tasks].reverse();
+      for (const task of reverseTasks) {
+        const successors = tasks.filter(t => (t.dependencies || []).includes(task.id));
+        const lateFinish = successors.length === 0 ? projectDuration : Math.min(...successors.map(s => taskMap.get(s.id)!.lateStart || projectDuration));
+        const lateStart = lateFinish - task.duration;
+        const slack = lateStart - (taskMap.get(task.id)!.earlyStart || 0);
+        taskMap.get(task.id)!.lateStart = lateStart;
+        taskMap.get(task.id)!.lateFinish = lateFinish;
+        taskMap.get(task.id)!.slack = slack;
+        taskMap.get(task.id)!.isCritical = slack === 0;
+      }
+
+      const updatedTasks = Array.from(taskMap.values());
+      for (const t of updatedTasks) {
+        await storage.updateProjectTask(t.id, restaurantId, {
+          earlyStart: t.earlyStart,
+          earlyFinish: t.earlyFinish,
+          lateStart: t.lateStart,
+          lateFinish: t.lateFinish,
+          slack: t.slack,
+          isCritical: t.isCritical,
+        });
+      }
+
+      res.json(updatedTasks);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ==================== QUOTATION DECISIONS ====================
+  app.get("/api/quotation-decisions", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const quotationId = req.query.quotationId as string;
+      if (!quotationId) return res.status(400).json({ message: "quotationId is required" });
+      const decisions = await storage.getQuotationDecisions(restaurantId, quotationId);
+      res.json(decisions);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/quotation-decisions", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data = { ...req.body, restaurantId };
+      if (data.decidedAt) data.decidedAt = new Date(data.decidedAt);
+      const decision = await storage.createQuotationDecision(data);
+      res.status(201).json(decision);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ==================== PAYMENT SCHEDULE AUTO-GENERATE ====================
+  app.post("/api/payment-schedules/auto-generate", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const { projectId, installments } = req.body;
+      if (!projectId || !installments || installments < 1) {
+        return res.status(400).json({ message: "projectId and installments (>= 1) are required" });
+      }
+
+      const services = await storage.getProjectServices(restaurantId, projectId);
+      const total = services.reduce((sum, s) => sum + parseFloat(String(s.totalPrice || "0")), 0);
+      if (total <= 0) return res.status(400).json({ message: "No services found or total is zero" });
+
+      const perInstallment = Math.round((total / installments) * 100) / 100;
+      const schedules = [];
+      for (let i = 0; i < installments; i++) {
+        const amount = i === installments - 1 ? Math.round((total - perInstallment * (installments - 1)) * 100) / 100 : perInstallment;
+        const schedule = await storage.createPaymentSchedule({
+          restaurantId,
+          projectId,
+          milestoneName: `Installment ${i + 1}`,
+          amount: String(amount),
+          status: "pending",
+        });
+        schedules.push(schedule);
+      }
+
+      res.status(201).json(schedules);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/company-settings", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const settings = await storage.getCompanySettings(restaurantId);
+      res.json(settings || {});
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/company-settings", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      
+      const allowedFields = ['companyName', 'companyEmail', 'companyPhone', 'companyAddress', 'companyLogo', 'agreementTemplate', 'agreementPlaceholders', 'termsAndConditions'];
+      const sanitized: any = {};
+      for (const key of allowedFields) {
+        if (req.body[key] !== undefined) {
+          sanitized[key] = req.body[key];
+        }
+      }
+      
+      const settings = await storage.upsertCompanySettings(restaurantId, sanitized);
+      res.json(settings);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  function escapeHtml(text: string | null | undefined): string {
+    if (!text) return '';
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  app.get("/api/quotations/:id/download-pdf", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      
+      const quotation = await storage.getQuotation(req.params.id, restaurantId);
+      if (!quotation) return res.status(404).json({ message: "Quotation not found" });
+      
+      const companyInfo = await storage.getCompanySettings(restaurantId);
+      
+      const items = Array.isArray(quotation.items) ? quotation.items : [];
+      const itemRows = items.map((item: any, idx: number) => `
+        <tr>
+          <td style="text-align:center">${idx + 1}</td>
+          <td>${escapeHtml(item.name)}</td>
+          <td style="text-align:center">${item.quantity || 1}</td>
+          <td style="text-align:right">${parseFloat(item.unitPrice || 0).toLocaleString('en-US', {minimumFractionDigits: 2})} SAR</td>
+          <td style="text-align:right">${parseFloat(item.total || 0).toLocaleString('en-US', {minimumFractionDigits: 2})} SAR</td>
+        </tr>
+      `).join('');
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
+            body { font-family: Arial, sans-serif; padding: 40px; font-size: 12px; color: #333; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1a365d; padding-bottom: 20px; margin-bottom: 30px; }
+            .company-info { max-width: 50%; }
+            .company-info h1 { color: #1a365d; margin: 0; font-size: 24px; }
+            .company-info p { margin: 3px 0; color: #666; font-size: 11px; }
+            .quotation-info { text-align: right; }
+            .quotation-info h2 { color: #1a365d; margin: 0; font-size: 28px; text-transform: uppercase; }
+            .quotation-info p { margin: 3px 0; color: #666; }
+            .client-section { background: #f8fafc; padding: 15px; border-radius: 6px; margin-bottom: 25px; }
+            .client-section h3 { color: #1a365d; margin: 0 0 8px 0; font-size: 14px; }
+            .client-section p { margin: 3px 0; font-size: 12px; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th { background: #1a365d; color: white; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; }
+            td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+            tr:nth-child(even) { background: #f8fafc; }
+            .totals { margin-top: 20px; text-align: right; }
+            .totals-row { display: flex; justify-content: flex-end; gap: 40px; padding: 5px 0; font-size: 13px; }
+            .totals-row.grand { font-size: 16px; font-weight: bold; color: #1a365d; border-top: 2px solid #1a365d; padding-top: 10px; margin-top: 10px; }
+            .terms { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+            .terms h3 { color: #1a365d; font-size: 14px; }
+            .terms p { font-size: 11px; color: #666; line-height: 1.6; }
+            .footer { text-align: center; margin-top: 40px; padding-top: 15px; border-top: 1px solid #e2e8f0; color: #999; font-size: 10px; }
+            .ar { font-family: 'Amiri', serif; direction: rtl; text-align: right; }
+            .validity { background: #fef3c7; padding: 10px 15px; border-radius: 6px; margin: 20px 0; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-info">
+              <h1>${escapeHtml(companyInfo?.companyName) || 'Company Name'}</h1>
+              ${companyInfo?.companyAddress ? `<p>${escapeHtml(companyInfo.companyAddress)}</p>` : ''}
+              ${companyInfo?.companyPhone ? `<p>Tel: ${escapeHtml(companyInfo.companyPhone)}</p>` : ''}
+              ${companyInfo?.companyEmail ? `<p>Email: ${escapeHtml(companyInfo.companyEmail)}</p>` : ''}
+            </div>
+            <div class="quotation-info">
+              <h2>Quotation</h2>
+              <p class="ar">عرض سعر</p>
+              <p><strong>${escapeHtml(quotation.quotationNumber)}</strong></p>
+              <p>Date: ${new Date(quotation.createdAt).toLocaleDateString('en-GB')}</p>
+              <p>Status: ${quotation.status.toUpperCase()}</p>
+            </div>
+          </div>
+
+          <div class="client-section">
+            <h3>Client / العميل</h3>
+            <p><strong>${escapeHtml(quotation.clientName)}</strong></p>
+            ${quotation.clientPhone ? `<p>Phone: ${escapeHtml(quotation.clientPhone)}</p>` : ''}
+            ${quotation.clientEmail ? `<p>Email: ${escapeHtml(quotation.clientEmail)}</p>` : ''}
+          </div>
+
+          ${quotation.description ? `<p style="margin-bottom:20px;">${escapeHtml(quotation.description)}</p>` : ''}
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width:50px;text-align:center">#</th>
+                <th>Description / الوصف</th>
+                <th style="width:80px;text-align:center">Qty / الكمية</th>
+                <th style="width:120px;text-align:right">Unit Price / سعر الوحدة</th>
+                <th style="width:120px;text-align:right">Total / المجموع</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemRows || '<tr><td colspan="5" style="text-align:center">No items</td></tr>'}
+            </tbody>
+          </table>
+
+          <div class="totals">
+            <div class="totals-row"><span>Subtotal / المجموع الفرعي:</span><span>${parseFloat(quotation.subtotal || '0').toLocaleString('en-US', {minimumFractionDigits: 2})} SAR</span></div>
+            <div class="totals-row"><span>VAT ${quotation.vatRate || '15'}% / ضريبة القيمة المضافة:</span><span>${parseFloat(quotation.vatAmount || '0').toLocaleString('en-US', {minimumFractionDigits: 2})} SAR</span></div>
+            <div class="totals-row grand"><span>Total / الإجمالي:</span><span>${parseFloat(quotation.totalAmount || '0').toLocaleString('en-US', {minimumFractionDigits: 2})} SAR</span></div>
+          </div>
+
+          ${quotation.validUntil ? `<div class="validity">Valid Until / صالح حتى: ${new Date(quotation.validUntil).toLocaleDateString('en-GB')}</div>` : ''}
+
+          ${quotation.notes ? `<div class="terms"><h3>Notes / ملاحظات</h3><p>${escapeHtml(quotation.notes)}</p></div>` : ''}
+
+          <div class="footer">
+            <p>${escapeHtml(companyInfo?.companyName) || 'Company'} - All Rights Reserved</p>
+            <p>Generated on ${new Date().toLocaleDateString('en-GB')}</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const puppeteer = await import("puppeteer");
+      const { execSync } = await import("child_process");
+      const { existsSync } = await import("fs");
+      
+      let chromiumPath: string | undefined = undefined;
+      try {
+        chromiumPath = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null', { encoding: 'utf8' }).trim();
+        if (!chromiumPath || !existsSync(chromiumPath)) chromiumPath = undefined;
+      } catch (e) {}
+      
+      const browser = await puppeteer.default.launch({
+        headless: true,
+        executablePath: chromiumPath,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process', '--no-zygote'],
+      });
+      const page = await browser.newPage();
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      const pdf = await page.pdf({ format: 'A4', margin: { top: '20mm', right: '15mm', bottom: '20mm', left: '15mm' }, printBackground: true });
+      await browser.close();
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="quotation-${quotation.quotationNumber}.pdf"`);
+      res.send(pdf);
+    } catch (error: any) {
+      console.error("Quotation PDF error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/service-projects/:id/dossier-pdf", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      
+      const project = await storage.getServiceProject(req.params.id, restaurantId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      
+      const companyInfo = await storage.getCompanySettings(restaurantId);
+      const services = await storage.getProjectServices(restaurantId, project.id);
+      const bills = await storage.getProjectBills(restaurantId, project.id);
+      const procurements = await storage.getProjectProcurements(restaurantId, project.id);
+      const tasks = await storage.getProjectTasks(restaurantId, project.id);
+      const schedules = await storage.getPaymentSchedules(restaurantId, project.id);
+      
+      const totalServices = services.reduce((s, svc) => s + parseFloat(svc.totalPrice || '0'), 0);
+      const totalBills = bills.reduce((s, b) => s + parseFloat(b.amount || '0'), 0);
+      const totalProcurements = procurements.reduce((s, p) => s + parseFloat(p.totalPrice || '0'), 0);
+      const totalPaid = schedules.filter(s => s.status === 'paid').reduce((s, p) => s + parseFloat(p.amount || '0'), 0);
+      const totalScheduled = schedules.reduce((s, p) => s + parseFloat(p.amount || '0'), 0);
+
+      const serviceRows = services.map((svc, idx) => `
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${escapeHtml(svc.name)}</td>
+          <td>${escapeHtml(svc.pricingMethod)}</td>
+          <td style="text-align:right">${parseFloat(svc.unitPrice || '0').toFixed(2)}</td>
+          <td style="text-align:center">${svc.quantity}</td>
+          <td style="text-align:right">${parseFloat(svc.totalPrice || '0').toFixed(2)} SAR</td>
+        </tr>
+      `).join('');
+
+      const billRows = bills.map((b, idx) => `
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${escapeHtml(b.description)}</td>
+          <td>${escapeHtml(b.vendor || '-')}</td>
+          <td style="text-align:right">${parseFloat(b.amount || '0').toFixed(2)} SAR</td>
+          <td>${escapeHtml(b.status)}</td>
+        </tr>
+      `).join('');
+
+      const procurementRows = procurements.map((p, idx) => `
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${escapeHtml(p.itemName)}</td>
+          <td>${escapeHtml(p.vendor || '-')}</td>
+          <td style="text-align:center">${p.quantity}</td>
+          <td style="text-align:right">${parseFloat(p.totalPrice || '0').toFixed(2)} SAR</td>
+          <td>${escapeHtml(p.status)}</td>
+        </tr>
+      `).join('');
+
+      const taskRows = tasks.map((t, idx) => `
+        <tr style="${t.isCritical ? 'background:#fef2f2;' : ''}">
+          <td>${idx + 1}</td>
+          <td>${escapeHtml(t.name)}${t.isCritical ? ' ⚠' : ''}</td>
+          <td style="text-align:center">${t.duration} days</td>
+          <td>${escapeHtml(t.status)}</td>
+          <td style="text-align:center">${t.slack ?? '-'}</td>
+        </tr>
+      `).join('');
+
+      const scheduleRows = schedules.map((s, idx) => `
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${escapeHtml(s.milestoneName)}</td>
+          <td style="text-align:right">${parseFloat(s.amount || '0').toFixed(2)} SAR</td>
+          <td>${s.dueDate ? new Date(s.dueDate).toLocaleDateString('en-GB') : '-'}</td>
+          <td>${escapeHtml(s.status)}</td>
+        </tr>
+      `).join('');
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
+            body { font-family: Arial, sans-serif; padding: 30px; font-size: 11px; color: #333; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1a365d; padding-bottom: 15px; margin-bottom: 20px; }
+            .company-info h1 { color: #1a365d; margin: 0; font-size: 22px; }
+            .company-info p { margin: 2px 0; color: #666; font-size: 10px; }
+            .dossier-title { text-align: right; }
+            .dossier-title h2 { color: #1a365d; margin: 0; font-size: 24px; }
+            .dossier-title p { margin: 2px 0; color: #666; }
+            .ar { font-family: 'Amiri', serif; direction: rtl; }
+            .project-info { background: #f0f4f8; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+            .project-info h3 { color: #1a365d; margin: 0 0 8px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+            .info-item { font-size: 11px; }
+            .info-item span { color: #666; }
+            .section { margin: 25px 0; page-break-inside: avoid; }
+            .section h3 { color: #1a365d; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; font-size: 14px; }
+            table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 10px; }
+            th { background: #1a365d; color: white; padding: 8px; text-align: left; font-size: 10px; }
+            td { padding: 7px 8px; border-bottom: 1px solid #e2e8f0; }
+            tr:nth-child(even) { background: #f8fafc; }
+            .summary-box { background: #e8f5e9; padding: 15px; border-radius: 6px; margin: 15px 0; }
+            .summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+            .summary-item { text-align: center; }
+            .summary-item .label { font-size: 10px; color: #666; }
+            .summary-item .value { font-size: 16px; font-weight: bold; color: #1a365d; }
+            .total-row { font-weight: bold; background: #f0f4f8 !important; }
+            .footer { text-align: center; margin-top: 30px; padding-top: 10px; border-top: 1px solid #e2e8f0; color: #999; font-size: 9px; }
+            .critical { color: #dc2626; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-info">
+              <h1>${escapeHtml(companyInfo?.companyName) || 'Company Name'}</h1>
+              ${companyInfo?.companyAddress ? `<p>${escapeHtml(companyInfo.companyAddress)}</p>` : ''}
+              ${companyInfo?.companyPhone ? `<p>Tel: ${escapeHtml(companyInfo.companyPhone)}</p>` : ''}
+              ${companyInfo?.companyEmail ? `<p>Email: ${escapeHtml(companyInfo.companyEmail)}</p>` : ''}
+            </div>
+            <div class="dossier-title">
+              <h2>Project Dossier</h2>
+              <p class="ar">ملف المشروع</p>
+              <p>${escapeHtml(project.projectNumber)}</p>
+              <p>${new Date().toLocaleDateString('en-GB')}</p>
+            </div>
+          </div>
+
+          <div class="project-info">
+            <h3>${escapeHtml(project.name)}</h3>
+            <div class="info-grid">
+              <div class="info-item"><span>Client / العميل:</span> ${escapeHtml(project.clientName)}</div>
+              <div class="info-item"><span>Status:</span> ${escapeHtml(project.status)}</div>
+              <div class="info-item"><span>Priority:</span> ${escapeHtml(project.priority)}</div>
+              <div class="info-item"><span>Location:</span> ${escapeHtml(project.location) || '-'}</div>
+              <div class="info-item"><span>Start Date:</span> ${project.startDate ? new Date(project.startDate).toLocaleDateString('en-GB') : '-'}</div>
+              <div class="info-item"><span>End Date:</span> ${project.endDate ? new Date(project.endDate).toLocaleDateString('en-GB') : '-'}</div>
+              <div class="info-item"><span>Budget:</span> ${project.estimatedBudget ? parseFloat(project.estimatedBudget).toFixed(2) + ' SAR' : '-'}</div>
+            </div>
+            ${project.description ? `<p style="margin-top:8px;">${escapeHtml(project.description)}</p>` : ''}
+          </div>
+
+          <div class="summary-box">
+            <div class="summary-grid">
+              <div class="summary-item"><div class="label">Services Value / قيمة الخدمات</div><div class="value">${totalServices.toFixed(2)} SAR</div></div>
+              <div class="summary-item"><div class="label">Total Bills / إجمالي الفواتير</div><div class="value">${totalBills.toFixed(2)} SAR</div></div>
+              <div class="summary-item"><div class="label">Procurements / المشتريات</div><div class="value">${totalProcurements.toFixed(2)} SAR</div></div>
+            </div>
+          </div>
+
+          ${services.length > 0 ? `
+          <div class="section">
+            <h3>Services / الخدمات</h3>
+            <table>
+              <thead><tr><th>#</th><th>Service</th><th>Method</th><th>Unit Price</th><th>Qty</th><th>Total</th></tr></thead>
+              <tbody>${serviceRows}
+                <tr class="total-row"><td colspan="5" style="text-align:right">Total / الإجمالي:</td><td style="text-align:right">${totalServices.toFixed(2)} SAR</td></tr>
+              </tbody>
+            </table>
+          </div>` : ''}
+
+          ${bills.length > 0 ? `
+          <div class="section">
+            <h3>Bills / الفواتير</h3>
+            <table>
+              <thead><tr><th>#</th><th>Description</th><th>Vendor</th><th>Amount</th><th>Status</th></tr></thead>
+              <tbody>${billRows}
+                <tr class="total-row"><td colspan="3" style="text-align:right">Total:</td><td style="text-align:right">${totalBills.toFixed(2)} SAR</td><td></td></tr>
+              </tbody>
+            </table>
+          </div>` : ''}
+
+          ${procurements.length > 0 ? `
+          <div class="section">
+            <h3>Procurements / المشتريات</h3>
+            <table>
+              <thead><tr><th>#</th><th>Item</th><th>Vendor</th><th>Qty</th><th>Total</th><th>Status</th></tr></thead>
+              <tbody>${procurementRows}
+                <tr class="total-row"><td colspan="4" style="text-align:right">Total:</td><td style="text-align:right">${totalProcurements.toFixed(2)} SAR</td><td></td></tr>
+              </tbody>
+            </table>
+          </div>` : ''}
+
+          ${tasks.length > 0 ? `
+          <div class="section">
+            <h3>Tasks / المهام</h3>
+            <table>
+              <thead><tr><th>#</th><th>Task</th><th>Duration</th><th>Status</th><th>Slack</th></tr></thead>
+              <tbody>${taskRows}</tbody>
+            </table>
+          </div>` : ''}
+
+          ${schedules.length > 0 ? `
+          <div class="section">
+            <h3>Payment Schedule / جدول الدفعات</h3>
+            <table>
+              <thead><tr><th>#</th><th>Milestone</th><th>Amount</th><th>Due Date</th><th>Status</th></tr></thead>
+              <tbody>${scheduleRows}
+                <tr class="total-row"><td></td><td style="text-align:right">Total:</td><td style="text-align:right">${totalScheduled.toFixed(2)} SAR</td><td></td><td>Paid: ${totalPaid.toFixed(2)} SAR</td></tr>
+              </tbody>
+            </table>
+          </div>` : ''}
+
+          ${project.notes ? `<div class="section"><h3>Notes / ملاحظات</h3><p>${escapeHtml(project.notes)}</p></div>` : ''}
+
+          <div class="footer">
+            <p>${escapeHtml(companyInfo?.companyName) || 'Company'} - Project Dossier - ${escapeHtml(project.projectNumber)}</p>
+            <p>Generated on ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB')}</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const puppeteer = await import("puppeteer");
+      const { execSync } = await import("child_process");
+      const { existsSync } = await import("fs");
+      
+      let chromiumPath: string | undefined = undefined;
+      try {
+        chromiumPath = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null', { encoding: 'utf8' }).trim();
+        if (!chromiumPath || !existsSync(chromiumPath)) chromiumPath = undefined;
+      } catch (e) {}
+      
+      const browser = await puppeteer.default.launch({
+        headless: true,
+        executablePath: chromiumPath,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process', '--no-zygote'],
+      });
+      const page = await browser.newPage();
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      const pdf = await page.pdf({ format: 'A4', margin: { top: '15mm', right: '10mm', bottom: '15mm', left: '10mm' }, printBackground: true });
+      await browser.close();
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="project-dossier-${project.projectNumber}.pdf"`);
+      res.send(pdf);
+    } catch (error: any) {
+      console.error("Project dossier PDF error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Setup WebSocket server for real-time notifications on specific path to avoid conflicts with Vite HMR

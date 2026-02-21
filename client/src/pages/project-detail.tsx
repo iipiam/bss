@@ -1,0 +1,939 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
+} from "@/components/ui/form";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  ArrowLeft, Plus, Edit, Trash2, DollarSign, Calendar, Phone, Mail,
+  User, MapPin, Clock, FileText, CheckCircle, Layers, Receipt,
+  ShoppingCart, CreditCard, ListTodo, Zap, AlertTriangle, Download,
+} from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useDeviceLayout } from "@/lib/mobileLayout";
+import { Link, useParams } from "wouter";
+import { format } from "date-fns";
+
+interface ServiceProject {
+  id: string; restaurantId: string; projectNumber: string; name: string;
+  clientName: string; clientPhone: string | null; clientEmail: string | null;
+  description: string | null; location: string | null; status: string; priority: string;
+  startDate: string | null; endDate: string | null; estimatedBudget: string | null;
+  actualCost: string | null; contractorId: string | null; notes: string | null; createdAt: string;
+}
+interface ProjectServiceItem {
+  id: string; projectId: string; serviceCatalogId: string | null; name: string;
+  description: string | null; pricingMethod: string; unitPrice: string; quantity: string;
+  unit: string | null; totalPrice: string; status: string; notes: string | null;
+}
+interface ProjectBillItem {
+  id: string; projectId: string; description: string; amount: string; category: string | null;
+  vendor: string | null; billDate: string; dueDate: string | null; status: string;
+  paidDate: string | null; notes: string | null;
+}
+interface ProjectProcurementItem {
+  id: string; projectId: string; itemName: string; description: string | null;
+  quantity: string; unitPrice: string; totalPrice: string; vendor: string | null;
+  purchaseDate: string; deliveryDate: string | null; status: string; notes: string | null;
+}
+interface PaymentScheduleItem {
+  id: string; projectId: string; milestoneName: string; amount: string;
+  dueDate: string | null; status: string; paidDate: string | null; notes: string | null;
+}
+interface ProjectTaskItem {
+  id: string; projectId: string; name: string; description: string | null;
+  duration: number; dependencies: string[] | null; status: string; isCritical: boolean;
+  earlyStart: number | null; earlyFinish: number | null; lateStart: number | null;
+  lateFinish: number | null; slack: number | null; sortOrder: number;
+}
+interface CatalogItem {
+  id: string; name: string; description: string | null; pricingMethod: string;
+  unitPrice: string; unit: string | null;
+}
+
+const serviceSchema = z.object({
+  serviceCatalogId: z.string().optional().default(""),
+  name: z.string().min(1), description: z.string().optional().default(""),
+  pricingMethod: z.string().min(1), unitPrice: z.string().min(1),
+  quantity: z.string().min(1), unit: z.string().optional().default(""),
+  totalPrice: z.string().min(1), status: z.string().min(1),
+  notes: z.string().optional().default(""),
+});
+const billSchema = z.object({
+  description: z.string().min(1), amount: z.string().min(1),
+  category: z.string().optional().default(""), vendor: z.string().optional().default(""),
+  billDate: z.string().min(1), dueDate: z.string().optional().default(""),
+  status: z.string().min(1), paidDate: z.string().optional().default(""),
+  notes: z.string().optional().default(""),
+});
+const procurementSchema = z.object({
+  itemName: z.string().min(1), description: z.string().optional().default(""),
+  quantity: z.string().min(1), unitPrice: z.string().min(1),
+  totalPrice: z.string().min(1), vendor: z.string().optional().default(""),
+  purchaseDate: z.string().min(1), deliveryDate: z.string().optional().default(""),
+  status: z.string().min(1), notes: z.string().optional().default(""),
+});
+const paymentSchema = z.object({
+  milestoneName: z.string().min(1), amount: z.string().min(1),
+  dueDate: z.string().optional().default(""), status: z.string().min(1),
+  paidDate: z.string().optional().default(""), notes: z.string().optional().default(""),
+});
+const taskSchema = z.object({
+  name: z.string().min(1), description: z.string().optional().default(""),
+  duration: z.string().min(1), dependencies: z.string().optional().default(""),
+  status: z.string().min(1),
+});
+
+type ServiceFormValues = z.infer<typeof serviceSchema>;
+type BillFormValues = z.infer<typeof billSchema>;
+type ProcurementFormValues = z.infer<typeof procurementSchema>;
+type PaymentFormValues = z.infer<typeof paymentSchema>;
+type TaskFormValues = z.infer<typeof taskSchema>;
+
+function statusBadge(status: string): "default" | "secondary" | "destructive" {
+  if (status === "completed" || status === "paid" || status === "received") return "default";
+  if (status === "overdue" || status === "cancelled") return "destructive";
+  if (status === "in_progress" || status === "ordered") return "default";
+  return "secondary";
+}
+function statusClass(status: string): string {
+  if (status === "completed" || status === "paid" || status === "received") return "bg-green-600 text-white";
+  return "";
+}
+function priorityBadge(p: string): "default" | "secondary" | "destructive" {
+  if (p === "urgent") return "destructive";
+  if (p === "high" || p === "medium") return "default";
+  return "secondary";
+}
+function priorityClass(p: string): string {
+  if (p === "high") return "border-yellow-500 text-yellow-700 dark:text-yellow-400";
+  return "";
+}
+const pricingLabels: Record<string, string> = {
+  per_piece: "Per Piece", length: "Length", area: "Area", hour: "Hour", lump_sum: "Lump Sum",
+};
+
+function fmtDate(d: string | null) {
+  if (!d) return "-";
+  try { return format(new Date(d), "MMM dd, yyyy"); } catch { return d; }
+}
+function fmtNum(v: string | null | undefined) {
+  return parseFloat(v || "0").toLocaleString();
+}
+
+export default function ProjectDetail() {
+  const params = useParams<{ id: string }>();
+  const projectId = params.id;
+  const { t } = useLanguage();
+  const layout = useDeviceLayout();
+  const { toast } = useToast();
+
+  const [activeTab, setActiveTab] = useState("overview");
+  const [svcOpen, setSvcOpen] = useState(false);
+  const [billOpen, setBillOpen] = useState(false);
+  const [procOpen, setProcOpen] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
+  const [taskOpen, setTaskOpen] = useState(false);
+  const [autoGenOpen, setAutoGenOpen] = useState(false);
+  const [installments, setInstallments] = useState("3");
+
+  const [editSvc, setEditSvc] = useState<ProjectServiceItem | null>(null);
+  const [editBill, setEditBill] = useState<ProjectBillItem | null>(null);
+  const [editProc, setEditProc] = useState<ProjectProcurementItem | null>(null);
+  const [editPay, setEditPay] = useState<PaymentScheduleItem | null>(null);
+  const [editTask, setEditTask] = useState<ProjectTaskItem | null>(null);
+  const [delItem, setDelItem] = useState<{ type: string; id: string; name: string } | null>(null);
+
+  const { data: project, isLoading } = useQuery<ServiceProject>({
+    queryKey: ["/api/service-projects", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/service-projects/${projectId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch project");
+      return res.json();
+    },
+    enabled: !!projectId,
+  });
+
+  const { data: services = [] } = useQuery<ProjectServiceItem[]>({
+    queryKey: ["/api/project-services", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/project-services?projectId=${projectId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed"); return res.json();
+    },
+    enabled: !!projectId,
+  });
+  const { data: bills = [] } = useQuery<ProjectBillItem[]>({
+    queryKey: ["/api/project-bills", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/project-bills?projectId=${projectId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed"); return res.json();
+    },
+    enabled: !!projectId,
+  });
+  const { data: procurements = [] } = useQuery<ProjectProcurementItem[]>({
+    queryKey: ["/api/project-procurements", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/project-procurements?projectId=${projectId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed"); return res.json();
+    },
+    enabled: !!projectId,
+  });
+  const { data: payments = [] } = useQuery<PaymentScheduleItem[]>({
+    queryKey: ["/api/payment-schedules", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/payment-schedules?projectId=${projectId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed"); return res.json();
+    },
+    enabled: !!projectId,
+  });
+  const { data: tasks = [] } = useQuery<ProjectTaskItem[]>({
+    queryKey: ["/api/project-tasks", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/project-tasks?projectId=${projectId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed"); return res.json();
+    },
+    enabled: !!projectId,
+  });
+  const { data: catalog = [] } = useQuery<CatalogItem[]>({
+    queryKey: ["/api/service-catalog"],
+  });
+
+  const svcForm = useForm<ServiceFormValues>({ resolver: zodResolver(serviceSchema), defaultValues: { serviceCatalogId: "", name: "", description: "", pricingMethod: "lump_sum", unitPrice: "0", quantity: "1", unit: "", totalPrice: "0", status: "pending", notes: "" } });
+  const billForm = useForm<BillFormValues>({ resolver: zodResolver(billSchema), defaultValues: { description: "", amount: "", category: "", vendor: "", billDate: new Date().toISOString().split("T")[0], dueDate: "", status: "pending", paidDate: "", notes: "" } });
+  const procForm = useForm<ProcurementFormValues>({ resolver: zodResolver(procurementSchema), defaultValues: { itemName: "", description: "", quantity: "1", unitPrice: "0", totalPrice: "0", vendor: "", purchaseDate: new Date().toISOString().split("T")[0], deliveryDate: "", status: "ordered", notes: "" } });
+  const payForm = useForm<PaymentFormValues>({ resolver: zodResolver(paymentSchema), defaultValues: { milestoneName: "", amount: "", dueDate: "", status: "pending", paidDate: "", notes: "" } });
+  const taskForm = useForm<TaskFormValues>({ resolver: zodResolver(taskSchema), defaultValues: { name: "", description: "", duration: "1", dependencies: "", status: "pending" } });
+
+  function makeMutation(endpoint: string, qk: string[], method: "POST" | "PATCH" | "DELETE", closeFn: () => void) {
+    return useMutation({
+      mutationFn: async (data: any) => {
+        if (method === "DELETE") { await apiRequest("DELETE", endpoint + "/" + data.id); return; }
+        const url = data._editId ? `${endpoint}/${data._editId}` : endpoint;
+        const m = data._editId ? "PATCH" : "POST";
+        const { _editId, ...body } = data;
+        return await apiRequest(m, url, body);
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: qk });
+        closeFn();
+        toast({ title: (t as any).saved || "Saved", description: (t as any).changesSaved || "Changes saved successfully" });
+      },
+      onError: (e: any) => {
+        toast({ title: t.error, description: e.message || "Operation failed", variant: "destructive" });
+      },
+    });
+  }
+
+  const svcMut = makeMutation("/api/project-services", ["/api/project-services", projectId], "POST", () => { setSvcOpen(false); setEditSvc(null); svcForm.reset(); });
+  const billMut = makeMutation("/api/project-bills", ["/api/project-bills", projectId], "POST", () => { setBillOpen(false); setEditBill(null); billForm.reset(); });
+  const procMut = makeMutation("/api/project-procurements", ["/api/project-procurements", projectId], "POST", () => { setProcOpen(false); setEditProc(null); procForm.reset(); });
+  const payMut = makeMutation("/api/payment-schedules", ["/api/payment-schedules", projectId], "POST", () => { setPayOpen(false); setEditPay(null); payForm.reset(); });
+  const taskMut = makeMutation("/api/project-tasks", ["/api/project-tasks", projectId], "POST", () => { setTaskOpen(false); setEditTask(null); taskForm.reset(); });
+
+  const deleteMutation = useMutation({
+    mutationFn: async ({ type, id }: { type: string; id: string }) => {
+      await apiRequest("DELETE", `/api/${type}/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/project-services", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/project-bills", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/project-procurements", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/payment-schedules", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/project-tasks", projectId] });
+      setDelItem(null);
+      toast({ title: t.delete, description: (t as any).itemDeletedSuccessfully || "Item deleted" });
+    },
+    onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },
+  });
+
+  const autoGenMut = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/payment-schedules/auto-generate", { projectId, installments: parseInt(installments) });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/payment-schedules", projectId] });
+      setAutoGenOpen(false);
+      toast({ title: (t as any).scheduleGenerated || "Schedule Generated", description: (t as any).paymentScheduleGenerated || "Payment schedule auto-generated" });
+    },
+    onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },
+  });
+
+  const cpmMut = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/project-tasks/calculate-cpm", { projectId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/project-tasks", projectId] });
+      toast({ title: (t as any).cpmCalculated || "CPM Calculated", description: (t as any).criticalPathUpdated || "Critical path has been updated" });
+    },
+    onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },
+  });
+
+  function onCatalogSelect(catId: string) {
+    const item = catalog.find(c => c.id === catId);
+    if (item) {
+      svcForm.setValue("name", item.name);
+      svcForm.setValue("description", item.description || "");
+      svcForm.setValue("pricingMethod", item.pricingMethod);
+      svcForm.setValue("unitPrice", item.unitPrice);
+      svcForm.setValue("unit", item.unit || "");
+      recalcServiceTotal();
+    }
+  }
+
+  function recalcServiceTotal() {
+    const up = parseFloat(svcForm.getValues("unitPrice") || "0");
+    const qty = parseFloat(svcForm.getValues("quantity") || "1");
+    svcForm.setValue("totalPrice", (up * qty).toFixed(2));
+  }
+  function recalcProcTotal() {
+    const up = parseFloat(procForm.getValues("unitPrice") || "0");
+    const qty = parseFloat(procForm.getValues("quantity") || "1");
+    procForm.setValue("totalPrice", (up * qty).toFixed(2));
+  }
+
+  function openEditSvc(s: ProjectServiceItem) {
+    setEditSvc(s);
+    svcForm.reset({ serviceCatalogId: s.serviceCatalogId || "", name: s.name, description: s.description || "", pricingMethod: s.pricingMethod, unitPrice: s.unitPrice, quantity: s.quantity, unit: s.unit || "", totalPrice: s.totalPrice, status: s.status, notes: s.notes || "" });
+    setSvcOpen(true);
+  }
+  function openEditBill(b: ProjectBillItem) {
+    setEditBill(b);
+    billForm.reset({ description: b.description, amount: b.amount, category: b.category || "", vendor: b.vendor || "", billDate: b.billDate?.split("T")[0] || "", dueDate: b.dueDate?.split("T")[0] || "", status: b.status, paidDate: b.paidDate?.split("T")[0] || "", notes: b.notes || "" });
+    setBillOpen(true);
+  }
+  function openEditProc(p: ProjectProcurementItem) {
+    setEditProc(p);
+    procForm.reset({ itemName: p.itemName, description: p.description || "", quantity: p.quantity, unitPrice: p.unitPrice, totalPrice: p.totalPrice, vendor: p.vendor || "", purchaseDate: p.purchaseDate?.split("T")[0] || "", deliveryDate: p.deliveryDate?.split("T")[0] || "", status: p.status, notes: p.notes || "" });
+    setProcOpen(true);
+  }
+  function openEditPay(p: PaymentScheduleItem) {
+    setEditPay(p);
+    payForm.reset({ milestoneName: p.milestoneName, amount: p.amount, dueDate: p.dueDate?.split("T")[0] || "", status: p.status, paidDate: p.paidDate?.split("T")[0] || "", notes: p.notes || "" });
+    setPayOpen(true);
+  }
+  function openEditTask(tk: ProjectTaskItem) {
+    setEditTask(tk);
+    taskForm.reset({ name: tk.name, description: tk.description || "", duration: String(tk.duration), dependencies: (tk.dependencies || []).join(","), status: tk.status });
+    setTaskOpen(true);
+  }
+
+  function submitSvc(data: ServiceFormValues) {
+    const body: any = { ...data, projectId, serviceCatalogId: data.serviceCatalogId || null, description: data.description || null, unit: data.unit || null, notes: data.notes || null };
+    if (editSvc) body._editId = editSvc.id;
+    svcMut.mutate(body);
+  }
+  function submitBill(data: BillFormValues) {
+    const body: any = { ...data, projectId, category: data.category || null, vendor: data.vendor || null, dueDate: data.dueDate || null, paidDate: data.paidDate || null, notes: data.notes || null };
+    if (editBill) body._editId = editBill.id;
+    billMut.mutate(body);
+  }
+  function submitProc(data: ProcurementFormValues) {
+    const body: any = { ...data, projectId, description: data.description || null, vendor: data.vendor || null, deliveryDate: data.deliveryDate || null, notes: data.notes || null };
+    if (editProc) body._editId = editProc.id;
+    procMut.mutate(body);
+  }
+  function submitPay(data: PaymentFormValues) {
+    const body: any = { ...data, projectId, dueDate: data.dueDate || null, paidDate: data.paidDate || null, notes: data.notes || null };
+    if (editPay) body._editId = editPay.id;
+    payMut.mutate(body);
+  }
+  function submitTask(data: TaskFormValues) {
+    const deps = data.dependencies ? data.dependencies.split(",").map(d => d.trim()).filter(Boolean) : [];
+    const body: any = { name: data.name, description: data.description || null, duration: parseInt(data.duration), dependencies: deps.length ? deps : null, status: data.status, projectId };
+    if (editTask) body._editId = editTask.id;
+    taskMut.mutate(body);
+  }
+
+  const totalServices = services.reduce((s, x) => s + parseFloat(x.totalPrice || "0"), 0);
+  const totalBills = bills.reduce((s, x) => s + parseFloat(x.amount || "0"), 0);
+  const totalProc = procurements.reduce((s, x) => s + parseFloat(x.totalPrice || "0"), 0);
+  const totalPayments = payments.reduce((s, x) => s + parseFloat(x.amount || "0"), 0);
+  const paidPayments = payments.filter(p => p.status === "paid").reduce((s, x) => s + parseFloat(x.amount || "0"), 0);
+  const paymentProgress = totalPayments > 0 ? (paidPayments / totalPayments) * 100 : 0;
+
+  if (isLoading) return <div className="flex items-center justify-center p-12"><p>{t.loading}...</p></div>;
+  if (!project) return <div className="flex flex-col items-center justify-center p-12"><p>{(t as any).projectNotFound || "Project not found"}</p><Link href="/service-projects"><Button variant="outline" className="mt-4" data-testid="button-back-to-projects"><ArrowLeft className="h-4 w-4 mr-2" />{(t as any).backToProjects || "Back to Projects"}</Button></Link></div>;
+
+  return (
+    <div className={`${layout.padding} ${layout.spaceY}`}>
+      <div className={`flex ${layout.isMobile ? "flex-col gap-3" : "items-center justify-between gap-4"}`}>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Link href="/service-projects">
+            <Button variant="ghost" size="icon" data-testid="button-back">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className={`${layout.text2Xl} font-bold`} data-testid="text-project-name">{project.name}</h1>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <Badge variant="outline" data-testid="badge-project-number">{project.projectNumber}</Badge>
+              <Badge variant={statusBadge(project.status)} className={statusClass(project.status)} data-testid="badge-project-status">
+                {project.status.replace("_", " ")}
+              </Badge>
+              <Badge variant={priorityBadge(project.priority)} className={priorityClass(project.priority)} data-testid="badge-project-priority">
+                {project.priority}
+              </Badge>
+            </div>
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => window.open(`/api/service-projects/${params.id}/dossier-pdf`, '_blank')}
+          data-testid="button-download-dossier"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          {(t as any).downloadDossier || "Download Dossier"}
+        </Button>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className={`${layout.isMobile ? "grid grid-cols-3 w-full" : "grid grid-cols-6 w-full"}`}>
+          <TabsTrigger value="overview" data-testid="tab-overview">{(t as any).overview || "Overview"}</TabsTrigger>
+          <TabsTrigger value="services" data-testid="tab-services">{(t as any).services || "Services"}</TabsTrigger>
+          <TabsTrigger value="bills" data-testid="tab-bills">{(t as any).bills || "Bills"}</TabsTrigger>
+          <TabsTrigger value="procurements" data-testid="tab-procurements">{(t as any).procurements || "Procurements"}</TabsTrigger>
+          <TabsTrigger value="payments" data-testid="tab-payments">{(t as any).payments || "Payments"}</TabsTrigger>
+          <TabsTrigger value="tasks" data-testid="tab-tasks">{(t as any).tasks || "Tasks"}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 4, tablet: 2, mobile: 2 })}`}>
+            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><Layers className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{(t as any).totalServicesValue || "Services Value"}</p></div><p className="text-2xl font-bold" data-testid="text-total-services">{fmtNum(String(totalServices))} SAR</p></CardContent></Card>
+            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><Receipt className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{(t as any).totalBillsAmount || "Total Bills"}</p></div><p className="text-2xl font-bold" data-testid="text-total-bills">{fmtNum(String(totalBills))} SAR</p></CardContent></Card>
+            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><ShoppingCart className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{(t as any).totalProcurements || "Procurements"}</p></div><p className="text-2xl font-bold" data-testid="text-total-procurements">{fmtNum(String(totalProc))} SAR</p></CardContent></Card>
+            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><CreditCard className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{(t as any).paymentProgress || "Payment Progress"}</p></div><p className="text-2xl font-bold" data-testid="text-payment-progress">{paymentProgress.toFixed(0)}%</p><Progress value={paymentProgress} className="mt-2" /></CardContent></Card>
+          </div>
+          <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 2, tablet: 1, mobile: 1 })}`}>
+            <Card>
+              <CardHeader className="pb-3"><CardTitle className="text-lg">{(t as any).clientInfo || "Client Information"}</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" /><span data-testid="text-client-name">{project.clientName}</span></div>
+                {project.clientPhone && <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /><span>{project.clientPhone}</span></div>}
+                {project.clientEmail && <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" /><span>{project.clientEmail}</span></div>}
+                {project.location && <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-muted-foreground" /><span>{project.location}</span></div>}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-3"><CardTitle className="text-lg">{(t as any).projectDetails || "Project Details"}</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-muted-foreground" /><span>{(t as any).startDate || "Start"}: {fmtDate(project.startDate)}</span></div>
+                <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-muted-foreground" /><span>{(t as any).endDate || "End"}: {fmtDate(project.endDate)}</span></div>
+                <div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-muted-foreground" /><span>{(t as any).estimatedBudget || "Budget"}: {fmtNum(project.estimatedBudget)} SAR</span></div>
+                {project.actualCost && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-muted-foreground" /><span>{(t as any).actualCost || "Actual"}: {fmtNum(project.actualCost)} SAR</span></div>}
+                {project.description && <div className="pt-2 border-t"><p className="text-sm text-muted-foreground">{project.description}</p></div>}
+                {project.notes && <div className="pt-2 border-t"><p className="text-sm text-muted-foreground">{project.notes}</p></div>}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="services" className="space-y-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <h2 className="text-lg font-semibold">{(t as any).services || "Services"}</h2>
+            <Button onClick={() => { setEditSvc(null); svcForm.reset(); setSvcOpen(true); }} data-testid="button-add-service"><Plus className="h-4 w-4 mr-2" />{(t as any).addService || "Add Service"}</Button>
+          </div>
+          {services.length === 0 ? <p className="text-muted-foreground text-center py-8">{(t as any).noServices || "No services added yet"}</p> : (
+            <div className="space-y-3">
+              {services.map(s => (
+                <Card key={s.id} data-testid={`card-service-${s.id}`}>
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="min-w-0">
+                        <p className="font-semibold truncate" data-testid={`text-service-name-${s.id}`}>{s.name}</p>
+                        <p className="text-sm text-muted-foreground">{pricingLabels[s.pricingMethod] || s.pricingMethod} · {s.quantity} {s.unit || ""}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge variant={statusBadge(s.status)} className={statusClass(s.status)}>{s.status}</Badge>
+                        <span className="font-semibold">{fmtNum(s.totalPrice)} SAR</span>
+                        <Button variant="ghost" size="icon" onClick={() => openEditSvc(s)} data-testid={`button-edit-service-${s.id}`}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => setDelItem({ type: "project-services", id: s.id, name: s.name })} data-testid={`button-delete-service-${s.id}`}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              <div className="flex justify-end pt-2 border-t"><p className="font-bold">{t.total}: {fmtNum(String(totalServices))} SAR</p></div>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="bills" className="space-y-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <h2 className="text-lg font-semibold">{(t as any).bills || "Bills"}</h2>
+            <Button onClick={() => { setEditBill(null); billForm.reset({ description: "", amount: "", category: "", vendor: "", billDate: new Date().toISOString().split("T")[0], dueDate: "", status: "pending", paidDate: "", notes: "" }); setBillOpen(true); }} data-testid="button-add-bill"><Plus className="h-4 w-4 mr-2" />{(t as any).addBill || "Add Bill"}</Button>
+          </div>
+          {bills.length === 0 ? <p className="text-muted-foreground text-center py-8">{(t as any).noBills || "No bills added yet"}</p> : (
+            <div className="space-y-3">
+              {bills.map(b => (
+                <Card key={b.id} data-testid={`card-bill-${b.id}`}>
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="min-w-0">
+                        <p className="font-semibold truncate">{b.description}</p>
+                        <p className="text-sm text-muted-foreground">{b.vendor || "-"} · {fmtDate(b.billDate)}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge variant={statusBadge(b.status)} className={statusClass(b.status)}>{b.status}</Badge>
+                        <span className="font-semibold">{fmtNum(b.amount)} SAR</span>
+                        <Button variant="ghost" size="icon" onClick={() => openEditBill(b)} data-testid={`button-edit-bill-${b.id}`}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => setDelItem({ type: "project-bills", id: b.id, name: b.description })} data-testid={`button-delete-bill-${b.id}`}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              <div className="flex justify-end pt-2 border-t"><p className="font-bold">{t.total}: {fmtNum(String(totalBills))} SAR</p></div>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="procurements" className="space-y-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <h2 className="text-lg font-semibold">{(t as any).procurements || "Procurements"}</h2>
+            <Button onClick={() => { setEditProc(null); procForm.reset({ itemName: "", description: "", quantity: "1", unitPrice: "0", totalPrice: "0", vendor: "", purchaseDate: new Date().toISOString().split("T")[0], deliveryDate: "", status: "ordered", notes: "" }); setProcOpen(true); }} data-testid="button-add-procurement"><Plus className="h-4 w-4 mr-2" />{(t as any).addProcurement || "Add Procurement"}</Button>
+          </div>
+          {procurements.length === 0 ? <p className="text-muted-foreground text-center py-8">{(t as any).noProcurements || "No procurements added yet"}</p> : (
+            <div className="space-y-3">
+              {procurements.map(p => (
+                <Card key={p.id} data-testid={`card-procurement-${p.id}`}>
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="min-w-0">
+                        <p className="font-semibold truncate">{p.itemName}</p>
+                        <p className="text-sm text-muted-foreground">{p.vendor || "-"} · Qty: {p.quantity}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge variant={statusBadge(p.status)} className={statusClass(p.status)}>{p.status}</Badge>
+                        <span className="font-semibold">{fmtNum(p.totalPrice)} SAR</span>
+                        <Button variant="ghost" size="icon" onClick={() => openEditProc(p)} data-testid={`button-edit-procurement-${p.id}`}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => setDelItem({ type: "project-procurements", id: p.id, name: p.itemName })} data-testid={`button-delete-procurement-${p.id}`}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              <div className="flex justify-end pt-2 border-t"><p className="font-bold">{t.total}: {fmtNum(String(totalProc))} SAR</p></div>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="payments" className="space-y-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <h2 className="text-lg font-semibold">{(t as any).payments || "Payments"}</h2>
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" onClick={() => setAutoGenOpen(true)} data-testid="button-auto-generate"><Zap className="h-4 w-4 mr-2" />{(t as any).autoGenerate || "Auto-Generate"}</Button>
+              <Button onClick={() => { setEditPay(null); payForm.reset(); setPayOpen(true); }} data-testid="button-add-payment"><Plus className="h-4 w-4 mr-2" />{(t as any).addPayment || "Add Payment"}</Button>
+            </div>
+          </div>
+          <Card><CardContent className="pt-4 pb-4">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-sm text-muted-foreground">{(t as any).paid || "Paid"}: {fmtNum(String(paidPayments))} / {fmtNum(String(totalPayments))} SAR</span>
+              <span className="text-sm font-semibold">{paymentProgress.toFixed(0)}%</span>
+            </div>
+            <Progress value={paymentProgress} data-testid="progress-payments" />
+          </CardContent></Card>
+          {payments.length === 0 ? <p className="text-muted-foreground text-center py-8">{(t as any).noPayments || "No payment schedules yet"}</p> : (
+            <div className="space-y-3">
+              {payments.map(p => (
+                <Card key={p.id} data-testid={`card-payment-${p.id}`}>
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="min-w-0">
+                        <p className="font-semibold truncate">{p.milestoneName}</p>
+                        <p className="text-sm text-muted-foreground">{(t as any).dueDate || "Due"}: {fmtDate(p.dueDate)}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge variant={statusBadge(p.status)} className={statusClass(p.status)}>{p.status}</Badge>
+                        <span className="font-semibold">{fmtNum(p.amount)} SAR</span>
+                        <Button variant="ghost" size="icon" onClick={() => openEditPay(p)} data-testid={`button-edit-payment-${p.id}`}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => setDelItem({ type: "payment-schedules", id: p.id, name: p.milestoneName })} data-testid={`button-delete-payment-${p.id}`}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="tasks" className="space-y-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <h2 className="text-lg font-semibold">{(t as any).tasks || "Tasks"}</h2>
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" onClick={() => cpmMut.mutate()} disabled={cpmMut.isPending} data-testid="button-calculate-cpm">
+                <AlertTriangle className="h-4 w-4 mr-2" />{(t as any).calculateCriticalPath || "Calculate CPM"}
+              </Button>
+              <Button onClick={() => { setEditTask(null); taskForm.reset(); setTaskOpen(true); }} data-testid="button-add-task"><Plus className="h-4 w-4 mr-2" />{(t as any).addTask || "Add Task"}</Button>
+            </div>
+          </div>
+          {tasks.length === 0 ? <p className="text-muted-foreground text-center py-8">{(t as any).noTasks || "No tasks added yet"}</p> : (
+            <div className="space-y-3">
+              {tasks.map(tk => (
+                <Card key={tk.id} className={tk.isCritical ? "border-2 border-red-500" : ""} data-testid={`card-task-${tk.id}`}>
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold truncate" data-testid={`text-task-name-${tk.id}`}>{tk.name}</p>
+                          {tk.isCritical && <Badge variant="destructive">{(t as any).critical || "Critical"}</Badge>}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{(t as any).duration || "Duration"}: {tk.duration} {(t as any).days || "days"}</p>
+                        {(tk.earlyStart !== null) && (
+                          <div className="flex gap-4 text-xs text-muted-foreground mt-1 flex-wrap">
+                            <span>ES: {tk.earlyStart}</span><span>EF: {tk.earlyFinish}</span>
+                            <span>LS: {tk.lateStart}</span><span>LF: {tk.lateFinish}</span>
+                            <span>{(t as any).slack || "Slack"}: {tk.slack}</span>
+                          </div>
+                        )}
+                        {tk.earlyStart !== null && tk.earlyFinish !== null && (
+                          <div className="mt-2 h-4 rounded-md relative bg-muted overflow-visible">
+                            <div
+                              className={`absolute h-full rounded-md ${tk.isCritical ? "bg-red-500" : "bg-primary"}`}
+                              style={{
+                                left: `${((tk.earlyStart || 0) / Math.max(...tasks.map(t2 => t2.lateFinish || t2.earlyFinish || 1), 1)) * 100}%`,
+                                width: `${((tk.duration) / Math.max(...tasks.map(t2 => t2.lateFinish || t2.earlyFinish || 1), 1)) * 100}%`,
+                                minWidth: "8px",
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge variant={statusBadge(tk.status)} className={statusClass(tk.status)}>{tk.status.replace("_", " ")}</Badge>
+                        <Button variant="ghost" size="icon" onClick={() => openEditTask(tk)} data-testid={`button-edit-task-${tk.id}`}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => setDelItem({ type: "project-tasks", id: tk.id, name: tk.name })} data-testid={`button-delete-task-${tk.id}`}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Service Dialog */}
+      <Dialog open={svcOpen} onOpenChange={(o) => { if (!o) { setSvcOpen(false); setEditSvc(null); } else setSvcOpen(true); }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editSvc ? t.edit : t.add} {(t as any).service || "Service"}</DialogTitle><DialogDescription>{editSvc ? (t as any).editServiceDesc || "Update service details" : (t as any).addServiceDesc || "Add a new service to this project"}</DialogDescription></DialogHeader>
+          <Form {...svcForm}>
+            <form onSubmit={svcForm.handleSubmit(submitSvc)} className="space-y-4">
+              {catalog.length > 0 && (
+                <FormField control={svcForm.control} name="serviceCatalogId" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).fromCatalog || "From Catalog"}</FormLabel>
+                    <Select onValueChange={(v) => { field.onChange(v); onCatalogSelect(v); }} value={field.value}>
+                      <FormControl><SelectTrigger data-testid="select-catalog"><SelectValue placeholder={(t as any).selectFromCatalog || "Select from catalog..."} /></SelectTrigger></FormControl>
+                      <SelectContent>{catalog.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                    </Select><FormMessage /></FormItem>
+                )} />
+              )}
+              <FormField control={svcForm.control} name="name" render={({ field }) => (
+                <FormItem><FormLabel>{t.name}</FormLabel><FormControl><Input data-testid="input-service-name" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={svcForm.control} name="description" render={({ field }) => (
+                <FormItem><FormLabel>{t.description}</FormLabel><FormControl><Textarea data-testid="input-service-description" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={svcForm.control} name="pricingMethod" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).pricingMethod || "Pricing Method"}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl><SelectTrigger data-testid="select-pricing-method"><SelectValue /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        <SelectItem value="per_piece">Per Piece</SelectItem><SelectItem value="length">Length</SelectItem>
+                        <SelectItem value="area">Area</SelectItem><SelectItem value="hour">Hour</SelectItem>
+                        <SelectItem value="lump_sum">Lump Sum</SelectItem>
+                      </SelectContent>
+                    </Select><FormMessage /></FormItem>
+                )} />
+                <FormField control={svcForm.control} name="unit" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).unit || "Unit"}</FormLabel><FormControl><Input data-testid="input-service-unit" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <FormField control={svcForm.control} name="unitPrice" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).unitPrice || "Unit Price"}</FormLabel><FormControl><Input data-testid="input-service-unit-price" type="number" {...field} onChange={(e) => { field.onChange(e); setTimeout(recalcServiceTotal, 0); }} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={svcForm.control} name="quantity" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).quantity || "Quantity"}</FormLabel><FormControl><Input data-testid="input-service-quantity" type="number" {...field} onChange={(e) => { field.onChange(e); setTimeout(recalcServiceTotal, 0); }} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={svcForm.control} name="totalPrice" render={({ field }) => (
+                  <FormItem><FormLabel>{t.total}</FormLabel><FormControl><Input data-testid="input-service-total" type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+              <FormField control={svcForm.control} name="status" render={({ field }) => (
+                <FormItem><FormLabel>{t.status}</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl><SelectTrigger data-testid="select-service-status"><SelectValue /></SelectTrigger></FormControl>
+                    <SelectContent><SelectItem value="pending">{t.pending}</SelectItem><SelectItem value="in_progress">{(t as any).inProgress || "In Progress"}</SelectItem><SelectItem value="completed">{t.completed}</SelectItem></SelectContent>
+                  </Select><FormMessage /></FormItem>
+              )} />
+              <FormField control={svcForm.control} name="notes" render={({ field }) => (
+                <FormItem><FormLabel>{t.notes}</FormLabel><FormControl><Textarea data-testid="input-service-notes" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => { setSvcOpen(false); setEditSvc(null); }} data-testid="button-cancel-service">{t.cancel}</Button>
+                <Button type="submit" disabled={svcMut.isPending} data-testid="button-submit-service">{editSvc ? t.save : t.add}</Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bill Dialog */}
+      <Dialog open={billOpen} onOpenChange={(o) => { if (!o) { setBillOpen(false); setEditBill(null); } else setBillOpen(true); }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editBill ? t.edit : t.add} {(t as any).bill || "Bill"}</DialogTitle><DialogDescription>{editBill ? (t as any).editBillDesc || "Update bill details" : (t as any).addBillDesc || "Add a new bill"}</DialogDescription></DialogHeader>
+          <Form {...billForm}>
+            <form onSubmit={billForm.handleSubmit(submitBill)} className="space-y-4">
+              <FormField control={billForm.control} name="description" render={({ field }) => (
+                <FormItem><FormLabel>{t.description}</FormLabel><FormControl><Input data-testid="input-bill-description" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={billForm.control} name="amount" render={({ field }) => (
+                  <FormItem><FormLabel>{t.amount}</FormLabel><FormControl><Input data-testid="input-bill-amount" type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={billForm.control} name="category" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).category || "Category"}</FormLabel><FormControl><Input data-testid="input-bill-category" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+              <FormField control={billForm.control} name="vendor" render={({ field }) => (
+                <FormItem><FormLabel>{(t as any).vendor || "Vendor"}</FormLabel><FormControl><Input data-testid="input-bill-vendor" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={billForm.control} name="billDate" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).billDate || "Bill Date"}</FormLabel><FormControl><Input data-testid="input-bill-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={billForm.control} name="dueDate" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).dueDate || "Due Date"}</FormLabel><FormControl><Input data-testid="input-bill-due-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={billForm.control} name="status" render={({ field }) => (
+                  <FormItem><FormLabel>{t.status}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl><SelectTrigger data-testid="select-bill-status"><SelectValue /></SelectTrigger></FormControl>
+                      <SelectContent><SelectItem value="pending">{t.pending}</SelectItem><SelectItem value="paid">{(t as any).paid || "Paid"}</SelectItem></SelectContent>
+                    </Select><FormMessage /></FormItem>
+                )} />
+                <FormField control={billForm.control} name="paidDate" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).paidDate || "Paid Date"}</FormLabel><FormControl><Input data-testid="input-bill-paid-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+              <FormField control={billForm.control} name="notes" render={({ field }) => (
+                <FormItem><FormLabel>{t.notes}</FormLabel><FormControl><Textarea data-testid="input-bill-notes" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => { setBillOpen(false); setEditBill(null); }} data-testid="button-cancel-bill">{t.cancel}</Button>
+                <Button type="submit" disabled={billMut.isPending} data-testid="button-submit-bill">{editBill ? t.save : t.add}</Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Procurement Dialog */}
+      <Dialog open={procOpen} onOpenChange={(o) => { if (!o) { setProcOpen(false); setEditProc(null); } else setProcOpen(true); }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editProc ? t.edit : t.add} {(t as any).procurement || "Procurement"}</DialogTitle><DialogDescription>{editProc ? (t as any).editProcurementDesc || "Update procurement details" : (t as any).addProcurementDesc || "Add a new procurement item"}</DialogDescription></DialogHeader>
+          <Form {...procForm}>
+            <form onSubmit={procForm.handleSubmit(submitProc)} className="space-y-4">
+              <FormField control={procForm.control} name="itemName" render={({ field }) => (
+                <FormItem><FormLabel>{(t as any).itemName || "Item Name"}</FormLabel><FormControl><Input data-testid="input-procurement-name" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={procForm.control} name="description" render={({ field }) => (
+                <FormItem><FormLabel>{t.description}</FormLabel><FormControl><Textarea data-testid="input-procurement-description" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <div className="grid grid-cols-3 gap-4">
+                <FormField control={procForm.control} name="quantity" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).quantity || "Quantity"}</FormLabel><FormControl><Input data-testid="input-procurement-quantity" type="number" {...field} onChange={(e) => { field.onChange(e); setTimeout(recalcProcTotal, 0); }} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={procForm.control} name="unitPrice" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).unitPrice || "Unit Price"}</FormLabel><FormControl><Input data-testid="input-procurement-unit-price" type="number" {...field} onChange={(e) => { field.onChange(e); setTimeout(recalcProcTotal, 0); }} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={procForm.control} name="totalPrice" render={({ field }) => (
+                  <FormItem><FormLabel>{t.total}</FormLabel><FormControl><Input data-testid="input-procurement-total" type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+              <FormField control={procForm.control} name="vendor" render={({ field }) => (
+                <FormItem><FormLabel>{(t as any).vendor || "Vendor"}</FormLabel><FormControl><Input data-testid="input-procurement-vendor" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={procForm.control} name="purchaseDate" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).purchaseDate || "Purchase Date"}</FormLabel><FormControl><Input data-testid="input-procurement-purchase-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={procForm.control} name="deliveryDate" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).deliveryDate || "Delivery Date"}</FormLabel><FormControl><Input data-testid="input-procurement-delivery-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+              <FormField control={procForm.control} name="status" render={({ field }) => (
+                <FormItem><FormLabel>{t.status}</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl><SelectTrigger data-testid="select-procurement-status"><SelectValue /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value="ordered">{(t as any).ordered || "Ordered"}</SelectItem>
+                      <SelectItem value="received">{(t as any).received || "Received"}</SelectItem>
+                      <SelectItem value="completed">{t.completed}</SelectItem>
+                      <SelectItem value="cancelled">{t.cancelled}</SelectItem>
+                    </SelectContent>
+                  </Select><FormMessage /></FormItem>
+              )} />
+              <FormField control={procForm.control} name="notes" render={({ field }) => (
+                <FormItem><FormLabel>{t.notes}</FormLabel><FormControl><Textarea data-testid="input-procurement-notes" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => { setProcOpen(false); setEditProc(null); }} data-testid="button-cancel-procurement">{t.cancel}</Button>
+                <Button type="submit" disabled={procMut.isPending} data-testid="button-submit-procurement">{editProc ? t.save : t.add}</Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Dialog */}
+      <Dialog open={payOpen} onOpenChange={(o) => { if (!o) { setPayOpen(false); setEditPay(null); } else setPayOpen(true); }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editPay ? t.edit : t.add} {(t as any).payment || "Payment"}</DialogTitle><DialogDescription>{editPay ? (t as any).editPaymentDesc || "Update payment schedule" : (t as any).addPaymentDesc || "Add a payment milestone"}</DialogDescription></DialogHeader>
+          <Form {...payForm}>
+            <form onSubmit={payForm.handleSubmit(submitPay)} className="space-y-4">
+              <FormField control={payForm.control} name="milestoneName" render={({ field }) => (
+                <FormItem><FormLabel>{(t as any).milestoneName || "Milestone Name"}</FormLabel><FormControl><Input data-testid="input-payment-milestone" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={payForm.control} name="amount" render={({ field }) => (
+                  <FormItem><FormLabel>{t.amount}</FormLabel><FormControl><Input data-testid="input-payment-amount" type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={payForm.control} name="dueDate" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).dueDate || "Due Date"}</FormLabel><FormControl><Input data-testid="input-payment-due-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={payForm.control} name="status" render={({ field }) => (
+                  <FormItem><FormLabel>{t.status}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl><SelectTrigger data-testid="select-payment-status"><SelectValue /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        <SelectItem value="pending">{t.pending}</SelectItem>
+                        <SelectItem value="invoiced">{(t as any).invoiced || "Invoiced"}</SelectItem>
+                        <SelectItem value="paid">{(t as any).paid || "Paid"}</SelectItem>
+                        <SelectItem value="overdue">{(t as any).overdue || "Overdue"}</SelectItem>
+                      </SelectContent>
+                    </Select><FormMessage /></FormItem>
+                )} />
+                <FormField control={payForm.control} name="paidDate" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).paidDate || "Paid Date"}</FormLabel><FormControl><Input data-testid="input-payment-paid-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+              <FormField control={payForm.control} name="notes" render={({ field }) => (
+                <FormItem><FormLabel>{t.notes}</FormLabel><FormControl><Textarea data-testid="input-payment-notes" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => { setPayOpen(false); setEditPay(null); }} data-testid="button-cancel-payment">{t.cancel}</Button>
+                <Button type="submit" disabled={payMut.isPending} data-testid="button-submit-payment">{editPay ? t.save : t.add}</Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Task Dialog */}
+      <Dialog open={taskOpen} onOpenChange={(o) => { if (!o) { setTaskOpen(false); setEditTask(null); } else setTaskOpen(true); }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editTask ? t.edit : t.add} {(t as any).task || "Task"}</DialogTitle><DialogDescription>{editTask ? (t as any).editTaskDesc || "Update task details" : (t as any).addTaskDesc || "Add a new task"}</DialogDescription></DialogHeader>
+          <Form {...taskForm}>
+            <form onSubmit={taskForm.handleSubmit(submitTask)} className="space-y-4">
+              <FormField control={taskForm.control} name="name" render={({ field }) => (
+                <FormItem><FormLabel>{t.name}</FormLabel><FormControl><Input data-testid="input-task-name" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={taskForm.control} name="description" render={({ field }) => (
+                <FormItem><FormLabel>{t.description}</FormLabel><FormControl><Textarea data-testid="input-task-description" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={taskForm.control} name="duration" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).durationDays || "Duration (days)"}</FormLabel><FormControl><Input data-testid="input-task-duration" type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={taskForm.control} name="status" render={({ field }) => (
+                  <FormItem><FormLabel>{t.status}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl><SelectTrigger data-testid="select-task-status"><SelectValue /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        <SelectItem value="pending">{t.pending}</SelectItem>
+                        <SelectItem value="in_progress">{(t as any).inProgress || "In Progress"}</SelectItem>
+                        <SelectItem value="completed">{t.completed}</SelectItem>
+                      </SelectContent>
+                    </Select><FormMessage /></FormItem>
+                )} />
+              </div>
+              {tasks.length > 0 && (
+                <FormField control={taskForm.control} name="dependencies" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).dependencies || "Dependencies"}</FormLabel>
+                    <FormControl><Input data-testid="input-task-dependencies" placeholder={(t as any).commaSeparatedIds || "Comma-separated task IDs"} {...field} /></FormControl>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {tasks.filter(tk => tk.id !== editTask?.id).map(tk => <span key={tk.id} className="mr-2">{tk.id.slice(0, 8)}: {tk.name}</span>)}
+                    </div>
+                    <FormMessage /></FormItem>
+                )} />
+              )}
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => { setTaskOpen(false); setEditTask(null); }} data-testid="button-cancel-task">{t.cancel}</Button>
+                <Button type="submit" disabled={taskMut.isPending} data-testid="button-submit-task">{editTask ? t.save : t.add}</Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Auto-Generate Payment Dialog */}
+      <Dialog open={autoGenOpen} onOpenChange={setAutoGenOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{(t as any).autoGenerateSchedule || "Auto-Generate Payment Schedule"}</DialogTitle><DialogDescription>{(t as any).autoGenerateDesc || "Automatically create payment installments based on project budget"}</DialogDescription></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">{(t as any).numberOfInstallments || "Number of Installments"}</label>
+              <Input data-testid="input-installments" type="number" min="1" max="24" value={installments} onChange={(e) => setInstallments(e.target.value)} className="mt-1" />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setAutoGenOpen(false)} data-testid="button-cancel-auto-gen">{t.cancel}</Button>
+              <Button onClick={() => autoGenMut.mutate()} disabled={autoGenMut.isPending} data-testid="button-confirm-auto-gen">{(t as any).generate || "Generate"}</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!delItem} onOpenChange={(o) => !o && setDelItem(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.confirmDelete}</AlertDialogTitle>
+            <AlertDialogDescription>{(t as any).deleteItemConfirm || "Are you sure you want to delete"} "{delItem?.name}"?</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">{t.cancel}</AlertDialogCancel>
+            <AlertDialogAction data-testid="button-confirm-delete" onClick={() => delItem && deleteMutation.mutate({ type: delItem.type, id: delItem.id })} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t.delete}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

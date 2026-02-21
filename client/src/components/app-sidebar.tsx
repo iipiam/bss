@@ -167,6 +167,7 @@ export function AppSidebar() {
     { title: t.teamChat, url: "/chat", icon: MessageCircle, testId: "chat", gradient: "from-blue-500 to-cyan-500" },
     { title: t.support || "Support", url: "/support", icon: HeadphonesIcon, testId: "support", gradient: "from-emerald-500 to-teal-500" },
     { title: t.settings, url: "/settings", icon: Settings, testId: "settings", gradient: "from-slate-500 to-gray-500", permission: 'settings' },
+    { title: (t as any).companySettings || "Company Settings", url: "/company-settings", icon: Building2, testId: "company-settings", gradient: "from-violet-500 to-indigo-500", permission: 'settings', businessTypes: ['design_services', 'installation_services', 'it_services'] },
     { title: t.printers || "Printers", url: "/printer-settings", icon: Printer, testId: "printer-settings", gradient: "from-teal-500 to-cyan-500", permission: 'settings' },
     { title: t.employees, url: "/employees", icon: Users, testId: "employees", gradient: "from-sky-500 to-blue-500", permission: 'users' },
     { title: t.passwordManager, url: "/password-manager", icon: Key, testId: "password-manager", gradient: "from-red-500 to-rose-500" },

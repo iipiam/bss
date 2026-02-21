@@ -1,0 +1,315 @@
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { FileText, Building2, ScrollText, Save, FolderOpen, Info } from "lucide-react";
+
+export default function CompanySettingsPage() {
+  const { t } = useLanguage();
+  const { toast } = useToast();
+
+  const [companyName, setCompanyName] = useState("");
+  const [companyEmail, setCompanyEmail] = useState("");
+  const [companyPhone, setCompanyPhone] = useState("");
+  const [companyAddress, setCompanyAddress] = useState("");
+  const [agreementTemplate, setAgreementTemplate] = useState("");
+  const [termsAndConditions, setTermsAndConditions] = useState("");
+
+  const { data: settings, isLoading } = useQuery<any>({
+    queryKey: ["/api/company-settings"],
+  });
+
+  useEffect(() => {
+    if (settings && settings.id) {
+      setCompanyName(settings.companyName || "");
+      setCompanyEmail(settings.companyEmail || "");
+      setCompanyPhone(settings.companyPhone || "");
+      setCompanyAddress(settings.companyAddress || "");
+      setAgreementTemplate(settings.agreementTemplate || "");
+      setTermsAndConditions(settings.termsAndConditions || "");
+    }
+  }, [settings]);
+
+  const saveMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("PATCH", "/api/company-settings", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/company-settings"] });
+      toast({
+        title: (t as any).settingsSaved || "Settings Saved",
+        description: (t as any).settingsSavedDesc || "Company settings have been updated.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.error,
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSaveCompanyInfo = () => {
+    saveMutation.mutate({ companyName, companyEmail, companyPhone, companyAddress });
+  };
+
+  const handleSaveTemplate = () => {
+    saveMutation.mutate({ agreementTemplate });
+  };
+
+  const handleSaveTerms = () => {
+    saveMutation.mutate({ termsAndConditions });
+  };
+
+  const placeholders = [
+    { key: "{{clientName}}", desc: "Client name" },
+    { key: "{{projectName}}", desc: "Project name" },
+    { key: "{{projectNumber}}", desc: "Project number" },
+    { key: "{{totalAmount}}", desc: "Total amount" },
+    { key: "{{startDate}}", desc: "Project start date" },
+    { key: "{{endDate}}", desc: "Project end date" },
+    { key: "{{companyName}}", desc: "Your company name" },
+    { key: "{{companyAddress}}", desc: "Your company address" },
+    { key: "{{companyPhone}}", desc: "Your company phone" },
+    { key: "{{companyEmail}}", desc: "Your company email" },
+    { key: "{{date}}", desc: "Current date" },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6 overflow-y-auto h-full" data-testid="page-company-settings">
+      <div className="flex items-center gap-3">
+        <Building2 className="h-6 w-6 text-primary" />
+        <div>
+          <h1 className="text-2xl font-bold" data-testid="text-page-title">
+            {(t as any).companySettings || "Company Settings"}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {(t as any).companySettingsDesc || "Manage your company information, agreement templates, and terms."}
+          </p>
+        </div>
+      </div>
+
+      <Tabs defaultValue="company-info" className="space-y-4">
+        <TabsList data-testid="tabs-company-settings">
+          <TabsTrigger value="company-info" data-testid="tab-company-info">
+            <Building2 className="h-4 w-4 mr-2" />
+            {(t as any).companyInfo || "Company Info"}
+          </TabsTrigger>
+          <TabsTrigger value="agreement" data-testid="tab-agreement">
+            <FileText className="h-4 w-4 mr-2" />
+            {(t as any).agreementTemplate || "Agreement Template"}
+          </TabsTrigger>
+          <TabsTrigger value="terms" data-testid="tab-terms">
+            <ScrollText className="h-4 w-4 mr-2" />
+            {(t as any).termsConditions || "Terms & Conditions"}
+          </TabsTrigger>
+          <TabsTrigger value="documents" data-testid="tab-documents">
+            <FolderOpen className="h-4 w-4 mr-2" />
+            {(t as any).companyDocuments || "Documents"}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="company-info">
+          <Card>
+            <CardHeader>
+              <CardTitle>{(t as any).companyInformation || "Company Information"}</CardTitle>
+              <CardDescription>
+                {(t as any).companyInfoDesc || "Basic information about your company used in documents and communications."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="companyName">{(t as any).companyName || "Company Name"}</Label>
+                <Input
+                  id="companyName"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder={(t as any).enterCompanyName || "Enter company name"}
+                  data-testid="input-company-name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="companyEmail">{(t as any).companyEmail || "Company Email"}</Label>
+                <Input
+                  id="companyEmail"
+                  type="email"
+                  value={companyEmail}
+                  onChange={(e) => setCompanyEmail(e.target.value)}
+                  placeholder={(t as any).enterCompanyEmail || "Enter company email"}
+                  data-testid="input-company-email"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="companyPhone">{(t as any).companyPhone || "Company Phone"}</Label>
+                <Input
+                  id="companyPhone"
+                  value={companyPhone}
+                  onChange={(e) => setCompanyPhone(e.target.value)}
+                  placeholder={(t as any).enterCompanyPhone || "Enter company phone"}
+                  data-testid="input-company-phone"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="companyAddress">{(t as any).companyAddress || "Company Address"}</Label>
+                <Textarea
+                  id="companyAddress"
+                  value={companyAddress}
+                  onChange={(e) => setCompanyAddress(e.target.value)}
+                  placeholder={(t as any).enterCompanyAddress || "Enter company address"}
+                  rows={3}
+                  data-testid="input-company-address"
+                />
+              </div>
+              <Button
+                onClick={handleSaveCompanyInfo}
+                disabled={saveMutation.isPending}
+                data-testid="button-save-company-info"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {saveMutation.isPending ? ((t as any).saving || "Saving...") : ((t as any).saveChanges || "Save Changes")}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="agreement">
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>{(t as any).agreementTemplate || "Agreement Template"}</CardTitle>
+                <CardDescription>
+                  {(t as any).agreementTemplateDesc || "Define the template for client agreements. Use placeholders that will be replaced with actual values."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Textarea
+                  value={agreementTemplate}
+                  onChange={(e) => setAgreementTemplate(e.target.value)}
+                  placeholder={(t as any).enterAgreementTemplate || "Enter your agreement template text here..."}
+                  rows={12}
+                  className="font-mono text-sm"
+                  data-testid="input-agreement-template"
+                />
+                <Button
+                  onClick={handleSaveTemplate}
+                  disabled={saveMutation.isPending}
+                  data-testid="button-save-agreement"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {saveMutation.isPending ? ((t as any).saving || "Saving...") : ((t as any).saveChanges || "Save Changes")}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Info className="h-5 w-5 text-muted-foreground" />
+                  {(t as any).availablePlaceholders || "Available Placeholders"}
+                </CardTitle>
+                <CardDescription>
+                  {(t as any).placeholdersDesc || "These placeholders will be automatically replaced with actual values when generating agreements."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {placeholders.map((p) => (
+                    <Badge
+                      key={p.key}
+                      variant="secondary"
+                      className="font-mono text-xs"
+                      data-testid={`badge-placeholder-${p.key.replace(/[{}]/g, '')}`}
+                    >
+                      {p.key}
+                    </Badge>
+                  ))}
+                </div>
+                <div className="mt-4 space-y-1">
+                  {placeholders.map((p) => (
+                    <div key={p.key} className="flex items-center gap-2 text-sm" data-testid={`text-placeholder-desc-${p.key.replace(/[{}]/g, '')}`}>
+                      <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{p.key}</code>
+                      <span className="text-muted-foreground">- {p.desc}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="terms">
+          <Card>
+            <CardHeader>
+              <CardTitle>{(t as any).termsConditions || "Terms & Conditions"}</CardTitle>
+              <CardDescription>
+                {(t as any).termsDesc || "Define the terms and conditions that will be included in your agreements and quotations."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Textarea
+                value={termsAndConditions}
+                onChange={(e) => setTermsAndConditions(e.target.value)}
+                placeholder={(t as any).enterTerms || "Enter your terms and conditions here..."}
+                rows={12}
+                className="text-sm"
+                data-testid="input-terms-conditions"
+              />
+              <Button
+                onClick={handleSaveTerms}
+                disabled={saveMutation.isPending}
+                data-testid="button-save-terms"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {saveMutation.isPending ? ((t as any).saving || "Saving...") : ((t as any).saveChanges || "Save Changes")}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="documents">
+          <Card>
+            <CardHeader>
+              <CardTitle>{(t as any).companyDocuments || "Company Documents"}</CardTitle>
+              <CardDescription>
+                {(t as any).companyDocumentsDesc || "Upload and manage company documents such as logos, letterheads, and certificates."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3 p-6 rounded-lg border border-dashed border-border text-center" data-testid="text-documents-coming-soon">
+                <FolderOpen className="h-8 w-8 text-muted-foreground" />
+                <div className="text-left">
+                  <p className="font-medium text-foreground">
+                    {(t as any).documentUploadComingSoon || "Document upload coming soon"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {(t as any).documentUploadComingSoonDesc || "This feature is under development. You will be able to upload company logos, letterheads, and certificates."}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

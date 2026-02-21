@@ -1,0 +1,448 @@
+
+Employee Sub-Accounts
+Company admins can create employee sub-accounts with their own username and password
+Each sub-account has configurable permissions controlling access to: Dashboard, Projects, Financial, Invoices, Services, Clients, and Contractors
+Employees log in with their own credentials and only see what they have permission to access
+2. Dashboard
+Central landing page after login
+Displays key metrics and overview of the company's activity
+Interface Preference selector lets the user choose between Desktop, iPhone, and iPad layouts to optimize the viewing experience
+Quick access to all major sections of the app
+3. Project Management
+Project Creation and Editing
+Create projects with details like name, description, client, status, dates, and budget
+Edit and update project information at any time
+CPM (Critical Path Method) Scheduling
+Server-side implementation of the Critical Path Method algorithm
+Calculates the critical path through project tasks
+Identifies which tasks are critical (cannot be delayed without delaying the project)
+Helps project managers understand scheduling dependencies and priorities
+Project-Specific Services
+Add services to each project from the company's service catalog
+Each service has a configurable pricing method:
+Per piece — price per individual unit
+Length — price per unit of length
+Area — price per unit of area
+Hour — price per hour of work
+Lump sum — a single fixed price for the entire service
+Project-Specific Bills
+Track bills associated with each project
+Record bill details, amounts, dates, and status
+Project-Specific Procurements
+Track procurement purchases for each project
+Record what was purchased, from whom, costs, and dates
+Payment Schedules
+Automatic generation of payment schedules for projects
+Breaks the project cost into scheduled payment installments
+Tracks payment status for each installment
+Project Dossier PDF
+A comprehensive PDF document containing all project information in one file
+Includes financials, tasks, materials, schedules, and all related data
+Can be downloaded for offline review or sharing
+4. Quotation System
+Creating Quotations
+Each project can have a quotation
+Add services to the quotation with editable pricing methods and amounts
+Preview the quotation before finalizing
+Quotation Workflow
+Quotations can be approved or declined
+When declined, a reason is tracked so the team knows why
+Quotation PDF
+Generate and download a professional PDF of the quotation
+Includes company information in the header
+Supports both Arabic and English with proper text rendering
+Uses Amiri font for Arabic text with connected letters
+RTL layout for Arabic content
+5. Invoicing
+Invoice Generation
+Create invoices for projects and services
+All amounts displayed in Saudi Riyal (SAR)
+Invoice PDF Download
+Generate professional PDF invoices
+Full bilingual support — Arabic and English
+Arabic text uses the Amiri font with connected letters (not disconnected)
+RTL alignment for Arabic content
+Company information appears in the header
+Subscription and Refund Invoices
+Generate invoices specifically for subscription payments
+Generate refund invoices when needed
+6. Financial Management
+Bills Tracking
+Record and track all bills across projects
+View bill details, amounts, due dates, and payment status
+PDF generation for individual bills
+Procurements Tracking
+Record procurement purchases with full details
+Track costs, vendors, and dates
+PDF generation for individual procurements
+VAT Statements and Reporting
+Generate VAT reports for the company's financial activity
+PDF download of VAT reports
+Supports Arabic and English
+Payment Tracking
+Monitor payment status across all projects
+Track which payments have been made and which are outstanding
+Business Operations Tracking
+Overview of all business financial operations
+Monitor revenue, expenses, and overall financial health
+PBS (Project Breakdown Structure) Analysis
+Analyze projects by breaking them down into their component parts
+Financial analysis at the project level
+7. Client Management
+Full CRUD operations: create, read, update, and delete client records
+All clients are scoped to the logged-in company (multi-tenant isolation)
+Store client name, contact information, and other details
+View all clients with search and filtering
+8. Contractor Management
+Full CRUD operations for contractor records
+Contractors are company-specific (multi-tenant)
+Store contractor details and contact information
+View all contractors with search and filtering
+9. Service Catalog Management
+Maintain a company-specific catalog of services offered
+Each service has a name, description, and default pricing method
+Services can be added to project quotations and project-specific service lists
+Pricing methods include: per piece, length, area, hour, and lump sum
+10. Employee Management
+Employee Records
+Full CRUD operations: create, view, edit, and delete employees
+Employee details include:
+Name
+Nationality
+Salary
+Visa information
+ID information
+Phone number
+Email address
+Position/title
+Department
+Hire date
+Sub-Account Creation
+Create login credentials (username and password) for each employee
+Employees can log into the system with their own accounts
+Permission Controls
+Configure access permissions per employee for these sections:
+Dashboard
+Projects
+Financial
+Invoices
+Services
+Clients
+Contractors
+Employees only see sections they have permission to access
+11. Company Settings
+Agreement Templates
+Customizable agreement templates using a placeholder system
+Placeholders are dynamic variables that get replaced with actual project/client data when generating agreements
+Users can create custom placeholders and edit existing ones
+Terms and Conditions
+Manage the company's terms and conditions
+Terms are automatically included in project agreement PDFs
+Company Documents
+Upload and download company legal documents
+Maximum file size of 50MB per document
+Store important legal papers, licenses, certifications, etc.
+Company Information
+Edit company name, email, phone number, address, and additional details
+This information appears in the headers of all generated PDFs (agreements, quotations, invoices)
+Stored in the company_settings table
+12. Activity Logging
+Automatically tracks user actions throughout the entire system
+Records what action was taken, by whom, and when
+Search functionality to find specific actions or filter by user
+Dropdown filter for specific action types
+Provides a full audit trail of all system activity
+13. Support Ticket System
+Users can create support tickets to report issues or request help
+Each ticket supports a threaded message conversation
+Tickets have status tracking (open, in progress, resolved, etc.)
+IT Admins can view and respond to tickets from the IT Admin panel
+
+
+15. PDF Generation
+All PDFs in the system support:
+
+Arabic language with Amiri font embedding for proper connected Arabic letter rendering
+English language support
+RTL (right-to-left) text alignment for Arabic content
+Company information in headers
+Saudi Riyal (SAR) currency formatting
+PDF types available:
+
+Invoices
+Bills
+Procurements
+Quotations
+Project agreements
+Project dossiers (comprehensive project documents)
+Payment schedule invoices
+Subscription invoices
+Refund invoices
+VAT reports
+16. Bilingual Support (Arabic & English)
+Full Arabic and English language support throughout the entire app
+Language toggle button available on every page
+All labels, buttons, messages, and content switch between languages
+RTL layout automatically applied when Arabic is selected
+LTR layout for English
+PDFs render in both languages with proper text direction
+17. Mobile Responsiveness
+Fully responsive interface for phones and tablets
+Sidebar collapses automatically on mobile devices
+Touch-friendly tap targets with a minimum of 44px size
+Tables convert to card views on mobile screens for better readability
+Interface Preference selector on the dashboard for Desktop, iPhone, and iPad layouts
+18. Theming
+Light mode and dark mode support
+Theme toggle button available throughout the app
+Colors managed through CSS variables for consistent theming
+Smooth transition between themes
+19. Navigation
+Sidebar navigation for all major sections
+Custom globe lightning logo in the sidebar and on login pages
+"Back to Main Login" link on the IT Admin login page for easy navigation
+Sidebar collapses on mobile for space efficiency
+20. Archived Accounts
+Company accounts can be archived (soft deleted)
+IT Admins can view and manage archived accounts
+Archived accounts are filtered out of active company lists
+
+
+Tip: You can click the eye icon next to the password field to show or hide your password while typing.
+
+Step 3: Navigating the App
+The sidebar on the left shows all sections of the app
+Click on any section name to go to that area
+On mobile, the sidebar collapses — tap the menu icon at the top to open it
+At the top of the page, you will find:
+Language toggle — switch between Arabic and English
+Theme toggle — switch between light and dark mode
+On the Dashboard, you can also choose your Interface Preference — Desktop, iPhone, or iPad layout
+Step 4: Managing Clients
+Click "Clients" in the sidebar
+To add a new client, click the "Add Client" button
+Fill in the client's name, contact details, and any other information
+Click Save
+Your client now appears in the list
+To edit a client, click on their record and make changes
+To delete a client, click the delete option on their record
+Step 5: Managing Contractors
+Click "Contractors" in the sidebar
+To add a new contractor, click the "Add Contractor" button
+Fill in the contractor's details
+Click Save
+To edit or delete, follow the same steps as with clients
+Step 6: Setting Up Your Service Catalog
+Click "Services" in the sidebar
+Click "Add Service" to create a new service your company offers
+Enter the service name, description, and choose a default pricing method:
+Per piece — charged per unit
+Length — charged by length measurement
+Area — charged by area measurement
+Hour — charged per hour
+Lump sum — one fixed price
+Click Save
+These services will be available when creating quotations and project service lists
+Step 7: Creating and Managing Projects
+Creating a Project
+Click "Projects" in the sidebar
+Click "Add Project"
+Fill in the project name, description, select a client, set dates, budget, and status
+Click Save
+Adding Services to a Project
+Open a project by clicking on it
+Go to the Services section within the project
+Click "Add Service"
+Select a service from your catalog
+Choose the pricing method and enter the price/quantity
+Click Save
+Tracking Bills for a Project
+Inside a project, go to the Bills section
+Click "Add Bill"
+Enter the bill details — description, amount, date, status
+Click Save
+Tracking Procurements for a Project
+Inside a project, go to the Procurements section
+Click "Add Procurement"
+Enter what was purchased, vendor, cost, and date
+Click Save
+Payment Schedules
+Inside a project, go to the Payment Schedule section
+The system can automatically generate a payment schedule based on the project total
+Each installment shows the amount and due date
+Track which payments have been made
+CPM Scheduling
+Inside a project, go to the Tasks/Schedule section
+Add tasks with their durations and dependencies
+The system calculates the Critical Path — the longest sequence of tasks that determines the minimum project duration
+Tasks on the critical path are highlighted so you know which ones cannot be delayed
+Step 8: Creating Quotations
+Open a project
+Go to the Quotation section
+Click "Create Quotation"
+Add services to the quotation — you can adjust pricing for each service
+Click "Preview" to see how the quotation looks
+If satisfied, you can:
+Download as PDF — the PDF will include your company info in the header, in either Arabic or English
+Approve the quotation to move forward
+Decline the quotation with a reason
+Step 9: Creating Invoices
+Navigate to the Invoices section from the sidebar
+Click "Create Invoice"
+Fill in the invoice details — client, project, services, amounts
+All amounts are displayed in Saudi Riyal (SAR)
+Click "Download PDF" to generate a professional invoice
+The PDF supports both Arabic and English with proper text rendering
+Step 10: Generating Project Agreements
+Open a project
+Go to the Agreement section
+The agreement is generated based on your agreement template (set up in Company Settings)
+Placeholders in the template are automatically replaced with actual project and client data
+Your Terms and Conditions are included at the bottom
+Click "Download PDF" to get the agreement document
+Step 11: Downloading the Project Dossier
+Open a project
+Look for the "Download Dossier" option
+This generates a comprehensive PDF that includes everything about the project:
+Project details
+Financial summary (bills, procurements, payments)
+Tasks and schedule
+Materials
+All related data in one document
+Step 12: Financial Management
+Viewing Bills and Procurements
+Go to the Financial section in the sidebar
+View all bills and procurements across all projects
+You can download individual bill or procurement PDFs
+VAT Statements
+In the Financial section, look for VAT Reports
+Generate VAT reports for specific periods
+Download as PDF
+Business Operations
+View overall business financial health
+Track revenue, expenses, and trends
+PBS Analysis
+Access the PBS (Project Breakdown Structure) Analysis
+Analyze projects broken down by their components
+Understand financial distribution across project elements
+Step 13: Managing Employees
+Adding an Employee
+Click "Employees" in the sidebar
+Click "Add Employee"
+Fill in all details:
+Name, nationality, phone, email
+Position, department, hire date
+Salary information
+Visa details and ID information
+Click Save
+Creating a Sub-Account for an Employee
+Open an employee's record
+Look for the option to create login credentials
+Set a username and password for the employee
+Choose which sections the employee can access:
+Dashboard
+Projects
+Financial
+Invoices
+Services
+Clients
+Contractors
+Click Save
+The employee can now log in with their own credentials and only see what they have permission to
+Step 14: Company Settings
+Editing Company Information
+Go to Settings or the Company page from the sidebar
+Update your company name, email, phone, address, and details
+Click Save
+This information will appear in the headers of all PDFs you generate
+Customizing Agreement Templates
+In Settings, go to the Agreement Template section
+Edit your template text
+Use placeholders (like {client_name}, {project_name}) that will be automatically filled in when agreements are generated
+You can add custom placeholders for information specific to your business
+Click Save
+Managing Terms and Conditions
+In Settings, find the Terms and Conditions section
+Write or edit your terms
+These will be automatically included in all project agreements
+Click Save
+Uploading Company Documents
+In Settings, go to Company Documents
+Click "Upload" to add a legal document (license, certification, etc.)
+Maximum file size is 50MB
+You can download any uploaded document later
+Step 15: Viewing Activity Logs
+Go to the Activity Log section from the sidebar
+You will see a list of all actions taken in the system
+Each entry shows: what action was taken, who did it, and when
+Use the search bar to find specific actions or users
+Use the action type filter dropdown to show only specific types of actions
+Step 16: Submitting Support Tickets
+Go to the Support section
+Click "Create Ticket"
+Describe your issue or request
+Submit the ticket
+You can view replies from the admin and continue the conversation in the ticket thread
+Step 17: Switching Language
+Find the language toggle button (usually at the top of the page)
+Click it to switch between Arabic and English
+The entire interface will change:
+All text switches to the selected language
+Arabic uses RTL (right-to-left) layout
+English uses LTR (left-to-right) layout
+PDFs will also generate in the currently selected language
+Step 18: Switching Theme
+Find the theme toggle button at the top of the page
+Click it to switch between light mode and dark mode
+The entire app changes appearance instantly
+Step 19: Resetting Your Password
+On the login page, click the "Reset Password" or "Forgot Password" link
+You will need to enter the main password for verification
+Enter your commercial registration number
+Set a new password
+Click Submit
+You can now log in with your new password
+For IT Administrators
+Accessing the IT Admin Panel
+Go to the /it-admin page (there is a link on the main login page)
+Enter your IT admin username and password
+Click Login
+Viewing System Statistics
+The Dashboard tab shows total companies, projects, clients, services, and invoices across the entire platform
+Managing Company Accounts
+Go to the Account Management tab
+Search for companies by name or registration number
+Click on a company to see their full details — projects, clients, services, invoices
+You can reset a company's password from here
+Managing IT Admin Accounts
+Go to the IT Account Management tab
+Create new IT admin accounts with username and password
+Edit existing accounts
+Delete accounts that are no longer needed
+Reset passwords for any IT admin account
+Managing Subscriptions
+Go to the Client Subscriptions tab
+View all company subscriptions
+Filter by active or expired status
+Generating Subscription Invoices
+Go to the Subscription Invoices tab
+Create and manage invoices for subscription payments
+Download invoices as PDF
+VAT Reports
+Go to the VAT Generator tab
+Generate platform-level VAT reports
+Download as PDF
+ZATCA Settings
+Go to the ZATCA Settings tab
+Configure settings for Saudi tax authority compliance
+Viewing Activity Logs
+Go to the Activity Log tab
+View all user activity across the entire platform
+Handling Support Tickets
+Go to the Support Tickets tab
+View tickets submitted by companies
+Reply to tickets with messages
+Track ticket status
+Managing Archived Accounts
+Archived (deleted) company accounts can be viewed separately
+They are filtered out of the active company list
