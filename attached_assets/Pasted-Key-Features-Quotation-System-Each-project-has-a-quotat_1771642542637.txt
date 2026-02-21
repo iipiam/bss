@@ -1,0 +1,102 @@
+Key Features
+Quotation System
+Each project has a quotation workflow with preview and PDF download
+Quotation approval and decline with reason tracking
+Services can be added to quotations with editable pricing methods
+Project Management
+Project-specific services with pricing methods: per piece, length, area, hour, lump sum
+Project-specific bills and procurements tracking
+Payment schedules with automatic generation
+PDF generation for agreements, quotations, and payment invoices
+Comprehensive project dossier PDF with all financials, tasks, and materials
+CPM (Critical Path Method) scheduling algorithm implemented server-side
+Financial Management
+Bills and procurements tracking per project
+VAT statements and reporting
+Payment tracking
+Business Operations tracking
+PBS (Project Breakdown Structure) Analysis
+Subscription and refund invoice generation
+Invoicing
+Invoice generation with PDF download
+Support for both Arabic and English languages in PDFs
+Amiri font embedding for proper Arabic text rendering
+RTL (right-to-left) text alignment for Arabic content
+Connected Arabic letters in PDF output
+Currency displayed in Saudi Riyal (SAR)
+Client and Contractor Management
+Full CRUD operations for clients and contractors
+Client and contractor records scoped to each company
+Service Catalog Management
+Company-specific service catalog
+Services with configurable pricing methods
+Company Settings
+Customizable agreement templates with a placeholder system
+Custom placeholders that users can add and edit
+Terms and conditions management (included in project agreements)
+Company documents (legal papers) upload and download (max 50MB file size)
+Company Information (Company Page)
+Fields for company name, email, phone, address, and details
+Company information appears in agreement and quotation PDF headers
+All company info is stored in the company_settings table
+Employee Management
+Full CRUD operations for employee records
+Sub-account creation with username and password authentication
+Permission controls for: Dashboard, Projects, Financial, Invoices, Services, Clients, Contractors
+Employee details include: name, nationality, salary, visa info, ID info, phone, email, position, department, hire date
+API endpoints: /api/employees (GET, POST), /api/employees/:id (GET, PATCH, DELETE)
+Activity Logging
+Tracks user actions across the entire system
+Search functionality by action or user
+Action type filter dropdown (all actions or specific action types)
+API endpoint: /api/activity-logs (GET, POST)
+Support Ticket System
+Ticket creation and management
+Message threading within tickets
+Archived Accounts Management
+Ability to archive and manage deleted or inactive company accounts
+Interface Preference Selector
+Available on the dashboard
+Options for Desktop, iPhone, and iPad interface layouts
+Mobile Responsiveness
+iPhone and mobile responsive interface
+Sidebar collapses on mobile devices
+Touch-friendly tap targets (minimum 44px)
+Card views for tables on mobile screens
+Bilingual Support
+Full Arabic and English language support
+RTL (right-to-left) layout for Arabic
+Language toggle available throughout the app
+All PDFs support both Arabic and English with proper text rendering
+Amiri font used for Arabic text in PDFs to ensure connected Arabic letters
+Design and Theming
+Light and dark mode support with theme toggle
+Styled using Tailwind CSS with CSS variables for theming
+Shadcn/UI component library built on Radix UI primitives
+Lucide React icons throughout the interface
+Custom globe lightning logo used on login page, IT Admin page, and sidebar navigation
+System Architecture
+Frontend
+React 18 with TypeScript
+Wouter for routing
+TanStack React Query for server state caching and synchronization
+Shadcn/UI component library (Radix UI primitives)
+Tailwind CSS with CSS variables
+React Hook Form with Zod validation
+Vite as the build tool
+Backend
+Node.js with Express
+TypeScript with ES modules
+RESTful JSON API with /api/* routes
+Database
+PostgreSQL (via DATABASE_URL environment variable)
+Drizzle ORM with PostgreSQL dialect
+Schema defined in shared/schema.ts
+Drizzle Kit for schema migrations
+Multi-Tenant Architecture
+All data entities are scoped to a company ID
+Each company's data is isolated from other companies
+Build System
+Development: npm run dev runs the server with Vite middleware for hot module replacement
+Production: npm run build uses esbuild for server bundle and Vite for client bundle
+Output goes to the dist/ directory

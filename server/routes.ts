@@ -14497,7 +14497,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
-      const contract = await storage.createContract({ ...req.body, restaurantId });
+      const data = { ...req.body, restaurantId };
+      if (data.startDate) data.startDate = new Date(data.startDate);
+      if (data.endDate) data.endDate = new Date(data.endDate);
+      const contract = await storage.createContract(data);
       res.status(201).json(contract);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -14508,7 +14511,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
-      const contract = await storage.updateContract(req.params.id, restaurantId, req.body);
+      const data = { ...req.body };
+      if (data.startDate) data.startDate = new Date(data.startDate);
+      if (data.endDate) data.endDate = new Date(data.endDate);
+      const contract = await storage.updateContract(req.params.id, restaurantId, data);
       if (!contract) return res.status(404).json({ message: "Contract not found" });
       res.json(contract);
     } catch (error: any) {
@@ -14556,7 +14562,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
-      const valuation = await storage.createValuation({ ...req.body, restaurantId });
+      const data = { ...req.body, restaurantId };
+      if (data.assessmentDate) data.assessmentDate = new Date(data.assessmentDate);
+      const valuation = await storage.createValuation(data);
       res.status(201).json(valuation);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -14567,7 +14575,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
-      const valuation = await storage.updateValuation(req.params.id, restaurantId, req.body);
+      const data = { ...req.body };
+      if (data.assessmentDate) data.assessmentDate = new Date(data.assessmentDate);
+      const valuation = await storage.updateValuation(req.params.id, restaurantId, data);
       if (!valuation) return res.status(404).json({ message: "Valuation not found" });
       res.json(valuation);
     } catch (error: any) {

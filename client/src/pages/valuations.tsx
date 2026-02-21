@@ -126,7 +126,13 @@ export default function Valuations() {
 
   const createMutation = useMutation({
     mutationFn: async (data: ValuationFormValues) => {
-      return await apiRequest("POST", "/api/valuations", data);
+      const payload = {
+        ...data,
+        area: data.area || null,
+        marketValue: data.marketValue || null,
+        areaUnit: data.areaUnit || "sqm",
+      };
+      return await apiRequest("POST", "/api/valuations", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/valuations"] });
@@ -148,19 +154,20 @@ export default function Valuations() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: ValuationFormValues & { id: string }) => {
-      return await apiRequest("PATCH", `/api/valuations/${data.id}`, {
+      const payload = {
         propertyName: data.propertyName,
         propertyType: data.propertyType,
         location: data.location,
-        area: data.area,
-        areaUnit: data.areaUnit,
+        area: data.area || null,
+        areaUnit: data.areaUnit || "sqm",
         estimatedValue: data.estimatedValue,
-        marketValue: data.marketValue,
+        marketValue: data.marketValue || null,
         assessmentDate: data.assessmentDate,
         valuationType: data.valuationType,
         status: data.status,
         notes: data.notes,
-      });
+      };
+      return await apiRequest("PATCH", `/api/valuations/${data.id}`, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/valuations"] });
@@ -203,10 +210,16 @@ export default function Valuations() {
   });
 
   const onSubmit = (data: ValuationFormValues) => {
+    const payload = {
+      ...data,
+      area: data.area || null,
+      marketValue: data.marketValue || null,
+      areaUnit: data.areaUnit || "sqm",
+    };
     if (editingValuation) {
-      updateMutation.mutate({ ...data, id: editingValuation.id });
+      updateMutation.mutate({ ...payload, id: editingValuation.id });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(payload);
     }
   };
 

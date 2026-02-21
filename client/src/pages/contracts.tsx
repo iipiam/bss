@@ -161,7 +161,7 @@ export default function Contracts() {
 
   const createContractMutation = useMutation({
     mutationFn: async (data: ContractFormValues) => {
-      return await apiRequest("POST", "/api/contracts", {
+      const payload = {
         ...data,
         clientPhone: data.clientPhone || null,
         clientEmail: data.clientEmail || null,
@@ -169,7 +169,8 @@ export default function Contracts() {
         endDate: data.endDate || null,
         commissionRate: data.commissionRate || null,
         notes: data.notes || null,
-      });
+      };
+      return await apiRequest("POST", "/api/contracts", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
@@ -191,7 +192,7 @@ export default function Contracts() {
 
   const updateContractMutation = useMutation({
     mutationFn: async (data: ContractFormValues & { id: string }) => {
-      return await apiRequest("PATCH", `/api/contracts/${data.id}`, {
+      const payload = {
         contractNumber: data.contractNumber,
         propertyName: data.propertyName,
         clientName: data.clientName,
@@ -204,7 +205,8 @@ export default function Contracts() {
         value: data.value,
         commissionRate: data.commissionRate || null,
         notes: data.notes || null,
-      });
+      };
+      return await apiRequest("PATCH", `/api/contracts/${data.id}`, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
@@ -247,10 +249,19 @@ export default function Contracts() {
   });
 
   const onSubmit = (data: ContractFormValues) => {
+    const payload = {
+      ...data,
+      clientPhone: data.clientPhone || null,
+      clientEmail: data.clientEmail || null,
+      startDate: data.startDate || null,
+      endDate: data.endDate || null,
+      commissionRate: data.commissionRate || null,
+      notes: data.notes || null,
+    };
     if (editingContract) {
-      updateContractMutation.mutate({ ...data, id: editingContract.id });
+      updateContractMutation.mutate({ ...payload, id: editingContract.id });
     } else {
-      createContractMutation.mutate(data);
+      createContractMutation.mutate(payload);
     }
   };
 
