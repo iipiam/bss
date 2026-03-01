@@ -5760,6 +5760,52 @@ export const storage = new DatabaseStorage();
 
     await pool.query(`ALTER TABLE company_settings ADD COLUMN IF NOT EXISTS company_documents JSONB DEFAULT '[]'`);
 
+    // Real Estate: Create contracts table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS contracts (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        contract_number TEXT NOT NULL,
+        property_id VARCHAR(255),
+        property_name TEXT NOT NULL,
+        client_name TEXT NOT NULL,
+        client_phone TEXT,
+        client_email TEXT,
+        contract_type TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'draft',
+        start_date TIMESTAMP,
+        end_date TIMESTAMP,
+        value DECIMAL(12, 2) NOT NULL,
+        commission DECIMAL(10, 2),
+        commission_rate DECIMAL(5, 2),
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('[Migration] Table verified/created: contracts');
+
+    // Real Estate: Create valuations table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS valuations (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        property_id VARCHAR(255),
+        property_name TEXT NOT NULL,
+        property_type TEXT NOT NULL,
+        location TEXT NOT NULL,
+        area DECIMAL(10, 2),
+        area_unit TEXT DEFAULT 'sqm',
+        estimated_value DECIMAL(12, 2) NOT NULL,
+        market_value DECIMAL(12, 2),
+        assessment_date TIMESTAMP NOT NULL DEFAULT NOW(),
+        valuation_type TEXT NOT NULL DEFAULT 'market',
+        status TEXT NOT NULL DEFAULT 'pending',
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('[Migration] Table verified/created: valuations');
+
     console.log('[Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings');
   } catch (error: any) {
     // Only log if not a duplicate column error (which means columns already exist)
