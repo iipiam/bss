@@ -1,0 +1,46 @@
+Kinzhal@BSS-Server:~$ const pool = new Pool({ connectionString: 'postgresql://bssadmin:KinzhalLTDCo%401991@localhost:5432/bss' });
+-bash: syntax error near unexpected token `('
+Kinzhal@BSS-Server:~$ const bcrypt = require('bcrypt');
+const { Pool } = require('pg');
+const pool = new Pool({ connectionString: 'postgresql://bssadmin:KinzhalLTDCo%401991@localhost:5432/bss' });
+
+async function createTestAccount(businessName, businessType, businessSubtype, username, password) {
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const restaurant = await pool.query(
+    `INSERT INTO restaurants (name, business_type, business_subtype, subscription_plan, subscription_status, branches_count, cr_number, national_id, vat_registered) VALUES ($1, $2, $3, 'monthly', 'active', 1, '1234567890', '1234567890', false) RETURNING id`,
+    [businessName, businessType, businessSubtype]
+  );
+  const restaurantId = restaurant.rows[0].id;
+  await pool.query(
+    `INSERT INTO users (username, password, full_name, email, role, restaurant_id) VALUES ($1, $2, $3, $4, 'admin', $5)`,
+    [username, hashedPassword, businessName + ' Admin', username + '@test.com', restaurantId]
+  );
+  console.log('Created: ' + businessName + ' - Username: ' + username + ', Restaurant ID: ' + restaurantId);
+}
+-bash: syntax error near unexpected token `('
+-bash: syntax error near unexpected token `('
+-bash: syntax error near unexpected token `('
+-bash: syntax error near unexpected token `('
+-bash: syntax error near unexpected token `('
+-bash: syntax error near unexpected token `('
+-bash: command substitution: line 1: syntax error near unexpected token `('
+-bash: command substitution: line 1: `INSERT INTO restaurants (name, business_type, business_subtype, subscription_plan, subscription_status, branches_count, cr_number, national_id, vat_registered) VALUES ($1, $2, $3, 'monthly', 'active', 1, '1234567890', '1234567890', false) RETURNING id'
+,: command not found
+[businessName,: command not found
+-bash: syntax error near unexpected token `)'
+Command 'const' not found, did you mean:
+  command 'coinst' from deb coinst (1.9.3-5)
+Try: sudo apt install <deb name>
+-bash: syntax error near unexpected token `('
+-bash: command substitution: line 1: syntax error near unexpected token `('
+-bash: command substitution: line 1: `INSERT INTO users (username, password, full_name, email, role, restaurant_id) VALUES ($1, $2, $3, $4, 'admin', $5)'
+,: command not found
+[username,: command not found
+-bash: syntax error near unexpected token `)'
+-bash: syntax error near unexpected token `'Created: ''
+-bash: syntax error near unexpected token `}'
+Kinzhal@BSS-Server:~$ await createTestAccount('IT Solutions Test', 'it_services', 'software_development', 'itservices1', 'test123');
+-bash: syntax error near unexpected token `('
+Kinzhal@BSS-Server:~$ await createTestAccount('Real Estate Test', 'real_estate_brokerage', 'brokerage_office', 'realestate1', 'test123');
+-bash: syntax error near unexpected token `('
+Kinzhal@BSS-Server:~$

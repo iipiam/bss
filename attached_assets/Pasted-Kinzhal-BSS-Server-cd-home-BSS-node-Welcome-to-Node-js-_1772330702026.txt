@@ -1,0 +1,65 @@
+Kinzhal@BSS-Server:~$ cd /home/BSS
+node
+Welcome to Node.js v20.20.0.
+Type ".help" for more information.
+> const bcrypt = require('bcrypt');
+undefined
+> const { Pool } = require('pg');
+ await pool.query(
+    `INSERT INTO users (username, password, full_name, email, role, restaurant_id)
+     VALUES ($1, $2, $3, $4, 'admin', $5)`,
+    [username, hashedPassword, businessName + ' Admin', username + '@test.com', restaurantId]
+  );
+
+  console.log(`Created: ${businessName} (${businessType}) - Username: ${username}, Restaurant ID: ${restaurantId}`);
+}
+
+// Create IT Services account
+await createTestAccount('IT Solutions Test', 'it_services', 'software_development', 'itservices1', 'test123');
+
+// Create Real Estate account
+await createTestAccount('Real Estate Test', 'real_estate_brokerage', 'brokerage_office', 'realestate1', 'test123');undefined
+> const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+undefined
+>
+> async function createTestAccount(businessName, businessType, businessSubtype, username, password) {
+...   const hashedPassword = await bcrypt.hash(password, 10);
+...
+...   // Create the restaurant/business entry
+...   const restaurant = await pool.query(
+...     `INSERT INTO restaurants (name, business_type, business_subtype, subscription_plan, subscription_status, branches_count, cr_number, national_id, vat_registered)
+...      VALUES ($1, $2, $3, 'monthly', 'active', 1, '1234567890', '1234567890', false)
+...      RETURNING id`,
+...     [businessName, businessType, businessSubtype]
+...   );
+...
+...   const restaurantId = restaurant.rows[0].id;
+...
+...   // Create the admin user
+...   await pool.query(
+...     `INSERT INTO users (username, password, full_name, email, role, restaurant_id)
+...      VALUES ($1, $2, $3, $4, 'admin', $5)`,
+...     [username, hashedPassword, businessName + ' Admin', username + '@test.com', restaurantId]
+...   );
+...
+...   console.log(`Created: ${businessName} (${businessType}) - Username: ${username}, Restaurant ID: ${restaurantId}`);
+... }
+undefined
+>
+> // Create IT Services account
+undefined
+> await createTestAccount('IT Solutions Test', 'it_services', 'software_development', 'itservices1', 'test123');
+Uncaught Error: SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string
+    at /home/BSS/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTestAccount (REPL26:5:22)
+    at async REPL29:1:33
+>
+> // Create Real Estate account
+undefined
+> await createTestAccount('Real Estate Test', 'real_estate_brokerage', 'brokerage_office', 'realestate1', 'test123');
+Uncaught Error: SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string
+    at /home/BSS/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTestAccount (REPL26:5:22)
+    at async REPL32:1:33

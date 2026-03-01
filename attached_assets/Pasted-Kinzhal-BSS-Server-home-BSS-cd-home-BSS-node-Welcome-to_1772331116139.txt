@@ -1,0 +1,63 @@
+Kinzhal@BSS-Server:/home/BSS$ cd /home/BSS
+node
+Welcome to Node.js v20.20.0.
+Type ".help" for more information.
+> const bcrypt = require('bcrypt');
+undefined
+> const { Pool } = require('pg');
+undefined
+> const pool = new Pool({ connectionString: 'postgresql://bssadmin:KinzhalLTDCo%401991@localhost:5432/bss' });
+undefined
+> async function createTestAccount(b,t,u,p){const h=await bcrypt.hash(p,10);const r=await pool.query("INSERT INTO restaurants (name,business_type,subscription_plan,subscription_status,branches_count,cr_number,national_id,vat_registered) VALUES ($1,$2,'monthly','active',1,'1234567890','1234567890',false) RETURNING id",[b,t]);const id=r.rows[0].id;await pool.query("INSERT INTO users (username,password,full_name,email,role,restaurant_id) VALUES ($1,$2,$3,$4,'admin',$5)",[u,h,b+' Admin',u+'@test.com',id]);console.log('Created: '+b+' Username: '+u+' ID: '+id);}
+undefined
+> await createTestAccount('IT Solutions Test','it_services','itservices1','test123');
+Uncaught:
+error: column "cr_number" of relation "restaurants" does not exist
+    at /home/BSS/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTestAccount (REPL6:1:83)
+    at async REPL7:1:33 {
+  length: 133,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '98',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1066',
+  routine: 'checkInsertTargets'
+}
+> await createTestAccount('Real Estate Test','real_estate_brokerage','realestate1','test123');
+Uncaught:
+error: column "cr_number" of relation "restaurants" does not exist
+    at /home/BSS/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTestAccount (REPL6:1:83)
+    at async REPL8:1:33 {
+  length: 133,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '98',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1066',
+  routine: 'checkInsertTargets'
+}
+> .exit

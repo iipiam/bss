@@ -1,0 +1,65 @@
+Kinzhal@BSS-Server:/home/BSS$ cd /home/BSS
+node
+Welcome to Node.js v20.20.0.
+Type ".help" for more information.
+> const bcrypt = require('bcrypt');
+undefined
+> const { Pool } = require('pg');
+tgresql://bssadmin:KinzhalLTDCo%401991@localhost:5432/bss' });undefined
+> const pool = new Pool({ connectionString: 'postgresql://bssadmin:KinzhalLTDCo%401991@localhost:5432/bss' });
+undefined
+>
+> async function createTestAccount(b,t,u,p){const h=await bcrypt.hash(p,10);const r=await pool.query("INSERT INTO restaurants (name,business_type,type,subscription_plan,subscription_status,branches_count,national_id,has_vat_registration,commercial_registration) VALUES ($1,$2,$2,'monthly','active',1,'1234567890',false,'1234567890') RETURNING id",[b,t]);const id=r.rows[0].id;await pool.query("INSERT INTO users (username,password,full_name,email,role,restaurant_id) VALUES ($1,$2,$3,$4,'admin',$5)",[u,h,b+' Admin',u+'@test.com',id]);console.log('Created: '+b+' Username: '+u+' ID: '+id);}
+undefined
+> await createTestAccount('IT Solutions Test','it_services','itservices1','test123');
+Uncaught:
+error: null value in column "permissions" of relation "users" violates not-null constraint
+    at /home/BSS/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTestAccount (REPL5:1:375)
+    at async REPL6:1:33 {
+  length: 637,
+  severity: 'ERROR',
+  code: '23502',
+  detail: 'Failing row contains (02a43ee7-3ac4-4a08-b563-5086ea909207, ac0494f2-902c-468c-8507-62fc12cbf140, itservices1, $2b$10$rwKOvC8yze.Qk/aPh8B8detHysDnwiJ.gQXvlqM/6/UB8tTvczz16, IT Solutions Test Admin, itservices1@test.com, null, admin, null, null, null, null, laptop, t, null, null, null, null, null, 0, 0, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 2026-03-01 02:14:57.491863, English).',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'users',
+  column: 'permissions',
+  dataType: undefined,
+  constraint: undefined,
+  file: 'execMain.c',
+  line: '2057',
+  routine: 'ExecConstraints'
+}
+> await createTestAccount('Real Estate Test','real_estate_brokerage','realestate1','test123');
+Uncaught:
+error: null value in column "permissions" of relation "users" violates not-null constraint
+    at /home/BSS/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTestAccount (REPL5:1:375)
+    at async REPL7:1:33 {
+  length: 636,
+  severity: 'ERROR',
+  code: '23502',
+  detail: 'Failing row contains (e65b7cf9-d05f-4315-9d7d-8f34eae56494, 3ee3bd2f-0c4c-438d-9816-042b6a61f03e, realestate1, $2b$10$1gv7Eiv6lFAWqjHBYNbKw.Yln2gybJ/6N4azL6YTACDVMRkdChjiu, Real Estate Test Admin, realestate1@test.com, null, admin, null, null, null, null, laptop, t, null, null, null, null, null, 0, 0, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 2026-03-01 02:15:02.600418, English).',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'users',
+  column: 'permissions',
+  dataType: undefined,
+  constraint: undefined,
+  file: 'execMain.c',
+  line: '2057',
+  routine: 'ExecConstraints'
+}
+> .exit
+Kinzhal@BSS-Server:/home/BSS$
