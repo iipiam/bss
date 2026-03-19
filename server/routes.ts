@@ -7902,6 +7902,52 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Export Owner's Equity Statement PDF
+  app.get("/api/export/equity-statement-pdf", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const year = req.query.year as string || new Date().getFullYear().toString();
+      const settings = await storage.getSettings(restaurantId);
+      const bills = await storage.getShopBills(restaurantId);
+      const bepData = await storage.getBepMetrics(restaurantId, parseInt(year));
+
+      const totalRevenue = bepData.revenue;
+      const cogs = bepData.cogsTotal;
+      const grossProfit = totalRevenue - cogs;
+
+      const yearBills = bills.filter(b => new Date(b.paymentDate).getFullYear() === parseInt(year));
+      const operatingExpenses = yearBills
+        .filter(b => b.billType !== 'foundational')
+        .reduce((sum, b) => sum + parseFloat(b.amount), 0);
+      const netIncome = grossProfit - operatingExpenses;
+
+      const beginningEquity = 0;
+      const ownerInvestments = 0;
+      const ownerWithdrawals = 0;
+      const endingEquity = beginningEquity + netIncome + ownerInvestments - ownerWithdrawals;
+
+      const { generateEquityStatementPDF } = await import('./invoice.js');
+      const pdfBuffer = await generateEquityStatementPDF({
+        companyName: settings?.restaurantName || "BlindSpot System (BSS)",
+        companyVAT: settings?.vatNumber || "",
+        year,
+        beginningEquity,
+        netIncome,
+        ownerInvestments,
+        ownerWithdrawals,
+        endingEquity,
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=equity-statement-${year}.pdf`);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Equity Statement PDF export error:", error);
+      res.status(500).json({ error: "Failed to export equity statement" });
+    }
+  });
+
   // Download individual invoice PDF
   app.get("/api/invoices/:id/download", requireAuth, requireRestaurant, async (req, res) => {
     try {

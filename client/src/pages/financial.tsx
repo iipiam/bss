@@ -432,11 +432,12 @@ export default function Financial() {
     }
   };
 
-  const handleExportStatementPDF = async (type: 'income-statement' | 'balance-sheet' | 'cash-flow') => {
+  const handleExportStatementPDF = async (type: 'income-statement' | 'balance-sheet' | 'cash-flow' | 'equity-statement') => {
     const titles: Record<string, string> = {
       'income-statement': (t as any).incomeStatement || 'Income Statement',
       'balance-sheet': (t as any).balanceSheet || 'Balance Sheet',
       'cash-flow': (t as any).cashFlowStatement || 'Cash Flow Statement',
+      'equity-statement': (t as any).ownersEquityStatement || "Owner's Equity Statement",
     };
     try {
       const response = await fetch(`/api/export/${type}-pdf?year=${selectedYear}`);
@@ -486,6 +487,11 @@ export default function Financial() {
   const cashFromOperations = netIncome + totalInventoryValue - pendingBillsAmount;
   const cashFromInvesting = -(inventoryItems.reduce((s, i) => s + parseFloat(i.price || "0"), 0));
   const netCashFlow = cashFromOperations + cashFromInvesting;
+
+  const ownerInvestments = 0;
+  const ownerWithdrawals = 0;
+  const beginningEquity = 0;
+  const endingEquity = beginningEquity + netIncome + ownerInvestments - ownerWithdrawals;
 
   return (
     <div className="p-8 space-y-6">
@@ -569,6 +575,7 @@ export default function Financial() {
           <TabsTrigger value="income-statement" data-testid="tab-income-statement">{(t as any).incomeStatement || "Income Statement"}</TabsTrigger>
           <TabsTrigger value="balance-sheet" data-testid="tab-balance-sheet">{(t as any).balanceSheet || "Balance Sheet"}</TabsTrigger>
           <TabsTrigger value="cash-flow" data-testid="tab-cash-flow">{(t as any).cashFlowStatement || "Cash Flow"}</TabsTrigger>
+          <TabsTrigger value="equity-statement" data-testid="tab-equity-statement">{(t as any).ownersEquityStatement || "Equity Statement"}</TabsTrigger>
           <TabsTrigger value="expenses" data-testid="tab-expenses">{t.expenses}</TabsTrigger>
           <TabsTrigger value="invoices" data-testid="tab-invoices">{t.zatcaInvoices}</TabsTrigger>
         </TabsList>
@@ -1666,6 +1673,135 @@ export default function Financial() {
                 <div className={`text-2xl font-bold font-mono ${netCashFlow >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-net-cash-flow-card">
                   {netCashFlow.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Owner's Equity Statement */}
+        <TabsContent value="equity-statement" className="space-y-4">
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => handleExportStatementPDF('equity-statement')} data-testid="button-export-equity-pdf">
+              <FileDown className="h-4 w-4 mr-2" />
+              {(t as any).exportPdf || "Export PDF"}
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                  <Scale className="h-5 w-5 text-indigo-600" />
+                </div>
+                <div>
+                  <CardTitle>{(t as any).ownersEquityStatement || "Statement of Owner's Equity"}</CardTitle>
+                  <CardDescription>{(t as any).forThePeriodEnding || "For the period ending"} {(t as any).december || "December"} 31, {selectedYear}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[60%]">{(t as any).description || "Description"}</TableHead>
+                    <TableHead className="text-right">{t.amount} (SAR)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow className="bg-muted/30">
+                    <TableCell className="font-bold text-base">{(t as any).beginningEquity || "Beginning Owner's Equity"}</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-base">{beginningEquity.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  </TableRow>
+
+                  <TableRow className="bg-muted/20">
+                    <TableCell className="font-semibold">{(t as any).additionsToEquity || "Additions to Equity"}</TableCell>
+                    <TableCell className="text-right"></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="pl-8 text-muted-foreground">{(t as any).netIncome || "Net Income"}</TableCell>
+                    <TableCell className={`text-right font-mono ${netIncome >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                      {netIncome >= 0 ? '+' : ''}{netIncome.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="pl-8 text-muted-foreground">{(t as any).ownerInvestments || "Owner Investments / Capital Contributions"}</TableCell>
+                    <TableCell className="text-right font-mono text-green-600">
+                      +{ownerInvestments.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow className="bg-green-500/5">
+                    <TableCell className="font-semibold pl-4">{(t as any).totalAdditions || "Total Additions"}</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-green-600">
+                      +{(netIncome + ownerInvestments).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </TableCell>
+                  </TableRow>
+
+                  <TableRow className="bg-muted/20">
+                    <TableCell className="font-semibold">{(t as any).deductionsFromEquity || "Deductions from Equity"}</TableCell>
+                    <TableCell className="text-right"></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="pl-8 text-muted-foreground">{(t as any).ownerWithdrawals || "Owner Withdrawals / Distributions"}</TableCell>
+                    <TableCell className="text-right font-mono text-destructive">
+                      -{ownerWithdrawals.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow className="bg-red-500/5">
+                    <TableCell className="font-semibold pl-4">{(t as any).totalDeductions || "Total Deductions"}</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-destructive">
+                      -{ownerWithdrawals.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TableCell className="font-bold text-lg">{(t as any).endingEquity || "Ending Owner's Equity"}</TableCell>
+                    <TableCell className={`text-right font-bold font-mono text-lg ${endingEquity >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-ending-equity">
+                      {endingEquity.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{(t as any).beginningEquity || "Beginning Equity"}</CardTitle>
+                <Scale className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold font-mono" data-testid="text-beginning-equity-card">
+                  {beginningEquity.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                </div>
+                <p className="text-xs text-muted-foreground">{(t as any).startOfPeriod || "Start of period"}</p>
+              </CardContent>
+            </Card>
+
+            <Card className={netIncome >= 0 ? "bg-gradient-to-r from-green-500/5 to-green-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{(t as any).netChange || "Net Change"}</CardTitle>
+                {netIncome >= 0 ? <TrendingUp className="h-4 w-4 text-green-500" /> : <TrendingDown className="h-4 w-4 text-red-500" />}
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold font-mono ${netIncome >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-net-change-card">
+                  {(netIncome + ownerInvestments - ownerWithdrawals).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                </div>
+                <p className="text-xs text-muted-foreground">{(t as any).incomeInvestmentsWithdrawals || "Income + Investments - Withdrawals"}</p>
+              </CardContent>
+            </Card>
+
+            <Card className={endingEquity >= 0 ? "bg-gradient-to-r from-indigo-500/5 to-indigo-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{(t as any).endingEquity || "Ending Equity"}</CardTitle>
+                <DollarSign className="h-4 w-4 text-indigo-500" />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold font-mono ${endingEquity >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-ending-equity-card">
+                  {endingEquity.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                </div>
+                <p className="text-xs text-muted-foreground">{(t as any).endOfPeriod || "End of period"}</p>
               </CardContent>
             </Card>
           </div>

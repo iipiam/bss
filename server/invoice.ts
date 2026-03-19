@@ -4275,6 +4275,54 @@ export async function generateCashFlowPDF(data: {
   } finally { await page.close(); }
 }
 
+export async function generateEquityStatementPDF(data: {
+  companyName: string; companyVAT: string; year: string;
+  beginningEquity: number; netIncome: number; ownerInvestments: number;
+  ownerWithdrawals: number; endingEquity: number;
+}): Promise<Buffer> {
+  const netChange = data.netIncome + data.ownerInvestments - data.ownerWithdrawals;
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    ${getBasePdfStyles()}
+    ${getStatementArabicStyles()}
+    .total-row { background: ${PDF_STYLES.colors.primary}; color: white; font-weight: 700; font-size: ${PDF_STYLES.fontSize.md}; }
+    .subtotal-row-green { background: #ecfdf5; font-weight: 600; }
+    .subtotal-row-red { background: #fef2f2; font-weight: 600; }
+  </style></head><body>
+    <div class="header">
+      <div class="company-name">${bidiText(data.companyName)}</div>
+      <div class="document-title">Statement of Owner's Equity / <span class="ar">قائمة حقوق الملكية</span></div>
+      <div class="year">For the Year Ending December 31, ${escapeHtml(data.year)} / <span class="ar">للسنة المنتهية في 31 ديسمبر ${escapeHtml(data.year)}</span></div>
+      ${data.companyVAT ? `<div class="year">VAT: ${escapeHtml(data.companyVAT)}</div>` : ''}
+    </div>
+    <table>
+      <thead><tr><th>Description / <span class="ar">الوصف</span></th><th>Amount (SAR) / <span class="ar">المبلغ</span></th></tr></thead>
+      <tbody>
+        <tr class="section-header"><td>Beginning Owner's Equity / <span class="ar">رأس مال المالك في بداية الفترة</span></td><td>${data.beginningEquity.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+
+        <tr class="subsection"><td style="padding-left:12px">Additions to Equity / <span class="ar">إضافات إلى حقوق الملكية</span></td><td></td></tr>
+        <tr><td class="indent">Net Income / <span class="ar">صافي الدخل</span></td><td class="${data.netIncome >= 0 ? 'positive' : 'negative'}">${data.netIncome >= 0 ? '+' : ''}${data.netIncome.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+        <tr><td class="indent">Owner Investments / <span class="ar">استثمارات المالك</span></td><td class="positive">+${data.ownerInvestments.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+        <tr class="subtotal-row-green"><td style="padding-left:12px"><strong>Total Additions / <span class="ar">إجمالي الإضافات</span></strong></td><td class="positive"><strong>+${(data.netIncome + data.ownerInvestments).toLocaleString('en-SA', {minimumFractionDigits: 2})}</strong></td></tr>
+
+        <tr class="subsection"><td style="padding-left:12px">Deductions from Equity / <span class="ar">خصومات من حقوق الملكية</span></td><td></td></tr>
+        <tr><td class="indent">Owner Withdrawals / <span class="ar">سحوبات المالك</span></td><td class="negative">-${data.ownerWithdrawals.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+        <tr class="subtotal-row-red"><td style="padding-left:12px"><strong>Total Deductions / <span class="ar">إجمالي الخصومات</span></strong></td><td class="negative"><strong>-${data.ownerWithdrawals.toLocaleString('en-SA', {minimumFractionDigits: 2})}</strong></td></tr>
+
+        <tr class="section-header"><td>Net Change in Equity / <span class="ar">صافي التغير في حقوق الملكية</span></td><td class="${netChange >= 0 ? 'positive' : 'negative'}">${netChange >= 0 ? '+' : ''}${netChange.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+        <tr class="total-row"><td>Ending Owner's Equity / <span class="ar">رأس مال المالك في نهاية الفترة</span></td><td>${data.endingEquity.toLocaleString('en-SA', {minimumFractionDigits: 2})} SAR</td></tr>
+      </tbody>
+    </table>
+    <div class="footer"><div>BlindSpot System (BSS) - Statement of Owner's Equity</div><div>VAT Compliant - Saudi Arabia / <span class="ar">متوافق مع ضريبة القيمة المضافة</span></div></div>
+  </body></html>`;
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+  try {
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: PDF_MARGINS });
+    return Buffer.from(pdfBuffer);
+  } finally { await page.close(); }
+}
+
 // Cleanup function for graceful shutdown
 export async function closeBrowser(): Promise<void> {
   if (browserInstance) {
