@@ -163,9 +163,9 @@ export default function Financial() {
     };
     
     return {
-      best: { bepRevenue: safeValue(bestBepRevenue), label: (t as any).bestCase || "Best Case" },
-      base: { bepRevenue: safeValue(adjustedBepRevenue), label: (t as any).yourScenario || "Your Scenario" },
-      worst: { bepRevenue: safeValue(worstBepRevenue), label: (t as any).worstCase || "Worst Case" },
+      best: { bepRevenue: safeValue(bestBepRevenue), label: t.bestCase || "Best Case" },
+      base: { bepRevenue: safeValue(adjustedBepRevenue), label: t.yourScenario || "Your Scenario" },
+      worst: { bepRevenue: safeValue(worstBepRevenue), label: t.worstCase || "Worst Case" },
       adjusted: {
         price: safeValue(adjustedPrice),
         variableCost: safeValue(adjustedVariableCost),
@@ -181,9 +181,9 @@ export default function Financial() {
   const scenarioChartData = useMemo(() => {
     if (!sensitivityScenarios.best || !sensitivityScenarios.base || !sensitivityScenarios.worst) return [];
     return [
-      { name: (t as any).bestCase || "Best Case", bepRevenue: sensitivityScenarios.best.bepRevenue, fill: "hsl(142, 76%, 36%)" },
-      { name: (t as any).yourScenario || "Your Scenario", bepRevenue: sensitivityScenarios.base.bepRevenue, fill: "hsl(199, 89%, 48%)" },
-      { name: (t as any).worstCase || "Worst Case", bepRevenue: sensitivityScenarios.worst.bepRevenue, fill: "hsl(0, 84%, 60%)" },
+      { name: t.bestCase || "Best Case", bepRevenue: sensitivityScenarios.best.bepRevenue, fill: "hsl(142, 76%, 36%)" },
+      { name: t.yourScenario || "Your Scenario", bepRevenue: sensitivityScenarios.base.bepRevenue, fill: "hsl(199, 89%, 48%)" },
+      { name: t.worstCase || "Worst Case", bepRevenue: sensitivityScenarios.worst.bepRevenue, fill: "hsl(0, 84%, 60%)" },
     ];
   }, [sensitivityScenarios]);
 
@@ -310,7 +310,7 @@ export default function Financial() {
       document.body.removeChild(a);
       toast({
         title: t.exportSuccessful,
-        description: (t as any).financialDataExportedToExcel || "Financial data exported to Excel",
+        description: t.financialDataExportedToExcel || "Financial data exported to Excel",
       });
     } catch (error) {
       toast({
@@ -339,7 +339,7 @@ export default function Financial() {
       document.body.removeChild(a);
       toast({
         title: t.pdfExportSuccessful,
-        description: (t as any).financialStatementExportedToPdf || "Financial statement exported to PDF",
+        description: t.financialStatementExportedToPdf || "Financial statement exported to PDF",
       });
     } catch (error) {
       toast({
@@ -367,13 +367,13 @@ export default function Financial() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast({
-        title: (t as any).downloadSuccessful || "Download Successful",
-        description: `${(t as any).invoice || "Invoice"} ${invoiceNumber} ${(t as any).downloaded || "downloaded"}`,
+        title: t.downloadSuccessful || "Download Successful",
+        description: `${t.invoice || "Invoice"} ${invoiceNumber} ${t.downloaded || "downloaded"}`,
       });
     } catch (error) {
       toast({
-        title: (t as any).downloadFailed || "Download Failed",
-        description: error instanceof Error ? error.message : ((t as any).failedToDownloadInvoice || "Failed to download invoice"),
+        title: t.downloadFailed || "Download Failed",
+        description: error instanceof Error ? error.message : (t.failedToDownloadInvoice || "Failed to download invoice"),
         variant: "destructive",
       });
     }
@@ -382,16 +382,16 @@ export default function Financial() {
   const handleExportAllInvoices = async () => {
     if (invoices.length === 0) {
       toast({
-        title: (t as any).noInvoices || "No invoices",
-        description: (t as any).noInvoicesAvailable || "No invoices available to export",
+        title: t.noInvoices || "No invoices",
+        description: t.noInvoicesAvailable || "No invoices available to export",
         variant: "destructive",
       });
       return;
     }
 
     toast({
-      title: (t as any).exportingInvoices || "Exporting invoices",
-      description: `${(t as any).downloading || "Downloading"} ${invoices.length} ${(t as any).invoiceCount || "invoice(s)"}...`,
+      title: t.exportingInvoices || "Exporting invoices",
+      description: `${t.downloading || "Downloading"} ${invoices.length} ${t.invoiceCount || "invoice(s)"}...`,
     });
 
     for (const invoice of invoices) {
@@ -421,12 +421,12 @@ export default function Financial() {
       document.body.removeChild(a);
       toast({
         title: t.pdfExportSuccessful,
-        description: `${(t as any).expensesReportFor || "Expenses report for"} ${selectedYear} ${(t as any).exportedToPdf || "exported to PDF"}`,
+        description: `${t.expensesReportFor || "Expenses report for"} ${selectedYear} ${t.exportedToPdf || "exported to PDF"}`,
       });
     } catch (error) {
       toast({
         title: t.exportFailed,
-        description: error instanceof Error ? error.message : ((t as any).failedToExportExpensesPdf || "Failed to export expenses PDF"),
+        description: error instanceof Error ? error.message : (t.failedToExportExpensesPdf || "Failed to export expenses PDF"),
         variant: "destructive",
       });
     }
@@ -434,10 +434,10 @@ export default function Financial() {
 
   const handleExportStatementPDF = async (type: 'income-statement' | 'balance-sheet' | 'cash-flow' | 'equity-statement') => {
     const titles: Record<string, string> = {
-      'income-statement': (t as any).incomeStatement || 'Income Statement',
-      'balance-sheet': (t as any).balanceSheet || 'Balance Sheet',
-      'cash-flow': (t as any).cashFlowStatement || 'Cash Flow Statement',
-      'equity-statement': (t as any).ownersEquityStatement || "Owner's Equity Statement",
+      'income-statement': t.incomeStatement || 'Income Statement',
+      'balance-sheet': t.balanceSheet || 'Balance Sheet',
+      'cash-flow': t.cashFlowStatement || 'Cash Flow Statement',
+      'equity-statement': t.ownersEquityStatement || "Owner's Equity Statement",
     };
     try {
       const response = await fetch(`/api/export/${type}-pdf?year=${selectedYear}`);
@@ -456,12 +456,12 @@ export default function Financial() {
       document.body.removeChild(a);
       toast({
         title: t.pdfExportSuccessful,
-        description: `${titles[type]} ${(t as any).exportedToPdf || "exported to PDF"}`,
+        description: `${titles[type]} ${t.exportedToPdf || "exported to PDF"}`,
       });
     } catch (error) {
       toast({
         title: t.exportFailed,
-        description: error instanceof Error ? error.message : ((t as any).failedToExportPdf || "Failed to export PDF"),
+        description: error instanceof Error ? error.message : (t.failedToExportPdf || "Failed to export PDF"),
         variant: "destructive",
       });
     }
@@ -503,11 +503,11 @@ export default function Financial() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExport} data-testid="button-export-excel">
             <Download className="h-4 w-4 mr-2" />
-            {(t as any).exportExcel || "Export Excel"}
+            {t.exportExcel || "Export Excel"}
           </Button>
           <Button variant="outline" onClick={handleExportPDF} data-testid="button-export-pdf">
             <FileDown className="h-4 w-4 mr-2" />
-            {(t as any).exportPdf || "Export PDF"}
+            {t.exportPdf || "Export PDF"}
           </Button>
           <Select value={selectedYear} onValueChange={setSelectedYear}>
             <SelectTrigger className="w-32" data-testid="select-year">
@@ -542,7 +542,7 @@ export default function Financial() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono">{parseFloat(yearlyData.vat).toFixed(2)} SAR</div>
-            <p className="text-xs text-muted-foreground">{(t as any).saudiVat15 || "15% Saudi VAT"}</p>
+            <p className="text-xs text-muted-foreground">{t.saudiVat15 || "15% Saudi VAT"}</p>
           </CardContent>
         </Card>
 
@@ -564,7 +564,7 @@ export default function Financial() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono">{yearlyData.invoices}</div>
-            <p className="text-xs text-muted-foreground">{(t as any).zatcaCompliant || "ZATCA compliant"}</p>
+            <p className="text-xs text-muted-foreground">{t.zatcaCompliant || "ZATCA compliant"}</p>
           </CardContent>
         </Card>
       </div>
@@ -572,10 +572,10 @@ export default function Financial() {
       <Tabs defaultValue="statements" className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="statements" data-testid="tab-statements">{t.financialStatements}</TabsTrigger>
-          <TabsTrigger value="income-statement" data-testid="tab-income-statement">{(t as any).incomeStatement || "Income Statement"}</TabsTrigger>
-          <TabsTrigger value="balance-sheet" data-testid="tab-balance-sheet">{(t as any).balanceSheet || "Balance Sheet"}</TabsTrigger>
-          <TabsTrigger value="cash-flow" data-testid="tab-cash-flow">{(t as any).cashFlowStatement || "Cash Flow"}</TabsTrigger>
-          <TabsTrigger value="equity-statement" data-testid="tab-equity-statement">{(t as any).ownersEquityStatement || "Equity Statement"}</TabsTrigger>
+          <TabsTrigger value="income-statement" data-testid="tab-income-statement">{t.incomeStatement || "Income Statement"}</TabsTrigger>
+          <TabsTrigger value="balance-sheet" data-testid="tab-balance-sheet">{t.balanceSheet || "Balance Sheet"}</TabsTrigger>
+          <TabsTrigger value="cash-flow" data-testid="tab-cash-flow">{t.cashFlowStatement || "Cash Flow"}</TabsTrigger>
+          <TabsTrigger value="equity-statement" data-testid="tab-equity-statement">{t.ownersEquityStatement || "Equity Statement"}</TabsTrigger>
           <TabsTrigger value="expenses" data-testid="tab-expenses">{t.expenses}</TabsTrigger>
           <TabsTrigger value="invoices" data-testid="tab-invoices">{t.zatcaInvoices}</TabsTrigger>
         </TabsList>
@@ -584,8 +584,8 @@ export default function Financial() {
           {/* Monthly Revenue Chart */}
           <Card>
             <CardHeader>
-              <CardTitle>{(t as any).monthlyRevenueAndVat || "Monthly Revenue & VAT"}</CardTitle>
-              <CardDescription>{(t as any).revenueAndVatBreakdown || "Revenue and VAT collection breakdown for"} {selectedYear}</CardDescription>
+              <CardTitle>{t.monthlyRevenueAndVat || "Monthly Revenue & VAT"}</CardTitle>
+              <CardDescription>{t.revenueAndVatBreakdown || "Revenue and VAT collection breakdown for"} {selectedYear}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
@@ -604,8 +604,8 @@ export default function Financial() {
           {/* Monthly Transactions Chart */}
           <Card>
             <CardHeader>
-              <CardTitle>{(t as any).monthlyTransactions || "Monthly Transactions"}</CardTitle>
-              <CardDescription>{(t as any).transactionsPerMonth || "Number of transactions per month in"} {selectedYear}</CardDescription>
+              <CardTitle>{t.monthlyTransactions || "Monthly Transactions"}</CardTitle>
+              <CardDescription>{t.transactionsPerMonth || "Number of transactions per month in"} {selectedYear}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
@@ -614,7 +614,7 @@ export default function Financial() {
                   <XAxis dataKey="month" />
                   <YAxis />
                   <Tooltip />
-                  <Line type="monotone" dataKey="transactions" stroke="hsl(var(--primary))" strokeWidth={2} name={(t as any).transactions || "Transactions"} />
+                  <Line type="monotone" dataKey="transactions" stroke="hsl(var(--primary))" strokeWidth={2} name={t.transactions || "Transactions"} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -623,16 +623,16 @@ export default function Financial() {
           {/* Monthly Breakdown Table */}
           <Card>
             <CardHeader>
-              <CardTitle>{(t as any).monthlyBreakdown || "Monthly Breakdown"}</CardTitle>
-              <CardDescription>{(t as any).detailedMonthlyData || "Detailed monthly financial data"}</CardDescription>
+              <CardTitle>{t.monthlyBreakdown || "Monthly Breakdown"}</CardTitle>
+              <CardDescription>{t.detailedMonthlyData || "Detailed monthly financial data"}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <div className="grid grid-cols-4 gap-4 font-medium text-sm border-b pb-2">
-                  <div>{(t as any).month || "Month"}</div>
+                  <div>{t.month || "Month"}</div>
                   <div className="text-right">{t.totalRevenue}</div>
                   <div className="text-right">{t.vatCollected}</div>
-                  <div className="text-right">{(t as any).transactions || "Transactions"}</div>
+                  <div className="text-right">{t.transactions || "Transactions"}</div>
                 </div>
                 {financialData?.monthly?.map((month: any) => (
                   <div key={month.month} className="grid grid-cols-4 gap-4 text-sm font-mono">
@@ -652,7 +652,7 @@ export default function Financial() {
           <div className="flex justify-end">
             <Button variant="outline" onClick={handleExportExpensesPDF} data-testid="button-export-expenses-pdf">
               <FileDown className="h-4 w-4 mr-2" />
-              {(t as any).exportPdf || "Export PDF"}
+              {t.exportPdf || "Export PDF"}
             </Button>
           </div>
           
@@ -665,18 +665,18 @@ export default function Financial() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold font-mono">{totalExpensesWithInventory.toFixed(2)} SAR</div>
-                <p className="text-xs text-muted-foreground">{(t as any).billsPlusInventory || "Bills + Inventory"} ({selectedYear})</p>
+                <p className="text-xs text-muted-foreground">{t.billsPlusInventory || "Bills + Inventory"} ({selectedYear})</p>
               </CardContent>
             </Card>
 
             <Card className="bg-gradient-to-r from-blue-500/5 to-blue-600/10">
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{(t as any).inventoryValue || "Inventory Value"}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.inventoryValue || "Inventory Value"}</CardTitle>
                 <Package className="h-4 w-4 text-blue-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold font-mono text-blue-600" data-testid="expense-inventory-value">{totalInventoryValue.toFixed(2)} SAR</div>
-                <p className="text-xs text-muted-foreground">{inventoryItems.length} {(t as any).itemsInStock || "items in stock"}</p>
+                <p className="text-xs text-muted-foreground">{inventoryItems.length} {t.itemsInStock || "items in stock"}</p>
               </CardContent>
             </Card>
 
@@ -687,7 +687,7 @@ export default function Financial() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold font-mono text-green-600">{paidBillsAmount.toFixed(2)} SAR</div>
-                <p className="text-xs text-muted-foreground">{((paidBillsAmount / totalBillsAmount) * 100 || 0).toFixed(1)}% {(t as any).ofBills || "of bills"}</p>
+                <p className="text-xs text-muted-foreground">{((paidBillsAmount / totalBillsAmount) * 100 || 0).toFixed(1)}% {t.ofBills || "of bills"}</p>
               </CardContent>
             </Card>
 
@@ -698,7 +698,7 @@ export default function Financial() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold font-mono text-orange-600">{pendingBillsAmount.toFixed(2)} SAR</div>
-                <p className="text-xs text-muted-foreground">{((pendingBillsAmount / totalBillsAmount) * 100 || 0).toFixed(1)}% {(t as any).ofBills || "of bills"}</p>
+                <p className="text-xs text-muted-foreground">{((pendingBillsAmount / totalBillsAmount) * 100 || 0).toFixed(1)}% {t.ofBills || "of bills"}</p>
               </CardContent>
             </Card>
           </div>
@@ -706,8 +706,8 @@ export default function Financial() {
           {/* Monthly Expenses Trend */}
           <Card>
             <CardHeader>
-              <CardTitle>{(t as any).monthlyOperatingExpenses || "Monthly Operating Expenses"}</CardTitle>
-              <CardDescription>{(t as any).recurringExpensesByMonth || "Recurring expenses by month for"} {selectedYear} {(t as any).excludesOneTimeFoundational || "(excludes one-time & foundational)"}</CardDescription>
+              <CardTitle>{t.monthlyOperatingExpenses || "Monthly Operating Expenses"}</CardTitle>
+              <CardDescription>{t.recurringExpensesByMonth || "Recurring expenses by month for"} {selectedYear} {t.excludesOneTimeFoundational || "(excludes one-time & foundational)"}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -732,7 +732,7 @@ export default function Financial() {
                       </div>
                       <div>
                         <CardTitle>{t.bepCalculator}</CardTitle>
-                        <CardDescription>{t.breakEvenPointAnalysis} {(t as any).forWord || "for"} {selectedYear}</CardDescription>
+                        <CardDescription>{t.breakEvenPointAnalysis} {t.forWord || "for"} {selectedYear}</CardDescription>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -741,7 +741,7 @@ export default function Financial() {
                       </Badge>
                       <div className="flex items-center gap-1.5 px-2 py-1 bg-green-500/10 rounded-full">
                         <Radio className="h-3 w-3 text-green-500 animate-pulse" />
-                        <span className="text-xs font-medium text-green-600">{(t as any).live || "Live"}</span>
+                        <span className="text-xs font-medium text-green-600">{t.live || "Live"}</span>
                       </div>
                     </div>
                   </div>
@@ -758,7 +758,7 @@ export default function Financial() {
                               <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" data-testid="tooltip-fixed-costs" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p className="max-w-xs">{(t as any).fixedCostsTooltip || "Recurring expenses like rent, salaries, utilities. Excludes one-time and foundational costs."}</p>
+                              <p className="max-w-xs">{t.fixedCostsTooltip || "Recurring expenses like rent, salaries, utilities. Excludes one-time and foundational costs."}</p>
                             </TooltipContent>
                           </Tooltip>
                         </div>
@@ -771,13 +771,13 @@ export default function Financial() {
                     <Card className="bg-gradient-to-r from-orange-500/5 to-orange-600/10">
                       <CardContent className="pt-4">
                         <div className="flex items-center gap-1">
-                          <span className="text-xs text-muted-foreground">{(t as any).variableCosts || "Variable Costs"}</span>
+                          <span className="text-xs text-muted-foreground">{t.variableCosts || "Variable Costs"}</span>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" data-testid="tooltip-variable-costs" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p className="max-w-xs">{(t as any).variableCostsTooltip || "Cost of goods sold (COGS) based on recipes and ingredients used."}</p>
+                              <p className="max-w-xs">{t.variableCostsTooltip || "Cost of goods sold (COGS) based on recipes and ingredients used."}</p>
                             </TooltipContent>
                           </Tooltip>
                         </div>
@@ -790,18 +790,18 @@ export default function Financial() {
                     <Card className="bg-gradient-to-r from-teal-500/5 to-teal-600/10">
                       <CardContent className="pt-4">
                         <div className="flex items-center gap-1">
-                          <span className="text-xs text-muted-foreground">{(t as any).bepUnits || "BEP Units"}</span>
+                          <span className="text-xs text-muted-foreground">{t.bepUnits || "BEP Units"}</span>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" data-testid="tooltip-bep" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p className="max-w-xs">{(t as any).bepUnitsTooltip || "Sales needed to cover all costs. Above this = profit, below = loss."}</p>
+                              <p className="max-w-xs">{t.bepUnitsTooltip || "Sales needed to cover all costs. Above this = profit, below = loss."}</p>
                             </TooltipContent>
                           </Tooltip>
                         </div>
                         <p className="text-lg font-bold font-mono text-teal-600" data-testid="bep-units">
-                          {bepMetrics.bepUnits.toLocaleString("en-SA")} {(t as any).units || "units"}
+                          {bepMetrics.bepUnits.toLocaleString("en-SA")} {t.units || "units"}
                         </p>
                       </CardContent>
                     </Card>
@@ -833,7 +833,7 @@ export default function Financial() {
                               <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" data-testid="tooltip-margin-of-safety" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p className="max-w-xs">{(t as any).marginOfSafetyTooltip || "How much revenue can drop before reaching break-even."}</p>
+                              <p className="max-w-xs">{t.marginOfSafetyTooltip || "How much revenue can drop before reaching break-even."}</p>
                             </TooltipContent>
                           </Tooltip>
                         </div>
@@ -899,7 +899,7 @@ export default function Financial() {
                           </TableFooter>
                         </Table>
                       ) : (
-                        <p className="text-center text-muted-foreground py-4">{(t as any).noFixedExpensesBreakdown || "No fixed expenses breakdown available"}</p>
+                        <p className="text-center text-muted-foreground py-4">{t.noFixedExpensesBreakdown || "No fixed expenses breakdown available"}</p>
                       )}
                     </CollapsibleContent>
                   </Collapsible>
@@ -909,26 +909,26 @@ export default function Financial() {
                     <p className="text-sm font-medium mb-3">{t.costStructure}</p>
                     <div className="grid gap-4 md:grid-cols-4">
                       <div className="space-y-1 p-3 bg-muted/30 rounded-lg">
-                        <span className="text-xs text-muted-foreground">{(t as any).sellingPricePerUnit || "Selling Price/Unit"}</span>
+                        <span className="text-xs text-muted-foreground">{t.sellingPricePerUnit || "Selling Price/Unit"}</span>
                         <p className="text-lg font-bold font-mono" data-testid="bep-selling-price-unit">
                           {bepMetrics.avgSellingPrice.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                         </p>
                       </div>
                       <div className="space-y-1 p-3 bg-muted/30 rounded-lg">
-                        <span className="text-xs text-muted-foreground">{(t as any).variableCostPerUnit || "Variable Cost/Unit"}</span>
+                        <span className="text-xs text-muted-foreground">{t.variableCostPerUnit || "Variable Cost/Unit"}</span>
                         <p className="text-lg font-bold font-mono" data-testid="bep-variable-cost-unit">
                           {bepMetrics.avgVariableCostPerUnit.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                         </p>
                       </div>
                       <div className="space-y-1 p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center gap-1">
-                          <span className="text-xs text-muted-foreground">{(t as any).contributionMarginPerUnit || "Contribution Margin/Unit"}</span>
+                          <span className="text-xs text-muted-foreground">{t.contributionMarginPerUnit || "Contribution Margin/Unit"}</span>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" data-testid="tooltip-contribution-margin" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p className="max-w-xs">{(t as any).contributionMarginTooltip || "Amount each unit sold contributes to covering fixed costs."}</p>
+                              <p className="max-w-xs">{t.contributionMarginTooltip || "Amount each unit sold contributes to covering fixed costs."}</p>
                             </TooltipContent>
                           </Tooltip>
                         </div>
@@ -947,10 +947,10 @@ export default function Financial() {
 
                   {/* D. Sensitivity Analysis Section */}
                   <div className="pt-4 border-t">
-                    <p className="text-sm font-medium mb-3">{(t as any).sensitivityAnalysis || "Sensitivity Analysis"}</p>
+                    <p className="text-sm font-medium mb-3">{t.sensitivityAnalysis || "Sensitivity Analysis"}</p>
                     <div className="grid gap-4 md:grid-cols-3 mb-4">
                       <div className="space-y-2">
-                        <label className="text-xs text-muted-foreground">{(t as any).sellingPriceChange || "Selling Price Change"}</label>
+                        <label className="text-xs text-muted-foreground">{t.sellingPriceChange || "Selling Price Change"}</label>
                         <Select value={priceChange} onValueChange={setPriceChange} data-testid="select-price-change">
                           <SelectTrigger data-testid="select-price-change-trigger">
                             <SelectValue />
@@ -965,7 +965,7 @@ export default function Financial() {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs text-muted-foreground">{(t as any).variableCostChange || "Variable Cost Change"}</label>
+                        <label className="text-xs text-muted-foreground">{t.variableCostChange || "Variable Cost Change"}</label>
                         <Select value={variableCostChange} onValueChange={setVariableCostChange} data-testid="select-variable-cost-change">
                           <SelectTrigger data-testid="select-variable-cost-change-trigger">
                             <SelectValue />
@@ -980,7 +980,7 @@ export default function Financial() {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs text-muted-foreground">{(t as any).fixedCostChange || "Fixed Cost Change"}</label>
+                        <label className="text-xs text-muted-foreground">{t.fixedCostChange || "Fixed Cost Change"}</label>
                         <Select value={fixedCostChange} onValueChange={setFixedCostChange} data-testid="select-fixed-cost-change">
                           <SelectTrigger data-testid="select-fixed-cost-change-trigger">
                             <SelectValue />
@@ -1000,8 +1000,8 @@ export default function Financial() {
                     <div className="grid gap-4 md:grid-cols-3">
                       <Card className="bg-gradient-to-r from-green-500/5 to-green-600/10 border-green-500/20">
                         <CardContent className="pt-4">
-                          <p className="text-xs text-muted-foreground font-medium text-green-600">{(t as any).bestCase || "Best Case"}</p>
-                          <p className="text-sm text-muted-foreground">{(t as any).bestCaseDesc || "+20% Price, -20% Costs"}</p>
+                          <p className="text-xs text-muted-foreground font-medium text-green-600">{t.bestCase || "Best Case"}</p>
+                          <p className="text-sm text-muted-foreground">{t.bestCaseDesc || "+20% Price, -20% Costs"}</p>
                           <p className="text-xl font-bold font-mono text-green-600 mt-2" data-testid="scenario-best-bep">
                             {(sensitivityScenarios.best?.bepRevenue || 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                           </p>
@@ -1010,14 +1010,14 @@ export default function Financial() {
 
                       <Card className="bg-gradient-to-r from-blue-500/5 to-blue-600/10 border-blue-500/20">
                         <CardContent className="pt-4">
-                          <p className="text-xs text-muted-foreground font-medium text-blue-600">{(t as any).yourScenario || "Your Scenario"}</p>
+                          <p className="text-xs text-muted-foreground font-medium text-blue-600">{t.yourScenario || "Your Scenario"}</p>
                           <p className="text-sm text-muted-foreground">
                             {priceChange !== "0" && `${parseInt(priceChange) > 0 ? "+" : ""}${priceChange}% Price`}
                             {priceChange !== "0" && (variableCostChange !== "0" || fixedCostChange !== "0") && ", "}
                             {variableCostChange !== "0" && `${parseInt(variableCostChange) > 0 ? "+" : ""}${variableCostChange}% VC`}
                             {variableCostChange !== "0" && fixedCostChange !== "0" && ", "}
                             {fixedCostChange !== "0" && `${parseInt(fixedCostChange) > 0 ? "+" : ""}${fixedCostChange}% FC`}
-                            {priceChange === "0" && variableCostChange === "0" && fixedCostChange === "0" && ((t as any).noChanges || "No changes")}
+                            {priceChange === "0" && variableCostChange === "0" && fixedCostChange === "0" && (t.noChanges || "No changes")}
                           </p>
                           <p className="text-xl font-bold font-mono text-blue-600 mt-2" data-testid="scenario-base-bep">
                             {(sensitivityScenarios.adjusted?.bepRevenue || 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
@@ -1027,8 +1027,8 @@ export default function Financial() {
 
                       <Card className="bg-gradient-to-r from-red-500/5 to-red-600/10 border-red-500/20">
                         <CardContent className="pt-4">
-                          <p className="text-xs text-muted-foreground font-medium text-red-600">{(t as any).worstCase || "Worst Case"}</p>
-                          <p className="text-sm text-muted-foreground">{(t as any).worstCaseDesc || "-20% Price, +20% Costs"}</p>
+                          <p className="text-xs text-muted-foreground font-medium text-red-600">{t.worstCase || "Worst Case"}</p>
+                          <p className="text-sm text-muted-foreground">{t.worstCaseDesc || "-20% Price, +20% Costs"}</p>
                           <p className="text-xl font-bold font-mono text-red-600 mt-2" data-testid="scenario-worst-bep">
                             {(sensitivityScenarios.worst?.bepRevenue || 0).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                           </p>
@@ -1039,7 +1039,7 @@ export default function Financial() {
 
                   {/* E. Bar Chart for Scenario Comparison */}
                   <div className="pt-4 border-t">
-                    <p className="text-sm font-medium mb-3">{(t as any).scenarioComparison || "Scenario Comparison"}</p>
+                    <p className="text-sm font-medium mb-3">{t.scenarioComparison || "Scenario Comparison"}</p>
                     <ResponsiveContainer width="100%" height={250}>
                       <BarChart data={scenarioChartData}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -1058,7 +1058,7 @@ export default function Financial() {
                       </BarChart>
                     </ResponsiveContainer>
                     <p className="text-xs text-muted-foreground text-center mt-2">
-                      {(t as any).lowerBepBetter || "Lower BEP Revenue is better - means you need less sales to break even"}
+                      {t.lowerBepBetter || "Lower BEP Revenue is better - means you need less sales to break even"}
                     </p>
                   </div>
                 </CardContent>
@@ -1067,8 +1067,8 @@ export default function Financial() {
             {/* Expenses by Type Pie Chart */}
             <Card>
               <CardHeader>
-                <CardTitle>{(t as any).operatingExpensesByType || "Operating Expenses by Type"}</CardTitle>
-                <CardDescription>{(t as any).recurringExpensesBreakdown || "Recurring expenses breakdown (excludes one-time & foundational)"}</CardDescription>
+                <CardTitle>{t.operatingExpensesByType || "Operating Expenses by Type"}</CardTitle>
+                <CardDescription>{t.recurringExpensesBreakdown || "Recurring expenses breakdown (excludes one-time & foundational)"}</CardDescription>
               </CardHeader>
               <CardContent>
                 {billTypeData.length > 0 ? (
@@ -1100,8 +1100,8 @@ export default function Financial() {
             {/* Top Expenses by Type */}
             <Card>
               <CardHeader>
-                <CardTitle>{(t as any).operatingExpensesSummary || "Operating Expenses Summary"}</CardTitle>
-                <CardDescription>{(t as any).recurringExpensesByCategory || "Recurring expenses by category (excludes one-time & foundational)"}</CardDescription>
+                <CardTitle>{t.operatingExpensesSummary || "Operating Expenses Summary"}</CardTitle>
+                <CardDescription>{t.recurringExpensesByCategory || "Recurring expenses by category (excludes one-time & foundational)"}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -1109,7 +1109,7 @@ export default function Financial() {
                   <div className="flex items-center justify-between bg-blue-500/5 p-2 rounded-md">
                     <div className="flex items-center gap-2">
                       <Package className="w-4 h-4 text-blue-500" />
-                      <span className="font-medium">{(t as any).inventoryValue || "Inventory Value"}</span>
+                      <span className="font-medium">{t.inventoryValue || "Inventory Value"}</span>
                     </div>
                     <span className="font-mono font-semibold text-blue-600">{totalInventoryValue.toFixed(2)} SAR</span>
                   </div>
@@ -1123,11 +1123,11 @@ export default function Financial() {
                     </div>
                   ))}
                   {billTypeData.length === 0 && totalInventoryValue === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">{(t as any).noExpensesRecorded || "No expenses recorded"}</div>
+                    <div className="text-center py-8 text-muted-foreground">{t.noExpensesRecorded || "No expenses recorded"}</div>
                   )}
                   {/* Total Line */}
                   <div className="flex items-center justify-between border-t pt-3 mt-3">
-                    <span className="font-semibold">{(t as any).totalOperatingExpenses || "Total Operating Expenses"}</span>
+                    <span className="font-semibold">{t.totalOperatingExpenses || "Total Operating Expenses"}</span>
                     <span className="font-mono font-bold text-lg">{(recurringExpensesTotal + totalInventoryValue).toFixed(2)} SAR</span>
                   </div>
                 </div>
@@ -1137,17 +1137,17 @@ export default function Financial() {
           {/* Bills Table */}
           <Card>
             <CardHeader>
-              <CardTitle>{(t as any).allExpensesFor || "All Expenses for"} {selectedYear}</CardTitle>
-              <CardDescription>{billsForYear.length} {(t as any).expenseRecords || "expense records"}</CardDescription>
+              <CardTitle>{t.allExpensesFor || "All Expenses for"} {selectedYear}</CardTitle>
+              <CardDescription>{billsForYear.length} {t.expenseRecords || "expense records"}</CardDescription>
             </CardHeader>
             <CardContent>
               {billsForYear.length > 0 ? (
                 <div className="space-y-2">
                   <div className="grid grid-cols-6 gap-4 font-medium text-sm border-b pb-2">
-                    <div>{(t as any).type || "Type"}</div>
-                    <div>{(t as any).paymentDate || "Payment Date"}</div>
+                    <div>{t.type || "Type"}</div>
+                    <div>{t.paymentDate || "Payment Date"}</div>
                     <div className="text-right">{t.amount}</div>
-                    <div>{(t as any).period || "Period"}</div>
+                    <div>{t.period || "Period"}</div>
                     <div>{t.status}</div>
                     <div className="truncate">{t.description}</div>
                   </div>
@@ -1169,7 +1169,7 @@ export default function Financial() {
               ) : (
                 <div className="text-center py-12 text-muted-foreground">
                   <Wallet className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>{(t as any).noExpensesRecordedFor || "No expenses recorded for"} {selectedYear}</p>
+                  <p>{t.noExpensesRecordedFor || "No expenses recorded for"} {selectedYear}</p>
                 </div>
               )}
             </CardContent>
@@ -1182,13 +1182,13 @@ export default function Financial() {
                 <div className="flex items-center gap-2">
                   <Truck className="h-5 w-5 text-primary" />
                   <div>
-                    <CardTitle>{(t as any).deliveryAppBreakdown || "Delivery App Breakdown"}</CardTitle>
-                    <CardDescription>{(t as any).detailedFinancialPerformance || "Detailed financial performance by delivery app for"} {selectedYear}</CardDescription>
+                    <CardTitle>{t.deliveryAppBreakdown || "Delivery App Breakdown"}</CardTitle>
+                    <CardDescription>{t.detailedFinancialPerformance || "Detailed financial performance by delivery app for"} {selectedYear}</CardDescription>
                   </div>
                 </div>
                 <Badge variant="outline" className="flex items-center gap-1">
                   <Radio className="h-3 w-3 text-green-500 animate-pulse" />
-                  {(t as any).live || "Live"}
+                  {t.live || "Live"}
                 </Badge>
               </div>
             </CardHeader>
@@ -1199,14 +1199,14 @@ export default function Financial() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left py-2 font-semibold">{(t as any).app || "App"}</th>
-                          <th className="text-right py-2 font-semibold">{(t as any).orders || "Orders"}</th>
+                          <th className="text-left py-2 font-semibold">{t.app || "App"}</th>
+                          <th className="text-right py-2 font-semibold">{t.orders || "Orders"}</th>
                           <th className="text-right py-2 font-semibold">{t.totalSales}</th>
                           <th className="text-right py-2 font-semibold">{t.totalRevenue}</th>
-                          <th className="text-right py-2 font-semibold">{(t as any).commissionLabel || "Commission"}</th>
-                          <th className="text-right py-2 font-semibold">{(t as any).banking || "Banking"}</th>
-                          <th className="text-right py-2 font-semibold">{(t as any).subsidyLabel || "Subsidy"}</th>
-                          <th className="text-right py-2 font-semibold">{(t as any).netEarnings || "Net Earnings"}</th>
+                          <th className="text-right py-2 font-semibold">{t.commissionLabel || "Commission"}</th>
+                          <th className="text-right py-2 font-semibold">{t.banking || "Banking"}</th>
+                          <th className="text-right py-2 font-semibold">{t.subsidyLabel || "Subsidy"}</th>
+                          <th className="text-right py-2 font-semibold">{t.netEarnings || "Net Earnings"}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1232,7 +1232,7 @@ export default function Financial() {
                       </tbody>
                       <tfoot className="bg-muted/50">
                         <tr className="font-bold">
-                          <td className="py-3">{(t as any).total || "Total"}</td>
+                          <td className="py-3">{t.total || "Total"}</td>
                           <td className="text-right py-3 font-mono">{deliveryBreakdown.totals.orders}</td>
                           <td className="text-right py-3 font-mono">{deliveryBreakdown.totals.sales.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR</td>
                           <td className="text-right py-3 font-mono">{deliveryBreakdown.totals.revenue.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR</td>
@@ -1263,7 +1263,7 @@ export default function Financial() {
                     </Card>
                     <Card className="bg-gradient-to-r from-red-500/5 to-red-600/10">
                       <CardContent className="pt-4">
-                        <div className="text-sm text-muted-foreground">{(t as any).totalFees || "Total Fees"}</div>
+                        <div className="text-sm text-muted-foreground">{t.totalFees || "Total Fees"}</div>
                         <div className="text-2xl font-bold font-mono text-destructive">
                           -{(deliveryBreakdown.totals.commission + deliveryBreakdown.totals.banking + deliveryBreakdown.totals.posFees).toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR
                         </div>
@@ -1271,7 +1271,7 @@ export default function Financial() {
                     </Card>
                     <Card className={`bg-gradient-to-r ${deliveryBreakdown.totals.netEarnings >= 0 ? 'from-green-500/5 to-green-600/10' : 'from-red-500/5 to-red-600/10'}`}>
                       <CardContent className="pt-4">
-                        <div className="text-sm text-muted-foreground">{(t as any).netEarnings || "Net Earnings"}</div>
+                        <div className="text-sm text-muted-foreground">{t.netEarnings || "Net Earnings"}</div>
                         <div className={`text-2xl font-bold font-mono ${deliveryBreakdown.totals.netEarnings >= 0 ? 'text-green-600' : 'text-destructive'}`}>
                           {deliveryBreakdown.totals.netEarnings >= 0 ? '+' : ''}{deliveryBreakdown.totals.netEarnings.toLocaleString("en-SA", { minimumFractionDigits: 2 })} SAR
                         </div>
@@ -1282,8 +1282,8 @@ export default function Financial() {
               ) : (
                 <div className="text-center py-12 text-muted-foreground">
                   <Truck className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>{(t as any).noDeliveryAppOrders || "No delivery app orders for"} {selectedYear}</p>
-                  <p className="text-xs mt-2">{(t as any).deliveryOrdersWillAppear || "Orders placed through delivery apps will appear here"}</p>
+                  <p>{t.noDeliveryAppOrders || "No delivery app orders for"} {selectedYear}</p>
+                  <p className="text-xs mt-2">{t.deliveryOrdersWillAppear || "Orders placed through delivery apps will appear here"}</p>
                 </div>
               )}
             </CardContent>
@@ -1295,7 +1295,7 @@ export default function Financial() {
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => handleExportStatementPDF('income-statement')} data-testid="button-export-income-pdf">
               <FileDown className="h-4 w-4 mr-2" />
-              {(t as any).exportPdf || "Export PDF"}
+              {t.exportPdf || "Export PDF"}
             </Button>
           </div>
 
@@ -1306,8 +1306,8 @@ export default function Financial() {
                   <BarChart3 className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
-                  <CardTitle>{(t as any).incomeStatement || "Income Statement"} ({(t as any).profitAndLoss || "Profit & Loss"})</CardTitle>
-                  <CardDescription>{(t as any).forThePeriodEnding || "For the period ending"} {(t as any).december || "December"} 31, {selectedYear}</CardDescription>
+                  <CardTitle>{t.incomeStatement || "Income Statement"} ({t.profitAndLoss || "Profit & Loss"})</CardTitle>
+                  <CardDescription>{t.forThePeriodEnding || "For the period ending"} {t.december || "December"} 31, {selectedYear}</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -1315,7 +1315,7 @@ export default function Financial() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[60%]">{(t as any).description || "Description"}</TableHead>
+                    <TableHead className="w-[60%]">{t.description || "Description"}</TableHead>
                     <TableHead className="text-right">{t.amount} (SAR)</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1325,28 +1325,28 @@ export default function Financial() {
                     <TableCell className="text-right font-bold font-mono text-base">{totalRevenue.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="pl-8 text-muted-foreground">{(t as any).salesRevenue || "Sales Revenue"}</TableCell>
+                    <TableCell className="pl-8 text-muted-foreground">{t.salesRevenue || "Sales Revenue"}</TableCell>
                     <TableCell className="text-right font-mono">{totalRevenue.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   </TableRow>
 
                   <TableRow className="bg-muted/30">
-                    <TableCell className="font-bold text-base">{(t as any).costOfGoodsSold || "Cost of Goods Sold (COGS)"}</TableCell>
+                    <TableCell className="font-bold text-base">{t.costOfGoodsSold || "Cost of Goods Sold (COGS)"}</TableCell>
                     <TableCell className="text-right font-bold font-mono text-base text-destructive">({cogs.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</TableCell>
                   </TableRow>
 
                   <TableRow className="bg-green-500/5">
-                    <TableCell className="font-bold text-lg">{(t as any).grossProfit || "Gross Profit"}</TableCell>
+                    <TableCell className="font-bold text-lg">{t.grossProfit || "Gross Profit"}</TableCell>
                     <TableCell className={`text-right font-bold font-mono text-lg ${grossProfit >= 0 ? 'text-green-600' : 'text-destructive'}`}>
                       {grossProfit.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="pl-8 text-muted-foreground text-sm">{(t as any).grossMargin || "Gross Margin"}</TableCell>
+                    <TableCell className="pl-8 text-muted-foreground text-sm">{t.grossMargin || "Gross Margin"}</TableCell>
                     <TableCell className="text-right font-mono text-sm text-muted-foreground">{totalRevenue > 0 ? ((grossProfit / totalRevenue) * 100).toFixed(1) : '0.0'}%</TableCell>
                   </TableRow>
 
                   <TableRow className="bg-muted/30">
-                    <TableCell className="font-bold text-base">{(t as any).operatingExpensesLabel || "Operating Expenses"}</TableCell>
+                    <TableCell className="font-bold text-base">{t.operatingExpensesLabel || "Operating Expenses"}</TableCell>
                     <TableCell className="text-right font-bold font-mono text-base text-destructive">({operatingExpenses.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</TableCell>
                   </TableRow>
                   {Object.entries(expensesByCategory).sort((a, b) => b[1] - a[1]).map(([cat, amount]) => (
@@ -1357,7 +1357,7 @@ export default function Financial() {
                   ))}
 
                   <TableRow className="bg-muted/30">
-                    <TableCell className="font-bold text-base">{(t as any).operatingIncome || "Operating Income"}</TableCell>
+                    <TableCell className="font-bold text-base">{t.operatingIncome || "Operating Income"}</TableCell>
                     <TableCell className={`text-right font-bold font-mono text-base ${operatingIncome >= 0 ? 'text-green-600' : 'text-destructive'}`}>
                       {operatingIncome.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
@@ -1365,7 +1365,7 @@ export default function Financial() {
                 </TableBody>
                 <TableFooter>
                   <TableRow>
-                    <TableCell className="font-bold text-lg">{(t as any).netIncome || "Net Income"}</TableCell>
+                    <TableCell className="font-bold text-lg">{t.netIncome || "Net Income"}</TableCell>
                     <TableCell className={`text-right font-bold font-mono text-lg ${netIncome >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-net-income">
                       {netIncome.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                     </TableCell>
@@ -1378,40 +1378,40 @@ export default function Financial() {
           <div className="grid gap-6 md:grid-cols-3">
             <Card className={grossProfit >= 0 ? "bg-gradient-to-r from-green-500/5 to-green-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{(t as any).grossProfit || "Gross Profit"}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.grossProfit || "Gross Profit"}</CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className={`text-2xl font-bold font-mono ${grossProfit >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-gross-profit">
                   {grossProfit.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                 </div>
-                <p className="text-xs text-muted-foreground">{(t as any).grossMargin || "Gross Margin"}: {totalRevenue > 0 ? ((grossProfit / totalRevenue) * 100).toFixed(1) : '0.0'}%</p>
+                <p className="text-xs text-muted-foreground">{t.grossMargin || "Gross Margin"}: {totalRevenue > 0 ? ((grossProfit / totalRevenue) * 100).toFixed(1) : '0.0'}%</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{(t as any).operatingExpensesLabel || "Operating Expenses"}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.operatingExpensesLabel || "Operating Expenses"}</CardTitle>
                 <Wallet className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold font-mono text-destructive" data-testid="text-operating-expenses">
                   {operatingExpenses.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                 </div>
-                <p className="text-xs text-muted-foreground">{Object.keys(expensesByCategory).length} {(t as any).categories || "categories"}</p>
+                <p className="text-xs text-muted-foreground">{Object.keys(expensesByCategory).length} {t.categories || "categories"}</p>
               </CardContent>
             </Card>
 
             <Card className={netIncome >= 0 ? "bg-gradient-to-r from-blue-500/5 to-blue-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{(t as any).netIncome || "Net Income"}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.netIncome || "Net Income"}</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className={`text-2xl font-bold font-mono ${netIncome >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-net-income-card">
                   {netIncome.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                 </div>
-                <p className="text-xs text-muted-foreground">{(t as any).netMargin || "Net Margin"}: {totalRevenue > 0 ? ((netIncome / totalRevenue) * 100).toFixed(1) : '0.0'}%</p>
+                <p className="text-xs text-muted-foreground">{t.netMargin || "Net Margin"}: {totalRevenue > 0 ? ((netIncome / totalRevenue) * 100).toFixed(1) : '0.0'}%</p>
               </CardContent>
             </Card>
           </div>
@@ -1422,7 +1422,7 @@ export default function Financial() {
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => handleExportStatementPDF('balance-sheet')} data-testid="button-export-balance-pdf">
               <FileDown className="h-4 w-4 mr-2" />
-              {(t as any).exportPdf || "Export PDF"}
+              {t.exportPdf || "Export PDF"}
             </Button>
           </div>
 
@@ -1433,8 +1433,8 @@ export default function Financial() {
                   <Scale className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
-                  <CardTitle>{(t as any).balanceSheet || "Balance Sheet"}</CardTitle>
-                  <CardDescription>{(t as any).asOf || "As of"} {(t as any).december || "December"} 31, {selectedYear}</CardDescription>
+                  <CardTitle>{t.balanceSheet || "Balance Sheet"}</CardTitle>
+                  <CardDescription>{t.asOf || "As of"} {t.december || "December"} 31, {selectedYear}</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -1442,31 +1442,31 @@ export default function Financial() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[60%]">{(t as any).account || "Account"}</TableHead>
+                    <TableHead className="w-[60%]">{t.account || "Account"}</TableHead>
                     <TableHead className="text-right">{t.amount} (SAR)</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   <TableRow className="bg-muted/30">
-                    <TableCell className="font-bold text-base">{(t as any).assets || "Assets"}</TableCell>
+                    <TableCell className="font-bold text-base">{t.assets || "Assets"}</TableCell>
                     <TableCell className="text-right font-bold font-mono text-base"></TableCell>
                   </TableRow>
                   <TableRow className="bg-muted/20">
-                    <TableCell className="pl-4 font-semibold">{(t as any).currentAssets || "Current Assets"}</TableCell>
+                    <TableCell className="pl-4 font-semibold">{t.currentAssets || "Current Assets"}</TableCell>
                     <TableCell className="text-right"></TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="pl-8 text-muted-foreground">{(t as any).cashAndRevenue || "Cash & Revenue"}</TableCell>
+                    <TableCell className="pl-8 text-muted-foreground">{t.cashAndRevenue || "Cash & Revenue"}</TableCell>
                     <TableCell className="text-right font-mono">{totalRevenue.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="pl-8 text-muted-foreground">{(t as any).inventoryValue || "Inventory"}</TableCell>
+                    <TableCell className="pl-8 text-muted-foreground">{t.inventoryValue || "Inventory"}</TableCell>
                     <TableCell className="text-right font-mono">{totalInventoryValue.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   </TableRow>
                 </TableBody>
                 <TableFooter>
                   <TableRow className="bg-blue-500/10">
-                    <TableCell className="font-bold text-base">{(t as any).totalAssets || "Total Assets"}</TableCell>
+                    <TableCell className="font-bold text-base">{t.totalAssets || "Total Assets"}</TableCell>
                     <TableCell className="text-right font-bold font-mono text-base" data-testid="text-total-assets">
                       {totalAssets.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                     </TableCell>
@@ -1479,25 +1479,25 @@ export default function Financial() {
               <Table>
                 <TableBody>
                   <TableRow className="bg-muted/30">
-                    <TableCell className="font-bold text-base w-[60%]">{(t as any).liabilities || "Liabilities"}</TableCell>
+                    <TableCell className="font-bold text-base w-[60%]">{t.liabilities || "Liabilities"}</TableCell>
                     <TableCell className="text-right font-bold font-mono text-base"></TableCell>
                   </TableRow>
                   <TableRow className="bg-muted/20">
-                    <TableCell className="pl-4 font-semibold">{(t as any).currentLiabilities || "Current Liabilities"}</TableCell>
+                    <TableCell className="pl-4 font-semibold">{t.currentLiabilities || "Current Liabilities"}</TableCell>
                     <TableCell className="text-right"></TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="pl-8 text-muted-foreground">{(t as any).vatPayable || "VAT Payable (15%)"}</TableCell>
+                    <TableCell className="pl-8 text-muted-foreground">{t.vatPayable || "VAT Payable (15%)"}</TableCell>
                     <TableCell className="text-right font-mono">{vatPayable.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="pl-8 text-muted-foreground">{(t as any).accountsPayable || "Accounts Payable (Pending Bills)"}</TableCell>
+                    <TableCell className="pl-8 text-muted-foreground">{t.accountsPayable || "Accounts Payable (Pending Bills)"}</TableCell>
                     <TableCell className="text-right font-mono">{pendingBillsAmount.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   </TableRow>
                 </TableBody>
                 <TableFooter>
                   <TableRow className="bg-orange-500/10">
-                    <TableCell className="font-bold text-base">{(t as any).totalLiabilities || "Total Liabilities"}</TableCell>
+                    <TableCell className="font-bold text-base">{t.totalLiabilities || "Total Liabilities"}</TableCell>
                     <TableCell className="text-right font-bold font-mono text-base" data-testid="text-total-liabilities">
                       {totalLiabilities.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                     </TableCell>
@@ -1510,17 +1510,17 @@ export default function Financial() {
               <Table>
                 <TableBody>
                   <TableRow className="bg-muted/30">
-                    <TableCell className="font-bold text-base w-[60%]">{(t as any).ownersEquity || "Owner's Equity"}</TableCell>
+                    <TableCell className="font-bold text-base w-[60%]">{t.ownersEquity || "Owner's Equity"}</TableCell>
                     <TableCell className="text-right font-bold font-mono text-base"></TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="pl-8 text-muted-foreground">{(t as any).retainedEarnings || "Retained Earnings"}</TableCell>
+                    <TableCell className="pl-8 text-muted-foreground">{t.retainedEarnings || "Retained Earnings"}</TableCell>
                     <TableCell className={`text-right font-mono ${ownersEquity >= 0 ? '' : 'text-destructive'}`}>{ownersEquity.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   </TableRow>
                 </TableBody>
                 <TableFooter>
                   <TableRow className="bg-green-500/10">
-                    <TableCell className="font-bold text-base">{(t as any).totalEquity || "Total Equity"}</TableCell>
+                    <TableCell className="font-bold text-base">{t.totalEquity || "Total Equity"}</TableCell>
                     <TableCell className={`text-right font-bold font-mono text-base ${ownersEquity >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-total-equity">
                       {ownersEquity.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                     </TableCell>
@@ -1533,7 +1533,7 @@ export default function Financial() {
           <div className="grid gap-6 md:grid-cols-3">
             <Card className="bg-gradient-to-r from-blue-500/5 to-blue-600/10">
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{(t as any).totalAssets || "Total Assets"}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.totalAssets || "Total Assets"}</CardTitle>
                 <TrendingUp className="h-4 w-4 text-blue-500" />
               </CardHeader>
               <CardContent>
@@ -1542,7 +1542,7 @@ export default function Financial() {
             </Card>
             <Card className="bg-gradient-to-r from-orange-500/5 to-orange-600/10">
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{(t as any).totalLiabilities || "Total Liabilities"}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.totalLiabilities || "Total Liabilities"}</CardTitle>
                 <TrendingDown className="h-4 w-4 text-orange-500" />
               </CardHeader>
               <CardContent>
@@ -1551,7 +1551,7 @@ export default function Financial() {
             </Card>
             <Card className={ownersEquity >= 0 ? "bg-gradient-to-r from-green-500/5 to-green-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{(t as any).ownersEquity || "Owner's Equity"}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.ownersEquity || "Owner's Equity"}</CardTitle>
                 <Scale className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
@@ -1566,7 +1566,7 @@ export default function Financial() {
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => handleExportStatementPDF('cash-flow')} data-testid="button-export-cashflow-pdf">
               <FileDown className="h-4 w-4 mr-2" />
-              {(t as any).exportPdf || "Export PDF"}
+              {t.exportPdf || "Export PDF"}
             </Button>
           </div>
 
@@ -1577,8 +1577,8 @@ export default function Financial() {
                   <ArrowDownUp className="h-5 w-5 text-purple-600" />
                 </div>
                 <div>
-                  <CardTitle>{(t as any).cashFlowStatement || "Cash Flow Statement"}</CardTitle>
-                  <CardDescription>{(t as any).forThePeriodEnding || "For the period ending"} {(t as any).december || "December"} 31, {selectedYear}</CardDescription>
+                  <CardTitle>{t.cashFlowStatement || "Cash Flow Statement"}</CardTitle>
+                  <CardDescription>{t.forThePeriodEnding || "For the period ending"} {t.december || "December"} 31, {selectedYear}</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -1586,44 +1586,44 @@ export default function Financial() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[60%]">{(t as any).description || "Description"}</TableHead>
+                    <TableHead className="w-[60%]">{t.description || "Description"}</TableHead>
                     <TableHead className="text-right">{t.amount} (SAR)</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   <TableRow className="bg-muted/30">
-                    <TableCell className="font-bold text-base">{(t as any).operatingActivities || "Operating Activities"}</TableCell>
+                    <TableCell className="font-bold text-base">{t.operatingActivities || "Operating Activities"}</TableCell>
                     <TableCell className="text-right"></TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="pl-8 text-muted-foreground">{(t as any).netIncome || "Net Income"}</TableCell>
+                    <TableCell className="pl-8 text-muted-foreground">{t.netIncome || "Net Income"}</TableCell>
                     <TableCell className={`text-right font-mono ${netIncome >= 0 ? '' : 'text-destructive'}`}>{netIncome.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="pl-8 text-muted-foreground">{(t as any).inventoryAdjustments || "Inventory Adjustments"}</TableCell>
+                    <TableCell className="pl-8 text-muted-foreground">{t.inventoryAdjustments || "Inventory Adjustments"}</TableCell>
                     <TableCell className="text-right font-mono">+{totalInventoryValue.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="pl-8 text-muted-foreground">{(t as any).accountsPayableChange || "Change in Accounts Payable"}</TableCell>
+                    <TableCell className="pl-8 text-muted-foreground">{t.accountsPayableChange || "Change in Accounts Payable"}</TableCell>
                     <TableCell className="text-right font-mono text-destructive">-{pendingBillsAmount.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   </TableRow>
                   <TableRow className="bg-blue-500/5">
-                    <TableCell className="font-semibold pl-4">{(t as any).netCashFromOperations || "Net Cash from Operations"}</TableCell>
+                    <TableCell className="font-semibold pl-4">{t.netCashFromOperations || "Net Cash from Operations"}</TableCell>
                     <TableCell className={`text-right font-bold font-mono ${cashFromOperations >= 0 ? 'text-green-600' : 'text-destructive'}`}>
                       {cashFromOperations.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                   </TableRow>
 
                   <TableRow className="bg-muted/30">
-                    <TableCell className="font-bold text-base">{(t as any).investingActivities || "Investing Activities"}</TableCell>
+                    <TableCell className="font-bold text-base">{t.investingActivities || "Investing Activities"}</TableCell>
                     <TableCell className="text-right"></TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="pl-8 text-muted-foreground">{(t as any).inventoryPurchases || "Inventory Purchases"}</TableCell>
+                    <TableCell className="pl-8 text-muted-foreground">{t.inventoryPurchases || "Inventory Purchases"}</TableCell>
                     <TableCell className="text-right font-mono text-destructive">{cashFromInvesting.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   </TableRow>
                   <TableRow className="bg-purple-500/5">
-                    <TableCell className="font-semibold pl-4">{(t as any).netCashFromInvesting || "Net Cash from Investing"}</TableCell>
+                    <TableCell className="font-semibold pl-4">{t.netCashFromInvesting || "Net Cash from Investing"}</TableCell>
                     <TableCell className={`text-right font-bold font-mono ${cashFromInvesting >= 0 ? 'text-green-600' : 'text-destructive'}`}>
                       {cashFromInvesting.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
@@ -1631,7 +1631,7 @@ export default function Financial() {
                 </TableBody>
                 <TableFooter>
                   <TableRow>
-                    <TableCell className="font-bold text-lg">{(t as any).netCashFlow || "Net Cash Flow"}</TableCell>
+                    <TableCell className="font-bold text-lg">{t.netCashFlow || "Net Cash Flow"}</TableCell>
                     <TableCell className={`text-right font-bold font-mono text-lg ${netCashFlow >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-net-cash-flow">
                       {netCashFlow.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                     </TableCell>
@@ -1644,7 +1644,7 @@ export default function Financial() {
           <div className="grid gap-6 md:grid-cols-3">
             <Card className={cashFromOperations >= 0 ? "bg-gradient-to-r from-blue-500/5 to-blue-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{(t as any).operatingActivities || "Operating Activities"}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.operatingActivities || "Operating Activities"}</CardTitle>
                 <TrendingUp className="h-4 w-4 text-blue-500" />
               </CardHeader>
               <CardContent>
@@ -1655,7 +1655,7 @@ export default function Financial() {
             </Card>
             <Card className={cashFromInvesting >= 0 ? "bg-gradient-to-r from-purple-500/5 to-purple-600/10" : "bg-gradient-to-r from-orange-500/5 to-orange-600/10"}>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{(t as any).investingActivities || "Investing Activities"}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.investingActivities || "Investing Activities"}</CardTitle>
                 <ArrowDownUp className="h-4 w-4 text-purple-500" />
               </CardHeader>
               <CardContent>
@@ -1666,7 +1666,7 @@ export default function Financial() {
             </Card>
             <Card className={netCashFlow >= 0 ? "bg-gradient-to-r from-green-500/5 to-green-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{(t as any).netCashFlow || "Net Cash Flow"}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.netCashFlow || "Net Cash Flow"}</CardTitle>
                 <DollarSign className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
@@ -1683,7 +1683,7 @@ export default function Financial() {
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => handleExportStatementPDF('equity-statement')} data-testid="button-export-equity-pdf">
               <FileDown className="h-4 w-4 mr-2" />
-              {(t as any).exportPdf || "Export PDF"}
+              {t.exportPdf || "Export PDF"}
             </Button>
           </div>
 
@@ -1694,8 +1694,8 @@ export default function Financial() {
                   <Scale className="h-5 w-5 text-indigo-600" />
                 </div>
                 <div>
-                  <CardTitle>{(t as any).ownersEquityStatement || "Statement of Owner's Equity"}</CardTitle>
-                  <CardDescription>{(t as any).forThePeriodEnding || "For the period ending"} {(t as any).december || "December"} 31, {selectedYear}</CardDescription>
+                  <CardTitle>{t.ownersEquityStatement || "Statement of Owner's Equity"}</CardTitle>
+                  <CardDescription>{t.forThePeriodEnding || "For the period ending"} {t.december || "December"} 31, {selectedYear}</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -1703,51 +1703,51 @@ export default function Financial() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[60%]">{(t as any).description || "Description"}</TableHead>
+                    <TableHead className="w-[60%]">{t.description || "Description"}</TableHead>
                     <TableHead className="text-right">{t.amount} (SAR)</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   <TableRow className="bg-muted/30">
-                    <TableCell className="font-bold text-base">{(t as any).beginningEquity || "Beginning Owner's Equity"}</TableCell>
+                    <TableCell className="font-bold text-base">{t.beginningEquity || "Beginning Owner's Equity"}</TableCell>
                     <TableCell className="text-right font-bold font-mono text-base">{beginningEquity.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   </TableRow>
 
                   <TableRow className="bg-muted/20">
-                    <TableCell className="font-semibold">{(t as any).additionsToEquity || "Additions to Equity"}</TableCell>
+                    <TableCell className="font-semibold">{t.additionsToEquity || "Additions to Equity"}</TableCell>
                     <TableCell className="text-right"></TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="pl-8 text-muted-foreground">{(t as any).netIncome || "Net Income"}</TableCell>
+                    <TableCell className="pl-8 text-muted-foreground">{t.netIncome || "Net Income"}</TableCell>
                     <TableCell className={`text-right font-mono ${netIncome >= 0 ? 'text-green-600' : 'text-destructive'}`}>
                       {netIncome >= 0 ? '+' : ''}{netIncome.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="pl-8 text-muted-foreground">{(t as any).ownerInvestments || "Owner Investments / Capital Contributions"}</TableCell>
+                    <TableCell className="pl-8 text-muted-foreground">{t.ownerInvestments || "Owner Investments / Capital Contributions"}</TableCell>
                     <TableCell className="text-right font-mono text-green-600">
                       +{ownerInvestments.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                   </TableRow>
                   <TableRow className="bg-green-500/5">
-                    <TableCell className="font-semibold pl-4">{(t as any).totalAdditions || "Total Additions"}</TableCell>
+                    <TableCell className="font-semibold pl-4">{t.totalAdditions || "Total Additions"}</TableCell>
                     <TableCell className="text-right font-bold font-mono text-green-600">
                       +{(netIncome + ownerInvestments).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                   </TableRow>
 
                   <TableRow className="bg-muted/20">
-                    <TableCell className="font-semibold">{(t as any).deductionsFromEquity || "Deductions from Equity"}</TableCell>
+                    <TableCell className="font-semibold">{t.deductionsFromEquity || "Deductions from Equity"}</TableCell>
                     <TableCell className="text-right"></TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="pl-8 text-muted-foreground">{(t as any).ownerWithdrawals || "Owner Withdrawals / Distributions"}</TableCell>
+                    <TableCell className="pl-8 text-muted-foreground">{t.ownerWithdrawals || "Owner Withdrawals / Distributions"}</TableCell>
                     <TableCell className="text-right font-mono text-destructive">
                       -{ownerWithdrawals.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                   </TableRow>
                   <TableRow className="bg-red-500/5">
-                    <TableCell className="font-semibold pl-4">{(t as any).totalDeductions || "Total Deductions"}</TableCell>
+                    <TableCell className="font-semibold pl-4">{t.totalDeductions || "Total Deductions"}</TableCell>
                     <TableCell className="text-right font-bold font-mono text-destructive">
                       -{ownerWithdrawals.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
@@ -1755,7 +1755,7 @@ export default function Financial() {
                 </TableBody>
                 <TableFooter>
                   <TableRow>
-                    <TableCell className="font-bold text-lg">{(t as any).endingEquity || "Ending Owner's Equity"}</TableCell>
+                    <TableCell className="font-bold text-lg">{t.endingEquity || "Ending Owner's Equity"}</TableCell>
                     <TableCell className={`text-right font-bold font-mono text-lg ${endingEquity >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-ending-equity">
                       {endingEquity.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                     </TableCell>
@@ -1768,40 +1768,40 @@ export default function Financial() {
           <div className="grid gap-6 md:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{(t as any).beginningEquity || "Beginning Equity"}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.beginningEquity || "Beginning Equity"}</CardTitle>
                 <Scale className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold font-mono" data-testid="text-beginning-equity-card">
                   {beginningEquity.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                 </div>
-                <p className="text-xs text-muted-foreground">{(t as any).startOfPeriod || "Start of period"}</p>
+                <p className="text-xs text-muted-foreground">{t.startOfPeriod || "Start of period"}</p>
               </CardContent>
             </Card>
 
             <Card className={netIncome >= 0 ? "bg-gradient-to-r from-green-500/5 to-green-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{(t as any).netChange || "Net Change"}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.netChange || "Net Change"}</CardTitle>
                 {netIncome >= 0 ? <TrendingUp className="h-4 w-4 text-green-500" /> : <TrendingDown className="h-4 w-4 text-red-500" />}
               </CardHeader>
               <CardContent>
                 <div className={`text-2xl font-bold font-mono ${netIncome >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-net-change-card">
                   {(netIncome + ownerInvestments - ownerWithdrawals).toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                 </div>
-                <p className="text-xs text-muted-foreground">{(t as any).incomeInvestmentsWithdrawals || "Income + Investments - Withdrawals"}</p>
+                <p className="text-xs text-muted-foreground">{t.incomeInvestmentsWithdrawals || "Income + Investments - Withdrawals"}</p>
               </CardContent>
             </Card>
 
             <Card className={endingEquity >= 0 ? "bg-gradient-to-r from-indigo-500/5 to-indigo-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{(t as any).endingEquity || "Ending Equity"}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.endingEquity || "Ending Equity"}</CardTitle>
                 <DollarSign className="h-4 w-4 text-indigo-500" />
               </CardHeader>
               <CardContent>
                 <div className={`text-2xl font-bold font-mono ${endingEquity >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-ending-equity-card">
                   {endingEquity.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
                 </div>
-                <p className="text-xs text-muted-foreground">{(t as any).endOfPeriod || "End of period"}</p>
+                <p className="text-xs text-muted-foreground">{t.endOfPeriod || "End of period"}</p>
               </CardContent>
             </Card>
           </div>
@@ -1812,12 +1812,12 @@ export default function Financial() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>{(t as any).zatcaCompliantInvoices || "ZATCA Compliant Invoices"}</CardTitle>
-                  <CardDescription>{(t as any).allGeneratedInvoices || "All generated invoices with QR codes for Saudi Arabia compliance"}</CardDescription>
+                  <CardTitle>{t.zatcaCompliantInvoices || "ZATCA Compliant Invoices"}</CardTitle>
+                  <CardDescription>{t.allGeneratedInvoices || "All generated invoices with QR codes for Saudi Arabia compliance"}</CardDescription>
                 </div>
                 <Button variant="outline" onClick={handleExportAllInvoices} data-testid="button-export-all-invoices">
                   <Download className="h-4 w-4 mr-2" />
-                  {(t as any).exportAll || "Export All"}
+                  {t.exportAll || "Export All"}
                 </Button>
               </div>
             </CardHeader>
@@ -1825,24 +1825,24 @@ export default function Financial() {
               {invoices.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>{(t as any).noInvoicesGenerated || "No invoices generated yet"}</p>
-                  <p className="text-sm">{(t as any).invoicesWillAppear || "Invoices will appear here automatically when transactions are completed"}</p>
+                  <p>{t.noInvoicesGenerated || "No invoices generated yet"}</p>
+                  <p className="text-sm">{t.invoicesWillAppear || "Invoices will appear here automatically when transactions are completed"}</p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   <div className="grid grid-cols-7 gap-4 font-medium text-sm border-b pb-2">
-                    <div>{(t as any).invoiceNumber || "Invoice #"}</div>
+                    <div>{t.invoiceNumber || "Invoice #"}</div>
                     <div>{t.customer}</div>
-                    <div className="text-right">{(t as any).subtotal || "Subtotal"}</div>
+                    <div className="text-right">{t.subtotal || "Subtotal"}</div>
                     <div className="text-right">{t.vatCollected}</div>
-                    <div className="text-right">{(t as any).total || "Total"}</div>
+                    <div className="text-right">{t.total || "Total"}</div>
                     <div className="text-right">{t.date}</div>
                     <div className="text-right">{t.actions}</div>
                   </div>
                   {invoices.map((invoice) => (
                     <div key={invoice.id} className="grid grid-cols-7 gap-4 text-sm items-center hover-elevate p-2 rounded-md" data-testid={`invoice-${invoice.id}`}>
                       <div className="font-mono font-medium">{invoice.invoiceNumber}</div>
-                      <div className="text-muted-foreground">{invoice.customerName || ((t as any).walkIn || "Walk-in")}</div>
+                      <div className="text-muted-foreground">{invoice.customerName || (t.walkIn || "Walk-in")}</div>
                       <div className="text-right font-mono">{parseFloat(invoice.subtotal).toFixed(2)}</div>
                       <div className="text-right font-mono text-muted-foreground">{parseFloat(invoice.vatAmount).toFixed(2)}</div>
                       <div className="text-right font-mono font-medium">{parseFloat(invoice.total).toFixed(2)} SAR</div>
