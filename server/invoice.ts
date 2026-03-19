@@ -4099,6 +4099,38 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
   }
 }
 
+function bidiText(text: string): string {
+  const escaped = escapeHtml(text);
+  const hasArabic = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
+  if (hasArabic) {
+    return `<span style="unicode-bidi: embed; direction: rtl; font-family: 'Noto Naskh Arabic', 'Inter', sans-serif;">${escaped}</span>`;
+  }
+  return escaped;
+}
+
+function getStatementArabicStyles(): string {
+  return `
+    body { font-family: ${PDF_STYLES.fonts.primary}; font-size: ${PDF_STYLES.fontSize.sm}; padding: 4mm; }
+    * { unicode-bidi: plaintext; }
+    td, th { unicode-bidi: plaintext; }
+    .ar { direction: rtl; font-family: ${PDF_STYLES.fonts.arabic}; }
+    .header { text-align: center; margin-bottom: 8px; border-bottom: 2px solid ${PDF_STYLES.colors.primary}; padding-bottom: 6px; }
+    .company-name { font-size: ${PDF_STYLES.fontSize.xl}; font-weight: 700; color: ${PDF_STYLES.colors.primary}; margin-bottom: 3px; }
+    .document-title { font-size: ${PDF_STYLES.fontSize.lg}; font-weight: 600; color: ${PDF_STYLES.colors.textSecondary}; }
+    .year { font-size: ${PDF_STYLES.fontSize.md}; color: ${PDF_STYLES.colors.textMuted}; }
+    .section-header { background: #f3f4f6; font-weight: 700; font-size: ${PDF_STYLES.fontSize.md}; }
+    .subsection { background: #f9fafb; font-weight: 600; }
+    .indent { padding-left: 24px; color: #6b7280; }
+    .positive { color: #16a34a; }
+    .negative { color: #dc2626; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; margin-bottom: 16px; }
+    th, td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; }
+    th { text-align: left; background: #f9fafb; font-weight: 600; }
+    td:last-child, th:last-child { text-align: right; direction: ltr; }
+    .footer { margin-top: 16px; text-align: center; font-size: ${PDF_STYLES.fontSize.xs}; color: ${PDF_STYLES.colors.textMuted}; border-top: 1px solid #e5e7eb; padding-top: 8px; }
+  `;
+}
+
 export async function generateIncomeStatementPDF(data: {
   companyName: string; companyVAT: string; year: string;
   revenue: number; cogs: number; grossProfit: number;
@@ -4107,45 +4139,32 @@ export async function generateIncomeStatementPDF(data: {
 }): Promise<Buffer> {
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     ${getBasePdfStyles()}
-    body { font-size: ${PDF_STYLES.fontSize.sm}; padding: 4mm; }
-    .header { text-align: center; margin-bottom: 8px; border-bottom: 2px solid ${PDF_STYLES.colors.primary}; padding-bottom: 6px; }
-    .company-name { font-size: ${PDF_STYLES.fontSize.xl}; font-weight: 700; color: ${PDF_STYLES.colors.primary}; margin-bottom: 3px; }
-    .document-title { font-size: ${PDF_STYLES.fontSize.lg}; font-weight: 600; color: ${PDF_STYLES.colors.textSecondary}; }
-    .year { font-size: ${PDF_STYLES.fontSize.md}; color: ${PDF_STYLES.colors.textMuted}; }
-    .section-header { background: #f3f4f6; font-weight: 700; font-size: ${PDF_STYLES.fontSize.md}; }
-    .indent { padding-left: 24px; color: #6b7280; }
+    ${getStatementArabicStyles()}
     .total-row { background: ${PDF_STYLES.colors.primary}; color: white; font-weight: 700; font-size: ${PDF_STYLES.fontSize.md}; }
     .subtotal-row { background: #ecfdf5; font-weight: 600; }
-    .positive { color: #16a34a; }
-    .negative { color: #dc2626; }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    th, td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; }
-    th { text-align: left; background: #f9fafb; font-weight: 600; }
-    td:last-child, th:last-child { text-align: right; }
-    .footer { margin-top: 16px; text-align: center; font-size: ${PDF_STYLES.fontSize.xs}; color: ${PDF_STYLES.colors.textMuted}; border-top: 1px solid #e5e7eb; padding-top: 8px; }
   </style></head><body>
     <div class="header">
-      <div class="company-name">${escapeHtml(data.companyName)}</div>
-      <div class="document-title">Income Statement (Profit & Loss) / قائمة الدخل</div>
-      <div class="year">For the Year Ending December 31, ${escapeHtml(data.year)} / للسنة المنتهية في 31 ديسمبر ${escapeHtml(data.year)}</div>
+      <div class="company-name">${bidiText(data.companyName)}</div>
+      <div class="document-title">Income Statement (Profit & Loss) / <span class="ar">قائمة الدخل</span></div>
+      <div class="year">For the Year Ending December 31, ${escapeHtml(data.year)} / <span class="ar">للسنة المنتهية في 31 ديسمبر ${escapeHtml(data.year)}</span></div>
       ${data.companyVAT ? `<div class="year">VAT: ${escapeHtml(data.companyVAT)}</div>` : ''}
     </div>
     <table>
-      <thead><tr><th>Description / الوصف</th><th>Amount (SAR) / المبلغ</th></tr></thead>
+      <thead><tr><th>Description / <span class="ar">الوصف</span></th><th>Amount (SAR) / <span class="ar">المبلغ</span></th></tr></thead>
       <tbody>
-        <tr class="section-header"><td>Revenue / الإيرادات</td><td>${data.revenue.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
-        <tr><td class="indent">Sales Revenue / إيرادات المبيعات</td><td>${data.revenue.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
-        <tr class="section-header"><td>Cost of Goods Sold / تكلفة البضاعة المباعة</td><td class="negative">(${data.cogs.toLocaleString('en-SA', {minimumFractionDigits: 2})})</td></tr>
-        <tr class="subtotal-row"><td><strong>Gross Profit / إجمالي الربح</strong></td><td class="${data.grossProfit >= 0 ? 'positive' : 'negative'}"><strong>${data.grossProfit.toLocaleString('en-SA', {minimumFractionDigits: 2})}</strong></td></tr>
-        <tr><td class="indent" style="font-size:11px">Gross Margin / هامش الربح الإجمالي: ${data.revenue > 0 ? ((data.grossProfit / data.revenue) * 100).toFixed(1) : '0.0'}%</td><td></td></tr>
-        <tr class="section-header"><td>Operating Expenses / المصروفات التشغيلية</td><td class="negative">(${data.operatingExpenses.toLocaleString('en-SA', {minimumFractionDigits: 2})})</td></tr>
-        ${data.expensesByCategory.map(e => `<tr><td class="indent">${escapeHtml(e.category)}</td><td>${e.amount.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>`).join('')}
-        <tr class="section-header"><td>Operating Income / الدخل التشغيلي</td><td class="${data.operatingIncome >= 0 ? 'positive' : 'negative'}">${data.operatingIncome.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
-        <tr class="total-row"><td>Net Income / صافي الدخل</td><td>${data.netIncome.toLocaleString('en-SA', {minimumFractionDigits: 2})} SAR</td></tr>
-        <tr><td class="indent" style="font-size:11px">Net Margin / هامش صافي الربح: ${data.revenue > 0 ? ((data.netIncome / data.revenue) * 100).toFixed(1) : '0.0'}%</td><td></td></tr>
+        <tr class="section-header"><td>Revenue / <span class="ar">الإيرادات</span></td><td>${data.revenue.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+        <tr><td class="indent">Sales Revenue / <span class="ar">إيرادات المبيعات</span></td><td>${data.revenue.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+        <tr class="section-header"><td>Cost of Goods Sold / <span class="ar">تكلفة البضاعة المباعة</span></td><td class="negative">(${data.cogs.toLocaleString('en-SA', {minimumFractionDigits: 2})})</td></tr>
+        <tr class="subtotal-row"><td><strong>Gross Profit / <span class="ar">إجمالي الربح</span></strong></td><td class="${data.grossProfit >= 0 ? 'positive' : 'negative'}"><strong>${data.grossProfit.toLocaleString('en-SA', {minimumFractionDigits: 2})}</strong></td></tr>
+        <tr><td class="indent" style="font-size:11px">Gross Margin / <span class="ar">هامش الربح الإجمالي</span>: ${data.revenue > 0 ? ((data.grossProfit / data.revenue) * 100).toFixed(1) : '0.0'}%</td><td></td></tr>
+        <tr class="section-header"><td>Operating Expenses / <span class="ar">المصروفات التشغيلية</span></td><td class="negative">(${data.operatingExpenses.toLocaleString('en-SA', {minimumFractionDigits: 2})})</td></tr>
+        ${data.expensesByCategory.map(e => `<tr><td class="indent">${bidiText(e.category)}</td><td>${e.amount.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>`).join('')}
+        <tr class="section-header"><td>Operating Income / <span class="ar">الدخل التشغيلي</span></td><td class="${data.operatingIncome >= 0 ? 'positive' : 'negative'}">${data.operatingIncome.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+        <tr class="total-row"><td>Net Income / <span class="ar">صافي الدخل</span></td><td>${data.netIncome.toLocaleString('en-SA', {minimumFractionDigits: 2})} SAR</td></tr>
+        <tr><td class="indent" style="font-size:11px">Net Margin / <span class="ar">هامش صافي الربح</span>: ${data.revenue > 0 ? ((data.netIncome / data.revenue) * 100).toFixed(1) : '0.0'}%</td><td></td></tr>
       </tbody>
     </table>
-    <div class="footer"><div>BlindSpot System (BSS) - Income Statement</div><div>VAT Compliant - Saudi Arabia / متوافق مع ضريبة القيمة المضافة</div></div>
+    <div class="footer"><div>BlindSpot System (BSS) - Income Statement</div><div>VAT Compliant - Saudi Arabia / <span class="ar">متوافق مع ضريبة القيمة المضافة</span></div></div>
   </body></html>`;
   const browser = await getBrowser();
   const page = await browser.newPage();
@@ -4164,58 +4183,44 @@ export async function generateBalanceSheetPDF(data: {
 }): Promise<Buffer> {
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     ${getBasePdfStyles()}
-    body { font-size: ${PDF_STYLES.fontSize.sm}; padding: 4mm; }
-    .header { text-align: center; margin-bottom: 8px; border-bottom: 2px solid ${PDF_STYLES.colors.primary}; padding-bottom: 6px; }
-    .company-name { font-size: ${PDF_STYLES.fontSize.xl}; font-weight: 700; color: ${PDF_STYLES.colors.primary}; margin-bottom: 3px; }
-    .document-title { font-size: ${PDF_STYLES.fontSize.lg}; font-weight: 600; color: ${PDF_STYLES.colors.textSecondary}; }
-    .year { font-size: ${PDF_STYLES.fontSize.md}; color: ${PDF_STYLES.colors.textMuted}; }
-    .section-header { background: #f3f4f6; font-weight: 700; font-size: ${PDF_STYLES.fontSize.md}; }
-    .subsection { background: #f9fafb; font-weight: 600; }
-    .indent { padding-left: 24px; color: #6b7280; }
+    ${getStatementArabicStyles()}
     .total-row-blue { background: #2563eb; color: white; font-weight: 700; }
     .total-row-orange { background: #ea580c; color: white; font-weight: 700; }
     .total-row-green { background: #16a34a; color: white; font-weight: 700; }
-    .positive { color: #16a34a; }
-    .negative { color: #dc2626; }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; margin-bottom: 16px; }
-    th, td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; }
-    th { text-align: left; background: #f9fafb; font-weight: 600; }
-    td:last-child, th:last-child { text-align: right; }
-    .footer { margin-top: 16px; text-align: center; font-size: ${PDF_STYLES.fontSize.xs}; color: ${PDF_STYLES.colors.textMuted}; border-top: 1px solid #e5e7eb; padding-top: 8px; }
   </style></head><body>
     <div class="header">
-      <div class="company-name">${escapeHtml(data.companyName)}</div>
-      <div class="document-title">Balance Sheet / الميزانية العمومية</div>
-      <div class="year">As of December 31, ${escapeHtml(data.year)} / كما في 31 ديسمبر ${escapeHtml(data.year)}</div>
+      <div class="company-name">${bidiText(data.companyName)}</div>
+      <div class="document-title">Balance Sheet / <span class="ar">الميزانية العمومية</span></div>
+      <div class="year">As of December 31, ${escapeHtml(data.year)} / <span class="ar">كما في 31 ديسمبر ${escapeHtml(data.year)}</span></div>
       ${data.companyVAT ? `<div class="year">VAT: ${escapeHtml(data.companyVAT)}</div>` : ''}
     </div>
     <table>
-      <thead><tr><th>Account / الحساب</th><th>Amount (SAR) / المبلغ</th></tr></thead>
+      <thead><tr><th>Account / <span class="ar">الحساب</span></th><th>Amount (SAR) / <span class="ar">المبلغ</span></th></tr></thead>
       <tbody>
-        <tr class="section-header"><td>Assets / الأصول</td><td></td></tr>
-        <tr class="subsection"><td style="padding-left:12px">Current Assets / الأصول المتداولة</td><td></td></tr>
-        <tr><td class="indent">Cash & Revenue / النقدية والإيرادات</td><td>${data.cashAndRevenue.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
-        <tr><td class="indent">Inventory / المخزون</td><td>${data.inventoryValue.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
-        <tr class="total-row-blue"><td>Total Assets / إجمالي الأصول</td><td>${data.totalAssets.toLocaleString('en-SA', {minimumFractionDigits: 2})} SAR</td></tr>
+        <tr class="section-header"><td>Assets / <span class="ar">الأصول</span></td><td></td></tr>
+        <tr class="subsection"><td style="padding-left:12px">Current Assets / <span class="ar">الأصول المتداولة</span></td><td></td></tr>
+        <tr><td class="indent">Cash & Revenue / <span class="ar">النقدية والإيرادات</span></td><td>${data.cashAndRevenue.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+        <tr><td class="indent">Inventory / <span class="ar">المخزون</span></td><td>${data.inventoryValue.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+        <tr class="total-row-blue"><td>Total Assets / <span class="ar">إجمالي الأصول</span></td><td>${data.totalAssets.toLocaleString('en-SA', {minimumFractionDigits: 2})} SAR</td></tr>
       </tbody>
     </table>
     <table>
       <tbody>
-        <tr class="section-header"><td>Liabilities / الالتزامات</td><td></td></tr>
-        <tr class="subsection"><td style="padding-left:12px">Current Liabilities / الالتزامات المتداولة</td><td></td></tr>
-        <tr><td class="indent">VAT Payable (15%) / ضريبة القيمة المضافة المستحقة</td><td>${data.vatPayable.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
-        <tr><td class="indent">Accounts Payable / الذمم الدائنة</td><td>${data.accountsPayable.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
-        <tr class="total-row-orange"><td>Total Liabilities / إجمالي الالتزامات</td><td>${data.totalLiabilities.toLocaleString('en-SA', {minimumFractionDigits: 2})} SAR</td></tr>
+        <tr class="section-header"><td>Liabilities / <span class="ar">الالتزامات</span></td><td></td></tr>
+        <tr class="subsection"><td style="padding-left:12px">Current Liabilities / <span class="ar">الالتزامات المتداولة</span></td><td></td></tr>
+        <tr><td class="indent">VAT Payable (15%) / <span class="ar">ضريبة القيمة المضافة المستحقة</span></td><td>${data.vatPayable.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+        <tr><td class="indent">Accounts Payable / <span class="ar">الذمم الدائنة</span></td><td>${data.accountsPayable.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+        <tr class="total-row-orange"><td>Total Liabilities / <span class="ar">إجمالي الالتزامات</span></td><td>${data.totalLiabilities.toLocaleString('en-SA', {minimumFractionDigits: 2})} SAR</td></tr>
       </tbody>
     </table>
     <table>
       <tbody>
-        <tr class="section-header"><td>Owner's Equity / حقوق الملكية</td><td></td></tr>
-        <tr><td class="indent">Retained Earnings / الأرباح المحتجزة</td><td class="${data.ownersEquity >= 0 ? 'positive' : 'negative'}">${data.ownersEquity.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
-        <tr class="total-row-green"><td>Total Equity / إجمالي حقوق الملكية</td><td>${data.ownersEquity.toLocaleString('en-SA', {minimumFractionDigits: 2})} SAR</td></tr>
+        <tr class="section-header"><td>Owner's Equity / <span class="ar">حقوق الملكية</span></td><td></td></tr>
+        <tr><td class="indent">Retained Earnings / <span class="ar">الأرباح المحتجزة</span></td><td class="${data.ownersEquity >= 0 ? 'positive' : 'negative'}">${data.ownersEquity.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+        <tr class="total-row-green"><td>Total Equity / <span class="ar">إجمالي حقوق الملكية</span></td><td>${data.ownersEquity.toLocaleString('en-SA', {minimumFractionDigits: 2})} SAR</td></tr>
       </tbody>
     </table>
-    <div class="footer"><div>BlindSpot System (BSS) - Balance Sheet</div><div>VAT Compliant - Saudi Arabia / متوافق مع ضريبة القيمة المضافة</div></div>
+    <div class="footer"><div>BlindSpot System (BSS) - Balance Sheet</div><div>VAT Compliant - Saudi Arabia / <span class="ar">متوافق مع ضريبة القيمة المضافة</span></div></div>
   </body></html>`;
   const browser = await getBrowser();
   const page = await browser.newPage();
@@ -4234,45 +4239,32 @@ export async function generateCashFlowPDF(data: {
 }): Promise<Buffer> {
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     ${getBasePdfStyles()}
-    body { font-size: ${PDF_STYLES.fontSize.sm}; padding: 4mm; }
-    .header { text-align: center; margin-bottom: 8px; border-bottom: 2px solid ${PDF_STYLES.colors.primary}; padding-bottom: 6px; }
-    .company-name { font-size: ${PDF_STYLES.fontSize.xl}; font-weight: 700; color: ${PDF_STYLES.colors.primary}; margin-bottom: 3px; }
-    .document-title { font-size: ${PDF_STYLES.fontSize.lg}; font-weight: 600; color: ${PDF_STYLES.colors.textSecondary}; }
-    .year { font-size: ${PDF_STYLES.fontSize.md}; color: ${PDF_STYLES.colors.textMuted}; }
-    .section-header { background: #f3f4f6; font-weight: 700; font-size: ${PDF_STYLES.fontSize.md}; }
-    .indent { padding-left: 24px; color: #6b7280; }
+    ${getStatementArabicStyles()}
     .subtotal-row-blue { background: #eff6ff; font-weight: 600; }
     .subtotal-row-purple { background: #faf5ff; font-weight: 600; }
     .total-row { background: ${PDF_STYLES.colors.primary}; color: white; font-weight: 700; font-size: ${PDF_STYLES.fontSize.md}; }
-    .positive { color: #16a34a; }
-    .negative { color: #dc2626; }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    th, td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; }
-    th { text-align: left; background: #f9fafb; font-weight: 600; }
-    td:last-child, th:last-child { text-align: right; }
-    .footer { margin-top: 16px; text-align: center; font-size: ${PDF_STYLES.fontSize.xs}; color: ${PDF_STYLES.colors.textMuted}; border-top: 1px solid #e5e7eb; padding-top: 8px; }
   </style></head><body>
     <div class="header">
-      <div class="company-name">${escapeHtml(data.companyName)}</div>
-      <div class="document-title">Cash Flow Statement / قائمة التدفقات النقدية</div>
-      <div class="year">For the Year Ending December 31, ${escapeHtml(data.year)} / للسنة المنتهية في 31 ديسمبر ${escapeHtml(data.year)}</div>
+      <div class="company-name">${bidiText(data.companyName)}</div>
+      <div class="document-title">Cash Flow Statement / <span class="ar">قائمة التدفقات النقدية</span></div>
+      <div class="year">For the Year Ending December 31, ${escapeHtml(data.year)} / <span class="ar">للسنة المنتهية في 31 ديسمبر ${escapeHtml(data.year)}</span></div>
       ${data.companyVAT ? `<div class="year">VAT: ${escapeHtml(data.companyVAT)}</div>` : ''}
     </div>
     <table>
-      <thead><tr><th>Description / الوصف</th><th>Amount (SAR) / المبلغ</th></tr></thead>
+      <thead><tr><th>Description / <span class="ar">الوصف</span></th><th>Amount (SAR) / <span class="ar">المبلغ</span></th></tr></thead>
       <tbody>
-        <tr class="section-header"><td>Operating Activities / الأنشطة التشغيلية</td><td></td></tr>
-        <tr><td class="indent">Net Income / صافي الدخل</td><td class="${data.netIncome >= 0 ? 'positive' : 'negative'}">${data.netIncome.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
-        <tr><td class="indent">Inventory Adjustments / تعديلات المخزون</td><td class="positive">+${data.inventoryAdjustments.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
-        <tr><td class="indent">Change in Accounts Payable / التغير في الذمم الدائنة</td><td class="negative">-${data.accountsPayableChange.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
-        <tr class="subtotal-row-blue"><td style="padding-left:12px"><strong>Net Cash from Operations / صافي النقد من العمليات</strong></td><td class="${data.cashFromOperations >= 0 ? 'positive' : 'negative'}"><strong>${data.cashFromOperations.toLocaleString('en-SA', {minimumFractionDigits: 2})}</strong></td></tr>
-        <tr class="section-header"><td>Investing Activities / الأنشطة الاستثمارية</td><td></td></tr>
-        <tr><td class="indent">Inventory Purchases / مشتريات المخزون</td><td class="negative">${data.inventoryPurchases.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
-        <tr class="subtotal-row-purple"><td style="padding-left:12px"><strong>Net Cash from Investing / صافي النقد من الاستثمار</strong></td><td class="${data.cashFromInvesting >= 0 ? 'positive' : 'negative'}"><strong>${data.cashFromInvesting.toLocaleString('en-SA', {minimumFractionDigits: 2})}</strong></td></tr>
-        <tr class="total-row"><td>Net Cash Flow / صافي التدفق النقدي</td><td>${data.netCashFlow.toLocaleString('en-SA', {minimumFractionDigits: 2})} SAR</td></tr>
+        <tr class="section-header"><td>Operating Activities / <span class="ar">الأنشطة التشغيلية</span></td><td></td></tr>
+        <tr><td class="indent">Net Income / <span class="ar">صافي الدخل</span></td><td class="${data.netIncome >= 0 ? 'positive' : 'negative'}">${data.netIncome.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+        <tr><td class="indent">Inventory Adjustments / <span class="ar">تعديلات المخزون</span></td><td class="positive">+${data.inventoryAdjustments.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+        <tr><td class="indent">Change in Accounts Payable / <span class="ar">التغير في الذمم الدائنة</span></td><td class="negative">-${data.accountsPayableChange.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+        <tr class="subtotal-row-blue"><td style="padding-left:12px"><strong>Net Cash from Operations / <span class="ar">صافي النقد من العمليات</span></strong></td><td class="${data.cashFromOperations >= 0 ? 'positive' : 'negative'}"><strong>${data.cashFromOperations.toLocaleString('en-SA', {minimumFractionDigits: 2})}</strong></td></tr>
+        <tr class="section-header"><td>Investing Activities / <span class="ar">الأنشطة الاستثمارية</span></td><td></td></tr>
+        <tr><td class="indent">Inventory Purchases / <span class="ar">مشتريات المخزون</span></td><td class="negative">${data.inventoryPurchases.toLocaleString('en-SA', {minimumFractionDigits: 2})}</td></tr>
+        <tr class="subtotal-row-purple"><td style="padding-left:12px"><strong>Net Cash from Investing / <span class="ar">صافي النقد من الاستثمار</span></strong></td><td class="${data.cashFromInvesting >= 0 ? 'positive' : 'negative'}"><strong>${data.cashFromInvesting.toLocaleString('en-SA', {minimumFractionDigits: 2})}</strong></td></tr>
+        <tr class="total-row"><td>Net Cash Flow / <span class="ar">صافي التدفق النقدي</span></td><td>${data.netCashFlow.toLocaleString('en-SA', {minimumFractionDigits: 2})} SAR</td></tr>
       </tbody>
     </table>
-    <div class="footer"><div>BlindSpot System (BSS) - Cash Flow Statement</div><div>VAT Compliant - Saudi Arabia / متوافق مع ضريبة القيمة المضافة</div></div>
+    <div class="footer"><div>BlindSpot System (BSS) - Cash Flow Statement</div><div>VAT Compliant - Saudi Arabia / <span class="ar">متوافق مع ضريبة القيمة المضافة</span></div></div>
   </body></html>`;
   const browser = await getBrowser();
   const page = await browser.newPage();
