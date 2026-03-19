@@ -14636,6 +14636,24 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Run ZATCA compliance checks - IT only
+  app.post("/api/zatca/compliance-checks", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { restaurantId: targetRestaurantId } = req.body;
+      if (!targetRestaurantId) {
+        return res.status(400).json({ error: "Restaurant ID required in request body" });
+      }
+      
+      const { runComplianceChecks } = await import("./zatca/service");
+      const result = await runComplianceChecks(targetRestaurantId);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error running compliance checks:", error);
+      res.status(500).json({ error: "Failed to run compliance checks" });
+    }
+  });
+
   // Retry pending invoices - IT only
   app.post("/api/zatca/retry-pending", requireAuth, requireITAccount, async (req, res) => {
     try {

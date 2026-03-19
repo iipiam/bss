@@ -2306,7 +2306,6 @@ export interface Translations {
   failedToExportPdf: string;
   forThePeriodEnding: string;
   asOf: string;
-  december: string;
   salesRevenue: string;
   costOfGoodsSold: string;
   grossProfit: string;
@@ -4660,7 +4659,6 @@ export const translations: Record<Language, Translations> = {
       failedToExportPdf: 'Failed to export PDF',
       forThePeriodEnding: 'For the period ending',
       asOf: 'As of',
-      december: 'December',
       salesRevenue: 'Sales Revenue',
       costOfGoodsSold: 'Cost of Goods Sold (COGS)',
       grossProfit: 'Gross Profit',
@@ -7009,7 +7007,6 @@ export const translations: Record<Language, Translations> = {
       failedToExportPdf: 'فشل تصدير PDF',
       forThePeriodEnding: 'للفترة المنتهية في',
       asOf: 'كما في',
-      december: 'ديسمبر',
       salesRevenue: 'إيرادات المبيعات',
       costOfGoodsSold: 'تكلفة البضاعة المباعة',
       grossProfit: 'إجمالي الربح',
@@ -9340,7 +9337,6 @@ export const translations: Record<Language, Translations> = {
       failedToExportPdf: 'PDF-Export fehlgeschlagen',
       forThePeriodEnding: 'Für den Zeitraum bis',
       asOf: 'Stand',
-      december: 'Dezember',
       salesRevenue: 'Umsatzerlöse',
       costOfGoodsSold: 'Herstellungskosten',
       grossProfit: 'Bruttogewinn',
@@ -11671,7 +11667,6 @@ export const translations: Record<Language, Translations> = {
       failedToExportPdf: 'PDF 导出失败',
       forThePeriodEnding: '截至期间',
       asOf: '截至',
-      december: '十二月',
       salesRevenue: '销售收入',
       costOfGoodsSold: '销售成本',
       grossProfit: '毛利润',
@@ -14002,7 +13997,6 @@ export const translations: Record<Language, Translations> = {
       failedToExportPdf: 'PDF রপ্তানি ব্যর্থ',
       forThePeriodEnding: 'সময়কাল শেষ হচ্ছে',
       asOf: 'তারিখ অনুযায়ী',
-      december: 'ডিসেম্বর',
       salesRevenue: 'বিক্রয় আয়',
       costOfGoodsSold: 'বিক্রিত পণ্যের খরচ',
       grossProfit: 'মোট মুনাফা',
@@ -16333,7 +16327,6 @@ export const translations: Record<Language, Translations> = {
       failedToExportPdf: 'Esportazione PDF fallita',
       forThePeriodEnding: 'Per il periodo terminante il',
       asOf: 'Al',
-      december: 'Dicembre',
       salesRevenue: 'Ricavi di vendita',
       costOfGoodsSold: 'Costo del venduto',
       grossProfit: 'Utile lordo',
@@ -18608,7 +18601,6 @@ export const translations: Record<Language, Translations> = {
       failedToExportPdf: 'PDF निर्यात विफल',
       forThePeriodEnding: 'अवधि समाप्त',
       asOf: 'तिथि अनुसार',
-      december: 'दिसंबर',
       salesRevenue: 'बिक्री राजस्व',
       costOfGoodsSold: 'बेची गई वस्तुओं की लागत',
       grossProfit: 'सकल लाभ',
@@ -20883,7 +20875,6 @@ export const translations: Record<Language, Translations> = {
       failedToExportPdf: 'PDF برآمد ناکام',
       forThePeriodEnding: 'مدت کے اختتام تک',
       asOf: 'بتاریخ',
-      december: 'دسمبر',
       salesRevenue: 'فروخت کی آمدنی',
       costOfGoodsSold: 'فروخت شدہ مال کی لاگت',
       grossProfit: 'مجموعی منافع',
@@ -23091,7 +23082,6 @@ export const translations: Record<Language, Translations> = {
       failedToExportPdf: 'Error al exportar PDF',
       forThePeriodEnding: 'Para el período que termina',
       asOf: 'A fecha de',
-      december: 'Diciembre',
       salesRevenue: 'Ingresos por ventas',
       costOfGoodsSold: 'Costo de ventas',
       grossProfit: 'Ganancia bruta',
@@ -25299,7 +25289,6 @@ export const translations: Record<Language, Translations> = {
       failedToExportPdf: 'Nabigong i-export PDF',
       forThePeriodEnding: 'Para sa panahong nagtatapos',
       asOf: 'Simula sa',
-      december: 'Disyembre',
       salesRevenue: 'Kita sa Benta',
       costOfGoodsSold: 'Halaga ng Naibentang Kalakal',
       grossProfit: 'Kabuuang Kita',

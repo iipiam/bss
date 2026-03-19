@@ -269,6 +269,37 @@ export default function ZatcaSettingsPage() {
     },
   });
 
+  const complianceChecksMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/zatca/compliance-checks", { restaurantId: selectedRestaurantId });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings", selectedRestaurantId] });
+      if (data.success) {
+        toast({
+          title: t.success || "Success",
+          description: (t as any).complianceChecksPassed || "All compliance checks passed successfully.",
+        });
+      } else {
+        const failedChecks = data.results?.filter((r: any) => !r.passed) || [];
+        toast({
+          title: t.error || "Error",
+          description: failedChecks.length > 0 
+            ? `${(t as any).complianceChecksFailed || "Compliance checks failed"}: ${failedChecks.map((r: any) => r.invoiceType).join(", ")}`
+            : (t as any).complianceChecksFailed || "Compliance checks failed",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const productionCsidMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest("POST", "/api/zatca/production-csid", { complianceRequestId, restaurantId: selectedRestaurantId });
@@ -820,6 +851,38 @@ export default function ZatcaSettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold">3</span>
+                  {(t as any).runComplianceChecks || "Run Compliance Checks"}
+                </CardTitle>
+                <CardDescription>{(t as any).runComplianceChecksDescription || "Submit test invoices to ZATCA to verify your integration before requesting production credentials"}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>{(t as any).complianceChecksInfo || "Compliance Verification"}</AlertTitle>
+                  <AlertDescription>{(t as any).complianceChecksInfoDescription || "This will submit test invoices (Standard B2B and Simplified B2C) to ZATCA using your Compliance CSID to verify your integration is working correctly."}</AlertDescription>
+                </Alert>
+                <Button
+                  onClick={() => complianceChecksMutation.mutate()}
+                  disabled={complianceChecksMutation.isPending || !settings?.complianceCsid}
+                  data-testid="button-run-compliance-checks"
+                >
+                  {complianceChecksMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {(t as any).runComplianceChecks || "Run Compliance Checks"}
+                </Button>
+                {settings?.onboardingStatus === "compliance_received" && (
+                  <Alert className="bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <AlertTitle className="text-green-800 dark:text-green-300">{(t as any).complianceChecksPassed || "Compliance Checks Passed"}</AlertTitle>
+                    <AlertDescription className="text-green-700 dark:text-green-400">{(t as any).readyForProduction || "Your integration is verified. You can now request a Production CSID."}</AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold">4</span>
                   {t.requestProductionCsid || "Request Production CSID"}
                 </CardTitle>
                 <CardDescription>{t.requestProductionCsidDescription || "Complete compliance checks and receive your production certificate"}</CardDescription>
