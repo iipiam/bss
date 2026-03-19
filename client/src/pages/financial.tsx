@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, TrendingUp, TrendingDown, DollarSign, FileText, Receipt, FileDown, Wallet, Target, Radio, Truck, Package, ChevronDown, ChevronUp, HelpCircle, Calculator } from "lucide-react";
+import { Download, TrendingUp, TrendingDown, DollarSign, FileText, Receipt, FileDown, Wallet, Target, Radio, Truck, Package, ChevronDown, ChevronUp, HelpCircle, Calculator, BarChart3, Scale, ArrowDownUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend } from "recharts";
@@ -432,6 +432,61 @@ export default function Financial() {
     }
   };
 
+  const handleExportStatementPDF = async (type: 'income-statement' | 'balance-sheet' | 'cash-flow') => {
+    const titles: Record<string, string> = {
+      'income-statement': (t as any).incomeStatement || 'Income Statement',
+      'balance-sheet': (t as any).balanceSheet || 'Balance Sheet',
+      'cash-flow': (t as any).cashFlowStatement || 'Cash Flow Statement',
+    };
+    try {
+      const response = await fetch(`/api/export/${type}-pdf?year=${selectedYear}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Export failed');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${type}-${selectedYear}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: t.pdfExportSuccessful,
+        description: `${titles[type]} ${(t as any).exportedToPdf || "exported to PDF"}`,
+      });
+    } catch (error) {
+      toast({
+        title: t.exportFailed,
+        description: error instanceof Error ? error.message : ((t as any).failedToExportPdf || "Failed to export PDF"),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const cogs = bepMetrics?.cogsTotal || 0;
+  const grossProfit = totalRevenue - cogs;
+  const operatingExpenses = billsForYear.filter(b => b.billType !== 'foundational').reduce((s, b) => s + parseFloat(b.amount || "0"), 0);
+  const operatingIncome = grossProfit - operatingExpenses;
+  const vatPayable = totalRevenue * 0.15;
+  const netIncome = operatingIncome;
+
+  const expensesByCategory = billsForYear.reduce((acc, bill) => {
+    const cat = bill.billType || 'other';
+    acc[cat] = (acc[cat] || 0) + parseFloat(bill.amount || "0");
+    return acc;
+  }, {} as Record<string, number>);
+
+  const totalAssets = totalRevenue + totalInventoryValue;
+  const totalLiabilities = vatPayable + pendingBillsAmount;
+  const ownersEquity = totalAssets - totalLiabilities;
+
+  const cashFromOperations = netIncome + totalInventoryValue - pendingBillsAmount;
+  const cashFromInvesting = -(inventoryItems.reduce((s, i) => s + parseFloat(i.price || "0"), 0));
+  const netCashFlow = cashFromOperations + cashFromInvesting;
+
   return (
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
@@ -509,8 +564,11 @@ export default function Financial() {
       </div>
 
       <Tabs defaultValue="statements" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="statements" data-testid="tab-statements">{t.financialStatements}</TabsTrigger>
+          <TabsTrigger value="income-statement" data-testid="tab-income-statement">{(t as any).incomeStatement || "Income Statement"}</TabsTrigger>
+          <TabsTrigger value="balance-sheet" data-testid="tab-balance-sheet">{(t as any).balanceSheet || "Balance Sheet"}</TabsTrigger>
+          <TabsTrigger value="cash-flow" data-testid="tab-cash-flow">{(t as any).cashFlowStatement || "Cash Flow"}</TabsTrigger>
           <TabsTrigger value="expenses" data-testid="tab-expenses">{t.expenses}</TabsTrigger>
           <TabsTrigger value="invoices" data-testid="tab-invoices">{t.zatcaInvoices}</TabsTrigger>
         </TabsList>
@@ -1223,6 +1281,394 @@ export default function Financial() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Income Statement (Profit & Loss) */}
+        <TabsContent value="income-statement" className="space-y-4">
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => handleExportStatementPDF('income-statement')} data-testid="button-export-income-pdf">
+              <FileDown className="h-4 w-4 mr-2" />
+              {(t as any).exportPdf || "Export PDF"}
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                  <BarChart3 className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <CardTitle>{(t as any).incomeStatement || "Income Statement"} ({(t as any).profitAndLoss || "Profit & Loss"})</CardTitle>
+                  <CardDescription>{(t as any).forThePeriodEnding || "For the period ending"} {(t as any).december || "December"} 31, {selectedYear}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[60%]">{(t as any).description || "Description"}</TableHead>
+                    <TableHead className="text-right">{t.amount} (SAR)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow className="bg-muted/30">
+                    <TableCell className="font-bold text-base">{t.totalRevenue}</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-base">{totalRevenue.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="pl-8 text-muted-foreground">{(t as any).salesRevenue || "Sales Revenue"}</TableCell>
+                    <TableCell className="text-right font-mono">{totalRevenue.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  </TableRow>
+
+                  <TableRow className="bg-muted/30">
+                    <TableCell className="font-bold text-base">{(t as any).costOfGoodsSold || "Cost of Goods Sold (COGS)"}</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-base text-destructive">({cogs.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</TableCell>
+                  </TableRow>
+
+                  <TableRow className="bg-green-500/5">
+                    <TableCell className="font-bold text-lg">{(t as any).grossProfit || "Gross Profit"}</TableCell>
+                    <TableCell className={`text-right font-bold font-mono text-lg ${grossProfit >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                      {grossProfit.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="pl-8 text-muted-foreground text-sm">{(t as any).grossMargin || "Gross Margin"}</TableCell>
+                    <TableCell className="text-right font-mono text-sm text-muted-foreground">{totalRevenue > 0 ? ((grossProfit / totalRevenue) * 100).toFixed(1) : '0.0'}%</TableCell>
+                  </TableRow>
+
+                  <TableRow className="bg-muted/30">
+                    <TableCell className="font-bold text-base">{(t as any).operatingExpensesLabel || "Operating Expenses"}</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-base text-destructive">({operatingExpenses.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</TableCell>
+                  </TableRow>
+                  {Object.entries(expensesByCategory).sort((a, b) => b[1] - a[1]).map(([cat, amount]) => (
+                    <TableRow key={cat}>
+                      <TableCell className="pl-8 text-muted-foreground capitalize">{cat}</TableCell>
+                      <TableCell className="text-right font-mono">{amount.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                    </TableRow>
+                  ))}
+
+                  <TableRow className="bg-muted/30">
+                    <TableCell className="font-bold text-base">{(t as any).operatingIncome || "Operating Income"}</TableCell>
+                    <TableCell className={`text-right font-bold font-mono text-base ${operatingIncome >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                      {operatingIncome.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TableCell className="font-bold text-lg">{(t as any).netIncome || "Net Income"}</TableCell>
+                    <TableCell className={`text-right font-bold font-mono text-lg ${netIncome >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-net-income">
+                      {netIncome.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            <Card className={grossProfit >= 0 ? "bg-gradient-to-r from-green-500/5 to-green-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{(t as any).grossProfit || "Gross Profit"}</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold font-mono ${grossProfit >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-gross-profit">
+                  {grossProfit.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                </div>
+                <p className="text-xs text-muted-foreground">{(t as any).grossMargin || "Gross Margin"}: {totalRevenue > 0 ? ((grossProfit / totalRevenue) * 100).toFixed(1) : '0.0'}%</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{(t as any).operatingExpensesLabel || "Operating Expenses"}</CardTitle>
+                <Wallet className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold font-mono text-destructive" data-testid="text-operating-expenses">
+                  {operatingExpenses.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                </div>
+                <p className="text-xs text-muted-foreground">{Object.keys(expensesByCategory).length} {(t as any).categories || "categories"}</p>
+              </CardContent>
+            </Card>
+
+            <Card className={netIncome >= 0 ? "bg-gradient-to-r from-blue-500/5 to-blue-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{(t as any).netIncome || "Net Income"}</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold font-mono ${netIncome >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-net-income-card">
+                  {netIncome.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                </div>
+                <p className="text-xs text-muted-foreground">{(t as any).netMargin || "Net Margin"}: {totalRevenue > 0 ? ((netIncome / totalRevenue) * 100).toFixed(1) : '0.0'}%</p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Balance Sheet */}
+        <TabsContent value="balance-sheet" className="space-y-4">
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => handleExportStatementPDF('balance-sheet')} data-testid="button-export-balance-pdf">
+              <FileDown className="h-4 w-4 mr-2" />
+              {(t as any).exportPdf || "Export PDF"}
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                  <Scale className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <CardTitle>{(t as any).balanceSheet || "Balance Sheet"}</CardTitle>
+                  <CardDescription>{(t as any).asOf || "As of"} {(t as any).december || "December"} 31, {selectedYear}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[60%]">{(t as any).account || "Account"}</TableHead>
+                    <TableHead className="text-right">{t.amount} (SAR)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow className="bg-muted/30">
+                    <TableCell className="font-bold text-base">{(t as any).assets || "Assets"}</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-base"></TableCell>
+                  </TableRow>
+                  <TableRow className="bg-muted/20">
+                    <TableCell className="pl-4 font-semibold">{(t as any).currentAssets || "Current Assets"}</TableCell>
+                    <TableCell className="text-right"></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="pl-8 text-muted-foreground">{(t as any).cashAndRevenue || "Cash & Revenue"}</TableCell>
+                    <TableCell className="text-right font-mono">{totalRevenue.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="pl-8 text-muted-foreground">{(t as any).inventoryValue || "Inventory"}</TableCell>
+                    <TableCell className="text-right font-mono">{totalInventoryValue.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  </TableRow>
+                </TableBody>
+                <TableFooter>
+                  <TableRow className="bg-blue-500/10">
+                    <TableCell className="font-bold text-base">{(t as any).totalAssets || "Total Assets"}</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-base" data-testid="text-total-assets">
+                      {totalAssets.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+
+              <div className="mt-6" />
+
+              <Table>
+                <TableBody>
+                  <TableRow className="bg-muted/30">
+                    <TableCell className="font-bold text-base w-[60%]">{(t as any).liabilities || "Liabilities"}</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-base"></TableCell>
+                  </TableRow>
+                  <TableRow className="bg-muted/20">
+                    <TableCell className="pl-4 font-semibold">{(t as any).currentLiabilities || "Current Liabilities"}</TableCell>
+                    <TableCell className="text-right"></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="pl-8 text-muted-foreground">{(t as any).vatPayable || "VAT Payable (15%)"}</TableCell>
+                    <TableCell className="text-right font-mono">{vatPayable.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="pl-8 text-muted-foreground">{(t as any).accountsPayable || "Accounts Payable (Pending Bills)"}</TableCell>
+                    <TableCell className="text-right font-mono">{pendingBillsAmount.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  </TableRow>
+                </TableBody>
+                <TableFooter>
+                  <TableRow className="bg-orange-500/10">
+                    <TableCell className="font-bold text-base">{(t as any).totalLiabilities || "Total Liabilities"}</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-base" data-testid="text-total-liabilities">
+                      {totalLiabilities.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+
+              <div className="mt-6" />
+
+              <Table>
+                <TableBody>
+                  <TableRow className="bg-muted/30">
+                    <TableCell className="font-bold text-base w-[60%]">{(t as any).ownersEquity || "Owner's Equity"}</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-base"></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="pl-8 text-muted-foreground">{(t as any).retainedEarnings || "Retained Earnings"}</TableCell>
+                    <TableCell className={`text-right font-mono ${ownersEquity >= 0 ? '' : 'text-destructive'}`}>{ownersEquity.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  </TableRow>
+                </TableBody>
+                <TableFooter>
+                  <TableRow className="bg-green-500/10">
+                    <TableCell className="font-bold text-base">{(t as any).totalEquity || "Total Equity"}</TableCell>
+                    <TableCell className={`text-right font-bold font-mono text-base ${ownersEquity >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-total-equity">
+                      {ownersEquity.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            <Card className="bg-gradient-to-r from-blue-500/5 to-blue-600/10">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{(t as any).totalAssets || "Total Assets"}</CardTitle>
+                <TrendingUp className="h-4 w-4 text-blue-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold font-mono" data-testid="text-total-assets-card">{totalAssets.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR</div>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-r from-orange-500/5 to-orange-600/10">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{(t as any).totalLiabilities || "Total Liabilities"}</CardTitle>
+                <TrendingDown className="h-4 w-4 text-orange-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold font-mono text-orange-600" data-testid="text-total-liabilities-card">{totalLiabilities.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR</div>
+              </CardContent>
+            </Card>
+            <Card className={ownersEquity >= 0 ? "bg-gradient-to-r from-green-500/5 to-green-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{(t as any).ownersEquity || "Owner's Equity"}</CardTitle>
+                <Scale className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold font-mono ${ownersEquity >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-equity-card">{ownersEquity.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR</div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Cash Flow Statement */}
+        <TabsContent value="cash-flow" className="space-y-4">
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => handleExportStatementPDF('cash-flow')} data-testid="button-export-cashflow-pdf">
+              <FileDown className="h-4 w-4 mr-2" />
+              {(t as any).exportPdf || "Export PDF"}
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+                  <ArrowDownUp className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <CardTitle>{(t as any).cashFlowStatement || "Cash Flow Statement"}</CardTitle>
+                  <CardDescription>{(t as any).forThePeriodEnding || "For the period ending"} {(t as any).december || "December"} 31, {selectedYear}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[60%]">{(t as any).description || "Description"}</TableHead>
+                    <TableHead className="text-right">{t.amount} (SAR)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow className="bg-muted/30">
+                    <TableCell className="font-bold text-base">{(t as any).operatingActivities || "Operating Activities"}</TableCell>
+                    <TableCell className="text-right"></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="pl-8 text-muted-foreground">{(t as any).netIncome || "Net Income"}</TableCell>
+                    <TableCell className={`text-right font-mono ${netIncome >= 0 ? '' : 'text-destructive'}`}>{netIncome.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="pl-8 text-muted-foreground">{(t as any).inventoryAdjustments || "Inventory Adjustments"}</TableCell>
+                    <TableCell className="text-right font-mono">+{totalInventoryValue.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="pl-8 text-muted-foreground">{(t as any).accountsPayableChange || "Change in Accounts Payable"}</TableCell>
+                    <TableCell className="text-right font-mono text-destructive">-{pendingBillsAmount.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  </TableRow>
+                  <TableRow className="bg-blue-500/5">
+                    <TableCell className="font-semibold pl-4">{(t as any).netCashFromOperations || "Net Cash from Operations"}</TableCell>
+                    <TableCell className={`text-right font-bold font-mono ${cashFromOperations >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                      {cashFromOperations.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </TableCell>
+                  </TableRow>
+
+                  <TableRow className="bg-muted/30">
+                    <TableCell className="font-bold text-base">{(t as any).investingActivities || "Investing Activities"}</TableCell>
+                    <TableCell className="text-right"></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="pl-8 text-muted-foreground">{(t as any).inventoryPurchases || "Inventory Purchases"}</TableCell>
+                    <TableCell className="text-right font-mono text-destructive">{cashFromInvesting.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  </TableRow>
+                  <TableRow className="bg-purple-500/5">
+                    <TableCell className="font-semibold pl-4">{(t as any).netCashFromInvesting || "Net Cash from Investing"}</TableCell>
+                    <TableCell className={`text-right font-bold font-mono ${cashFromInvesting >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                      {cashFromInvesting.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TableCell className="font-bold text-lg">{(t as any).netCashFlow || "Net Cash Flow"}</TableCell>
+                    <TableCell className={`text-right font-bold font-mono text-lg ${netCashFlow >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-net-cash-flow">
+                      {netCashFlow.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            <Card className={cashFromOperations >= 0 ? "bg-gradient-to-r from-blue-500/5 to-blue-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{(t as any).operatingActivities || "Operating Activities"}</CardTitle>
+                <TrendingUp className="h-4 w-4 text-blue-500" />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold font-mono ${cashFromOperations >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-cash-operations">
+                  {cashFromOperations.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                </div>
+              </CardContent>
+            </Card>
+            <Card className={cashFromInvesting >= 0 ? "bg-gradient-to-r from-purple-500/5 to-purple-600/10" : "bg-gradient-to-r from-orange-500/5 to-orange-600/10"}>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{(t as any).investingActivities || "Investing Activities"}</CardTitle>
+                <ArrowDownUp className="h-4 w-4 text-purple-500" />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold font-mono ${cashFromInvesting >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-cash-investing">
+                  {cashFromInvesting.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                </div>
+              </CardContent>
+            </Card>
+            <Card className={netCashFlow >= 0 ? "bg-gradient-to-r from-green-500/5 to-green-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{(t as any).netCashFlow || "Net Cash Flow"}</CardTitle>
+                <DollarSign className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold font-mono ${netCashFlow >= 0 ? 'text-green-600' : 'text-destructive'}`} data-testid="text-net-cash-flow-card">
+                  {netCashFlow.toLocaleString("en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="invoices" className="space-y-4">

@@ -7743,6 +7743,165 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Export Income Statement PDF
+  app.get("/api/export/income-statement-pdf", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const year = req.query.year as string || new Date().getFullYear().toString();
+      const settings = await storage.getSettings(restaurantId);
+      const bills = await storage.getShopBills(restaurantId);
+      const bepData = await storage.getBepMetrics(restaurantId, parseInt(year));
+
+      const totalRevenue = bepData.revenue;
+      const cogs = bepData.cogsTotal;
+      const grossProfit = totalRevenue - cogs;
+
+      const yearBills = bills.filter(b => new Date(b.paymentDate).getFullYear() === parseInt(year));
+      const operatingExpenses = yearBills
+        .filter(b => b.billType !== 'foundational')
+        .reduce((sum, b) => sum + parseFloat(b.amount), 0);
+      const operatingIncome = grossProfit - operatingExpenses;
+      const netIncome = operatingIncome;
+
+      const categoryMap = new Map<string, number>();
+      yearBills.filter(b => b.billType !== 'foundational').forEach(b => {
+        const cat = b.billType || 'other';
+        categoryMap.set(cat, (categoryMap.get(cat) || 0) + parseFloat(b.amount));
+      });
+      const expensesByCategory = Array.from(categoryMap.entries())
+        .map(([category, amount]) => ({ category, amount }))
+        .sort((a, b) => b.amount - a.amount);
+
+      const { generateIncomeStatementPDF } = await import('./invoice.js');
+      const pdfBuffer = await generateIncomeStatementPDF({
+        companyName: settings?.restaurantName || "BlindSpot System (BSS)",
+        companyVAT: settings?.vatNumber || "",
+        year,
+        revenue: totalRevenue,
+        cogs,
+        grossProfit,
+        operatingExpenses,
+        operatingIncome,
+        netIncome,
+        expensesByCategory,
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=income-statement-${year}.pdf`);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Income Statement PDF export error:", error);
+      res.status(500).json({ error: "Failed to export income statement" });
+    }
+  });
+
+  // Export Balance Sheet PDF
+  app.get("/api/export/balance-sheet-pdf", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const year = req.query.year as string || new Date().getFullYear().toString();
+      const settings = await storage.getSettings(restaurantId);
+      const bills = await storage.getShopBills(restaurantId);
+      const inventory = await storage.getInventoryItems(restaurantId);
+      const bepData = await storage.getBepMetrics(restaurantId, parseInt(year));
+
+      const totalRevenue = bepData.revenue;
+      const cogs = bepData.cogsTotal;
+      const grossProfit = totalRevenue - cogs;
+
+      const yearBills = bills.filter(b => new Date(b.paymentDate).getFullYear() === parseInt(year));
+      const operatingExpenses = yearBills
+        .filter(b => b.billType !== 'foundational')
+        .reduce((sum, b) => sum + parseFloat(b.amount), 0);
+      const netIncome = grossProfit - operatingExpenses;
+
+      const inventoryValue = inventory.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
+      const totalAssets = totalRevenue + inventoryValue;
+      const vatPayable = totalRevenue * 0.15;
+      const pendingBillsAmount = yearBills
+        .filter(b => b.status !== 'paid')
+        .reduce((sum, b) => sum + parseFloat(b.amount), 0);
+      const totalLiabilities = vatPayable + pendingBillsAmount;
+      const ownersEquity = totalAssets - totalLiabilities;
+
+      const { generateBalanceSheetPDF } = await import('./invoice.js');
+      const pdfBuffer = await generateBalanceSheetPDF({
+        companyName: settings?.restaurantName || "BlindSpot System (BSS)",
+        companyVAT: settings?.vatNumber || "",
+        year,
+        cashAndRevenue: totalRevenue,
+        inventoryValue,
+        totalAssets,
+        vatPayable,
+        accountsPayable: pendingBillsAmount,
+        totalLiabilities,
+        ownersEquity,
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=balance-sheet-${year}.pdf`);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Balance Sheet PDF export error:", error);
+      res.status(500).json({ error: "Failed to export balance sheet" });
+    }
+  });
+
+  // Export Cash Flow Statement PDF
+  app.get("/api/export/cash-flow-pdf", requireAuth, requireRestaurant, requirePermission('reports'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const year = req.query.year as string || new Date().getFullYear().toString();
+      const settings = await storage.getSettings(restaurantId);
+      const bills = await storage.getShopBills(restaurantId);
+      const inventory = await storage.getInventoryItems(restaurantId);
+      const bepData = await storage.getBepMetrics(restaurantId, parseInt(year));
+
+      const totalRevenue = bepData.revenue;
+      const cogs = bepData.cogsTotal;
+      const grossProfit = totalRevenue - cogs;
+
+      const yearBills = bills.filter(b => new Date(b.paymentDate).getFullYear() === parseInt(year));
+      const operatingExpenses = yearBills
+        .filter(b => b.billType !== 'foundational')
+        .reduce((sum, b) => sum + parseFloat(b.amount), 0);
+      const netIncome = grossProfit - operatingExpenses;
+
+      const inventoryValue = inventory.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
+      const pendingBillsAmount = yearBills
+        .filter(b => b.status !== 'paid')
+        .reduce((sum, b) => sum + parseFloat(b.amount), 0);
+
+      const cashFromOperations = netIncome + inventoryValue - pendingBillsAmount;
+      const cashFromInvesting = -inventoryValue;
+      const netCashFlow = cashFromOperations + cashFromInvesting;
+
+      const { generateCashFlowPDF } = await import('./invoice.js');
+      const pdfBuffer = await generateCashFlowPDF({
+        companyName: settings?.restaurantName || "BlindSpot System (BSS)",
+        companyVAT: settings?.vatNumber || "",
+        year,
+        netIncome,
+        inventoryAdjustments: inventoryValue,
+        accountsPayableChange: pendingBillsAmount,
+        cashFromOperations,
+        inventoryPurchases: cashFromInvesting,
+        cashFromInvesting,
+        netCashFlow,
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=cash-flow-${year}.pdf`);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Cash Flow PDF export error:", error);
+      res.status(500).json({ error: "Failed to export cash flow statement" });
+    }
+  });
+
   // Download individual invoice PDF
   app.get("/api/invoices/:id/download", requireAuth, requireRestaurant, async (req, res) => {
     try {
