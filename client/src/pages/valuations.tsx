@@ -804,7 +804,7 @@ export default function Valuations() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t.confirmDelete}</AlertDialogTitle>
             <AlertDialogDescription>
-              {(t as any).deleteValuationConfirm || `This will permanently delete "${deletingValuation?.propertyName}".`} {t.actionCannotBeUndone}
+              {t.deleteValuationConfirm || `This will permanently delete "${deletingValuation?.propertyName}".`} {t.actionCannotBeUndone}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

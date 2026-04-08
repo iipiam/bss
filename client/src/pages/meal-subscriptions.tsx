@@ -70,6 +70,8 @@ interface MealSelection {
   menuItemId?: string;
 }
 
+type MealSelectionsMap = Record<string, MealSelection[]>;
+
 type PlanType = "daily" | "weekly" | "monthly";
 type MealTimeType = "breakfast" | "lunch" | "dinner";
 type PaymentStatusType = "paid" | "pending" | "partial";
@@ -91,10 +93,10 @@ const subscriptionFormSchema = z.object({
   subscriberEmail: z.string().optional(),
   deliveryAddress: z.string().optional(),
   dietaryNotes: z.string().optional(),
-  mealSelections: z.array(z.object({
+  mealSelections: z.record(z.string(), z.array(z.object({
     name: z.string(),
     menuItemId: z.string().optional(),
-  })).default([]),
+  }))).default({}),
   planType: z.enum(["daily", "weekly", "monthly"]),
   scheduleDays: z.array(z.string()).default([]),
   mealTime: z.array(z.enum(["breakfast", "lunch", "dinner"])).min(1, "Select at least one meal time"),
@@ -146,14 +148,60 @@ function asSubscriptionStatus(val: string): SubscriptionStatusType {
   return valid.includes(val as SubscriptionStatusType) ? (val as SubscriptionStatusType) : "active";
 }
 
-function parseMealSelections(raw: unknown): MealSelection[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.filter(
-    (item): item is MealSelection =>
-      typeof item === "object" &&
-      item !== null &&
-      typeof (item as Record<string, unknown>).name === "string"
-  );
+function parseMealSelectionsFlat(raw: unknown): MealSelection[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) {
+    return raw.filter(
+      (item): item is MealSelection =>
+        typeof item === "object" &&
+        item !== null &&
+        typeof (item as Record<string, unknown>).name === "string"
+    );
+  }
+  if (typeof raw === 'object') {
+    const map = raw as Record<string, unknown>;
+    const all: MealSelection[] = [];
+    for (const vals of Object.values(map)) {
+      if (Array.isArray(vals)) {
+        for (const item of vals) {
+          if (typeof item === 'object' && item !== null && typeof (item as Record<string, unknown>).name === 'string') {
+            all.push(item as MealSelection);
+          }
+        }
+      }
+    }
+    return all;
+  }
+  return [];
+}
+
+function parseMealSelectionsMap(raw: unknown, mealTimes: string[]): MealSelectionsMap {
+  const result: MealSelectionsMap = {};
+  for (const mt of mealTimes) result[mt] = [];
+  if (!raw) return result;
+  if (typeof raw === 'object' && !Array.isArray(raw)) {
+    const map = raw as Record<string, unknown>;
+    for (const mt of mealTimes) {
+      if (Array.isArray(map[mt])) {
+        result[mt] = (map[mt] as unknown[]).filter(
+          (item): item is MealSelection =>
+            typeof item === 'object' && item !== null && typeof (item as Record<string, unknown>).name === 'string'
+        );
+      }
+    }
+    return result;
+  }
+  if (Array.isArray(raw)) {
+    const flat = raw.filter(
+      (item): item is MealSelection =>
+        typeof item === 'object' && item !== null && typeof (item as Record<string, unknown>).name === 'string'
+    );
+    if (mealTimes.length > 0) {
+      result[mealTimes[0]] = flat;
+    }
+    return result;
+  }
+  return result;
 }
 
 export default function MealSubscriptionsPage() {
@@ -186,7 +234,7 @@ export default function MealSubscriptionsPage() {
       subscriberEmail: "",
       deliveryAddress: "",
       dietaryNotes: "",
-      mealSelections: [],
+      mealSelections: {},
       planType: "daily",
       scheduleDays: [],
       mealTime: ["lunch"],
@@ -326,7 +374,7 @@ export default function MealSubscriptionsPage() {
       subscriberEmail: "",
       deliveryAddress: "",
       dietaryNotes: "",
-      mealSelections: [],
+      mealSelections: {},
       planType: "daily",
       scheduleDays: [],
       mealTime: ["lunch"],
@@ -361,7 +409,7 @@ export default function MealSubscriptionsPage() {
       subscriberEmail: sub.subscriberEmail || "",
       deliveryAddress: sub.deliveryAddress || "",
       dietaryNotes: sub.dietaryNotes || "",
-      mealSelections: parseMealSelections(sub.mealSelections),
+      mealSelections: parseMealSelectionsMap(sub.mealSelections, parseMealTimes(sub.mealTime)),
       planType: asPlanType(sub.planType),
       scheduleDays: Array.isArray(sub.scheduleDays) ? sub.scheduleDays : [],
       mealTime: mealTimes,
@@ -474,13 +522,15 @@ export default function MealSubscriptionsPage() {
     }
   };
 
-  const calculateAmount = (selections: MealSelection[], _mealTimes?: string[], days?: number) => {
-    if (selections.length === 0) return;
+  const calculateAmountFromMap = (selectionsMap?: MealSelectionsMap, days?: number) => {
+    const map = selectionsMap ?? form.getValues("mealSelections") ?? {};
     let mealsPerDay = 0;
-    for (const sel of selections) {
-      if (sel.menuItemId) {
-        const menuItem = menuItems.find((m) => m.id === sel.menuItemId);
-        if (menuItem?.price) mealsPerDay += parseFloat(menuItem.price);
+    for (const mealTimeSelections of Object.values(map)) {
+      for (const sel of mealTimeSelections) {
+        if (sel.menuItemId) {
+          const menuItem = menuItems.find((m) => m.id === sel.menuItemId);
+          if (menuItem?.price) mealsPerDay += parseFloat(menuItem.price);
+        }
       }
     }
     const numDays = days ?? form.getValues("numberOfDays") ?? 1;
@@ -490,17 +540,25 @@ export default function MealSubscriptionsPage() {
     }
   };
 
-  const toggleMenuItem = (item: MenuItemType) => {
-    const selections = form.getValues("mealSelections") || [];
-    const isSelected = selections.some((s) => s.menuItemId === item.id);
-    let updated: MealSelection[];
+  const toggleMenuItemForMealTime = (mealTime: string, item: MenuItemType) => {
+    const allSelections = { ...(form.getValues("mealSelections") || {}) };
+    const current = allSelections[mealTime] || [];
+    const isSelected = current.some((s) => s.menuItemId === item.id);
     if (isSelected) {
-      updated = selections.filter((s) => s.menuItemId !== item.id);
+      allSelections[mealTime] = current.filter((s) => s.menuItemId !== item.id);
     } else {
-      updated = [...selections, { name: item.name, menuItemId: item.id }];
+      allSelections[mealTime] = [...current, { name: item.name, menuItemId: item.id }];
     }
-    form.setValue("mealSelections", updated);
-    calculateAmount(updated, form.getValues("mealTime") || []);
+    form.setValue("mealSelections", allSelections);
+    calculateAmountFromMap(allSelections);
+  };
+
+  const removeSelectionFromMealTime = (mealTime: string, idx: number) => {
+    const allSelections = { ...(form.getValues("mealSelections") || {}) };
+    const current = allSelections[mealTime] || [];
+    allSelections[mealTime] = current.filter((_, i) => i !== idx);
+    form.setValue("mealSelections", allSelections);
+    calculateAmountFromMap(allSelections);
   };
 
   const handleDownloadPdf = async (subId: string) => {
@@ -521,12 +579,13 @@ export default function MealSubscriptionsPage() {
 
   const handleWhatsApp = (sub: MealSubscription) => {
     import("@/lib/whatsapp").then(({ formatPhoneForWhatsApp, openWhatsAppWithMessage }) => {
-      const mealTimes = sub.mealTime.split(",").map(t => getMealTimeLabel(t.trim())).join(", ");
-      const selections = parseMealSelections(sub.mealSelections);
-      const mealsList = selections.map(s => s.name).join(", ");
+      const mealTimesList = sub.mealTime.split(",").map(t => t.trim());
+      const mealTimesStr = mealTimesList.map(t => getMealTimeLabel(t)).join(", ");
+      const allSelections = parseMealSelectionsFlat(sub.mealSelections);
+      const mealsList = allSelections.map(s => s.name).join(", ");
       const scheduleUrl = `${window.location.origin}/api/meal-subscriptions/${sub.id}/schedule-pdf`;
       const daysInfo = sub.numberOfDays ? `\n${t.numberOfDays || "Number of Days"}: ${sub.numberOfDays}` : '';
-      const message = `*${t.mealSubscriptions}*\n\n${sub.subscriberName},\n\n${t.planType}: ${getPlanLabel(sub.planType)}\n${t.mealTime}: ${mealTimes}\n${mealsList ? `${t.mealSelections}: ${mealsList}\n` : ''}${daysInfo}${t.subscriptionAmount}: ${parseFloat(sub.amount || '0').toFixed(2)} SAR\n\n${scheduleUrl}`;
+      const message = `*${t.mealSubscriptions}*\n\n${sub.subscriberName},\n\n${t.planType}: ${getPlanLabel(sub.planType)}\n${t.mealTime}: ${mealTimesStr}\n${mealsList ? `${t.mealSelections}: ${mealsList}\n` : ''}${daysInfo}${t.subscriptionAmount}: ${parseFloat(sub.amount || '0').toFixed(2)} SAR\n\n${scheduleUrl}`;
       openWhatsAppWithMessage(sub.subscriberPhone, message);
     });
   };
@@ -667,8 +726,8 @@ export default function MealSubscriptionsPage() {
         ) : (
           <div className="space-y-4">
             {todaysDeliveryList.map((sub) => {
-              const selections = parseMealSelections(sub.mealSelections);
               const mealTimes = sub.mealTime.split(",").map((mt) => mt.trim());
+              const selectionsMap = parseMealSelectionsMap(sub.mealSelections, mealTimes);
               const allDone = mealTimes.every((mt) => isMealDeliveredToday(sub, mt));
               return (
                 <Card key={sub.id} className={allDone ? "opacity-60" : ""} data-testid={`card-delivery-${sub.id}`}>
@@ -699,15 +758,6 @@ export default function MealSubscriptionsPage() {
                     {getPaymentBadge(sub.paymentStatus)}
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {selections.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {selections.map((item, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs">
-                            {item.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
                     {sub.dietaryNotes && (
                       <p className="text-xs text-muted-foreground italic">{sub.dietaryNotes}</p>
                     )}
@@ -715,8 +765,19 @@ export default function MealSubscriptionsPage() {
                       {mealTimes.map((mt) => {
                         const done = isMealDeliveredToday(sub, mt);
                         const doneTime = getDeliveredTime(sub, mt);
+                        const mtSelections = selectionsMap[mt] || [];
                         return (
-                          <div key={mt} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2">
+                          <div key={mt} className="rounded-md border p-2 space-y-2">
+                            {mtSelections.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {mtSelections.map((item, idx) => (
+                                  <Badge key={idx} variant="secondary" className="text-xs">
+                                    {item.name}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
                               <Clock className="h-4 w-4 text-muted-foreground" />
                               <span className="font-medium">{getMealTimeLabel(mt)}</span>
@@ -759,6 +820,7 @@ export default function MealSubscriptionsPage() {
                               </Button>
                             )}
                           </div>
+                          </div>
                         );
                       })}
                     </div>
@@ -779,7 +841,8 @@ export default function MealSubscriptionsPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {filteredSubscriptions.map((sub) => {
-              const selections = parseMealSelections(sub.mealSelections);
+              const mealTimesList = sub.mealTime.split(",").map(mt => mt.trim());
+              const selectionsMap = parseMealSelectionsMap(sub.mealSelections, mealTimesList);
               return (
                 <Card key={sub.id} data-testid={`card-subscription-${sub.id}`}>
                   <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
