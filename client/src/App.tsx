@@ -192,7 +192,7 @@ function Router() {
         <Route path="/service-catalog" component={ServiceCatalogPage} />
         <Route path="/contractors" component={Contractors} />
         <Route path="/company-settings" component={CompanySettingsPage} />
-        <Route path="/meal-subscriptions">{() => <BusinessTypeGuard allowedTypes={['restaurant']}><MealSubscriptions /></BusinessTypeGuard>}</Route>
+        <Route path="/meal-subscriptions" component={MealSubscriptions} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>
