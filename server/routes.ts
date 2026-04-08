@@ -16081,10 +16081,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return e.date === todayStr && e.mealTime === mealTime;
       });
       if (alreadyDelivered) return res.status(400).json({ message: "Already marked as delivered" });
-      const newEntry = { date: todayStr, mealTime, deliveredAt: new Date().toISOString() };
+
+      const selections = Array.isArray(sub.mealSelections) ? sub.mealSelections as { name: string; menuItemId?: string }[] : [];
+      const menuItemIds = selections.filter((s) => s.menuItemId).map((s) => s.menuItemId!);
+      let inventoryResult = { deducted: false, details: [] as string[] };
+      if (menuItemIds.length > 0) {
+        const { orderProcessingService } = await import("./orderProcessingService");
+        inventoryResult = await orderProcessingService.deductInventoryForMealDelivery(
+          menuItemIds, restaurantId, req.params.id, mealTime
+        );
+      }
+
+      const newEntry = { date: todayStr, mealTime, deliveredAt: new Date().toISOString(), inventoryDeducted: inventoryResult.deducted };
       const updatedLog = [...existingLog, newEntry];
       const updated = await storage.updateMealSubscription(req.params.id, restaurantId, { deliveryLog: updatedLog });
-      res.json(updated);
+      res.json({ ...updated, inventoryResult });
     } catch (error: any) {
       console.error("Error marking delivery:", error);
       res.status(500).json({ message: error.message });

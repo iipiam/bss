@@ -456,6 +456,156 @@ export class OrderProcessingService {
       await this.deductInventoryInTransaction(tx, stockRequirements, orderId, branchId);
     });
   }
+
+  async deductInventoryForMealDelivery(
+    menuItemIds: string[],
+    restaurantId: string,
+    subscriptionId: string,
+    mealTime: string
+  ): Promise<{ deducted: boolean; details: string[] }> {
+    if (menuItemIds.length === 0) {
+      return { deducted: false, details: ["No menu items linked to subscription"] };
+    }
+
+    try {
+      const menuItemResults = await db
+        .select()
+        .from(menuItems)
+        .where(and(
+          inArray(menuItems.id, menuItemIds),
+          eq(menuItems.restaurantId, restaurantId)
+        ));
+
+      if (menuItemResults.length === 0) {
+        return { deducted: false, details: ["No matching menu items found"] };
+      }
+
+      const recipeIds = menuItemResults
+        .filter((m) => m.recipeId)
+        .map((m) => m.recipeId!);
+
+      let recipesMap = new Map<string, Recipe>();
+      if (recipeIds.length > 0) {
+        const recipeResults = await db
+          .select()
+          .from(recipes)
+          .where(inArray(recipes.id, recipeIds));
+        for (const r of recipeResults) {
+          recipesMap.set(r.id, r);
+        }
+      }
+
+      const allInventoryIds = new Set<string>();
+      for (const item of menuItemResults) {
+        if (item.recipeId) {
+          const recipe = recipesMap.get(item.recipeId);
+          if (recipe?.ingredients) {
+            for (const ing of recipe.ingredients) {
+              allInventoryIds.add(ing.inventoryItemId);
+            }
+          }
+        } else if (item.inventoryItemId) {
+          allInventoryIds.add(item.inventoryItemId);
+        }
+      }
+
+      if (allInventoryIds.size === 0) {
+        return { deducted: false, details: ["No inventory items linked to selected menu items"] };
+      }
+
+      const inventoryMap = await getInventoryItemsBatch(Array.from(allInventoryIds));
+      const stockRequirements = new Map<string, StockRequirement>();
+      const quantity = 1;
+
+      for (const item of menuItemResults) {
+        if (item.recipeId) {
+          const recipe = recipesMap.get(item.recipeId);
+          if (recipe) {
+            this.processRecipeBasedItemOptimized(item, recipe, quantity, stockRequirements, "", inventoryMap);
+          }
+        } else if (item.stockNo && item.inventoryItemId) {
+          this.processSimpleItemOptimized(item, quantity, stockRequirements, "", inventoryMap);
+        }
+      }
+
+      if (stockRequirements.size === 0) {
+        return { deducted: false, details: ["No stock requirements calculated"] };
+      }
+
+      const validation = this.validateStock(stockRequirements);
+      if (!validation.isValid) {
+        console.warn(`[MealDelivery] Insufficient stock for subscription ${subscriptionId}: ${validation.message}`);
+      }
+
+      const refId = `MSUB-${subscriptionId.substring(0, 8)}-${mealTime}`;
+      await db.transaction(async (tx) => {
+        const inventoryIds = Array.from(stockRequirements.keys());
+        const restaurantIdResult = await tx.execute(sql`
+          SELECT id, restaurant_id as "restaurantId" 
+          FROM inventory_items 
+          WHERE id IN (${sql.join(inventoryIds.map(id => sql`${id}`), sql`, `)})
+        `);
+        const restaurantIdMap = new Map<string, string>(
+          ((restaurantIdResult as any).rows || []).map((r: any) => [r.id, r.restaurantId])
+        );
+
+        const transactions: InsertInventoryTransaction[] = [];
+        const updates: Array<{ id: string; quantity: string; price: string; status: string }> = [];
+
+        for (const [inventoryItemId, requirement] of Array.from(stockRequirements.entries())) {
+          const quantityBefore = requirement.availableQuantity;
+          let quantityAfter = quantityBefore - requirement.requiredQuantity;
+          if (quantityAfter < 0) quantityAfter = 0;
+
+          const rid = restaurantIdMap.get(inventoryItemId);
+          if (!rid) continue;
+
+          transactions.push({
+            restaurantId: rid,
+            inventoryItemId,
+            orderId: refId,
+            type: "sale",
+            quantityChange: (-requirement.requiredQuantity).toString(),
+            quantityBefore: quantityBefore.toString(),
+            quantityAfter: quantityAfter.toString(),
+            notes: `Meal subscription delivery (${mealTime})`,
+          });
+
+          const newPrice = quantityAfter * requirement.unitPrice;
+          let status: string;
+          if (quantityAfter === 0) status = "Depleted";
+          else if (quantityAfter < 10) status = "Low Stock";
+          else status = "In Stock";
+
+          updates.push({
+            id: inventoryItemId,
+            quantity: quantityAfter.toString(),
+            price: newPrice.toFixed(2),
+            status,
+          });
+        }
+
+        if (transactions.length > 0) {
+          await tx.insert(inventoryTransactions).values(transactions);
+        }
+        for (const update of updates) {
+          await tx
+            .update(inventoryItems)
+            .set({ quantity: update.quantity, price: update.price, status: update.status })
+            .where(eq(inventoryItems.id, update.id));
+        }
+      });
+
+      const details = Array.from(stockRequirements.entries()).map(
+        ([_, req]) => `${req.inventoryItemName}: -${req.requiredQuantity.toFixed(2)} ${req.unit}`
+      );
+      console.log(`[MealDelivery] Deducted inventory for subscription ${subscriptionId} (${mealTime}):`, details);
+      return { deducted: true, details };
+    } catch (error: any) {
+      console.error(`[MealDelivery] Error deducting inventory for subscription ${subscriptionId}:`, error);
+      return { deducted: false, details: [error.message] };
+    }
+  }
 }
 
 export const orderProcessingService = new OrderProcessingService();
