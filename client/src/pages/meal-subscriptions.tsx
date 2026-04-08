@@ -1088,7 +1088,7 @@ export default function MealSubscriptionsPage() {
                                 }
                                 form.setValue("mealTime", updated, { shouldValidate: true });
                                 form.setValue("deliveryHours", updatedHours);
-                                calculateAmount(form.getValues("mealSelections") || [], updated);
+                                calculateAmountFromMap(form.getValues("mealSelections") as any);
                               }}
                               data-testid={`button-meal-time-${time}`}
                             >
@@ -1217,7 +1217,7 @@ export default function MealSubscriptionsPage() {
                             const val = e.target.value ? parseInt(e.target.value) : undefined;
                             field.onChange(val);
                             if (val && val > 0) {
-                              calculateAmount(form.getValues("mealSelections") || [], undefined, val);
+                              calculateAmountFromMap(form.getValues("mealSelections") as any, val);
                             }
                           }}
                           data-testid="input-number-of-days"
@@ -1231,13 +1231,15 @@ export default function MealSubscriptionsPage() {
                   control={form.control}
                   name="amount"
                   render={({ field }) => {
-                    const selections = form.watch("mealSelections") || [];
+                    const selectionsMap = (form.watch("mealSelections") || {}) as any as MealSelectionsMap;
                     const numDays = form.watch("numberOfDays");
                     let mealsPerDay = 0;
-                    for (const sel of selections) {
-                      if (sel.menuItemId) {
-                        const mi = menuItems.find((m) => m.id === sel.menuItemId);
-                        if (mi?.price) mealsPerDay += parseFloat(mi.price);
+                    for (const mt of Object.keys(selectionsMap)) {
+                      for (const sel of (selectionsMap[mt] || [])) {
+                        if (sel.menuItemId) {
+                          const mi = menuItems.find((m) => m.id === sel.menuItemId);
+                          if (mi?.price) mealsPerDay += parseFloat(mi.price);
+                        }
                       }
                     }
                     const hasCalc = mealsPerDay > 0 && numDays && numDays > 0;
@@ -1261,51 +1263,54 @@ export default function MealSubscriptionsPage() {
 
               <div>
                 <FormLabel>{t.mealSelections}</FormLabel>
-                {menuItems.filter(item => item.available).length > 0 ? (
-                  <div className="flex flex-wrap gap-2 mt-2 max-h-40 overflow-y-auto border rounded-md p-2">
-                    {menuItems.filter(item => item.available).map((item) => {
-                      const selections = form.watch("mealSelections") || [];
-                      const isSelected = selections.some((s) => s.menuItemId === item.id);
-                      return (
-                        <Button
-                          key={item.id}
-                          type="button"
-                          size="sm"
-                          variant={isSelected ? "default" : "outline"}
-                          className={`toggle-elevate ${isSelected ? "toggle-elevated" : ""}`}
-                          onClick={() => toggleMenuItem(item)}
-                          data-testid={`button-menu-item-${item.id}`}
-                        >
-                          {item.name} ({parseFloat(item.price).toFixed(2)} SAR)
-                        </Button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground mt-1">{t.noMenuItems || "No menu items available. Add items in the Menu page first."}</p>
-                )}
-                {(form.watch("mealSelections") || []).length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {(form.watch("mealSelections") || []).map((sel, idx) => (
-                      <Badge key={idx} variant="secondary" className="gap-1" data-testid={`badge-selection-${idx}`}>
-                        {sel.name}
-                        <button
-                          type="button"
-                          className="ml-1 hover:text-destructive"
-                          onClick={() => {
-                            const current = form.getValues("mealSelections") || [];
-                            const updated = current.filter((_, i) => i !== idx);
-                            form.setValue("mealSelections", updated);
-                            calculateAmount(updated, form.getValues("mealTime") || []);
-                          }}
-                          data-testid={`button-remove-selection-${idx}`}
-                        >
-                          <XCircle className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
+                {(form.watch("mealTime") || []).map((mt) => {
+                  const currentMap = (form.watch("mealSelections") || {}) as any as MealSelectionsMap;
+                  const mtSelections = currentMap[mt] || [];
+                  return (
+                    <div key={mt} className="mt-3 space-y-2">
+                      <p className="text-sm font-medium">{getMealTimeLabel(mt)}</p>
+                      {menuItems.filter(item => item.available).length > 0 ? (
+                        <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto border rounded-md p-2">
+                          {menuItems.filter(item => item.available).map((item) => {
+                            const isSelected = mtSelections.some((s) => s.menuItemId === item.id);
+                            return (
+                              <Button
+                                key={item.id}
+                                type="button"
+                                size="sm"
+                                variant={isSelected ? "default" : "outline"}
+                                className={`toggle-elevate ${isSelected ? "toggle-elevated" : ""}`}
+                                onClick={() => toggleMenuItemForMealTime(mt, item)}
+                                data-testid={`button-menu-item-${mt}-${item.id}`}
+                              >
+                                {item.name} ({parseFloat(item.price).toFixed(2)} SAR)
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">{t.noMenuItems || "No menu items available."}</p>
+                      )}
+                      {mtSelections.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {mtSelections.map((sel, idx) => (
+                            <Badge key={idx} variant="secondary" className="gap-1" data-testid={`badge-selection-${mt}-${idx}`}>
+                              {sel.name}
+                              <button
+                                type="button"
+                                className="ml-1 hover:text-destructive"
+                                onClick={() => removeSelectionFromMealTime(mt, idx)}
+                                data-testid={`button-remove-selection-${mt}-${idx}`}
+                              >
+                                <XCircle className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               <FormField
