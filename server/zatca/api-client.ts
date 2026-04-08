@@ -124,7 +124,10 @@ export class ZatcaApiClient {
           const snippet = text.substring(0, 300).replace(/<[^>]*>/g, "").trim();
           let friendlyMessage = snippet || "The server may be temporarily unavailable.";
           if (snippet.toLowerCase().includes("invalid csr") || snippet.toLowerCase().includes("pkcs10")) {
-            friendlyMessage = "The CSR is invalid or was not accepted by ZATCA. Please regenerate the CSR from the Settings tab and try again. If the issue persists, verify your ZATCA settings (VAT number, serial number, common name) are correct.";
+            friendlyMessage = "ZATCA rejected the CSR. Please verify: (1) Your ZATCA environment setting matches where your EGS is registered (Sandbox/Simulation/Production). (2) The OTP was generated from the correct ZATCA portal for this environment. (3) Your VAT number, serial number, and company name exactly match your ZATCA portal registration. (4) The OTP has not expired (OTPs are valid for a limited time).";
+          }
+          if (snippet.toLowerCase().includes("invalid request")) {
+            friendlyMessage = "ZATCA returned 'Invalid Request'. The Sandbox environment may be unavailable. Try switching to 'Simulation' environment in the Settings tab, then generate a new OTP from fatoora.zatca.gov.sa and try again.";
           }
           return {
             success: false,

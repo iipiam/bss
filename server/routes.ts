@@ -14557,6 +14557,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "ZATCA settings not configured. Please save settings first." });
       }
       
+      const env = (settings.environment || "sandbox") as "sandbox" | "simulation" | "production";
       const { csr, privateKey } = generateCSR(
         settings.csrCommonName || "",
         settings.csrOrganizationName || "",
@@ -14566,7 +14567,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         settings.csrOrganizationIdentifier || "",
         (settings.csrInvoiceType || "1100") as "1000" | "0100" | "1100",
         settings.csrSerialNumber || "",
-        settings.csrOrganizationUnitName || ""
+        settings.csrOrganizationUnitName || "",
+        "BSS",
+        env
       );
       
       await storage.updateZatcaSettings(targetRestaurantId, {
@@ -14595,6 +14598,36 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "OTP is required" });
       }
       
+      const settings = await storage.getZatcaSettings(targetRestaurantId);
+      if (!settings) {
+        return res.status(400).json({ error: "ZATCA settings not configured. Please save settings first." });
+      }
+
+      const env = (settings.environment || "sandbox") as "sandbox" | "simulation" | "production";
+      console.log(`[ZATCA Onboard] Environment: ${env}`);
+      console.log(`[ZATCA Onboard] Settings: CN=${settings.csrCommonName}, O=${settings.csrOrganizationName}, OU=${settings.csrOrganizationUnitName}, VAT=${settings.csrOrganizationIdentifier}, SN=${settings.csrSerialNumber}, InvType=${settings.csrInvoiceType}`);
+      console.log(`[ZATCA Onboard] Auto-regenerating CSR before requesting CSID...`);
+      const { generateCSR } = await import("./zatca/crypto");
+      const { csr: freshCsr, privateKey: freshKey } = generateCSR(
+        settings.csrCommonName || "",
+        settings.csrOrganizationName || "",
+        settings.csrOrganizationUnitName || "",
+        settings.csrCountryName || "SA",
+        settings.csrSerialNumber || "",
+        settings.csrOrganizationIdentifier || "",
+        (settings.csrInvoiceType || "1100") as "1000" | "0100" | "1100",
+        settings.csrSerialNumber || "",
+        settings.csrOrganizationUnitName || "",
+        "BSS",
+        env
+      );
+
+      await storage.updateZatcaSettings(targetRestaurantId, {
+        csr: freshCsr,
+        privateKey: freshKey
+      });
+      console.log("[ZATCA Onboard] Fresh CSR saved, length:", freshCsr.length);
+
       const { onboardToZatca } = await import("./zatca/service");
       const result = await onboardToZatca(targetRestaurantId, otp);
       

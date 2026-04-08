@@ -556,6 +556,7 @@ export default function ZatcaSettingsPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="sandbox">{t.sandbox || "Sandbox (Testing)"}</SelectItem>
+                        <SelectItem value="simulation">{(t as any).simulation || "Simulation (Pre-Production)"}</SelectItem>
                         <SelectItem value="production">{t.production || "Production"}</SelectItem>
                       </SelectContent>
                     </Select>

@@ -87,6 +87,7 @@ interface CSRConfig {
   egsUnitSerialNumber: string;
   branchName: string;
   solutionName?: string;
+  environment?: "sandbox" | "simulation" | "production";
 }
 
 function createCSRConfigFile(config: CSRConfig, configPath: string): void {
@@ -98,15 +99,25 @@ function createCSRConfigFile(config: CSRConfig, configPath: string): void {
     egsSerial = `1-${config.solutionName || "BSS"}|2-${config.solutionName || "BSS"}|3-${sn}`;
   }
   
+  const certTemplateName = config.environment === "production" 
+    ? "ZATCA-Code-Signing" 
+    : "TSTZATCA-Code-Signing";
+  
+  console.log(`[ZATCA CSR Config] Environment: ${config.environment}, CertTemplate: ${certTemplateName}`);
   console.log(`[ZATCA CSR Config] EGS Serial: ${egsSerial}`);
   console.log(`[ZATCA CSR Config] Subject: C=${config.countryCode}, O=${config.organizationName}, OU=${config.organizationalUnit}, CN=${config.commonName}`);
   console.log(`[ZATCA CSR Config] VAT: ${config.vatNumber}, InvoiceType: ${config.invoiceType}, Branch: ${config.branchName}`);
 
   const configContent = `
+oid_section = OIDs
+
+[OIDs]
+certificateTemplateName = 1.3.6.1.4.1.311.20.2
+
 [req]
 default_bits = 2048
-prompt = no
 default_md = sha256
+prompt = no
 req_extensions = v3_req
 distinguished_name = req_distinguished_name
 
@@ -117,17 +128,11 @@ O = ${config.organizationName}
 CN = ${config.commonName}
 
 [v3_req]
-basicConstraints = CA:FALSE
-keyUsage = digitalSignature, nonRepudiation, keyEncipherment
-1.3.6.1.4.1.311.20.2 = ASN1:PRINTABLESTRING:ZATCA-Code-Signing
-2.5.4.4 = ASN1:UTF8STRING:${egsSerial}
-2.5.4.12 = ASN1:UTF8STRING:${config.invoiceType}
-2.5.4.26 = ASN1:UTF8STRING:${config.branchName}
-2.5.4.15 = ASN1:UTF8STRING:${egsSerial}
-subjectAltName = dirName:dir_sect
+certificateTemplateName = ASN1:PRINTABLESTRING:${certTemplateName}
+subjectAltName = dirName:alt_names
 
-[dir_sect]
-SN = ${config.vatNumber}
+[alt_names]
+SN = ${egsSerial}
 UID = ${config.vatNumber}
 title = ${config.invoiceType}
 registeredAddress = ${config.branchName}
@@ -147,7 +152,8 @@ export function generateCSR(
   invoiceType: "1000" | "0100" | "1100",
   egsUnitSerialNumber: string,
   branchName: string,
-  solutionName: string = "BSS"
+  solutionName: string = "BSS",
+  environment: "sandbox" | "simulation" | "production" = "sandbox"
 ): { csr: string; privateKey: string } {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "zatca-csr-"));
   const keyPath = path.join(tempDir, "private.key");
@@ -165,7 +171,8 @@ export function generateCSR(
       invoiceType,
       egsUnitSerialNumber,
       branchName,
-      solutionName
+      solutionName,
+      environment
     }, configPath);
 
     execSync(`openssl ecparam -name secp256k1 -genkey -noout -out "${keyPath}"`, {
