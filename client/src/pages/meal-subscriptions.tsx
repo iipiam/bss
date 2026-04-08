@@ -54,6 +54,7 @@ import {
   MessageCircle,
   CheckCircle2,
   Undo2,
+  Wallet,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -544,7 +545,7 @@ export default function MealSubscriptionsPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-4">
             <div className="rounded-md bg-primary/10 p-2">
@@ -564,6 +565,22 @@ export default function MealSubscriptionsPage() {
             <div>
               <p className="text-sm text-muted-foreground">{t.monthlyRevenue}</p>
               <p className="text-2xl font-bold" data-testid="text-monthly-revenue">{monthlyRev.toFixed(2)} SAR</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="rounded-md bg-blue-500/10 p-2">
+              <Wallet className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">{t.creditBalance || "Credit Balance"}</p>
+              <p className="text-2xl font-bold" data-testid="text-total-credit">
+                {subscriptions
+                  .filter((s) => s.status === "active")
+                  .reduce((sum, s) => sum + parseFloat(s.creditBalance || "0"), 0)
+                  .toFixed(2)} SAR
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -796,6 +813,12 @@ export default function MealSubscriptionsPage() {
                         {getPlanLabel(sub.planType)}
                       </span>
                       <span className="font-semibold">{parseFloat(sub.amount || "0").toFixed(2)} SAR</span>
+                      <span className="flex items-center gap-1">
+                        <Wallet className="h-3 w-3 text-muted-foreground" />
+                        <span className={`font-semibold ${parseFloat(sub.creditBalance || "0") <= 0 ? "text-destructive" : "text-green-600"}`}>
+                          {parseFloat(sub.creditBalance || "0").toFixed(2)} SAR
+                        </span>
+                      </span>
                     </div>
                     {Array.isArray(sub.scheduleDays) && sub.scheduleDays.length > 0 && (
                       <div className="grid grid-cols-7 gap-1">

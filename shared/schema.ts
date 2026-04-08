@@ -1793,6 +1793,7 @@ export const mealSubscriptions = pgTable("meal_subscriptions", {
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date"),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull().default("0"),
+  creditBalance: decimal("credit_balance", { precision: 10, scale: 2 }).notNull().default("0"),
   paymentStatus: text("payment_status").notNull().default("pending"),
   status: text("status").notNull().default("active"),
   notes: text("notes"),

@@ -5914,7 +5914,10 @@ export const storage = new DatabaseStorage();
     await pool.query(`
       ALTER TABLE meal_subscriptions ADD COLUMN IF NOT EXISTS delivery_hours JSONB NOT NULL DEFAULT '{}'
     `);
-    console.log('[Migration] Meal subscriptions columns verified/added: delivery_log, delivery_hours');
+    await pool.query(`
+      ALTER TABLE meal_subscriptions ADD COLUMN IF NOT EXISTS credit_balance DECIMAL(10,2) NOT NULL DEFAULT 0
+    `);
+    console.log('[Migration] Meal subscriptions columns verified/added: delivery_log, delivery_hours, credit_balance');
 
     console.log('[Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings');
   } catch (error: any) {

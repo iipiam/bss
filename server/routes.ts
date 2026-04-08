@@ -15971,6 +15971,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const { id, createdAt, restaurantId: _rid, ...safeBody } = req.body;
       if (safeBody.startDate && typeof safeBody.startDate === 'string') safeBody.startDate = new Date(safeBody.startDate);
       if (safeBody.endDate && typeof safeBody.endDate === 'string') safeBody.endDate = new Date(safeBody.endDate);
+      if (!safeBody.creditBalance && safeBody.amount) {
+        safeBody.creditBalance = safeBody.amount;
+      }
       const subscription = await storage.createMealSubscription({ ...safeBody, restaurantId });
       if (subscription.paymentStatus === 'paid' && parseFloat(subscription.amount || '0') > 0) {
         try {
@@ -16003,6 +16006,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (safeBody.startDate && typeof safeBody.startDate === 'string') safeBody.startDate = new Date(safeBody.startDate);
       if (safeBody.endDate && typeof safeBody.endDate === 'string') safeBody.endDate = new Date(safeBody.endDate);
       const existingSub = await storage.getMealSubscription(req.params.id, restaurantId);
+      if (safeBody.amount && existingSub) {
+        const oldAmount = parseFloat(existingSub.amount || "0");
+        const newAmount = parseFloat(safeBody.amount);
+        const oldCredit = parseFloat(existingSub.creditBalance || "0");
+        const spent = oldAmount - oldCredit;
+        safeBody.creditBalance = Math.max(0, newAmount - spent).toFixed(2);
+      }
       const subscription = await storage.updateMealSubscription(req.params.id, restaurantId, safeBody);
       if (!subscription) return res.status(404).json({ message: "Subscription not found" });
       if (safeBody.paymentStatus === 'paid' && existingSub?.paymentStatus !== 'paid' && parseFloat(subscription.amount || '0') > 0) {
@@ -16092,9 +16102,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         );
       }
 
-      const newEntry = { date: todayStr, mealTime, deliveredAt: new Date().toISOString(), inventoryDeducted: inventoryResult.deducted };
+      let deliveryCost = 0;
+      if (menuItemIds.length > 0) {
+        const allMenuItems = await storage.getMenuItems(restaurantId);
+        for (const mid of menuItemIds) {
+          const mi = allMenuItems.find((m) => m.id === mid);
+          if (mi?.price) deliveryCost += parseFloat(mi.price);
+        }
+      }
+
+      const currentCredit = parseFloat(sub.creditBalance || sub.amount || "0");
+      const newCredit = Math.max(0, currentCredit - deliveryCost);
+
+      const newEntry = { date: todayStr, mealTime, deliveredAt: new Date().toISOString(), inventoryDeducted: inventoryResult.deducted, cost: deliveryCost.toFixed(2) };
       const updatedLog = [...existingLog, newEntry];
-      const updated = await storage.updateMealSubscription(req.params.id, restaurantId, { deliveryLog: updatedLog });
+      const updated = await storage.updateMealSubscription(req.params.id, restaurantId, { deliveryLog: updatedLog, creditBalance: newCredit.toFixed(2) });
       res.json({ ...updated, inventoryResult });
     } catch (error: any) {
       console.error("Error marking delivery:", error);
@@ -16128,11 +16150,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         }
       }
 
+      const deliveryCost = parseFloat((deliveryEntry as any)?.cost || "0");
+      const currentCredit = parseFloat(sub.creditBalance || "0");
+      const restoredCredit = currentCredit + deliveryCost;
+
       const updatedLog = existingLog.filter((entry) => {
         const e = entry as { date: string; mealTime: string };
         return !(e.date === todayStr && e.mealTime === mealTime);
       });
-      const updated = await storage.updateMealSubscription(req.params.id, restaurantId, { deliveryLog: updatedLog });
+      const updated = await storage.updateMealSubscription(req.params.id, restaurantId, { deliveryLog: updatedLog, creditBalance: restoredCredit.toFixed(2) });
       res.json(updated);
     } catch (error: any) {
       console.error("Error undoing delivery:", error);

@@ -2455,6 +2455,7 @@ export interface Translations {
   noDeliveriesToday: string;
   deliveryTime: string;
   allDelivered: string;
+  creditBalance: string;
   selectMealItems: string;
 }
 
@@ -4840,6 +4841,7 @@ export const translations: Record<Language, Translations> = {
     noDeliveriesToday: 'No deliveries scheduled for today',
     deliveryTime: 'Delivery Time',
     allDelivered: 'All Delivered',
+    creditBalance: 'Credit Balance',
     selectMealItems: 'Select meal items',
   },
   
@@ -7223,6 +7225,7 @@ export const translations: Record<Language, Translations> = {
     noDeliveriesToday: 'لا توجد توصيلات مجدولة لليوم',
     deliveryTime: 'وقت التوصيل',
     allDelivered: 'تم توصيل الكل',
+    creditBalance: 'الرصيد المتبقي',
     selectMealItems: 'اختر أصناف الوجبات',
   },
   German: {
@@ -9590,6 +9593,7 @@ export const translations: Record<Language, Translations> = {
     noDeliveriesToday: 'Keine Lieferungen für heute geplant',
     deliveryTime: 'Lieferzeit',
     allDelivered: 'Alle geliefert',
+    creditBalance: 'Guthaben',
     selectMealItems: 'Mahlzeiten auswählen',
   },
   Chinese: {
@@ -11957,6 +11961,7 @@ export const translations: Record<Language, Translations> = {
     noDeliveriesToday: '今天没有配送计划',
     deliveryTime: '配送时间',
     allDelivered: '全部已送达',
+    creditBalance: '信用余额',
     selectMealItems: '选择餐食项目',
   },
   Bengali: {
@@ -14324,6 +14329,7 @@ export const translations: Record<Language, Translations> = {
     noDeliveriesToday: 'আজ কোন ডেলিভারি নির্ধারিত নেই',
     deliveryTime: 'ডেলিভারি সময়',
     allDelivered: 'সব ডেলিভারি সম্পন্ন',
+    creditBalance: 'ক্রেডিট ব্যালেন্স',
     selectMealItems: 'খাবার আইটেম নির্বাচন করুন',
   },
   Italian: {
@@ -16691,6 +16697,7 @@ export const translations: Record<Language, Translations> = {
     noDeliveriesToday: 'Nessuna consegna prevista per oggi',
     deliveryTime: 'Orario di consegna',
     allDelivered: 'Tutto consegnato',
+    creditBalance: 'Saldo credito',
     selectMealItems: 'Seleziona pasti',
   },
 
@@ -19002,6 +19009,7 @@ export const translations: Record<Language, Translations> = {
     noDeliveriesToday: 'आज कोई डिलीवरी निर्धारित नहीं है',
     deliveryTime: 'डिलीवरी समय',
     allDelivered: 'सभी डिलीवर हो गए',
+    creditBalance: 'क्रेडिट शेष',
     selectMealItems: 'भोजन आइटम चुनें',
   },
   
@@ -21313,6 +21321,7 @@ export const translations: Record<Language, Translations> = {
     noDeliveriesToday: 'آج کوئی ڈیلیوری طے نہیں',
     deliveryTime: 'ڈیلیوری کا وقت',
     allDelivered: 'سب ڈیلیور ہو گئے',
+    creditBalance: 'کریڈٹ بیلنس',
     selectMealItems: 'کھانے کی اشیاء منتخب کریں',
   },
   
@@ -23557,6 +23566,7 @@ export const translations: Record<Language, Translations> = {
     noDeliveriesToday: 'No hay entregas programadas para hoy',
     deliveryTime: 'Hora de entrega',
     allDelivered: 'Todo entregado',
+    creditBalance: 'Saldo de crédito',
     selectMealItems: 'Seleccionar elementos de comida',
   },
 
@@ -25801,6 +25811,7 @@ export const translations: Record<Language, Translations> = {
     noDeliveriesToday: 'Walang delivery na naka-iskedyul ngayon',
     deliveryTime: 'Oras ng delivery',
     allDelivered: 'Lahat naihatid',
+    creditBalance: 'Credit Balance',
     selectMealItems: 'Pumili ng mga pagkain',
   },
 };
