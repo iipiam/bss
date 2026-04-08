@@ -14581,9 +14581,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         success: true, 
         message: "CSR generated successfully. Ready for ZATCA onboarding." 
       });
-    } catch (error) {
-      console.error("Error generating CSR:", error);
-      res.status(500).json({ error: "Failed to generate CSR" });
+    } catch (error: any) {
+      console.error("Error generating CSR:", error?.message || error);
+      res.status(400).json({ error: error?.message || "Failed to generate CSR" });
     }
   });
 
@@ -14606,7 +14606,35 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const env = (settings.environment || "sandbox") as "sandbox" | "simulation" | "production";
       console.log(`[ZATCA Onboard] Environment: ${env}`);
       console.log(`[ZATCA Onboard] Settings: CN=${settings.csrCommonName}, O=${settings.csrOrganizationName}, OU=${settings.csrOrganizationUnitName}, VAT=${settings.csrOrganizationIdentifier}, SN=${settings.csrSerialNumber}, InvType=${settings.csrInvoiceType}`);
-      console.log(`[ZATCA Onboard] Auto-regenerating CSR before requesting CSID...`);
+
+      const vatNumber = (settings.csrOrganizationIdentifier || "").trim();
+      if (!vatNumber) {
+        return res.status(400).json({ error: "VAT Number (Organization Identifier) is required. Please enter it in the CSR Configuration tab." });
+      }
+      if (!/^\d{15}$/.test(vatNumber)) {
+        return res.status(400).json({ error: `VAT Number must be exactly 15 digits. Current value "${vatNumber}" has ${vatNumber.replace(/\D/g, "").length} digits.` });
+      }
+      if (!vatNumber.startsWith("3")) {
+        return res.status(400).json({ error: `VAT Number must start with digit 3. Current value starts with "${vatNumber[0]}".` });
+      }
+      if (!vatNumber.endsWith("3")) {
+        return res.status(400).json({ error: `VAT Number must end with digit 3. Current value ends with "${vatNumber[vatNumber.length - 1]}".` });
+      }
+
+      if (!settings.csrOrganizationName?.trim()) {
+        return res.status(400).json({ error: "Organization Name is required. Please enter it in the CSR Configuration tab." });
+      }
+      if (!settings.csrCommonName?.trim()) {
+        return res.status(400).json({ error: "Common Name (EGS Unit) is required. Please enter it in the CSR Configuration tab." });
+      }
+      if (!settings.csrSerialNumber?.trim()) {
+        return res.status(400).json({ error: "Device Serial Number is required. Please enter it in the CSR Configuration tab." });
+      }
+      if (!settings.csrOrganizationUnitName?.trim()) {
+        return res.status(400).json({ error: "Branch/Unit Name is required. Please enter it in the CSR Configuration tab." });
+      }
+
+      console.log(`[ZATCA Onboard] All fields validated. Auto-regenerating CSR before requesting CSID...`);
       const { generateCSR } = await import("./zatca/crypto");
       const { csr: freshCsr, privateKey: freshKey } = generateCSR(
         settings.csrCommonName || "",
@@ -14637,9 +14665,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         console.error("[ZATCA Onboard] Failed:", result.message);
         res.status(400).json({ error: result.message, details: (result as any).details });
       }
-    } catch (error) {
-      console.error("Error onboarding to ZATCA:", error);
-      res.status(500).json({ error: "Failed to onboard to ZATCA" });
+    } catch (error: any) {
+      console.error("Error onboarding to ZATCA:", error?.message || error);
+      res.status(400).json({ error: error?.message || "Failed to onboard to ZATCA" });
     }
   });
 

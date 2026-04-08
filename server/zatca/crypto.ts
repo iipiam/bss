@@ -155,6 +155,18 @@ export function generateCSR(
   solutionName: string = "BSS",
   environment: "sandbox" | "simulation" | "production" = "sandbox"
 ): { csr: string; privateKey: string } {
+  const cleanVat = (vatNumber || "").trim();
+  if (!cleanVat || !/^\d{15}$/.test(cleanVat)) {
+    throw new Error(`Invalid VAT number "${cleanVat}": must be exactly 15 digits`);
+  }
+  if (!cleanVat.startsWith("3") || !cleanVat.endsWith("3")) {
+    throw new Error(`Invalid VAT number "${cleanVat}": must start and end with digit 3`);
+  }
+  if (!commonName?.trim()) throw new Error("Common Name (EGS Unit) is required");
+  if (!organizationName?.trim()) throw new Error("Organization Name is required");
+  if (!organizationalUnit?.trim()) throw new Error("Organization Unit (Branch Name) is required");
+  if (!serialNumber?.trim()) throw new Error("Serial Number is required");
+
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "zatca-csr-"));
   const keyPath = path.join(tempDir, "private.key");
   const csrPath = path.join(tempDir, "request.csr");

@@ -238,9 +238,17 @@ export default function ZatcaSettingsPage() {
       });
     },
     onError: (error: Error) => {
+      let msg = error.message;
+      try {
+        const jsonStart = msg.indexOf("{");
+        if (jsonStart >= 0) {
+          const parsed = JSON.parse(msg.substring(jsonStart));
+          msg = parsed.error || parsed.message || msg;
+        }
+      } catch {}
       toast({
         title: t.error || "Error",
-        description: error.message,
+        description: msg,
         variant: "destructive",
       });
     },
@@ -261,9 +269,17 @@ export default function ZatcaSettingsPage() {
       });
     },
     onError: (error: Error) => {
+      let msg = error.message;
+      try {
+        const jsonStart = msg.indexOf("{");
+        if (jsonStart >= 0) {
+          const parsed = JSON.parse(msg.substring(jsonStart));
+          msg = parsed.error || parsed.message || msg;
+        }
+      } catch {}
       toast({
         title: t.error || "Error",
-        description: error.message,
+        description: msg,
         variant: "destructive",
       });
     },
@@ -606,10 +622,26 @@ export default function ZatcaSettingsPage() {
                     <Input
                       id="csrOrganizationIdentifier"
                       value={formData.csrOrganizationIdentifier || ""}
-                      onChange={(e) => handleChange("csrOrganizationIdentifier", e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "").slice(0, 15);
+                        handleChange("csrOrganizationIdentifier", val);
+                      }}
                       placeholder={t.enterVatNumber || "e.g., 300000000000003"}
                       data-testid="input-vat-number"
+                      maxLength={15}
                     />
+                    {formData.csrOrganizationIdentifier && (() => {
+                      const v = formData.csrOrganizationIdentifier || "";
+                      const errors: string[] = [];
+                      if (v.length !== 15) errors.push(`Must be 15 digits (currently ${v.length})`);
+                      if (v.length > 0 && !v.startsWith("3")) errors.push("Must start with 3");
+                      if (v.length >= 15 && !v.endsWith("3")) errors.push("Must end with 3");
+                      if (errors.length > 0) {
+                        return <p className="text-xs text-destructive">{errors.join(". ")}</p>;
+                      }
+                      return <p className="text-xs text-green-600">Valid Saudi VAT number format</p>;
+                    })()}
+                    <p className="text-xs text-muted-foreground">Saudi VAT number: 15 digits, starts and ends with 3</p>
                   </div>
 
                   <div className="space-y-2">
