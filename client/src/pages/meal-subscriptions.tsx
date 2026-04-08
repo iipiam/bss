@@ -1031,7 +1031,7 @@ export default function MealSubscriptionsPage() {
                               <span className="text-sm font-medium">{getMealTimeLabel(mt)}</span>
                               <Input
                                 type="time"
-                                value={form.watch(`deliveryHours.${mt}`) || DEFAULT_DELIVERY_HOURS[mt] || "12:00"}
+                                value={(form.watch("deliveryHours") || {})[mt] || DEFAULT_DELIVERY_HOURS[mt] || "12:00"}
                                 onChange={(e) => {
                                   const hours = { ...form.getValues("deliveryHours") };
                                   hours[mt] = e.target.value;
