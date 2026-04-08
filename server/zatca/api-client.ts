@@ -97,13 +97,17 @@ export class ZatcaApiClient {
         headers["Authorization"] = this.getAuthHeader();
       }
 
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const url = `${this.baseUrl}${endpoint}`;
+      console.log(`[ZATCA API] ${method} ${url}`);
+      
+      const response = await fetch(url, {
         method,
         headers,
         body: body ? JSON.stringify(body) : undefined
       });
 
-      // Handle empty responses gracefully
+      console.log(`[ZATCA API] Response status: ${response.status} ${response.statusText}`);
+
       const text = await response.text();
       let data: any = null;
       
@@ -111,11 +115,13 @@ export class ZatcaApiClient {
         try {
           data = JSON.parse(text);
         } catch (parseError) {
+          console.error(`[ZATCA API] Non-JSON response (${response.status}):`, text.substring(0, 1000));
+          const snippet = text.substring(0, 200).replace(/<[^>]*>/g, "").trim();
           return {
             success: false,
             error: {
-              code: "PARSE_ERROR",
-              message: "Invalid response from ZATCA API",
+              code: `HTTP_${response.status}`,
+              message: `ZATCA API returned non-JSON response (HTTP ${response.status}). ${snippet || "The server may be temporarily unavailable."}`,
               details: text.substring(0, 500)
             }
           };
@@ -123,11 +129,16 @@ export class ZatcaApiClient {
       }
 
       if (!response.ok) {
+        const errorMsg = data?.message 
+          || data?.errors?.[0]?.message 
+          || data?.validationResults?.errorMessages?.[0]?.message
+          || `ZATCA API request failed with status ${response.status}`;
+        console.error(`[ZATCA API] Error response:`, JSON.stringify(data, null, 2));
         return {
           success: false,
           error: {
             code: data?.code || response.status.toString(),
-            message: data?.message || `ZATCA API request failed with status ${response.status}`,
+            message: errorMsg,
             details: data ? JSON.stringify(data) : `HTTP ${response.status}`
           }
         };

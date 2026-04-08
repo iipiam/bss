@@ -14582,7 +14582,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (result.success) {
         res.json(result);
       } else {
-        res.status(400).json({ error: result.message });
+        console.error("[ZATCA Onboard] Failed:", result.message);
+        res.status(400).json({ error: result.message, details: (result as any).details });
       }
     } catch (error) {
       console.error("Error onboarding to ZATCA:", error);

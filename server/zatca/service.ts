@@ -452,13 +452,16 @@ export async function onboardToZatca(
   };
 
   const client = new ZatcaApiClient(config);
+  console.log(`[ZATCA Service] Requesting compliance CSID for restaurant ${restaurantId}, env: ${settings.environment}`);
   const response = await client.requestComplianceCSID(settings.csr, otp);
 
   if (!response.success) {
+    console.error(`[ZATCA Service] Compliance CSID request failed:`, response.error);
     return { 
       success: false, 
-      message: response.error?.message || "Failed to request compliance CSID" 
-    };
+      message: response.error?.message || "Failed to request compliance CSID",
+      details: response.error?.details
+    } as any;
   }
 
   const data = response.data!;
