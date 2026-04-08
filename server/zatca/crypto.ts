@@ -184,7 +184,7 @@ export function generateCSR(
     });
 
     const privateKeyPem = fs.readFileSync(keyPath, "utf8");
-    const csrPem = fs.readFileSync(csrPath, "utf8");
+    const csrPem = fs.readFileSync(csrPath, "utf8").trim();
 
     try {
       const verifyResult = execSync(`openssl req -in "${csrPath}" -verify -noout 2>&1`, { encoding: "utf8" }).trim();
@@ -193,13 +193,10 @@ export function generateCSR(
       console.error(`[ZATCA CSR] Verification failed:`, verifyErr.stdout || verifyErr.message);
     }
 
-    const csrBase64 = csrPem
-      .replace(/-----BEGIN [A-Z ]+-----/g, "")
-      .replace(/-----END [A-Z ]+-----/g, "")
-      .replace(/\s+/g, "")
-      .trim();
+    const csrBase64 = Buffer.from(csrPem).toString("base64");
     
-    console.log(`[ZATCA CSR] Generated CSR base64 length: ${csrBase64.length}, first 60 chars: ${csrBase64.substring(0, 60)}...`);
+    console.log(`[ZATCA CSR] PEM length: ${csrPem.length}, base64(PEM) length: ${csrBase64.length}`);
+    console.log(`[ZATCA CSR] First 60 chars: ${csrBase64.substring(0, 60)}...`);
     
     return {
       csr: csrBase64,

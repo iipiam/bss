@@ -444,43 +444,34 @@ export async function onboardToZatca(
     return { success: false, message: "CSR not generated. Please generate CSR first." };
   }
 
-  console.log(`[ZATCA Service] Raw CSR from DB length: ${settings.csr.length}, first 80 chars: ${settings.csr.substring(0, 80)}...`);
+  console.log(`[ZATCA Service] CSR from DB length: ${settings.csr.length}, first 60 chars: ${settings.csr.substring(0, 60)}...`);
 
-  const cleanCsr = settings.csr
-    .replace(/-----BEGIN CERTIFICATE REQUEST-----/g, "")
-    .replace(/-----END CERTIFICATE REQUEST-----/g, "")
-    .replace(/-----BEGIN NEW CERTIFICATE REQUEST-----/g, "")
-    .replace(/-----END NEW CERTIFICATE REQUEST-----/g, "")
-    .replace(/\s+/g, "")
-    .trim();
+  const cleanCsr = settings.csr.trim();
 
   if (!cleanCsr) {
-    return { success: false, message: "CSR is empty after cleaning. Please regenerate CSR." };
+    return { success: false, message: "CSR is empty. Please regenerate CSR." };
   }
 
-  const isValidBase64 = /^[A-Za-z0-9+/=]+$/.test(cleanCsr);
+  const isValidBase64 = /^[A-Za-z0-9+/=\s]+$/.test(cleanCsr);
   if (!isValidBase64) {
     console.error(`[ZATCA Service] CSR contains invalid base64 characters`);
     return { success: false, message: "CSR contains invalid characters. Please regenerate CSR." };
   }
 
-  try {
-    const derBytes = Buffer.from(cleanCsr, "base64");
-    if (derBytes.length < 100) {
-      console.error(`[ZATCA Service] CSR DER is too short: ${derBytes.length} bytes`);
-      return { success: false, message: "CSR appears to be corrupted (too short). Please regenerate CSR." };
-    }
-    console.log(`[ZATCA Service] CSR DER decoded: ${derBytes.length} bytes, first byte: 0x${derBytes[0].toString(16)}`);
-    if (derBytes[0] !== 0x30) {
-      console.error(`[ZATCA Service] CSR DER does not start with SEQUENCE tag (0x30), got 0x${derBytes[0].toString(16)}`);
-      return { success: false, message: "CSR structure is invalid. Please regenerate CSR." };
-    }
-  } catch (decodeErr) {
-    console.error(`[ZATCA Service] Failed to decode CSR base64:`, decodeErr);
-    return { success: false, message: "CSR base64 is corrupted. Please regenerate CSR." };
+  const decoded = Buffer.from(cleanCsr, "base64").toString("utf8");
+  const isPemWrapped = decoded.includes("-----BEGIN CERTIFICATE REQUEST-----") || decoded.includes("-----BEGIN NEW CERTIFICATE REQUEST-----");
+  console.log(`[ZATCA Service] CSR format: ${isPemWrapped ? "base64(PEM) ✓" : "raw base64 (legacy)"}, decoded length: ${decoded.length}`);
+
+  let csrToSend = cleanCsr;
+  if (!isPemWrapped) {
+    console.log(`[ZATCA Service] Converting legacy raw base64 CSR to base64(PEM) format...`);
+    const pemLines = cleanCsr.match(/.{1,64}/g) || [];
+    const pem = `-----BEGIN CERTIFICATE REQUEST-----\n${pemLines.join("\n")}\n-----END CERTIFICATE REQUEST-----`;
+    csrToSend = Buffer.from(pem).toString("base64");
+    console.log(`[ZATCA Service] Converted CSR length: ${csrToSend.length}`);
   }
 
-  console.log(`[ZATCA Service] Clean CSR length: ${cleanCsr.length}, valid base64: ${isValidBase64}, first 40 chars: ${cleanCsr.substring(0, 40)}...`);
+  console.log(`[ZATCA Service] CSR to send length: ${csrToSend.length}, first 40 chars: ${csrToSend.substring(0, 40)}...`);
 
   const config: ZatcaConfig = {
     environment: settings.environment as "sandbox" | "simulation" | "production",
@@ -491,7 +482,7 @@ export async function onboardToZatca(
 
   const client = new ZatcaApiClient(config);
   console.log(`[ZATCA Service] Requesting compliance CSID for restaurant ${restaurantId}, env: ${settings.environment}`);
-  const response = await client.requestComplianceCSID(cleanCsr, otp);
+  const response = await client.requestComplianceCSID(csrToSend, otp);
 
   if (!response.success) {
     console.error(`[ZATCA Service] Compliance CSID request failed:`, response.error);

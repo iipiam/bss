@@ -141,15 +141,17 @@ export class ZatcaApiClient {
       }
 
       if (!response.ok) {
-        const errorMsg = data?.message 
+        const errorMsg = data?.errorMessage
+          || data?.message 
           || data?.errors?.[0]?.message 
           || data?.validationResults?.errorMessages?.[0]?.message
           || `ZATCA API request failed with status ${response.status}`;
+        const errorCode = data?.errorCode || data?.errors?.[0]?.code || data?.code || response.status.toString();
         console.error(`[ZATCA API] Error response:`, JSON.stringify(data, null, 2));
         return {
           success: false,
           error: {
-            code: data?.code || response.status.toString(),
+            code: errorCode,
             message: errorMsg,
             details: data ? JSON.stringify(data) : `HTTP ${response.status}`
           }
