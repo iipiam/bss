@@ -125,6 +125,7 @@ export function AppSidebar() {
     { title: t.orders, url: "/orders", icon: ClipboardList, testId: "orders", gradient: "from-blue-500 to-cyan-500", permission: 'orders', businessTypes: ['restaurant', 'factory'] },
     { title: businessType === 'factory' ? t.workshop : t.kitchen, url: "/kitchen", icon: Flame, testId: "kitchen", gradient: "from-orange-500 to-red-500", permission: 'kitchen', businessTypes: ['restaurant', 'factory'] },
     { title: t.deliveryApps, url: "/delivery-apps", icon: Truck, testId: "delivery-apps", gradient: "from-violet-500 to-purple-500", permission: 'deliveryApps', businessTypes: ['restaurant'] },
+    { title: t.mealSubscriptions || "Meal Subscriptions", url: "/meal-subscriptions", icon: CalendarCheck, testId: "meal-subscriptions", gradient: "from-lime-500 to-green-500", permission: 'orders', businessTypes: ['restaurant'] },
     { title: t.propertyListings, url: "/menu", icon: Home, testId: "property-listings", gradient: "from-emerald-500 to-teal-500", permission: 'menu', businessTypes: ['real_estate'] },
     { title: t.clientInquiries, url: "/orders", icon: ClipboardList, testId: "client-inquiries", gradient: "from-blue-500 to-cyan-500", permission: 'orders', businessTypes: ['real_estate'] },
     { title: t.contracts, url: "/contracts", icon: Handshake, testId: "contracts", gradient: "from-orange-500 to-red-500", permission: 'orders', businessTypes: ['real_estate'] },
@@ -145,7 +146,6 @@ export function AppSidebar() {
     { title: t.valuations, url: "/valuations", icon: Calculator, testId: "valuations", gradient: "from-teal-500 to-cyan-500", permission: 'reports', businessTypes: ['real_estate'] },
     { title: t.serviceCatalog || "Service Catalog", url: "/service-catalog", icon: Wrench, testId: "service-catalog", gradient: "from-green-500 to-emerald-500", permission: 'menu', businessTypes: ['design_services', 'installation_services', 'it_services'] },
     { title: t.contractors || "Contractors", url: "/contractors", icon: HardHat, testId: "contractors", gradient: "from-orange-500 to-amber-500", permission: 'customers', businessTypes: ['design_services', 'installation_services', 'it_services'] },
-    { title: t.mealSubscriptions || "Meal Subscriptions", url: "/meal-subscriptions", icon: CalendarCheck, testId: "meal-subscriptions", gradient: "from-lime-500 to-green-500", permission: 'orders', businessTypes: ['restaurant'] },
   ];
 
   const allAnalytics: MenuItem[] = [
