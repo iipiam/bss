@@ -15969,6 +15969,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const { id, createdAt, restaurantId: _rid, ...safeBody } = req.body;
+      if (safeBody.startDate && typeof safeBody.startDate === 'string') safeBody.startDate = new Date(safeBody.startDate);
+      if (safeBody.endDate && typeof safeBody.endDate === 'string') safeBody.endDate = new Date(safeBody.endDate);
       const subscription = await storage.createMealSubscription({ ...safeBody, restaurantId });
       res.status(201).json(subscription);
     } catch (error: any) {
@@ -15981,6 +15983,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const { id, createdAt, restaurantId: _rid, ...safeBody } = req.body;
+      if (safeBody.startDate && typeof safeBody.startDate === 'string') safeBody.startDate = new Date(safeBody.startDate);
+      if (safeBody.endDate && typeof safeBody.endDate === 'string') safeBody.endDate = new Date(safeBody.endDate);
       const subscription = await storage.updateMealSubscription(req.params.id, restaurantId, safeBody);
       if (!subscription) return res.status(404).json({ message: "Subscription not found" });
       res.json(subscription);
