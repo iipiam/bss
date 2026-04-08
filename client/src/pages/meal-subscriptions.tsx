@@ -86,7 +86,7 @@ const subscriptionFormSchema = z.object({
   })).default([]),
   planType: z.enum(["daily", "weekly", "monthly"]),
   scheduleDays: z.array(z.string()).default([]),
-  mealTime: z.enum(["breakfast", "lunch", "dinner"]),
+  mealTime: z.array(z.enum(["breakfast", "lunch", "dinner"])).min(1, "Select at least one meal time"),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().optional(),
   amount: z.string().min(1, "Amount is required"),
@@ -103,8 +103,10 @@ function asPlanType(val: string): PlanType {
   return PLAN_TYPES.includes(val as PlanType) ? (val as PlanType) : "daily";
 }
 
-function asMealTime(val: string): MealTimeType {
-  return MEAL_TIMES.includes(val as MealTimeType) ? (val as MealTimeType) : "lunch";
+function parseMealTimes(val: string): MealTimeType[] {
+  if (!val) return ["lunch"];
+  const parts = val.split(",").map((s) => s.trim()).filter((s) => MEAL_TIMES.includes(s as MealTimeType));
+  return parts.length > 0 ? (parts as MealTimeType[]) : ["lunch"];
 }
 
 function asPaymentStatus(val: string): PaymentStatusType {
@@ -159,7 +161,7 @@ export default function MealSubscriptionsPage() {
       mealSelections: [],
       planType: "daily",
       scheduleDays: [],
-      mealTime: "lunch",
+      mealTime: ["lunch"],
       startDate: "",
       endDate: "",
       amount: "",
@@ -173,8 +175,9 @@ export default function MealSubscriptionsPage() {
     mutationFn: async (data: SubscriptionFormValues) => {
       const payload = {
         ...data,
-        startDate: new Date(data.startDate).toISOString(),
-        endDate: data.endDate ? new Date(data.endDate).toISOString() : null,
+        mealTime: data.mealTime.join(","),
+        startDate: data.startDate ? new Date(data.startDate + "T00:00:00").toISOString() : new Date().toISOString(),
+        endDate: data.endDate ? new Date(data.endDate + "T00:00:00").toISOString() : null,
       };
       return apiRequest("POST", "/api/meal-subscriptions", payload);
     },
@@ -193,8 +196,9 @@ export default function MealSubscriptionsPage() {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<SubscriptionFormValues> }) => {
       const payload: Record<string, unknown> = { ...data };
-      if (data.startDate) payload.startDate = new Date(data.startDate).toISOString();
-      if (data.endDate) payload.endDate = new Date(data.endDate).toISOString();
+      if (data.mealTime) payload.mealTime = data.mealTime.join(",");
+      if (data.startDate) payload.startDate = new Date(data.startDate + "T00:00:00").toISOString();
+      if (data.endDate) payload.endDate = new Date(data.endDate + "T00:00:00").toISOString();
       return apiRequest("PATCH", `/api/meal-subscriptions/${id}`, payload);
     },
     onSuccess: () => {
@@ -247,7 +251,7 @@ export default function MealSubscriptionsPage() {
       mealSelections: [],
       planType: "daily",
       scheduleDays: [],
-      mealTime: "lunch",
+      mealTime: ["lunch"],
       startDate: new Date().toISOString().split("T")[0],
       endDate: "",
       amount: "",
@@ -269,7 +273,7 @@ export default function MealSubscriptionsPage() {
       mealSelections: parseMealSelections(sub.mealSelections),
       planType: asPlanType(sub.planType),
       scheduleDays: Array.isArray(sub.scheduleDays) ? sub.scheduleDays : [],
-      mealTime: asMealTime(sub.mealTime),
+      mealTime: parseMealTimes(sub.mealTime),
       startDate: sub.startDate ? new Date(sub.startDate).toISOString().split("T")[0] : "",
       endDate: sub.endDate ? new Date(sub.endDate).toISOString().split("T")[0] : "",
       amount: sub.amount?.toString() || "",
@@ -518,7 +522,7 @@ export default function MealSubscriptionsPage() {
                   <div className="flex flex-wrap items-center gap-3 text-sm">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3 text-muted-foreground" />
-                      {getMealTimeLabel(sub.mealTime)}
+                      {sub.mealTime.split(",").map((t) => getMealTimeLabel(t.trim())).join(", ")}
                     </span>
                     <span className="flex items-center gap-1">
                       <CalendarCheck className="h-3 w-3 text-muted-foreground" />
@@ -669,21 +673,35 @@ export default function MealSubscriptionsPage() {
                 <FormField
                   control={form.control}
                   name="mealTime"
-                  render={({ field }) => (
+                  render={() => (
                     <FormItem>
                       <FormLabel>{t.mealTime}</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-meal-time">
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="breakfast">{t.breakfast}</SelectItem>
-                          <SelectItem value="lunch">{t.lunch}</SelectItem>
-                          <SelectItem value="dinner">{t.dinner}</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {MEAL_TIMES.map((time) => {
+                          const selected = (form.watch("mealTime") || []).includes(time);
+                          return (
+                            <Button
+                              key={time}
+                              type="button"
+                              size="sm"
+                              variant={selected ? "default" : "outline"}
+                              className={`toggle-elevate ${selected ? "toggle-elevated" : ""}`}
+                              onClick={() => {
+                                const current = form.getValues("mealTime") || [];
+                                if (selected) {
+                                  const updated = current.filter((t) => t !== time);
+                                  if (updated.length > 0) form.setValue("mealTime", updated, { shouldValidate: true });
+                                } else {
+                                  form.setValue("mealTime", [...current, time], { shouldValidate: true });
+                                }
+                              }}
+                              data-testid={`button-meal-time-${time}`}
+                            >
+                              {getMealTimeLabel(time)}
+                            </Button>
+                          );
+                        })}
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
