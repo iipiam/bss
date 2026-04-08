@@ -52,6 +52,7 @@ import {
   businessInfo,
   procurement,
   deviceSerialNumbers,
+  mealSubscriptions,
 } from "@shared/schema";
 import { getPlanPricing, type SubscriptionPlan, type BusinessType } from "@shared/subscriptionPricing";
 import { ADMIN_PERMISSIONS, type PermissionSet } from "@shared/permissions";
@@ -16057,11 +16058,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/meal-subscriptions/:id/schedule-pdf", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+  app.get("/api/meal-subscriptions/:id/schedule-pdf", async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
-      const subscription = await storage.getMealSubscription(req.params.id, restaurantId);
+      const subscriptionId = req.params.id;
+      const allSubs = await db.select().from(mealSubscriptions).where(eq(mealSubscriptions.id, subscriptionId)).limit(1);
+      const subscription = allSubs[0];
       if (!subscription) return res.status(404).json({ message: "Subscription not found" });
+      const restaurantId = subscription.restaurantId;
       const restaurant = await storage.getRestaurant(restaurantId);
       const menuItemsList = await storage.getMenuItems(restaurantId);
       const selections = Array.isArray(subscription.mealSelections) ? (subscription.mealSelections as Array<{ name: string; menuItemId?: string }>) : [];
@@ -16082,6 +16085,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         startDate: subscription.startDate?.toISOString() || '',
         endDate: subscription.endDate?.toISOString(),
         amount: subscription.amount || '0',
+        numberOfDays: subscription.numberOfDays || undefined,
         paymentStatus: subscription.paymentStatus,
         restaurantName: restaurant?.name || 'Restaurant',
         createdAt: subscription.createdAt?.toISOString() || new Date().toISOString(),

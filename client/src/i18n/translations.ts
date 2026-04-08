@@ -1210,6 +1210,7 @@ export interface Translations {
   totalSubscriptions: string;
   totalVatCollected: string;
   subscriptionAmount: string;
+  numberOfDays: string;
   vatCalculation: string;
   selectPeriod: string;
   fromDate: string;
@@ -3637,6 +3638,7 @@ export const translations: Record<Language, Translations> = {
     totalSubscriptions: 'Total Subscriptions',
     totalVatCollected: 'Total VAT Collected',
     subscriptionAmount: 'Subscription Amount',
+    numberOfDays: 'Number of Days',
     vatCalculation: 'VAT Calculation',
     selectPeriod: 'Select Period',
     fromDate: 'From Date',
@@ -6024,6 +6026,7 @@ export const translations: Record<Language, Translations> = {
     totalSubscriptions: 'إجمالي الاشتراكات',
     totalVatCollected: 'إجمالي ضريبة القيمة المضافة المحصلة',
     subscriptionAmount: 'مبلغ الاشتراك',
+    numberOfDays: 'عدد الأيام',
     vatCalculation: 'حساب ضريبة القيمة المضافة',
     selectPeriod: 'حدد الفترة',
     fromDate: 'من تاريخ',
@@ -8407,6 +8410,7 @@ export const translations: Record<Language, Translations> = {
     totalSubscriptions: 'Gesamtabonnements',
     totalVatCollected: 'Erhobene MwSt. gesamt',
     subscriptionAmount: 'Abonnementbetrag',
+    numberOfDays: 'Anzahl der Tage',
     vatCalculation: 'MwSt.-Berechnung',
     selectPeriod: 'Zeitraum auswählen',
     fromDate: 'Von Datum',
@@ -10776,6 +10780,7 @@ export const translations: Record<Language, Translations> = {
     totalSubscriptions: '订阅总数',
     totalVatCollected: '已收增值税总额',
     subscriptionAmount: '订阅金额',
+    numberOfDays: '天数',
     vatCalculation: '增值税计算',
     selectPeriod: '选择期间',
     fromDate: '开始日期',
@@ -13145,6 +13150,7 @@ export const translations: Record<Language, Translations> = {
     totalSubscriptions: 'মোট সাবস্ক্রিপশন',
     totalVatCollected: 'মোট সংগৃহীত ভ্যাট',
     subscriptionAmount: 'সাবস্ক্রিপশন পরিমাণ',
+    numberOfDays: 'দিনের সংখ্যা',
     vatCalculation: 'ভ্যাট হিসাব',
     selectPeriod: 'সময়কাল নির্বাচন করুন',
     fromDate: 'শুরুর তারিখ',
@@ -15514,6 +15520,7 @@ export const translations: Record<Language, Translations> = {
     totalSubscriptions: 'Abbonamenti Totali',
     totalVatCollected: 'IVA Totale Raccolta',
     subscriptionAmount: 'Importo Abbonamento',
+    numberOfDays: 'Numero di Giorni',
     vatCalculation: 'Calcolo IVA',
     selectPeriod: 'Seleziona Periodo',
     fromDate: 'Data Inizio',
@@ -17859,6 +17866,7 @@ export const translations: Record<Language, Translations> = {
     totalSubscriptions: 'कुल सदस्यताएं',
     totalVatCollected: 'कुल एकत्रित वैट',
     subscriptionAmount: 'सदस्यता राशि',
+    numberOfDays: 'दिनों की संख्या',
     vatCalculation: 'वैट गणना',
     selectPeriod: 'अवधि चुनें',
     fromDate: 'आरंभ तिथि',
@@ -20172,6 +20180,7 @@ export const translations: Record<Language, Translations> = {
     totalSubscriptions: 'کل سبسکرپشنز',
     totalVatCollected: 'جمع شدہ کل VAT',
     subscriptionAmount: 'سبسکرپشن رقم',
+    numberOfDays: 'دنوں کی تعداد',
     vatCalculation: 'VAT حساب',
     selectPeriod: 'مدت منتخب کریں',
     fromDate: 'تاریخ سے',
@@ -22421,6 +22430,7 @@ export const translations: Record<Language, Translations> = {
     totalSubscriptions: 'Suscripciones Totales',
     totalVatCollected: 'IVA Total Recaudado',
     subscriptionAmount: 'Monto de Suscripción',
+    numberOfDays: 'Número de Días',
     vatCalculation: 'Cálculo de IVA',
     selectPeriod: 'Seleccionar Período',
     fromDate: 'Fecha Desde',
@@ -24667,6 +24677,7 @@ export const translations: Record<Language, Translations> = {
     totalSubscriptions: 'Kabuuang Subscription',
     totalVatCollected: 'Kabuuang Nakolektang VAT',
     subscriptionAmount: 'Halaga ng Subscription',
+    numberOfDays: 'Bilang ng Araw',
     vatCalculation: 'Pagkalkula ng VAT',
     selectPeriod: 'Pumili ng Panahon',
     fromDate: 'Mula sa Petsa',

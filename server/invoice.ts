@@ -4336,6 +4336,7 @@ export async function generateMealSubscriptionSchedulePDF(data: {
   startDate: string;
   endDate?: string;
   amount: string;
+  numberOfDays?: number;
   paymentStatus: string;
   restaurantName: string;
   createdAt: string;
@@ -4382,6 +4383,7 @@ export async function generateMealSubscriptionSchedulePDF(data: {
   const mealsRows = data.mealSelections.map(m =>
     `<tr><td style="padding:8px;border:1px solid #ddd;">${m.name}</td><td style="padding:8px;border:1px solid #ddd;text-align:right;">${m.price ? parseFloat(m.price).toFixed(2) + ' SAR' : '-'}</td></tr>`
   ).join("");
+  const mealsSubtotal = data.mealSelections.reduce((sum, m) => sum + (m.price ? parseFloat(m.price) : 0), 0);
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
@@ -4422,6 +4424,7 @@ export async function generateMealSubscriptionSchedulePDF(data: {
         <div style="grid-column:1/3;"><div class="info-label" style="margin-bottom:4px;">Schedule | الجدول:</div>${daysHtml}</div>
         <div class="info-item"><span class="info-label">Start | البداية:</span><span>${data.startDate ? new Date(data.startDate).toLocaleDateString('en-GB') : '-'}</span></div>
         <div class="info-item"><span class="info-label">End | النهاية:</span><span>${data.endDate ? new Date(data.endDate).toLocaleDateString('en-GB') : 'Open-ended | مفتوح'}</span></div>
+        ${data.numberOfDays ? `<div class="info-item"><span class="info-label">Number of Days | عدد الأيام:</span><span>${data.numberOfDays}</span></div>` : ''}
         <div class="info-item"><span class="info-label">Payment | الدفع:</span><span>${paymentStr}</span></div>
       </div>
     </div>
@@ -4431,7 +4434,9 @@ export async function generateMealSubscriptionSchedulePDF(data: {
       <table>
         <thead><tr><th>Item | العنصر</th><th>Price | السعر</th></tr></thead>
         <tbody>${mealsRows}
-          <tr class="total-row"><td style="padding:8px;border:1px solid #ddd;">Total | الإجمالي</td><td style="padding:8px;border:1px solid #ddd;text-align:right;">${parseFloat(data.amount).toFixed(2)} SAR</td></tr>
+          <tr style="background:#f8fafc;"><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Meals Per Day | وجبات اليوم</td><td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:600;">${mealsSubtotal.toFixed(2)} SAR</td></tr>
+          ${data.numberOfDays ? `<tr style="background:#f8fafc;"><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Number of Days | عدد الأيام</td><td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:600;">${data.numberOfDays}</td></tr>` : ''}
+          <tr class="total-row"><td style="padding:8px;border:1px solid #ddd;">Total | الإجمالي${data.numberOfDays ? ` (${mealsSubtotal.toFixed(2)} × ${data.numberOfDays})` : ''}</td><td style="padding:8px;border:1px solid #ddd;text-align:right;">${parseFloat(data.amount).toFixed(2)} SAR</td></tr>
         </tbody>
       </table>
     </div>` : ''}

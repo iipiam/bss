@@ -101,6 +101,7 @@ const subscriptionFormSchema = z.object({
   deliveryHours: z.record(z.string(), z.string()).default({}),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().optional(),
+  numberOfDays: z.coerce.number().min(1, "Minimum 1 day").optional(),
   amount: z.string().min(1, "Amount is required"),
   paymentStatus: z.enum(["paid", "pending", "partial"]),
   status: z.enum(["active", "paused", "expired", "cancelled"]).default("active"),
@@ -191,6 +192,7 @@ export default function MealSubscriptionsPage() {
       mealTime: ["lunch"],
       startDate: "",
       endDate: "",
+      numberOfDays: undefined,
       amount: "",
       paymentStatus: "pending",
       status: "active",
@@ -331,6 +333,7 @@ export default function MealSubscriptionsPage() {
       deliveryHours: { ...DEFAULT_DELIVERY_HOURS },
       startDate: new Date().toISOString().split("T")[0],
       endDate: "",
+      numberOfDays: undefined,
       amount: "",
       paymentStatus: "pending",
       status: "active",
@@ -365,6 +368,7 @@ export default function MealSubscriptionsPage() {
       deliveryHours,
       startDate: sub.startDate ? new Date(sub.startDate).toISOString().split("T")[0] : "",
       endDate: sub.endDate ? new Date(sub.endDate).toISOString().split("T")[0] : "",
+      numberOfDays: sub.numberOfDays || undefined,
       amount: sub.amount?.toString() || "",
       paymentStatus: asPaymentStatus(sub.paymentStatus),
       status: asSubscriptionStatus(sub.status),
@@ -470,16 +474,17 @@ export default function MealSubscriptionsPage() {
     }
   };
 
-  const calculateAmount = (selections: MealSelection[], mealTimes: string[]) => {
-    if (selections.length === 0 || mealTimes.length === 0) return;
-    let totalPerDelivery = 0;
+  const calculateAmount = (selections: MealSelection[], _mealTimes?: string[], days?: number) => {
+    if (selections.length === 0) return;
+    let mealsPerDay = 0;
     for (const sel of selections) {
       if (sel.menuItemId) {
         const menuItem = menuItems.find((m) => m.id === sel.menuItemId);
-        if (menuItem?.price) totalPerDelivery += parseFloat(menuItem.price);
+        if (menuItem?.price) mealsPerDay += parseFloat(menuItem.price);
       }
     }
-    const total = totalPerDelivery * mealTimes.length;
+    const numDays = days ?? form.getValues("numberOfDays") ?? 1;
+    const total = mealsPerDay * numDays;
     if (total > 0) {
       form.setValue("amount", total.toFixed(2));
     }
@@ -520,7 +525,8 @@ export default function MealSubscriptionsPage() {
       const selections = parseMealSelections(sub.mealSelections);
       const mealsList = selections.map(s => s.name).join(", ");
       const scheduleUrl = `${window.location.origin}/api/meal-subscriptions/${sub.id}/schedule-pdf`;
-      const message = `*${t.mealSubscriptions}*\n\n${sub.subscriberName},\n\n${t.planType}: ${getPlanLabel(sub.planType)}\n${t.mealTime}: ${mealTimes}\n${mealsList ? `${t.mealSelections}: ${mealsList}\n` : ''}${t.subscriptionAmount}: ${parseFloat(sub.amount || '0').toFixed(2)} SAR\n\n${scheduleUrl}`;
+      const daysInfo = sub.numberOfDays ? `\n${t.numberOfDays || "Number of Days"}: ${sub.numberOfDays}` : '';
+      const message = `*${t.mealSubscriptions}*\n\n${sub.subscriberName},\n\n${t.planType}: ${getPlanLabel(sub.planType)}\n${t.mealTime}: ${mealTimes}\n${mealsList ? `${t.mealSelections}: ${mealsList}\n` : ''}${daysInfo}${t.subscriptionAmount}: ${parseFloat(sub.amount || '0').toFixed(2)} SAR\n\n${scheduleUrl}`;
       openWhatsAppWithMessage(sub.subscriberPhone, message);
     });
   };
@@ -815,7 +821,7 @@ export default function MealSubscriptionsPage() {
                         <CalendarCheck className="h-3 w-3 text-muted-foreground" />
                         {getPlanLabel(sub.planType)}
                       </span>
-                      <span className="font-semibold">{parseFloat(sub.amount || "0").toFixed(2)} SAR</span>
+                      <span className="font-semibold">{parseFloat(sub.amount || "0").toFixed(2)} SAR{sub.numberOfDays ? ` (${sub.numberOfDays} ${t.days || "days"})` : ""}</span>
                       <span className="flex items-center gap-1">
                         <Wallet className="h-3 w-3 text-muted-foreground" />
                         <span className={`font-semibold ${parseFloat(sub.creditBalance || "0") <= 0 ? "text-destructive" : "text-green-600"}`}>
@@ -1097,7 +1103,7 @@ export default function MealSubscriptionsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="startDate"
@@ -1124,18 +1130,64 @@ export default function MealSubscriptionsPage() {
                     </FormItem>
                   )}
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="amount"
+                  name="numberOfDays"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.subscriptionAmount} (SAR)</FormLabel>
+                      <FormLabel>{t.numberOfDays || "Number of Days"} | عدد الأيام</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.01" {...field} data-testid="input-amount" />
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="e.g. 30"
+                          value={field.value ?? ""}
+                          onChange={(e) => {
+                            const val = e.target.value ? parseInt(e.target.value) : undefined;
+                            field.onChange(val);
+                            if (val && val > 0) {
+                              calculateAmount(form.getValues("mealSelections") || [], undefined, val);
+                            }
+                          }}
+                          data-testid="input-number-of-days"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
+                />
+                <FormField
+                  control={form.control}
+                  name="amount"
+                  render={({ field }) => {
+                    const selections = form.watch("mealSelections") || [];
+                    const numDays = form.watch("numberOfDays");
+                    let mealsPerDay = 0;
+                    for (const sel of selections) {
+                      if (sel.menuItemId) {
+                        const mi = menuItems.find((m) => m.id === sel.menuItemId);
+                        if (mi?.price) mealsPerDay += parseFloat(mi.price);
+                      }
+                    }
+                    const hasCalc = mealsPerDay > 0 && numDays && numDays > 0;
+                    return (
+                      <FormItem>
+                        <FormLabel>{t.subscriptionAmount} (SAR)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" {...field} data-testid="input-amount" />
+                        </FormControl>
+                        {hasCalc && (
+                          <p className="text-xs text-muted-foreground" data-testid="text-amount-calc">
+                            {mealsPerDay.toFixed(2)} SAR × {numDays} {t.days || "days"} = {(mealsPerDay * numDays).toFixed(2)} SAR
+                          </p>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
               </div>
 
