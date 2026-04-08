@@ -169,12 +169,17 @@ export function generateCSR(
     const privateKeyPem = fs.readFileSync(keyPath, "utf8");
     const csrPem = fs.readFileSync(csrPath, "utf8");
 
-    const csrLines = csrPem.split("\n")
-      .filter(line => !line.startsWith("-----"))
-      .join("");
+    // Strip PEM headers/footers and all whitespace to get clean base64
+    const csrBase64 = csrPem
+      .replace(/-----BEGIN [A-Z ]+-----/g, "")
+      .replace(/-----END [A-Z ]+-----/g, "")
+      .replace(/\s+/g, "")
+      .trim();
+    
+    console.log(`[ZATCA CSR] Generated CSR length: ${csrBase64.length}`);
     
     return {
-      csr: csrLines,
+      csr: csrBase64,
       privateKey: privateKeyPem
     };
 

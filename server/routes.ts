@@ -14484,7 +14484,6 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       
       // Map frontend field names to database column names (seller prefix for address fields)
-      const settingsData: Record<string, any> = { ...rawSettingsData };
       const fieldMappings: Record<string, string> = {
         streetName: "sellerStreetName",
         buildingNumber: "sellerBuildingNumber",
@@ -14492,17 +14491,36 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         city: "sellerCity",
         postalZone: "sellerPostalZone",
         crNumber: "sellerCrNumber",
+        countryCode: "csrCountryName",
       };
       
+      // Whitelist only the editable settings fields
+      const allowedDbFields = [
+        "environment", "isEnabled",
+        "csrCommonName", "csrSerialNumber", "csrOrganizationIdentifier",
+        "csrOrganizationUnitName", "csrOrganizationName", "csrCountryName",
+        "csrInvoiceType", "csrLocationAddress", "csrIndustryBusinessCategory",
+        "sellerStreetName", "sellerBuildingNumber", "sellerCitySubdivision",
+        "sellerCity", "sellerPostalZone", "sellerCrNumber",
+        "privateKey", "complianceCsid", "complianceCsidSecret",
+        "productionCsid", "productionCsidSecret", "onboardingStatus",
+      ];
+      
+      const settingsData: Record<string, any> = {};
+      
+      // First apply field mappings from frontend names to DB names
       for (const [frontendKey, dbKey] of Object.entries(fieldMappings)) {
-        if (frontendKey in settingsData) {
-          settingsData[dbKey] = settingsData[frontendKey];
-          delete settingsData[frontendKey];
+        if (frontendKey in rawSettingsData && rawSettingsData[frontendKey] !== undefined) {
+          settingsData[dbKey] = rawSettingsData[frontendKey];
         }
       }
       
-      // Remove any unknown fields that don't exist in schema
-      delete settingsData.countryCode; // This is handled by csrCountryName
+      // Then copy allowed DB-named fields directly
+      for (const key of allowedDbFields) {
+        if (key in rawSettingsData && rawSettingsData[key] !== undefined && !(key in settingsData)) {
+          settingsData[key] = rawSettingsData[key];
+        }
+      }
       
       const existingSettings = await storage.getZatcaSettings(targetRestaurantId);
       
@@ -14517,9 +14535,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         });
         res.status(201).json(created);
       }
-    } catch (error) {
-      console.error("Error saving ZATCA settings:", error);
-      res.status(500).json({ error: "Failed to save ZATCA settings" });
+    } catch (error: any) {
+      console.error("Error saving ZATCA settings:", error?.message || error);
+      res.status(500).json({ error: "Failed to save ZATCA settings", details: error?.message });
     }
   });
 

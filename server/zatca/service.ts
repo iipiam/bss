@@ -444,6 +444,21 @@ export async function onboardToZatca(
     return { success: false, message: "CSR not generated. Please generate CSR first." };
   }
 
+  // Clean CSR: remove PEM headers/footers, whitespace, and newlines to get pure base64
+  const cleanCsr = settings.csr
+    .replace(/-----BEGIN CERTIFICATE REQUEST-----/g, "")
+    .replace(/-----END CERTIFICATE REQUEST-----/g, "")
+    .replace(/-----BEGIN NEW CERTIFICATE REQUEST-----/g, "")
+    .replace(/-----END NEW CERTIFICATE REQUEST-----/g, "")
+    .replace(/\s+/g, "")
+    .trim();
+
+  if (!cleanCsr) {
+    return { success: false, message: "CSR is empty after cleaning. Please regenerate CSR." };
+  }
+
+  console.log(`[ZATCA Service] CSR length: ${cleanCsr.length}, first 40 chars: ${cleanCsr.substring(0, 40)}...`);
+
   const config: ZatcaConfig = {
     environment: settings.environment as "sandbox" | "simulation" | "production",
     csid: "",
@@ -453,7 +468,7 @@ export async function onboardToZatca(
 
   const client = new ZatcaApiClient(config);
   console.log(`[ZATCA Service] Requesting compliance CSID for restaurant ${restaurantId}, env: ${settings.environment}`);
-  const response = await client.requestComplianceCSID(settings.csr, otp);
+  const response = await client.requestComplianceCSID(cleanCsr, otp);
 
   if (!response.success) {
     console.error(`[ZATCA Service] Compliance CSID request failed:`, response.error);
