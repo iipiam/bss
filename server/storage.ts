@@ -624,6 +624,7 @@ export interface IStorage {
   // Meal Subscriptions (MULTI-TENANT: requires restaurantId)
   getMealSubscriptions(restaurantId: string, status?: string): Promise<MealSubscription[]>;
   getMealSubscription(id: string, restaurantId: string): Promise<MealSubscription | undefined>;
+  getTodaysMealDeliveries(restaurantId: string): Promise<MealSubscription[]>;
   createMealSubscription(subscription: InsertMealSubscription): Promise<MealSubscription>;
   updateMealSubscription(id: string, restaurantId: string, subscription: Partial<InsertMealSubscription>): Promise<MealSubscription | undefined>;
   deleteMealSubscription(id: string, restaurantId: string): Promise<boolean>;
@@ -5473,6 +5474,26 @@ export class DatabaseStorage implements IStorage {
   async getMealSubscription(id: string, restaurantId: string): Promise<MealSubscription | undefined> {
     const [sub] = await db.select().from(mealSubscriptions).where(and(eq(mealSubscriptions.id, id), eq(mealSubscriptions.restaurantId, restaurantId)));
     return sub;
+  }
+
+  async getTodaysMealDeliveries(restaurantId: string): Promise<MealSubscription[]> {
+    const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    const todayDayName = dayNames[new Date().getDay()];
+    const activeSubscriptions = await db
+      .select()
+      .from(mealSubscriptions)
+      .where(
+        and(
+          eq(mealSubscriptions.restaurantId, restaurantId),
+          eq(mealSubscriptions.status, "active")
+        )
+      )
+      .orderBy(desc(mealSubscriptions.createdAt));
+    return activeSubscriptions.filter((sub) => {
+      const days = Array.isArray(sub.scheduleDays) ? sub.scheduleDays : [];
+      if (days.length === 0) return true;
+      return days.includes(todayDayName);
+    });
   }
 
   async createMealSubscription(subscription: InsertMealSubscription): Promise<MealSubscription> {

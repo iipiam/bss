@@ -58,7 +58,21 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
-import type { MealSubscription } from "@shared/schema";
+import type { MealSubscription, MenuItem as MenuItemType } from "@shared/schema";
+
+interface MealSelection {
+  name: string;
+  menuItemId?: string;
+}
+
+type PlanType = "daily" | "weekly" | "monthly";
+type MealTimeType = "breakfast" | "lunch" | "dinner";
+type PaymentStatusType = "paid" | "pending" | "partial";
+type SubscriptionStatusType = "active" | "paused" | "expired" | "cancelled";
+
+const PLAN_TYPES: PlanType[] = ["daily", "weekly", "monthly"];
+const MEAL_TIMES: MealTimeType[] = ["breakfast", "lunch", "dinner"];
+const PAYMENT_STATUSES: PaymentStatusType[] = ["paid", "pending", "partial"];
 
 const subscriptionFormSchema = z.object({
   subscriberName: z.string().min(1, "Name is required"),
@@ -85,6 +99,33 @@ type SubscriptionFormValues = z.infer<typeof subscriptionFormSchema>;
 
 const DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
 
+function asPlanType(val: string): PlanType {
+  return PLAN_TYPES.includes(val as PlanType) ? (val as PlanType) : "daily";
+}
+
+function asMealTime(val: string): MealTimeType {
+  return MEAL_TIMES.includes(val as MealTimeType) ? (val as MealTimeType) : "lunch";
+}
+
+function asPaymentStatus(val: string): PaymentStatusType {
+  return PAYMENT_STATUSES.includes(val as PaymentStatusType) ? (val as PaymentStatusType) : "pending";
+}
+
+function asSubscriptionStatus(val: string): SubscriptionStatusType {
+  const valid: SubscriptionStatusType[] = ["active", "paused", "expired", "cancelled"];
+  return valid.includes(val as SubscriptionStatusType) ? (val as SubscriptionStatusType) : "active";
+}
+
+function parseMealSelections(raw: unknown): MealSelection[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (item): item is MealSelection =>
+      typeof item === "object" &&
+      item !== null &&
+      typeof (item as Record<string, unknown>).name === "string"
+  );
+}
+
 export default function MealSubscriptionsPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
@@ -99,7 +140,11 @@ export default function MealSubscriptionsPage() {
     queryKey: ["/api/meal-subscriptions"],
   });
 
-  const { data: menuItems = [] } = useQuery<any[]>({
+  const { data: todaysDeliveryList = [] } = useQuery<MealSubscription[]>({
+    queryKey: ["/api/meal-subscriptions/today"],
+  });
+
+  const { data: menuItems = [] } = useQuery<MenuItemType[]>({
     queryKey: ["/api/menu"],
   });
 
@@ -139,14 +184,14 @@ export default function MealSubscriptionsPage() {
       setDialogOpen(false);
       form.reset();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: error.message, variant: "destructive" });
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<SubscriptionFormValues> }) => {
-      const payload: any = { ...data };
+      const payload: Record<string, unknown> = { ...data };
       if (data.startDate) payload.startDate = new Date(data.startDate).toISOString();
       if (data.endDate) payload.endDate = new Date(data.endDate).toISOString();
       return apiRequest("PATCH", `/api/meal-subscriptions/${id}`, payload);
@@ -158,7 +203,7 @@ export default function MealSubscriptionsPage() {
       setEditingSubscription(null);
       form.reset();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: error.message, variant: "destructive" });
     },
   });
@@ -172,7 +217,7 @@ export default function MealSubscriptionsPage() {
       toast({ title: t.subscriptionDeleted });
       setDeleteId(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: error.message, variant: "destructive" });
     },
   });
@@ -217,15 +262,15 @@ export default function MealSubscriptionsPage() {
       subscriberEmail: sub.subscriberEmail || "",
       deliveryAddress: sub.deliveryAddress || "",
       dietaryNotes: sub.dietaryNotes || "",
-      mealSelections: Array.isArray(sub.mealSelections) ? sub.mealSelections as any : [],
-      planType: sub.planType as any,
+      mealSelections: parseMealSelections(sub.mealSelections),
+      planType: asPlanType(sub.planType),
       scheduleDays: Array.isArray(sub.scheduleDays) ? sub.scheduleDays : [],
-      mealTime: sub.mealTime as any,
+      mealTime: asMealTime(sub.mealTime),
       startDate: sub.startDate ? new Date(sub.startDate).toISOString().split("T")[0] : "",
       endDate: sub.endDate ? new Date(sub.endDate).toISOString().split("T")[0] : "",
       amount: sub.amount?.toString() || "",
-      paymentStatus: sub.paymentStatus as any,
-      status: sub.status as any,
+      paymentStatus: asPaymentStatus(sub.paymentStatus),
+      status: asSubscriptionStatus(sub.status),
       notes: sub.notes || "",
     });
     setDialogOpen(true);
@@ -243,15 +288,6 @@ export default function MealSubscriptionsPage() {
   const monthlyRev = subscriptions
     .filter((s) => s.status === "active")
     .reduce((sum, s) => sum + parseFloat(s.amount || "0"), 0);
-
-  const today = new Date();
-  const dayName = DAY_KEYS[today.getDay()];
-  const todaysDeliveryList = subscriptions.filter((s) => {
-    if (s.status !== "active") return false;
-    const days = Array.isArray(s.scheduleDays) ? s.scheduleDays : [];
-    if (days.length === 0) return true;
-    return days.includes(dayName);
-  });
 
   const filteredSubscriptions = subscriptions.filter((s) => {
     if (statusFilter !== "all" && s.status !== statusFilter) return false;
@@ -449,90 +485,93 @@ export default function MealSubscriptionsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {displayList.map((sub) => (
-            <Card key={sub.id} data-testid={`card-subscription-${sub.id}`}>
-              <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
-                <div className="space-y-1 min-w-0">
-                  <h3 className="font-semibold truncate" data-testid={`text-name-${sub.id}`}>{sub.subscriberName}</h3>
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Phone className="h-3 w-3" />
-                      {sub.subscriberPhone}
-                    </span>
-                    {sub.deliveryAddress && (
+          {displayList.map((sub) => {
+            const selections = parseMealSelections(sub.mealSelections);
+            return (
+              <Card key={sub.id} data-testid={`card-subscription-${sub.id}`}>
+                <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
+                  <div className="space-y-1 min-w-0">
+                    <h3 className="font-semibold truncate" data-testid={`text-name-${sub.id}`}>{sub.subscriberName}</h3>
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        <span className="truncate max-w-[150px]">{sub.deliveryAddress}</span>
+                        <Phone className="h-3 w-3" />
+                        {sub.subscriberPhone}
                       </span>
+                      {sub.deliveryAddress && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          <span className="truncate max-w-[150px]">{sub.deliveryAddress}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1">
+                    {getStatusBadge(sub.status)}
+                    {getPaymentBadge(sub.paymentStatus)}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-3 text-sm">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-muted-foreground" />
+                      {getMealTimeLabel(sub.mealTime)}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CalendarCheck className="h-3 w-3 text-muted-foreground" />
+                      {getPlanLabel(sub.planType)}
+                    </span>
+                    <span className="font-semibold">{parseFloat(sub.amount || "0").toFixed(2)} SAR</span>
+                  </div>
+                  {Array.isArray(sub.scheduleDays) && sub.scheduleDays.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {sub.scheduleDays.map((day) => (
+                        <Badge key={day} variant="outline" className="text-xs">
+                          {getDayLabel(day)}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  {selections.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {selections.map((item, idx) => (
+                        <Badge key={idx} variant="secondary" className="text-xs">
+                          {item.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
+                    <Button size="sm" variant="outline" onClick={() => handleOpenEdit(sub)} data-testid={`button-edit-${sub.id}`}>
+                      <Edit className="h-3 w-3 mr-1" />
+                      {t.edit || "Edit"}
+                    </Button>
+                    {sub.status === "active" && (
+                      <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: sub.id, status: "paused" })} data-testid={`button-pause-${sub.id}`}>
+                        <Pause className="h-3 w-3 mr-1" />
+                        {t.pauseSubscription}
+                      </Button>
                     )}
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-1">
-                  {getStatusBadge(sub.status)}
-                  {getPaymentBadge(sub.paymentStatus)}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex flex-wrap items-center gap-3 text-sm">
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3 text-muted-foreground" />
-                    {getMealTimeLabel(sub.mealTime)}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <CalendarCheck className="h-3 w-3 text-muted-foreground" />
-                    {getPlanLabel(sub.planType)}
-                  </span>
-                  <span className="font-semibold">{parseFloat(sub.amount || "0").toFixed(2)} SAR</span>
-                </div>
-                {Array.isArray(sub.scheduleDays) && sub.scheduleDays.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {sub.scheduleDays.map((day) => (
-                      <Badge key={day} variant="outline" className="text-xs">
-                        {getDayLabel(day)}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-                {Array.isArray(sub.mealSelections) && (sub.mealSelections as any[]).length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {(sub.mealSelections as any[]).map((item: any, idx: number) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
-                        {item.name}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-                <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
-                  <Button size="sm" variant="outline" onClick={() => handleOpenEdit(sub)} data-testid={`button-edit-${sub.id}`}>
-                    <Edit className="h-3 w-3 mr-1" />
-                    {t.edit || "Edit"}
-                  </Button>
-                  {sub.status === "active" && (
-                    <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: sub.id, status: "paused" })} data-testid={`button-pause-${sub.id}`}>
-                      <Pause className="h-3 w-3 mr-1" />
-                      {t.pauseSubscription}
+                    {sub.status === "paused" && (
+                      <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: sub.id, status: "active" })} data-testid={`button-resume-${sub.id}`}>
+                        <Play className="h-3 w-3 mr-1" />
+                        {t.resumeSubscription}
+                      </Button>
+                    )}
+                    {(sub.status === "active" || sub.status === "paused") && (
+                      <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: sub.id, status: "cancelled" })} data-testid={`button-cancel-${sub.id}`}>
+                        <XCircle className="h-3 w-3 mr-1" />
+                        {t.cancelSubscription}
+                      </Button>
+                    )}
+                    <Button size="sm" variant="destructive" onClick={() => setDeleteId(sub.id)} data-testid={`button-delete-${sub.id}`}>
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      {t.delete || "Delete"}
                     </Button>
-                  )}
-                  {sub.status === "paused" && (
-                    <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: sub.id, status: "active" })} data-testid={`button-resume-${sub.id}`}>
-                      <Play className="h-3 w-3 mr-1" />
-                      {t.resumeSubscription}
-                    </Button>
-                  )}
-                  {(sub.status === "active" || sub.status === "paused") && (
-                    <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: sub.id, status: "cancelled" })} data-testid={`button-cancel-${sub.id}`}>
-                      <XCircle className="h-3 w-3 mr-1" />
-                      {t.cancelSubscription}
-                    </Button>
-                  )}
-                  <Button size="sm" variant="destructive" onClick={() => setDeleteId(sub.id)} data-testid={`button-delete-${sub.id}`}>
-                    <Trash2 className="h-3 w-3 mr-1" />
-                    {t.delete || "Delete"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
@@ -737,9 +776,9 @@ export default function MealSubscriptionsPage() {
                 <div>
                   <FormLabel>{t.mealSelections}</FormLabel>
                   <div className="flex flex-wrap gap-2 mt-2 max-h-32 overflow-y-auto border rounded-md p-2">
-                    {menuItems.map((item: any) => {
+                    {menuItems.map((item) => {
                       const selections = form.watch("mealSelections") || [];
-                      const isSelected = selections.some((s: any) => s.menuItemId === item.id);
+                      const isSelected = selections.some((s) => s.menuItemId === item.id);
                       return (
                         <Button
                           key={item.id}
@@ -749,7 +788,7 @@ export default function MealSubscriptionsPage() {
                           className={`toggle-elevate ${isSelected ? "toggle-elevated" : ""}`}
                           onClick={() => {
                             if (isSelected) {
-                              form.setValue("mealSelections", selections.filter((s: any) => s.menuItemId !== item.id));
+                              form.setValue("mealSelections", selections.filter((s) => s.menuItemId !== item.id));
                             } else {
                               form.setValue("mealSelections", [...selections, { name: item.name, menuItemId: item.id }]);
                             }

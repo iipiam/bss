@@ -15941,6 +15941,18 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  app.get("/api/meal-subscriptions/today", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const deliveries = await storage.getTodaysMealDeliveries(restaurantId);
+      res.json(deliveries);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error fetching today's meal deliveries:", message);
+      res.status(500).json({ message });
+    }
+  });
+
   app.get("/api/meal-subscriptions/:id", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
