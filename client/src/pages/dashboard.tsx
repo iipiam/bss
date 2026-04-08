@@ -125,27 +125,27 @@ const PerformanceCard = ({
     <Card className="hover-elevate transition-all">
       <CardContent className={layout.cardPadding}>
         <div
-          className={`flex items-center justify-between ${layout.isMobile ? "mb-2" : "mb-4"}`}
+          className={`flex items-center justify-between gap-2 ${layout.isMobile ? "mb-2" : "mb-4"}`}
         >
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="p-2 rounded-lg bg-primary/10 shrink-0">
               <Icon
                 className={`${layout.isMobile ? "w-4 h-4" : "w-5 h-5"} text-primary`}
               />
             </div>
             <h3
-              className={`font-semibold ${layout.isMobile ? "text-xs" : "text-sm"} text-muted-foreground`}
+              className={`font-semibold ${layout.isMobile ? "text-xs" : "text-sm"} text-muted-foreground truncate`}
             >
               {title}
             </h3>
           </div>
           {hasNoHistoricalData ? (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-muted/50 text-muted-foreground">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-muted/50 text-muted-foreground shrink-0 whitespace-nowrap">
               <span>No data</span>
             </div>
           ) : (
             <div
-              className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
+              className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold shrink-0 whitespace-nowrap ${
                 isPositive
                   ? "bg-green-500/10 text-green-600 dark:text-green-400"
                   : metric.change === 0
