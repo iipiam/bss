@@ -78,6 +78,12 @@ const PLAN_TYPES: PlanType[] = ["daily", "weekly", "monthly"];
 const MEAL_TIMES: MealTimeType[] = ["breakfast", "lunch", "dinner"];
 const PAYMENT_STATUSES: PaymentStatusType[] = ["paid", "pending", "partial"];
 
+const DEFAULT_DELIVERY_HOURS: Record<string, string> = {
+  breakfast: "07:00",
+  lunch: "12:00",
+  dinner: "19:00",
+};
+
 const subscriptionFormSchema = z.object({
   subscriberName: z.string().min(1, "Name is required"),
   subscriberPhone: z.string().min(1, "Phone is required"),
@@ -91,6 +97,7 @@ const subscriptionFormSchema = z.object({
   planType: z.enum(["daily", "weekly", "monthly"]),
   scheduleDays: z.array(z.string()).default([]),
   mealTime: z.array(z.enum(["breakfast", "lunch", "dinner"])).min(1, "Select at least one meal time"),
+  deliveryHours: z.record(z.string(), z.string()).default({}),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().optional(),
   amount: z.string().min(1, "Amount is required"),
@@ -111,6 +118,21 @@ function parseMealTimes(val: string): MealTimeType[] {
   if (!val) return ["lunch"];
   const parts = val.split(",").map((s) => s.trim()).filter((s) => MEAL_TIMES.includes(s as MealTimeType));
   return parts.length > 0 ? (parts as MealTimeType[]) : ["lunch"];
+}
+
+function parseDeliveryHoursStatic(val: unknown): Record<string, string> {
+  if (val && typeof val === 'object' && !Array.isArray(val)) return val as Record<string, string>;
+  return {};
+}
+
+function formatTime12h(time24: string): string {
+  const [hStr, mStr] = time24.split(":");
+  let h = parseInt(hStr, 10);
+  const m = mStr || "00";
+  const ampm = h >= 12 ? "PM" : "AM";
+  if (h === 0) h = 12;
+  else if (h > 12) h -= 12;
+  return `${h}:${m} ${ampm}`;
 }
 
 function asPaymentStatus(val: string): PaymentStatusType {
@@ -305,6 +327,7 @@ export default function MealSubscriptionsPage() {
       planType: "daily",
       scheduleDays: [],
       mealTime: ["lunch"],
+      deliveryHours: { ...DEFAULT_DELIVERY_HOURS },
       startDate: new Date().toISOString().split("T")[0],
       endDate: "",
       amount: "",
@@ -315,8 +338,19 @@ export default function MealSubscriptionsPage() {
     setDialogOpen(true);
   };
 
+  const parseDeliveryHours = (val: unknown): Record<string, string> => {
+    if (val && typeof val === 'object' && !Array.isArray(val)) return val as Record<string, string>;
+    return {};
+  };
+
   const handleOpenEdit = (sub: MealSubscription) => {
     setEditingSubscription(sub);
+    const existingHours = parseDeliveryHours(sub.deliveryHours);
+    const mealTimes = parseMealTimes(sub.mealTime);
+    const deliveryHours: Record<string, string> = {};
+    for (const mt of mealTimes) {
+      deliveryHours[mt] = existingHours[mt] || DEFAULT_DELIVERY_HOURS[mt] || "12:00";
+    }
     form.reset({
       subscriberName: sub.subscriberName,
       subscriberPhone: sub.subscriberPhone,
@@ -326,7 +360,8 @@ export default function MealSubscriptionsPage() {
       mealSelections: parseMealSelections(sub.mealSelections),
       planType: asPlanType(sub.planType),
       scheduleDays: Array.isArray(sub.scheduleDays) ? sub.scheduleDays : [],
-      mealTime: parseMealTimes(sub.mealTime),
+      mealTime: mealTimes,
+      deliveryHours,
       startDate: sub.startDate ? new Date(sub.startDate).toISOString().split("T")[0] : "",
       endDate: sub.endDate ? new Date(sub.endDate).toISOString().split("T")[0] : "",
       amount: sub.amount?.toString() || "",
@@ -662,8 +697,13 @@ export default function MealSubscriptionsPage() {
                             <div className="flex items-center gap-2">
                               <Clock className="h-4 w-4 text-muted-foreground" />
                               <span className="font-medium">{getMealTimeLabel(mt)}</span>
+                              {(() => {
+                                const hours = parseDeliveryHoursStatic(sub.deliveryHours);
+                                const hour = hours[mt];
+                                return hour ? <span className="text-xs text-muted-foreground">({formatTime12h(hour)})</span> : null;
+                              })()}
                               {done && doneTime && (
-                                <span className="text-xs text-muted-foreground">({doneTime})</span>
+                                <Badge variant="outline" className="text-xs">{doneTime}</Badge>
                               )}
                             </div>
                             {done ? (
@@ -744,7 +784,12 @@ export default function MealSubscriptionsPage() {
                     <div className="flex flex-wrap items-center gap-3 text-sm">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3 text-muted-foreground" />
-                        {sub.mealTime.split(",").map((t) => getMealTimeLabel(t.trim())).join(", ")}
+                        {sub.mealTime.split(",").map((mt) => {
+                          const label = getMealTimeLabel(mt.trim());
+                          const hours = parseDeliveryHoursStatic(sub.deliveryHours);
+                          const hour = hours[mt.trim()];
+                          return hour ? `${label} (${formatTime12h(hour)})` : label;
+                        }).join(", ")}
                       </span>
                       <span className="flex items-center gap-1">
                         <CalendarCheck className="h-3 w-3 text-muted-foreground" />
@@ -930,14 +975,19 @@ export default function MealSubscriptionsPage() {
                               className={`toggle-elevate ${selected ? "toggle-elevated" : ""}`}
                               onClick={() => {
                                 const current = form.getValues("mealTime") || [];
+                                const currentHours = form.getValues("deliveryHours") || {};
                                 let updated: MealTimeType[];
+                                let updatedHours = { ...currentHours };
                                 if (selected) {
                                   updated = current.filter((t) => t !== time);
                                   if (updated.length === 0) return;
+                                  delete updatedHours[time];
                                 } else {
                                   updated = [...current, time];
+                                  updatedHours[time] = DEFAULT_DELIVERY_HOURS[time] || "12:00";
                                 }
                                 form.setValue("mealTime", updated, { shouldValidate: true });
+                                form.setValue("deliveryHours", updatedHours);
                                 calculateAmount(form.getValues("mealSelections") || [], updated);
                               }}
                               data-testid={`button-meal-time-${time}`}
@@ -947,6 +997,27 @@ export default function MealSubscriptionsPage() {
                           );
                         })}
                       </div>
+                      {(form.watch("mealTime") || []).length > 0 && (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3 p-3 rounded-md border bg-muted/20">
+                          {(form.watch("mealTime") || []).map((mt) => (
+                            <div key={mt} className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                              <span className="text-sm font-medium min-w-[60px]">{getMealTimeLabel(mt)}</span>
+                              <Input
+                                type="time"
+                                value={form.watch("deliveryHours")?.[mt] || DEFAULT_DELIVERY_HOURS[mt] || "12:00"}
+                                onChange={(e) => {
+                                  const hours = { ...form.getValues("deliveryHours") };
+                                  hours[mt] = e.target.value;
+                                  form.setValue("deliveryHours", hours);
+                                }}
+                                className="w-[120px]"
+                                data-testid={`input-delivery-hour-${mt}`}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}

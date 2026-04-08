@@ -16111,6 +16111,23 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (!sub) return res.status(404).json({ message: "Subscription not found" });
       const todayStr = new Date().toISOString().split("T")[0];
       const existingLog = Array.isArray(sub.deliveryLog) ? sub.deliveryLog as unknown[] : [];
+
+      const deliveryEntry = existingLog.find((entry) => {
+        const e = entry as { date: string; mealTime: string };
+        return e.date === todayStr && e.mealTime === mealTime;
+      }) as { date: string; mealTime: string; inventoryDeducted?: boolean } | undefined;
+
+      if (deliveryEntry?.inventoryDeducted) {
+        const selections = Array.isArray(sub.mealSelections) ? sub.mealSelections as { name: string; menuItemId?: string }[] : [];
+        const menuItemIds = selections.filter((s) => s.menuItemId).map((s) => s.menuItemId!);
+        if (menuItemIds.length > 0) {
+          const { orderProcessingService } = await import("./orderProcessingService");
+          await orderProcessingService.reverseInventoryForMealDelivery(
+            menuItemIds, restaurantId, req.params.id, mealTime
+          );
+        }
+      }
+
       const updatedLog = existingLog.filter((entry) => {
         const e = entry as { date: string; mealTime: string };
         return !(e.date === todayStr && e.mealTime === mealTime);

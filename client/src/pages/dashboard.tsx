@@ -469,6 +469,23 @@ export default function Dashboard() {
     return labels[mealTime] || mealTime;
   };
 
+  const formatTime12h = (time24: string): string => {
+    const [hStr, mStr] = time24.split(":");
+    let h = parseInt(hStr, 10);
+    const m = mStr || "00";
+    const ampm = h >= 12 ? "PM" : "AM";
+    if (h === 0) h = 12;
+    else if (h > 12) h -= 12;
+    return `${h}:${m} ${ampm}`;
+  };
+
+  const getDeliveryHour = (sub: MealSubscription, mealTime: string): string | null => {
+    const hours = sub.deliveryHours && typeof sub.deliveryHours === 'object' && !Array.isArray(sub.deliveryHours)
+      ? sub.deliveryHours as Record<string, string>
+      : {};
+    return hours[mealTime] || null;
+  };
+
   const parseMealSelections = (selections: unknown): { name: string; menuItemId?: string }[] => {
     if (Array.isArray(selections)) return selections;
     if (typeof selections === 'string') { try { return JSON.parse(selections); } catch { return []; } }
@@ -816,6 +833,8 @@ export default function Dashboard() {
                       {mealTimes.map((mt) => {
                         const done = isMealDeliveredToday(sub, mt);
                         const doneTime = getDeliveredTime(sub, mt);
+                        const scheduledHour = getDeliveryHour(sub, mt);
+                        const hourLabel = scheduledHour ? formatTime12h(scheduledHour) : null;
                         return (
                           <div key={mt} className="flex items-center gap-1">
                             {done ? (
@@ -832,7 +851,7 @@ export default function Dashboard() {
                                 data-testid={`dashboard-deliver-${sub.id}-${mt}`}
                               >
                                 <CheckCircle2 className="h-3 w-3 mr-1" />
-                                {getMealTimeLabel(mt)}
+                                {getMealTimeLabel(mt)}{hourLabel && ` (${hourLabel})`}
                               </Button>
                             )}
                           </div>

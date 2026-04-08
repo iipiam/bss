@@ -534,10 +534,11 @@ export class OrderProcessingService {
 
       const validation = this.validateStock(stockRequirements);
       if (!validation.isValid) {
-        console.warn(`[MealDelivery] Insufficient stock for subscription ${subscriptionId}: ${validation.message}`);
+        return { deducted: false, details: [`Insufficient stock: ${validation.message}`] };
       }
 
-      const refId = `MSUB-${subscriptionId.substring(0, 8)}-${mealTime}`;
+      const todayStr = new Date().toISOString().split("T")[0];
+      const refId = `MSUB-${subscriptionId.substring(0, 8)}-${todayStr}-${mealTime}`;
       await db.transaction(async (tx) => {
         const inventoryIds = Array.from(stockRequirements.keys());
         const restaurantIdResult = await tx.execute(sql`
@@ -554,8 +555,11 @@ export class OrderProcessingService {
 
         for (const [inventoryItemId, requirement] of Array.from(stockRequirements.entries())) {
           const quantityBefore = requirement.availableQuantity;
-          let quantityAfter = quantityBefore - requirement.requiredQuantity;
-          if (quantityAfter < 0) quantityAfter = 0;
+          const quantityAfter = quantityBefore - requirement.requiredQuantity;
+
+          if (quantityAfter < 0) {
+            throw new Error(`Cannot deduct ${requirement.requiredQuantity} ${requirement.unit} from ${requirement.inventoryItemName}. Only ${quantityBefore} available.`);
+          }
 
           const rid = restaurantIdMap.get(inventoryItemId);
           if (!rid) continue;
@@ -604,6 +608,163 @@ export class OrderProcessingService {
     } catch (error: any) {
       console.error(`[MealDelivery] Error deducting inventory for subscription ${subscriptionId}:`, error);
       return { deducted: false, details: [error.message] };
+    }
+  }
+  async reverseInventoryForMealDelivery(
+    menuItemIds: string[],
+    restaurantId: string,
+    subscriptionId: string,
+    mealTime: string
+  ): Promise<{ reversed: boolean; details: string[] }> {
+    if (menuItemIds.length === 0) {
+      return { reversed: false, details: ["No menu items to reverse"] };
+    }
+
+    try {
+      const menuItemResults = await db
+        .select()
+        .from(menuItems)
+        .where(and(
+          inArray(menuItems.id, menuItemIds),
+          eq(menuItems.restaurantId, restaurantId)
+        ));
+
+      if (menuItemResults.length === 0) {
+        return { reversed: false, details: ["No matching menu items found"] };
+      }
+
+      const recipeIds = menuItemResults.filter((m) => m.recipeId).map((m) => m.recipeId!);
+      let recipesMap = new Map<string, Recipe>();
+      if (recipeIds.length > 0) {
+        const recipeResults = await db.select().from(recipes).where(inArray(recipes.id, recipeIds));
+        for (const r of recipeResults) recipesMap.set(r.id, r);
+      }
+
+      const allInventoryIds = new Set<string>();
+      for (const item of menuItemResults) {
+        if (item.recipeId) {
+          const recipe = recipesMap.get(item.recipeId);
+          if (recipe?.ingredients) for (const ing of recipe.ingredients) allInventoryIds.add(ing.inventoryItemId);
+        } else if (item.inventoryItemId) {
+          allInventoryIds.add(item.inventoryItemId);
+        }
+      }
+
+      if (allInventoryIds.size === 0) {
+        return { reversed: false, details: ["No inventory items to reverse"] };
+      }
+
+      const inventoryMap = await getInventoryItemsBatch(Array.from(allInventoryIds));
+      const restoreAmounts = new Map<string, { quantity: number; name: string; unit: string; unitPrice: number }>();
+
+      for (const item of menuItemResults) {
+        if (item.recipeId) {
+          const recipe = recipesMap.get(item.recipeId);
+          if (recipe) {
+            const portionMultiplier = parseFloat(item.portionSize || "1.00");
+            for (const ingredient of recipe.ingredients) {
+              const qty = ingredient.quantity * portionMultiplier;
+              const existing = restoreAmounts.get(ingredient.inventoryItemId);
+              const invItem = inventoryMap.get(ingredient.inventoryItemId);
+              const availableQty = invItem ? parseFloat(invItem.quantity) : 0;
+              const totalPriceVal = invItem ? parseFloat(invItem.price || "0") : 0;
+              const unitPriceVal = availableQty > 0 ? totalPriceVal / availableQty : 0;
+              if (existing) {
+                existing.quantity += qty;
+              } else {
+                restoreAmounts.set(ingredient.inventoryItemId, {
+                  quantity: qty, name: ingredient.name, unit: ingredient.unit, unitPrice: unitPriceVal,
+                });
+              }
+            }
+          }
+        } else if (item.stockNo && item.inventoryItemId) {
+          const qty = parseFloat(item.stockNo.toString());
+          const invItem = inventoryMap.get(item.inventoryItemId);
+          const availableQty = invItem ? parseFloat(invItem.quantity) : 0;
+          const totalPriceVal = invItem ? parseFloat(invItem.price || "0") : 0;
+          const unitPriceVal = availableQty > 0 ? totalPriceVal / availableQty : 0;
+          const existing = restoreAmounts.get(item.inventoryItemId);
+          if (existing) {
+            existing.quantity += qty;
+          } else {
+            restoreAmounts.set(item.inventoryItemId, {
+              quantity: qty, name: invItem?.name || item.name, unit: invItem?.unit || "unit", unitPrice: unitPriceVal,
+            });
+          }
+        }
+      }
+
+      if (restoreAmounts.size === 0) {
+        return { reversed: false, details: ["No quantities to reverse"] };
+      }
+
+      const todayStr = new Date().toISOString().split("T")[0];
+      const refId = `MSUB-UNDO-${subscriptionId.substring(0, 8)}-${todayStr}-${mealTime}`;
+      await db.transaction(async (tx) => {
+        const inventoryIds = Array.from(restoreAmounts.keys());
+        const restaurantIdResult = await tx.execute(sql`
+          SELECT id, restaurant_id as "restaurantId" 
+          FROM inventory_items 
+          WHERE id IN (${sql.join(inventoryIds.map(id => sql`${id}`), sql`, `)})
+        `);
+        const restaurantIdMap = new Map<string, string>(
+          ((restaurantIdResult as any).rows || []).map((r: any) => [r.id, r.restaurantId])
+        );
+
+        const currentItems = await tx.execute(sql`
+          SELECT id, quantity, price FROM inventory_items 
+          WHERE id IN (${sql.join(inventoryIds.map(id => sql`${id}`), sql`, `)})
+        `);
+        const currentMap = new Map<string, { quantity: string; price: string }>(
+          ((currentItems as any).rows || []).map((r: any) => [r.id, { quantity: r.quantity, price: r.price }])
+        );
+
+        const transactions: InsertInventoryTransaction[] = [];
+
+        for (const [inventoryItemId, restore] of Array.from(restoreAmounts.entries())) {
+          const rid = restaurantIdMap.get(inventoryItemId);
+          if (!rid) continue;
+          const current = currentMap.get(inventoryItemId);
+          const currentQty = current ? parseFloat(current.quantity) : 0;
+          const newQty = currentQty + restore.quantity;
+          const newPrice = newQty * restore.unitPrice;
+
+          let status: string;
+          if (newQty === 0) status = "Depleted";
+          else if (newQty < 10) status = "Low Stock";
+          else status = "In Stock";
+
+          transactions.push({
+            restaurantId: rid,
+            inventoryItemId,
+            orderId: refId,
+            type: "adjustment",
+            quantityChange: restore.quantity.toString(),
+            quantityBefore: currentQty.toString(),
+            quantityAfter: newQty.toString(),
+            notes: `Meal subscription delivery undone (${mealTime})`,
+          });
+
+          await tx
+            .update(inventoryItems)
+            .set({ quantity: newQty.toString(), price: newPrice.toFixed(2), status })
+            .where(eq(inventoryItems.id, inventoryItemId));
+        }
+
+        if (transactions.length > 0) {
+          await tx.insert(inventoryTransactions).values(transactions);
+        }
+      });
+
+      const details = Array.from(restoreAmounts.entries()).map(
+        ([_, r]) => `${r.name}: +${r.quantity.toFixed(2)} ${r.unit}`
+      );
+      console.log(`[MealDelivery] Reversed inventory for subscription ${subscriptionId} (${mealTime}):`, details);
+      return { reversed: true, details };
+    } catch (error: any) {
+      console.error(`[MealDelivery] Error reversing inventory for subscription ${subscriptionId}:`, error);
+      return { reversed: false, details: [error.message] };
     }
   }
 }

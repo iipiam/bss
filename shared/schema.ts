@@ -1796,6 +1796,7 @@ export const mealSubscriptions = pgTable("meal_subscriptions", {
   paymentStatus: text("payment_status").notNull().default("pending"),
   status: text("status").notNull().default("active"),
   notes: text("notes"),
+  deliveryHours: jsonb("delivery_hours").notNull().default({}),
   deliveryLog: jsonb("delivery_log").notNull().default([]),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
