@@ -444,7 +444,8 @@ export async function onboardToZatca(
     return { success: false, message: "CSR not generated. Please generate CSR first." };
   }
 
-  // Clean CSR: remove PEM headers/footers, whitespace, and newlines to get pure base64
+  console.log(`[ZATCA Service] Raw CSR from DB length: ${settings.csr.length}, first 80 chars: ${settings.csr.substring(0, 80)}...`);
+
   const cleanCsr = settings.csr
     .replace(/-----BEGIN CERTIFICATE REQUEST-----/g, "")
     .replace(/-----END CERTIFICATE REQUEST-----/g, "")
@@ -457,7 +458,13 @@ export async function onboardToZatca(
     return { success: false, message: "CSR is empty after cleaning. Please regenerate CSR." };
   }
 
-  console.log(`[ZATCA Service] CSR length: ${cleanCsr.length}, first 40 chars: ${cleanCsr.substring(0, 40)}...`);
+  const isValidBase64 = /^[A-Za-z0-9+/=]+$/.test(cleanCsr);
+  if (!isValidBase64) {
+    console.error(`[ZATCA Service] CSR contains invalid base64 characters`);
+    return { success: false, message: "CSR contains invalid characters. Please regenerate CSR." };
+  }
+
+  console.log(`[ZATCA Service] Clean CSR length: ${cleanCsr.length}, valid base64: ${isValidBase64}, first 40 chars: ${cleanCsr.substring(0, 40)}...`);
 
   const config: ZatcaConfig = {
     environment: settings.environment as "sandbox" | "simulation" | "production",

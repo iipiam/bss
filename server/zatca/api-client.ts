@@ -98,12 +98,17 @@ export class ZatcaApiClient {
       }
 
       const url = `${this.baseUrl}${endpoint}`;
+      const bodyStr = body ? JSON.stringify(body) : undefined;
       console.log(`[ZATCA API] ${method} ${url}`);
+      if (bodyStr && endpoint === "/compliance") {
+        const bodyObj = body as Record<string, string>;
+        console.log(`[ZATCA API] CSR field length: ${bodyObj.csr?.length || 0}, first 60: ${bodyObj.csr?.substring(0, 60)}...`);
+      }
       
       const response = await fetch(url, {
         method,
         headers,
-        body: body ? JSON.stringify(body) : undefined
+        body: bodyStr
       });
 
       console.log(`[ZATCA API] Response status: ${response.status} ${response.statusText}`);
@@ -116,13 +121,17 @@ export class ZatcaApiClient {
           data = JSON.parse(text);
         } catch (parseError) {
           console.error(`[ZATCA API] Non-JSON response (${response.status}):`, text.substring(0, 1000));
-          const snippet = text.substring(0, 200).replace(/<[^>]*>/g, "").trim();
+          const snippet = text.substring(0, 300).replace(/<[^>]*>/g, "").trim();
+          let friendlyMessage = snippet || "The server may be temporarily unavailable.";
+          if (snippet.toLowerCase().includes("invalid csr") || snippet.toLowerCase().includes("pkcs10")) {
+            friendlyMessage = "The CSR is invalid or was not accepted by ZATCA. Please regenerate the CSR from the Settings tab and try again. If the issue persists, verify your ZATCA settings (VAT number, serial number, common name) are correct.";
+          }
           return {
             success: false,
             error: {
               code: `HTTP_${response.status}`,
-              message: `ZATCA API returned non-JSON response (HTTP ${response.status}). ${snippet || "The server may be temporarily unavailable."}`,
-              details: text.substring(0, 500)
+              message: friendlyMessage,
+              details: snippet
             }
           };
         }
