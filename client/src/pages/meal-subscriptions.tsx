@@ -275,16 +275,18 @@ export default function MealSubscriptionsPage() {
     },
   });
 
+  type DeliveryLogEntry = { date: string; mealTime: string; deliveredAt: string };
+
   const isMealDeliveredToday = (sub: MealSubscription, mealTime: string): boolean => {
     const todayStr = new Date().toISOString().split("T")[0];
-    const log = Array.isArray(sub.deliveryLog) ? sub.deliveryLog as any[] : [];
-    return log.some((entry: any) => entry.date === todayStr && entry.mealTime === mealTime);
+    const log = Array.isArray(sub.deliveryLog) ? (sub.deliveryLog as DeliveryLogEntry[]) : [];
+    return log.some((entry) => entry.date === todayStr && entry.mealTime === mealTime);
   };
 
   const getDeliveredTime = (sub: MealSubscription, mealTime: string): string | null => {
     const todayStr = new Date().toISOString().split("T")[0];
-    const log = Array.isArray(sub.deliveryLog) ? sub.deliveryLog as any[] : [];
-    const entry = log.find((e: any) => e.date === todayStr && e.mealTime === mealTime);
+    const log = Array.isArray(sub.deliveryLog) ? (sub.deliveryLog as DeliveryLogEntry[]) : [];
+    const entry = log.find((e) => e.date === todayStr && e.mealTime === mealTime);
     if (entry?.deliveredAt) {
       return new Date(entry.deliveredAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }

@@ -8678,6 +8678,8 @@ export const translations: Record<Language, Translations> = {
     unarchive: 'Unarchive',
     archive: 'Archive',
     somethingWentWrong: 'Something went wrong',
+    deleteSubscription: 'Abonnement löschen',
+    subscriptionDeleted: 'Abonnement erfolgreich gelöscht',
 
     // Violations
     violations: 'Violations',
@@ -11044,6 +11046,8 @@ export const translations: Record<Language, Translations> = {
     unarchive: 'Unarchive',
     archive: 'Archive',
     somethingWentWrong: 'Something went wrong',
+    deleteSubscription: '删除订阅',
+    subscriptionDeleted: '订阅已成功删除',
 
     // Violations
     violations: 'Violations',
@@ -13410,6 +13414,8 @@ export const translations: Record<Language, Translations> = {
     unarchive: 'Unarchive',
     archive: 'Archive',
     somethingWentWrong: 'Something went wrong',
+    deleteSubscription: 'সাবস্ক্রিপশন মুছুন',
+    subscriptionDeleted: 'সাবস্ক্রিপশন সফলভাবে মুছে ফেলা হয়েছে',
 
     // Violations
     violations: 'Violations',
@@ -15776,6 +15782,8 @@ export const translations: Record<Language, Translations> = {
     unarchive: 'Unarchive',
     archive: 'Archive',
     somethingWentWrong: 'Something went wrong',
+    deleteSubscription: 'Elimina Abbonamento',
+    subscriptionDeleted: 'Abbonamento eliminato con successo',
 
     // Violations
     violations: 'Violations',
@@ -18086,6 +18094,8 @@ export const translations: Record<Language, Translations> = {
     unarchive: 'असंग्रहीत करें',
     archive: 'संग्रहीत करें',
     somethingWentWrong: 'कुछ गलत हो गया',
+    deleteSubscription: 'सदस्यता हटाएं',
+    subscriptionDeleted: 'सदस्यता सफलतापूर्वक हटाई गई',
 
     // Violations
     violations: 'Violations',
@@ -20396,6 +20406,8 @@ export const translations: Record<Language, Translations> = {
     unarchive: 'غیر محفوظ کریں',
     archive: 'محفوظ کریں',
     somethingWentWrong: 'کچھ غلط ہو گیا',
+    deleteSubscription: 'رکنیت حذف کریں',
+    subscriptionDeleted: 'رکنیت کامیابی سے حذف ہو گئی',
 
     // Violations
     violations: 'Violations',
@@ -22640,6 +22652,8 @@ export const translations: Record<Language, Translations> = {
     unarchive: "Desarchivar",
     archive: "Archivar",
     somethingWentWrong: "Algo salió mal",
+    deleteSubscription: 'Eliminar Suscripción',
+    subscriptionDeleted: 'Suscripción eliminada exitosamente',
 
     // Violations
     violations: 'Violations',
@@ -24883,6 +24897,8 @@ export const translations: Record<Language, Translations> = {
     unarchive: "I-unarchive",
     archive: "I-archive",
     somethingWentWrong: "May nangyaring mali",
+    deleteSubscription: 'I-delete ang Subscription',
+    subscriptionDeleted: 'Matagumpay na na-delete ang subscription',
 
     // Violations
     violations: 'Violations',
