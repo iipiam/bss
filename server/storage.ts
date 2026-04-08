@@ -5489,7 +5489,19 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(mealSubscriptions.createdAt));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     return activeSubscriptions.filter((sub) => {
+      if (sub.startDate) {
+        const start = new Date(sub.startDate);
+        start.setHours(0, 0, 0, 0);
+        if (start > today) return false;
+      }
+      if (sub.endDate) {
+        const end = new Date(sub.endDate);
+        end.setHours(0, 0, 0, 0);
+        if (end < today) return false;
+      }
       const days = Array.isArray(sub.scheduleDays) ? sub.scheduleDays : [];
       if (days.length === 0) return true;
       return days.includes(todayDayName);

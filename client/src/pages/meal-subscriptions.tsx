@@ -180,6 +180,7 @@ export default function MealSubscriptionsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions/today"] });
       toast({ title: t.subscriptionCreated });
       setDialogOpen(false);
       form.reset();
@@ -198,6 +199,7 @@ export default function MealSubscriptionsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions/today"] });
       toast({ title: t.subscriptionUpdated });
       setDialogOpen(false);
       setEditingSubscription(null);
@@ -214,6 +216,7 @@ export default function MealSubscriptionsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions/today"] });
       toast({ title: t.subscriptionDeleted });
       setDeleteId(null);
     },
@@ -228,6 +231,7 @@ export default function MealSubscriptionsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions/today"] });
       toast({ title: t.subscriptionUpdated });
     },
   });
