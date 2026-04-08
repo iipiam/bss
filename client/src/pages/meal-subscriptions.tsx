@@ -753,12 +753,23 @@ export default function MealSubscriptionsPage() {
                       <span className="font-semibold">{parseFloat(sub.amount || "0").toFixed(2)} SAR</span>
                     </div>
                     {Array.isArray(sub.scheduleDays) && sub.scheduleDays.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {sub.scheduleDays.map((day) => (
-                          <Badge key={day} variant="outline" className="text-xs">
-                            {getDayLabel(day)}
-                          </Badge>
-                        ))}
+                      <div className="grid grid-cols-7 gap-1">
+                        {DAY_KEYS.map((day) => {
+                          const isActive = sub.scheduleDays.includes(day);
+                          const dayInitial = getDayLabel(day).charAt(0).toUpperCase();
+                          return (
+                            <div
+                              key={day}
+                              className={`flex items-center justify-center rounded-md text-xs font-medium h-7 w-full transition-colors ${
+                                isActive
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted/40 text-muted-foreground"
+                              }`}
+                            >
+                              {dayInitial}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                     {selections.length > 0 && (
@@ -966,21 +977,24 @@ export default function MealSubscriptionsPage() {
 
               <div>
                 <FormLabel>{t.scheduleDays}</FormLabel>
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="grid grid-cols-7 gap-1 mt-2">
                   {DAY_KEYS.map((day) => {
                     const selected = (form.watch("scheduleDays") || []).includes(day);
                     return (
-                      <Button
+                      <button
                         key={day}
                         type="button"
-                        size="sm"
-                        variant={selected ? "default" : "outline"}
-                        className={`toggle-elevate ${selected ? "toggle-elevated" : ""}`}
+                        className={`flex flex-col items-center justify-center rounded-md py-2 text-xs font-medium transition-colors cursor-pointer border ${
+                          selected
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted/60"
+                        }`}
                         onClick={() => toggleDay(day)}
                         data-testid={`button-day-${day}`}
                       >
-                        {getDayLabel(day)}
-                      </Button>
+                        <span className="text-[10px] uppercase opacity-70">{getDayLabel(day).slice(0, 3)}</span>
+                        <span className="text-sm font-semibold">{getDayLabel(day).charAt(0)}</span>
+                      </button>
                     );
                   })}
                 </div>

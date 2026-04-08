@@ -2451,7 +2451,6 @@ export interface Translations {
   subscriptionCreated: string;
   noSubscriptions: string;
   markDelivered: string;
-  delivered: string;
   undoDelivery: string;
   noDeliveriesToday: string;
   deliveryTime: string;
@@ -4837,7 +4836,6 @@ export const translations: Record<Language, Translations> = {
     subscriptionCreated: 'Subscription created successfully',
     noSubscriptions: 'No subscriptions found',
     markDelivered: 'Mark Delivered',
-    delivered: 'Delivered',
     undoDelivery: 'Undo',
     noDeliveriesToday: 'No deliveries scheduled for today',
     deliveryTime: 'Delivery Time',
@@ -7221,7 +7219,6 @@ export const translations: Record<Language, Translations> = {
     subscriptionCreated: 'تم إنشاء الاشتراك بنجاح',
     noSubscriptions: 'لا توجد اشتراكات',
     markDelivered: 'تم التوصيل',
-    delivered: 'تم التوصيل',
     undoDelivery: 'تراجع',
     noDeliveriesToday: 'لا توجد توصيلات مجدولة لليوم',
     deliveryTime: 'وقت التوصيل',
@@ -9589,7 +9586,6 @@ export const translations: Record<Language, Translations> = {
     subscriptionCreated: 'Abonnement erfolgreich erstellt',
     noSubscriptions: 'Keine Abonnements gefunden',
     markDelivered: 'Als geliefert markieren',
-    delivered: 'Geliefert',
     undoDelivery: 'Rückgängig',
     noDeliveriesToday: 'Keine Lieferungen für heute geplant',
     deliveryTime: 'Lieferzeit',
@@ -11957,7 +11953,6 @@ export const translations: Record<Language, Translations> = {
     subscriptionCreated: '订阅创建成功',
     noSubscriptions: '未找到订阅',
     markDelivered: '标记已送达',
-    delivered: '已送达',
     undoDelivery: '撤销',
     noDeliveriesToday: '今天没有配送计划',
     deliveryTime: '配送时间',
@@ -14325,7 +14320,6 @@ export const translations: Record<Language, Translations> = {
     subscriptionCreated: 'সাবস্ক্রিপশন সফলভাবে তৈরি হয়েছে',
     noSubscriptions: 'কোন সাবস্ক্রিপশন পাওয়া যায়নি',
     markDelivered: 'ডেলিভারি সম্পন্ন',
-    delivered: 'ডেলিভারি হয়েছে',
     undoDelivery: 'পূর্বাবস্থায় ফেরান',
     noDeliveriesToday: 'আজ কোন ডেলিভারি নির্ধারিত নেই',
     deliveryTime: 'ডেলিভারি সময়',
@@ -16693,7 +16687,6 @@ export const translations: Record<Language, Translations> = {
     subscriptionCreated: 'Abbonamento creato con successo',
     noSubscriptions: 'Nessun abbonamento trovato',
     markDelivered: 'Segna come consegnato',
-    delivered: 'Consegnato',
     undoDelivery: 'Annulla',
     noDeliveriesToday: 'Nessuna consegna prevista per oggi',
     deliveryTime: 'Orario di consegna',
@@ -19005,7 +18998,6 @@ export const translations: Record<Language, Translations> = {
     subscriptionCreated: 'सदस्यता सफलतापूर्वक बनाई गई',
     noSubscriptions: 'कोई सदस्यता नहीं मिली',
     markDelivered: 'डिलीवरी पूर्ण',
-    delivered: 'डिलीवर हो गया',
     undoDelivery: 'पूर्ववत करें',
     noDeliveriesToday: 'आज कोई डिलीवरी निर्धारित नहीं है',
     deliveryTime: 'डिलीवरी समय',
@@ -21317,7 +21309,6 @@ export const translations: Record<Language, Translations> = {
     subscriptionCreated: 'رکنیت کامیابی سے بنائی گئی',
     noSubscriptions: 'کوئی رکنیت نہیں ملی',
     markDelivered: 'ڈیلیوری مکمل',
-    delivered: 'ڈیلیور ہو گیا',
     undoDelivery: 'واپس',
     noDeliveriesToday: 'آج کوئی ڈیلیوری طے نہیں',
     deliveryTime: 'ڈیلیوری کا وقت',
@@ -21681,7 +21672,7 @@ export const translations: Record<Language, Translations> = {
     preparing: "Preparing",
     ready: "Listo",
     completed: "Completado",
-    delivered: "Entregado",
+    delivered: 'Entregado',
     cancelled: "Cancelado",
     
     // Financial
@@ -23562,7 +23553,6 @@ export const translations: Record<Language, Translations> = {
     subscriptionCreated: 'Suscripción creada exitosamente',
     noSubscriptions: 'No se encontraron suscripciones',
     markDelivered: 'Marcar entregado',
-    delivered: 'Entregado',
     undoDelivery: 'Deshacer',
     noDeliveriesToday: 'No hay entregas programadas para hoy',
     deliveryTime: 'Hora de entrega',
@@ -23925,7 +23915,7 @@ export const translations: Record<Language, Translations> = {
     preparing: "Preparing",
     ready: "Handa Na",
     completed: "Nakumpleto",
-    delivered: "Naideliver",
+    delivered: 'Naihatid',
     cancelled: "Kinansela",
     
     // Financial
@@ -25807,7 +25797,6 @@ export const translations: Record<Language, Translations> = {
     subscriptionCreated: 'Matagumpay na nagawa ang subscription',
     noSubscriptions: 'Walang nahanap na subscription',
     markDelivered: 'Markahan bilang naihatid',
-    delivered: 'Naihatid',
     undoDelivery: 'I-undo',
     noDeliveriesToday: 'Walang delivery na naka-iskedyul ngayon',
     deliveryTime: 'Oras ng delivery',

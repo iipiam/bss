@@ -28,7 +28,15 @@ import {
   CreditCard,
   Wallet,
   RefreshCw,
+  Truck,
+  CheckCircle2,
+  MapPin,
+  UtensilsCrossed,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { apiRequest } from "@/lib/queryClient";
+import { useMutation } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import {
   LineChart,
   Line,
@@ -42,7 +50,7 @@ import {
   Cell,
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
-import type { Order, ShopBill } from "@shared/schema";
+import type { Order, ShopBill, MealSubscription } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useDeviceLayout, useCompactChartConfig } from "@/lib/mobileLayout";
@@ -430,6 +438,57 @@ export default function Dashboard() {
     staleTime: 0, // Ensure instant updates
   });
 
+  const { toast } = useToast();
+
+  const { data: todaysDeliveries = [] } = useQuery<MealSubscription[]>({
+    queryKey: ["/api/meal-subscriptions/today"],
+    enabled: businessType === 'restaurant',
+    staleTime: 0,
+  });
+
+  type DeliveryLogEntry = { date: string; mealTime: string; deliveredAt: string };
+
+  const isMealDeliveredToday = (sub: MealSubscription, mealTime: string): boolean => {
+    const todayStr = new Date().toISOString().split("T")[0];
+    const log = Array.isArray(sub.deliveryLog) ? (sub.deliveryLog as DeliveryLogEntry[]) : [];
+    return log.some((entry) => entry.date === todayStr && entry.mealTime === mealTime);
+  };
+
+  const getDeliveredTime = (sub: MealSubscription, mealTime: string): string | null => {
+    const todayStr = new Date().toISOString().split("T")[0];
+    const log = Array.isArray(sub.deliveryLog) ? (sub.deliveryLog as DeliveryLogEntry[]) : [];
+    const entry = log.find((e) => e.date === todayStr && e.mealTime === mealTime);
+    if (entry?.deliveredAt) {
+      return new Date(entry.deliveredAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return null;
+  };
+
+  const getMealTimeLabel = (mealTime: string) => {
+    const labels: Record<string, string> = { breakfast: t.breakfast || 'Breakfast', lunch: t.lunch || 'Lunch', dinner: t.dinner || 'Dinner' };
+    return labels[mealTime] || mealTime;
+  };
+
+  const parseMealSelections = (selections: unknown): { name: string; menuItemId?: string }[] => {
+    if (Array.isArray(selections)) return selections;
+    if (typeof selections === 'string') { try { return JSON.parse(selections); } catch { return []; } }
+    return [];
+  };
+
+  const markDeliveredMutation = useMutation({
+    mutationFn: async ({ id, mealTime }: { id: string; mealTime: string }) => {
+      return apiRequest("POST", `/api/meal-subscriptions/${id}/mark-delivered`, { mealTime });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions/today"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions"] });
+      toast({ title: t.delivered });
+    },
+    onError: (error: Error) => {
+      toast({ title: error.message, variant: "destructive" });
+    },
+  });
+
   const { data: bills = [], isLoading: billsLoading } = useQuery<ShopBill[]>({
     queryKey: ["/api/shop/bills"],
     queryFn: async () => {
@@ -701,6 +760,92 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+
+      {businessType === 'restaurant' && todaysDeliveries.length > 0 && (
+        <Card>
+          <CardHeader className={`${layout.cardHeaderPadding} flex flex-row items-center justify-between gap-2`}>
+            <div className="flex items-center gap-2">
+              <div className="rounded-md bg-orange-500/10 p-2">
+                <Truck className="h-5 w-5 text-orange-600" />
+              </div>
+              <div>
+                <CardTitle className={layout.isMobile ? "text-base" : ""}>
+                  {t.todaysDeliveries}
+                </CardTitle>
+                <CardDescription>
+                  {todaysDeliveries.reduce((count, sub) => {
+                    const mealTimes = sub.mealTime.split(",").map((mt) => mt.trim());
+                    return count + mealTimes.filter((mt) => !isMealDeliveredToday(sub, mt)).length;
+                  }, 0)} {t.pending || 'pending'} / {todaysDeliveries.reduce((count, sub) => count + sub.mealTime.split(",").length, 0)} {t.total || 'total'}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className={layout.cardPadding}>
+            <div className="space-y-3">
+              {todaysDeliveries.map((sub) => {
+                const mealTimes = sub.mealTime.split(",").map((mt) => mt.trim());
+                const selections = parseMealSelections(sub.mealSelections);
+                const allDone = mealTimes.every((mt) => isMealDeliveredToday(sub, mt));
+                return (
+                  <div key={sub.id} className={`rounded-md border p-3 space-y-2 ${allDone ? "opacity-50" : ""}`} data-testid={`dashboard-delivery-${sub.id}`}>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <UtensilsCrossed className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="font-semibold truncate">{sub.subscriberName}</span>
+                        {allDone && (
+                          <Badge variant="default" className="bg-green-600 text-white text-xs shrink-0">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            {t.allDelivered}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{sub.subscriberPhone}</span>
+                        {sub.deliveryAddress && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /><span className="truncate max-w-[120px]">{sub.deliveryAddress}</span></span>}
+                      </div>
+                    </div>
+                    {selections.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {selections.map((item, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">{item.name}</Badge>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {mealTimes.map((mt) => {
+                        const done = isMealDeliveredToday(sub, mt);
+                        const doneTime = getDeliveredTime(sub, mt);
+                        return (
+                          <div key={mt} className="flex items-center gap-1">
+                            {done ? (
+                              <Badge variant="default" className="bg-green-600 text-white text-xs">
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                {getMealTimeLabel(mt)} {doneTime && `(${doneTime})`}
+                              </Badge>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => markDeliveredMutation.mutate({ id: sub.id, mealTime: mt })}
+                                disabled={markDeliveredMutation.isPending}
+                                data-testid={`dashboard-deliver-${sub.id}-${mt}`}
+                              >
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                {getMealTimeLabel(mt)}
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div
         className={`grid ${layout.gap} ${layout.gridCols({ desktop: 2, mobile: 1 })}`}
