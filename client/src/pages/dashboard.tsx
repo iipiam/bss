@@ -488,7 +488,18 @@ export default function Dashboard() {
 
   const parseMealSelections = (selections: unknown): { name: string; menuItemId?: string }[] => {
     if (Array.isArray(selections)) return selections;
-    if (typeof selections === 'string') { try { return JSON.parse(selections); } catch { return []; } }
+    if (typeof selections === 'string') { try { const p = JSON.parse(selections); if (Array.isArray(p)) return p; if (typeof p === 'object' && p !== null) { const all: { name: string; menuItemId?: string }[] = []; for (const vals of Object.values(p)) { if (Array.isArray(vals)) { for (const item of vals as any[]) { if (typeof item === 'object' && item !== null && typeof item.name === 'string') all.push(item); } } } return all; } return []; } catch { return []; } }
+    if (typeof selections === 'object' && selections !== null) {
+      const all: { name: string; menuItemId?: string }[] = [];
+      for (const vals of Object.values(selections as Record<string, unknown>)) {
+        if (Array.isArray(vals)) {
+          for (const item of vals) {
+            if (typeof item === 'object' && item !== null && typeof (item as any).name === 'string') all.push(item as { name: string; menuItemId?: string });
+          }
+        }
+      }
+      return all;
+    }
     return [];
   };
 

@@ -16067,18 +16067,34 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = subscription.restaurantId;
       const restaurant = await storage.getRestaurant(restaurantId);
       const menuItemsList = await storage.getMenuItems(restaurantId);
-      const selections = Array.isArray(subscription.mealSelections) ? (subscription.mealSelections as Array<{ name: string; menuItemId?: string }>) : [];
-      const selectionsWithPrices = selections.map(s => {
-        const menuItem = s.menuItemId ? menuItemsList.find((m: any) => m.id === s.menuItemId) : null;
-        return { name: s.name, price: menuItem?.price?.toString() };
-      });
+      const mealTimes = subscription.mealTime.split(",").map((t: string) => t.trim());
+      const rawSel = subscription.mealSelections;
+      const selectionsMap: Record<string, Array<{ name: string; menuItemId?: string }>> = {};
+      if (rawSel && typeof rawSel === 'object' && !Array.isArray(rawSel)) {
+        const map = rawSel as Record<string, unknown>;
+        for (const mt of mealTimes) {
+          if (Array.isArray(map[mt])) {
+            selectionsMap[mt] = (map[mt] as any[]).filter(item => typeof item === 'object' && item !== null && typeof item.name === 'string');
+          }
+        }
+      } else if (Array.isArray(rawSel)) {
+        const flat = rawSel.filter((item: any) => typeof item === 'object' && item !== null && typeof item.name === 'string') as Array<{ name: string; menuItemId?: string }>;
+        if (mealTimes.length > 0) selectionsMap[mealTimes[0]] = flat;
+      }
+      const mealSelectionsGrouped: Record<string, Array<{ name: string; price?: string }>> = {};
+      for (const [mt, items] of Object.entries(selectionsMap)) {
+        mealSelectionsGrouped[mt] = items.map(s => {
+          const menuItem = s.menuItemId ? menuItemsList.find((m: any) => m.id === s.menuItemId) : null;
+          return { name: s.name, price: menuItem?.price?.toString() };
+        });
+      }
       const pdfBuffer = await generateMealSubscriptionSchedulePDF({
         subscriberName: subscription.subscriberName,
         subscriberPhone: subscription.subscriberPhone,
         subscriberEmail: subscription.subscriberEmail || undefined,
         deliveryAddress: subscription.deliveryAddress || undefined,
         dietaryNotes: subscription.dietaryNotes || undefined,
-        mealSelections: selectionsWithPrices,
+        mealSelectionsGrouped,
         planType: subscription.planType,
         scheduleDays: Array.isArray(subscription.scheduleDays) ? subscription.scheduleDays : [],
         mealTime: subscription.mealTime,
@@ -16114,7 +16130,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       });
       if (alreadyDelivered) return res.status(400).json({ message: "Already marked as delivered" });
 
-      const selections = Array.isArray(sub.mealSelections) ? sub.mealSelections as { name: string; menuItemId?: string }[] : [];
+      let selections: { name: string; menuItemId?: string }[] = [];
+      const rawSel = sub.mealSelections;
+      if (rawSel && typeof rawSel === 'object' && !Array.isArray(rawSel)) {
+        const map = rawSel as Record<string, unknown>;
+        if (Array.isArray(map[mealTime])) {
+          selections = (map[mealTime] as any[]).filter(item => typeof item === 'object' && item !== null && typeof item.name === 'string');
+        }
+      } else if (Array.isArray(rawSel)) {
+        selections = rawSel.filter((item: any) => typeof item === 'object' && item !== null && typeof item.name === 'string') as { name: string; menuItemId?: string }[];
+      }
       const menuItemIds = selections.filter((s) => s.menuItemId).map((s) => s.menuItemId!);
       let inventoryResult = { deducted: false, details: [] as string[] };
       if (menuItemIds.length > 0) {
@@ -16162,7 +16187,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }) as { date: string; mealTime: string; inventoryDeducted?: boolean } | undefined;
 
       if (deliveryEntry?.inventoryDeducted) {
-        const selections = Array.isArray(sub.mealSelections) ? sub.mealSelections as { name: string; menuItemId?: string }[] : [];
+        let selections: { name: string; menuItemId?: string }[] = [];
+        const rawSelUndo = sub.mealSelections;
+        if (rawSelUndo && typeof rawSelUndo === 'object' && !Array.isArray(rawSelUndo)) {
+          const map = rawSelUndo as Record<string, unknown>;
+          if (Array.isArray(map[mealTime])) {
+            selections = (map[mealTime] as any[]).filter(item => typeof item === 'object' && item !== null && typeof item.name === 'string');
+          }
+        } else if (Array.isArray(rawSelUndo)) {
+          selections = rawSelUndo.filter((item: any) => typeof item === 'object' && item !== null && typeof item.name === 'string') as { name: string; menuItemId?: string }[];
+        }
         const menuItemIds = selections.filter((s) => s.menuItemId).map((s) => s.menuItemId!);
         if (menuItemIds.length > 0) {
           const { orderProcessingService } = await import("./orderProcessingService");

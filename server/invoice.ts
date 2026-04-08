@@ -4329,7 +4329,7 @@ export async function generateMealSubscriptionSchedulePDF(data: {
   subscriberEmail?: string;
   deliveryAddress?: string;
   dietaryNotes?: string;
-  mealSelections: Array<{ name: string; price?: string }>;
+  mealSelectionsGrouped: Record<string, Array<{ name: string; price?: string }>>;
   planType: string;
   scheduleDays: string[];
   mealTime: string;
@@ -4380,10 +4380,21 @@ export async function generateMealSubscriptionSchedulePDF(data: {
   const planStr = `${planLabels[data.planType]?.en || data.planType} | ${planLabels[data.planType]?.ar || data.planType}`;
   const paymentStr = `${paymentLabels[data.paymentStatus]?.en || data.paymentStatus} | ${paymentLabels[data.paymentStatus]?.ar || data.paymentStatus}`;
 
-  const mealsRows = data.mealSelections.map(m =>
-    `<tr><td style="padding:8px;border:1px solid #ddd;">${m.name}</td><td style="padding:8px;border:1px solid #ddd;text-align:right;">${m.price ? parseFloat(m.price).toFixed(2) + ' SAR' : '-'}</td></tr>`
-  ).join("");
-  const mealsSubtotal = data.mealSelections.reduce((sum, m) => sum + (m.price ? parseFloat(m.price) : 0), 0);
+  const allMealTimes = data.mealTime.split(",").map(t => t.trim());
+  let mealsRows = "";
+  let totalItemCount = 0;
+  for (const mt of allMealTimes) {
+    const items = data.mealSelectionsGrouped[mt] || [];
+    if (items.length === 0) continue;
+    totalItemCount += items.length;
+    const mtLabel = `${mealTimeLabels[mt]?.en || mt} | ${mealTimeLabels[mt]?.ar || mt}`;
+    mealsRows += `<tr><td colspan="2" style="padding:8px;border:1px solid #ddd;background:#eef2ff;font-weight:700;color:#2563eb;">${mtLabel}</td></tr>`;
+    for (const m of items) {
+      mealsRows += `<tr><td style="padding:8px;border:1px solid #ddd;padding-left:20px;">${m.name}</td><td style="padding:8px;border:1px solid #ddd;text-align:right;">${m.price ? parseFloat(m.price).toFixed(2) + ' SAR' : '-'}</td></tr>`;
+    }
+  }
+  const allItems = Object.values(data.mealSelectionsGrouped).flat();
+  const mealsSubtotal = allItems.reduce((sum, m) => sum + (m.price ? parseFloat(m.price) : 0), 0);
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
@@ -4428,7 +4439,7 @@ export async function generateMealSubscriptionSchedulePDF(data: {
         <div class="info-item"><span class="info-label">Payment | الدفع:</span><span>${paymentStr}</span></div>
       </div>
     </div>
-    ${data.mealSelections.length > 0 ? `
+    ${totalItemCount > 0 ? `
     <div class="section">
       <div class="section-title">Meal Items | عناصر الوجبات</div>
       <table>

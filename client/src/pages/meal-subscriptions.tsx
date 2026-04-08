@@ -581,11 +581,17 @@ export default function MealSubscriptionsPage() {
     import("@/lib/whatsapp").then(({ formatPhoneForWhatsApp, openWhatsAppWithMessage }) => {
       const mealTimesList = sub.mealTime.split(",").map(t => t.trim());
       const mealTimesStr = mealTimesList.map(t => getMealTimeLabel(t)).join(", ");
-      const allSelections = parseMealSelectionsFlat(sub.mealSelections);
-      const mealsList = allSelections.map(s => s.name).join(", ");
+      const selectionsMap = parseMealSelectionsMap(sub.mealSelections, mealTimesList);
+      let mealsBlock = "";
+      for (const mt of mealTimesList) {
+        const items = selectionsMap[mt] || [];
+        if (items.length > 0) {
+          mealsBlock += `\n*${getMealTimeLabel(mt)}:*\n${items.map(s => `  - ${s.name}`).join("\n")}\n`;
+        }
+      }
       const scheduleUrl = `${window.location.origin}/api/meal-subscriptions/${sub.id}/schedule-pdf`;
       const daysInfo = sub.numberOfDays ? `\n${t.numberOfDays || "Number of Days"}: ${sub.numberOfDays}` : '';
-      const message = `*${t.mealSubscriptions}*\n\n${sub.subscriberName},\n\n${t.planType}: ${getPlanLabel(sub.planType)}\n${t.mealTime}: ${mealTimesStr}\n${mealsList ? `${t.mealSelections}: ${mealsList}\n` : ''}${daysInfo}${t.subscriptionAmount}: ${parseFloat(sub.amount || '0').toFixed(2)} SAR\n\n${scheduleUrl}`;
+      const message = `*${t.mealSubscriptions}*\n\n${sub.subscriberName},\n\n${t.planType}: ${getPlanLabel(sub.planType)}\n${t.mealTime}: ${mealTimesStr}${mealsBlock}${daysInfo}\n${t.subscriptionAmount}: ${parseFloat(sub.amount || '0').toFixed(2)} SAR\n\n${scheduleUrl}`;
       openWhatsAppWithMessage(sub.subscriberPhone, message);
     });
   };
