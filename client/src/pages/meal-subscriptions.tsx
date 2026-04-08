@@ -912,13 +912,18 @@ export default function MealSubscriptionsPage() {
                         })}
                       </div>
                     )}
-                    {selections.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {selections.map((item, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs">
-                            {item.name}
-                          </Badge>
-                        ))}
+                    {Object.entries(selectionsMap).some(([, items]) => items.length > 0) && (
+                      <div className="space-y-1">
+                        {Object.entries(selectionsMap).map(([mt, items]) => items.length > 0 ? (
+                          <div key={mt} className="flex flex-wrap gap-1 items-center">
+                            <span className="text-xs text-muted-foreground font-medium">{getMealTimeLabel(mt)}:</span>
+                            {items.map((item, idx) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {item.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : null)}
                       </div>
                     )}
                     <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
