@@ -90,8 +90,18 @@ interface CSRConfig {
 }
 
 function createCSRConfigFile(config: CSRConfig, configPath: string): void {
-  const egsSerial = `1-${config.solutionName || "BSS"}|2-${config.solutionName || "BSS"}|3-${config.egsUnitSerialNumber}`;
+  let egsSerial: string;
+  const sn = config.serialNumber || config.egsUnitSerialNumber || "";
+  if (/^\d+-[^|]+\|\d+-[^|]+\|\d+-.+/.test(sn)) {
+    egsSerial = sn;
+  } else {
+    egsSerial = `1-${config.solutionName || "BSS"}|2-${config.solutionName || "BSS"}|3-${sn}`;
+  }
   
+  console.log(`[ZATCA CSR Config] EGS Serial: ${egsSerial}`);
+  console.log(`[ZATCA CSR Config] Subject: C=${config.countryCode}, O=${config.organizationName}, OU=${config.organizationalUnit}, CN=${config.commonName}`);
+  console.log(`[ZATCA CSR Config] VAT: ${config.vatNumber}, InvoiceType: ${config.invoiceType}, Branch: ${config.branchName}`);
+
   const configContent = `
 [req]
 default_bits = 2048
@@ -110,7 +120,7 @@ CN = ${config.commonName}
 basicConstraints = CA:FALSE
 keyUsage = digitalSignature, nonRepudiation, keyEncipherment
 1.3.6.1.4.1.311.20.2 = ASN1:PRINTABLESTRING:ZATCA-Code-Signing
-2.5.4.4 = ASN1:UTF8STRING:${config.serialNumber}
+2.5.4.4 = ASN1:UTF8STRING:${egsSerial}
 2.5.4.12 = ASN1:UTF8STRING:${config.invoiceType}
 2.5.4.26 = ASN1:UTF8STRING:${config.branchName}
 2.5.4.15 = ASN1:UTF8STRING:${egsSerial}
@@ -169,14 +179,20 @@ export function generateCSR(
     const privateKeyPem = fs.readFileSync(keyPath, "utf8");
     const csrPem = fs.readFileSync(csrPath, "utf8");
 
-    // Strip PEM headers/footers and all whitespace to get clean base64
+    try {
+      const verifyResult = execSync(`openssl req -in "${csrPath}" -verify -noout 2>&1`, { encoding: "utf8" }).trim();
+      console.log(`[ZATCA CSR] Verification: ${verifyResult}`);
+    } catch (verifyErr: any) {
+      console.error(`[ZATCA CSR] Verification failed:`, verifyErr.stdout || verifyErr.message);
+    }
+
     const csrBase64 = csrPem
       .replace(/-----BEGIN [A-Z ]+-----/g, "")
       .replace(/-----END [A-Z ]+-----/g, "")
       .replace(/\s+/g, "")
       .trim();
     
-    console.log(`[ZATCA CSR] Generated CSR length: ${csrBase64.length}`);
+    console.log(`[ZATCA CSR] Generated CSR base64 length: ${csrBase64.length}, first 60 chars: ${csrBase64.substring(0, 60)}...`);
     
     return {
       csr: csrBase64,

@@ -464,6 +464,22 @@ export async function onboardToZatca(
     return { success: false, message: "CSR contains invalid characters. Please regenerate CSR." };
   }
 
+  try {
+    const derBytes = Buffer.from(cleanCsr, "base64");
+    if (derBytes.length < 100) {
+      console.error(`[ZATCA Service] CSR DER is too short: ${derBytes.length} bytes`);
+      return { success: false, message: "CSR appears to be corrupted (too short). Please regenerate CSR." };
+    }
+    console.log(`[ZATCA Service] CSR DER decoded: ${derBytes.length} bytes, first byte: 0x${derBytes[0].toString(16)}`);
+    if (derBytes[0] !== 0x30) {
+      console.error(`[ZATCA Service] CSR DER does not start with SEQUENCE tag (0x30), got 0x${derBytes[0].toString(16)}`);
+      return { success: false, message: "CSR structure is invalid. Please regenerate CSR." };
+    }
+  } catch (decodeErr) {
+    console.error(`[ZATCA Service] Failed to decode CSR base64:`, decodeErr);
+    return { success: false, message: "CSR base64 is corrupted. Please regenerate CSR." };
+  }
+
   console.log(`[ZATCA Service] Clean CSR length: ${cleanCsr.length}, valid base64: ${isValidBase64}, first 40 chars: ${cleanCsr.substring(0, 40)}...`);
 
   const config: ZatcaConfig = {
