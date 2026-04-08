@@ -2450,6 +2450,12 @@ export interface Translations {
   confirmDeleteSubscription: string;
   subscriptionCreated: string;
   noSubscriptions: string;
+  markDelivered: string;
+  delivered: string;
+  undoDelivery: string;
+  noDeliveriesToday: string;
+  deliveryTime: string;
+  allDelivered: string;
   selectMealItems: string;
 }
 
@@ -4830,6 +4836,12 @@ export const translations: Record<Language, Translations> = {
     confirmDeleteSubscription: 'Are you sure you want to delete this subscription?',
     subscriptionCreated: 'Subscription created successfully',
     noSubscriptions: 'No subscriptions found',
+    markDelivered: 'Mark Delivered',
+    delivered: 'Delivered',
+    undoDelivery: 'Undo',
+    noDeliveriesToday: 'No deliveries scheduled for today',
+    deliveryTime: 'Delivery Time',
+    allDelivered: 'All Delivered',
     selectMealItems: 'Select meal items',
   },
   
@@ -7208,6 +7220,12 @@ export const translations: Record<Language, Translations> = {
     confirmDeleteSubscription: 'هل أنت متأكد من حذف هذا الاشتراك؟',
     subscriptionCreated: 'تم إنشاء الاشتراك بنجاح',
     noSubscriptions: 'لا توجد اشتراكات',
+    markDelivered: 'تم التوصيل',
+    delivered: 'تم التوصيل',
+    undoDelivery: 'تراجع',
+    noDeliveriesToday: 'لا توجد توصيلات مجدولة لليوم',
+    deliveryTime: 'وقت التوصيل',
+    allDelivered: 'تم توصيل الكل',
     selectMealItems: 'اختر أصناف الوجبات',
   },
   German: {
@@ -9568,6 +9586,12 @@ export const translations: Record<Language, Translations> = {
     confirmDeleteSubscription: 'Möchten Sie dieses Abonnement wirklich löschen?',
     subscriptionCreated: 'Abonnement erfolgreich erstellt',
     noSubscriptions: 'Keine Abonnements gefunden',
+    markDelivered: 'Als geliefert markieren',
+    delivered: 'Geliefert',
+    undoDelivery: 'Rückgängig',
+    noDeliveriesToday: 'Keine Lieferungen für heute geplant',
+    deliveryTime: 'Lieferzeit',
+    allDelivered: 'Alle geliefert',
     selectMealItems: 'Mahlzeiten auswählen',
   },
   Chinese: {
@@ -11928,6 +11952,12 @@ export const translations: Record<Language, Translations> = {
     confirmDeleteSubscription: '确定要删除此订阅吗？',
     subscriptionCreated: '订阅创建成功',
     noSubscriptions: '未找到订阅',
+    markDelivered: '标记已送达',
+    delivered: '已送达',
+    undoDelivery: '撤销',
+    noDeliveriesToday: '今天没有配送计划',
+    deliveryTime: '配送时间',
+    allDelivered: '全部已送达',
     selectMealItems: '选择餐食项目',
   },
   Bengali: {
@@ -14288,6 +14318,12 @@ export const translations: Record<Language, Translations> = {
     confirmDeleteSubscription: 'আপনি কি এই সাবস্ক্রিপশন মুছতে চান?',
     subscriptionCreated: 'সাবস্ক্রিপশন সফলভাবে তৈরি হয়েছে',
     noSubscriptions: 'কোন সাবস্ক্রিপশন পাওয়া যায়নি',
+    markDelivered: 'ডেলিভারি সম্পন্ন',
+    delivered: 'ডেলিভারি হয়েছে',
+    undoDelivery: 'পূর্বাবস্থায় ফেরান',
+    noDeliveriesToday: 'আজ কোন ডেলিভারি নির্ধারিত নেই',
+    deliveryTime: 'ডেলিভারি সময়',
+    allDelivered: 'সব ডেলিভারি সম্পন্ন',
     selectMealItems: 'খাবার আইটেম নির্বাচন করুন',
   },
   Italian: {
@@ -16648,6 +16684,12 @@ export const translations: Record<Language, Translations> = {
     confirmDeleteSubscription: 'Sei sicuro di voler eliminare questo abbonamento?',
     subscriptionCreated: 'Abbonamento creato con successo',
     noSubscriptions: 'Nessun abbonamento trovato',
+    markDelivered: 'Segna come consegnato',
+    delivered: 'Consegnato',
+    undoDelivery: 'Annulla',
+    noDeliveriesToday: 'Nessuna consegna prevista per oggi',
+    deliveryTime: 'Orario di consegna',
+    allDelivered: 'Tutto consegnato',
     selectMealItems: 'Seleziona pasti',
   },
 
@@ -18952,6 +18994,12 @@ export const translations: Record<Language, Translations> = {
     confirmDeleteSubscription: 'क्या आप इस सदस्यता को हटाना चाहते हैं?',
     subscriptionCreated: 'सदस्यता सफलतापूर्वक बनाई गई',
     noSubscriptions: 'कोई सदस्यता नहीं मिली',
+    markDelivered: 'डिलीवरी पूर्ण',
+    delivered: 'डिलीवर हो गया',
+    undoDelivery: 'पूर्ववत करें',
+    noDeliveriesToday: 'आज कोई डिलीवरी निर्धारित नहीं है',
+    deliveryTime: 'डिलीवरी समय',
+    allDelivered: 'सभी डिलीवर हो गए',
     selectMealItems: 'भोजन आइटम चुनें',
   },
   
@@ -21256,6 +21304,12 @@ export const translations: Record<Language, Translations> = {
     confirmDeleteSubscription: 'کیا آپ واقعی یہ رکنیت حذف کرنا چاہتے ہیں؟',
     subscriptionCreated: 'رکنیت کامیابی سے بنائی گئی',
     noSubscriptions: 'کوئی رکنیت نہیں ملی',
+    markDelivered: 'ڈیلیوری مکمل',
+    delivered: 'ڈیلیور ہو گیا',
+    undoDelivery: 'واپس',
+    noDeliveriesToday: 'آج کوئی ڈیلیوری طے نہیں',
+    deliveryTime: 'ڈیلیوری کا وقت',
+    allDelivered: 'سب ڈیلیور ہو گئے',
     selectMealItems: 'کھانے کی اشیاء منتخب کریں',
   },
   
@@ -23493,6 +23547,12 @@ export const translations: Record<Language, Translations> = {
     confirmDeleteSubscription: '¿Está seguro de que desea eliminar esta suscripción?',
     subscriptionCreated: 'Suscripción creada exitosamente',
     noSubscriptions: 'No se encontraron suscripciones',
+    markDelivered: 'Marcar entregado',
+    delivered: 'Entregado',
+    undoDelivery: 'Deshacer',
+    noDeliveriesToday: 'No hay entregas programadas para hoy',
+    deliveryTime: 'Hora de entrega',
+    allDelivered: 'Todo entregado',
     selectMealItems: 'Seleccionar elementos de comida',
   },
 
@@ -25730,6 +25790,12 @@ export const translations: Record<Language, Translations> = {
     confirmDeleteSubscription: 'Sigurado ka bang gusto mong burahin ang subscription na ito?',
     subscriptionCreated: 'Matagumpay na nagawa ang subscription',
     noSubscriptions: 'Walang nahanap na subscription',
+    markDelivered: 'Markahan bilang naihatid',
+    delivered: 'Naihatid',
+    undoDelivery: 'I-undo',
+    noDeliveriesToday: 'Walang delivery na naka-iskedyul ngayon',
+    deliveryTime: 'Oras ng delivery',
+    allDelivered: 'Lahat naihatid',
     selectMealItems: 'Pumili ng mga pagkain',
   },
 };

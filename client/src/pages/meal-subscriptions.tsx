@@ -52,6 +52,8 @@ import {
   Clock,
   Download,
   MessageCircle,
+  CheckCircle2,
+  Undo2,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -246,6 +248,49 @@ export default function MealSubscriptionsPage() {
     },
   });
 
+  const markDeliveredMutation = useMutation({
+    mutationFn: async ({ id, mealTime }: { id: string; mealTime: string }) => {
+      return apiRequest("POST", `/api/meal-subscriptions/${id}/mark-delivered`, { mealTime });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions/today"] });
+      toast({ title: t.delivered });
+    },
+    onError: (error: Error) => {
+      toast({ title: error.message, variant: "destructive" });
+    },
+  });
+
+  const undoDeliveryMutation = useMutation({
+    mutationFn: async ({ id, mealTime }: { id: string; mealTime: string }) => {
+      return apiRequest("POST", `/api/meal-subscriptions/${id}/undo-delivered`, { mealTime });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions/today"] });
+    },
+    onError: (error: Error) => {
+      toast({ title: error.message, variant: "destructive" });
+    },
+  });
+
+  const isMealDeliveredToday = (sub: MealSubscription, mealTime: string): boolean => {
+    const todayStr = new Date().toISOString().split("T")[0];
+    const log = Array.isArray(sub.deliveryLog) ? sub.deliveryLog as any[] : [];
+    return log.some((entry: any) => entry.date === todayStr && entry.mealTime === mealTime);
+  };
+
+  const getDeliveredTime = (sub: MealSubscription, mealTime: string): string | null => {
+    const todayStr = new Date().toISOString().split("T")[0];
+    const log = Array.isArray(sub.deliveryLog) ? sub.deliveryLog as any[] : [];
+    const entry = log.find((e: any) => e.date === todayStr && e.mealTime === mealTime);
+    if (entry?.deliveredAt) {
+      return new Date(entry.deliveredAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return null;
+  };
+
   const handleOpenCreate = () => {
     setEditingSubscription(null);
     form.reset({
@@ -315,7 +360,7 @@ export default function MealSubscriptionsPage() {
     return true;
   });
 
-  const displayList = activeTab === "today" ? todaysDeliveryList : filteredSubscriptions;
+
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -545,111 +590,220 @@ export default function MealSubscriptionsPage() {
         )}
       </div>
 
-      {displayList.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center text-muted-foreground" data-testid="text-no-subscriptions">
-            <CalendarCheck className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>{t.noSubscriptions}</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {displayList.map((sub) => {
-            const selections = parseMealSelections(sub.mealSelections);
-            return (
-              <Card key={sub.id} data-testid={`card-subscription-${sub.id}`}>
-                <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
-                  <div className="space-y-1 min-w-0">
-                    <h3 className="font-semibold truncate" data-testid={`text-name-${sub.id}`}>{sub.subscriberName}</h3>
-                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Phone className="h-3 w-3" />
-                        {sub.subscriberPhone}
-                      </span>
-                      {sub.deliveryAddress && (
+      {activeTab === "today" ? (
+        todaysDeliveryList.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground" data-testid="text-no-deliveries-today">
+              <Truck className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>{t.noDeliveriesToday}</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {todaysDeliveryList.map((sub) => {
+              const selections = parseMealSelections(sub.mealSelections);
+              const mealTimes = sub.mealTime.split(",").map((mt) => mt.trim());
+              const allDone = mealTimes.every((mt) => isMealDeliveredToday(sub, mt));
+              return (
+                <Card key={sub.id} className={allDone ? "opacity-60" : ""} data-testid={`card-delivery-${sub.id}`}>
+                  <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold text-lg" data-testid={`text-delivery-name-${sub.id}`}>{sub.subscriberName}</h3>
+                        {allDone && (
+                          <Badge variant="default" className="bg-green-600 text-white text-xs">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            {t.allDelivered}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          <span className="truncate max-w-[150px]">{sub.deliveryAddress}</span>
+                          <Phone className="h-3 w-3" />
+                          {sub.subscriberPhone}
                         </span>
-                      )}
+                        {sub.deliveryAddress && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {sub.deliveryAddress}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1">
-                    {getStatusBadge(sub.status)}
                     {getPaymentBadge(sub.paymentStatus)}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex flex-wrap items-center gap-3 text-sm">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3 text-muted-foreground" />
-                      {sub.mealTime.split(",").map((t) => getMealTimeLabel(t.trim())).join(", ")}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <CalendarCheck className="h-3 w-3 text-muted-foreground" />
-                      {getPlanLabel(sub.planType)}
-                    </span>
-                    <span className="font-semibold">{parseFloat(sub.amount || "0").toFixed(2)} SAR</span>
-                  </div>
-                  {Array.isArray(sub.scheduleDays) && sub.scheduleDays.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {sub.scheduleDays.map((day) => (
-                        <Badge key={day} variant="outline" className="text-xs">
-                          {getDayLabel(day)}
-                        </Badge>
-                      ))}
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {selections.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {selections.map((item, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {item.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    {sub.dietaryNotes && (
+                      <p className="text-xs text-muted-foreground italic">{sub.dietaryNotes}</p>
+                    )}
+                    <div className="space-y-2 pt-2 border-t">
+                      {mealTimes.map((mt) => {
+                        const done = isMealDeliveredToday(sub, mt);
+                        const doneTime = getDeliveredTime(sub, mt);
+                        return (
+                          <div key={mt} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">{getMealTimeLabel(mt)}</span>
+                              {done && doneTime && (
+                                <span className="text-xs text-muted-foreground">({doneTime})</span>
+                              )}
+                            </div>
+                            {done ? (
+                              <div className="flex items-center gap-2">
+                                <Badge variant="default" className="bg-green-600 text-white">
+                                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                                  {t.delivered}
+                                </Badge>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => undoDeliveryMutation.mutate({ id: sub.id, mealTime: mt })}
+                                  disabled={undoDeliveryMutation.isPending}
+                                  data-testid={`button-undo-delivery-${sub.id}-${mt}`}
+                                >
+                                  <Undo2 className="h-3 w-3 mr-1" />
+                                  {t.undoDelivery}
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => markDeliveredMutation.mutate({ id: sub.id, mealTime: mt })}
+                                disabled={markDeliveredMutation.isPending}
+                                data-testid={`button-mark-delivered-${sub.id}-${mt}`}
+                              >
+                                <CheckCircle2 className="h-4 w-4 mr-1" />
+                                {t.markDelivered}
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  )}
-                  {selections.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {selections.map((item, idx) => (
-                        <Badge key={idx} variant="secondary" className="text-xs">
-                          {item.name}
-                        </Badge>
-                      ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )
+      ) : (
+        filteredSubscriptions.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground" data-testid="text-no-subscriptions">
+              <CalendarCheck className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>{t.noSubscriptions}</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {filteredSubscriptions.map((sub) => {
+              const selections = parseMealSelections(sub.mealSelections);
+              return (
+                <Card key={sub.id} data-testid={`card-subscription-${sub.id}`}>
+                  <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
+                    <div className="space-y-1 min-w-0">
+                      <h3 className="font-semibold truncate" data-testid={`text-name-${sub.id}`}>{sub.subscriberName}</h3>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Phone className="h-3 w-3" />
+                          {sub.subscriberPhone}
+                        </span>
+                        {sub.deliveryAddress && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            <span className="truncate max-w-[150px]">{sub.deliveryAddress}</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  )}
-                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
-                    <Button size="sm" variant="outline" onClick={() => handleDownloadPdf(sub.id)} data-testid={`button-pdf-${sub.id}`}>
-                      <Download className="h-3 w-3 mr-1" />
-                      PDF
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleWhatsApp(sub)} data-testid={`button-whatsapp-${sub.id}`}>
-                      <MessageCircle className="h-3 w-3 mr-1" />
-                      WhatsApp
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleOpenEdit(sub)} data-testid={`button-edit-${sub.id}`}>
-                      <Edit className="h-3 w-3 mr-1" />
-                      {t.edit || "Edit"}
-                    </Button>
-                    {sub.status === "active" && (
-                      <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: sub.id, status: "paused" })} data-testid={`button-pause-${sub.id}`}>
-                        <Pause className="h-3 w-3 mr-1" />
-                        {t.pauseSubscription}
-                      </Button>
+                    <div className="flex flex-wrap items-center gap-1">
+                      {getStatusBadge(sub.status)}
+                      {getPaymentBadge(sub.paymentStatus)}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-3 text-sm">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3 text-muted-foreground" />
+                        {sub.mealTime.split(",").map((t) => getMealTimeLabel(t.trim())).join(", ")}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <CalendarCheck className="h-3 w-3 text-muted-foreground" />
+                        {getPlanLabel(sub.planType)}
+                      </span>
+                      <span className="font-semibold">{parseFloat(sub.amount || "0").toFixed(2)} SAR</span>
+                    </div>
+                    {Array.isArray(sub.scheduleDays) && sub.scheduleDays.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {sub.scheduleDays.map((day) => (
+                          <Badge key={day} variant="outline" className="text-xs">
+                            {getDayLabel(day)}
+                          </Badge>
+                        ))}
+                      </div>
                     )}
-                    {sub.status === "paused" && (
-                      <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: sub.id, status: "active" })} data-testid={`button-resume-${sub.id}`}>
-                        <Play className="h-3 w-3 mr-1" />
-                        {t.resumeSubscription}
-                      </Button>
+                    {selections.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {selections.map((item, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {item.name}
+                          </Badge>
+                        ))}
+                      </div>
                     )}
-                    {(sub.status === "active" || sub.status === "paused") && (
-                      <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: sub.id, status: "cancelled" })} data-testid={`button-cancel-${sub.id}`}>
-                        <XCircle className="h-3 w-3 mr-1" />
-                        {t.cancelSubscription}
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
+                      <Button size="sm" variant="outline" onClick={() => handleDownloadPdf(sub.id)} data-testid={`button-pdf-${sub.id}`}>
+                        <Download className="h-3 w-3 mr-1" />
+                        PDF
                       </Button>
-                    )}
-                    <Button size="sm" variant="destructive" onClick={() => setDeleteId(sub.id)} data-testid={`button-delete-${sub.id}`}>
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      {t.delete || "Delete"}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                      <Button size="sm" variant="outline" onClick={() => handleWhatsApp(sub)} data-testid={`button-whatsapp-${sub.id}`}>
+                        <MessageCircle className="h-3 w-3 mr-1" />
+                        WhatsApp
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => handleOpenEdit(sub)} data-testid={`button-edit-${sub.id}`}>
+                        <Edit className="h-3 w-3 mr-1" />
+                        {t.edit || "Edit"}
+                      </Button>
+                      {sub.status === "active" && (
+                        <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: sub.id, status: "paused" })} data-testid={`button-pause-${sub.id}`}>
+                          <Pause className="h-3 w-3 mr-1" />
+                          {t.pauseSubscription}
+                        </Button>
+                      )}
+                      {sub.status === "paused" && (
+                        <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: sub.id, status: "active" })} data-testid={`button-resume-${sub.id}`}>
+                          <Play className="h-3 w-3 mr-1" />
+                          {t.resumeSubscription}
+                        </Button>
+                      )}
+                      {(sub.status === "active" || sub.status === "paused") && (
+                        <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: sub.id, status: "cancelled" })} data-testid={`button-cancel-${sub.id}`}>
+                          <XCircle className="h-3 w-3 mr-1" />
+                          {t.cancelSubscription}
+                        </Button>
+                      )}
+                      <Button size="sm" variant="destructive" onClick={() => setDeleteId(sub.id)} data-testid={`button-delete-${sub.id}`}>
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        {t.delete || "Delete"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

@@ -1796,9 +1796,10 @@ export const mealSubscriptions = pgTable("meal_subscriptions", {
   paymentStatus: text("payment_status").notNull().default("pending"),
   status: text("status").notNull().default("active"),
   notes: text("notes"),
+  deliveryLog: jsonb("delivery_log").notNull().default([]),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const insertMealSubscriptionSchema = createInsertSchema(mealSubscriptions).omit({ id: true, createdAt: true });
+export const insertMealSubscriptionSchema = createInsertSchema(mealSubscriptions).omit({ id: true, createdAt: true, deliveryLog: true });
 export type InsertMealSubscription = z.infer<typeof insertMealSubscriptionSchema>;
 export type MealSubscription = typeof mealSubscriptions.$inferSelect;

@@ -5908,6 +5908,12 @@ export const storage = new DatabaseStorage();
     `);
     console.log('[Migration] Table verified/created: meal_subscriptions');
 
+    // Add delivery_log column to meal_subscriptions if not exists
+    await pool.query(`
+      ALTER TABLE meal_subscriptions ADD COLUMN IF NOT EXISTS delivery_log JSONB NOT NULL DEFAULT '[]'
+    `);
+    console.log('[Migration] Meal subscriptions column verified/added: delivery_log');
+
     console.log('[Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings');
   } catch (error: any) {
     // Only log if not a duplicate column error (which means columns already exist)

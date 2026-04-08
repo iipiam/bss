@@ -16067,6 +16067,45 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  app.post("/api/meal-subscriptions/:id/mark-delivered", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { mealTime } = req.body;
+      if (!mealTime) return res.status(400).json({ message: "mealTime is required" });
+      const sub = await storage.getMealSubscription(req.params.id, restaurantId);
+      if (!sub) return res.status(404).json({ message: "Subscription not found" });
+      const todayStr = new Date().toISOString().split("T")[0];
+      const existingLog = Array.isArray(sub.deliveryLog) ? sub.deliveryLog as any[] : [];
+      const alreadyDelivered = existingLog.some((entry: any) => entry.date === todayStr && entry.mealTime === mealTime);
+      if (alreadyDelivered) return res.status(400).json({ message: "Already marked as delivered" });
+      const newEntry = { date: todayStr, mealTime, deliveredAt: new Date().toISOString() };
+      const updatedLog = [...existingLog, newEntry];
+      const updated = await storage.updateMealSubscription(req.params.id, restaurantId, { deliveryLog: updatedLog } as any);
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error marking delivery:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/meal-subscriptions/:id/undo-delivered", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { mealTime } = req.body;
+      if (!mealTime) return res.status(400).json({ message: "mealTime is required" });
+      const sub = await storage.getMealSubscription(req.params.id, restaurantId);
+      if (!sub) return res.status(404).json({ message: "Subscription not found" });
+      const todayStr = new Date().toISOString().split("T")[0];
+      const existingLog = Array.isArray(sub.deliveryLog) ? sub.deliveryLog as any[] : [];
+      const updatedLog = existingLog.filter((entry: any) => !(entry.date === todayStr && entry.mealTime === mealTime));
+      const updated = await storage.updateMealSubscription(req.params.id, restaurantId, { deliveryLog: updatedLog } as any);
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error undoing delivery:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.delete("/api/meal-subscriptions/:id", requireAuth, requireRestaurant, requireAction('orders', 'delete'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
