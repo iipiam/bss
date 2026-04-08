@@ -539,7 +539,13 @@ export default function MealSubscriptionsPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{t.todaysDeliveries}</p>
-              <p className="text-2xl font-bold" data-testid="text-today-deliveries">{todaysDeliveryList.length}</p>
+              <p className="text-2xl font-bold" data-testid="text-today-deliveries">
+                {todaysDeliveryList.reduce((count, sub) => {
+                  const mealTimes = sub.mealTime.split(",").map((mt) => mt.trim());
+                  const pending = mealTimes.filter((mt) => !isMealDeliveredToday(sub, mt)).length;
+                  return count + pending;
+                }, 0)} / {todaysDeliveryList.reduce((count, sub) => count + sub.mealTime.split(",").length, 0)}
+              </p>
             </div>
           </CardContent>
         </Card>
