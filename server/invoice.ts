@@ -4323,6 +4323,128 @@ export async function generateEquityStatementPDF(data: {
   } finally { await page.close(); }
 }
 
+export async function generateMealSubscriptionSchedulePDF(data: {
+  subscriberName: string;
+  subscriberPhone: string;
+  subscriberEmail?: string;
+  deliveryAddress?: string;
+  dietaryNotes?: string;
+  mealSelections: Array<{ name: string; price?: string }>;
+  planType: string;
+  scheduleDays: string[];
+  mealTime: string;
+  startDate: string;
+  endDate?: string;
+  amount: string;
+  paymentStatus: string;
+  restaurantName: string;
+  createdAt: string;
+}): Promise<Buffer> {
+  const dayLabels: Record<string, { en: string; ar: string }> = {
+    sunday: { en: "Sunday", ar: "الأحد" },
+    monday: { en: "Monday", ar: "الاثنين" },
+    tuesday: { en: "Tuesday", ar: "الثلاثاء" },
+    wednesday: { en: "Wednesday", ar: "الأربعاء" },
+    thursday: { en: "Thursday", ar: "الخميس" },
+    friday: { en: "Friday", ar: "الجمعة" },
+    saturday: { en: "Saturday", ar: "السبت" },
+  };
+  const mealTimeLabels: Record<string, { en: string; ar: string }> = {
+    breakfast: { en: "Breakfast", ar: "فطور" },
+    lunch: { en: "Lunch", ar: "غداء" },
+    dinner: { en: "Dinner", ar: "عشاء" },
+  };
+  const planLabels: Record<string, { en: string; ar: string }> = {
+    daily: { en: "Daily", ar: "يومي" },
+    weekly: { en: "Weekly", ar: "أسبوعي" },
+    monthly: { en: "Monthly", ar: "شهري" },
+  };
+  const paymentLabels: Record<string, { en: string; ar: string }> = {
+    paid: { en: "Paid", ar: "مدفوع" },
+    pending: { en: "Pending", ar: "قيد الانتظار" },
+    partial: { en: "Partial", ar: "جزئي" },
+  };
+
+  const mealTimes = data.mealTime.split(",").map(t => t.trim());
+  const mealTimeStr = mealTimes.map(t => `${mealTimeLabels[t]?.en || t} | ${mealTimeLabels[t]?.ar || t}`).join(", ");
+  const daysStr = data.scheduleDays.length > 0
+    ? data.scheduleDays.map(d => `${dayLabels[d]?.en || d} | ${dayLabels[d]?.ar || d}`).join(", ")
+    : "Every Day | كل يوم";
+  const planStr = `${planLabels[data.planType]?.en || data.planType} | ${planLabels[data.planType]?.ar || data.planType}`;
+  const paymentStr = `${paymentLabels[data.paymentStatus]?.en || data.paymentStatus} | ${paymentLabels[data.paymentStatus]?.ar || data.paymentStatus}`;
+
+  const mealsRows = data.mealSelections.map(m =>
+    `<tr><td style="padding:8px;border:1px solid #ddd;">${m.name}</td><td style="padding:8px;border:1px solid #ddd;text-align:right;">${m.price ? parseFloat(m.price).toFixed(2) + ' SAR' : '-'}</td></tr>`
+  ).join("");
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
+    body{font-family:'Inter','Noto Naskh Arabic',sans-serif;margin:0;padding:40px;color:#1a1a1a;font-size:13px;}
+    .header{text-align:center;margin-bottom:30px;border-bottom:3px solid #2563eb;padding-bottom:20px;}
+    .header h1{margin:0;font-size:22px;color:#2563eb;}
+    .header h2{margin:5px 0 0;font-size:14px;color:#666;}
+    .section{margin-bottom:20px;}
+    .section-title{font-size:15px;font-weight:700;color:#2563eb;margin-bottom:10px;border-bottom:1px solid #e5e7eb;padding-bottom:5px;}
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;}
+    .info-item{display:flex;justify-content:space-between;}
+    .info-label{font-weight:600;color:#555;}
+    table{width:100%;border-collapse:collapse;margin-top:8px;}
+    th{background:#2563eb;color:white;padding:8px;text-align:left;font-weight:600;}
+    th:last-child{text-align:right;}
+    .total-row{background:#f0f4ff;font-weight:700;}
+    .footer{margin-top:30px;text-align:center;font-size:11px;color:#888;border-top:1px solid #e5e7eb;padding-top:15px;}
+  </style></head><body>
+    <div class="header">
+      <h1>${data.restaurantName}</h1>
+      <h2>Meal Subscription Schedule | جدول اشتراك الوجبات</h2>
+      <p style="margin:5px 0 0;font-size:12px;color:#888;">Date | التاريخ: ${new Date(data.createdAt).toLocaleDateString('en-GB')}</p>
+    </div>
+    <div class="section">
+      <div class="section-title">Subscriber Information | معلومات المشترك</div>
+      <div class="info-grid">
+        <div class="info-item"><span class="info-label">Name | الاسم:</span><span>${data.subscriberName}</span></div>
+        <div class="info-item"><span class="info-label">Phone | الهاتف:</span><span>${data.subscriberPhone}</span></div>
+        ${data.subscriberEmail ? `<div class="info-item"><span class="info-label">Email | البريد:</span><span>${data.subscriberEmail}</span></div>` : ''}
+        ${data.deliveryAddress ? `<div class="info-item"><span class="info-label">Address | العنوان:</span><span>${data.deliveryAddress}</span></div>` : ''}
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Subscription Details | تفاصيل الاشتراك</div>
+      <div class="info-grid">
+        <div class="info-item"><span class="info-label">Plan | الخطة:</span><span>${planStr}</span></div>
+        <div class="info-item"><span class="info-label">Meal Time | وقت الوجبة:</span><span>${mealTimeStr}</span></div>
+        <div class="info-item"><span class="info-label">Schedule | الجدول:</span><span>${daysStr}</span></div>
+        <div class="info-item"><span class="info-label">Start | البداية:</span><span>${data.startDate ? new Date(data.startDate).toLocaleDateString('en-GB') : '-'}</span></div>
+        <div class="info-item"><span class="info-label">End | النهاية:</span><span>${data.endDate ? new Date(data.endDate).toLocaleDateString('en-GB') : 'Open-ended | مفتوح'}</span></div>
+        <div class="info-item"><span class="info-label">Payment | الدفع:</span><span>${paymentStr}</span></div>
+      </div>
+    </div>
+    ${data.mealSelections.length > 0 ? `
+    <div class="section">
+      <div class="section-title">Meal Items | عناصر الوجبات</div>
+      <table>
+        <thead><tr><th>Item | العنصر</th><th>Price | السعر</th></tr></thead>
+        <tbody>${mealsRows}
+          <tr class="total-row"><td style="padding:8px;border:1px solid #ddd;">Total | الإجمالي</td><td style="padding:8px;border:1px solid #ddd;text-align:right;">${parseFloat(data.amount).toFixed(2)} SAR</td></tr>
+        </tbody>
+      </table>
+    </div>` : ''}
+    ${data.dietaryNotes ? `<div class="section"><div class="section-title">Dietary Notes | ملاحظات غذائية</div><p>${data.dietaryNotes}</p></div>` : ''}
+    <div class="footer">
+      <p>${data.restaurantName} - Meal Subscription Management | إدارة اشتراكات الوجبات</p>
+      <p>Powered by BSS | مدعوم من BSS</p>
+    </div>
+  </body></html>`;
+
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+  try {
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: PDF_MARGINS });
+    return Buffer.from(pdfBuffer);
+  } finally { await page.close(); }
+}
+
 // Cleanup function for graceful shutdown
 export async function closeBrowser(): Promise<void> {
   if (browserInstance) {

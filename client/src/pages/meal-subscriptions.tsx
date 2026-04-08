@@ -50,6 +50,8 @@ import {
   XCircle,
   MapPin,
   Clock,
+  Download,
+  MessageCircle,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -179,14 +181,18 @@ export default function MealSubscriptionsPage() {
         startDate: data.startDate ? new Date(data.startDate + "T00:00:00").toISOString() : new Date().toISOString(),
         endDate: data.endDate ? new Date(data.endDate + "T00:00:00").toISOString() : null,
       };
-      return apiRequest("POST", "/api/meal-subscriptions", payload);
+      const res = await apiRequest("POST", "/api/meal-subscriptions", payload);
+      return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (created: MealSubscription) => {
       queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions/today"] });
       toast({ title: t.subscriptionCreated });
       setDialogOpen(false);
       form.reset();
+      if (created?.id && created?.subscriberPhone) {
+        handleWhatsApp(created);
+      }
     },
     onError: (error: Error) => {
       toast({ title: error.message, variant: "destructive" });
@@ -381,6 +387,61 @@ export default function MealSubscriptionsPage() {
     }
   };
 
+  const calculateAmount = (selections: MealSelection[], mealTimes: string[]) => {
+    if (selections.length === 0 || mealTimes.length === 0) return;
+    let totalPerDelivery = 0;
+    for (const sel of selections) {
+      if (sel.menuItemId) {
+        const menuItem = menuItems.find((m) => m.id === sel.menuItemId);
+        if (menuItem?.price) totalPerDelivery += parseFloat(menuItem.price);
+      }
+    }
+    const total = totalPerDelivery * mealTimes.length;
+    if (total > 0) {
+      form.setValue("amount", total.toFixed(2));
+    }
+  };
+
+  const toggleMenuItem = (item: MenuItemType) => {
+    const selections = form.getValues("mealSelections") || [];
+    const isSelected = selections.some((s) => s.menuItemId === item.id);
+    let updated: MealSelection[];
+    if (isSelected) {
+      updated = selections.filter((s) => s.menuItemId !== item.id);
+    } else {
+      updated = [...selections, { name: item.name, menuItemId: item.id }];
+    }
+    form.setValue("mealSelections", updated);
+    calculateAmount(updated, form.getValues("mealTime") || []);
+  };
+
+  const handleDownloadPdf = async (subId: string) => {
+    try {
+      const response = await fetch(`/api/meal-subscriptions/${subId}/schedule-pdf`, { credentials: 'include' });
+      if (!response.ok) throw new Error("Failed to download PDF");
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `meal-subscription-schedule.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      toast({ title: "Failed to download schedule PDF", variant: "destructive" });
+    }
+  };
+
+  const handleWhatsApp = (sub: MealSubscription) => {
+    import("@/lib/whatsapp").then(({ formatPhoneForWhatsApp, openWhatsAppWithMessage }) => {
+      const mealTimes = sub.mealTime.split(",").map(t => getMealTimeLabel(t.trim())).join(", ");
+      const selections = parseMealSelections(sub.mealSelections);
+      const mealsList = selections.map(s => s.name).join(", ");
+      const scheduleUrl = `${window.location.origin}/api/meal-subscriptions/${sub.id}/schedule-pdf`;
+      const message = `*${t.mealSubscriptions}*\n\n${sub.subscriberName},\n\n${t.planType}: ${getPlanLabel(sub.planType)}\n${t.mealTime}: ${mealTimes}\n${mealsList ? `${t.mealSelections}: ${mealsList}\n` : ''}${t.subscriptionAmount}: ${parseFloat(sub.amount || '0').toFixed(2)} SAR\n\n${scheduleUrl}`;
+      openWhatsAppWithMessage(sub.subscriberPhone, message);
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64" data-testid="loading-subscriptions">
@@ -549,6 +610,14 @@ export default function MealSubscriptionsPage() {
                     </div>
                   )}
                   <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
+                    <Button size="sm" variant="outline" onClick={() => handleDownloadPdf(sub.id)} data-testid={`button-pdf-${sub.id}`}>
+                      <Download className="h-3 w-3 mr-1" />
+                      PDF
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleWhatsApp(sub)} data-testid={`button-whatsapp-${sub.id}`}>
+                      <MessageCircle className="h-3 w-3 mr-1" />
+                      WhatsApp
+                    </Button>
                     <Button size="sm" variant="outline" onClick={() => handleOpenEdit(sub)} data-testid={`button-edit-${sub.id}`}>
                       <Edit className="h-3 w-3 mr-1" />
                       {t.edit || "Edit"}
@@ -688,12 +757,15 @@ export default function MealSubscriptionsPage() {
                               className={`toggle-elevate ${selected ? "toggle-elevated" : ""}`}
                               onClick={() => {
                                 const current = form.getValues("mealTime") || [];
+                                let updated: MealTimeType[];
                                 if (selected) {
-                                  const updated = current.filter((t) => t !== time);
-                                  if (updated.length > 0) form.setValue("mealTime", updated, { shouldValidate: true });
+                                  updated = current.filter((t) => t !== time);
+                                  if (updated.length === 0) return;
                                 } else {
-                                  form.setValue("mealTime", [...current, time], { shouldValidate: true });
+                                  updated = [...current, time];
                                 }
+                                form.setValue("mealTime", updated, { shouldValidate: true });
+                                calculateAmount(form.getValues("mealSelections") || [], updated);
                               }}
                               data-testid={`button-meal-time-${time}`}
                             >
@@ -797,8 +869,8 @@ export default function MealSubscriptionsPage() {
               {menuItems.length > 0 && (
                 <div>
                   <FormLabel>{t.mealSelections}</FormLabel>
-                  <div className="flex flex-wrap gap-2 mt-2 max-h-32 overflow-y-auto border rounded-md p-2">
-                    {menuItems.map((item) => {
+                  <div className="flex flex-wrap gap-2 mt-2 max-h-40 overflow-y-auto border rounded-md p-2">
+                    {menuItems.filter(item => item.available).map((item) => {
                       const selections = form.watch("mealSelections") || [];
                       const isSelected = selections.some((s) => s.menuItemId === item.id);
                       return (
@@ -808,16 +880,10 @@ export default function MealSubscriptionsPage() {
                           size="sm"
                           variant={isSelected ? "default" : "outline"}
                           className={`toggle-elevate ${isSelected ? "toggle-elevated" : ""}`}
-                          onClick={() => {
-                            if (isSelected) {
-                              form.setValue("mealSelections", selections.filter((s) => s.menuItemId !== item.id));
-                            } else {
-                              form.setValue("mealSelections", [...selections, { name: item.name, menuItemId: item.id }]);
-                            }
-                          }}
+                          onClick={() => toggleMenuItem(item)}
                           data-testid={`button-menu-item-${item.id}`}
                         >
-                          {item.name}
+                          {item.name} ({parseFloat(item.price).toFixed(2)} SAR)
                         </Button>
                       );
                     })}

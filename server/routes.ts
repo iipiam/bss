@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { db } from "./db";
-import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport, generateInvestorStatementPDF, generateBssAnalysisStatementPDF, generateRefundClearanceInvoice, getBrowser } from "./invoice";
+import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport, generateInvestorStatementPDF, generateBssAnalysisStatementPDF, generateRefundClearanceInvoice, getBrowser, generateMealSubscriptionSchedulePDF } from "./invoice";
 import { PasswordResetMailer } from "./email";
 import { sanitizePatchBody } from "./utils";
 import { logActivity } from "./activityLogger";
@@ -15972,6 +15972,23 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (safeBody.startDate && typeof safeBody.startDate === 'string') safeBody.startDate = new Date(safeBody.startDate);
       if (safeBody.endDate && typeof safeBody.endDate === 'string') safeBody.endDate = new Date(safeBody.endDate);
       const subscription = await storage.createMealSubscription({ ...safeBody, restaurantId });
+      if (subscription.paymentStatus === 'paid' && parseFloat(subscription.amount || '0') > 0) {
+        try {
+          const subtotal = parseFloat(subscription.amount || '0') / 1.15;
+          const tax = parseFloat(subscription.amount || '0') - subtotal;
+          await storage.createTransaction({
+            restaurantId,
+            transactionId: `MSUB-${subscription.id.substring(0, 8)}-${Date.now()}`,
+            itemCount: Array.isArray(subscription.mealSelections) ? (subscription.mealSelections as Array<unknown>).length : 1,
+            subtotal: subtotal.toFixed(2),
+            tax: tax.toFixed(2),
+            total: parseFloat(subscription.amount || '0').toFixed(2),
+            paymentMethod: 'Meal Subscription',
+          });
+        } catch (txError) {
+          console.error("Error creating transaction for meal subscription:", txError);
+        }
+      }
       res.status(201).json(subscription);
     } catch (error: any) {
       console.error("Error creating meal subscription:", error);
@@ -15985,11 +16002,67 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const { id, createdAt, restaurantId: _rid, ...safeBody } = req.body;
       if (safeBody.startDate && typeof safeBody.startDate === 'string') safeBody.startDate = new Date(safeBody.startDate);
       if (safeBody.endDate && typeof safeBody.endDate === 'string') safeBody.endDate = new Date(safeBody.endDate);
+      const existingSub = await storage.getMealSubscription(req.params.id, restaurantId);
       const subscription = await storage.updateMealSubscription(req.params.id, restaurantId, safeBody);
       if (!subscription) return res.status(404).json({ message: "Subscription not found" });
+      if (safeBody.paymentStatus === 'paid' && existingSub?.paymentStatus !== 'paid' && parseFloat(subscription.amount || '0') > 0) {
+        try {
+          const subtotal = parseFloat(subscription.amount || '0') / 1.15;
+          const tax = parseFloat(subscription.amount || '0') - subtotal;
+          await storage.createTransaction({
+            restaurantId,
+            transactionId: `MSUB-${subscription.id.substring(0, 8)}-${Date.now()}`,
+            itemCount: Array.isArray(subscription.mealSelections) ? (subscription.mealSelections as Array<unknown>).length : 1,
+            subtotal: subtotal.toFixed(2),
+            tax: tax.toFixed(2),
+            total: parseFloat(subscription.amount || '0').toFixed(2),
+            paymentMethod: 'Meal Subscription',
+          });
+        } catch (txError) {
+          console.error("Error creating transaction for meal subscription payment:", txError);
+        }
+      }
       res.json(subscription);
     } catch (error: any) {
       console.error("Error updating meal subscription:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/meal-subscriptions/:id/schedule-pdf", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const subscription = await storage.getMealSubscription(req.params.id, restaurantId);
+      if (!subscription) return res.status(404).json({ message: "Subscription not found" });
+      const restaurant = await storage.getRestaurant(restaurantId);
+      const menuItemsList = await storage.getMenuItems(restaurantId);
+      const selections = Array.isArray(subscription.mealSelections) ? (subscription.mealSelections as Array<{ name: string; menuItemId?: string }>) : [];
+      const selectionsWithPrices = selections.map(s => {
+        const menuItem = s.menuItemId ? menuItemsList.find((m: any) => m.id === s.menuItemId) : null;
+        return { name: s.name, price: menuItem?.price?.toString() };
+      });
+      const pdfBuffer = await generateMealSubscriptionSchedulePDF({
+        subscriberName: subscription.subscriberName,
+        subscriberPhone: subscription.subscriberPhone,
+        subscriberEmail: subscription.subscriberEmail || undefined,
+        deliveryAddress: subscription.deliveryAddress || undefined,
+        dietaryNotes: subscription.dietaryNotes || undefined,
+        mealSelections: selectionsWithPrices,
+        planType: subscription.planType,
+        scheduleDays: Array.isArray(subscription.scheduleDays) ? subscription.scheduleDays : [],
+        mealTime: subscription.mealTime,
+        startDate: subscription.startDate?.toISOString() || '',
+        endDate: subscription.endDate?.toISOString(),
+        amount: subscription.amount || '0',
+        paymentStatus: subscription.paymentStatus,
+        restaurantName: restaurant?.name || 'Restaurant',
+        createdAt: subscription.createdAt?.toISOString() || new Date().toISOString(),
+      });
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=meal-subscription-${subscription.subscriberName.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`);
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error("Error generating meal subscription schedule PDF:", error);
       res.status(500).json({ message: error.message });
     }
   });
