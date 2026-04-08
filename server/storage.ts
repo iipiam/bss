@@ -626,7 +626,7 @@ export interface IStorage {
   getMealSubscription(id: string, restaurantId: string): Promise<MealSubscription | undefined>;
   getTodaysMealDeliveries(restaurantId: string): Promise<MealSubscription[]>;
   createMealSubscription(subscription: InsertMealSubscription): Promise<MealSubscription>;
-  updateMealSubscription(id: string, restaurantId: string, subscription: Partial<InsertMealSubscription>): Promise<MealSubscription | undefined>;
+  updateMealSubscription(id: string, restaurantId: string, subscription: Partial<InsertMealSubscription> & { deliveryLog?: unknown[] }): Promise<MealSubscription | undefined>;
   deleteMealSubscription(id: string, restaurantId: string): Promise<boolean>;
 }
 
@@ -5513,7 +5513,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateMealSubscription(id: string, restaurantId: string, subscription: Partial<InsertMealSubscription>): Promise<MealSubscription | undefined> {
+  async updateMealSubscription(id: string, restaurantId: string, subscription: Partial<InsertMealSubscription> & { deliveryLog?: unknown[] }): Promise<MealSubscription | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(subscription).filter(([_, value]) => value !== undefined)
     );
