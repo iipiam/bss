@@ -285,8 +285,8 @@ export default function Quotations() {
       queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
       setApproveQuotation(null);
       toast({
-        title: (t as any).quotationApproved || "Quotation Approved",
-        description: (t as any).quotationApprovedDesc || "The quotation has been approved successfully.",
+        title: t.quotationApproved || "Quotation Approved",
+        description: t.quotationApprovedDesc || "The quotation has been approved successfully.",
       });
     },
     onError: (error: any) => {
@@ -317,8 +317,8 @@ export default function Quotations() {
       setDeclineQuotation(null);
       setDeclineReason("");
       toast({
-        title: (t as any).quotationDeclined || "Quotation Declined",
-        description: (t as any).quotationDeclinedDesc || "The quotation has been declined.",
+        title: t.quotationDeclined || "Quotation Declined",
+        description: t.quotationDeclinedDesc || "The quotation has been declined.",
       });
     },
     onError: (error: any) => {
@@ -888,7 +888,7 @@ export default function Quotations() {
 
                 {quotation.status === "declined" && (quotation as any).declineReason && (
                   <div className="text-xs text-destructive mt-1">
-                    <span className="font-medium">{(t as any).declineReason || "Reason"}: </span>
+                    <span className="font-medium">{t.declineReason || "Reason"}: </span>
                     {(quotation as any).declineReason}
                   </div>
                 )}
@@ -982,9 +982,9 @@ export default function Quotations() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{(t as any).approveQuotation || "Approve Quotation"}</AlertDialogTitle>
+            <AlertDialogTitle>{t.approveQuotation || "Approve Quotation"}</AlertDialogTitle>
             <AlertDialogDescription>
-              {(t as any).approveQuotationConfirm || "Are you sure you want to approve this quotation?"} ({approveQuotation?.quotationNumber})
+              {t.approveQuotationConfirm || "Are you sure you want to approve this quotation?"} ({approveQuotation?.quotationNumber})
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1006,17 +1006,17 @@ export default function Quotations() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{(t as any).declineQuotation || "Decline Quotation"}</DialogTitle>
+            <DialogTitle>{t.declineQuotation || "Decline Quotation"}</DialogTitle>
             <DialogDescription>
-              {(t as any).declineQuotationDesc || "Please provide a reason for declining this quotation."} ({declineQuotation?.quotationNumber})
+              {t.declineQuotationDesc || "Please provide a reason for declining this quotation."} ({declineQuotation?.quotationNumber})
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">{(t as any).declineReason || "Reason"}</label>
+              <label className="text-sm font-medium">{t.declineReason || "Reason"}</label>
               <Textarea
                 data-testid="input-decline-reason"
-                placeholder={(t as any).enterDeclineReason || "Enter reason for declining..."}
+                placeholder={t.enterDeclineReason || "Enter reason for declining..."}
                 value={declineReason}
                 onChange={(e) => setDeclineReason(e.target.value)}
                 className="mt-1"
@@ -1045,14 +1045,14 @@ export default function Quotations() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{(t as any).decisionHistory || "Decision History"}</DialogTitle>
+            <DialogTitle>{t.decisionHistory || "Decision History"}</DialogTitle>
             <DialogDescription>
               {viewDecisionsQuotation?.quotationNumber}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             {decisions.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{(t as any).noDecisions || "No decisions recorded."}</p>
+              <p className="text-sm text-muted-foreground">{t.noDecisions || "No decisions recorded."}</p>
             ) : (
               decisions.map((decision: any) => (
                 <Card key={decision.id}>

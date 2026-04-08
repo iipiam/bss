@@ -1776,3 +1776,29 @@ export const companySettings = pgTable("company_settings", {
 export const insertCompanySettingsSchema = createInsertSchema(companySettings).omit({ id: true, updatedAt: true });
 export type InsertCompanySettings = z.infer<typeof insertCompanySettingsSchema>;
 export type CompanySettings = typeof companySettings.$inferSelect;
+
+// Meal Subscriptions (Restaurant - MULTI-TENANT)
+export const mealSubscriptions = pgTable("meal_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  subscriberName: text("subscriber_name").notNull(),
+  subscriberPhone: text("subscriber_phone").notNull(),
+  subscriberEmail: text("subscriber_email"),
+  deliveryAddress: text("delivery_address"),
+  dietaryNotes: text("dietary_notes"),
+  mealSelections: jsonb("meal_selections").notNull().default([]),
+  planType: text("plan_type").notNull().default("daily"),
+  scheduleDays: text("schedule_days").array().notNull().default([]),
+  mealTime: text("meal_time").notNull().default("lunch"),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull().default("0"),
+  paymentStatus: text("payment_status").notNull().default("pending"),
+  status: text("status").notNull().default("active"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertMealSubscriptionSchema = createInsertSchema(mealSubscriptions).omit({ id: true, createdAt: true });
+export type InsertMealSubscription = z.infer<typeof insertMealSubscriptionSchema>;
+export type MealSubscription = typeof mealSubscriptions.$inferSelect;

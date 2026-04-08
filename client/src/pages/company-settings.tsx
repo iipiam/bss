@@ -46,8 +46,8 @@ export default function CompanySettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/company-settings"] });
       toast({
-        title: (t as any).settingsSaved || "Settings Saved",
-        description: (t as any).settingsSavedDesc || "Company settings have been updated.",
+        title: t.settingsSaved || "Settings Saved",
+        description: t.settingsSavedDesc || "Company settings have been updated.",
       });
     },
     onError: (error: any) => {
@@ -95,8 +95,8 @@ export default function CompanySettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/company-settings"] });
       toast({
-        title: (t as any).documentUploaded || "Document Uploaded",
-        description: (t as any).documentUploadedDesc || "Document has been uploaded successfully.",
+        title: t.documentUploaded || "Document Uploaded",
+        description: t.documentUploadedDesc || "Document has been uploaded successfully.",
       });
     },
     onError: (error: any) => {
@@ -111,8 +111,8 @@ export default function CompanySettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/company-settings"] });
       toast({
-        title: (t as any).documentDeleted || "Document Deleted",
-        description: (t as any).documentDeletedDesc || "Document has been removed.",
+        title: t.documentDeleted || "Document Deleted",
+        description: t.documentDeletedDesc || "Document has been removed.",
       });
     },
     onError: (error: any) => {
@@ -177,10 +177,10 @@ export default function CompanySettingsPage() {
         <Building2 className="h-6 w-6 text-primary" />
         <div>
           <h1 className="text-2xl font-bold" data-testid="text-page-title">
-            {(t as any).companySettings || "Company Settings"}
+            {t.companySettings || "Company Settings"}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {(t as any).companySettingsDesc || "Manage your company information, agreement templates, and terms."}
+            {t.companySettingsDesc || "Manage your company information, agreement templates, and terms."}
           </p>
         </div>
       </div>
@@ -189,69 +189,69 @@ export default function CompanySettingsPage() {
         <TabsList data-testid="tabs-company-settings">
           <TabsTrigger value="company-info" data-testid="tab-company-info">
             <Building2 className="h-4 w-4 mr-2" />
-            {(t as any).companyInfo || "Company Info"}
+            {t.companyInfo || "Company Info"}
           </TabsTrigger>
           <TabsTrigger value="agreement" data-testid="tab-agreement">
             <FileText className="h-4 w-4 mr-2" />
-            {(t as any).agreementTemplate || "Agreement Template"}
+            {t.agreementTemplate || "Agreement Template"}
           </TabsTrigger>
           <TabsTrigger value="terms" data-testid="tab-terms">
             <ScrollText className="h-4 w-4 mr-2" />
-            {(t as any).termsConditions || "Terms & Conditions"}
+            {t.termsConditions || "Terms & Conditions"}
           </TabsTrigger>
           <TabsTrigger value="documents" data-testid="tab-documents">
             <FolderOpen className="h-4 w-4 mr-2" />
-            {(t as any).companyDocuments || "Documents"}
+            {t.companyDocuments || "Documents"}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="company-info">
           <Card>
             <CardHeader>
-              <CardTitle>{(t as any).companyInformation || "Company Information"}</CardTitle>
+              <CardTitle>{t.companyInformation || "Company Information"}</CardTitle>
               <CardDescription>
-                {(t as any).companyInfoDesc || "Basic information about your company used in documents and communications."}
+                {t.companyInfoDesc || "Basic information about your company used in documents and communications."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="companyName">{(t as any).companyName || "Company Name"}</Label>
+                <Label htmlFor="companyName">{t.companyName || "Company Name"}</Label>
                 <Input
                   id="companyName"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder={(t as any).enterCompanyName || "Enter company name"}
+                  placeholder={t.enterCompanyName || "Enter company name"}
                   data-testid="input-company-name"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="companyEmail">{(t as any).companyEmail || "Company Email"}</Label>
+                <Label htmlFor="companyEmail">{t.companyEmail || "Company Email"}</Label>
                 <Input
                   id="companyEmail"
                   type="email"
                   value={companyEmail}
                   onChange={(e) => setCompanyEmail(e.target.value)}
-                  placeholder={(t as any).enterCompanyEmail || "Enter company email"}
+                  placeholder={t.enterCompanyEmail || "Enter company email"}
                   data-testid="input-company-email"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="companyPhone">{(t as any).companyPhone || "Company Phone"}</Label>
+                <Label htmlFor="companyPhone">{t.companyPhone || "Company Phone"}</Label>
                 <Input
                   id="companyPhone"
                   value={companyPhone}
                   onChange={(e) => setCompanyPhone(e.target.value)}
-                  placeholder={(t as any).enterCompanyPhone || "Enter company phone"}
+                  placeholder={t.enterCompanyPhone || "Enter company phone"}
                   data-testid="input-company-phone"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="companyAddress">{(t as any).companyAddress || "Company Address"}</Label>
+                <Label htmlFor="companyAddress">{t.companyAddress || "Company Address"}</Label>
                 <Textarea
                   id="companyAddress"
                   value={companyAddress}
                   onChange={(e) => setCompanyAddress(e.target.value)}
-                  placeholder={(t as any).enterCompanyAddress || "Enter company address"}
+                  placeholder={t.enterCompanyAddress || "Enter company address"}
                   rows={3}
                   data-testid="input-company-address"
                 />
@@ -262,7 +262,7 @@ export default function CompanySettingsPage() {
                 data-testid="button-save-company-info"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {saveMutation.isPending ? ((t as any).saving || "Saving...") : ((t as any).saveChanges || "Save Changes")}
+                {saveMutation.isPending ? (t.saving || "Saving...") : (t.saveChanges || "Save Changes")}
               </Button>
             </CardContent>
           </Card>
@@ -272,16 +272,16 @@ export default function CompanySettingsPage() {
           <div className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>{(t as any).agreementTemplate || "Agreement Template"}</CardTitle>
+                <CardTitle>{t.agreementTemplate || "Agreement Template"}</CardTitle>
                 <CardDescription>
-                  {(t as any).agreementTemplateDesc || "Define the template for client agreements. Use placeholders that will be replaced with actual values."}
+                  {t.agreementTemplateDesc || "Define the template for client agreements. Use placeholders that will be replaced with actual values."}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <Textarea
                   value={agreementTemplate}
                   onChange={(e) => setAgreementTemplate(e.target.value)}
-                  placeholder={(t as any).enterAgreementTemplate || "Enter your agreement template text here..."}
+                  placeholder={t.enterAgreementTemplate || "Enter your agreement template text here..."}
                   rows={12}
                   className="font-mono text-sm"
                   data-testid="input-agreement-template"
@@ -292,7 +292,7 @@ export default function CompanySettingsPage() {
                   data-testid="button-save-agreement"
                 >
                   <Save className="h-4 w-4 mr-2" />
-                  {saveMutation.isPending ? ((t as any).saving || "Saving...") : ((t as any).saveChanges || "Save Changes")}
+                  {saveMutation.isPending ? (t.saving || "Saving...") : (t.saveChanges || "Save Changes")}
                 </Button>
               </CardContent>
             </Card>
@@ -301,10 +301,10 @@ export default function CompanySettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Info className="h-5 w-5 text-muted-foreground" />
-                  {(t as any).availablePlaceholders || "Available Placeholders"}
+                  {t.availablePlaceholders || "Available Placeholders"}
                 </CardTitle>
                 <CardDescription>
-                  {(t as any).placeholdersDesc || "These placeholders will be automatically replaced with actual values when generating agreements."}
+                  {t.placeholdersDesc || "These placeholders will be automatically replaced with actual values when generating agreements."}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -336,16 +336,16 @@ export default function CompanySettingsPage() {
         <TabsContent value="terms">
           <Card>
             <CardHeader>
-              <CardTitle>{(t as any).termsConditions || "Terms & Conditions"}</CardTitle>
+              <CardTitle>{t.termsConditions || "Terms & Conditions"}</CardTitle>
               <CardDescription>
-                {(t as any).termsDesc || "Define the terms and conditions that will be included in your agreements and quotations."}
+                {t.termsDesc || "Define the terms and conditions that will be included in your agreements and quotations."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Textarea
                 value={termsAndConditions}
                 onChange={(e) => setTermsAndConditions(e.target.value)}
-                placeholder={(t as any).enterTerms || "Enter your terms and conditions here..."}
+                placeholder={t.enterTerms || "Enter your terms and conditions here..."}
                 rows={12}
                 className="text-sm"
                 data-testid="input-terms-conditions"
@@ -356,7 +356,7 @@ export default function CompanySettingsPage() {
                 data-testid="button-save-terms"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {saveMutation.isPending ? ((t as any).saving || "Saving...") : ((t as any).saveChanges || "Save Changes")}
+                {saveMutation.isPending ? (t.saving || "Saving...") : (t.saveChanges || "Save Changes")}
               </Button>
             </CardContent>
           </Card>
@@ -365,8 +365,8 @@ export default function CompanySettingsPage() {
         <TabsContent value="documents">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><FolderOpen className="h-5 w-5" />{(t as any).companyDocuments || "Company Documents"}</CardTitle>
-              <CardDescription>{(t as any).companyDocumentsDesc || "Upload and manage company logos, letterheads, and certificates."}</CardDescription>
+              <CardTitle className="flex items-center gap-2"><FolderOpen className="h-5 w-5" />{t.companyDocuments || "Company Documents"}</CardTitle>
+              <CardDescription>{t.companyDocumentsDesc || "Upload and manage company logos, letterheads, and certificates."}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div
@@ -377,15 +377,15 @@ export default function CompanySettingsPage() {
                 data-testid="dropzone-documents"
               >
                 <Upload className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
-                <p className="text-sm font-medium">{(t as any).dragDropFiles || "Drag & drop files here"}</p>
-                <p className="text-xs text-muted-foreground mt-1">{(t as any).supportedFormats || "PDF, JPEG, PNG, GIF, WebP (max 10MB)"}</p>
+                <p className="text-sm font-medium">{t.dragDropFiles || "Drag & drop files here"}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t.supportedFormats || "PDF, JPEG, PNG, GIF, WebP (max 10MB)"}</p>
                 <Button
                   variant="outline"
                   className="mt-3"
                   onClick={() => document.getElementById('doc-upload-input')?.click()}
                   data-testid="button-browse-files"
                 >
-                  {(t as any).browseFiles || "Browse Files"}
+                  {t.browseFiles || "Browse Files"}
                 </Button>
                 <input
                   id="doc-upload-input"
@@ -400,7 +400,7 @@ export default function CompanySettingsPage() {
 
               {documents.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium">{(t as any).uploadedDocuments || "Uploaded Documents"} ({documents.length})</h4>
+                  <h4 className="text-sm font-medium">{t.uploadedDocuments || "Uploaded Documents"} ({documents.length})</h4>
                   {documents.map((doc: any) => (
                     <div key={doc.id} className="flex items-center justify-between gap-2 p-3 border rounded-md" data-testid={`document-${doc.id}`}>
                       <div className="flex items-center gap-3 min-w-0">

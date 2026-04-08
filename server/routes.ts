@@ -15928,6 +15928,68 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // ==================== MEAL SUBSCRIPTIONS ====================
+  app.get("/api/meal-subscriptions", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const status = req.query.status as string | undefined;
+      const subscriptions = await storage.getMealSubscriptions(restaurantId, status);
+      res.json(subscriptions);
+    } catch (error: any) {
+      console.error("Error fetching meal subscriptions:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/meal-subscriptions/:id", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const subscription = await storage.getMealSubscription(req.params.id, restaurantId);
+      if (!subscription) return res.status(404).json({ message: "Subscription not found" });
+      res.json(subscription);
+    } catch (error: any) {
+      console.error("Error fetching meal subscription:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/meal-subscriptions", requireAuth, requireRestaurant, requireAction('orders', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { id, createdAt, restaurantId: _rid, ...safeBody } = req.body;
+      const subscription = await storage.createMealSubscription({ ...safeBody, restaurantId });
+      res.status(201).json(subscription);
+    } catch (error: any) {
+      console.error("Error creating meal subscription:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/meal-subscriptions/:id", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { id, createdAt, restaurantId: _rid, ...safeBody } = req.body;
+      const subscription = await storage.updateMealSubscription(req.params.id, restaurantId, safeBody);
+      if (!subscription) return res.status(404).json({ message: "Subscription not found" });
+      res.json(subscription);
+    } catch (error: any) {
+      console.error("Error updating meal subscription:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/meal-subscriptions/:id", requireAuth, requireRestaurant, requireAction('orders', 'delete'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const deleted = await storage.deleteMealSubscription(req.params.id, restaurantId);
+      if (!deleted) return res.status(404).json({ message: "Subscription not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error deleting meal subscription:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Setup WebSocket server for real-time notifications on specific path to avoid conflicts with Vite HMR

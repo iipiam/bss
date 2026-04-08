@@ -237,7 +237,7 @@ export default function ProjectDetail() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: qk });
         closeFn();
-        toast({ title: (t as any).saved || "Saved", description: (t as any).changesSaved || "Changes saved successfully" });
+        toast({ title: t.saved || "Saved", description: t.changesSaved || "Changes saved successfully" });
       },
       onError: (e: any) => {
         toast({ title: t.error, description: e.message || "Operation failed", variant: "destructive" });
@@ -262,7 +262,7 @@ export default function ProjectDetail() {
       queryClient.invalidateQueries({ queryKey: ["/api/payment-schedules", projectId] });
       queryClient.invalidateQueries({ queryKey: ["/api/project-tasks", projectId] });
       setDelItem(null);
-      toast({ title: t.delete, description: (t as any).itemDeletedSuccessfully || "Item deleted" });
+      toast({ title: t.delete, description: t.itemDeletedSuccessfully || "Item deleted" });
     },
     onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },
   });
@@ -274,7 +274,7 @@ export default function ProjectDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/payment-schedules", projectId] });
       setAutoGenOpen(false);
-      toast({ title: (t as any).scheduleGenerated || "Schedule Generated", description: (t as any).paymentScheduleGenerated || "Payment schedule auto-generated" });
+      toast({ title: t.scheduleGenerated || "Schedule Generated", description: t.paymentScheduleGenerated || "Payment schedule auto-generated" });
     },
     onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },
   });
@@ -285,7 +285,7 @@ export default function ProjectDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/project-tasks", projectId] });
-      toast({ title: (t as any).cpmCalculated || "CPM Calculated", description: (t as any).criticalPathUpdated || "Critical path has been updated" });
+      toast({ title: t.cpmCalculated || "CPM Calculated", description: t.criticalPathUpdated || "Critical path has been updated" });
     },
     onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },
   });
@@ -374,7 +374,7 @@ export default function ProjectDetail() {
   const paymentProgress = totalPayments > 0 ? (paidPayments / totalPayments) * 100 : 0;
 
   if (isLoading) return <div className="flex items-center justify-center p-12"><p>{t.loading}...</p></div>;
-  if (!project) return <div className="flex flex-col items-center justify-center p-12"><p>{(t as any).projectNotFound || "Project not found"}</p><Link href="/service-projects"><Button variant="outline" className="mt-4" data-testid="button-back-to-projects"><ArrowLeft className="h-4 w-4 mr-2" />{(t as any).backToProjects || "Back to Projects"}</Button></Link></div>;
+  if (!project) return <div className="flex flex-col items-center justify-center p-12"><p>{t.projectNotFound || "Project not found"}</p><Link href="/service-projects"><Button variant="outline" className="mt-4" data-testid="button-back-to-projects"><ArrowLeft className="h-4 w-4 mr-2" />{t.backToProjects || "Back to Projects"}</Button></Link></div>;
 
   return (
     <div className={`${layout.padding} ${layout.spaceY}`}>
@@ -404,30 +404,30 @@ export default function ProjectDetail() {
           data-testid="button-download-dossier"
         >
           <Download className="h-4 w-4 mr-2" />
-          {(t as any).downloadDossier || "Download Dossier"}
+          {t.downloadDossier || "Download Dossier"}
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className={`${layout.isMobile ? "grid grid-cols-3 w-full" : "grid grid-cols-6 w-full"}`}>
-          <TabsTrigger value="overview" data-testid="tab-overview">{(t as any).overview || "Overview"}</TabsTrigger>
-          <TabsTrigger value="services" data-testid="tab-services">{(t as any).services || "Services"}</TabsTrigger>
-          <TabsTrigger value="bills" data-testid="tab-bills">{(t as any).bills || "Bills"}</TabsTrigger>
-          <TabsTrigger value="procurements" data-testid="tab-procurements">{(t as any).procurements || "Procurements"}</TabsTrigger>
-          <TabsTrigger value="payments" data-testid="tab-payments">{(t as any).payments || "Payments"}</TabsTrigger>
-          <TabsTrigger value="tasks" data-testid="tab-tasks">{(t as any).tasks || "Tasks"}</TabsTrigger>
+          <TabsTrigger value="overview" data-testid="tab-overview">{t.overview || "Overview"}</TabsTrigger>
+          <TabsTrigger value="services" data-testid="tab-services">{t.services || "Services"}</TabsTrigger>
+          <TabsTrigger value="bills" data-testid="tab-bills">{t.bills || "Bills"}</TabsTrigger>
+          <TabsTrigger value="procurements" data-testid="tab-procurements">{t.procurements || "Procurements"}</TabsTrigger>
+          <TabsTrigger value="payments" data-testid="tab-payments">{t.payments || "Payments"}</TabsTrigger>
+          <TabsTrigger value="tasks" data-testid="tab-tasks">{t.tasks || "Tasks"}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 4, tablet: 2, mobile: 2 })}`}>
-            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><Layers className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{(t as any).totalServicesValue || "Services Value"}</p></div><p className="text-2xl font-bold" data-testid="text-total-services">{fmtNum(String(totalServices))} SAR</p></CardContent></Card>
-            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><Receipt className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{(t as any).totalBillsAmount || "Total Bills"}</p></div><p className="text-2xl font-bold" data-testid="text-total-bills">{fmtNum(String(totalBills))} SAR</p></CardContent></Card>
-            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><ShoppingCart className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{(t as any).totalProcurements || "Procurements"}</p></div><p className="text-2xl font-bold" data-testid="text-total-procurements">{fmtNum(String(totalProc))} SAR</p></CardContent></Card>
-            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><CreditCard className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{(t as any).paymentProgress || "Payment Progress"}</p></div><p className="text-2xl font-bold" data-testid="text-payment-progress">{paymentProgress.toFixed(0)}%</p><Progress value={paymentProgress} className="mt-2" /></CardContent></Card>
+            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><Layers className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.totalServicesValue || "Services Value"}</p></div><p className="text-2xl font-bold" data-testid="text-total-services">{fmtNum(String(totalServices))} SAR</p></CardContent></Card>
+            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><Receipt className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.totalBillsAmount || "Total Bills"}</p></div><p className="text-2xl font-bold" data-testid="text-total-bills">{fmtNum(String(totalBills))} SAR</p></CardContent></Card>
+            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><ShoppingCart className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.totalProcurements || "Procurements"}</p></div><p className="text-2xl font-bold" data-testid="text-total-procurements">{fmtNum(String(totalProc))} SAR</p></CardContent></Card>
+            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><CreditCard className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.paymentProgress || "Payment Progress"}</p></div><p className="text-2xl font-bold" data-testid="text-payment-progress">{paymentProgress.toFixed(0)}%</p><Progress value={paymentProgress} className="mt-2" /></CardContent></Card>
           </div>
           <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 2, tablet: 1, mobile: 1 })}`}>
             <Card>
-              <CardHeader className="pb-3"><CardTitle className="text-lg">{(t as any).clientInfo || "Client Information"}</CardTitle></CardHeader>
+              <CardHeader className="pb-3"><CardTitle className="text-lg">{t.clientInfo || "Client Information"}</CardTitle></CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" /><span data-testid="text-client-name">{project.clientName}</span></div>
                 {project.clientPhone && <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /><span>{project.clientPhone}</span></div>}
@@ -436,12 +436,12 @@ export default function ProjectDetail() {
               </CardContent>
             </Card>
             <Card>
-              <CardHeader className="pb-3"><CardTitle className="text-lg">{(t as any).projectDetails || "Project Details"}</CardTitle></CardHeader>
+              <CardHeader className="pb-3"><CardTitle className="text-lg">{t.projectDetails || "Project Details"}</CardTitle></CardHeader>
               <CardContent className="space-y-2">
-                <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-muted-foreground" /><span>{(t as any).startDate || "Start"}: {fmtDate(project.startDate)}</span></div>
-                <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-muted-foreground" /><span>{(t as any).endDate || "End"}: {fmtDate(project.endDate)}</span></div>
-                <div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-muted-foreground" /><span>{(t as any).estimatedBudget || "Budget"}: {fmtNum(project.estimatedBudget)} SAR</span></div>
-                {project.actualCost && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-muted-foreground" /><span>{(t as any).actualCost || "Actual"}: {fmtNum(project.actualCost)} SAR</span></div>}
+                <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-muted-foreground" /><span>{t.startDate || "Start"}: {fmtDate(project.startDate)}</span></div>
+                <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-muted-foreground" /><span>{t.endDate || "End"}: {fmtDate(project.endDate)}</span></div>
+                <div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-muted-foreground" /><span>{t.estimatedBudget || "Budget"}: {fmtNum(project.estimatedBudget)} SAR</span></div>
+                {project.actualCost && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-muted-foreground" /><span>{t.actualCost || "Actual"}: {fmtNum(project.actualCost)} SAR</span></div>}
                 {project.description && <div className="pt-2 border-t"><p className="text-sm text-muted-foreground">{project.description}</p></div>}
                 {project.notes && <div className="pt-2 border-t"><p className="text-sm text-muted-foreground">{project.notes}</p></div>}
               </CardContent>
@@ -451,10 +451,10 @@ export default function ProjectDetail() {
 
         <TabsContent value="services" className="space-y-4">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <h2 className="text-lg font-semibold">{(t as any).services || "Services"}</h2>
-            <Button onClick={() => { setEditSvc(null); svcForm.reset(); setSvcOpen(true); }} data-testid="button-add-service"><Plus className="h-4 w-4 mr-2" />{(t as any).addService || "Add Service"}</Button>
+            <h2 className="text-lg font-semibold">{t.services || "Services"}</h2>
+            <Button onClick={() => { setEditSvc(null); svcForm.reset(); setSvcOpen(true); }} data-testid="button-add-service"><Plus className="h-4 w-4 mr-2" />{t.addService || "Add Service"}</Button>
           </div>
-          {services.length === 0 ? <p className="text-muted-foreground text-center py-8">{(t as any).noServices || "No services added yet"}</p> : (
+          {services.length === 0 ? <p className="text-muted-foreground text-center py-8">{t.noServices || "No services added yet"}</p> : (
             <div className="space-y-3">
               {services.map(s => (
                 <Card key={s.id} data-testid={`card-service-${s.id}`}>
@@ -481,10 +481,10 @@ export default function ProjectDetail() {
 
         <TabsContent value="bills" className="space-y-4">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <h2 className="text-lg font-semibold">{(t as any).bills || "Bills"}</h2>
-            <Button onClick={() => { setEditBill(null); billForm.reset({ description: "", amount: "", category: "", vendor: "", billDate: new Date().toISOString().split("T")[0], dueDate: "", status: "pending", paidDate: "", notes: "" }); setBillOpen(true); }} data-testid="button-add-bill"><Plus className="h-4 w-4 mr-2" />{(t as any).addBill || "Add Bill"}</Button>
+            <h2 className="text-lg font-semibold">{t.bills || "Bills"}</h2>
+            <Button onClick={() => { setEditBill(null); billForm.reset({ description: "", amount: "", category: "", vendor: "", billDate: new Date().toISOString().split("T")[0], dueDate: "", status: "pending", paidDate: "", notes: "" }); setBillOpen(true); }} data-testid="button-add-bill"><Plus className="h-4 w-4 mr-2" />{t.addBill || "Add Bill"}</Button>
           </div>
-          {bills.length === 0 ? <p className="text-muted-foreground text-center py-8">{(t as any).noBills || "No bills added yet"}</p> : (
+          {bills.length === 0 ? <p className="text-muted-foreground text-center py-8">{t.noBills || "No bills added yet"}</p> : (
             <div className="space-y-3">
               {bills.map(b => (
                 <Card key={b.id} data-testid={`card-bill-${b.id}`}>
@@ -511,10 +511,10 @@ export default function ProjectDetail() {
 
         <TabsContent value="procurements" className="space-y-4">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <h2 className="text-lg font-semibold">{(t as any).procurements || "Procurements"}</h2>
-            <Button onClick={() => { setEditProc(null); procForm.reset({ itemName: "", description: "", quantity: "1", unitPrice: "0", totalPrice: "0", vendor: "", purchaseDate: new Date().toISOString().split("T")[0], deliveryDate: "", status: "ordered", notes: "" }); setProcOpen(true); }} data-testid="button-add-procurement"><Plus className="h-4 w-4 mr-2" />{(t as any).addProcurement || "Add Procurement"}</Button>
+            <h2 className="text-lg font-semibold">{t.procurements || "Procurements"}</h2>
+            <Button onClick={() => { setEditProc(null); procForm.reset({ itemName: "", description: "", quantity: "1", unitPrice: "0", totalPrice: "0", vendor: "", purchaseDate: new Date().toISOString().split("T")[0], deliveryDate: "", status: "ordered", notes: "" }); setProcOpen(true); }} data-testid="button-add-procurement"><Plus className="h-4 w-4 mr-2" />{t.addProcurement || "Add Procurement"}</Button>
           </div>
-          {procurements.length === 0 ? <p className="text-muted-foreground text-center py-8">{(t as any).noProcurements || "No procurements added yet"}</p> : (
+          {procurements.length === 0 ? <p className="text-muted-foreground text-center py-8">{t.noProcurements || "No procurements added yet"}</p> : (
             <div className="space-y-3">
               {procurements.map(p => (
                 <Card key={p.id} data-testid={`card-procurement-${p.id}`}>
@@ -541,20 +541,20 @@ export default function ProjectDetail() {
 
         <TabsContent value="payments" className="space-y-4">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <h2 className="text-lg font-semibold">{(t as any).payments || "Payments"}</h2>
+            <h2 className="text-lg font-semibold">{t.payments || "Payments"}</h2>
             <div className="flex gap-2 flex-wrap">
-              <Button variant="outline" onClick={() => setAutoGenOpen(true)} data-testid="button-auto-generate"><Zap className="h-4 w-4 mr-2" />{(t as any).autoGenerate || "Auto-Generate"}</Button>
-              <Button onClick={() => { setEditPay(null); payForm.reset(); setPayOpen(true); }} data-testid="button-add-payment"><Plus className="h-4 w-4 mr-2" />{(t as any).addPayment || "Add Payment"}</Button>
+              <Button variant="outline" onClick={() => setAutoGenOpen(true)} data-testid="button-auto-generate"><Zap className="h-4 w-4 mr-2" />{t.autoGenerate || "Auto-Generate"}</Button>
+              <Button onClick={() => { setEditPay(null); payForm.reset(); setPayOpen(true); }} data-testid="button-add-payment"><Plus className="h-4 w-4 mr-2" />{t.addPayment || "Add Payment"}</Button>
             </div>
           </div>
           <Card><CardContent className="pt-4 pb-4">
             <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="text-sm text-muted-foreground">{(t as any).paid || "Paid"}: {fmtNum(String(paidPayments))} / {fmtNum(String(totalPayments))} SAR</span>
+              <span className="text-sm text-muted-foreground">{t.paid || "Paid"}: {fmtNum(String(paidPayments))} / {fmtNum(String(totalPayments))} SAR</span>
               <span className="text-sm font-semibold">{paymentProgress.toFixed(0)}%</span>
             </div>
             <Progress value={paymentProgress} data-testid="progress-payments" />
           </CardContent></Card>
-          {payments.length === 0 ? <p className="text-muted-foreground text-center py-8">{(t as any).noPayments || "No payment schedules yet"}</p> : (
+          {payments.length === 0 ? <p className="text-muted-foreground text-center py-8">{t.noPayments || "No payment schedules yet"}</p> : (
             <div className="space-y-3">
               {payments.map(p => (
                 <Card key={p.id} data-testid={`card-payment-${p.id}`}>
@@ -562,7 +562,7 @@ export default function ProjectDetail() {
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div className="min-w-0">
                         <p className="font-semibold truncate">{p.milestoneName}</p>
-                        <p className="text-sm text-muted-foreground">{(t as any).dueDate || "Due"}: {fmtDate(p.dueDate)}</p>
+                        <p className="text-sm text-muted-foreground">{t.dueDate || "Due"}: {fmtDate(p.dueDate)}</p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <Badge variant={statusBadge(p.status)} className={statusClass(p.status)}>{p.status}</Badge>
@@ -580,15 +580,15 @@ export default function ProjectDetail() {
 
         <TabsContent value="tasks" className="space-y-4">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <h2 className="text-lg font-semibold">{(t as any).tasks || "Tasks"}</h2>
+            <h2 className="text-lg font-semibold">{t.tasks || "Tasks"}</h2>
             <div className="flex gap-2 flex-wrap">
               <Button variant="outline" onClick={() => cpmMut.mutate()} disabled={cpmMut.isPending} data-testid="button-calculate-cpm">
-                <AlertTriangle className="h-4 w-4 mr-2" />{(t as any).calculateCriticalPath || "Calculate CPM"}
+                <AlertTriangle className="h-4 w-4 mr-2" />{t.calculateCriticalPath || "Calculate CPM"}
               </Button>
-              <Button onClick={() => { setEditTask(null); taskForm.reset(); setTaskOpen(true); }} data-testid="button-add-task"><Plus className="h-4 w-4 mr-2" />{(t as any).addTask || "Add Task"}</Button>
+              <Button onClick={() => { setEditTask(null); taskForm.reset(); setTaskOpen(true); }} data-testid="button-add-task"><Plus className="h-4 w-4 mr-2" />{t.addTask || "Add Task"}</Button>
             </div>
           </div>
-          {tasks.length === 0 ? <p className="text-muted-foreground text-center py-8">{(t as any).noTasks || "No tasks added yet"}</p> : (
+          {tasks.length === 0 ? <p className="text-muted-foreground text-center py-8">{t.noTasks || "No tasks added yet"}</p> : (
             <div className="space-y-3">
               {tasks.map(tk => (
                 <Card key={tk.id} className={tk.isCritical ? "border-2 border-red-500" : ""} data-testid={`card-task-${tk.id}`}>
@@ -597,14 +597,14 @@ export default function ProjectDetail() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <p className="font-semibold truncate" data-testid={`text-task-name-${tk.id}`}>{tk.name}</p>
-                          {tk.isCritical && <Badge variant="destructive">{(t as any).critical || "Critical"}</Badge>}
+                          {tk.isCritical && <Badge variant="destructive">{t.critical || "Critical"}</Badge>}
                         </div>
-                        <p className="text-sm text-muted-foreground">{(t as any).duration || "Duration"}: {tk.duration} {(t as any).days || "days"}</p>
+                        <p className="text-sm text-muted-foreground">{t.duration || "Duration"}: {tk.duration} {t.days || "days"}</p>
                         {(tk.earlyStart !== null) && (
                           <div className="flex gap-4 text-xs text-muted-foreground mt-1 flex-wrap">
                             <span>ES: {tk.earlyStart}</span><span>EF: {tk.earlyFinish}</span>
                             <span>LS: {tk.lateStart}</span><span>LF: {tk.lateFinish}</span>
-                            <span>{(t as any).slack || "Slack"}: {tk.slack}</span>
+                            <span>{t.slack || "Slack"}: {tk.slack}</span>
                           </div>
                         )}
                         {tk.earlyStart !== null && tk.earlyFinish !== null && (
@@ -637,14 +637,14 @@ export default function ProjectDetail() {
       {/* Service Dialog */}
       <Dialog open={svcOpen} onOpenChange={(o) => { if (!o) { setSvcOpen(false); setEditSvc(null); } else setSvcOpen(true); }}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editSvc ? t.edit : t.add} {(t as any).service || "Service"}</DialogTitle><DialogDescription>{editSvc ? (t as any).editServiceDesc || "Update service details" : (t as any).addServiceDesc || "Add a new service to this project"}</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>{editSvc ? t.edit : t.add} {t.service || "Service"}</DialogTitle><DialogDescription>{editSvc ? t.editServiceDesc || "Update service details" : t.addServiceDesc || "Add a new service to this project"}</DialogDescription></DialogHeader>
           <Form {...svcForm}>
             <form onSubmit={svcForm.handleSubmit(submitSvc)} className="space-y-4">
               {catalog.length > 0 && (
                 <FormField control={svcForm.control} name="serviceCatalogId" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).fromCatalog || "From Catalog"}</FormLabel>
+                  <FormItem><FormLabel>{t.fromCatalog || "From Catalog"}</FormLabel>
                     <Select onValueChange={(v) => { field.onChange(v); onCatalogSelect(v); }} value={field.value}>
-                      <FormControl><SelectTrigger data-testid="select-catalog"><SelectValue placeholder={(t as any).selectFromCatalog || "Select from catalog..."} /></SelectTrigger></FormControl>
+                      <FormControl><SelectTrigger data-testid="select-catalog"><SelectValue placeholder={t.selectFromCatalog || "Select from catalog..."} /></SelectTrigger></FormControl>
                       <SelectContent>{catalog.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                     </Select><FormMessage /></FormItem>
                 )} />
@@ -657,7 +657,7 @@ export default function ProjectDetail() {
               )} />
               <div className="grid grid-cols-2 gap-4">
                 <FormField control={svcForm.control} name="pricingMethod" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).pricingMethod || "Pricing Method"}</FormLabel>
+                  <FormItem><FormLabel>{t.pricingMethod || "Pricing Method"}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl><SelectTrigger data-testid="select-pricing-method"><SelectValue /></SelectTrigger></FormControl>
                       <SelectContent>
@@ -668,15 +668,15 @@ export default function ProjectDetail() {
                     </Select><FormMessage /></FormItem>
                 )} />
                 <FormField control={svcForm.control} name="unit" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).unit || "Unit"}</FormLabel><FormControl><Input data-testid="input-service-unit" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t.unit || "Unit"}</FormLabel><FormControl><Input data-testid="input-service-unit" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <FormField control={svcForm.control} name="unitPrice" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).unitPrice || "Unit Price"}</FormLabel><FormControl><Input data-testid="input-service-unit-price" type="number" {...field} onChange={(e) => { field.onChange(e); setTimeout(recalcServiceTotal, 0); }} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t.unitPrice || "Unit Price"}</FormLabel><FormControl><Input data-testid="input-service-unit-price" type="number" {...field} onChange={(e) => { field.onChange(e); setTimeout(recalcServiceTotal, 0); }} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={svcForm.control} name="quantity" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).quantity || "Quantity"}</FormLabel><FormControl><Input data-testid="input-service-quantity" type="number" {...field} onChange={(e) => { field.onChange(e); setTimeout(recalcServiceTotal, 0); }} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t.quantity || "Quantity"}</FormLabel><FormControl><Input data-testid="input-service-quantity" type="number" {...field} onChange={(e) => { field.onChange(e); setTimeout(recalcServiceTotal, 0); }} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={svcForm.control} name="totalPrice" render={({ field }) => (
                   <FormItem><FormLabel>{t.total}</FormLabel><FormControl><Input data-testid="input-service-total" type="number" {...field} /></FormControl><FormMessage /></FormItem>
@@ -686,7 +686,7 @@ export default function ProjectDetail() {
                 <FormItem><FormLabel>{t.status}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger data-testid="select-service-status"><SelectValue /></SelectTrigger></FormControl>
-                    <SelectContent><SelectItem value="pending">{t.pending}</SelectItem><SelectItem value="in_progress">{(t as any).inProgress || "In Progress"}</SelectItem><SelectItem value="completed">{t.completed}</SelectItem></SelectContent>
+                    <SelectContent><SelectItem value="pending">{t.pending}</SelectItem><SelectItem value="in_progress">{t.inProgress || "In Progress"}</SelectItem><SelectItem value="completed">{t.completed}</SelectItem></SelectContent>
                   </Select><FormMessage /></FormItem>
               )} />
               <FormField control={svcForm.control} name="notes" render={({ field }) => (
@@ -704,7 +704,7 @@ export default function ProjectDetail() {
       {/* Bill Dialog */}
       <Dialog open={billOpen} onOpenChange={(o) => { if (!o) { setBillOpen(false); setEditBill(null); } else setBillOpen(true); }}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editBill ? t.edit : t.add} {(t as any).bill || "Bill"}</DialogTitle><DialogDescription>{editBill ? (t as any).editBillDesc || "Update bill details" : (t as any).addBillDesc || "Add a new bill"}</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>{editBill ? t.edit : t.add} {t.bill || "Bill"}</DialogTitle><DialogDescription>{editBill ? t.editBillDesc || "Update bill details" : t.addBillDesc || "Add a new bill"}</DialogDescription></DialogHeader>
           <Form {...billForm}>
             <form onSubmit={billForm.handleSubmit(submitBill)} className="space-y-4">
               <FormField control={billForm.control} name="description" render={({ field }) => (
@@ -715,18 +715,18 @@ export default function ProjectDetail() {
                   <FormItem><FormLabel>{t.amount}</FormLabel><FormControl><Input data-testid="input-bill-amount" type="number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={billForm.control} name="category" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).category || "Category"}</FormLabel><FormControl><Input data-testid="input-bill-category" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t.category || "Category"}</FormLabel><FormControl><Input data-testid="input-bill-category" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
               <FormField control={billForm.control} name="vendor" render={({ field }) => (
-                <FormItem><FormLabel>{(t as any).vendor || "Vendor"}</FormLabel><FormControl><Input data-testid="input-bill-vendor" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>{t.vendor || "Vendor"}</FormLabel><FormControl><Input data-testid="input-bill-vendor" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <div className="grid grid-cols-2 gap-4">
                 <FormField control={billForm.control} name="billDate" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).billDate || "Bill Date"}</FormLabel><FormControl><Input data-testid="input-bill-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t.billDate || "Bill Date"}</FormLabel><FormControl><Input data-testid="input-bill-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={billForm.control} name="dueDate" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).dueDate || "Due Date"}</FormLabel><FormControl><Input data-testid="input-bill-due-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t.dueDate || "Due Date"}</FormLabel><FormControl><Input data-testid="input-bill-due-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -734,11 +734,11 @@ export default function ProjectDetail() {
                   <FormItem><FormLabel>{t.status}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl><SelectTrigger data-testid="select-bill-status"><SelectValue /></SelectTrigger></FormControl>
-                      <SelectContent><SelectItem value="pending">{t.pending}</SelectItem><SelectItem value="paid">{(t as any).paid || "Paid"}</SelectItem></SelectContent>
+                      <SelectContent><SelectItem value="pending">{t.pending}</SelectItem><SelectItem value="paid">{t.paid || "Paid"}</SelectItem></SelectContent>
                     </Select><FormMessage /></FormItem>
                 )} />
                 <FormField control={billForm.control} name="paidDate" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).paidDate || "Paid Date"}</FormLabel><FormControl><Input data-testid="input-bill-paid-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t.paidDate || "Paid Date"}</FormLabel><FormControl><Input data-testid="input-bill-paid-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
               <FormField control={billForm.control} name="notes" render={({ field }) => (
@@ -756,35 +756,35 @@ export default function ProjectDetail() {
       {/* Procurement Dialog */}
       <Dialog open={procOpen} onOpenChange={(o) => { if (!o) { setProcOpen(false); setEditProc(null); } else setProcOpen(true); }}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editProc ? t.edit : t.add} {(t as any).procurement || "Procurement"}</DialogTitle><DialogDescription>{editProc ? (t as any).editProcurementDesc || "Update procurement details" : (t as any).addProcurementDesc || "Add a new procurement item"}</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>{editProc ? t.edit : t.add} {t.procurement || "Procurement"}</DialogTitle><DialogDescription>{editProc ? t.editProcurementDesc || "Update procurement details" : t.addProcurementDesc || "Add a new procurement item"}</DialogDescription></DialogHeader>
           <Form {...procForm}>
             <form onSubmit={procForm.handleSubmit(submitProc)} className="space-y-4">
               <FormField control={procForm.control} name="itemName" render={({ field }) => (
-                <FormItem><FormLabel>{(t as any).itemName || "Item Name"}</FormLabel><FormControl><Input data-testid="input-procurement-name" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>{t.itemName || "Item Name"}</FormLabel><FormControl><Input data-testid="input-procurement-name" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={procForm.control} name="description" render={({ field }) => (
                 <FormItem><FormLabel>{t.description}</FormLabel><FormControl><Textarea data-testid="input-procurement-description" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <div className="grid grid-cols-3 gap-4">
                 <FormField control={procForm.control} name="quantity" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).quantity || "Quantity"}</FormLabel><FormControl><Input data-testid="input-procurement-quantity" type="number" {...field} onChange={(e) => { field.onChange(e); setTimeout(recalcProcTotal, 0); }} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t.quantity || "Quantity"}</FormLabel><FormControl><Input data-testid="input-procurement-quantity" type="number" {...field} onChange={(e) => { field.onChange(e); setTimeout(recalcProcTotal, 0); }} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={procForm.control} name="unitPrice" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).unitPrice || "Unit Price"}</FormLabel><FormControl><Input data-testid="input-procurement-unit-price" type="number" {...field} onChange={(e) => { field.onChange(e); setTimeout(recalcProcTotal, 0); }} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t.unitPrice || "Unit Price"}</FormLabel><FormControl><Input data-testid="input-procurement-unit-price" type="number" {...field} onChange={(e) => { field.onChange(e); setTimeout(recalcProcTotal, 0); }} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={procForm.control} name="totalPrice" render={({ field }) => (
                   <FormItem><FormLabel>{t.total}</FormLabel><FormControl><Input data-testid="input-procurement-total" type="number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
               <FormField control={procForm.control} name="vendor" render={({ field }) => (
-                <FormItem><FormLabel>{(t as any).vendor || "Vendor"}</FormLabel><FormControl><Input data-testid="input-procurement-vendor" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>{t.vendor || "Vendor"}</FormLabel><FormControl><Input data-testid="input-procurement-vendor" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <div className="grid grid-cols-2 gap-4">
                 <FormField control={procForm.control} name="purchaseDate" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).purchaseDate || "Purchase Date"}</FormLabel><FormControl><Input data-testid="input-procurement-purchase-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t.purchaseDate || "Purchase Date"}</FormLabel><FormControl><Input data-testid="input-procurement-purchase-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={procForm.control} name="deliveryDate" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).deliveryDate || "Delivery Date"}</FormLabel><FormControl><Input data-testid="input-procurement-delivery-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t.deliveryDate || "Delivery Date"}</FormLabel><FormControl><Input data-testid="input-procurement-delivery-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
               <FormField control={procForm.control} name="status" render={({ field }) => (
@@ -792,8 +792,8 @@ export default function ProjectDetail() {
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger data-testid="select-procurement-status"><SelectValue /></SelectTrigger></FormControl>
                     <SelectContent>
-                      <SelectItem value="ordered">{(t as any).ordered || "Ordered"}</SelectItem>
-                      <SelectItem value="received">{(t as any).received || "Received"}</SelectItem>
+                      <SelectItem value="ordered">{t.ordered || "Ordered"}</SelectItem>
+                      <SelectItem value="received">{t.received || "Received"}</SelectItem>
                       <SelectItem value="completed">{t.completed}</SelectItem>
                       <SelectItem value="cancelled">{t.cancelled}</SelectItem>
                     </SelectContent>
@@ -814,18 +814,18 @@ export default function ProjectDetail() {
       {/* Payment Dialog */}
       <Dialog open={payOpen} onOpenChange={(o) => { if (!o) { setPayOpen(false); setEditPay(null); } else setPayOpen(true); }}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editPay ? t.edit : t.add} {(t as any).payment || "Payment"}</DialogTitle><DialogDescription>{editPay ? (t as any).editPaymentDesc || "Update payment schedule" : (t as any).addPaymentDesc || "Add a payment milestone"}</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>{editPay ? t.edit : t.add} {t.payment || "Payment"}</DialogTitle><DialogDescription>{editPay ? t.editPaymentDesc || "Update payment schedule" : t.addPaymentDesc || "Add a payment milestone"}</DialogDescription></DialogHeader>
           <Form {...payForm}>
             <form onSubmit={payForm.handleSubmit(submitPay)} className="space-y-4">
               <FormField control={payForm.control} name="milestoneName" render={({ field }) => (
-                <FormItem><FormLabel>{(t as any).milestoneName || "Milestone Name"}</FormLabel><FormControl><Input data-testid="input-payment-milestone" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>{t.milestoneName || "Milestone Name"}</FormLabel><FormControl><Input data-testid="input-payment-milestone" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <div className="grid grid-cols-2 gap-4">
                 <FormField control={payForm.control} name="amount" render={({ field }) => (
                   <FormItem><FormLabel>{t.amount}</FormLabel><FormControl><Input data-testid="input-payment-amount" type="number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={payForm.control} name="dueDate" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).dueDate || "Due Date"}</FormLabel><FormControl><Input data-testid="input-payment-due-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t.dueDate || "Due Date"}</FormLabel><FormControl><Input data-testid="input-payment-due-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -835,14 +835,14 @@ export default function ProjectDetail() {
                       <FormControl><SelectTrigger data-testid="select-payment-status"><SelectValue /></SelectTrigger></FormControl>
                       <SelectContent>
                         <SelectItem value="pending">{t.pending}</SelectItem>
-                        <SelectItem value="invoiced">{(t as any).invoiced || "Invoiced"}</SelectItem>
-                        <SelectItem value="paid">{(t as any).paid || "Paid"}</SelectItem>
-                        <SelectItem value="overdue">{(t as any).overdue || "Overdue"}</SelectItem>
+                        <SelectItem value="invoiced">{t.invoiced || "Invoiced"}</SelectItem>
+                        <SelectItem value="paid">{t.paid || "Paid"}</SelectItem>
+                        <SelectItem value="overdue">{t.overdue || "Overdue"}</SelectItem>
                       </SelectContent>
                     </Select><FormMessage /></FormItem>
                 )} />
                 <FormField control={payForm.control} name="paidDate" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).paidDate || "Paid Date"}</FormLabel><FormControl><Input data-testid="input-payment-paid-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t.paidDate || "Paid Date"}</FormLabel><FormControl><Input data-testid="input-payment-paid-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
               <FormField control={payForm.control} name="notes" render={({ field }) => (
@@ -860,7 +860,7 @@ export default function ProjectDetail() {
       {/* Task Dialog */}
       <Dialog open={taskOpen} onOpenChange={(o) => { if (!o) { setTaskOpen(false); setEditTask(null); } else setTaskOpen(true); }}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editTask ? t.edit : t.add} {(t as any).task || "Task"}</DialogTitle><DialogDescription>{editTask ? (t as any).editTaskDesc || "Update task details" : (t as any).addTaskDesc || "Add a new task"}</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>{editTask ? t.edit : t.add} {t.task || "Task"}</DialogTitle><DialogDescription>{editTask ? t.editTaskDesc || "Update task details" : t.addTaskDesc || "Add a new task"}</DialogDescription></DialogHeader>
           <Form {...taskForm}>
             <form onSubmit={taskForm.handleSubmit(submitTask)} className="space-y-4">
               <FormField control={taskForm.control} name="name" render={({ field }) => (
@@ -871,7 +871,7 @@ export default function ProjectDetail() {
               )} />
               <div className="grid grid-cols-2 gap-4">
                 <FormField control={taskForm.control} name="duration" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).durationDays || "Duration (days)"}</FormLabel><FormControl><Input data-testid="input-task-duration" type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t.durationDays || "Duration (days)"}</FormLabel><FormControl><Input data-testid="input-task-duration" type="number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={taskForm.control} name="status" render={({ field }) => (
                   <FormItem><FormLabel>{t.status}</FormLabel>
@@ -879,7 +879,7 @@ export default function ProjectDetail() {
                       <FormControl><SelectTrigger data-testid="select-task-status"><SelectValue /></SelectTrigger></FormControl>
                       <SelectContent>
                         <SelectItem value="pending">{t.pending}</SelectItem>
-                        <SelectItem value="in_progress">{(t as any).inProgress || "In Progress"}</SelectItem>
+                        <SelectItem value="in_progress">{t.inProgress || "In Progress"}</SelectItem>
                         <SelectItem value="completed">{t.completed}</SelectItem>
                       </SelectContent>
                     </Select><FormMessage /></FormItem>
@@ -887,8 +887,8 @@ export default function ProjectDetail() {
               </div>
               {tasks.length > 0 && (
                 <FormField control={taskForm.control} name="dependencies" render={({ field }) => (
-                  <FormItem><FormLabel>{(t as any).dependencies || "Dependencies"}</FormLabel>
-                    <FormControl><Input data-testid="input-task-dependencies" placeholder={(t as any).commaSeparatedIds || "Comma-separated task IDs"} {...field} /></FormControl>
+                  <FormItem><FormLabel>{t.dependencies || "Dependencies"}</FormLabel>
+                    <FormControl><Input data-testid="input-task-dependencies" placeholder={t.commaSeparatedIds || "Comma-separated task IDs"} {...field} /></FormControl>
                     <div className="text-xs text-muted-foreground mt-1">
                       {tasks.filter(tk => tk.id !== editTask?.id).map(tk => <span key={tk.id} className="mr-2">{tk.id.slice(0, 8)}: {tk.name}</span>)}
                     </div>
@@ -907,15 +907,15 @@ export default function ProjectDetail() {
       {/* Auto-Generate Payment Dialog */}
       <Dialog open={autoGenOpen} onOpenChange={setAutoGenOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{(t as any).autoGenerateSchedule || "Auto-Generate Payment Schedule"}</DialogTitle><DialogDescription>{(t as any).autoGenerateDesc || "Automatically create payment installments based on project budget"}</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>{t.autoGenerateSchedule || "Auto-Generate Payment Schedule"}</DialogTitle><DialogDescription>{t.autoGenerateDesc || "Automatically create payment installments based on project budget"}</DialogDescription></DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">{(t as any).numberOfInstallments || "Number of Installments"}</label>
+              <label className="text-sm font-medium">{t.numberOfInstallments || "Number of Installments"}</label>
               <Input data-testid="input-installments" type="number" min="1" max="24" value={installments} onChange={(e) => setInstallments(e.target.value)} className="mt-1" />
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setAutoGenOpen(false)} data-testid="button-cancel-auto-gen">{t.cancel}</Button>
-              <Button onClick={() => autoGenMut.mutate()} disabled={autoGenMut.isPending} data-testid="button-confirm-auto-gen">{(t as any).generate || "Generate"}</Button>
+              <Button onClick={() => autoGenMut.mutate()} disabled={autoGenMut.isPending} data-testid="button-confirm-auto-gen">{t.generate || "Generate"}</Button>
             </div>
           </div>
         </DialogContent>
@@ -926,7 +926,7 @@ export default function ProjectDetail() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t.confirmDelete}</AlertDialogTitle>
-            <AlertDialogDescription>{(t as any).deleteItemConfirm || "Are you sure you want to delete"} "{delItem?.name}"?</AlertDialogDescription>
+            <AlertDialogDescription>{t.deleteItemConfirm || "Are you sure you want to delete"} "{delItem?.name}"?</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel data-testid="button-cancel-delete">{t.cancel}</AlertDialogCancel>

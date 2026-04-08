@@ -44,6 +44,7 @@ import {
   Wrench,
   HardHat,
   Calendar,
+  CalendarCheck,
 } from "lucide-react";
 import logoImage from "@assets/Kinzhal_logo_1768960890639.png";
 import {
@@ -120,15 +121,15 @@ export function AppSidebar() {
 
   // Declarative menu configuration with business type guards
   const allOperations: MenuItem[] = [
-    { title: businessType === 'real_estate' ? (t as any).dealProcessing : isServiceBusiness ? (t as any).serviceDesk || "Service Desk" : t.pos, url: "/pos", icon: ShoppingCart, testId: "pos", gradient: "from-emerald-500 to-teal-500", permission: 'pos', businessTypes: ['restaurant', 'factory', 'real_estate'] },
+    { title: businessType === 'real_estate' ? t.dealProcessing : isServiceBusiness ? t.serviceDesk || "Service Desk" : t.pos, url: "/pos", icon: ShoppingCart, testId: "pos", gradient: "from-emerald-500 to-teal-500", permission: 'pos', businessTypes: ['restaurant', 'factory', 'real_estate'] },
     { title: t.orders, url: "/orders", icon: ClipboardList, testId: "orders", gradient: "from-blue-500 to-cyan-500", permission: 'orders', businessTypes: ['restaurant', 'factory'] },
     { title: businessType === 'factory' ? t.workshop : t.kitchen, url: "/kitchen", icon: Flame, testId: "kitchen", gradient: "from-orange-500 to-red-500", permission: 'kitchen', businessTypes: ['restaurant', 'factory'] },
     { title: t.deliveryApps, url: "/delivery-apps", icon: Truck, testId: "delivery-apps", gradient: "from-violet-500 to-purple-500", permission: 'deliveryApps', businessTypes: ['restaurant'] },
-    { title: (t as any).propertyListings, url: "/menu", icon: Home, testId: "property-listings", gradient: "from-emerald-500 to-teal-500", permission: 'menu', businessTypes: ['real_estate'] },
-    { title: (t as any).clientInquiries, url: "/orders", icon: ClipboardList, testId: "client-inquiries", gradient: "from-blue-500 to-cyan-500", permission: 'orders', businessTypes: ['real_estate'] },
-    { title: (t as any).contracts, url: "/contracts", icon: Handshake, testId: "contracts", gradient: "from-orange-500 to-red-500", permission: 'orders', businessTypes: ['real_estate'] },
-    { title: (t as any).projects || "Projects", url: "/service-projects", icon: Briefcase, testId: "service-projects", gradient: "from-blue-500 to-indigo-500", permission: 'orders', businessTypes: ['design_services', 'installation_services', 'it_services'] },
-    { title: (t as any).quotations || "Quotations", url: "/quotations", icon: FileSpreadsheet, testId: "quotations", gradient: "from-emerald-500 to-teal-500", permission: 'orders', businessTypes: ['design_services', 'installation_services', 'it_services'] },
+    { title: t.propertyListings, url: "/menu", icon: Home, testId: "property-listings", gradient: "from-emerald-500 to-teal-500", permission: 'menu', businessTypes: ['real_estate'] },
+    { title: t.clientInquiries, url: "/orders", icon: ClipboardList, testId: "client-inquiries", gradient: "from-blue-500 to-cyan-500", permission: 'orders', businessTypes: ['real_estate'] },
+    { title: t.contracts, url: "/contracts", icon: Handshake, testId: "contracts", gradient: "from-orange-500 to-red-500", permission: 'orders', businessTypes: ['real_estate'] },
+    { title: t.projects || "Projects", url: "/service-projects", icon: Briefcase, testId: "service-projects", gradient: "from-blue-500 to-indigo-500", permission: 'orders', businessTypes: ['design_services', 'installation_services', 'it_services'] },
+    { title: t.quotations || "Quotations", url: "/quotations", icon: FileSpreadsheet, testId: "quotations", gradient: "from-emerald-500 to-teal-500", permission: 'orders', businessTypes: ['design_services', 'installation_services', 'it_services'] },
   ];
 
   const allManagement: MenuItem[] = [
@@ -139,15 +140,16 @@ export function AppSidebar() {
     { title: t.licenses || "Licenses", url: "/licenses", icon: FileKey, testId: "licenses", gradient: "from-amber-500 to-yellow-500", permission: 'licenses' },
     { title: t.customers, url: "/customers", icon: UserCircle, testId: "customers", gradient: "from-cyan-500 to-blue-500", permission: 'customers' },
     { title: t.investors, url: "/investors", icon: TrendingUp, testId: "investors", gradient: "from-emerald-500 to-green-500", permission: 'reports' },
-    { title: businessType === 'real_estate' ? (t as any).offices : t.branches, url: "/branches", icon: Building2, testId: "branches", gradient: "from-indigo-500 to-purple-500", permission: 'branches' },
+    { title: businessType === 'real_estate' ? t.offices : t.branches, url: "/branches", icon: Building2, testId: "branches", gradient: "from-indigo-500 to-purple-500", permission: 'branches' },
     { title: t.procurement, url: "/procurement", icon: ShoppingBag, testId: "procurement", gradient: "from-pink-500 to-rose-500", permission: 'procurement', businessTypes: ['restaurant', 'factory'] },
-    { title: (t as any).valuations, url: "/valuations", icon: Calculator, testId: "valuations", gradient: "from-teal-500 to-cyan-500", permission: 'reports', businessTypes: ['real_estate'] },
-    { title: (t as any).serviceCatalog || "Service Catalog", url: "/service-catalog", icon: Wrench, testId: "service-catalog", gradient: "from-green-500 to-emerald-500", permission: 'menu', businessTypes: ['design_services', 'installation_services', 'it_services'] },
-    { title: (t as any).contractors || "Contractors", url: "/contractors", icon: HardHat, testId: "contractors", gradient: "from-orange-500 to-amber-500", permission: 'customers', businessTypes: ['design_services', 'installation_services', 'it_services'] },
+    { title: t.valuations, url: "/valuations", icon: Calculator, testId: "valuations", gradient: "from-teal-500 to-cyan-500", permission: 'reports', businessTypes: ['real_estate'] },
+    { title: t.serviceCatalog || "Service Catalog", url: "/service-catalog", icon: Wrench, testId: "service-catalog", gradient: "from-green-500 to-emerald-500", permission: 'menu', businessTypes: ['design_services', 'installation_services', 'it_services'] },
+    { title: t.contractors || "Contractors", url: "/contractors", icon: HardHat, testId: "contractors", gradient: "from-orange-500 to-amber-500", permission: 'customers', businessTypes: ['design_services', 'installation_services', 'it_services'] },
+    { title: t.mealSubscriptions || "Meal Subscriptions", url: "/meal-subscriptions", icon: CalendarCheck, testId: "meal-subscriptions", gradient: "from-lime-500 to-green-500", permission: 'orders', businessTypes: ['restaurant'] },
   ];
 
   const allAnalytics: MenuItem[] = [
-    { title: businessType === 'real_estate' ? (t as any).commissions : t.sales, url: "/sales", icon: DollarSign, testId: "sales", gradient: "from-green-500 to-teal-500", permission: 'sales' },
+    { title: businessType === 'real_estate' ? t.commissions : t.sales, url: "/sales", icon: DollarSign, testId: "sales", gradient: "from-green-500 to-teal-500", permission: 'sales' },
     { title: t.financial, url: "/financial", icon: Receipt, testId: "financial", gradient: "from-blue-500 to-purple-500", permission: 'reports' },
     { title: t.profitability, url: "/profitability", icon: Calculator, testId: "profitability", gradient: "from-amber-500 to-orange-500", permission: 'reports', businessTypes: ['restaurant', 'factory'] },
     { title: t.menuProfitability, url: "/menu-profitability", icon: TrendingUp, testId: "menu-profitability", gradient: "from-red-500 to-rose-500", permission: 'reports', businessTypes: ['restaurant', 'factory'] },
@@ -162,12 +164,12 @@ export function AppSidebar() {
 
   const allSystem: MenuItem[] = [
     { title: t.tutorial, url: "/tutorial", icon: BookOpen, testId: "tutorial", gradient: "from-purple-500 to-violet-500" },
-    { title: businessType === 'factory' ? t.factory : businessType === 'real_estate' ? (t as any).office : isServiceBusiness ? (t as any).company || "Company" : t.shop, url: "/shop", icon: Store, testId: "shop", gradient: "from-pink-500 to-fuchsia-500", permission: 'workingHours' },
+    { title: businessType === 'factory' ? t.factory : businessType === 'real_estate' ? t.office : isServiceBusiness ? t.company || "Company" : t.shop, url: "/shop", icon: Store, testId: "shop", gradient: "from-pink-500 to-fuchsia-500", permission: 'workingHours' },
     { title: t.profile, url: "/profile", icon: UserCircle, testId: "profile", gradient: "from-indigo-500 to-purple-500" },
     { title: t.teamChat, url: "/chat", icon: MessageCircle, testId: "chat", gradient: "from-blue-500 to-cyan-500" },
     { title: t.support || "Support", url: "/support", icon: HeadphonesIcon, testId: "support", gradient: "from-emerald-500 to-teal-500" },
     { title: t.settings, url: "/settings", icon: Settings, testId: "settings", gradient: "from-slate-500 to-gray-500", permission: 'settings' },
-    { title: (t as any).companySettings || "Company Settings", url: "/company-settings", icon: Building2, testId: "company-settings", gradient: "from-violet-500 to-indigo-500", permission: 'settings', businessTypes: ['design_services', 'installation_services', 'it_services'] },
+    { title: t.companySettings || "Company Settings", url: "/company-settings", icon: Building2, testId: "company-settings", gradient: "from-violet-500 to-indigo-500", permission: 'settings', businessTypes: ['design_services', 'installation_services', 'it_services'] },
     { title: t.printers || "Printers", url: "/printer-settings", icon: Printer, testId: "printer-settings", gradient: "from-teal-500 to-cyan-500", permission: 'settings' },
     { title: t.employees, url: "/employees", icon: Users, testId: "employees", gradient: "from-sky-500 to-blue-500", permission: 'users' },
     { title: t.passwordManager, url: "/password-manager", icon: Key, testId: "password-manager", gradient: "from-red-500 to-rose-500" },
@@ -184,13 +186,13 @@ export function AppSidebar() {
     { title: t.performance, url: "/performance", icon: TrendingUp, testId: "performance", gradient: "from-cyan-500 to-blue-500" },
     { title: t.accountManagement, url: "/it-account-management", icon: UserCog, testId: "it-account-management", gradient: "from-orange-500 to-red-500" },
     { title: t.businessManagement || "Business Management", url: "/business-management", icon: Building2, testId: "business-management", gradient: "from-teal-500 to-cyan-500" },
-    { title: (t as any).zatcaSettings || "ZATCA E-Invoicing", url: "/zatca-settings", icon: Shield, testId: "zatca-settings", gradient: "from-green-600 to-emerald-500" },
+    { title: t.zatcaSettings || "ZATCA E-Invoicing", url: "/zatca-settings", icon: Shield, testId: "zatca-settings", gradient: "from-green-600 to-emerald-500" },
   ];
 
   // Support menu items for IT Dashboard (visible only to IT accounts)
   const itSupportItems: MenuItem[] = [
     { title: t.allTickets || "All Tickets", url: "/support", icon: Ticket, testId: "it-support-all", gradient: "from-blue-500 to-indigo-500" },
-    { title: (t as any).pending || "Pending", url: "/support?status=pending", icon: Clock, testId: "it-support-pending", gradient: "from-yellow-500 to-amber-500" },
+    { title: t.pending || "Pending", url: "/support?status=pending", icon: Clock, testId: "it-support-pending", gradient: "from-yellow-500 to-amber-500" },
     { title: t.ticketStatusResolved || "Solved", url: "/support?status=resolved", icon: CheckCircle, testId: "it-support-solved", gradient: "from-green-500 to-emerald-500" },
     { title: t.ticketStatusClosed || "Closed", url: "/support?status=closed", icon: XCircle, testId: "it-support-closed", gradient: "from-gray-500 to-slate-500" },
   ];

@@ -163,6 +163,9 @@ import {
   type CompanySettings,
   type InsertCompanySettings,
   companySettings,
+  type MealSubscription,
+  type InsertMealSubscription,
+  mealSubscriptions,
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, gte, lte, lt, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
@@ -617,6 +620,13 @@ export interface IStorage {
   // Company Settings
   getCompanySettings(restaurantId: string): Promise<CompanySettings | undefined>;
   upsertCompanySettings(restaurantId: string, data: Partial<InsertCompanySettings>): Promise<CompanySettings>;
+
+  // Meal Subscriptions (MULTI-TENANT: requires restaurantId)
+  getMealSubscriptions(restaurantId: string, status?: string): Promise<MealSubscription[]>;
+  getMealSubscription(id: string, restaurantId: string): Promise<MealSubscription | undefined>;
+  createMealSubscription(subscription: InsertMealSubscription): Promise<MealSubscription>;
+  updateMealSubscription(id: string, restaurantId: string, subscription: Partial<InsertMealSubscription>): Promise<MealSubscription | undefined>;
+  deleteMealSubscription(id: string, restaurantId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -5451,6 +5461,40 @@ export class DatabaseStorage implements IStorage {
     const [result] = await db.insert(companySettings).values({ ...data, restaurantId }).returning();
     return result;
   }
+  // Meal Subscriptions (MULTI-TENANT: SQL-level restaurantId filtering)
+  async getMealSubscriptions(restaurantId: string, status?: string): Promise<MealSubscription[]> {
+    const conditions = [eq(mealSubscriptions.restaurantId, restaurantId)];
+    if (status) {
+      conditions.push(eq(mealSubscriptions.status, status));
+    }
+    return db.select().from(mealSubscriptions).where(and(...conditions)).orderBy(desc(mealSubscriptions.createdAt));
+  }
+
+  async getMealSubscription(id: string, restaurantId: string): Promise<MealSubscription | undefined> {
+    const [sub] = await db.select().from(mealSubscriptions).where(and(eq(mealSubscriptions.id, id), eq(mealSubscriptions.restaurantId, restaurantId)));
+    return sub;
+  }
+
+  async createMealSubscription(subscription: InsertMealSubscription): Promise<MealSubscription> {
+    const [created] = await db.insert(mealSubscriptions).values(subscription).returning();
+    return created;
+  }
+
+  async updateMealSubscription(id: string, restaurantId: string, subscription: Partial<InsertMealSubscription>): Promise<MealSubscription | undefined> {
+    const updateData = Object.fromEntries(
+      Object.entries(subscription).filter(([_, value]) => value !== undefined)
+    );
+    if (Object.keys(updateData).length === 0) {
+      return this.getMealSubscription(id, restaurantId);
+    }
+    const [updated] = await db.update(mealSubscriptions).set(updateData).where(and(eq(mealSubscriptions.id, id), eq(mealSubscriptions.restaurantId, restaurantId))).returning();
+    return updated;
+  }
+
+  async deleteMealSubscription(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(mealSubscriptions).where(and(eq(mealSubscriptions.id, id), eq(mealSubscriptions.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
 }
 
 export const storage = new DatabaseStorage();
@@ -5805,6 +5849,31 @@ export const storage = new DatabaseStorage();
       )
     `);
     console.log('[Migration] Table verified/created: valuations');
+
+    // Meal Subscriptions: Create meal_subscriptions table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS meal_subscriptions (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        subscriber_name TEXT NOT NULL,
+        subscriber_phone TEXT NOT NULL,
+        subscriber_email TEXT,
+        delivery_address TEXT,
+        dietary_notes TEXT,
+        meal_selections JSONB NOT NULL DEFAULT '[]',
+        plan_type TEXT NOT NULL DEFAULT 'daily',
+        schedule_days TEXT[] NOT NULL DEFAULT '{}',
+        meal_time TEXT NOT NULL DEFAULT 'lunch',
+        start_date TIMESTAMP NOT NULL,
+        end_date TIMESTAMP,
+        amount DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        payment_status TEXT NOT NULL DEFAULT 'pending',
+        status TEXT NOT NULL DEFAULT 'active',
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('[Migration] Table verified/created: meal_subscriptions');
 
     console.log('[Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings');
   } catch (error: any) {

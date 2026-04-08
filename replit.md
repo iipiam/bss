@@ -57,6 +57,7 @@ Preferred communication style: Simple, everyday language.
 - **Procurement Reorder**: One-click reorder for completed/received inventory procurements, adding quantity to existing inventory items.
 - **Violations Management**: Track government violations with document uploads, status tracking, automatic bill creation, statistics dashboard, and a reference document feature for regulations.
 - **Printer Configuration**: Multi-tenant printer settings with support for thermal receipt printers (Epson, Star Micronics, Brother, Zebra, BIXOLON), IP-based network printers with QZ Tray integration, and per-branch default printer selection.
+- **Meal Subscription Management**: Restaurant-only feature for managing recurring meal plans (daily/weekly/monthly). Includes subscriber management (name, phone, email, delivery address, dietary notes), meal selections linked to menu items, schedule days configuration, meal time (breakfast/lunch/dinner), payment status tracking (paid/pending/partial), subscription lifecycle (active/paused/expired/cancelled), summary dashboard (active count, monthly revenue, today's deliveries), and full multi-language support.
 
 ## External Dependencies
 
