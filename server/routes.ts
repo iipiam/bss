@@ -16105,6 +16105,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         paymentStatus: subscription.paymentStatus,
         restaurantName: restaurant?.name || 'Restaurant',
         createdAt: subscription.createdAt?.toISOString() || new Date().toISOString(),
+        deliveryLog: Array.isArray(subscription.deliveryLog) ? subscription.deliveryLog as Array<{ date: string; mealTime: string; deliveredAt: string }> : [],
       });
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=meal-subscription-${subscription.subscriberName.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`);

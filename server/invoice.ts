@@ -4340,6 +4340,7 @@ export async function generateMealSubscriptionSchedulePDF(data: {
   paymentStatus: string;
   restaurantName: string;
   createdAt: string;
+  deliveryLog?: Array<{ date: string; mealTime: string; deliveredAt: string }>;
 }): Promise<Buffer> {
   const dayLabels: Record<string, { en: string; ar: string }> = {
     sunday: { en: "Sunday", ar: "الأحد" },
@@ -4380,6 +4381,18 @@ export async function generateMealSubscriptionSchedulePDF(data: {
   const planStr = `${planLabels[data.planType]?.en || data.planType} | ${planLabels[data.planType]?.ar || data.planType}`;
   const paymentStr = `${paymentLabels[data.paymentStatus]?.en || data.paymentStatus} | ${paymentLabels[data.paymentStatus]?.ar || data.paymentStatus}`;
 
+  const todayStr = new Date().toISOString().split("T")[0];
+  const deliveredMealTimes = new Set<string>();
+  const deliveredTimeMap: Record<string, string> = {};
+  if (data.deliveryLog) {
+    for (const entry of data.deliveryLog) {
+      if (entry.date === todayStr) {
+        deliveredMealTimes.add(entry.mealTime);
+        const dt = new Date(entry.deliveredAt);
+        deliveredTimeMap[entry.mealTime] = dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+      }
+    }
+  }
   const allMealTimes = data.mealTime.split(",").map(t => t.trim());
   let mealsRows = "";
   let totalItemCount = 0;
@@ -4387,10 +4400,16 @@ export async function generateMealSubscriptionSchedulePDF(data: {
     const items = data.mealSelectionsGrouped[mt] || [];
     if (items.length === 0) continue;
     totalItemCount += items.length;
+    const isDelivered = deliveredMealTimes.has(mt);
     const mtLabel = `${mealTimeLabels[mt]?.en || mt} | ${mealTimeLabels[mt]?.ar || mt}`;
-    mealsRows += `<tr><td colspan="2" style="padding:8px;border:1px solid #ddd;background:#eef2ff;font-weight:700;color:#2563eb;">${mtLabel}</td></tr>`;
+    const headerBg = isDelivered ? "background:#dcfce7;color:#166534;" : "background:#eef2ff;color:#2563eb;";
+    const deliveredBadge = isDelivered
+      ? ` <span style="float:right;font-size:11px;font-weight:600;color:#166534;">✓ Delivered | تم التوصيل${deliveredTimeMap[mt] ? ' (' + deliveredTimeMap[mt] + ')' : ''}</span>`
+      : ` <span style="float:right;font-size:11px;font-weight:400;color:#9ca3af;">Pending | قيد الانتظار</span>`;
+    mealsRows += `<tr><td colspan="2" style="padding:8px;border:1px solid #ddd;font-weight:700;${headerBg}">${mtLabel}${deliveredBadge}</td></tr>`;
+    const rowBg = isDelivered ? "background:#f0fdf4;" : "";
     for (const m of items) {
-      mealsRows += `<tr><td style="padding:8px;border:1px solid #ddd;padding-left:20px;">${m.name}</td><td style="padding:8px;border:1px solid #ddd;text-align:right;">${m.price ? parseFloat(m.price).toFixed(2) + ' SAR' : '-'}</td></tr>`;
+      mealsRows += `<tr style="${rowBg}"><td style="padding:8px;border:1px solid #ddd;padding-left:20px;">${m.name}</td><td style="padding:8px;border:1px solid #ddd;text-align:right;">${m.price ? parseFloat(m.price).toFixed(2) + ' SAR' : '-'}</td></tr>`;
     }
   }
   const allItems = Object.values(data.mealSelectionsGrouped).flat();

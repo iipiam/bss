@@ -325,10 +325,19 @@ export default function MealSubscriptionsPage() {
     mutationFn: async ({ id, mealTime }: { id: string; mealTime: string }) => {
       return apiRequest("POST", `/api/meal-subscriptions/${id}/mark-delivered`, { mealTime });
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/meal-subscriptions/today"] });
       toast({ title: t.delivered });
+      const sub = subscriptions.find(s => s.id === variables.id);
+      if (sub) {
+        const pdfUrl = `${window.location.origin}/api/meal-subscriptions/${sub.id}/schedule-pdf`;
+        const mtLabel = getMealTimeLabel(variables.mealTime);
+        import("@/lib/whatsapp").then(({ openWhatsAppWithMessage }) => {
+          const message = `*${t.mealSubscriptions}*\n\n${sub.subscriberName},\n\n✓ ${mtLabel} ${t.delivered}\n\n${pdfUrl}`;
+          openWhatsAppWithMessage(sub.subscriberPhone, message);
+        });
+      }
     },
     onError: (error: Error) => {
       toast({ title: error.message, variant: "destructive" });
