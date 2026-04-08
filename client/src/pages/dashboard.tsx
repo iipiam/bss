@@ -642,14 +642,12 @@ export default function Dashboard() {
           title={t.todaysSales}
           value={`${dashboardData?.todaysSales || "0.00"} SAR`}
           icon={DollarSign}
-          trend={{ value: 12.5, direction: "up" }}
         />
         {businessType !== 'real_estate' && (
           <MetricCard
             title={t.activeOrders}
             value={dashboardData?.activeOrders || 0}
             icon={ShoppingCart}
-            trend={{ value: 8.2, direction: "up" }}
           />
         )}
         {businessType !== 'real_estate' && (
@@ -657,7 +655,6 @@ export default function Dashboard() {
             title={t.lowStockItems}
             value={dashboardData?.lowStockItems || 0}
             icon={Package}
-            trend={{ value: 3.1, direction: "down" }}
           />
         )}
       </div>

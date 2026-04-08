@@ -4367,9 +4367,15 @@ export async function generateMealSubscriptionSchedulePDF(data: {
 
   const mealTimes = data.mealTime.split(",").map(t => t.trim());
   const mealTimeStr = mealTimes.map(t => `${mealTimeLabels[t]?.en || t} | ${mealTimeLabels[t]?.ar || t}`).join(", ");
-  const daysStr = data.scheduleDays.length > 0
-    ? data.scheduleDays.map(d => `${dayLabels[d]?.en || d} | ${dayLabels[d]?.ar || d}`).join(", ")
-    : "Every Day | كل يوم";
+  const allDays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+  const daysGrid = allDays.map(d => {
+    const isActive = data.scheduleDays.includes(d);
+    const bg = isActive ? "background:#2563eb;color:white;" : "background:#f3f4f6;color:#9ca3af;";
+    return `<div style="text-align:center;padding:6px 2px;border-radius:6px;font-size:11px;font-weight:600;${bg}"><div>${dayLabels[d]?.en.slice(0,3) || d}</div><div style="font-size:10px;margin-top:2px;">${dayLabels[d]?.ar || d}</div></div>`;
+  }).join("");
+  const daysHtml = data.scheduleDays.length > 0
+    ? `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:6px;">${daysGrid}</div>`
+    : `<span>Every Day | كل يوم</span>`;
   const planStr = `${planLabels[data.planType]?.en || data.planType} | ${planLabels[data.planType]?.ar || data.planType}`;
   const paymentStr = `${paymentLabels[data.paymentStatus]?.en || data.paymentStatus} | ${paymentLabels[data.paymentStatus]?.ar || data.paymentStatus}`;
 
@@ -4413,7 +4419,7 @@ export async function generateMealSubscriptionSchedulePDF(data: {
       <div class="info-grid">
         <div class="info-item"><span class="info-label">Plan | الخطة:</span><span>${planStr}</span></div>
         <div class="info-item"><span class="info-label">Meal Time | وقت الوجبة:</span><span>${mealTimeStr}</span></div>
-        <div class="info-item" style="grid-column:1/3;"><span class="info-label">Schedule | الجدول:</span><span style="word-break:break-word;">${daysStr}</span></div>
+        <div style="grid-column:1/3;"><div class="info-label" style="margin-bottom:4px;">Schedule | الجدول:</div>${daysHtml}</div>
         <div class="info-item"><span class="info-label">Start | البداية:</span><span>${data.startDate ? new Date(data.startDate).toLocaleDateString('en-GB') : '-'}</span></div>
         <div class="info-item"><span class="info-label">End | النهاية:</span><span>${data.endDate ? new Date(data.endDate).toLocaleDateString('en-GB') : 'Open-ended | مفتوح'}</span></div>
         <div class="info-item"><span class="info-label">Payment | الدفع:</span><span>${paymentStr}</span></div>
