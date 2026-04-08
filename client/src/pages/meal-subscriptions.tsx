@@ -799,15 +799,18 @@ export default function MealSubscriptionsPage() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex flex-wrap items-center gap-3 text-sm">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3 text-muted-foreground" />
-                        {sub.mealTime.split(",").map((mt) => {
-                          const label = getMealTimeLabel(mt.trim());
-                          const hours = parseDeliveryHoursStatic(sub.deliveryHours);
-                          const hour = hours[mt.trim()];
-                          return hour ? `${label} (${formatTime12h(hour)})` : label;
-                        }).join(", ")}
-                      </span>
+                      {sub.mealTime.split(",").map((mt) => {
+                        const trimmed = mt.trim();
+                        const label = getMealTimeLabel(trimmed);
+                        const hours = parseDeliveryHoursStatic(sub.deliveryHours);
+                        const hour = hours[trimmed];
+                        return (
+                          <span key={trimmed} className="flex items-center gap-1">
+                            <Clock className="h-3 w-3 text-muted-foreground" />
+                            {hour ? `${label} (${formatTime12h(hour)})` : label}
+                          </span>
+                        );
+                      })}
                       <span className="flex items-center gap-1">
                         <CalendarCheck className="h-3 w-3 text-muted-foreground" />
                         {getPlanLabel(sub.planType)}
@@ -1021,14 +1024,14 @@ export default function MealSubscriptionsPage() {
                         })}
                       </div>
                       {(form.watch("mealTime") || []).length > 0 && (
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3 p-3 rounded-md border bg-muted/20">
+                        <div className="flex flex-wrap gap-3 mt-3 p-3 rounded-md border bg-muted/20">
                           {(form.watch("mealTime") || []).map((mt) => (
                             <div key={mt} className="flex items-center gap-2">
                               <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                              <span className="text-sm font-medium min-w-[60px]">{getMealTimeLabel(mt)}</span>
+                              <span className="text-sm font-medium">{getMealTimeLabel(mt)}</span>
                               <Input
                                 type="time"
-                                value={form.watch("deliveryHours")?.[mt] || DEFAULT_DELIVERY_HOURS[mt] || "12:00"}
+                                value={form.watch(`deliveryHours.${mt}`) || DEFAULT_DELIVERY_HOURS[mt] || "12:00"}
                                 onChange={(e) => {
                                   const hours = { ...form.getValues("deliveryHours") };
                                   hours[mt] = e.target.value;
@@ -1136,9 +1139,9 @@ export default function MealSubscriptionsPage() {
                 />
               </div>
 
-              {menuItems.length > 0 && (
-                <div>
-                  <FormLabel>{t.mealSelections}</FormLabel>
+              <div>
+                <FormLabel>{t.mealSelections}</FormLabel>
+                {menuItems.filter(item => item.available).length > 0 ? (
                   <div className="flex flex-wrap gap-2 mt-2 max-h-40 overflow-y-auto border rounded-md p-2">
                     {menuItems.filter(item => item.available).map((item) => {
                       const selections = form.watch("mealSelections") || [];
@@ -1158,8 +1161,32 @@ export default function MealSubscriptionsPage() {
                       );
                     })}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <p className="text-sm text-muted-foreground mt-1">{t.noMenuItems || "No menu items available. Add items in the Menu page first."}</p>
+                )}
+                {(form.watch("mealSelections") || []).length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {(form.watch("mealSelections") || []).map((sel, idx) => (
+                      <Badge key={idx} variant="secondary" className="gap-1" data-testid={`badge-selection-${idx}`}>
+                        {sel.name}
+                        <button
+                          type="button"
+                          className="ml-1 hover:text-destructive"
+                          onClick={() => {
+                            const current = form.getValues("mealSelections") || [];
+                            const updated = current.filter((_, i) => i !== idx);
+                            form.setValue("mealSelections", updated);
+                            calculateAmount(updated, form.getValues("mealTime") || []);
+                          }}
+                          data-testid={`button-remove-selection-${idx}`}
+                        >
+                          <XCircle className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <FormField
                 control={form.control}

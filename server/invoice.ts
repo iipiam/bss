@@ -4386,7 +4386,7 @@ export async function generateMealSubscriptionSchedulePDF(data: {
     .section{margin-bottom:20px;}
     .section-title{font-size:15px;font-weight:700;color:#2563eb;margin-bottom:10px;border-bottom:1px solid #e5e7eb;padding-bottom:5px;}
     .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;}
-    .info-item{display:flex;justify-content:space-between;}
+    .info-item{display:flex;justify-content:space-between;gap:8px;}
     .info-label{font-weight:600;color:#555;}
     table{width:100%;border-collapse:collapse;margin-top:8px;}
     th{background:#2563eb;color:white;padding:8px;text-align:left;font-weight:600;}
@@ -4413,7 +4413,7 @@ export async function generateMealSubscriptionSchedulePDF(data: {
       <div class="info-grid">
         <div class="info-item"><span class="info-label">Plan | الخطة:</span><span>${planStr}</span></div>
         <div class="info-item"><span class="info-label">Meal Time | وقت الوجبة:</span><span>${mealTimeStr}</span></div>
-        <div class="info-item"><span class="info-label">Schedule | الجدول:</span><span>${daysStr}</span></div>
+        <div class="info-item" style="grid-column:1/3;"><span class="info-label">Schedule | الجدول:</span><span style="word-break:break-word;">${daysStr}</span></div>
         <div class="info-item"><span class="info-label">Start | البداية:</span><span>${data.startDate ? new Date(data.startDate).toLocaleDateString('en-GB') : '-'}</span></div>
         <div class="info-item"><span class="info-label">End | النهاية:</span><span>${data.endDate ? new Date(data.endDate).toLocaleDateString('en-GB') : 'Open-ended | مفتوح'}</span></div>
         <div class="info-item"><span class="info-label">Payment | الدفع:</span><span>${paymentStr}</span></div>

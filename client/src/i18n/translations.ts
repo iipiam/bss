@@ -2456,6 +2456,7 @@ export interface Translations {
   deliveryTime: string;
   allDelivered: string;
   creditBalance: string;
+  noMenuItems: string;
   selectMealItems: string;
 }
 
@@ -4842,6 +4843,7 @@ export const translations: Record<Language, Translations> = {
     deliveryTime: 'Delivery Time',
     allDelivered: 'All Delivered',
     creditBalance: 'Credit Balance',
+    noMenuItems: 'No menu items available. Add items in the Menu page first.',
     selectMealItems: 'Select meal items',
   },
   
@@ -7226,6 +7228,7 @@ export const translations: Record<Language, Translations> = {
     deliveryTime: 'وقت التوصيل',
     allDelivered: 'تم توصيل الكل',
     creditBalance: 'الرصيد المتبقي',
+    noMenuItems: 'لا توجد عناصر قائمة متاحة. أضف العناصر في صفحة القائمة أولاً.',
     selectMealItems: 'اختر أصناف الوجبات',
   },
   German: {
@@ -9594,6 +9597,7 @@ export const translations: Record<Language, Translations> = {
     deliveryTime: 'Lieferzeit',
     allDelivered: 'Alle geliefert',
     creditBalance: 'Guthaben',
+    noMenuItems: 'Keine Menüpunkte verfügbar. Fügen Sie zuerst Artikel auf der Menüseite hinzu.',
     selectMealItems: 'Mahlzeiten auswählen',
   },
   Chinese: {
@@ -11962,6 +11966,7 @@ export const translations: Record<Language, Translations> = {
     deliveryTime: '配送时间',
     allDelivered: '全部已送达',
     creditBalance: '信用余额',
+    noMenuItems: '没有可用的菜单项目。请先在菜单页面添加项目。',
     selectMealItems: '选择餐食项目',
   },
   Bengali: {
@@ -14330,6 +14335,7 @@ export const translations: Record<Language, Translations> = {
     deliveryTime: 'ডেলিভারি সময়',
     allDelivered: 'সব ডেলিভারি সম্পন্ন',
     creditBalance: 'ক্রেডিট ব্যালেন্স',
+    noMenuItems: 'কোনো মেনু আইটেম উপলব্ধ নেই। প্রথমে মেনু পেজে আইটেম যোগ করুন।',
     selectMealItems: 'খাবার আইটেম নির্বাচন করুন',
   },
   Italian: {
@@ -16698,6 +16704,7 @@ export const translations: Record<Language, Translations> = {
     deliveryTime: 'Orario di consegna',
     allDelivered: 'Tutto consegnato',
     creditBalance: 'Saldo credito',
+    noMenuItems: 'Nessun elemento di menu disponibile. Aggiungi prima gli elementi nella pagina Menu.',
     selectMealItems: 'Seleziona pasti',
   },
 
@@ -19010,6 +19017,7 @@ export const translations: Record<Language, Translations> = {
     deliveryTime: 'डिलीवरी समय',
     allDelivered: 'सभी डिलीवर हो गए',
     creditBalance: 'क्रेडिट शेष',
+    noMenuItems: 'कोई मेनू आइटम उपलब्ध नहीं है। पहले मेनू पेज में आइटम जोड़ें।',
     selectMealItems: 'भोजन आइटम चुनें',
   },
   
@@ -21322,6 +21330,7 @@ export const translations: Record<Language, Translations> = {
     deliveryTime: 'ڈیلیوری کا وقت',
     allDelivered: 'سب ڈیلیور ہو گئے',
     creditBalance: 'کریڈٹ بیلنس',
+    noMenuItems: 'کوئی مینو آئٹم دستیاب نہیں۔ پہلے مینو پیج میں آئٹمز شامل کریں۔',
     selectMealItems: 'کھانے کی اشیاء منتخب کریں',
   },
   
@@ -23567,6 +23576,7 @@ export const translations: Record<Language, Translations> = {
     deliveryTime: 'Hora de entrega',
     allDelivered: 'Todo entregado',
     creditBalance: 'Saldo de crédito',
+    noMenuItems: 'No hay elementos de menú disponibles. Agregue elementos en la página de Menú primero.',
     selectMealItems: 'Seleccionar elementos de comida',
   },
 
@@ -25812,6 +25822,7 @@ export const translations: Record<Language, Translations> = {
     deliveryTime: 'Oras ng delivery',
     allDelivered: 'Lahat naihatid',
     creditBalance: 'Credit Balance',
+    noMenuItems: 'Walang available na menu items. Magdagdag muna ng items sa Menu page.',
     selectMealItems: 'Pumili ng mga pagkain',
   },
 };
