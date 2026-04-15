@@ -256,7 +256,8 @@ export default function ZatcaSettingsPage() {
 
   const onboardMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/zatca/onboard", { otp, restaurantId: selectedRestaurantId });
+      const res = await apiRequest("POST", "/api/zatca/onboard", { otp, restaurantId: selectedRestaurantId });
+      return await res.json();
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings", selectedRestaurantId] });
@@ -287,30 +288,42 @@ export default function ZatcaSettingsPage() {
 
   const complianceChecksMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/zatca/compliance-checks", { restaurantId: selectedRestaurantId });
+      const res = await apiRequest("POST", "/api/zatca/compliance-checks", { restaurantId: selectedRestaurantId });
+      return await res.json();
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings", selectedRestaurantId] });
       if (data.success) {
         toast({
           title: t.success || "Success",
-          description: (t as any).complianceChecksPassed || "All compliance checks passed successfully.",
+          description: (t as any).complianceChecksPassed || "All compliance checks passed successfully. You can now request a Production CSID.",
         });
       } else {
         const failedChecks = data.results?.filter((r: any) => !r.passed) || [];
+        const errorDetails = failedChecks
+          .flatMap((r: any) => (r.errors || []).map((e: any) => `${r.invoiceType}: ${e.message || e.code}`))
+          .slice(0, 3);
         toast({
           title: t.error || "Error",
-          description: failedChecks.length > 0 
-            ? `${(t as any).complianceChecksFailed || "Compliance checks failed"}: ${failedChecks.map((r: any) => r.invoiceType).join(", ")}`
+          description: errorDetails.length > 0 
+            ? errorDetails.join("; ")
             : (t as any).complianceChecksFailed || "Compliance checks failed",
           variant: "destructive",
         });
       }
     },
     onError: (error: Error) => {
+      let msg = error.message;
+      try {
+        const jsonStart = msg.indexOf("{");
+        if (jsonStart >= 0) {
+          const parsed = JSON.parse(msg.substring(jsonStart));
+          msg = parsed.error || parsed.message || msg;
+        }
+      } catch {}
       toast({
         title: t.error || "Error",
-        description: error.message,
+        description: msg,
         variant: "destructive",
       });
     },
@@ -338,13 +351,14 @@ export default function ZatcaSettingsPage() {
 
   const retryPendingMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/zatca/retry-pending", { restaurantId: selectedRestaurantId });
+      const res = await apiRequest("POST", "/api/zatca/retry-pending", { restaurantId: selectedRestaurantId });
+      return await res.json();
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/zatca/invoices", selectedRestaurantId] });
       toast({
         title: t.success || "Success",
-        description: `Processed ${data.processed} invoices. ${data.successful} successful, ${data.failed} failed.`,
+        description: `Processed ${data.processed || 0} invoices. ${data.successful || 0} successful, ${data.failed || 0} failed.`,
       });
     },
     onError: (error: Error) => {
@@ -438,6 +452,8 @@ export default function ZatcaSettingsPage() {
         return <Badge variant="outline" data-testid="badge-status-csr-generated"><Settings className="w-3 h-3 mr-1" />{t.csrGenerated || "CSR Generated"}</Badge>;
       case "compliance_received":
         return <Badge variant="default" className="bg-yellow-500" data-testid="badge-status-compliance"><AlertCircle className="w-3 h-3 mr-1" />{t.complianceReceived || "Compliance CSID"}</Badge>;
+      case "compliance_passed":
+        return <Badge variant="default" className="bg-blue-500" data-testid="badge-status-compliance-passed"><CheckCircle2 className="w-3 h-3 mr-1" />{"Compliance Passed"}</Badge>;
       case "production_ready":
         return <Badge variant="default" className="bg-green-500" data-testid="badge-status-production"><CheckCircle2 className="w-3 h-3 mr-1" />{t.productionReady || "Production Ready"}</Badge>;
       default:
@@ -902,7 +918,7 @@ export default function ZatcaSettingsPage() {
                   {complianceChecksMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   {(t as any).runComplianceChecks || "Run Compliance Checks"}
                 </Button>
-                {settings?.onboardingStatus === "compliance_received" && (
+                {(settings?.onboardingStatus === "compliance_passed" || settings?.onboardingStatus === "compliance_received") && (
                   <Alert className="bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800">
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                     <AlertTitle className="text-green-800 dark:text-green-300">{(t as any).complianceChecksPassed || "Compliance Checks Passed"}</AlertTitle>

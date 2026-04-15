@@ -633,11 +633,29 @@ export async function runComplianceChecks(
       }
     };
 
-    const testXml = generateZatcaInvoiceXml(testData);
+    const signingCredentials = settings.privateKey 
+      ? { 
+          privateKey: settings.privateKey, 
+          certificate: settings.certificate || settings.complianceCsid || "" 
+        }
+      : undefined;
+
+    console.log(`[ZATCA Compliance] Generating ${testType.type} invoice with ${signingCredentials ? "real credentials" : "NO credentials (will use dummy)"}`);
+
+    const testXml = generateZatcaInvoiceXml(testData, signingCredentials);
     const testHash = generateInvoiceHash(testXml);
     const testInvoiceBase64 = Buffer.from(testXml, "utf8").toString("base64");
 
     const response = await client.complianceCheck(testHash, testUuid, testInvoiceBase64);
+    
+    console.log(`[ZATCA Compliance] ${testType.type} response: success=${response.success}, status=${response.data?.status || "N/A"}`);
+    if (response.data?.validationResults) {
+      const vr = response.data.validationResults;
+      console.log(`[ZATCA Compliance] Errors: ${vr.errorMessages?.length || 0}, Warnings: ${vr.warningMessages?.length || 0}`);
+      if (vr.errorMessages?.length) {
+        console.log(`[ZATCA Compliance] Error details:`, JSON.stringify(vr.errorMessages));
+      }
+    }
 
     results.push({
       invoiceType: `${testType.type}-${testType.subType}`,
@@ -652,7 +670,7 @@ export async function runComplianceChecks(
   
   if (allPassed) {
     await storage.updateZatcaSettings(restaurantId, {
-      onboardingStatus: "compliance_received"
+      onboardingStatus: "compliance_passed"
     });
   }
 
