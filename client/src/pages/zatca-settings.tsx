@@ -199,9 +199,15 @@ export default function ZatcaSettingsPage() {
 
   useEffect(() => {
     if (settings) {
-      setFormData(settings);
+      const cleanSettings = { ...settings };
+      const maskedFields = ["privateKey", "complianceCsid", "complianceCsidSecret", "productionCsid", "productionCsidSecret"] as const;
+      for (const field of maskedFields) {
+        if (cleanSettings[field] === "[CONFIGURED]") {
+          delete cleanSettings[field];
+        }
+      }
+      setFormData(cleanSettings);
     } else {
-      // Reset form when restaurant changes
       setFormData({
         environment: "sandbox",
         csrCountryName: "SA",

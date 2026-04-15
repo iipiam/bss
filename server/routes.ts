@@ -14509,6 +14509,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       
       const settingsData: Record<string, any> = {};
       
+      const sensitiveFields = ["privateKey", "complianceCsid", "complianceCsidSecret", "productionCsid", "productionCsidSecret"];
+      
       // First apply field mappings from frontend names to DB names
       for (const [frontendKey, dbKey] of Object.entries(fieldMappings)) {
         if (frontendKey in rawSettingsData && rawSettingsData[frontendKey] !== undefined) {
@@ -14519,6 +14521,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Then copy allowed DB-named fields directly
       for (const key of allowedDbFields) {
         if (key in rawSettingsData && rawSettingsData[key] !== undefined && !(key in settingsData)) {
+          if (sensitiveFields.includes(key) && rawSettingsData[key] === "[CONFIGURED]") {
+            continue;
+          }
           settingsData[key] = rawSettingsData[key];
         }
       }
