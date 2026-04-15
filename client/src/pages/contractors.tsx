@@ -381,7 +381,7 @@ export default function ContractorsPage() {
                       <FormControl>
                         <Input
                           data-testid="input-contractor-name"
-                          placeholder="Enter contractor name"
+                          placeholder={t.enterContractorName}
                           {...field}
                         />
                       </FormControl>
@@ -400,7 +400,7 @@ export default function ContractorsPage() {
                         <FormControl>
                           <Input
                             data-testid="input-contractor-company"
-                            placeholder="Company name"
+                            placeholder={t.enterCompanyNamePlaceholder}
                             {...field}
                           />
                         </FormControl>
@@ -475,7 +475,7 @@ export default function ContractorsPage() {
                         <FormControl>
                           <Input
                             data-testid="input-contractor-license"
-                            placeholder="License #"
+                            placeholder={t.licenseLabel}
                             {...field}
                           />
                         </FormControl>
@@ -515,7 +515,7 @@ export default function ContractorsPage() {
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-contractor-status">
-                            <SelectValue placeholder="Select status" />
+                            <SelectValue placeholder={t.selectStatus} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -537,7 +537,7 @@ export default function ContractorsPage() {
                       <FormControl>
                         <Textarea
                           data-testid="input-contractor-notes"
-                          placeholder="Additional notes..."
+                          placeholder={t.additionalNotes}
                           className="resize-none"
                           {...field}
                         />
@@ -728,7 +728,7 @@ export default function ContractorsPage() {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Award className="h-3 w-3 shrink-0" />
                       <span className="truncate" data-testid={`text-contractor-license-${contractor.id}`}>
-                        License: {contractor.licenseNumber}
+                        {t.licenseLabel}: {contractor.licenseNumber}
                       </span>
                     </div>
                   )}
@@ -736,7 +736,7 @@ export default function ContractorsPage() {
 
                 <div className="flex items-center justify-between gap-2 pt-2 border-t">
                   {renderRating(contractor.rating) || (
-                    <span className="text-xs text-muted-foreground">No rating</span>
+                    <span className="text-xs text-muted-foreground">{t.noRating}</span>
                   )}
                   <span className="text-xs text-muted-foreground">
                     {formatDate(contractor.createdAt)}

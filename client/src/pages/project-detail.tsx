@@ -130,9 +130,11 @@ function priorityClass(p: string): string {
   if (p === "high") return "border-yellow-500 text-yellow-700 dark:text-yellow-400";
   return "";
 }
-const pricingLabels: Record<string, string> = {
-  per_piece: "Per Piece", length: "Length", area: "Area", hour: "Hour", lump_sum: "Lump Sum",
-};
+function getPricingLabels(t: any): Record<string, string> {
+  return {
+    per_piece: t.perPiece || "Per Piece", length: t.lengthUnit || "Length", area: t.areaUnit || "Area", hour: t.hourUnit || "Hour", lump_sum: t.lumpSum || "Lump Sum",
+  };
+}
 
 function fmtDate(d: string | null) {
   if (!d) return "-";
@@ -148,6 +150,7 @@ export default function ProjectDetail() {
   const { t } = useLanguage();
   const layout = useDeviceLayout();
   const { toast } = useToast();
+  const pricingLabels = getPricingLabels(t);
 
   const [activeTab, setActiveTab] = useState("overview");
   const [svcOpen, setSvcOpen] = useState(false);
@@ -661,9 +664,9 @@ export default function ProjectDetail() {
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl><SelectTrigger data-testid="select-pricing-method"><SelectValue /></SelectTrigger></FormControl>
                       <SelectContent>
-                        <SelectItem value="per_piece">Per Piece</SelectItem><SelectItem value="length">Length</SelectItem>
-                        <SelectItem value="area">Area</SelectItem><SelectItem value="hour">Hour</SelectItem>
-                        <SelectItem value="lump_sum">Lump Sum</SelectItem>
+                        <SelectItem value="per_piece">{t.perPiece || "Per Piece"}</SelectItem><SelectItem value="length">{t.lengthUnit || "Length"}</SelectItem>
+                        <SelectItem value="area">{t.areaUnit || "Area"}</SelectItem><SelectItem value="hour">{t.hourUnit || "Hour"}</SelectItem>
+                        <SelectItem value="lump_sum">{t.lumpSum || "Lump Sum"}</SelectItem>
                       </SelectContent>
                     </Select><FormMessage /></FormItem>
                 )} />

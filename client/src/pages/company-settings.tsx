@@ -147,17 +147,17 @@ export default function CompanySettingsPage() {
   const documents = Array.isArray(settings?.companyDocuments) ? settings.companyDocuments : [];
 
   const placeholders = [
-    { key: "{{clientName}}", desc: "Client name" },
-    { key: "{{projectName}}", desc: "Project name" },
-    { key: "{{projectNumber}}", desc: "Project number" },
-    { key: "{{totalAmount}}", desc: "Total amount" },
-    { key: "{{startDate}}", desc: "Project start date" },
-    { key: "{{endDate}}", desc: "Project end date" },
-    { key: "{{companyName}}", desc: "Your company name" },
-    { key: "{{companyAddress}}", desc: "Your company address" },
-    { key: "{{companyPhone}}", desc: "Your company phone" },
-    { key: "{{companyEmail}}", desc: "Your company email" },
-    { key: "{{date}}", desc: "Current date" },
+    { key: "{{clientName}}", desc: t.placeholderClientName || "Client name" },
+    { key: "{{projectName}}", desc: t.placeholderProjectName || "Project name" },
+    { key: "{{projectNumber}}", desc: t.placeholderProjectNumber || "Project number" },
+    { key: "{{totalAmount}}", desc: t.placeholderTotalAmount || "Total amount" },
+    { key: "{{startDate}}", desc: t.placeholderStartDate || "Project start date" },
+    { key: "{{endDate}}", desc: t.placeholderEndDate || "Project end date" },
+    { key: "{{companyName}}", desc: t.placeholderCompanyName || "Your company name" },
+    { key: "{{companyAddress}}", desc: t.placeholderCompanyAddress || "Your company address" },
+    { key: "{{companyPhone}}", desc: t.placeholderCompanyPhone || "Your company phone" },
+    { key: "{{companyEmail}}", desc: t.placeholderCompanyEmail || "Your company email" },
+    { key: "{{date}}", desc: t.placeholderCurrentDate || "Current date" },
   ];
 
   if (isLoading) {
@@ -165,7 +165,7 @@ export default function CompanySettingsPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-          <p className="text-sm text-muted-foreground">Loading...</p>
+          <p className="text-sm text-muted-foreground">{t.loading}</p>
         </div>
       </div>
     );

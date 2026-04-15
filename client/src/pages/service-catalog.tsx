@@ -352,7 +352,7 @@ export default function ServiceCatalog() {
                       <FormControl>
                         <Input
                           data-testid="input-service-name"
-                          placeholder="Enter service name"
+                          placeholder={t.enterServiceName}
                           {...field}
                         />
                       </FormControl>
@@ -370,7 +370,7 @@ export default function ServiceCatalog() {
                       <FormControl>
                         <Textarea
                           data-testid="input-service-description"
-                          placeholder="Service description..."
+                          placeholder={t.serviceDescription}
                           className="resize-none"
                           {...field}
                         />
@@ -407,7 +407,7 @@ export default function ServiceCatalog() {
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-service-status">
-                              <SelectValue placeholder="Select status" />
+                              <SelectValue placeholder={t.selectStatus} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -431,7 +431,7 @@ export default function ServiceCatalog() {
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-pricing-method">
-                              <SelectValue placeholder="Select method" />
+                              <SelectValue placeholder={t.selectMethod} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>

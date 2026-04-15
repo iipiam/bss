@@ -492,7 +492,7 @@ export default function Quotations() {
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-quotation-status">
-                              <SelectValue placeholder="Select status" />
+                              <SelectValue placeholder={t.selectStatus} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -518,7 +518,7 @@ export default function Quotations() {
                       <FormControl>
                         <Input
                           data-testid="input-client-name"
-                          placeholder="Enter client name"
+                          placeholder={t.enterClientName}
                           {...field}
                         />
                       </FormControl>
@@ -574,7 +574,7 @@ export default function Quotations() {
                       <FormControl>
                         <Textarea
                           data-testid="input-quotation-description"
-                          placeholder="Quotation description..."
+                          placeholder={t.quotationDescription}
                           className="resize-none"
                           {...field}
                         />
@@ -689,7 +689,7 @@ export default function Quotations() {
                       <FormControl>
                         <Textarea
                           data-testid="input-quotation-notes"
-                          placeholder="Additional notes..."
+                          placeholder={t.additionalNotes}
                           className="resize-none"
                           {...field}
                         />
@@ -787,7 +787,7 @@ export default function Quotations() {
 
       {isLoading ? (
         <div className="flex items-center justify-center p-12">
-          <p>Loading...</p>
+          <p>{t.loading}</p>
         </div>
       ) : filteredQuotations.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 text-center">

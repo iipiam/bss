@@ -779,7 +779,7 @@ export default function ServiceProjects() {
 
       {isLoading ? (
         <div className="flex items-center justify-center p-12">
-          <p>Loading...</p>
+          <p>{t.loading}</p>
         </div>
       ) : filteredProjects.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 text-center">
