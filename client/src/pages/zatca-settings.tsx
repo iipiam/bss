@@ -453,7 +453,7 @@ export default function ZatcaSettingsPage() {
       case "compliance_received":
         return <Badge variant="default" className="bg-yellow-500" data-testid="badge-status-compliance"><AlertCircle className="w-3 h-3 mr-1" />{t.complianceReceived || "Compliance CSID"}</Badge>;
       case "compliance_passed":
-        return <Badge variant="default" className="bg-blue-500" data-testid="badge-status-compliance-passed"><CheckCircle2 className="w-3 h-3 mr-1" />{"Compliance Passed"}</Badge>;
+        return <Badge variant="default" className="bg-blue-500" data-testid="badge-status-compliance-passed"><CheckCircle2 className="w-3 h-3 mr-1" />{(t as any).compliancePassed || "Compliance Passed"}</Badge>;
       case "production_ready":
         return <Badge variant="default" className="bg-green-500" data-testid="badge-status-production"><CheckCircle2 className="w-3 h-3 mr-1" />{t.productionReady || "Production Ready"}</Badge>;
       default:
