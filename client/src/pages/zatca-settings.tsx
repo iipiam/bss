@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Shield, AlertCircle, CheckCircle2, Settings, KeyRound, FileText, RefreshCw, Clock, XCircle, Info, Eye, EyeOff, Copy, Download, Building2, ChevronDown, Upload } from "lucide-react";
+import { Loader2, Shield, AlertCircle, AlertTriangle, CheckCircle2, Settings, KeyRound, FileText, RefreshCw, RotateCcw, Clock, XCircle, Info, Eye, EyeOff, Copy, Download, Building2, ChevronDown, Upload } from "lucide-react";
 
 interface Restaurant {
   restaurantId: string;
@@ -400,6 +400,35 @@ export default function ZatcaSettingsPage() {
     },
   });
 
+  const resetOnboardingMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/zatca/reset-onboarding", { restaurantId: selectedRestaurantId });
+      return await res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings", selectedRestaurantId] });
+      setComplianceRequestId("");
+      toast({
+        title: t.success || "Success",
+        description: data.message || "ZATCA onboarding has been reset. You can now re-run Step 2.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t.error || "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const isCredentialsCorrupted = settings && (
+    settings.complianceCsid === "[CONFIGURED]" ||
+    settings.complianceCsidSecret === "[CONFIGURED]" ||
+    settings.privateKey === "[CONFIGURED]" ||
+    settings.complianceRequestId === "[CONFIGURED]"
+  );
+
   const saveManualCredentialsMutation = useMutation({
     mutationFn: async () => {
       const credentialData: Record<string, any> = { restaurantId: selectedRestaurantId };
@@ -577,10 +606,38 @@ export default function ZatcaSettingsPage() {
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-4 mb-6 flex-wrap">
             <span className="text-sm font-medium">{t.onboardingStatus || "Onboarding Status"}:</span>
             {getStatusBadge(settings?.onboardingStatus || "not_started")}
+            {(settings?.onboardingStatus !== "not_started" && settings?.onboardingStatus !== "production_ready") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (confirm("This will clear all ZATCA credentials and reset onboarding to Step 1. You will need to re-run the onboarding process. Continue?")) {
+                    resetOnboardingMutation.mutate();
+                  }
+                }}
+                disabled={resetOnboardingMutation.isPending}
+                data-testid="button-reset-onboarding"
+              >
+                {resetOnboardingMutation.isPending && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
+                <RotateCcw className="w-3 h-3 mr-1" />
+                Reset Onboarding
+              </Button>
+            )}
           </div>
+
+          {isCredentialsCorrupted && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Corrupted Credentials Detected</AlertTitle>
+              <AlertDescription>
+                Your ZATCA credentials were corrupted by a previous bug (stored as placeholder values instead of real credentials). 
+                Click "Reset Onboarding" above, then re-run Step 2 to get fresh credentials from ZATCA.
+              </AlertDescription>
+            </Alert>
+          )}
 
           <Tabs defaultValue="settings" className="space-y-6">
         <TabsList>

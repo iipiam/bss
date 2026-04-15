@@ -524,7 +524,15 @@ export async function getProductionCSID(
   const csidSecret = settings?.complianceCsidSecret;
   
   if (!settings || !csid || !csidSecret) {
-    return { success: false, message: "Compliance CSID not found" };
+    return { success: false, message: "Compliance CSID not found. Please complete Step 2 first." };
+  }
+
+  if (csid === "[CONFIGURED]" || csidSecret === "[CONFIGURED]" || (settings.privateKey && settings.privateKey === "[CONFIGURED]")) {
+    return { success: false, message: "ZATCA credentials are corrupted (contain placeholder values). Please use the 'Reset Onboarding' button and re-run Step 2 to get fresh credentials." };
+  }
+
+  if (complianceRequestId === "[CONFIGURED]") {
+    return { success: false, message: "Compliance Request ID is corrupted. Please use the 'Reset Onboarding' button and re-run Step 2." };
   }
 
   const config: ZatcaConfig = {
@@ -578,6 +586,13 @@ export async function runComplianceChecks(
     return { 
       success: false, 
       results: [{ invoiceType: "all", passed: false, errors: [{ code: "NO_CSID", message: "Compliance CSID not found. Please complete Step 2 first." }] }]
+    };
+  }
+
+  if (csid === "[CONFIGURED]" || csidSecret === "[CONFIGURED]" || (settings.privateKey && settings.privateKey === "[CONFIGURED]")) {
+    return {
+      success: false,
+      results: [{ invoiceType: "all", passed: false, errors: [{ code: "CORRUPTED_CREDENTIALS", message: "ZATCA credentials are corrupted (contain placeholder values). Please use the 'Reset Onboarding' button and re-run Step 2 to get fresh credentials." }] }]
     };
   }
 

@@ -14509,7 +14509,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       
       const settingsData: Record<string, any> = {};
       
-      const sensitiveFields = ["privateKey", "complianceCsid", "complianceCsidSecret", "productionCsid", "productionCsidSecret"];
+      const sensitiveFields = ["privateKey", "complianceCsid", "complianceCsidSecret", "productionCsid", "productionCsidSecret", "complianceRequestId"];
       
       // First apply field mappings from frontend names to DB names
       for (const [frontendKey, dbKey] of Object.entries(fieldMappings)) {
@@ -14698,6 +14698,39 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("Error requesting production CSID:", error);
       res.status(500).json({ error: "Failed to request production CSID" });
+    }
+  });
+
+  // Reset ZATCA onboarding - IT only (clears corrupted credentials)
+  app.post("/api/zatca/reset-onboarding", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { restaurantId: targetRestaurantId } = req.body;
+      if (!targetRestaurantId) {
+        return res.status(400).json({ error: "Restaurant ID required in request body" });
+      }
+
+      const existingSettings = await storage.getZatcaSettings(targetRestaurantId);
+      if (!existingSettings) {
+        return res.status(404).json({ error: "No ZATCA settings found for this restaurant" });
+      }
+
+      await storage.updateZatcaSettings(targetRestaurantId, {
+        privateKey: null,
+        complianceCsid: null,
+        complianceCsidSecret: null,
+        complianceRequestId: null,
+        complianceCsidReceivedAt: null,
+        productionCsid: null,
+        productionCsidSecret: null,
+        onboardingStatus: "not_started",
+        isEnabled: false,
+      });
+
+      console.log(`[ZATCA] Onboarding reset for restaurant ${targetRestaurantId}`);
+      res.json({ success: true, message: "ZATCA onboarding has been reset. You can now re-run Step 2 to get fresh credentials." });
+    } catch (error) {
+      console.error("Error resetting ZATCA onboarding:", error);
+      res.status(500).json({ error: "Failed to reset ZATCA onboarding" });
     }
   });
 
