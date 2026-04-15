@@ -90,6 +90,14 @@ interface CSRConfig {
   environment?: "sandbox" | "simulation" | "production";
 }
 
+function truncateToAsn1Max(value: string, maxBytes: number = 64): string {
+  let result = value;
+  while (Buffer.byteLength(result, "utf8") > maxBytes) {
+    result = result.slice(0, -1);
+  }
+  return result;
+}
+
 function createCSRConfigFile(config: CSRConfig, configPath: string): void {
   let egsSerial: string;
   const sn = config.serialNumber || config.egsUnitSerialNumber || "";
@@ -102,11 +110,21 @@ function createCSRConfigFile(config: CSRConfig, configPath: string): void {
   const certTemplateName = config.environment === "production" 
     ? "ZATCA-Code-Signing" 
     : "TSTZATCA-Code-Signing";
+
+  const safeOrgName = truncateToAsn1Max(config.organizationName);
+  const safeOrgUnit = truncateToAsn1Max(config.organizationalUnit);
+  const safeCommonName = truncateToAsn1Max(config.commonName);
+  const safeBranchName = truncateToAsn1Max(config.branchName);
+  const safeEgsSerial = truncateToAsn1Max(egsSerial);
+  
+  if (safeOrgName !== config.organizationName) {
+    console.log(`[ZATCA CSR Config] Organization name truncated from ${Buffer.byteLength(config.organizationName, "utf8")} to ${Buffer.byteLength(safeOrgName, "utf8")} bytes: "${safeOrgName}"`);
+  }
   
   console.log(`[ZATCA CSR Config] Environment: ${config.environment}, CertTemplate: ${certTemplateName}`);
-  console.log(`[ZATCA CSR Config] EGS Serial: ${egsSerial}`);
-  console.log(`[ZATCA CSR Config] Subject: C=${config.countryCode}, O=${config.organizationName}, OU=${config.organizationalUnit}, CN=${config.commonName}`);
-  console.log(`[ZATCA CSR Config] VAT: ${config.vatNumber}, InvoiceType: ${config.invoiceType}, Branch: ${config.branchName}`);
+  console.log(`[ZATCA CSR Config] EGS Serial: ${safeEgsSerial}`);
+  console.log(`[ZATCA CSR Config] Subject: C=${config.countryCode}, O=${safeOrgName}, OU=${safeOrgUnit}, CN=${safeCommonName}`);
+  console.log(`[ZATCA CSR Config] VAT: ${config.vatNumber}, InvoiceType: ${config.invoiceType}, Branch: ${safeBranchName}`);
 
   const configContent = `
 oid_section = OIDs
@@ -120,23 +138,24 @@ default_md = sha256
 prompt = no
 req_extensions = v3_req
 distinguished_name = req_distinguished_name
+string_mask = utf8only
 
 [req_distinguished_name]
 C = ${config.countryCode}
-OU = ${config.organizationalUnit}
-O = ${config.organizationName}
-CN = ${config.commonName}
+OU = ${safeOrgUnit}
+O = ${safeOrgName}
+CN = ${safeCommonName}
 
 [v3_req]
 certificateTemplateName = ASN1:PRINTABLESTRING:${certTemplateName}
 subjectAltName = dirName:alt_names
 
 [alt_names]
-SN = ${egsSerial}
+SN = ${safeEgsSerial}
 UID = ${config.vatNumber}
 title = ${config.invoiceType}
-registeredAddress = ${config.branchName}
-businessCategory = ${egsSerial}
+registeredAddress = ${safeBranchName}
+businessCategory = ${safeEgsSerial}
 `.trim();
 
   fs.writeFileSync(configPath, configContent);
