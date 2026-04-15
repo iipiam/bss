@@ -267,8 +267,9 @@ export default function ZatcaSettingsPage() {
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings", selectedRestaurantId] });
-      if (data.complianceRequestId) {
-        setComplianceRequestId(data.complianceRequestId);
+      const reqId = data.requestId || data.complianceRequestId;
+      if (reqId) {
+        setComplianceRequestId(reqId);
       }
       toast({
         title: t.success || "Success",
@@ -337,19 +338,36 @@ export default function ZatcaSettingsPage() {
 
   const productionCsidMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/zatca/production-csid", { complianceRequestId, restaurantId: selectedRestaurantId });
+      const res = await apiRequest("POST", "/api/zatca/production-csid", { complianceRequestId, restaurantId: selectedRestaurantId });
+      return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings", selectedRestaurantId] });
-      toast({
-        title: t.success || "Success",
-        description: t.productionCsidSuccess || "Production CSID received. ZATCA integration is now active.",
-      });
+      if (data.success) {
+        toast({
+          title: t.success || "Success",
+          description: t.productionCsidSuccess || "Production CSID received. ZATCA integration is now active.",
+        });
+      } else {
+        toast({
+          title: t.error || "Error",
+          description: data.message || data.error || "Failed to get production CSID",
+          variant: "destructive",
+        });
+      }
     },
     onError: (error: Error) => {
+      let msg = error.message;
+      try {
+        const jsonStart = msg.indexOf("{");
+        if (jsonStart >= 0) {
+          const parsed = JSON.parse(msg.substring(jsonStart));
+          msg = parsed.error || parsed.message || msg;
+        }
+      } catch {}
       toast({
         title: t.error || "Error",
-        description: error.message,
+        description: msg,
         variant: "destructive",
       });
     },
@@ -916,6 +934,28 @@ export default function ZatcaSettingsPage() {
                   <AlertTitle>{(t as any).complianceChecksInfo || "Compliance Verification"}</AlertTitle>
                   <AlertDescription>{(t as any).complianceChecksInfoDescription || "This will submit test invoices (Standard B2B and Simplified B2C) to ZATCA using your Compliance CSID to verify your integration is working correctly."}</AlertDescription>
                 </Alert>
+                {settings?.complianceCsidReceivedAt && (() => {
+                  const ageMinutes = (Date.now() - new Date(settings.complianceCsidReceivedAt).getTime()) / 60000;
+                  if (ageMinutes > 50) {
+                    return (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>CSID Expired</AlertTitle>
+                        <AlertDescription>Your Compliance CSID was received {Math.round(ageMinutes)} minutes ago and has likely expired (valid for ~60 minutes). Please go back to Step 2, generate a new OTP, and request a new Compliance CSID.</AlertDescription>
+                      </Alert>
+                    );
+                  }
+                  if (ageMinutes > 30) {
+                    return (
+                      <Alert className="bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
+                        <AlertCircle className="h-4 w-4 text-yellow-600" />
+                        <AlertTitle className="text-yellow-800 dark:text-yellow-300">CSID Expiring Soon</AlertTitle>
+                        <AlertDescription className="text-yellow-700 dark:text-yellow-400">Your Compliance CSID was received {Math.round(ageMinutes)} minutes ago. It expires after ~60 minutes. Complete Steps 3 and 4 soon.</AlertDescription>
+                      </Alert>
+                    );
+                  }
+                  return null;
+                })()}
                 <Button
                   onClick={() => complianceChecksMutation.mutate()}
                   disabled={complianceChecksMutation.isPending || !settings?.complianceCsid}
@@ -924,7 +964,7 @@ export default function ZatcaSettingsPage() {
                   {complianceChecksMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   {(t as any).runComplianceChecks || "Run Compliance Checks"}
                 </Button>
-                {(settings?.onboardingStatus === "compliance_passed" || settings?.onboardingStatus === "compliance_received") && (
+                {settings?.onboardingStatus === "compliance_passed" && (
                   <Alert className="bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800">
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                     <AlertTitle className="text-green-800 dark:text-green-300">{(t as any).complianceChecksPassed || "Compliance Checks Passed"}</AlertTitle>

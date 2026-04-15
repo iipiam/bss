@@ -5656,8 +5656,9 @@ export const storage = new DatabaseStorage();
     await pool.query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS adjustment_reason TEXT`);
     console.log('[Migration] Invoices columns verified/added: document_type, referenced_invoice_id, adjustment_reason');
     
-    // Add compliance_request_id to zatca_settings if not exists
+    // Add ZATCA compliance columns if not exists
     await pool.query(`ALTER TABLE zatca_settings ADD COLUMN IF NOT EXISTS compliance_request_id TEXT`).catch(() => {});
+    await pool.query(`ALTER TABLE zatca_settings ADD COLUMN IF NOT EXISTS compliance_csid_received_at TIMESTAMP`).catch(() => {});
     
     // BizFlow Manager: Create service_projects table if not exists
     await pool.query(`

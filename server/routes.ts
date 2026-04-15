@@ -14503,7 +14503,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         "csrInvoiceType", "csrLocationAddress", "csrIndustryBusinessCategory",
         "sellerStreetName", "sellerBuildingNumber", "sellerCitySubdivision",
         "sellerCity", "sellerPostalZone", "sellerCrNumber",
-        "privateKey", "complianceCsid", "complianceCsidSecret", "complianceRequestId",
+        "privateKey", "complianceCsid", "complianceCsidSecret", "complianceRequestId", "complianceCsidReceivedAt",
         "productionCsid", "productionCsidSecret", "onboardingStatus",
       ];
       

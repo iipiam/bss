@@ -501,6 +501,7 @@ export async function onboardToZatca(
     complianceCsid: data.binarySecurityToken,
     complianceCsidSecret: data.secret,
     complianceRequestId: data.requestID,
+    complianceCsidReceivedAt: new Date(),
     onboardingStatus: "compliance_received"
   });
 
@@ -576,11 +577,18 @@ export async function runComplianceChecks(
   if (!settings || !csid || !csidSecret) {
     return { 
       success: false, 
-      results: [{ invoiceType: "all", passed: false, errors: [{ code: "NO_CSID", message: "Compliance CSID not found" }] }]
+      results: [{ invoiceType: "all", passed: false, errors: [{ code: "NO_CSID", message: "Compliance CSID not found. Please complete Step 2 first." }] }]
     };
   }
 
-  console.log(`[ZATCA Compliance] Environment: ${settings.environment}, CSID length: ${csid.length}, Secret length: ${csidSecret.length}, Has private key: ${!!settings.privateKey}`);
+  const csidReceivedAt = settings.complianceCsidReceivedAt ? new Date(settings.complianceCsidReceivedAt) : null;
+  const csidAgeMinutes = csidReceivedAt ? (Date.now() - csidReceivedAt.getTime()) / 60000 : null;
+  
+  console.log(`[ZATCA Compliance] Environment: ${settings.environment}, CSID length: ${csid.length}, Secret length: ${csidSecret.length}, Has private key: ${!!settings.privateKey}, CSID age: ${csidAgeMinutes ? csidAgeMinutes.toFixed(1) + " min" : "unknown"}`);
+
+  if (csidAgeMinutes && csidAgeMinutes > 55) {
+    console.warn(`[ZATCA Compliance] WARNING: Compliance CSID is ${csidAgeMinutes.toFixed(1)} minutes old. It expires after ~60 minutes. Consider re-running Step 2.`);
+  }
 
   const config: ZatcaConfig = {
     environment: settings.environment as "sandbox" | "simulation" | "production",
@@ -602,9 +610,25 @@ export async function runComplianceChecks(
     { type: "standard" as const, subType: "01" as const }
   ];
 
+  let has401Error = false;
+
   for (const testType of testInvoiceTypes) {
     const testUuid = generateUUID();
     const now = new Date();
+    
+    const certForSigning = settings.complianceCsid || "";
+    let decodedCert = certForSigning;
+    try {
+      const decoded = Buffer.from(certForSigning, "base64").toString("utf8");
+      if (decoded.includes("-----BEGIN CERTIFICATE-----")) {
+        decodedCert = decoded;
+      } else {
+        decodedCert = `-----BEGIN CERTIFICATE-----\n${certForSigning}\n-----END CERTIFICATE-----`;
+      }
+    } catch (e) {
+      decodedCert = `-----BEGIN CERTIFICATE-----\n${certForSigning}\n-----END CERTIFICATE-----`;
+    }
+
     const testData: ZatcaInvoiceData = {
       invoiceNumber: `TEST-${Date.now()}`,
       invoiceType: testType.type,
@@ -641,11 +665,11 @@ export async function runComplianceChecks(
     const signingCredentials = settings.privateKey 
       ? { 
           privateKey: settings.privateKey, 
-          certificate: settings.certificate || settings.complianceCsid || "" 
+          certificate: decodedCert
         }
       : undefined;
 
-    console.log(`[ZATCA Compliance] Generating ${testType.type} invoice with ${signingCredentials ? "real credentials" : "NO credentials (will use dummy)"}`);
+    console.log(`[ZATCA Compliance] Generating ${testType.type} invoice with ${signingCredentials ? "real credentials (cert length: " + decodedCert.length + ")" : "NO credentials (will use dummy)"}`);
 
     const testXml = generateZatcaInvoiceXml(testData, signingCredentials);
     const testHash = generateInvoiceHash(testXml);
@@ -653,7 +677,7 @@ export async function runComplianceChecks(
 
     const response = await client.complianceCheck(testHash, testUuid, testInvoiceBase64);
     
-    console.log(`[ZATCA Compliance] ${testType.type} response: success=${response.success}, status=${response.data?.status || "N/A"}`);
+    console.log(`[ZATCA Compliance] ${testType.type} response: success=${response.success}, status=${response.data?.status || "N/A"}, error: ${response.error?.message || "none"}`);
     if (response.data?.validationResults) {
       const vr = response.data.validationResults;
       console.log(`[ZATCA Compliance] Errors: ${vr.errorMessages?.length || 0}, Warnings: ${vr.warningMessages?.length || 0}`);
@@ -662,13 +686,27 @@ export async function runComplianceChecks(
       }
     }
 
+    const is401 = response.error?.code === "401" || response.error?.message?.includes("status 401");
+    if (is401) has401Error = true;
+
+    let errorMessage = response.error?.message || "";
+    if (is401) {
+      const ageInfo = csidAgeMinutes 
+        ? ` (CSID is ${Math.round(csidAgeMinutes)} minutes old${csidAgeMinutes > 55 ? " - LIKELY EXPIRED" : ""})`
+        : " (CSID age unknown)";
+      errorMessage = `Authentication failed${ageInfo}. Your Compliance CSID may have expired. Please go back to Step 2, generate a new OTP, and request a new Compliance CSID. Then re-run compliance checks within 1 hour.`;
+    }
+
     results.push({
       invoiceType: `${testType.type}-${testType.subType}`,
       passed: response.success && response.data?.status !== "REJECTED",
-      errors: response.error ? [{ code: response.error.code, message: response.error.message }] : 
+      errors: is401 ? [{ code: "AUTH_EXPIRED", message: errorMessage }] :
+              response.error ? [{ code: response.error.code, message: response.error.message }] : 
               response.data?.validationResults?.errorMessages,
       warnings: response.data?.validationResults?.warningMessages || response.warnings
     });
+
+    if (is401) break;
   }
 
   const allPassed = results.every(r => r.passed);
@@ -676,6 +714,10 @@ export async function runComplianceChecks(
   if (allPassed) {
     await storage.updateZatcaSettings(restaurantId, {
       onboardingStatus: "compliance_passed"
+    });
+  } else if (has401Error) {
+    await storage.updateZatcaSettings(restaurantId, {
+      onboardingStatus: "compliance_received"
     });
   }
 
