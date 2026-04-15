@@ -1,5 +1,5 @@
 import { storage } from "../storage";
-import { generateZatcaInvoiceXml, generateUnsignedInvoiceXml, generateInvoiceHash, generateInvoiceHashHex, type ZatcaInvoiceData } from "./xml-generator";
+import { generateZatcaInvoiceXml, generateUnsignedInvoiceXml, generateInvoiceHash, generateInvoiceHashHex, canonicalizeInvoiceXml, type ZatcaInvoiceData } from "./xml-generator";
 import { generateZatcaQRCode, generateUUID, signWithECDSA, formatIssueDate, formatIssueTime, formatTimestamp, hashSHA256Hex, extractPublicKeyBase64 } from "./crypto";
 import { ZatcaApiClient, submitInvoiceToZatca, type ZatcaConfig } from "./api-client";
 import { signInvoiceWithSDK, generateCSRWithSDK, validateInvoiceWithSDK, isSDKAvailable } from "./sdk-wrapper";
@@ -693,6 +693,13 @@ export async function runComplianceChecks(
     const testXml = generateZatcaInvoiceXml(testData, signingCredentials);
     const testHash = generateInvoiceHash(testXml);
     const testInvoiceBase64 = Buffer.from(testXml, "utf8").toString("base64");
+
+    const canonicalForm = canonicalizeInvoiceXml(testXml);
+    console.log(`[ZATCA Debug] ${testType.type} canonical form first 300 chars: ${canonicalForm.substring(0, 300)}`);
+    console.log(`[ZATCA Debug] ${testType.type} canonical form length: ${canonicalForm.length}, hash: ${testHash}`);
+    const digestMatch = testXml.match(/<ds:DigestValue>([^<]+)<\/ds:DigestValue>/);
+    console.log(`[ZATCA Debug] ${testType.type} DigestValue in XML: ${digestMatch ? digestMatch[1] : "NOT FOUND"}`);
+    console.log(`[ZATCA Debug] ${testType.type} hash == DigestValue: ${digestMatch ? (testHash === digestMatch[1]) : "N/A"}`);
 
     const response = await client.complianceCheck(testHash, testUuid, testInvoiceBase64);
     
