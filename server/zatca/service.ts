@@ -495,9 +495,12 @@ export async function onboardToZatca(
 
   const data = response.data!;
 
+  console.log(`[ZATCA Service] Compliance CSID received. Token length: ${data.binarySecurityToken?.length || 0}, Secret length: ${data.secret?.length || 0}, RequestID: ${data.requestID}`);
+  
   await storage.updateZatcaSettings(restaurantId, {
     complianceCsid: data.binarySecurityToken,
     complianceCsidSecret: data.secret,
+    complianceRequestId: data.requestID,
     onboardingStatus: "compliance_received"
   });
 
@@ -576,6 +579,8 @@ export async function runComplianceChecks(
       results: [{ invoiceType: "all", passed: false, errors: [{ code: "NO_CSID", message: "Compliance CSID not found" }] }]
     };
   }
+
+  console.log(`[ZATCA Compliance] Environment: ${settings.environment}, CSID length: ${csid.length}, Secret length: ${csidSecret.length}, Has private key: ${!!settings.privateKey}`);
 
   const config: ZatcaConfig = {
     environment: settings.environment as "sandbox" | "simulation" | "production",

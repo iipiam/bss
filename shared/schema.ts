@@ -1345,6 +1345,7 @@ export const zatcaSettings = pgTable("zatca_settings", {
   // CSID (Cryptographic Stamp Identifier)
   complianceCsid: text("compliance_csid"), // Compliance CSID for testing
   complianceCsidSecret: text("compliance_csid_secret"), // Compliance CSID secret
+  complianceRequestId: text("compliance_request_id"), // Request ID from compliance CSID response
   productionCsid: text("production_csid"), // Production CSID
   productionCsidSecret: text("production_csid_secret"), // Production CSID secret
   csidExpiresAt: timestamp("csid_expires_at"),

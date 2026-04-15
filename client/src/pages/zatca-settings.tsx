@@ -167,6 +167,12 @@ export default function ZatcaSettingsPage() {
     retry: false,
   });
 
+  useEffect(() => {
+    if (settings?.complianceRequestId && !complianceRequestId) {
+      setComplianceRequestId(settings.complianceRequestId);
+    }
+  }, [settings?.complianceRequestId]);
+
   const { data: invoiceStatuses } = useQuery<InvoiceZatcaStatus[]>({
     queryKey: ["/api/zatca/invoices", selectedRestaurantId],
     queryFn: async () => {

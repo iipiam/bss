@@ -74,7 +74,10 @@ export class ZatcaApiClient {
   }
 
   private getAuthHeader(): string {
-    const credentials = Buffer.from(`${this.csid}:${this.csidSecret}`).toString("base64");
+    const cleanCsid = this.csid.replace(/[\r\n\s]/g, '');
+    const cleanSecret = this.csidSecret.replace(/[\r\n\s]/g, '');
+    console.log(`[ZATCA Auth] CSID length: ${cleanCsid.length}, first 20: ${cleanCsid.substring(0, 20)}..., Secret length: ${cleanSecret.length}`);
+    const credentials = Buffer.from(`${cleanCsid}:${cleanSecret}`).toString("base64");
     return `Basic ${credentials}`;
   }
 
@@ -111,9 +114,13 @@ export class ZatcaApiClient {
         body: bodyStr
       });
 
-      console.log(`[ZATCA API] Response status: ${response.status} ${response.statusText}`);
+      console.log(`[ZATCA API] Response status: ${response.status} ${response.statusText} for ${endpoint}`);
 
       const text = await response.text();
+      if (response.status === 401) {
+        console.error(`[ZATCA API] 401 Unauthorized for ${endpoint}. Response body: ${text.substring(0, 500)}`);
+        console.error(`[ZATCA API] Auth was ${this.csid ? "provided" : "NOT provided"}, CSID length: ${this.csid?.length || 0}`);
+      }
       let data: any = null;
       
       if (text && text.trim()) {
