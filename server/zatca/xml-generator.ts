@@ -182,27 +182,23 @@ export function generateInvoiceTypeCodeName(invoiceType: "standard" | "simplifie
 /**
  * Generate SHA-256 hash of invoice content (base64 format)
  */
-export function generateInvoiceHash(xmlContent: string): string {
+export function canonicalizeInvoiceXml(xmlContent: string): string {
   let cleanedXml = xmlContent.replace(/<\?xml[^?]*\?>\s*/g, "");
   cleanedXml = cleanedXml.replace(/<ext:UBLExtensions>[\s\S]*?<\/ext:UBLExtensions>/g, "");
   cleanedXml = cleanedXml.replace(/<cac:Signature>[\s\S]*?<\/cac:Signature>/g, "");
   cleanedXml = cleanedXml.replace(/<cac:AdditionalDocumentReference>\s*<cbc:ID>QR<\/cbc:ID>[\s\S]*?<\/cac:AdditionalDocumentReference>/g, "");
-  cleanedXml = cleanedXml.replace(/>\s+</g, "><").trim();
-  
-  return crypto.createHash("sha256").update(cleanedXml, "utf8").digest("base64");
+  cleanedXml = cleanedXml.trim();
+  return cleanedXml;
 }
 
-/**
- * Generate SHA-256 hash of invoice content (hex format)
- */
+export function generateInvoiceHash(xmlContent: string): string {
+  const canonicalized = canonicalizeInvoiceXml(xmlContent);
+  return crypto.createHash("sha256").update(canonicalized, "utf8").digest("base64");
+}
+
 export function generateInvoiceHashHex(xmlContent: string): string {
-  let cleanedXml = xmlContent.replace(/<\?xml[^?]*\?>\s*/g, "");
-  cleanedXml = cleanedXml.replace(/<ext:UBLExtensions>[\s\S]*?<\/ext:UBLExtensions>/g, "");
-  cleanedXml = cleanedXml.replace(/<cac:Signature>[\s\S]*?<\/cac:Signature>/g, "");
-  cleanedXml = cleanedXml.replace(/<cac:AdditionalDocumentReference>\s*<cbc:ID>QR<\/cbc:ID>[\s\S]*?<\/cac:AdditionalDocumentReference>/g, "");
-  cleanedXml = cleanedXml.replace(/>\s+</g, "><").trim();
-  
-  return crypto.createHash("sha256").update(cleanedXml, "utf8").digest("hex");
+  const canonicalized = canonicalizeInvoiceXml(xmlContent);
+  return crypto.createHash("sha256").update(canonicalized, "utf8").digest("hex");
 }
 
 /**
@@ -633,6 +629,14 @@ export function generateSignedInvoiceXml(
   </cac:LegalMonetaryTotal>${invoiceLinesXml}
 </Invoice>`;
 
+  const realInvoiceHash = generateInvoiceHash(signedXml);
+  if (realInvoiceHash !== invoiceHash) {
+    const finalSignedXml = signedXml.replace(
+      `<ds:DigestValue>${invoiceHash}</ds:DigestValue>`,
+      `<ds:DigestValue>${realInvoiceHash}</ds:DigestValue>`
+    );
+    return finalSignedXml;
+  }
   return signedXml;
 }
 

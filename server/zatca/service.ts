@@ -272,6 +272,9 @@ export async function processInvoiceForZatca(
     publicKeyBase64 = fallbackResult.publicKeyBase64;
   }
 
+  invoiceHash = generateInvoiceHash(signedXml);
+  invoiceHashHex = generateInvoiceHashHex(signedXml);
+
   let qrCodeImage = "";
   try {
     qrCodeImage = await QRCode.toDataURL(qrCodeBase64, {
@@ -398,10 +401,11 @@ export async function retryPendingInvoices(restaurantId: string): Promise<{
 
     processed++;
 
+    const recomputedHash = generateInvoiceHash(invoice.signedXml);
     const result = await submitInvoiceToZatca(
       config,
       invoice.signedXml,
-      invoice.invoiceHash,
+      recomputedHash,
       invoice.uuid,
       invoice.invoiceType as "standard" | "simplified"
     );
