@@ -648,6 +648,27 @@ export async function runComplianceChecks(
       decodedCert = `-----BEGIN CERTIFICATE-----\n${certForSigning}\n-----END CERTIFICATE-----`;
     }
 
+    const testBuyerInfo = testType.type === "standard" 
+      ? {
+          name: "Test Buyer Company",
+          vatNumber: "300000000000003",
+          streetName: "Buyer Street",
+          buildingNumber: "5678",
+          citySubdivision: "Buyer District",
+          city: "Jeddah",
+          postalZone: "23456",
+          countryCode: "SA"
+        }
+      : {
+          name: "Walk-in Customer",
+          streetName: "-",
+          buildingNumber: "0000",
+          citySubdivision: "-",
+          city: "Riyadh",
+          postalZone: "00000",
+          countryCode: "SA"
+        };
+
     const testData: ZatcaInvoiceData = {
       invoiceNumber: `TEST-${Date.now()}`,
       invoiceType: testType.type,
@@ -678,7 +699,8 @@ export async function runComplianceChecks(
         postalZone: settings.sellerPostalZone || "12345",
         countryCode: "SA",
         crNumber: settings.sellerCrNumber || "1234567890"
-      }
+      },
+      buyerInfo: testBuyerInfo
     };
 
     const signingCredentials = settings.privateKey 
