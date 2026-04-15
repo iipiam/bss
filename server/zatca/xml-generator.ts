@@ -297,25 +297,31 @@ export function generateSignedInvoiceXml(
   const finalVat = formatDecimal(calculatedVat);
   const finalTotal = formatDecimal(calculatedSubtotal + calculatedVat);
 
-  let customerPartyXml = "";
-  if (buyerInfo) {
-    const buyerVat = buyerInfo.vatNumber ? formatVatNumber(buyerInfo.vatNumber) : "";
-    customerPartyXml = `
+  const buyerName = buyerInfo?.name || "NA";
+  const buyerStreet = buyerInfo?.streetName || "-";
+  const buyerBuilding = buyerInfo?.buildingNumber || "0000";
+  const buyerDistrict = buyerInfo?.citySubdivision || "-";
+  const buyerCity = buyerInfo?.city || "Riyadh";
+  const buyerPostal = buyerInfo?.postalZone || "00000";
+  const buyerCountry = buyerInfo?.countryCode || "SA";
+  const buyerVat = buyerInfo?.vatNumber ? formatVatNumber(buyerInfo.vatNumber) : "";
+
+  const customerPartyXml = `
   <cac:AccountingCustomerParty>
-    <cac:Party>${buyerInfo.vatNumber ? `
+    <cac:Party>${buyerVat ? `
       <cac:PartyIdentification>
         <cbc:ID schemeID="VAT">${buyerVat}</cbc:ID>
       </cac:PartyIdentification>` : ""}
       <cac:PostalAddress>
-        <cbc:StreetName>${escapeXml(buyerInfo.streetName || "-")}</cbc:StreetName>
-        <cbc:BuildingNumber>${escapeXml(buyerInfo.buildingNumber || "0000")}</cbc:BuildingNumber>
-        <cbc:CitySubdivisionName>${escapeXml(buyerInfo.citySubdivision || "-")}</cbc:CitySubdivisionName>
-        <cbc:CityName>${escapeXml(buyerInfo.city || "Riyadh")}</cbc:CityName>
-        <cbc:PostalZone>${escapeXml(buyerInfo.postalZone || "00000")}</cbc:PostalZone>
+        <cbc:StreetName>${escapeXml(buyerStreet)}</cbc:StreetName>
+        <cbc:BuildingNumber>${escapeXml(buyerBuilding)}</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>${escapeXml(buyerDistrict)}</cbc:CitySubdivisionName>
+        <cbc:CityName>${escapeXml(buyerCity)}</cbc:CityName>
+        <cbc:PostalZone>${escapeXml(buyerPostal)}</cbc:PostalZone>
         <cac:Country>
-          <cbc:IdentificationCode>${escapeXml(buyerInfo.countryCode || "SA")}</cbc:IdentificationCode>
+          <cbc:IdentificationCode>${escapeXml(buyerCountry)}</cbc:IdentificationCode>
         </cac:Country>
-      </cac:PostalAddress>${buyerInfo.vatNumber ? `
+      </cac:PostalAddress>${buyerVat ? `
       <cac:PartyTaxScheme>
         <cbc:CompanyID>${buyerVat}</cbc:CompanyID>
         <cac:TaxScheme>
@@ -323,11 +329,10 @@ export function generateSignedInvoiceXml(
         </cac:TaxScheme>
       </cac:PartyTaxScheme>` : ""}
       <cac:PartyLegalEntity>
-        <cbc:RegistrationName>${escapeXml(buyerInfo.name)}</cbc:RegistrationName>
+        <cbc:RegistrationName>${escapeXml(buyerName)}</cbc:RegistrationName>
       </cac:PartyLegalEntity>
     </cac:Party>
   </cac:AccountingCustomerParty>`;
-  }
 
   // Build billing reference for credit/debit notes (required by ZATCA)
   let billingReferenceXml = "";
@@ -550,7 +555,7 @@ export function generateSignedInvoiceXml(
   <cbc:IssueTime>${escapeXml(issueTime)}</cbc:IssueTime>
   <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>
   <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
-  <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>
+  <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>${billingReferenceXml}
   <cac:AdditionalDocumentReference>
     <cbc:ID>ICV</cbc:ID>
     <cbc:UUID>${invoiceCounter}</cbc:UUID>
