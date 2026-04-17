@@ -95,11 +95,18 @@ export function formatVatNumber(vatNumber: string): string {
 /**
  * Generates TLV (Tag-Length-Value) encoded data for QR code
  * Phase 1: 5 tags, Phase 2: 9 tags
+ * Accepts a string (encoded as UTF-8) or a Buffer (raw bytes).
+ * Length field is 1 byte for values <= 255 bytes, otherwise 2-byte big-endian.
  */
-function generateTlvData(tag: number, value: string): Buffer {
-  const valueBuffer = Buffer.from(value, "utf8");
+function generateTlvData(tag: number, value: string | Buffer): Buffer {
+  const valueBuffer = typeof value === "string" ? Buffer.from(value, "utf8") : value;
   const tagBuffer = Buffer.from([tag]);
-  const lengthBuffer = Buffer.from([valueBuffer.length]);
+  let lengthBuffer: Buffer;
+  if (valueBuffer.length <= 0xff) {
+    lengthBuffer = Buffer.from([valueBuffer.length]);
+  } else {
+    lengthBuffer = Buffer.from([0x82, (valueBuffer.length >> 8) & 0xff, valueBuffer.length & 0xff]);
+  }
   return Buffer.concat([tagBuffer, lengthBuffer, valueBuffer]);
 }
 
@@ -119,16 +126,22 @@ export function generatePhase2QrCode(
 ): string {
   const formattedVat = formatVatNumber(vatNumber);
   
+  // Tags 6-9 must be RAW BYTES (not base64 strings), per ZATCA Phase 2 spec
+  const hashBuf = Buffer.from(invoiceHash, "base64");
+  const sigBuf = Buffer.from(signature, "base64");
+  const pubBuf = Buffer.from(publicKey, "base64");
+  const certSigBuf = Buffer.from(certificateSignature, "base64");
+
   const tlvParts: Buffer[] = [
     generateTlvData(1, sellerName),
     generateTlvData(2, formattedVat),
     generateTlvData(3, timestamp),
     generateTlvData(4, formatDecimal(totalWithVat)),
     generateTlvData(5, formatDecimal(vatAmount)),
-    generateTlvData(6, invoiceHash),
-    generateTlvData(7, signature),
-    generateTlvData(8, publicKey),
-    generateTlvData(9, certificateSignature),
+    generateTlvData(6, hashBuf),
+    generateTlvData(7, sigBuf),
+    generateTlvData(8, pubBuf),
+    generateTlvData(9, certSigBuf),
   ];
   
   return Buffer.concat(tlvParts).toString("base64");

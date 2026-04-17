@@ -14510,11 +14510,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const settingsData: Record<string, any> = {};
       
       const sensitiveFields = ["privateKey", "complianceCsid", "complianceCsidSecret", "productionCsid", "productionCsidSecret", "complianceRequestId"];
+      const dateFields = new Set(["complianceCsidReceivedAt", "csidExpiresAt"]);
+      
+      const coerceValue = (key: string, value: any) => {
+        if (value === null || value === undefined) return value;
+        if (dateFields.has(key) && typeof value === "string") {
+          const d = new Date(value);
+          return isNaN(d.getTime()) ? null : d;
+        }
+        return value;
+      };
       
       // First apply field mappings from frontend names to DB names
       for (const [frontendKey, dbKey] of Object.entries(fieldMappings)) {
         if (frontendKey in rawSettingsData && rawSettingsData[frontendKey] !== undefined) {
-          settingsData[dbKey] = rawSettingsData[frontendKey];
+          settingsData[dbKey] = coerceValue(dbKey, rawSettingsData[frontendKey]);
         }
       }
       
@@ -14524,7 +14534,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           if (sensitiveFields.includes(key) && rawSettingsData[key] === "[CONFIGURED]") {
             continue;
           }
-          settingsData[key] = rawSettingsData[key];
+          settingsData[key] = coerceValue(key, rawSettingsData[key]);
         }
       }
       
