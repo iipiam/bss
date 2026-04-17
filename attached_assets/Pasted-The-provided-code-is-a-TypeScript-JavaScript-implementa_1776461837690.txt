@@ -1,0 +1,54 @@
+The provided code is a TypeScript/JavaScript implementation for generating ZATCA (Fatoora) e-invoices in UBL 2.1 XML format. It handles both Phase 1 (basic QR) and Phase 2 (signed XML with cryptographic stamp, 9-tag QR, hash chain, etc.).
+Overall Compliance Assessment (as of 2026)
+Not fully compliant with current ZATCA Phase 2 requirements (Integration phase, including clearance for B2B/standard invoices and reporting for B2C/simplified invoices).
+It gets many things right (good structure, correct namespaces, QR TLV logic, VAT formatting, basic signing attempt), but it has several critical issues that will cause rejections during ZATCA validation (via SDK, sandbox, or production API). These include incorrect hash calculation, incomplete/inaccurate canonicalization, structural problems in the signed XML, and minor schema/business rule violations.
+Major Issues (Will Cause Rejection)
+
+Invoice Hash Calculation is Incorrect / Fragile
+canonicalizeInvoiceXml() and generateInvoiceHash() remove <UBLExtensions>, <cac:Signature>, and the QR AdditionalDocumentReference using regex/string replace.
+ZATCA requires exact removal via XPath + C14N 1.1 (Canonical XML 1.1) normalization before SHA-256 hashing. Regex is unreliable (whitespace, newlines, attribute order, namespaces, etc. matter). Many developers report hash mismatch errors because of this.
+The code calculates the hash on baseInvoiceXml (unsigned), then builds signedXml, recalculates, and tries to patch the <ds:DigestValue>. This is error-prone and often fails to match what ZATCA computes.
+
+Signature Structure (XAdES) Has Problems
+The <ds:Reference URI=""> with multiple XPath transforms is mostly correct, but the order and exact XPath can vary slightly in official examples.
+SignedProperties handling and hashing of <xades:SignedProperties> may not match exactly.
+IssuerSerial in <xades:IssuerSerial> is hardcoded to dummy values (CN=ZATCA-Code-Signing-CA... and serial 0). This should come from the real CSID certificate.
+No full certificate chain support (ZATCA sometimes expects the full chain in <ds:X509Data>).
+
+ProfileID
+Hardcoded to reporting:1.0 everywhere.
+For B2B Standard Invoices (clearance), it should often be urn:fdc:peppol.eu:2017:poacc:billing:01:1.0 or specific clearance profile depending on the flow. reporting:1.0 is more common for simplified/reporting. Check your invoice type.
+
+InvoiceTypeCode and Subtype
+Logic is reasonable, but name attribute on <cbc:InvoiceTypeCode> must match ZATCA's expected patterns (e.g., 0100000 for standard, 0200000 for simplified, with more digits for specific subtypes like self-billing or notes). Your generateInvoiceTypeCodeName() is too simplistic.
+
+Buyer Party Handling
+Good attempt to conditionalize PartyIdentification vs PartyTaxScheme based on VAT presence.
+However, for VAT-registered buyers, the VAT number goes in PartyTaxScheme/CompanyID. For non-VAT buyers, use proper schemeID (e.g., "CRN", "NAT", "OTH", etc.). Your fallback is okay but incomplete.
+
+Line Items & Tax Totals
+Line-level <cac:TaxTotal> is non-standard in UBL for most cases (ZATCA prefers tax at header + ClassifiedTaxCategory per line).
+Multiple <cac:TaxTotal> at header level (one simple, one with subtotals) can be acceptable, but ensure exact VAT breakdown and no duplicate subtotals with wrong percentages.
+No support for allowances/charges per line (discount is only at header).
+
+QR Code (Phase 2)
+TLV generation is mostly correct (raw bytes for tags 6-9).
+Tag 9 (certificate signature / ZATCA stamp on public key) is passed as certificateHash — this is often wrong. It should be the cryptographic stamp signature on the public key (from CSID).
+Timestamp format and value sources are okay.
+
+Other Minor / Potential Issues
+No <cac:AccountingCustomerParty> when buyerInfo is missing (required for standard invoices).
+Hardcoded dummy values when no credentials.
+PaymentMeansCode mapping is basic.
+No handling for additional required fields in newer XML Implementation Standard (e.g., more address details, plot identification, etc.).
+XML escaping is basic — may break on special characters.
+No proper XML declaration + encoding handling in all places.
+
+
+Recommendations
+
+Do not use this in production without fixes and thorough testing against the official ZATCA SDK (Compliance & Enablement Toolbox) and sandbox.
+Use a reliable library if possible (e.g., zatca-xml-js, or official SDK wrappers in Node.js) rather than manual string concatenation.
+Test every generated XML with ZATCA's web validator / SDK for schema, business rules, hash, signature, and QR.
+For B2B (Standard): Submit to Clearance API (gets stamped by ZATCA).
+For B2C (Simplified): Stamp locally with your CSID, report within 24h.
