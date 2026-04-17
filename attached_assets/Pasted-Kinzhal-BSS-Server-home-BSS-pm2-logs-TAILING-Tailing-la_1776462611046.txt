@@ -1,0 +1,53 @@
+Kinzhal@BSS-Server:/home/BSS$ pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+/home/Kinzhal/.pm2/pm2.log last 15 lines:
+PM2        | 2026-04-17T21:23:22: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-04-17T21:23:22: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-04-17T21:23:23: PM2 log: pid=1769031 msg=process killed
+PM2        | 2026-04-17T21:23:23: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-04-17T21:23:23: PM2 log: App [BSS:0] online
+PM2        | 2026-04-17T21:25:42: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-04-17T21:25:42: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-04-17T21:25:42: PM2 log: pid=1769322 msg=process killed
+PM2        | 2026-04-17T21:25:42: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-04-17T21:25:42: PM2 log: App [BSS:0] online
+PM2        | 2026-04-17T21:47:53: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-04-17T21:47:53: PM2 log: App [BSS:0] exited with code [130] via signal [SIGINT]
+PM2        | 2026-04-17T21:47:53: PM2 log: pid=1769449 msg=process killed
+PM2        | 2026-04-17T21:47:53: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-04-17T21:47:53: PM2 log: App [BSS:0] online
+
+/home/Kinzhal/.pm2/logs/BSS-error.log last 15 lines:
+0|BSS      |   code: 'ERR_OSSL_ASN1_WRONG_TAG'
+0|BSS      | }
+0|BSS      | [ZATCA] Failed to extract IssuerSerial, using fallback: Error: Failed to parse certificate
+0|BSS      |     at getCertificateInfo (file:///home/BSS/dist/index.js:10659:11)
+0|BSS      |     at getCertificateIssuerSerial (file:///home/BSS/dist/index.js:10679:18)
+0|BSS      |     at generateSignedInvoiceXml (file:///home/BSS/dist/index.js:11147:28)
+0|BSS      |     at runComplianceChecks (file:///home/BSS/dist/index.js:12304:21)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      |     at async file:///home/BSS/dist/index.js:24920:22
+0|BSS      | [ZATCA API] 401 Unauthorized for /compliance/invoices. Response body:
+0|BSS      | [ZATCA API] Auth was provided, CSID length: 1196
+0|BSS      | [ZATCA API] Error response: null
+0|BSS      | [ZATCA API] 401 Unauthorized for /production/csids. Response body: You are not authorized to use this api endpoint
+0|BSS      | [ZATCA API] Auth was provided, CSID length: 1196
+0|BSS      | [ZATCA API] Non-JSON response (401): You are not authorized to use this api endpoint
+
+/home/Kinzhal/.pm2/logs/BSS-out.log last 15 lines:
+0|BSS      | [ZATCA Debug] simplified canonical form first 300 chars: <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:Common
+0|BSS      | [ZATCA Debug] simplified canonical form length: 5086, hash: 0q+CaPF9P09/FgCkeDasEvTRNXidEHEIInkSPjCXJXo=
+0|BSS      | [ZATCA Debug] simplified DigestValue in XML: 0q+CaPF9P09/FgCkeDasEvTRNXidEHEIInkSPjCXJXo=
+0|BSS      | [ZATCA Debug] simplified hash == DigestValue: true
+0|BSS      | [ZATCA Auth] CSID length: 1196, first 20: TUlJQ216Q0NBa0tnQXdJ..., Secret length: 44
+0|BSS      | [ZATCA API] POST https://gw-fatoora.zatca.gov.sa/e-invoicing/core/compliance/invoices
+0|BSS      | [ZATCA API] Response status: 401 Unauthorized for /compliance/invoices
+0|BSS      | [ZATCA Compliance] simplified response: success=false, status=N/A, error: ZATCA API request failed with status 401
+0|BSS      | 9:49:28 PM [express] POST /api/zatca/compliance-checks 200 in 89ms :: {"success":false,"results":[{"…
+0|BSS      | 9:49:28 PM [express] GET /api/zatca/settings 200 in 8ms :: {"id":"c2eb15c6-c7a7-4fb6-a8a5-5283decf93…
+0|BSS      | 9:49:33 PM [express] GET /api/branches 403 in 9ms :: {"error":"This endpoint requires a restaurant a…
+0|BSS      | [ZATCA Auth] CSID length: 1196, first 20: TUlJQ216Q0NBa0tnQXdJ..., Secret length: 44
+0|BSS      | [ZATCA API] POST https://gw-fatoora.zatca.gov.sa/e-invoicing/core/production/csids
+0|BSS      | [ZATCA API] Response status: 401 Unauthorized for /production/csids
+0|BSS      | 9:49:36 PM [express] POST /api/zatca/production-csid 400 in 155ms :: {"error":"You are not authorize…
+

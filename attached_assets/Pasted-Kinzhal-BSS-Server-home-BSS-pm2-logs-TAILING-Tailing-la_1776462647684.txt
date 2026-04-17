@@ -1,0 +1,53 @@
+Kinzhal@BSS-Server:/home/BSS$ pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+/home/Kinzhal/.pm2/pm2.log last 15 lines:
+PM2        | 2026-04-17T21:23:22: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-04-17T21:23:22: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-04-17T21:23:23: PM2 log: pid=1769031 msg=process killed
+PM2        | 2026-04-17T21:23:23: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-04-17T21:23:23: PM2 log: App [BSS:0] online
+PM2        | 2026-04-17T21:25:42: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-04-17T21:25:42: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-04-17T21:25:42: PM2 log: pid=1769322 msg=process killed
+PM2        | 2026-04-17T21:25:42: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-04-17T21:25:42: PM2 log: App [BSS:0] online
+PM2        | 2026-04-17T21:47:53: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-04-17T21:47:53: PM2 log: App [BSS:0] exited with code [130] via signal [SIGINT]
+PM2        | 2026-04-17T21:47:53: PM2 log: pid=1769449 msg=process killed
+PM2        | 2026-04-17T21:47:53: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-04-17T21:47:53: PM2 log: App [BSS:0] online
+
+/home/Kinzhal/.pm2/logs/BSS-error.log last 15 lines:
+0|BSS      | [ZATCA API] Error response: null
+0|BSS      | [ZATCA API] Error response: {
+0|BSS      |   "errors": [
+0|BSS      |     {
+0|BSS      |       "code": "Invalid-OTP",
+0|BSS      |       "message": "The provided OTP is invalid"
+0|BSS      |     }
+0|BSS      |   ]
+0|BSS      | }
+0|BSS      | [ZATCA Service] Compliance CSID request failed: {
+0|BSS      |   code: 'Invalid-OTP',
+0|BSS      |   message: 'The provided OTP is invalid',
+0|BSS      |   details: '{"errors":[{"code":"Invalid-OTP","message":"The provided OTP is invalid"}]}'
+0|BSS      | }
+0|BSS      | [ZATCA Onboard] Failed: The provided OTP is invalid
+
+/home/Kinzhal/.pm2/logs/BSS-out.log last 15 lines:
+0|BSS      | [ZATCA Service] CSR to send length: 1244, first 40 chars: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNU...
+0|BSS      | [ZATCA Service] Requesting compliance CSID for restaurant 8e22b8ff-d15d-40df-ab60-a3c9f9ef2012, env: production
+0|BSS      | [ZATCA API] POST https://gw-fatoora.zatca.gov.sa/e-invoicing/core/compliance
+0|BSS      | [ZATCA API] CSR field length: 1244, first 60: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ2R6Q0NB...
+0|BSS      | [ZATCA API] Response status: 400 Bad Request for /compliance
+0|BSS      | 9:50:23 PM [express] POST /api/zatca/onboard 400 in 730ms :: {"error":"The provided OTP is invalid",…
+0|BSS      | [ZATCA CSR Config] Environment: production, CertTemplate: ZATCA-Code-Signing
+0|BSS      | [ZATCA CSR Config] EGS Serial: 1-BSS|2-BSS|3-89049032007208882600174497549056
+0|BSS      | [ZATCA CSR Config] Subject: C=SA, O=مؤسسة أوج الصروح للمقاولات العامة, OU=Main Device, CN=AwjS1
+0|BSS      | [ZATCA CSR Config] VAT: 312384206600003, InvoiceType: 1100, Branch: Main Device
+0|BSS      | [ZATCA CSR] Verification: Certificate request self-signature verify OK
+0|BSS      | [ZATCA CSR] PEM length: 931, base64(PEM) length: 1244
+0|BSS      | [ZATCA CSR] First 60 chars: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ2VEQ0NB...
+0|BSS      | 9:50:25 PM [express] POST /api/zatca/generate-csr 200 in 53ms :: {"success":true,"message":"CSR gene…
+0|BSS      | 9:50:25 PM [express] GET /api/zatca/settings 200 in 8ms :: {"id":"c2eb15c6-c7a7-4fb6-a8a5-5283decf93…
+
