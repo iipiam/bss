@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { extractPublicKeyBase64 } from "./crypto";
 
 interface ZatcaInvoiceLineItem {
   name: string;
@@ -306,11 +307,18 @@ export function generateSignedInvoiceXml(
   const buyerCountry = buyerInfo?.countryCode || "SA";
   const buyerVat = buyerInfo?.vatNumber ? formatVatNumber(buyerInfo.vatNumber) : "";
 
+  // BT-46: PartyIdentification must use TIN/CRN/MOM/MLS/700/SAG/NAT/GCC/IQA/PAS/OTH
+  // Required ONLY when buyer is NOT VAT-registered. When buyer has VAT, identification
+  // goes in PartyTaxScheme, NOT PartyIdentification.
+  const buyerOtherIdScheme = (buyerInfo as any)?.otherIdScheme || "NAT";
+  const buyerOtherIdValue = (buyerInfo as any)?.otherIdValue || "";
+  const includeBuyerPartyId = !buyerVat && buyerOtherIdValue;
+
   const customerPartyXml = `
   <cac:AccountingCustomerParty>
-    <cac:Party>${buyerVat ? `
+    <cac:Party>${includeBuyerPartyId ? `
       <cac:PartyIdentification>
-        <cbc:ID schemeID="VAT">${buyerVat}</cbc:ID>
+        <cbc:ID schemeID="${escapeXml(buyerOtherIdScheme)}">${escapeXml(buyerOtherIdValue)}</cbc:ID>
       </cac:PartyIdentification>` : ""}
       <cac:PostalAddress>
         <cbc:StreetName>${escapeXml(buyerStreet)}</cbc:StreetName>
@@ -436,6 +444,7 @@ export function generateSignedInvoiceXml(
   let certificateHash = dummyHash;
   let signedPropertiesHash = dummyHash;
   
+  let publicKeyBase64 = dummyCert;
   if (credentials?.privateKey && credentials?.certificate) {
     signatureValue = signInvoice(baseInvoiceXml, credentials.privateKey);
     certificateBase64 = credentials.certificate
@@ -443,6 +452,12 @@ export function generateSignedInvoiceXml(
       .replace(/-----END CERTIFICATE-----/g, "")
       .replace(/\s/g, "");
     certificateHash = generateCertificateHash(credentials.certificate);
+    try {
+      publicKeyBase64 = extractPublicKeyBase64(credentials.certificate);
+    } catch (e) {
+      console.error("[ZATCA] Failed to extract public key, falling back:", e);
+      publicKeyBase64 = certificateBase64;
+    }
     
     const signedProperties = `<xades:SignedProperties Id="xadesSignedProperties">
       <xades:SignedSignatureProperties>
@@ -469,7 +484,7 @@ export function generateSignedInvoiceXml(
         calculatedVat,
         invoiceHash,
         signatureValue,
-        certificateBase64.substring(0, 100),
+        publicKeyBase64,
         certificateHash
       )
     : generatePhase1QrCode(
