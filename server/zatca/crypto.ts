@@ -346,6 +346,129 @@ export function getCertificateInfo(certificatePem: string): {
   }
 }
 
+/**
+ * Convert a Node X509Certificate `issuer` (multi-line `CN=...\nO=...`) into
+ * the RFC2253-style single-line LDAP form ZATCA / XAdES expects, with the
+ * RDNs in reverse order (least-significant first):
+ *   "CN=ZATCA-Code-Signing-CA, DC=zatca, DC=gov, DC=sa"
+ */
+export function formatIssuerNameRFC2253(issuerMultiline: string): string {
+  if (!issuerMultiline) return "";
+  const lines = issuerMultiline
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  // Node lists RDNs from most-significant (root) → least-significant (leaf).
+  // RFC2253 / XAdES wants least-significant first.
+  return lines.reverse().join(", ");
+}
+
+/**
+ * Convert a hex serial-number string (Node's X509Certificate.serialNumber) to
+ * its decimal representation, as required by `<ds:X509SerialNumber>`.
+ */
+export function serialNumberHexToDecimal(hex: string): string {
+  if (!hex) return "0";
+  const cleaned = hex.replace(/^0x/i, "").replace(/[^0-9a-fA-F]/g, "");
+  if (cleaned.length === 0) return "0";
+  try {
+    return BigInt("0x" + cleaned).toString(10);
+  } catch {
+    return "0";
+  }
+}
+
+/**
+ * Extract real issuer/serial from a CSID certificate for `<xades:IssuerSerial>`.
+ * Falls back to the legacy ZATCA dummy values if parsing fails so signing never
+ * crashes hard.
+ */
+export function getCertificateIssuerSerial(certificatePem: string): {
+  issuerName: string;
+  serialNumber: string;
+} {
+  try {
+    const info = getCertificateInfo(certificatePem);
+    return {
+      issuerName: formatIssuerNameRFC2253(info.issuer),
+      serialNumber: serialNumberHexToDecimal(info.serialNumber),
+    };
+  } catch (e) {
+    console.error("[ZATCA] Failed to extract IssuerSerial, using fallback:", e);
+    return {
+      issuerName: "CN=ZATCA-Code-Signing-CA, DC=zatca, DC=gov, DC=sa",
+      serialNumber: "0",
+    };
+  }
+}
+
+/**
+ * Minimal DER walker that extracts the `signatureValue` BIT STRING from an
+ * X.509 certificate.
+ *
+ * X.509 structure:
+ *   Certificate ::= SEQUENCE {
+ *     tbsCertificate       SEQUENCE,
+ *     signatureAlgorithm   SEQUENCE,
+ *     signatureValue       BIT STRING
+ *   }
+ *
+ * Returns the raw signature bytes (without the leading "unused-bits" byte
+ * of the BIT STRING). For ECDSA certs this is the DER-encoded ECDSA-Sig.
+ */
+export function extractCertificateSignatureBytes(certificatePem: string): Buffer {
+  const certContent = certificatePem.includes("-----BEGIN")
+    ? certificatePem
+    : `-----BEGIN CERTIFICATE-----\n${certificatePem}\n-----END CERTIFICATE-----`;
+
+  const x509 = new crypto.X509Certificate(certContent);
+  const der: Buffer = (x509 as any).raw;
+  if (!der || der.length < 4) {
+    throw new Error("Certificate has no DER payload");
+  }
+
+  // readLen returns { length, headerSize } at offset
+  const readLen = (buf: Buffer, off: number) => {
+    const first = buf[off];
+    if ((first & 0x80) === 0) {
+      return { length: first, headerSize: 1 };
+    }
+    const numBytes = first & 0x7f;
+    let length = 0;
+    for (let i = 0; i < numBytes; i++) {
+      length = (length << 8) | buf[off + 1 + i];
+    }
+    return { length, headerSize: 1 + numBytes };
+  };
+
+  // Outer SEQUENCE
+  if (der[0] !== 0x30) throw new Error("Cert: expected outer SEQUENCE");
+  const outer = readLen(der, 1);
+  let cursor = 1 + outer.headerSize;
+  const outerEnd = cursor + outer.length;
+
+  // tbsCertificate (SEQUENCE) — skip
+  if (der[cursor] !== 0x30) throw new Error("Cert: expected tbsCertificate SEQUENCE");
+  const tbs = readLen(der, cursor + 1);
+  cursor += 1 + tbs.headerSize + tbs.length;
+
+  // signatureAlgorithm (SEQUENCE) — skip
+  if (der[cursor] !== 0x30) throw new Error("Cert: expected signatureAlgorithm SEQUENCE");
+  const sigAlg = readLen(der, cursor + 1);
+  cursor += 1 + sigAlg.headerSize + sigAlg.length;
+
+  // signatureValue (BIT STRING)
+  if (der[cursor] !== 0x03) throw new Error("Cert: expected BIT STRING for signatureValue");
+  const bitStr = readLen(der, cursor + 1);
+  const bitStart = cursor + 1 + bitStr.headerSize;
+  // First byte of BIT STRING contents is the "unused bits" count, drop it.
+  const sigBytes = der.subarray(bitStart + 1, bitStart + bitStr.length);
+  if (bitStart + bitStr.length > outerEnd) {
+    throw new Error("Cert: signatureValue overruns outer SEQUENCE");
+  }
+  return Buffer.from(sigBytes);
+}
+
 export function verifySignature(
   publicKeyPem: string,
   data: string,

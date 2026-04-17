@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { extractPublicKeyBase64 } from "./crypto";
+import { extractPublicKeyBase64, getCertificateIssuerSerial, extractCertificateSignatureBytes } from "./crypto";
 
 interface ZatcaInvoiceLineItem {
   name: string;
@@ -456,7 +456,15 @@ export function generateSignedInvoiceXml(
   let certificateBase64 = dummyCert;
   let certificateHash = dummyHash;
   let signedPropertiesHash = dummyHash;
-  
+
+  // Tag 9: real ECDSA signature bytes from the X.509 certificate (the CA's
+  // stamp on the cert), base64-encoded. Falls back to the cert digest if
+  // parsing fails (legacy behaviour) so we never crash.
+  let certificateSignatureBase64 = certificateHash;
+  // <xades:IssuerSerial> values (real values when we have a real cert).
+  let issuerName = "CN=ZATCA-Code-Signing-CA, DC=zatca, DC=gov, DC=sa";
+  let serialNumber = "0";
+
   let publicKeyBase64 = dummyCert;
   if (credentials?.privateKey && credentials?.certificate) {
     signatureValue = signInvoice(baseInvoiceXml, credentials.privateKey);
@@ -471,7 +479,21 @@ export function generateSignedInvoiceXml(
       console.error("[ZATCA] Failed to extract public key, falling back:", e);
       publicKeyBase64 = certificateBase64;
     }
-    
+    try {
+      const certSigBytes = extractCertificateSignatureBytes(credentials.certificate);
+      certificateSignatureBase64 = certSigBytes.toString("base64");
+    } catch (e) {
+      console.error("[ZATCA] Failed to extract certificate signature for QR Tag 9, falling back to certHash:", e);
+      certificateSignatureBase64 = certificateHash;
+    }
+    try {
+      const issuerSerial = getCertificateIssuerSerial(credentials.certificate);
+      issuerName = issuerSerial.issuerName;
+      serialNumber = issuerSerial.serialNumber;
+    } catch (e) {
+      console.error("[ZATCA] Failed to extract IssuerSerial, using defaults:", e);
+    }
+
     const signedProperties = `<xades:SignedProperties Id="xadesSignedProperties">
       <xades:SignedSignatureProperties>
         <xades:SigningTime>${signingTime}</xades:SigningTime>
@@ -481,6 +503,10 @@ export function generateSignedInvoiceXml(
               <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" />
               <ds:DigestValue>${certificateHash}</ds:DigestValue>
             </xades:CertDigest>
+            <xades:IssuerSerial>
+              <ds:X509IssuerName>${escapeXml(issuerName)}</ds:X509IssuerName>
+              <ds:X509SerialNumber>${escapeXml(serialNumber)}</ds:X509SerialNumber>
+            </xades:IssuerSerial>
           </xades:Cert>
         </xades:SigningCertificate>
       </xades:SignedSignatureProperties>
@@ -498,7 +524,7 @@ export function generateSignedInvoiceXml(
         invoiceHash,
         signatureValue,
         publicKeyBase64,
-        certificateHash
+        certificateSignatureBase64
       )
     : generatePhase1QrCode(
         sellerInfo.name,
@@ -561,8 +587,8 @@ export function generateSignedInvoiceXml(
                             <ds:DigestValue>${certificateHash}</ds:DigestValue>
                           </xades:CertDigest>
                           <xades:IssuerSerial>
-                            <ds:X509IssuerName>CN=ZATCA-Code-Signing-CA, DC=zatca, DC=gov, DC=sa</ds:X509IssuerName>
-                            <ds:X509SerialNumber>0</ds:X509SerialNumber>
+                            <ds:X509IssuerName>${escapeXml(issuerName)}</ds:X509IssuerName>
+                            <ds:X509SerialNumber>${escapeXml(serialNumber)}</ds:X509SerialNumber>
                           </xades:IssuerSerial>
                         </xades:Cert>
                       </xades:SigningCertificate>

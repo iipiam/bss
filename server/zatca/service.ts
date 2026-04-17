@@ -1,6 +1,6 @@
 import { storage } from "../storage";
 import { generateZatcaInvoiceXml, generateUnsignedInvoiceXml, generateInvoiceHash, generateInvoiceHashHex, canonicalizeInvoiceXml, type ZatcaInvoiceData } from "./xml-generator";
-import { generateZatcaQRCode, generateUUID, signWithECDSA, formatIssueDate, formatIssueTime, formatTimestamp, hashSHA256Hex, extractPublicKeyBase64 } from "./crypto";
+import { generateZatcaQRCode, generateUUID, signWithECDSA, formatIssueDate, formatIssueTime, formatTimestamp, hashSHA256Hex, extractPublicKeyBase64, getCertificateIssuerSerial, extractCertificateSignatureBytes } from "./crypto";
 import { ZatcaApiClient, submitInvoiceToZatca, type ZatcaConfig } from "./api-client";
 import { signInvoiceWithSDK, generateCSRWithSDK, validateInvoiceWithSDK, isSDKAvailable } from "./sdk-wrapper";
 import QRCode from "qrcode";
@@ -44,9 +44,16 @@ async function signInvoiceManually(
       const certHash = require("crypto").createHash("sha256")
         .update(Buffer.from(certificateBase64!, "base64"))
         .digest("base64");
-      
+
+      // Real issuer/serial parsed from the CSID certificate (falls back to legacy
+      // dummy values if parsing fails).
+      const { issuerName, serialNumber } = getCertificateIssuerSerial(certificate);
+      const escapeXmlAttr = (s: string) => s
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+
       const signingTime = now.toISOString();
-      const signedPropertiesXml = `<xades:SignedProperties xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" Id="xadesSignedProperties"><xades:SignedSignatureProperties><xades:SigningTime>${signingTime}</xades:SigningTime><xades:SigningCertificate><xades:Cert><xades:CertDigest><ds:DigestMethod xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue xmlns:ds="http://www.w3.org/2000/09/xmldsig#">${certHash}</ds:DigestValue></xades:CertDigest><xades:IssuerSerial><ds:X509IssuerName xmlns:ds="http://www.w3.org/2000/09/xmldsig#">CN=ZATCA-Code-Signing-CA</ds:X509IssuerName><ds:X509SerialNumber xmlns:ds="http://www.w3.org/2000/09/xmldsig#">0</ds:X509SerialNumber></xades:IssuerSerial></xades:Cert></xades:SigningCertificate></xades:SignedSignatureProperties></xades:SignedProperties>`;
+      const signedPropertiesXml = `<xades:SignedProperties xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" Id="xadesSignedProperties"><xades:SignedSignatureProperties><xades:SigningTime>${signingTime}</xades:SigningTime><xades:SigningCertificate><xades:Cert><xades:CertDigest><ds:DigestMethod xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue xmlns:ds="http://www.w3.org/2000/09/xmldsig#">${certHash}</ds:DigestValue></xades:CertDigest><xades:IssuerSerial><ds:X509IssuerName xmlns:ds="http://www.w3.org/2000/09/xmldsig#">${escapeXmlAttr(issuerName)}</ds:X509IssuerName><ds:X509SerialNumber xmlns:ds="http://www.w3.org/2000/09/xmldsig#">${escapeXmlAttr(serialNumber)}</ds:X509SerialNumber></xades:IssuerSerial></xades:Cert></xades:SigningCertificate></xades:SignedSignatureProperties></xades:SignedProperties>`;
       
       signedPropertiesHash = require("crypto").createHash("sha256")
         .update(signedPropertiesXml, "utf8")
