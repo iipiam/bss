@@ -1,0 +1,335 @@
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+/home/Kinzhal/.pm2/pm2.log last 15 lines:
+PM2        | 2026-04-17T21:25:42: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-04-17T21:25:42: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-04-17T21:25:42: PM2 log: pid=1769322 msg=process killed
+PM2        | 2026-04-17T21:25:42: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-04-17T21:25:42: PM2 log: App [BSS:0] online
+PM2        | 2026-04-17T21:47:53: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-04-17T21:47:53: PM2 log: App [BSS:0] exited with code [130] via signal [SIGINT]
+PM2        | 2026-04-17T21:47:53: PM2 log: pid=1769449 msg=process killed
+PM2        | 2026-04-17T21:47:53: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-04-17T21:47:53: PM2 log: App [BSS:0] online
+PM2        | 2026-04-17T21:59:17: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-04-17T21:59:17: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-04-17T21:59:17: PM2 log: pid=1770263 msg=process killed
+PM2        | 2026-04-17T21:59:17: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-04-17T21:59:17: PM2 log: App [BSS:0] online
+
+/home/Kinzhal/.pm2/logs/BSS-error.log last 15 lines:
+0|BSS      |       {
+0|BSS      |         "type": "ERROR",
+0|BSS      |         "code": "BR-CL-KSA-14",
+0|BSS      |         "category": "KSA",
+0|BSS      |         "message": "[KSA-14]Field character limit for QR Code field has been exceeded. The maximum character limit for this field is 1000 characters.",
+0|BSS      |         "status": "ERROR"
+0|BSS      |       }
+0|BSS      |     ],
+0|BSS      |     "status": "ERROR"
+0|BSS      |   },
+0|BSS      |   "reportingStatus": null,
+0|BSS      |   "clearanceStatus": "NOT_CLEARED",
+0|BSS      |   "qrSellertStatus": null,
+0|BSS      |   "qrBuyertStatus": null
+0|BSS      | }
+
+/home/Kinzhal/.pm2/logs/BSS-out.log last 15 lines:
+0|BSS      | [ZATCA Debug] standard hash == DigestValue: true
+0|BSS      | [ZATCA Auth] CSID length: 1196, first 20: TUlJQ25EQ0NBa0tnQXdJ..., Secret length: 44
+0|BSS      | [ZATCA API] POST https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance/invoices
+0|BSS      | [ZATCA API] Response status: 400 Bad Request for /compliance/invoices
+0|BSS      | [ZATCA Compliance] standard response: success=false, status=N/A, error: [KSA-14]Field character limit for QR Code field has been exceeded. The maximum character limit for this field is 1000 characters.
+0|BSS      | 9:54:51 PM [express] POST /api/zatca/compliance-checks 200 in 251ms :: {"success":false,"results":[{…
+0|BSS      | 9:54:51 PM [express] GET /api/zatca/settings 304 in 7ms :: {"id":"c2eb15c6-c7a7-4fb6-a8a5-5283decf93…
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+
+0|BSS  | 9:59:19 PM [express] serving on port 3000
+0|BSS  | [Migration] Restaurants column verified/added: has_vat_registration, tax_number made nullable
+0|BSS  | [Migration] Procurement columns verified/added: inventory_item_id, original_procurement_id, unit
+0|BSS  | [Migration] Investors columns verified/added: national_id, contact_number, investor_type, recipe_id, document_path, document_content, document_filename
+0|BSS  | [Migration] Settings column verified/added: weekly_schedule
+0|BSS  | [Migration] Table verified/created: device_serial_numbers
+0|BSS  | [Migration] Table verified/created: pending_signups
+0|BSS  | [Migration] Invoices columns verified/added: document_type, referenced_invoice_id, adjustment_reason
+0|BSS  | [Migration] Table verified/created: contracts
+0|BSS  | [Migration] Table verified/created: valuations
+0|BSS  | [Migration] Table verified/created: meal_subscriptions
+0|BSS  | [Migration] Meal subscriptions columns verified/added: delivery_log, delivery_hours, credit_balance, number_of_days
+0|BSS  | [Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings
+0|BSS  | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS  | 9:59:26 PM [express] GET /api/it/business-management/clients 200 in 24ms :: [{"restaurantId":"8e22b8…
+0|BSS  | 9:59:26 PM [express] GET /api/zatca/invoices 304 in 84ms :: []
+0|BSS  | 9:59:26 PM [express] GET /api/zatca/settings 304 in 69ms :: {"id":"c2eb15c6-c7a7-4fb6-a8a5-5283decf9…
+0|BSS  | 9:59:26 PM [express] GET /api/branches 403 in 38ms :: {"error":"This endpoint requires a restaurant …
+0|BSS  | 9:59:26 PM [express] GET /api/auth/me 200 in 38ms :: {"user":{"id":"bb811919-d05b-439a-a394-346154ce…
+0|BSS  | [WebSocket] Client disconnected from notifications
+0|BSS  | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS  | [WebSocket] Client disconnected from notifications
+0|BSS  | 9:59:28 PM [express] GET /api/auth/me 304 in 7ms :: {"user":{"id":"bb811919-d05b-439a-a394-346154ce1…
+0|BSS  | 9:59:28 PM [express] GET /api/branches 403 in 8ms :: {"error":"This endpoint requires a restaurant a…
+0|BSS  | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS  | 9:59:29 PM [express] GET /api/it/business-management/clients 200 in 8ms :: [{"restaurantId":"8e22b8f…
+0|BSS  | 9:59:31 PM [express] GET /api/zatca/invoices 304 in 8ms :: []
+0|BSS  | 9:59:31 PM [express] GET /api/zatca/settings 304 in 10ms :: {"id":"c2eb15c6-c7a7-4fb6-a8a5-5283decf9…
+0|BSS  | 9:59:34 PM [express] POST /api/zatca/settings 200 in 11ms :: {"id":"c2eb15c6-c7a7-4fb6-a8a5-5283decf…
+0|BSS  | 9:59:34 PM [express] GET /api/zatca/settings 200 in 5ms :: {"id":"c2eb15c6-c7a7-4fb6-a8a5-5283decf93…
+0|BSS  | [ZATCA CSR Config] Environment: sandbox, CertTemplate: TSTZATCA-Code-Signing
+0|BSS  | [ZATCA CSR Config] EGS Serial: 1-BSS|2-BSS|3-89049032007208882600174497549056
+0|BSS  | [ZATCA CSR Config] Subject: C=SA, O=مؤسسة أوج الصروح للمقاولات العامة, OU=Main Device, CN=AwjS1
+0|BSS  | [ZATCA CSR Config] VAT: 312384206600003, InvoiceType: 1100, Branch: Main Device
+0|BSS  | [ZATCA CSR] Verification: Certificate request self-signature verify OK
+0|BSS  | [ZATCA CSR] PEM length: 935, base64(PEM) length: 1248
+0|BSS  | [ZATCA CSR] First 60 chars: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ2VqQ0NB...
+0|BSS  | 9:59:38 PM [express] POST /api/zatca/generate-csr 200 in 51ms :: {"success":true,"message":"CSR gene…
+0|BSS  | 9:59:38 PM [express] GET /api/zatca/settings 200 in 8ms :: {"id":"c2eb15c6-c7a7-4fb6-a8a5-5283decf93…
+0|BSS  | 9:59:41 PM [express] GET /api/branches 403 in 5ms :: {"error":"This endpoint requires a restaurant a…
+0|BSS  | [ZATCA Onboard] Environment: sandbox
+0|BSS  | [ZATCA Onboard] Settings: CN=AwjS1, O=مؤسسة أوج الصروح للمقاولات العامة, OU=Main Device, VAT=312384206600003, SN=89049032007208882600174497549056, InvType=1100
+0|BSS  | [ZATCA Onboard] All fields validated. Auto-regenerating CSR before requesting CSID...
+0|BSS  | [ZATCA CSR Config] Environment: sandbox, CertTemplate: TSTZATCA-Code-Signing
+0|BSS  | [ZATCA CSR Config] EGS Serial: 1-BSS|2-BSS|3-89049032007208882600174497549056
+0|BSS  | [ZATCA CSR Config] Subject: C=SA, O=مؤسسة أوج الصروح للمقاولات العامة, OU=Main Device, CN=AwjS1
+0|BSS  | [ZATCA CSR Config] VAT: 312384206600003, InvoiceType: 1100, Branch: Main Device
+0|BSS  | [ZATCA CSR] Verification: Certificate request self-signature verify OK
+0|BSS  | [ZATCA CSR] PEM length: 935, base64(PEM) length: 1248
+0|BSS  | [ZATCA CSR] First 60 chars: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ2VUQ0NB...
+0|BSS  | [ZATCA Onboard] Fresh CSR saved, length: 1248
+0|BSS  | /bin/sh: 1: java: not found
+0|BSS  | [ZATCA] SDK available: false
+0|BSS  | [ZATCA Service] CSR from DB length: 1248, first 60 chars: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ2VUQ0NB...
+0|BSS  | [ZATCA Service] CSR format: base64(PEM) ✓, decoded length: 935
+0|BSS  | [ZATCA Service] CSR to send length: 1248, first 40 chars: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNU...
+0|BSS  | [ZATCA Service] Requesting compliance CSID for restaurant 8e22b8ff-d15d-40df-ab60-a3c9f9ef2012, env: sandbox
+0|BSS  | [ZATCA API] POST https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance
+0|BSS  | [ZATCA API] CSR field length: 1248, first 60: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ2VUQ0NB...
+0|BSS  | [ZATCA API] Response status: 200 OK for /compliance
+0|BSS  | [ZATCA Service] Compliance CSID received. Token length: 1200, Secret length: 44, RequestID: 1234567890123
+0|BSS  | 9:59:44 PM [express] POST /api/zatca/onboard 200 in 355ms :: {"success":true,"message":"Compliance C…
+0|BSS  | 9:59:44 PM [express] GET /api/zatca/settings 200 in 8ms :: {"id":"c2eb15c6-c7a7-4fb6-a8a5-5283decf93…
+0|BSS  | [ZATCA Auth] CSID length: 1200, first 20: TUlJQ25UQ0NBa0tnQXdJ..., Secret length: 44
+0|BSS  | [ZATCA API] POST https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/production/csids
+0|BSS  | [ZATCA API] Response status: 200 OK for /production/csids
+0|BSS  | 9:59:49 PM [express] POST /api/zatca/production-csid 200 in 310ms :: {"success":true,"message":"Prod…
+0|BSS  | 9:59:50 PM [express] GET /api/zatca/settings 200 in 12ms :: {"id":"c2eb15c6-c7a7-4fb6-a8a5-5283decf9…
+0|BSS  | [ZATCA Compliance] Environment: sandbox, CSID length: 1200, Secret length: 44, Has private key: true, CSID age: 0.1 min
+0|BSS  | [ZATCA Compliance] Generating simplified invoice with real credentials (cert length: 1254)
+0|BSS  | Certificate parsing error: Error: error:068000A8:asn1 encoding routines::wrong tag
+0|BSS  |     at new X509Certificate (node:internal/crypto/x509:119:21)
+0|BSS  |     at extractPublicKeyBase64 (file:///home/BSS/dist/index.js:10636:18)
+0|BSS  |     at generateSignedInvoiceXml (file:///home/BSS/dist/index.js:11134:25)
+0|BSS  |     at runComplianceChecks (file:///home/BSS/dist/index.js:12332:17)
+0|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS  |     at async file:///home/BSS/dist/index.js:24951:22 {
+0|BSS  |   opensslErrorStack: [
+0|BSS  |     'error:0688010A:asn1 encoding routines::nested asn1 error',
+0|BSS  |     'error:068000A8:asn1 encoding routines::wrong tag',
+0|BSS  |     'error:0488000D:PEM routines::ASN1 lib',
+0|BSS  |     'error:0688010A:asn1 encoding routines::nested asn1 error'
+0|BSS  |   ],
+0|BSS  |   library: 'asn1 encoding routines',
+0|BSS  |   reason: 'wrong tag',
+0|BSS  |   code: 'ERR_OSSL_ASN1_WRONG_TAG'
+0|BSS  | }
+0|BSS  | [ZATCA] Failed to extract public key, falling back: Error: Failed to extract public key from certificate
+0|BSS  |     at extractPublicKeyBase64 (file:///home/BSS/dist/index.js:10641:11)
+0|BSS  |     at generateSignedInvoiceXml (file:///home/BSS/dist/index.js:11134:25)
+0|BSS  |     at runComplianceChecks (file:///home/BSS/dist/index.js:12332:17)
+0|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS  |     at async file:///home/BSS/dist/index.js:24951:22
+0|BSS  | [ZATCA] Failed to extract certificate signature for QR Tag 9, falling back to certHash: Error: error:068000A8:asn1 encoding routines::wrong tag
+0|BSS  |     at new X509Certificate (node:internal/crypto/x509:119:21)
+0|BSS  |     at extractCertificateSignatureBytes (file:///home/BSS/dist/index.js:10696:16)
+0|BSS  |     at generateSignedInvoiceXml (file:///home/BSS/dist/index.js:11140:28)
+0|BSS  |     at runComplianceChecks (file:///home/BSS/dist/index.js:12332:17)
+0|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS  |     at async file:///home/BSS/dist/index.js:24951:22 {
+0|BSS  |   opensslErrorStack: [
+0|BSS  |     'error:0688010A:asn1 encoding routines::nested asn1 error',
+0|BSS  |     'error:068000A8:asn1 encoding routines::wrong tag',
+0|BSS  |     'error:0488000D:PEM routines::ASN1 lib',
+0|BSS  |     'error:0688010A:asn1 encoding routines::nested asn1 error'
+0|BSS  |   ],
+0|BSS  |   library: 'asn1 encoding routines',
+0|BSS  |   reason: 'wrong tag',
+0|BSS  |   code: 'ERR_OSSL_ASN1_WRONG_TAG'
+0|BSS  | }
+0|BSS  | Certificate parsing error: Error: error:068000A8:asn1 encoding routines::wrong tag
+0|BSS  |     at new X509Certificate (node:internal/crypto/x509:119:21)
+0|BSS  |     at getCertificateInfo (file:///home/BSS/dist/index.js:10649:18)
+0|BSS  |     at getCertificateIssuerSerial (file:///home/BSS/dist/index.js:10679:18)
+0|BSS  |     at generateSignedInvoiceXml (file:///home/BSS/dist/index.js:11147:28)
+0|BSS  |     at runComplianceChecks (file:///home/BSS/dist/index.js:12332:17)
+0|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS  |     at async file:///home/BSS/dist/index.js:24951:22 {
+0|BSS  |   opensslErrorStack: [
+0|BSS  |     'error:0688010A:asn1 encoding routines::nested asn1 error',
+0|BSS  |     'error:068000A8:asn1 encoding routines::wrong tag',
+0|BSS  |     'error:0488000D:PEM routines::ASN1 lib',
+0|BSS  |     'error:0688010A:asn1 encoding routines::nested asn1 error'
+0|BSS  |   ],
+0|BSS  |   library: 'asn1 encoding routines',
+0|BSS  |   reason: 'wrong tag',
+0|BSS  |   code: 'ERR_OSSL_ASN1_WRONG_TAG'
+0|BSS  | }
+0|BSS  | [ZATCA] Failed to extract IssuerSerial, using fallback: Error: Failed to parse certificate
+0|BSS  |     at getCertificateInfo (file:///home/BSS/dist/index.js:10659:11)
+0|BSS  |     at getCertificateIssuerSerial (file:///home/BSS/dist/index.js:10679:18)
+0|BSS  |     at generateSignedInvoiceXml (file:///home/BSS/dist/index.js:11147:28)
+0|BSS  |     at runComplianceChecks (file:///home/BSS/dist/index.js:12332:17)
+0|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS  |     at async file:///home/BSS/dist/index.js:24951:22
+0|BSS  | [ZATCA Debug] simplified canonical form first 300 chars: <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:Common
+0|BSS  | [ZATCA Debug] simplified canonical form length: 5086, hash: UtfpQjV0l9OMlmLhiYP9xN0r3lSQG82WYtgmPg8LBcc=
+0|BSS  | [ZATCA Debug] simplified DigestValue in XML: UtfpQjV0l9OMlmLhiYP9xN0r3lSQG82WYtgmPg8LBcc=
+0|BSS  | [ZATCA Debug] simplified hash == DigestValue: true
+0|BSS  | [ZATCA Auth] CSID length: 1200, first 20: TUlJQ25UQ0NBa0tnQXdJ..., Secret length: 44
+0|BSS  | [ZATCA API] POST https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance/invoices
+0|BSS  | [ZATCA API] Response status: 400 Bad Request for /compliance/invoices
+0|BSS  | [ZATCA API] Error response: {
+0|BSS  |   "validationResults": {
+0|BSS  |     "infoMessages": [
+0|BSS  |       {
+0|BSS  |         "type": "INFO",
+0|BSS  |         "code": "XSD_ZATCA_VALID",
+0|BSS  |         "category": "XSD validation",
+0|BSS  |         "message": "Complied with UBL 2.1 standards in line with ZATCA specifications",
+0|BSS  |         "status": "PASS"
+0|BSS  |       }
+0|BSS  |     ],
+0|BSS  |     "warningMessages": [],
+0|BSS  |     "errorMessages": [
+0|BSS  |       {
+0|BSS  |         "type": "ERROR",
+0|BSS  |         "code": "BR-CL-KSA-14",
+0|BSS  |         "category": "KSA",
+0|BSS  |         "message": "[KSA-14]Field character limit for QR Code field has been exceeded. The maximum character limit for this field is 1000 characters.",
+0|BSS  |         "status": "ERROR"
+0|BSS  |       },
+0|BSS  |       {
+0|BSS  |         "type": "ERROR",
+0|BSS  |         "code": "QRCODE_INVALID",
+0|BSS  |         "category": "QRCODE_VALIDATION",
+0|BSS  |         "message": "Failed to validate QR code",
+0|BSS  |         "status": "ERROR"
+0|BSS  |       }
+0|BSS  |     ],
+0|BSS  |     "status": "ERROR"
+0|BSS  |   },
+0|BSS  |   "reportingStatus": "NOT_REPORTED",
+0|BSS  |   "clearanceStatus": null,
+0|BSS  |   "qrSellertStatus": null,
+0|BSS  |   "qrBuyertStatus": null
+0|BSS  | }
+0|BSS  | [ZATCA Compliance] simplified response: success=false, status=N/A, error: [KSA-14]Field character limit for QR Code field has been exceeded. The maximum character limit for this field is 1000 characters.
+0|BSS  | [ZATCA Compliance] Generating standard invoice with real credentials (cert length: 1254)
+0|BSS  | Certificate parsing error: Error: error:068000A8:asn1 encoding routines::wrong tag
+0|BSS  |     at new X509Certificate (node:internal/crypto/x509:119:21)
+0|BSS  |     at extractPublicKeyBase64 (file:///home/BSS/dist/index.js:10636:18)
+0|BSS  |     at generateSignedInvoiceXml (file:///home/BSS/dist/index.js:11134:25)
+0|BSS  |     at runComplianceChecks (file:///home/BSS/dist/index.js:12332:17)
+0|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS  |     at async file:///home/BSS/dist/index.js:24951:22 {
+0|BSS  |   opensslErrorStack: [
+0|BSS  |     'error:0688010A:asn1 encoding routines::nested asn1 error',
+0|BSS  |     'error:068000A8:asn1 encoding routines::wrong tag',
+0|BSS  |     'error:0488000D:PEM routines::ASN1 lib',
+0|BSS  |     'error:0688010A:asn1 encoding routines::nested asn1 error'
+0|BSS  |   ],
+0|BSS  |   library: 'asn1 encoding routines',
+0|BSS  |   reason: 'wrong tag',
+0|BSS  |   code: 'ERR_OSSL_ASN1_WRONG_TAG'
+0|BSS  | }
+0|BSS  | [ZATCA] Failed to extract public key, falling back: Error: Failed to extract public key from certificate
+0|BSS  |     at extractPublicKeyBase64 (file:///home/BSS/dist/index.js:10641:11)
+0|BSS  |     at generateSignedInvoiceXml (file:///home/BSS/dist/index.js:11134:25)
+0|BSS  |     at runComplianceChecks (file:///home/BSS/dist/index.js:12332:17)
+0|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS  |     at async file:///home/BSS/dist/index.js:24951:22
+0|BSS  | [ZATCA] Failed to extract certificate signature for QR Tag 9, falling back to certHash: Error: error:068000A8:asn1 encoding routines::wrong tag
+0|BSS  |     at new X509Certificate (node:internal/crypto/x509:119:21)
+0|BSS  |     at extractCertificateSignatureBytes (file:///home/BSS/dist/index.js:10696:16)
+0|BSS  |     at generateSignedInvoiceXml (file:///home/BSS/dist/index.js:11140:28)
+0|BSS  |     at runComplianceChecks (file:///home/BSS/dist/index.js:12332:17)
+0|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS  |     at async file:///home/BSS/dist/index.js:24951:22 {
+0|BSS  |   opensslErrorStack: [
+0|BSS  |     'error:0688010A:asn1 encoding routines::nested asn1 error',
+0|BSS  |     'error:068000A8:asn1 encoding routines::wrong tag',
+0|BSS  |     'error:0488000D:PEM routines::ASN1 lib',
+0|BSS  |     'error:0688010A:asn1 encoding routines::nested asn1 error'
+0|BSS  |   ],
+0|BSS  |   library: 'asn1 encoding routines',
+0|BSS  |   reason: 'wrong tag',
+0|BSS  |   code: 'ERR_OSSL_ASN1_WRONG_TAG'
+0|BSS  | }
+0|BSS  | Certificate parsing error: Error: error:068000A8:asn1 encoding routines::wrong tag
+0|BSS  |     at new X509Certificate (node:internal/crypto/x509:119:21)
+0|BSS  |     at getCertificateInfo (file:///home/BSS/dist/index.js:10649:18)
+0|BSS  |     at getCertificateIssuerSerial (file:///home/BSS/dist/index.js:10679:18)
+0|BSS  |     at generateSignedInvoiceXml (file:///home/BSS/dist/index.js:11147:28)
+0|BSS  |     at runComplianceChecks (file:///home/BSS/dist/index.js:12332:17)
+0|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS  |     at async file:///home/BSS/dist/index.js:24951:22 {
+0|BSS  |   opensslErrorStack: [
+0|BSS  |     'error:0688010A:asn1 encoding routines::nested asn1 error',
+0|BSS  |     'error:068000A8:asn1 encoding routines::wrong tag',
+0|BSS  |     'error:0488000D:PEM routines::ASN1 lib',
+0|BSS  |     'error:0688010A:asn1 encoding routines::nested asn1 error'
+0|BSS  |   ],
+0|BSS  |   library: 'asn1 encoding routines',
+0|BSS  |   reason: 'wrong tag',
+0|BSS  |   code: 'ERR_OSSL_ASN1_WRONG_TAG'
+0|BSS  | }
+0|BSS  | [ZATCA] Failed to extract IssuerSerial, using fallback: Error: Failed to parse certificate
+0|BSS  |     at getCertificateInfo (file:///home/BSS/dist/index.js:10659:11)
+0|BSS  |     at getCertificateIssuerSerial (file:///home/BSS/dist/index.js:10679:18)
+0|BSS  |     at generateSignedInvoiceXml (file:///home/BSS/dist/index.js:11147:28)
+0|BSS  |     at runComplianceChecks (file:///home/BSS/dist/index.js:12332:17)
+0|BSS  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS  |     at async file:///home/BSS/dist/index.js:24951:22
+0|BSS  | [ZATCA Debug] standard canonical form first 300 chars: <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:Common
+0|BSS  | [ZATCA Debug] standard canonical form length: 5302, hash: AeYSsn0rqoa4wgu7Xym1qFS5uyn39exfvjOLKuFjYIk=
+0|BSS  | [ZATCA Debug] standard DigestValue in XML: AeYSsn0rqoa4wgu7Xym1qFS5uyn39exfvjOLKuFjYIk=
+0|BSS  | [ZATCA Debug] standard hash == DigestValue: true
+0|BSS  | [ZATCA Auth] CSID length: 1200, first 20: TUlJQ25UQ0NBa0tnQXdJ..., Secret length: 44
+0|BSS  | [ZATCA API] POST https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance/invoices
+0|BSS  | [ZATCA API] Response status: 400 Bad Request for /compliance/invoices
+0|BSS  | [ZATCA API] Error response: {
+0|BSS  |   "validationResults": {
+0|BSS  |     "infoMessages": [
+0|BSS  |       {
+0|BSS  |         "type": "INFO",
+0|BSS  |         "code": "XSD_ZATCA_VALID",
+0|BSS  |         "category": "XSD validation",
+0|BSS  |         "message": "Complied with UBL 2.1 standards in line with ZATCA specifications",
+0|BSS  |         "status": "PASS"
+0|BSS  |       }
+0|BSS  |     ],
+0|BSS  |     "warningMessages": [],
+0|BSS  |     "errorMessages": [
+0|BSS  |       {
+0|BSS  |         "type": "ERROR",
+0|BSS  |         "code": "BR-CL-KSA-14",
+0|BSS  |         "category": "KSA",
+0|BSS  |         "message": "[KSA-14]Field character limit for QR Code field has been exceeded. The maximum character limit for this field is 1000 characters.",
+0|BSS  |         "status": "ERROR"
+0|BSS  |       }
+0|BSS  |     ],
+0|BSS  |     "status": "ERROR"
+0|BSS  |   },
+0|BSS  |   "reportingStatus": null,
+0|BSS  |   "clearanceStatus": "NOT_CLEARED",
+0|BSS  |   "qrSellertStatus": null,
+0|BSS  |   "qrBuyertStatus": null
+0|BSS  | }
+0|BSS  | [ZATCA Compliance] standard response: success=false, status=N/A, error: [KSA-14]Field character limit for QR Code field has been exceeded. The maximum character limit for this field is 1000 characters.
+0|BSS  | 9:59:52 PM [express] POST /api/zatca/compliance-checks 200 in 365ms :: {"success":false,"results":[{…
+0|BSS  | 9:59:52 PM [express] GET /api/zatca/settings 304 in 6ms :: {"id":"c2eb15c6-c7a7-4fb6-a8a5-5283decf93…
+0|BSS  | [WebSocket] Clie
