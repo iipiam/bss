@@ -1,0 +1,54 @@
+Kinzhal@BSS-Server:~$ pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+/home/Kinzhal/.pm2/pm2.log last 15 lines:
+PM2        | 2026-04-17T21:47:53: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-04-17T21:47:53: PM2 log: App [BSS:0] exited with code [130] via signal [SIGINT]
+PM2        | 2026-04-17T21:47:53: PM2 log: pid=1769449 msg=process killed
+PM2        | 2026-04-17T21:47:53: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-04-17T21:47:53: PM2 log: App [BSS:0] online
+PM2        | 2026-04-17T21:59:17: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-04-17T21:59:17: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-04-17T21:59:17: PM2 log: pid=1770263 msg=process killed
+PM2        | 2026-04-17T21:59:17: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-04-17T21:59:17: PM2 log: App [BSS:0] online
+PM2        | 2026-04-17T22:03:57: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-04-17T22:03:57: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-04-17T22:03:57: PM2 log: pid=1770739 msg=process killed
+PM2        | 2026-04-17T22:03:57: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-04-17T22:03:57: PM2 log: App [BSS:0] online
+
+/home/Kinzhal/.pm2/logs/BSS-error.log last 15 lines:
+0|BSS      |       {
+0|BSS      |         "type": "ERROR",
+0|BSS      |         "code": "BR-CL-KSA-14",
+0|BSS      |         "category": "KSA",
+0|BSS      |         "message": "[KSA-14]Field character limit for QR Code field has been exceeded. The maximum character limit for this field is 1000 characters.",
+0|BSS      |         "status": "ERROR"
+0|BSS      |       }
+0|BSS      |     ],
+0|BSS      |     "status": "ERROR"
+0|BSS      |   },
+0|BSS      |   "reportingStatus": null,
+0|BSS      |   "clearanceStatus": "NOT_CLEARED",
+0|BSS      |   "qrSellertStatus": null,
+0|BSS      |   "qrBuyertStatus": null
+0|BSS      | }
+
+/home/Kinzhal/.pm2/logs/BSS-out.log last 15 lines:
+0|BSS      | [ZATCA Auth] CSID length: 1196, first 20: TUlJQ25EQ0NBa0tnQXdJ..., Secret length: 44
+0|BSS      | [ZATCA API] POST https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance/invoices
+0|BSS      | [ZATCA API] Response status: 400 Bad Request for /compliance/invoices
+0|BSS      | [ZATCA Compliance] simplified response: success=false, status=N/A, error: [KSA-14]Field character limit for QR Code field has been exceeded. The maximum character limit for this field is 1000 characters.
+0|BSS      | [ZATCA Compliance] Generating standard invoice with real credentials (cert length: 1250)
+0|BSS      | [ZATCA Debug] standard canonical form first 300 chars: <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:Common
+0|BSS      | [ZATCA Debug] standard canonical form length: 5302, hash: 3eD5yxXEgFiG9rvPxBzVms/om1UYNDr6FPfDZZPM3yk=
+0|BSS      | [ZATCA Debug] standard DigestValue in XML: 3eD5yxXEgFiG9rvPxBzVms/om1UYNDr6FPfDZZPM3yk=
+0|BSS      | [ZATCA Debug] standard hash == DigestValue: true
+0|BSS      | [ZATCA Auth] CSID length: 1196, first 20: TUlJQ25EQ0NBa0tnQXdJ..., Secret length: 44
+0|BSS      | [ZATCA API] POST https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance/invoices
+0|BSS      | [ZATCA API] Response status: 400 Bad Request for /compliance/invoices
+0|BSS      | [ZATCA Compliance] standard response: success=false, status=N/A, error: [KSA-14]Field character limit for QR Code field has been exceeded. The maximum character limit for this field is 1000 characters.
+0|BSS      | 11:15:57 PM [express] POST /api/zatca/compliance-checks 200 in 150ms :: {"success":false,"results":[{…
+0|BSS      | 11:15:57 PM [express] GET /api/zatca/settings 304 in 7ms :: {"id":"c2eb15c6-c7a7-4fb6-a8a5-5283decf93…
+
+0|BSS  | 
