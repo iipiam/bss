@@ -225,6 +225,11 @@ export async function processInvoiceForZatca(
   
   const certificate = settings.productionCsid || settings.complianceCsid;
   
+  // Track whether the SDK produced the signed XML. If it did, we MUST trust
+  // the SDK's invoice hash and QR code byte-for-byte — recomputing them with
+  // our local fallback canonicalizer would silently corrupt them.
+  let usedSdk = false;
+
   if (USE_SDK && settings.privateKey && certificate) {
     console.log("[ZATCA] Using SDK for invoice signing");
     try {
@@ -242,8 +247,12 @@ export async function processInvoiceForZatca(
       if (sdkResult.success && sdkResult.signedInvoice) {
         signedXml = sdkResult.signedInvoice;
         invoiceHash = sdkResult.invoiceHash || generateInvoiceHash(signedXml);
-        invoiceHashHex = generateInvoiceHashHex(signedXml);
+        // Hex form of the SDK-returned (base64) hash, when available.
+        invoiceHashHex = sdkResult.invoiceHash
+          ? Buffer.from(sdkResult.invoiceHash, "base64").toString("hex")
+          : generateInvoiceHashHex(signedXml);
         qrCodeBase64 = sdkResult.qrCode || "";
+        usedSdk = true;
         
         certificateBase64 = certificate.replace(/-----BEGIN CERTIFICATE-----/g, '')
           .replace(/-----END CERTIFICATE-----/g, '')
@@ -279,8 +288,12 @@ export async function processInvoiceForZatca(
     publicKeyBase64 = fallbackResult.publicKeyBase64;
   }
 
-  invoiceHash = generateInvoiceHash(signedXml);
-  invoiceHashHex = generateInvoiceHashHex(signedXml);
+  // Only recompute hash with the local fallback canonicalizer when the SDK
+  // wasn't used. The SDK's own hash is the canonical, ZATCA-accepted value.
+  if (!usedSdk) {
+    invoiceHash = generateInvoiceHash(signedXml);
+    invoiceHashHex = generateInvoiceHashHex(signedXml);
+  }
 
   let qrCodeImage = "";
   try {
