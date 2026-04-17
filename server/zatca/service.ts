@@ -732,16 +732,51 @@ export async function runComplianceChecks(
 
     console.log(`[ZATCA Compliance] Generating ${testType.type} invoice with ${signingCredentials ? "real credentials (cert length: " + decodedCert.length + ")" : "NO credentials (will use dummy)"}`);
 
-    const testXml = generateZatcaInvoiceXml(testData, signingCredentials);
-    const testHash = generateInvoiceHash(testXml);
+    // Prefer the official ZATCA SDK for signing/hash/QR. The manual path
+    // produces a QR > 1000 chars which trips KSA-14 during compliance.
+    let testXml: string;
+    let testHash: string;
+    let usedSdkForCompliance = false;
+
+    if (USE_SDK && signingCredentials?.privateKey && decodedCert) {
+      try {
+        const unsignedXml = generateUnsignedInvoiceXml(testData);
+        const sdkResult = await signInvoiceWithSDK(
+          unsignedXml,
+          decodedCert,
+          signingCredentials.privateKey,
+          undefined
+        );
+        if (sdkResult.success && sdkResult.signedInvoice) {
+          testXml = sdkResult.signedInvoice;
+          testHash = sdkResult.invoiceHash || generateInvoiceHash(testXml);
+          usedSdkForCompliance = true;
+          console.log(`[ZATCA Compliance] ${testType.type} signed via SDK; hash=${testHash.substring(0, 20)}..., qrLen=${(sdkResult.qrCode || "").length}`);
+        } else {
+          console.error(`[ZATCA Compliance] SDK signing failed for ${testType.type}: ${sdkResult.error}. Falling back to manual.`);
+          testXml = generateZatcaInvoiceXml(testData, signingCredentials);
+          testHash = generateInvoiceHash(testXml);
+        }
+      } catch (e: any) {
+        console.error(`[ZATCA Compliance] SDK threw for ${testType.type}: ${e?.message}. Falling back to manual.`);
+        testXml = generateZatcaInvoiceXml(testData, signingCredentials);
+        testHash = generateInvoiceHash(testXml);
+      }
+    } else {
+      testXml = generateZatcaInvoiceXml(testData, signingCredentials);
+      testHash = generateInvoiceHash(testXml);
+    }
+
     const testInvoiceBase64 = Buffer.from(testXml, "utf8").toString("base64");
 
-    const canonicalForm = canonicalizeInvoiceXml(testXml);
-    console.log(`[ZATCA Debug] ${testType.type} canonical form first 300 chars: ${canonicalForm.substring(0, 300)}`);
-    console.log(`[ZATCA Debug] ${testType.type} canonical form length: ${canonicalForm.length}, hash: ${testHash}`);
-    const digestMatch = testXml.match(/<ds:DigestValue>([^<]+)<\/ds:DigestValue>/);
-    console.log(`[ZATCA Debug] ${testType.type} DigestValue in XML: ${digestMatch ? digestMatch[1] : "NOT FOUND"}`);
-    console.log(`[ZATCA Debug] ${testType.type} hash == DigestValue: ${digestMatch ? (testHash === digestMatch[1]) : "N/A"}`);
+    if (!usedSdkForCompliance) {
+      const canonicalForm = canonicalizeInvoiceXml(testXml);
+      console.log(`[ZATCA Debug] ${testType.type} canonical form first 300 chars: ${canonicalForm.substring(0, 300)}`);
+      console.log(`[ZATCA Debug] ${testType.type} canonical form length: ${canonicalForm.length}, hash: ${testHash}`);
+      const digestMatch = testXml.match(/<ds:DigestValue>([^<]+)<\/ds:DigestValue>/);
+      console.log(`[ZATCA Debug] ${testType.type} DigestValue in XML: ${digestMatch ? digestMatch[1] : "NOT FOUND"}`);
+      console.log(`[ZATCA Debug] ${testType.type} hash == DigestValue: ${digestMatch ? (testHash === digestMatch[1]) : "N/A"}`);
+    }
 
     const response = await client.complianceCheck(testHash, testUuid, testInvoiceBase64);
     
