@@ -5676,11 +5676,19 @@ export const storage = new DatabaseStorage();
         start_date TIMESTAMP,
         end_date TIMESTAMP,
         estimated_budget DECIMAL(12, 2),
+        actual_cost DECIMAL(12, 2),
+        contractor_id VARCHAR(255),
         location TEXT,
         notes TEXT,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
+
+    // Backfill missing columns on pre-existing service_projects tables
+    // (CREATE TABLE IF NOT EXISTS won't add columns to an existing table).
+    await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS actual_cost DECIMAL(12, 2)`);
+    await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS contractor_id VARCHAR(255)`);
+    console.log('[Migration] service_projects columns verified/added: actual_cost, contractor_id');
 
     // BizFlow Manager: Create quotations table if not exists
     await pool.query(`
