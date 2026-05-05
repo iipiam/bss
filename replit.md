@@ -28,7 +28,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Feature Specifications
 - **Analytics & Reporting**: Dashboard with key metrics (DoD, WoW, MoM, YoY), daily demand forecasting, peak hours analysis, detailed BEP calculator with sensitivity analysis, and Menu Profitability Analysis.
-- **ZATCA Compliance**: Complete ZATCA Phase 2 e-invoicing integration including UBL 2.1 XML generation, ECDSA digital signing (XAdES-T), 9-Tag QR Codes, API integration for CSID, clearance, and reporting. Features IT settings page, manual credential entry, invoice status tracking, and bilingual PDF invoices.
+- **ZATCA Compliance**: Complete ZATCA Phase 2 e-invoicing integration including UBL 2.1 XML generation, ECDSA digital signing (XAdES-T), 9-Tag QR Codes, API integration for CSID, clearance, and reporting. Features IT settings page, manual credential entry, invoice status tracking, and bilingual PDF invoices. Certificate handling normalizes ZATCA's `base64(base64(DER))` CSID to proper PEM via `normalizeCertificateToPem`/`extractCertificateBase64Body` so all hashing, embedding, and X.509 parsing paths receive correct DER bytes.
 - **Financial Management**: Delivery app cost calculation, PDF export for financial statements, Excel import/export, enhanced BEP calculator, manual delivery profitability entry, and automatic bill proration.
 - **Management Modules**: CRUD for Customer, Menu Item (with configurable display sizes), Inventory (Excel import/export, expiration tracking, add-ons), Recipe (inventory-linked costing, portion sizes).
 - **Stock Management**: Real-time stock calculation and deduction on POS orders.

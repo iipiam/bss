@@ -1,6 +1,6 @@
 import { storage } from "../storage";
 import { generateZatcaInvoiceXml, generateUnsignedInvoiceXml, generateInvoiceHash, generateInvoiceHashHex, canonicalizeInvoiceXml, type ZatcaInvoiceData } from "./xml-generator";
-import { generateZatcaQRCode, generateUUID, signWithECDSA, formatIssueDate, formatIssueTime, formatTimestamp, hashSHA256Hex, extractPublicKeyBase64, getCertificateIssuerSerial, extractCertificateSignatureBytes } from "./crypto";
+import { generateZatcaQRCode, generateUUID, signWithECDSA, formatIssueDate, formatIssueTime, formatTimestamp, hashSHA256Hex, extractPublicKeyBase64, getCertificateIssuerSerial, extractCertificateSignatureBytes, normalizeCertificateToPem, extractCertificateBase64Body } from "./crypto";
 import { ZatcaApiClient, submitInvoiceToZatca, type ZatcaConfig } from "./api-client";
 import { signInvoiceWithSDK, generateCSRWithSDK, validateInvoiceWithSDK, isSDKAvailable } from "./sdk-wrapper";
 import QRCode from "qrcode";
@@ -37,10 +37,10 @@ async function signInvoiceManually(
   
   if (settings.privateKey && certificate) {
     try {
-      certificateBase64 = certificate.replace(/-----BEGIN CERTIFICATE-----/g, '')
-        .replace(/-----END CERTIFICATE-----/g, '')
-        .replace(/\s/g, '');
-      
+      // Always normalize the (potentially double-base64) CSID first so cert
+      // hashing/embedding uses the real DER bytes, not the inner base64 text.
+      certificateBase64 = extractCertificateBase64Body(certificate);
+
       const certHash = require("crypto").createHash("sha256")
         .update(Buffer.from(certificateBase64!, "base64"))
         .digest("base64");
@@ -233,10 +233,8 @@ export async function processInvoiceForZatca(
   if (USE_SDK && settings.privateKey && certificate) {
     console.log("[ZATCA] Using SDK for invoice signing");
     try {
-      const certPem = certificate.includes("-----BEGIN") 
-        ? certificate 
-        : `-----BEGIN CERTIFICATE-----\n${certificate}\n-----END CERTIFICATE-----`;
-      
+      const certPem = normalizeCertificateToPem(certificate);
+
       const sdkResult = await signInvoiceWithSDK(
         unsignedXml,
         certPem,
@@ -254,9 +252,7 @@ export async function processInvoiceForZatca(
         qrCodeBase64 = sdkResult.qrCode || "";
         usedSdk = true;
         
-        certificateBase64 = certificate.replace(/-----BEGIN CERTIFICATE-----/g, '')
-          .replace(/-----END CERTIFICATE-----/g, '')
-          .replace(/\s/g, '');
+        certificateBase64 = extractCertificateBase64Body(certificate);
         
         try {
           publicKeyBase64 = extractPublicKeyBase64(certificate);
@@ -658,14 +654,9 @@ export async function runComplianceChecks(
     const certForSigning = settings.complianceCsid || "";
     let decodedCert = certForSigning;
     try {
-      const decoded = Buffer.from(certForSigning, "base64").toString("utf8");
-      if (decoded.includes("-----BEGIN CERTIFICATE-----")) {
-        decodedCert = decoded;
-      } else {
-        decodedCert = `-----BEGIN CERTIFICATE-----\n${certForSigning}\n-----END CERTIFICATE-----`;
-      }
+      decodedCert = normalizeCertificateToPem(certForSigning);
     } catch (e) {
-      decodedCert = `-----BEGIN CERTIFICATE-----\n${certForSigning}\n-----END CERTIFICATE-----`;
+      console.error(`[ZATCA Compliance] Failed to normalize CSID, using raw value:`, e);
     }
 
     const testBuyerInfo = testType.type === "standard" 

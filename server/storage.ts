@@ -5926,6 +5926,43 @@ export const storage = new DatabaseStorage();
     `);
     console.log('[Migration] Meal subscriptions columns verified/added: delivery_log, delivery_hours, credit_balance, number_of_days');
 
+    // Service Catalog (for service business types)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS service_catalog (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        name TEXT NOT NULL,
+        description TEXT,
+        category TEXT,
+        pricing_method TEXT NOT NULL DEFAULT 'lump_sum',
+        unit_price DECIMAL(12,2) NOT NULL,
+        unit TEXT,
+        estimated_duration TEXT,
+        status TEXT NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('[Migration] Table verified/created: service_catalog');
+
+    // Contractors (for service business types)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS contractors (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        name TEXT NOT NULL,
+        company TEXT,
+        phone TEXT,
+        email TEXT,
+        specialization TEXT,
+        license_number TEXT,
+        rating DECIMAL(3,1),
+        status TEXT NOT NULL DEFAULT 'active',
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('[Migration] Table verified/created: contractors');
+
     console.log('[Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings');
   } catch (error: any) {
     // Only log if not a duplicate column error (which means columns already exist)

@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { extractPublicKeyBase64, getCertificateIssuerSerial, extractCertificateSignatureBytes } from "./crypto";
+import { extractPublicKeyBase64, getCertificateIssuerSerial, extractCertificateSignatureBytes, extractCertificateBase64Body } from "./crypto";
 
 interface ZatcaInvoiceLineItem {
   name: string;
@@ -233,11 +233,10 @@ export function signInvoice(xmlContent: string, privateKey: string): string {
  * Generate certificate hash
  */
 export function generateCertificateHash(certificate: string): string {
-  const cleanCert = certificate
-    .replace(/-----BEGIN CERTIFICATE-----/g, "")
-    .replace(/-----END CERTIFICATE-----/g, "")
-    .replace(/\s/g, "");
-  
+  // The cert hash MUST be SHA-256 of the raw DER bytes. Use the normalizer to
+  // peel ZATCA's double-base64 wrapping before hashing, otherwise we'd hash
+  // the inner-base64 ASCII text instead of the DER bytes.
+  const cleanCert = extractCertificateBase64Body(certificate);
   return crypto.createHash("sha256").update(Buffer.from(cleanCert, "base64")).digest("base64");
 }
 
@@ -468,10 +467,7 @@ export function generateSignedInvoiceXml(
   let publicKeyBase64 = dummyCert;
   if (credentials?.privateKey && credentials?.certificate) {
     signatureValue = signInvoice(baseInvoiceXml, credentials.privateKey);
-    certificateBase64 = credentials.certificate
-      .replace(/-----BEGIN CERTIFICATE-----/g, "")
-      .replace(/-----END CERTIFICATE-----/g, "")
-      .replace(/\s/g, "");
+    certificateBase64 = extractCertificateBase64Body(credentials.certificate);
     certificateHash = generateCertificateHash(credentials.certificate);
     try {
       publicKeyBase64 = extractPublicKeyBase64(credentials.certificate);

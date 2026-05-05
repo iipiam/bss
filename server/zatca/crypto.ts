@@ -290,12 +290,98 @@ export function signCanonicalXML(
   };
 }
 
+/**
+ * Normalize whatever ZATCA gives us into a valid PEM certificate string.
+ *
+ * ZATCA's `binarySecurityToken` (the CSID) is delivered as
+ *   base64( base64(DER) )
+ * — i.e. the inner string already lacks PEM headers. Most legacy callers in
+ * this codebase blindly wrapped the raw stored string in BEGIN/END headers,
+ * which produced an invalid PEM (double-base64 inside the body) and made every
+ * downstream X509 parse fail with "wrong tag".
+ *
+ * This helper accepts:
+ *   - A full PEM string (returns it as-is, normalized line breaks).
+ *   - The single-base64 form (`MIIC...`) — wraps it in PEM headers.
+ *   - The double-base64 form (`TUlJ...`, what ZATCA actually returns) — decodes
+ *     once, then wraps the inner base64 in PEM headers.
+ *   - Raw DER bytes as a Buffer — base64-encodes and wraps.
+ *
+ * Always returns a PEM string with the body broken into 64-character lines
+ * (some strict parsers, including OpenSSL on certain Linux builds, reject
+ * un-broken PEM bodies).
+ */
+export function normalizeCertificateToPem(input: string | Buffer): string {
+  // Accept raw DER directly.
+  if (Buffer.isBuffer(input)) {
+    const b64 = input.toString("base64");
+    return wrapBase64AsPem(b64);
+  }
+
+  const trimmed = (input || "").toString().trim();
+  if (!trimmed) {
+    throw new Error("Empty certificate input");
+  }
+
+  // Already a PEM block — re-emit with normalized line breaks.
+  if (trimmed.includes("-----BEGIN CERTIFICATE-----")) {
+    const body = trimmed
+      .replace(/-----BEGIN CERTIFICATE-----/g, "")
+      .replace(/-----END CERTIFICATE-----/g, "")
+      .replace(/\s+/g, "");
+    return wrapBase64AsPem(body);
+  }
+
+  // Otherwise we have base64. ZATCA's CSID is base64(base64(DER)). We detect
+  // the double-encoded case by:
+  //   1. base64-decoding once -> if the result is itself valid base64 whose
+  //      decoded bytes look like an ASN.1 SEQUENCE (first byte 0x30), peel a
+  //      layer.
+  // Otherwise treat the input as single-base64 (raw DER body).
+  let bodyBase64 = trimmed.replace(/\s+/g, "");
+  try {
+    const onceDecoded = Buffer.from(bodyBase64, "base64").toString("utf8").trim();
+    // Inner string must look like base64 (only base64 chars + optional padding).
+    if (/^[A-Za-z0-9+/]+={0,2}$/.test(onceDecoded.replace(/\s+/g, ""))) {
+      const innerDer = Buffer.from(onceDecoded, "base64");
+      // X.509 cert DER must start with ASN.1 SEQUENCE tag (0x30).
+      if (innerDer.length > 4 && innerDer[0] === 0x30) {
+        bodyBase64 = onceDecoded.replace(/\s+/g, "");
+      }
+    }
+  } catch {
+    // Ignore and treat as single-base64.
+  }
+
+  return wrapBase64AsPem(bodyBase64);
+}
+
+/**
+ * Strip PEM headers/whitespace from any cert input, returning the pure
+ * single-base64 DER body. Safe to feed into Buffer.from(..., "base64") to get
+ * the raw DER bytes — needed for cert hashing, QR Tag 9 cert payload, and the
+ * <ds:X509Certificate> element body in the signed XML.
+ */
+export function extractCertificateBase64Body(input: string | Buffer): string {
+  const pem = normalizeCertificateToPem(input);
+  return pem
+    .replace(/-----BEGIN CERTIFICATE-----/g, "")
+    .replace(/-----END CERTIFICATE-----/g, "")
+    .replace(/\s+/g, "");
+}
+
+function wrapBase64AsPem(base64Body: string): string {
+  const cleaned = base64Body.replace(/\s+/g, "");
+  const lines: string[] = [];
+  for (let i = 0; i < cleaned.length; i += 64) {
+    lines.push(cleaned.slice(i, i + 64));
+  }
+  return `-----BEGIN CERTIFICATE-----\n${lines.join("\n")}\n-----END CERTIFICATE-----`;
+}
+
 export function extractPublicKeyFromCertificate(certificatePem: string): string {
   try {
-    const certContent = certificatePem.includes("-----BEGIN")
-      ? certificatePem
-      : `-----BEGIN CERTIFICATE-----\n${certificatePem}\n-----END CERTIFICATE-----`;
-    
+    const certContent = normalizeCertificateToPem(certificatePem);
     const x509 = new crypto.X509Certificate(certContent);
     const publicKey = x509.publicKey.export({ type: "spki", format: "pem" }) as string;
     return publicKey;
@@ -307,10 +393,7 @@ export function extractPublicKeyFromCertificate(certificatePem: string): string 
 
 export function extractPublicKeyBase64(certificatePem: string): string {
   try {
-    const certContent = certificatePem.includes("-----BEGIN")
-      ? certificatePem
-      : `-----BEGIN CERTIFICATE-----\n${certificatePem}\n-----END CERTIFICATE-----`;
-    
+    const certContent = normalizeCertificateToPem(certificatePem);
     const x509 = new crypto.X509Certificate(certContent);
     const publicKeyDer = x509.publicKey.export({ type: "spki", format: "der" }) as Buffer;
     return publicKeyDer.toString("base64");
@@ -328,10 +411,7 @@ export function getCertificateInfo(certificatePem: string): {
   serialNumber: string;
 } {
   try {
-    const certContent = certificatePem.includes("-----BEGIN")
-      ? certificatePem
-      : `-----BEGIN CERTIFICATE-----\n${certificatePem}\n-----END CERTIFICATE-----`;
-    
+    const certContent = normalizeCertificateToPem(certificatePem);
     const x509 = new crypto.X509Certificate(certContent);
     return {
       subject: x509.subject,
@@ -417,10 +497,7 @@ export function getCertificateIssuerSerial(certificatePem: string): {
  * of the BIT STRING). For ECDSA certs this is the DER-encoded ECDSA-Sig.
  */
 export function extractCertificateSignatureBytes(certificatePem: string): Buffer {
-  const certContent = certificatePem.includes("-----BEGIN")
-    ? certificatePem
-    : `-----BEGIN CERTIFICATE-----\n${certificatePem}\n-----END CERTIFICATE-----`;
-
+  const certContent = normalizeCertificateToPem(certificatePem);
   const x509 = new crypto.X509Certificate(certContent);
   const der: Buffer = (x509 as any).raw;
   if (!der || der.length < 4) {
