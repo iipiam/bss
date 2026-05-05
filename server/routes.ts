@@ -16078,11 +16078,22 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
 
       const fmtDate = (d: any) => d ? new Date(d).toLocaleDateString('en-GB') : '-';
+      const fmtMoney = (n: number) => `${n.toFixed(2)} SAR`;
+
+      const vatAmount = totalAmount * 0.15;
+      const totalWithVat = totalAmount + vatAmount;
+
       const replacements: Record<string, string> = {
         '{{clientName}}': project.clientName || '',
+        '{{clientPhone}}': project.clientPhone || '',
+        '{{clientEmail}}': project.clientEmail || '',
         '{{projectName}}': project.name || '',
         '{{projectNumber}}': project.projectNumber || '',
-        '{{totalAmount}}': `${totalAmount.toFixed(2)} SAR`,
+        '{{projectLocation}}': project.location || '',
+        '{{projectDescription}}': project.description || '',
+        '{{totalAmount}}': fmtMoney(totalAmount),
+        '{{vatAmount}}': fmtMoney(vatAmount),
+        '{{totalWithVat}}': fmtMoney(totalWithVat),
         '{{startDate}}': fmtDate(project.startDate),
         '{{endDate}}': fmtDate(project.endDate),
         '{{companyName}}': company?.companyName || '',
@@ -16099,37 +16110,94 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const bodyHtml = body.replace(/\n/g, '<br/>');
       const terms = (company?.termsAndConditions || '').trim();
 
+      const servicesRows = services.length > 0
+        ? services.map((svc, i) => {
+            const qty = parseFloat(svc.quantity || '1');
+            const unit = svc.unit ? escapeHtml(svc.unit) : '';
+            const unitPrice = parseFloat(svc.unitPrice || '0');
+            const total = parseFloat(svc.totalPrice || '0');
+            return `
+              <tr>
+                <td class="num">${i + 1}</td>
+                <td>
+                  <div class="svc-name">${escapeHtml(svc.name || '')}</div>
+                  ${svc.description ? `<div class="svc-desc">${escapeHtml(svc.description)}</div>` : ''}
+                </td>
+                <td class="num">${qty}${unit ? ' ' + unit : ''}</td>
+                <td class="num">${fmtMoney(unitPrice)}</td>
+                <td class="num">${fmtMoney(total)}</td>
+              </tr>`;
+          }).join('')
+        : `<tr><td colspan="5" class="empty">No services added to this project.</td></tr>`;
+
+      const logoHtml = company?.companyLogo
+        ? `<img src="${escapeHtml(company.companyLogo)}" alt="logo" class="logo" />`
+        : '';
+
       const htmlContent = `
         <!DOCTYPE html>
         <html>
         <head>
           <meta charset="UTF-8">
           <style>
-            body { font-family: Arial, sans-serif; padding: 40px; font-size: 12px; color: #222; line-height: 1.6; }
-            .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1a365d; padding-bottom: 15px; margin-bottom: 25px; }
+            body { font-family: Arial, sans-serif; padding: 40px; font-size: 12px; color: #222; line-height: 1.5; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1a365d; padding-bottom: 15px; margin-bottom: 20px; }
+            .company-info { display: flex; gap: 14px; align-items: flex-start; }
+            .company-info .logo { width: 64px; height: 64px; object-fit: contain; }
             .company-info h1 { color: #1a365d; margin: 0; font-size: 22px; }
-            .company-info p { margin: 2px 0; color: #666; font-size: 10px; }
+            .company-info p { margin: 2px 0; color: #555; font-size: 10px; }
             .doc-title { text-align: right; }
             .doc-title h2 { color: #1a365d; margin: 0; font-size: 22px; }
             .doc-title p { margin: 2px 0; color: #666; font-size: 11px; }
-            .meta { background: #f0f4f8; padding: 12px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 11px; }
-            .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; }
-            .meta-item span { color: #666; }
-            .agreement-body { white-space: pre-wrap; padding: 10px 0; }
-            .terms { margin-top: 30px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #555; }
-            .terms h3 { color: #1a365d; font-size: 13px; margin-bottom: 8px; }
-            .signatures { margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr; gap: 50px; }
-            .sig-block { border-top: 1px solid #333; padding-top: 8px; font-size: 11px; }
-            .footer { margin-top: 30px; padding-top: 12px; border-top: 1px solid #e2e8f0; text-align: center; color: #888; font-size: 9px; }
+
+            .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+            .party-box { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; }
+            .party-box h4 { margin: 0 0 6px 0; color: #1a365d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+            .party-box .row { font-size: 11px; margin: 2px 0; }
+            .party-box .row .lbl { color: #666; display: inline-block; min-width: 70px; }
+
+            .project-box { background: #f0f4f8; border-left: 4px solid #1a365d; padding: 10px 14px; margin-bottom: 18px; }
+            .project-box .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; font-size: 11px; }
+            .project-box .lbl { color: #666; }
+            .project-box .desc { margin-top: 8px; font-size: 11px; color: #333; }
+
+            .section-title { color: #1a365d; font-size: 13px; font-weight: 700; border-bottom: 2px solid #1a365d; padding-bottom: 4px; margin: 20px 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+
+            table.services { width: 100%; border-collapse: collapse; font-size: 11px; }
+            table.services th { background: #1a365d; color: #fff; text-align: left; padding: 8px 10px; font-weight: 600; }
+            table.services th.num, table.services td.num { text-align: right; }
+            table.services td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+            table.services .svc-name { font-weight: 600; color: #1a365d; }
+            table.services .svc-desc { color: #666; font-size: 10px; margin-top: 2px; }
+            table.services .empty { text-align: center; color: #999; padding: 14px; font-style: italic; }
+
+            .totals { display: flex; justify-content: flex-end; margin-top: 10px; }
+            .totals table { font-size: 11px; min-width: 280px; }
+            .totals td { padding: 4px 10px; }
+            .totals .lbl { color: #666; }
+            .totals .val { text-align: right; font-family: 'Courier New', monospace; }
+            .totals tr.grand { font-weight: 700; color: #1a365d; border-top: 2px solid #1a365d; font-size: 13px; }
+
+            .agreement-body { white-space: pre-wrap; padding: 8px 0; font-size: 11px; }
+
+            .terms { margin-top: 24px; padding-top: 12px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #444; white-space: pre-wrap; }
+
+            .signatures { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+            .sig-block { border-top: 1px solid #333; padding-top: 6px; font-size: 11px; text-align: center; }
+
+            .footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e2e8f0; text-align: center; color: #888; font-size: 9px; }
           </style>
         </head>
         <body>
           <div class="header">
             <div class="company-info">
-              <h1>${escapeHtml(company?.companyName || 'Company')}</h1>
-              ${company?.companyAddress ? `<p>${escapeHtml(company.companyAddress)}</p>` : ''}
-              ${company?.companyPhone ? `<p>${escapeHtml(company.companyPhone)}</p>` : ''}
-              ${company?.companyEmail ? `<p>${escapeHtml(company.companyEmail)}</p>` : ''}
+              ${logoHtml}
+              <div>
+                <h1>${escapeHtml(company?.companyName || 'Company')}</h1>
+                ${company?.companyAddress ? `<p>${escapeHtml(company.companyAddress)}</p>` : ''}
+                ${company?.companyPhone ? `<p>Tel: ${escapeHtml(company.companyPhone)}</p>` : ''}
+                ${company?.companyEmail ? `<p>Email: ${escapeHtml(company.companyEmail)}</p>` : ''}
+              </div>
             </div>
             <div class="doc-title">
               <h2>Agreement / اتفاقية</h2>
@@ -16138,9 +16206,68 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             </div>
           </div>
 
+          <div class="parties">
+            <div class="party-box">
+              <h4>Service Provider / مقدم الخدمة</h4>
+              <div class="row"><span class="lbl">Name:</span> ${escapeHtml(company?.companyName || '-')}</div>
+              ${company?.companyAddress ? `<div class="row"><span class="lbl">Address:</span> ${escapeHtml(company.companyAddress)}</div>` : ''}
+              ${company?.companyPhone ? `<div class="row"><span class="lbl">Phone:</span> ${escapeHtml(company.companyPhone)}</div>` : ''}
+              ${company?.companyEmail ? `<div class="row"><span class="lbl">Email:</span> ${escapeHtml(company.companyEmail)}</div>` : ''}
+            </div>
+            <div class="party-box">
+              <h4>Client / العميل</h4>
+              <div class="row"><span class="lbl">Name:</span> ${escapeHtml(project.clientName || '-')}</div>
+              ${project.clientPhone ? `<div class="row"><span class="lbl">Phone:</span> ${escapeHtml(project.clientPhone)}</div>` : ''}
+              ${project.clientEmail ? `<div class="row"><span class="lbl">Email:</span> ${escapeHtml(project.clientEmail)}</div>` : ''}
+              ${project.location ? `<div class="row"><span class="lbl">Location:</span> ${escapeHtml(project.location)}</div>` : ''}
+            </div>
+          </div>
+
+          <div class="project-box">
+            <div class="grid">
+              <div><span class="lbl">Project:</span> <strong>${escapeHtml(project.name || '-')}</strong></div>
+              <div><span class="lbl">Number:</span> <strong>${escapeHtml(project.projectNumber || '-')}</strong></div>
+              <div><span class="lbl">Start Date:</span> ${fmtDate(project.startDate)}</div>
+              <div><span class="lbl">End Date:</span> ${fmtDate(project.endDate)}</div>
+            </div>
+            ${project.description ? `<div class="desc"><span class="lbl">Description: </span>${escapeHtml(project.description)}</div>` : ''}
+          </div>
+
+          <div class="section-title">Services / الخدمات</div>
+          <table class="services">
+            <thead>
+              <tr>
+                <th style="width:30px;">#</th>
+                <th>Service / الخدمة</th>
+                <th class="num" style="width:90px;">Qty</th>
+                <th class="num" style="width:110px;">Unit Price</th>
+                <th class="num" style="width:120px;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${servicesRows}
+            </tbody>
+          </table>
+
+          <div class="totals">
+            <table>
+              <tr><td class="lbl">Subtotal</td><td class="val">${fmtMoney(totalAmount)}</td></tr>
+              <tr><td class="lbl">VAT (15%)</td><td class="val">${fmtMoney(vatAmount)}</td></tr>
+              <tr class="grand"><td>Total</td><td class="val">${fmtMoney(totalWithVat)}</td></tr>
+            </table>
+          </div>
+
+          <div class="section-title">Agreement / الاتفاقية</div>
           <div class="agreement-body">${bodyHtml}</div>
 
-          ${terms ? `<div class="terms">${escapeHtml(terms).replace(/\n/g, '<br/>')}</div>` : ''}
+          ${terms ? `<div class="section-title">Terms &amp; Conditions / الشروط والأحكام</div><div class="terms">${escapeHtml(terms)}</div>` : ''}
+
+          <div class="signatures">
+            <div class="sig-block">${escapeHtml(company?.companyName || 'Service Provider')}</div>
+            <div class="sig-block">${escapeHtml(project.clientName || 'Client')}</div>
+          </div>
+
+          <div class="footer">Generated on ${new Date().toLocaleString('en-GB')} — ${escapeHtml(project.projectNumber)}</div>
         </body>
         </html>
       `;
