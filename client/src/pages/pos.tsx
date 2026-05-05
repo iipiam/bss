@@ -521,7 +521,13 @@ export default function POS() {
     0,
   );
 
-  // Subsidy: matched against the tier whose [minAmount, maxAmount] contains baseSubtotal
+  // Cart's `baseSubtotal` is VAT-exclusive (item.price comes from basePrice).
+  // The delivery app's listed customer price is VAT-inclusive, so the formula
+  // input ("gross") for delivery economics must be baseSubtotal * 1.15.
+  const deliveryGross = baseSubtotal * 1.15;
+
+  // Subsidy: matched against the tier whose [minAmount, maxAmount] contains the
+  // delivery gross (the value the customer actually pays in the app).
   const deliverySubsidy = (() => {
     if (!selectedDeliveryApp) return 0;
     const tiers = (selectedDeliveryApp.subsidyTiers as Array<{
@@ -531,10 +537,10 @@ export default function POS() {
     }> | null) || [];
     const tier = tiers.find(
       (tr) =>
-        baseSubtotal >= Number(tr.minAmount) &&
+        deliveryGross >= Number(tr.minAmount) &&
         (tr.maxAmount === null ||
           tr.maxAmount === undefined ||
-          baseSubtotal <= Number(tr.maxAmount)),
+          deliveryGross <= Number(tr.maxAmount)),
     );
     return tier ? Number(tier.subsidy) || 0 : 0;
   })();
@@ -545,14 +551,14 @@ export default function POS() {
   //   banking         = gross * banking%
   //   vat             = (commission + subsidy + banking) * 15%
   //   net (POS total) = gross - commission - subsidy - banking - vat - posFees
-  const subsidizedPrice = baseSubtotal - deliverySubsidy;
+  const subsidizedPrice = deliveryGross - deliverySubsidy;
 
   const deliveryCommission = selectedDeliveryApp
     ? subsidizedPrice * (parseFloat(selectedDeliveryApp.commission) / 100)
     : 0;
 
   const deliveryBankingFees = selectedDeliveryApp
-    ? baseSubtotal * (parseFloat(selectedDeliveryApp.bankingFees || "0") / 100)
+    ? deliveryGross * (parseFloat(selectedDeliveryApp.bankingFees || "0") / 100)
     : 0;
 
   const deliveryPosFees = selectedDeliveryApp
@@ -564,10 +570,10 @@ export default function POS() {
     : 0;
 
   // When a delivery app is selected, "subtotal" and "total" represent the
-  // restaurant's NET earnings (gross minus all delivery costs). Standalone
-  // (dine-in) orders keep the original behaviour: subtotal + 15% VAT.
+  // restaurant's NET earnings (delivery gross minus all delivery costs).
+  // Standalone (dine-in) orders keep the original behaviour: subtotal + 15% VAT.
   const subtotal = selectedDeliveryApp
-    ? baseSubtotal -
+    ? deliveryGross -
       deliveryCommission -
       deliverySubsidy -
       deliveryBankingFees -
@@ -1021,7 +1027,7 @@ export default function POS() {
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>{t.itemsSubtotal}</span>
                   <span className="font-mono">
-                    {baseSubtotal.toFixed(2)} {t.sar}
+                    {(selectedDeliveryApp ? deliveryGross : baseSubtotal).toFixed(2)} {t.sar}
                   </span>
                 </div>
                 {selectedDeliveryApp && deliveryCommission > 0 && (
@@ -1696,7 +1702,7 @@ export default function POS() {
             <div className="flex justify-between text-muted-foreground">
               <span>{t.itemsSubtotal}</span>
               <span className="font-mono">
-                {baseSubtotal.toFixed(2)} {t.sar}
+                {(selectedDeliveryApp ? deliveryGross : baseSubtotal).toFixed(2)} {t.sar}
               </span>
             </div>
             {selectedDeliveryApp && deliveryCommission > 0 && (
