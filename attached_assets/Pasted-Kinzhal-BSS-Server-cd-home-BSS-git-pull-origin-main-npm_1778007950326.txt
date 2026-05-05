@@ -1,0 +1,70 @@
+Kinzhal@BSS-Server:~$ cd /home/BSS && git pull origin main && npm install --legacy-peer-deps && npm run build && pm2 restart all
+From https://github.com/iipiam/bss
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+
+removed 1 package, changed 1 package, and audited 789 packages in 8s
+
+79 packages are looking for funding
+  run `npm fund` for details
+
+49 vulnerabilities (1 low, 13 moderate, 30 high, 5 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.2.2 building client environment for production...
+✓ 0 modules transformed.
+✗ Build failed in 13ms
+error during build:
+Could not resolve entry module "client/index.html".
+    at getRollupError (file:///home/BSS/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///home/BSS/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at ModuleLoader.loadEntryModule (file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:21597:20)
+    at async Promise.all (index 0)
+Kinzhal@BSS-Server:/home/BSS$ cd /home/BSS && git pull origin main && npm install --legacy-peer-deps && npm run build && pm2 restart all
+From https://github.com/iipiam/bss
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+
+up to date, audited 789 packages in 3s
+
+79 packages are looking for funding
+  run `npm fund` for details
+
+49 vulnerabilities (1 low, 13 moderate, 30 high, 5 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.2.2 building client environment for production...
+✓ 0 modules transformed.
+✗ Build failed in 13ms
+error during build:
+Could not resolve entry module "client/index.html".
+    at getRollupError (file:///home/BSS/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///home/BSS/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at ModuleLoader.loadEntryModule (file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:21597:20)
+    at async Promise.all (index 0)
