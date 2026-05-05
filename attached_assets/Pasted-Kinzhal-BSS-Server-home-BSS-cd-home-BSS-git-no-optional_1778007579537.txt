@@ -1,0 +1,81 @@
+Kinzhal@BSS-Server:/home/BSS$ cd /home/BSS
+git --no-optional-locks ls-files | wc -l
+git --no-optional-locks ls-files client/ | head
+40
+Kinzhal@BSS-Server:/home/BSS$ # 1. Back up server-only files
+cd /home
+cp -a BSS BSS-backup-$(date +%Y%m%d)
+mkdir -p /tmp/bss-keep
+cp BSS/.env /tmp/bss-keep/
+cp BSS/ecosystem.config.cjs /tmp/bss-keep/ 2>/dev/null
+cp -r BSS/uploads /tmp/bss-keep/ 2>/dev/null
+
+# 2. Move old folder aside and clone fresh
+mv BSS BSS-old
+git clone https://github.com/iipiam/bss.git BSS
+cd BSS
+
+# 3. Restore the saved files
+cp /tmp/bss-keep/.env .
+cp /tmp/bss-keep/ecosystem.config.cjs . 2>/dev/null
+cp -r /tmp/bss-keep/uploads ./ 2>/dev/null
+
+# 4. Install, build, restart
+npm install
+npm run build
+pm2 restart all
+cp: cannot create directory 'BSS-backup-20260505': Permission denied
+mv: cannot move 'BSS' to 'BSS-old': Permission denied
+fatal: destination path 'BSS' already exists and is not an empty directory.
+npm error code ERESOLVE
+npm error ERESOLVE could not resolve
+npm error
+npm error While resolving: @tailwindcss/vite@4.1.3
+npm error Found: vite@7.2.2
+npm error node_modules/vite
+npm error   vite@"^7.2.2" from the root project
+npm error   peer vite@"^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0" from @vitejs/plugin-react@5.1.1
+npm error   node_modules/@vitejs/plugin-react
+npm error     @vitejs/plugin-react@"^5.1.1" from the root project
+npm error
+npm error Could not resolve dependency:
+npm error peer vite@"^5.2.0 || ^6" from @tailwindcss/vite@4.1.3
+npm error node_modules/@tailwindcss/vite
+npm error   dev @tailwindcss/vite@"^4.1.3" from the root project
+npm error
+npm error Conflicting peer dependency: vite@6.4.2
+npm error node_modules/vite
+npm error   peer vite@"^5.2.0 || ^6" from @tailwindcss/vite@4.1.3
+npm error   node_modules/@tailwindcss/vite
+npm error     dev @tailwindcss/vite@"^4.1.3" from the root project
+npm error
+npm error Fix the upstream dependency conflict, or retry
+npm error this command with --force or --legacy-peer-deps
+npm error to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error /home/Kinzhal/.npm/_logs/2026-05-05T18_59_03_647Z-eresolve-report.txt
+npm error A complete log of this run can be found in: /home/Kinzhal/.npm/_logs/2026-05-05T18_59_03_647Z-debug-0.log
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.2.2 building client environment for production...
+✓ 0 modules transformed.
+✗ Build failed in 13ms
+error during build:
+Could not resolve entry module "client/index.html".
+    at getRollupError (file:///home/BSS/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///home/BSS/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at ModuleLoader.loadEntryModule (file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:21597:20)
+    at async Promise.all (index 0)
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 64   │ online    │ 0%       │ 26.5mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+Kinzhal@BSS-Server:/home/BSS$
