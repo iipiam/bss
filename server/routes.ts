@@ -16138,29 +16138,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             </div>
           </div>
 
-          <div class="meta">
-            <div class="meta-grid">
-              <div class="meta-item"><span>Client / العميل:</span> <strong>${escapeHtml(project.clientName)}</strong></div>
-              <div class="meta-item"><span>Project / المشروع:</span> <strong>${escapeHtml(project.name)}</strong></div>
-              ${project.startDate ? `<div class="meta-item"><span>Start / البدء:</span> ${fmtDate(project.startDate)}</div>` : ''}
-              ${project.endDate ? `<div class="meta-item"><span>End / الانتهاء:</span> ${fmtDate(project.endDate)}</div>` : ''}
-              <div class="meta-item"><span>Total / الإجمالي:</span> <strong>${totalAmount.toFixed(2)} SAR</strong></div>
-              ${project.location ? `<div class="meta-item"><span>Location / الموقع:</span> ${escapeHtml(project.location)}</div>` : ''}
-            </div>
-          </div>
-
           <div class="agreement-body">${bodyHtml}</div>
 
-          ${terms ? `<div class="terms"><h3>Terms &amp; Conditions / الشروط والأحكام</h3><div>${escapeHtml(terms).replace(/\n/g, '<br/>')}</div></div>` : ''}
-
-          <div class="signatures">
-            <div class="sig-block">${escapeHtml(company?.companyName || 'Company')}<br/><span style="color:#666">Authorized Signature</span></div>
-            <div class="sig-block">${escapeHtml(project.clientName)}<br/><span style="color:#666">Client Signature</span></div>
-          </div>
-
-          <div class="footer">
-            ${escapeHtml(company?.companyName || 'Company')} — Agreement — ${escapeHtml(project.projectNumber)}
-          </div>
+          ${terms ? `<div class="terms">${escapeHtml(terms).replace(/\n/g, '<br/>')}</div>` : ''}
         </body>
         </html>
       `;
