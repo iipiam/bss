@@ -525,8 +525,38 @@ export default function POS() {
     ? baseSubtotal * (parseFloat(selectedDeliveryApp.commission) / 100)
     : 0;
 
-  // Calculate final subtotal (base + commission)
-  const subtotal = baseSubtotal + deliveryCommission;
+  const deliveryBankingFees = selectedDeliveryApp
+    ? baseSubtotal * (parseFloat(selectedDeliveryApp.bankingFees || "0") / 100)
+    : 0;
+
+  const deliveryPosFees = selectedDeliveryApp
+    ? parseFloat(selectedDeliveryApp.posFees || "0")
+    : 0;
+
+  const deliverySubsidy = (() => {
+    if (!selectedDeliveryApp) return 0;
+    const tiers = (selectedDeliveryApp.subsidyTiers as Array<{
+      minAmount: number;
+      maxAmount: number | null;
+      subsidy: number;
+    }> | null) || [];
+    const tier = tiers.find(
+      (tr) =>
+        baseSubtotal >= Number(tr.minAmount) &&
+        (tr.maxAmount === null ||
+          tr.maxAmount === undefined ||
+          baseSubtotal <= Number(tr.maxAmount)),
+    );
+    return tier ? Number(tier.subsidy) || 0 : 0;
+  })();
+
+  // Calculate final subtotal (base + commission + banking + pos fees - subsidy)
+  const subtotal =
+    baseSubtotal +
+    deliveryCommission +
+    deliveryBankingFees +
+    deliveryPosFees -
+    deliverySubsidy;
 
   // Calculate tax on final subtotal
   const tax = subtotal * 0.15;
@@ -987,14 +1017,42 @@ export default function POS() {
                     </span>
                   </div>
                 )}
-                {selectedDeliveryApp && deliveryCommission > 0 && (
-                  <div className="flex justify-between text-sm font-medium">
-                    <span>{t.subtotal}</span>
+                {selectedDeliveryApp && deliveryBankingFees > 0 && (
+                  <div className="flex justify-between text-sm text-muted-foreground" data-testid="text-banking-fees">
+                    <span>{t.banking}</span>
                     <span className="font-mono">
-                      {subtotal.toFixed(2)} {t.sar}
+                      +{deliveryBankingFees.toFixed(2)} {t.sar}
                     </span>
                   </div>
                 )}
+                {selectedDeliveryApp && deliveryPosFees > 0 && (
+                  <div className="flex justify-between text-sm text-muted-foreground" data-testid="text-pos-fees">
+                    <span>{t.posFees}</span>
+                    <span className="font-mono">
+                      +{deliveryPosFees.toFixed(2)} {t.sar}
+                    </span>
+                  </div>
+                )}
+                {selectedDeliveryApp && deliverySubsidy > 0 && (
+                  <div className="flex justify-between text-sm text-muted-foreground" data-testid="text-subsidy">
+                    <span>{t.subsidyLabel}</span>
+                    <span className="font-mono">
+                      -{deliverySubsidy.toFixed(2)} {t.sar}
+                    </span>
+                  </div>
+                )}
+                {selectedDeliveryApp &&
+                  (deliveryCommission > 0 ||
+                    deliveryBankingFees > 0 ||
+                    deliveryPosFees > 0 ||
+                    deliverySubsidy > 0) && (
+                    <div className="flex justify-between text-sm font-medium">
+                      <span>{t.subtotal}</span>
+                      <span className="font-mono">
+                        {subtotal.toFixed(2)} {t.sar}
+                      </span>
+                    </div>
+                  )}
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>{t.tax} (15%)</span>
                   <span className="font-mono">
@@ -1636,14 +1694,42 @@ export default function POS() {
                 </span>
               </div>
             )}
-            {selectedDeliveryApp && deliveryCommission > 0 && (
-              <div className="flex justify-between font-medium">
-                <span>{t.subtotal}</span>
+            {selectedDeliveryApp && deliveryBankingFees > 0 && (
+              <div className="flex justify-between text-muted-foreground" data-testid="text-banking-fees-desktop">
+                <span>{t.banking}</span>
                 <span className="font-mono">
-                  {subtotal.toFixed(2)} {t.sar}
+                  +{deliveryBankingFees.toFixed(2)} {t.sar}
                 </span>
               </div>
             )}
+            {selectedDeliveryApp && deliveryPosFees > 0 && (
+              <div className="flex justify-between text-muted-foreground" data-testid="text-pos-fees-desktop">
+                <span>{t.posFees}</span>
+                <span className="font-mono">
+                  +{deliveryPosFees.toFixed(2)} {t.sar}
+                </span>
+              </div>
+            )}
+            {selectedDeliveryApp && deliverySubsidy > 0 && (
+              <div className="flex justify-between text-muted-foreground" data-testid="text-subsidy-desktop">
+                <span>{t.subsidyLabel}</span>
+                <span className="font-mono">
+                  -{deliverySubsidy.toFixed(2)} {t.sar}
+                </span>
+              </div>
+            )}
+            {selectedDeliveryApp &&
+              (deliveryCommission > 0 ||
+                deliveryBankingFees > 0 ||
+                deliveryPosFees > 0 ||
+                deliverySubsidy > 0) && (
+                <div className="flex justify-between font-medium">
+                  <span>{t.subtotal}</span>
+                  <span className="font-mono">
+                    {subtotal.toFixed(2)} {t.sar}
+                  </span>
+                </div>
+              )}
             <div className="flex justify-between text-muted-foreground">
               <span>{t.tax} (15%)</span>
               <span className="font-mono">
