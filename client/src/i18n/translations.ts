@@ -2197,6 +2197,8 @@ export interface Translations {
   payments: string;
   clientInfo: string;
   downloadDossier: string;
+  generateAgreement: string;
+  addProjectService: string;
   days: string;
   slack: string;
   duration: string;
@@ -4623,6 +4625,8 @@ export const translations: Record<Language, Translations> = {
     payments: 'Payments',
     clientInfo: 'Client Info',
     downloadDossier: 'Download Dossier',
+    generateAgreement: 'Generate Agreement',
+    addProjectService: 'Add Project Service',
     days: 'days',
     slack: 'Slack',
     duration: 'Duration',
@@ -7035,6 +7039,8 @@ export const translations: Record<Language, Translations> = {
     payments: 'المدفوعات',
     clientInfo: 'معلومات العميل',
     downloadDossier: 'تحميل الملف',
+    generateAgreement: 'إنشاء الاتفاقية',
+    addProjectService: 'إضافة خدمة للمشروع',
     days: 'أيام',
     slack: 'فترة السماح',
     duration: 'المدة',
@@ -9431,6 +9437,8 @@ export const translations: Record<Language, Translations> = {
     payments: 'Zahlungen',
     clientInfo: 'Kundeninfo',
     downloadDossier: 'Dossier herunterladen',
+    generateAgreement: 'Vertrag erstellen',
+    addProjectService: 'Projektleistung hinzufügen',
     days: 'Tage',
     slack: 'Pufferzeit',
     duration: 'Dauer',
@@ -11831,6 +11839,8 @@ export const translations: Record<Language, Translations> = {
     payments: '付款',
     clientInfo: '客户信息',
     downloadDossier: '下载档案',
+    generateAgreement: '生成协议',
+    addProjectService: '添加项目服务',
     days: '天',
     slack: '浮动时间',
     duration: '持续时间',
@@ -14231,6 +14241,8 @@ export const translations: Record<Language, Translations> = {
     payments: 'অর্থপ্রদান',
     clientInfo: 'ক্লায়েন্ট তথ্য',
     downloadDossier: 'ডসিয়ার ডাউনলোড',
+    generateAgreement: 'চুক্তি তৈরি করুন',
+    addProjectService: 'প্রকল্প পরিষেবা যোগ করুন',
     days: 'দিন',
     slack: 'স্ল্যাক',
     duration: 'সময়কাল',
@@ -16631,6 +16643,8 @@ export const translations: Record<Language, Translations> = {
     payments: 'Pagamenti',
     clientInfo: 'Info Cliente',
     downloadDossier: 'Scarica Dossier',
+    generateAgreement: 'Genera Contratto',
+    addProjectService: 'Aggiungi Servizio Progetto',
     days: 'giorni',
     slack: 'Margine',
     duration: 'Durata',
@@ -18975,6 +18989,8 @@ export const translations: Record<Language, Translations> = {
     payments: 'भुगतान',
     clientInfo: 'ग्राहक जानकारी',
     downloadDossier: 'डोज़ियर डाउनलोड करें',
+    generateAgreement: 'समझौता बनाएं',
+    addProjectService: 'परियोजना सेवा जोड़ें',
     days: 'दिन',
     slack: 'स्लैक',
     duration: 'अवधि',
@@ -21319,6 +21335,8 @@ export const translations: Record<Language, Translations> = {
     payments: 'ادائیگیاں',
     clientInfo: 'کلائنٹ کی معلومات',
     downloadDossier: 'ڈوزیئر ڈاؤن لوڈ',
+    generateAgreement: 'معاہدہ بنائیں',
+    addProjectService: 'پروجیکٹ سروس شامل کریں',
     days: 'دن',
     slack: 'سلیک',
     duration: 'مدت',
@@ -23596,6 +23614,8 @@ export const translations: Record<Language, Translations> = {
     payments: 'Pagos',
     clientInfo: 'Info del Cliente',
     downloadDossier: 'Descargar Dossier',
+    generateAgreement: 'Generar Contrato',
+    addProjectService: 'Añadir Servicio del Proyecto',
     days: 'días',
     slack: 'Holgura',
     duration: 'Duración',
@@ -25873,6 +25893,8 @@ export const translations: Record<Language, Translations> = {
     payments: 'Mga Bayad',
     clientInfo: 'Info ng Kliyente',
     downloadDossier: 'I-download ang Dossier',
+    generateAgreement: 'Bumuo ng Kasunduan',
+    addProjectService: 'Magdagdag ng Serbisyo sa Proyekto',
     days: 'araw',
     slack: 'Slack',
     duration: 'Tagal',

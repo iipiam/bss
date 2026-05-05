@@ -16056,6 +16056,145 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Generate Agreement PDF for a service project — fills the company's
+  // agreement template with the project's data and produces a PDF.
+  app.get("/api/service-projects/:id/agreement-pdf", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+
+      const project = await storage.getServiceProject(req.params.id, restaurantId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+
+      const company = await storage.getCompanySettings(restaurantId);
+      const services = await storage.getProjectServices(restaurantId, project.id);
+      const totalAmount = services.reduce((s, svc) => s + parseFloat(svc.totalPrice || '0'), 0);
+
+      const template = (company?.agreementTemplate || '').trim();
+      if (!template) {
+        return res.status(400).json({
+          message: "No agreement template configured. Please set one in Company Settings → Agreement Template."
+        });
+      }
+
+      const fmtDate = (d: any) => d ? new Date(d).toLocaleDateString('en-GB') : '-';
+      const replacements: Record<string, string> = {
+        '{{clientName}}': project.clientName || '',
+        '{{projectName}}': project.name || '',
+        '{{projectNumber}}': project.projectNumber || '',
+        '{{totalAmount}}': `${totalAmount.toFixed(2)} SAR`,
+        '{{startDate}}': fmtDate(project.startDate),
+        '{{endDate}}': fmtDate(project.endDate),
+        '{{companyName}}': company?.companyName || '',
+        '{{companyAddress}}': company?.companyAddress || '',
+        '{{companyPhone}}': company?.companyPhone || '',
+        '{{companyEmail}}': company?.companyEmail || '',
+        '{{date}}': new Date().toLocaleDateString('en-GB'),
+      };
+
+      let body = template;
+      for (const [key, val] of Object.entries(replacements)) {
+        body = body.split(key).join(escapeHtml(val));
+      }
+      const bodyHtml = body.replace(/\n/g, '<br/>');
+      const terms = (company?.termsAndConditions || '').trim();
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: Arial, sans-serif; padding: 40px; font-size: 12px; color: #222; line-height: 1.6; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1a365d; padding-bottom: 15px; margin-bottom: 25px; }
+            .company-info h1 { color: #1a365d; margin: 0; font-size: 22px; }
+            .company-info p { margin: 2px 0; color: #666; font-size: 10px; }
+            .doc-title { text-align: right; }
+            .doc-title h2 { color: #1a365d; margin: 0; font-size: 22px; }
+            .doc-title p { margin: 2px 0; color: #666; font-size: 11px; }
+            .meta { background: #f0f4f8; padding: 12px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 11px; }
+            .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; }
+            .meta-item span { color: #666; }
+            .agreement-body { white-space: pre-wrap; padding: 10px 0; }
+            .terms { margin-top: 30px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #555; }
+            .terms h3 { color: #1a365d; font-size: 13px; margin-bottom: 8px; }
+            .signatures { margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr; gap: 50px; }
+            .sig-block { border-top: 1px solid #333; padding-top: 8px; font-size: 11px; }
+            .footer { margin-top: 30px; padding-top: 12px; border-top: 1px solid #e2e8f0; text-align: center; color: #888; font-size: 9px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-info">
+              <h1>${escapeHtml(company?.companyName || 'Company')}</h1>
+              ${company?.companyAddress ? `<p>${escapeHtml(company.companyAddress)}</p>` : ''}
+              ${company?.companyPhone ? `<p>${escapeHtml(company.companyPhone)}</p>` : ''}
+              ${company?.companyEmail ? `<p>${escapeHtml(company.companyEmail)}</p>` : ''}
+            </div>
+            <div class="doc-title">
+              <h2>Agreement / اتفاقية</h2>
+              <p>${escapeHtml(project.projectNumber)}</p>
+              <p>${new Date().toLocaleDateString('en-GB')}</p>
+            </div>
+          </div>
+
+          <div class="meta">
+            <div class="meta-grid">
+              <div class="meta-item"><span>Client / العميل:</span> <strong>${escapeHtml(project.clientName)}</strong></div>
+              <div class="meta-item"><span>Project / المشروع:</span> <strong>${escapeHtml(project.name)}</strong></div>
+              ${project.startDate ? `<div class="meta-item"><span>Start / البدء:</span> ${fmtDate(project.startDate)}</div>` : ''}
+              ${project.endDate ? `<div class="meta-item"><span>End / الانتهاء:</span> ${fmtDate(project.endDate)}</div>` : ''}
+              <div class="meta-item"><span>Total / الإجمالي:</span> <strong>${totalAmount.toFixed(2)} SAR</strong></div>
+              ${project.location ? `<div class="meta-item"><span>Location / الموقع:</span> ${escapeHtml(project.location)}</div>` : ''}
+            </div>
+          </div>
+
+          <div class="agreement-body">${bodyHtml}</div>
+
+          ${terms ? `<div class="terms"><h3>Terms &amp; Conditions / الشروط والأحكام</h3><div>${escapeHtml(terms).replace(/\n/g, '<br/>')}</div></div>` : ''}
+
+          <div class="signatures">
+            <div class="sig-block">${escapeHtml(company?.companyName || 'Company')}<br/><span style="color:#666">Authorized Signature</span></div>
+            <div class="sig-block">${escapeHtml(project.clientName)}<br/><span style="color:#666">Client Signature</span></div>
+          </div>
+
+          <div class="footer">
+            ${escapeHtml(company?.companyName || 'Company')} — Agreement — ${escapeHtml(project.projectNumber)}
+          </div>
+        </body>
+        </html>
+      `;
+
+      const puppeteer = await import("puppeteer");
+      const { execSync } = await import("child_process");
+      const { existsSync } = await import("fs");
+
+      let chromiumPath: string | undefined = undefined;
+      try {
+        chromiumPath = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null', { encoding: 'utf8' }).trim();
+        if (!chromiumPath || !existsSync(chromiumPath)) chromiumPath = undefined;
+      } catch (e) {}
+
+      const browser = await puppeteer.default.launch({
+        headless: true,
+        executablePath: chromiumPath,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process', '--no-zygote'],
+      });
+      const page = await browser.newPage();
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      const pdfData = await page.pdf({ format: 'A4', margin: { top: '15mm', right: '12mm', bottom: '15mm', left: '12mm' }, printBackground: true });
+      await browser.close();
+      const pdfBuffer = Buffer.from(pdfData);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="agreement-${project.projectNumber}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error("Project agreement PDF error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // ==================== MEAL SUBSCRIPTIONS ====================
   app.get("/api/meal-subscriptions", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
     try {

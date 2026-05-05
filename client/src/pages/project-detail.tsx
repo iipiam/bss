@@ -23,6 +23,7 @@ import {
   ArrowLeft, Plus, Edit, Trash2, DollarSign, Calendar, Phone, Mail,
   User, MapPin, Clock, FileText, CheckCircle, Layers, Receipt,
   ShoppingCart, CreditCard, ListTodo, Zap, AlertTriangle, Download,
+  FileSignature,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -401,14 +402,52 @@ export default function ProjectDetail() {
             </div>
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => window.open(`/api/service-projects/${params.id}/dossier-pdf`, '_blank')}
-          data-testid="button-download-dossier"
-        >
-          <Download className="h-4 w-4 mr-2" />
-          {t.downloadDossier || "Download Dossier"}
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            onClick={() => { setActiveTab("services"); setEditSvc(null); svcForm.reset(); setSvcOpen(true); }}
+            data-testid="button-add-project-service"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {t.addProjectService || "Add Project Service"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={async () => {
+              try {
+                const res = await fetch(`/api/service-projects/${params.id}/agreement-pdf`, { credentials: "include" });
+                if (!res.ok) {
+                  let msg = "Failed to generate agreement";
+                  try { const j = await res.json(); msg = j.message || msg; } catch {}
+                  toast({ title: t.error || "Error", description: msg, variant: "destructive" });
+                  return;
+                }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `agreement-${project.projectNumber}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+              } catch (e: any) {
+                toast({ title: t.error || "Error", description: e.message, variant: "destructive" });
+              }
+            }}
+            data-testid="button-generate-agreement"
+          >
+            <FileSignature className="h-4 w-4 mr-2" />
+            {t.generateAgreement || "Generate Agreement"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => window.open(`/api/service-projects/${params.id}/dossier-pdf`, '_blank')}
+            data-testid="button-download-dossier"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {t.downloadDossier || "Download Dossier"}
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
