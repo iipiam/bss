@@ -25,84 +25,53 @@ async function signInvoiceManually(
   previousHash: string | null,
   timestamp: string
 ): Promise<ManualSigningResult> {
-  const invoiceHash = generateInvoiceHash(unsignedXml);
-  const invoiceHashHex = generateInvoiceHashHex(unsignedXml);
-  
-  let signature: string | undefined;
-  let signedPropertiesHash: string | undefined;
+  const certificate = settings.productionCsid || settings.complianceCsid;
+
+  // Delegate to the canonical XML generator so the embedded DigestValue,
+  // QR Tag 6 and SignatureValue are all derived from the SAME canonical
+  // bytes. Previously this function built its own signedXml and let the
+  // generator overwrite it with a placeholder-stamped one — guaranteeing the
+  // mismatch ZATCA was rejecting.
+  const signedXml = generateZatcaInvoiceXml(
+    baseInvoiceData,
+    settings.privateKey && certificate
+      ? { privateKey: settings.privateKey, certificate }
+      : undefined
+  );
+
+  const invoiceHash = generateInvoiceHash(signedXml);
+  const invoiceHashHex = generateInvoiceHashHex(signedXml);
+
+  // Pull the QR code that was embedded in the signed XML (single source of
+  // truth for whatever ZATCA verifies against).
+  let qrCodeBase64 = "";
+  const qrMatch = signedXml.match(
+    /<cac:AdditionalDocumentReference>\s*<cbc:ID>QR<\/cbc:ID>[\s\S]*?<cbc:EmbeddedDocumentBinaryObject[^>]*>([^<]+)<\/cbc:EmbeddedDocumentBinaryObject>/
+  );
+  if (qrMatch) qrCodeBase64 = qrMatch[1];
+
   let certificateBase64: string | undefined;
   let publicKeyBase64: string | undefined;
-  
-  const certificate = settings.productionCsid || settings.complianceCsid;
-  
-  if (settings.privateKey && certificate) {
+  if (certificate) {
     try {
-      // Always normalize the (potentially double-base64) CSID first so cert
-      // hashing/embedding uses the real DER bytes, not the inner base64 text.
       certificateBase64 = extractCertificateBase64Body(certificate);
-
-      const certHash = require("crypto").createHash("sha256")
-        .update(Buffer.from(certificateBase64!, "base64"))
-        .digest("base64");
-
-      // Real issuer/serial parsed from the CSID certificate (falls back to legacy
-      // dummy values if parsing fails).
-      const { issuerName, serialNumber } = getCertificateIssuerSerial(certificate);
-      const escapeXmlAttr = (s: string) => s
-        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
-
-      const signingTime = now.toISOString();
-      const signedPropertiesXml = `<xades:SignedProperties xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" Id="xadesSignedProperties"><xades:SignedSignatureProperties><xades:SigningTime>${signingTime}</xades:SigningTime><xades:SigningCertificate><xades:Cert><xades:CertDigest><ds:DigestMethod xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue xmlns:ds="http://www.w3.org/2000/09/xmldsig#">${certHash}</ds:DigestValue></xades:CertDigest><xades:IssuerSerial><ds:X509IssuerName xmlns:ds="http://www.w3.org/2000/09/xmldsig#">${escapeXmlAttr(issuerName)}</ds:X509IssuerName><ds:X509SerialNumber xmlns:ds="http://www.w3.org/2000/09/xmldsig#">${escapeXmlAttr(serialNumber)}</ds:X509SerialNumber></xades:IssuerSerial></xades:Cert></xades:SigningCertificate></xades:SignedSignatureProperties></xades:SignedProperties>`;
-      
-      signedPropertiesHash = require("crypto").createHash("sha256")
-        .update(signedPropertiesXml, "utf8")
-        .digest("base64");
-      
-      const signedInfoXml = `<ds:SignedInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:CanonicalizationMethod Algorithm="http://www.w3.org/2006/12/xml-c14n11"/><ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256"/><ds:Reference Id="invoiceSignedData" URI=""><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/TR/1999/REC-xpath-19991116"><ds:XPath>not(//ancestor-or-self::ext:UBLExtensions)</ds:XPath></ds:Transform><ds:Transform Algorithm="http://www.w3.org/TR/1999/REC-xpath-19991116"><ds:XPath>not(//ancestor-or-self::cac:Signature)</ds:XPath></ds:Transform><ds:Transform Algorithm="http://www.w3.org/TR/1999/REC-xpath-19991116"><ds:XPath>not(//ancestor-or-self::cac:AdditionalDocumentReference[cbc:ID='QR'])</ds:XPath></ds:Transform><ds:Transform Algorithm="http://www.w3.org/2006/12/xml-c14n11"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>${invoiceHash}</ds:DigestValue></ds:Reference><ds:Reference Type="http://www.w3.org/2000/09/xmldsig#SignatureProperties" URI="#xadesSignedProperties"><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>${signedPropertiesHash}</ds:DigestValue></ds:Reference></ds:SignedInfo>`;
-      
-      signature = signWithECDSA(settings.privateKey, signedInfoXml);
-      
-      try {
-        publicKeyBase64 = extractPublicKeyBase64(certificate);
-      } catch (e) {
-        publicKeyBase64 = certificateBase64;
-      }
-    } catch (error) {
-      console.error("Failed to sign invoice:", error);
+    } catch (e) {
+      console.error("[ZATCA] Failed to extract cert body:", e);
+    }
+    try {
+      publicKeyBase64 = extractPublicKeyBase64(certificate);
+    } catch (e) {
+      publicKeyBase64 = certificateBase64;
     }
   }
-  
-  const qrTlvData = {
-    sellerName: settings.csrOrganizationName || "",
-    vatNumber: settings.csrOrganizationIdentifier || "",
-    timestamp: timestamp,
-    invoiceTotal: baseInvoiceData.total.toFixed(2),
-    vatTotal: baseInvoiceData.vatAmount.toFixed(2),
-    invoiceHash: invoiceHash,
-    signature: signature,
-    publicKey: publicKeyBase64
-  };
-  const qrCodeBase64 = generateZatcaQRCode(qrTlvData);
-  
-  const signedInvoiceData = {
-    ...baseInvoiceData,
-    qrCode: qrCodeBase64,
-    signatureValue: signature,
-    signedPropertiesHash: signedPropertiesHash,
-    invoiceHash: invoiceHash,
-    certificateBase64: certificateBase64
-  };
-  
-  const signedXml = generateZatcaInvoiceXml(signedInvoiceData);
-  
+
   return {
     signedXml,
     invoiceHash,
     invoiceHashHex,
     qrCodeBase64,
     certificateBase64,
-    publicKeyBase64
+    publicKeyBase64,
   };
 }
 
