@@ -23,7 +23,7 @@ import {
   ArrowLeft, Plus, Edit, Trash2, DollarSign, Calendar, Phone, Mail,
   User, MapPin, Clock, FileText, CheckCircle, Layers, Receipt,
   ShoppingCart, CreditCard, ListTodo, Zap, AlertTriangle, Download,
-  FileSignature,
+  FileSignature, MessageCircle,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -61,6 +61,7 @@ interface ProjectProcurementItem {
 interface PaymentScheduleItem {
   id: string; projectId: string; milestoneName: string; amount: string;
   dueDate: string | null; status: string; paidDate: string | null; notes: string | null;
+  invoiceId: string | null; transactionId: string | null;
 }
 interface ProjectTaskItem {
   id: string; projectId: string; name: string; description: string | null;
@@ -332,6 +333,45 @@ export default function ProjectDetail() {
     procForm.reset({ itemName: p.itemName, description: p.description || "", quantity: p.quantity, unitPrice: p.unitPrice, totalPrice: p.totalPrice, vendor: p.vendor || "", purchaseDate: p.purchaseDate?.split("T")[0] || "", deliveryDate: p.deliveryDate?.split("T")[0] || "", status: p.status, notes: p.notes || "" });
     setProcOpen(true);
   }
+  async function downloadPaymentInvoice(p: PaymentScheduleItem) {
+    if (!p.invoiceId) return;
+    try {
+      const res = await fetch(`/api/invoices/${p.invoiceId}/download`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to download invoice");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice-${p.milestoneName.replace(/\s+/g, "-")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e: any) {
+      toast({ title: t.error || "Error", description: e.message, variant: "destructive" });
+    }
+  }
+
+  async function sendInvoiceWhatsApp(p: PaymentScheduleItem) {
+    if (!project?.clientPhone || !p.invoiceId) return;
+    try {
+      const { formatPhoneForWhatsApp, openWhatsAppWithMessage, createWhatsAppAttachmentMessage } = await import("@/lib/whatsapp");
+      // Trigger PDF download for manual attach
+      await downloadPaymentInvoice(p);
+      const message = createWhatsAppAttachmentMessage({
+        invoiceNumber: `${project.projectNumber}-${p.id.substring(0, 8)}`,
+        total: parseFloat(p.amount).toFixed(2),
+        paymentMethod: "Project Payment",
+        restaurantName: project.name,
+        customerName: project.clientName,
+      });
+      formatPhoneForWhatsApp(project.clientPhone);
+      openWhatsAppWithMessage(project.clientPhone, message);
+    } catch (e: any) {
+      toast({ title: t.error || "Error", description: e.message, variant: "destructive" });
+    }
+  }
+
   function openEditPay(p: PaymentScheduleItem) {
     setEditPay(p);
     payForm.reset({ milestoneName: p.milestoneName, amount: p.amount, dueDate: p.dueDate?.split("T")[0] || "", status: p.status, paidDate: p.paidDate?.split("T")[0] || "", notes: p.notes || "" });
@@ -606,9 +646,21 @@ export default function ProjectDetail() {
                         <p className="font-semibold truncate">{p.milestoneName}</p>
                         <p className="text-sm text-muted-foreground">{t.dueDate || "Due"}: {fmtDate(p.dueDate)}</p>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
                         <Badge variant={statusBadge(p.status)} className={statusClass(p.status)}>{p.status}</Badge>
                         <span className="font-semibold">{fmtNum(p.amount)} SAR</span>
+                        {p.status === "paid" && p.invoiceId && (
+                          <>
+                            <Button variant="outline" size="sm" onClick={() => downloadPaymentInvoice(p)} data-testid={`button-download-invoice-${p.id}`}>
+                              <Download className="h-4 w-4 mr-1" />{t.downloadInvoice || "Invoice"}
+                            </Button>
+                            {project?.clientPhone && (
+                              <Button variant="outline" size="sm" onClick={() => sendInvoiceWhatsApp(p)} data-testid={`button-whatsapp-${p.id}`}>
+                                <MessageCircle className="h-4 w-4 mr-1" />WhatsApp
+                              </Button>
+                            )}
+                          </>
+                        )}
                         <Button variant="ghost" size="icon" onClick={() => openEditPay(p)} data-testid={`button-edit-payment-${p.id}`}><Edit className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => setDelItem({ type: "payment-schedules", id: p.id, name: p.milestoneName })} data-testid={`button-delete-payment-${p.id}`}><Trash2 className="h-4 w-4" /></Button>
                       </div>

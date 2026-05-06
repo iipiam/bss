@@ -5729,9 +5729,13 @@ export const storage = new DatabaseStorage();
         status TEXT NOT NULL DEFAULT 'pending',
         paid_date TIMESTAMP,
         notes TEXT,
+        invoice_id VARCHAR(255),
+        transaction_id VARCHAR(255),
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
+    await pool.query(`ALTER TABLE payment_schedules ADD COLUMN IF NOT EXISTS invoice_id VARCHAR(255)`);
+    await pool.query(`ALTER TABLE payment_schedules ADD COLUMN IF NOT EXISTS transaction_id VARCHAR(255)`);
 
     // BizFlow Manager: Create project_services table if not exists
     await pool.query(`

@@ -1646,6 +1646,8 @@ export const paymentSchedules = pgTable("payment_schedules", {
   status: text("status").notNull().default("pending"), // "pending", "invoiced", "paid", "overdue"
   paidDate: timestamp("paid_date"),
   notes: text("notes"),
+  invoiceId: varchar("invoice_id"),
+  transactionId: varchar("transaction_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 })
 

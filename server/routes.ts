@@ -15232,8 +15232,63 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const data = { ...req.body };
       if (data.dueDate) data.dueDate = new Date(data.dueDate);
       if (data.paidDate) data.paidDate = new Date(data.paidDate);
+      const existing = await storage.getPaymentSchedule(req.params.id, restaurantId);
       const schedule = await storage.updatePaymentSchedule(req.params.id, restaurantId, data);
       if (!schedule) return res.status(404).json({ message: "Payment schedule not found" });
+
+      // When transitioning to "paid", create a transaction + ZATCA invoice so the
+      // payment shows up in dashboard, sales tracking and financial statements.
+      const becamePaid = schedule.status === 'paid' && existing?.status !== 'paid' && !schedule.invoiceId;
+      if (becamePaid) {
+        try {
+          const total = parseFloat(schedule.amount || '0');
+          if (total > 0) {
+            const project = await storage.getServiceProject(schedule.projectId, restaurantId);
+            const subtotal = total / 1.15;
+            const tax = total - subtotal;
+            const txnId = `PRJ-${(project?.projectNumber || 'X')}-${schedule.id.substring(0, 8)}-${Date.now()}`;
+
+            const txn = await storage.createTransaction({
+              restaurantId,
+              transactionId: txnId,
+              itemCount: 1,
+              subtotal: subtotal.toFixed(2),
+              tax: tax.toFixed(2),
+              total: total.toFixed(2),
+              paymentMethod: 'Project Payment',
+            });
+
+            const invoiceNumber = `PRJ-${(project?.projectNumber || 'X')}-${schedule.id.substring(0, 8)}`;
+            const customerName = project?.clientName || schedule.milestoneName;
+            const itemName = `${project?.name ? project.name + ' - ' : ''}${schedule.milestoneName}`;
+            const invoice = await storage.createInvoice({
+              restaurantId,
+              invoiceNumber,
+              invoiceType: 'simplified',
+              transactionId: txn.id,
+              customerName,
+              items: [{
+                name: itemName,
+                quantity: 1,
+                basePrice: parseFloat(subtotal.toFixed(2)),
+                vatAmount: parseFloat(tax.toFixed(2)),
+                total: parseFloat(total.toFixed(2)),
+              }],
+              subtotal: subtotal.toFixed(2),
+              vatAmount: tax.toFixed(2),
+              total: total.toFixed(2),
+            } as any);
+
+            const finalSchedule = await storage.updatePaymentSchedule(req.params.id, restaurantId, {
+              invoiceId: invoice.id,
+              transactionId: txn.id,
+            } as any);
+            return res.json(finalSchedule || schedule);
+          }
+        } catch (err: any) {
+          console.error("[PaymentSchedule] Failed to create transaction/invoice on paid:", err);
+        }
+      }
       res.json(schedule);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
