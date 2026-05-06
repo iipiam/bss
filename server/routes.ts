@@ -14705,9 +14705,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       } else {
         res.status(400).json({ error: result.message });
       }
-    } catch (error) {
-      console.error("Error requesting production CSID:", error);
-      res.status(500).json({ error: "Failed to request production CSID" });
+    } catch (error: any) {
+      console.error("Error requesting production CSID:", error?.stack || error);
+      res.status(500).json({
+        error: error?.message || "Failed to request production CSID",
+        stack: process.env.NODE_ENV === "production" ? undefined : error?.stack,
+      });
     }
   });
 
@@ -14777,9 +14780,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const result = await runComplianceChecks(targetRestaurantId);
       
       res.json(result);
-    } catch (error) {
-      console.error("Error running compliance checks:", error);
-      res.status(500).json({ error: "Failed to run compliance checks" });
+    } catch (error: any) {
+      console.error("Error running compliance checks:", error?.stack || error);
+      res.status(500).json({
+        error: error?.message || "Failed to run compliance checks",
+        stack: process.env.NODE_ENV === "production" ? undefined : error?.stack,
+      });
     }
   });
 
