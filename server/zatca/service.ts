@@ -79,7 +79,7 @@ async function signInvoiceManually(
     timestamp: timestamp,
     invoiceTotal: baseInvoiceData.total.toFixed(2),
     vatTotal: baseInvoiceData.vatAmount.toFixed(2),
-    invoiceHash: invoiceHashHex,
+    invoiceHash: invoiceHash,
     signature: signature,
     publicKey: publicKeyBase64
   };
