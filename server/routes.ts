@@ -14612,13 +14612,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // Onboard to ZATCA (request compliance CSID) - IT only
   app.post("/api/zatca/onboard", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const { restaurantId: targetRestaurantId, otp } = req.body;
+      const { restaurantId: targetRestaurantId, otp: rawOtp } = req.body;
       if (!targetRestaurantId) {
         return res.status(400).json({ error: "Restaurant ID required in request body" });
       }
+      // Strip ALL whitespace (spaces, tabs, newlines) from OTP — copy/paste from
+      // the ZATCA portal often introduces invisible whitespace that ZATCA
+      // rejects with "OTP Invalid".
+      const otp = String(rawOtp || "").replace(/\s+/g, "");
       if (!otp) {
         return res.status(400).json({ error: "OTP is required" });
       }
+      if (!/^\d{6}$/.test(otp)) {
+        return res.status(400).json({ error: `OTP must be exactly 6 digits. Received "${otp}" (${otp.length} chars). Generate a fresh OTP from fatoora.zatca.gov.sa and paste only the digits.` });
+      }
+      console.log(`[ZATCA Onboard] OTP received (${otp.length} chars): ${otp.substring(0, 2)}****`);
       
       const settings = await storage.getZatcaSettings(targetRestaurantId);
       if (!settings) {
