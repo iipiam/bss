@@ -205,8 +205,17 @@ export function canonicalizeInvoiceXml(xmlContent: string): string {
   });
 }
 
+/**
+ * ZATCA invoice hash: SHA-256 of the canonical XML, expressed as base64 of
+ * the *lowercase hex* string of the digest (NOT base64 of the raw 32-byte
+ * digest). This 88-character form is what ZATCA's validator and SDK expect
+ * in <ds:DigestValue> and what gets packed (as the hex ASCII bytes) into
+ * QR Tag 6. Using base64-of-raw-bytes (44 chars) is the cause of the
+ * "Invoice xml hash does not match with qr code invoice xml hash" error.
+ */
 export function generateInvoiceHash(xmlContent: string): string {
-  return crypto.createHash("sha256").update(canonicalizeInvoiceXml(xmlContent), "utf8").digest("base64");
+  const hex = crypto.createHash("sha256").update(canonicalizeInvoiceXml(xmlContent), "utf8").digest("hex");
+  return Buffer.from(hex, "utf8").toString("base64");
 }
 
 export function generateInvoiceHashHex(xmlContent: string): string {
@@ -249,9 +258,14 @@ export function signInvoice(xmlContent: string, privateKey: string): string {
   }
 }
 
+/**
+ * ZATCA certificate hash: same base64-of-hex convention as the invoice
+ * hash. SHA-256 over the DER-encoded certificate bytes.
+ */
 export function generateCertificateHash(certificate: string): string {
   const cleanCert = extractCertificateBase64Body(certificate);
-  return crypto.createHash("sha256").update(Buffer.from(cleanCert, "base64")).digest("base64");
+  const hex = crypto.createHash("sha256").update(Buffer.from(cleanCert, "base64")).digest("hex");
+  return Buffer.from(hex, "utf8").toString("base64");
 }
 
 /**
@@ -659,8 +673,10 @@ export function generateSignedInvoiceXml(
   const invoiceHash = generateInvoiceHash(shellXml);
 
   // --- Step 3: Compute SignedProperties hash. ---------------------------
+  // Same base64-of-hex convention as the invoice hash.
   const signedPropertiesXml = buildSignedPropertiesXml(signingTime, certificateHash, issuerName, serialNumber);
-  const signedPropertiesHash = crypto.createHash("sha256").update(signedPropertiesXml, "utf8").digest("base64");
+  const signedPropertiesHashHex = crypto.createHash("sha256").update(signedPropertiesXml, "utf8").digest("hex");
+  const signedPropertiesHash = Buffer.from(signedPropertiesHashHex, "utf8").toString("base64");
 
   // --- Step 4: Build SignedInfo with the real hashes, canonicalize it,
   // and ECDSA-SHA256-sign the canonical bytes. ---------------------------
