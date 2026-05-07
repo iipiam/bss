@@ -1,0 +1,51 @@
+/home/Kinzhal/.pm2/logs/BSS-error.log last 50 lines:
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      |     at async file:///home/BSS/dist/index.js:25228:22
+0|BSS      | Error requesting production CSID: TypeError: ZatcaApiClient is not a constructor
+0|BSS      |     at getProductionCSID (file:///home/BSS/dist/index.js:12460:18)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      |     at async file:///home/BSS/dist/index.js:25165:22
+0|BSS      | Error requesting production CSID: Error: Dynamic require of "@xmldom/xmldom" is not supported
+0|BSS      |     at file:///home/BSS/dist/index.js:7:9
+0|BSS      |     at server/zatca/xml-generator.ts (file:///home/BSS/dist/index.js:11665:37)
+0|BSS      |     at __init (file:///home/BSS/dist/index.js:10:56)
+0|BSS      |     at server/zatca/service.ts (file:///home/BSS/dist/index.js:12662:5)
+0|BSS      |     at __init (file:///home/BSS/dist/index.js:10:56)
+0|BSS      |     at file:///home/BSS/dist/index.js:25164:93
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      |     at async file:///home/BSS/dist/index.js:25164:57
+0|BSS      | [ZATCA Compliance] WARNING: Compliance CSID is 952.5 minutes old. It expires after ~60 minutes. Consider re-running Step 2.
+0|BSS      | Error running compliance checks: TypeError: ZatcaApiClient is not a constructor
+0|BSS      |     at runComplianceChecks (file:///home/BSS/dist/index.js:12508:18)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      |     at async file:///home/BSS/dist/index.js:25231:22
+0|BSS      | Error onboarding to ZATCA: ZatcaApiClient is not a constructor
+0|BSS      | [ZATCA Compliance] WARNING: Compliance CSID is 1121.9 minutes old. It expires after ~60 minutes. Consider re-running Step 2.
+0|BSS      | Error running compliance checks: TypeError: ZatcaApiClient is not a constructor
+0|BSS      |     at runComplianceChecks (file:///home/BSS/dist/index.js:12508:18)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      |     at async file:///home/BSS/dist/index.js:25231:22
+0|BSS      | Error onboarding to ZATCA: ZatcaApiClient is not a constructor
+0|BSS      | Error onboarding to ZATCA: ZatcaApiClient is not a constructor
+0|BSS      | Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@xmldom/xmldom' imported from /home/BSS/dist/index.js
+0|BSS      |     at packageResolve (node:internal/modules/esm/resolve:873:9)
+0|BSS      |     at moduleResolve (node:internal/modules/esm/resolve:946:18)
+0|BSS      |     at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+0|BSS      |     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:708:12)
+0|BSS      |     at #cachedDefaultResolve (node:internal/modules/esm/loader:657:25)
+0|BSS      |     at ModuleLoader.resolve (node:internal/modules/esm/loader:640:38)
+0|BSS      |     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:264:38)
+0|BSS      |     at ModuleJob._link (node:internal/modules/esm/module_job:168:49) {
+0|BSS      |   code: 'ERR_MODULE_NOT_FOUND'
+0|BSS      | }
+0|BSS      | Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@xmldom/xmldom' imported from /home/BSS/dist/index.js
+0|BSS      |     at packageResolve (node:internal/modules/esm/resolve:873:9)
+0|BSS      |     at moduleResolve (node:internal/modules/esm/resolve:946:18)
+0|BSS      |     at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+0|BSS      |     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:708:12)
+0|BSS      |     at #cachedDefaultResolve (node:internal/modules/esm/loader:657:25)
+0|BSS      |     at ModuleLoader.resolve (node:internal/modules/esm/loader:640:38)
+0|BSS      |     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:264:38)
+0|BSS      |     at ModuleJob._link (node:internal/modules/esm/module_job:168:49) {
+0|BSS      |   code: 'ERR_MODULE_NOT_FOUND'
+0|BSS      | }
