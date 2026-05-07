@@ -1,9 +1,9 @@
 import crypto from "crypto";
 import { extractPublicKeyBase64, getCertificateIssuerSerial, extractCertificateSignatureBytes, extractCertificateBase64Body } from "./crypto";
-
-const { DOMParser, XMLSerializer } = require("@xmldom/xmldom") as any;
-const xpath = require("xpath") as any;
-const { C14nCanonicalization } = require("xml-crypto") as any;
+import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
+import * as xpath from "xpath";
+import xmlCrypto from "xml-crypto";
+const { C14nCanonicalization } = xmlCrypto as any;
 
 interface ZatcaInvoiceLineItem {
   name: string;

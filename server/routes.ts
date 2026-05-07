@@ -8,6 +8,13 @@ import { PasswordResetMailer } from "./email";
 import { sanitizePatchBody } from "./utils";
 import { logActivity } from "./activityLogger";
 import { requirePermission, requireAnyPermission, requireAllPermissions, requireAction } from "./middleware/requirePermission";
+import {
+  processInvoiceForZatca,
+  onboardToZatca,
+  getProductionCSID,
+  runComplianceChecks,
+  retryPendingInvoices,
+} from "./zatca/service";
 import bcrypt from "bcrypt";
 import QRCode from "qrcode";
 import rateLimit from "express-rate-limit";
@@ -4914,7 +4921,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       
       // Process invoice through ZATCA if enabled (B2B Standard Invoice - requires clearance)
       try {
-        const { processInvoiceForZatca } = await import("./zatca/service");
+        
         const zatcaResult = await processInvoiceForZatca({
           restaurantId,
           invoiceId: createdInvoice.id,
@@ -5052,7 +5059,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       // Process invoice through ZATCA if enabled (async, non-blocking)
       try {
-        const { processInvoiceForZatca } = await import("./zatca/service");
+        
         const zatcaResult = await processInvoiceForZatca({
           restaurantId,
           invoiceId: createdInvoice.id,
@@ -14671,7 +14678,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       });
       console.log("[ZATCA Onboard] Fresh CSR saved, length:", freshCsr.length);
 
-      const { onboardToZatca } = await import("./zatca/service");
+      
       const result = await onboardToZatca(targetRestaurantId, otp);
       
       if (result.success) {
@@ -14697,7 +14704,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "Compliance request ID is required" });
       }
       
-      const { getProductionCSID } = await import("./zatca/service");
+      
       const result = await getProductionCSID(targetRestaurantId, complianceRequestId);
       
       if (result.success) {
@@ -14776,7 +14783,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "Restaurant ID required in request body" });
       }
       
-      const { runComplianceChecks } = await import("./zatca/service");
+      
       const result = await runComplianceChecks(targetRestaurantId);
       
       res.json(result);
@@ -14797,7 +14804,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "Restaurant ID required in request body" });
       }
       
-      const { retryPendingInvoices } = await import("./zatca/service");
+      
       const result = await retryPendingInvoices(targetRestaurantId);
       
       res.json(result);
@@ -14815,7 +14822,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ error: "Restaurant ID required in request body" });
       }
       
-      const { processInvoiceForZatca } = await import("./zatca/service");
+      
       const result = await processInvoiceForZatca({
         restaurantId: targetRestaurantId,
         ...invoiceData
