@@ -1,0 +1,104 @@
+⚡ Done in 88ms
+[PM2] Applying action restartProcessId on app [all](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 73   │ online    │ 0%       │ 17.9mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[TAILING] Tailing last 30 lines for [all] processes (change the value with --lines option)
+/home/Kinzhal/.pm2/pm2.log last 30 lines:
+PM2        | 2026-05-06T19:04:17: PM2 log: pid=2270243 msg=process killed
+PM2        | 2026-05-06T19:04:17: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-05-06T19:04:17: PM2 log: App [BSS:0] online
+PM2        | 2026-05-06T19:44:33: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-05-06T19:44:33: PM2 log: App [BSS:0] exited with code [130] via signal [SIGINT]
+PM2        | 2026-05-06T19:44:33: PM2 log: pid=2270835 msg=process killed
+PM2        | 2026-05-06T19:44:33: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-05-06T19:44:33: PM2 log: App [BSS:0] online
+PM2        | 2026-05-06T20:02:54: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-05-06T20:02:54: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-05-06T20:02:54: PM2 log: pid=2271983 msg=process killed
+PM2        | 2026-05-06T20:02:54: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-05-06T20:02:54: PM2 log: App [BSS:0] online
+PM2        | 2026-05-07T03:08:32: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-05-07T03:08:32: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-05-07T13:50:05: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-05-07T13:50:05: PM2 log: App [BSS:0] exited with code [130] via signal [SIGINT]
+PM2        | 2026-05-07T13:50:05: PM2 log: pid=2272502 msg=process killed
+PM2        | 2026-05-07T13:50:05: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-05-07T13:50:05: PM2 log: App [BSS:0] online
+PM2        | 2026-05-07T13:54:29: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-05-07T13:54:29: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-05-07T13:54:29: PM2 log: pid=2300029 msg=process killed
+PM2        | 2026-05-07T13:54:29: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-05-07T13:54:29: PM2 log: App [BSS:0] online
+PM2        | 2026-05-07T13:56:00: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-05-07T13:56:00: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-05-07T13:56:00: PM2 log: pid=2300162 msg=process killed
+PM2        | 2026-05-07T13:56:00: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-05-07T13:56:00: PM2 log: App [BSS:0] online
+
+/home/Kinzhal/.pm2/logs/BSS-out.log last 30 lines:
+0|BSS      | [ZATCA CSR Config] VAT: 312384206600003, InvoiceType: 1100, Branch: Main Device
+0|BSS      | [ZATCA CSR] Verification: Certificate request self-signature verify OK
+0|BSS      | [ZATCA CSR] PEM length: 817, base64(PEM) length: 1092
+0|BSS      | [ZATCA CSR] First 60 chars: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ0lqQ0NB...
+0|BSS      | [ZATCA Onboard] Fresh CSR saved, length: 1092
+0|BSS      | [ZATCA Service] CSR from DB length: 1092, first 60 chars: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ0lqQ0NB...
+0|BSS      | [ZATCA Service] CSR format: base64(PEM) ✓, decoded length: 817
+0|BSS      | [ZATCA Service] CSR to send length: 1092, first 40 chars: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNU...
+0|BSS      | 1:43:39 PM [express] POST /api/zatca/onboard 400 in 48ms :: {"error":"ZatcaApiClient is not a constr…
+0|BSS      | 1:43:43 PM [express] GET /api/branches 403 in 7ms :: {"error":"This endpoint requires a restaurant a…
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS      | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS      | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS      | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS      | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS      | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+
+/home/Kinzhal/.pm2/logs/BSS-error.log last 30 lines:
+0|BSS      |     at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+0|BSS      |     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:708:12)
+0|BSS      |     at #cachedDefaultResolve (node:internal/modules/esm/loader:657:25)
+0|BSS      |     at ModuleLoader.resolve (node:internal/modules/esm/loader:640:38)
+0|BSS      |     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:264:38)
+0|BSS      |     at ModuleJob._link (node:internal/modules/esm/module_job:168:49) {
+0|BSS      |   code: 'ERR_MODULE_NOT_FOUND'
+0|BSS      | }
+0|BSS      | Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@xmldom/xmldom' imported from /home/BSS/dist/index.js
+0|BSS      |     at packageResolve (node:internal/modules/esm/resolve:873:9)
+0|BSS      |     at moduleResolve (node:internal/modules/esm/resolve:946:18)
+0|BSS      |     at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+0|BSS      |     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:708:12)
+0|BSS      |     at #cachedDefaultResolve (node:internal/modules/esm/loader:657:25)
+0|BSS      |     at ModuleLoader.resolve (node:internal/modules/esm/loader:640:38)
+0|BSS      |     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:264:38)
+0|BSS      |     at ModuleJob._link (node:internal/modules/esm/module_job:168:49) {
+0|BSS      |   code: 'ERR_MODULE_NOT_FOUND'
+0|BSS      | }
+0|BSS      | Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@xmldom/xmldom' imported from /home/BSS/dist/index.js
+0|BSS      |     at packageResolve (node:internal/modules/esm/resolve:873:9)
+0|BSS      |     at moduleResolve (node:internal/modules/esm/resolve:946:18)
+0|BSS      |     at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+0|BSS      |     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:708:12)
+0|BSS      |     at #cachedDefaultResolve (node:internal/modules/esm/loader:657:25)
+0|BSS      |     at ModuleLoader.resolve (node:internal/modules/esm/loader:640:38)
+0|BSS      |     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:264:38)
+0|BSS      |     at ModuleJob._link (node:internal/modules/esm/module_job:168:49) {
+0|BSS      |   code: 'ERR_MODULE_NOT_FOUND'
+0|BSS      | }
