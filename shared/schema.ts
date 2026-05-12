@@ -1592,6 +1592,10 @@ export const serviceProjects = pgTable("service_projects", {
   clientName: text("client_name").notNull(),
   clientPhone: text("client_phone"),
   clientEmail: text("client_email"),
+  clientCrNumber: text("client_cr_number"),
+  clientVatNumber: text("client_vat_number"),
+  clientAddress: text("client_address"),
+  clientLegalRepresentative: text("client_legal_representative"),
   description: text("description"),
   location: text("location"),
   status: text("status").notNull().default("draft"), // "draft", "in_progress", "on_hold", "completed", "cancelled"

@@ -16021,6 +16021,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             <h3>${escapeHtml(project.name)}</h3>
             <div class="info-grid">
               <div class="info-item"><span>Client / العميل:</span> ${escapeHtml(project.clientName)}</div>
+              ${project.clientLegalRepresentative ? `<div class="info-item"><span>Representative / الممثل:</span> ${escapeHtml(project.clientLegalRepresentative)}</div>` : ''}
+              ${project.clientCrNumber ? `<div class="info-item"><span>CR / ID:</span> ${escapeHtml(project.clientCrNumber)}</div>` : ''}
+              ${project.clientVatNumber ? `<div class="info-item"><span>VAT No:</span> ${escapeHtml(project.clientVatNumber)}</div>` : ''}
+              ${project.clientPhone ? `<div class="info-item"><span>Phone:</span> ${escapeHtml(project.clientPhone)}</div>` : ''}
+              ${project.clientEmail ? `<div class="info-item"><span>Email:</span> ${escapeHtml(project.clientEmail)}</div>` : ''}
+              ${project.clientAddress ? `<div class="info-item"><span>Address:</span> ${escapeHtml(project.clientAddress)}</div>` : ''}
               <div class="info-item"><span>Status:</span> ${escapeHtml(project.status)}</div>
               <div class="info-item"><span>Priority:</span> ${escapeHtml(project.priority)}</div>
               <div class="info-item"><span>Location:</span> ${escapeHtml(project.location) || '-'}</div>
@@ -16163,6 +16169,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         '{{clientName}}': project.clientName || '',
         '{{clientPhone}}': project.clientPhone || '',
         '{{clientEmail}}': project.clientEmail || '',
+        '{{clientCrNumber}}': project.clientCrNumber || '',
+        '{{clientVatNumber}}': project.clientVatNumber || '',
+        '{{clientAddress}}': project.clientAddress || '',
+        '{{clientLegalRepresentative}}': project.clientLegalRepresentative || '',
         '{{projectName}}': project.name || '',
         '{{projectNumber}}': project.projectNumber || '',
         '{{projectLocation}}': project.location || '',
@@ -16293,8 +16303,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             <div class="party-box">
               <h4>Client / العميل</h4>
               <div class="row"><span class="lbl">Name:</span> ${escapeHtml(project.clientName || '-')}</div>
+              ${project.clientLegalRepresentative ? `<div class="row"><span class="lbl">Representative:</span> ${escapeHtml(project.clientLegalRepresentative)}</div>` : ''}
+              ${project.clientCrNumber ? `<div class="row"><span class="lbl">CR / ID:</span> ${escapeHtml(project.clientCrNumber)}</div>` : ''}
+              ${project.clientVatNumber ? `<div class="row"><span class="lbl">VAT No:</span> ${escapeHtml(project.clientVatNumber)}</div>` : ''}
               ${project.clientPhone ? `<div class="row"><span class="lbl">Phone:</span> ${escapeHtml(project.clientPhone)}</div>` : ''}
               ${project.clientEmail ? `<div class="row"><span class="lbl">Email:</span> ${escapeHtml(project.clientEmail)}</div>` : ''}
+              ${project.clientAddress ? `<div class="row"><span class="lbl">Address:</span> ${escapeHtml(project.clientAddress)}</div>` : ''}
               ${project.location ? `<div class="row"><span class="lbl">Location:</span> ${escapeHtml(project.location)}</div>` : ''}
             </div>
           </div>

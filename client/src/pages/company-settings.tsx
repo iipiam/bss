@@ -148,6 +148,12 @@ export default function CompanySettingsPage() {
 
   const placeholders = [
     { key: "{{clientName}}", desc: t.placeholderClientName || "Client name" },
+    { key: "{{clientPhone}}", desc: t.placeholderClientPhone || "Client phone" },
+    { key: "{{clientEmail}}", desc: t.placeholderClientEmail || "Client email" },
+    { key: "{{clientCrNumber}}", desc: t.placeholderClientCrNumber || "Client CR / National ID" },
+    { key: "{{clientVatNumber}}", desc: t.placeholderClientVatNumber || "Client VAT number" },
+    { key: "{{clientAddress}}", desc: t.placeholderClientAddress || "Client address" },
+    { key: "{{clientLegalRepresentative}}", desc: t.placeholderClientLegalRepresentative || "Client legal representative" },
     { key: "{{projectName}}", desc: t.placeholderProjectName || "Project name" },
     { key: "{{projectNumber}}", desc: t.placeholderProjectNumber || "Project number" },
     { key: "{{totalAmount}}", desc: t.placeholderTotalAmount || "Total amount" },

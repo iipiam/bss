@@ -5670,6 +5670,10 @@ export const storage = new DatabaseStorage();
         client_name TEXT NOT NULL,
         client_phone TEXT,
         client_email TEXT,
+        client_cr_number TEXT,
+        client_vat_number TEXT,
+        client_address TEXT,
+        client_legal_representative TEXT,
         description TEXT,
         status TEXT NOT NULL DEFAULT 'draft',
         priority TEXT NOT NULL DEFAULT 'medium',
@@ -5688,7 +5692,11 @@ export const storage = new DatabaseStorage();
     // (CREATE TABLE IF NOT EXISTS won't add columns to an existing table).
     await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS actual_cost DECIMAL(12, 2)`);
     await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS contractor_id VARCHAR(255)`);
-    console.log('[Migration] service_projects columns verified/added: actual_cost, contractor_id');
+    await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS client_cr_number TEXT`);
+    await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS client_vat_number TEXT`);
+    await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS client_address TEXT`);
+    await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS client_legal_representative TEXT`);
+    console.log('[Migration] service_projects columns verified/added: actual_cost, contractor_id, client_cr_number, client_vat_number, client_address, client_legal_representative');
 
     // BizFlow Manager: Create quotations table if not exists
     await pool.query(`

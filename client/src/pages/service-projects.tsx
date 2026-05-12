@@ -73,6 +73,10 @@ interface ServiceProject {
   clientName: string;
   clientPhone: string | null;
   clientEmail: string | null;
+  clientCrNumber: string | null;
+  clientVatNumber: string | null;
+  clientAddress: string | null;
+  clientLegalRepresentative: string | null;
   description: string | null;
   location: string | null;
   status: string;
@@ -92,6 +96,10 @@ const projectFormSchema = z.object({
   clientName: z.string().min(1, "Client name is required"),
   clientPhone: z.string().optional().default(""),
   clientEmail: z.string().optional().default(""),
+  clientCrNumber: z.string().optional().default(""),
+  clientVatNumber: z.string().optional().default(""),
+  clientAddress: z.string().optional().default(""),
+  clientLegalRepresentative: z.string().optional().default(""),
   description: z.string().optional().default(""),
   location: z.string().optional().default(""),
   status: z.string().min(1, "Status is required"),
@@ -188,6 +196,10 @@ export default function ServiceProjects() {
       clientName: "",
       clientPhone: "",
       clientEmail: "",
+      clientCrNumber: "",
+      clientVatNumber: "",
+      clientAddress: "",
+      clientLegalRepresentative: "",
       description: "",
       location: "",
       status: "draft",
@@ -209,6 +221,10 @@ export default function ServiceProjects() {
         ...data,
         clientPhone: data.clientPhone || null,
         clientEmail: data.clientEmail || null,
+        clientCrNumber: data.clientCrNumber || null,
+        clientVatNumber: data.clientVatNumber || null,
+        clientAddress: data.clientAddress || null,
+        clientLegalRepresentative: data.clientLegalRepresentative || null,
         description: data.description || null,
         location: data.location || null,
         startDate: data.startDate || null,
@@ -244,6 +260,10 @@ export default function ServiceProjects() {
         clientName: data.clientName,
         clientPhone: data.clientPhone || null,
         clientEmail: data.clientEmail || null,
+        clientCrNumber: data.clientCrNumber || null,
+        clientVatNumber: data.clientVatNumber || null,
+        clientAddress: data.clientAddress || null,
+        clientLegalRepresentative: data.clientLegalRepresentative || null,
         description: data.description || null,
         location: data.location || null,
         status: data.status,
@@ -300,6 +320,10 @@ export default function ServiceProjects() {
       ...data,
       clientPhone: data.clientPhone || null,
       clientEmail: data.clientEmail || null,
+      clientCrNumber: data.clientCrNumber || null,
+      clientVatNumber: data.clientVatNumber || null,
+      clientAddress: data.clientAddress || null,
+      clientLegalRepresentative: data.clientLegalRepresentative || null,
       description: data.description || null,
       location: data.location || null,
       startDate: data.startDate || null,
@@ -322,6 +346,10 @@ export default function ServiceProjects() {
       clientName: project.clientName,
       clientPhone: project.clientPhone || "",
       clientEmail: project.clientEmail || "",
+      clientCrNumber: project.clientCrNumber || "",
+      clientVatNumber: project.clientVatNumber || "",
+      clientAddress: project.clientAddress || "",
+      clientLegalRepresentative: project.clientLegalRepresentative || "",
       description: project.description || "",
       location: project.location || "",
       status: project.status,
@@ -357,6 +385,10 @@ export default function ServiceProjects() {
       clientName: "",
       clientPhone: "",
       clientEmail: "",
+      clientCrNumber: "",
+      clientVatNumber: "",
+      clientAddress: "",
+      clientLegalRepresentative: "",
       description: "",
       location: "",
       status: "draft",
@@ -527,6 +559,86 @@ export default function ServiceProjects() {
                       </FormItem>
                     )}
                   />
+                </div>
+
+                <div className="pt-2">
+                  <h4 className="text-sm font-semibold text-muted-foreground mb-3" data-testid="text-client-legal-section">
+                    {t.clientLegalInformation}
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="clientCrNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t.clientCrNumber}</FormLabel>
+                          <FormControl>
+                            <Input
+                              data-testid="input-client-cr-number"
+                              placeholder="1010XXXXXX"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="clientVatNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t.clientVatNumber}</FormLabel>
+                          <FormControl>
+                            <Input
+                              data-testid="input-client-vat-number"
+                              placeholder="3XXXXXXXXXXXXX3"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="mt-4">
+                    <FormField
+                      control={form.control}
+                      name="clientAddress"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t.clientAddress}</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              data-testid="input-client-address"
+                              className="resize-none"
+                              rows={2}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="mt-4">
+                    <FormField
+                      control={form.control}
+                      name="clientLegalRepresentative"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t.clientLegalRepresentative}</FormLabel>
+                          <FormControl>
+                            <Input
+                              data-testid="input-client-legal-representative"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
                 <FormField
