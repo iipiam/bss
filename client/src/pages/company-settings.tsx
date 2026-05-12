@@ -147,13 +147,13 @@ export default function CompanySettingsPage() {
   const documents = Array.isArray(settings?.companyDocuments) ? settings.companyDocuments : [];
 
   const placeholders = [
-    { key: "{{clientName}}", desc: t.placeholderClientName || "Client name" },
-    { key: "{{clientPhone}}", desc: t.placeholderClientPhone || "Client phone" },
-    { key: "{{clientEmail}}", desc: t.placeholderClientEmail || "Client email" },
-    { key: "{{clientCrNumber}}", desc: t.placeholderClientCrNumber || "Client CR / National ID" },
-    { key: "{{clientVatNumber}}", desc: t.placeholderClientVatNumber || "Client VAT number" },
-    { key: "{{clientAddress}}", desc: t.placeholderClientAddress || "Client address" },
-    { key: "{{clientLegalRepresentative}}", desc: t.placeholderClientLegalRepresentative || "Client legal representative" },
+    { key: "{{clientName}}", desc: "Client name / اسم العميل" },
+    { key: "{{clientPhone}}", desc: "Client phone / هاتف العميل" },
+    { key: "{{clientEmail}}", desc: "Client email / بريد العميل الإلكتروني" },
+    { key: "{{clientCrNumber}}", desc: "Client CR / National ID / السجل التجاري أو الهوية الوطنية للعميل" },
+    { key: "{{clientVatNumber}}", desc: "Client VAT number / الرقم الضريبي للعميل" },
+    { key: "{{clientAddress}}", desc: "Client address / عنوان العميل" },
+    { key: "{{clientLegalRepresentative}}", desc: "Client legal representative / الممثل القانوني للعميل" },
     { key: "{{projectName}}", desc: t.placeholderProjectName || "Project name" },
     { key: "{{projectNumber}}", desc: t.placeholderProjectNumber || "Project number" },
     { key: "{{totalAmount}}", desc: t.placeholderTotalAmount || "Total amount" },
