@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -54,6 +54,7 @@ import {
   ThumbsDown,
   MessageSquare,
   Download,
+  X,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -94,22 +95,39 @@ interface Quotation {
   declineReason: string | null;
 }
 
+const quotationItemSchema = z.object({
+  serviceId: z.string().min(1, "Service is required"),
+  name: z.string(),
+  quantity: z.coerce.number().positive("Quantity must be greater than 0"),
+  unitPrice: z.coerce.number().nonnegative(),
+  total: z.coerce.number().nonnegative(),
+});
+
 const quotationFormSchema = z.object({
   quotationNumber: z.string().min(1, "Quotation number is required"),
   clientName: z.string().min(1, "Client name is required"),
   clientPhone: z.string().optional().default(""),
   clientEmail: z.string().optional().default(""),
   description: z.string().optional().default(""),
-  subtotal: z.string().min(1, "Subtotal is required"),
+  items: z.array(quotationItemSchema).min(1, "At least one service item is required"),
   vatRate: z.string().optional().default("15"),
-  vatAmount: z.string().min(1, "VAT amount is required"),
-  totalAmount: z.string().min(1, "Total amount is required"),
   status: z.string().min(1, "Status is required"),
   validUntil: z.string().optional().default(""),
   notes: z.string().optional().default(""),
 });
 
 type QuotationFormValues = z.infer<typeof quotationFormSchema>;
+
+interface ServiceCatalogItem {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  pricingMethod: string;
+  unitPrice: string;
+  unit: string | null;
+  status: string;
+}
 
 function getStatusBadgeVariant(status: string): "default" | "secondary" | "outline" | "destructive" {
   switch (status) {
@@ -138,6 +156,7 @@ function getStatusBadgeClassName(status: string): string {
 export default function Quotations() {
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [presetProjectId, setPresetProjectId] = useState<string | null>(null);
   const [editingQuotation, setEditingQuotation] = useState<Quotation | null>(null);
   const [deletingQuotation, setDeletingQuotation] = useState<Quotation | null>(null);
   const [approveQuotation, setApproveQuotation] = useState<Quotation | null>(null);
@@ -156,19 +175,96 @@ export default function Quotations() {
       clientPhone: "",
       clientEmail: "",
       description: "",
-      subtotal: "",
+      items: [],
       vatRate: "15",
-      vatAmount: "",
-      totalAmount: "",
       status: "draft",
       validUntil: "",
       notes: "",
     },
   });
 
+  const watchedItems = form.watch("items") || [];
+  const watchedVatRate = form.watch("vatRate");
+
+  const totals = useMemo(() => {
+    const subtotal = (watchedItems || []).reduce(
+      (sum, it) => sum + (Number(it?.total) || 0),
+      0,
+    );
+    const rate = parseFloat(watchedVatRate || "0") || 0;
+    const vatAmount = subtotal * (rate / 100);
+    const totalAmount = subtotal + vatAmount;
+    return {
+      subtotal: subtotal.toFixed(2),
+      vatAmount: vatAmount.toFixed(2),
+      totalAmount: totalAmount.toFixed(2),
+    };
+  }, [watchedItems, watchedVatRate]);
+
   const { data: quotations = [], isLoading } = useQuery<Quotation[]>({
     queryKey: ["/api/quotations"],
   });
+
+  const { data: serviceCatalog = [] } = useQuery<ServiceCatalogItem[]>({
+    queryKey: ["/api/service-catalog"],
+  });
+
+  const activeServices = useMemo(
+    () => serviceCatalog.filter((s) => s.status === "active"),
+    [serviceCatalog],
+  );
+
+  const addLineItem = () => {
+    const current = form.getValues("items") || [];
+    form.setValue(
+      "items",
+      [
+        ...current,
+        { serviceId: "", name: "", quantity: 1, unitPrice: 0, total: 0 },
+      ],
+      { shouldValidate: false, shouldDirty: true },
+    );
+  };
+
+  const removeLineItem = (index: number) => {
+    const current = form.getValues("items") || [];
+    form.setValue(
+      "items",
+      current.filter((_, i) => i !== index),
+      { shouldValidate: true, shouldDirty: true },
+    );
+  };
+
+  const updateLineService = (index: number, serviceId: string) => {
+    const svc = activeServices.find((s) => s.id === serviceId);
+    const current = form.getValues("items") || [];
+    const next = [...current];
+    const qty = Number(next[index]?.quantity) || 1;
+    const unitPrice = svc ? parseFloat(svc.unitPrice) || 0 : 0;
+    next[index] = {
+      ...next[index],
+      serviceId,
+      name: svc?.name || "",
+      unitPrice,
+      quantity: qty,
+      total: +(qty * unitPrice).toFixed(2),
+    };
+    form.setValue("items", next, { shouldValidate: true, shouldDirty: true });
+  };
+
+  const updateLineQuantity = (index: number, qtyRaw: string) => {
+    const qty = parseFloat(qtyRaw);
+    const safeQty = isNaN(qty) || qty < 0 ? 0 : qty;
+    const current = form.getValues("items") || [];
+    const next = [...current];
+    const unitPrice = Number(next[index]?.unitPrice) || 0;
+    next[index] = {
+      ...next[index],
+      quantity: safeQty,
+      total: +(safeQty * unitPrice).toFixed(2),
+    };
+    form.setValue("items", next, { shouldValidate: true, shouldDirty: true });
+  };
 
   const { data: decisions = [] } = useQuery<any[]>({
     queryKey: ["/api/quotation-decisions", viewDecisionsQuotation?.id],
@@ -182,7 +278,7 @@ export default function Quotations() {
   });
 
   const createQuotationMutation = useMutation({
-    mutationFn: async (data: QuotationFormValues) => {
+    mutationFn: async (data: QuotationFormValues & { subtotal: string; vatAmount: string; totalAmount: string }) => {
       const payload = {
         ...data,
         clientPhone: data.clientPhone || null,
@@ -212,13 +308,14 @@ export default function Quotations() {
   });
 
   const updateQuotationMutation = useMutation({
-    mutationFn: async (data: QuotationFormValues & { id: string }) => {
+    mutationFn: async (data: QuotationFormValues & { id: string; subtotal: string; vatAmount: string; totalAmount: string }) => {
       const payload = {
         quotationNumber: data.quotationNumber,
         clientName: data.clientName,
         clientPhone: data.clientPhone || null,
         clientEmail: data.clientEmail || null,
         description: data.description || null,
+        items: data.items,
         subtotal: data.subtotal,
         vatRate: data.vatRate,
         vatAmount: data.vatAmount,
@@ -331,8 +428,11 @@ export default function Quotations() {
   });
 
   const onSubmit = (data: QuotationFormValues) => {
-    const payload = {
+    const payload: any = {
       ...data,
+      subtotal: totals.subtotal,
+      vatAmount: totals.vatAmount,
+      totalAmount: totals.totalAmount,
       clientPhone: data.clientPhone || null,
       clientEmail: data.clientEmail || null,
       description: data.description || null,
@@ -342,22 +442,30 @@ export default function Quotations() {
     if (editingQuotation) {
       updateQuotationMutation.mutate({ ...payload, id: editingQuotation.id });
     } else {
+      if (presetProjectId) payload.projectId = presetProjectId;
       createQuotationMutation.mutate(payload);
     }
   };
 
   const handleEdit = (quotation: Quotation) => {
     setEditingQuotation(quotation);
+    const items = Array.isArray(quotation.items)
+      ? quotation.items.map((it: any) => ({
+          serviceId: it.serviceId || "",
+          name: it.name || "",
+          quantity: Number(it.quantity) || 0,
+          unitPrice: Number(it.unitPrice) || 0,
+          total: Number(it.total) || 0,
+        }))
+      : [];
     form.reset({
       quotationNumber: quotation.quotationNumber,
       clientName: quotation.clientName,
       clientPhone: quotation.clientPhone || "",
       clientEmail: quotation.clientEmail || "",
       description: quotation.description || "",
-      subtotal: quotation.subtotal,
+      items,
       vatRate: quotation.vatRate,
-      vatAmount: quotation.vatAmount,
-      totalAmount: quotation.totalAmount,
       status: quotation.status,
       validUntil: quotation.validUntil || "",
       notes: quotation.notes || "",
@@ -369,6 +477,7 @@ export default function Quotations() {
     setOpen(isOpen);
     if (!isOpen) {
       setEditingQuotation(null);
+      setPresetProjectId(null);
       form.reset();
     }
   };
@@ -376,22 +485,21 @@ export default function Quotations() {
   const handleCloseDialog = () => {
     setOpen(false);
     setEditingQuotation(null);
+    setPresetProjectId(null);
     form.reset();
   };
 
-  const handleAddNew = () => {
+  const handleAddNew = (preset?: { clientName?: string; clientPhone?: string; clientEmail?: string }) => {
     const nextNumber = quotations.length + 1;
     const suggestion = `QT-${String(nextNumber).padStart(3, "0")}`;
     form.reset({
       quotationNumber: suggestion,
-      clientName: "",
-      clientPhone: "",
-      clientEmail: "",
+      clientName: preset?.clientName || "",
+      clientPhone: preset?.clientPhone || "",
+      clientEmail: preset?.clientEmail || "",
       description: "",
-      subtotal: "",
+      items: [],
       vatRate: "15",
-      vatAmount: "",
-      totalAmount: "",
       status: "draft",
       validUntil: "",
       notes: "",
@@ -399,6 +507,21 @@ export default function Quotations() {
     setEditingQuotation(null);
     setOpen(true);
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const qs = new URLSearchParams(window.location.search);
+    const projectId = qs.get("projectId");
+    if (!projectId) return;
+    setPresetProjectId(projectId);
+    handleAddNew({
+      clientName: qs.get("clientName") || "",
+      clientPhone: qs.get("clientPhone") || "",
+      clientEmail: qs.get("clientEmail") || "",
+    });
+    window.history.replaceState({}, "", window.location.pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filteredQuotations = quotations.filter(
     (quotation) =>
@@ -443,7 +566,7 @@ export default function Quotations() {
             <Button
               data-testid="button-add-quotation"
               className={layout.isMobile ? "h-[44px]" : ""}
-              onClick={handleAddNew}
+              onClick={() => handleAddNew()}
             >
               <Plus className="h-4 w-4 mr-2" />
               {t.addQuotation}
@@ -584,25 +707,137 @@ export default function Quotations() {
                   )}
                 />
 
+                <div className="space-y-2 rounded-md border p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <FormLabel className="m-0">
+                      {t.lineItems || "Line Items"}
+                    </FormLabel>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addLineItem}
+                      data-testid="button-add-line-item"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      {t.addItem || "Add Item"}
+                    </Button>
+                  </div>
+
+                  {activeServices.length === 0 && (
+                    <p className="text-sm text-muted-foreground" data-testid="text-no-services">
+                      {t.noServicesInCatalog ||
+                        "No services found in the Service Catalog. Please add services first."}
+                    </p>
+                  )}
+
+                  {watchedItems.length === 0 ? (
+                    <p
+                      className="text-sm text-muted-foreground"
+                      data-testid="text-no-items"
+                    >
+                      {t.noItemsAdded ||
+                        "No items added yet. Click 'Add Item' and pick a service from the catalog."}
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {watchedItems.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="grid grid-cols-12 gap-2 items-end"
+                          data-testid={`row-line-item-${idx}`}
+                        >
+                          <div className="col-span-6">
+                            <label className="text-xs text-muted-foreground">
+                              {t.service || "Service"}
+                            </label>
+                            <Select
+                              value={item.serviceId || ""}
+                              onValueChange={(val) => updateLineService(idx, val)}
+                            >
+                              <SelectTrigger
+                                data-testid={`select-line-service-${idx}`}
+                              >
+                                <SelectValue
+                                  placeholder={t.selectService || "Select service"}
+                                />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {activeServices.map((svc) => (
+                                  <SelectItem key={svc.id} value={svc.id}>
+                                    {svc.name}
+                                    {svc.unit ? ` (${svc.unit})` : ""} —{" "}
+                                    {parseFloat(svc.unitPrice).toFixed(2)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="col-span-2">
+                            <label className="text-xs text-muted-foreground">
+                              {t.quantity || "Qty"}
+                            </label>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="any"
+                              value={item.quantity ?? ""}
+                              onChange={(e) =>
+                                updateLineQuantity(idx, e.target.value)
+                              }
+                              data-testid={`input-line-quantity-${idx}`}
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <label className="text-xs text-muted-foreground">
+                              {t.unitPrice || "Unit price"}
+                            </label>
+                            <Input
+                              type="number"
+                              value={Number(item.unitPrice || 0).toFixed(2)}
+                              readOnly
+                              tabIndex={-1}
+                              data-testid={`input-line-unit-price-${idx}`}
+                            />
+                          </div>
+                          <div className="col-span-1">
+                            <label className="text-xs text-muted-foreground">
+                              {t.total || "Total"}
+                            </label>
+                            <Input
+                              type="number"
+                              value={Number(item.total || 0).toFixed(2)}
+                              readOnly
+                              tabIndex={-1}
+                              data-testid={`input-line-total-${idx}`}
+                            />
+                          </div>
+                          <div className="col-span-1 flex justify-end">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeLineItem(idx)}
+                              data-testid={`button-remove-line-${idx}`}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {form.formState.errors.items && (
+                    <p
+                      className="text-sm text-destructive"
+                      data-testid="error-items"
+                    >
+                      {form.formState.errors.items.message as string}
+                    </p>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="subtotal"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t.subtotal}</FormLabel>
-                        <FormControl>
-                          <Input
-                            data-testid="input-subtotal"
-                            type="number"
-                            placeholder="0"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                   <FormField
                     control={form.control}
                     name="vatRate"
@@ -621,45 +856,32 @@ export default function Quotations() {
                       </FormItem>
                     )}
                   />
+                  <div />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="vatAmount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t.vatAmount}</FormLabel>
-                        <FormControl>
-                          <Input
-                            data-testid="input-vat-amount"
-                            type="number"
-                            placeholder="0"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="totalAmount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t.totalAmount}</FormLabel>
-                        <FormControl>
-                          <Input
-                            data-testid="input-total-amount"
-                            type="number"
-                            placeholder="0"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <div className="rounded-md border p-3 space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      {t.subtotal}
+                    </span>
+                    <span data-testid="text-computed-subtotal">
+                      {totals.subtotal}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      {t.vatAmount}
+                    </span>
+                    <span data-testid="text-computed-vat-amount">
+                      {totals.vatAmount}
+                    </span>
+                  </div>
+                  <div className="flex justify-between font-semibold pt-1 border-t">
+                    <span>{t.totalAmount}</span>
+                    <span data-testid="text-computed-total-amount">
+                      {totals.totalAmount}
+                    </span>
+                  </div>
                 </div>
 
                 <FormField

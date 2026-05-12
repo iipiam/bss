@@ -33,7 +33,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeviceLayout } from "@/lib/mobileLayout";
-import { Link, useParams } from "wouter";
+import { Link, useParams, useLocation } from "wouter";
 import { format } from "date-fns";
 
 interface ServiceProject {
@@ -149,6 +149,7 @@ function fmtNum(v: string | null | undefined) {
 export default function ProjectDetail() {
   const params = useParams<{ id: string }>();
   const projectId = params.id;
+  const [, setLocation] = useLocation();
   const { t } = useLanguage();
   const layout = useDeviceLayout();
   const { toast } = useToast();
@@ -478,6 +479,22 @@ export default function ProjectDetail() {
           >
             <FileSignature className="h-4 w-4 mr-2" />
             {t.generateAgreement || "Generate Agreement"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              const qs = new URLSearchParams({
+                projectId: String(params.id),
+                clientName: project.clientName || "",
+                clientPhone: project.clientPhone || "",
+                clientEmail: project.clientEmail || "",
+              }).toString();
+              setLocation(`/quotations?${qs}`);
+            }}
+            data-testid="button-generate-quotation"
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            {t.generateQuotation || "Generate Quotation"}
           </Button>
           <Button
             variant="outline"
