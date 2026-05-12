@@ -296,6 +296,67 @@ export default function ProjectDetail() {
     onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },
   });
 
+  const generateQuotationMutation = useMutation({
+    mutationFn: async () => {
+      if (!project) throw new Error("Project not loaded");
+      if (!services || services.length === 0) {
+        throw new Error(
+          t.addServicesBeforeQuotation ||
+            "Please add at least one service to this project before generating a quotation."
+        );
+      }
+      const items = services.map((s) => {
+        const qty = parseFloat(s.quantity || "0") || 0;
+        const unitPrice = parseFloat(s.unitPrice || "0") || 0;
+        const total = parseFloat(s.totalPrice || "0") || qty * unitPrice;
+        return {
+          serviceId: s.serviceCatalogId || s.id,
+          name: s.name,
+          quantity: qty,
+          unitPrice,
+          total,
+        };
+      });
+      const subtotal = items.reduce((sum, it) => sum + it.total, 0);
+      const vatRate = 15;
+      const vatAmount = subtotal * (vatRate / 100);
+      const totalAmount = subtotal + vatAmount;
+      const quotationNumber = `QT-${project.projectNumber || "PRJ"}-${Date.now()
+        .toString()
+        .slice(-5)}`;
+      const payload = {
+        quotationNumber,
+        projectId: project.id,
+        clientName: project.clientName || "",
+        clientPhone: project.clientPhone || null,
+        clientEmail: project.clientEmail || null,
+        description: project.name || null,
+        items,
+        subtotal: subtotal.toFixed(2),
+        vatRate: String(vatRate),
+        vatAmount: vatAmount.toFixed(2),
+        totalAmount: totalAmount.toFixed(2),
+        status: "draft",
+        validUntil: null,
+        notes: null,
+      };
+      return await apiRequest("POST", "/api/quotations", payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+      toast({
+        title: t.quotationGenerated || "Quotation Generated",
+        description:
+          t.quotationGeneratedDesc ||
+          "A draft quotation was created from this project's services.",
+      });
+      setLocation("/quotations");
+    },
+    onError: (e: any) => {
+      toast({ title: t.error, description: e.message, variant: "destructive" });
+    },
+  });
+
   function onCatalogSelect(catId: string) {
     const item = catalog.find(c => c.id === catId);
     if (item) {
@@ -482,19 +543,14 @@ export default function ProjectDetail() {
           </Button>
           <Button
             variant="outline"
-            onClick={() => {
-              const qs = new URLSearchParams({
-                projectId: String(params.id),
-                clientName: project.clientName || "",
-                clientPhone: project.clientPhone || "",
-                clientEmail: project.clientEmail || "",
-              }).toString();
-              setLocation(`/quotations?${qs}`);
-            }}
+            onClick={() => generateQuotationMutation.mutate()}
+            disabled={generateQuotationMutation.isPending}
             data-testid="button-generate-quotation"
           >
             <FileText className="h-4 w-4 mr-2" />
-            {t.generateQuotation || "Generate Quotation"}
+            {generateQuotationMutation.isPending
+              ? (t.generating || "Generating...")
+              : (t.generateQuotation || "Generate Quotation")}
           </Button>
           <Button
             variant="outline"

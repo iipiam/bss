@@ -1,0 +1,64 @@
+Build a complete, premium, luxurious 4-page informational website for CRÈME & CRUMBS®, a high-end Saudi bakery brand specializing in luxury cookies, cakes, and fine baked goods.
+Follow the Brand Identity Guideline 100% strictly (from the official brand book):
+Color Palette (exact codes):
+
+Primary Color: #e09996 (soft elegant pink) → use for buttons, accents, links, icons
+Secondary/Dark Color: #85464f (deep rich maroon) → use for headings, dark sections, logo
+Background: Clean white (#ffffff) or very light off-white with very subtle repeating C&C monogram pattern at 5-10% opacity (as shown in the pattern pages of the guideline)
+
+Logo Rules (very important - do not break them):
+
+Main logo: “CRÉME & CRUMBS®” (with accent on É and registered trademark ®)
+Use elegant serif font very close to Misty Vogue
+Never change logo colors, never distort, stretch, rotate, or modify the logo
+Always use the correct version with ®
+Secondary marks: C&C monogram inside circles/seals (pink, maroon, white versions) are allowed for favicon, small icons, or decorative elements
+
+Typography:
+
+English headings & logo: Luxurious elegant serif (Playfair Display or closest to Misty Vogue)
+Arabic text: Clean, modern Arabic font (IBM Plex Sans Arabic or Tajawal)
+All website content must be in professional Arabic (فصحى) with perfect RTL support
+
+Tagline:
+
+“Best taste and quality” (use it in hero section and footer)
+
+Overall Aesthetic:
+
+Very high-end, feminine, warm, sophisticated, minimal luxury bakery style
+Clean white space, soft elegant shadows, subtle animations
+Feels premium and expensive (think Ladurée meets modern Saudi luxury)
+
+Exact 4 Pages (all in Arabic + perfect RTL):
+
+الرئيسية (Home)
+Stunning hero section with high-quality bakery/store photo + main logo + tagline + CTA buttons in #e09996
+
+من نحن (About Us)
+Use the official company description from the brand guideline
+Include photos of store facades and products
+
+خدماتنا (Our Services / Products)
+Elegant grid/cards showcasing luxury cookies (كوكيز فاخرة), cakes (كعك راقي), fine baked goods (مخبوزات فاخرة), and baking arts
+Use the bakery line icons from the brand guideline (croissant, cookie, cupcake, cake slice, bread, chef hat, coffee, etc.)
+
+تواصل معنا (Contact Us)
+Working contact form
+Contact information + all professional emails
+Placeholder for Google Map
+
+
+Technical Requirements:
+
+Build with HTML5 + Tailwind CSS + vanilla JavaScript (or Next.js if you prefer)
+Fully responsive (mobile-first)
+Sticky navigation header with logo on the left
+Smooth scroll + elegant fade-in animations
+Working contact form
+Footer with logo, quick links, copyright “© 2025 CRÈME & CRUMBS®”, and professional emails
+Fast loading, clean, well-structured code
+
+Start building the full project immediately with pixel-perfect attention to the brand colors, logo usage, typography, patterns, and luxurious feel exactly as shown in the Crème & Crumbs brand guideline.
+When finished, show me the live preview and the project folder structure.
+Begin now.
