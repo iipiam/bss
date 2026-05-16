@@ -50,8 +50,10 @@ import {
   Legend,
 } from "recharts";
 import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
+import { getMarketingT } from "@/i18n/marketingTranslations";
 
 const LS_KEY = "bss_marketing_toolkit_v1";
 
@@ -202,10 +204,11 @@ function fmt(n: number, digits = 2) {
   return n.toLocaleString(undefined, { maximumFractionDigits: digits });
 }
 
-function erRating(er: number) {
-  if (er >= 5) return { label: "Excellent", color: "bg-green-500", text: "text-green-600" };
-  if (er >= 3) return { label: "Good", color: "bg-yellow-500", text: "text-yellow-600" };
-  return { label: "Low", color: "bg-red-500", text: "text-red-600" };
+function erRating(er: number, labels?: { excellent: string; good: string; low: string }) {
+  const L = labels ?? { excellent: "Excellent", good: "Good", low: "Low" };
+  if (er >= 5) return { label: L.excellent, color: "bg-green-500", text: "text-green-600" };
+  if (er >= 3) return { label: L.good, color: "bg-yellow-500", text: "text-yellow-600" };
+  return { label: L.low, color: "bg-red-500", text: "text-red-600" };
 }
 
 function InfoTip({ children }: { children: React.ReactNode }) {
@@ -222,7 +225,8 @@ function InfoTip({ children }: { children: React.ReactNode }) {
 }
 
 export default function Marketing() {
-  const { t, isRTL } = useLanguage();
+  const { language, isRTL } = useLanguage();
+  const t = getMarketingT(language);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("gtm");
   const reportRef = useRef<HTMLDivElement>(null);
@@ -303,11 +307,11 @@ export default function Marketing() {
       keyPartnerships: "Local farms, delivery apps, payment providers",
       costStructure: "Rent, salaries, ingredients, marketing, utilities",
     });
-    toast({ title: t.exampleLoaded || "Example loaded" });
+    toast({ title: t.exampleLoaded });
   };
 
   const resetAll = () => {
-    if (!confirm(t.resetConfirm || "Reset everything? This cannot be undone.")) return;
+    if (!confirm(t.resetConfirm)) return;
     setProducts([newProduct()]);
     setSwot({ strengths: "", weaknesses: "", opportunities: "", threats: "" });
     setCanvas({
@@ -326,7 +330,7 @@ export default function Marketing() {
     setBloggerFiles([]);
     setBloggerForm(emptyBlogger());
     localStorage.removeItem(LS_KEY);
-    toast({ title: t.resetDone || "All data cleared" });
+    toast({ title: t.resetDone });
   };
 
   // ---- Influencers ----
@@ -337,7 +341,8 @@ export default function Marketing() {
   };
 
   const singleResult = computeER(single);
-  const singleRating = erRating(singleResult.er);
+  const ratingLabels = { excellent: t.excellent, good: t.good, low: t.low };
+  const singleRating = erRating(singleResult.er, ratingLabels);
 
   const influencerResults = influencers.map((inf) => ({ ...inf, ...computeER(inf) }));
   const avgER =
@@ -355,8 +360,8 @@ export default function Marketing() {
   const addBloggerFile = () => {
     if (!bloggerForm.name.trim()) {
       toast({
-        title: t.error || "Error",
-        description: t.bloggerNameRequired || "Blogger name is required",
+        title: t.error,
+        description: t.bloggerNameRequired,
         variant: "destructive",
       });
       return;
@@ -366,7 +371,7 @@ export default function Marketing() {
       ...arr,
     ]);
     setBloggerForm(emptyBlogger());
-    toast({ title: t.bloggerSaved || "Blogger file created" });
+    toast({ title: t.bloggerSaved });
   };
 
   const deleteBloggerFile = (id: string) =>
@@ -383,7 +388,7 @@ export default function Marketing() {
       r.shares,
       r.saves,
       r.er.toFixed(2),
-      erRating(r.er).label,
+      erRating(r.er, ratingLabels).label,
     ]);
     const csv =
       [headers, ...rows].map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -396,180 +401,214 @@ export default function Marketing() {
     URL.revokeObjectURL(url);
   };
 
-  const downloadInfluencerPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text("Influencer Engagement Report", 14, 18);
-    doc.setFontSize(10);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 26);
-    doc.text(`Average ER: ${avgER.toFixed(2)}%`, 14, 34);
-    let y = 46;
-    doc.setFontSize(11);
-    doc.text("Name", 14, y);
-    doc.text("Followers", 60, y);
-    doc.text("Eng.", 95, y);
-    doc.text("ER%", 120, y);
-    doc.text("Rating", 145, y);
-    y += 4;
-    doc.line(14, y, 196, y);
-    y += 6;
-    doc.setFontSize(10);
-    influencerResults.forEach((r) => {
-      if (y > 270) {
-        doc.addPage();
-        y = 20;
-      }
-      doc.text((r.name || "—").substring(0, 24), 14, y);
-      doc.text(String(r.followers), 60, y);
-      doc.text(String(r.engagements), 95, y);
-      doc.text(r.er.toFixed(2), 120, y);
-      doc.text(erRating(r.er).label, 145, y);
-      y += 6;
+  // ============ Professional PDF export via html2canvas ============
+  // Captures rendered DOM (preserves charts, tables, RTL, Arabic glyphs).
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  const captureElementToPDF = async (
+    el: HTMLElement,
+    filename: string,
+    title: string,
+  ) => {
+    const isDark = document.documentElement.classList.contains("dark");
+    const bg = isDark ? "#0a0a0a" : "#ffffff";
+    const canvas = await html2canvas(el, {
+      scale: 2,
+      backgroundColor: bg,
+      useCORS: true,
+      logging: false,
+      windowWidth: el.scrollWidth,
     });
-    doc.save(`influencers_${Date.now()}.pdf`);
+    const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 10;
+    const headerH = 18;
+    const footerH = 10;
+    const contentW = pageW - margin * 2;
+    const contentH = pageH - headerH - footerH;
+    const imgW = contentW;
+
+    const drawHeader = (pageNum: number, totalPages: number) => {
+      pdf.setFillColor(124, 58, 237);
+      pdf.rect(0, 0, pageW, headerH - 4, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(title, margin, 9);
+      pdf.setFontSize(8);
+      pdf.setFont("helvetica", "normal");
+      const sub = `${t.pdfGenerated}: ${new Date().toLocaleString()}`;
+      pdf.text(sub, pageW - margin, 9, { align: "right" });
+      pdf.setTextColor(120, 120, 120);
+      pdf.setFontSize(8);
+      pdf.text(
+        `${t.page} ${pageNum} ${t.of} ${totalPages}`,
+        pageW / 2,
+        pageH - 4,
+        { align: "center" },
+      );
+      pdf.text("BSS — Marketing Toolkit", margin, pageH - 4);
+    };
+
+    // Slice the tall canvas into page-sized strips
+    const pxPerMM = canvas.width / imgW;
+    const pageContentPx = contentH * pxPerMM;
+    const totalPages = Math.max(1, Math.ceil(canvas.height / pageContentPx));
+
+    for (let i = 0; i < totalPages; i++) {
+      if (i > 0) pdf.addPage();
+      const sliceY = i * pageContentPx;
+      const sliceH = Math.min(pageContentPx, canvas.height - sliceY);
+      const sliceCanvas = document.createElement("canvas");
+      sliceCanvas.width = canvas.width;
+      sliceCanvas.height = sliceH;
+      const ctx = sliceCanvas.getContext("2d")!;
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+      ctx.drawImage(canvas, 0, -sliceY);
+      const sliceImg = sliceCanvas.toDataURL("image/png");
+      const sliceImgH = (sliceH / pxPerMM);
+      drawHeader(i + 1, totalPages);
+      pdf.addImage(sliceImg, "PNG", margin, headerH, imgW, sliceImgH);
+    }
+
+    pdf.save(filename);
   };
 
-  const downloadFinancialPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text("Business & Financial Analysis", 14, 18);
-    doc.setFontSize(10);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 26);
-    let y = 38;
-    computed.forEach(({ p, calc }, idx) => {
-      if (y > 240) {
-        doc.addPage();
-        y = 20;
-      }
-      doc.setFontSize(13);
-      doc.text(`${idx + 1}. ${p.name}`, 14, y);
-      y += 8;
-      doc.setFontSize(10);
-      const lines = [
-        `Selling Price / Unit: ${fmt(p.sellingPrice)}`,
-        `Variable Cost / Unit: ${fmt(p.variableCost)}`,
-        `Monthly Fixed Costs: ${fmt(p.fixedCosts)}`,
-        `Initial Capital: ${fmt(p.initialCapital)}`,
-        `Monthly Units: ${fmt(p.monthlyUnits, 0)}`,
-        `Monthly Growth: ${fmt(p.growthRate)}%`,
-        `--`,
-        `Gross Margin: ${fmt(calc.grossMarginPct)}%`,
-        `Break-even Units: ${fmt(calc.breakEvenUnits, 0)}`,
-        `Break-even Revenue: ${fmt(calc.breakEvenRevenue)}`,
-        `Monthly Profit: ${fmt(calc.monthlyProfit)}`,
-        `Yearly Profit: ${fmt(calc.yearlyProfit)}`,
-        `Payback Period: ${isFinite(calc.paybackMonths) ? fmt(calc.paybackMonths, 1) + " months" : "N/A"}`,
-        `ROI (annual): ${fmt(calc.roiPct)}%`,
+  const captureSection = async (sectionId: string, switchTab: string, filename: string, title: string) => {
+    setActiveTab(switchTab);
+    // Wait for tab content to mount and charts to render
+    await wait(450);
+    const el = document.getElementById(sectionId);
+    if (!el) {
+      toast({ title: t.error, description: `Section not found: ${sectionId}` });
+      return;
+    }
+    try {
+      await captureElementToPDF(el, filename, title);
+    } catch (err: any) {
+      toast({ title: t.error, description: String(err?.message || err) });
+    }
+  };
+
+  const downloadInfluencerPDF = () =>
+    captureSection(
+      "pdf-section-influencers",
+      "bloggers",
+      `influencers_${Date.now()}.pdf`,
+      `${t.bloggers} — ${t.compareInfluencers}`,
+    );
+
+  const downloadFinancialPDF = () =>
+    captureSection(
+      "pdf-section-financial",
+      "financial",
+      `financial_analysis_${Date.now()}.pdf`,
+      t.finTitle,
+    );
+
+  const downloadFullReport = async () => {
+    toast({ title: t.pdfTitle, description: t.pdfGenerated + "..." });
+    try {
+      const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const headerH = 18;
+      const footerH = 10;
+      const contentW = pageW - margin * 2;
+      const contentH = pageH - headerH - footerH;
+      const isDark = document.documentElement.classList.contains("dark");
+      const bg = isDark ? "#0a0a0a" : "#ffffff";
+      let firstPage = true;
+
+      // Cover page
+      pdf.setFillColor(124, 58, 237);
+      pdf.rect(0, 0, pageW, pageH, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(28);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(t.pdfTitle, pageW / 2, pageH / 2 - 10, { align: "center" });
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(t.marketingSubtitle, pageW / 2, pageH / 2 + 2, { align: "center", maxWidth: pageW - 40 });
+      pdf.setFontSize(10);
+      pdf.text(`${t.pdfGenerated}: ${new Date().toLocaleString()}`, pageW / 2, pageH - 20, { align: "center" });
+      pdf.text("BSS — BlindSpot System", pageW / 2, pageH - 14, { align: "center" });
+      firstPage = false;
+
+      const sections: { tab: string; id: string; title: string }[] = [
+        { tab: "gtm", id: "pdf-section-gtm", title: t.gtmStrategy },
+        { tab: "sales", id: "pdf-section-sales", title: t.salesCycle },
+        { tab: "financial", id: "pdf-section-financial", title: t.finTitle },
+        { tab: "bloggers", id: "pdf-section-bloggers", title: t.bloggers },
       ];
-      lines.forEach((line) => {
-        if (y > 280) {
-          doc.addPage();
-          y = 20;
+
+      for (const s of sections) {
+        setActiveTab(s.tab);
+        await wait(500);
+        const el = document.getElementById(s.id);
+        if (!el) continue;
+        const canvas = await html2canvas(el, {
+          scale: 2,
+          backgroundColor: bg,
+          useCORS: true,
+          logging: false,
+          windowWidth: el.scrollWidth,
+        });
+        const imgW = contentW;
+        const pxPerMM = canvas.width / imgW;
+        const pageContentPx = contentH * pxPerMM;
+        const totalPages = Math.max(1, Math.ceil(canvas.height / pageContentPx));
+
+        for (let i = 0; i < totalPages; i++) {
+          if (!firstPage) pdf.addPage();
+          firstPage = false;
+          // Header
+          pdf.setFillColor(124, 58, 237);
+          pdf.rect(0, 0, pageW, headerH - 4, "F");
+          pdf.setTextColor(255, 255, 255);
+          pdf.setFont("helvetica", "bold");
+          pdf.setFontSize(13);
+          pdf.text(s.title, margin, 9);
+          pdf.setFont("helvetica", "normal");
+          pdf.setFontSize(8);
+          pdf.text(
+            `${t.pdfGenerated}: ${new Date().toLocaleString()}`,
+            pageW - margin,
+            9,
+            { align: "right" },
+          );
+          // Slice
+          const sliceY = i * pageContentPx;
+          const sliceH = Math.min(pageContentPx, canvas.height - sliceY);
+          const sliceCanvas = document.createElement("canvas");
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = sliceH;
+          const ctx = sliceCanvas.getContext("2d")!;
+          ctx.fillStyle = bg;
+          ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+          ctx.drawImage(canvas, 0, -sliceY);
+          const sliceImg = sliceCanvas.toDataURL("image/png");
+          pdf.addImage(sliceImg, "PNG", margin, headerH, imgW, sliceH / pxPerMM);
+          // Footer
+          pdf.setTextColor(120, 120, 120);
+          pdf.setFontSize(8);
+          pdf.text(
+            `${s.title} — ${t.page} ${i + 1} ${t.of} ${totalPages}`,
+            pageW / 2,
+            pageH - 4,
+            { align: "center" },
+          );
+          pdf.text("BSS — Marketing Toolkit", margin, pageH - 4);
         }
-        doc.text(line, 14, y);
-        y += 5;
-      });
-      y += 6;
-    });
-    doc.save(`financial_analysis_${Date.now()}.pdf`);
-  };
-
-  const downloadFullReport = () => {
-    const doc = new jsPDF();
-    // Title
-    doc.setFontSize(20);
-    doc.text("Marketing & Business Toolkit Report", 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
-
-    // SWOT
-    let y = 42;
-    doc.setFontSize(14);
-    doc.text("SWOT Analysis", 14, y);
-    y += 8;
-    doc.setFontSize(10);
-    const swotPairs: [string, string][] = [
-      ["Strengths", swot.strengths || "—"],
-      ["Weaknesses", swot.weaknesses || "—"],
-      ["Opportunities", swot.opportunities || "—"],
-      ["Threats", swot.threats || "—"],
-    ];
-    swotPairs.forEach(([k, v]) => {
-      doc.setFont("helvetica", "bold");
-      doc.text(`${k}:`, 14, y);
-      doc.setFont("helvetica", "normal");
-      const split = doc.splitTextToSize(v, 170);
-      doc.text(split, 14, y + 5);
-      y += 5 + split.length * 5 + 4;
-      if (y > 270) {
-        doc.addPage();
-        y = 20;
       }
-    });
 
-    // Business Model Canvas
-    doc.addPage();
-    y = 20;
-    doc.setFontSize(14);
-    doc.text("Business Model Canvas", 14, y);
-    y += 8;
-    doc.setFontSize(10);
-    const canvasBlocks: [string, string][] = [
-      ["Customer Segments", canvas.customerSegments],
-      ["Value Propositions", canvas.valuePropositions],
-      ["Channels", canvas.channels],
-      ["Customer Relationships", canvas.customerRelationships],
-      ["Revenue Streams", canvas.revenueStreams],
-      ["Key Resources", canvas.keyResources],
-      ["Key Activities", canvas.keyActivities],
-      ["Key Partnerships", canvas.keyPartnerships],
-      ["Cost Structure", canvas.costStructure],
-    ];
-    canvasBlocks.forEach(([k, v]) => {
-      doc.setFont("helvetica", "bold");
-      doc.text(`${k}:`, 14, y);
-      doc.setFont("helvetica", "normal");
-      const split = doc.splitTextToSize(v || "—", 170);
-      doc.text(split, 14, y + 5);
-      y += 5 + split.length * 5 + 4;
-      if (y > 270) {
-        doc.addPage();
-        y = 20;
-      }
-    });
-
-    // Financial
-    doc.addPage();
-    y = 20;
-    doc.setFontSize(14);
-    doc.text("Financial Models", 14, y);
-    y += 8;
-    doc.setFontSize(10);
-    computed.forEach(({ p, calc }, idx) => {
-      if (y > 240) {
-        doc.addPage();
-        y = 20;
-      }
-      doc.setFont("helvetica", "bold");
-      doc.text(`${idx + 1}. ${p.name}`, 14, y);
-      doc.setFont("helvetica", "normal");
-      y += 6;
-      const lines = [
-        `Selling Price: ${fmt(p.sellingPrice)} | Variable Cost: ${fmt(p.variableCost)}`,
-        `Monthly Fixed: ${fmt(p.fixedCosts)} | Initial Capital: ${fmt(p.initialCapital)}`,
-        `Monthly Units: ${fmt(p.monthlyUnits, 0)} | Growth: ${fmt(p.growthRate)}%`,
-        `Gross Margin: ${fmt(calc.grossMarginPct)}% | BE Units: ${fmt(calc.breakEvenUnits, 0)}`,
-        `Monthly Profit: ${fmt(calc.monthlyProfit)} | Yearly Profit: ${fmt(calc.yearlyProfit)}`,
-        `Payback: ${isFinite(calc.paybackMonths) ? fmt(calc.paybackMonths, 1) + " mo" : "N/A"} | ROI: ${fmt(calc.roiPct)}%`,
-      ];
-      lines.forEach((l) => {
-        doc.text(l, 14, y);
-        y += 5;
-      });
-      y += 4;
-    });
-
-    doc.save(`marketing_toolkit_report_${Date.now()}.pdf`);
+      pdf.save(`marketing_toolkit_report_${Date.now()}.pdf`);
+    } catch (err: any) {
+      toast({ title: t.error, description: String(err?.message || err) });
+    }
   };
 
   return (
@@ -581,25 +620,22 @@ export default function Marketing() {
             <span className="inline-flex items-center justify-center h-10 w-10 rounded-md bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white">
               <Megaphone className="h-5 w-5" />
             </span>
-            {t.marketing || "Marketing"}
+            {t.marketing}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t.marketingSubtitle ||
-              "Bloggers, Go-to-Market Strategies, Sales Cycles & Business Financial Analysis Toolkit"}
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">{t.marketingSubtitle}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={loadExample} data-testid="button-load-example">
             <Lightbulb className="h-4 w-4 me-2" />
-            {t.loadExample || "Load Example"}
+            {t.loadExample}
           </Button>
           <Button variant="outline" size="sm" onClick={resetAll} data-testid="button-reset-all">
             <RotateCcw className="h-4 w-4 me-2" />
-            {t.resetAll || "Reset"}
+            {t.resetAll}
           </Button>
           <Button size="sm" onClick={downloadFullReport} data-testid="button-download-full-report">
             <Download className="h-4 w-4 me-2" />
-            {t.downloadFullReport || "Full PDF Report"}
+            {t.downloadFullReport}
           </Button>
         </div>
       </div>
@@ -608,70 +644,43 @@ export default function Marketing() {
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
           <TabsTrigger value="gtm" data-testid="tab-gtm" className="flex items-center gap-2 py-2">
             <Target className="h-4 w-4" />
-            <span className="hidden sm:inline">{t.gtmStrategy || "Go-to-Market"}</span>
+            <span className="hidden sm:inline">{t.gtmStrategy}</span>
             <span className="sm:hidden">GTM</span>
           </TabsTrigger>
           <TabsTrigger value="sales" data-testid="tab-sales" className="flex items-center gap-2 py-2">
             <TrendingUp className="h-4 w-4" />
-            <span>{t.salesCycle || "Sales Cycle"}</span>
+            <span>{t.salesCycle}</span>
           </TabsTrigger>
           <TabsTrigger value="financial" data-testid="tab-financial" className="flex items-center gap-2 py-2">
             <Calculator className="h-4 w-4" />
-            <span className="hidden sm:inline">{t.financialAnalysis || "Financial"}</span>
+            <span className="hidden sm:inline">{t.financialAnalysis}</span>
             <span className="sm:hidden">$</span>
           </TabsTrigger>
           <TabsTrigger value="bloggers" data-testid="tab-bloggers" className="flex items-center gap-2 py-2">
             <Users className="h-4 w-4" />
-            <span>{t.bloggers || "Bloggers"}</span>
+            <span>{t.bloggers}</span>
           </TabsTrigger>
         </TabsList>
 
         {/* ===================== GTM ===================== */}
-        <TabsContent value="gtm" className="space-y-4">
+        <TabsContent value="gtm" className="space-y-4" id="pdf-section-gtm">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="h-5 w-5 text-violet-500" />
-                {t.gtmStrategy || "Go-to-Market Strategy"}
+                {t.gtmTitle}
               </CardTitle>
-              <CardDescription>
-                A Go-to-Market (GTM) strategy is the plan that defines how a company launches a product,
-                reaches its target customers, and achieves competitive advantage.
-              </CardDescription>
+              <CardDescription>{t.gtmDesc}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
               <div className="grid md:grid-cols-2 gap-4">
                 {[
-                  {
-                    icon: Users,
-                    title: "1. Target Audience",
-                    body: "Define your ideal customer profile (ICP) and buyer personas — demographics, behaviour, pain points and where they spend time.",
-                  },
-                  {
-                    icon: Lightbulb,
-                    title: "2. Value Proposition",
-                    body: "A clear statement of the unique value you deliver, why it matters, and how it differs from alternatives in the market.",
-                  },
-                  {
-                    icon: BarChart3,
-                    title: "3. Market & Competitor Analysis",
-                    body: "Understand market size (TAM/SAM/SOM), trends, and your direct & indirect competitors' positioning and pricing.",
-                  },
-                  {
-                    icon: DollarSign,
-                    title: "4. Pricing & Packaging",
-                    body: "Set a pricing model (subscription, freemium, value-based) that aligns with customer value and unit economics.",
-                  },
-                  {
-                    icon: Megaphone,
-                    title: "5. Marketing Channels",
-                    body: "Choose the most effective acquisition channels: SEO, paid ads, content, partnerships, events, influencer or community.",
-                  },
-                  {
-                    icon: TrendingUp,
-                    title: "6. Sales Motion & KPIs",
-                    body: "Decide between self-serve, inside sales, or field sales. Track activation, conversion, CAC, LTV and payback.",
-                  },
+                  { icon: Users, title: t.card1Title, body: t.card1Body },
+                  { icon: Lightbulb, title: t.card2Title, body: t.card2Body },
+                  { icon: BarChart3, title: t.card3Title, body: t.card3Body },
+                  { icon: DollarSign, title: t.card4Title, body: t.card4Body },
+                  { icon: Megaphone, title: t.card5Title, body: t.card5Body },
+                  { icon: TrendingUp, title: t.card6Title, body: t.card6Body },
                 ].map((b) => (
                   <div key={b.title} className="rounded-md border p-4 space-y-2 hover-elevate">
                     <div className="flex items-center gap-2 font-medium">
@@ -690,20 +699,18 @@ export default function Marketing() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Layers className="h-5 w-5 text-emerald-500" />
-                {t.swotAnalysis || "SWOT Analysis"}
+                {t.swotAnalysis}
               </CardTitle>
-              <CardDescription>
-                Identify internal Strengths & Weaknesses, external Opportunities & Threats.
-              </CardDescription>
+              <CardDescription>{t.swotDesc}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-4">
                 {(
                   [
-                    { k: "strengths", label: "Strengths", color: "border-green-500/40" },
-                    { k: "weaknesses", label: "Weaknesses", color: "border-red-500/40" },
-                    { k: "opportunities", label: "Opportunities", color: "border-blue-500/40" },
-                    { k: "threats", label: "Threats", color: "border-orange-500/40" },
+                    { k: "strengths", label: t.strengths, color: "border-green-500/40" },
+                    { k: "weaknesses", label: t.weaknesses, color: "border-red-500/40" },
+                    { k: "opportunities", label: t.opportunities, color: "border-blue-500/40" },
+                    { k: "threats", label: t.threats, color: "border-orange-500/40" },
                   ] as const
                 ).map((f) => (
                   <div key={f.k} className={`rounded-md border-2 ${f.color} p-3`}>
@@ -711,7 +718,7 @@ export default function Marketing() {
                     <Textarea
                       rows={4}
                       className="mt-2 resize-none"
-                      placeholder={`List your ${f.label.toLowerCase()}...`}
+                      placeholder={`${t.listYour} ${f.label}...`}
                       value={swot[f.k]}
                       onChange={(e) => setSwot({ ...swot, [f.k]: e.target.value })}
                       data-testid={`textarea-swot-${f.k}`}
@@ -727,25 +734,23 @@ export default function Marketing() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Layers className="h-5 w-5 text-blue-500" />
-                {t.businessModelCanvas || "Business Model Canvas"}
+                {t.businessModelCanvas}
               </CardTitle>
-              <CardDescription>
-                A one-page view of how your business creates, delivers, and captures value.
-              </CardDescription>
+              <CardDescription>{t.bmcDesc}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-3 gap-3">
                 {(
                   [
-                    { k: "keyPartnerships", label: "Key Partnerships" },
-                    { k: "keyActivities", label: "Key Activities" },
-                    { k: "valuePropositions", label: "Value Propositions" },
-                    { k: "customerRelationships", label: "Customer Relationships" },
-                    { k: "customerSegments", label: "Customer Segments" },
-                    { k: "keyResources", label: "Key Resources" },
-                    { k: "channels", label: "Channels" },
-                    { k: "costStructure", label: "Cost Structure" },
-                    { k: "revenueStreams", label: "Revenue Streams" },
+                    { k: "keyPartnerships", label: t.keyPartnerships },
+                    { k: "keyActivities", label: t.keyActivities },
+                    { k: "valuePropositions", label: t.valuePropositions },
+                    { k: "customerRelationships", label: t.customerRelationships },
+                    { k: "customerSegments", label: t.customerSegments },
+                    { k: "keyResources", label: t.keyResources },
+                    { k: "channels", label: t.channels },
+                    { k: "costStructure", label: t.costStructure },
+                    { k: "revenueStreams", label: t.revenueStreams },
                   ] as const
                 ).map((b) => (
                   <div key={b.k} className="rounded-md border p-3">
@@ -766,55 +771,25 @@ export default function Marketing() {
         </TabsContent>
 
         {/* ===================== Sales Cycle ===================== */}
-        <TabsContent value="sales" className="space-y-4">
+        <TabsContent value="sales" className="space-y-4" id="pdf-section-sales">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-emerald-500" />
-                {t.salesCycle || "Sales Cycle Stages"}
+                {t.salesCycleStages}
               </CardTitle>
-              <CardDescription>
-                The repeatable process your team follows to move a prospect from first touch to closed deal and beyond.
-              </CardDescription>
+              <CardDescription>{t.salesCycleDesc}</CardDescription>
             </CardHeader>
             <CardContent>
               <ol className="space-y-3">
                 {[
-                  {
-                    n: 1,
-                    title: "Prospecting",
-                    body: "Identify potential customers through research, referrals, inbound leads, and outbound outreach.",
-                  },
-                  {
-                    n: 2,
-                    title: "Qualification",
-                    body: "Verify fit using frameworks like BANT or MEDDIC — budget, authority, need, timing.",
-                  },
-                  {
-                    n: 3,
-                    title: "Discovery & Needs Analysis",
-                    body: "Ask open-ended questions to understand pain points, goals, and decision-making criteria.",
-                  },
-                  {
-                    n: 4,
-                    title: "Presentation / Demo",
-                    body: "Tailor your product demonstration to the prospect's specific needs and desired outcomes.",
-                  },
-                  {
-                    n: 5,
-                    title: "Proposal & Negotiation",
-                    body: "Send a clear proposal, handle objections, and negotiate terms that work for both sides.",
-                  },
-                  {
-                    n: 6,
-                    title: "Closing",
-                    body: "Confirm the decision, sign the contract, collect payment details, and onboard the customer.",
-                  },
-                  {
-                    n: 7,
-                    title: "Retention & Upsell",
-                    body: "Deliver value, monitor satisfaction, expand the relationship through renewals and cross-sells.",
-                  },
+                  { n: 1, title: t.stage1Title, body: t.stage1Body },
+                  { n: 2, title: t.stage2Title, body: t.stage2Body },
+                  { n: 3, title: t.stage3Title, body: t.stage3Body },
+                  { n: 4, title: t.stage4Title, body: t.stage4Body },
+                  { n: 5, title: t.stage5Title, body: t.stage5Body },
+                  { n: 6, title: t.stage6Title, body: t.stage6Body },
+                  { n: 7, title: t.stage7Title, body: t.stage7Body },
                 ].map((s) => (
                   <li key={s.n} className="flex gap-3 rounded-md border p-3 hover-elevate">
                     <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-white flex items-center justify-center font-semibold text-sm">
@@ -835,16 +810,16 @@ export default function Marketing() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Key Sales Metrics</CardTitle>
+              <CardTitle className="text-base">{t.keySalesMetrics}</CardTitle>
             </CardHeader>
             <CardContent className="grid md:grid-cols-3 gap-3 text-sm">
               {[
-                ["CAC", "Cost to acquire a customer = Total Sales & Marketing Spend / New Customers"],
-                ["LTV", "Lifetime value = Avg Revenue per Customer × Gross Margin × Avg Lifespan"],
-                ["Conversion Rate", "% of leads that become paying customers at each funnel stage"],
-                ["Sales Cycle Length", "Average time from first touch to closed deal"],
-                ["Win Rate", "Deals won / Total deals worked"],
-                ["Pipeline Coverage", "Total pipeline value / Target quota (3-4x is healthy)"],
+                [t.cac, t.cacDesc],
+                [t.ltv, t.ltvDesc],
+                [t.conversionRate, t.conversionRateDesc],
+                [t.cycleLength, t.cycleLengthDesc],
+                [t.winRate, t.winRateDesc],
+                [t.pipelineCoverage, t.pipelineCoverageDesc],
               ].map(([k, v]) => (
                 <div key={k} className="rounded-md border p-3">
                   <div className="font-semibold">{k}</div>
@@ -856,17 +831,15 @@ export default function Marketing() {
         </TabsContent>
 
         {/* ===================== Financial ===================== */}
-        <TabsContent value="financial" className="space-y-4">
+        <TabsContent value="financial" className="space-y-4" id="pdf-section-financial">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Calculator className="h-5 w-5 text-amber-500" />
-                  {t.financialAnalysis || "Business & Financial Analysis"}
+                  {t.finTitle}
                 </CardTitle>
-                <CardDescription>
-                  Break-even, ROI, payback period, and 24-month cumulative profit — calculated in real time.
-                </CardDescription>
+                <CardDescription>{t.finDesc}</CardDescription>
               </div>
               <div className="flex gap-2">
                 <Button
@@ -876,7 +849,7 @@ export default function Marketing() {
                   data-testid="button-add-product"
                 >
                   <Plus className="h-4 w-4 me-2" />
-                  {t.addProduct || "Add Product"}
+                  {t.addProduct}
                 </Button>
                 <Button size="sm" onClick={downloadFinancialPDF} data-testid="button-download-financial-pdf">
                   <Download className="h-4 w-4 me-2" />
@@ -894,7 +867,7 @@ export default function Marketing() {
                     value={p.name}
                     onChange={(e) => updateProduct(p.id, { name: e.target.value })}
                     className="font-semibold text-base max-w-md"
-                    placeholder="Product name"
+                    placeholder={t.productName}
                     data-testid={`input-product-name-${p.id}`}
                   />
                 </div>
@@ -913,12 +886,12 @@ export default function Marketing() {
                 <div className="grid md:grid-cols-3 gap-3">
                   {(
                     [
-                      ["sellingPrice", "Selling Price / Unit", "Price you charge for one unit."],
-                      ["variableCost", "Variable Cost / Unit", "Cost that varies per unit sold (ingredients, materials)."],
-                      ["fixedCosts", "Monthly Fixed Costs", "Rent, salaries, utilities — costs that don't change with volume."],
-                      ["initialCapital", "Initial Capital", "Upfront investment in equipment, deposits, setup."],
-                      ["monthlyUnits", "Expected Monthly Units", "Realistic monthly sales volume."],
-                      ["growthRate", "Monthly Growth Rate %", "Expected month-over-month volume growth."],
+                      ["sellingPrice", t.sellingPrice, t.sellingPriceHelp],
+                      ["variableCost", t.variableCost, t.variableCostHelp],
+                      ["fixedCosts", t.fixedCosts, t.fixedCostsHelp],
+                      ["initialCapital", t.initialCapital, t.initialCapitalHelp],
+                      ["monthlyUnits", t.monthlyUnits, t.monthlyUnitsHelp],
+                      ["growthRate", t.growthRate, t.growthRateHelp],
                     ] as const
                   ).map(([k, label, help]) => (
                     <div key={k}>
@@ -940,17 +913,17 @@ export default function Marketing() {
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {[
-                    ["Gross Margin", `${fmt(calc.grossMarginPct)}%`],
-                    ["Break-even Units", fmt(calc.breakEvenUnits, 0)],
-                    ["Break-even Revenue", fmt(calc.breakEvenRevenue)],
-                    ["Monthly Profit", fmt(calc.monthlyProfit)],
-                    ["Yearly Profit", fmt(calc.yearlyProfit)],
+                    [t.grossMargin, `${fmt(calc.grossMarginPct)}%`],
+                    [t.breakEvenUnits, fmt(calc.breakEvenUnits, 0)],
+                    [t.breakEvenRevenue, fmt(calc.breakEvenRevenue)],
+                    [t.monthlyProfit, fmt(calc.monthlyProfit)],
+                    [t.yearlyProfit, fmt(calc.yearlyProfit)],
                     [
-                      "Payback Period",
-                      isFinite(calc.paybackMonths) ? `${fmt(calc.paybackMonths, 1)} mo` : "N/A",
+                      t.paybackPeriod,
+                      isFinite(calc.paybackMonths) ? `${fmt(calc.paybackMonths, 1)} mo` : t.na,
                     ],
-                    ["ROI (annual)", `${fmt(calc.roiPct)}%`],
-                    ["Contribution / Unit", fmt(p.sellingPrice - p.variableCost)],
+                    [t.roiAnnual, `${fmt(calc.roiPct)}%`],
+                    [t.contributionUnit, fmt(p.sellingPrice - p.variableCost)],
                   ].map(([k, v]) => (
                     <div key={k} className="rounded-md border p-3">
                       <div className="text-xs text-muted-foreground">{k}</div>
@@ -975,7 +948,7 @@ export default function Marketing() {
                         stroke="#8b5cf6"
                         strokeWidth={2}
                         dot={false}
-                        name="Cumulative Profit"
+                        name={t.cumulativeProfit}
                       />
                       <Line
                         type="monotone"
@@ -983,7 +956,7 @@ export default function Marketing() {
                         stroke="#10b981"
                         strokeWidth={2}
                         dot={false}
-                        name="Monthly Profit"
+                        name={t.monthlyProfitChart}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -994,27 +967,25 @@ export default function Marketing() {
         </TabsContent>
 
         {/* ===================== Bloggers ===================== */}
-        <TabsContent value="bloggers" className="space-y-4">
+        <TabsContent value="bloggers" className="space-y-4" id="pdf-section-bloggers">
           {/* Single Calculator */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-pink-500" />
-                {t.singleInfluencerCalc || "Single Influencer Calculator"}
+                {t.singleInfluencerCalc}
               </CardTitle>
-              <CardDescription>
-                Quickly calculate engagement rate for one influencer.
-              </CardDescription>
+              <CardDescription>{t.singleInfluencerDesc}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-5 gap-3">
                 {(
                   [
-                    ["followers", "Followers / Reach"],
-                    ["likes", "Likes"],
-                    ["comments", "Comments"],
-                    ["shares", "Shares"],
-                    ["saves", "Saves"],
+                    ["followers", t.followers],
+                    ["likes", t.likes],
+                    ["comments", t.comments],
+                    ["shares", t.shares],
+                    ["saves", t.saves],
                   ] as const
                 ).map(([k, label]) => (
                   <div key={k}>
@@ -1030,19 +1001,19 @@ export default function Marketing() {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <div className="rounded-md border p-3">
-                  <div className="text-xs text-muted-foreground">Total Engagements</div>
+                  <div className="text-xs text-muted-foreground">{t.totalEngagements}</div>
                   <div className="text-xl font-bold" data-testid="stat-single-engagements">
                     {fmt(singleResult.engagements, 0)}
                   </div>
                 </div>
                 <div className="rounded-md border p-3">
-                  <div className="text-xs text-muted-foreground">Engagement Rate</div>
+                  <div className="text-xs text-muted-foreground">{t.engagementRate}</div>
                   <div className={`text-xl font-bold ${singleRating.text}`} data-testid="stat-single-er">
                     {fmt(singleResult.er)}%
                   </div>
                 </div>
                 <div className="rounded-md border p-3">
-                  <div className="text-xs text-muted-foreground">Rating</div>
+                  <div className="text-xs text-muted-foreground">{t.rating}</div>
                   <div className="mt-1">
                     <Badge className={`${singleRating.color} text-white`} data-testid="badge-single-rating">
                       {singleRating.label}
@@ -1056,13 +1027,13 @@ export default function Marketing() {
           {/* Benchmarks */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Food Niche Benchmarks</CardTitle>
+              <CardTitle className="text-base">{t.foodBenchmarks}</CardTitle>
             </CardHeader>
             <CardContent className="grid md:grid-cols-3 gap-3 text-sm">
               {[
-                ["Nano (1k–10k)", "Good ER > 8%", "from-green-500 to-emerald-500"],
-                ["Micro (10k–100k)", "Good ER > 4–5%", "from-yellow-500 to-amber-500"],
-                ["Macro (100k+)", "Good ER > 2–3%", "from-blue-500 to-indigo-500"],
+                [t.nano, t.nanoDesc, "from-green-500 to-emerald-500"],
+                [t.micro, t.microDesc, "from-yellow-500 to-amber-500"],
+                [t.macro, t.macroDesc, "from-blue-500 to-indigo-500"],
               ].map(([t1, t2, g]) => (
                 <div key={t1} className={`rounded-md p-4 bg-gradient-to-br ${g} text-white`}>
                   <div className="font-semibold">{t1}</div>
@@ -1073,18 +1044,16 @@ export default function Marketing() {
           </Card>
 
           {/* Comparison Table */}
-          <Card>
+          <Card id="pdf-section-influencers">
             <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
               <div>
-                <CardTitle className="text-base">{t.compareInfluencers || "Compare Influencers"}</CardTitle>
-                <CardDescription>
-                  Add multiple influencers and compare their engagement performance.
-                </CardDescription>
+                <CardTitle className="text-base">{t.compareInfluencers}</CardTitle>
+                <CardDescription>{t.compareDesc}</CardDescription>
               </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={addInfluencer} data-testid="button-add-influencer">
                   <Plus className="h-4 w-4 me-2" />
-                  Add
+                  {t.add}
                 </Button>
                 <Button size="sm" variant="outline" onClick={downloadCSV} data-testid="button-download-csv">
                   <Download className="h-4 w-4 me-2" />
@@ -1101,27 +1070,27 @@ export default function Marketing() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Followers</TableHead>
-                      <TableHead>Likes</TableHead>
-                      <TableHead>Comments</TableHead>
-                      <TableHead>Shares</TableHead>
-                      <TableHead>Saves</TableHead>
+                      <TableHead>{t.name}</TableHead>
+                      <TableHead>{t.followers}</TableHead>
+                      <TableHead>{t.likes}</TableHead>
+                      <TableHead>{t.comments}</TableHead>
+                      <TableHead>{t.shares}</TableHead>
+                      <TableHead>{t.saves}</TableHead>
                       <TableHead>ER%</TableHead>
-                      <TableHead>Rating</TableHead>
+                      <TableHead>{t.rating}</TableHead>
                       <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {influencerResults.map((r) => {
-                      const rating = erRating(r.er);
+                      const rating = erRating(r.er, ratingLabels);
                       return (
                         <TableRow key={r.id} data-testid={`row-influencer-${r.id}`}>
                           <TableCell>
                             <Input
                               value={r.name}
                               onChange={(e) => updateInfluencer(r.id, { name: e.target.value })}
-                              placeholder="Name"
+                              placeholder={t.name}
                               className="min-w-32"
                               data-testid={`input-influencer-name-${r.id}`}
                             />
@@ -1164,8 +1133,8 @@ export default function Marketing() {
                 </Table>
               </div>
               <div className="mt-4 rounded-md border p-3 flex items-center justify-between">
-                <span className="text-sm font-medium">Average ER</span>
-                <span className={`text-lg font-bold ${erRating(avgER).text}`} data-testid="stat-average-er">
+                <span className="text-sm font-medium">{t.averageER}</span>
+                <span className={`text-lg font-bold ${erRating(avgER, ratingLabels).text}`} data-testid="stat-average-er">
                   {fmt(avgER)}%
                 </span>
               </div>
@@ -1177,16 +1146,14 @@ export default function Marketing() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-violet-500" />
-                {t.createBloggerFile || "Create Blogger File"}
+                {t.createBloggerFile}
               </CardTitle>
-              <CardDescription>
-                Save a complete profile for each blogger including contact details and engagement stats.
-              </CardDescription>
+              <CardDescription>{t.createBloggerDesc}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-3 gap-3">
                 <div>
-                  <Label className="text-xs">Name *</Label>
+                  <Label className="text-xs">{t.name} *</Label>
                   <Input
                     value={bloggerForm.name}
                     onChange={(e) => setBloggerForm({ ...bloggerForm, name: e.target.value })}
@@ -1194,7 +1161,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Handle / Username</Label>
+                  <Label className="text-xs">{t.handle}</Label>
                   <Input
                     value={bloggerForm.handle}
                     onChange={(e) => setBloggerForm({ ...bloggerForm, handle: e.target.value })}
@@ -1203,7 +1170,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Platform</Label>
+                  <Label className="text-xs">{t.platform}</Label>
                   <Input
                     value={bloggerForm.platform}
                     onChange={(e) => setBloggerForm({ ...bloggerForm, platform: e.target.value })}
@@ -1211,7 +1178,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Niche</Label>
+                  <Label className="text-xs">{t.niche}</Label>
                   <Input
                     value={bloggerForm.niche}
                     onChange={(e) => setBloggerForm({ ...bloggerForm, niche: e.target.value })}
@@ -1219,7 +1186,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Email</Label>
+                  <Label className="text-xs">{t.email}</Label>
                   <Input
                     type="email"
                     value={bloggerForm.contactEmail}
@@ -1228,7 +1195,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Phone</Label>
+                  <Label className="text-xs">{t.phone}</Label>
                   <Input
                     value={bloggerForm.contactPhone}
                     onChange={(e) => setBloggerForm({ ...bloggerForm, contactPhone: e.target.value })}
@@ -1236,7 +1203,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">City</Label>
+                  <Label className="text-xs">{t.city}</Label>
                   <Input
                     value={bloggerForm.city}
                     onChange={(e) => setBloggerForm({ ...bloggerForm, city: e.target.value })}
@@ -1244,7 +1211,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Followers</Label>
+                  <Label className="text-xs">{t.followers}</Label>
                   <Input
                     type="number"
                     value={bloggerForm.followers}
@@ -1253,7 +1220,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Likes</Label>
+                  <Label className="text-xs">{t.likes}</Label>
                   <Input
                     type="number"
                     value={bloggerForm.likes}
@@ -1262,7 +1229,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Comments</Label>
+                  <Label className="text-xs">{t.comments}</Label>
                   <Input
                     type="number"
                     value={bloggerForm.comments}
@@ -1271,7 +1238,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Shares</Label>
+                  <Label className="text-xs">{t.shares}</Label>
                   <Input
                     type="number"
                     value={bloggerForm.shares}
@@ -1280,7 +1247,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Saves</Label>
+                  <Label className="text-xs">{t.saves}</Label>
                   <Input
                     type="number"
                     value={bloggerForm.saves}
@@ -1290,7 +1257,7 @@ export default function Marketing() {
                 </div>
               </div>
               <div>
-                <Label className="text-xs">Notes</Label>
+                <Label className="text-xs">{t.notes}</Label>
                 <Textarea
                   rows={2}
                   value={bloggerForm.notes}
@@ -1301,7 +1268,7 @@ export default function Marketing() {
               <div className="flex justify-end">
                 <Button onClick={addBloggerFile} data-testid="button-save-blogger">
                   <Plus className="h-4 w-4 me-2" />
-                  {t.saveBloggerFile || "Save Blogger File"}
+                  {t.saveBloggerFile}
                 </Button>
               </div>
             </CardContent>
@@ -1311,13 +1278,13 @@ export default function Marketing() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">
-                  {t.savedBloggers || "Saved Blogger Files"} ({bloggerFiles.length})
+                  {t.savedBloggers} ({bloggerFiles.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {bloggerFiles.map((b) => {
                   const { er } = computeER(b);
-                  const rating = erRating(er);
+                  const rating = erRating(er, ratingLabels);
                   return (
                     <div
                       key={b.id}
@@ -1337,9 +1304,9 @@ export default function Marketing() {
                           {b.contactPhone && `· ${b.contactPhone}`}
                         </div>
                         <div className="text-xs mt-1">
-                          Followers: <b>{fmt(b.followers, 0)}</b> · Likes: <b>{fmt(b.likes, 0)}</b> ·
-                          Comments: <b>{fmt(b.comments, 0)}</b> · Shares: <b>{fmt(b.shares, 0)}</b> ·
-                          Saves: <b>{fmt(b.saves, 0)}</b>
+                          {t.followers}: <b>{fmt(b.followers, 0)}</b> · {t.likes}: <b>{fmt(b.likes, 0)}</b> ·
+                          {t.comments}: <b>{fmt(b.comments, 0)}</b> · {t.shares}: <b>{fmt(b.shares, 0)}</b> ·
+                          {t.saves}: <b>{fmt(b.saves, 0)}</b>
                         </div>
                         {b.notes && <div className="text-xs text-muted-foreground mt-1 italic">{b.notes}</div>}
                       </div>
