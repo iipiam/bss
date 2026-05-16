@@ -101,6 +101,7 @@ const Contractors = lazy(() => import("@/pages/contractors"));
 const ProjectDetail = lazy(() => import("@/pages/project-detail"));
 const CompanySettingsPage = lazy(() => import("@/pages/company-settings"));
 const MealSubscriptions = lazy(() => import("@/pages/meal-subscriptions"));
+const Marketing = lazy(() => import("@/pages/marketing"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Auth pages loaded eagerly to avoid Suspense issues with AuthProvider
@@ -193,6 +194,7 @@ function Router() {
         <Route path="/contractors" component={Contractors} />
         <Route path="/company-settings" component={CompanySettingsPage} />
         <Route path="/meal-subscriptions" component={MealSubscriptions} />
+        <Route path="/marketing" component={Marketing} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>

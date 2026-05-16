@@ -1,0 +1,62 @@
+add a professional, modern, and highly interactive page the title:
+Marketing, in this page there will be three pages:
+
+"Go-to-Market Strategies, Sales Cycles & Business Financial Analysis Toolkit"
+
+### Core Requirements:
+
+1. **Design & UX**
+   - Clean, professional, modern interface (support both Light and Dark mode).
+   - Fully responsive (mobile + desktop).
+   - Sidebar navigation with smooth scrolling.
+   - RTL support for Arabic language.
+
+2. **Main Sections**
+   - 1. Go-to-Market Strategy (GTM)
+   - 2. Sales Cycle
+   - 3. Business & Financial Analysis
+
+3. **Key Interactive Features**
+
+   **A. Interactive Financial Model (Most Important)**
+   - Users can input their data easily:
+     - Product Name
+     - Selling Price per Unit
+     - Variable Cost % (or per unit)
+     - Monthly Fixed Costs
+     - Initial Capital Investment
+     - Expected Monthly Units Sold
+     - Monthly Growth Rate (%)
+   - Auto-calculations (real-time):
+     - Gross Margin %
+     - Break-even Point (units & revenue)
+     - Monthly & Yearly Profit
+     - Payback Period (months)
+     - ROI %
+     - Cumulative Profit Chart
+   - Ability to add multiple products/models.
+
+   **C. PDF Export**
+   - Download individual sections as PDF.
+   - Download the complete report (all sections + filled financial model) as PDF.
+   - Nice formatted PDFs with user data included.
+
+   **D. Additional Useful Features**
+   - SWOT Analysis Template (editable fields).
+   - Business Model Canvas (simple editable version).
+   - Reset / Load Example Data button.
+   - Tooltips and helpful explanations next to each field.
+
+4. **Technical Stack**
+   - HTML + CSS + Vanilla JavaScript (or React if easier for you).
+   - Use jsPDF + html2canvas or html2pdf.js for high-quality PDF export.
+   - Chart.js for profit and break-even visualization.
+   - Clean, well-commented, and organized code.
+
+5. **Content**
+Please include the full content about:
+- Go-to-Market Strategy explanation
+- Sales Cycle stages
+- Business & Financial Analysis (Break-even, ROI, Payback, SWOT, etc.)
+
+Make it feels like a professional business toolkit that users can reuse for different products.
