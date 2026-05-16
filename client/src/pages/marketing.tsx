@@ -59,7 +59,7 @@ import {
   Legend,
 } from "recharts";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import { toCanvas as htiToCanvas } from "html-to-image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { getMarketingT } from "@/i18n/marketingTranslations";
@@ -472,53 +472,6 @@ export default function Marketing() {
   // Captures rendered DOM (preserves charts, tables, RTL, Arabic glyphs).
   const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-  // html2canvas 1.4.x cannot parse modern CSS color functions such as
-  // color(...), oklch(...), oklab(...), or color-mix(...). We walk the
-  // cloned DOM and rewrite any offending computed colors to plain rgb()
-  // using a canvas as a color-space converter.
-  const sanitizeModernColors = (doc: Document) => {
-    const probe = document.createElement("canvas").getContext("2d");
-    if (!probe) return;
-    const toRgb = (v: string): string | null => {
-      try {
-        probe.fillStyle = "#000";
-        probe.fillStyle = v;
-        return probe.fillStyle as string;
-      } catch {
-        return null;
-      }
-    };
-    const props = [
-      "color",
-      "background-color",
-      "border-top-color",
-      "border-right-color",
-      "border-bottom-color",
-      "border-left-color",
-      "outline-color",
-      "text-decoration-color",
-      "fill",
-      "stroke",
-      "caret-color",
-      "column-rule-color",
-    ];
-    const re = /(?:^|[^-\w])(?:color|oklch|oklab|color-mix|lch|lab|hwb)\s*\(/i;
-    const view = doc.defaultView || window;
-    doc.querySelectorAll<HTMLElement>("*").forEach((el) => {
-      const cs = view.getComputedStyle(el);
-      for (const p of props) {
-        const v = cs.getPropertyValue(p);
-        if (v && re.test(v)) {
-          const rgb = toRgb(v);
-          if (rgb) el.style.setProperty(p, rgb, "important");
-        }
-      }
-      const bgImg = cs.getPropertyValue("background-image");
-      if (bgImg && re.test(bgImg)) {
-        el.style.setProperty("background-image", "none", "important");
-      }
-    });
-  };
 
   const captureElementToPDF = async (
     el: HTMLElement,
@@ -527,13 +480,11 @@ export default function Marketing() {
   ) => {
     const isDark = document.documentElement.classList.contains("dark");
     const bg = isDark ? "#0a0a0a" : "#ffffff";
-    const canvas = await html2canvas(el, {
-      scale: 2,
+    const canvas = await htiToCanvas(el, {
+      pixelRatio: 2,
       backgroundColor: bg,
-      useCORS: true,
-      logging: false,
-      windowWidth: el.scrollWidth,
-      onclone: (doc) => sanitizeModernColors(doc),
+      cacheBust: true,
+      skipFonts: false,
     });
     const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
     const pageW = pdf.internal.pageSize.getWidth();
@@ -666,13 +617,11 @@ export default function Marketing() {
         await wait(500);
         const el = document.getElementById(s.id);
         if (!el) continue;
-        const canvas = await html2canvas(el, {
-          scale: 2,
+        const canvas = await htiToCanvas(el, {
+          pixelRatio: 2,
           backgroundColor: bg,
-          useCORS: true,
-          logging: false,
-          windowWidth: el.scrollWidth,
-          onclone: (doc) => sanitizeModernColors(doc),
+          cacheBust: true,
+          skipFonts: false,
         });
         const imgW = contentW;
         const pxPerMM = canvas.width / imgW;
