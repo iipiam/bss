@@ -213,7 +213,7 @@ function InfoTip({ children }: { children: React.ReactNode }) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Info className="h-3.5 w-3.5 text-muted-foreground inline-block ml-1 cursor-help" />
+          <Info className="h-3.5 w-3.5 text-muted-foreground inline-block ms-1 cursor-help" />
         </TooltipTrigger>
         <TooltipContent className="max-w-xs text-xs">{children}</TooltipContent>
       </Tooltip>
@@ -590,15 +590,15 @@ export default function Marketing() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={loadExample} data-testid="button-load-example">
-            <Lightbulb className="h-4 w-4 mr-2" />
+            <Lightbulb className="h-4 w-4 me-2" />
             {t.loadExample || "Load Example"}
           </Button>
           <Button variant="outline" size="sm" onClick={resetAll} data-testid="button-reset-all">
-            <RotateCcw className="h-4 w-4 mr-2" />
+            <RotateCcw className="h-4 w-4 me-2" />
             {t.resetAll || "Reset"}
           </Button>
           <Button size="sm" onClick={downloadFullReport} data-testid="button-download-full-report">
-            <Download className="h-4 w-4 mr-2" />
+            <Download className="h-4 w-4 me-2" />
             {t.downloadFullReport || "Full PDF Report"}
           </Button>
         </div>
@@ -875,11 +875,11 @@ export default function Marketing() {
                   onClick={() => setProducts((arr) => [...arr, { ...newProduct(), name: `Product ${arr.length + 1}` }])}
                   data-testid="button-add-product"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 me-2" />
                   {t.addProduct || "Add Product"}
                 </Button>
                 <Button size="sm" onClick={downloadFinancialPDF} data-testid="button-download-financial-pdf">
-                  <Download className="h-4 w-4 mr-2" />
+                  <Download className="h-4 w-4 me-2" />
                   PDF
                 </Button>
               </div>
@@ -1083,15 +1083,15 @@ export default function Marketing() {
               </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={addInfluencer} data-testid="button-add-influencer">
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 me-2" />
                   Add
                 </Button>
                 <Button size="sm" variant="outline" onClick={downloadCSV} data-testid="button-download-csv">
-                  <Download className="h-4 w-4 mr-2" />
+                  <Download className="h-4 w-4 me-2" />
                   CSV
                 </Button>
                 <Button size="sm" onClick={downloadInfluencerPDF} data-testid="button-download-influencer-pdf">
-                  <Download className="h-4 w-4 mr-2" />
+                  <Download className="h-4 w-4 me-2" />
                   PDF
                 </Button>
               </div>
@@ -1300,7 +1300,7 @@ export default function Marketing() {
               </div>
               <div className="flex justify-end">
                 <Button onClick={addBloggerFile} data-testid="button-save-blogger">
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 me-2" />
                   {t.saveBloggerFile || "Save Blogger File"}
                 </Button>
               </div>
@@ -1344,7 +1344,7 @@ export default function Marketing() {
                         {b.notes && <div className="text-xs text-muted-foreground mt-1 italic">{b.notes}</div>}
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="text-right">
+                        <div className="text-end">
                           <div className="text-xs text-muted-foreground">ER</div>
                           <div className={`text-lg font-bold ${rating.text}`}>{fmt(er)}%</div>
                         </div>
