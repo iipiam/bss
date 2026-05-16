@@ -468,10 +468,115 @@ export default function Marketing() {
     URL.revokeObjectURL(url);
   };
 
-  // ============ Professional PDF export via html2canvas ============
+  // ============ Professional PDF export via html-to-image ============
   // Captures rendered DOM (preserves charts, tables, RTL, Arabic glyphs).
   const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+  // Detect Arabic / Hebrew / Urdu characters in a string
+  const containsRTLChars = (s: string) =>
+    /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(s);
+
+  // Render a text label to a PNG dataURL via the browser's own text shaping
+  // engine. This fixes (1) Arabic text shaping (cursive joining / contextual
+  // glyph forms), (2) Unicode BiDi resolution, and (3) RTL layout — none of
+  // which jsPDF's built-in `pdf.text()` can do with the helvetica core font.
+  const renderTextToImage = async (
+    text: string,
+    opts: {
+      fontSize: number; // px
+      color: string;
+      bg?: string;
+      bold?: boolean;
+      maxWidthPx?: number;
+      paddingPx?: number;
+      align?: "left" | "right" | "center";
+    },
+  ): Promise<{ dataUrl: string; wPx: number; hPx: number }> => {
+    const rtl = containsRTLChars(text);
+    const padding = opts.paddingPx ?? 4;
+    const host = document.createElement("div");
+    host.style.position = "fixed";
+    host.style.left = "-100000px";
+    host.style.top = "0";
+    host.style.pointerEvents = "none";
+    host.style.zIndex = "-1";
+    host.setAttribute("aria-hidden", "true");
+
+    const inner = document.createElement("div");
+    inner.textContent = text;
+    inner.dir = rtl ? "rtl" : "ltr";
+    inner.style.display = "inline-block";
+    inner.style.boxSizing = "border-box";
+    inner.style.padding = `${padding}px`;
+    inner.style.background = opts.bg ?? "transparent";
+    inner.style.color = opts.color;
+    inner.style.fontSize = `${opts.fontSize}px`;
+    inner.style.lineHeight = "1.25";
+    inner.style.fontWeight = opts.bold ? "700" : "400";
+    inner.style.whiteSpace = opts.maxWidthPx ? "normal" : "nowrap";
+    inner.style.textAlign = opts.align ?? (rtl ? "right" : "left");
+    if (opts.maxWidthPx) inner.style.maxWidth = `${opts.maxWidthPx}px`;
+    // Use system Arabic-capable fonts when RTL, else generic sans
+    inner.style.fontFamily = rtl
+      ? '"Noto Naskh Arabic","Segoe UI","Tahoma","Geeza Pro","Arial Unicode MS",Arial,sans-serif'
+      : '"Inter","Segoe UI",Arial,sans-serif';
+
+    host.appendChild(inner);
+    document.body.appendChild(host);
+    try {
+      // Force layout
+      const rect = inner.getBoundingClientRect();
+      const wPx = Math.max(1, Math.ceil(rect.width));
+      const hPx = Math.max(1, Math.ceil(rect.height));
+      const canvas = await htiToCanvas(inner, {
+        pixelRatio: 2,
+        backgroundColor: opts.bg ?? undefined,
+        cacheBust: true,
+        skipFonts: false,
+        width: wPx,
+        height: hPx,
+      });
+      return { dataUrl: canvas.toDataURL("image/png"), wPx, hPx };
+    } finally {
+      document.body.removeChild(host);
+    }
+  };
+
+  // Place a text label on the PDF, rendered as an image so Arabic shaping,
+  // BiDi, and RTL alignment all work correctly.
+  const placeTextImage = async (
+    pdf: jsPDF,
+    text: string,
+    xMM: number,
+    yMM: number,
+    opts: {
+      fontSizePx: number;
+      color: string;
+      bg?: string;
+      bold?: boolean;
+      maxWidthMM?: number;
+      align?: "left" | "right" | "center";
+      pxPerMM?: number;
+    },
+  ) => {
+    const pxPerMM = opts.pxPerMM ?? 3.78; // ~96dpi
+    const maxWidthPx = opts.maxWidthMM ? Math.floor(opts.maxWidthMM * pxPerMM) : undefined;
+    const { dataUrl, wPx, hPx } = await renderTextToImage(text, {
+      fontSize: opts.fontSizePx,
+      color: opts.color,
+      bg: opts.bg,
+      bold: opts.bold,
+      maxWidthPx,
+      align: opts.align,
+    });
+    const wMM = wPx / pxPerMM;
+    const hMM = hPx / pxPerMM;
+    let drawX = xMM;
+    if (opts.align === "right") drawX = xMM - wMM;
+    else if (opts.align === "center") drawX = xMM - wMM / 2;
+    pdf.addImage(dataUrl, "PNG", drawX, yMM, wMM, hMM);
+    return { wMM, hMM };
+  };
 
   const captureElementToPDF = async (
     el: HTMLElement,
@@ -496,26 +601,51 @@ export default function Marketing() {
     const contentH = pageH - headerH - footerH;
     const imgW = contentW;
 
-    const drawHeader = (pageNum: number, totalPages: number) => {
+    const headerBarBg = "#7c3aed";
+    const drawHeader = async (pageNum: number, totalPages: number) => {
       pdf.setFillColor(124, 58, 237);
       pdf.rect(0, 0, pageW, headerH - 4, "F");
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(14);
-      pdf.setFont("helvetica", "bold");
-      pdf.text(title, margin, 9);
-      pdf.setFontSize(8);
-      pdf.setFont("helvetica", "normal");
+      // Title (may be Arabic) — rasterized for proper shaping/BiDi/RTL
+      const titleIsRTL = containsRTLChars(title);
+      await placeTextImage(
+        pdf,
+        title,
+        titleIsRTL ? pageW - margin : margin,
+        2,
+        {
+          fontSizePx: 16,
+          color: "#ffffff",
+          bg: headerBarBg,
+          bold: true,
+          maxWidthMM: pageW - margin * 2 - 70,
+          align: titleIsRTL ? "right" : "left",
+        },
+      );
       const sub = `${t.pdfGenerated}: ${new Date().toLocaleString()}`;
-      pdf.text(sub, pageW - margin, 9, { align: "right" });
+      // Anchor subtitle on the opposite side from the title so they don't overlap.
+      await placeTextImage(
+        pdf,
+        sub,
+        titleIsRTL ? margin : pageW - margin,
+        4,
+        {
+          fontSizePx: 9,
+          color: "#ffffff",
+          bg: headerBarBg,
+          align: titleIsRTL ? "left" : "right",
+        },
+      );
+      // Footer — page indicator (translated, may be Arabic) + ASCII brand
+      const pageStr = `${t.page} ${pageNum} / ${totalPages}`;
+      await placeTextImage(pdf, pageStr, pageW / 2, pageH - 7, {
+        fontSizePx: 9,
+        color: "#787878",
+        align: "center",
+      });
       pdf.setTextColor(120, 120, 120);
       pdf.setFontSize(8);
-      pdf.text(
-        `${t.page} ${pageNum} ${t.of} ${totalPages}`,
-        pageW / 2,
-        pageH - 4,
-        { align: "center" },
-      );
-      pdf.text("BSS — Marketing Toolkit", margin, pageH - 4);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("BSS - Marketing Toolkit", margin, pageH - 4);
     };
 
     // Slice the tall canvas into page-sized strips
@@ -536,7 +666,7 @@ export default function Marketing() {
       ctx.drawImage(canvas, 0, -sliceY);
       const sliceImg = sliceCanvas.toDataURL("image/png");
       const sliceImgH = (sliceH / pxPerMM);
-      drawHeader(i + 1, totalPages);
+      await drawHeader(i + 1, totalPages);
       pdf.addImage(sliceImg, "PNG", margin, headerH, imgW, sliceImgH);
     }
 
@@ -590,19 +720,37 @@ export default function Marketing() {
       const bg = isDark ? "#0a0a0a" : "#ffffff";
       let firstPage = true;
 
-      // Cover page
+      // Cover page — solid purple background
+      const coverBg = "#7c3aed";
       pdf.setFillColor(124, 58, 237);
       pdf.rect(0, 0, pageW, pageH, "F");
+      // Title (rasterized — handles Arabic shaping/BiDi/RTL)
+      await placeTextImage(pdf, t.pdfTitle, pageW / 2, pageH / 2 - 18, {
+        fontSizePx: 36,
+        color: "#ffffff",
+        bg: coverBg,
+        bold: true,
+        align: "center",
+        maxWidthMM: pageW - 30,
+      });
+      await placeTextImage(pdf, t.marketingSubtitle, pageW / 2, pageH / 2 + 4, {
+        fontSizePx: 14,
+        color: "#ffffff",
+        bg: coverBg,
+        align: "center",
+        maxWidthMM: pageW - 40,
+      });
+      await placeTextImage(
+        pdf,
+        `${t.pdfGenerated}: ${new Date().toLocaleString()}`,
+        pageW / 2,
+        pageH - 24,
+        { fontSizePx: 11, color: "#ffffff", bg: coverBg, align: "center" },
+      );
       pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(28);
-      pdf.setFont("helvetica", "bold");
-      pdf.text(t.pdfTitle, pageW / 2, pageH / 2 - 10, { align: "center" });
-      pdf.setFontSize(12);
-      pdf.setFont("helvetica", "normal");
-      pdf.text(t.marketingSubtitle, pageW / 2, pageH / 2 + 2, { align: "center", maxWidth: pageW - 40 });
       pdf.setFontSize(10);
-      pdf.text(`${t.pdfGenerated}: ${new Date().toLocaleString()}`, pageW / 2, pageH - 20, { align: "center" });
-      pdf.text("BSS — BlindSpot System", pageW / 2, pageH - 14, { align: "center" });
+      pdf.setFont("helvetica", "normal");
+      pdf.text("BSS - BlindSpot System", pageW / 2, pageH - 14, { align: "center" });
       firstPage = false;
 
       const sections: { tab: string; id: string; title: string }[] = [
@@ -628,23 +776,41 @@ export default function Marketing() {
         const pageContentPx = contentH * pxPerMM;
         const totalPages = Math.max(1, Math.ceil(canvas.height / pageContentPx));
 
+        const headerBg = "#7c3aed";
+        const titleIsRTL = containsRTLChars(s.title);
+        const sub = `${t.pdfGenerated}: ${new Date().toLocaleString()}`;
         for (let i = 0; i < totalPages; i++) {
           if (!firstPage) pdf.addPage();
           firstPage = false;
-          // Header
+          // Header bar
           pdf.setFillColor(124, 58, 237);
           pdf.rect(0, 0, pageW, headerH - 4, "F");
-          pdf.setTextColor(255, 255, 255);
-          pdf.setFont("helvetica", "bold");
-          pdf.setFontSize(13);
-          pdf.text(s.title, margin, 9);
-          pdf.setFont("helvetica", "normal");
-          pdf.setFontSize(8);
-          pdf.text(
-            `${t.pdfGenerated}: ${new Date().toLocaleString()}`,
-            pageW - margin,
-            9,
-            { align: "right" },
+          // Title (rasterized — Arabic shaping/BiDi/RTL)
+          await placeTextImage(
+            pdf,
+            s.title,
+            titleIsRTL ? pageW - margin : margin,
+            2,
+            {
+              fontSizePx: 15,
+              color: "#ffffff",
+              bg: headerBg,
+              bold: true,
+              maxWidthMM: pageW - margin * 2 - 70,
+              align: titleIsRTL ? "right" : "left",
+            },
+          );
+          await placeTextImage(
+            pdf,
+            sub,
+            titleIsRTL ? margin : pageW - margin,
+            4,
+            {
+              fontSizePx: 9,
+              color: "#ffffff",
+              bg: headerBg,
+              align: titleIsRTL ? "left" : "right",
+            },
           );
           // Slice
           const sliceY = i * pageContentPx;
@@ -658,16 +824,18 @@ export default function Marketing() {
           ctx.drawImage(canvas, 0, -sliceY);
           const sliceImg = sliceCanvas.toDataURL("image/png");
           pdf.addImage(sliceImg, "PNG", margin, headerH, imgW, sliceH / pxPerMM);
-          // Footer
+          // Footer — page indicator (translated)
+          await placeTextImage(
+            pdf,
+            `${s.title} — ${t.page} ${i + 1} / ${totalPages}`,
+            pageW / 2,
+            pageH - 7,
+            { fontSizePx: 9, color: "#787878", align: "center" },
+          );
           pdf.setTextColor(120, 120, 120);
           pdf.setFontSize(8);
-          pdf.text(
-            `${s.title} — ${t.page} ${i + 1} ${t.of} ${totalPages}`,
-            pageW / 2,
-            pageH - 4,
-            { align: "center" },
-          );
-          pdf.text("BSS — Marketing Toolkit", margin, pageH - 4);
+          pdf.setFont("helvetica", "normal");
+          pdf.text("BSS - Marketing Toolkit", margin, pageH - 4);
         }
       }
 
