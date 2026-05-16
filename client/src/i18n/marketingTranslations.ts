@@ -60,6 +60,10 @@ export type MarketingT = {
   finTitle: string;
   finDesc: string;
   addProduct: string;
+  selectFromMenu: string;
+  selectMenuItemPlaceholder: string;
+  noMenuItems: string;
+  linkedFromMenuToast: string;
   productName: string;
   sellingPrice: string; sellingPriceHelp: string;
   variableCost: string; variableCostHelp: string;
@@ -223,6 +227,10 @@ const en: MarketingT = {
   finTitle: "Business & Financial Analysis",
   finDesc: "Break-even, ROI, payback period, and 24-month cumulative profit — calculated in real time.",
   addProduct: "Add Product",
+  selectFromMenu: "Select from Menu",
+  selectMenuItemPlaceholder: "Choose a menu item…",
+  noMenuItems: "No menu items found",
+  linkedFromMenuToast: "Product linked from menu with costs",
   productName: "Product name",
   sellingPrice: "Selling Price / Unit",
   sellingPriceHelp: "Price you charge for one unit.",
@@ -390,6 +398,10 @@ const ar: MarketingT = {
   finTitle: "التحليل التجاري والمالي",
   finDesc: "نقطة التعادل، العائد على الاستثمار، فترة الاسترداد، والربح التراكمي لـ ٢٤ شهراً — محسوبة فوراً.",
   addProduct: "إضافة منتج",
+  selectFromMenu: "اختر من القائمة",
+  selectMenuItemPlaceholder: "اختر صنفًا من القائمة…",
+  noMenuItems: "لا توجد أصناف في القائمة",
+  linkedFromMenuToast: "تم ربط المنتج من القائمة مع التكاليف",
   productName: "اسم المنتج",
   sellingPrice: "سعر البيع / الوحدة",
   sellingPriceHelp: "السعر الذي تتقاضاه عن الوحدة الواحدة.",

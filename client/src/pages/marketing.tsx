@@ -8,6 +8,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
+import type { MenuItem, Recipe, InventoryItem, ShopBill } from "@shared/schema";
+import {
   Table,
   TableBody,
   TableCell,
@@ -278,6 +287,64 @@ export default function Marketing() {
       );
     } catch {}
   }, [products, swot, canvas, influencers, bloggerFiles]);
+
+  // ---- Menu / cost data from BSS ----
+  const { data: menuItems = [] } = useQuery<MenuItem[]>({ queryKey: ["/api/menu"] });
+  const { data: recipes = [] } = useQuery<Recipe[]>({ queryKey: ["/api/recipes"] });
+  const { data: inventory = [] } = useQuery<InventoryItem[]>({ queryKey: ["/api/inventory"] });
+  const { data: shopBills = [] } = useQuery<ShopBill[]>({ queryKey: ["/api/shop/bills"] });
+
+  const monthlyFixedCosts = useMemo(() => {
+    const factor: Record<string, number> = {
+      "one-time": 0,
+      weekly: 4.33,
+      monthly: 1,
+      quarterly: 1 / 3,
+      "semi-annually": 1 / 6,
+      yearly: 1 / 12,
+    };
+    return shopBills
+      .filter((b) => !b.archived)
+      .reduce((sum, b) => sum + (parseFloat(b.amount) || 0) * (factor[b.paymentPeriod] ?? 1), 0);
+  }, [shopBills]);
+
+  const computeVariableCost = (mi: MenuItem): number => {
+    const portion = parseFloat(mi.portionSize || "1") || 1;
+    if (mi.recipeId) {
+      const r = recipes.find((x) => x.id === mi.recipeId);
+      if (r) return (parseFloat(r.cost) || 0) * portion;
+    }
+    if (mi.inventoryItemId) {
+      const inv = inventory.find((x) => x.id === mi.inventoryItemId);
+      if (inv) {
+        const unitPrice =
+          parseFloat(inv.unitPrice || "0") ||
+          parseFloat(inv.price || "0") / (parseFloat(inv.quantity || "1") || 1);
+        const stockNo = parseFloat(mi.stockNo || "1") || 1;
+        return unitPrice * stockNo;
+      }
+    }
+    return 0;
+  };
+
+  const addProductFromMenu = (menuItemId: string) => {
+    const mi = menuItems.find((m) => m.id === menuItemId);
+    if (!mi) return;
+    const sellingPrice = parseFloat(mi.price) || 0;
+    const variableCost = computeVariableCost(mi);
+    const linked: FinProduct = {
+      id: crypto.randomUUID(),
+      name: mi.name,
+      sellingPrice,
+      variableCost,
+      fixedCosts: Math.round(monthlyFixedCosts),
+      initialCapital: 20000,
+      monthlyUnits: 100,
+      growthRate: 5,
+    };
+    setProducts((arr) => [...arr, linked]);
+    toast({ title: t.linkedFromMenuToast, description: mi.name });
+  };
 
   // ---- Financial model ----
   const computed = useMemo(() => products.map((p) => ({ p, calc: computeFin(p) })), [products]);
@@ -841,7 +908,23 @@ export default function Marketing() {
                 </CardTitle>
                 <CardDescription>{t.finDesc}</CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap items-center">
+                <Select value="" onValueChange={(v) => v && addProductFromMenu(v)}>
+                  <SelectTrigger className="w-[220px] h-9" data-testid="select-menu-item">
+                    <SelectValue placeholder={t.selectFromMenu} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {menuItems.length === 0 ? (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">{t.noMenuItems}</div>
+                    ) : (
+                      menuItems.map((mi) => (
+                        <SelectItem key={mi.id} value={mi.id} data-testid={`option-menu-${mi.id}`}>
+                          {mi.name} — {fmt(parseFloat(mi.price) || 0)}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
                 <Button
                   size="sm"
                   variant="outline"
