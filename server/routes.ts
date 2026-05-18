@@ -16907,13 +16907,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // Pure-JS PDF builder using jspdf (no puppeteer / no Chrome required).
   // Renders the catering contract directly so it works on any server without
   // system libraries.
-  async function buildCateringContractPdfBuffer(restaurantId: string, contractId: string): Promise<Buffer> {
+  async function buildCateringContractPdfBuffer(restaurantId: string, contractId: string, lang: string = 'en'): Promise<Buffer> {
     const contract = await storage.getCateringContract(contractId, restaurantId);
     if (!contract) throw new Error("Contract not found");
     const restaurant = await storage.getRestaurant(restaurantId);
     const templates = await storage.getCateringContractTemplates(restaurantId);
     const defaultTpl = templates.find(t => t.isDefault) || templates[0];
     const tplContent = defaultTpl?.content || '';
+    const isAr = lang === 'ar';
+    const L = (en: string, ar: string) => isAr ? ar : en;
 
     const meals = Array.isArray(contract.mealSelections) ? contract.mealSelections as Array<any> : [];
     const installments = Array.isArray(contract.paymentInstallments) ? contract.paymentInstallments as Array<any> : [];
@@ -16974,12 +16976,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
     setColor('#1a365d');
-    doc.text(restaurant?.name || '', pageW / 2, y + 20, { align: 'center' });
+    const restName = restaurant?.name || '';
+    useFontFor(restName, 'bold');
+    doc.text(T(restName), pageW / 2, y + 20, { align: 'center' });
     y += 28;
-    doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     setColor('#666666');
-    doc.text('Catering Supply Contract', pageW / 2, y + 12, { align: 'center' });
+    const subtitle = L('Catering Supply Contract', 'عقد توريد وجبات');
+    useFontFor(subtitle, 'normal');
+    doc.text(T(subtitle), pageW / 2, y + 12, { align: 'center' });
     y += 20;
     setDraw('#1a365d');
     doc.setLineWidth(2);
@@ -16993,22 +16998,39 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     doc.setFontSize(10);
     setColor('#333333');
     const metaY = y + 22;
-    doc.setFont('helvetica', 'bold'); doc.text('Contract #:', margin + 10, metaY);
-    doc.setFont('helvetica', 'normal'); doc.text(String(contract.contractNumber || ''), margin + 70, metaY);
-    doc.setFont('helvetica', 'bold'); doc.text('Date:', margin + contentW / 2 - 30, metaY);
-    doc.setFont('helvetica', 'normal');
-    doc.text(new Date(contract.createdAt).toLocaleDateString('en-GB'), margin + contentW / 2 + 5, metaY);
-    doc.setFont('helvetica', 'bold'); doc.text('Status:', pageW - margin - 110, metaY);
-    doc.setFont('helvetica', 'normal'); doc.text(String(contract.status || ''), pageW - margin - 70, metaY);
+    const statusLabels: Record<string, string> = isAr
+      ? { active: 'نشط', completed: 'مكتمل', cancelled: 'ملغى' }
+      : { active: 'Active', completed: 'Completed', cancelled: 'Cancelled' };
+    const statusVal = statusLabels[String(contract.status || '')] || String(contract.status || '');
+    const dateVal = new Date(contract.createdAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB');
+    if (isAr) {
+      const metaRight = (lbl: string, val: string, rx: number) => {
+        useFontFor(lbl, 'bold'); doc.text(T(lbl), rx, metaY, { align: 'right' });
+        useFontFor(val, 'normal'); doc.text(T(val), rx - 70, metaY, { align: 'right' });
+      };
+      metaRight('رقم العقد:', String(contract.contractNumber || ''), pageW - margin - 10);
+      metaRight('التاريخ:', dateVal, pageW - margin - contentW / 2 + 30);
+      metaRight('الحالة:', statusVal, margin + 110);
+    } else {
+      const metaLabel = (txt: string, x: number) => { useFontFor(txt, 'bold'); doc.text(T(txt), x, metaY); };
+      const metaVal = (txt: string, x: number) => { useFontFor(txt, 'normal'); doc.text(T(txt), x, metaY); };
+      metaLabel('Contract #:', margin + 10);
+      metaVal(String(contract.contractNumber || ''), margin + 90);
+      metaLabel('Date:', margin + contentW / 2 - 30);
+      metaVal(dateVal, margin + contentW / 2 + 25);
+      metaLabel('Status:', pageW - margin - 120);
+      metaVal(statusVal, pageW - margin - 70);
+    }
     y += 50;
 
     // Section helper
     const section = (title: string) => {
       ensure(30);
-      doc.setFont('helvetica', 'bold');
+      useFontFor(title, 'bold');
       doc.setFontSize(13);
       setColor('#1a365d');
-      doc.text(title, margin, y);
+      if (isAr) doc.text(T(title), pageW - margin, y, { align: 'right' });
+      else doc.text(T(title), margin, y);
       y += 4;
       setDraw('#e2e8f0');
       doc.setLineWidth(0.5);
@@ -17021,46 +17043,61 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
     const labelValue = (label: string, value: string) => {
       const v = value || '—';
-      const lines = splitText(v, contentW - 130);
+      const lines = splitText(v, contentW - 150);
       ensure(14 * Math.max(1, lines.length));
-      useFontFor(label, 'bold');
-      doc.text(T(label), margin, y);
-      useFontFor(v, 'normal');
-      if (hasArabic(v)) {
-        // Right-align Arabic values to the right edge of the content area
+      if (isAr) {
         const rx = pageW - margin;
-        (lines as string[]).forEach((ln, i) => doc.text(ln, rx, y + 14 * i, { align: 'right' }));
+        useFontFor(label, 'bold');
+        doc.text(T(label), rx, y, { align: 'right' });
+        useFontFor(v, 'normal');
+        (lines as string[]).forEach((ln, i) => doc.text(ln, rx - 150, y + 14 * i, { align: 'right' }));
       } else {
-        doc.text(lines, margin + 130, y);
+        useFontFor(label, 'bold');
+        doc.text(T(label), margin, y);
+        useFontFor(v, 'normal');
+        if (hasArabic(v)) {
+          const rx = pageW - margin;
+          (lines as string[]).forEach((ln, i) => doc.text(ln, rx, y + 14 * i, { align: 'right' }));
+        } else {
+          doc.text(lines, margin + 150, y);
+        }
       }
       y += 14 * Math.max(1, lines.length);
     };
 
+    // Day name translation
+    const dayMap: Record<string, string> = isAr
+      ? { sunday: 'الأحد', monday: 'الإثنين', tuesday: 'الثلاثاء', wednesday: 'الأربعاء', thursday: 'الخميس', friday: 'الجمعة', saturday: 'السبت' }
+      : { sunday: 'Sunday', monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday', thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday' };
+    const daysStr = days.map((d: string) => dayMap[String(d).toLowerCase()] || d).join(isAr ? '، ' : ', ');
+    const fmtDate = (d: any) => d ? new Date(d).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB') : '—';
+    const SAR = L('SAR', 'ر.س');
+
     // Client info
-    section('Client Information');
-    labelValue('Client Name:', contract.clientName || '');
-    labelValue('Phone:', contract.clientPhone || '');
-    labelValue('Email:', contract.clientEmail || '');
-    labelValue('Delivery Location:', contract.deliveryLocation || '');
+    section(L('Client Information', 'بيانات العميل'));
+    labelValue(L('Client Name:', 'اسم العميل:'), contract.clientName || '');
+    labelValue(L('Phone:', 'الهاتف:'), contract.clientPhone || '');
+    labelValue(L('Email:', 'البريد الإلكتروني:'), contract.clientEmail || '');
+    labelValue(L('Delivery Location:', 'موقع التوصيل:'), contract.deliveryLocation || '');
 
     // Delivery info
-    section('Delivery Details');
-    labelValue('Meals per Day:', String(contract.mealsPerDay || 0));
-    labelValue('Delivery Days:', days.join(', ') || '—');
-    labelValue('Delivery Time:', contract.deliveryTime || '—');
-    labelValue('Start Date:', contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-GB') : '—');
-    labelValue('End Date:', contract.endDate ? new Date(contract.endDate).toLocaleDateString('en-GB') : '—');
+    section(L('Delivery Details', 'تفاصيل التوصيل'));
+    labelValue(L('Meals per Day:', 'الوجبات يومياً:'), String(contract.mealsPerDay || 0));
+    labelValue(L('Delivery Days:', 'أيام التوصيل:'), daysStr || '—');
+    labelValue(L('Delivery Time:', 'وقت التوصيل:'), contract.deliveryTime || '—');
+    labelValue(L('Start Date:', 'تاريخ البداية:'), fmtDate(contract.startDate));
+    labelValue(L('End Date:', 'تاريخ النهاية:'), fmtDate(contract.endDate));
 
     // Meals
-    section('Meals');
+    section(L('Meals', 'الوجبات'));
     if (meals.length === 0) {
       doc.text('—', margin, y); y += 14;
     } else {
       for (const m of meals) {
         ensure(14);
         const name = m.name || '';
-        const priceStr = `${parseFloat(m.price || 0).toFixed(2)} SAR`;
-        const line = hasArabic(name) ? `${name}  —  ${priceStr}  •` : `• ${name} — ${priceStr}`;
+        const priceStr = `${parseFloat(m.price || 0).toFixed(2)} ${SAR}`;
+        const line = (isAr || hasArabic(name)) ? `${name}  —  ${priceStr}  •` : `• ${name} — ${priceStr}`;
         const wrapped = splitText(line, contentW);
         useFontFor(line, 'normal');
         if (hasArabic(line)) {
@@ -17073,25 +17110,33 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
 
     // Financial
-    section('Financial Summary');
-    labelValue('Total Value:', parseFloat(contract.totalValue || '0').toFixed(2) + ' SAR');
-    labelValue('Discount:', parseFloat(contract.discountPercent || '0').toFixed(2) + ' %');
-    doc.setFont('helvetica', 'bold');
-    labelValue('Final Value:', parseFloat(contract.finalValue || '0').toFixed(2) + ' SAR');
-    doc.setFont('helvetica', 'normal');
+    section(L('Financial Summary', 'الملخص المالي'));
+    labelValue(L('Total Value:', 'القيمة الإجمالية:'), parseFloat(contract.totalValue || '0').toFixed(2) + ' ' + SAR);
+    labelValue(L('Discount:', 'الخصم:'), parseFloat(contract.discountPercent || '0').toFixed(2) + ' %');
+    labelValue(L('Final Value:', 'القيمة النهائية:'), parseFloat(contract.finalValue || '0').toFixed(2) + ' ' + SAR);
 
     // Payment schedule
     if (installments.length > 0) {
-      section('Payment Schedule');
-      const headers = ['#', 'Description', '%', 'Amount (SAR)', 'Due Date'];
+      section(L('Payment Schedule', 'جدول السداد'));
+      const headers = isAr
+        ? ['#', 'الوصف', '%', `المبلغ (${SAR})`, 'تاريخ الاستحقاق']
+        : ['#', 'Description', '%', `Amount (${SAR})`, 'Due Date'];
       const colW = [30, contentW * 0.4, 50, 100, contentW - 30 - contentW * 0.4 - 50 - 100];
       ensure(22);
       setFill('#1a365d');
       doc.rect(margin, y - 12, contentW, 18, 'F');
       setColor('#ffffff');
-      doc.setFont('helvetica', 'bold');
-      let cx = margin + 6;
-      headers.forEach((h, i) => { doc.text(h, cx, y); cx += colW[i]; });
+      // Right-to-left column layout for Arabic, left-to-right for English
+      if (isAr) {
+        let rx = pageW - margin - 6;
+        headers.forEach((h, i) => {
+          useFontFor(h, 'bold'); doc.text(T(h), rx, y, { align: 'right' });
+          rx -= colW[i];
+        });
+      } else {
+        let cx = margin + 6;
+        headers.forEach((h, i) => { useFontFor(h, 'bold'); doc.text(T(h), cx, y); cx += colW[i]; });
+      }
       y += 12;
       doc.setFont('helvetica', 'normal');
       setColor('#333333');
@@ -17099,26 +17144,37 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         ensure(16);
         setDraw('#e2e8f0');
         doc.line(margin, y + 4, pageW - margin, y + 4);
-        let x = margin + 6;
         const row = [
           String(i + 1),
           String(it.label || ''),
           parseFloat(it.percent || 0).toFixed(2),
           parseFloat(it.amount || 0).toFixed(2),
-          it.dueDate ? new Date(it.dueDate).toLocaleDateString('en-GB') : '—',
+          fmtDate(it.dueDate),
         ];
-        row.forEach((v, j) => {
-          const lines = doc.splitTextToSize(v, colW[j] - 8);
-          doc.text(lines[0] || '', x, y);
-          x += colW[j];
-        });
+        if (isAr) {
+          let rx = pageW - margin - 6;
+          row.forEach((v, j) => {
+            useFontFor(v, 'normal');
+            const lines = doc.splitTextToSize(T(v), colW[j] - 8);
+            doc.text(lines[0] || '', rx, y, { align: 'right' });
+            rx -= colW[j];
+          });
+        } else {
+          let x = margin + 6;
+          row.forEach((v, j) => {
+            useFontFor(v, 'normal');
+            const lines = doc.splitTextToSize(T(v), colW[j] - 8);
+            doc.text(lines[0] || '', x, y);
+            x += colW[j];
+          });
+        }
         y += 16;
       });
     }
 
     // Terms (template content, plain text)
     if (tplContent) {
-      section('Terms & Conditions');
+      section(L('Terms & Conditions', 'الشروط والأحكام'));
       const placeholders: Record<string, string> = {
         my_restaurant_name: restaurant?.name || '',
         client_name: contract.clientName || '',
@@ -17126,14 +17182,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         email: contract.clientEmail || '',
         delivery_location: contract.deliveryLocation || '',
         number_of_meals: String(contract.mealsPerDay || 0),
-        delivery_days: days.join(', '),
+        delivery_days: daysStr,
         delivery_time: contract.deliveryTime || '',
-        total_value: parseFloat(contract.totalValue || '0').toFixed(2) + ' SAR',
+        total_value: parseFloat(contract.totalValue || '0').toFixed(2) + ' ' + SAR,
         discount_percentage: parseFloat(contract.discountPercent || '0').toFixed(2) + '%',
-        final_value: parseFloat(contract.finalValue || '0').toFixed(2) + ' SAR',
-        start_date: contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-GB') : '',
-        end_date: contract.endDate ? new Date(contract.endDate).toLocaleDateString('en-GB') : '',
-        meals_list: meals.map((m: any) => `${m.name} (${parseFloat(m.price || 0).toFixed(2)} SAR)`).join(', '),
+        final_value: parseFloat(contract.finalValue || '0').toFixed(2) + ' ' + SAR,
+        start_date: fmtDate(contract.startDate),
+        end_date: fmtDate(contract.endDate),
+        meals_list: meals.map((m: any) => `${m.name} (${parseFloat(m.price || 0).toFixed(2)} ${SAR})`).join(isAr ? '، ' : ', '),
         payment_schedule: '',
       };
       // Strip HTML to plain text, substitute placeholders
@@ -17147,13 +17203,25 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         const lines = splitText(p, contentW);
         ensure(13 * lines.length);
         useFontFor(p, 'normal');
-        if (hasArabic(p)) {
+        if (isAr || hasArabic(p)) {
           lines.forEach((ln, i) => doc.text(ln, pageW - margin, y + 13 * i, { align: 'right' }));
         } else {
           doc.text(lines, margin, y);
         }
         y += 13 * lines.length + 4;
       }
+    } else {
+      // Fallback notice if no template configured yet
+      section(L('Terms & Conditions', 'الشروط والأحكام'));
+      const notice = L(
+        'No terms & conditions template configured. Add one from the Template tab.',
+        'لا يوجد قالب شروط وأحكام مُهيأ. أضف قالباً من تبويب القالب.'
+      );
+      const lines = splitText(notice, contentW);
+      useFontFor(notice, 'normal');
+      if (isAr) lines.forEach((ln, i) => doc.text(ln, pageW - margin, y + 13 * i, { align: 'right' }));
+      else doc.text(lines, margin, y);
+      y += 13 * lines.length + 4;
     }
 
     // Footer
@@ -17163,8 +17231,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       setColor('#999999');
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
-      doc.text('Generated by BlindSpot System (BSS) — kinbss.org', pageW / 2, pageH - 20, { align: 'center' });
-      doc.text(`Page ${p} of ${pageCount}`, pageW - margin, pageH - 20, { align: 'right' });
+      const footer = L('Generated by BlindSpot System (BSS) — kinbss.org', 'تم الإنشاء بواسطة نظام بلايند سبوت (BSS) — kinbss.org');
+      useFontFor(footer, 'normal');
+      doc.text(T(footer), pageW / 2, pageH - 20, { align: 'center' });
+      const pageStr = L(`Page ${p} of ${pageCount}`, `صفحة ${p} من ${pageCount}`);
+      useFontFor(pageStr, 'normal');
+      doc.text(T(pageStr), pageW - margin, pageH - 20, { align: 'right' });
     }
 
     const arr = doc.output('arraybuffer');
@@ -17174,7 +17246,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.get("/api/catering-contracts/:id/pdf", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      const pdfBuffer = await buildCateringContractPdfBuffer(restaurantId, req.params.id);
+      const lang = String(req.query.lang || 'en');
+      const pdfBuffer = await buildCateringContractPdfBuffer(restaurantId, req.params.id, lang);
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Length', String(pdfBuffer.length));
       res.setHeader('Content-Disposition', `attachment; filename="catering-contract-${req.params.id}.pdf"`);
@@ -17214,7 +17287,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const { eq } = await import('drizzle-orm');
       const [contract] = await db.select().from(cateringContracts).where(eq(cateringContracts.shareToken, req.params.token));
       if (!contract) return res.status(404).send('Not found');
-      const pdfBuffer = await buildCateringContractPdfBuffer(contract.restaurantId, contract.id);
+      const lang = String(req.query.lang || 'en');
+      const pdfBuffer = await buildCateringContractPdfBuffer(contract.restaurantId, contract.id, lang);
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Length', String(pdfBuffer.length));
       res.setHeader('Content-Disposition', `inline; filename="catering-contract-${contract.contractNumber}.pdf"`);
@@ -17232,7 +17306,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (!contract) return res.status(404).json({ message: "Contract not found" });
       if (!contract.clientEmail) return res.status(400).json({ message: "Client email not set" });
 
-      const pdfBuffer = await buildCateringContractPdfBuffer(restaurantId, req.params.id);
+      const lang = String(req.query.lang || 'en');
+      const pdfBuffer = await buildCateringContractPdfBuffer(restaurantId, req.params.id, lang);
 
       // Try Resend integration first (supports attachments natively)
       let sent = false;

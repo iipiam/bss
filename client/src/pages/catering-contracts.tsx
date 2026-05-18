@@ -138,7 +138,7 @@ export default function CateringContractsPage() {
   };
 
   const downloadPdf = async (c: CateringContract) => {
-    const resp = await fetch(`/api/catering-contracts/${c.id}/pdf`, { credentials: "include" });
+    const resp = await fetch(`/api/catering-contracts/${c.id}/pdf?lang=${encodeURIComponent(language)}`, { credentials: "include" });
     if (!resp.ok) {
       toast({ title: "Error", description: await resp.text(), variant: "destructive" });
       return;
@@ -153,7 +153,7 @@ export default function CateringContractsPage() {
   };
 
   const emailMut = useMutation({
-    mutationFn: async (id: string) => await apiRequest("POST", `/api/catering-contracts/${id}/send-email`, {}),
+    mutationFn: async (id: string) => await apiRequest("POST", `/api/catering-contracts/${id}/send-email?lang=${encodeURIComponent(language)}`, {}),
     onSuccess: () => toast({ title: t.emailSent }),
     onError: (e: any) => toast({ title: t.emailFailed, description: e.message, variant: "destructive" }),
   });
@@ -162,7 +162,8 @@ export default function CateringContractsPage() {
     if (!c.clientPhone) return;
     try {
       const resp = await apiRequest("POST", `/api/catering-contracts/${c.id}/share-link`, {});
-      const { url } = await resp.json();
+      const { url: baseUrl } = await resp.json();
+      const url = `${baseUrl}?lang=${encodeURIComponent(language)}`;
       const phone = formatPhoneForWhatsApp(c.clientPhone);
       const msg = language === 'ar'
         ? `مرحبا ${c.clientName}،\nعقد التموين رقم ${c.contractNumber} جاهز.\nالقيمة النهائية: ${parseFloat(c.finalValue || '0').toFixed(2)} ${t.sar}\n\nتحميل العقد (PDF):\n${url}\n\nشكرا.`
