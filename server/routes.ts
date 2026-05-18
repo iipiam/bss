@@ -16936,9 +16936,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     </body></html>`;
   }
 
-  // Pure-JS PDF builder using jspdf (no puppeteer / no Chrome required).
-  // Renders the catering contract directly so it works on any server without
-  // system libraries.
+  // Puppeteer-based PDF builder. Renders the contract as HTML and prints it
+  // via headless Chromium so Arabic text shaping & bidirectional ordering are
+  // handled natively by the browser (no manual reshaping needed).
   async function buildCateringContractPdfBuffer(restaurantId: string, contractId: string, lang: string = 'en'): Promise<Buffer> {
     const contract = await storage.getCateringContract(contractId, restaurantId);
     if (!contract) throw new Error("Contract not found");
@@ -16948,156 +16948,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const tplContent = defaultTpl?.content || '';
     const isAr = lang === 'ar' || lang === 'Arabic' || lang === 'Urdu' || lang === 'ur';
     const L = (en: string, ar: string) => isAr ? ar : en;
+    const dir = isAr ? 'rtl' : 'ltr';
+    const align = isAr ? 'right' : 'left';
 
     const meals = Array.isArray(contract.mealSelections) ? contract.mealSelections as Array<any> : [];
     const installments = Array.isArray(contract.paymentInstallments) ? contract.paymentInstallments as Array<any> : [];
     const days = Array.isArray(contract.deliveryDays) ? contract.deliveryDays : [];
 
-    const { jsPDF } = await import('jspdf');
-    const { AMIRI_REGULAR_BASE64 } = await import('./fonts/amiriBase64');
-    const { prepareArabic, hasArabic } = await import('./arabicShaper');
-    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-    // Register Amiri (Arabic-capable) font once so we can switch to it for
-    // any text containing Arabic characters.
-    doc.addFileToVFS('Amiri-Regular.ttf', AMIRI_REGULAR_BASE64);
-    doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('Amiri-Regular.ttf', 'Amiri', 'bold');
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    const margin = 48;
-    const contentW = pageW - margin * 2;
-    let y = margin;
-
-    // Helper: render text, switching to Amiri + RTL alignment for Arabic strings.
-    const useFontFor = (txt: string, style: 'normal' | 'bold' = 'normal') => {
-      if (hasArabic(txt)) doc.setFont('Amiri', style);
-      else doc.setFont('helvetica', style);
-    };
-    const T = (txt: string): string => hasArabic(txt) ? prepareArabic(txt) : txt;
-    const drawText = (txt: string, x: number, ty: number, opts?: any) => {
-      const style = (opts && opts.style) || 'normal';
-      useFontFor(String(txt), style);
-      const out = T(String(txt));
-      const o: any = { ...(opts || {}) }; delete o.style;
-      if (hasArabic(String(txt)) && !o.align) o.align = 'right';
-      doc.text(out, x, ty, o);
-    };
-    const splitText = (txt: string, w: number): string[] => {
-      const prepared = T(String(txt));
-      useFontFor(String(txt));
-      return doc.splitTextToSize(prepared, w) as string[];
-    };
-
-    const ensure = (need: number) => {
-      if (y + need > pageH - margin) { doc.addPage(); y = margin; }
-    };
-    const setColor = (hex: string) => {
-      const n = parseInt(hex.replace('#', ''), 16);
-      doc.setTextColor((n >> 16) & 255, (n >> 8) & 255, n & 255);
-    };
-    const setFill = (hex: string) => {
-      const n = parseInt(hex.replace('#', ''), 16);
-      doc.setFillColor((n >> 16) & 255, (n >> 8) & 255, n & 255);
-    };
-    const setDraw = (hex: string) => {
-      const n = parseInt(hex.replace('#', ''), 16);
-      doc.setDrawColor((n >> 16) & 255, (n >> 8) & 255, n & 255);
-    };
-
-    // Header
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(20);
-    setColor('#1a365d');
-    const restName = restaurant?.name || '';
-    useFontFor(restName, 'bold');
-    doc.text(T(restName), pageW / 2, y + 20, { align: 'center' });
-    y += 28;
-    doc.setFontSize(10);
-    setColor('#666666');
-    const subtitle = L('Catering Supply Contract', 'عقد توريد وجبات');
-    useFontFor(subtitle, 'normal');
-    doc.text(T(subtitle), pageW / 2, y + 12, { align: 'center' });
-    y += 20;
-    setDraw('#1a365d');
-    doc.setLineWidth(2);
-    doc.line(margin, y, pageW - margin, y);
-    y += 18;
-
-    // Meta box
-    setFill('#f8fafc');
-    doc.rect(margin, y, contentW, 36, 'F');
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    setColor('#333333');
-    const metaY = y + 22;
-    const statusLabels: Record<string, string> = isAr
-      ? { active: 'نشط', completed: 'مكتمل', cancelled: 'ملغى' }
-      : { active: 'Active', completed: 'Completed', cancelled: 'Cancelled' };
-    const statusVal = statusLabels[String(contract.status || '')] || String(contract.status || '');
-    const dateVal = new Date(contract.createdAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB');
-    if (isAr) {
-      const metaRight = (lbl: string, val: string, rx: number) => {
-        useFontFor(lbl, 'bold'); doc.text(T(lbl), rx, metaY, { align: 'right' });
-        useFontFor(val, 'normal'); doc.text(T(val), rx - 70, metaY, { align: 'right' });
-      };
-      metaRight('رقم العقد:', String(contract.contractNumber || ''), pageW - margin - 10);
-      metaRight('التاريخ:', dateVal, pageW - margin - contentW / 2 + 30);
-      metaRight('الحالة:', statusVal, margin + 110);
-    } else {
-      const metaLabel = (txt: string, x: number) => { useFontFor(txt, 'bold'); doc.text(T(txt), x, metaY); };
-      const metaVal = (txt: string, x: number) => { useFontFor(txt, 'normal'); doc.text(T(txt), x, metaY); };
-      metaLabel('Contract #:', margin + 10);
-      metaVal(String(contract.contractNumber || ''), margin + 90);
-      metaLabel('Date:', margin + contentW / 2 - 30);
-      metaVal(dateVal, margin + contentW / 2 + 25);
-      metaLabel('Status:', pageW - margin - 120);
-      metaVal(statusVal, pageW - margin - 70);
-    }
-    y += 50;
-
-    // Section helper
-    const section = (title: string) => {
-      ensure(30);
-      useFontFor(title, 'bold');
-      doc.setFontSize(13);
-      setColor('#1a365d');
-      if (isAr) doc.text(T(title), pageW - margin, y, { align: 'right' });
-      else doc.text(T(title), margin, y);
-      y += 4;
-      setDraw('#e2e8f0');
-      doc.setLineWidth(0.5);
-      doc.line(margin, y + 2, pageW - margin, y + 2);
-      y += 14;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      setColor('#333333');
-    };
-
-    const labelValue = (label: string, value: string) => {
-      const v = value || '—';
-      const lines = splitText(v, contentW - 150);
-      ensure(14 * Math.max(1, lines.length));
-      if (isAr) {
-        const rx = pageW - margin;
-        useFontFor(label, 'bold');
-        doc.text(T(label), rx, y, { align: 'right' });
-        useFontFor(v, 'normal');
-        (lines as string[]).forEach((ln, i) => doc.text(ln, rx - 150, y + 14 * i, { align: 'right' }));
-      } else {
-        useFontFor(label, 'bold');
-        doc.text(T(label), margin, y);
-        useFontFor(v, 'normal');
-        if (hasArabic(v)) {
-          const rx = pageW - margin;
-          (lines as string[]).forEach((ln, i) => doc.text(ln, rx, y + 14 * i, { align: 'right' }));
-        } else {
-          doc.text(lines, margin + 150, y);
-        }
-      }
-      y += 14 * Math.max(1, lines.length);
-    };
-
-    // Day name translation
     const dayMap: Record<string, string> = isAr
       ? { sunday: 'الأحد', monday: 'الإثنين', tuesday: 'الثلاثاء', wednesday: 'الأربعاء', thursday: 'الخميس', friday: 'الجمعة', saturday: 'السبت' }
       : { sunday: 'Sunday', monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday', thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday' };
@@ -17105,183 +16962,217 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const fmtDate = (d: any) => d ? new Date(d).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB') : '—';
     const SAR = L('SAR', 'ر.س');
 
-    // Client info
-    section(L('Client Information', 'بيانات العميل'));
-    labelValue(L('Client Name:', 'اسم العميل:'), contract.clientName || '');
-    labelValue(L('Phone:', 'الهاتف:'), contract.clientPhone || '');
-    labelValue(L('Email:', 'البريد الإلكتروني:'), contract.clientEmail || '');
-    labelValue(L('Delivery Location:', 'موقع التوصيل:'), contract.deliveryLocation || '');
+    const statusLabels: Record<string, string> = isAr
+      ? { active: 'نشط', completed: 'مكتمل', cancelled: 'ملغى' }
+      : { active: 'Active', completed: 'Completed', cancelled: 'Cancelled' };
+    const statusVal = statusLabels[String(contract.status || '')] || String(contract.status || '');
 
-    // Delivery info
-    section(L('Delivery Details', 'تفاصيل التوصيل'));
-    labelValue(L('Meals per Day:', 'الوجبات يومياً:'), String(contract.mealsPerDay || 0));
-    labelValue(L('Delivery Days:', 'أيام التوصيل:'), daysStr || '—');
-    labelValue(L('Delivery Time:', 'وقت التوصيل:'), contract.deliveryTime || '—');
-    labelValue(L('Start Date:', 'تاريخ البداية:'), fmtDate(contract.startDate));
-    labelValue(L('End Date:', 'تاريخ النهاية:'), fmtDate(contract.endDate));
+    const mealsListHtml = meals.length
+      ? `<ul class="meals">${meals.map(m => `<li><span>${escapeHtml(m.name || '')}</span><span class="price">${parseFloat(m.price || 0).toFixed(2)} ${SAR}</span></li>`).join('')}</ul>`
+      : '<p>—</p>';
 
-    // Meals
-    section(L('Meals', 'الوجبات'));
-    if (meals.length === 0) {
-      doc.text('—', margin, y); y += 14;
-    } else {
-      for (const m of meals) {
-        ensure(14);
-        const name = m.name || '';
-        const priceStr = `${parseFloat(m.price || 0).toFixed(2)} ${SAR}`;
-        const line = (isAr || hasArabic(name)) ? `${name}  —  ${priceStr}  •` : `• ${name} — ${priceStr}`;
-        const wrapped = splitText(line, contentW);
-        useFontFor(line, 'normal');
-        if (hasArabic(line)) {
-          wrapped.forEach((ln, i) => doc.text(ln, pageW - margin, y + 14 * i, { align: 'right' }));
-        } else {
-          doc.text(wrapped, margin, y);
-        }
-        y += 14 * wrapped.length;
+    const paymentScheduleHtml = installments.length
+      ? `<table class="data-table">
+          <thead><tr>
+            <th>#</th>
+            <th>${L('Description', 'الوصف')}</th>
+            <th class="num">%</th>
+            <th class="num">${L('Amount', 'المبلغ')} (${SAR})</th>
+            <th>${L('Due Date', 'تاريخ الاستحقاق')}</th>
+          </tr></thead>
+          <tbody>${installments.map((it: any, i: number) => `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${escapeHtml(it.label || '')}</td>
+              <td class="num">${parseFloat(it.percent || 0).toFixed(2)}</td>
+              <td class="num">${parseFloat(it.amount || 0).toFixed(2)}</td>
+              <td>${fmtDate(it.dueDate)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`
+      : '';
+
+    const placeholders: Record<string, string> = {
+      my_restaurant_name: escapeHtml(restaurant?.name || ''),
+      client_name: escapeHtml(contract.clientName || ''),
+      phone: escapeHtml(contract.clientPhone || ''),
+      email: escapeHtml(contract.clientEmail || ''),
+      delivery_location: escapeHtml(contract.deliveryLocation || ''),
+      meals_list: mealsListHtml,
+      number_of_meals: String(contract.mealsPerDay || 0),
+      delivery_days: escapeHtml(daysStr),
+      delivery_time: escapeHtml(contract.deliveryTime || ''),
+      total_value: escapeHtml(parseFloat(contract.totalValue || '0').toFixed(2) + ' ' + SAR),
+      discount_percentage: escapeHtml(parseFloat(contract.discountPercent || '0').toFixed(2) + '%'),
+      final_value: escapeHtml(parseFloat(contract.finalValue || '0').toFixed(2) + ' ' + SAR),
+      payment_schedule: paymentScheduleHtml,
+      start_date: escapeHtml(fmtDate(contract.startDate)),
+      end_date: escapeHtml(fmtDate(contract.endDate)),
+    };
+    const customPhs = Array.isArray((defaultTpl as any)?.customPlaceholders)
+      ? (defaultTpl as any).customPlaceholders as Array<{ key: string; value: string }>
+      : [];
+    for (const cp of customPhs) {
+      if (cp && typeof cp.key === 'string' && cp.key.trim()) {
+        placeholders[cp.key.trim()] = escapeHtml(String(cp.value ?? ''));
       }
     }
 
-    // Financial
-    section(L('Financial Summary', 'الملخص المالي'));
-    labelValue(L('Total Value:', 'القيمة الإجمالية:'), parseFloat(contract.totalValue || '0').toFixed(2) + ' ' + SAR);
-    labelValue(L('Discount:', 'الخصم:'), parseFloat(contract.discountPercent || '0').toFixed(2) + ' %');
-    labelValue(L('Final Value:', 'القيمة النهائية:'), parseFloat(contract.finalValue || '0').toFixed(2) + ' ' + SAR);
-
-    // Payment schedule
-    if (installments.length > 0) {
-      section(L('Payment Schedule', 'جدول السداد'));
-      const headers = isAr
-        ? ['#', 'الوصف', '%', `المبلغ (${SAR})`, 'تاريخ الاستحقاق']
-        : ['#', 'Description', '%', `Amount (${SAR})`, 'Due Date'];
-      const colW = [30, contentW * 0.4, 50, 100, contentW - 30 - contentW * 0.4 - 50 - 100];
-      ensure(22);
-      setFill('#1a365d');
-      doc.rect(margin, y - 12, contentW, 18, 'F');
-      setColor('#ffffff');
-      // Right-to-left column layout for Arabic, left-to-right for English
-      if (isAr) {
-        let rx = pageW - margin - 6;
-        headers.forEach((h, i) => {
-          useFontFor(h, 'bold'); doc.text(T(h), rx, y, { align: 'right' });
-          rx -= colW[i];
-        });
-      } else {
-        let cx = margin + 6;
-        headers.forEach((h, i) => { useFontFor(h, 'bold'); doc.text(T(h), cx, y); cx += colW[i]; });
-      }
-      y += 12;
-      doc.setFont('helvetica', 'normal');
-      setColor('#333333');
-      installments.forEach((it: any, i: number) => {
-        ensure(16);
-        setDraw('#e2e8f0');
-        doc.line(margin, y + 4, pageW - margin, y + 4);
-        const row = [
-          String(i + 1),
-          String(it.label || ''),
-          parseFloat(it.percent || 0).toFixed(2),
-          parseFloat(it.amount || 0).toFixed(2),
-          fmtDate(it.dueDate),
-        ];
-        if (isAr) {
-          let rx = pageW - margin - 6;
-          row.forEach((v, j) => {
-            useFontFor(v, 'normal');
-            const lines = doc.splitTextToSize(T(v), colW[j] - 8);
-            doc.text(lines[0] || '', rx, y, { align: 'right' });
-            rx -= colW[j];
-          });
-        } else {
-          let x = margin + 6;
-          row.forEach((v, j) => {
-            useFontFor(v, 'normal');
-            const lines = doc.splitTextToSize(T(v), colW[j] - 8);
-            doc.text(lines[0] || '', x, y);
-            x += colW[j];
-          });
-        }
-        y += 16;
-      });
-    }
-
-    // Terms (template content, plain text)
+    // Render the Terms & Conditions template. If the template is plain text,
+    // escape it and convert newlines to <br/>; if it contains HTML, trust the
+    // author's markup. In both cases, substitute placeholders afterwards so
+    // values like meals_list / payment_schedule keep their HTML fragments.
+    const isHtmlTemplate = /<[a-z][^>]*>/i.test(tplContent);
+    let termsBody = '';
     if (tplContent) {
-      section(L('Terms & Conditions', 'الشروط والأحكام'));
-      const placeholders: Record<string, string> = {
-        my_restaurant_name: restaurant?.name || '',
-        client_name: contract.clientName || '',
-        phone: contract.clientPhone || '',
-        email: contract.clientEmail || '',
-        delivery_location: contract.deliveryLocation || '',
-        number_of_meals: String(contract.mealsPerDay || 0),
-        delivery_days: daysStr,
-        delivery_time: contract.deliveryTime || '',
-        total_value: parseFloat(contract.totalValue || '0').toFixed(2) + ' ' + SAR,
-        discount_percentage: parseFloat(contract.discountPercent || '0').toFixed(2) + '%',
-        final_value: parseFloat(contract.finalValue || '0').toFixed(2) + ' ' + SAR,
-        start_date: fmtDate(contract.startDate),
-        end_date: fmtDate(contract.endDate),
-        meals_list: meals.map((m: any) => `${m.name} (${parseFloat(m.price || 0).toFixed(2)} ${SAR})`).join(isAr ? '، ' : ', '),
-        payment_schedule: '',
-      };
-      // Merge user-defined custom placeholders (these can override built-ins)
-      const customPhs = Array.isArray((defaultTpl as any)?.customPlaceholders)
-        ? (defaultTpl as any).customPlaceholders as Array<{ key: string; value: string }>
-        : [];
-      for (const cp of customPhs) {
-        if (cp && typeof cp.key === 'string' && cp.key.trim()) {
-          placeholders[cp.key.trim()] = String(cp.value ?? '');
-        }
-      }
-      // Strip HTML to plain text, substitute placeholders
-      let text = tplContent.replace(/<br\s*\/?>/gi, '\n').replace(/<\/?p[^>]*>/gi, '\n').replace(/<[^>]+>/g, '');
-      text = text.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+      termsBody = isHtmlTemplate
+        ? tplContent
+        : tplContent.split('\n').map(line => escapeHtml(line)).join('<br/>');
       for (const [k, v] of Object.entries(placeholders)) {
-        text = text.split(`{{${k}}}`).join(v);
+        termsBody = termsBody.split(`{{${k}}}`).join(v);
       }
-      const paragraphs = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
-      for (const p of paragraphs) {
-        const lines = splitText(p, contentW);
-        ensure(13 * lines.length);
-        useFontFor(p, 'normal');
-        if (isAr || hasArabic(p)) {
-          lines.forEach((ln, i) => doc.text(ln, pageW - margin, y + 13 * i, { align: 'right' }));
-        } else {
-          doc.text(lines, margin, y);
-        }
-        y += 13 * lines.length + 4;
-      }
-    } else {
-      // Fallback notice if no template configured yet
-      section(L('Terms & Conditions', 'الشروط والأحكام'));
-      const notice = L(
-        'No terms & conditions template configured. Add one from the Template tab.',
-        'لا يوجد قالب شروط وأحكام مُهيأ. أضف قالباً من تبويب القالب.'
-      );
-      const lines = splitText(notice, contentW);
-      useFontFor(notice, 'normal');
-      if (isAr) lines.forEach((ln, i) => doc.text(ln, pageW - margin, y + 13 * i, { align: 'right' }));
-      else doc.text(lines, margin, y);
-      y += 13 * lines.length + 4;
     }
 
-    // Footer
-    const pageCount = (doc as any).internal.getNumberOfPages();
-    for (let p = 1; p <= pageCount; p++) {
-      doc.setPage(p);
-      setColor('#999999');
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      const footer = L('Generated by BlindSpot System (BSS) — kinbss.org', 'تم الإنشاء بواسطة نظام بلايند سبوت (BSS) — kinbss.org');
-      useFontFor(footer, 'normal');
-      doc.text(T(footer), pageW / 2, pageH - 20, { align: 'center' });
-      const pageStr = L(`Page ${p} of ${pageCount}`, `صفحة ${p} من ${pageCount}`);
-      useFontFor(pageStr, 'normal');
-      doc.text(T(pageStr), pageW - margin, pageH - 20, { align: 'right' });
-    }
+    const labelValue = (label: string, value: string) =>
+      `<div class="lv"><div class="lv-lbl">${escapeHtml(label)}</div><div class="lv-val">${escapeHtml(value || '—')}</div></div>`;
 
-    const arr = doc.output('arraybuffer');
-    return Buffer.from(arr);
+    const html = `<!DOCTYPE html>
+<html lang="${isAr ? 'ar' : 'en'}" dir="${dir}">
+<head>
+  <meta charset="UTF-8" />
+  <title>Catering Contract ${escapeHtml(contract.contractNumber || '')}</title>
+  <style>
+    @page { size: A4; margin: 18mm 14mm 18mm 14mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: ${isAr ? "'Noto Naskh Arabic', 'Amiri', 'Segoe UI', Arial, sans-serif" : "'Segoe UI', Arial, sans-serif"};
+      color: #222;
+      font-size: 12px;
+      line-height: 1.55;
+      direction: ${dir};
+      text-align: ${align};
+      margin: 0;
+    }
+    .header { text-align: center; border-bottom: 3px solid #1a365d; padding-bottom: 12px; margin-bottom: 18px; }
+    .header h1 { color: #1a365d; margin: 0; font-size: 22px; }
+    .header .subtitle { color: #666; font-size: 11px; margin-top: 4px; }
+    .meta {
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+      background: #f8fafc; padding: 10px 14px; border-radius: 6px;
+      margin-bottom: 16px; font-size: 11px;
+    }
+    .meta .item { display: flex; gap: 6px; }
+    .meta .item .lbl { color: #555; font-weight: 600; }
+    h2.section {
+      color: #1a365d; font-size: 14px; margin: 18px 0 8px 0;
+      border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;
+    }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 18px; }
+    .lv { display: flex; gap: 8px; padding: 3px 0; font-size: 11.5px; }
+    .lv-lbl { color: #555; font-weight: 600; min-width: 120px; }
+    .lv-val { color: #222; flex: 1; }
+    ul.meals { list-style: none; padding: 0; margin: 4px 0; }
+    ul.meals li {
+      display: flex; justify-content: space-between; gap: 12px;
+      padding: 5px 8px; border-bottom: 1px dashed #e2e8f0;
+    }
+    ul.meals li .price { color: #1a365d; font-weight: 600; }
+    .totals {
+      margin-top: 8px; background: #f8fafc; padding: 10px 14px;
+      border-radius: 6px; font-size: 12px;
+    }
+    .totals .row { display: flex; justify-content: space-between; padding: 3px 0; }
+    .totals .row.grand { font-weight: 700; color: #1a365d; border-top: 1px solid #cbd5e0; margin-top: 4px; padding-top: 6px; font-size: 13px; }
+    table.data-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 6px; }
+    table.data-table th { background: #1a365d; color: #fff; padding: 8px 10px; text-align: ${align}; font-weight: 600; }
+    table.data-table td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; }
+    table.data-table .num { text-align: ${isAr ? 'left' : 'right'}; font-variant-numeric: tabular-nums; }
+    .terms { font-size: 11.5px; line-height: 1.7; }
+    .terms p { margin: 6px 0; }
+    .footer {
+      position: fixed; bottom: 6mm; ${isAr ? 'right' : 'left'}: 14mm; ${isAr ? 'left' : 'right'}: 14mm;
+      text-align: center; color: #999; font-size: 9.5px;
+      border-top: 1px solid #e2e8f0; padding-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>${escapeHtml(restaurant?.name || '')}</h1>
+    <div class="subtitle">${L('Catering Supply Contract', 'عقد توريد وجبات')}</div>
+  </div>
+
+  <div class="meta">
+    <div class="item"><span class="lbl">${L('Contract #:', 'رقم العقد:')}</span><span>${escapeHtml(contract.contractNumber || '')}</span></div>
+    <div class="item"><span class="lbl">${L('Date:', 'التاريخ:')}</span><span>${escapeHtml(new Date(contract.createdAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB'))}</span></div>
+    <div class="item"><span class="lbl">${L('Status:', 'الحالة:')}</span><span>${escapeHtml(statusVal)}</span></div>
+  </div>
+
+  <h2 class="section">${L('Client Information', 'بيانات العميل')}</h2>
+  <div class="grid2">
+    ${labelValue(L('Client Name:', 'اسم العميل:'), contract.clientName || '')}
+    ${labelValue(L('Phone:', 'الهاتف:'), contract.clientPhone || '')}
+    ${labelValue(L('Email:', 'البريد الإلكتروني:'), contract.clientEmail || '')}
+    ${labelValue(L('Delivery Location:', 'موقع التوصيل:'), contract.deliveryLocation || '')}
+  </div>
+
+  <h2 class="section">${L('Delivery Details', 'تفاصيل التوصيل')}</h2>
+  <div class="grid2">
+    ${labelValue(L('Meals per Day:', 'الوجبات يومياً:'), String(contract.mealsPerDay || 0))}
+    ${labelValue(L('Delivery Days:', 'أيام التوصيل:'), daysStr || '—')}
+    ${labelValue(L('Delivery Time:', 'وقت التوصيل:'), contract.deliveryTime || '—')}
+    ${labelValue(L('Start Date:', 'تاريخ البداية:'), fmtDate(contract.startDate))}
+    ${labelValue(L('End Date:', 'تاريخ النهاية:'), fmtDate(contract.endDate))}
+  </div>
+
+  <h2 class="section">${L('Meals', 'الوجبات')}</h2>
+  ${mealsListHtml}
+
+  <h2 class="section">${L('Financial Summary', 'الملخص المالي')}</h2>
+  <div class="totals">
+    <div class="row"><span>${L('Total Value', 'القيمة الإجمالية')}</span><span>${escapeHtml(parseFloat(contract.totalValue || '0').toFixed(2) + ' ' + SAR)}</span></div>
+    <div class="row"><span>${L('Discount', 'الخصم')}</span><span>${escapeHtml(parseFloat(contract.discountPercent || '0').toFixed(2) + ' %')}</span></div>
+    <div class="row grand"><span>${L('Final Value', 'القيمة النهائية')}</span><span>${escapeHtml(parseFloat(contract.finalValue || '0').toFixed(2) + ' ' + SAR)}</span></div>
+  </div>
+
+  ${installments.length ? `<h2 class="section">${L('Payment Schedule', 'جدول السداد')}</h2>${paymentScheduleHtml}` : ''}
+
+  <h2 class="section">${L('Terms & Conditions', 'الشروط والأحكام')}</h2>
+  <div class="terms">
+    ${termsBody || `<p style="color:#888;">${L('No terms & conditions template configured.', 'لا يوجد قالب شروط وأحكام مُهيأ.')}</p>`}
+  </div>
+
+  <div class="footer">${L('Generated by BlindSpot System (BSS) — kinbss.org', 'تم الإنشاء بواسطة نظام بلايند سبوت (BSS) — kinbss.org')}</div>
+</body>
+</html>`;
+
+    const puppeteer = await import("puppeteer");
+    const { execSync } = await import("child_process");
+    const { existsSync } = await import("fs");
+
+    let chromiumPath: string | undefined = undefined;
+    try {
+      chromiumPath = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null', { encoding: 'utf8' }).trim();
+      if (!chromiumPath || !existsSync(chromiumPath)) chromiumPath = undefined;
+    } catch (e) {}
+
+    const browser = await puppeteer.default.launch({
+      headless: true,
+      executablePath: chromiumPath,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process', '--no-zygote'],
+    });
+    try {
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      const pdfData = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '18mm', right: '14mm', bottom: '18mm', left: '14mm' },
+      });
+      return Buffer.from(pdfData);
+    } finally {
+      await browser.close();
+    }
   }
 
   app.get("/api/catering-contracts/:id/pdf", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
