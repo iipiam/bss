@@ -470,12 +470,18 @@ export default function CateringContractsPage() {
   );
 }
 
+type CustomPh = { key: string; label: string; value: string };
+
 function TemplateEditor({ templates, t }: { templates: CateringContractTemplate[]; t: ReturnType<typeof useCateringT> }) {
   const { toast } = useToast();
   const [selectedId, setSelectedId] = useState<string>("");
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
   const [isDefault, setIsDefault] = useState(false);
+  const [customPlaceholders, setCustomPlaceholders] = useState<CustomPh[]>([]);
+  const [newPhKey, setNewPhKey] = useState("");
+  const [newPhLabel, setNewPhLabel] = useState("");
+  const [newPhValue, setNewPhValue] = useState("");
 
   const selected = templates.find(tpl => tpl.id === selectedId);
 
@@ -485,16 +491,57 @@ function TemplateEditor({ templates, t }: { templates: CateringContractTemplate[
       setName(selected.name);
       setContent(selected.content);
       setIsDefault(selected.isDefault);
+      setCustomPlaceholders(Array.isArray((selected as any).customPlaceholders) ? (selected as any).customPlaceholders : []);
     } else {
       setName("");
       setContent("");
       setIsDefault(false);
+      setCustomPlaceholders([]);
     }
+    setNewPhKey(""); setNewPhLabel(""); setNewPhValue("");
   }, [selectedId]);
+
+  const sanitizeKey = (k: string) =>
+    k.trim().toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "");
+
+  const addCustomPh = () => {
+    const key = sanitizeKey(newPhKey);
+    if (!key) {
+      toast({ title: t.placeholderKeyRequired, variant: "destructive" });
+      return;
+    }
+    const reservedKeys = new Set(PLACEHOLDERS);
+    if (reservedKeys.has(key) || customPlaceholders.some(p => p.key === key)) {
+      toast({ title: t.placeholderKeyExists, variant: "destructive" });
+      return;
+    }
+    setCustomPlaceholders(prev => [...prev, { key, label: newPhLabel.trim() || key, value: newPhValue }]);
+    setNewPhKey(""); setNewPhLabel(""); setNewPhValue("");
+  };
+
+  const updateCustomPh = (idx: number, patch: Partial<CustomPh>) => {
+    setCustomPlaceholders(prev => {
+      const next = prev.map((p, i) => i === idx ? { ...p, ...patch } : p);
+      if (patch.key !== undefined) {
+        const newKey = next[idx].key;
+        const reserved = new Set(PLACEHOLDERS);
+        const duplicate = next.some((p, i) => i !== idx && p.key && p.key === newKey);
+        if (newKey && (reserved.has(newKey) || duplicate)) {
+          toast({ title: t.placeholderKeyExists, variant: "destructive" });
+          return prev;
+        }
+      }
+      return next;
+    });
+  };
+
+  const removeCustomPh = (idx: number) => {
+    setCustomPlaceholders(prev => prev.filter((_, i) => i !== idx));
+  };
 
   const saveMut = useMutation({
     mutationFn: async () => {
-      const body = { name, content, isDefault };
+      const body = { name, content, isDefault, customPlaceholders };
       if (selectedId) return await apiRequest("PATCH", `/api/catering-contract-templates/${selectedId}`, body);
       return await apiRequest("POST", "/api/catering-contract-templates", body);
     },
@@ -537,14 +584,22 @@ function TemplateEditor({ templates, t }: { templates: CateringContractTemplate[
       start_date: "01/06/2026",
       end_date: "30/06/2026",
     };
+    const esc = (s: string) => String(s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
     let html = content;
     for (const [k, v] of Object.entries(sample)) html = html.split(`{{${k}}}`).join(v);
+    // User-defined custom placeholders (override built-ins). Values are escaped
+    // so untrusted text cannot inject HTML/script into the preview.
+    for (const cp of customPlaceholders) {
+      if (cp.key) html = html.split(`{{${cp.key}}}`).join(esc(cp.value || ""));
+    }
     // If plain text, convert newlines
     if (!/<[a-z][^>]*>/i.test(content)) {
       html = html.split("\n").map((l) => `<p style="margin:6px 0;">${l}</p>`).join("");
     }
     return html;
-  }, [content]);
+  }, [content, customPlaceholders]);
 
   return (
     <div className="grid lg:grid-cols-3 gap-4">
@@ -595,6 +650,97 @@ function TemplateEditor({ templates, t }: { templates: CateringContractTemplate[
                   {`{{${ph}}}`}
                 </Button>
               ))}
+            </div>
+          </div>
+
+          <div className="border rounded-md p-3 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-sm font-semibold">{t.customPlaceholders}</Label>
+              <span className="text-xs text-muted-foreground">{t.customPlaceholdersDesc}</span>
+            </div>
+
+            {customPlaceholders.length > 0 && (
+              <div className="space-y-2">
+                {customPlaceholders.map((cp, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-2 items-center" data-testid={`row-custom-ph-${idx}`}>
+                    <Input
+                      className="col-span-3 font-mono text-xs"
+                      value={cp.key}
+                      onChange={(e) => updateCustomPh(idx, { key: sanitizeKey(e.target.value) })}
+                      placeholder={t.placeholderKey}
+                      data-testid={`input-custom-ph-key-${idx}`}
+                    />
+                    <Input
+                      className="col-span-3 text-xs"
+                      value={cp.label}
+                      onChange={(e) => updateCustomPh(idx, { label: e.target.value })}
+                      placeholder={t.placeholderLabel}
+                      data-testid={`input-custom-ph-label-${idx}`}
+                    />
+                    <Input
+                      className="col-span-4 text-xs"
+                      value={cp.value}
+                      onChange={(e) => updateCustomPh(idx, { value: e.target.value })}
+                      placeholder={t.placeholderValue}
+                      data-testid={`input-custom-ph-value-${idx}`}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="col-span-1"
+                      onClick={() => insertPlaceholder(cp.key)}
+                      disabled={!cp.key}
+                      data-testid={`button-insert-custom-ph-${idx}`}
+                    >
+                      <ListPlus className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="col-span-1"
+                      onClick={() => removeCustomPh(idx)}
+                      data-testid={`button-remove-custom-ph-${idx}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="grid grid-cols-12 gap-2 items-center pt-2 border-t">
+              <Input
+                className="col-span-3 font-mono text-xs"
+                value={newPhKey}
+                onChange={(e) => setNewPhKey(e.target.value)}
+                placeholder={t.placeholderKey}
+                data-testid="input-new-ph-key"
+              />
+              <Input
+                className="col-span-3 text-xs"
+                value={newPhLabel}
+                onChange={(e) => setNewPhLabel(e.target.value)}
+                placeholder={t.placeholderLabel}
+                data-testid="input-new-ph-label"
+              />
+              <Input
+                className="col-span-4 text-xs"
+                value={newPhValue}
+                onChange={(e) => setNewPhValue(e.target.value)}
+                placeholder={t.placeholderValue}
+                data-testid="input-new-ph-value"
+              />
+              <Button
+                type="button"
+                size="sm"
+                className="col-span-2"
+                onClick={addCustomPh}
+                data-testid="button-add-custom-ph"
+              >
+                <Plus className="h-3 w-3 me-1" /> {t.addPlaceholder}
+              </Button>
             </div>
           </div>
 

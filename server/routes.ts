@@ -16777,11 +16777,42 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  const RESERVED_CATERING_PH_KEYS = new Set([
+    "my_restaurant_name","client_name","phone","email","delivery_location",
+    "meals_list","number_of_meals","delivery_days","delivery_time",
+    "total_value","discount_percentage","final_value","payment_schedule",
+    "start_date","end_date",
+  ]);
+  const customPhSchema = z.array(z.object({
+    key: z.string().trim().min(1).max(64).regex(/^[a-z0-9_]+$/i, "Invalid placeholder key"),
+    label: z.string().max(120).optional().default(""),
+    value: z.string().max(5000).optional().default(""),
+  })).max(50).superRefine((arr, ctx) => {
+    const seen = new Set<string>();
+    arr.forEach((p, i) => {
+      const k = p.key.toLowerCase();
+      if (RESERVED_CATERING_PH_KEYS.has(k)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [i, "key"], message: "Reserved placeholder key" });
+      }
+      if (seen.has(k)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [i, "key"], message: "Duplicate placeholder key" });
+      }
+      seen.add(k);
+    });
+  });
+  const templateBodySchema = z.object({
+    name: z.string().trim().min(1).max(200),
+    content: z.string().max(50000).optional().default(""),
+    isDefault: z.boolean().optional().default(false),
+    customPlaceholders: customPhSchema.optional().default([]),
+  });
+
   app.post("/api/catering-contract-templates", requireAuth, requireRestaurant, requireAction('orders', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      const { id, createdAt, updatedAt, restaurantId: _rid, ...body } = req.body;
-      const template = await storage.createCateringContractTemplate({ ...body, restaurantId });
+      const parsed = templateBodySchema.safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ message: "Invalid template", errors: parsed.error.flatten() });
+      const template = await storage.createCateringContractTemplate({ ...parsed.data, restaurantId } as any);
       res.json(template);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -16791,8 +16822,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.patch("/api/catering-contract-templates/:id", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      const { id, createdAt, updatedAt, restaurantId: _rid, ...body } = req.body;
-      const template = await storage.updateCateringContractTemplate(req.params.id, restaurantId, body);
+      const parsed = templateBodySchema.partial().safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ message: "Invalid template", errors: parsed.error.flatten() });
+      const template = await storage.updateCateringContractTemplate(req.params.id, restaurantId, parsed.data as any);
       if (!template) return res.status(404).json({ message: "Template not found" });
       res.json(template);
     } catch (error: any) {
@@ -17192,6 +17224,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         meals_list: meals.map((m: any) => `${m.name} (${parseFloat(m.price || 0).toFixed(2)} ${SAR})`).join(isAr ? '، ' : ', '),
         payment_schedule: '',
       };
+      // Merge user-defined custom placeholders (these can override built-ins)
+      const customPhs = Array.isArray((defaultTpl as any)?.customPlaceholders)
+        ? (defaultTpl as any).customPlaceholders as Array<{ key: string; value: string }>
+        : [];
+      for (const cp of customPhs) {
+        if (cp && typeof cp.key === 'string' && cp.key.trim()) {
+          placeholders[cp.key.trim()] = String(cp.value ?? '');
+        }
+      }
       // Strip HTML to plain text, substitute placeholders
       let text = tplContent.replace(/<br\s*\/?>/gi, '\n').replace(/<\/?p[^>]*>/gi, '\n').replace(/<[^>]+>/g, '');
       text = text.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');

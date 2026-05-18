@@ -99,6 +99,16 @@ export type CateringT = {
   phStartDate: string;
   phEndDate: string;
 
+  // Custom placeholders
+  customPlaceholders: string;
+  customPlaceholdersDesc: string;
+  placeholderKey: string;
+  placeholderLabel: string;
+  placeholderValue: string;
+  addPlaceholder: string;
+  placeholderKeyRequired: string;
+  placeholderKeyExists: string;
+
   contractCreated: string;
   contractUpdated: string;
   contractDeleted: string;
@@ -201,6 +211,15 @@ const en: CateringT = {
   phStartDate: "Start Date",
   phEndDate: "End Date",
 
+  customPlaceholders: "Custom Placeholders",
+  customPlaceholdersDesc: "Define your own placeholders with fixed values for this template.",
+  placeholderKey: "key (e.g. company_vat)",
+  placeholderLabel: "Label",
+  placeholderValue: "Value",
+  addPlaceholder: "Add",
+  placeholderKeyRequired: "Placeholder key is required",
+  placeholderKeyExists: "This placeholder key already exists",
+
   contractCreated: "Contract created",
   contractUpdated: "Contract updated",
   contractDeleted: "Contract deleted",
@@ -302,6 +321,15 @@ const ar: CateringT = {
   phPaymentSchedule: "جدول الدفع",
   phStartDate: "تاريخ البداية",
   phEndDate: "تاريخ النهاية",
+
+  customPlaceholders: "عناصر نائبة مخصصة",
+  customPlaceholdersDesc: "أضف عناصر نائبة خاصة بك بقيم ثابتة لهذا القالب.",
+  placeholderKey: "المفتاح (مثل company_vat)",
+  placeholderLabel: "التسمية",
+  placeholderValue: "القيمة",
+  addPlaceholder: "إضافة",
+  placeholderKeyRequired: "مفتاح العنصر النائب مطلوب",
+  placeholderKeyExists: "هذا المفتاح موجود مسبقاً",
 
   contractCreated: "تم إنشاء العقد",
   contractUpdated: "تم تحديث العقد",

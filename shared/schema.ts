@@ -1853,6 +1853,7 @@ export const cateringContractTemplates = pgTable("catering_contract_templates", 
   name: text("name").notNull(),
   content: text("content").notNull().default(""),
   isDefault: boolean("is_default").notNull().default(false),
+  customPlaceholders: jsonb("custom_placeholders").notNull().default(sql`'[]'::jsonb`),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

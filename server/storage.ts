@@ -6093,9 +6093,14 @@ export const storage = new DatabaseStorage();
         name TEXT NOT NULL,
         content TEXT NOT NULL DEFAULT '',
         is_default BOOLEAN NOT NULL DEFAULT FALSE,
+        custom_placeholders JSONB NOT NULL DEFAULT '[]'::jsonb,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
+    `);
+    await pool.query(`
+      ALTER TABLE catering_contract_templates
+      ADD COLUMN IF NOT EXISTS custom_placeholders JSONB NOT NULL DEFAULT '[]'::jsonb
     `);
     console.log('[Migration] Tables verified/created: catering_contracts, catering_contract_templates');
 
