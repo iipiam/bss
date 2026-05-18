@@ -135,6 +135,8 @@ export type CateringT = {
   costReportWarning: string;
   closeReport: string;
   qtyPerDay: string;
+  sendQuotation: string;
+  noClientPhone: string;
 };
 
 const en: CateringT = {
@@ -266,6 +268,8 @@ const en: CateringT = {
   costReportWarning: "Some meals are not linked to a menu item with a recipe, so their cost is treated as 0. Link them via 'Select from Menu' for accurate margins.",
   closeReport: "Close",
   qtyPerDay: "Qty/Day",
+  sendQuotation: "Send Quotation",
+  noClientPhone: "Client phone number not set",
 };
 
 const ar: CateringT = {
@@ -397,6 +401,8 @@ const ar: CateringT = {
   costReportWarning: "بعض الوجبات غير مرتبطة بعنصر قائمة يحتوي على وصفة، لذا تُعتبر تكلفتها صفر. اربطها عبر «اختيار من القائمة» للحصول على هامش دقيق.",
   closeReport: "إغلاق",
   qtyPerDay: "كمية/يوم",
+  sendQuotation: "إرسال عرض السعر",
+  noClientPhone: "رقم هاتف العميل غير محدد",
 };
 
 const cateringTranslations: Record<Language, CateringT> = {

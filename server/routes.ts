@@ -16939,7 +16939,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // Puppeteer-based PDF builder. Renders the contract as HTML and prints it
   // via headless Chromium so Arabic text shaping & bidirectional ordering are
   // handled natively by the browser (no manual reshaping needed).
-  async function buildCateringContractPdfBuffer(restaurantId: string, contractId: string, lang: string = 'en'): Promise<Buffer> {
+  async function buildCateringContractPdfBuffer(restaurantId: string, contractId: string, lang: string = 'en', mode: 'contract' | 'quotation' = 'contract'): Promise<Buffer> {
     const contract = await storage.getCateringContract(contractId, restaurantId);
     if (!contract) throw new Error("Contract not found");
     const restaurant = await storage.getRestaurant(restaurantId);
@@ -17040,7 +17040,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 <html lang="${isAr ? 'ar' : 'en'}" dir="${dir}">
 <head>
   <meta charset="UTF-8" />
-  <title>Catering Contract ${escapeHtml(contract.contractNumber || '')}</title>
+  <title>${mode === 'quotation' ? 'Catering Quotation' : 'Catering Contract'} ${escapeHtml(contract.contractNumber || '')}</title>
   <style>
     @page { size: A4; margin: 18mm 14mm 18mm 14mm; }
     * { box-sizing: border-box; }
@@ -17099,13 +17099,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 <body>
   <div class="header">
     <h1>${escapeHtml(restaurant?.name || '')}</h1>
-    <div class="subtitle">${L('Catering Supply Contract', 'عقد توريد وجبات')}</div>
+    <div class="subtitle">${mode === 'quotation' ? L('Catering Quotation', 'عرض سعر تموين') : L('Catering Supply Contract', 'عقد توريد وجبات')}</div>
   </div>
 
   <div class="meta">
-    <div class="item"><span class="lbl">${L('Contract #:', 'رقم العقد:')}</span><span>${escapeHtml(contract.contractNumber || '')}</span></div>
+    <div class="item"><span class="lbl">${mode === 'quotation' ? L('Quotation #:', 'رقم العرض:') : L('Contract #:', 'رقم العقد:')}</span><span>${escapeHtml(contract.contractNumber || '')}</span></div>
     <div class="item"><span class="lbl">${L('Date:', 'التاريخ:')}</span><span>${escapeHtml(new Date(contract.createdAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB'))}</span></div>
-    <div class="item"><span class="lbl">${L('Status:', 'الحالة:')}</span><span>${escapeHtml(statusVal)}</span></div>
+    ${mode === 'quotation'
+      ? `<div class="item"><span class="lbl">${L('Valid Until:', 'صالح حتى:')}</span><span>${escapeHtml(new Date(new Date(contract.createdAt).getTime() + 30 * 86400000).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB'))}</span></div>`
+      : `<div class="item"><span class="lbl">${L('Status:', 'الحالة:')}</span><span>${escapeHtml(statusVal)}</span></div>`}
   </div>
 
   <h2 class="section">${L('Client Information', 'بيانات العميل')}</h2>
@@ -17136,6 +17138,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   </div>
 
   ${installments.length ? `<h2 class="section">${L('Payment Schedule', 'جدول السداد')}</h2>${paymentScheduleHtml}` : ''}
+
+  ${mode === 'quotation' ? `<h2 class="section">${L('Quotation Notes', 'ملاحظات العرض')}</h2>
+  <div class="terms">
+    <p>${L('This quotation is valid for 30 days from the date of issue.', 'هذا العرض ساري لمدة 30 يوماً من تاريخ الإصدار.')}</p>
+    <p>${L('Prices are inclusive of applicable VAT unless stated otherwise.', 'الأسعار شاملة ضريبة القيمة المضافة المطبقة ما لم يُذكر خلاف ذلك.')}</p>
+    <p>${L('Final contract terms will be confirmed upon acceptance.', 'سيتم تأكيد الشروط النهائية للعقد عند القبول.')}</p>
+  </div>` : ''}
 
   <h2 class="section">${L('Terms & Conditions', 'الشروط والأحكام')}</h2>
   <div class="terms">
@@ -17179,10 +17188,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const lang = String(req.query.lang || 'en');
-      const pdfBuffer = await buildCateringContractPdfBuffer(restaurantId, req.params.id, lang);
+      const mode = String(req.query.mode || 'contract') === 'quotation' ? 'quotation' : 'contract';
+      const pdfBuffer = await buildCateringContractPdfBuffer(restaurantId, req.params.id, lang, mode);
+      const filePrefix = mode === 'quotation' ? 'catering-quotation' : 'catering-contract';
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Length', String(pdfBuffer.length));
-      res.setHeader('Content-Disposition', `attachment; filename="catering-contract-${req.params.id}.pdf"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${filePrefix}-${req.params.id}.pdf"`);
       res.end(pdfBuffer);
     } catch (error: any) {
       console.error("Error generating catering contract PDF:", error);
@@ -17220,10 +17231,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const [contract] = await db.select().from(cateringContracts).where(eq(cateringContracts.shareToken, req.params.token));
       if (!contract) return res.status(404).send('Not found');
       const lang = String(req.query.lang || 'en');
-      const pdfBuffer = await buildCateringContractPdfBuffer(contract.restaurantId, contract.id, lang);
+      const mode = String(req.query.mode || 'contract') === 'quotation' ? 'quotation' : 'contract';
+      const pdfBuffer = await buildCateringContractPdfBuffer(contract.restaurantId, contract.id, lang, mode);
+      const filePrefix = mode === 'quotation' ? 'catering-quotation' : 'catering-contract';
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Length', String(pdfBuffer.length));
-      res.setHeader('Content-Disposition', `inline; filename="catering-contract-${contract.contractNumber}.pdf"`);
+      res.setHeader('Content-Disposition', `inline; filename="${filePrefix}-${contract.contractNumber}.pdf"`);
       res.end(pdfBuffer);
     } catch (error: any) {
       console.error("Error generating public catering PDF:", error);
