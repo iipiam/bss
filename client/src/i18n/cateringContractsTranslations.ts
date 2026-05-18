@@ -114,6 +114,26 @@ export type CateringT = {
   contractDeleted: string;
   required: string;
   sar: string;
+
+  // Cost & profit report
+  costReport: string;
+  costReportTitle: string;
+  costReportSubtitle: string;
+  mealsBreakdown: string;
+  unitCost: string;
+  unitProfit: string;
+  margin: string;
+  notLinkedToMenu: string;
+  noRecipeLinked: string;
+  totalDeliveries: string;
+  estimatedCogs: string;
+  estimatedProfit: string;
+  contractRevenue: string;
+  overallMargin: string;
+  avgMealCost: string;
+  avgMealPrice: string;
+  costReportWarning: string;
+  closeReport: string;
 };
 
 const en: CateringT = {
@@ -225,6 +245,25 @@ const en: CateringT = {
   contractDeleted: "Contract deleted",
   required: "Required",
   sar: "SAR",
+
+  costReport: "Cost & Profit Report",
+  costReportTitle: "Cost & Profit Report",
+  costReportSubtitle: "Margin analysis based on linked menu items, recipes and contract pricing",
+  mealsBreakdown: "Meals Breakdown",
+  unitCost: "Unit Cost",
+  unitProfit: "Unit Profit",
+  margin: "Margin",
+  notLinkedToMenu: "Not linked to menu",
+  noRecipeLinked: "No recipe linked",
+  totalDeliveries: "Total Deliveries",
+  estimatedCogs: "Estimated COGS",
+  estimatedProfit: "Estimated Profit",
+  contractRevenue: "Contract Revenue (Final)",
+  overallMargin: "Overall Margin",
+  avgMealCost: "Avg Meal Cost",
+  avgMealPrice: "Avg Meal Price",
+  costReportWarning: "Some meals are not linked to a menu item with a recipe, so their cost is treated as 0. Link them via 'Select from Menu' for accurate margins.",
+  closeReport: "Close",
 };
 
 const ar: CateringT = {
@@ -336,6 +375,25 @@ const ar: CateringT = {
   contractDeleted: "تم حذف العقد",
   required: "مطلوب",
   sar: "ر.س",
+
+  costReport: "تقرير التكلفة والربح",
+  costReportTitle: "تقرير التكلفة والربح",
+  costReportSubtitle: "تحليل هامش الربح بناءً على عناصر القائمة المربوطة والوصفات وسعر العقد",
+  mealsBreakdown: "تفاصيل الوجبات",
+  unitCost: "تكلفة الوحدة",
+  unitProfit: "ربح الوحدة",
+  margin: "الهامش",
+  notLinkedToMenu: "غير مرتبط بالقائمة",
+  noRecipeLinked: "لا توجد وصفة مرتبطة",
+  totalDeliveries: "إجمالي عمليات التوصيل",
+  estimatedCogs: "تكلفة البضاعة المُقدّرة",
+  estimatedProfit: "الربح المُقدّر",
+  contractRevenue: "إيراد العقد (النهائي)",
+  overallMargin: "الهامش الإجمالي",
+  avgMealCost: "متوسط تكلفة الوجبة",
+  avgMealPrice: "متوسط سعر الوجبة",
+  costReportWarning: "بعض الوجبات غير مرتبطة بعنصر قائمة يحتوي على وصفة، لذا تُعتبر تكلفتها صفر. اربطها عبر «اختيار من القائمة» للحصول على هامش دقيق.",
+  closeReport: "إغلاق",
 };
 
 const cateringTranslations: Record<Language, CateringT> = {

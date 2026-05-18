@@ -13,12 +13,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Pencil, FileDown, Mail, MessageCircle, FileText, ListPlus } from "lucide-react";
+import { Plus, Trash2, Pencil, FileDown, Mail, MessageCircle, FileText, ListPlus, TrendingUp } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatPhoneForWhatsApp, openWhatsAppWithMessage } from "@/lib/whatsapp";
-import type { CateringContract, CateringContractTemplate } from "@shared/schema";
+import type { CateringContract, CateringContractTemplate, Recipe } from "@shared/schema";
 
-type Meal = { name: string; price: number };
+type Meal = { name: string; price: number; menuItemId?: string };
 type Installment = { label: string; percent: number; amount: number; dueDate?: string };
 
 const DAY_KEYS = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"] as const;
@@ -65,7 +65,9 @@ export default function CateringContractsPage() {
 
   const { data: contracts = [], isLoading } = useQuery<CateringContract[]>({ queryKey: ["/api/catering-contracts"] });
   const { data: templates = [] } = useQuery<CateringContractTemplate[]>({ queryKey: ["/api/catering-contract-templates"] });
-  const { data: menuItems = [] } = useQuery<Array<{ id: string; name: string; price: string; category?: string }>>({ queryKey: ["/api/menu"] });
+  const { data: menuItems = [] } = useQuery<Array<{ id: string; name: string; price: string; category?: string; recipeId?: string | null; portionSize?: string | null }>>({ queryKey: ["/api/menu"] });
+  const { data: recipes = [] } = useQuery<Recipe[]>({ queryKey: ["/api/recipes"] });
+  const [costReport, setCostReport] = useState<CateringContract | null>(null);
 
   const dayLabel = (k: string) => (t as any)[k] || k;
 
@@ -223,6 +225,9 @@ export default function CateringContractsPage() {
                       <div className="flex flex-wrap gap-2">
                         <Button size="sm" variant="outline" onClick={() => downloadPdf(c)} data-testid={`button-pdf-${c.id}`}>
                           <FileDown className="h-4 w-4 me-1" /> {t.downloadPdf}
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setCostReport(c)} data-testid={`button-cost-report-${c.id}`}>
+                          <TrendingUp className="h-4 w-4 me-1" /> {t.costReport}
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => emailMut.mutate(c.id)} disabled={!c.clientEmail || emailMut.isPending} data-testid={`button-email-${c.id}`}>
                           <Mail className="h-4 w-4 me-1" /> {t.sendEmail}
@@ -455,7 +460,7 @@ export default function CateringContractsPage() {
             <Button variant="outline" onClick={() => setMenuPickerOpen(false)} data-testid="button-menu-picker-cancel">{t.cancel}</Button>
             <Button
               onClick={() => {
-                const selected = menuItems.filter(mi => pickedMenuIds[mi.id]).map(mi => ({ name: mi.name, price: parseFloat(mi.price || "0") }));
+                const selected = menuItems.filter(mi => pickedMenuIds[mi.id]).map(mi => ({ menuItemId: mi.id, name: mi.name, price: parseFloat(mi.price || "0") }));
                 if (selected.length) setField("mealSelections", [...(form.mealSelections || []), ...selected]);
                 setMenuPickerOpen(false);
               }}
@@ -466,6 +471,169 @@ export default function CateringContractsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CostReportDialog
+        contract={costReport}
+        onClose={() => setCostReport(null)}
+        menuItems={menuItems}
+        recipes={recipes}
+        t={t}
+      />
+    </div>
+  );
+}
+
+function CostReportDialog({
+  contract, onClose, menuItems, recipes, t,
+}: {
+  contract: CateringContract | null;
+  onClose: () => void;
+  menuItems: Array<{ id: string; name: string; price: string; recipeId?: string | null; portionSize?: string | null }>;
+  recipes: Recipe[];
+  t: ReturnType<typeof useCateringT>;
+}) {
+  const data = useMemo(() => {
+    if (!contract) return null;
+    const meals: Meal[] = Array.isArray(contract.mealSelections) ? (contract.mealSelections as any) : [];
+    const menuById = new Map(menuItems.map(mi => [mi.id, mi]));
+    const recipeById = new Map(recipes.map(r => [r.id, r]));
+
+    const rows = meals.map((m) => {
+      const mi = m.menuItemId ? menuById.get(m.menuItemId) : undefined;
+      let cost: number | null = null;
+      let note = "";
+      if (!mi) {
+        note = t.notLinkedToMenu;
+      } else if (!mi.recipeId) {
+        note = t.noRecipeLinked;
+      } else {
+        const recipe = recipeById.get(mi.recipeId);
+        if (recipe) {
+          const portion = parseFloat(mi.portionSize || "1") || 1;
+          cost = parseFloat(recipe.cost || "0") * portion;
+        } else {
+          note = t.noRecipeLinked;
+        }
+      }
+      const price = Number(m.price) || 0;
+      const effectiveCost = cost ?? 0;
+      const profit = price - effectiveCost;
+      const margin = price > 0 ? (profit / price) * 100 : 0;
+      return { name: m.name, price, cost, costKnown: cost !== null, profit, margin, note };
+    });
+
+    // Compute total deliveries within the contract window matching deliveryDays.
+    const dayMap: Record<string, number> = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
+    const days: string[] = Array.isArray(contract.deliveryDays) ? contract.deliveryDays : [];
+    const dayNums = new Set(days.map(d => dayMap[String(d).toLowerCase()]).filter(n => n !== undefined));
+    let deliveryCount = 0;
+    if (contract.startDate && contract.endDate && dayNums.size > 0) {
+      const start = new Date(contract.startDate);
+      const end = new Date(contract.endDate);
+      const cur = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+      while (cur <= last) {
+        if (dayNums.has(cur.getDay())) deliveryCount++;
+        cur.setDate(cur.getDate() + 1);
+      }
+    }
+    const mealsPerDay = Number(contract.mealsPerDay) || 1;
+    const totalDeliveries = deliveryCount * mealsPerDay;
+    const avgPrice = rows.length ? rows.reduce((s, r) => s + r.price, 0) / rows.length : 0;
+    const avgCost  = rows.length ? rows.reduce((s, r) => s + (r.cost ?? 0), 0) / rows.length : 0;
+    const cogs = avgCost * totalDeliveries;
+    const revenue = parseFloat(contract.finalValue || "0");
+    const profit = revenue - cogs;
+    const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+    const hasUnlinked = rows.some(r => !r.costKnown);
+
+    return { rows, totalDeliveries, avgPrice, avgCost, cogs, revenue, profit, margin, hasUnlinked };
+  }, [contract, menuItems, recipes, t]);
+
+  if (!contract || !data) return null;
+  const sar = t.sar;
+  const fmt = (n: number) => n.toFixed(2);
+
+  return (
+    <Dialog open={!!contract} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" data-testid="dialog-cost-report">
+        <DialogHeader>
+          <DialogTitle>{t.costReportTitle} — {contract.contractNumber}</DialogTitle>
+          <p className="text-sm text-muted-foreground">{t.costReportSubtitle}</p>
+        </DialogHeader>
+
+        <div className="grid gap-4 py-2">
+          {data.hasUnlinked && (
+            <div className="text-xs rounded-md border border-dashed p-2 text-muted-foreground" data-testid="text-cost-warning">
+              {t.costReportWarning}
+            </div>
+          )}
+
+          <div>
+            <div className="text-sm font-semibold mb-2">{t.mealsBreakdown}</div>
+            <div className="rounded-md border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="text-start p-2">{t.mealName}</th>
+                    <th className="text-end p-2">{t.mealPrice}</th>
+                    <th className="text-end p-2">{t.unitCost}</th>
+                    <th className="text-end p-2">{t.unitProfit}</th>
+                    <th className="text-end p-2">{t.margin}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.rows.map((r, i) => (
+                    <tr key={i} className="border-t" data-testid={`row-cost-meal-${i}`}>
+                      <td className="p-2">
+                        <div>{r.name}</div>
+                        {r.note && <div className="text-xs text-muted-foreground">{r.note}</div>}
+                      </td>
+                      <td className="p-2 text-end tabular-nums">{fmt(r.price)} {sar}</td>
+                      <td className="p-2 text-end tabular-nums">{r.costKnown ? `${fmt(r.cost!)} ${sar}` : "—"}</td>
+                      <td className="p-2 text-end tabular-nums">{fmt(r.profit)} {sar}</td>
+                      <td className="p-2 text-end tabular-nums">{fmt(r.margin)}%</td>
+                    </tr>
+                  ))}
+                  {data.rows.length === 0 && (
+                    <tr><td colSpan={5} className="p-4 text-center text-muted-foreground">—</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <SummaryRow label={t.totalDeliveries} value={String(data.totalDeliveries)} testid="cost-total-deliveries" />
+            <SummaryRow label={t.avgMealPrice} value={`${fmt(data.avgPrice)} ${sar}`} testid="cost-avg-price" />
+            <SummaryRow label={t.avgMealCost} value={`${fmt(data.avgCost)} ${sar}`} testid="cost-avg-cost" />
+            <SummaryRow label={t.estimatedCogs} value={`${fmt(data.cogs)} ${sar}`} testid="cost-cogs" />
+            <SummaryRow label={t.contractRevenue} value={`${fmt(data.revenue)} ${sar}`} testid="cost-revenue" />
+            <SummaryRow label={t.estimatedProfit} value={`${fmt(data.profit)} ${sar}`} testid="cost-profit"
+              valueClass={data.profit >= 0 ? "text-green-600 dark:text-green-400 font-semibold" : "text-red-600 dark:text-red-400 font-semibold"} />
+          </div>
+
+          <div className="rounded-md border p-3 flex items-center justify-between">
+            <div className="text-sm font-semibold">{t.overallMargin}</div>
+            <div className={`text-lg tabular-nums font-bold ${data.margin >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`} data-testid="text-cost-overall-margin">
+              {fmt(data.margin)}%
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} data-testid="button-cost-report-close">{t.closeReport}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SummaryRow({ label, value, testid, valueClass }: { label: string; value: string; testid: string; valueClass?: string }) {
+  return (
+    <div className="flex items-center justify-between rounded-md border p-2 text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={`tabular-nums ${valueClass || ""}`} data-testid={`text-${testid}`}>{value}</span>
     </div>
   );
 }
