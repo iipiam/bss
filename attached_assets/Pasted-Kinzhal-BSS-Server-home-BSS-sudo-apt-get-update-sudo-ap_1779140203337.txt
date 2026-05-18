@@ -1,0 +1,95 @@
+Kinzhal@BSS-Server:/home/BSS$ sudo apt-get update && sudo apt-get install -y \
+  libatk1.0-0 libatk-bridge2.0-0 libcups2 libxkbcommon0 \
+  libxcomposite1 libxdamage1 libxrandr2 libgbm1 \
+  libpango-1.0-0 libcairo2 libasound2 libnss3 libnspr4 \
+  libdrm2 libxshmfence1 libx11-xcb1 libxcb-dri3-0 \
+  fonts-liberation libappindicator3-1 xdg-utils
+[sudo] password for Kinzhal:
+Hit:1 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+Hit:2 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease
+Hit:3 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease
+Hit:4 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease
+Hit:5 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease
+Hit:6 https://deb.nodesource.com/node_20.x nodistro InRelease
+Reading package lists... Done
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+Note, selecting 'libatk1.0-0t64' instead of 'libatk1.0-0'
+Note, selecting 'libatk-bridge2.0-0t64' instead of 'libatk-bridge2.0-0'
+Note, selecting 'libcups2t64' instead of 'libcups2'
+Package libasound2 is a virtual package provided by:
+  liboss4-salsa-asound2 4.2-build2020-1ubuntu3.1
+  libasound2t64 1.2.11-1ubuntu0.2 (= 1.2.11-1ubuntu0.2)
+You should explicitly select one to install.
+
+E: Package 'libasound2' has no installation candidate
+Kinzhal@BSS-Server:/home/BSS$ pm2 restart all
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 87   │ online    │ 0%       │ 18.0mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+Kinzhal@BSS-Server:/home/BSS$ cd /home/BSS
+npx puppeteer browsers install chrome --install-deps
+pm2 restart all
+puppeteer browsers install [browser]
+
+Download and install the specified browser. If successful, the command outputs the actual browser buildId that was insta
+lled and the absolute path to the browser executable (format: <browser>@<buildID> <path>).
+
+Positionals:
+  browser  Which browser to install <browser>[@<buildId|latest>]. `latest` will try to find the latest available build.
+           `buildId` is a browser-specific identifier such as a version or a revision.                          [string]
+
+Options:
+  --version       Show version number                                                                          [boolean]
+  --help          Show help                                                                                    [boolean]
+  --platform      Platform that the binary needs to be compatible with.
+                   [string] [choices: "linux", "linux_arm", "mac", "mac_arm", "win32", "win64"] [default: Auto-detected]
+  --base-url      Base URL to download from                                                                     [string]
+  --install-deps  Whether to attempt installing system dependencies (only supported on Linux, requires root privileges).
+                                                                                              [boolean] [default: false]
+
+Examples:
+  puppeteer install                             Install all pinned browsers
+  puppeteer install chrome                      Install the pinned available build of the Chrome browser.
+  puppeteer install chrome@latest               Install the latest available build for the Chrome browser.
+  puppeteer install chrome@stable               Install the latest available build for the Chrome browser from the stabl
+                                                e channel.
+  puppeteer install chrome@beta                 Install the latest available build for the Chrome browser from the beta
+                                                channel.
+  puppeteer install chrome@dev                  Install the latest available build for the Chrome browser from the dev c
+                                                hannel.
+  puppeteer install chrome@canary               Install the latest available build for the Chrome Canary browser.
+  puppeteer install chrome@115                  Install the latest available build for Chrome 115.
+  puppeteer install chromedriver@canary         Install the latest available build for ChromeDriver Canary.
+  puppeteer install chromedriver@115            Install the latest available build for ChromeDriver 115.
+  puppeteer install chromedriver@115.0.5790     Install the latest available patch (115.0.5790.X) build for ChromeDriver
+                                                .
+  puppeteer install chrome-headless-shell       Install the latest available chrome-headless-shell build.
+  puppeteer install chrome-headless-shell@beta  Install the latest available chrome-headless-shell build corresponding t
+                                                o the Beta channel.
+  puppeteer install chrome-headless-shell@118   Install the latest available chrome-headless-shell 118 build.
+  puppeteer install chromium@1083080            Install the revision 1083080 of the Chromium browser.
+  puppeteer install firefox                     Install the latest nightly available build of the Firefox browser.
+  puppeteer install firefox@stable              Install the latest stable build of the Firefox browser.
+  puppeteer install firefox@beta                Install the latest beta build of the Firefox browser.
+  puppeteer install firefox@devedition          Install the latest devedition build of the Firefox browser.
+  puppeteer install firefox@esr                 Install the latest ESR build of the Firefox browser.
+  puppeteer install firefox@nightly             Install the latest nightly build of the Firefox browser.
+  puppeteer install firefox@stable_111.0.1      Install a specific version of the Firefox browser.
+  puppeteer install firefox --platform mac      Install the latest Mac (Intel) build of the Firefox browser.
+
+Error: Installing system dependencies requires root privileges
+    at installDeps (/home/BSS/node_modules/@puppeteer/browsers/lib/cjs/install.js:115:15)
+    at installUrl (/home/BSS/node_modules/@puppeteer/browsers/lib/cjs/install.js:169:23)
+    at async install (/home/BSS/node_modules/@puppeteer/browsers/lib/cjs/install.js:52:16)
+    at async #install (/home/BSS/node_modules/@puppeteer/browsers/lib/cjs/CLI.js:346:9)
+    at async Object.handler (/home/BSS/node_modules/@puppeteer/browsers/lib/cjs/CLI.js:223:17)
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0 ])
+[PM2] [BSS](0) ✓
