@@ -2498,6 +2498,7 @@ export interface Translations {
   contractsScheduledToday?: string;
   mealsPerDay?: string;
   cateringContracts?: string;
+  marketing?: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -4929,6 +4930,7 @@ export const translations: Record<Language, Translations> = {
     contractsScheduledToday: 'contracts scheduled today',
     mealsPerDay: 'meals/day',
     cateringContracts: 'Catering Contracts',
+    marketing: 'Marketing',
   },
   
   Arabic: {
@@ -7358,6 +7360,7 @@ export const translations: Record<Language, Translations> = {
     contractsScheduledToday: 'عقد مجدول لليوم',
     mealsPerDay: 'وجبة/يوم',
     cateringContracts: 'عقود التموين',
+    marketing: 'التسويق',
   },
   German: {
     // Navigation
