@@ -2494,6 +2494,9 @@ export interface Translations {
   creditBalance: string;
   noMenuItems: string;
   selectMealItems: string;
+  activeCateringDeliveries?: string;
+  contractsScheduledToday?: string;
+  mealsPerDay?: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -4921,6 +4924,9 @@ export const translations: Record<Language, Translations> = {
     creditBalance: 'Credit Balance',
     noMenuItems: 'No menu items available. Add items in the Menu page first.',
     selectMealItems: 'Select meal items',
+    activeCateringDeliveries: 'Active Catering Deliveries',
+    contractsScheduledToday: 'contracts scheduled today',
+    mealsPerDay: 'meals/day',
   },
   
   Arabic: {
@@ -7346,6 +7352,9 @@ export const translations: Record<Language, Translations> = {
     creditBalance: 'الرصيد المتبقي',
     noMenuItems: 'لا توجد عناصر قائمة متاحة. أضف العناصر في صفحة القائمة أولاً.',
     selectMealItems: 'اختر أصناف الوجبات',
+    activeCateringDeliveries: 'توصيلات التموين النشطة',
+    contractsScheduledToday: 'عقد مجدول لليوم',
+    mealsPerDay: 'وجبة/يوم',
   },
   German: {
     // Navigation

@@ -32,6 +32,7 @@ import {
   CheckCircle2,
   MapPin,
   UtensilsCrossed,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/queryClient";
@@ -50,7 +51,7 @@ import {
   Cell,
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
-import type { Order, ShopBill, MealSubscription } from "@shared/schema";
+import type { Order, ShopBill, MealSubscription, CateringContract } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useDeviceLayout, useCompactChartConfig } from "@/lib/mobileLayout";
@@ -446,6 +447,12 @@ export default function Dashboard() {
     staleTime: 0,
   });
 
+  const { data: todaysCateringDeliveries = [] } = useQuery<CateringContract[]>({
+    queryKey: ["/api/catering-contracts/today"],
+    enabled: businessType === 'restaurant',
+    staleTime: 0,
+  });
+
   type DeliveryLogEntry = { date: string; mealTime: string; deliveredAt: string };
 
   const isMealDeliveredToday = (sub: MealSubscription, mealTime: string): boolean => {
@@ -794,6 +801,60 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+
+      {businessType === 'restaurant' && todaysCateringDeliveries.length > 0 && (
+        <Card>
+          <CardHeader className={`${layout.cardHeaderPadding} flex flex-row items-center justify-between gap-2`}>
+            <div className="flex items-center gap-2">
+              <div className="rounded-md bg-blue-500/10 p-2">
+                <FileText className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <CardTitle className={layout.isMobile ? "text-base" : ""}>
+                  {t.activeCateringDeliveries || "Active Catering Deliveries"}
+                </CardTitle>
+                <CardDescription>
+                  {todaysCateringDeliveries.length} {t.contractsScheduledToday || "contracts scheduled today"}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className={layout.cardPadding}>
+            <div className="space-y-3">
+              {todaysCateringDeliveries.map((c) => {
+                const meals: { name: string; price?: number }[] = Array.isArray(c.mealSelections) ? (c.mealSelections as any) : [];
+                return (
+                  <div key={c.id} className="rounded-md border p-3 space-y-2" data-testid={`dashboard-catering-${c.id}`}>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="font-semibold truncate">{c.clientName}</span>
+                        <Badge variant="secondary" className="text-xs shrink-0">#{c.contractNumber}</Badge>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{c.clientPhone}</span>
+                        {c.deliveryLocation && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /><span className="truncate max-w-[160px]">{c.deliveryLocation}</span></span>}
+                        {c.deliveryTime && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{c.deliveryTime}</span>}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap gap-1">
+                        {meals.slice(0, 5).map((m, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">{m.name}</Badge>
+                        ))}
+                        {meals.length > 5 && <Badge variant="outline" className="text-xs">+{meals.length - 5}</Badge>}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {c.mealsPerDay} × {t.mealsPerDay || "meals/day"}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {businessType === 'restaurant' && todaysDeliveries.length > 0 && (
         <Card>
