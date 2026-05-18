@@ -65,7 +65,7 @@ export default function CateringContractsPage() {
 
   const { data: contracts = [], isLoading } = useQuery<CateringContract[]>({ queryKey: ["/api/catering-contracts"] });
   const { data: templates = [] } = useQuery<CateringContractTemplate[]>({ queryKey: ["/api/catering-contract-templates"] });
-  const { data: menuItems = [] } = useQuery<Array<{ id: string; name: string; price: string; category?: string }>>({ queryKey: ["/api/menu-items"] });
+  const { data: menuItems = [] } = useQuery<Array<{ id: string; name: string; price: string; category?: string }>>({ queryKey: ["/api/menu"] });
 
   const dayLabel = (k: string) => (t as any)[k] || k;
 
