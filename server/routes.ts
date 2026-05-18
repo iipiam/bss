@@ -16914,7 +16914,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const templates = await storage.getCateringContractTemplates(restaurantId);
     const defaultTpl = templates.find(t => t.isDefault) || templates[0];
     const tplContent = defaultTpl?.content || '';
-    const isAr = lang === 'ar';
+    const isAr = lang === 'ar' || lang === 'Arabic' || lang === 'Urdu' || lang === 'ur';
     const L = (en: string, ar: string) => isAr ? ar : en;
 
     const meals = Array.isArray(contract.mealSelections) ? contract.mealSelections as Array<any> : [];

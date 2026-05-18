@@ -311,10 +311,18 @@ const ar: CateringT = {
 };
 
 const cateringTranslations: Record<Language, CateringT> = {
-  en, ar,
-  de: en, zh: en, bn: en, it: en, hi: en, ur: ar, es: en, tl: en,
+  English: en,
+  Arabic: ar,
+  Urdu: ar,
+  German: en,
+  Chinese: en,
+  Bengali: en,
+  Italian: en,
+  Hindi: en,
+  Spanish: en,
+  Tagalog: en,
 };
 
 export function useCateringT(language: Language): CateringT {
-  return cateringTranslations[language] || cateringTranslations.en;
+  return cateringTranslations[language] || cateringTranslations.English;
 }
