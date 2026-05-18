@@ -24,8 +24,11 @@ type Installment = { label: string; percent: number; amount: number; dueDate?: s
 const DAY_KEYS = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"] as const;
 
 const PLACEHOLDERS = [
-  "my_restaurant_name","client_name","phone","email","delivery_location",
-  "meals_list","number_of_meals","delivery_days","delivery_time",
+  "my_restaurant_name","restaurant_cr","restaurant_tax_number","restaurant_national_id",
+  "contract_number","contract_date","status","notes",
+  "client_name","phone","email","delivery_location",
+  "meals_list","meals_table","total_meals_count","number_of_meals",
+  "delivery_days","delivery_time",
   "total_value","discount_percentage","final_value","payment_schedule",
   "start_date","end_date",
 ];
@@ -757,12 +760,21 @@ function TemplateEditor({ templates, t }: { templates: CateringContractTemplate[
   const previewHtml = useMemo(() => {
     const sample: Record<string, string> = {
       my_restaurant_name: "My Restaurant",
+      restaurant_cr: "1010000000",
+      restaurant_tax_number: "300000000000003",
+      restaurant_national_id: "1010000000",
+      contract_number: "CC-000123",
+      contract_date: "01/06/2026",
+      status: "Active",
+      notes: "—",
       client_name: "John Doe",
       phone: "+966500000000",
       email: "client@example.com",
       delivery_location: "Riyadh, KSA",
       meals_list: "<ul><li>Chicken Mandi — 35.00 SAR</li><li>Salad — 10.00 SAR</li></ul>",
-      number_of_meals: "2",
+      meals_table: "<table border='1' cellpadding='6' style='border-collapse:collapse;'><tr><th>Meal</th><th>Qty/Day</th><th>Price</th><th>Daily</th></tr><tr><td>Chicken Mandi</td><td>20</td><td>35.00</td><td>700.00</td></tr><tr><td>Salad</td><td>20</td><td>10.00</td><td>200.00</td></tr></table>",
+      total_meals_count: "40",
+      number_of_meals: "40",
       delivery_days: "Sunday, Tuesday, Thursday",
       delivery_time: "12:00 - 14:00",
       total_value: "1,500.00 SAR",

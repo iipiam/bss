@@ -16971,6 +16971,29 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       ? `<ul class="meals">${meals.map(m => `<li><span>${escapeHtml(m.name || '')}</span><span class="price">${parseFloat(m.price || 0).toFixed(2)} ${SAR}</span></li>`).join('')}</ul>`
       : '<p>—</p>';
 
+    const mealsTableHtml = meals.length
+      ? `<table class="data-table">
+          <thead><tr>
+            <th>${L('Meal', 'الوجبة')}</th>
+            <th class="num">${L('Qty/Day', 'كمية/يوم')}</th>
+            <th class="num">${L('Price', 'السعر')} (${SAR})</th>
+            <th class="num">${L('Daily', 'يومياً')} (${SAR})</th>
+          </tr></thead>
+          <tbody>${meals.map((m: any) => {
+            const price = parseFloat(m.price || 0);
+            const qty = Math.max(1, parseInt(m.qtyPerDay || 1) || 1);
+            return `<tr>
+              <td>${escapeHtml(m.name || '')}</td>
+              <td class="num">${qty}</td>
+              <td class="num">${price.toFixed(2)}</td>
+              <td class="num">${(price * qty).toFixed(2)}</td>
+            </tr>`;
+          }).join('')}
+          </tbody>
+        </table>`
+      : '<p>—</p>';
+    const totalMealsCount = meals.reduce((s: number, m: any) => s + (Math.max(1, parseInt(m.qtyPerDay || 1) || 1)), 0);
+
     const paymentScheduleHtml = installments.length
       ? `<table class="data-table">
           <thead><tr>
@@ -16994,11 +17017,20 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
     const placeholders: Record<string, string> = {
       my_restaurant_name: escapeHtml(restaurant?.name || ''),
+      restaurant_cr: escapeHtml((restaurant as any)?.commercialRegistration || ''),
+      restaurant_tax_number: escapeHtml((restaurant as any)?.taxNumber || ''),
+      restaurant_national_id: escapeHtml((restaurant as any)?.nationalId || ''),
+      contract_number: escapeHtml(contract.contractNumber || ''),
+      contract_date: escapeHtml(fmtDate(contract.createdAt)),
+      status: escapeHtml(statusVal),
+      notes: escapeHtml((contract as any).notes || ''),
       client_name: escapeHtml(contract.clientName || ''),
       phone: escapeHtml(contract.clientPhone || ''),
       email: escapeHtml(contract.clientEmail || ''),
       delivery_location: escapeHtml(contract.deliveryLocation || ''),
       meals_list: mealsListHtml,
+      meals_table: mealsTableHtml,
+      total_meals_count: String(totalMealsCount),
       number_of_meals: String(contract.mealsPerDay || 0),
       delivery_days: escapeHtml(daysStr),
       delivery_time: escapeHtml(contract.deliveryTime || ''),
@@ -17299,6 +17331,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       // Fallback to SMTP if Resend not available
       if (!sent) {
+        const hasSmtp = !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD);
+        if (!hasSmtp) {
+          const detail = sendError
+            ? `Resend error: ${sendError}`
+            : 'No email provider is configured. Please ask your administrator to set RESEND_API_KEY (or SMTP_HOST/SMTP_USER/SMTP_PASSWORD) on the server.';
+          return res.status(500).json({ message: detail });
+        }
         const { sendGenericEmail } = await import('./emailService');
         const result = await sendGenericEmail({
           to: contract.clientEmail,
