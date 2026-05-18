@@ -16904,22 +16904,236 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     </body></html>`;
   }
 
+  // Pure-JS PDF builder using jspdf (no puppeteer / no Chrome required).
+  // Renders the catering contract directly so it works on any server without
+  // system libraries.
+  async function buildCateringContractPdfBuffer(restaurantId: string, contractId: string): Promise<Buffer> {
+    const contract = await storage.getCateringContract(contractId, restaurantId);
+    if (!contract) throw new Error("Contract not found");
+    const restaurant = await storage.getRestaurant(restaurantId);
+    const templates = await storage.getCateringContractTemplates(restaurantId);
+    const defaultTpl = templates.find(t => t.isDefault) || templates[0];
+    const tplContent = defaultTpl?.content || '';
+
+    const meals = Array.isArray(contract.mealSelections) ? contract.mealSelections as Array<any> : [];
+    const installments = Array.isArray(contract.paymentInstallments) ? contract.paymentInstallments as Array<any> : [];
+    const days = Array.isArray(contract.deliveryDays) ? contract.deliveryDays : [];
+
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 48;
+    const contentW = pageW - margin * 2;
+    let y = margin;
+
+    const ensure = (need: number) => {
+      if (y + need > pageH - margin) { doc.addPage(); y = margin; }
+    };
+    const setColor = (hex: string) => {
+      const n = parseInt(hex.replace('#', ''), 16);
+      doc.setTextColor((n >> 16) & 255, (n >> 8) & 255, n & 255);
+    };
+    const setFill = (hex: string) => {
+      const n = parseInt(hex.replace('#', ''), 16);
+      doc.setFillColor((n >> 16) & 255, (n >> 8) & 255, n & 255);
+    };
+    const setDraw = (hex: string) => {
+      const n = parseInt(hex.replace('#', ''), 16);
+      doc.setDrawColor((n >> 16) & 255, (n >> 8) & 255, n & 255);
+    };
+
+    // Header
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    setColor('#1a365d');
+    doc.text(restaurant?.name || '', pageW / 2, y + 20, { align: 'center' });
+    y += 28;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    setColor('#666666');
+    doc.text('Catering Supply Contract', pageW / 2, y + 12, { align: 'center' });
+    y += 20;
+    setDraw('#1a365d');
+    doc.setLineWidth(2);
+    doc.line(margin, y, pageW - margin, y);
+    y += 18;
+
+    // Meta box
+    setFill('#f8fafc');
+    doc.rect(margin, y, contentW, 36, 'F');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    setColor('#333333');
+    const metaY = y + 22;
+    doc.setFont('helvetica', 'bold'); doc.text('Contract #:', margin + 10, metaY);
+    doc.setFont('helvetica', 'normal'); doc.text(String(contract.contractNumber || ''), margin + 70, metaY);
+    doc.setFont('helvetica', 'bold'); doc.text('Date:', margin + contentW / 2 - 30, metaY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(new Date(contract.createdAt).toLocaleDateString('en-GB'), margin + contentW / 2 + 5, metaY);
+    doc.setFont('helvetica', 'bold'); doc.text('Status:', pageW - margin - 110, metaY);
+    doc.setFont('helvetica', 'normal'); doc.text(String(contract.status || ''), pageW - margin - 70, metaY);
+    y += 50;
+
+    // Section helper
+    const section = (title: string) => {
+      ensure(30);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      setColor('#1a365d');
+      doc.text(title, margin, y);
+      y += 4;
+      setDraw('#e2e8f0');
+      doc.setLineWidth(0.5);
+      doc.line(margin, y + 2, pageW - margin, y + 2);
+      y += 14;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      setColor('#333333');
+    };
+
+    const labelValue = (label: string, value: string) => {
+      const lines = doc.splitTextToSize(value || '—', contentW - 130);
+      ensure(14 * Math.max(1, lines.length));
+      doc.setFont('helvetica', 'bold');
+      doc.text(label, margin, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(lines, margin + 130, y);
+      y += 14 * Math.max(1, lines.length);
+    };
+
+    // Client info
+    section('Client Information');
+    labelValue('Client Name:', contract.clientName || '');
+    labelValue('Phone:', contract.clientPhone || '');
+    labelValue('Email:', contract.clientEmail || '');
+    labelValue('Delivery Location:', contract.deliveryLocation || '');
+
+    // Delivery info
+    section('Delivery Details');
+    labelValue('Meals per Day:', String(contract.mealsPerDay || 0));
+    labelValue('Delivery Days:', days.join(', ') || '—');
+    labelValue('Delivery Time:', contract.deliveryTime || '—');
+    labelValue('Start Date:', contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-GB') : '—');
+    labelValue('End Date:', contract.endDate ? new Date(contract.endDate).toLocaleDateString('en-GB') : '—');
+
+    // Meals
+    section('Meals');
+    if (meals.length === 0) {
+      doc.text('—', margin, y); y += 14;
+    } else {
+      for (const m of meals) {
+        ensure(14);
+        const line = `• ${m.name || ''} — ${parseFloat(m.price || 0).toFixed(2)} SAR`;
+        const wrapped = doc.splitTextToSize(line, contentW);
+        doc.text(wrapped, margin, y);
+        y += 14 * wrapped.length;
+      }
+    }
+
+    // Financial
+    section('Financial Summary');
+    labelValue('Total Value:', parseFloat(contract.totalValue || '0').toFixed(2) + ' SAR');
+    labelValue('Discount:', parseFloat(contract.discountPercent || '0').toFixed(2) + ' %');
+    doc.setFont('helvetica', 'bold');
+    labelValue('Final Value:', parseFloat(contract.finalValue || '0').toFixed(2) + ' SAR');
+    doc.setFont('helvetica', 'normal');
+
+    // Payment schedule
+    if (installments.length > 0) {
+      section('Payment Schedule');
+      const headers = ['#', 'Description', '%', 'Amount (SAR)', 'Due Date'];
+      const colW = [30, contentW * 0.4, 50, 100, contentW - 30 - contentW * 0.4 - 50 - 100];
+      ensure(22);
+      setFill('#1a365d');
+      doc.rect(margin, y - 12, contentW, 18, 'F');
+      setColor('#ffffff');
+      doc.setFont('helvetica', 'bold');
+      let cx = margin + 6;
+      headers.forEach((h, i) => { doc.text(h, cx, y); cx += colW[i]; });
+      y += 12;
+      doc.setFont('helvetica', 'normal');
+      setColor('#333333');
+      installments.forEach((it: any, i: number) => {
+        ensure(16);
+        setDraw('#e2e8f0');
+        doc.line(margin, y + 4, pageW - margin, y + 4);
+        let x = margin + 6;
+        const row = [
+          String(i + 1),
+          String(it.label || ''),
+          parseFloat(it.percent || 0).toFixed(2),
+          parseFloat(it.amount || 0).toFixed(2),
+          it.dueDate ? new Date(it.dueDate).toLocaleDateString('en-GB') : '—',
+        ];
+        row.forEach((v, j) => {
+          const lines = doc.splitTextToSize(v, colW[j] - 8);
+          doc.text(lines[0] || '', x, y);
+          x += colW[j];
+        });
+        y += 16;
+      });
+    }
+
+    // Terms (template content, plain text)
+    if (tplContent) {
+      section('Terms & Conditions');
+      const placeholders: Record<string, string> = {
+        my_restaurant_name: restaurant?.name || '',
+        client_name: contract.clientName || '',
+        phone: contract.clientPhone || '',
+        email: contract.clientEmail || '',
+        delivery_location: contract.deliveryLocation || '',
+        number_of_meals: String(contract.mealsPerDay || 0),
+        delivery_days: days.join(', '),
+        delivery_time: contract.deliveryTime || '',
+        total_value: parseFloat(contract.totalValue || '0').toFixed(2) + ' SAR',
+        discount_percentage: parseFloat(contract.discountPercent || '0').toFixed(2) + '%',
+        final_value: parseFloat(contract.finalValue || '0').toFixed(2) + ' SAR',
+        start_date: contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-GB') : '',
+        end_date: contract.endDate ? new Date(contract.endDate).toLocaleDateString('en-GB') : '',
+        meals_list: meals.map((m: any) => `${m.name} (${parseFloat(m.price || 0).toFixed(2)} SAR)`).join(', '),
+        payment_schedule: '',
+      };
+      // Strip HTML to plain text, substitute placeholders
+      let text = tplContent.replace(/<br\s*\/?>/gi, '\n').replace(/<\/?p[^>]*>/gi, '\n').replace(/<[^>]+>/g, '');
+      text = text.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+      for (const [k, v] of Object.entries(placeholders)) {
+        text = text.split(`{{${k}}}`).join(v);
+      }
+      const paragraphs = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
+      for (const p of paragraphs) {
+        const lines = doc.splitTextToSize(p, contentW);
+        ensure(13 * lines.length);
+        doc.text(lines, margin, y);
+        y += 13 * lines.length + 4;
+      }
+    }
+
+    // Footer
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let p = 1; p <= pageCount; p++) {
+      doc.setPage(p);
+      setColor('#999999');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.text('Generated by BlindSpot System (BSS) — kinbss.org', pageW / 2, pageH - 20, { align: 'center' });
+      doc.text(`Page ${p} of ${pageCount}`, pageW - margin, pageH - 20, { align: 'right' });
+    }
+
+    const arr = doc.output('arraybuffer');
+    return Buffer.from(arr);
+  }
+
   app.get("/api/catering-contracts/:id/pdf", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
-    let browser: any;
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      const html = await buildCateringContractHtml(restaurantId, req.params.id);
-      const puppeteer = (await import('puppeteer')).default;
-      browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' } });
-      await browser.close();
+      const pdfBuffer = await buildCateringContractPdfBuffer(restaurantId, req.params.id);
       res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Length', String(pdfBuffer.length));
       res.setHeader('Content-Disposition', `attachment; filename="catering-contract-${req.params.id}.pdf"`);
-      res.send(pdfBuffer);
+      res.end(pdfBuffer);
     } catch (error: any) {
-      if (browser) try { await browser.close(); } catch {}
       console.error("Error generating catering contract PDF:", error);
       res.status(500).json({ message: error.message });
     }
@@ -16948,45 +17162,31 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   // Public PDF download by share token (no auth) — for WhatsApp recipients
   app.get("/api/public/catering-contracts/:token/pdf", async (req, res) => {
-    let browser: any;
     try {
       const { db } = await import('./db');
       const { cateringContracts } = await import('@shared/schema');
       const { eq } = await import('drizzle-orm');
       const [contract] = await db.select().from(cateringContracts).where(eq(cateringContracts.shareToken, req.params.token));
       if (!contract) return res.status(404).send('Not found');
-      const html = await buildCateringContractHtml(contract.restaurantId, contract.id);
-      const puppeteer = (await import('puppeteer')).default;
-      browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' } });
-      await browser.close();
+      const pdfBuffer = await buildCateringContractPdfBuffer(contract.restaurantId, contract.id);
       res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Length', String(pdfBuffer.length));
       res.setHeader('Content-Disposition', `inline; filename="catering-contract-${contract.contractNumber}.pdf"`);
-      res.send(pdfBuffer);
+      res.end(pdfBuffer);
     } catch (error: any) {
-      if (browser) try { await browser.close(); } catch {}
       console.error("Error generating public catering PDF:", error);
       res.status(500).send('Error generating PDF');
     }
   });
 
   app.post("/api/catering-contracts/:id/send-email", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
-    let browser: any;
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const contract = await storage.getCateringContract(req.params.id, restaurantId);
       if (!contract) return res.status(404).json({ message: "Contract not found" });
       if (!contract.clientEmail) return res.status(400).json({ message: "Client email not set" });
 
-      const html = await buildCateringContractHtml(restaurantId, req.params.id);
-      const puppeteer = (await import('puppeteer')).default;
-      browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' } });
-      await browser.close();
+      const pdfBuffer = await buildCateringContractPdfBuffer(restaurantId, req.params.id);
 
       // Try Resend integration first (supports attachments natively)
       let sent = false;
@@ -17045,7 +17245,6 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       res.json({ success: true });
     } catch (error: any) {
-      if (browser) try { await browser.close(); } catch {}
       console.error("Error emailing catering contract:", error);
       res.status(500).json({ message: error.message });
     }
