@@ -13,7 +13,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Pencil, FileDown, Mail, MessageCircle, FileText } from "lucide-react";
+import { Plus, Trash2, Pencil, FileDown, Mail, MessageCircle, FileText, ListPlus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { formatPhoneForWhatsApp, openWhatsAppWithMessage } from "@/lib/whatsapp";
 import type { CateringContract, CateringContractTemplate } from "@shared/schema";
 
@@ -59,9 +60,12 @@ export default function CateringContractsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState<any>(emptyContract());
+  const [menuPickerOpen, setMenuPickerOpen] = useState(false);
+  const [pickedMenuIds, setPickedMenuIds] = useState<Record<string, boolean>>({});
 
   const { data: contracts = [], isLoading } = useQuery<CateringContract[]>({ queryKey: ["/api/catering-contracts"] });
   const { data: templates = [] } = useQuery<CateringContractTemplate[]>({ queryKey: ["/api/catering-contract-templates"] });
+  const { data: menuItems = [] } = useQuery<Array<{ id: string; name: string; price: string; category?: string }>>({ queryKey: ["/api/menu-items"] });
 
   const dayLabel = (k: string) => (t as any)[k] || k;
 
@@ -329,9 +333,14 @@ export default function CateringContractsPage() {
             <div>
               <div className="flex items-center justify-between gap-2 mb-2">
                 <Label>{t.mealSelections}</Label>
-                <Button type="button" size="sm" variant="outline" onClick={() => setField("mealSelections", [...(form.mealSelections || []), { name: "", price: 0 }])} data-testid="button-add-meal">
-                  <Plus className="h-4 w-4 me-1" /> {t.addMeal}
-                </Button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button type="button" size="sm" variant="outline" onClick={() => { setPickedMenuIds({}); setMenuPickerOpen(true); }} data-testid="button-select-from-menu">
+                    <ListPlus className="h-4 w-4 me-1" /> {t.selectFromMenu}
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setField("mealSelections", [...(form.mealSelections || []), { name: "", price: 0 }])} data-testid="button-add-meal">
+                    <Plus className="h-4 w-4 me-1" /> {t.addMeal}
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 {(form.mealSelections || []).map((m: Meal, i: number) => (
@@ -411,6 +420,48 @@ export default function CateringContractsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)} data-testid="button-cancel">{t.cancel}</Button>
             <Button onClick={handleSave} disabled={!form.clientName || !form.clientPhone || createMut.isPending || updateMut.isPending} data-testid="button-save">{t.save}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={menuPickerOpen} onOpenChange={setMenuPickerOpen}>
+        <DialogContent className="max-w-lg" data-testid="dialog-menu-picker">
+          <DialogHeader>
+            <DialogTitle>{t.selectFromMenu}</DialogTitle>
+            <p className="text-sm text-muted-foreground">{t.pickMenuItems}</p>
+          </DialogHeader>
+          <div className="max-h-[400px] overflow-y-auto space-y-1 py-2">
+            {menuItems.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">{t.noMenuItems}</p>
+            ) : (
+              menuItems.map((mi) => (
+                <label key={mi.id} className="flex items-center gap-3 p-2 rounded-md hover-elevate cursor-pointer" data-testid={`row-menu-item-${mi.id}`}>
+                  <Checkbox
+                    checked={!!pickedMenuIds[mi.id]}
+                    onCheckedChange={(v) => setPickedMenuIds(prev => ({ ...prev, [mi.id]: !!v }))}
+                    data-testid={`checkbox-menu-item-${mi.id}`}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate" data-testid={`text-menu-name-${mi.id}`}>{mi.name}</div>
+                    {mi.category && <div className="text-xs text-muted-foreground truncate">{mi.category}</div>}
+                  </div>
+                  <Badge variant="secondary" data-testid={`text-menu-price-${mi.id}`}>{parseFloat(mi.price || "0").toFixed(2)} {t.sar}</Badge>
+                </label>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMenuPickerOpen(false)} data-testid="button-menu-picker-cancel">{t.cancel}</Button>
+            <Button
+              onClick={() => {
+                const selected = menuItems.filter(mi => pickedMenuIds[mi.id]).map(mi => ({ name: mi.name, price: parseFloat(mi.price || "0") }));
+                if (selected.length) setField("mealSelections", [...(form.mealSelections || []), ...selected]);
+                setMenuPickerOpen(false);
+              }}
+              data-testid="button-menu-picker-add"
+            >
+              {t.addSelected}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -16920,12 +16920,39 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const days = Array.isArray(contract.deliveryDays) ? contract.deliveryDays : [];
 
     const { jsPDF } = await import('jspdf');
+    const { AMIRI_REGULAR_BASE64 } = await import('./fonts/amiriBase64');
+    const { prepareArabic, hasArabic } = await import('./arabicShaper');
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    // Register Amiri (Arabic-capable) font once so we can switch to it for
+    // any text containing Arabic characters.
+    doc.addFileToVFS('Amiri-Regular.ttf', AMIRI_REGULAR_BASE64);
+    doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
+    doc.addFont('Amiri-Regular.ttf', 'Amiri', 'bold');
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
     const margin = 48;
     const contentW = pageW - margin * 2;
     let y = margin;
+
+    // Helper: render text, switching to Amiri + RTL alignment for Arabic strings.
+    const useFontFor = (txt: string, style: 'normal' | 'bold' = 'normal') => {
+      if (hasArabic(txt)) doc.setFont('Amiri', style);
+      else doc.setFont('helvetica', style);
+    };
+    const T = (txt: string): string => hasArabic(txt) ? prepareArabic(txt) : txt;
+    const drawText = (txt: string, x: number, ty: number, opts?: any) => {
+      const style = (opts && opts.style) || 'normal';
+      useFontFor(String(txt), style);
+      const out = T(String(txt));
+      const o: any = { ...(opts || {}) }; delete o.style;
+      if (hasArabic(String(txt)) && !o.align) o.align = 'right';
+      doc.text(out, x, ty, o);
+    };
+    const splitText = (txt: string, w: number): string[] => {
+      const prepared = T(String(txt));
+      useFontFor(String(txt));
+      return doc.splitTextToSize(prepared, w) as string[];
+    };
 
     const ensure = (need: number) => {
       if (y + need > pageH - margin) { doc.addPage(); y = margin; }
@@ -16993,12 +17020,19 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     };
 
     const labelValue = (label: string, value: string) => {
-      const lines = doc.splitTextToSize(value || '—', contentW - 130);
+      const v = value || '—';
+      const lines = splitText(v, contentW - 130);
       ensure(14 * Math.max(1, lines.length));
-      doc.setFont('helvetica', 'bold');
-      doc.text(label, margin, y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(lines, margin + 130, y);
+      useFontFor(label, 'bold');
+      doc.text(T(label), margin, y);
+      useFontFor(v, 'normal');
+      if (hasArabic(v)) {
+        // Right-align Arabic values to the right edge of the content area
+        const rx = pageW - margin;
+        (lines as string[]).forEach((ln, i) => doc.text(ln, rx, y + 14 * i, { align: 'right' }));
+      } else {
+        doc.text(lines, margin + 130, y);
+      }
       y += 14 * Math.max(1, lines.length);
     };
 
@@ -17024,9 +17058,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } else {
       for (const m of meals) {
         ensure(14);
-        const line = `• ${m.name || ''} — ${parseFloat(m.price || 0).toFixed(2)} SAR`;
-        const wrapped = doc.splitTextToSize(line, contentW);
-        doc.text(wrapped, margin, y);
+        const name = m.name || '';
+        const priceStr = `${parseFloat(m.price || 0).toFixed(2)} SAR`;
+        const line = hasArabic(name) ? `${name}  —  ${priceStr}  •` : `• ${name} — ${priceStr}`;
+        const wrapped = splitText(line, contentW);
+        useFontFor(line, 'normal');
+        if (hasArabic(line)) {
+          wrapped.forEach((ln, i) => doc.text(ln, pageW - margin, y + 14 * i, { align: 'right' }));
+        } else {
+          doc.text(wrapped, margin, y);
+        }
         y += 14 * wrapped.length;
       }
     }
@@ -17103,9 +17144,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       const paragraphs = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
       for (const p of paragraphs) {
-        const lines = doc.splitTextToSize(p, contentW);
+        const lines = splitText(p, contentW);
         ensure(13 * lines.length);
-        doc.text(lines, margin, y);
+        useFontFor(p, 'normal');
+        if (hasArabic(p)) {
+          lines.forEach((ln, i) => doc.text(ln, pageW - margin, y + 13 * i, { align: 'right' }));
+        } else {
+          doc.text(lines, margin, y);
+        }
         y += 13 * lines.length + 4;
       }
     }

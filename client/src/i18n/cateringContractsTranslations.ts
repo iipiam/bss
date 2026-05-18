@@ -15,6 +15,10 @@ export type CateringT = {
   deliveryLocation: string;
   mealSelections: string;
   addMeal: string;
+  selectFromMenu: string;
+  pickMenuItems: string;
+  noMenuItems: string;
+  addSelected: string;
   mealName: string;
   mealPrice: string;
   mealsPerDay: string;
@@ -117,6 +121,10 @@ const en: CateringT = {
   deliveryLocation: "Delivery Location",
   mealSelections: "Meal Selections",
   addMeal: "Add Meal",
+  selectFromMenu: "Select from Menu",
+  pickMenuItems: "Pick menu items to add as meals",
+  noMenuItems: "No menu items available",
+  addSelected: "Add Selected",
   mealName: "Meal Name",
   mealPrice: "Price",
   mealsPerDay: "Meals Per Day",
@@ -215,6 +223,10 @@ const ar: CateringT = {
   deliveryLocation: "موقع التوصيل",
   mealSelections: "اختيار الوجبات",
   addMeal: "إضافة وجبة",
+  selectFromMenu: "اختيار من القائمة",
+  pickMenuItems: "اختر أصناف القائمة لإضافتها كوجبات",
+  noMenuItems: "لا توجد أصناف في القائمة",
+  addSelected: "إضافة المحدد",
   mealName: "اسم الوجبة",
   mealPrice: "السعر",
   mealsPerDay: "الوجبات يوميا",
