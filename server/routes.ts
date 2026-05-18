@@ -16692,6 +16692,30 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // NOTE: /today must come BEFORE /:id so it's not captured as an id
+  app.get("/api/catering-contracts/today", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const all = await storage.getCateringContracts(restaurantId);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const dayName = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][today.getDay()];
+      const active = all.filter((c) => {
+        if (c.status !== 'active') return false;
+        const start = new Date(c.startDate); start.setHours(0,0,0,0);
+        const end = new Date(c.endDate); end.setHours(0,0,0,0);
+        if (today < start || today > end) return false;
+        const days = (c.deliveryDays || []).map((d: string) => d.toLowerCase());
+        if (days.length === 0) return true;
+        return days.includes(dayName);
+      });
+      res.json(active);
+    } catch (error: any) {
+      console.error("Error fetching today's catering deliveries:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.get("/api/catering-contracts/:id", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
@@ -16897,30 +16921,6 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error: any) {
       if (browser) try { await browser.close(); } catch {}
       console.error("Error generating catering contract PDF:", error);
-      res.status(500).json({ message: error.message });
-    }
-  });
-
-  // Today's active catering deliveries (for dashboard widget)
-  app.get("/api/catering-contracts/today", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
-    try {
-      const restaurantId = req.session.user!.restaurantId!;
-      const all = await storage.getCateringContracts(restaurantId);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const dayName = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][today.getDay()];
-      const active = all.filter((c) => {
-        if (c.status !== 'active') return false;
-        const start = new Date(c.startDate); start.setHours(0,0,0,0);
-        const end = new Date(c.endDate); end.setHours(0,0,0,0);
-        if (today < start || today > end) return false;
-        const days = (c.deliveryDays || []).map((d: string) => d.toLowerCase());
-        if (days.length === 0) return true;
-        return days.includes(dayName);
-      });
-      res.json(active);
-    } catch (error: any) {
-      console.error("Error fetching today's catering deliveries:", error);
       res.status(500).json({ message: error.message });
     }
   });
