@@ -166,6 +166,12 @@ import {
   type MealSubscription,
   type InsertMealSubscription,
   mealSubscriptions,
+  type CateringContract,
+  type InsertCateringContract,
+  cateringContracts,
+  type CateringContractTemplate,
+  type InsertCateringContractTemplate,
+  cateringContractTemplates,
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, gte, lte, lt, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
@@ -628,6 +634,20 @@ export interface IStorage {
   createMealSubscription(subscription: InsertMealSubscription): Promise<MealSubscription>;
   updateMealSubscription(id: string, restaurantId: string, subscription: Partial<InsertMealSubscription> & { deliveryLog?: unknown[] }): Promise<MealSubscription | undefined>;
   deleteMealSubscription(id: string, restaurantId: string): Promise<boolean>;
+
+  // Catering Contracts (MULTI-TENANT)
+  getCateringContracts(restaurantId: string): Promise<CateringContract[]>;
+  getCateringContract(id: string, restaurantId: string): Promise<CateringContract | undefined>;
+  createCateringContract(contract: InsertCateringContract): Promise<CateringContract>;
+  updateCateringContract(id: string, restaurantId: string, contract: Partial<InsertCateringContract>): Promise<CateringContract | undefined>;
+  deleteCateringContract(id: string, restaurantId: string): Promise<boolean>;
+
+  // Catering Contract Templates (MULTI-TENANT)
+  getCateringContractTemplates(restaurantId: string): Promise<CateringContractTemplate[]>;
+  getCateringContractTemplate(id: string, restaurantId: string): Promise<CateringContractTemplate | undefined>;
+  createCateringContractTemplate(template: InsertCateringContractTemplate): Promise<CateringContractTemplate>;
+  updateCateringContractTemplate(id: string, restaurantId: string, template: Partial<InsertCateringContractTemplate>): Promise<CateringContractTemplate | undefined>;
+  deleteCateringContractTemplate(id: string, restaurantId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -5528,6 +5548,60 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(mealSubscriptions).where(and(eq(mealSubscriptions.id, id), eq(mealSubscriptions.restaurantId, restaurantId))).returning();
     return result.length > 0;
   }
+
+  // Catering Contracts (MULTI-TENANT)
+  async getCateringContracts(restaurantId: string): Promise<CateringContract[]> {
+    return db.select().from(cateringContracts).where(eq(cateringContracts.restaurantId, restaurantId)).orderBy(desc(cateringContracts.createdAt));
+  }
+  async getCateringContract(id: string, restaurantId: string): Promise<CateringContract | undefined> {
+    const [c] = await db.select().from(cateringContracts).where(and(eq(cateringContracts.id, id), eq(cateringContracts.restaurantId, restaurantId)));
+    return c;
+  }
+  async createCateringContract(contract: InsertCateringContract): Promise<CateringContract> {
+    const [created] = await db.insert(cateringContracts).values(contract).returning();
+    return created;
+  }
+  async updateCateringContract(id: string, restaurantId: string, contract: Partial<InsertCateringContract>): Promise<CateringContract | undefined> {
+    const updateData = Object.fromEntries(Object.entries(contract).filter(([_, v]) => v !== undefined));
+    if (Object.keys(updateData).length === 0) return this.getCateringContract(id, restaurantId);
+    const [updated] = await db.update(cateringContracts).set(updateData).where(and(eq(cateringContracts.id, id), eq(cateringContracts.restaurantId, restaurantId))).returning();
+    return updated;
+  }
+  async deleteCateringContract(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(cateringContracts).where(and(eq(cateringContracts.id, id), eq(cateringContracts.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+
+  // Catering Contract Templates (MULTI-TENANT)
+  async getCateringContractTemplates(restaurantId: string): Promise<CateringContractTemplate[]> {
+    return db.select().from(cateringContractTemplates).where(eq(cateringContractTemplates.restaurantId, restaurantId)).orderBy(desc(cateringContractTemplates.updatedAt));
+  }
+  async getCateringContractTemplate(id: string, restaurantId: string): Promise<CateringContractTemplate | undefined> {
+    const [t] = await db.select().from(cateringContractTemplates).where(and(eq(cateringContractTemplates.id, id), eq(cateringContractTemplates.restaurantId, restaurantId)));
+    return t;
+  }
+  async createCateringContractTemplate(template: InsertCateringContractTemplate): Promise<CateringContractTemplate> {
+    // If marking as default, clear other defaults first
+    if (template.isDefault) {
+      await db.update(cateringContractTemplates).set({ isDefault: false }).where(eq(cateringContractTemplates.restaurantId, template.restaurantId));
+    }
+    const [created] = await db.insert(cateringContractTemplates).values(template).returning();
+    return created;
+  }
+  async updateCateringContractTemplate(id: string, restaurantId: string, template: Partial<InsertCateringContractTemplate>): Promise<CateringContractTemplate | undefined> {
+    const updateData: Record<string, unknown> = Object.fromEntries(Object.entries(template).filter(([_, v]) => v !== undefined));
+    if (Object.keys(updateData).length === 0) return this.getCateringContractTemplate(id, restaurantId);
+    updateData.updatedAt = new Date();
+    if (template.isDefault) {
+      await db.update(cateringContractTemplates).set({ isDefault: false }).where(eq(cateringContractTemplates.restaurantId, restaurantId));
+    }
+    const [updated] = await db.update(cateringContractTemplates).set(updateData).where(and(eq(cateringContractTemplates.id, id), eq(cateringContractTemplates.restaurantId, restaurantId))).returning();
+    return updated;
+  }
+  async deleteCateringContractTemplate(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(cateringContractTemplates).where(and(eq(cateringContractTemplates.id, id), eq(cateringContractTemplates.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
 }
 
 export const storage = new DatabaseStorage();
@@ -5982,6 +6056,44 @@ export const storage = new DatabaseStorage();
       )
     `);
     console.log('[Migration] Table verified/created: contractors');
+
+    // Catering Contracts (Restaurant business type)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS catering_contracts (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        contract_number TEXT NOT NULL,
+        client_name TEXT NOT NULL,
+        client_phone TEXT NOT NULL,
+        client_email TEXT,
+        delivery_location TEXT,
+        meal_selections JSONB NOT NULL DEFAULT '[]',
+        meals_per_day INTEGER NOT NULL DEFAULT 1,
+        delivery_days TEXT[] NOT NULL DEFAULT '{}',
+        delivery_time TEXT,
+        start_date TIMESTAMP NOT NULL,
+        end_date TIMESTAMP NOT NULL,
+        total_value DECIMAL(12,2) NOT NULL DEFAULT 0,
+        discount_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
+        final_value DECIMAL(12,2) NOT NULL DEFAULT 0,
+        payment_installments JSONB NOT NULL DEFAULT '[]',
+        notes TEXT,
+        status TEXT NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS catering_contract_templates (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        name TEXT NOT NULL,
+        content TEXT NOT NULL DEFAULT '',
+        is_default BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('[Migration] Tables verified/created: catering_contracts, catering_contract_templates');
 
     console.log('[Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings');
   } catch (error: any) {

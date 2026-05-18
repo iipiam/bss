@@ -1,5 +1,41 @@
 import nodemailer from 'nodemailer';
 
+export async function sendGenericEmail(opts: {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  attachments?: Array<{ filename: string; content: Buffer; contentType?: string }>;
+}): Promise<{ ok: boolean; error?: string }> {
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpPort = parseInt(process.env.SMTP_PORT || '587');
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASSWORD;
+  const emailFrom = process.env.EMAIL_FROM || smtpUser;
+  if (!smtpHost || !smtpUser || !smtpPass) {
+    return { ok: false, error: 'SMTP not configured' };
+  }
+  const transporter = nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpPort === 465,
+    auth: { user: smtpUser, pass: smtpPass },
+  });
+  try {
+    await transporter.sendMail({
+      from: `"BSS" <${emailFrom}>`,
+      to: opts.to,
+      subject: opts.subject,
+      html: opts.html,
+      text: opts.text,
+      attachments: opts.attachments,
+    });
+    return { ok: true };
+  } catch (error: any) {
+    return { ok: false, error: error?.message || 'send failed' };
+  }
+}
+
 interface TicketEmailData {
   ticketNumber: string;
   subject: string;

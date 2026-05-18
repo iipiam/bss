@@ -1,0 +1,85 @@
+in restaurant business type accounts,
+Create a page called "عقود التموين" (Supply Contracts / Catering Contracts).
+Main Requirements:
+page Name: عقود التموين (Catering Contracts Management)
+to store:
+Clients
+Contracts
+Meals/Menu items
+Contract Templates
+
+Two Main Pages/Tabs:
+
+Create & Manage Contracts (Default page)
+Template Editor (for Terms & Conditions)
+
+
+Page 1: Create & Manage Contracts
+Features:
+
+Form to create a new contract with the following fields:
+Client Name
+Phone Number
+Email
+Delivery Location (address)
+Meal Selection: Multi-select from a list of available meals (with price per meal)
+Number of Meals per day
+Delivery Days (checkbox: Saturday to Friday)
+Delivery Time (time picker)
+Contract Start Date & End Date
+Total Contract Value (auto-calculated or manual)
+Number of Payments (installments)
+Payment Distribution: Ability to set percentage for each payment (should sum to 100%)
+Discount: Manual percentage discount (%) applied to total value
+Final Contract Value (after discount)
+
+"Save Contract" button that generates a unique contract for that client.
+List of all saved contracts with search/filter by client name.
+For each contract: "View / Download PDF" button and "Send Contract" button.
+
+Send Contract options:
+
+Send via Email (using SMTP or a service like Resend/SendGrid)
+Send via WhatsApp (generate a direct WhatsApp link with the PDF or message)
+
+
+Page 2: Template Editor
+
+Rich text editor (use TinyMCE or Quill) to create and edit the main contract template.
+can create placeholders manually.
+Template should include placeholders such as:
+{{my_restaurant_name}}
+{{my_contact_number}}
+{{my_email}}
+{{client_name}}
+{{phone}}
+{{email}}
+{{delivery_location}}
+{{meals_list}}
+{{number_of_meals}}
+{{delivery_days}}
+{{delivery_time}}
+{{total_value}}
+{{discount_percentage}}
+{{final_value}}
+{{payment_schedule}}
+{{start_date}} - {{end_date}}
+
+Default section for Terms & Conditions (editable).
+Save template button.
+
+
+PDF Generation
+
+When user clicks "Generate PDF", merge the filled template with client data and generate a professional PDF.
+Use libraries like reportlab, weasyprint, or pdfkit.
+PDF should look formal, with company header/footer (add placeholder for logo and company name).
+
+Additional Features
+
+Responsive design (mobile friendly)
+Clean, professional Arabic + English bilingual interface (RTL support)
+Authentication (simple login for now)
+Meals Menu management (CRUD for available meals with prices)
+
+

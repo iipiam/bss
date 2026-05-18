@@ -16680,6 +16680,260 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // ==================== CATERING CONTRACTS ====================
+  app.get("/api/catering-contracts", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const contracts = await storage.getCateringContracts(restaurantId);
+      res.json(contracts);
+    } catch (error: any) {
+      console.error("Error fetching catering contracts:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/catering-contracts/:id", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const contract = await storage.getCateringContract(req.params.id, restaurantId);
+      if (!contract) return res.status(404).json({ message: "Contract not found" });
+      res.json(contract);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/catering-contracts", requireAuth, requireRestaurant, requireAction('orders', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { id, createdAt, restaurantId: _rid, ...body } = req.body;
+      if (body.startDate && typeof body.startDate === 'string') body.startDate = new Date(body.startDate);
+      if (body.endDate && typeof body.endDate === 'string') body.endDate = new Date(body.endDate);
+      const contract = await storage.createCateringContract({ ...body, restaurantId });
+      res.json(contract);
+    } catch (error: any) {
+      console.error("Error creating catering contract:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/catering-contracts/:id", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { id, createdAt, restaurantId: _rid, ...body } = req.body;
+      if (body.startDate && typeof body.startDate === 'string') body.startDate = new Date(body.startDate);
+      if (body.endDate && typeof body.endDate === 'string') body.endDate = new Date(body.endDate);
+      const contract = await storage.updateCateringContract(req.params.id, restaurantId, body);
+      if (!contract) return res.status(404).json({ message: "Contract not found" });
+      res.json(contract);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/catering-contracts/:id", requireAuth, requireRestaurant, requireAction('orders', 'delete'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const ok = await storage.deleteCateringContract(req.params.id, restaurantId);
+      if (!ok) return res.status(404).json({ message: "Contract not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Catering Contract Templates
+  app.get("/api/catering-contract-templates", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const templates = await storage.getCateringContractTemplates(restaurantId);
+      res.json(templates);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/catering-contract-templates", requireAuth, requireRestaurant, requireAction('orders', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { id, createdAt, updatedAt, restaurantId: _rid, ...body } = req.body;
+      const template = await storage.createCateringContractTemplate({ ...body, restaurantId });
+      res.json(template);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/catering-contract-templates/:id", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { id, createdAt, updatedAt, restaurantId: _rid, ...body } = req.body;
+      const template = await storage.updateCateringContractTemplate(req.params.id, restaurantId, body);
+      if (!template) return res.status(404).json({ message: "Template not found" });
+      res.json(template);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/catering-contract-templates/:id", requireAuth, requireRestaurant, requireAction('orders', 'delete'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const ok = await storage.deleteCateringContractTemplate(req.params.id, restaurantId);
+      if (!ok) return res.status(404).json({ message: "Template not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Render contract HTML (template + data substitution)
+  async function buildCateringContractHtml(restaurantId: string, contractId: string): Promise<string> {
+    const contract = await storage.getCateringContract(contractId, restaurantId);
+    if (!contract) throw new Error("Contract not found");
+    const restaurant = await storage.getRestaurant(restaurantId);
+    const templates = await storage.getCateringContractTemplates(restaurantId);
+    const defaultTpl = templates.find(t => t.isDefault) || templates[0];
+    const tplContent = defaultTpl?.content || '';
+
+    const meals = Array.isArray(contract.mealSelections) ? contract.mealSelections as Array<any> : [];
+    const installments = Array.isArray(contract.paymentInstallments) ? contract.paymentInstallments as Array<any> : [];
+    const days = Array.isArray(contract.deliveryDays) ? contract.deliveryDays : [];
+
+    const mealsListHtml = meals.length
+      ? `<ul style="margin:6px 0;padding-${'inline-start'}:20px;">${meals.map(m => `<li>${escapeHtml(m.name)} — ${parseFloat(m.price || 0).toFixed(2)} SAR</li>`).join('')}</ul>`
+      : '—';
+    const paymentScheduleHtml = installments.length
+      ? `<table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:11px;">
+          <thead><tr style="background:#1a365d;color:#fff;">
+            <th style="padding:8px;text-align:left;">#</th>
+            <th style="padding:8px;text-align:left;">Description</th>
+            <th style="padding:8px;text-align:right;">%</th>
+            <th style="padding:8px;text-align:right;">Amount (SAR)</th>
+            <th style="padding:8px;text-align:left;">Due Date</th>
+          </tr></thead>
+          <tbody>${installments.map((it: any, i: number) => `
+            <tr style="border-bottom:1px solid #e2e8f0;">
+              <td style="padding:8px;">${i + 1}</td>
+              <td style="padding:8px;">${escapeHtml(it.label || '')}</td>
+              <td style="padding:8px;text-align:right;">${parseFloat(it.percent || 0).toFixed(2)}</td>
+              <td style="padding:8px;text-align:right;">${parseFloat(it.amount || 0).toFixed(2)}</td>
+              <td style="padding:8px;">${it.dueDate ? new Date(it.dueDate).toLocaleDateString('en-GB') : '—'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`
+      : '—';
+
+    const placeholders: Record<string, string> = {
+      my_restaurant_name: restaurant?.name || '',
+      client_name: contract.clientName || '',
+      phone: contract.clientPhone || '',
+      email: contract.clientEmail || '',
+      delivery_location: contract.deliveryLocation || '',
+      meals_list: mealsListHtml,
+      number_of_meals: String(contract.mealsPerDay || 0),
+      delivery_days: days.join(', '),
+      delivery_time: contract.deliveryTime || '',
+      total_value: parseFloat(contract.totalValue || '0').toFixed(2) + ' SAR',
+      discount_percentage: parseFloat(contract.discountPercent || '0').toFixed(2) + '%',
+      final_value: parseFloat(contract.finalValue || '0').toFixed(2) + ' SAR',
+      payment_schedule: paymentScheduleHtml,
+      start_date: contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-GB') : '',
+      end_date: contract.endDate ? new Date(contract.endDate).toLocaleDateString('en-GB') : '',
+    };
+
+    // If the template is plain text (no HTML tags), escape user text first
+    // and convert newlines to <br/>, then inject placeholders (which may
+    // legitimately contain HTML fragments such as meals_list / payment_schedule).
+    // For HTML templates, trust the author's markup and just substitute.
+    const isHtmlTemplate = /<[a-z][^>]*>/i.test(tplContent);
+    let body: string;
+    if (isHtmlTemplate) {
+      body = tplContent;
+    } else {
+      body = tplContent.split('\n').map(line => escapeHtml(line)).join('<br/>');
+    }
+    for (const [k, v] of Object.entries(placeholders)) {
+      body = body.split(`{{${k}}}`).join(v);
+    }
+
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+      @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
+      body { font-family: 'Amiri', Arial, sans-serif; padding: 40px; font-size: 12px; color: #333; }
+      .header { text-align:center; border-bottom: 3px solid #1a365d; padding-bottom: 16px; margin-bottom: 24px; }
+      .header h1 { color: #1a365d; margin: 0; font-size: 22px; }
+      .meta { display:flex; justify-content:space-between; background:#f8fafc; padding:12px; border-radius:6px; margin-bottom:20px; font-size:11px; }
+      h2 { color:#1a365d; font-size:16px; border-bottom:1px solid #e2e8f0; padding-bottom:6px; margin-top:24px; }
+      .footer { text-align:center; margin-top:40px; padding-top:12px; border-top:1px solid #e2e8f0; color:#999; font-size:10px; }
+    </style></head><body>
+      <div class="header">
+        <h1>${escapeHtml(restaurant?.name || '')}</h1>
+        <div style="color:#666;font-size:11px;margin-top:4px;">Catering Supply Contract — عقد توريد تموين</div>
+      </div>
+      <div class="meta">
+        <div><strong>Contract #:</strong> ${escapeHtml(contract.contractNumber)}</div>
+        <div><strong>Date:</strong> ${new Date(contract.createdAt).toLocaleDateString('en-GB')}</div>
+        <div><strong>Status:</strong> ${escapeHtml(contract.status)}</div>
+      </div>
+      ${body}
+      <div class="footer">Generated by BlindSpot System (BSS) — kinbss.org</div>
+    </body></html>`;
+  }
+
+  app.get("/api/catering-contracts/:id/pdf", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+    let browser: any;
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const html = await buildCateringContractHtml(restaurantId, req.params.id);
+      const puppeteer = (await import('puppeteer')).default;
+      browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' } });
+      await browser.close();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="catering-contract-${req.params.id}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      if (browser) try { await browser.close(); } catch {}
+      console.error("Error generating catering contract PDF:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/catering-contracts/:id/send-email", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+    let browser: any;
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const contract = await storage.getCateringContract(req.params.id, restaurantId);
+      if (!contract) return res.status(404).json({ message: "Contract not found" });
+      if (!contract.clientEmail) return res.status(400).json({ message: "Client email not set" });
+
+      const html = await buildCateringContractHtml(restaurantId, req.params.id);
+      const puppeteer = (await import('puppeteer')).default;
+      browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' } });
+      await browser.close();
+
+      const { sendGenericEmail } = await import('./emailService');
+      const result = await sendGenericEmail({
+        to: contract.clientEmail,
+        subject: `Catering Contract ${contract.contractNumber}`,
+        html: `<p>Dear ${escapeHtml(contract.clientName)},</p><p>Please find attached your catering supply contract <strong>${escapeHtml(contract.contractNumber)}</strong>.</p><p>Thank you.</p>`,
+        text: `Catering Contract ${contract.contractNumber}\n\nPlease find attached.`,
+        attachments: [{ filename: `catering-contract-${contract.contractNumber}.pdf`, content: Buffer.from(pdfBuffer), contentType: 'application/pdf' }],
+      });
+      if (!result.ok) return res.status(500).json({ message: result.error || 'Failed to send email' });
+      res.json({ success: true });
+    } catch (error: any) {
+      if (browser) try { await browser.close(); } catch {}
+      console.error("Error emailing catering contract:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Setup WebSocket server for real-time notifications on specific path to avoid conflicts with Vite HMR

@@ -1814,3 +1814,48 @@ export const mealSubscriptions = pgTable("meal_subscriptions", {
 export const insertMealSubscriptionSchema = createInsertSchema(mealSubscriptions).omit({ id: true, createdAt: true, deliveryLog: true });
 export type InsertMealSubscription = z.infer<typeof insertMealSubscriptionSchema>;
 export type MealSubscription = typeof mealSubscriptions.$inferSelect;
+
+// Catering Contracts (Restaurant - MULTI-TENANT)
+export const cateringContracts = pgTable("catering_contracts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  contractNumber: text("contract_number").notNull(),
+  clientName: text("client_name").notNull(),
+  clientPhone: text("client_phone").notNull(),
+  clientEmail: text("client_email"),
+  deliveryLocation: text("delivery_location"),
+  // Array of { name, price, menuItemId? }
+  mealSelections: jsonb("meal_selections").notNull().default([]),
+  mealsPerDay: integer("meals_per_day").notNull().default(1),
+  deliveryDays: text("delivery_days").array().notNull().default([]),
+  deliveryTime: text("delivery_time"),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  totalValue: decimal("total_value", { precision: 12, scale: 2 }).notNull().default("0"),
+  discountPercent: decimal("discount_percent", { precision: 5, scale: 2 }).notNull().default("0"),
+  finalValue: decimal("final_value", { precision: 12, scale: 2 }).notNull().default("0"),
+  // Array of { label, percent, amount, dueDate?, status }
+  paymentInstallments: jsonb("payment_installments").notNull().default([]),
+  notes: text("notes"),
+  status: text("status").notNull().default("active"), // active, completed, cancelled
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertCateringContractSchema = createInsertSchema(cateringContracts).omit({ id: true, createdAt: true });
+export type InsertCateringContract = z.infer<typeof insertCateringContractSchema>;
+export type CateringContract = typeof cateringContracts.$inferSelect;
+
+// Catering Contract Templates (Restaurant - MULTI-TENANT)
+export const cateringContractTemplates = pgTable("catering_contract_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  name: text("name").notNull(),
+  content: text("content").notNull().default(""),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertCateringContractTemplateSchema = createInsertSchema(cateringContractTemplates).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertCateringContractTemplate = z.infer<typeof insertCateringContractTemplateSchema>;
+export type CateringContractTemplate = typeof cateringContractTemplates.$inferSelect;
