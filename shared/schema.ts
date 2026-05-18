@@ -1838,10 +1838,11 @@ export const cateringContracts = pgTable("catering_contracts", {
   paymentInstallments: jsonb("payment_installments").notNull().default([]),
   notes: text("notes"),
   status: text("status").notNull().default("active"), // active, completed, cancelled
+  shareToken: text("share_token"), // public token for sharing PDF via WhatsApp / link
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const insertCateringContractSchema = createInsertSchema(cateringContracts).omit({ id: true, createdAt: true });
+export const insertCateringContractSchema = createInsertSchema(cateringContracts).omit({ id: true, createdAt: true, shareToken: true });
 export type InsertCateringContract = z.infer<typeof insertCateringContractSchema>;
 export type CateringContract = typeof cateringContracts.$inferSelect;
 

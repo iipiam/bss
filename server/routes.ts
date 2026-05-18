@@ -16901,6 +16901,53 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Generate/return a public share token + URL for WhatsApp PDF sharing
+  app.post("/api/catering-contracts/:id/share-link", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const contract = await storage.getCateringContract(req.params.id, restaurantId);
+      if (!contract) return res.status(404).json({ message: "Contract not found" });
+      let token = contract.shareToken;
+      if (!token) {
+        token = (await import('crypto')).randomBytes(24).toString('hex');
+        await storage.updateCateringContract(contract.id, restaurantId, { shareToken: token } as any);
+      }
+      const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol;
+      const host = req.headers['x-forwarded-host'] || req.headers.host;
+      const url = `${proto}://${host}/api/public/catering-contracts/${token}/pdf`;
+      res.json({ token, url });
+    } catch (error: any) {
+      console.error("Error creating share link:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Public PDF download by share token (no auth) — for WhatsApp recipients
+  app.get("/api/public/catering-contracts/:token/pdf", async (req, res) => {
+    let browser: any;
+    try {
+      const { db } = await import('./db');
+      const { cateringContracts } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      const [contract] = await db.select().from(cateringContracts).where(eq(cateringContracts.shareToken, req.params.token));
+      if (!contract) return res.status(404).send('Not found');
+      const html = await buildCateringContractHtml(contract.restaurantId, contract.id);
+      const puppeteer = (await import('puppeteer')).default;
+      browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' } });
+      await browser.close();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="catering-contract-${contract.contractNumber}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      if (browser) try { await browser.close(); } catch {}
+      console.error("Error generating public catering PDF:", error);
+      res.status(500).send('Error generating PDF');
+    }
+  });
+
   app.post("/api/catering-contracts/:id/send-email", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
     let browser: any;
     try {

@@ -6059,6 +6059,9 @@ export const storage = new DatabaseStorage();
 
     // Catering Contracts (Restaurant business type)
     await pool.query(`
+      DO $$ BEGIN
+        ALTER TABLE catering_contracts ADD COLUMN IF NOT EXISTS share_token text;
+      EXCEPTION WHEN undefined_table THEN NULL; END $$;
       CREATE TABLE IF NOT EXISTS catering_contracts (
         id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
         restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
@@ -6079,6 +6082,7 @@ export const storage = new DatabaseStorage();
         payment_installments JSONB NOT NULL DEFAULT '[]',
         notes TEXT,
         status TEXT NOT NULL DEFAULT 'active',
+        share_token TEXT,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);

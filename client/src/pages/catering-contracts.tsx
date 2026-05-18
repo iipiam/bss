@@ -154,13 +154,19 @@ export default function CateringContractsPage() {
     onError: (e: any) => toast({ title: t.emailFailed, description: e.message, variant: "destructive" }),
   });
 
-  const sendWhatsApp = (c: CateringContract) => {
+  const sendWhatsApp = async (c: CateringContract) => {
     if (!c.clientPhone) return;
-    const phone = formatPhoneForWhatsApp(c.clientPhone);
-    const msg = language === 'ar'
-      ? `مرحبا ${c.clientName}،\nعقد التموين رقم ${c.contractNumber} جاهز.\nالقيمة النهائية: ${parseFloat(c.finalValue || '0').toFixed(2)} ${t.sar}\nشكرا.`
-      : `Hello ${c.clientName},\nYour catering contract ${c.contractNumber} is ready.\nFinal value: ${parseFloat(c.finalValue || '0').toFixed(2)} ${t.sar}\nThank you.`;
-    openWhatsAppWithMessage(phone, msg);
+    try {
+      const resp = await apiRequest("POST", `/api/catering-contracts/${c.id}/share-link`, {});
+      const { url } = await resp.json();
+      const phone = formatPhoneForWhatsApp(c.clientPhone);
+      const msg = language === 'ar'
+        ? `مرحبا ${c.clientName}،\nعقد التموين رقم ${c.contractNumber} جاهز.\nالقيمة النهائية: ${parseFloat(c.finalValue || '0').toFixed(2)} ${t.sar}\n\nتحميل العقد (PDF):\n${url}\n\nشكرا.`
+        : `Hello ${c.clientName},\nYour catering contract ${c.contractNumber} is ready.\nFinal value: ${parseFloat(c.finalValue || '0').toFixed(2)} ${t.sar}\n\nDownload contract (PDF):\n${url}\n\nThank you.`;
+      openWhatsAppWithMessage(phone, msg);
+    } catch (e: any) {
+      toast({ title: t.pdfFailed || 'Failed', description: e.message, variant: "destructive" });
+    }
   };
 
   return (
