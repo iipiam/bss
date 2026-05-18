@@ -134,6 +134,7 @@ export type CateringT = {
   avgMealPrice: string;
   costReportWarning: string;
   closeReport: string;
+  qtyPerDay: string;
 };
 
 const en: CateringT = {
@@ -264,6 +265,7 @@ const en: CateringT = {
   avgMealPrice: "Avg Meal Price",
   costReportWarning: "Some meals are not linked to a menu item with a recipe, so their cost is treated as 0. Link them via 'Select from Menu' for accurate margins.",
   closeReport: "Close",
+  qtyPerDay: "Qty/Day",
 };
 
 const ar: CateringT = {
@@ -394,6 +396,7 @@ const ar: CateringT = {
   avgMealPrice: "متوسط سعر الوجبة",
   costReportWarning: "بعض الوجبات غير مرتبطة بعنصر قائمة يحتوي على وصفة، لذا تُعتبر تكلفتها صفر. اربطها عبر «اختيار من القائمة» للحصول على هامش دقيق.",
   closeReport: "إغلاق",
+  qtyPerDay: "كمية/يوم",
 };
 
 const cateringTranslations: Record<Language, CateringT> = {

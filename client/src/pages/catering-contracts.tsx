@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { formatPhoneForWhatsApp, openWhatsAppWithMessage } from "@/lib/whatsapp";
 import type { CateringContract, CateringContractTemplate, Recipe } from "@shared/schema";
 
-type Meal = { name: string; price: number; menuItemId?: string };
+type Meal = { name: string; price: number; menuItemId?: string; qtyPerDay?: number };
 type Installment = { label: string; percent: number; amount: number; dueDate?: string };
 
 const DAY_KEYS = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"] as const;
@@ -74,19 +74,20 @@ export default function CateringContractsPage() {
   // Auto compute totals when meals/discount change
   const recalc = (next: any) => {
     const meals: Meal[] = next.mealSelections || [];
-    const mealsPerDay = Number(next.mealsPerDay) || 1;
     const start = new Date(next.startDate);
     const end = new Date(next.endDate);
     const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000) + 1);
     const deliveryDaysCount = (next.deliveryDays || []).length;
-    // Approx delivering days within period
+    // Approx delivery dates within the contract window
     const weeks = days / 7;
-    const totalDeliveries = Math.round(weeks * deliveryDaysCount) || days;
-    const pricePerMeal = meals.length ? meals.reduce((s, m) => s + (Number(m.price) || 0), 0) / meals.length : 0;
-    const total = pricePerMeal * mealsPerDay * totalDeliveries;
+    const totalDates = Math.round(weeks * deliveryDaysCount) || days;
+    // Per-day cost = sum(meal.price × meal.qtyPerDay)
+    const dailyValue = meals.reduce((s, m) => s + (Number(m.price) || 0) * (Number(m.qtyPerDay) || 1), 0);
+    const total = dailyValue * totalDates;
+    const totalQtyPerDay = meals.reduce((s, m) => s + (Number(m.qtyPerDay) || 1), 0);
     const discount = Number(next.discountPercent) || 0;
     const final = total * (1 - discount / 100);
-    return { ...next, totalValue: total.toFixed(2), finalValue: final.toFixed(2) };
+    return { ...next, totalValue: total.toFixed(2), finalValue: final.toFixed(2), mealsPerDay: totalQtyPerDay || 1 };
   };
 
   const setField = (key: string, value: any) => setForm((prev: any) => recalc({ ...prev, [key]: value }));
@@ -343,7 +344,7 @@ export default function CateringContractsPage() {
                   <Button type="button" size="sm" variant="outline" onClick={() => { setPickedMenuIds({}); setMenuPickerOpen(true); }} data-testid="button-select-from-menu">
                     <ListPlus className="h-4 w-4 me-1" /> {t.selectFromMenu}
                   </Button>
-                  <Button type="button" size="sm" variant="outline" onClick={() => setField("mealSelections", [...(form.mealSelections || []), { name: "", price: 0 }])} data-testid="button-add-meal">
+                  <Button type="button" size="sm" variant="outline" onClick={() => setField("mealSelections", [...(form.mealSelections || []), { name: "", price: 0, qtyPerDay: 1 }])} data-testid="button-add-meal">
                     <Plus className="h-4 w-4 me-1" /> {t.addMeal}
                   </Button>
                 </div>
@@ -354,9 +355,12 @@ export default function CateringContractsPage() {
                     <Input className="flex-1" placeholder={t.mealName} value={m.name} onChange={(e) => {
                       const list = [...form.mealSelections]; list[i] = { ...list[i], name: e.target.value }; setField("mealSelections", list);
                     }} data-testid={`input-meal-name-${i}`} />
-                    <Input className="w-32" type="number" step="0.01" placeholder={t.mealPrice} value={m.price} onChange={(e) => {
+                    <Input className="w-28" type="number" step="0.01" placeholder={t.mealPrice} value={m.price} onChange={(e) => {
                       const list = [...form.mealSelections]; list[i] = { ...list[i], price: parseFloat(e.target.value) || 0 }; setField("mealSelections", list);
                     }} data-testid={`input-meal-price-${i}`} />
+                    <Input className="w-24" type="number" min="1" step="1" placeholder={t.qtyPerDay} title={t.qtyPerDay} value={m.qtyPerDay ?? 1} onChange={(e) => {
+                      const list = [...form.mealSelections]; list[i] = { ...list[i], qtyPerDay: Math.max(1, parseInt(e.target.value) || 1) }; setField("mealSelections", list);
+                    }} data-testid={`input-meal-qty-${i}`} />
                     <Button type="button" size="icon" variant="outline" onClick={() => {
                       const list = form.mealSelections.filter((_: any, idx: number) => idx !== i); setField("mealSelections", list);
                     }} data-testid={`button-remove-meal-${i}`}>
@@ -460,7 +464,7 @@ export default function CateringContractsPage() {
             <Button variant="outline" onClick={() => setMenuPickerOpen(false)} data-testid="button-menu-picker-cancel">{t.cancel}</Button>
             <Button
               onClick={() => {
-                const selected = menuItems.filter(mi => pickedMenuIds[mi.id]).map(mi => ({ menuItemId: mi.id, name: mi.name, price: parseFloat(mi.price || "0") }));
+                const selected = menuItems.filter(mi => pickedMenuIds[mi.id]).map(mi => ({ menuItemId: mi.id, name: mi.name, price: parseFloat(mi.price || "0"), qtyPerDay: 1 }));
                 if (selected.length) setField("mealSelections", [...(form.mealSelections || []), ...selected]);
                 setMenuPickerOpen(false);
               }}
@@ -516,32 +520,35 @@ function CostReportDialog({
         }
       }
       const price = Number(m.price) || 0;
+      const qty = Math.max(1, Number(m.qtyPerDay) || 1);
       const effectiveCost = cost ?? 0;
       const profit = price - effectiveCost;
       const margin = price > 0 ? (profit / price) * 100 : 0;
-      return { name: m.name, price, cost, costKnown: cost !== null, profit, margin, note };
+      return { name: m.name, price, qty, cost, costKnown: cost !== null, profit, margin, note };
     });
 
-    // Compute total deliveries within the contract window matching deliveryDays.
+    // Compute total delivery dates within the contract window matching deliveryDays.
     const dayMap: Record<string, number> = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
     const days: string[] = Array.isArray(contract.deliveryDays) ? contract.deliveryDays : [];
     const dayNums = new Set(days.map(d => dayMap[String(d).toLowerCase()]).filter(n => n !== undefined));
-    let deliveryCount = 0;
+    let deliveryDates = 0;
     if (contract.startDate && contract.endDate && dayNums.size > 0) {
       const start = new Date(contract.startDate);
       const end = new Date(contract.endDate);
       const cur = new Date(start.getFullYear(), start.getMonth(), start.getDate());
       const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
       while (cur <= last) {
-        if (dayNums.has(cur.getDay())) deliveryCount++;
+        if (dayNums.has(cur.getDay())) deliveryDates++;
         cur.setDate(cur.getDate() + 1);
       }
     }
-    const mealsPerDay = Number(contract.mealsPerDay) || 1;
-    const totalDeliveries = deliveryCount * mealsPerDay;
-    const avgPrice = rows.length ? rows.reduce((s, r) => s + r.price, 0) / rows.length : 0;
-    const avgCost  = rows.length ? rows.reduce((s, r) => s + (r.cost ?? 0), 0) / rows.length : 0;
-    const cogs = avgCost * totalDeliveries;
+    const dailyQty = rows.reduce((s, r) => s + r.qty, 0);
+    const totalDeliveries = deliveryDates * dailyQty;
+    const dailyCost = rows.reduce((s, r) => s + (r.cost ?? 0) * r.qty, 0);
+    const dailyPrice = rows.reduce((s, r) => s + r.price * r.qty, 0);
+    const avgPrice = dailyQty ? dailyPrice / dailyQty : 0;
+    const avgCost  = dailyQty ? dailyCost / dailyQty : 0;
+    const cogs = dailyCost * deliveryDates;
     const revenue = parseFloat(contract.finalValue || "0");
     const profit = revenue - cogs;
     const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
@@ -576,6 +583,7 @@ function CostReportDialog({
                 <thead className="bg-muted/50">
                   <tr>
                     <th className="text-start p-2">{t.mealName}</th>
+                    <th className="text-end p-2">{t.qtyPerDay}</th>
                     <th className="text-end p-2">{t.mealPrice}</th>
                     <th className="text-end p-2">{t.unitCost}</th>
                     <th className="text-end p-2">{t.unitProfit}</th>
@@ -589,6 +597,7 @@ function CostReportDialog({
                         <div>{r.name}</div>
                         {r.note && <div className="text-xs text-muted-foreground">{r.note}</div>}
                       </td>
+                      <td className="p-2 text-end tabular-nums">{r.qty}</td>
                       <td className="p-2 text-end tabular-nums">{fmt(r.price)} {sar}</td>
                       <td className="p-2 text-end tabular-nums">{r.costKnown ? `${fmt(r.cost!)} ${sar}` : "—"}</td>
                       <td className="p-2 text-end tabular-nums">{fmt(r.profit)} {sar}</td>
@@ -596,7 +605,7 @@ function CostReportDialog({
                     </tr>
                   ))}
                   {data.rows.length === 0 && (
-                    <tr><td colSpan={5} className="p-4 text-center text-muted-foreground">—</td></tr>
+                    <tr><td colSpan={6} className="p-4 text-center text-muted-foreground">—</td></tr>
                   )}
                 </tbody>
               </table>
