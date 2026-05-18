@@ -16988,15 +16988,61 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' } });
       await browser.close();
 
-      const { sendGenericEmail } = await import('./emailService');
-      const result = await sendGenericEmail({
-        to: contract.clientEmail,
-        subject: `Catering Contract ${contract.contractNumber}`,
-        html: `<p>Dear ${escapeHtml(contract.clientName)},</p><p>Please find attached your catering supply contract <strong>${escapeHtml(contract.contractNumber)}</strong>.</p><p>Thank you.</p>`,
-        text: `Catering Contract ${contract.contractNumber}\n\nPlease find attached.`,
-        attachments: [{ filename: `catering-contract-${contract.contractNumber}.pdf`, content: Buffer.from(pdfBuffer), contentType: 'application/pdf' }],
-      });
-      if (!result.ok) return res.status(500).json({ message: result.error || 'Failed to send email' });
+      // Try Resend integration first (supports attachments natively)
+      let sent = false;
+      let sendError: string | undefined;
+      try {
+        const { Resend } = await import('resend');
+        let apiKey: string | undefined;
+        let fromEmail: string | undefined;
+        const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+        const xReplitToken = process.env.REPL_IDENTITY
+          ? 'repl ' + process.env.REPL_IDENTITY
+          : process.env.WEB_REPL_RENEWAL
+          ? 'depl ' + process.env.WEB_REPL_RENEWAL
+          : null;
+        if (xReplitToken && hostname) {
+          const r = await fetch(
+            'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
+            { headers: { 'Accept': 'application/json', 'X_REPLIT_TOKEN': xReplitToken } }
+          );
+          const data = await r.json();
+          const s = data.items?.[0]?.settings;
+          if (s?.api_key) { apiKey = s.api_key; fromEmail = s.from_email; }
+        }
+        if (!apiKey) apiKey = process.env.RESEND_API_KEY;
+        if (!fromEmail) fromEmail = process.env.EMAIL_FROM || process.env.IT_EMAIL || 'IT@kinbss.org';
+        if (apiKey) {
+          const resend = new Resend(apiKey);
+          const data: any = await resend.emails.send({
+            from: fromEmail!,
+            to: contract.clientEmail,
+            subject: `Catering Contract ${contract.contractNumber}`,
+            html: `<p>Dear ${escapeHtml(contract.clientName)},</p><p>Please find attached your catering supply contract <strong>${escapeHtml(contract.contractNumber)}</strong>.</p><p>Thank you.</p>`,
+            text: `Catering Contract ${contract.contractNumber}\n\nPlease find attached.`,
+            attachments: [{
+              filename: `catering-contract-${contract.contractNumber}.pdf`,
+              content: Buffer.from(pdfBuffer),
+            }],
+          });
+          if (data?.error) { sendError = data.error.message; }
+          else { sent = true; }
+        }
+      } catch (e: any) {
+        sendError = e.message;
+      }
+      // Fallback to SMTP if Resend not available
+      if (!sent) {
+        const { sendGenericEmail } = await import('./emailService');
+        const result = await sendGenericEmail({
+          to: contract.clientEmail,
+          subject: `Catering Contract ${contract.contractNumber}`,
+          html: `<p>Dear ${escapeHtml(contract.clientName)},</p><p>Please find attached your catering supply contract <strong>${escapeHtml(contract.contractNumber)}</strong>.</p><p>Thank you.</p>`,
+          text: `Catering Contract ${contract.contractNumber}\n\nPlease find attached.`,
+          attachments: [{ filename: `catering-contract-${contract.contractNumber}.pdf`, content: Buffer.from(pdfBuffer), contentType: 'application/pdf' }],
+        });
+        if (!result.ok) return res.status(500).json({ message: sendError || result.error || 'Failed to send email' });
+      }
       res.json({ success: true });
     } catch (error: any) {
       if (browser) try { await browser.close(); } catch {}
