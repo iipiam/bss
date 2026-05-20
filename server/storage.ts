@@ -172,6 +172,9 @@ import {
   type CateringContractTemplate,
   type InsertCateringContractTemplate,
   cateringContractTemplates,
+  type CompanyProfile,
+  type InsertCompanyProfile,
+  companyProfiles,
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, gte, lte, lt, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
@@ -648,6 +651,10 @@ export interface IStorage {
   createCateringContractTemplate(template: InsertCateringContractTemplate): Promise<CateringContractTemplate>;
   updateCateringContractTemplate(id: string, restaurantId: string, template: Partial<InsertCateringContractTemplate>): Promise<CateringContractTemplate | undefined>;
   deleteCateringContractTemplate(id: string, restaurantId: string): Promise<boolean>;
+
+  // Company Profiles (MULTI-TENANT, one per restaurant)
+  getCompanyProfile(restaurantId: string): Promise<CompanyProfile | undefined>;
+  upsertCompanyProfile(restaurantId: string, profile: Partial<InsertCompanyProfile>): Promise<CompanyProfile>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -5598,6 +5605,27 @@ export class DatabaseStorage implements IStorage {
     const [updated] = await db.update(cateringContractTemplates).set(updateData).where(and(eq(cateringContractTemplates.id, id), eq(cateringContractTemplates.restaurantId, restaurantId))).returning();
     return updated;
   }
+  // Company Profiles
+  async getCompanyProfile(restaurantId: string): Promise<CompanyProfile | undefined> {
+    const [row] = await db.select().from(companyProfiles).where(eq(companyProfiles.restaurantId, restaurantId));
+    return row;
+  }
+
+  async upsertCompanyProfile(restaurantId: string, profile: Partial<InsertCompanyProfile>): Promise<CompanyProfile> {
+    const existing = await this.getCompanyProfile(restaurantId);
+    if (existing) {
+      const [updated] = await db.update(companyProfiles)
+        .set({ ...profile, restaurantId, updatedAt: new Date() })
+        .where(eq(companyProfiles.restaurantId, restaurantId))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(companyProfiles)
+      .values({ ...(profile as InsertCompanyProfile), restaurantId, companyName: profile.companyName || "" })
+      .returning();
+    return created;
+  }
+
   async deleteCateringContractTemplate(id: string, restaurantId: string): Promise<boolean> {
     const result = await db.delete(cateringContractTemplates).where(and(eq(cateringContractTemplates.id, id), eq(cateringContractTemplates.restaurantId, restaurantId))).returning();
     return result.length > 0;
@@ -6105,6 +6133,46 @@ export const storage = new DatabaseStorage();
     console.log('[Migration] Tables verified/created: catering_contracts, catering_contract_templates');
 
     console.log('[Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings');
+
+    // Company Profiles: marketing-ready profile per restaurant
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS company_profiles (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL UNIQUE REFERENCES restaurants(id),
+        template TEXT NOT NULL DEFAULT 'modern',
+        primary_color TEXT NOT NULL DEFAULT '#2563eb',
+        secondary_color TEXT NOT NULL DEFAULT '#0f172a',
+        accent_color TEXT NOT NULL DEFAULT '#f59e0b',
+        company_name TEXT NOT NULL DEFAULT '',
+        company_name_ar TEXT,
+        tagline TEXT,
+        tagline_ar TEXT,
+        about TEXT,
+        about_ar TEXT,
+        vision TEXT,
+        vision_ar TEXT,
+        mission TEXT,
+        mission_ar TEXT,
+        logo_data_url TEXT,
+        cover_data_url TEXT,
+        contact_email TEXT,
+        contact_phone TEXT,
+        contact_address TEXT,
+        contact_website TEXT,
+        social_linkedin TEXT,
+        social_instagram TEXT,
+        social_twitter TEXT,
+        core_values JSONB DEFAULT '[]',
+        services JSONB DEFAULT '[]',
+        achievements JSONB DEFAULT '[]',
+        testimonials JSONB DEFAULT '[]',
+        gallery_images JSONB DEFAULT '[]',
+        language TEXT NOT NULL DEFAULT 'en',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('[Migration] Table verified/created: company_profiles');
   } catch (error: any) {
     // Only log if not a duplicate column error (which means columns already exist)
     if (!error.message?.includes('already exists')) {

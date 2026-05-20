@@ -46,6 +46,7 @@ import {
   Calendar,
   CalendarCheck,
   Megaphone,
+  IdCard,
 } from "lucide-react";
 import logoImage from "@assets/Kinzhal_logo_1768960890639.png";
 import {
@@ -163,6 +164,7 @@ export function AppSidebar() {
     { title: t.bills, url: "/bills", icon: FileText, testId: "bills", gradient: "from-rose-500 to-pink-500", permission: 'bills' },
     { title: t.violations, url: "/violations", icon: AlertTriangle, testId: "violations", gradient: "from-red-500 to-orange-500", permission: 'bills' },
     { title: t.marketing || "Marketing", url: "/marketing", icon: Megaphone, testId: "marketing", gradient: "from-fuchsia-500 to-violet-500", permission: 'reports' },
+    { title: (t as any).companyProfile || "Company Profile", url: "/company-profile", icon: IdCard, testId: "company-profile", gradient: "from-indigo-500 to-blue-500", permission: 'reports' },
   ];
 
   const allSystem: MenuItem[] = [

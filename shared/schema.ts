@@ -1296,6 +1296,58 @@ export const insertPrinterSchema = createInsertSchema(printers)
 export type InsertPrinter = z.infer<typeof insertPrinterSchema>;
 export type Printer = typeof printers.$inferSelect;
 
+// Company Profile - Marketing-ready company profile per restaurant (one row per tenant)
+export const companyProfiles = pgTable("company_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull().unique(),
+  template: text("template").notNull().default("modern"), // modern, corporate, creative, minimal
+  primaryColor: text("primary_color").notNull().default("#2563eb"),
+  secondaryColor: text("secondary_color").notNull().default("#0f172a"),
+  accentColor: text("accent_color").notNull().default("#f59e0b"),
+  companyName: text("company_name").notNull().default(""),
+  companyNameAr: text("company_name_ar"),
+  tagline: text("tagline"),
+  taglineAr: text("tagline_ar"),
+  about: text("about"),
+  aboutAr: text("about_ar"),
+  vision: text("vision"),
+  visionAr: text("vision_ar"),
+  mission: text("mission"),
+  missionAr: text("mission_ar"),
+  logoDataUrl: text("logo_data_url"), // base64 data URL for logo
+  coverDataUrl: text("cover_data_url"), // optional cover/hero image
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+  contactAddress: text("contact_address"),
+  contactWebsite: text("contact_website"),
+  socialLinkedin: text("social_linkedin"),
+  socialInstagram: text("social_instagram"),
+  socialTwitter: text("social_twitter"),
+  // JSONB collections
+  coreValues: jsonb("core_values").$type<Array<{ title: string; description: string }>>().default([]),
+  services: jsonb("services").$type<Array<{ title: string; description: string; imageDataUrl?: string }>>().default([]),
+  achievements: jsonb("achievements").$type<Array<{ value: string; label: string }>>().default([]),
+  testimonials: jsonb("testimonials").$type<Array<{ name: string; role: string; quote: string; imageDataUrl?: string }>>().default([]),
+  galleryImages: jsonb("gallery_images").$type<Array<{ caption?: string; imageDataUrl: string }>>().default([]),
+  language: text("language").notNull().default("en"), // en or ar - controls PDF direction
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertCompanyProfileSchema = createInsertSchema(companyProfiles)
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({
+    template: z.enum(["modern", "corporate", "creative", "minimal"]).default("modern"),
+    language: z.enum(["en", "ar"]).default("en"),
+    coreValues: z.array(z.object({ title: z.string(), description: z.string() })).default([]),
+    services: z.array(z.object({ title: z.string(), description: z.string(), imageDataUrl: z.string().optional() })).default([]),
+    achievements: z.array(z.object({ value: z.string(), label: z.string() })).default([]),
+    testimonials: z.array(z.object({ name: z.string(), role: z.string(), quote: z.string(), imageDataUrl: z.string().optional() })).default([]),
+    galleryImages: z.array(z.object({ caption: z.string().optional(), imageDataUrl: z.string() })).default([]),
+  });
+export type InsertCompanyProfile = z.infer<typeof insertCompanyProfileSchema>;
+export type CompanyProfile = typeof companyProfiles.$inferSelect;
+
 // Violation References - Reference PDF documents for each authority type
 export const violationReferences = pgTable("violation_references", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
