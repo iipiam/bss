@@ -1331,6 +1331,7 @@ export const companyProfiles = pgTable("company_profiles", {
   achievements: jsonb("achievements").$type<Array<{ value: string; label: string }>>().default([]),
   testimonials: jsonb("testimonials").$type<Array<{ name: string; role: string; quote: string; imageDataUrl?: string }>>().default([]),
   galleryImages: jsonb("gallery_images").$type<Array<{ caption?: string; imageDataUrl: string }>>().default([]),
+  partners: jsonb("partners").$type<Array<{ name: string; logoDataUrl: string; website?: string }>>().default([]),
   language: text("language").notNull().default("en"), // en or ar - controls PDF direction
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -1348,6 +1349,14 @@ export const insertCompanyProfileSchema = createInsertSchema(companyProfiles)
     achievements: z.array(z.object({ value: z.string(), label: z.string() })).default([]),
     testimonials: z.array(z.object({ name: z.string(), role: z.string(), quote: z.string(), imageDataUrl: z.string().optional() })).default([]),
     galleryImages: z.array(z.object({ caption: z.string().optional(), imageDataUrl: z.string() })).default([]),
+    partners: z.array(z.object({
+      name: z.string(),
+      logoDataUrl: z.string().refine(
+        (v) => v === "" || v.startsWith("data:image/"),
+        "Partner logo must be an uploaded image (data URL)",
+      ),
+      website: z.string().optional(),
+    })).default([]),
   });
 export type InsertCompanyProfile = z.infer<typeof insertCompanyProfileSchema>;
 export type CompanyProfile = typeof companyProfiles.$inferSelect;

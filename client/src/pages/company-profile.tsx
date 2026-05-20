@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Download, Upload, Save, Loader2, Palette, Eye, FileText, Type, Layout } from "lucide-react";
+import { Plus, Trash2, Download, Upload, Save, Loader2, Palette, Eye, FileText, Type, Layout, ArrowUp, ArrowDown } from "lucide-react";
 import type { CompanyProfile, InsertCompanyProfile } from "@shared/schema";
 
 type ProfileForm = Omit<InsertCompanyProfile, "restaurantId">;
@@ -57,6 +57,10 @@ const LABELS = {
     gallery: "Gallery (Optional)", addImage: "Add Image",
     image: "Image", caption: "Caption (optional)",
     noGallery: "No gallery images yet.",
+    ourClients: "Our Clients", addPartner: "Add Partner",
+    partnerName: "Partner Name", partnerWebsite: "Website (optional)",
+    partnerLogo: "Logo",
+    noPartners: "No partners yet. Showcase notable customers and clients here.",
     contactInformation: "Contact Information",
     email: "Email", phone: "Phone", website: "Website", address: "Address",
     linkedin: "LinkedIn", instagram: "Instagram", twitter: "Twitter / X",
@@ -104,6 +108,10 @@ const LABELS = {
     gallery: "معرض الصور (اختياري)", addImage: "إضافة صورة",
     image: "صورة", caption: "تعليق (اختياري)",
     noGallery: "لا توجد صور بعد.",
+    ourClients: "عملاؤنا", addPartner: "إضافة عميل",
+    partnerName: "اسم العميل", partnerWebsite: "الموقع الإلكتروني (اختياري)",
+    partnerLogo: "الشعار",
+    noPartners: "لا يوجد عملاء بعد. اعرض عملاءك المميزين هنا.",
     contactInformation: "معلومات التواصل",
     email: "البريد الإلكتروني", phone: "الهاتف", website: "الموقع الإلكتروني", address: "العنوان",
     linkedin: "لينكدإن", instagram: "إنستغرام", twitter: "تويتر / X",
@@ -191,6 +199,7 @@ const DEFAULT: ProfileForm = {
   achievements: [],
   testimonials: [],
   galleryImages: [],
+  partners: [],
   language: "en",
 };
 
@@ -296,6 +305,7 @@ export default function CompanyProfilePage() {
         achievements: (profile.achievements as any) || [],
         testimonials: (profile.testimonials as any) || [],
         galleryImages: (profile.galleryImages as any) || [],
+        partners: ((profile as any).partners as any) || [],
       } as ProfileForm);
     }
   }, [profile]);
@@ -349,11 +359,19 @@ export default function CompanyProfilePage() {
   };
 
   const update = <K extends keyof ProfileForm>(k: K, v: ProfileForm[K]) => setForm((p) => ({ ...p, [k]: v }));
-  const addItem = <K extends "coreValues" | "services" | "achievements" | "testimonials" | "galleryImages">(k: K, item: any) =>
+  const addItem = <K extends "coreValues" | "services" | "achievements" | "testimonials" | "galleryImages" | "partners">(k: K, item: any) =>
     setForm((p) => ({ ...p, [k]: [...((p[k] as any[]) || []), item] }));
   const removeItem = (k: any, idx: number) => setForm((p) => ({ ...p, [k]: ((p as any)[k] as any[]).filter((_, i) => i !== idx) }));
   const updateItem = (k: any, idx: number, field: string, val: any) =>
     setForm((p) => ({ ...p, [k]: ((p as any)[k] as any[]).map((it, i) => (i === idx ? { ...it, [field]: val } : it)) }));
+  const moveItem = (k: any, idx: number, dir: -1 | 1) =>
+    setForm((p) => {
+      const arr = [...(((p as any)[k] as any[]) || [])];
+      const j = idx + dir;
+      if (j < 0 || j >= arr.length) return p;
+      [arr[idx], arr[j]] = [arr[j], arr[idx]];
+      return { ...p, [k]: arr };
+    });
 
   const applyPreset = (preset: typeof COLOR_PRESETS[number]) => {
     setForm((p) => ({ ...p, primaryColor: preset.primary, secondaryColor: preset.secondary, accentColor: preset.accent }));
@@ -679,6 +697,39 @@ export default function CompanyProfilePage() {
               </CardContent>
             </Card>
 
+            {/* OUR CLIENTS / PARTNERS */}
+            <Card className="lg:col-span-3">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+                <CardTitle className="text-base">{L.ourClients}</CardTitle>
+                <Button size="sm" variant="outline" onClick={() => addItem("partners", { name: "", logoDataUrl: "", website: "" })} data-testid="button-add-partner">
+                  <Plus className="h-4 w-4 mr-1" /> {L.addPartner}
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {(form.partners || []).length === 0 && <p className="text-sm text-muted-foreground">{L.noPartners}</p>}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {(form.partners || []).map((pt, i) => (
+                    <div key={i} className="border rounded-md p-3 space-y-2" data-testid={`row-partner-${i}`}>
+                      <ImageUploader value={pt.logoDataUrl} onChange={(v) => updateItem("partners", i, "logoDataUrl", v)} label={L.partnerLogo} height="h-28" testId={`partner-${i}`} />
+                      <Input value={pt.name} placeholder={L.partnerName} onChange={(e) => updateItem("partners", i, "name", e.target.value)} data-testid={`input-partner-name-${i}`} />
+                      <Input value={pt.website || ""} placeholder={L.partnerWebsite} onChange={(e) => updateItem("partners", i, "website", e.target.value)} data-testid={`input-partner-website-${i}`} />
+                      <div className="flex items-center gap-2">
+                        <Button size="icon" variant="ghost" onClick={() => moveItem("partners", i, -1)} disabled={i === 0} data-testid={`button-partner-up-${i}`}>
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => moveItem("partners", i, 1)} disabled={i === (form.partners || []).length - 1} data-testid={`button-partner-down-${i}`}>
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => removeItem("partners", i)} className="flex-1" data-testid={`button-remove-partner-${i}`}>
+                          <Trash2 className="h-3.5 w-3.5 mr-1" /> {L.remove}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* CONTACT */}
             <Card className="lg:col-span-3">
               <CardHeader><CardTitle className="text-base">{L.contactInformation}</CardTitle></CardHeader>
@@ -850,6 +901,24 @@ function ProfilePreview({ form, fontCss, L }: { form: ProfileForm; fontCss: stri
                     <div className="text-xs text-slate-500">{tm.role || L.role}</div>
                   </div>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Our Clients / Partners */}
+      {(form.partners || []).length > 0 && (
+        <div className="border rounded-lg p-6">
+          <h2 className="text-xl font-bold mb-4" style={{ color: form.secondaryColor }}>{isAr ? "عملاؤنا" : "Our Clients"}</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {(form.partners || []).map((pt, i) => (
+              <div key={i} className="border rounded-md p-3 text-center bg-white" data-testid={`preview-partner-${i}`}>
+                <div className="h-20 flex items-center justify-center bg-slate-50 rounded mb-2 overflow-hidden">
+                  <img src={pt.logoDataUrl || placeholderImg} alt={pt.name} className="max-h-16 max-w-full object-contain" />
+                </div>
+                <div className="text-sm font-bold" style={{ color: form.secondaryColor }}>{pt.name || L.partnerName}</div>
+                {pt.website && <div className="text-xs mt-1 break-all" style={{ color: form.primaryColor }}>{pt.website}</div>}
               </div>
             ))}
           </div>

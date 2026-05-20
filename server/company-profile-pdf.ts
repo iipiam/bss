@@ -32,7 +32,7 @@ interface Strings {
   services: string; achievements: string; testimonials: string;
   gallery: string; contact: string; email: string; phone: string;
   address: string; website: string; cover: string; profile: string;
-  page: string; of: string;
+  page: string; of: string; partners: string;
 }
 function getStrings(lang: string): Strings {
   if (lang === "ar") {
@@ -42,6 +42,7 @@ function getStrings(lang: string): Strings {
       gallery: "معرض الصور", contact: "تواصل معنا", email: "البريد الإلكتروني",
       phone: "الهاتف", address: "العنوان", website: "الموقع الإلكتروني",
       cover: "الملف التعريفي للشركة", profile: "ملف الشركة", page: "صفحة", of: "من",
+      partners: "عملاؤنا",
     };
   }
   return {
@@ -49,8 +50,34 @@ function getStrings(lang: string): Strings {
     services: "Services & Products", achievements: "Key Achievements", testimonials: "Testimonials",
     gallery: "Gallery", contact: "Contact Us", email: "Email", phone: "Phone",
     address: "Address", website: "Website", cover: "Company Profile", profile: "Profile",
-    page: "Page", of: "of",
+    page: "Page", of: "of", partners: "Our Clients",
   };
+}
+
+// Shared "Our Clients" / partners block rendered the same way across all
+// four template variants. Hidden entirely when the array is empty.
+function renderPartnersBlock(p: CompanyProfile, s: Strings, opts: { titleStyle?: string; prefix?: string } = {}): string {
+  const partners = (p as any).partners as Array<{ name: string; logoDataUrl: string; website?: string }> | undefined;
+  if (!partners || partners.length === 0) return "";
+  const prefix = opts.prefix || "";
+  const titleStyle = opts.titleStyle || `color: ${p.secondaryColor};`;
+  // Responsive grid: 4 across when many, 3 otherwise.
+  const cols = partners.length >= 4 ? 4 : (partners.length >= 2 ? 3 : 2);
+  return `
+    <div class="page">
+      <h2 class="section-title" style="${titleStyle}">${prefix}${escapeHtml(s.partners)}</h2>
+      <div style="display:grid; grid-template-columns: repeat(${cols}, 1fr); gap: 6mm; margin-top: 6mm;">
+        ${partners.map((pt) => `
+          <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 5mm; text-align: center; page-break-inside: avoid; break-inside: avoid; background: white;">
+            <div style="height: 28mm; display: flex; align-items: center; justify-content: center; margin-bottom: 4mm; background: #f8fafc; border-radius: 6px; overflow: hidden;">
+              <img src="${(pt.logoDataUrl && pt.logoDataUrl.startsWith("data:image/")) ? pt.logoDataUrl : PLACEHOLDER_LOGO}" style="max-width: 90%; max-height: 24mm; object-fit: contain;"/>
+            </div>
+            <div style="font-size: 11pt; font-weight: 700; color: ${p.secondaryColor};">${escapeHtml(pt.name)}</div>
+            ${pt.website ? `<div style="font-size: 9pt; color: ${p.primaryColor}; margin-top: 2mm; word-break: break-all;">${escapeHtml(pt.website)}</div>` : ""}
+          </div>
+        `).join("")}
+      </div>
+    </div>`;
 }
 
 function fontStack(p: CompanyProfile): string {
@@ -297,7 +324,8 @@ function renderModern(p: CompanyProfile, s: Strings): string {
       <div style="position:absolute;bottom:18mm;${p.language === "ar" ? "right" : "left"}:16mm;opacity:0.7;font-size:10pt;">© ${new Date().getFullYear()} ${escapeHtml(name)}</div>
     </div>` : "";
 
-  return cover + aboutPage + valuesPage + servicesPage + achievementsBlock + testimonialsBlock + galleryBlock + contactBlock;
+  const partnersBlock = renderPartnersBlock(p, s);
+  return cover + aboutPage + valuesPage + servicesPage + achievementsBlock + testimonialsBlock + partnersBlock + galleryBlock + contactBlock;
 }
 
 // ============== TEMPLATE: CORPORATE ==============
@@ -434,7 +462,8 @@ function renderCorporate(p: CompanyProfile, s: Strings): string {
       <div style="position:absolute;bottom:18mm;${p.language === "ar" ? "right" : "left"}:16mm;font-size:10pt;opacity:0.8;">© ${new Date().getFullYear()} ${escapeHtml(name)} — All Rights Reserved</div>
     </div>` : "";
 
-  return cover + aboutPage + valuesPage + servicesPage + achievementsBlock + testimonialsBlock + galleryBlock + contactBlock;
+  const partnersBlock = renderPartnersBlock(p, s);
+  return cover + aboutPage + valuesPage + servicesPage + achievementsBlock + testimonialsBlock + partnersBlock + galleryBlock + contactBlock;
 }
 
 // ============== TEMPLATE: CREATIVE ==============
@@ -587,7 +616,8 @@ function renderCreative(p: CompanyProfile, s: Strings): string {
       </div>
     </div>` : "";
 
-  return cover + aboutPage + valuesPage + servicesPage + achievementsBlock + testimonialsBlock + galleryBlock + contactBlock;
+  const partnersBlock = renderPartnersBlock(p, s, { prefix: "✦ " });
+  return cover + aboutPage + valuesPage + servicesPage + achievementsBlock + testimonialsBlock + partnersBlock + galleryBlock + contactBlock;
 }
 
 // ============== TEMPLATE: MINIMAL ==============
@@ -714,7 +744,8 @@ function renderMinimal(p: CompanyProfile, s: Strings): string {
       </div>
     </div>` : "";
 
-  return cover + aboutPage + valuesPage + servicesPage + achievementsBlock + testimonialsBlock + galleryBlock + contactBlock;
+  const partnersBlock = renderPartnersBlock(p, s);
+  return cover + aboutPage + valuesPage + servicesPage + achievementsBlock + testimonialsBlock + partnersBlock + galleryBlock + contactBlock;
 }
 
 function renderBody(p: CompanyProfile, s: Strings): string {
