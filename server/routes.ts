@@ -17618,7 +17618,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const body = rawBody;
       const price = rawPrice;
 
-      // Load business info — only use logo if it's an inline data URI to avoid SSRF
+      // Load business info — accept inline data URIs OR resolve same-origin
+      // uploaded logo paths (/uploads/logos/*) safely from local disk to embed
+      // as data URI. No arbitrary remote URLs are fetched (SSRF safe).
       let logoUrl = "";
       let businessName = "";
       try {
@@ -17626,6 +17628,24 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         const candidate = String((settings as any)?.logoUrl || "");
         if (/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/.test(candidate)) {
           logoUrl = candidate;
+        } else if (/^\/uploads\/logos\/[A-Za-z0-9._-]+$/.test(candidate)) {
+          try {
+            const fs = await import("fs/promises");
+            const path = await import("path");
+            const safeName = candidate.replace(/^\/uploads\/logos\//, "");
+            const filePath = path.join(process.cwd(), "public", "uploads", "logos", safeName);
+            const buf = await fs.readFile(filePath);
+            if (buf.length < 4 * 1024 * 1024) {
+              const ext = safeName.split(".").pop()?.toLowerCase() || "";
+              const mime =
+                ext === "png" ? "image/png" :
+                ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
+                ext === "webp" ? "image/webp" :
+                ext === "gif" ? "image/gif" :
+                ext === "svg" ? "image/svg+xml" : "";
+              if (mime) logoUrl = `data:${mime};base64,${buf.toString("base64")}`;
+            }
+          } catch {}
         }
         businessName = (settings as any)?.restaurantName || "";
       } catch {}
