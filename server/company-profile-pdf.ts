@@ -734,18 +734,38 @@ export async function generateCompanyProfilePDF(profile: CompanyProfile): Promis
 </body>
 </html>`;
 
-  const browser = await getBrowser();
-  const page = await browser.newPage();
-  try {
-    await page.setContent(html, { waitUntil: "networkidle0", timeout: 60000 });
-    const pdf = await page.pdf({
-      format: "A4",
-      printBackground: true,
-      margin: { top: "0", right: "0", bottom: "0", left: "0" },
-      preferCSSPageSize: true,
-    });
-    return Buffer.from(pdf);
-  } finally {
-    await page.close().catch(() => {});
+  // Try up to 2 times — the shared browser instance can go stale between
+  // requests, producing "Navigating frame was detached". On failure we close
+  // the broken browser so getBrowser() launches a fresh one on retry.
+  let lastErr: any;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    let browser: any;
+    let page: any;
+    try {
+      browser = await getBrowser();
+      page = await browser.newPage();
+      await page.setContent(html, { waitUntil: "load", timeout: 30000 });
+      try {
+        await page.evaluate(() => (document as any).fonts?.ready);
+      } catch {}
+      const pdf = await page.pdf({
+        format: "A4",
+        printBackground: true,
+        margin: { top: "0", right: "0", bottom: "0", left: "0" },
+        preferCSSPageSize: true,
+      });
+      await page.close().catch(() => {});
+      return Buffer.from(pdf);
+    } catch (err: any) {
+      lastErr = err;
+      await page?.close().catch(() => {});
+      const msg = String(err?.message || "");
+      const isStaleBrowser = msg.includes("frame was detached") || msg.includes("Target closed") || msg.includes("disconnected") || msg.includes("Protocol error");
+      if (isStaleBrowser && browser) {
+        try { await browser.close(); } catch {}
+      }
+      if (!isStaleBrowser) break;
+    }
   }
+  throw lastErr;
 }
