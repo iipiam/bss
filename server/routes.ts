@@ -52,6 +52,8 @@ import {
   insertCompanyBillSchema,
   insertBusinessInfoSchema,
   insertPrinterSchema,
+  insertMarketingDiscountCodeSchema,
+  insertMarketingBroadcastTemplateSchema,
   users,
   restaurants,
   orders,
@@ -17523,6 +17525,157 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       });
     } catch (e: any) {
       res.json({ status: 0, ok: false, latencyMs: Date.now() - start, error: e?.message });
+    }
+  });
+
+  // ====================== Marketing Tools (Multi-tenant) ======================
+  // Discount Codes
+  app.get("/api/marketing/discount-codes", requireAuth, requireRestaurant, requirePermission('marketing'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const codes = await storage.getMarketingDiscountCodes(restaurantId);
+      res.json(codes);
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || "Failed to fetch discount codes" });
+    }
+  });
+
+  app.post("/api/marketing/discount-codes", requireAuth, requireRestaurant, requireAction('marketing', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const body = {
+        ...req.body,
+        restaurantId,
+        expiresAt: req.body.expiresAt ? new Date(req.body.expiresAt) : null,
+      };
+      const data = insertMarketingDiscountCodeSchema.parse(body);
+      const created = await storage.createMarketingDiscountCode(data);
+      res.status(201).json(created);
+    } catch (e: any) {
+      if (e instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid discount code data", details: e.errors });
+      }
+      res.status(500).json({ error: e?.message || "Failed to create discount code" });
+    }
+  });
+
+  app.delete("/api/marketing/discount-codes/:id", requireAuth, requireRestaurant, requireAction('marketing', 'delete'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
+    const ok = await storage.deleteMarketingDiscountCode(req.params.id, restaurantId);
+    if (!ok) return res.status(404).json({ error: "Discount code not found" });
+    res.status(204).send();
+  });
+
+  // Broadcast Templates
+  app.get("/api/marketing/broadcast-templates", requireAuth, requireRestaurant, requirePermission('marketing'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const templates = await storage.getMarketingBroadcastTemplates(restaurantId);
+      res.json(templates);
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || "Failed to fetch broadcast templates" });
+    }
+  });
+
+  app.post("/api/marketing/broadcast-templates", requireAuth, requireRestaurant, requireAction('marketing', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const data = insertMarketingBroadcastTemplateSchema.parse({ ...req.body, restaurantId });
+      const created = await storage.createMarketingBroadcastTemplate(data);
+      res.status(201).json(created);
+    } catch (e: any) {
+      if (e instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid broadcast template data", details: e.errors });
+      }
+      res.status(500).json({ error: e?.message || "Failed to create broadcast template" });
+    }
+  });
+
+  app.delete("/api/marketing/broadcast-templates/:id", requireAuth, requireRestaurant, requireAction('marketing', 'delete'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
+    const ok = await storage.deleteMarketingBroadcastTemplate(req.params.id, restaurantId);
+    if (!ok) return res.status(404).json({ error: "Broadcast template not found" });
+    res.status(204).send();
+  });
+
+  // Promo Poster PDF (A4) generated via Puppeteer
+  app.post("/api/marketing/poster-pdf", requireAuth, requireRestaurant, requireAction('marketing', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const rawTitle = String(req.body?.title || "").slice(0, 200);
+      const rawBody = String(req.body?.body || "").slice(0, 2000);
+      const rawPrice = String(req.body?.price || "").slice(0, 50);
+      const rawImage = String(req.body?.imageDataUrl || "");
+      const rawAccent = String(req.body?.accentColor || "#7c3aed");
+
+      // Strict validation to prevent SSRF / resource exhaustion
+      const accentColor = /^#[0-9a-fA-F]{6}$/.test(rawAccent) ? rawAccent : "#7c3aed";
+      // Allow only inline data URIs (image/png|jpeg|webp|gif) up to ~6MB encoded
+      const imageDataUrl = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(rawImage) && rawImage.length < 6 * 1024 * 1024
+        ? rawImage
+        : "";
+      const title = rawTitle;
+      const body = rawBody;
+      const price = rawPrice;
+
+      // Load business info — only use logo if it's an inline data URI to avoid SSRF
+      let logoUrl = "";
+      let businessName = "";
+      try {
+        const settings = await storage.getSettings(restaurantId);
+        const candidate = String((settings as any)?.logoUrl || "");
+        if (/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/.test(candidate)) {
+          logoUrl = candidate;
+        }
+        businessName = (settings as any)?.restaurantName || "";
+      } catch {}
+
+      const escapeHtml = (s: string) =>
+        String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+
+      const html = `<!doctype html>
+<html><head><meta charset="utf-8"/><style>
+  @page { size: A4; margin: 0; }
+  html, body { margin: 0; padding: 0; font-family: 'Helvetica', 'Arial', sans-serif; }
+  .poster { width: 210mm; height: 297mm; background: linear-gradient(135deg, ${accentColor}22, #ffffff 60%); display: flex; flex-direction: column; position: relative; padding: 18mm; box-sizing: border-box; }
+  .header { display: flex; align-items: center; gap: 12mm; }
+  .logo { width: 28mm; height: 28mm; object-fit: contain; border-radius: 6mm; background: #fff; padding: 2mm; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .biz { font-size: 14pt; color: #555; }
+  .title { margin-top: 12mm; font-size: 44pt; font-weight: 800; color: #111; line-height: 1.1; }
+  .image-wrap { margin-top: 10mm; flex: 1; display: flex; align-items: center; justify-content: center; background: #fafafa; border-radius: 6mm; overflow: hidden; max-height: 140mm; }
+  .image-wrap img { max-width: 100%; max-height: 140mm; object-fit: contain; }
+  .body { margin-top: 8mm; font-size: 16pt; color: #333; line-height: 1.4; white-space: pre-wrap; }
+  .price-bar { margin-top: 8mm; display: flex; align-items: center; justify-content: space-between; padding: 8mm 10mm; border-radius: 5mm; background: ${accentColor}; color: #fff; }
+  .price-label { font-size: 14pt; opacity: 0.9; }
+  .price-value { font-size: 30pt; font-weight: 800; }
+  .footer { margin-top: 6mm; font-size: 10pt; color: #888; text-align: center; }
+</style></head>
+<body>
+  <div class="poster">
+    <div class="header">
+      ${logoUrl ? `<img class="logo" src="${escapeHtml(logoUrl)}"/>` : ''}
+      <div class="biz">${escapeHtml(businessName)}</div>
+    </div>
+    <div class="title">${escapeHtml(title)}</div>
+    ${imageDataUrl ? `<div class="image-wrap"><img src="${escapeHtml(imageDataUrl)}"/></div>` : ''}
+    ${body ? `<div class="body">${escapeHtml(body)}</div>` : ''}
+    ${price ? `<div class="price-bar"><div class="price-label">Price</div><div class="price-value">${escapeHtml(String(price))}</div></div>` : ''}
+    <div class="footer">${escapeHtml(businessName)} &middot; ${new Date().toLocaleDateString()}</div>
+  </div>
+</body></html>`;
+
+      const browser = await getBrowser();
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      const pdf = await page.pdf({ format: 'A4', printBackground: true });
+      await page.close();
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="promo-poster.pdf"');
+      res.send(Buffer.from(pdf));
+    } catch (e: any) {
+      console.error('[Marketing] Poster PDF error:', e);
+      res.status(500).json({ error: e?.message || 'Failed to generate poster' });
     }
   });
 

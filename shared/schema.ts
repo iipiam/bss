@@ -1917,3 +1917,37 @@ export const cateringContractTemplates = pgTable("catering_contract_templates", 
 export const insertCateringContractTemplateSchema = createInsertSchema(cateringContractTemplates).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertCateringContractTemplate = z.infer<typeof insertCateringContractTemplateSchema>;
 export type CateringContractTemplate = typeof cateringContractTemplates.$inferSelect;
+
+// Marketing - Discount Codes (MULTI-TENANT)
+export const marketingDiscountCodes = pgTable("marketing_discount_codes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  code: text("code").notNull(),
+  discountType: text("discount_type").notNull(), // 'percent' | 'fixed'
+  discountValue: decimal("discount_value", { precision: 12, scale: 2 }).notNull(),
+  expiresAt: timestamp("expires_at"),
+  usageCap: integer("usage_cap"),
+  usageCount: integer("usage_count").notNull().default(0),
+  active: boolean("active").notNull().default(true),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertMarketingDiscountCodeSchema = createInsertSchema(marketingDiscountCodes).omit({ id: true, createdAt: true, usageCount: true });
+export type InsertMarketingDiscountCode = z.infer<typeof insertMarketingDiscountCodeSchema>;
+export type MarketingDiscountCode = typeof marketingDiscountCodes.$inferSelect;
+
+// Marketing - WhatsApp Broadcast Templates (MULTI-TENANT)
+export const marketingBroadcastTemplates = pgTable("marketing_broadcast_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  name: text("name").notNull(),
+  segment: text("segment").notNull().default("all"), // 'all' | 'recent' | 'subscribers'
+  message: text("message").notNull(),
+  menuPdfUrl: text("menu_pdf_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertMarketingBroadcastTemplateSchema = createInsertSchema(marketingBroadcastTemplates).omit({ id: true, createdAt: true });
+export type InsertMarketingBroadcastTemplate = z.infer<typeof insertMarketingBroadcastTemplateSchema>;
+export type MarketingBroadcastTemplate = typeof marketingBroadcastTemplates.$inferSelect;

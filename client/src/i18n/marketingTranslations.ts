@@ -131,6 +131,82 @@ export type MarketingT = {
   pdfGenerated: string;
   page: string;
   of: string;
+
+  // ====== Marketing Tools (Discounts, WhatsApp Broadcast, Poster, QR) ======
+  discounts: string;
+  whatsappBroadcast: string;
+  posterGenerator: string;
+  qrCodes: string;
+
+  // Discounts
+  discountCodes: string;
+  discountCodesDesc: string;
+  newDiscountCode: string;
+  code: string;
+  discountType: string;
+  percent: string;
+  fixedAmount: string;
+  value: string;
+  expiresAt: string;
+  usageCap: string;
+  active: string;
+  inactive: string;
+  noDiscountCodes: string;
+  createCode: string;
+  codeCreated: string;
+  codeDeleted: string;
+  used: string;
+  noLimit: string;
+  noExpiry: string;
+  copyCode: string;
+  copied: string;
+
+  // WhatsApp Broadcast
+  broadcastDesc: string;
+  newTemplate: string;
+  templateName: string;
+  segment: string;
+  segmentAll: string;
+  segmentRecent: string;
+  segmentSubscribers: string;
+  messageBody: string;
+  menuPdfUrlOptional: string;
+  saveTemplate: string;
+  templateSaved: string;
+  templateDeleted: string;
+  noTemplates: string;
+  recipients: string;
+  noRecipients: string;
+  generateLinks: string;
+  openWhatsApp: string;
+  openAllRecipients: string;
+  copyLink: string;
+  linkCopied: string;
+  contactsLoaded: string;
+
+  // Poster Generator
+  posterDesc: string;
+  posterTitle: string;
+  posterBody: string;
+  posterPrice: string;
+  posterImage: string;
+  accentColor: string;
+  generatePoster: string;
+  generatingPoster: string;
+  posterGenerated: string;
+  uploadImage: string;
+  removeImage: string;
+
+  // QR Codes
+  qrCodesDesc: string;
+  qrUrl: string;
+  qrUrlPlaceholder: string;
+  qrLabel: string;
+  qrLabelPlaceholder: string;
+  generateQr: string;
+  downloadQr: string;
+  qrSize: string;
+  invalidUrl: string;
 };
 
 const en: MarketingT = {
@@ -308,6 +384,77 @@ const en: MarketingT = {
   pdfGenerated: "Generated",
   page: "Page",
   of: "of",
+
+  discounts: "Discounts",
+  whatsappBroadcast: "WhatsApp Broadcast",
+  posterGenerator: "Poster Generator",
+  qrCodes: "QR Codes",
+
+  discountCodes: "Discount Codes",
+  discountCodesDesc: "Create and manage promo codes (percent or fixed amount) with optional expiry and usage caps.",
+  newDiscountCode: "New discount code",
+  code: "Code",
+  discountType: "Type",
+  percent: "Percent (%)",
+  fixedAmount: "Fixed amount",
+  value: "Value",
+  expiresAt: "Expires at",
+  usageCap: "Usage cap",
+  active: "Active",
+  inactive: "Inactive",
+  noDiscountCodes: "No discount codes yet. Create one above.",
+  createCode: "Create code",
+  codeCreated: "Discount code created",
+  codeDeleted: "Discount code deleted",
+  used: "Used",
+  noLimit: "No limit",
+  noExpiry: "No expiry",
+  copyCode: "Copy code",
+  copied: "Copied to clipboard",
+
+  broadcastDesc: "Generate WhatsApp wa.me deep-links from saved templates to a customer segment.",
+  newTemplate: "New broadcast template",
+  templateName: "Template name",
+  segment: "Audience segment",
+  segmentAll: "All customers",
+  segmentRecent: "Recent customers (last 30 days)",
+  segmentSubscribers: "Meal subscribers",
+  messageBody: "Message",
+  menuPdfUrlOptional: "Menu / PDF URL (optional)",
+  saveTemplate: "Save template",
+  templateSaved: "Template saved",
+  templateDeleted: "Template deleted",
+  noTemplates: "No saved templates yet.",
+  recipients: "Recipients",
+  noRecipients: "No recipients in this segment.",
+  generateLinks: "Generate links",
+  openWhatsApp: "Open WhatsApp",
+  openAllRecipients: "Open WhatsApp for all recipients",
+  copyLink: "Copy link",
+  linkCopied: "Link copied",
+  contactsLoaded: "contacts loaded",
+
+  posterDesc: "Create an A4 promo poster with your logo, headline, image and price.",
+  posterTitle: "Headline",
+  posterBody: "Body text",
+  posterPrice: "Price (optional)",
+  posterImage: "Promo image",
+  accentColor: "Accent color",
+  generatePoster: "Generate PDF poster",
+  generatingPoster: "Generating poster…",
+  posterGenerated: "Poster downloaded",
+  uploadImage: "Upload image",
+  removeImage: "Remove image",
+
+  qrCodesDesc: "Generate a downloadable QR code for any URL — menu, promo landing, social profile.",
+  qrUrl: "Target URL",
+  qrUrlPlaceholder: "https://example.com/promo",
+  qrLabel: "Label (optional)",
+  qrLabelPlaceholder: "Summer Promo 2026",
+  generateQr: "Generate QR",
+  downloadQr: "Download PNG",
+  qrSize: "Size",
+  invalidUrl: "Enter a valid URL (must start with http:// or https://)",
 };
 
 const ar: MarketingT = {
@@ -478,6 +625,77 @@ const ar: MarketingT = {
   pdfGenerated: "تم الإنشاء",
   page: "صفحة",
   of: "من",
+
+  discounts: "الخصومات",
+  whatsappBroadcast: "بث واتساب",
+  posterGenerator: "مولّد البوسترات",
+  qrCodes: "رموز QR",
+
+  discountCodes: "أكواد الخصم",
+  discountCodesDesc: "أنشئ وأدِر أكواد الخصم (نسبة مئوية أو مبلغ ثابت) مع تاريخ انتهاء وحد استخدام اختياري.",
+  newDiscountCode: "كود خصم جديد",
+  code: "الكود",
+  discountType: "النوع",
+  percent: "نسبة (٪)",
+  fixedAmount: "مبلغ ثابت",
+  value: "القيمة",
+  expiresAt: "ينتهي في",
+  usageCap: "الحد الأقصى للاستخدام",
+  active: "فعّال",
+  inactive: "غير فعّال",
+  noDiscountCodes: "لا توجد أكواد خصم بعد. أنشئ واحدًا أعلاه.",
+  createCode: "إنشاء كود",
+  codeCreated: "تم إنشاء كود الخصم",
+  codeDeleted: "تم حذف كود الخصم",
+  used: "مستخدم",
+  noLimit: "بدون حد",
+  noExpiry: "بدون انتهاء",
+  copyCode: "نسخ الكود",
+  copied: "تم النسخ إلى الحافظة",
+
+  broadcastDesc: "أنشئ روابط wa.me من قوالب محفوظة إلى شريحة عملاء.",
+  newTemplate: "قالب بث جديد",
+  templateName: "اسم القالب",
+  segment: "شريحة الجمهور",
+  segmentAll: "كل العملاء",
+  segmentRecent: "العملاء الجدد (آخر ٣٠ يوماً)",
+  segmentSubscribers: "مشتركو الوجبات",
+  messageBody: "الرسالة",
+  menuPdfUrlOptional: "رابط القائمة / PDF (اختياري)",
+  saveTemplate: "حفظ القالب",
+  templateSaved: "تم حفظ القالب",
+  templateDeleted: "تم حذف القالب",
+  noTemplates: "لا توجد قوالب محفوظة بعد.",
+  recipients: "المستلمون",
+  noRecipients: "لا يوجد مستلمون في هذه الشريحة.",
+  generateLinks: "إنشاء الروابط",
+  openWhatsApp: "فتح واتساب",
+  openAllRecipients: "فتح واتساب لكل المستلمين",
+  copyLink: "نسخ الرابط",
+  linkCopied: "تم نسخ الرابط",
+  contactsLoaded: "جهات اتصال تم تحميلها",
+
+  posterDesc: "صمّم بوستر ترويجي بحجم A4 مع شعارك، عنوان، صورة وسعر.",
+  posterTitle: "العنوان الرئيسي",
+  posterBody: "نص المحتوى",
+  posterPrice: "السعر (اختياري)",
+  posterImage: "صورة العرض",
+  accentColor: "اللون المميّز",
+  generatePoster: "إنشاء بوستر PDF",
+  generatingPoster: "جاري إنشاء البوستر…",
+  posterGenerated: "تم تنزيل البوستر",
+  uploadImage: "رفع صورة",
+  removeImage: "إزالة الصورة",
+
+  qrCodesDesc: "أنشئ رمز QR قابل للتنزيل لأي رابط — قائمة، صفحة عرض، حساب اجتماعي.",
+  qrUrl: "الرابط المستهدف",
+  qrUrlPlaceholder: "https://example.com/promo",
+  qrLabel: "تسمية (اختياري)",
+  qrLabelPlaceholder: "عرض الصيف ٢٠٢٦",
+  generateQr: "إنشاء QR",
+  downloadQr: "تحميل PNG",
+  qrSize: "الحجم",
+  invalidUrl: "أدخل رابطًا صحيحًا (يجب أن يبدأ بـ http:// أو https://)",
 };
 
 export const marketingTranslations: Record<Language, MarketingT> = {

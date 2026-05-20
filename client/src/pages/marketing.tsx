@@ -14,8 +14,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
-import type { MenuItem, Recipe, InventoryItem, ShopBill } from "@shared/schema";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import QRCode from "qrcode";
+import type {
+  MenuItem,
+  Recipe,
+  InventoryItem,
+  ShopBill,
+  Customer,
+  MealSubscription,
+  MarketingDiscountCode,
+  MarketingBroadcastTemplate,
+} from "@shared/schema";
 import {
   Table,
   TableBody,
@@ -47,6 +58,12 @@ import {
   Lightbulb,
   Layers,
   ChevronRight,
+  Tag,
+  MessageCircle,
+  Image as ImageIcon,
+  QrCode,
+  Copy,
+  ExternalLink,
 } from "lucide-react";
 import {
   LineChart,
@@ -293,6 +310,161 @@ export default function Marketing() {
   const { data: recipes = [] } = useQuery<Recipe[]>({ queryKey: ["/api/recipes"] });
   const { data: inventory = [] } = useQuery<InventoryItem[]>({ queryKey: ["/api/inventory"] });
   const { data: shopBills = [] } = useQuery<ShopBill[]>({ queryKey: ["/api/shop/bills"] });
+
+  // ====== Marketing Tools state ======
+  const { data: customers = [] } = useQuery<Customer[]>({ queryKey: ["/api/customers"] });
+  const { data: mealSubs = [] } = useQuery<MealSubscription[]>({ queryKey: ["/api/meal-subscriptions"] });
+  const { data: discountCodes = [] } = useQuery<MarketingDiscountCode[]>({
+    queryKey: ["/api/marketing/discount-codes"],
+  });
+  const { data: broadcastTemplates = [] } = useQuery<MarketingBroadcastTemplate[]>({
+    queryKey: ["/api/marketing/broadcast-templates"],
+  });
+
+  // Discount form
+  const [discountForm, setDiscountForm] = useState({
+    code: "",
+    discountType: "percent" as "percent" | "fixed",
+    value: "",
+    expiresAt: "",
+    usageCap: "",
+    active: true,
+  });
+  const createDiscount = useMutation({
+    mutationFn: async (payload: any) => apiRequest("POST", "/api/marketing/discount-codes", payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/marketing/discount-codes"] });
+      toast({ title: t.codeCreated });
+      setDiscountForm({ code: "", discountType: "percent", value: "", expiresAt: "", usageCap: "", active: true });
+    },
+    onError: (e: any) => toast({ title: t.error, description: String(e?.message || e), variant: "destructive" }),
+  });
+  const deleteDiscount = useMutation({
+    mutationFn: async (id: string) => apiRequest("DELETE", `/api/marketing/discount-codes/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/marketing/discount-codes"] });
+      toast({ title: t.codeDeleted });
+    },
+  });
+
+  // Broadcast templates
+  const [tplForm, setTplForm] = useState({
+    name: "",
+    segment: "all" as "all" | "recent" | "subscribers",
+    message: "",
+    menuPdfUrl: "",
+  });
+  const saveTemplate = useMutation({
+    mutationFn: async (payload: any) => apiRequest("POST", "/api/marketing/broadcast-templates", payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/marketing/broadcast-templates"] });
+      toast({ title: t.templateSaved });
+      setTplForm({ name: "", segment: "all", message: "", menuPdfUrl: "" });
+    },
+    onError: (e: any) => toast({ title: t.error, description: String(e?.message || e), variant: "destructive" }),
+  });
+  const deleteTemplate = useMutation({
+    mutationFn: async (id: string) => apiRequest("DELETE", `/api/marketing/broadcast-templates/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/marketing/broadcast-templates"] });
+      toast({ title: t.templateDeleted });
+    },
+  });
+  const [activeBroadcastId, setActiveBroadcastId] = useState<string | null>(null);
+
+  const broadcastRecipients = useMemo(() => {
+    const tpl = broadcastTemplates.find((b) => b.id === activeBroadcastId);
+    if (!tpl) return [] as Array<{ name: string; phone: string }>;
+    const segment = tpl.segment;
+    if (segment === "subscribers") {
+      return mealSubs
+        .filter((s: any) => s.subscriberPhone)
+        .map((s: any) => ({ name: s.subscriberName || "", phone: s.subscriberPhone }));
+    }
+    if (segment === "recent") {
+      const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      return customers
+        .filter((c) => c.phone && new Date(c.createdAt as any).getTime() >= cutoff)
+        .map((c) => ({ name: c.name, phone: c.phone }));
+    }
+    return customers.filter((c) => c.phone).map((c) => ({ name: c.name, phone: c.phone }));
+  }, [activeBroadcastId, broadcastTemplates, customers, mealSubs]);
+
+  // Poster
+  const [posterForm, setPosterForm] = useState({
+    title: "",
+    body: "",
+    price: "",
+    imageDataUrl: "",
+    accentColor: "#7c3aed",
+  });
+  const [posterBusy, setPosterBusy] = useState(false);
+  const handlePosterImage = (file: File | null) => {
+    if (!file) {
+      setPosterForm((p) => ({ ...p, imageDataUrl: "" }));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setPosterForm((p) => ({ ...p, imageDataUrl: String(reader.result || "") }));
+    reader.readAsDataURL(file);
+  };
+  const generatePoster = async () => {
+    setPosterBusy(true);
+    try {
+      const res = await apiRequest("POST", "/api/marketing/poster-pdf", posterForm);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `poster-${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast({ title: t.posterGenerated });
+    } catch (e: any) {
+      toast({ title: t.error, description: String(e?.message || e), variant: "destructive" });
+    } finally {
+      setPosterBusy(false);
+    }
+  };
+
+  // QR
+  const [qrForm, setQrForm] = useState({ url: "", label: "", size: 512 });
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
+  const generateQr = async () => {
+    if (!/^https?:\/\//i.test(qrForm.url.trim())) {
+      toast({ title: t.invalidUrl, variant: "destructive" });
+      return;
+    }
+    try {
+      const data = await QRCode.toDataURL(qrForm.url.trim(), { width: qrForm.size, margin: 2 });
+      setQrDataUrl(data);
+    } catch (e: any) {
+      toast({ title: t.error, description: String(e?.message || e), variant: "destructive" });
+    }
+  };
+  const downloadQr = () => {
+    if (!qrDataUrl) return;
+    const a = document.createElement("a");
+    a.href = qrDataUrl;
+    a.download = `qr-${(qrForm.label || "code").replace(/[^a-z0-9]+/gi, "-")}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  const copyToClipboard = (text: string, msg: string) => {
+    try {
+      navigator.clipboard?.writeText(text);
+      toast({ title: msg });
+    } catch {}
+  };
+
+  const buildWaLink = (phone: string, message: string) => {
+    const digits = String(phone || "").replace(/[^0-9]/g, "");
+    return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+  };
 
   const monthlyFixedCosts = useMemo(() => {
     const factor: Record<string, number> = {
@@ -875,7 +1047,7 @@ export default function Marketing() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto">
           <TabsTrigger value="gtm" data-testid="tab-gtm" className="flex items-center gap-2 py-2">
             <Target className="h-4 w-4" />
             <span className="hidden sm:inline">{t.gtmStrategy}</span>
@@ -893,6 +1065,24 @@ export default function Marketing() {
           <TabsTrigger value="bloggers" data-testid="tab-bloggers" className="flex items-center gap-2 py-2">
             <Users className="h-4 w-4" />
             <span>{t.bloggers}</span>
+          </TabsTrigger>
+          <TabsTrigger value="discounts" data-testid="tab-discounts" className="flex items-center gap-2 py-2">
+            <Tag className="h-4 w-4" />
+            <span>{t.discounts}</span>
+          </TabsTrigger>
+          <TabsTrigger value="broadcast" data-testid="tab-broadcast" className="flex items-center gap-2 py-2">
+            <MessageCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">{t.whatsappBroadcast}</span>
+            <span className="sm:hidden">WA</span>
+          </TabsTrigger>
+          <TabsTrigger value="poster" data-testid="tab-poster" className="flex items-center gap-2 py-2">
+            <ImageIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">{t.posterGenerator}</span>
+            <span className="sm:hidden">Poster</span>
+          </TabsTrigger>
+          <TabsTrigger value="qr" data-testid="tab-qr" className="flex items-center gap-2 py-2">
+            <QrCode className="h-4 w-4" />
+            <span>{t.qrCodes}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1581,6 +1771,503 @@ export default function Marketing() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* ===================== Discounts ===================== */}
+        <TabsContent value="discounts" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-5 w-5 text-violet-500" />
+                {t.discountCodes}
+              </CardTitle>
+              <CardDescription>{t.discountCodesDesc}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+                <div className="md:col-span-2">
+                  <Label>{t.code}</Label>
+                  <Input
+                    data-testid="input-discount-code"
+                    value={discountForm.code}
+                    onChange={(e) => setDiscountForm({ ...discountForm, code: e.target.value.toUpperCase() })}
+                    placeholder="SUMMER20"
+                  />
+                </div>
+                <div>
+                  <Label>{t.discountType}</Label>
+                  <Select
+                    value={discountForm.discountType}
+                    onValueChange={(v) => setDiscountForm({ ...discountForm, discountType: v as any })}
+                  >
+                    <SelectTrigger data-testid="select-discount-type"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="percent">{t.percent}</SelectItem>
+                      <SelectItem value="fixed">{t.fixedAmount}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>{t.value}</Label>
+                  <Input
+                    data-testid="input-discount-value"
+                    type="number"
+                    min="0"
+                    value={discountForm.value}
+                    onChange={(e) => setDiscountForm({ ...discountForm, value: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>{t.expiresAt}</Label>
+                  <Input
+                    data-testid="input-discount-expires"
+                    type="date"
+                    value={discountForm.expiresAt}
+                    onChange={(e) => setDiscountForm({ ...discountForm, expiresAt: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>{t.usageCap}</Label>
+                  <Input
+                    data-testid="input-discount-cap"
+                    type="number"
+                    min="0"
+                    value={discountForm.usageCap}
+                    onChange={(e) => setDiscountForm({ ...discountForm, usageCap: e.target.value })}
+                  />
+                </div>
+              </div>
+              <Button
+                data-testid="button-create-discount"
+                onClick={() =>
+                  createDiscount.mutate({
+                    code: discountForm.code.trim(),
+                    discountType: discountForm.discountType,
+                    discountValue: String(Number(discountForm.value) || 0),
+                    expiresAt: discountForm.expiresAt || null,
+                    usageCap: discountForm.usageCap ? Number(discountForm.usageCap) : null,
+                    active: true,
+                  })
+                }
+                disabled={createDiscount.isPending || !discountForm.code.trim() || !discountForm.value}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                {t.createCode}
+              </Button>
+
+              {discountCodes.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t.noDiscountCodes}</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t.code}</TableHead>
+                      <TableHead>{t.discountType}</TableHead>
+                      <TableHead>{t.value}</TableHead>
+                      <TableHead>{t.expiresAt}</TableHead>
+                      <TableHead>{t.used} / {t.usageCap}</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {discountCodes.map((c) => (
+                      <TableRow key={c.id} data-testid={`row-discount-${c.id}`}>
+                        <TableCell className="font-mono font-semibold">
+                          <div className="flex items-center gap-2">
+                            <span data-testid={`text-code-${c.id}`}>{c.code}</span>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              data-testid={`button-copy-${c.id}`}
+                              onClick={() => copyToClipboard(c.code, t.copied)}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell>{c.discountType === "percent" ? t.percent : t.fixedAmount}</TableCell>
+                        <TableCell>{c.discountType === "percent" ? `${c.discountValue}%` : c.discountValue}</TableCell>
+                        <TableCell>
+                          {c.expiresAt ? new Date(c.expiresAt as any).toLocaleDateString() : t.noExpiry}
+                        </TableCell>
+                        <TableCell>
+                          {(c.usageCount ?? 0)} / {c.usageCap ?? t.noLimit}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            data-testid={`button-delete-discount-${c.id}`}
+                            onClick={() => deleteDiscount.mutate(c.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ===================== WhatsApp Broadcast ===================== */}
+        <TabsContent value="broadcast" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-green-500" />
+                {t.whatsappBroadcast}
+              </CardTitle>
+              <CardDescription>{t.broadcastDesc}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <Label>{t.templateName}</Label>
+                  <Input
+                    data-testid="input-template-name"
+                    value={tplForm.name}
+                    onChange={(e) => setTplForm({ ...tplForm, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>{t.segment}</Label>
+                  <Select
+                    value={tplForm.segment}
+                    onValueChange={(v) => setTplForm({ ...tplForm, segment: v as any })}
+                  >
+                    <SelectTrigger data-testid="select-segment"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t.segmentAll}</SelectItem>
+                      <SelectItem value="recent">{t.segmentRecent}</SelectItem>
+                      <SelectItem value="subscribers">{t.segmentSubscribers}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-2">
+                  <Label>{t.messageBody}</Label>
+                  <Textarea
+                    data-testid="input-template-message"
+                    rows={4}
+                    value={tplForm.message}
+                    onChange={(e) => setTplForm({ ...tplForm, message: e.target.value })}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label>{t.menuPdfUrlOptional}</Label>
+                  <Input
+                    data-testid="input-template-url"
+                    value={tplForm.menuPdfUrl}
+                    onChange={(e) => setTplForm({ ...tplForm, menuPdfUrl: e.target.value })}
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+              <Button
+                data-testid="button-save-template"
+                onClick={() =>
+                  saveTemplate.mutate({
+                    name: tplForm.name.trim(),
+                    segment: tplForm.segment,
+                    message: tplForm.message.trim(),
+                    menuPdfUrl: tplForm.menuPdfUrl.trim() || null,
+                  })
+                }
+                disabled={saveTemplate.isPending || !tplForm.name.trim() || !tplForm.message.trim()}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                {t.saveTemplate}
+              </Button>
+
+              {broadcastTemplates.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t.noTemplates}</p>
+              ) : (
+                <div className="space-y-2">
+                  {broadcastTemplates.map((tpl) => (
+                    <Card key={tpl.id} data-testid={`row-template-${tpl.id}`}>
+                      <CardContent className="p-4 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-semibold">{tpl.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {tpl.segment === "all" ? t.segmentAll : tpl.segment === "recent" ? t.segmentRecent : t.segmentSubscribers}
+                            </p>
+                            <p className="text-sm mt-1 whitespace-pre-wrap">{tpl.message}</p>
+                            {tpl.menuPdfUrl ? (
+                              <p className="text-xs text-muted-foreground mt-1 break-all">{tpl.menuPdfUrl}</p>
+                            ) : null}
+                          </div>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              data-testid={`button-load-template-${tpl.id}`}
+                              onClick={() => setActiveBroadcastId(tpl.id)}
+                            >
+                              {t.generateLinks}
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              data-testid={`button-delete-template-${tpl.id}`}
+                              onClick={() => deleteTemplate.mutate(tpl.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {activeBroadcastId && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center justify-between gap-2 flex-wrap">
+                      <span>{t.recipients} ({broadcastRecipients.length})</span>
+                      {broadcastRecipients.length > 0 && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          data-testid="button-open-all"
+                          onClick={() => {
+                            const tpl = broadcastTemplates.find((b) => b.id === activeBroadcastId);
+                            if (!tpl) return;
+                            const msg = `${tpl.message}${tpl.menuPdfUrl ? `\n${tpl.menuPdfUrl}` : ""}`;
+                            broadcastRecipients.slice(0, 20).forEach((r) => {
+                              window.open(buildWaLink(r.phone, msg), "_blank");
+                            });
+                          }}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          {t.openAllRecipients}
+                        </Button>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {broadcastRecipients.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">{t.noRecipients}</p>
+                    ) : (
+                      <div className="space-y-2 max-h-96 overflow-y-auto">
+                        {broadcastRecipients.map((r, i) => {
+                          const tpl = broadcastTemplates.find((b) => b.id === activeBroadcastId)!;
+                          const msg = `${tpl.message}${tpl.menuPdfUrl ? `\n${tpl.menuPdfUrl}` : ""}`;
+                          const link = buildWaLink(r.phone, msg);
+                          return (
+                            <div
+                              key={`${r.phone}-${i}`}
+                              data-testid={`row-recipient-${i}`}
+                              className="flex items-center justify-between gap-2 p-2 rounded-md border"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium truncate">{r.name || r.phone}</p>
+                                <p className="text-xs text-muted-foreground">{r.phone}</p>
+                              </div>
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  data-testid={`button-wa-${i}`}
+                                  onClick={() => window.open(link, "_blank")}
+                                >
+                                  <MessageCircle className="h-4 w-4 mr-1" />
+                                  {t.openWhatsApp}
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  data-testid={`button-copy-link-${i}`}
+                                  onClick={() => copyToClipboard(link, t.linkCopied)}
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ===================== Poster Generator ===================== */}
+        <TabsContent value="poster" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ImageIcon className="h-5 w-5 text-violet-500" />
+                {t.posterGenerator}
+              </CardTitle>
+              <CardDescription>{t.posterDesc}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div>
+                    <Label>{t.posterTitle}</Label>
+                    <Input
+                      data-testid="input-poster-title"
+                      value={posterForm.title}
+                      onChange={(e) => setPosterForm({ ...posterForm, title: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>{t.posterBody}</Label>
+                    <Textarea
+                      data-testid="input-poster-body"
+                      rows={4}
+                      value={posterForm.body}
+                      onChange={(e) => setPosterForm({ ...posterForm, body: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>{t.posterPrice}</Label>
+                      <Input
+                        data-testid="input-poster-price"
+                        value={posterForm.price}
+                        onChange={(e) => setPosterForm({ ...posterForm, price: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label>{t.accentColor}</Label>
+                      <Input
+                        data-testid="input-poster-color"
+                        type="color"
+                        value={posterForm.accentColor}
+                        onChange={(e) => setPosterForm({ ...posterForm, accentColor: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>{t.posterImage}</Label>
+                    <Input
+                      data-testid="input-poster-image"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handlePosterImage(e.target.files?.[0] || null)}
+                    />
+                    {posterForm.imageDataUrl && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="mt-1"
+                        data-testid="button-remove-poster-image"
+                        onClick={() => setPosterForm({ ...posterForm, imageDataUrl: "" })}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        {t.removeImage}
+                      </Button>
+                    )}
+                  </div>
+                  <Button
+                    data-testid="button-generate-poster"
+                    onClick={generatePoster}
+                    disabled={posterBusy || !posterForm.title.trim()}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    {posterBusy ? t.generatingPoster : t.generatePoster}
+                  </Button>
+                </div>
+                <div className="border rounded-md p-4 bg-muted/30 min-h-[400px]">
+                  <div
+                    className="aspect-[1/1.414] rounded-md p-6 flex flex-col gap-3 text-white"
+                    style={{ background: `linear-gradient(135deg, ${posterForm.accentColor}, #1f2937)` }}
+                    data-testid="preview-poster"
+                  >
+                    <p className="text-2xl font-bold">{posterForm.title || t.posterTitle}</p>
+                    {posterForm.imageDataUrl && (
+                      <img
+                        src={posterForm.imageDataUrl}
+                        alt=""
+                        className="rounded-md object-cover max-h-48 w-full"
+                      />
+                    )}
+                    <p className="text-sm opacity-90 whitespace-pre-wrap">{posterForm.body}</p>
+                    {posterForm.price && (
+                      <p className="text-3xl font-bold mt-auto">{posterForm.price}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ===================== QR Codes ===================== */}
+        <TabsContent value="qr" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <QrCode className="h-5 w-5 text-violet-500" />
+                {t.qrCodes}
+              </CardTitle>
+              <CardDescription>{t.qrCodesDesc}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="md:col-span-2">
+                  <Label>{t.qrUrl}</Label>
+                  <Input
+                    data-testid="input-qr-url"
+                    value={qrForm.url}
+                    placeholder={t.qrUrlPlaceholder}
+                    onChange={(e) => setQrForm({ ...qrForm, url: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>{t.qrSize}</Label>
+                  <Select
+                    value={String(qrForm.size)}
+                    onValueChange={(v) => setQrForm({ ...qrForm, size: Number(v) })}
+                  >
+                    <SelectTrigger data-testid="select-qr-size"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="256">256 px</SelectItem>
+                      <SelectItem value="512">512 px</SelectItem>
+                      <SelectItem value="1024">1024 px</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-3">
+                  <Label>{t.qrLabel}</Label>
+                  <Input
+                    data-testid="input-qr-label"
+                    value={qrForm.label}
+                    placeholder={t.qrLabelPlaceholder}
+                    onChange={(e) => setQrForm({ ...qrForm, label: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <Button data-testid="button-generate-qr" onClick={generateQr} disabled={!qrForm.url.trim()}>
+                  <QrCode className="h-4 w-4 mr-1" />
+                  {t.generateQr}
+                </Button>
+                {qrDataUrl && (
+                  <Button variant="outline" data-testid="button-download-qr" onClick={downloadQr}>
+                    <Download className="h-4 w-4 mr-1" />
+                    {t.downloadQr}
+                  </Button>
+                )}
+              </div>
+              {qrDataUrl && (
+                <div className="border rounded-md p-6 inline-flex flex-col items-center gap-2 bg-white">
+                  <img src={qrDataUrl} alt="QR code" className="w-64 h-64" data-testid="img-qr-preview" />
+                  {qrForm.label && <p className="text-sm font-medium text-black">{qrForm.label}</p>}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

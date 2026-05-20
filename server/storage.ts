@@ -175,6 +175,12 @@ import {
   type CompanyProfile,
   type InsertCompanyProfile,
   companyProfiles,
+  type MarketingDiscountCode,
+  type InsertMarketingDiscountCode,
+  marketingDiscountCodes,
+  type MarketingBroadcastTemplate,
+  type InsertMarketingBroadcastTemplate,
+  marketingBroadcastTemplates,
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, gte, lte, lt, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
@@ -655,6 +661,16 @@ export interface IStorage {
   // Company Profiles (MULTI-TENANT, one per restaurant)
   getCompanyProfile(restaurantId: string): Promise<CompanyProfile | undefined>;
   upsertCompanyProfile(restaurantId: string, profile: Partial<InsertCompanyProfile>): Promise<CompanyProfile>;
+
+  // Marketing - Discount Codes (MULTI-TENANT)
+  getMarketingDiscountCodes(restaurantId: string): Promise<MarketingDiscountCode[]>;
+  createMarketingDiscountCode(code: InsertMarketingDiscountCode): Promise<MarketingDiscountCode>;
+  deleteMarketingDiscountCode(id: string, restaurantId: string): Promise<boolean>;
+
+  // Marketing - Broadcast Templates (MULTI-TENANT)
+  getMarketingBroadcastTemplates(restaurantId: string): Promise<MarketingBroadcastTemplate[]>;
+  createMarketingBroadcastTemplate(template: InsertMarketingBroadcastTemplate): Promise<MarketingBroadcastTemplate>;
+  deleteMarketingBroadcastTemplate(id: string, restaurantId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -5630,6 +5646,40 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(cateringContractTemplates).where(and(eq(cateringContractTemplates.id, id), eq(cateringContractTemplates.restaurantId, restaurantId))).returning();
     return result.length > 0;
   }
+
+  // Marketing - Discount Codes
+  async getMarketingDiscountCodes(restaurantId: string): Promise<MarketingDiscountCode[]> {
+    return db.select().from(marketingDiscountCodes)
+      .where(eq(marketingDiscountCodes.restaurantId, restaurantId))
+      .orderBy(desc(marketingDiscountCodes.createdAt));
+  }
+  async createMarketingDiscountCode(code: InsertMarketingDiscountCode): Promise<MarketingDiscountCode> {
+    const [created] = await db.insert(marketingDiscountCodes).values(code).returning();
+    return created;
+  }
+  async deleteMarketingDiscountCode(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(marketingDiscountCodes)
+      .where(and(eq(marketingDiscountCodes.id, id), eq(marketingDiscountCodes.restaurantId, restaurantId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  // Marketing - Broadcast Templates
+  async getMarketingBroadcastTemplates(restaurantId: string): Promise<MarketingBroadcastTemplate[]> {
+    return db.select().from(marketingBroadcastTemplates)
+      .where(eq(marketingBroadcastTemplates.restaurantId, restaurantId))
+      .orderBy(desc(marketingBroadcastTemplates.createdAt));
+  }
+  async createMarketingBroadcastTemplate(template: InsertMarketingBroadcastTemplate): Promise<MarketingBroadcastTemplate> {
+    const [created] = await db.insert(marketingBroadcastTemplates).values(template).returning();
+    return created;
+  }
+  async deleteMarketingBroadcastTemplate(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(marketingBroadcastTemplates)
+      .where(and(eq(marketingBroadcastTemplates.id, id), eq(marketingBroadcastTemplates.restaurantId, restaurantId)))
+      .returning();
+    return result.length > 0;
+  }
 }
 
 export const storage = new DatabaseStorage();
@@ -6175,6 +6225,38 @@ export const storage = new DatabaseStorage();
     await pool.query(`ALTER TABLE company_profiles ADD COLUMN IF NOT EXISTS font_family TEXT NOT NULL DEFAULT 'inter'`);
     await pool.query(`ALTER TABLE company_profiles ADD COLUMN IF NOT EXISTS header_style TEXT NOT NULL DEFAULT 'gradient'`);
     console.log('[Migration] Table verified/created: company_profiles (with font_family, header_style)');
+
+    // Marketing - Discount Codes
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS marketing_discount_codes (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        code TEXT NOT NULL,
+        discount_type TEXT NOT NULL,
+        discount_value DECIMAL(12, 2) NOT NULL,
+        expires_at TIMESTAMP,
+        usage_cap INTEGER,
+        usage_count INTEGER NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT true,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('[Migration] Table verified/created: marketing_discount_codes');
+
+    // Marketing - Broadcast Templates
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS marketing_broadcast_templates (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        name TEXT NOT NULL,
+        segment TEXT NOT NULL DEFAULT 'all',
+        message TEXT NOT NULL,
+        menu_pdf_url TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('[Migration] Table verified/created: marketing_broadcast_templates');
   } catch (error: any) {
     // Only log if not a duplicate column error (which means columns already exist)
     if (!error.message?.includes('already exists')) {
