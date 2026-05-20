@@ -564,7 +564,7 @@ export default function Employees() {
                   </div>
                   
                   {/* Permission rows */}
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  <div className="space-y-2">
                     {ALL_PERMISSIONS.map((perm) => {
                       const permValue = normalizePermission(formData.permissions[perm]);
                       return (
@@ -1210,7 +1210,7 @@ export default function Employees() {
                 </div>
                 
                 {/* Permission rows */}
-                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                <div className="space-y-2">
                   {ALL_PERMISSIONS.map((perm) => {
                     const permValue = normalizePermission(formData.permissions[perm]);
                     return (

@@ -342,7 +342,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Branches (Multi-tenant isolated)
-  app.get("/api/branches", requireAuth, requireRestaurant, requirePermission('branches'), async (req, res) => {
+  app.get("/api/branches", requireAuth, requireRestaurant, requirePermission('branches', 'pos'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const branches = await storage.getBranches(restaurantId);
     res.json(branches);
@@ -663,7 +663,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Menu - disable caching for real-time updates to POS
-  app.get("/api/menu", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
+  app.get("/api/menu", requireAuth, requireRestaurant, requirePermission('menu', 'pos'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const items = await storage.getMenuItems(restaurantId);
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -673,7 +673,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Menu Stock (based on inventory and recipes) - MUST be before /:id route
-  app.get("/api/menu/stock", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
+  app.get("/api/menu/stock", requireAuth, requireRestaurant, requirePermission('menu', 'pos'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const branchId = req.query.branchId as string | undefined;
@@ -689,7 +689,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/menu/:id", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
+  app.get("/api/menu/:id", requireAuth, requireRestaurant, requirePermission('menu', 'pos'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const item = await storage.getMenuItem(req.params.id, restaurantId);
     if (!item) {
@@ -810,7 +810,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Menu Categories - custom categories that persist across sessions
-  app.get("/api/menu-categories", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
+  app.get("/api/menu-categories", requireAuth, requireRestaurant, requirePermission('menu', 'pos'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const categories = await storage.getMenuCategories(restaurantId);
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -885,7 +885,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Add-ons - disable caching for real-time updates to POS
-  app.get("/api/addons", requireAuth, requireRestaurant, requirePermission('menu'), async (req, res) => {
+  app.get("/api/addons", requireAuth, requireRestaurant, requirePermission('menu', 'pos'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const menuItemId = req.query.menuItemId as string | undefined;
     const addons = await storage.getAddons(restaurantId, menuItemId);
@@ -969,7 +969,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Customers
-  app.get("/api/customers", requireAuth, requireRestaurant, requirePermission('customers'), async (req, res) => {
+  app.get("/api/customers", requireAuth, requireRestaurant, requirePermission('customers', 'pos'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const customers = await storage.getCustomers(restaurantId);
     res.json(customers);
@@ -2184,7 +2184,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Delivery Apps
-  app.get("/api/delivery-apps", requireAuth, requireRestaurant, requirePermission('deliveryApps'), async (req, res) => {
+  app.get("/api/delivery-apps", requireAuth, requireRestaurant, requirePermission('deliveryApps', 'pos'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const apps = await storage.getDeliveryApps(restaurantId);
     res.json(apps);
