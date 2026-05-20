@@ -17415,22 +17415,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   // POST /api/catering-contracts/:id/installments/:index/issue
   // Marks an installment as issued, creates a Transaction (revenue record)
-  // tagged to the contract, and mints a public invoice token. Idempotent.
+  // tagged to the contract, eagerly generates the invoice PDF, and mints a
+  // public invoice token. Atomic + idempotent via a DB transaction with row
+  // locking — concurrent calls cannot double-count revenue.
   app.post("/api/catering-contracts/:id/installments/:index/issue", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      const contract = await storage.getCateringContract(req.params.id, restaurantId);
-      if (!contract) return res.status(404).json({ message: "Contract not found" });
       const index = parseInt(req.params.index, 10);
-      const installments = Array.isArray(contract.paymentInstallments)
-        ? [...(contract.paymentInstallments as Array<any>)]
-        : [];
-      if (!Number.isFinite(index) || index < 0 || index >= installments.length) {
-        return res.status(404).json({ message: "Installment not found" });
-      }
-      const current = installments[index] || {};
-      const amount = parseFloat(current.amount || 0);
-      if (!(amount > 0)) return res.status(400).json({ message: "Installment amount must be > 0" });
+      const contractId = req.params.id;
 
       const buildPublicUrl = (token: string) => {
         const base = (process.env.PUBLIC_APP_URL || '').replace(/\/$/, '');
@@ -17440,86 +17432,170 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return `${proto}://${host}/api/public/catering-invoices/${token}/pdf`;
       };
 
-      // Idempotent: already issued → never create another transaction.
-      // If token missing for any reason, regenerate token only and persist.
-      if (current.status === 'issued') {
-        let token = current.invoiceToken;
-        if (!token) {
-          token = (await import('crypto')).randomBytes(24).toString('hex');
-          installments[index] = { ...current, invoiceToken: token };
-          await storage.updateCateringContract(contract.id, restaurantId, { paymentInstallments: installments } as any);
-        }
-        return res.json({ alreadyIssued: true, token, url: buildPublicUrl(token), installment: installments[index] });
-      }
+      const { cateringContracts, transactions } = await import('@shared/schema');
+      const { and: andOp, eq: eqOp } = await import('drizzle-orm');
 
-      const subtotal = amount / 1.15;
-      const tax = amount - subtotal;
-      const txn = await storage.createTransaction({
-        restaurantId,
-        transactionId: `CATER-${contract.id.substring(0, 8)}-${index + 1}-${Date.now()}`,
-        itemCount: 1,
-        subtotal: subtotal.toFixed(2),
-        tax: tax.toFixed(2),
-        total: amount.toFixed(2),
-        paymentMethod: 'Catering Installment',
+      const result = await db.transaction(async (tx) => {
+        // Lock the contract row for the duration of the transaction so
+        // concurrent issue requests are serialized.
+        const locked = await tx
+          .select()
+          .from(cateringContracts)
+          .where(andOp(eqOp(cateringContracts.id, contractId), eqOp(cateringContracts.restaurantId, restaurantId)))
+          .for('update');
+        const contract = locked[0];
+        if (!contract) {
+          const err: any = new Error("Contract not found"); err.code = 404; throw err;
+        }
+        const installments = Array.isArray(contract.paymentInstallments)
+          ? [...(contract.paymentInstallments as Array<any>)]
+          : [];
+        if (!Number.isFinite(index) || index < 0 || index >= installments.length) {
+          const err: any = new Error("Installment not found"); err.code = 404; throw err;
+        }
+        const current = installments[index] || {};
+        const amount = parseFloat(current.amount || 0);
+        if (!(amount > 0)) {
+          const err: any = new Error("Installment amount must be > 0"); err.code = 400; throw err;
+        }
+
+        // Idempotent: already issued → return existing token (regenerate if missing).
+        if (current.status === 'issued') {
+          let token = current.invoiceToken;
+          if (!token) {
+            token = (await import('crypto')).randomBytes(24).toString('hex');
+            installments[index] = { ...current, invoiceToken: token };
+            await tx.update(cateringContracts)
+              .set({ paymentInstallments: installments as any })
+              .where(andOp(eqOp(cateringContracts.id, contractId), eqOp(cateringContracts.restaurantId, restaurantId)));
+          }
+          return { alreadyIssued: true, token, installment: installments[index] };
+        }
+
+        const subtotal = amount / 1.15;
+        const tax = amount - subtotal;
+        const issuedAtIso = new Date().toISOString();
+        const token = (await import('crypto')).randomBytes(24).toString('hex');
+
+        // Mark installment first inside the txn so the PDF builder (which reads
+        // the contract from storage) sees the issued state, then we create the
+        // revenue transaction. If anything throws, the whole txn rolls back.
+        installments[index] = {
+          ...current,
+          status: 'issued',
+          issuedAt: issuedAtIso,
+          invoiceToken: token,
+        };
+        await tx.update(cateringContracts)
+          .set({ paymentInstallments: installments as any })
+          .where(andOp(eqOp(cateringContracts.id, contractId), eqOp(cateringContracts.restaurantId, restaurantId)));
+
+        // Eagerly generate the bilingual ZATCA PDF (issuance triggers
+        // invoice generation, per task spec). If this throws, the txn rolls
+        // back and no revenue is recorded.
+        const lang = String(req.query.lang || 'en');
+        const pdfBuffer = await buildCateringInstallmentInvoicePdfBuffer(restaurantId, contractId, index, lang);
+
+        // Insert the revenue transaction inside the same DB txn.
+        const inserted = await tx.insert(transactions).values({
+          restaurantId,
+          transactionId: `CATER-${contractId.substring(0, 8)}-${index + 1}-${Date.now()}`,
+          itemCount: 1,
+          subtotal: subtotal.toFixed(2),
+          tax: tax.toFixed(2),
+          total: amount.toFixed(2),
+          paymentMethod: 'Catering Installment',
+        }).returning();
+        const txn = inserted[0];
+
+        // Persist the cached PDF + revenueOrderId on the installment.
+        installments[index] = {
+          ...installments[index],
+          revenueOrderId: txn.id,
+          invoicePdfB64: pdfBuffer.toString('base64'),
+        };
+        await tx.update(cateringContracts)
+          .set({ paymentInstallments: installments as any })
+          .where(andOp(eqOp(cateringContracts.id, contractId), eqOp(cateringContracts.restaurantId, restaurantId)));
+
+        return { alreadyIssued: false, token, installment: installments[index] };
       });
 
-      const token = (await import('crypto')).randomBytes(24).toString('hex');
-      installments[index] = {
-        ...current,
-        status: 'issued',
-        issuedAt: new Date().toISOString(),
-        revenueOrderId: txn.id,
-        invoiceToken: token,
-      };
-      await storage.updateCateringContract(contract.id, restaurantId, { paymentInstallments: installments } as any);
-
-      res.json({ token, url: buildPublicUrl(token), installment: installments[index] });
+      // Strip the heavy base64 PDF from the response payload.
+      const { invoicePdfB64, ...installmentForClient } = result.installment as any;
+      res.json({
+        alreadyIssued: result.alreadyIssued,
+        token: result.token,
+        url: buildPublicUrl(result.token),
+        installment: installmentForClient,
+      });
     } catch (error: any) {
       console.error("Error issuing catering installment:", error);
-      res.status(500).json({ message: error.message });
+      const code = error?.code === 404 ? 404 : error?.code === 400 ? 400 : 500;
+      res.status(code).json({ message: error.message });
     }
   });
 
   // POST /api/catering-contracts/:id/installments/:index/undo
-  // Reverses an issued installment: deletes the revenue transaction, clears
-  // status/issuedAt/revenueOrderId/invoiceToken (revoking the public link).
+  // Reverses an issued installment atomically: deletes the revenue
+  // transaction and clears status/issuedAt/revenueOrderId/invoiceToken in a
+  // single DB transaction. Fails hard if deletion fails (no orphaned revenue).
   app.post("/api/catering-contracts/:id/installments/:index/undo", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      const contract = await storage.getCateringContract(req.params.id, restaurantId);
-      if (!contract) return res.status(404).json({ message: "Contract not found" });
+      const contractId = req.params.id;
       const index = parseInt(req.params.index, 10);
-      const installments = Array.isArray(contract.paymentInstallments)
-        ? [...(contract.paymentInstallments as Array<any>)]
-        : [];
-      if (!Number.isFinite(index) || index < 0 || index >= installments.length) {
-        return res.status(404).json({ message: "Installment not found" });
-      }
-      const current = installments[index] || {};
-      if (current.status !== 'issued') {
-        return res.status(400).json({ message: "Installment is not issued" });
-      }
-      if (current.revenueOrderId) {
-        try {
-          const { transactions } = await import('@shared/schema');
-          const { and: andOp, eq: eqOp } = await import('drizzle-orm');
-          await db.delete(transactions).where(andOp(eqOp(transactions.id, current.revenueOrderId), eqOp(transactions.restaurantId, restaurantId)));
-        } catch (e: any) {
-          console.error("Error deleting catering installment transaction:", e?.message);
+      const { cateringContracts, transactions } = await import('@shared/schema');
+      const { and: andOp, eq: eqOp } = await import('drizzle-orm');
+
+      const installmentForClient = await db.transaction(async (tx) => {
+        const locked = await tx
+          .select()
+          .from(cateringContracts)
+          .where(andOp(eqOp(cateringContracts.id, contractId), eqOp(cateringContracts.restaurantId, restaurantId)))
+          .for('update');
+        const contract = locked[0];
+        if (!contract) { const err: any = new Error("Contract not found"); err.code = 404; throw err; }
+        const installments = Array.isArray(contract.paymentInstallments)
+          ? [...(contract.paymentInstallments as Array<any>)]
+          : [];
+        if (!Number.isFinite(index) || index < 0 || index >= installments.length) {
+          const err: any = new Error("Installment not found"); err.code = 404; throw err;
         }
-      }
-      installments[index] = {
-        label: current.label,
-        percent: current.percent,
-        amount: current.amount,
-        dueDate: current.dueDate,
-      };
-      await storage.updateCateringContract(contract.id, restaurantId, { paymentInstallments: installments } as any);
-      res.json({ success: true, installment: installments[index] });
+        const current = installments[index] || {};
+        if (current.status !== 'issued') {
+          const err: any = new Error("Installment is not issued"); err.code = 400; throw err;
+        }
+        if (current.revenueOrderId) {
+          const deleted = await tx.delete(transactions)
+            .where(andOp(eqOp(transactions.id, current.revenueOrderId), eqOp(transactions.restaurantId, restaurantId)))
+            .returning({ id: transactions.id });
+          if (deleted.length === 0) {
+            // Hard fail: revenue row could not be removed (missing or
+            // cross-tenant). Roll back so installment state stays 'issued'
+            // and no inconsistent state is committed.
+            const err: any = new Error("Revenue transaction could not be reversed; refusing to clear installment state");
+            err.code = 409;
+            throw err;
+          }
+        }
+        installments[index] = {
+          label: current.label,
+          percent: current.percent,
+          amount: current.amount,
+          dueDate: current.dueDate,
+        };
+        await tx.update(cateringContracts)
+          .set({ paymentInstallments: installments as any })
+          .where(andOp(eqOp(cateringContracts.id, contractId), eqOp(cateringContracts.restaurantId, restaurantId)));
+        return installments[index];
+      });
+
+      res.json({ success: true, installment: installmentForClient });
     } catch (error: any) {
       console.error("Error undoing catering installment:", error);
-      res.status(500).json({ message: error.message });
+      const code = error?.code === 404 ? 404 : error?.code === 400 ? 400 : 500;
+      res.status(code).json({ message: error.message });
     }
   });
 
@@ -17540,7 +17616,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const index = installments.findIndex(it => it && it.invoiceToken === token);
       if (index < 0) return res.status(404).send('Not found');
       const lang = String(req.query.lang || 'en');
-      const pdfBuffer = await buildCateringInstallmentInvoicePdfBuffer(contract.restaurantId, contract.id, index, lang);
+      const inst = installments[index] || {};
+      // Serve cached PDF if eagerly generated at issuance; otherwise render now.
+      let pdfBuffer: Buffer;
+      if (inst.invoicePdfB64 && typeof inst.invoicePdfB64 === 'string' && lang === 'en') {
+        pdfBuffer = Buffer.from(inst.invoicePdfB64, 'base64');
+      } else {
+        pdfBuffer = await buildCateringInstallmentInvoicePdfBuffer(contract.restaurantId, contract.id, index, lang);
+      }
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Length', String(pdfBuffer.length));
       res.setHeader('Content-Disposition', `inline; filename="catering-invoice-${contract.contractNumber}-${index + 1}.pdf"`);
