@@ -1,0 +1,82 @@
+    at async Promise.all (index 0)
+Kinzhal@BSS-Server:/home/BSS$ cd /home/BSS && git ls-files client/index.html
+Kinzhal@BSS-Server:/home/BSS$ cd /home/BSS && git checkout HEAD -- client/index.html && npm run build && pm2 restart BSS
+error: pathspec 'client/index.html' did not match any file(s) known to git
+Kinzhal@BSS-Server:/home/BSS$ ls -la /home/BSS/client/
+total 12
+drwxrwxr-x  3 Kinzhal Kinzhal 4096 May 20 11:14 .
+drwxr-xr-x 13 Kinzhal Kinzhal 4096 May 20 11:14 ..
+drwxrwxr-x  2 Kinzhal Kinzhal 4096 May 20 11:14 public
+Kinzhal@BSS-Server:/home/BSS$ cd /home/BSS && git log --oneline -- client/index.html
+Kinzhal@BSS-Server:/home/BSS$ git push origin main --force
+Username for 'https://github.com': iipiam
+Password for 'https://iipiam@github.com':
+remote: Invalid username or token. Password authentication is not supported for Git operations.
+fatal: Authentication failed for 'https://github.com/iipiam/bss.git/'
+Kinzhal@BSS-Server:/home/BSS$ cd /home/BSS && git fetch origin && git reset --hard origin/main && npm install && npm run build && pm2 restart BSS
+HEAD is now at e9cbe802 Add files via upload
+
+up to date, audited 789 packages in 3s
+
+79 packages are looking for funding
+  run `npm fund` for details
+
+51 vulnerabilities (1 low, 32 moderate, 13 high, 5 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.2.2 building client environment for production...
+✓ 0 modules transformed.
+✗ Build failed in 12ms
+error during build:
+Could not resolve entry module "client/index.html".
+    at getRollupError (file:///home/BSS/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///home/BSS/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at ModuleLoader.loadEntryModule (file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:21597:20)
+    at async Promise.all (index 0)
+Kinzhal@BSS-Server:/home/BSS$ cd /home/BSS && git pull && npm install && npm run build && pm2 restart BSS
+Already up to date.
+
+up to date, audited 789 packages in 3s
+
+79 packages are looking for funding
+  run `npm fund` for details
+
+51 vulnerabilities (1 low, 32 moderate, 13 high, 5 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.2.2 building client environment for production...
+✓ 0 modules transformed.
+✗ Build failed in 12ms
+error during build:
+Could not resolve entry module "client/index.html".
+    at getRollupError (file:///home/BSS/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///home/BSS/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at ModuleLoader.loadEntryModule (file:///home/BSS/node_modules/rollup/dist/es/shared/node-entry.js:21597:20)
+    at async Promise.all (index 0)
+Kinzhal@BSS-Server:/home/BSS$
