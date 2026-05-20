@@ -17487,20 +17487,32 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   // JSON graph of the real app: pages -> routes -> storage -> tables -> external.
   // Curated map (shared/appGraph.ts) augmented with a live route count from Express.
+  // Walk Express _router.stack and extract every (method, path) route. Handles
+  // routes registered directly on app as well as inside any sub-routers.
+  function collectLiveRoutes(): { method: string; path: string }[] {
+    const out: { method: string; path: string }[] = [];
+    const visit = (stack: any[], prefix = "") => {
+      for (const layer of stack || []) {
+        if (layer?.route?.path) {
+          const methods = Object.keys(layer.route.methods || {}).filter((m) => layer.route.methods[m]);
+          const paths = Array.isArray(layer.route.path) ? layer.route.path : [layer.route.path];
+          for (const p of paths) {
+            for (const m of methods) out.push({ method: m.toUpperCase(), path: prefix + p });
+          }
+        } else if (layer?.name === "router" && layer?.handle?.stack) {
+          visit(layer.handle.stack, prefix);
+        }
+      }
+    };
+    try { visit((app as any)?._router?.stack || []); } catch {}
+    return out;
+  }
+
   app.get("/api/it/app-diagram/graph", requireAuth, requireITAccount, async (req, res) => {
     try {
       const { buildAppGraph } = await import("@shared/appGraph");
-      let routeCount = 0;
-      try {
-        const stack: any[] = (app as any)?._router?.stack || [];
-        for (const layer of stack) {
-          if (layer?.route) routeCount += 1;
-          else if (layer?.handle?.stack) {
-            for (const sub of layer.handle.stack) if (sub?.route) routeCount += 1;
-          }
-        }
-      } catch {}
-      res.json(buildAppGraph(routeCount));
+      const liveRoutes = collectLiveRoutes();
+      res.json(buildAppGraph(liveRoutes.length, liveRoutes));
     } catch (e: any) {
       console.error("[AppDiagram graph] error:", e);
       res.status(500).json({ error: e?.message || String(e) });
@@ -17511,17 +17523,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const { buildAppGraph, renderAppDiagramHtml } = await import("@shared/appGraph");
       const { getBrowser } = await import("./invoice");
-      let routeCount = 0;
-      try {
-        const stack: any[] = (app as any)?._router?.stack || [];
-        for (const layer of stack) {
-          if (layer?.route) routeCount += 1;
-          else if (layer?.handle?.stack) {
-            for (const sub of layer.handle.stack) if (sub?.route) routeCount += 1;
-          }
-        }
-      } catch {}
-      const html = renderAppDiagramHtml(buildAppGraph(routeCount));
+      const liveRoutes = collectLiveRoutes();
+      const html = renderAppDiagramHtml(buildAppGraph(liveRoutes.length, liveRoutes));
       const browser = await getBrowser();
       const page = await browser.newPage();
       try {

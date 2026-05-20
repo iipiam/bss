@@ -27,7 +27,7 @@ export default function AppDiagram() {
   const dragRef = useRef<{ startX: number; startY: number; ox: number; oy: number } | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  const { data: graph, isLoading } = useQuery<AppGraph>({
+  const { data: graph, isLoading, isError, error, refetch } = useQuery<AppGraph>({
     queryKey: ["/api/it/app-diagram/graph"],
   });
 
@@ -147,7 +147,17 @@ export default function AppDiagram() {
               <span>{graph.nodes.length} nodes</span>
               <span>·</span>
               <span>{graph.edges.length} edges</span>
-              {graph.routeCount ? (<><span>·</span><span>{graph.routeCount} live routes</span></>) : null}
+              {graph.routeCount ? (<><span>·</span><span data-testid="text-live-routes">{graph.routeCount} live routes</span></>) : null}
+              {graph.staleCuratedRoutes && graph.staleCuratedRoutes.length > 0 && (
+                <Badge variant="outline" className="text-xs" style={{ color: "#dc2626", borderColor: "#fecaca" }} data-testid="badge-stale-routes">
+                  {graph.staleCuratedRoutes.length} stale
+                </Badge>
+              )}
+              {graph.uncuratedLiveRoutes ? (
+                <Badge variant="outline" className="text-xs" data-testid="badge-uncurated-routes">
+                  {graph.uncuratedLiveRoutes} uncurated
+                </Badge>
+              ) : null}
             </div>
           )}
         </CardHeader>
@@ -167,8 +177,13 @@ export default function AppDiagram() {
           </div>
 
           <div className="relative bg-white dark:bg-neutral-50" style={{ height: 640 }}>
-            {isLoading || !layout ? (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
+            {isError ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3" data-testid="state-graph-error">
+                <div className="text-sm">Failed to load graph: {(error as any)?.message || "unknown error"}</div>
+                <Button variant="outline" size="sm" onClick={() => refetch()} data-testid="button-retry-graph">Retry</Button>
+              </div>
+            ) : isLoading || !layout ? (
+              <div className="flex items-center justify-center h-full text-muted-foreground" data-testid="state-graph-loading">
                 <Loader2 className="h-6 w-6 animate-spin mr-2" /> Loading graph…
               </div>
             ) : (

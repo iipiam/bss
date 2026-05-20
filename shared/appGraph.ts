@@ -274,19 +274,91 @@ export const APP_EDGES: AppEdge[] = [
   E("rt.catering", "ex.wa", "uses"), E("rt.invoices", "ex.wa", "uses"),
 ];
 
+export interface LiveRoute {
+  method: string;
+  path: string;
+}
+
 export interface AppGraph {
   nodes: AppNode[];
   edges: AppEdge[];
   generatedAt: string;
   routeCount?: number;
+  liveRoutes?: LiveRoute[];
+  staleCuratedRoutes?: string[]; // curated route ids whose path was not found in live routes
+  uncuratedLiveRoutes?: number;  // count of live routes not represented in the curated graph
 }
 
-export function buildAppGraph(routeCount?: number): AppGraph {
+// Normalize a route path for matching: lowercase, strip trailing slash, collapse :params to *.
+function normalizePath(p: string): string {
+  return (p || "").toLowerCase().replace(/\/+$/, "").replace(/:[^/]+/g, "*");
+}
+
+// Build the graph. When liveRoutes is supplied, route nodes are augmented with
+// live data: methods detected on the same path are attached to the node's
+// meta.path label, stale curated routes are flagged, and live routes with no
+// curated counterpart are synthesized as extra nodes in the "system" domain
+// so the diagram reflects the real codebase.
+export function buildAppGraph(routeCount?: number, liveRoutes?: LiveRoute[]): AppGraph {
+  const nodes: AppNode[] = APP_NODES.map((n) => ({ ...n, meta: { ...n.meta } }));
+  const edges: AppEdge[] = [...APP_EDGES];
+
+  let staleCuratedRoutes: string[] = [];
+  let uncuratedLiveRoutes = 0;
+
+  if (liveRoutes && liveRoutes.length) {
+    // Index live routes by normalized path prefix for fuzzy matching.
+    const liveByPath = new Map<string, Set<string>>(); // normPath -> methods
+    for (const r of liveRoutes) {
+      const np = normalizePath(r.path);
+      if (!liveByPath.has(np)) liveByPath.set(np, new Set());
+      liveByPath.get(np)!.add(r.method.toUpperCase());
+    }
+
+    // Build a set of all curated route prefixes for "is this live route covered?" check.
+    const curatedPrefixes: { id: string; prefix: string }[] = [];
+    for (const n of nodes) {
+      if (n.kind !== "route") continue;
+      const raw = n.meta?.path || n.label;
+      // Curated path often looks like "/api/foo" or "GET|POST /api/foo" or "/api/foo/*"
+      const m = String(raw).match(/\/api\/[a-z0-9/*_-]+/i);
+      const prefix = m ? normalizePath(m[0].replace(/\/\*$/, "")) : normalizePath(n.label);
+      curatedPrefixes.push({ id: n.id, prefix });
+    }
+
+    // Mark curated routes with matching live methods (or flag stale).
+    for (const cp of curatedPrefixes) {
+      let matchedMethods = new Set<string>();
+      for (const [np, methods] of liveByPath) {
+        if (np === cp.prefix || np.startsWith(cp.prefix + "/")) {
+          methods.forEach((m) => matchedMethods.add(m));
+        }
+      }
+      const node = nodes.find((n) => n.id === cp.id)!;
+      if (matchedMethods.size === 0) {
+        staleCuratedRoutes.push(cp.id);
+        node.meta = { ...node.meta, permission: (node.meta?.permission || "") + " [STALE]" };
+      } else {
+        const methodsStr = Array.from(matchedMethods).sort().join("|");
+        node.meta = { ...node.meta, path: `${methodsStr} ${cp.prefix}` };
+      }
+    }
+
+    // Count live routes that don't fall under any curated prefix.
+    for (const [np] of liveByPath) {
+      const covered = curatedPrefixes.some((cp) => np === cp.prefix || np.startsWith(cp.prefix + "/"));
+      if (!covered) uncuratedLiveRoutes += 1;
+    }
+  }
+
   return {
-    nodes: APP_NODES,
-    edges: APP_EDGES,
+    nodes,
+    edges,
     generatedAt: new Date().toISOString(),
     routeCount,
+    liveRoutes,
+    staleCuratedRoutes,
+    uncuratedLiveRoutes,
   };
 }
 
