@@ -283,10 +283,13 @@ function AppContent() {
   // IT accounts can access /it-dashboard, /performance, /it-account-management, /business-management, /zatca-settings, and /support routes
   useEffect(() => {
     const allowedITRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management', '/zatca-settings', '/inspection-tools'];
+    const itOnlyRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management', '/inspection-tools'];
     const isAllowedRoute = allowedITRoutes.includes(location) || location.startsWith('/support');
-    
+
     if (accountType === 'it' && !isAllowedRoute) {
       setLocation('/it-dashboard');
+    } else if (accountType && accountType !== 'it' && itOnlyRoutes.includes(location)) {
+      setLocation('/');
     }
   }, [accountType, location, setLocation]);
 
