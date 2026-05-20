@@ -68,12 +68,12 @@ export const APP_NODES: AppNode[] = [
   p("pg.orders", "Orders", "operations", "/orders", "orders"),
   p("pg.kitchen", "Kitchen", "operations", "/kitchen", "kitchen"),
   p("pg.delivery", "Delivery Apps", "operations", "/delivery-apps", "deliveryApps"),
-  p("pg.mealsubs", "Meal Subscriptions", "operations", "/meal-subscriptions", "orders"),
-  p("pg.catering", "Catering Contracts", "operations", "/catering-contracts", "orders"),
+  p("pg.mealsubs", "Meal Subscriptions", "operations", "/meal-subscriptions", "mealSubscriptions"),
+  p("pg.catering", "Catering Contracts", "operations", "/catering-contracts", "catering"),
 
   r("rt.orders", "/api/orders", "operations", "GET|POST|PATCH /api/orders", "orders"),
-  r("rt.mealsubs", "/api/meal-subscriptions", "operations", "GET|POST /api/meal-subscriptions", "orders"),
-  r("rt.catering", "/api/catering-contracts", "operations", "GET|POST /api/catering-contracts", "orders"),
+  r("rt.mealsubs", "/api/meal-subscriptions", "operations", "GET|POST /api/meal-subscriptions", "mealSubscriptions"),
+  r("rt.catering", "/api/catering-contracts", "operations", "GET|POST /api/catering-contracts", "catering"),
   r("rt.delivery", "/api/delivery-apps", "operations", "GET|POST /api/delivery-apps", "deliveryApps"),
 
   s("st.orders", "createOrder / getOrders", "operations"),

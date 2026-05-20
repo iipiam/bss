@@ -64,6 +64,9 @@ function getPermissionLabels(t: any): Record<Permission, string> {
     licenses: t.licenses || "Licenses",
     investors: t.investors || "Investors",
     activityLog: t.activityLog || "Activity Log",
+    marketing: t.marketing || "Marketing",
+    mealSubscriptions: t.mealSubscriptions || "Meal Subscriptions",
+    catering: (t as any).cateringContracts || "Catering Contracts",
   };
 }
 

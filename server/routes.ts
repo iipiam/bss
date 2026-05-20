@@ -16397,7 +16397,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // ==================== MEAL SUBSCRIPTIONS ====================
-  app.get("/api/meal-subscriptions", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+  app.get("/api/meal-subscriptions", requireAuth, requireRestaurant, requirePermission('mealSubscriptions'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const status = req.query.status as string | undefined;
@@ -16409,7 +16409,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/meal-subscriptions/today", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+  app.get("/api/meal-subscriptions/today", requireAuth, requireRestaurant, requirePermission('mealSubscriptions'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const deliveries = await storage.getTodaysMealDeliveries(restaurantId);
@@ -16421,7 +16421,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/meal-subscriptions/:id", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+  app.get("/api/meal-subscriptions/:id", requireAuth, requireRestaurant, requirePermission('mealSubscriptions'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const subscription = await storage.getMealSubscription(req.params.id, restaurantId);
@@ -16433,7 +16433,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/meal-subscriptions", requireAuth, requireRestaurant, requireAction('orders', 'add'), async (req, res) => {
+  app.post("/api/meal-subscriptions", requireAuth, requireRestaurant, requireAction('mealSubscriptions', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const { id, createdAt, restaurantId: _rid, ...safeBody } = req.body;
@@ -16467,7 +16467,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/meal-subscriptions/:id", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+  app.patch("/api/meal-subscriptions/:id", requireAuth, requireRestaurant, requireAction('mealSubscriptions', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const { id, createdAt, restaurantId: _rid, ...safeBody } = req.body;
@@ -16565,7 +16565,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/meal-subscriptions/:id/mark-delivered", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+  app.post("/api/meal-subscriptions/:id/mark-delivered", requireAuth, requireRestaurant, requireAction('mealSubscriptions', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const { mealTime } = req.body;
@@ -16621,7 +16621,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/meal-subscriptions/:id/undo-delivered", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+  app.post("/api/meal-subscriptions/:id/undo-delivered", requireAuth, requireRestaurant, requireAction('mealSubscriptions', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const { mealTime } = req.body;
@@ -16672,7 +16672,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/meal-subscriptions/:id", requireAuth, requireRestaurant, requireAction('orders', 'delete'), async (req, res) => {
+  app.delete("/api/meal-subscriptions/:id", requireAuth, requireRestaurant, requireAction('mealSubscriptions', 'delete'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const deleted = await storage.deleteMealSubscription(req.params.id, restaurantId);
@@ -16685,7 +16685,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // ==================== CATERING CONTRACTS ====================
-  app.get("/api/catering-contracts", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+  app.get("/api/catering-contracts", requireAuth, requireRestaurant, requirePermission('catering'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const contracts = await storage.getCateringContracts(restaurantId);
@@ -16697,7 +16697,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // NOTE: /today must come BEFORE /:id so it's not captured as an id
-  app.get("/api/catering-contracts/today", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+  app.get("/api/catering-contracts/today", requireAuth, requireRestaurant, requirePermission('catering'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const all = await storage.getCateringContracts(restaurantId);
@@ -16720,7 +16720,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/catering-contracts/:id", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+  app.get("/api/catering-contracts/:id", requireAuth, requireRestaurant, requirePermission('catering'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const contract = await storage.getCateringContract(req.params.id, restaurantId);
@@ -16731,7 +16731,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/catering-contracts", requireAuth, requireRestaurant, requireAction('orders', 'add'), async (req, res) => {
+  app.post("/api/catering-contracts", requireAuth, requireRestaurant, requireAction('catering', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const { id, createdAt, restaurantId: _rid, ...body } = req.body;
@@ -16745,7 +16745,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/catering-contracts/:id", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+  app.patch("/api/catering-contracts/:id", requireAuth, requireRestaurant, requireAction('catering', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const { id, createdAt, restaurantId: _rid, ...body } = req.body;
@@ -16759,7 +16759,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/catering-contracts/:id", requireAuth, requireRestaurant, requireAction('orders', 'delete'), async (req, res) => {
+  app.delete("/api/catering-contracts/:id", requireAuth, requireRestaurant, requireAction('catering', 'delete'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const ok = await storage.deleteCateringContract(req.params.id, restaurantId);
@@ -16771,7 +16771,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Catering Contract Templates
-  app.get("/api/catering-contract-templates", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+  app.get("/api/catering-contract-templates", requireAuth, requireRestaurant, requirePermission('catering'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const templates = await storage.getCateringContractTemplates(restaurantId);
@@ -16811,7 +16811,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     customPlaceholders: customPhSchema.optional().default([]),
   });
 
-  app.post("/api/catering-contract-templates", requireAuth, requireRestaurant, requireAction('orders', 'add'), async (req, res) => {
+  app.post("/api/catering-contract-templates", requireAuth, requireRestaurant, requireAction('catering', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const parsed = templateBodySchema.safeParse(req.body);
@@ -16823,7 +16823,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/catering-contract-templates/:id", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+  app.patch("/api/catering-contract-templates/:id", requireAuth, requireRestaurant, requireAction('catering', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const parsed = templateBodySchema.partial().safeParse(req.body);
@@ -16836,7 +16836,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/catering-contract-templates/:id", requireAuth, requireRestaurant, requireAction('orders', 'delete'), async (req, res) => {
+  app.delete("/api/catering-contract-templates/:id", requireAuth, requireRestaurant, requireAction('catering', 'delete'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const ok = await storage.deleteCateringContractTemplate(req.params.id, restaurantId);
@@ -17220,7 +17220,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   }
 
-  app.get("/api/catering-contracts/:id/pdf", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+  app.get("/api/catering-contracts/:id/pdf", requireAuth, requireRestaurant, requirePermission('catering'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const lang = String(req.query.lang || 'en');
@@ -17238,7 +17238,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Generate/return a public share token + URL for WhatsApp PDF sharing
-  app.post("/api/catering-contracts/:id/share-link", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+  app.post("/api/catering-contracts/:id/share-link", requireAuth, requireRestaurant, requirePermission('catering'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const contract = await storage.getCateringContract(req.params.id, restaurantId);
@@ -17418,7 +17418,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // tagged to the contract, eagerly generates the invoice PDF, and mints a
   // public invoice token. Atomic + idempotent via a DB transaction with row
   // locking — concurrent calls cannot double-count revenue.
-  app.post("/api/catering-contracts/:id/installments/:index/issue", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+  app.post("/api/catering-contracts/:id/installments/:index/issue", requireAuth, requireRestaurant, requireAction('catering', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const index = parseInt(req.params.index, 10);
@@ -17540,7 +17540,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // Reverses an issued installment atomically: deletes the revenue
   // transaction and clears status/issuedAt/revenueOrderId/invoiceToken in a
   // single DB transaction. Fails hard if deletion fails (no orphaned revenue).
-  app.post("/api/catering-contracts/:id/installments/:index/undo", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+  app.post("/api/catering-contracts/:id/installments/:index/undo", requireAuth, requireRestaurant, requireAction('catering', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const contractId = req.params.id;
@@ -17656,7 +17656,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/catering-contracts/:id/send-email", requireAuth, requireRestaurant, requirePermission('orders'), async (req, res) => {
+  app.post("/api/catering-contracts/:id/send-email", requireAuth, requireRestaurant, requirePermission('catering'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const contract = await storage.getCateringContract(req.params.id, restaurantId);
