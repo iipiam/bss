@@ -1300,10 +1300,12 @@ export type Printer = typeof printers.$inferSelect;
 export const companyProfiles = pgTable("company_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull().unique(),
-  template: text("template").notNull().default("modern"), // modern, corporate, creative, minimal
+  template: text("template").notNull().default("modern"), // modern, corporate, creative, minimal, executive, bold, elegant, tech
   primaryColor: text("primary_color").notNull().default("#2563eb"),
   secondaryColor: text("secondary_color").notNull().default("#0f172a"),
   accentColor: text("accent_color").notNull().default("#f59e0b"),
+  fontFamily: text("font_family").notNull().default("inter"), // inter, playfair, montserrat, poppins, lora, manrope
+  headerStyle: text("header_style").notNull().default("gradient"), // gradient, solid, image, split, minimal
   companyName: text("company_name").notNull().default(""),
   companyNameAr: text("company_name_ar"),
   tagline: text("tagline"),
@@ -1337,7 +1339,9 @@ export const companyProfiles = pgTable("company_profiles", {
 export const insertCompanyProfileSchema = createInsertSchema(companyProfiles)
   .omit({ id: true, createdAt: true, updatedAt: true })
   .extend({
-    template: z.enum(["modern", "corporate", "creative", "minimal"]).default("modern"),
+    template: z.enum(["modern", "corporate", "creative", "minimal", "executive", "bold", "elegant", "tech"]).default("modern"),
+    fontFamily: z.enum(["inter", "playfair", "montserrat", "poppins", "lora", "manrope"]).default("inter"),
+    headerStyle: z.enum(["gradient", "solid", "image", "split", "minimal"]).default("gradient"),
     language: z.enum(["en", "ar"]).default("en"),
     coreValues: z.array(z.object({ title: z.string(), description: z.string() })).default([]),
     services: z.array(z.object({ title: z.string(), description: z.string(), imageDataUrl: z.string().optional() })).default([]),

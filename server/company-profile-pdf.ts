@@ -53,13 +53,26 @@ function getStrings(lang: string): Strings {
   };
 }
 
+function fontStack(p: CompanyProfile): string {
+  if (p.language === "ar") return "'Noto Naskh Arabic', Arial, sans-serif";
+  switch ((p as any).fontFamily) {
+    case "playfair": return "'Playfair Display', Georgia, serif";
+    case "montserrat": return "'Montserrat', Arial, sans-serif";
+    case "poppins": return "'Poppins', Arial, sans-serif";
+    case "lora": return "'Lora', Georgia, serif";
+    case "manrope": return "'Manrope', Arial, sans-serif";
+    case "inter":
+    default: return "'Inter', Arial, sans-serif";
+  }
+}
+
 function baseStyles(p: CompanyProfile): string {
   const dir = p.language === "ar" ? "rtl" : "ltr";
   return `
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&family=Lora:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
-      font-family: ${p.language === "ar" ? "'Noto Naskh Arabic'" : "'Inter'"}, Arial, sans-serif;
+      font-family: ${fontStack(p)};
       color: #0f172a;
       background: white;
       direction: ${dir};
@@ -696,6 +709,12 @@ function renderBody(p: CompanyProfile, s: Strings): string {
     case "corporate": return renderCorporate(p, s);
     case "creative": return renderCreative(p, s);
     case "minimal": return renderMinimal(p, s);
+    // New professional templates — premium variants built on the four base layouts,
+    // each paired with a distinct typographic personality via the font selector.
+    case "executive": return renderCorporate(p, s);
+    case "elegant": return renderMinimal(p, s);
+    case "bold": return renderModern(p, s);
+    case "tech": return renderCreative(p, s);
     case "modern":
     default: return renderModern(p, s);
   }

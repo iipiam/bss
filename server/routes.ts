@@ -6,6 +6,8 @@ import { db } from "./db";
 import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport, generateInvestorStatementPDF, generateBssAnalysisStatementPDF, generateRefundClearanceInvoice, getBrowser, generateMealSubscriptionSchedulePDF } from "./invoice";
 import { PasswordResetMailer } from "./email";
 import { sanitizePatchBody } from "./utils";
+import { generateCompanyProfilePDF } from "./company-profile-pdf";
+import { insertCompanyProfileSchema } from "@shared/schema";
 import { logActivity } from "./activityLogger";
 import { requirePermission, requireAnyPermission, requireAllPermissions, requireAction } from "./middleware/requirePermission";
 import {
@@ -17351,6 +17353,46 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       res.json({ success: true });
     } catch (error: any) {
       console.error("Error emailing catering contract:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ============== COMPANY PROFILE ==============
+  app.get("/api/company-profile", requireAuth, requireRestaurant, async (req: any, res) => {
+    try {
+      const profile = await storage.getCompanyProfile(req.session.restaurantId);
+      res.json(profile || null);
+    } catch (error: any) {
+      console.error("Error fetching company profile:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/company-profile", requireAuth, requireRestaurant, async (req: any, res) => {
+    try {
+      const parsed = insertCompanyProfileSchema.partial().safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Invalid payload", errors: parsed.error.errors });
+      }
+      const { restaurantId: _ignored, ...data } = parsed.data as any;
+      const profile = await storage.upsertCompanyProfile(req.session.restaurantId, data);
+      res.json(profile);
+    } catch (error: any) {
+      console.error("Error saving company profile:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/company-profile/pdf", requireAuth, requireRestaurant, async (req: any, res) => {
+    try {
+      const profile = await storage.getCompanyProfile(req.session.restaurantId);
+      if (!profile) return res.status(404).json({ message: "Company profile not found. Save it first." });
+      const pdf = await generateCompanyProfilePDF(profile);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="company-profile.pdf"`);
+      res.send(pdf);
+    } catch (error: any) {
+      console.error("Error generating company profile PDF:", error);
       res.status(500).json({ message: error.message });
     }
   });

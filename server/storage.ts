@@ -6172,7 +6172,9 @@ export const storage = new DatabaseStorage();
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
-    console.log('[Migration] Table verified/created: company_profiles');
+    await pool.query(`ALTER TABLE company_profiles ADD COLUMN IF NOT EXISTS font_family TEXT NOT NULL DEFAULT 'inter'`);
+    await pool.query(`ALTER TABLE company_profiles ADD COLUMN IF NOT EXISTS header_style TEXT NOT NULL DEFAULT 'gradient'`);
+    console.log('[Migration] Table verified/created: company_profiles (with font_family, header_style)');
   } catch (error: any) {
     // Only log if not a duplicate column error (which means columns already exist)
     if (!error.message?.includes('already exists')) {
