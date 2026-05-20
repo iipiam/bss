@@ -212,7 +212,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
   });
 }
 
-function ImageUploader({ value, onChange, label, height = "h-32", testId }: { value?: string | null; onChange: (v: string) => void; label: string; height?: string; testId: string }) {
+function ImageUploader({ value, onChange, label, height = "h-32", testId, maxSizeMB = 4 }: { value?: string | null; onChange: (v: string) => void; label: string; height?: string; testId: string; maxSizeMB?: number }) {
   const L = useLabels();
   const ref = useRef<HTMLInputElement>(null);
   return (
@@ -247,7 +247,7 @@ function ImageUploader({ value, onChange, label, height = "h-32", testId }: { va
           onChange={async (e) => {
             const f = e.target.files?.[0];
             if (f) {
-              if (f.size > 4 * 1024 * 1024) {
+              if (f.size > maxSizeMB * 1024 * 1024) {
                 alert(L.imageTooBig);
                 return;
               }
@@ -280,7 +280,7 @@ function ColorField({ label, value, onChange, testId }: { label: string; value: 
 }
 
 export default function CompanyProfilePage() {
-  const { isRTL, language } = useLanguage();
+  const { isRTL, language, t } = useLanguage();
   const L = useLabels();
   const { toast } = useToast();
   const [form, setForm] = useState<ProfileForm>(DEFAULT);
@@ -700,19 +700,19 @@ export default function CompanyProfilePage() {
             {/* OUR CLIENTS / PARTNERS */}
             <Card className="lg:col-span-3">
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
-                <CardTitle className="text-base">{L.ourClients}</CardTitle>
+                <CardTitle className="text-base">{t.ourClients || L.ourClients}</CardTitle>
                 <Button size="sm" variant="outline" onClick={() => addItem("partners", { name: "", logoDataUrl: "", website: "" })} data-testid="button-add-partner">
-                  <Plus className="h-4 w-4 mr-1" /> {L.addPartner}
+                  <Plus className="h-4 w-4 mr-1" /> {t.addPartner || L.addPartner}
                 </Button>
               </CardHeader>
               <CardContent className="space-y-3">
-                {(form.partners || []).length === 0 && <p className="text-sm text-muted-foreground">{L.noPartners}</p>}
+                {(form.partners || []).length === 0 && <p className="text-sm text-muted-foreground">{t.noPartners || L.noPartners}</p>}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {(form.partners || []).map((pt, i) => (
                     <div key={i} className="border rounded-md p-3 space-y-2" data-testid={`row-partner-${i}`}>
-                      <ImageUploader value={pt.logoDataUrl} onChange={(v) => updateItem("partners", i, "logoDataUrl", v)} label={L.partnerLogo} height="h-28" testId={`partner-${i}`} />
-                      <Input value={pt.name} placeholder={L.partnerName} onChange={(e) => updateItem("partners", i, "name", e.target.value)} data-testid={`input-partner-name-${i}`} />
-                      <Input value={pt.website || ""} placeholder={L.partnerWebsite} onChange={(e) => updateItem("partners", i, "website", e.target.value)} data-testid={`input-partner-website-${i}`} />
+                      <ImageUploader value={pt.logoDataUrl} onChange={(v) => updateItem("partners", i, "logoDataUrl", v)} label={t.partnerLogo || L.partnerLogo} height="h-28" testId={`partner-${i}`} maxSizeMB={1} />
+                      <Input value={pt.name} placeholder={t.partnerName || L.partnerName} onChange={(e) => updateItem("partners", i, "name", e.target.value)} data-testid={`input-partner-name-${i}`} />
+                      <Input value={pt.website || ""} placeholder={t.partnerWebsite || L.partnerWebsite} onChange={(e) => updateItem("partners", i, "website", e.target.value)} data-testid={`input-partner-website-${i}`} />
                       <div className="flex items-center gap-2">
                         <Button size="icon" variant="ghost" onClick={() => moveItem("partners", i, -1)} disabled={i === 0} data-testid={`button-partner-up-${i}`}>
                           <ArrowUp className="h-4 w-4" />
@@ -910,7 +910,7 @@ function ProfilePreview({ form, fontCss, L }: { form: ProfileForm; fontCss: stri
       {/* Our Clients / Partners */}
       {(form.partners || []).length > 0 && (
         <div className="border rounded-lg p-6">
-          <h2 className="text-xl font-bold mb-4" style={{ color: form.secondaryColor }}>{isAr ? "عملاؤنا" : "Our Clients"}</h2>
+          <h2 className="text-xl font-bold mb-4" style={{ color: form.secondaryColor }}>{isAr ? "عملاؤنا" : (L.ourClients || "Our Clients")}</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {(form.partners || []).map((pt, i) => (
               <div key={i} className="border rounded-md p-3 text-center bg-white" data-testid={`preview-partner-${i}`}>

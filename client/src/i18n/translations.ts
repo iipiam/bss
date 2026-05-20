@@ -2501,6 +2501,12 @@ export interface Translations {
   mealsPerDay?: string;
   cateringContracts?: string;
   marketing?: string;
+  ourClients?: string;
+  addPartner?: string;
+  partnerName?: string;
+  partnerWebsite?: string;
+  partnerLogo?: string;
+  noPartners?: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -4935,6 +4941,12 @@ export const translations: Record<Language, Translations> = {
     mealsPerDay: 'meals/day',
     cateringContracts: 'Catering Contracts',
     marketing: 'Marketing',
+    ourClients: 'Our Clients',
+    addPartner: 'Add Partner',
+    partnerName: 'Partner Name',
+    partnerWebsite: 'Website (optional)',
+    partnerLogo: 'Logo',
+    noPartners: 'No partners yet. Showcase notable customers and clients here.',
   },
   
   Arabic: {
@@ -7367,6 +7379,12 @@ export const translations: Record<Language, Translations> = {
     mealsPerDay: 'وجبة/يوم',
     cateringContracts: 'عقود التموين',
     marketing: 'التسويق',
+    ourClients: 'عملاؤنا',
+    addPartner: 'إضافة عميل',
+    partnerName: 'اسم العميل',
+    partnerWebsite: 'الموقع الإلكتروني (اختياري)',
+    partnerLogo: 'الشعار',
+    noPartners: 'لا يوجد عملاء بعد. اعرض عملاءك المميزين هنا.',
   },
   German: {
     // Navigation
@@ -9778,6 +9796,12 @@ export const translations: Record<Language, Translations> = {
     creditBalance: 'Guthaben',
     noMenuItems: 'Keine Menüpunkte verfügbar. Fügen Sie zuerst Artikel auf der Menüseite hinzu.',
     selectMealItems: 'Mahlzeiten auswählen',
+    ourClients: 'Unsere Kunden',
+    addPartner: 'Partner hinzufügen',
+    partnerName: 'Partnername',
+    partnerWebsite: 'Webseite (optional)',
+    partnerLogo: 'Logo',
+    noPartners: 'Noch keine Partner. Präsentieren Sie hier wichtige Kunden.',
   },
   Chinese: {
     // Navigation
@@ -12193,6 +12217,12 @@ export const translations: Record<Language, Translations> = {
     creditBalance: '信用余额',
     noMenuItems: '没有可用的菜单项目。请先在菜单页面添加项目。',
     selectMealItems: '选择餐食项目',
+    ourClients: '我们的客户',
+    addPartner: '添加合作伙伴',
+    partnerName: '合作伙伴名称',
+    partnerWebsite: '网站（可选）',
+    partnerLogo: '标志',
+    noPartners: '暂无合作伙伴。在此展示重要客户。',
   },
   Bengali: {
     // Navigation
@@ -14608,6 +14638,12 @@ export const translations: Record<Language, Translations> = {
     creditBalance: 'ক্রেডিট ব্যালেন্স',
     noMenuItems: 'কোনো মেনু আইটেম উপলব্ধ নেই। প্রথমে মেনু পেজে আইটেম যোগ করুন।',
     selectMealItems: 'খাবার আইটেম নির্বাচন করুন',
+    ourClients: 'আমাদের ক্লায়েন্ট',
+    addPartner: 'পার্টনার যোগ করুন',
+    partnerName: 'পার্টনারের নাম',
+    partnerWebsite: 'ওয়েবসাইট (ঐচ্ছিক)',
+    partnerLogo: 'লোগো',
+    noPartners: 'এখনও কোন পার্টনার নেই। এখানে উল্লেখযোগ্য গ্রাহকদের প্রদর্শন করুন।',
   },
   Italian: {
     // Navigation
@@ -17023,6 +17059,12 @@ export const translations: Record<Language, Translations> = {
     creditBalance: 'Saldo credito',
     noMenuItems: 'Nessun elemento di menu disponibile. Aggiungi prima gli elementi nella pagina Menu.',
     selectMealItems: 'Seleziona pasti',
+    ourClients: 'I Nostri Clienti',
+    addPartner: 'Aggiungi Partner',
+    partnerName: 'Nome Partner',
+    partnerWebsite: 'Sito Web (opzionale)',
+    partnerLogo: 'Logo',
+    noPartners: 'Nessun partner ancora. Mostra qui i clienti più importanti.',
   },
 
   Hindi: {
@@ -19382,6 +19424,12 @@ export const translations: Record<Language, Translations> = {
     creditBalance: 'क्रेडिट शेष',
     noMenuItems: 'कोई मेनू आइटम उपलब्ध नहीं है। पहले मेनू पेज में आइटम जोड़ें।',
     selectMealItems: 'भोजन आइटम चुनें',
+    ourClients: 'हमारे ग्राहक',
+    addPartner: 'भागीदार जोड़ें',
+    partnerName: 'भागीदार का नाम',
+    partnerWebsite: 'वेबसाइट (वैकल्पिक)',
+    partnerLogo: 'लोगो',
+    noPartners: 'अभी तक कोई भागीदार नहीं। यहां प्रमुख ग्राहकों को प्रदर्शित करें।',
   },
   
   Urdu: {
@@ -21741,6 +21789,12 @@ export const translations: Record<Language, Translations> = {
     creditBalance: 'کریڈٹ بیلنس',
     noMenuItems: 'کوئی مینو آئٹم دستیاب نہیں۔ پہلے مینو پیج میں آئٹمز شامل کریں۔',
     selectMealItems: 'کھانے کی اشیاء منتخب کریں',
+    ourClients: 'ہمارے کلائنٹس',
+    addPartner: 'پارٹنر شامل کریں',
+    partnerName: 'پارٹنر کا نام',
+    partnerWebsite: 'ویب سائٹ (اختیاری)',
+    partnerLogo: 'لوگو',
+    noPartners: 'ابھی تک کوئی پارٹنر نہیں۔ یہاں اہم گاہکوں کو ظاہر کریں۔',
   },
   
 
@@ -24033,6 +24087,12 @@ export const translations: Record<Language, Translations> = {
     creditBalance: 'Saldo de crédito',
     noMenuItems: 'No hay elementos de menú disponibles. Agregue elementos en la página de Menú primero.',
     selectMealItems: 'Seleccionar elementos de comida',
+    ourClients: 'Nuestros Clientes',
+    addPartner: 'Agregar Socio',
+    partnerName: 'Nombre del Socio',
+    partnerWebsite: 'Sitio web (opcional)',
+    partnerLogo: 'Logo',
+    noPartners: 'Aún no hay socios. Muestre aquí a sus clientes más destacados.',
   },
 
   Tagalog: {
@@ -26325,6 +26385,12 @@ export const translations: Record<Language, Translations> = {
     creditBalance: 'Credit Balance',
     noMenuItems: 'Walang available na menu items. Magdagdag muna ng items sa Menu page.',
     selectMealItems: 'Pumili ng mga pagkain',
+    ourClients: 'Aming mga Kliyente',
+    addPartner: 'Magdagdag ng Kasosyo',
+    partnerName: 'Pangalan ng Kasosyo',
+    partnerWebsite: 'Website (opsyonal)',
+    partnerLogo: 'Logo',
+    noPartners: 'Wala pang mga kasosyo. Ipakita rito ang mga kilalang kliyente.',
   },
 };
 
