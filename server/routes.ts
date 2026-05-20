@@ -17485,16 +17485,48 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json({ total: routes.length, routes });
   });
 
+  // JSON graph of the real app: pages -> routes -> storage -> tables -> external.
+  // Curated map (shared/appGraph.ts) augmented with a live route count from Express.
+  app.get("/api/it/app-diagram/graph", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { buildAppGraph } = await import("@shared/appGraph");
+      let routeCount = 0;
+      try {
+        const stack: any[] = (app as any)?._router?.stack || [];
+        for (const layer of stack) {
+          if (layer?.route) routeCount += 1;
+          else if (layer?.handle?.stack) {
+            for (const sub of layer.handle.stack) if (sub?.route) routeCount += 1;
+          }
+        }
+      } catch {}
+      res.json(buildAppGraph(routeCount));
+    } catch (e: any) {
+      console.error("[AppDiagram graph] error:", e);
+      res.status(500).json({ error: e?.message || String(e) });
+    }
+  });
+
   app.get("/api/it/app-diagram/pdf", requireAuth, requireITAccount, async (req, res) => {
     try {
-      const { renderAppDiagramHtml } = await import("@shared/appDiagrams");
+      const { buildAppGraph, renderAppDiagramHtml } = await import("@shared/appGraph");
       const { getBrowser } = await import("./invoice");
-      const html = renderAppDiagramHtml();
+      let routeCount = 0;
+      try {
+        const stack: any[] = (app as any)?._router?.stack || [];
+        for (const layer of stack) {
+          if (layer?.route) routeCount += 1;
+          else if (layer?.handle?.stack) {
+            for (const sub of layer.handle.stack) if (sub?.route) routeCount += 1;
+          }
+        }
+      } catch {}
+      const html = renderAppDiagramHtml(buildAppGraph(routeCount));
       const browser = await getBrowser();
       const page = await browser.newPage();
       try {
         await page.setContent(html, { waitUntil: "networkidle0" });
-        const pdf = await page.pdf({ format: "A4", landscape: true, printBackground: true, margin: { top: "12mm", bottom: "12mm", left: "12mm", right: "12mm" } });
+        const pdf = await page.pdf({ format: "A3", landscape: true, printBackground: true, margin: { top: "10mm", bottom: "10mm", left: "10mm", right: "10mm" } });
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", `attachment; filename="bss-app-diagram-${new Date().toISOString().slice(0, 10)}.pdf"`);
         res.send(Buffer.from(pdf));
