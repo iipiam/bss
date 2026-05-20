@@ -1899,7 +1899,9 @@ export const cateringContracts = pgTable("catering_contracts", {
   totalValue: decimal("total_value", { precision: 12, scale: 2 }).notNull().default("0"),
   discountPercent: decimal("discount_percent", { precision: 5, scale: 2 }).notNull().default("0"),
   finalValue: decimal("final_value", { precision: 12, scale: 2 }).notNull().default("0"),
-  // Array of { label, percent, amount, dueDate?, status }
+  // Array of { label, percent, amount, dueDate?, status?, issuedAt?, revenueOrderId?, invoiceToken? }
+  // status: 'pending' | 'issued' (default pending). Issued installments have
+  // revenueOrderId (transaction id) + invoiceToken for the public PDF link.
   paymentInstallments: jsonb("payment_installments").notNull().default([]),
   notes: text("notes"),
   status: text("status").notNull().default("active"), // active, completed, cancelled

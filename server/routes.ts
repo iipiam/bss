@@ -17258,6 +17258,299 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // ---------------------------------------------------------------------------
+  // Catering installment invoice — bilingual ZATCA-style PDF
+  // ---------------------------------------------------------------------------
+  function buildZatcaPhase1QrTlv(sellerName: string, vatNumber: string, isoTimestamp: string, totalInclVat: string, vatAmount: string): string {
+    const enc = (tag: number, value: string) => {
+      const buf = Buffer.from(value, 'utf8');
+      return Buffer.concat([Buffer.from([tag, buf.length]), buf]);
+    };
+    const tlv = Buffer.concat([
+      enc(1, sellerName),
+      enc(2, vatNumber),
+      enc(3, isoTimestamp),
+      enc(4, totalInclVat),
+      enc(5, vatAmount),
+    ]);
+    return tlv.toString('base64');
+  }
+
+  async function buildCateringInstallmentInvoicePdfBuffer(
+    restaurantId: string,
+    contractId: string,
+    installmentIndex: number,
+    lang: string = 'en',
+  ): Promise<Buffer> {
+    const contract = await storage.getCateringContract(contractId, restaurantId);
+    if (!contract) throw new Error("Contract not found");
+    const installments = Array.isArray(contract.paymentInstallments) ? contract.paymentInstallments as Array<any> : [];
+    const inst = installments[installmentIndex];
+    if (!inst) throw new Error("Installment not found");
+    const restaurant = await storage.getRestaurant(restaurantId);
+    const settings = await storage.getSettings(restaurantId);
+
+    const isAr = lang === 'ar' || lang === 'Arabic' || lang === 'Urdu' || lang === 'ur';
+    const L = (en: string, ar: string) => isAr ? ar : en;
+    const dir = isAr ? 'rtl' : 'ltr';
+    const align = isAr ? 'right' : 'left';
+    const SAR = L('SAR', 'ر.س');
+
+    const totalInclVat = parseFloat(inst.amount || 0);
+    const baseAmount = totalInclVat / 1.15;
+    const vatAmount = totalInclVat - baseAmount;
+    const fmt = (n: number) => n.toFixed(2);
+
+    const invoiceNumber = `CAT-${contract.contractNumber}-${installmentIndex + 1}`;
+    const issuedAt = inst.issuedAt ? new Date(inst.issuedAt) : new Date();
+    const sellerName = settings?.restaurantName || restaurant?.name || 'Restaurant';
+    const vatNumber = settings?.vatNumber || (restaurant as any)?.taxNumber || '';
+    const qrTlv = buildZatcaPhase1QrTlv(sellerName, vatNumber, issuedAt.toISOString(), fmt(totalInclVat), fmt(vatAmount));
+    const QR = (await import('qrcode')).default;
+    const qrDataUrl = await QR.toDataURL(qrTlv, { width: 140, margin: 1 });
+
+    const html = `<!DOCTYPE html>
+<html lang="${isAr ? 'ar' : 'en'}" dir="${dir}">
+<head>
+<meta charset="UTF-8" />
+<title>${escapeHtml(invoiceNumber)}</title>
+<style>
+  @page { size: A4; margin: 18mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: ${isAr ? "'Noto Naskh Arabic','Amiri',Arial,sans-serif" : "'Segoe UI',Arial,sans-serif"}; color:#222; font-size:12px; direction:${dir}; text-align:${align}; margin:0; }
+  .head { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #1a365d; padding-bottom:10px; margin-bottom:14px; gap:14px; }
+  .head .co h1 { color:#1a365d; margin:0 0 4px; font-size:20px; }
+  .head .co p { margin:1px 0; font-size:11px; color:#555; }
+  .head .ttl { text-align:${isAr ? 'left' : 'right'}; }
+  .head .ttl h2 { color:#1a365d; margin:0; font-size:18px; }
+  .head .ttl p { margin:2px 0; font-size:11px; color:#555; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:6px 18px; margin:8px 0 16px; }
+  .lv { display:flex; gap:8px; padding:3px 0; font-size:11.5px; }
+  .lv .l { color:#555; font-weight:600; min-width:120px; }
+  table.t { width:100%; border-collapse:collapse; font-size:11.5px; margin:6px 0; }
+  table.t th { background:#1a365d; color:#fff; padding:8px 10px; text-align:${align}; }
+  table.t td { padding:8px 10px; border-bottom:1px solid #e2e8f0; }
+  table.t .num { text-align:${isAr ? 'left' : 'right'}; font-variant-numeric: tabular-nums; }
+  .totals { margin-top:8px; background:#f8fafc; padding:10px 14px; border-radius:6px; max-width:340px; ${isAr ? 'margin-right:auto;' : 'margin-left:auto;'} }
+  .totals .row { display:flex; justify-content:space-between; padding:3px 0; }
+  .totals .row.grand { font-weight:700; color:#1a365d; border-top:1px solid #cbd5e0; margin-top:4px; padding-top:6px; font-size:13px; }
+  .qrbox { text-align:center; margin-top:14px; }
+  .qrbox img { width:140px; height:140px; }
+  .qrbox p { font-size:10px; color:#666; margin:4px 0 0; }
+  .footer { text-align:center; color:#999; font-size:10px; margin-top:18px; border-top:1px solid #e2e8f0; padding-top:6px; }
+  .badge { display:inline-block; padding:2px 8px; background:#1a365d; color:#fff; border-radius:4px; font-size:10px; }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="co">
+      <h1>${escapeHtml(sellerName)}</h1>
+      ${vatNumber ? `<p><strong>${L('VAT #', 'الرقم الضريبي')}:</strong> ${escapeHtml(vatNumber)}</p>` : ''}
+      ${settings?.address ? `<p>${escapeHtml(settings.address)}</p>` : ''}
+      ${settings?.phone ? `<p>${escapeHtml(settings.phone)}</p>` : ''}
+    </div>
+    <div class="ttl">
+      <h2>${L('Tax Invoice', 'فاتورة ضريبية')}</h2>
+      <p><strong>#</strong> ${escapeHtml(invoiceNumber)}</p>
+      <p>${escapeHtml(issuedAt.toLocaleDateString(isAr ? 'ar-EG' : 'en-GB'))} ${escapeHtml(issuedAt.toLocaleTimeString(isAr ? 'ar-EG' : 'en-GB'))}</p>
+      <p><span class="badge">${L('Simplified', 'مبسطة')}</span></p>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="lv"><span class="l">${L('Customer', 'العميل')}:</span><span>${escapeHtml(contract.clientName || '—')}</span></div>
+    <div class="lv"><span class="l">${L('Phone', 'الهاتف')}:</span><span>${escapeHtml(contract.clientPhone || '—')}</span></div>
+    <div class="lv"><span class="l">${L('Contract #', 'رقم العقد')}:</span><span>${escapeHtml(contract.contractNumber || '—')}</span></div>
+    <div class="lv"><span class="l">${L('Installment', 'القسط')}:</span><span>${installmentIndex + 1} ${L('of', 'من')} ${installments.length}</span></div>
+  </div>
+
+  <table class="t">
+    <thead><tr>
+      <th>${L('Description', 'الوصف')}</th>
+      <th class="num">${L('Qty', 'الكمية')}</th>
+      <th class="num">${L('Net', 'الصافي')} (${SAR})</th>
+      <th class="num">${L('VAT 15%', 'ضريبة 15%')} (${SAR})</th>
+      <th class="num">${L('Total', 'الإجمالي')} (${SAR})</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td>${L('Catering Contract Installment', 'قسط عقد تموين')}${inst.label ? ` — ${escapeHtml(inst.label)}` : ''}</td>
+        <td class="num">1</td>
+        <td class="num">${fmt(baseAmount)}</td>
+        <td class="num">${fmt(vatAmount)}</td>
+        <td class="num">${fmt(totalInclVat)}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <div class="row"><span>${L('Subtotal', 'المجموع الفرعي')}</span><span>${fmt(baseAmount)} ${SAR}</span></div>
+    <div class="row"><span>${L('VAT 15%', 'ضريبة القيمة المضافة 15%')}</span><span>${fmt(vatAmount)} ${SAR}</span></div>
+    <div class="row grand"><span>${L('Total', 'الإجمالي')}</span><span>${fmt(totalInclVat)} ${SAR}</span></div>
+  </div>
+
+  <div class="qrbox">
+    <img src="${qrDataUrl}" alt="ZATCA QR" />
+    <p>${L('ZATCA Compliant E-Invoice', 'فاتورة إلكترونية متوافقة مع هيئة الزكاة والضريبة والجمارك')}</p>
+  </div>
+
+  <div class="footer">${L('Generated by BlindSpot System (BSS) — kinbss.org', 'تم الإنشاء بواسطة نظام بلايند سبوت (BSS) — kinbss.org')}</div>
+</body>
+</html>`;
+
+    const browser = await getBrowser();
+    const page = await browser.newPage();
+    try {
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      const pdfData = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '18mm', right: '14mm', bottom: '18mm', left: '14mm' },
+      });
+      return Buffer.from(pdfData);
+    } finally {
+      await page.close().catch(() => {});
+    }
+  }
+
+  // POST /api/catering-contracts/:id/installments/:index/issue
+  // Marks an installment as issued, creates a Transaction (revenue record)
+  // tagged to the contract, and mints a public invoice token. Idempotent.
+  app.post("/api/catering-contracts/:id/installments/:index/issue", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const contract = await storage.getCateringContract(req.params.id, restaurantId);
+      if (!contract) return res.status(404).json({ message: "Contract not found" });
+      const index = parseInt(req.params.index, 10);
+      const installments = Array.isArray(contract.paymentInstallments)
+        ? [...(contract.paymentInstallments as Array<any>)]
+        : [];
+      if (!Number.isFinite(index) || index < 0 || index >= installments.length) {
+        return res.status(404).json({ message: "Installment not found" });
+      }
+      const current = installments[index] || {};
+      const amount = parseFloat(current.amount || 0);
+      if (!(amount > 0)) return res.status(400).json({ message: "Installment amount must be > 0" });
+
+      const buildPublicUrl = (token: string) => {
+        const base = (process.env.PUBLIC_APP_URL || '').replace(/\/$/, '');
+        if (base) return `${base}/api/public/catering-invoices/${token}/pdf`;
+        const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol;
+        const host = req.headers['x-forwarded-host'] || req.headers.host;
+        return `${proto}://${host}/api/public/catering-invoices/${token}/pdf`;
+      };
+
+      // Idempotent: already issued → never create another transaction.
+      // If token missing for any reason, regenerate token only and persist.
+      if (current.status === 'issued') {
+        let token = current.invoiceToken;
+        if (!token) {
+          token = (await import('crypto')).randomBytes(24).toString('hex');
+          installments[index] = { ...current, invoiceToken: token };
+          await storage.updateCateringContract(contract.id, restaurantId, { paymentInstallments: installments } as any);
+        }
+        return res.json({ alreadyIssued: true, token, url: buildPublicUrl(token), installment: installments[index] });
+      }
+
+      const subtotal = amount / 1.15;
+      const tax = amount - subtotal;
+      const txn = await storage.createTransaction({
+        restaurantId,
+        transactionId: `CATER-${contract.id.substring(0, 8)}-${index + 1}-${Date.now()}`,
+        itemCount: 1,
+        subtotal: subtotal.toFixed(2),
+        tax: tax.toFixed(2),
+        total: amount.toFixed(2),
+        paymentMethod: 'Catering Installment',
+      });
+
+      const token = (await import('crypto')).randomBytes(24).toString('hex');
+      installments[index] = {
+        ...current,
+        status: 'issued',
+        issuedAt: new Date().toISOString(),
+        revenueOrderId: txn.id,
+        invoiceToken: token,
+      };
+      await storage.updateCateringContract(contract.id, restaurantId, { paymentInstallments: installments } as any);
+
+      res.json({ token, url: buildPublicUrl(token), installment: installments[index] });
+    } catch (error: any) {
+      console.error("Error issuing catering installment:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // POST /api/catering-contracts/:id/installments/:index/undo
+  // Reverses an issued installment: deletes the revenue transaction, clears
+  // status/issuedAt/revenueOrderId/invoiceToken (revoking the public link).
+  app.post("/api/catering-contracts/:id/installments/:index/undo", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const contract = await storage.getCateringContract(req.params.id, restaurantId);
+      if (!contract) return res.status(404).json({ message: "Contract not found" });
+      const index = parseInt(req.params.index, 10);
+      const installments = Array.isArray(contract.paymentInstallments)
+        ? [...(contract.paymentInstallments as Array<any>)]
+        : [];
+      if (!Number.isFinite(index) || index < 0 || index >= installments.length) {
+        return res.status(404).json({ message: "Installment not found" });
+      }
+      const current = installments[index] || {};
+      if (current.status !== 'issued') {
+        return res.status(400).json({ message: "Installment is not issued" });
+      }
+      if (current.revenueOrderId) {
+        try {
+          const { transactions } = await import('@shared/schema');
+          const { and: andOp, eq: eqOp } = await import('drizzle-orm');
+          await db.delete(transactions).where(andOp(eqOp(transactions.id, current.revenueOrderId), eqOp(transactions.restaurantId, restaurantId)));
+        } catch (e: any) {
+          console.error("Error deleting catering installment transaction:", e?.message);
+        }
+      }
+      installments[index] = {
+        label: current.label,
+        percent: current.percent,
+        amount: current.amount,
+        dueDate: current.dueDate,
+      };
+      await storage.updateCateringContract(contract.id, restaurantId, { paymentInstallments: installments } as any);
+      res.json({ success: true, installment: installments[index] });
+    } catch (error: any) {
+      console.error("Error undoing catering installment:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Public installment invoice PDF (no auth — token-gated)
+  app.get("/api/public/catering-invoices/:token/pdf", async (req, res) => {
+    try {
+      const token = req.params.token;
+      if (!token) return res.status(404).send('Not found');
+      const { db } = await import('./db');
+      const { cateringContracts } = await import('@shared/schema');
+      const { sql: sqlOp } = await import('drizzle-orm');
+      // Find contract whose paymentInstallments contains an object with this invoiceToken
+      const rows = await db.select().from(cateringContracts)
+        .where(sqlOp`${cateringContracts.paymentInstallments} @> ${JSON.stringify([{ invoiceToken: token }])}::jsonb`);
+      const contract = rows[0];
+      if (!contract) return res.status(404).send('Not found');
+      const installments = Array.isArray(contract.paymentInstallments) ? contract.paymentInstallments as Array<any> : [];
+      const index = installments.findIndex(it => it && it.invoiceToken === token);
+      if (index < 0) return res.status(404).send('Not found');
+      const lang = String(req.query.lang || 'en');
+      const pdfBuffer = await buildCateringInstallmentInvoicePdfBuffer(contract.restaurantId, contract.id, index, lang);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Length', String(pdfBuffer.length));
+      res.setHeader('Content-Disposition', `inline; filename="catering-invoice-${contract.contractNumber}-${index + 1}.pdf"`);
+      res.end(pdfBuffer);
+    } catch (error: any) {
+      console.error("Error generating public catering invoice PDF:", error);
+      res.status(500).send('Error generating PDF');
+    }
+  });
+
   // Public PDF download by share token (no auth) — for WhatsApp recipients
   app.get("/api/public/catering-contracts/:token/pdf", async (req, res) => {
     try {

@@ -13,13 +13,22 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Pencil, FileDown, Mail, MessageCircle, FileText, ListPlus, TrendingUp } from "lucide-react";
+import { Plus, Trash2, Pencil, FileDown, Mail, MessageCircle, FileText, ListPlus, TrendingUp, Receipt, Undo2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatPhoneForWhatsApp, openWhatsAppWithMessage } from "@/lib/whatsapp";
 import type { CateringContract, CateringContractTemplate, Recipe } from "@shared/schema";
 
 type Meal = { name: string; price: number; menuItemId?: string; qtyPerDay?: number };
-type Installment = { label: string; percent: number; amount: number; dueDate?: string };
+type Installment = {
+  label: string;
+  percent: number;
+  amount: number;
+  dueDate?: string;
+  status?: 'pending' | 'issued';
+  issuedAt?: string;
+  revenueOrderId?: string;
+  invoiceToken?: string;
+};
 
 const DAY_KEYS = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"] as const;
 
@@ -71,6 +80,7 @@ export default function CateringContractsPage() {
   const { data: menuItems = [] } = useQuery<Array<{ id: string; name: string; price: string; category?: string; recipeId?: string | null; portionSize?: string | null }>>({ queryKey: ["/api/menu"] });
   const { data: recipes = [] } = useQuery<Recipe[]>({ queryKey: ["/api/recipes"] });
   const [costReport, setCostReport] = useState<CateringContract | null>(null);
+  const [issueDialog, setIssueDialog] = useState<{ open: boolean; index: number; installment?: Installment }>({ open: false, index: -1 });
 
   const dayLabel = (k: string) => (t as any)[k] || k;
 
@@ -142,6 +152,51 @@ export default function CateringContractsPage() {
     if (editing) updateMut.mutate({ id: editing.id, body });
     else createMut.mutate(body);
   };
+
+  // Refresh the current form's installments after issue/undo so UI reflects new status
+  const refreshEditingContract = async () => {
+    if (!editing) return;
+    const resp = await fetch(`/api/catering-contracts/${editing.id}`, { credentials: "include" });
+    if (!resp.ok) return;
+    const fresh = await resp.json();
+    setEditing(fresh);
+    setForm((prev: any) => ({
+      ...prev,
+      paymentInstallments: fresh.paymentInstallments || [],
+    }));
+    queryClient.invalidateQueries({ queryKey: ["/api/catering-contracts"] });
+  };
+
+  const issueMut = useMutation({
+    mutationFn: async ({ contractId, index }: { contractId: string; index: number }) =>
+      await apiRequest("POST", `/api/catering-contracts/${contractId}/installments/${index}/issue`, {}),
+    onSuccess: async (resp: any, vars) => {
+      const data = await resp.json();
+      await refreshEditingContract();
+      // Open WhatsApp deep link with prefilled bilingual (AR + EN) message + invoice URL
+      if (editing?.clientPhone) {
+        const inst: Installment = data.installment || form.paymentInstallments[vars.index];
+        const amount = parseFloat(String(inst?.amount || 0)).toFixed(2);
+        const url = `${data.url}?lang=${encodeURIComponent(language)}`;
+        const ar = `مرحبا ${editing.clientName}،\nنرفق فاتورة القسط رقم ${vars.index + 1} لعقد التموين ${editing.contractNumber}.\nالمبلغ: ${amount} ر.س (شامل ضريبة القيمة المضافة 15%)\n\nتحميل الفاتورة (PDF):\n${url}\n\nشكرا لكم.`;
+        const en = `Hello ${editing.clientName},\nAttached is the invoice for installment #${vars.index + 1} of catering contract ${editing.contractNumber}.\nAmount: ${amount} SAR (including 15% VAT)\n\nDownload invoice (PDF):\n${url}\n\nThank you.`;
+        openWhatsAppWithMessage(editing.clientPhone, `${ar}\n\n— — —\n\n${en}`);
+      }
+      setIssueDialog({ open: false, index: -1 });
+      toast({ title: data.alreadyIssued ? ((t as any).installmentAlreadyIssued || 'Installment already issued') : ((t as any).installmentIssued || 'Installment issued') });
+    },
+    onError: (e: any) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+  });
+
+  const undoIssueMut = useMutation({
+    mutationFn: async ({ contractId, index }: { contractId: string; index: number }) =>
+      await apiRequest("POST", `/api/catering-contracts/${contractId}/installments/${index}/undo`, {}),
+    onSuccess: async () => {
+      await refreshEditingContract();
+      toast({ title: (t as any).installmentReversed || 'Installment reversed' });
+    },
+    onError: (e: any) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+  });
 
   const downloadPdf = async (c: CateringContract) => {
     const resp = await fetch(`/api/catering-contracts/${c.id}/pdf?lang=${encodeURIComponent(language)}`, { credentials: "include" });
@@ -408,31 +463,69 @@ export default function CateringContractsPage() {
                 </Button>
               </div>
               <div className="space-y-2">
-                {(form.paymentInstallments || []).map((it: Installment, i: number) => (
-                  <div key={i} className="grid grid-cols-12 gap-2 items-center">
-                    <Input className="col-span-4" placeholder={t.installmentLabel} value={it.label} onChange={(e) => {
-                      const list = [...form.paymentInstallments]; list[i] = { ...list[i], label: e.target.value }; setField("paymentInstallments", list);
-                    }} data-testid={`input-installment-label-${i}`} />
-                    <Input className="col-span-2" type="number" step="0.01" placeholder="%" value={it.percent} onChange={(e) => {
-                      const pct = parseFloat(e.target.value) || 0;
-                      const final = parseFloat(form.finalValue) || 0;
-                      const list = [...form.paymentInstallments];
-                      list[i] = { ...list[i], percent: pct, amount: Number((final * pct / 100).toFixed(2)) };
-                      setField("paymentInstallments", list);
-                    }} data-testid={`input-installment-percent-${i}`} />
-                    <Input className="col-span-3" type="number" step="0.01" placeholder={t.installmentAmount} value={it.amount} onChange={(e) => {
-                      const list = [...form.paymentInstallments]; list[i] = { ...list[i], amount: parseFloat(e.target.value) || 0 }; setField("paymentInstallments", list);
-                    }} data-testid={`input-installment-amount-${i}`} />
-                    <Input className="col-span-2" type="date" value={it.dueDate || ""} onChange={(e) => {
-                      const list = [...form.paymentInstallments]; list[i] = { ...list[i], dueDate: e.target.value }; setField("paymentInstallments", list);
-                    }} data-testid={`input-installment-date-${i}`} />
-                    <Button type="button" size="icon" variant="outline" onClick={() => {
-                      const list = form.paymentInstallments.filter((_: any, idx: number) => idx !== i); setField("paymentInstallments", list);
-                    }} data-testid={`button-remove-installment-${i}`}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                {(form.paymentInstallments || []).map((it: Installment, i: number) => {
+                  const isIssued = it.status === 'issued';
+                  return (
+                  <div key={i} className="space-y-1">
+                    <div className="grid grid-cols-12 gap-2 items-center">
+                      <Input className="col-span-4" placeholder={t.installmentLabel} value={it.label} disabled={isIssued} onChange={(e) => {
+                        const list = [...form.paymentInstallments]; list[i] = { ...list[i], label: e.target.value }; setField("paymentInstallments", list);
+                      }} data-testid={`input-installment-label-${i}`} />
+                      <Input className="col-span-2" type="number" step="0.01" placeholder="%" value={it.percent} disabled={isIssued} onChange={(e) => {
+                        const pct = parseFloat(e.target.value) || 0;
+                        const final = parseFloat(form.finalValue) || 0;
+                        const list = [...form.paymentInstallments];
+                        list[i] = { ...list[i], percent: pct, amount: Number((final * pct / 100).toFixed(2)) };
+                        setField("paymentInstallments", list);
+                      }} data-testid={`input-installment-percent-${i}`} />
+                      <Input className="col-span-3" type="number" step="0.01" placeholder={t.installmentAmount} value={it.amount} disabled={isIssued} onChange={(e) => {
+                        const list = [...form.paymentInstallments]; list[i] = { ...list[i], amount: parseFloat(e.target.value) || 0 }; setField("paymentInstallments", list);
+                      }} data-testid={`input-installment-amount-${i}`} />
+                      <Input className="col-span-2" type="date" value={it.dueDate || ""} disabled={isIssued} onChange={(e) => {
+                        const list = [...form.paymentInstallments]; list[i] = { ...list[i], dueDate: e.target.value }; setField("paymentInstallments", list);
+                      }} data-testid={`input-installment-date-${i}`} />
+                      <Button type="button" size="icon" variant="outline" disabled={isIssued} onClick={() => {
+                        const list = form.paymentInstallments.filter((_: any, idx: number) => idx !== i); setField("paymentInstallments", list);
+                      }} data-testid={`button-remove-installment-${i}`}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 ps-1">
+                      {isIssued ? (
+                        <Badge variant="default" data-testid={`badge-installment-status-${i}`}>
+                          {(t as any).issued || 'Issued'}{it.issuedAt ? ` · ${new Date(it.issuedAt).toLocaleDateString('en-GB')}` : ''}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" data-testid={`badge-installment-status-${i}`}>{(t as any).pending || 'Pending'}</Badge>
+                      )}
+                      {editing && !isIssued && (
+                        <Button type="button" size="sm" variant="outline" onClick={() => setIssueDialog({ open: true, index: i, installment: it })} data-testid={`button-issue-installment-${i}`}>
+                          <Receipt className="h-4 w-4 me-1" />{(t as any).issuePayment || 'Issue payment'}
+                        </Button>
+                      )}
+                      {editing && isIssued && (
+                        <>
+                          <Button type="button" size="sm" variant="outline" onClick={() => {
+                            if (!it.invoiceToken) return;
+                            const url = `/api/public/catering-invoices/${it.invoiceToken}/pdf?lang=${encodeURIComponent(language)}`;
+                            window.open(url, '_blank');
+                          }} data-testid={`button-view-invoice-${i}`}>
+                            <FileDown className="h-4 w-4 me-1" />{(t as any).viewInvoice || 'View invoice'}
+                          </Button>
+                          <Button type="button" size="sm" variant="outline" onClick={() => {
+                            if (!editing) return;
+                            if (confirm((t as any).confirmUndoIssue || 'Reverse this issued installment? This removes the revenue record and revokes the invoice link.')) {
+                              undoIssueMut.mutate({ contractId: editing.id, index: i });
+                            }
+                          }} disabled={undoIssueMut.isPending} data-testid={`button-undo-installment-${i}`}>
+                            <Undo2 className="h-4 w-4 me-1" />{(t as any).undo || 'Undo'}
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -497,6 +590,51 @@ export default function CateringContractsPage() {
         recipes={recipes}
         t={t}
       />
+
+      <Dialog open={issueDialog.open} onOpenChange={(o) => !o && setIssueDialog({ open: false, index: -1 })}>
+        <DialogContent className="max-w-md" data-testid="dialog-issue-installment">
+          <DialogHeader>
+            <DialogTitle>{(t as any).issuePayment || 'Issue payment'}</DialogTitle>
+          </DialogHeader>
+          {issueDialog.installment && (() => {
+            const total = parseFloat(String(issueDialog.installment.amount || 0));
+            const base = total / 1.15;
+            const vat = total - base;
+            const fmt = (n: number) => n.toFixed(2);
+            return (
+              <div className="space-y-3 py-2">
+                <div className="text-sm text-muted-foreground">
+                  {(t as any).installmentIssueDescription || 'This will record the installment as paid, create a revenue transaction, generate a ZATCA-compliant invoice, and open WhatsApp with a download link for the client.'}
+                </div>
+                <div className="rounded-md border p-3 space-y-1 text-sm">
+                  <div className="flex justify-between"><span className="text-muted-foreground">{(t as any).installmentLabel || 'Label'}</span><span data-testid="text-issue-label">{issueDialog.installment.label || '—'}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{(t as any).subtotal || 'Subtotal'}</span><span data-testid="text-issue-subtotal">{fmt(base)} {t.sar}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{(t as any).vat15 || 'VAT 15%'}</span><span data-testid="text-issue-vat">{fmt(vat)} {t.sar}</span></div>
+                  <div className="flex justify-between font-semibold border-t pt-1 mt-1"><span>{(t as any).total || 'Total'}</span><span data-testid="text-issue-total">{fmt(total)} {t.sar}</span></div>
+                </div>
+                {editing?.clientPhone && (
+                  <div className="text-xs text-muted-foreground" data-testid="text-issue-whatsapp-target">
+                    {(t as any).willOpenWhatsAppFor || 'Will open WhatsApp for'}: <strong>{editing.clientPhone}</strong>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIssueDialog({ open: false, index: -1 })} data-testid="button-issue-cancel">{t.cancel}</Button>
+            <Button
+              onClick={() => {
+                if (editing && issueDialog.index >= 0) issueMut.mutate({ contractId: editing.id, index: issueDialog.index });
+              }}
+              disabled={issueMut.isPending || !editing}
+              data-testid="button-issue-confirm"
+            >
+              <Receipt className="h-4 w-4 me-1" />
+              {issueMut.isPending ? '...' : ((t as any).confirmIssue || 'Confirm & Send via WhatsApp')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
