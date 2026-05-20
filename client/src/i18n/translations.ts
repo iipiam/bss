@@ -1201,6 +1201,7 @@ export interface Translations {
   
   // IT Business Management
   businessManagement: string;
+  inspectionTools: string;
   businessManagementDescription: string;
   clientSubscriptions: string;
   subscriptionInvoices: string;
@@ -3669,6 +3670,7 @@ export const translations: Record<Language, Translations> = {
     
     // IT Business Management
     businessManagement: 'Business Management',
+    inspectionTools: 'Inspection Tools',
     businessManagementDescription: 'Manage client subscriptions, invoices, and VAT statements',
     clientSubscriptions: 'Client Subscriptions',
     subscriptionInvoices: 'Subscription Invoices',
@@ -6101,6 +6103,7 @@ export const translations: Record<Language, Translations> = {
     
     // IT Business Management
     businessManagement: 'إدارة الأعمال',
+    inspectionTools: 'أدوات الفحص',
     businessManagementDescription: 'إدارة اشتراكات العملاء والفواتير وبيانات ضريبة القيمة المضافة',
     clientSubscriptions: 'اشتراكات العملاء',
     subscriptionInvoices: 'فواتير الاشتراكات',
@@ -8529,6 +8532,7 @@ export const translations: Record<Language, Translations> = {
     
     // IT Business Management
     businessManagement: 'Geschäftsverwaltung',
+    inspectionTools: 'Inspektionswerkzeuge',
     businessManagementDescription: 'Kundenabonnements, Rechnungen und MwSt.-Auszüge verwalten',
     clientSubscriptions: 'Kundenabonnements',
     subscriptionInvoices: 'Abonnementrechnungen',
@@ -10938,6 +10942,7 @@ export const translations: Record<Language, Translations> = {
     
     // IT Business Management
     businessManagement: '业务管理',
+    inspectionTools: '检查工具',
     businessManagementDescription: '管理客户订阅、发票和增值税报表',
     clientSubscriptions: '客户订阅',
     subscriptionInvoices: '订阅发票',
@@ -13351,6 +13356,7 @@ export const translations: Record<Language, Translations> = {
     
     // IT Business Management
     businessManagement: 'ব্যবসা ব্যবস্থাপনা',
+    inspectionTools: 'পরিদর্শন সরঞ্জাম',
     businessManagementDescription: 'গ্রাহক সাবস্ক্রিপশন, চালান এবং ভ্যাট বিবরণী পরিচালনা করুন',
     clientSubscriptions: 'গ্রাহক সাবস্ক্রিপশন',
     subscriptionInvoices: 'সাবস্ক্রিপশন চালান',
@@ -15764,6 +15770,7 @@ export const translations: Record<Language, Translations> = {
     
     // IT Business Management
     businessManagement: 'Gestione Aziendale',
+    inspectionTools: 'Strumenti di Ispezione',
     businessManagementDescription: 'Gestisci abbonamenti clienti, fatture e dichiarazioni IVA',
     clientSubscriptions: 'Abbonamenti Clienti',
     subscriptionInvoices: 'Fatture Abbonamento',
@@ -18153,6 +18160,7 @@ export const translations: Record<Language, Translations> = {
     
     // IT Business Management
     businessManagement: 'व्यवसाय प्रबंधन',
+    inspectionTools: 'निरीक्षण उपकरण',
     businessManagementDescription: 'ग्राहक सदस्यताएं, चालान और वैट विवरण प्रबंधित करें',
     clientSubscriptions: 'ग्राहक सदस्यताएं',
     subscriptionInvoices: 'सदस्यता चालान',
@@ -20510,6 +20518,7 @@ export const translations: Record<Language, Translations> = {
     
     // IT Business Management
     businessManagement: 'کاروباری انتظام',
+    inspectionTools: 'معائنہ کے اوزار',
     businessManagementDescription: 'کلائنٹ سبسکرپشنز، انوائسز اور VAT بیانات کا انتظام کریں',
     clientSubscriptions: 'کلائنٹ سبسکرپشنز',
     subscriptionInvoices: 'سبسکرپشن انوائسز',
@@ -22803,6 +22812,7 @@ export const translations: Record<Language, Translations> = {
     
     // IT Business Management
     businessManagement: 'Gestión Empresarial',
+    inspectionTools: 'Herramientas de Inspección',
     businessManagementDescription: 'Gestionar suscripciones de clientes, facturas y declaraciones de IVA',
     clientSubscriptions: 'Suscripciones de Clientes',
     subscriptionInvoices: 'Facturas de Suscripción',
@@ -25093,6 +25103,7 @@ export const translations: Record<Language, Translations> = {
     
     // IT Business Management
     businessManagement: 'Pamamahala ng Negosyo',
+    inspectionTools: 'Mga Tool sa Pagsusuri',
     businessManagementDescription: 'Pamahalaan ang mga subscription ng kliyente, invoice at VAT statements',
     clientSubscriptions: 'Mga Subscription ng Kliyente',
     subscriptionInvoices: 'Mga Invoice ng Subscription',

@@ -200,6 +200,7 @@ function Router() {
         <Route path="/meal-subscriptions" component={MealSubscriptions} />
         <Route path="/catering-contracts" component={CateringContracts} />
         <Route path="/marketing" component={Marketing} />
+        <Route path="/inspection-tools" component={InspectionTools} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>
@@ -281,7 +282,7 @@ function AppContent() {
   // Handle IT account redirects using useEffect to avoid render issues
   // IT accounts can access /it-dashboard, /performance, /it-account-management, /business-management, /zatca-settings, and /support routes
   useEffect(() => {
-    const allowedITRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management', '/zatca-settings'];
+    const allowedITRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management', '/zatca-settings', '/inspection-tools'];
     const isAllowedRoute = allowedITRoutes.includes(location) || location.startsWith('/support');
     
     if (accountType === 'it' && !isAllowedRoute) {
