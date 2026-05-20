@@ -17360,7 +17360,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // ============== COMPANY PROFILE ==============
   app.get("/api/company-profile", requireAuth, requireRestaurant, async (req: any, res) => {
     try {
-      const profile = await storage.getCompanyProfile(req.session.restaurantId);
+      const profile = await storage.getCompanyProfile(req.session.user.restaurantId);
       res.json(profile || null);
     } catch (error: any) {
       console.error("Error fetching company profile:", error);
@@ -17375,7 +17375,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(400).json({ message: "Invalid payload", errors: parsed.error.errors });
       }
       const { restaurantId: _ignored, ...data } = parsed.data as any;
-      const profile = await storage.upsertCompanyProfile(req.session.restaurantId, data);
+      const profile = await storage.upsertCompanyProfile(req.session.user.restaurantId, data);
       res.json(profile);
     } catch (error: any) {
       console.error("Error saving company profile:", error);
@@ -17385,7 +17385,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   app.post("/api/company-profile/pdf", requireAuth, requireRestaurant, async (req: any, res) => {
     try {
-      const profile = await storage.getCompanyProfile(req.session.restaurantId);
+      const profile = await storage.getCompanyProfile(req.session.user.restaurantId);
       if (!profile) return res.status(404).json({ message: "Company profile not found. Save it first." });
       const pdf = await generateCompanyProfilePDF(profile);
       res.setHeader("Content-Type", "application/pdf");
