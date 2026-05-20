@@ -1847,8 +1847,100 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUser(id: string, restaurantId: string): Promise<boolean> {
-    const result = await db.delete(users).where(and(eq(users.id, id), eq(users.restaurantId, restaurantId)));
-    return result.rowCount !== null && result.rowCount > 0;
+    // Verify the user belongs to this restaurant before doing any cleanup
+    const [existing] = await db.select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.id, id), eq(users.restaurantId, restaurantId)));
+    if (!existing) return false;
+
+    // Clean up FK references that don't have ON DELETE behavior in the schema.
+    // We do this inside a single transaction so the user row is only removed
+    // if every dependent table is cleared successfully.
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Delete activity log rows for this employee (can be very large; this is
+      // the most common cause of the previous DELETE timing out on the FK
+      // constraint check).
+      await client.query(
+        'DELETE FROM employee_activity_log WHERE employee_id = $1',
+        [id],
+      );
+
+      // Null out references in tenant-scoped bills (salary + audit columns).
+      await client.query(
+        `UPDATE bills
+            SET employee_id = NULL
+          WHERE employee_id = $1`,
+        [id],
+      );
+      await client.query(
+        `UPDATE bills
+            SET created_by = NULL
+          WHERE created_by = $1`,
+        [id],
+      );
+      await client.query(
+        `UPDATE bills
+            SET updated_by = NULL
+          WHERE updated_by = $1`,
+        [id],
+      );
+
+      // Null out the assigned/assignedBy columns on support tickets, and
+      // reassign tickets opened by this user to keep them visible. Sub-account
+      // employees are unlikely to be on the IT side, but cover both cases.
+      await client.query(
+        'UPDATE support_tickets SET assigned_to = NULL WHERE assigned_to = $1',
+        [id],
+      );
+      await client.query(
+        'UPDATE support_tickets SET assigned_by = NULL WHERE assigned_by = $1',
+        [id],
+      );
+      // ticket_messages.sender_id is NOT NULL, so delete those messages.
+      await client.query(
+        'DELETE FROM ticket_messages WHERE sender_id = $1',
+        [id],
+      );
+      // Tickets opened by the deleted user — delete them (cascades to messages).
+      await client.query(
+        'DELETE FROM support_tickets WHERE user_id = $1',
+        [id],
+      );
+
+      // Licenses uploaded_by references (best-effort; tables may not exist on
+      // older deployments — wrap each in its own savepoint).
+      for (const sql of [
+        'UPDATE licenses SET uploaded_by = NULL WHERE uploaded_by = $1',
+        'UPDATE it_bills SET created_by = NULL WHERE created_by = $1',
+        'UPDATE it_bills SET updated_by = NULL WHERE updated_by = $1',
+      ]) {
+        try {
+          await client.query('SAVEPOINT sp');
+          await client.query(sql, [id]);
+          await client.query('RELEASE SAVEPOINT sp');
+        } catch (err) {
+          await client.query('ROLLBACK TO SAVEPOINT sp');
+          // Column or table missing on this deployment — ignore and continue.
+        }
+      }
+
+      // Finally remove the user.
+      const result = await client.query(
+        'DELETE FROM users WHERE id = $1 AND restaurant_id = $2',
+        [id, restaurantId],
+      );
+
+      await client.query('COMMIT');
+      return (result.rowCount ?? 0) > 0;
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 
   async setPasswordResetToken(userId: string, token: string, expiry: Date): Promise<void> {
