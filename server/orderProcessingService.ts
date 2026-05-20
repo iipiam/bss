@@ -5,10 +5,12 @@ import {
   inventoryTransactions,
   menuItems,
   recipes,
+  addons,
   type InsertInventoryTransaction,
   type MenuItem,
   type Recipe,
   type InventoryItem,
+  type Addon,
 } from "@shared/schema";
 
 // Helper to safely get inventory item with fallback for missing unit_price column
@@ -148,6 +150,23 @@ export class OrderProcessingService {
         }
       }
 
+      // Collect addon IDs from the order so we can deduct addon-linked inventory too.
+      const addonIds = new Set<string>();
+      for (const oi of orderItems) {
+        if (oi.addons) for (const a of oi.addons) if (a?.id) addonIds.add(a.id);
+      }
+      let addonsMap = new Map<string, Addon>();
+      if (addonIds.size > 0) {
+        const addonRows = await db
+          .select()
+          .from(addons)
+          .where(inArray(addons.id, Array.from(addonIds)));
+        addonsMap = new Map(addonRows.map((a) => [a.id, a]));
+        for (const a of addonRows) {
+          if (a.inventoryItemId) allInventoryIds.add(a.inventoryItemId);
+        }
+      }
+
       // OPTIMIZATION 4: Batch fetch all inventory items in parallel
       const inventoryMap = await getInventoryItemsBatch(Array.from(allInventoryIds));
 
@@ -176,6 +195,40 @@ export class OrderProcessingService {
             branchId,
             inventoryMap
           );
+        }
+
+        // Process each addon attached to this order line item.
+        // Each addon use consumes 1 unit of its linked inventory item per order-item quantity.
+        if (orderItem.addons && orderItem.addons.length > 0) {
+          for (const oa of orderItem.addons) {
+            const addon = addonsMap.get(oa.id);
+            if (!addon || !addon.inventoryItemId) continue;
+            const invItem = inventoryMap.get(addon.inventoryItemId);
+            if (!invItem) {
+              throw new Error(`Inventory item ${addon.inventoryItemId} not found for add-on "${addon.name}". Please check the add-on's inventory link.`);
+            }
+            if (branchId && invItem.branchId && invItem.branchId !== branchId) {
+              throw new Error(`Add-on "${addon.name}" inventory belongs to branch ${invItem.branchId} but order is for branch ${branchId}`);
+            }
+            const requiredQty = orderItem.quantity; // 1 unit per add-on per item
+            const existing = stockRequirements.get(invItem.id);
+            if (existing) {
+              existing.requiredQuantity += requiredQty;
+            } else {
+              const availableQty = parseFloat(invItem.quantity);
+              const totalPriceVal = parseFloat(invItem.price || "0");
+              const unitPriceVal = availableQty > 0 ? totalPriceVal / availableQty : 0;
+              stockRequirements.set(invItem.id, {
+                inventoryItemId: invItem.id,
+                inventoryItemName: `${invItem.name} (add-on: ${addon.name})`,
+                requiredQuantity: requiredQty,
+                availableQuantity: availableQty,
+                unit: invItem.unit,
+                unitPrice: unitPriceVal,
+                totalPrice: totalPriceVal,
+              });
+            }
+          }
         }
       }
 
