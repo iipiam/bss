@@ -3,6 +3,7 @@ interface ZatcaConfig {
   csid: string;
   csidSecret: string;
   privateKey: string;
+  acceptLanguage?: string;
 }
 
 interface ComplianceCSIDRequest {
@@ -47,6 +48,9 @@ interface InvoiceResponse {
   status: "CLEARED" | "REPORTED" | "REJECTED" | "PENDING";
   clearanceStatus?: string;
   reportingStatus?: string;
+  // Cleared standard invoice (ZATCA returns base64-encoded signed XML on
+  // successful clearance). Reporting API does NOT return this.
+  clearedInvoice?: string;
   validationResults?: {
     infoMessages?: Array<{ code: string; message: string }>;
     warningMessages?: Array<{ code: string; message: string }>;
@@ -65,12 +69,14 @@ export class ZatcaApiClient {
   private csid: string;
   private csidSecret: string;
   private privateKey: string;
+  private acceptLanguage: string;
 
   constructor(config: ZatcaConfig) {
     this.baseUrl = ZATCA_URLS[config.environment];
     this.csid = config.csid;
     this.csidSecret = config.csidSecret;
     this.privateKey = config.privateKey;
+    this.acceptLanguage = config.acceptLanguage || "en";
   }
 
   private getAuthHeader(): string {
@@ -91,7 +97,7 @@ export class ZatcaApiClient {
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "Accept-Language": "en",
+        "Accept-Language": this.acceptLanguage,
         "Accept-Version": "V2",
         ...customHeaders
       };
@@ -258,7 +264,11 @@ export class ZatcaApiClient {
         invoiceHash,
         uuid,
         invoice: invoiceBase64
-      }
+      },
+      // ZATCA expects Clearance-Status=0 on the reporting endpoint to
+      // indicate the invoice is being reported (simplified) rather than
+      // cleared. Omitting it is a frequent cause of 400 rejections.
+      { "Clearance-Status": "0" }
     );
   }
 
@@ -284,6 +294,10 @@ export async function submitInvoiceToZatca(
   zatcaUuid?: string;
   clearedAt?: Date;
   reportedAt?: Date;
+  // For standard invoices: the authoritative signed XML returned by ZATCA
+  // on successful clearance (decoded from base64). For simplified invoices
+  // this is always undefined (reporting API does not return XML).
+  clearedXml?: string;
   errors?: Array<{ code: string; message: string }>;
   warnings?: Array<{ code: string; message: string }>;
 }> {
@@ -308,12 +322,33 @@ export async function submitInvoiceToZatca(
   const data = response.data!;
   const now = new Date();
 
+  let clearedXml: string | undefined;
+  if (invoiceType === "standard" && data.clearedInvoice) {
+    try {
+      clearedXml = Buffer.from(data.clearedInvoice, "base64").toString("utf8");
+    } catch (e) {
+      console.error("[ZATCA] Failed to decode clearedInvoice base64:", e);
+    }
+  }
+
+  // ZATCA returns HTTP 202 with the invoice cleared/reported "with warnings".
+  // The response body still contains validationResults; surface as warning
+  // state so the UI can display the warnings rather than a hard success.
+  const hasWarnings =
+    (data.validationResults?.warningMessages?.length || 0) > 0 ||
+    (response.warnings?.length || 0) > 0;
+  let normalizedStatus = data.status?.toLowerCase() || "pending";
+  if (hasWarnings && (normalizedStatus === "cleared" || normalizedStatus === "reported")) {
+    normalizedStatus = `${normalizedStatus}_with_warnings`;
+  }
+
   return {
     success: true,
-    status: data.status.toLowerCase(),
+    status: normalizedStatus,
     zatcaUuid: uuid,
     clearedAt: data.status === "CLEARED" ? now : undefined,
     reportedAt: data.status === "REPORTED" ? now : undefined,
+    clearedXml,
     errors: data.validationResults?.errorMessages,
     warnings: data.validationResults?.warningMessages || response.warnings
   };

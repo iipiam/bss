@@ -302,11 +302,43 @@ export async function processInvoiceForZatca(
     zatcaResponse = result;
 
     if (result.success) {
-      submissionStatus = result.status === "cleared" ? "cleared" : 
-                        result.status === "reported" ? "reported" : "pending";
+      // Map "<status>_with_warnings" → keep the status as cleared/reported
+      // but mark as "warning" so the UI surfaces the warnings explicitly.
+      const baseStatus = result.status.replace(/_with_warnings$/, "");
+      if (result.status.endsWith("_with_warnings")) {
+        submissionStatus = "warning" as any;
+      } else {
+        submissionStatus = baseStatus === "cleared" ? "cleared" :
+                          baseStatus === "reported" ? "reported" : "pending";
+      }
     } else {
       submissionStatus = "rejected";
       errors = result.errors || [];
+    }
+
+    // For standard (B2B) invoices ZATCA returns the authoritative cleared
+    // XML — this is what must be sent to the buyer and stored. Re-extract
+    // the QR from the cleared XML so PDF receipts use ZATCA's stamp.
+    let finalSignedXml = signedXml;
+    let finalQrCode = qrCodeBase64;
+    if (result.clearedXml) {
+      finalSignedXml = result.clearedXml;
+      const qrMatch = result.clearedXml.match(
+        /<cac:AdditionalDocumentReference>\s*<cbc:ID>QR<\/cbc:ID>[\s\S]*?<cbc:EmbeddedDocumentBinaryObject[^>]*>([^<]+)<\/cbc:EmbeddedDocumentBinaryObject>/
+      );
+      if (qrMatch) {
+        finalQrCode = qrMatch[1];
+        try {
+          qrCodeImage = await QRCode.toDataURL(finalQrCode, {
+            errorCorrectionLevel: "M",
+            type: "image/png",
+            width: 200,
+            margin: 1
+          });
+        } catch (error) {
+          console.error("Failed to regenerate QR code image from cleared XML:", error);
+        }
+      }
     }
 
     await storage.createInvoiceZatcaStatus({
@@ -319,13 +351,17 @@ export async function processInvoiceForZatca(
       invoiceCounter: counter,
       submissionType: params.invoiceType === "standard" ? "clearance" : "reporting",
       submissionStatus: submissionStatus,
-      qrCode: qrCodeBase64,
-      signedXml: signedXml,
+      qrCode: finalQrCode,
+      signedXml: finalSignedXml,
       clearedAt: result.clearedAt,
       submittedAt: result.reportedAt || (result.success ? new Date() : undefined),
       zatcaErrors: errors.length > 0 ? errors : null,
       zatcaWarnings: result.warnings || null
     });
+
+    // Update the local refs so the function return reflects what was stored.
+    signedXml = finalSignedXml;
+    qrCodeBase64 = finalQrCode;
   } else {
     await storage.createInvoiceZatcaStatus({
       restaurantId: params.restaurantId,
@@ -397,12 +433,32 @@ export async function retryPendingInvoices(restaurantId: string): Promise<{
 
     if (result.success) {
       succeeded++;
+      const isWarning = result.status.endsWith("_with_warnings");
+      const baseStatus = result.status.replace(/_with_warnings$/, "");
+      const newStatus: "cleared" | "reported" | "pending" | "warning" =
+        isWarning ? "warning" :
+        baseStatus === "cleared" ? "cleared" :
+        baseStatus === "reported" ? "reported" : "pending";
+
+      // For standard invoices, prefer ZATCA's returned cleared XML (and QR)
+      // as the authoritative version stored locally — matches main path.
+      let updatedXml: string | undefined;
+      let updatedQr: string | undefined;
+      if (result.clearedXml) {
+        updatedXml = result.clearedXml;
+        const qrMatch = result.clearedXml.match(
+          /<cac:AdditionalDocumentReference>\s*<cbc:ID>QR<\/cbc:ID>[\s\S]*?<cbc:EmbeddedDocumentBinaryObject[^>]*>([^<]+)<\/cbc:EmbeddedDocumentBinaryObject>/
+        );
+        if (qrMatch) updatedQr = qrMatch[1];
+      }
+
       await storage.updateInvoiceZatcaStatus(invoice.invoiceId, restaurantId, {
-        submissionStatus: result.status === "cleared" ? "cleared" : 
-                         result.status === "reported" ? "reported" : "pending",
+        submissionStatus: newStatus,
         clearedAt: result.clearedAt,
         submittedAt: result.reportedAt || new Date(),
-        zatcaWarnings: result.warnings || null
+        zatcaWarnings: result.warnings || null,
+        ...(updatedXml ? { signedXml: updatedXml } : {}),
+        ...(updatedQr ? { qrCode: updatedQr } : {}),
       });
     } else {
       failed++;
@@ -543,16 +599,31 @@ export async function getProductionCSID(
 
   const data = response.data!;
 
+  // Parse the certificate's notAfter so the UI can warn the user before
+  // the production CSID expires (typically 1 year, sometimes 3 years).
+  let csidExpiresAt: Date | undefined;
+  try {
+    const certPem = normalizeCertificateToPem(data.binarySecurityToken);
+    const x509 = new (await import("crypto")).X509Certificate(certPem);
+    csidExpiresAt = new Date(x509.validTo);
+    if (isNaN(csidExpiresAt.getTime())) csidExpiresAt = undefined;
+  } catch (e) {
+    console.error("[ZATCA Service] Failed to parse production CSID validity:", e);
+  }
+
   await storage.updateZatcaSettings(restaurantId, {
     productionCsid: data.binarySecurityToken,
     productionCsidSecret: data.secret,
+    csidExpiresAt: csidExpiresAt,
     isEnabled: true,
     onboardingStatus: "production_ready"
   });
 
   return {
     success: true,
-    message: "Production CSID obtained successfully. ZATCA integration is now active."
+    message: csidExpiresAt
+      ? `Production CSID obtained successfully. Valid until ${csidExpiresAt.toISOString().slice(0, 10)}. ZATCA integration is now active.`
+      : "Production CSID obtained successfully. ZATCA integration is now active."
   };
 }
 
@@ -609,10 +680,42 @@ export async function runComplianceChecks(
     warnings?: Array<{ code: string; message: string }>;
   }> = [];
 
-  const testInvoiceTypes = [
-    { type: "simplified" as const, subType: "01" as const },
-    { type: "standard" as const, subType: "01" as const }
-  ];
+  // Per ZATCA tutorial (https://youtu.be/IugzfwPlAgo) compliance checks
+  // must exercise EVERY invoice type the EGS will issue:
+  //   - csrInvoiceType "1000" → standard B2B only (3 docs)
+  //   - csrInvoiceType "0100" → simplified B2C only (3 docs)
+  //   - csrInvoiceType "1100" → both (6 docs)
+  // The 3 docs per category are: tax invoice (388), debit note (383),
+  // credit note (381). Skipping any of these is a frequent cause of
+  // production CSID rejection at Step 4 even though Step 3 "passed".
+  const csrInvoiceType = settings.csrInvoiceType || "1100";
+  const standardEnabled = csrInvoiceType[0] === "1";
+  const simplifiedEnabled = csrInvoiceType[1] === "1";
+
+  type TestDocType = { type: "standard" | "simplified"; subType: "01" | "02"; documentType?: "credit_note" | "debit_note"; label: string };
+  const testInvoiceTypes: TestDocType[] = [];
+  if (standardEnabled) {
+    testInvoiceTypes.push({ type: "standard", subType: "01", label: "standard-invoice" });
+    testInvoiceTypes.push({ type: "standard", subType: "01", documentType: "debit_note", label: "standard-debit-note" });
+    testInvoiceTypes.push({ type: "standard", subType: "02", documentType: "credit_note", label: "standard-credit-note" });
+  }
+  if (simplifiedEnabled) {
+    testInvoiceTypes.push({ type: "simplified", subType: "01", label: "simplified-invoice" });
+    testInvoiceTypes.push({ type: "simplified", subType: "01", documentType: "debit_note", label: "simplified-debit-note" });
+    testInvoiceTypes.push({ type: "simplified", subType: "02", documentType: "credit_note", label: "simplified-credit-note" });
+  }
+  // Fallback: if the CSR didn't declare any (legacy data), test all 6.
+  if (testInvoiceTypes.length === 0) {
+    testInvoiceTypes.push(
+      { type: "standard", subType: "01", label: "standard-invoice" },
+      { type: "standard", subType: "01", documentType: "debit_note", label: "standard-debit-note" },
+      { type: "standard", subType: "02", documentType: "credit_note", label: "standard-credit-note" },
+      { type: "simplified", subType: "01", label: "simplified-invoice" },
+      { type: "simplified", subType: "01", documentType: "debit_note", label: "simplified-debit-note" },
+      { type: "simplified", subType: "02", documentType: "credit_note", label: "simplified-credit-note" },
+    );
+  }
+  console.log(`[ZATCA Compliance] csrInvoiceType=${csrInvoiceType} → testing ${testInvoiceTypes.length} doc types: ${testInvoiceTypes.map(t => t.label).join(", ")}`);
 
   let has401Error = false;
 
@@ -650,9 +753,14 @@ export async function runComplianceChecks(
         };
 
     const testData: ZatcaInvoiceData = {
-      invoiceNumber: `TEST-${Date.now()}`,
+      invoiceNumber: `TEST-${testType.label}-${Date.now()}`,
       invoiceType: testType.type,
       invoiceSubType: testType.subType,
+      documentType: testType.documentType,
+      referencedInvoiceNumber: testType.documentType ? `TEST-REF-${Date.now()}` : undefined,
+      adjustmentReason: testType.documentType === "credit_note" ? "Goods returned"
+                       : testType.documentType === "debit_note" ? "Additional charges"
+                       : undefined,
       paymentMethod: "cash",
       subtotal: 100.00,
       vatAmount: 15.00,
@@ -761,7 +869,7 @@ export async function runComplianceChecks(
     }
 
     results.push({
-      invoiceType: `${testType.type}-${testType.subType}`,
+      invoiceType: testType.label,
       passed: response.success && response.data?.status !== "REJECTED",
       errors: is401 ? [{ code: "AUTH_EXPIRED", message: errorMessage }] :
               response.error ? [{ code: response.error.code, message: response.error.message }] : 
