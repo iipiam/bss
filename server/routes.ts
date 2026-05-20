@@ -17397,6 +17397,113 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // ============== IT INSPECTION TOOLS ==============
+  app.get("/api/it/inspection/health", requireAuth, requireITAccount, async (req, res) => {
+    const start = Date.now();
+    const memUsage = process.memoryUsage();
+    let dbStatus = "unknown";
+    let dbLatencyMs = 0;
+    let dbVersion = "";
+    try {
+      const dbStart = Date.now();
+      const { pool } = await import("./db");
+      const r = await pool.query("SELECT version()");
+      dbLatencyMs = Date.now() - dbStart;
+      dbStatus = "ok";
+      dbVersion = String(r.rows?.[0]?.version || "").split(" ").slice(0, 2).join(" ");
+    } catch (e: any) {
+      dbStatus = "error: " + (e?.message || String(e));
+    }
+    res.json({
+      uptime: process.uptime(),
+      nodeVersion: process.version,
+      platform: process.platform,
+      memory: {
+        rssMB: Math.round(memUsage.rss / 1024 / 1024),
+        heapUsedMB: Math.round(memUsage.heapUsed / 1024 / 1024),
+        heapTotalMB: Math.round(memUsage.heapTotal / 1024 / 1024),
+        externalMB: Math.round(memUsage.external / 1024 / 1024),
+      },
+      database: { status: dbStatus, latencyMs: dbLatencyMs, version: dbVersion },
+      responseTimeMs: Date.now() - start,
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  app.get("/api/it/inspection/schema", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { pool } = await import("./db");
+      const r = await pool.query(`
+        SELECT table_name, 
+          (SELECT COUNT(*) FROM information_schema.columns c WHERE c.table_name = t.table_name AND c.table_schema = 'public') AS column_count
+        FROM information_schema.tables t
+        WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+        ORDER BY table_name
+      `);
+      const counts = await Promise.all(
+        r.rows.map(async (row: any) => {
+          try {
+            const c = await pool.query(`SELECT COUNT(*)::int AS n FROM "${row.table_name}"`);
+            return { table: row.table_name, columns: Number(row.column_count), rows: c.rows[0].n };
+          } catch {
+            return { table: row.table_name, columns: Number(row.column_count), rows: -1 };
+          }
+        })
+      );
+      res.json({ tables: counts, totalTables: counts.length });
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || String(e) });
+    }
+  });
+
+  app.get("/api/it/inspection/sessions", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { pool } = await import("./db");
+      const r = await pool.query(`
+        SELECT COUNT(*)::int AS total,
+          COUNT(*) FILTER (WHERE expire > NOW())::int AS active,
+          COUNT(*) FILTER (WHERE expire <= NOW())::int AS expired
+        FROM session
+      `).catch(() => ({ rows: [{ total: 0, active: 0, expired: 0 }] }));
+      res.json(r.rows[0]);
+    } catch (e: any) {
+      res.json({ total: 0, active: 0, expired: 0, error: e?.message });
+    }
+  });
+
+  app.get("/api/it/inspection/routes", requireAuth, requireITAccount, async (req, res) => {
+    const routes: any[] = [];
+    const stack = (app as any)._router?.stack || [];
+    for (const layer of stack) {
+      if (layer.route) {
+        const methods = Object.keys(layer.route.methods).map((m) => m.toUpperCase());
+        routes.push({ path: layer.route.path, methods });
+      }
+    }
+    res.json({ total: routes.length, routes });
+  });
+
+  app.post("/api/it/inspection/test-endpoint", requireAuth, requireITAccount, async (req, res) => {
+    const { method, path: testPath } = req.body || {};
+    if (!method || !testPath) return res.status(400).json({ error: "method and path required" });
+    const start = Date.now();
+    try {
+      const port = process.env.PORT || 5000;
+      const url = `http://localhost:${port}${testPath}`;
+      const r = await fetch(url, { method: String(method).toUpperCase(), headers: { Cookie: req.headers.cookie || "" } });
+      const text = await r.text();
+      res.json({
+        status: r.status,
+        ok: r.ok,
+        latencyMs: Date.now() - start,
+        bodyPreview: text.slice(0, 500),
+        contentType: r.headers.get("content-type"),
+      });
+    } catch (e: any) {
+      res.json({ status: 0, ok: false, latencyMs: Date.now() - start, error: e?.message });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Setup WebSocket server for real-time notifications on specific path to avoid conflicts with Vite HMR

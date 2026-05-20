@@ -104,6 +104,7 @@ const MealSubscriptions = lazy(() => import("@/pages/meal-subscriptions"));
 const CateringContracts = lazy(() => import("@/pages/catering-contracts"));
 const Marketing = lazy(() => import("@/pages/marketing"));
 const CompanyProfile = lazy(() => import("@/pages/company-profile"));
+const InspectionTools = lazy(() => import("@/pages/inspection-tools"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Auth pages loaded eagerly to avoid Suspense issues with AuthProvider

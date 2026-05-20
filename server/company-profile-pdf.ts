@@ -80,15 +80,22 @@ function baseStyles(p: CompanyProfile): string {
       print-color-adjust: exact;
     }
     @page { size: A4; margin: 0; }
+    /* Each .page is exactly one A4 sheet. We use height (not min-height) so
+       contents that would overflow are caught by the cropping rules below
+       instead of silently spilling onto a partial second page. */
     .page {
       width: 210mm;
-      min-height: 297mm;
-      padding: 18mm 16mm;
+      height: 297mm;
+      padding: 16mm 14mm;
       page-break-after: always;
+      page-break-inside: avoid;
+      break-after: page;
+      break-inside: avoid;
       position: relative;
       overflow: hidden;
+      box-sizing: border-box;
     }
-    .page:last-child { page-break-after: auto; }
+    .page:last-child { page-break-after: auto; break-after: auto; }
     .cover-page {
       padding: 0;
       display: flex;
@@ -97,14 +104,20 @@ function baseStyles(p: CompanyProfile): string {
       color: white;
     }
     h1, h2, h3, h4 { line-height: 1.2; }
+    h1 { font-size: 40pt; }
+    h2 { font-size: 22pt; }
+    h3 { font-size: 13pt; }
+    p  { font-size: 11pt; line-height: 1.65; }
     .muted { color: #475569; }
     img { max-width: 100%; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14mm; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8mm; }
-    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6mm; }
-    .stat-value { font-size: 36pt; font-weight: 800; line-height: 1; }
-    .stat-label { font-size: 10pt; color: #64748b; margin-top: 4mm; }
-    .card { background: #f8fafc; border-radius: 10px; padding: 7mm; }
+    /* Tight grid gaps so 2/3/4-column layouts fit A4 width without overflow. */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6mm; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5mm; }
+    /* Cards never split across pages — prevents half-cards at page bottom. */
+    .card { background: #f8fafc; border-radius: 10px; padding: 6mm; page-break-inside: avoid; break-inside: avoid; }
+    .stat-value { font-size: 30pt; font-weight: 800; line-height: 1; }
+    .stat-label { font-size: 9.5pt; color: #64748b; margin-top: 3mm; }
     .pill {
       display: inline-block;
       padding: 2mm 5mm;
@@ -161,7 +174,7 @@ function renderModern(p: CompanyProfile, s: Strings): string {
       </div>
       <div style="padding: 0 16mm; text-align: center;">
         <div class="pill" style="background: rgba(255,255,255,0.18); color: white; margin-bottom: 12mm;">${escapeHtml(s.cover)}</div>
-        <h1 style="font-size: 48pt; font-weight: 900; margin-bottom: 8mm; color: white;">${escapeHtml(name)}</h1>
+        <h1 style="font-size: 42pt; font-weight: 900; margin-bottom: 8mm; color: white;">${escapeHtml(name)}</h1>
         ${tagline ? `<p style="font-size: 16pt; opacity: 0.92; max-width: 140mm; margin: 0 auto;">${escapeHtml(tagline)}</p>` : ""}
       </div>
       <div style="padding: 0 16mm 20mm; display: flex; justify-content: space-between; align-items: end; font-size: 10pt; opacity: 0.85;">
@@ -260,7 +273,7 @@ function renderModern(p: CompanyProfile, s: Strings): string {
       <div class="grid-2" style="gap: 4mm;">
         ${p.galleryImages.map((g) => `
           <div style="border-radius: 8px; overflow: hidden;">
-            <img src="${g.imageDataUrl}" style="width: 100%; height: 70mm; object-fit: cover; display: block;"/>
+            <img src="${g.imageDataUrl}" style="width: 100%; height: 60mm; object-fit: cover; display: block;"/>
             ${g.caption ? `<div style="padding: 2mm 0; font-size: 9pt; color: #64748b; text-align: center;">${escapeHtml(g.caption)}</div>` : ""}
           </div>
         `).join("")}
@@ -302,7 +315,7 @@ function renderCorporate(p: CompanyProfile, s: Strings): string {
         ${p.logoDataUrl ? `<img src="${p.logoDataUrl}" style="height: 28mm; max-width: 70mm; object-fit: contain; margin-bottom: 16mm; background:white; padding:4mm; border-radius:4px;"/>` : ""}
         <div style="border-${p.language === "ar" ? "right" : "left"}: 4px solid ${p.primaryColor}; padding-${p.language === "ar" ? "right" : "left"}: 8mm;">
           <div style="font-size: 11pt; letter-spacing: 4px; opacity: 0.6; margin-bottom: 6mm;">${escapeHtml(s.cover).toUpperCase()}</div>
-          <h1 style="font-family: 'Playfair Display', serif; font-size: 44pt; font-weight: 800; line-height: 1.1; margin-bottom: 8mm;">${escapeHtml(name)}</h1>
+          <h1 style="font-family: 'Playfair Display', serif; font-size: 38pt; font-weight: 800; line-height: 1.1; margin-bottom: 8mm;">${escapeHtml(name)}</h1>
           ${tagline ? `<p style="font-size: 14pt; opacity: 0.85; max-width: 140mm;">${escapeHtml(tagline)}</p>` : ""}
         </div>
       </div>
@@ -400,7 +413,7 @@ function renderCorporate(p: CompanyProfile, s: Strings): string {
       <div class="grid-2" style="gap: 4mm;">
         ${p.galleryImages.map((g) => `
           <div>
-            <img src="${g.imageDataUrl}" style="width:100%; height:70mm; object-fit:cover; border-radius: 4px;"/>
+            <img src="${g.imageDataUrl}" style="width:100%; height:55mm; object-fit:cover; border-radius: 4px;"/>
             ${g.caption ? `<div style="padding-top:2mm; font-size:9pt; color:#64748b;">${escapeHtml(g.caption)}</div>` : ""}
           </div>
         `).join("")}
@@ -441,7 +454,7 @@ function renderCreative(p: CompanyProfile, s: Strings): string {
       </div>
       <div style="padding: 0 20mm; position:relative;">
         <div style="font-size: 11pt; color: ${p.primaryColor}; font-weight: 700; letter-spacing: 6px; margin-bottom: 8mm;">${escapeHtml(s.cover).toUpperCase()}</div>
-        <h1 style="font-size: 56pt; font-weight: 900; line-height: 1; margin-bottom: 10mm; color: ${p.primaryColor};">${escapeHtml(name)}</h1>
+        <h1 style="font-size: 46pt; font-weight: 900; line-height: 1; margin-bottom: 10mm; color: ${p.primaryColor};">${escapeHtml(name)}</h1>
         ${tagline ? `<p style="font-size: 17pt; color: #475569; max-width: 150mm; font-weight: 300; line-height: 1.4;">${escapeHtml(tagline)}</p>` : ""}
       </div>
       <div style="padding: 0 20mm 22mm; position:relative; display: flex; gap: 4mm; flex-wrap: wrap;">
@@ -552,7 +565,7 @@ function renderCreative(p: CompanyProfile, s: Strings): string {
       <div class="grid-2" style="gap: 4mm;">
         ${p.galleryImages.map((g) => `
           <div style="border-radius: 14px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.08);">
-            <img src="${g.imageDataUrl}" style="width:100%; height:70mm; object-fit:cover;"/>
+            <img src="${g.imageDataUrl}" style="width:100%; height:55mm; object-fit:cover;"/>
             ${g.caption ? `<div style="padding:3mm 4mm; font-size:9pt; color:#475569; background:white;">${escapeHtml(g.caption)}</div>` : ""}
           </div>
         `).join("")}
@@ -564,7 +577,7 @@ function renderCreative(p: CompanyProfile, s: Strings): string {
       <div style="position:absolute;top:-30mm;${p.language === "ar" ? "left" : "right"}:-30mm;width:120mm;height:120mm;border-radius:50%;background:${p.primaryColor};opacity:0.3;"></div>
       <div style="position:absolute;bottom:-40mm;${p.language === "ar" ? "right" : "left"}:-40mm;width:140mm;height:140mm;border-radius:50%;background:${p.accentColor};opacity:0.25;"></div>
       <div style="position:relative; padding-top: 30mm;">
-        <h2 style="font-size: 40pt; font-weight: 900; margin-bottom: 12mm;">✦ ${escapeHtml(s.contact)}</h2>
+        <h2 style="font-size: 32pt; font-weight: 900; margin-bottom: 12mm;">✦ ${escapeHtml(s.contact)}</h2>
         <div style="font-size: 12pt; line-height: 2.2;">
           ${p.contactEmail ? `<div><strong style="display:inline-block;width:30mm;opacity:0.7;">${escapeHtml(s.email)}</strong> ${escapeHtml(p.contactEmail)}</div>` : ""}
           ${p.contactPhone ? `<div><strong style="display:inline-block;width:30mm;opacity:0.7;">${escapeHtml(s.phone)}</strong> ${escapeHtml(p.contactPhone)}</div>` : ""}
@@ -592,7 +605,7 @@ function renderMinimal(p: CompanyProfile, s: Strings): string {
       </div>
       <div style="padding: 0 20mm; max-width: 170mm;">
         <div style="width: 30mm; height: 2px; background: ${p.primaryColor}; margin-bottom: 8mm;"></div>
-        <h1 style="font-size: 50pt; font-weight: 300; letter-spacing: -1px; line-height: 1.05; margin-bottom: 8mm;">${escapeHtml(name)}</h1>
+        <h1 style="font-size: 40pt; font-weight: 300; letter-spacing: -1px; line-height: 1.05; margin-bottom: 8mm;">${escapeHtml(name)}</h1>
         ${tagline ? `<p style="font-size: 14pt; color: #64748b; font-weight: 300; line-height: 1.4;">${escapeHtml(tagline)}</p>` : ""}
       </div>
       <div style="padding: 0 20mm 22mm; display:flex; justify-content: space-between; font-size: 9pt; color: #94a3b8; letter-spacing: 2px;">
@@ -680,7 +693,7 @@ function renderMinimal(p: CompanyProfile, s: Strings): string {
       <div class="grid-2" style="gap: 4mm;">
         ${p.galleryImages.map((g) => `
           <div>
-            <img src="${g.imageDataUrl}" style="width:100%; height:70mm; object-fit:cover;"/>
+            <img src="${g.imageDataUrl}" style="width:100%; height:55mm; object-fit:cover;"/>
             ${g.caption ? `<div style="padding-top:2mm; font-size:9pt; color:#94a3b8;">${escapeHtml(g.caption)}</div>` : ""}
           </div>
         `).join("")}
