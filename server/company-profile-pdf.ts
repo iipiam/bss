@@ -441,7 +441,7 @@ function renderCreative(p: CompanyProfile, s: Strings): string {
       </div>
       <div style="padding: 0 20mm; position:relative;">
         <div style="font-size: 11pt; color: ${p.primaryColor}; font-weight: 700; letter-spacing: 6px; margin-bottom: 8mm;">${escapeHtml(s.cover).toUpperCase()}</div>
-        <h1 style="font-size: 56pt; font-weight: 900; line-height: 1; margin-bottom: 10mm; background: linear-gradient(135deg, ${p.primaryColor}, ${p.accentColor}); -webkit-background-clip: text; background-clip: text; color: transparent;">${escapeHtml(name)}</h1>
+        <h1 style="font-size: 56pt; font-weight: 900; line-height: 1; margin-bottom: 10mm; color: ${p.primaryColor};">${escapeHtml(name)}</h1>
         ${tagline ? `<p style="font-size: 17pt; color: #475569; max-width: 150mm; font-weight: 300; line-height: 1.4;">${escapeHtml(tagline)}</p>` : ""}
       </div>
       <div style="padding: 0 20mm 22mm; position:relative; display: flex; gap: 4mm; flex-wrap: wrap;">
