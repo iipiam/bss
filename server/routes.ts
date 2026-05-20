@@ -17483,6 +17483,28 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json({ total: routes.length, routes });
   });
 
+  app.get("/api/it/app-diagram/pdf", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { renderAppDiagramHtml } = await import("@shared/appDiagrams");
+      const { getBrowser } = await import("./invoice");
+      const html = renderAppDiagramHtml();
+      const browser = await getBrowser();
+      const page = await browser.newPage();
+      try {
+        await page.setContent(html, { waitUntil: "networkidle0" });
+        const pdf = await page.pdf({ format: "A4", landscape: true, printBackground: true, margin: { top: "12mm", bottom: "12mm", left: "12mm", right: "12mm" } });
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename="bss-app-diagram-${new Date().toISOString().slice(0, 10)}.pdf"`);
+        res.send(Buffer.from(pdf));
+      } finally {
+        await page.close();
+      }
+    } catch (e: any) {
+      console.error("[AppDiagram PDF] error:", e);
+      res.status(500).json({ error: e?.message || String(e) });
+    }
+  });
+
   app.post("/api/it/inspection/test-endpoint", requireAuth, requireITAccount, async (req, res) => {
     const { method, path: testPath } = req.body || {};
     if (!method || !testPath) return res.status(400).json({ error: "method and path required" });

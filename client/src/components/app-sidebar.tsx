@@ -48,6 +48,7 @@ import {
   Megaphone,
   IdCard,
   Stethoscope,
+  Network,
 } from "lucide-react";
 import logoImage from "@assets/Kinzhal_logo_1768960890639.png";
 import {
@@ -194,6 +195,7 @@ export function AppSidebar() {
     { title: t.businessManagement || "Business Management", url: "/business-management", icon: Building2, testId: "business-management", gradient: "from-teal-500 to-cyan-500" },
     { title: t.zatcaSettings || "ZATCA E-Invoicing", url: "/zatca-settings", icon: Shield, testId: "zatca-settings", gradient: "from-green-600 to-emerald-500" },
     { title: t.inspectionTools || "Inspection Tools", url: "/inspection-tools", icon: Stethoscope, testId: "inspection-tools", gradient: "from-pink-500 to-rose-500" },
+    { title: t.appDiagram || "App Diagram", url: "/app-diagram", icon: Network, testId: "app-diagram", gradient: "from-indigo-500 to-blue-500" },
   ];
 
   // Support menu items for IT Dashboard (visible only to IT accounts)
@@ -214,7 +216,7 @@ export function AppSidebar() {
       }
       
       // Client accounts cannot see IT-only pages
-      if (item.testId === 'it-dashboard' || item.testId === 'performance' || item.testId === 'it-account-management' || item.testId === 'business-management' || item.testId === 'inspection-tools') {
+      if (item.testId === 'it-dashboard' || item.testId === 'performance' || item.testId === 'it-account-management' || item.testId === 'business-management' || item.testId === 'inspection-tools' || item.testId === 'app-diagram') {
         return false;
       }
       

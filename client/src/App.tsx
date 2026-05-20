@@ -105,6 +105,7 @@ const CateringContracts = lazy(() => import("@/pages/catering-contracts"));
 const Marketing = lazy(() => import("@/pages/marketing"));
 const CompanyProfile = lazy(() => import("@/pages/company-profile"));
 const InspectionTools = lazy(() => import("@/pages/inspection-tools"));
+const AppDiagram = lazy(() => import("@/pages/app-diagram"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Auth pages loaded eagerly to avoid Suspense issues with AuthProvider
@@ -201,6 +202,7 @@ function Router() {
         <Route path="/catering-contracts" component={CateringContracts} />
         <Route path="/marketing" component={Marketing} />
         <Route path="/inspection-tools" component={InspectionTools} />
+        <Route path="/app-diagram" component={AppDiagram} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>
@@ -282,8 +284,8 @@ function AppContent() {
   // Handle IT account redirects using useEffect to avoid render issues
   // IT accounts can access /it-dashboard, /performance, /it-account-management, /business-management, /zatca-settings, and /support routes
   useEffect(() => {
-    const allowedITRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management', '/zatca-settings', '/inspection-tools'];
-    const itOnlyRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management', '/inspection-tools'];
+    const allowedITRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management', '/zatca-settings', '/inspection-tools', '/app-diagram'];
+    const itOnlyRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management', '/inspection-tools', '/app-diagram'];
     const isAllowedRoute = allowedITRoutes.includes(location) || location.startsWith('/support');
 
     if (accountType === 'it' && !isAllowedRoute) {
