@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import {
   Card,
@@ -173,32 +174,50 @@ function PrinterCard({
           </div>
           <div className="flex items-center gap-1">
             {!printer.isDefault && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onSetDefault(printer)}
-                title={t.setAsDefault}
-                data-testid={`button-set-default-${printer.id}`}
-              >
-                <Star className="h-4 w-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t.setAsDefault}
+                    onClick={() => onSetDefault(printer)}
+                    title={t.setAsDefault}
+                    data-testid={`button-set-default-${printer.id}`}
+                  >
+                    <Star className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t.setAsDefault}</TooltipContent>
+              </Tooltip>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onEdit(printer)}
-              data-testid={`button-edit-printer-${printer.id}`}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onDelete(printer)}
-              data-testid={`button-delete-printer-${printer.id}`}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t.edit}
+                  onClick={() => onEdit(printer)}
+                  data-testid={`button-edit-printer-${printer.id}`}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t.edit}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t.delete}
+                  onClick={() => onDelete(printer)}
+                  data-testid={`button-delete-printer-${printer.id}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t.delete}</TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </CardContent>

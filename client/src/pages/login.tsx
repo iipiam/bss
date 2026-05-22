@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { LogIn, UserPlus, Check, Languages, Play, Video, Mail, HelpCircle, MessageCircle, Upload, FileText, X } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
@@ -864,14 +865,20 @@ export default function Login() {
                           {crCertificate ? crCertificate.name.substring(0, 20) + "..." : t.uploadFile || "Upload File"}
                         </Button>
                         {crCertificate && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setCrCertificate(null)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Remove file"
+                                onClick={() => setCrCertificate(null)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Remove file</TooltipContent>
+                          </Tooltip>
                         )}
                       </div>
                     </div>
@@ -900,14 +907,20 @@ export default function Login() {
                             {vatCertificate ? vatCertificate.name.substring(0, 20) + "..." : t.uploadFile || "Upload File"}
                           </Button>
                           {vatCertificate && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setVatCertificate(null)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  aria-label="Remove file"
+                                  onClick={() => setVatCertificate(null)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Remove file</TooltipContent>
+                            </Tooltip>
                           )}
                         </div>
                       </div>
@@ -936,14 +949,20 @@ export default function Login() {
                           {ibanCertificate ? ibanCertificate.name.substring(0, 20) + "..." : t.uploadFile || "Upload File"}
                         </Button>
                         {ibanCertificate && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setIbanCertificate(null)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Remove file"
+                                onClick={() => setIbanCertificate(null)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Remove file</TooltipContent>
+                          </Tooltip>
                         )}
                       </div>
                     </div>
@@ -971,14 +990,20 @@ export default function Login() {
                           {nationalAddress ? nationalAddress.name.substring(0, 20) + "..." : t.uploadFile || "Upload File"}
                         </Button>
                         {nationalAddress && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setNationalAddress(null)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Remove file"
+                                onClick={() => setNationalAddress(null)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Remove file</TooltipContent>
+                          </Tooltip>
                         )}
                       </div>
                     </div>

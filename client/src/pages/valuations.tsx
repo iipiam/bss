@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -717,22 +718,34 @@ export default function Valuations() {
                   </div>
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEdit(valuation)}
-                    data-testid={`button-edit-${valuation.id}`}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setDeletingValuation(valuation)}
-                    data-testid={`button-delete-${valuation.id}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t.edit}
+                        onClick={() => handleEdit(valuation)}
+                        data-testid={`button-edit-${valuation.id}`}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t.edit}</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t.delete}
+                        onClick={() => setDeletingValuation(valuation)}
+                        data-testid={`button-delete-${valuation.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t.delete}</TooltipContent>
+                  </Tooltip>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">

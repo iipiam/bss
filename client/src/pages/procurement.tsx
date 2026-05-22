@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -850,30 +851,42 @@ export default function ProcurementPage() {
                           </p>
                         </div>
                         <div className="flex gap-1">
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => {
-                              if (invoiceImage?.endsWith('.pdf')) {
-                                window.open(invoiceImage, '_blank');
-                              } else {
-                                setViewImageUrl(invoiceImage);
-                              }
-                            }}
-                            data-testid="button-view-invoice"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => setInvoiceImage(null)}
-                            data-testid="button-remove-invoice"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="icon"
+                                aria-label={t.view}
+                                onClick={() => {
+                                  if (invoiceImage?.endsWith('.pdf')) {
+                                    window.open(invoiceImage, '_blank');
+                                  } else {
+                                    setViewImageUrl(invoiceImage);
+                                  }
+                                }}
+                                data-testid="button-view-invoice"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t.view}</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="icon"
+                                aria-label="Remove"
+                                onClick={() => setInvoiceImage(null)}
+                                data-testid="button-remove-invoice"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Remove</TooltipContent>
+                          </Tooltip>
                         </div>
                       </div>
                     ) : (

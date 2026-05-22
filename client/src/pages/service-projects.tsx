@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -923,30 +924,48 @@ export default function ServiceProjects() {
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <Link href={`/service-projects/${project.id}`}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      data-testid={`button-view-${project.id}`}
-                    >
-                      <FileText className="h-4 w-4" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={t.view}
+                          data-testid={`button-view-${project.id}`}
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t.view}</TooltipContent>
+                    </Tooltip>
                   </Link>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEdit(project)}
-                    data-testid={`button-edit-${project.id}`}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setDeletingProject(project)}
-                    data-testid={`button-delete-${project.id}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t.edit}
+                        onClick={() => handleEdit(project)}
+                        data-testid={`button-edit-${project.id}`}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t.edit}</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t.delete}
+                        onClick={() => setDeletingProject(project)}
+                        data-testid={`button-delete-${project.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t.delete}</TooltipContent>
+                  </Tooltip>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">

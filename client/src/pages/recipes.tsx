@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -737,16 +738,22 @@ export default function Recipes() {
                       disabled
                       data-testid={`input-ingredient-unit-${index}`}
                     />
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => removeIngredient(index)}
-                      disabled={ingredients.length === 1}
-                      data-testid={`button-remove-ingredient-${index}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          aria-label={t.delete}
+                          onClick={() => removeIngredient(index)}
+                          disabled={ingredients.length === 1}
+                          data-testid={`button-remove-ingredient-${index}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t.delete}</TooltipContent>
+                    </Tooltip>
                   </div>
                 ))}
               </div>
@@ -769,16 +776,22 @@ export default function Recipes() {
                       rows={2}
                       data-testid={`input-step-${index}`}
                     />
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => removeStep(index)}
-                      disabled={steps.length === 1}
-                      data-testid={`button-remove-step-${index}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          aria-label={t.delete}
+                          onClick={() => removeStep(index)}
+                          disabled={steps.length === 1}
+                          data-testid={`button-remove-step-${index}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t.delete}</TooltipContent>
+                    </Tooltip>
                   </div>
                 ))}
               </div>

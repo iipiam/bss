@@ -20,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TableFooter } from "@/components/ui/table";
 import { 
   Building2, 
@@ -1174,14 +1175,20 @@ export default function BusinessManagement() {
                       {t.expired || "Expired"}
                     </Button>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => refetchClients()}
-                    data-testid="button-refresh-clients"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
+                  <UITooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        aria-label={t.refresh || "Refresh"}
+                        onClick={() => refetchClients()}
+                        data-testid="button-refresh-clients"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t.refresh || "Refresh"}</TooltipContent>
+                  </UITooltip>
                 </div>
               </div>
             </CardHeader>
@@ -1348,14 +1355,20 @@ export default function BusinessManagement() {
                       data-testid="input-search-invoices"
                     />
                   </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => refetchInvoices()}
-                    data-testid="button-refresh-invoices"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
+                  <UITooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        aria-label={t.refresh || "Refresh"}
+                        onClick={() => refetchInvoices()}
+                        data-testid="button-refresh-invoices"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t.refresh || "Refresh"}</TooltipContent>
+                  </UITooltip>
                 </div>
               </div>
             </CardHeader>
@@ -1648,14 +1661,20 @@ export default function BusinessManagement() {
                       {t.overdueBills}
                     </Button>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => refetchBills()}
-                    data-testid="button-refresh-bills"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
+                  <UITooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        aria-label={t.refresh || "Refresh"}
+                        onClick={() => refetchBills()}
+                        data-testid="button-refresh-bills"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t.refresh || "Refresh"}</TooltipContent>
+                  </UITooltip>
                   <Dialog open={isAddBillDialogOpen} onOpenChange={setIsAddBillDialogOpen}>
                     <DialogTrigger asChild>
                       <Button data-testid="button-add-bill">
@@ -1864,19 +1883,25 @@ export default function BusinessManagement() {
                               data-testid="input-bill-invoice-file"
                             />
                             {invoiceFile && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                  setInvoiceFile(null);
-                                  const fileInput = document.getElementById('invoiceFile') as HTMLInputElement;
-                                  if (fileInput) fileInput.value = '';
-                                }}
-                                data-testid="button-remove-invoice-file"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
+                              <UITooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label={"Remove"}
+                                    onClick={() => {
+                                      setInvoiceFile(null);
+                                      const fileInput = document.getElementById('invoiceFile') as HTMLInputElement;
+                                      if (fileInput) fileInput.value = '';
+                                    }}
+                                    data-testid="button-remove-invoice-file"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{"Remove"}</TooltipContent>
+                              </UITooltip>
                             )}
                           </div>
                           {invoiceFile && (
@@ -1960,32 +1985,44 @@ export default function BusinessManagement() {
                           <TableCell>
                             {bill.attachmentPath ? (
                               <div className="flex items-center gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => window.open(bill.attachmentPath!, '_blank')}
-                                  data-testid={`button-view-invoice-${bill.id}`}
-                                  title={t.view || "View"}
-                                >
-                                  <FileText className="h-4 w-4 text-blue-500" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => {
-                                    const downloadUrl = `${bill.attachmentPath}?download=true`;
-                                    const a = document.createElement('a');
-                                    a.href = downloadUrl;
-                                    a.download = '';
-                                    document.body.appendChild(a);
-                                    a.click();
-                                    document.body.removeChild(a);
-                                  }}
-                                  data-testid={`button-download-invoice-${bill.id}`}
-                                  title={t.downloadInvoice || "Download"}
-                                >
-                                  <Download className="h-4 w-4 text-green-500" />
-                                </Button>
+                                <UITooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      aria-label={t.view || "View"}
+                                      onClick={() => window.open(bill.attachmentPath!, '_blank')}
+                                      data-testid={`button-view-invoice-${bill.id}`}
+                                      title={t.view || "View"}
+                                    >
+                                      <FileText className="h-4 w-4 text-blue-500" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>{t.view || "View"}</TooltipContent>
+                                </UITooltip>
+                                <UITooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      aria-label={t.download || "Download"}
+                                      onClick={() => {
+                                        const downloadUrl = `${bill.attachmentPath}?download=true`;
+                                        const a = document.createElement('a');
+                                        a.href = downloadUrl;
+                                        a.download = '';
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        document.body.removeChild(a);
+                                      }}
+                                      data-testid={`button-download-invoice-${bill.id}`}
+                                      title={t.downloadInvoice || "Download"}
+                                    >
+                                      <Download className="h-4 w-4 text-green-500" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>{t.download || "Download"}</TooltipContent>
+                                </UITooltip>
                               </div>
                             ) : (
                               <span className="text-muted-foreground text-sm">-</span>
@@ -1993,23 +2030,35 @@ export default function BusinessManagement() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => openEditBillDialog(bill)}
-                                data-testid={`button-edit-bill-${bill.id}`}
-                              >
-                                <Edit className="h-4 w-4 text-blue-500" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => deleteBillMutation.mutate(bill.id)}
-                                disabled={deleteBillMutation.isPending}
-                                data-testid={`button-delete-bill-${bill.id}`}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-500" />
-                              </Button>
+                              <UITooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label={t.edit || "Edit"}
+                                    onClick={() => openEditBillDialog(bill)}
+                                    data-testid={`button-edit-bill-${bill.id}`}
+                                  >
+                                    <Edit className="h-4 w-4 text-blue-500" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{t.edit || "Edit"}</TooltipContent>
+                              </UITooltip>
+                              <UITooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label={t.delete || "Delete"}
+                                    onClick={() => deleteBillMutation.mutate(bill.id)}
+                                    disabled={deleteBillMutation.isPending}
+                                    data-testid={`button-delete-bill-${bill.id}`}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{t.delete || "Delete"}</TooltipContent>
+                              </UITooltip>
                             </div>
                           </TableCell>
                         </TableRow>

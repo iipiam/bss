@@ -6,6 +6,7 @@ import { useCateringT } from "@/i18n/cateringContractsTranslations";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -430,11 +431,16 @@ export default function CateringContractsPage() {
                     <Input className="w-24" type="number" min="1" step="1" placeholder={t.qtyPerDay} title={t.qtyPerDay} value={m.qtyPerDay ?? 1} onChange={(e) => {
                       const list = [...form.mealSelections]; list[i] = { ...list[i], qtyPerDay: Math.max(1, parseInt(e.target.value) || 1) }; setField("mealSelections", list);
                     }} data-testid={`input-meal-qty-${i}`} />
-                    <Button type="button" size="icon" variant="outline" onClick={() => {
-                      const list = form.mealSelections.filter((_: any, idx: number) => idx !== i); setField("mealSelections", list);
-                    }} data-testid={`button-remove-meal-${i}`}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button type="button" size="icon" variant="outline" aria-label={t.delete} onClick={() => {
+                          const list = form.mealSelections.filter((_: any, idx: number) => idx !== i); setField("mealSelections", list);
+                        }} data-testid={`button-remove-meal-${i}`}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t.delete}</TooltipContent>
+                    </Tooltip>
                   </div>
                 ))}
               </div>
@@ -484,11 +490,16 @@ export default function CateringContractsPage() {
                       <Input className="col-span-2" type="date" value={it.dueDate || ""} disabled={isIssued} onChange={(e) => {
                         const list = [...form.paymentInstallments]; list[i] = { ...list[i], dueDate: e.target.value }; setField("paymentInstallments", list);
                       }} data-testid={`input-installment-date-${i}`} />
-                      <Button type="button" size="icon" variant="outline" disabled={isIssued} onClick={() => {
-                        const list = form.paymentInstallments.filter((_: any, idx: number) => idx !== i); setField("paymentInstallments", list);
-                      }} data-testid={`button-remove-installment-${i}`}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button type="button" size="icon" variant="outline" aria-label={t.delete} disabled={isIssued} onClick={() => {
+                            const list = form.paymentInstallments.filter((_: any, idx: number) => idx !== i); setField("paymentInstallments", list);
+                          }} data-testid={`button-remove-installment-${i}`}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t.delete}</TooltipContent>
+                      </Tooltip>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 ps-1">
                       {isIssued ? (
@@ -1033,16 +1044,22 @@ function TemplateEditor({ templates, t }: { templates: CateringContractTemplate[
                     >
                       <ListPlus className="h-3 w-3" />
                     </Button>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="col-span-1"
-                      onClick={() => removeCustomPh(idx)}
-                      data-testid={`button-remove-custom-ph-${idx}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          aria-label={t.delete}
+                          className="col-span-1"
+                          onClick={() => removeCustomPh(idx)}
+                          data-testid={`button-remove-custom-ph-${idx}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t.delete}</TooltipContent>
+                    </Tooltip>
                   </div>
                 ))}
               </div>

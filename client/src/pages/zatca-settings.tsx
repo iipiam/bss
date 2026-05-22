@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Shield, AlertCircle, AlertTriangle, CheckCircle2, Settings, KeyRound, FileText, RefreshCw, RotateCcw, Clock, XCircle, Info, Eye, EyeOff, Copy, Download, Building2, ChevronDown, Upload } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Restaurant {
   restaurantId: string;
@@ -960,22 +961,34 @@ export default function ZatcaSettingsPage() {
                           className="font-mono text-xs"
                           data-testid="input-compliance-csid-masked"
                         />
-                        <Button 
-                          variant="outline" 
-                          size="icon"
-                          onClick={() => setShowComplianceCsid(!showComplianceCsid)}
-                          data-testid="button-toggle-compliance-csid"
-                        >
-                          {showComplianceCsid ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="icon"
-                          onClick={() => copyToClipboard(settings.complianceCsid || "")}
-                          data-testid="button-copy-compliance-csid"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="icon"
+                              aria-label="Toggle visibility"
+                              onClick={() => setShowComplianceCsid(!showComplianceCsid)}
+                              data-testid="button-toggle-compliance-csid"
+                            >
+                              {showComplianceCsid ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Toggle visibility</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="icon"
+                              aria-label="Copy"
+                              onClick={() => copyToClipboard(settings.complianceCsid || "")}
+                              data-testid="button-copy-compliance-csid"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Copy</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                   </div>
@@ -1092,22 +1105,34 @@ export default function ZatcaSettingsPage() {
                           className="font-mono text-xs"
                           data-testid="input-production-csid-masked"
                         />
-                        <Button 
-                          variant="outline" 
-                          size="icon"
-                          onClick={() => setShowProductionCsid(!showProductionCsid)}
-                          data-testid="button-toggle-production-csid"
-                        >
-                          {showProductionCsid ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="icon"
-                          onClick={() => copyToClipboard(settings.productionCsid || "")}
-                          data-testid="button-copy-production-csid"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="icon"
+                              aria-label="Toggle visibility"
+                              onClick={() => setShowProductionCsid(!showProductionCsid)}
+                              data-testid="button-toggle-production-csid"
+                            >
+                              {showProductionCsid ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Toggle visibility</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="icon"
+                              aria-label="Copy"
+                              onClick={() => copyToClipboard(settings.productionCsid || "")}
+                              data-testid="button-copy-production-csid"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Copy</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                     {settings?.privateKey && (
@@ -1121,22 +1146,34 @@ export default function ZatcaSettingsPage() {
                             className="font-mono text-xs"
                             data-testid="input-private-key-masked"
                           />
-                          <Button 
-                            variant="outline" 
-                            size="icon"
-                            onClick={() => setShowPrivateKey(!showPrivateKey)}
-                            data-testid="button-toggle-private-key"
-                          >
-                            {showPrivateKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="icon"
-                            onClick={downloadPrivateKey}
-                            data-testid="button-download-private-key"
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="icon"
+                                aria-label="Toggle visibility"
+                                onClick={() => setShowPrivateKey(!showPrivateKey)}
+                                data-testid="button-toggle-private-key"
+                              >
+                                {showPrivateKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Toggle visibility</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="icon"
+                                aria-label={t.download}
+                                onClick={downloadPrivateKey}
+                                data-testid="button-download-private-key"
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t.download}</TooltipContent>
+                          </Tooltip>
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {t.privateKeyWarning || "Store this key securely. You will need it if you reinstall or move to a new system."}

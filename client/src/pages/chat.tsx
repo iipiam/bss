@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useBranch } from "@/contexts/BranchContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -339,22 +340,34 @@ export default function Chat() {
             {t.teamChat}
           </CardTitle>
           <div className="flex gap-1">
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setIsChannelDialogOpen(true)}
-              data-testid="button-new-channel"
-            >
-              <Hash className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setIsDMDialogOpen(true)}
-              data-testid="button-new-dm"
-            >
-              <UserPlus className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  aria-label="New channel"
+                  onClick={() => setIsChannelDialogOpen(true)}
+                  data-testid="button-new-channel"
+                >
+                  <Hash className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>New channel</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  aria-label="New direct message"
+                  onClick={() => setIsDMDialogOpen(true)}
+                  data-testid="button-new-dm"
+                >
+                  <UserPlus className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>New direct message</TooltipContent>
+            </Tooltip>
           </div>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col gap-4 p-4">
@@ -519,14 +532,20 @@ export default function Chat() {
                     className="resize-none min-h-[60px]"
                     data-testid="input-message"
                   />
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={!messageContent.trim() || sendMessageMutation.isPending}
-                    size="icon"
-                    data-testid="button-send-message"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={handleSendMessage}
+                        disabled={!messageContent.trim() || sendMessageMutation.isPending}
+                        size="icon"
+                        aria-label={t.sendMessage}
+                        data-testid="button-send-message"
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t.sendMessage}</TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             </CardContent>

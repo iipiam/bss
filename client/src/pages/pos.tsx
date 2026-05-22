@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -1652,39 +1653,57 @@ export default function POS() {
                           </div>
                         )}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => removeItem(item.id)}
-                        data-testid={`button-remove-${item.id}`}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Remove"
+                            className="h-6 w-6"
+                            onClick={() => removeItem(item.id)}
+                            data-testid={`button-remove-${item.id}`}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Remove</TooltipContent>
+                      </Tooltip>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => updateQuantity(item.id, -1)}
-                          data-testid={`button-decrease-${item.id}`}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              aria-label="Decrease quantity"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.id, -1)}
+                              data-testid={`button-decrease-${item.id}`}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Decrease quantity</TooltipContent>
+                        </Tooltip>
                         <span className="w-8 text-center font-mono font-semibold">
                           {item.quantity}
                         </span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => updateQuantity(item.id, 1)}
-                          data-testid={`button-increase-${item.id}`}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              aria-label="Increase quantity"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.id, 1)}
+                              data-testid={`button-increase-${item.id}`}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Increase quantity</TooltipContent>
+                        </Tooltip>
                       </div>
                       <p className="font-mono font-bold">
                         {calculateItemTotal(item).toFixed(2)} {t.sar}
@@ -1870,18 +1889,24 @@ export default function POS() {
                     )}
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => {
-                    setCustomerName("");
-                    setCustomerPhone("+966 ");
-                  }}
-                  data-testid="button-remove-customer"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Remove customer"
+                      className="h-6 w-6"
+                      onClick={() => {
+                        setCustomerName("");
+                        setCustomerPhone("+966 ");
+                      }}
+                      data-testid="button-remove-customer"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Remove customer</TooltipContent>
+                </Tooltip>
               </div>
             </div>
           )}

@@ -46,6 +46,7 @@ import {
   Edit
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Account {
   id: string;
@@ -256,16 +257,22 @@ export default function ITAccountManagement() {
                     placeholder={t.enterNewPassword || "Enter new password"}
                     data-testid="input-new-password"
                   />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3"
-                    onClick={() => setShowPassword(!showPassword)}
-                    data-testid="button-toggle-password"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Toggle visibility"
+                        className="absolute right-0 top-0 h-full px-3"
+                        onClick={() => setShowPassword(!showPassword)}
+                        data-testid="button-toggle-password"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Toggle visibility</TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
               <div className="space-y-2">
@@ -1463,20 +1470,26 @@ export default function ITAccountManagement() {
                                         placeholder={t.enterNewPassword || "Enter new password"}
                                         data-testid="input-new-password"
                                       />
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="absolute right-0 top-0 h-full px-3"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        data-testid="button-toggle-password"
-                                      >
-                                        {showPassword ? (
-                                          <EyeOff className="h-4 w-4" />
-                                        ) : (
-                                          <Eye className="h-4 w-4" />
-                                        )}
-                                      </Button>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            aria-label="Toggle visibility"
+                                            className="absolute right-0 top-0 h-full px-3"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            data-testid="button-toggle-password"
+                                          >
+                                            {showPassword ? (
+                                              <EyeOff className="h-4 w-4" />
+                                            ) : (
+                                              <Eye className="h-4 w-4" />
+                                            )}
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Toggle visibility</TooltipContent>
+                                      </Tooltip>
                                     </div>
                                   </div>
                                   <div className="space-y-2">
@@ -2641,16 +2654,22 @@ export default function ITAccountManagement() {
                                         placeholder={t.enterNewPassword || "Enter new password"}
                                         data-testid="input-it-new-password"
                                       />
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="absolute right-0 top-0 h-full px-3"
-                                        onClick={() => setShowItPassword(!showItPassword)}
-                                        data-testid="button-toggle-it-password"
-                                      >
-                                        {showItPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                      </Button>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            aria-label="Toggle visibility"
+                                            className="absolute right-0 top-0 h-full px-3"
+                                            onClick={() => setShowItPassword(!showItPassword)}
+                                            data-testid="button-toggle-it-password"
+                                          >
+                                            {showItPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Toggle visibility</TooltipContent>
+                                      </Tooltip>
                                     </div>
                                   </div>
                                   <div className="space-y-2">
@@ -2819,16 +2838,22 @@ export default function ITAccountManagement() {
                                             placeholder={t.enterNewPassword || "Enter new password"}
                                             data-testid="input-it-new-password"
                                           />
-                                          <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            className="absolute right-0 top-0 h-full px-3"
-                                            onClick={() => setShowItPassword(!showItPassword)}
-                                            data-testid="button-toggle-it-password"
-                                          >
-                                            {showItPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                          </Button>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                aria-label="Toggle visibility"
+                                                className="absolute right-0 top-0 h-full px-3"
+                                                onClick={() => setShowItPassword(!showItPassword)}
+                                                data-testid="button-toggle-it-password"
+                                              >
+                                                {showItPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                              </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Toggle visibility</TooltipContent>
+                                          </Tooltip>
                                         </div>
                                       </div>
                                       <div className="space-y-2">
@@ -3114,14 +3139,20 @@ export default function ITAccountManagement() {
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-2 flex-shrink-0">
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      onClick={() => handleFileDownload(file)}
-                                      data-testid={`button-download-file-${file.id}`}
-                                    >
-                                      <Download className="h-4 w-4" />
-                                    </Button>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="outline"
+                                          size="icon"
+                                          aria-label={t.download}
+                                          onClick={() => handleFileDownload(file)}
+                                          data-testid={`button-download-file-${file.id}`}
+                                        >
+                                          <Download className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>{t.download}</TooltipContent>
+                                    </Tooltip>
                                     <Dialog 
                                       open={deleteDialogOpen && fileToDelete?.id === file.id}
                                       onOpenChange={(open) => {

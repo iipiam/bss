@@ -63,6 +63,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDeviceLayout } from "@/lib/mobileLayout";
 import { format } from "date-fns";
 
@@ -814,15 +815,21 @@ export default function Quotations() {
                             />
                           </div>
                           <div className="col-span-1 flex justify-end">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeLineItem(idx)}
-                              data-testid={`button-remove-line-${idx}`}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  aria-label="Remove"
+                                  onClick={() => removeLineItem(idx)}
+                                  data-testid={`button-remove-line-${idx}`}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Remove</TooltipContent>
+                            </Tooltip>
                           </div>
                         </div>
                       ))}
@@ -1041,61 +1048,97 @@ export default function Quotations() {
                   </h3>
                 </div>
                 <div className="flex gap-1 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => window.open(`/api/quotations/${quotation.id}/download-pdf?lang=${pdfLang}`, '_blank')}
-                    data-testid={`button-download-pdf-${quotation.id}`}
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEdit(quotation)}
-                    data-testid={`button-edit-${quotation.id}`}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setDeletingQuotation(quotation)}
-                    data-testid={`button-delete-${quotation.id}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t.download}
+                        onClick={() => window.open(`/api/quotations/${quotation.id}/download-pdf?lang=${pdfLang}`, '_blank')}
+                        data-testid={`button-download-pdf-${quotation.id}`}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t.download}</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t.edit}
+                        onClick={() => handleEdit(quotation)}
+                        data-testid={`button-edit-${quotation.id}`}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t.edit}</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t.delete}
+                        onClick={() => setDeletingQuotation(quotation)}
+                        data-testid={`button-delete-${quotation.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t.delete}</TooltipContent>
+                  </Tooltip>
                   {(quotation.status === "draft" || quotation.status === "sent") && (
                     <>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setApproveQuotation(quotation)}
-                        data-testid={`button-approve-${quotation.id}`}
-                        className="text-green-600"
-                      >
-                        <ThumbsUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeclineQuotation(quotation)}
-                        data-testid={`button-decline-${quotation.id}`}
-                        className="text-red-600"
-                      >
-                        <ThumbsDown className="h-4 w-4" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={t.approve}
+                            onClick={() => setApproveQuotation(quotation)}
+                            data-testid={`button-approve-${quotation.id}`}
+                            className="text-green-600"
+                          >
+                            <ThumbsUp className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t.approve}</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Decline"
+                            onClick={() => setDeclineQuotation(quotation)}
+                            data-testid={`button-decline-${quotation.id}`}
+                            className="text-red-600"
+                          >
+                            <ThumbsDown className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Decline</TooltipContent>
+                      </Tooltip>
                     </>
                   )}
                   {(quotation.status === "approved" || quotation.status === "declined") && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setViewDecisionsQuotation(quotation)}
-                      data-testid={`button-view-decisions-${quotation.id}`}
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={t.view}
+                          onClick={() => setViewDecisionsQuotation(quotation)}
+                          data-testid={`button-view-decisions-${quotation.id}`}
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t.view}</TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
               </CardHeader>

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Download, Upload, Save, Loader2, Palette, Eye, FileText, Type, Layout, ArrowUp, ArrowDown } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { CompanyProfile, InsertCompanyProfile } from "@shared/schema";
 
 type ProfileForm = Omit<InsertCompanyProfile, "restaurantId">;
@@ -222,16 +223,22 @@ function ImageUploader({ value, onChange, label, height = "h-32", testId, maxSiz
         {value ? (
           <>
             <img src={value} className="w-full h-full object-contain" alt="upload" />
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              className="absolute top-2 right-2"
-              onClick={() => onChange("")}
-              data-testid={`button-remove-${testId}`}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  aria-label={L.remove}
+                  className="absolute top-2 right-2"
+                  onClick={() => onChange("")}
+                  data-testid={`button-remove-${testId}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{L.remove}</TooltipContent>
+            </Tooltip>
           </>
         ) : (
           <Button type="button" variant="ghost" onClick={() => ref.current?.click()} data-testid={`button-upload-${testId}`}>
@@ -598,7 +605,12 @@ export default function CompanyProfilePage() {
                   <div key={i} className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-2 items-start" data-testid={`row-value-${i}`}>
                     <Input value={v.title} placeholder={L.valueTitle} onChange={(e) => updateItem("coreValues", i, "title", e.target.value)} data-testid={`input-value-title-${i}`} />
                     <Textarea rows={2} value={v.description} placeholder={L.valueDesc} onChange={(e) => updateItem("coreValues", i, "description", e.target.value)} data-testid={`input-value-desc-${i}`} />
-                    <Button size="icon" variant="ghost" onClick={() => removeItem("coreValues", i)} data-testid={`button-remove-value-${i}`}><Trash2 className="h-4 w-4" /></Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button size="icon" variant="ghost" aria-label={L.remove} onClick={() => removeItem("coreValues", i)} data-testid={`button-remove-value-${i}`}><Trash2 className="h-4 w-4" /></Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{L.remove}</TooltipContent>
+                    </Tooltip>
                   </div>
                 ))}
               </CardContent>
@@ -621,7 +633,12 @@ export default function CompanyProfilePage() {
                       <Input value={s.title} placeholder={L.serviceTitle} onChange={(e) => updateItem("services", i, "title", e.target.value)} data-testid={`input-service-title-${i}`} />
                       <Textarea rows={3} value={s.description} placeholder={L.serviceDesc} onChange={(e) => updateItem("services", i, "description", e.target.value)} data-testid={`input-service-desc-${i}`} />
                     </div>
-                    <Button size="icon" variant="ghost" onClick={() => removeItem("services", i)} data-testid={`button-remove-service-${i}`}><Trash2 className="h-4 w-4" /></Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button size="icon" variant="ghost" aria-label={L.remove} onClick={() => removeItem("services", i)} data-testid={`button-remove-service-${i}`}><Trash2 className="h-4 w-4" /></Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{L.remove}</TooltipContent>
+                    </Tooltip>
                   </div>
                 ))}
               </CardContent>
@@ -641,7 +658,12 @@ export default function CompanyProfilePage() {
                   <div key={i} className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-2 items-center" data-testid={`row-achievement-${i}`}>
                     <Input value={a.value} placeholder={L.statValue} onChange={(e) => updateItem("achievements", i, "value", e.target.value)} data-testid={`input-achievement-value-${i}`} />
                     <Input value={a.label} placeholder={L.statLabel} onChange={(e) => updateItem("achievements", i, "label", e.target.value)} data-testid={`input-achievement-label-${i}`} />
-                    <Button size="icon" variant="ghost" onClick={() => removeItem("achievements", i)} data-testid={`button-remove-achievement-${i}`}><Trash2 className="h-4 w-4" /></Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button size="icon" variant="ghost" aria-label={L.remove} onClick={() => removeItem("achievements", i)} data-testid={`button-remove-achievement-${i}`}><Trash2 className="h-4 w-4" /></Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{L.remove}</TooltipContent>
+                    </Tooltip>
                   </div>
                 ))}
               </CardContent>
@@ -667,7 +689,12 @@ export default function CompanyProfilePage() {
                       </div>
                       <Textarea rows={3} value={tm.quote} placeholder={L.quote} onChange={(e) => updateItem("testimonials", i, "quote", e.target.value)} data-testid={`input-testimonial-quote-${i}`} />
                     </div>
-                    <Button size="icon" variant="ghost" onClick={() => removeItem("testimonials", i)} data-testid={`button-remove-testimonial-${i}`}><Trash2 className="h-4 w-4" /></Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button size="icon" variant="ghost" aria-label={L.remove} onClick={() => removeItem("testimonials", i)} data-testid={`button-remove-testimonial-${i}`}><Trash2 className="h-4 w-4" /></Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{L.remove}</TooltipContent>
+                    </Tooltip>
                   </div>
                 ))}
               </CardContent>
@@ -714,12 +741,22 @@ export default function CompanyProfilePage() {
                       <Input value={pt.name} placeholder={t.partnerName || L.partnerName} onChange={(e) => updateItem("partners", i, "name", e.target.value)} data-testid={`input-partner-name-${i}`} />
                       <Input value={pt.website || ""} placeholder={t.partnerWebsite || L.partnerWebsite} onChange={(e) => updateItem("partners", i, "website", e.target.value)} data-testid={`input-partner-website-${i}`} />
                       <div className="flex items-center gap-2">
-                        <Button size="icon" variant="ghost" onClick={() => moveItem("partners", i, -1)} disabled={i === 0} data-testid={`button-partner-up-${i}`}>
-                          <ArrowUp className="h-4 w-4" />
-                        </Button>
-                        <Button size="icon" variant="ghost" onClick={() => moveItem("partners", i, 1)} disabled={i === (form.partners || []).length - 1} data-testid={`button-partner-down-${i}`}>
-                          <ArrowDown className="h-4 w-4" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button size="icon" variant="ghost" aria-label="Move up" onClick={() => moveItem("partners", i, -1)} disabled={i === 0} data-testid={`button-partner-up-${i}`}>
+                              <ArrowUp className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Move up</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button size="icon" variant="ghost" aria-label="Move down" onClick={() => moveItem("partners", i, 1)} disabled={i === (form.partners || []).length - 1} data-testid={`button-partner-down-${i}`}>
+                              <ArrowDown className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Move down</TooltipContent>
+                        </Tooltip>
                         <Button size="sm" variant="ghost" onClick={() => removeItem("partners", i)} className="flex-1" data-testid={`button-remove-partner-${i}`}>
                           <Trash2 className="h-3.5 w-3.5 mr-1" /> {L.remove}
                         </Button>

@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Plus, Search, Edit, UtensilsCrossed, Settings2, Trash2, X, Download, Upload, FileDown, ImagePlus } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -696,17 +697,23 @@ export default function Menu() {
                             )}
                           </div>
                           {canDelete ? (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                deleteCategoryMutation.mutate(savedCategory.id);
-                              }}
-                              disabled={deleteCategoryMutation.isPending}
-                              data-testid={`button-delete-category-${category}`}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  aria-label={t.delete}
+                                  onClick={() => {
+                                    deleteCategoryMutation.mutate(savedCategory.id);
+                                  }}
+                                  disabled={deleteCategoryMutation.isPending}
+                                  data-testid={`button-delete-category-${category}`}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>{t.delete}</TooltipContent>
+                            </Tooltip>
                           ) : (
                             <span className="text-xs text-muted-foreground">{t.inUse || "In use"}</span>
                           )}
@@ -782,20 +789,26 @@ export default function Menu() {
                           alt={t.preview || "Preview"}
                           className="w-full h-full object-cover"
                         />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-1 right-1 h-6 w-6"
-                          onClick={() => {
-                            setImageFile(null);
-                            setImagePreview(null);
-                            if (fileInputRef.current) fileInputRef.current.value = '';
-                          }}
-                          data-testid="button-remove-image"
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              aria-label="Remove image"
+                              className="absolute top-1 right-1 h-6 w-6"
+                              onClick={() => {
+                                setImageFile(null);
+                                setImagePreview(null);
+                                if (fileInputRef.current) fileInputRef.current.value = '';
+                              }}
+                              data-testid="button-remove-image"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Remove image</TooltipContent>
+                        </Tooltip>
                       </div>
                     )}
                     <div className="flex-1">
@@ -1258,22 +1271,34 @@ export default function Menu() {
                   <span className="text-sm">{item.available ? (t.available || "Available") : (t.unavailable || "Unavailable")}</span>
                 </div>
                 <div className="flex gap-1">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => handleEdit(item)}
-                    data-testid={`button-edit-menu-${item.id}`}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => setDeletingItem(item)}
-                    data-testid={`button-delete-menu-${item.id}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        aria-label={t.edit}
+                        onClick={() => handleEdit(item)}
+                        data-testid={`button-edit-menu-${item.id}`}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t.edit}</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        aria-label={t.delete}
+                        onClick={() => setDeletingItem(item)}
+                        data-testid={`button-delete-menu-${item.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t.delete}</TooltipContent>
+                  </Tooltip>
                 </div>
               </CardFooter>
             </Card>

@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Edit, UserCircle, Trash2, DollarSign, TrendingUp, FileDown, Banknote, ChefHat, FileText, Upload, Eye, X, Calendar, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -1397,16 +1398,22 @@ export default function Investors() {
                       <div className="flex items-center gap-2 flex-1 bg-muted/50 rounded-md px-3 py-2">
                         <FileText className="h-4 w-4 text-primary" />
                         <span className="text-sm truncate flex-1">{pendingFile.name}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => setPendingFile(null)}
-                          data-testid="button-remove-selected-file"
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Remove file"
+                              className="h-6 w-6"
+                              onClick={() => setPendingFile(null)}
+                              data-testid="button-remove-selected-file"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Remove file</TooltipContent>
+                        </Tooltip>
                       </div>
                     )}
                   </div>
@@ -1529,46 +1536,70 @@ export default function Investors() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handlePreviewStatement(investor)}
-                          disabled={loadingPreview && previewInvestorName === investor.name}
-                          className="h-[44px] w-[44px] shrink-0 text-blue-600 hover:text-blue-700"
-                          data-testid={`button-preview-statement-${investor.id}`}
-                          title={t.previewStatement || "Preview Statement"}
-                        >
-                          <Eye className={`h-4 w-4 ${loadingPreview && previewInvestorName === investor.name ? 'animate-pulse' : ''}`} />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handleDownloadStatement(investor)}
-                          disabled={downloadingStatement === investor.id}
-                          className="h-[44px] w-[44px] shrink-0 text-primary hover:text-primary"
-                          data-testid={`button-download-statement-${investor.id}`}
-                          title={t.downloadStatement || "Download Statement"}
-                        >
-                          <FileDown className={`h-4 w-4 ${downloadingStatement === investor.id ? 'animate-pulse' : ''}`} />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handleEdit(investor)}
-                          className="h-[44px] w-[44px] shrink-0"
-                          data-testid={`button-edit-${investor.id}`}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => setDeletingInvestor(investor)}
-                          className="h-[44px] w-[44px] shrink-0 text-destructive hover:text-destructive"
-                          data-testid={`button-delete-${investor.id}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              aria-label={t.previewStatement || "Preview Statement"}
+                              onClick={() => handlePreviewStatement(investor)}
+                              disabled={loadingPreview && previewInvestorName === investor.name}
+                              className="h-[44px] w-[44px] shrink-0 text-blue-600 hover:text-blue-700"
+                              data-testid={`button-preview-statement-${investor.id}`}
+                              title={t.previewStatement || "Preview Statement"}
+                            >
+                              <Eye className={`h-4 w-4 ${loadingPreview && previewInvestorName === investor.name ? 'animate-pulse' : ''}`} />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.previewStatement || "Preview Statement"}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              aria-label={t.downloadStatement || "Download Statement"}
+                              onClick={() => handleDownloadStatement(investor)}
+                              disabled={downloadingStatement === investor.id}
+                              className="h-[44px] w-[44px] shrink-0 text-primary hover:text-primary"
+                              data-testid={`button-download-statement-${investor.id}`}
+                              title={t.downloadStatement || "Download Statement"}
+                            >
+                              <FileDown className={`h-4 w-4 ${downloadingStatement === investor.id ? 'animate-pulse' : ''}`} />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.downloadStatement || "Download Statement"}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              aria-label={t.edit}
+                              onClick={() => handleEdit(investor)}
+                              className="h-[44px] w-[44px] shrink-0"
+                              data-testid={`button-edit-${investor.id}`}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.edit}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              aria-label={t.delete}
+                              onClick={() => setDeletingInvestor(investor)}
+                              className="h-[44px] w-[44px] shrink-0 text-destructive hover:text-destructive"
+                              data-testid={`button-delete-${investor.id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.delete}</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
 

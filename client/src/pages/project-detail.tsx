@@ -19,6 +19,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   ArrowLeft, Plus, Edit, Trash2, DollarSign, Calendar, Phone, Mail,
   User, MapPin, Clock, FileText, CheckCircle, Layers, Receipt,
@@ -488,9 +489,14 @@ export default function ProjectDetail() {
       <div className={`flex ${layout.isMobile ? "flex-col gap-3" : "items-center justify-between gap-4"}`}>
         <div className="flex items-center gap-3 flex-wrap">
           <Link href="/service-projects">
-            <Button variant="ghost" size="icon" data-testid="button-back">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label={t.back || "Back"} data-testid="button-back">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t.back || "Back"}</TooltipContent>
+            </Tooltip>
           </Link>
           <div>
             <h1 className={`${layout.text2Xl} font-bold`} data-testid="text-project-name">{project.name}</h1>
@@ -623,8 +629,18 @@ export default function ProjectDetail() {
                       <div className="flex items-center gap-2 shrink-0">
                         <Badge variant={statusBadge(s.status)} className={statusClass(s.status)}>{s.status}</Badge>
                         <span className="font-semibold">{fmtNum(s.totalPrice)} SAR</span>
-                        <Button variant="ghost" size="icon" onClick={() => openEditSvc(s)} data-testid={`button-edit-service-${s.id}`}><Edit className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDelItem({ type: "project-services", id: s.id, name: s.name })} data-testid={`button-delete-service-${s.id}`}><Trash2 className="h-4 w-4" /></Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label={t.edit} onClick={() => openEditSvc(s)} data-testid={`button-edit-service-${s.id}`}><Edit className="h-4 w-4" /></Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.edit}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label={t.delete} onClick={() => setDelItem({ type: "project-services", id: s.id, name: s.name })} data-testid={`button-delete-service-${s.id}`}><Trash2 className="h-4 w-4" /></Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.delete}</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                   </CardContent>
@@ -653,8 +669,18 @@ export default function ProjectDetail() {
                       <div className="flex items-center gap-2 shrink-0">
                         <Badge variant={statusBadge(b.status)} className={statusClass(b.status)}>{b.status}</Badge>
                         <span className="font-semibold">{fmtNum(b.amount)} SAR</span>
-                        <Button variant="ghost" size="icon" onClick={() => openEditBill(b)} data-testid={`button-edit-bill-${b.id}`}><Edit className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDelItem({ type: "project-bills", id: b.id, name: b.description })} data-testid={`button-delete-bill-${b.id}`}><Trash2 className="h-4 w-4" /></Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label={t.edit} onClick={() => openEditBill(b)} data-testid={`button-edit-bill-${b.id}`}><Edit className="h-4 w-4" /></Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.edit}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label={t.delete} onClick={() => setDelItem({ type: "project-bills", id: b.id, name: b.description })} data-testid={`button-delete-bill-${b.id}`}><Trash2 className="h-4 w-4" /></Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.delete}</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                   </CardContent>
@@ -683,8 +709,18 @@ export default function ProjectDetail() {
                       <div className="flex items-center gap-2 shrink-0">
                         <Badge variant={statusBadge(p.status)} className={statusClass(p.status)}>{p.status}</Badge>
                         <span className="font-semibold">{fmtNum(p.totalPrice)} SAR</span>
-                        <Button variant="ghost" size="icon" onClick={() => openEditProc(p)} data-testid={`button-edit-procurement-${p.id}`}><Edit className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDelItem({ type: "project-procurements", id: p.id, name: p.itemName })} data-testid={`button-delete-procurement-${p.id}`}><Trash2 className="h-4 w-4" /></Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label={t.edit} onClick={() => openEditProc(p)} data-testid={`button-edit-procurement-${p.id}`}><Edit className="h-4 w-4" /></Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.edit}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label={t.delete} onClick={() => setDelItem({ type: "project-procurements", id: p.id, name: p.itemName })} data-testid={`button-delete-procurement-${p.id}`}><Trash2 className="h-4 w-4" /></Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.delete}</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                   </CardContent>
@@ -735,8 +771,18 @@ export default function ProjectDetail() {
                             )}
                           </>
                         )}
-                        <Button variant="ghost" size="icon" onClick={() => openEditPay(p)} data-testid={`button-edit-payment-${p.id}`}><Edit className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDelItem({ type: "payment-schedules", id: p.id, name: p.milestoneName })} data-testid={`button-delete-payment-${p.id}`}><Trash2 className="h-4 w-4" /></Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label={t.edit} onClick={() => openEditPay(p)} data-testid={`button-edit-payment-${p.id}`}><Edit className="h-4 w-4" /></Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.edit}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label={t.delete} onClick={() => setDelItem({ type: "payment-schedules", id: p.id, name: p.milestoneName })} data-testid={`button-delete-payment-${p.id}`}><Trash2 className="h-4 w-4" /></Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.delete}</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                   </CardContent>
@@ -790,8 +836,18 @@ export default function ProjectDetail() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <Badge variant={statusBadge(tk.status)} className={statusClass(tk.status)}>{tk.status.replace("_", " ")}</Badge>
-                        <Button variant="ghost" size="icon" onClick={() => openEditTask(tk)} data-testid={`button-edit-task-${tk.id}`}><Edit className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDelItem({ type: "project-tasks", id: tk.id, name: tk.name })} data-testid={`button-delete-task-${tk.id}`}><Trash2 className="h-4 w-4" /></Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label={t.edit} onClick={() => openEditTask(tk)} data-testid={`button-edit-task-${tk.id}`}><Edit className="h-4 w-4" /></Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.edit}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label={t.delete} onClick={() => setDelItem({ type: "project-tasks", id: tk.id, name: tk.name })} data-testid={`button-delete-task-${tk.id}`}><Trash2 className="h-4 w-4" /></Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.delete}</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                   </CardContent>

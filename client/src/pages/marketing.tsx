@@ -41,6 +41,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import {
   Megaphone,
   Target,
@@ -235,19 +236,6 @@ function erRating(er: number, labels?: { excellent: string; good: string; low: s
   if (er >= 5) return { label: L.excellent, color: "bg-green-500", text: "text-green-600" };
   if (er >= 3) return { label: L.good, color: "bg-yellow-500", text: "text-yellow-600" };
   return { label: L.low, color: "bg-red-500", text: "text-red-600" };
-}
-
-function InfoTip({ children }: { children: React.ReactNode }) {
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Info className="h-3.5 w-3.5 text-muted-foreground inline-block ms-1 cursor-help" />
-        </TooltipTrigger>
-        <TooltipContent className="max-w-xs text-xs">{children}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
 }
 
 export default function Marketing() {
@@ -1341,14 +1329,20 @@ export default function Marketing() {
                   />
                 </div>
                 {products.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeProduct(p.id)}
-                    data-testid={`button-remove-product-${p.id}`}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Delete"
+                        onClick={() => removeProduct(p.id)}
+                        data-testid={`button-remove-product-${p.id}`}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Delete</TooltipContent>
+                  </Tooltip>
                 )}
               </CardHeader>
               <CardContent className="space-y-4">
@@ -1905,14 +1899,20 @@ export default function Marketing() {
                           </TableCell>
                           <TableCell>
                             {influencers.length > 1 && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => removeInfluencer(r.id)}
-                                data-testid={`button-remove-influencer-${r.id}`}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    aria-label="Delete"
+                                    onClick={() => removeInfluencer(r.id)}
+                                    data-testid={`button-remove-influencer-${r.id}`}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Delete</TooltipContent>
+                              </Tooltip>
                             )}
                           </TableCell>
                         </TableRow>
@@ -2105,14 +2105,20 @@ export default function Marketing() {
                           <div className={`text-lg font-bold ${rating.text}`}>{fmt(er)}%</div>
                         </div>
                         <Badge className={`${rating.color} text-white`}>{rating.label}</Badge>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteBloggerFile(b.id)}
-                          data-testid={`button-delete-blogger-${b.id}`}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Delete"
+                              onClick={() => deleteBloggerFile(b.id)}
+                              data-testid={`button-delete-blogger-${b.id}`}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                   );
@@ -2224,14 +2230,20 @@ export default function Marketing() {
                         <TableCell className="font-mono font-semibold">
                           <div className="flex items-center gap-2">
                             <span data-testid={`text-code-${c.id}`}>{c.code}</span>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              data-testid={`button-copy-${c.id}`}
-                              onClick={() => copyToClipboard(c.code, t.copied)}
-                            >
-                              <Copy className="h-3 w-3" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  aria-label="Copy"
+                                  data-testid={`button-copy-${c.id}`}
+                                  onClick={() => copyToClipboard(c.code, t.copied)}
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Copy</TooltipContent>
+                            </Tooltip>
                           </div>
                         </TableCell>
                         <TableCell>{c.discountType === "percent" ? t.percent : t.fixedAmount}</TableCell>
@@ -2243,14 +2255,20 @@ export default function Marketing() {
                           {(c.usageCount ?? 0)} / {c.usageCap ?? t.noLimit}
                         </TableCell>
                         <TableCell>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            data-testid={`button-delete-discount-${c.id}`}
-                            onClick={() => deleteDiscount.mutate(c.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                aria-label="Delete"
+                                data-testid={`button-delete-discount-${c.id}`}
+                                onClick={() => deleteDiscount.mutate(c.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Delete</TooltipContent>
+                          </Tooltip>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -2357,14 +2375,20 @@ export default function Marketing() {
                             >
                               {t.generateLinks}
                             </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              data-testid={`button-delete-template-${tpl.id}`}
-                              onClick={() => deleteTemplate.mutate(tpl.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  aria-label="Delete"
+                                  data-testid={`button-delete-template-${tpl.id}`}
+                                  onClick={() => deleteTemplate.mutate(tpl.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete</TooltipContent>
+                            </Tooltip>
                           </div>
                         </div>
                       </CardContent>
@@ -2427,14 +2451,20 @@ export default function Marketing() {
                                   <MessageCircle className="h-4 w-4 mr-1" />
                                   {t.openWhatsApp}
                                 </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  data-testid={`button-copy-link-${i}`}
-                                  onClick={() => copyToClipboard(link, t.linkCopied)}
-                                >
-                                  <Copy className="h-4 w-4" />
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      aria-label="Copy link"
+                                      data-testid={`button-copy-link-${i}`}
+                                      onClick={() => copyToClipboard(link, t.linkCopied)}
+                                    >
+                                      <Copy className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Copy link</TooltipContent>
+                                </Tooltip>
                               </div>
                             </div>
                           );

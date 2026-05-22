@@ -5,6 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -439,15 +440,21 @@ export default function SupportDetail() {
                 className="flex-1 min-h-[80px]"
                 data-testid="textarea-message"
               />
-              <Button
-                onClick={handleSendMessage}
-                disabled={!newMessage.trim() || sendMessageMutation.isPending}
-                size="icon"
-                className="h-[80px] w-[80px]"
-                data-testid="button-send-message"
-              >
-                <Send className="h-5 w-5" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                    size="icon"
+                    aria-label={t.sendMessage}
+                    className="h-[80px] w-[80px]"
+                    data-testid="button-send-message"
+                  >
+                    <Send className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t.sendMessage}</TooltipContent>
+              </Tooltip>
             </div>
           )}
 

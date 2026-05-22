@@ -6,6 +6,7 @@ import { useInvestmentAgreementTemplatesT } from "@/i18n/investmentAgreementTemp
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -281,11 +282,16 @@ export default function InvestmentAgreementTemplatesPage() {
                         data-testid={`button-insert-custom-ph-${idx}`}>
                         <ListPlus className="h-3 w-3" />
                       </Button>
-                      <Button type="button" size="icon" variant="ghost" className="col-span-1"
-                        onClick={() => removeCustomPh(idx)}
-                        data-testid={`button-remove-custom-ph-${idx}`}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button type="button" size="icon" variant="ghost" aria-label={t.delete} className="col-span-1"
+                            onClick={() => removeCustomPh(idx)}
+                            data-testid={`button-remove-custom-ph-${idx}`}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t.delete}</TooltipContent>
+                      </Tooltip>
                     </div>
                   ))}
                 </div>

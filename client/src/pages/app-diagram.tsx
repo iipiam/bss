@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Download, Network, Loader2, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -123,15 +124,30 @@ export default function AppDiagram() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="icon" onClick={() => setTransform((t) => ({ ...t, k: Math.min(2, t.k + 0.15) }))} data-testid="button-zoom-in">
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={() => setTransform((t) => ({ ...t, k: Math.max(0.2, t.k - 0.15) }))} data-testid="button-zoom-out">
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={fitToView} data-testid="button-fit">
-            <Maximize2 className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="icon" aria-label="Zoom in" onClick={() => setTransform((t) => ({ ...t, k: Math.min(2, t.k + 0.15) }))} data-testid="button-zoom-in">
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Zoom in</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="icon" aria-label="Zoom out" onClick={() => setTransform((t) => ({ ...t, k: Math.max(0.2, t.k - 0.15) }))} data-testid="button-zoom-out">
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Zoom out</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="icon" aria-label="Fit to view" onClick={fitToView} data-testid="button-fit">
+                <Maximize2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Fit to view</TooltipContent>
+          </Tooltip>
           <Button onClick={handleDownload} disabled={downloading} data-testid="button-download-pdf">
             {downloading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
             Download PDF

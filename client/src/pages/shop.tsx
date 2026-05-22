@@ -19,6 +19,7 @@ import { Plus, Pencil, Trash2, DollarSign, FileText, Search, Sparkles, Upload, D
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const createSalaryFormSchema = (t: any) => z.object({
   employeeName: z.string().min(1, t.employeeNameRequired),
@@ -688,18 +689,29 @@ export default function Shop() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="icon" variant="ghost" onClick={() => handleEditSalary(salary)} data-testid={`button-edit-salary-${salary.id}`}>
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => deleteSalaryMutation.mutate(salary.id)}
-                          disabled={deleteSalaryMutation.isPending}
-                          data-testid={`button-delete-salary-${salary.id}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button size="icon" variant="ghost" aria-label={t.edit} onClick={() => handleEditSalary(salary)} data-testid={`button-edit-salary-${salary.id}`}>
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.edit}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              aria-label={t.delete}
+                              onClick={() => deleteSalaryMutation.mutate(salary.id)}
+                              disabled={deleteSalaryMutation.isPending}
+                              data-testid={`button-delete-salary-${salary.id}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.delete}</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                   ))}
@@ -985,25 +997,37 @@ export default function Shop() {
                         <div className="flex gap-1">
                           {bill.invoiceImage ? (
                             <>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => window.open(`/api/shop/bills/${bill.id}/invoice`, '_blank')}
-                                title={t.viewInvoice || "View Invoice"}
-                                data-testid={`button-view-invoice-${bill.id}`}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => deleteBillInvoiceMutation.mutate(bill.id)}
-                                disabled={deleteBillInvoiceMutation.isPending}
-                                title={t.deleteInvoice || "Delete Invoice"}
-                                data-testid={`button-delete-invoice-${bill.id}`}
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    aria-label={t.viewInvoice || "View Invoice"}
+                                    onClick={() => window.open(`/api/shop/bills/${bill.id}/invoice`, '_blank')}
+                                    title={t.viewInvoice || "View Invoice"}
+                                    data-testid={`button-view-invoice-${bill.id}`}
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{t.viewInvoice || "View Invoice"}</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    aria-label={t.deleteInvoice || "Delete Invoice"}
+                                    onClick={() => deleteBillInvoiceMutation.mutate(bill.id)}
+                                    disabled={deleteBillInvoiceMutation.isPending}
+                                    title={t.deleteInvoice || "Delete Invoice"}
+                                    data-testid={`button-delete-invoice-${bill.id}`}
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{t.deleteInvoice || "Delete Invoice"}</TooltipContent>
+                              </Tooltip>
                             </>
                           ) : (
                             <label className="cursor-pointer">
@@ -1024,31 +1048,48 @@ export default function Shop() {
                                 }}
                                 data-testid={`input-upload-invoice-${bill.id}`}
                               />
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    asChild
+                                    aria-label={t.uploadInvoice || "Upload Invoice"}
+                                    disabled={uploadBillInvoiceMutation.isPending}
+                                    title={t.uploadInvoice || "Upload Invoice"}
+                                  >
+                                    <span data-testid={`button-upload-invoice-${bill.id}`}>
+                                      <Upload className="w-4 h-4" />
+                                    </span>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{t.uploadInvoice || "Upload Invoice"}</TooltipContent>
+                              </Tooltip>
+                            </label>
+                          )}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button size="icon" variant="ghost" aria-label={t.edit} onClick={() => handleEditBill(bill)} data-testid={`button-edit-bill-${bill.id}`}>
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t.edit}</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                asChild
-                                disabled={uploadBillInvoiceMutation.isPending}
-                                title={t.uploadInvoice || "Upload Invoice"}
+                                aria-label={t.delete}
+                                onClick={() => deleteBillMutation.mutate(bill.id)}
+                                disabled={deleteBillMutation.isPending}
+                                data-testid={`button-delete-bill-${bill.id}`}
                               >
-                                <span data-testid={`button-upload-invoice-${bill.id}`}>
-                                  <Upload className="w-4 h-4" />
-                                </span>
+                                <Trash2 className="w-4 h-4" />
                               </Button>
-                            </label>
-                          )}
-                          <Button size="icon" variant="ghost" onClick={() => handleEditBill(bill)} data-testid={`button-edit-bill-${bill.id}`}>
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => deleteBillMutation.mutate(bill.id)}
-                            disabled={deleteBillMutation.isPending}
-                            data-testid={`button-delete-bill-${bill.id}`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t.delete}</TooltipContent>
+                          </Tooltip>
                         </div>
                       </div>
                     );

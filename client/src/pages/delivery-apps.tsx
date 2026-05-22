@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Edit, Trash2, GripVertical, Calculator, TrendingUp, FileText } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -195,17 +196,28 @@ function SortableDeliveryAppCard({ app, onEdit, onDelete, testOrderAmount, t, la
             </div>
           </div>
           <div className="flex justify-end gap-2 mt-3">
-            <Button variant="ghost" size="icon" onClick={() => onEdit(app)} data-testid={`button-edit-${app.id}`}>
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onDelete(app)}
-              data-testid={`button-delete-${app.id}`}
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label={t.edit} onClick={() => onEdit(app)} data-testid={`button-edit-${app.id}`}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t.edit}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t.delete}
+                  onClick={() => onDelete(app)}
+                  data-testid={`button-delete-${app.id}`}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t.delete}</TooltipContent>
+            </Tooltip>
           </div>
         </CardContent>
       </Card>
@@ -882,19 +894,25 @@ export default function DeliveryApps() {
                           )}
                         />
                       </div>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => {
-                          const current = form.getValues("subsidyTiers");
-                          form.setValue("subsidyTiers", current.filter((_, i) => i !== index));
-                        }}
-                        data-testid={`button-delete-tier-${index}`}
-                        className="mt-6"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            aria-label={t.delete}
+                            onClick={() => {
+                              const current = form.getValues("subsidyTiers");
+                              form.setValue("subsidyTiers", current.filter((_, i) => i !== index));
+                            }}
+                            data-testid={`button-delete-tier-${index}`}
+                            className="mt-6"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t.delete}</TooltipContent>
+                      </Tooltip>
                     </div>
                   ))}
                   {form.watch("subsidyTiers").length === 0 && (
@@ -1437,22 +1455,34 @@ export default function DeliveryApps() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              onClick={() => handleEditProfitability(entry)}
-                              data-testid={`button-edit-profitability-${entry.id}`}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              onClick={() => setDeletingProfitability(entry)}
-                              data-testid={`button-delete-profitability-${entry.id}`}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  aria-label={t.edit}
+                                  onClick={() => handleEditProfitability(entry)}
+                                  data-testid={`button-edit-profitability-${entry.id}`}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>{t.edit}</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  aria-label={t.delete}
+                                  onClick={() => setDeletingProfitability(entry)}
+                                  data-testid={`button-delete-profitability-${entry.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>{t.delete}</TooltipContent>
+                            </Tooltip>
                           </div>
                         </TableCell>
                       </TableRow>

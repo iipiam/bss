@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -527,27 +528,39 @@ export default function Licenses() {
                                 {uploadedFileName || field.value.split('/').pop()}
                               </span>
                               <div className="flex gap-1 flex-shrink-0">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  asChild
-                                  data-testid="button-view-document"
-                                >
-                                  <a href={field.value} target="_blank" rel="noopener noreferrer" title={t.viewDocument || "View document"}>
-                                    <Download className="h-4 w-4" />
-                                  </a>
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={handleRemoveFile}
-                                  title={t.removeFile || "Remove file"}
-                                  data-testid="button-remove-file"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      aria-label={t.viewDocument || "View document"}
+                                      asChild
+                                      data-testid="button-view-document"
+                                    >
+                                      <a href={field.value} target="_blank" rel="noopener noreferrer" title={t.viewDocument || "View document"}>
+                                        <Download className="h-4 w-4" />
+                                      </a>
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>{t.viewDocument || "View document"}</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      aria-label={t.removeFile || "Remove file"}
+                                      onClick={handleRemoveFile}
+                                      title={t.removeFile || "Remove file"}
+                                      data-testid="button-remove-file"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>{t.removeFile || "Remove file"}</TooltipContent>
+                                </Tooltip>
                               </div>
                             </div>
                           ) : (
