@@ -1847,7 +1847,6 @@ export const companySettings = pgTable("company_settings", {
   companyLogo: text("company_logo"),
   agreementTemplate: text("agreement_template"),
   agreementPlaceholders: jsonb("agreement_placeholders"),
-  investorAgreementTemplate: text("investor_agreement_template"), // Investment Agreement template (Mustache-style {{placeholder}})
   termsAndConditions: text("terms_and_conditions"),
   companyDocuments: jsonb("company_documents").default([]),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

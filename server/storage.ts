@@ -5881,8 +5881,7 @@ export const storage = new DatabaseStorage();
     await pool.query(`ALTER TABLE investors ADD COLUMN IF NOT EXISTS signed_agreement_content TEXT`);
     await pool.query(`ALTER TABLE investors ADD COLUMN IF NOT EXISTS signed_agreement_filename TEXT`);
     await pool.query(`ALTER TABLE investors ADD COLUMN IF NOT EXISTS signed_agreement_uploaded_at TIMESTAMP`);
-    await pool.query(`ALTER TABLE company_settings ADD COLUMN IF NOT EXISTS investor_agreement_template TEXT`);
-    console.log('[Migration] Investors columns verified/added: national_id, contact_number, investor_type, recipe_id, document_path, document_content, document_filename, agreement_content, agreement_filename, agreement_generated_at, signed_agreement_content, signed_agreement_filename, signed_agreement_uploaded_at; company_settings.investor_agreement_template');
+    console.log('[Migration] Investors columns verified/added: national_id, contact_number, investor_type, recipe_id, document_path, document_content, document_filename, agreement_content, agreement_filename, agreement_generated_at, signed_agreement_content, signed_agreement_filename, signed_agreement_uploaded_at');
     
     // Add weekly_schedule column to settings table for per-day shift configuration
     await pool.query(`
@@ -6334,6 +6333,71 @@ export const storage = new DatabaseStorage();
       )
     `);
     console.log('[Migration] Table verified/created: investment_agreement_templates');
+
+    // Backfill legacy company_settings.investor_agreement_template into investment_agreement_templates,
+    // then drop the orphaned column.
+    const legacyColCheck = await pool.query(`
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'company_settings' AND column_name = 'investor_agreement_template'
+    `);
+    if ((legacyColCheck.rowCount ?? 0) > 0) {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const legacyRows = await client.query(`
+          SELECT restaurant_id, investor_agreement_template
+          FROM company_settings
+          WHERE investor_agreement_template IS NOT NULL AND investor_agreement_template <> ''
+        `);
+        let migrated = 0;
+        let skippedDuplicate = 0;
+        for (const row of legacyRows.rows) {
+          const restaurantId: string = row.restaurant_id;
+          const content: string = row.investor_agreement_template;
+          const dup = await client.query(
+            `SELECT 1 FROM investment_agreement_templates WHERE restaurant_id = $1 AND content = $2 LIMIT 1`,
+            [restaurantId, content]
+          );
+          if ((dup.rowCount ?? 0) > 0) {
+            skippedDuplicate++;
+            continue;
+          }
+          const existingDefault = await client.query(
+            `SELECT id FROM investment_agreement_templates WHERE restaurant_id = $1 AND is_default = TRUE LIMIT 1`,
+            [restaurantId]
+          );
+          const makeDefault = (existingDefault.rowCount ?? 0) === 0;
+          await client.query(
+            `INSERT INTO investment_agreement_templates (restaurant_id, name, content, is_default)
+             VALUES ($1, $2, $3, $4)`,
+            [restaurantId, makeDefault ? 'Default Investment Agreement' : 'Legacy Investment Agreement', content, makeDefault]
+          );
+          migrated++;
+        }
+        const unresolved = await client.query(`
+          SELECT cs.restaurant_id
+          FROM company_settings cs
+          WHERE cs.investor_agreement_template IS NOT NULL
+            AND cs.investor_agreement_template <> ''
+            AND NOT EXISTS (
+              SELECT 1 FROM investment_agreement_templates t
+              WHERE t.restaurant_id = cs.restaurant_id
+                AND t.content = cs.investor_agreement_template
+            )
+        `);
+        if ((unresolved.rowCount ?? 0) > 0) {
+          throw new Error(`[Migration] Aborting drop: ${unresolved.rowCount} tenants still have unmigrated investor_agreement_template content`);
+        }
+        await client.query(`ALTER TABLE company_settings DROP COLUMN investor_agreement_template`);
+        await client.query('COMMIT');
+        console.log(`[Migration] Backfilled ${migrated} legacy investor_agreement_template values (${skippedDuplicate} already present), dropped column`);
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      } finally {
+        client.release();
+      }
+    }
 
     console.log('[Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings');
 
