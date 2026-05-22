@@ -2978,39 +2978,79 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // =========================================================================
   // Investment Agreement: template + per-investor generated/signed PDFs
   // =========================================================================
-  const DEFAULT_INVESTOR_AGREEMENT_TEMPLATE = `INVESTMENT AGREEMENT
+  const DEFAULT_INVESTOR_AGREEMENT_TEMPLATE = `عقد استثمار صامت (شراكة صامتة)
+بسم الله الرحمن الرحيم
+التاريخ: {{hijri_date}}
+الموافق: {{agreement_date}}
+المكان: مدينة {{city}}.
 
-This Investment Agreement ("Agreement") is entered into on {{agreement_date}} between:
+الأطراف المتعاقدة:
+الطرف الأول (المالك / الشريك النشط):
+السيد/ {{owner_name}}، {{owner_nationality}} الجنسية، رقم الهوية الوطنية: {{restaurant_national_id}}، رقم الجوال: {{owner_phone}} (يُشار إليه فيما بعد بـ"المالك" أو "الشريك النشط").
+الطرف الثاني (المستثمر الصامت):
+السيد/ {{investor_name}}، جنسية: {{investor_nationality}}، رقم الهوية/الإقامة: {{national_id}}، رقم الجوال: {{contact_number}} (يُشار إليه فيما بعد بـ"المستثمر الصامت").
 
-1. {{my_restaurant_name}} (Commercial Registration: {{restaurant_cr}}, VAT: {{restaurant_tax_number}}), hereinafter referred to as "the Company".
+المقدمة:
+لما كان الطرف الأول يملك ويدير مؤسسة/شركة {{my_restaurant_name}} مسجلة في السجل التجاري برقم {{restaurant_cr}} بتاريخ {{cr_issue_date}} تحت اسم {{trade_name}}، ويقوم بنشاط {{business_activity}}.
+ولما رغب الطرف الثاني في الاستثمار في هذه المؤسسة كمستثمر صامت (دون أي مشاركة في الإدارة أو التشغيل اليومي بأي شكل من الأشكال)، واتفق الطرفان على الشروط والنسب التالية:
 
-2. {{investor_name}} (National ID / Iqama: {{national_id}}, Phone: {{contact_number}}), hereinafter referred to as "the Investor".
+المادة الأولى: الغرض من العقد
+يهدف هذا العقد إلى تنظيم علاقة استثمار صامت بين الطرفين، حيث يقدم المستثمر الصامت رأس مال نقدي فقط مقابل حصة في الأرباح الصافية فقط، دون أن يكون له أي دور إداري أو تشغيلي تماماً.
 
-WHEREAS the Investor wishes to invest in the Company on the terms set out below, the parties agree as follows:
+المادة الثانية: قيمة الاستثمار وحصة المستثمر الصامت:
+يستثمر الطرف الثاني مبلغًا قدره {{amount_invested}} ريال سعودي ({{amount_in_words}} ريال سعودي فقط)، مقابل حصة قدرها {{interest_percentage}}% ({{percentage_in_words}}) من الأرباح الصافية للمؤسسة وفروعها وامتيازاتها التجارية وعقودها إن وُجدت.
 
-1. INVESTMENT
-   The Investor shall contribute an investment of SAR {{amount_invested}} ({{investor_type}}).
-   {{recipe_clause}}
+المادة الثالثة: التزامات الطرف الأول (الشريك النشط)
+• إدارة المؤسسة بكفاءة واحترافية وحسن نية.
+• تزويد المستثمر الصامت بتقارير مالية دورية (شهرية أو ربع سنوية) تتضمن البيانات المالية والأرباح الصافية.
+• عدم التصرف في أصول المؤسسة بطريقة تضر بالمستثمر الصامت.
+• حفظ أسرار العمل والمعلومات المالية.
 
-2. PROFIT SHARE
-   The Investor shall be entitled to {{interest_percentage}}% of the net monthly profits of the Company, calculated after all operating costs, salaries, recurring bills and cost of goods sold.
+المادة الرابعة: التزامات الطرف الثاني (المستثمر الصامت):
+• عدم التدخل في إدارة أو تشغيل المؤسسة تماماً بأي شكل من الأشكال.
+• الحفاظ على سرية جميع المعلومات التجارية.
+• لا يحق للمستثمر المطالبة باسترجاع أمواله إلا بعد مضي سنتين ميلاديتين من تاريخ التوقيع بالموافقة على العقد أو إذا تم الإخلال بالتزامات الطرف الأول.
 
-3. PAYMENT
-   Profit distributions shall be transferred to the Investor's bank account:
-   Bank: {{bank_name}}
-   IBAN: {{iban}}
+المادة الخامسة: توزيع الأرباح والخسائر
+• تُحسب الأرباح الصافية بعد خصم جميع المصروفات والالتزامات.
+• يحصل المستثمر الصامت على نسبته من الأرباح الصافية إن وُجدت خلال مدة لا تتجاوز (30) يومًا من نهاية كل فترة محاسبية.
+• في حال بيع المنشأة يستحق المستثمر من قيمة البيعة بما يتساوى مع نسبة استثماره.
+• تتحمل الخسائر بنسبة الحصة في الأرباح (مع سقف مسؤولية المستثمر الصامت بحد استثماره فقط).
 
-4. TERM
-   This Agreement remains in force until terminated in writing by either party with thirty (30) days' notice.
+المادة السادسة: مدة العقد
+مدة العقد غير محددة تبدأ من تاريخ توقيعه، وتنتهي بخروج المستثمر أو الإفلاس الكامل مع ما يُثبت ذلك.
 
-5. GENERAL
-   Any dispute shall be settled in accordance with the laws of the Kingdom of Saudi Arabia.
-   Additional notes: {{notes}}
+المادة السابعة: الإنهاء والخروج
+• يجوز إنهاء العقد باتفاق الطرفين أو في حال الإخلال الجوهري.
+• عند الإنهاء أو الخروج، يحق للمستثمر الصامت استرداد رأس ماله (أو نسبته من صافي الأصول) حسب الاتفاق أو التقييم المحايد.
 
-Signed in two original copies, one for each party.
+المادة الثامنة: النزاعات
+يخضع هذا العقد لأنظمة المملكة العربية السعودية، وتكون المحاكم المختصة في مدينة {{disputes_city}} هي المختصة بالفصل في أي نزاع ينشأ عن هذا العقد.
 
-____________________________                          ____________________________
-The Company                                            The Investor`;
+المادة التاسعة: أحكام عامة
+• يُعد هذا العقد ساريًا وملزمًا للطرفين وورثتهما.
+• أي تعديل يجب أن يكون كتابيًا وموقعًا من الطرفين.
+• يتكون العقد من {{pages_count}} صفحة وملاحق (إن وجدت).
+
+ملاحظات إضافية: {{notes}}
+
+تم الاتفاق والتوقيع:
+
+الطرف الأول (المالك):
+الاسم: {{owner_name}}
+التوقيع: …………………….
+التاريخ: {{agreement_date}}
+
+الطرف الثاني (المستثمر الصامت):
+الاسم: {{investor_name}}
+التوقيع: …………………….
+التاريخ: {{agreement_date}}
+
+شهود (اختياري):
+1. الاسم: {{witness_1_name}}
+   التوقيع: …………………….
+2. الاسم: {{witness_2_name}}
+   التوقيع: …………………….`;
 
   function getInvestorPlaceholders(restaurant: any, investor: any, recipeName: string, isAr: boolean): Record<string, string> {
     const fmtDate = (d: any) => d ? new Date(d).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB') : '—';
