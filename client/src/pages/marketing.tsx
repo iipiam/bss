@@ -281,6 +281,26 @@ export default function Marketing() {
   const [bloggerFiles, setBloggerFiles] = useState<BloggerFile[]>([]);
   const [bloggerForm, setBloggerForm] = useState(emptyBlogger());
 
+  // ---- Influencer Marketing Calculator (extended) ----
+  const [calcCurrency, setCalcCurrency] = useState<"SAR" | "USD">("SAR");
+  const [calcCpm, setCalcCpm] = useState<number>(50);
+  const [calcSponsorFollowers, setCalcSponsorFollowers] = useState<number>(25000);
+  const [calcSponsorEr, setCalcSponsorEr] = useState<number>(4);
+  const [roiInputs, setRoiInputs] = useState({
+    cost: 5000,
+    impressions: 50000,
+    engagements: 2500,
+    aov: 80,
+    conversionRate: 2,
+  });
+  const [earningsInputs, setEarningsInputs] = useState({
+    pricePerPost: 800,
+    pricePerStory: 150,
+    posts: 4,
+    stories: 8,
+    affiliateRevenue: 500,
+  });
+
   // Load from localStorage on mount
   useEffect(() => {
     try {
@@ -292,6 +312,12 @@ export default function Marketing() {
         if (s.canvas) setCanvas(s.canvas);
         if (Array.isArray(s.influencers) && s.influencers.length) setInfluencers(s.influencers);
         if (Array.isArray(s.bloggerFiles)) setBloggerFiles(s.bloggerFiles);
+        if (s.calcCurrency === "SAR" || s.calcCurrency === "USD") setCalcCurrency(s.calcCurrency);
+        if (typeof s.calcCpm === "number") setCalcCpm(s.calcCpm);
+        if (typeof s.calcSponsorFollowers === "number") setCalcSponsorFollowers(s.calcSponsorFollowers);
+        if (typeof s.calcSponsorEr === "number") setCalcSponsorEr(s.calcSponsorEr);
+        if (s.roiInputs && typeof s.roiInputs === "object") setRoiInputs((prev) => ({ ...prev, ...s.roiInputs }));
+        if (s.earningsInputs && typeof s.earningsInputs === "object") setEarningsInputs((prev) => ({ ...prev, ...s.earningsInputs }));
       }
     } catch {}
   }, []);
@@ -300,10 +326,13 @@ export default function Marketing() {
     try {
       localStorage.setItem(
         LS_KEY,
-        JSON.stringify({ products, swot, canvas, influencers, bloggerFiles })
+        JSON.stringify({
+          products, swot, canvas, influencers, bloggerFiles,
+          calcCurrency, calcCpm, calcSponsorFollowers, calcSponsorEr, roiInputs, earningsInputs,
+        })
       );
     } catch {}
-  }, [products, swot, canvas, influencers, bloggerFiles]);
+  }, [products, swot, canvas, influencers, bloggerFiles, calcCurrency, calcCpm, calcSponsorFollowers, calcSponsorEr, roiInputs, earningsInputs]);
 
   // ---- Menu / cost data from BSS ----
   const { data: menuItems = [] } = useQuery<MenuItem[]>({ queryKey: ["/api/menu"] });
@@ -1480,6 +1509,326 @@ export default function Marketing() {
                   <div className="text-xs opacity-90 mt-1">{t2}</div>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+
+          {/* Currency Toggle + Sponsorship Rate Estimator */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-emerald-500" />
+                  Sponsorship Rate Estimator
+                </CardTitle>
+                <CardDescription>
+                  Estimate fair post pricing using CPM × (Followers × ER%) / 1000.
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground">Currency</Label>
+                <Select value={calcCurrency} onValueChange={(v) => setCalcCurrency(v as "SAR" | "USD")}>
+                  <SelectTrigger className="w-24" data-testid="select-calc-currency">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="SAR">SAR</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs">Followers</Label>
+                  <Input
+                    type="number"
+                    value={calcSponsorFollowers}
+                    onChange={(e) => setCalcSponsorFollowers(parseFloat(e.target.value) || 0)}
+                    data-testid="input-sponsor-followers"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Engagement Rate %</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={calcSponsorEr}
+                    onChange={(e) => setCalcSponsorEr(parseFloat(e.target.value) || 0)}
+                    data-testid="input-sponsor-er"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">
+                    CPM ({calcCurrency})
+                    <InfoTip>Cost per 1,000 engaged users. KSA food niche: 25–80 SAR.</InfoTip>
+                  </Label>
+                  <Input
+                    type="number"
+                    value={calcCpm}
+                    onChange={(e) => setCalcCpm(parseFloat(e.target.value) || 0)}
+                    data-testid="input-sponsor-cpm"
+                  />
+                </div>
+              </div>
+              {(() => {
+                const reach = calcSponsorFollowers * (calcSponsorEr / 100);
+                const estPrice = (reach * calcCpm) / 1000;
+                const lowPrice = estPrice * 0.7;
+                const highPrice = estPrice * 1.3;
+                return (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="rounded-md border p-3">
+                      <div className="text-xs text-muted-foreground">Engaged Reach</div>
+                      <div className="text-lg font-bold" data-testid="stat-sponsor-reach">{fmt(reach, 0)}</div>
+                    </div>
+                    <div className="rounded-md border p-3 bg-emerald-50 dark:bg-emerald-950/30">
+                      <div className="text-xs text-muted-foreground">Suggested Price</div>
+                      <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400" data-testid="stat-sponsor-price">
+                        {fmt(estPrice, 0)} {calcCurrency}
+                      </div>
+                    </div>
+                    <div className="rounded-md border p-3">
+                      <div className="text-xs text-muted-foreground">Min (−30%)</div>
+                      <div className="text-base font-semibold" data-testid="stat-sponsor-low">
+                        {fmt(lowPrice, 0)} {calcCurrency}
+                      </div>
+                    </div>
+                    <div className="rounded-md border p-3">
+                      <div className="text-xs text-muted-foreground">Max (+30%)</div>
+                      <div className="text-base font-semibold" data-testid="stat-sponsor-high">
+                        {fmt(highPrice, 0)} {calcCurrency}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          {/* Cost & ROI Calculator (For Brands) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calculator className="h-5 w-5 text-blue-500" />
+                Cost & ROI Calculator (For Brands)
+              </CardTitle>
+              <CardDescription>
+                Measure campaign performance: CPE, CPM, estimated revenue, and ROI.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-5 gap-3">
+                <div>
+                  <Label className="text-xs">Campaign Cost ({calcCurrency})</Label>
+                  <Input
+                    type="number"
+                    value={roiInputs.cost}
+                    onChange={(e) => setRoiInputs({ ...roiInputs, cost: parseFloat(e.target.value) || 0 })}
+                    data-testid="input-roi-cost"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Impressions</Label>
+                  <Input
+                    type="number"
+                    value={roiInputs.impressions}
+                    onChange={(e) => setRoiInputs({ ...roiInputs, impressions: parseFloat(e.target.value) || 0 })}
+                    data-testid="input-roi-impressions"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Engagements</Label>
+                  <Input
+                    type="number"
+                    value={roiInputs.engagements}
+                    onChange={(e) => setRoiInputs({ ...roiInputs, engagements: parseFloat(e.target.value) || 0 })}
+                    data-testid="input-roi-engagements"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">
+                    AOV ({calcCurrency})
+                    <InfoTip>Average order value per converted customer.</InfoTip>
+                  </Label>
+                  <Input
+                    type="number"
+                    value={roiInputs.aov}
+                    onChange={(e) => setRoiInputs({ ...roiInputs, aov: parseFloat(e.target.value) || 0 })}
+                    data-testid="input-roi-aov"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">
+                    Conversion %
+                    <InfoTip>% of engaged users expected to buy. Food niche typical: 1–3%.</InfoTip>
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={roiInputs.conversionRate}
+                    onChange={(e) => setRoiInputs({ ...roiInputs, conversionRate: parseFloat(e.target.value) || 0 })}
+                    data-testid="input-roi-conversion"
+                  />
+                </div>
+              </div>
+              {(() => {
+                const cpe = roiInputs.engagements > 0 ? roiInputs.cost / roiInputs.engagements : 0;
+                const cpm = roiInputs.impressions > 0 ? (roiInputs.cost / roiInputs.impressions) * 1000 : 0;
+                const estSales = roiInputs.engagements * (roiInputs.conversionRate / 100);
+                const estRevenue = estSales * roiInputs.aov;
+                const profit = estRevenue - roiInputs.cost;
+                const roi = roiInputs.cost > 0 ? (profit / roiInputs.cost) * 100 : 0;
+                const roas = roiInputs.cost > 0 ? estRevenue / roiInputs.cost : 0;
+                const roiPositive = roi >= 0;
+                const chartData = [
+                  { name: "Cost", value: roiInputs.cost },
+                  { name: "Revenue", value: estRevenue },
+                  { name: "Profit", value: profit },
+                ];
+                return (
+                  <>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="rounded-md border p-3">
+                        <div className="text-xs text-muted-foreground">CPE (Cost per Engagement)</div>
+                        <div className="text-lg font-bold" data-testid="stat-roi-cpe">{fmt(cpe, 3)} {calcCurrency}</div>
+                      </div>
+                      <div className="rounded-md border p-3">
+                        <div className="text-xs text-muted-foreground">CPM</div>
+                        <div className="text-lg font-bold" data-testid="stat-roi-cpm">{fmt(cpm, 2)} {calcCurrency}</div>
+                      </div>
+                      <div className="rounded-md border p-3">
+                        <div className="text-xs text-muted-foreground">Est. Sales</div>
+                        <div className="text-lg font-bold" data-testid="stat-roi-sales">{fmt(estSales, 0)}</div>
+                      </div>
+                      <div className="rounded-md border p-3">
+                        <div className="text-xs text-muted-foreground">Est. Revenue</div>
+                        <div className="text-lg font-bold" data-testid="stat-roi-revenue">{fmt(estRevenue, 0)} {calcCurrency}</div>
+                      </div>
+                      <div className={`rounded-md border p-3 ${roiPositive ? "bg-green-50 dark:bg-green-950/30" : "bg-red-50 dark:bg-red-950/30"}`}>
+                        <div className="text-xs text-muted-foreground">ROI</div>
+                        <div className={`text-xl font-bold ${roiPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`} data-testid="stat-roi-roi">
+                          {fmt(roi, 1)}%
+                        </div>
+                      </div>
+                      <div className="rounded-md border p-3">
+                        <div className="text-xs text-muted-foreground">ROAS</div>
+                        <div className="text-lg font-bold" data-testid="stat-roi-roas">{fmt(roas, 2)}×</div>
+                      </div>
+                      <div className="rounded-md border p-3 col-span-2">
+                        <div className="text-xs text-muted-foreground">Profit / Loss</div>
+                        <div className={`text-lg font-bold ${roiPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`} data-testid="stat-roi-profit">
+                          {fmt(profit, 0)} {calcCurrency}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="h-64 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <RTooltip />
+                          <Legend />
+                          <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          {/* Influencer Earnings Dashboard */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-purple-500" />
+                Influencer Earnings Dashboard
+              </CardTitle>
+              <CardDescription>
+                Project monthly income from posts, stories, and affiliate revenue.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-5 gap-3">
+                <div>
+                  <Label className="text-xs">Price / Post ({calcCurrency})</Label>
+                  <Input
+                    type="number"
+                    value={earningsInputs.pricePerPost}
+                    onChange={(e) => setEarningsInputs({ ...earningsInputs, pricePerPost: parseFloat(e.target.value) || 0 })}
+                    data-testid="input-earnings-price-post"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Price / Story ({calcCurrency})</Label>
+                  <Input
+                    type="number"
+                    value={earningsInputs.pricePerStory}
+                    onChange={(e) => setEarningsInputs({ ...earningsInputs, pricePerStory: parseFloat(e.target.value) || 0 })}
+                    data-testid="input-earnings-price-story"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Posts / Month</Label>
+                  <Input
+                    type="number"
+                    value={earningsInputs.posts}
+                    onChange={(e) => setEarningsInputs({ ...earningsInputs, posts: parseFloat(e.target.value) || 0 })}
+                    data-testid="input-earnings-posts"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Stories / Month</Label>
+                  <Input
+                    type="number"
+                    value={earningsInputs.stories}
+                    onChange={(e) => setEarningsInputs({ ...earningsInputs, stories: parseFloat(e.target.value) || 0 })}
+                    data-testid="input-earnings-stories"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Affiliate / Month ({calcCurrency})</Label>
+                  <Input
+                    type="number"
+                    value={earningsInputs.affiliateRevenue}
+                    onChange={(e) => setEarningsInputs({ ...earningsInputs, affiliateRevenue: parseFloat(e.target.value) || 0 })}
+                    data-testid="input-earnings-affiliate"
+                  />
+                </div>
+              </div>
+              {(() => {
+                const postRev = earningsInputs.pricePerPost * earningsInputs.posts;
+                const storyRev = earningsInputs.pricePerStory * earningsInputs.stories;
+                const monthly = postRev + storyRev + earningsInputs.affiliateRevenue;
+                const yearly = monthly * 12;
+                return (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="rounded-md border p-3">
+                      <div className="text-xs text-muted-foreground">Posts Revenue</div>
+                      <div className="text-lg font-bold" data-testid="stat-earnings-posts">{fmt(postRev, 0)} {calcCurrency}</div>
+                    </div>
+                    <div className="rounded-md border p-3">
+                      <div className="text-xs text-muted-foreground">Stories Revenue</div>
+                      <div className="text-lg font-bold" data-testid="stat-earnings-stories">{fmt(storyRev, 0)} {calcCurrency}</div>
+                    </div>
+                    <div className="rounded-md border p-3 bg-purple-50 dark:bg-purple-950/30">
+                      <div className="text-xs text-muted-foreground">Monthly Total</div>
+                      <div className="text-xl font-bold text-purple-600 dark:text-purple-400" data-testid="stat-earnings-monthly">
+                        {fmt(monthly, 0)} {calcCurrency}
+                      </div>
+                    </div>
+                    <div className="rounded-md border p-3 bg-indigo-50 dark:bg-indigo-950/30">
+                      <div className="text-xs text-muted-foreground">Yearly Projection</div>
+                      <div className="text-xl font-bold text-indigo-600 dark:text-indigo-400" data-testid="stat-earnings-yearly">
+                        {fmt(yearly, 0)} {calcCurrency}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
 
