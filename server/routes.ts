@@ -16228,7 +16228,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
-      
+
+      const lang = req.query.lang === 'ar' ? 'ar' : 'en';
+      const isAr = lang === 'ar';
+      const dir = isAr ? 'rtl' : 'ltr';
+      const align = isAr ? 'right' : 'left';
+
       const quotation = await storage.getQuotation(req.params.id, restaurantId);
       if (!quotation) return res.status(404).json({ message: "Quotation not found" });
       
@@ -16247,12 +16252,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       const htmlContent = `
         <!DOCTYPE html>
-        <html>
+        <html lang="${lang}" dir="${dir}">
         <head>
           <meta charset="UTF-8">
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
-            body { font-family: Arial, sans-serif; padding: 40px; font-size: 12px; color: #333; }
+            @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap');
+            body { font-family: ${isAr ? "'Noto Naskh Arabic','Amiri',Arial,sans-serif" : "Arial, sans-serif"}; padding: 40px; font-size: 12px; color: #333; direction: ${dir}; text-align: ${align}; }
             .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1a365d; padding-bottom: 20px; margin-bottom: 30px; }
             .company-info { max-width: 50%; }
             .company-info h1 { color: #1a365d; margin: 0; font-size: 24px; }
@@ -16371,7 +16376,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
-      
+
+      const lang = req.query.lang === 'ar' ? 'ar' : 'en';
+      const isAr = lang === 'ar';
+      const dir = isAr ? 'rtl' : 'ltr';
+      const align = isAr ? 'right' : 'left';
+
       const project = await storage.getServiceProject(req.params.id, restaurantId);
       if (!project) return res.status(404).json({ message: "Project not found" });
       
@@ -16442,12 +16452,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       const htmlContent = `
         <!DOCTYPE html>
-        <html>
+        <html lang="${lang}" dir="${dir}">
         <head>
           <meta charset="UTF-8">
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
-            body { font-family: Arial, sans-serif; padding: 30px; font-size: 11px; color: #333; }
+            @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap');
+            body { font-family: ${isAr ? "'Noto Naskh Arabic','Amiri',Arial,sans-serif" : "Arial, sans-serif"}; padding: 30px; font-size: 11px; color: #333; direction: ${dir}; text-align: ${align}; }
             .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1a365d; padding-bottom: 15px; margin-bottom: 20px; }
             .company-info h1 { color: #1a365d; margin: 0; font-size: 22px; }
             .company-info p { margin: 2px 0; color: #666; font-size: 10px; }
@@ -16620,6 +16630,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
 
+      const lang = req.query.lang === 'ar' ? 'ar' : 'en';
+      const isAr = lang === 'ar';
+      const dir = isAr ? 'rtl' : 'ltr';
+      const align = isAr ? 'right' : 'left';
+
       const project = await storage.getServiceProject(req.params.id, restaurantId);
       if (!project) return res.status(404).json({ message: "Project not found" });
 
@@ -16697,11 +16712,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       const htmlContent = `
         <!DOCTYPE html>
-        <html>
+        <html lang="${lang}" dir="${dir}">
         <head>
           <meta charset="UTF-8">
           <style>
-            body { font-family: Arial, sans-serif; padding: 40px; font-size: 12px; color: #222; line-height: 1.5; }
+            @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap');
+            body { font-family: ${isAr ? "'Noto Naskh Arabic','Amiri',Arial,sans-serif" : "Arial, sans-serif"}; padding: 40px; font-size: 12px; color: #222; line-height: 1.5; direction: ${dir}; text-align: ${align}; }
             .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1a365d; padding-bottom: 15px; margin-bottom: 20px; }
             .company-info { display: flex; gap: 14px; align-items: flex-start; }
             .company-info .logo { width: 64px; height: 64px; object-fit: contain; }
