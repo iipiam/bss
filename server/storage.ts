@@ -5676,73 +5676,75 @@ export class DatabaseStorage implements IStorage {
   async applyProductToProject(productId: string, projectId: string, restaurantId: string): Promise<{
     items: ProjectItem[]; services: ProjectService[]; tasks: ProjectTask[];
   }> {
-    const [project] = await db.select().from(serviceProjects).where(and(eq(serviceProjects.id, projectId), eq(serviceProjects.restaurantId, restaurantId)));
-    if (!project) throw new Error("Project not found");
-    const [product] = await db.select().from(serviceProducts).where(and(eq(serviceProducts.id, productId), eq(serviceProducts.restaurantId, restaurantId)));
-    if (!product) throw new Error("Product not found");
+    return await db.transaction(async (tx) => {
+      const [project] = await tx.select().from(serviceProjects).where(and(eq(serviceProjects.id, projectId), eq(serviceProjects.restaurantId, restaurantId)));
+      if (!project) throw new Error("Project not found");
+      const [product] = await tx.select().from(serviceProducts).where(and(eq(serviceProducts.id, productId), eq(serviceProducts.restaurantId, restaurantId)));
+      if (!product) throw new Error("Product not found");
 
-    const pItems = await db.select().from(productItems).where(and(eq(productItems.productId, productId), eq(productItems.restaurantId, restaurantId))).orderBy(productItems.sortOrder);
-    const pLinks = await db.select().from(productServiceLinks).where(and(eq(productServiceLinks.productId, productId), eq(productServiceLinks.restaurantId, restaurantId))).orderBy(productServiceLinks.sortOrder);
-    const pTasks = await db.select().from(productTasks).where(and(eq(productTasks.productId, productId), eq(productTasks.restaurantId, restaurantId))).orderBy(productTasks.sortOrder);
+      const pItems = await tx.select().from(productItems).where(and(eq(productItems.productId, productId), eq(productItems.restaurantId, restaurantId))).orderBy(productItems.sortOrder);
+      const pLinks = await tx.select().from(productServiceLinks).where(and(eq(productServiceLinks.productId, productId), eq(productServiceLinks.restaurantId, restaurantId))).orderBy(productServiceLinks.sortOrder);
+      const pTasks = await tx.select().from(productTasks).where(and(eq(productTasks.productId, productId), eq(productTasks.restaurantId, restaurantId))).orderBy(productTasks.sortOrder);
 
-    let insertedItems: ProjectItem[] = [];
-    let insertedServices: ProjectService[] = [];
-    let insertedTasks: ProjectTask[] = [];
+      let insertedItems: ProjectItem[] = [];
+      let insertedServices: ProjectService[] = [];
+      let insertedTasks: ProjectTask[] = [];
 
-    if (pItems.length > 0) {
-      insertedItems = await db.insert(projectItems).values(pItems.map((it, idx) => ({
-        restaurantId, projectId, sourceProductId: productId,
-        name: it.name, cost: it.cost, percentage: it.percentage, sortOrder: idx,
-      }))).returning();
-    }
+      if (pItems.length > 0) {
+        insertedItems = await tx.insert(projectItems).values(pItems.map((it, idx) => ({
+          restaurantId, projectId, sourceProductId: productId,
+          name: it.name, cost: it.cost, percentage: it.percentage, sortOrder: idx,
+        }))).returning();
+      }
 
-    if (pLinks.length > 0) {
-      const catalogIds = pLinks.map(l => l.serviceCatalogId).filter((x): x is string => !!x);
-      const catalogRows = catalogIds.length > 0
-        ? await db.select().from(serviceCatalog).where(and(eq(serviceCatalog.restaurantId, restaurantId), sql`${serviceCatalog.id} = ANY(${catalogIds})`))
-        : [];
-      const byId = new Map(catalogRows.map(c => [c.id, c]));
-      const rows = pLinks.map(link => {
-        const qty = parseFloat(link.quantity || "1") || 1;
-        if (link.serviceCatalogId) {
-          const cat = byId.get(link.serviceCatalogId);
-          if (!cat) return null;
-          const unit = parseFloat(cat.unitPrice || "0") || 0;
+      if (pLinks.length > 0) {
+        const catalogIds = pLinks.map(l => l.serviceCatalogId).filter((x): x is string => !!x);
+        const catalogRows = catalogIds.length > 0
+          ? await tx.select().from(serviceCatalog).where(and(eq(serviceCatalog.restaurantId, restaurantId), sql`${serviceCatalog.id} = ANY(${catalogIds})`))
+          : [];
+        const byId = new Map(catalogRows.map(c => [c.id, c]));
+        const rows = pLinks.map(link => {
+          const qty = parseFloat(link.quantity || "1") || 1;
+          if (link.serviceCatalogId) {
+            const cat = byId.get(link.serviceCatalogId);
+            if (!cat) return null;
+            const unit = parseFloat(cat.unitPrice || "0") || 0;
+            const total = (qty * unit).toFixed(2);
+            return {
+              restaurantId, projectId, serviceCatalogId: cat.id, name: cat.name,
+              description: cat.description, pricingMethod: cat.pricingMethod,
+              unitPrice: cat.unitPrice, quantity: String(qty), unit: cat.unit,
+              totalPrice: total, status: "pending", notes: null,
+              sourceProductId: productId,
+            };
+          }
+          const name = link.name?.trim();
+          if (!name) return null;
+          const unit = parseFloat(link.unitPrice || "0") || 0;
           const total = (qty * unit).toFixed(2);
           return {
-            restaurantId, projectId, serviceCatalogId: cat.id, name: cat.name,
-            description: cat.description, pricingMethod: cat.pricingMethod,
-            unitPrice: cat.unitPrice, quantity: String(qty), unit: cat.unit,
+            restaurantId, projectId, serviceCatalogId: null, name,
+            description: null, pricingMethod: "per_piece",
+            unitPrice: String(unit), quantity: String(qty), unit: null,
             totalPrice: total, status: "pending", notes: null,
             sourceProductId: productId,
           };
+        }).filter(Boolean) as InsertProjectService[];
+        if (rows.length > 0) {
+          insertedServices = await tx.insert(projectServices).values(rows).returning();
         }
-        const name = link.name?.trim();
-        if (!name) return null;
-        const unit = parseFloat(link.unitPrice || "0") || 0;
-        const total = (qty * unit).toFixed(2);
-        return {
-          restaurantId, projectId, serviceCatalogId: null, name,
-          description: null, pricingMethod: "per_piece",
-          unitPrice: String(unit), quantity: String(qty), unit: null,
-          totalPrice: total, status: "pending", notes: null,
-          sourceProductId: productId,
-        };
-      }).filter(Boolean) as InsertProjectService[];
-      if (rows.length > 0) {
-        insertedServices = await db.insert(projectServices).values(rows).returning();
       }
-    }
 
-    if (pTasks.length > 0) {
-      insertedTasks = await db.insert(projectTasks).values(pTasks.map((tk, idx) => ({
-        restaurantId, projectId, name: tk.name, description: tk.description,
-        duration: tk.duration, status: "pending", sortOrder: idx,
-        sourceProductId: productId,
-      }))).returning();
-    }
+      if (pTasks.length > 0) {
+        insertedTasks = await tx.insert(projectTasks).values(pTasks.map((tk, idx) => ({
+          restaurantId, projectId, name: tk.name, description: tk.description,
+          duration: tk.duration, status: "pending", sortOrder: idx,
+          sourceProductId: productId,
+        }))).returning();
+      }
 
-    return { items: insertedItems, services: insertedServices, tasks: insertedTasks };
+      return { items: insertedItems, services: insertedServices, tasks: insertedTasks };
+    });
   }
 
   // Quotation Decisions
