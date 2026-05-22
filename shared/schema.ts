@@ -1936,6 +1936,22 @@ export const insertCateringContractTemplateSchema = createInsertSchema(cateringC
 export type InsertCateringContractTemplate = z.infer<typeof insertCateringContractTemplateSchema>;
 export type CateringContractTemplate = typeof cateringContractTemplates.$inferSelect;
 
+// Investment Agreement Templates (Restaurant - MULTI-TENANT)
+export const investmentAgreementTemplates = pgTable("investment_agreement_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  name: text("name").notNull(),
+  content: text("content").notNull().default(""),
+  isDefault: boolean("is_default").notNull().default(false),
+  customPlaceholders: jsonb("custom_placeholders").notNull().default(sql`'[]'::jsonb`),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertInvestmentAgreementTemplateSchema = createInsertSchema(investmentAgreementTemplates).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertInvestmentAgreementTemplate = z.infer<typeof insertInvestmentAgreementTemplateSchema>;
+export type InvestmentAgreementTemplate = typeof investmentAgreementTemplates.$inferSelect;
+
 // Marketing - Discount Codes (MULTI-TENANT)
 export const marketingDiscountCodes = pgTable("marketing_discount_codes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

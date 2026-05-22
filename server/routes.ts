@@ -3046,8 +3046,10 @@ The Company                                            The Investor`;
     const investor = await storage.getInvestor(investorId);
     if (!investor || investor.restaurantId !== restaurantId) throw new Error('Investor not found');
     const restaurant = await storage.getRestaurant(restaurantId);
-    const settings = await storage.getCompanySettings(restaurantId);
-    const tpl = ((settings as any)?.investorAgreementTemplate || DEFAULT_INVESTOR_AGREEMENT_TEMPLATE) as string;
+    const templates = await storage.getInvestmentAgreementTemplates(restaurantId);
+    const defaultTpl = templates.find(t => t.isDefault) || templates[0];
+    const tpl = (defaultTpl?.content && defaultTpl.content.trim()) ? defaultTpl.content : DEFAULT_INVESTOR_AGREEMENT_TEMPLATE;
+    const customPlaceholders = Array.isArray((defaultTpl as any)?.customPlaceholders) ? (defaultTpl as any).customPlaceholders as Array<{key:string;value?:string}> : [];
     let recipeName = '';
     if (investor.investorType === 'recipe' && (investor as any).recipeId) {
       try {
@@ -3061,7 +3063,13 @@ The Company                                            The Investor`;
     const align = isAr ? 'right' : 'left';
     const L = (en: string, ar: string) => isAr ? ar : en;
 
-    const placeholders = getInvestorPlaceholders(restaurant, investor, recipeName, isAr);
+    const basePlaceholders = getInvestorPlaceholders(restaurant, investor, recipeName, isAr);
+    const placeholders: Record<string, string> = { ...basePlaceholders };
+    for (const cp of customPlaceholders) {
+      if (cp && typeof cp.key === 'string' && cp.key && !(cp.key in placeholders)) {
+        placeholders[cp.key] = String(cp.value ?? '');
+      }
+    }
     // SECURITY: templates are always treated as plain text and escaped before
     // injection into the rendered HTML. This prevents stored-template HTML/JS
     // (including remote URLs that could trigger SSRF via Puppeteer) from
@@ -3132,38 +3140,86 @@ The Company                                            The Investor`;
     }
   }
 
-  // GET the saved template (returns default if none configured)
-  app.get("/api/investor-agreement-template", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
+  // Investment Agreement Templates (multi-template CRUD)
+  const RESERVED_INVESTOR_PH_KEYS = new Set([
+    'agreement_date', 'my_restaurant_name', 'restaurant_cr', 'restaurant_tax_number', 'restaurant_national_id',
+    'investor_name', 'national_id', 'contact_number', 'investor_type', 'amount_invested',
+    'interest_percentage', 'iban', 'bank_name', 'notes', 'recipe_name', 'recipe_clause',
+  ]);
+  const investorCustomPhSchema = z.array(z.object({
+    key: z.string().trim().min(1).max(64).regex(/^[a-z0-9_]+$/i, 'Invalid placeholder key'),
+    label: z.string().max(120).optional().default(''),
+    value: z.string().max(5000).optional().default(''),
+  })).max(50).superRefine((arr, ctx) => {
+    const seen = new Set<string>();
+    arr.forEach((p, i) => {
+      const k = p.key.toLowerCase();
+      if (RESERVED_INVESTOR_PH_KEYS.has(k)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [i, 'key'], message: 'Reserved placeholder key' });
+      }
+      if (seen.has(k)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [i, 'key'], message: 'Duplicate placeholder key' });
+      }
+      seen.add(k);
+    });
+  });
+  const investorTemplateBodySchema = z.object({
+    name: z.string().trim().min(1).max(200),
+    content: z.string().max(50000).optional().default(''),
+    isDefault: z.boolean().optional().default(false),
+    customPlaceholders: investorCustomPhSchema.optional().default([]),
+  });
+
+  app.get("/api/investment-agreement-templates", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      const settings = await storage.getCompanySettings(restaurantId);
-      const template = (settings as any)?.investorAgreementTemplate || DEFAULT_INVESTOR_AGREEMENT_TEMPLATE;
-      res.json({
-        template,
-        isDefault: !(settings as any)?.investorAgreementTemplate,
-        placeholders: [
-          'agreement_date', 'my_restaurant_name', 'restaurant_cr', 'restaurant_tax_number', 'restaurant_national_id',
-          'investor_name', 'national_id', 'contact_number', 'investor_type', 'amount_invested',
-          'interest_percentage', 'iban', 'bank_name', 'notes', 'recipe_name', 'recipe_clause',
-        ],
-      });
+      const templates = await storage.getInvestmentAgreementTemplates(restaurantId);
+      res.json(templates);
     } catch (error: any) {
-      console.error('[INVESTORS] Template fetch error:', error);
-      res.status(500).json({ error: 'Failed to fetch template' });
+      res.status(500).json({ message: error.message });
     }
   });
 
-  // PUT save template (pass empty string / null to reset to default)
-  app.put("/api/investor-agreement-template", requireAuth, requireRestaurant, requireAction('investors', 'edit'), async (req, res) => {
+  app.get("/api/investment-agreement-templates/default-content", requireAuth, requireRestaurant, requirePermission('investors'), async (_req, res) => {
+    res.json({
+      content: DEFAULT_INVESTOR_AGREEMENT_TEMPLATE,
+      placeholders: Array.from(RESERVED_INVESTOR_PH_KEYS),
+    });
+  });
+
+  app.post("/api/investment-agreement-templates", requireAuth, requireRestaurant, requireAction('investors', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      const raw = req.body?.template;
-      const template = typeof raw === 'string' && raw.trim() ? raw : null;
-      await storage.upsertCompanySettings(restaurantId, { investorAgreementTemplate: template } as any);
-      res.json({ success: true, template: template ?? DEFAULT_INVESTOR_AGREEMENT_TEMPLATE, isDefault: template === null });
+      const parsed = investorTemplateBodySchema.safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ message: 'Invalid template', errors: parsed.error.flatten() });
+      const template = await storage.createInvestmentAgreementTemplate({ ...parsed.data, restaurantId } as any);
+      res.json(template);
     } catch (error: any) {
-      console.error('[INVESTORS] Template save error:', error);
-      res.status(500).json({ error: 'Failed to save template' });
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/investment-agreement-templates/:id", requireAuth, requireRestaurant, requireAction('investors', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const parsed = investorTemplateBodySchema.partial().safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ message: 'Invalid template', errors: parsed.error.flatten() });
+      const template = await storage.updateInvestmentAgreementTemplate(req.params.id, restaurantId, parsed.data as any);
+      if (!template) return res.status(404).json({ message: 'Template not found' });
+      res.json(template);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/investment-agreement-templates/:id", requireAuth, requireRestaurant, requireAction('investors', 'delete'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const ok = await storage.deleteInvestmentAgreementTemplate(req.params.id, restaurantId);
+      if (!ok) return res.status(404).json({ message: 'Template not found' });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   });
 

@@ -172,6 +172,9 @@ import {
   type CateringContractTemplate,
   type InsertCateringContractTemplate,
   cateringContractTemplates,
+  type InvestmentAgreementTemplate,
+  type InsertInvestmentAgreementTemplate,
+  investmentAgreementTemplates,
   type CompanyProfile,
   type InsertCompanyProfile,
   companyProfiles,
@@ -657,6 +660,13 @@ export interface IStorage {
   createCateringContractTemplate(template: InsertCateringContractTemplate): Promise<CateringContractTemplate>;
   updateCateringContractTemplate(id: string, restaurantId: string, template: Partial<InsertCateringContractTemplate>): Promise<CateringContractTemplate | undefined>;
   deleteCateringContractTemplate(id: string, restaurantId: string): Promise<boolean>;
+
+  // Investment Agreement Templates (MULTI-TENANT)
+  getInvestmentAgreementTemplates(restaurantId: string): Promise<InvestmentAgreementTemplate[]>;
+  getInvestmentAgreementTemplate(id: string, restaurantId: string): Promise<InvestmentAgreementTemplate | undefined>;
+  createInvestmentAgreementTemplate(template: InsertInvestmentAgreementTemplate): Promise<InvestmentAgreementTemplate>;
+  updateInvestmentAgreementTemplate(id: string, restaurantId: string, template: Partial<InsertInvestmentAgreementTemplate>): Promise<InvestmentAgreementTemplate | undefined>;
+  deleteInvestmentAgreementTemplate(id: string, restaurantId: string): Promise<boolean>;
 
   // Company Profiles (MULTI-TENANT, one per restaurant)
   getCompanyProfile(restaurantId: string): Promise<CompanyProfile | undefined>;
@@ -5739,6 +5749,36 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
+  // Investment Agreement Templates (MULTI-TENANT)
+  async getInvestmentAgreementTemplates(restaurantId: string): Promise<InvestmentAgreementTemplate[]> {
+    return db.select().from(investmentAgreementTemplates).where(eq(investmentAgreementTemplates.restaurantId, restaurantId)).orderBy(desc(investmentAgreementTemplates.updatedAt));
+  }
+  async getInvestmentAgreementTemplate(id: string, restaurantId: string): Promise<InvestmentAgreementTemplate | undefined> {
+    const [t] = await db.select().from(investmentAgreementTemplates).where(and(eq(investmentAgreementTemplates.id, id), eq(investmentAgreementTemplates.restaurantId, restaurantId)));
+    return t;
+  }
+  async createInvestmentAgreementTemplate(template: InsertInvestmentAgreementTemplate): Promise<InvestmentAgreementTemplate> {
+    if (template.isDefault) {
+      await db.update(investmentAgreementTemplates).set({ isDefault: false }).where(eq(investmentAgreementTemplates.restaurantId, template.restaurantId));
+    }
+    const [created] = await db.insert(investmentAgreementTemplates).values(template).returning();
+    return created;
+  }
+  async updateInvestmentAgreementTemplate(id: string, restaurantId: string, template: Partial<InsertInvestmentAgreementTemplate>): Promise<InvestmentAgreementTemplate | undefined> {
+    const updateData: Record<string, unknown> = Object.fromEntries(Object.entries(template).filter(([_, v]) => v !== undefined));
+    if (Object.keys(updateData).length === 0) return this.getInvestmentAgreementTemplate(id, restaurantId);
+    updateData.updatedAt = new Date();
+    if (template.isDefault) {
+      await db.update(investmentAgreementTemplates).set({ isDefault: false }).where(eq(investmentAgreementTemplates.restaurantId, restaurantId));
+    }
+    const [updated] = await db.update(investmentAgreementTemplates).set(updateData).where(and(eq(investmentAgreementTemplates.id, id), eq(investmentAgreementTemplates.restaurantId, restaurantId))).returning();
+    return updated;
+  }
+  async deleteInvestmentAgreementTemplate(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(investmentAgreementTemplates).where(and(eq(investmentAgreementTemplates.id, id), eq(investmentAgreementTemplates.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+
   // Marketing - Discount Codes
   async getMarketingDiscountCodes(restaurantId: string): Promise<MarketingDiscountCode[]> {
     return db.select().from(marketingDiscountCodes)
@@ -6280,6 +6320,20 @@ export const storage = new DatabaseStorage();
       ADD COLUMN IF NOT EXISTS custom_placeholders JSONB NOT NULL DEFAULT '[]'::jsonb
     `);
     console.log('[Migration] Tables verified/created: catering_contracts, catering_contract_templates');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS investment_agreement_templates (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        name TEXT NOT NULL,
+        content TEXT NOT NULL DEFAULT '',
+        is_default BOOLEAN NOT NULL DEFAULT FALSE,
+        custom_placeholders JSONB NOT NULL DEFAULT '[]'::jsonb,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('[Migration] Table verified/created: investment_agreement_templates');
 
     console.log('[Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings');
 

@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -115,8 +116,6 @@ export default function Investors() {
   const [uploadingIbanCertFor, setUploadingIbanCertFor] = useState<string | null>(null);
   const [deletingIbanCertFor, setDeletingIbanCertFor] = useState<Investor | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
-  const [templateDraft, setTemplateDraft] = useState<string>("");
   const [generatingAgreementFor, setGeneratingAgreementFor] = useState<string | null>(null);
   const [uploadingSignedFor, setUploadingSignedFor] = useState<string | null>(null);
   const [deletingSignedFor, setDeletingSignedFor] = useState<Investor | null>(null);
@@ -648,63 +647,9 @@ export default function Investors() {
   };
 
   // =========================================================================
-  // Investment Agreement: template + per-investor generated/signed PDFs
+  // Investment Agreement: per-investor generated/signed PDFs
+  // (Templates are managed on the dedicated /investment-agreement-templates page.)
   // =========================================================================
-  const openTemplateEditor = async () => {
-    try {
-      const resp = await fetch('/api/investor-agreement-template', { credentials: 'include' });
-      if (resp.ok) {
-        const data = await resp.json();
-        setTemplateDraft(data.template || '');
-      } else {
-        setTemplateDraft('');
-      }
-    } catch {
-      setTemplateDraft('');
-    }
-    setTemplateDialogOpen(true);
-  };
-
-  const saveTemplateMutation = useMutation({
-    mutationFn: async (template: string) => {
-      return await apiRequest('PUT', '/api/investor-agreement-template', { template });
-    },
-    onSuccess: () => {
-      setTemplateDialogOpen(false);
-      toast({
-        title: t.templateSaved || 'Template Saved',
-        description: t.agreementTemplateSavedDesc || 'Investment agreement template has been saved.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: t.error || 'Error',
-        description: error?.message || 'Failed to save template',
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const resetTemplateToDefault = async () => {
-    try {
-      await apiRequest('PUT', '/api/investor-agreement-template', { template: '' });
-      const resp = await fetch('/api/investor-agreement-template', { credentials: 'include' });
-      if (resp.ok) {
-        const data = await resp.json();
-        setTemplateDraft(data.template || '');
-      }
-      toast({
-        title: t.templateReset || 'Template Reset',
-        description: t.templateResetDesc || 'Reverted to the default agreement template.',
-      });
-    } catch (error: any) {
-      toast({
-        title: t.error || 'Error',
-        description: error?.message || 'Failed to reset template',
-        variant: 'destructive',
-      });
-    }
-  };
 
   const handleGenerateAgreement = async (investor: Investor) => {
     setGeneratingAgreementFor(investor.id);
@@ -880,13 +825,6 @@ export default function Investors() {
       });
     },
   });
-
-  const INVESTOR_AGREEMENT_PLACEHOLDERS = [
-    'agreement_date', 'my_restaurant_name', 'restaurant_cr', 'restaurant_tax_number',
-    'investor_name', 'national_id', 'contact_number', 'investor_type',
-    'amount_invested', 'interest_percentage', 'iban', 'bank_name',
-    'notes', 'recipe_name', 'recipe_clause',
-  ];
 
   const handleFormFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1166,15 +1104,16 @@ export default function Investors() {
           </p>
         </div>
         <div className={`flex flex-col sm:flex-row gap-2 ${layout.isMobile ? "w-full" : ""}`}>
-          <Button
-            variant="outline"
-            onClick={openTemplateEditor}
-            className={layout.isMobile ? "w-full" : ""}
-            data-testid="button-edit-agreement-template"
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            {t.editAgreementTemplate || "Edit Agreement Template"}
-          </Button>
+          <Link href="/investment-agreement-templates">
+            <Button
+              variant="outline"
+              className={layout.isMobile ? "w-full" : ""}
+              data-testid="button-edit-agreement-template"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              {t.editAgreementTemplate || "Edit Agreement Template"}
+            </Button>
+          </Link>
         <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
             <Button className={layout.isMobile ? "w-full" : ""} data-testid="button-add-investor">
@@ -1504,70 +1443,6 @@ export default function Investors() {
         </Dialog>
         </div>
       </div>
-
-      {/* Investment Agreement Template Editor Dialog */}
-      <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle data-testid="text-template-dialog-title">
-              {t.investmentAgreementTemplate || "Investment Agreement Template"}
-            </DialogTitle>
-            <DialogDescription>
-              {t.agreementTemplateDesc ||
-                "Edit the template used when generating investment agreements. Use the placeholders below — they are replaced with each investor's data when the agreement is generated."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="text-xs text-muted-foreground">
-              <span className="font-medium">{t.availablePlaceholders || "Available placeholders"}:</span>
-              <div className="mt-2 flex flex-wrap gap-1">
-                {INVESTOR_AGREEMENT_PLACEHOLDERS.map((p) => (
-                  <code
-                    key={p}
-                    className="px-1.5 py-0.5 rounded bg-muted text-[11px] cursor-pointer hover-elevate"
-                    onClick={() => setTemplateDraft((prev) => prev + `{{${p}}}`)}
-                    data-testid={`placeholder-${p}`}
-                  >
-                    {`{{${p}}}`}
-                  </code>
-                ))}
-              </div>
-            </div>
-            <Textarea
-              value={templateDraft}
-              onChange={(e) => setTemplateDraft(e.target.value)}
-              className="min-h-[400px] font-mono text-xs"
-              placeholder={t.agreementTemplatePlaceholder || "Enter your investment agreement template..."}
-              data-testid="textarea-agreement-template"
-            />
-          </div>
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={resetTemplateToDefault}
-              data-testid="button-reset-template"
-            >
-              {t.resetToDefault || "Reset to Default"}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setTemplateDialogOpen(false)}
-              data-testid="button-cancel-template"
-            >
-              {t.cancel || "Cancel"}
-            </Button>
-            <Button
-              onClick={() => saveTemplateMutation.mutate(templateDraft)}
-              disabled={saveTemplateMutation.isPending}
-              data-testid="button-save-template"
-            >
-              {saveTemplateMutation.isPending
-                ? (t.saving || "Saving...")
-                : (t.saveTemplate || "Save Template")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Net Profit Summary */}
       <Card>
