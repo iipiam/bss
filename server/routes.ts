@@ -7,7 +7,7 @@ import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatRe
 import { PasswordResetMailer } from "./email";
 import { sanitizePatchBody } from "./utils";
 import { generateCompanyProfilePDF } from "./company-profile-pdf";
-import { numberToArabicWords, numberToEnglishWords, percentageToWords } from "./lib/numberToWords";
+import { amountToWords, percentageToWords } from "./lib/numberToWords";
 import { insertCompanyProfileSchema } from "@shared/schema";
 import { logActivity } from "./activityLogger";
 import { requirePermission, requireAnyPermission, requireAllPermissions, requireAction } from "./middleware/requirePermission";
@@ -2999,7 +2999,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 يهدف هذا العقد إلى تنظيم علاقة استثمار صامت بين الطرفين، حيث يقدم المستثمر الصامت رأس مال نقدي فقط مقابل حصة في الأرباح الصافية فقط، دون أن يكون له أي دور إداري أو تشغيلي تماماً.
 
 المادة الثانية: قيمة الاستثمار وحصة المستثمر الصامت:
-يستثمر الطرف الثاني مبلغًا قدره {{amount_invested}} ريال سعودي ({{amount_in_words}} ريال سعودي فقط)، مقابل حصة قدرها {{interest_percentage}}% ({{percentage_in_words}}) من الأرباح الصافية للمؤسسة وفروعها وامتيازاتها التجارية وعقودها إن وُجدت.
+يستثمر الطرف الثاني مبلغًا قدره {{amount_invested}} ريال سعودي ({{amount_in_words}} فقط)، مقابل حصة قدرها {{interest_percentage}}% ({{percentage_in_words}}) من الأرباح الصافية للمؤسسة وفروعها وامتيازاتها التجارية وعقودها إن وُجدت.
 
 المادة الثالثة: التزامات الطرف الأول (الشريك النشط)
 • إدارة المؤسسة بكفاءة واحترافية وحسن نية.
@@ -3087,11 +3087,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       contact_number: investor.contactNumber || '—',
       investor_type: typeLabel,
       amount_invested: amountNum.toFixed(2),
-      // Pure number words per spec — the default template already prints
-      // the currency suffix ("ريال سعودي فقط" / "Saudi Riyals only") around
-      // {{amount_in_words}}. For SAR + halalas wording, use the
-      // amountToWords helper directly (exported from lib/numberToWords).
-      amount_in_words: isAr ? numberToArabicWords(amountNum) : numberToEnglishWords(amountNum),
+      // amountToWords already includes the currency word ("ريالاً" / "riyals")
+      // and halalas precision (e.g. 28.50 → "ثمانية وعشرون ريالاً وخمسون هللة").
+      // The default template wraps this with "(... فقط)" / "(... only)".
+      amount_in_words: amountToWords(amountNum, lang),
       interest_percentage: pctNum.toFixed(2),
       percentage_in_words: percentageToWords(pctNum, lang),
       iban: investor.iban || '—',
