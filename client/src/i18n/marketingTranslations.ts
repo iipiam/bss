@@ -132,6 +132,48 @@ export type MarketingT = {
   page: string;
   of: string;
 
+  // ====== Influencer Marketing Calculator ======
+  calcCurrency: string;
+  calcSponsorshipEstimator: string;
+  calcSponsorshipDesc: string;
+  calcCpmLabel: string;
+  calcCpmTooltip: string;
+  calcEngagementRatePct: string;
+  calcEngagedReach: string;
+  calcSuggestedPrice: string;
+  calcPriceMin: string;
+  calcPriceMax: string;
+  calcRoiTitle: string;
+  calcRoiDesc: string;
+  calcCampaignCost: string;
+  calcImpressions: string;
+  calcEngagementsLabel: string;
+  calcAov: string;
+  calcAovTooltip: string;
+  calcConversionPct: string;
+  calcConversionTooltip: string;
+  calcCpe: string;
+  calcCpm: string;
+  calcEstSales: string;
+  calcEstRevenue: string;
+  calcRoi: string;
+  calcRoas: string;
+  calcProfitLoss: string;
+  calcChartCost: string;
+  calcChartRevenue: string;
+  calcChartProfit: string;
+  calcEarningsTitle: string;
+  calcEarningsDesc: string;
+  calcPricePerPost: string;
+  calcPricePerStory: string;
+  calcPostsPerMonth: string;
+  calcStoriesPerMonth: string;
+  calcAffiliatePerMonth: string;
+  calcPostsRevenue: string;
+  calcStoriesRevenue: string;
+  calcMonthlyTotal: string;
+  calcYearlyProjection: string;
+
   // ====== Marketing Tools (Discounts, WhatsApp Broadcast, Poster, QR) ======
   discounts: string;
   whatsappBroadcast: string;
@@ -455,6 +497,47 @@ const en: MarketingT = {
   downloadQr: "Download PNG",
   qrSize: "Size",
   invalidUrl: "Enter a valid URL (must start with http:// or https://)",
+
+  calcCurrency: "Currency",
+  calcSponsorshipEstimator: "Sponsorship Rate Estimator",
+  calcSponsorshipDesc: "Estimate fair post pricing using CPM × (Followers × ER%) / 1000.",
+  calcCpmLabel: "CPM",
+  calcCpmTooltip: "Cost per 1,000 engaged users. KSA food niche: 25–80 SAR.",
+  calcEngagementRatePct: "Engagement Rate %",
+  calcEngagedReach: "Engaged Reach",
+  calcSuggestedPrice: "Suggested Price",
+  calcPriceMin: "Min (−30%)",
+  calcPriceMax: "Max (+30%)",
+  calcRoiTitle: "Cost & ROI Calculator (For Brands)",
+  calcRoiDesc: "Measure campaign performance: CPE, CPM, estimated revenue, and ROI.",
+  calcCampaignCost: "Campaign Cost",
+  calcImpressions: "Impressions",
+  calcEngagementsLabel: "Engagements",
+  calcAov: "AOV",
+  calcAovTooltip: "Average order value per converted customer.",
+  calcConversionPct: "Conversion %",
+  calcConversionTooltip: "% of engaged users expected to buy. Food niche typical: 1–3%.",
+  calcCpe: "CPE (Cost per Engagement)",
+  calcCpm: "CPM",
+  calcEstSales: "Est. Sales",
+  calcEstRevenue: "Est. Revenue",
+  calcRoi: "ROI",
+  calcRoas: "ROAS",
+  calcProfitLoss: "Profit / Loss",
+  calcChartCost: "Cost",
+  calcChartRevenue: "Revenue",
+  calcChartProfit: "Profit",
+  calcEarningsTitle: "Influencer Earnings Dashboard",
+  calcEarningsDesc: "Project monthly income from posts, stories, and affiliate revenue.",
+  calcPricePerPost: "Price / Post",
+  calcPricePerStory: "Price / Story",
+  calcPostsPerMonth: "Posts / Month",
+  calcStoriesPerMonth: "Stories / Month",
+  calcAffiliatePerMonth: "Affiliate / Month",
+  calcPostsRevenue: "Posts Revenue",
+  calcStoriesRevenue: "Stories Revenue",
+  calcMonthlyTotal: "Monthly Total",
+  calcYearlyProjection: "Yearly Projection",
 };
 
 const ar: MarketingT = {
@@ -696,6 +779,47 @@ const ar: MarketingT = {
   downloadQr: "تحميل PNG",
   qrSize: "الحجم",
   invalidUrl: "أدخل رابطًا صحيحًا (يجب أن يبدأ بـ http:// أو https://)",
+
+  calcCurrency: "العملة",
+  calcSponsorshipEstimator: "مُقدِّر سعر الرعاية",
+  calcSponsorshipDesc: "احسب سعرًا عادلًا للمنشور باستخدام: CPM × (المتابعون × معدل التفاعل٪) ÷ 1000.",
+  calcCpmLabel: "تكلفة الألف (CPM)",
+  calcCpmTooltip: "التكلفة لكل 1000 مستخدم متفاعل. قطاع الأغذية في السعودية: 25–80 ر.س.",
+  calcEngagementRatePct: "معدل التفاعل ٪",
+  calcEngagedReach: "الوصول المتفاعل",
+  calcSuggestedPrice: "السعر المقترح",
+  calcPriceMin: "الحد الأدنى (−٣٠٪)",
+  calcPriceMax: "الحد الأقصى (+٣٠٪)",
+  calcRoiTitle: "حاسبة التكلفة والعائد على الاستثمار (للعلامات التجارية)",
+  calcRoiDesc: "قِس أداء الحملة: التكلفة لكل تفاعل، تكلفة الألف، الإيرادات المتوقعة، والعائد على الاستثمار.",
+  calcCampaignCost: "تكلفة الحملة",
+  calcImpressions: "مرات الظهور",
+  calcEngagementsLabel: "التفاعلات",
+  calcAov: "متوسط قيمة الطلب",
+  calcAovTooltip: "متوسط قيمة الطلب لكل عميل محوّل.",
+  calcConversionPct: "نسبة التحويل ٪",
+  calcConversionTooltip: "نسبة المتفاعلين المتوقع شراؤهم. القطاع الغذائي عادةً: ١–٣٪.",
+  calcCpe: "التكلفة لكل تفاعل (CPE)",
+  calcCpm: "تكلفة الألف (CPM)",
+  calcEstSales: "المبيعات المتوقعة",
+  calcEstRevenue: "الإيرادات المتوقعة",
+  calcRoi: "العائد على الاستثمار",
+  calcRoas: "العائد على الإنفاق الإعلاني",
+  calcProfitLoss: "الربح / الخسارة",
+  calcChartCost: "التكلفة",
+  calcChartRevenue: "الإيرادات",
+  calcChartProfit: "الربح",
+  calcEarningsTitle: "لوحة أرباح المؤثر",
+  calcEarningsDesc: "توقع الدخل الشهري من المنشورات والقصص وعمولات التسويق بالعمولة.",
+  calcPricePerPost: "سعر المنشور",
+  calcPricePerStory: "سعر القصة",
+  calcPostsPerMonth: "المنشورات / الشهر",
+  calcStoriesPerMonth: "القصص / الشهر",
+  calcAffiliatePerMonth: "العمولات / الشهر",
+  calcPostsRevenue: "إيرادات المنشورات",
+  calcStoriesRevenue: "إيرادات القصص",
+  calcMonthlyTotal: "الإجمالي الشهري",
+  calcYearlyProjection: "التوقع السنوي",
 };
 
 // Native translations for the marketing-tools (Task #8) keys for the remaining

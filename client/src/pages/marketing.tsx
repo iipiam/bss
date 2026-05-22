@@ -1518,14 +1518,14 @@ export default function Marketing() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5 text-emerald-500" />
-                  Sponsorship Rate Estimator
+                  {t.calcSponsorshipEstimator}
                 </CardTitle>
                 <CardDescription>
-                  Estimate fair post pricing using CPM × (Followers × ER%) / 1000.
+                  {t.calcSponsorshipDesc}
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Label className="text-xs text-muted-foreground">Currency</Label>
+                <Label className="text-xs text-muted-foreground">{t.calcCurrency}</Label>
                 <Select value={calcCurrency} onValueChange={(v) => setCalcCurrency(v as "SAR" | "USD")}>
                   <SelectTrigger className="w-24" data-testid="select-calc-currency">
                     <SelectValue />
@@ -1540,7 +1540,7 @@ export default function Marketing() {
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-3 gap-3">
                 <div>
-                  <Label className="text-xs">Followers</Label>
+                  <Label className="text-xs">{t.followers}</Label>
                   <Input
                     type="number"
                     value={calcSponsorFollowers}
@@ -1549,7 +1549,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Engagement Rate %</Label>
+                  <Label className="text-xs">{t.calcEngagementRatePct}</Label>
                   <Input
                     type="number"
                     step="0.1"
@@ -1560,8 +1560,8 @@ export default function Marketing() {
                 </div>
                 <div>
                   <Label className="text-xs">
-                    CPM ({calcCurrency})
-                    <InfoTip>Cost per 1,000 engaged users. KSA food niche: 25–80 SAR.</InfoTip>
+                    {t.calcCpmLabel} ({calcCurrency})
+                    <InfoTip>{t.calcCpmTooltip}</InfoTip>
                   </Label>
                   <Input
                     type="number"
@@ -1579,23 +1579,23 @@ export default function Marketing() {
                 return (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="rounded-md border p-3">
-                      <div className="text-xs text-muted-foreground">Engaged Reach</div>
+                      <div className="text-xs text-muted-foreground">{t.calcEngagedReach}</div>
                       <div className="text-lg font-bold" data-testid="stat-sponsor-reach">{fmt(reach, 0)}</div>
                     </div>
                     <div className="rounded-md border p-3 bg-emerald-50 dark:bg-emerald-950/30">
-                      <div className="text-xs text-muted-foreground">Suggested Price</div>
+                      <div className="text-xs text-muted-foreground">{t.calcSuggestedPrice}</div>
                       <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400" data-testid="stat-sponsor-price">
                         {fmt(estPrice, 0)} {calcCurrency}
                       </div>
                     </div>
                     <div className="rounded-md border p-3">
-                      <div className="text-xs text-muted-foreground">Min (−30%)</div>
+                      <div className="text-xs text-muted-foreground">{t.calcPriceMin}</div>
                       <div className="text-base font-semibold" data-testid="stat-sponsor-low">
                         {fmt(lowPrice, 0)} {calcCurrency}
                       </div>
                     </div>
                     <div className="rounded-md border p-3">
-                      <div className="text-xs text-muted-foreground">Max (+30%)</div>
+                      <div className="text-xs text-muted-foreground">{t.calcPriceMax}</div>
                       <div className="text-base font-semibold" data-testid="stat-sponsor-high">
                         {fmt(highPrice, 0)} {calcCurrency}
                       </div>
@@ -1611,16 +1611,16 @@ export default function Marketing() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calculator className="h-5 w-5 text-blue-500" />
-                Cost & ROI Calculator (For Brands)
+                {t.calcRoiTitle}
               </CardTitle>
               <CardDescription>
-                Measure campaign performance: CPE, CPM, estimated revenue, and ROI.
+                {t.calcRoiDesc}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-5 gap-3">
                 <div>
-                  <Label className="text-xs">Campaign Cost ({calcCurrency})</Label>
+                  <Label className="text-xs">{t.calcCampaignCost} ({calcCurrency})</Label>
                   <Input
                     type="number"
                     value={roiInputs.cost}
@@ -1629,7 +1629,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Impressions</Label>
+                  <Label className="text-xs">{t.calcImpressions}</Label>
                   <Input
                     type="number"
                     value={roiInputs.impressions}
@@ -1638,7 +1638,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Engagements</Label>
+                  <Label className="text-xs">{t.calcEngagementsLabel}</Label>
                   <Input
                     type="number"
                     value={roiInputs.engagements}
@@ -1648,8 +1648,8 @@ export default function Marketing() {
                 </div>
                 <div>
                   <Label className="text-xs">
-                    AOV ({calcCurrency})
-                    <InfoTip>Average order value per converted customer.</InfoTip>
+                    {t.calcAov} ({calcCurrency})
+                    <InfoTip>{t.calcAovTooltip}</InfoTip>
                   </Label>
                   <Input
                     type="number"
@@ -1660,8 +1660,8 @@ export default function Marketing() {
                 </div>
                 <div>
                   <Label className="text-xs">
-                    Conversion %
-                    <InfoTip>% of engaged users expected to buy. Food niche typical: 1–3%.</InfoTip>
+                    {t.calcConversionPct}
+                    <InfoTip>{t.calcConversionTooltip}</InfoTip>
                   </Label>
                   <Input
                     type="number"
@@ -1682,41 +1682,41 @@ export default function Marketing() {
                 const roas = roiInputs.cost > 0 ? estRevenue / roiInputs.cost : 0;
                 const roiPositive = roi >= 0;
                 const chartData = [
-                  { name: "Cost", value: roiInputs.cost },
-                  { name: "Revenue", value: estRevenue },
-                  { name: "Profit", value: profit },
+                  { name: t.calcChartCost, value: roiInputs.cost },
+                  { name: t.calcChartRevenue, value: estRevenue },
+                  { name: t.calcChartProfit, value: profit },
                 ];
                 return (
                   <>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div className="rounded-md border p-3">
-                        <div className="text-xs text-muted-foreground">CPE (Cost per Engagement)</div>
+                        <div className="text-xs text-muted-foreground">{t.calcCpe}</div>
                         <div className="text-lg font-bold" data-testid="stat-roi-cpe">{fmt(cpe, 3)} {calcCurrency}</div>
                       </div>
                       <div className="rounded-md border p-3">
-                        <div className="text-xs text-muted-foreground">CPM</div>
+                        <div className="text-xs text-muted-foreground">{t.calcCpm}</div>
                         <div className="text-lg font-bold" data-testid="stat-roi-cpm">{fmt(cpm, 2)} {calcCurrency}</div>
                       </div>
                       <div className="rounded-md border p-3">
-                        <div className="text-xs text-muted-foreground">Est. Sales</div>
+                        <div className="text-xs text-muted-foreground">{t.calcEstSales}</div>
                         <div className="text-lg font-bold" data-testid="stat-roi-sales">{fmt(estSales, 0)}</div>
                       </div>
                       <div className="rounded-md border p-3">
-                        <div className="text-xs text-muted-foreground">Est. Revenue</div>
+                        <div className="text-xs text-muted-foreground">{t.calcEstRevenue}</div>
                         <div className="text-lg font-bold" data-testid="stat-roi-revenue">{fmt(estRevenue, 0)} {calcCurrency}</div>
                       </div>
                       <div className={`rounded-md border p-3 ${roiPositive ? "bg-green-50 dark:bg-green-950/30" : "bg-red-50 dark:bg-red-950/30"}`}>
-                        <div className="text-xs text-muted-foreground">ROI</div>
+                        <div className="text-xs text-muted-foreground">{t.calcRoi}</div>
                         <div className={`text-xl font-bold ${roiPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`} data-testid="stat-roi-roi">
                           {fmt(roi, 1)}%
                         </div>
                       </div>
                       <div className="rounded-md border p-3">
-                        <div className="text-xs text-muted-foreground">ROAS</div>
+                        <div className="text-xs text-muted-foreground">{t.calcRoas}</div>
                         <div className="text-lg font-bold" data-testid="stat-roi-roas">{fmt(roas, 2)}×</div>
                       </div>
                       <div className="rounded-md border p-3 col-span-2">
-                        <div className="text-xs text-muted-foreground">Profit / Loss</div>
+                        <div className="text-xs text-muted-foreground">{t.calcProfitLoss}</div>
                         <div className={`text-lg font-bold ${roiPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`} data-testid="stat-roi-profit">
                           {fmt(profit, 0)} {calcCurrency}
                         </div>
@@ -1745,16 +1745,16 @@ export default function Marketing() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-purple-500" />
-                Influencer Earnings Dashboard
+                {t.calcEarningsTitle}
               </CardTitle>
               <CardDescription>
-                Project monthly income from posts, stories, and affiliate revenue.
+                {t.calcEarningsDesc}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-5 gap-3">
                 <div>
-                  <Label className="text-xs">Price / Post ({calcCurrency})</Label>
+                  <Label className="text-xs">{t.calcPricePerPost} ({calcCurrency})</Label>
                   <Input
                     type="number"
                     value={earningsInputs.pricePerPost}
@@ -1763,7 +1763,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Price / Story ({calcCurrency})</Label>
+                  <Label className="text-xs">{t.calcPricePerStory} ({calcCurrency})</Label>
                   <Input
                     type="number"
                     value={earningsInputs.pricePerStory}
@@ -1772,7 +1772,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Posts / Month</Label>
+                  <Label className="text-xs">{t.calcPostsPerMonth}</Label>
                   <Input
                     type="number"
                     value={earningsInputs.posts}
@@ -1781,7 +1781,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Stories / Month</Label>
+                  <Label className="text-xs">{t.calcStoriesPerMonth}</Label>
                   <Input
                     type="number"
                     value={earningsInputs.stories}
@@ -1790,7 +1790,7 @@ export default function Marketing() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Affiliate / Month ({calcCurrency})</Label>
+                  <Label className="text-xs">{t.calcAffiliatePerMonth} ({calcCurrency})</Label>
                   <Input
                     type="number"
                     value={earningsInputs.affiliateRevenue}
@@ -1807,21 +1807,21 @@ export default function Marketing() {
                 return (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="rounded-md border p-3">
-                      <div className="text-xs text-muted-foreground">Posts Revenue</div>
+                      <div className="text-xs text-muted-foreground">{t.calcPostsRevenue}</div>
                       <div className="text-lg font-bold" data-testid="stat-earnings-posts">{fmt(postRev, 0)} {calcCurrency}</div>
                     </div>
                     <div className="rounded-md border p-3">
-                      <div className="text-xs text-muted-foreground">Stories Revenue</div>
+                      <div className="text-xs text-muted-foreground">{t.calcStoriesRevenue}</div>
                       <div className="text-lg font-bold" data-testid="stat-earnings-stories">{fmt(storyRev, 0)} {calcCurrency}</div>
                     </div>
                     <div className="rounded-md border p-3 bg-purple-50 dark:bg-purple-950/30">
-                      <div className="text-xs text-muted-foreground">Monthly Total</div>
+                      <div className="text-xs text-muted-foreground">{t.calcMonthlyTotal}</div>
                       <div className="text-xl font-bold text-purple-600 dark:text-purple-400" data-testid="stat-earnings-monthly">
                         {fmt(monthly, 0)} {calcCurrency}
                       </div>
                     </div>
                     <div className="rounded-md border p-3 bg-indigo-50 dark:bg-indigo-950/30">
-                      <div className="text-xs text-muted-foreground">Yearly Projection</div>
+                      <div className="text-xs text-muted-foreground">{t.calcYearlyProjection}</div>
                       <div className="text-xl font-bold text-indigo-600 dark:text-indigo-400" data-testid="stat-earnings-yearly">
                         {fmt(yearly, 0)} {calcCurrency}
                       </div>
