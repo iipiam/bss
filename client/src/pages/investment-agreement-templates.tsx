@@ -14,9 +14,9 @@ import { Plus, Trash2, ListPlus, FileText, RefreshCw } from "lucide-react";
 import type { InvestmentAgreementTemplate } from "@shared/schema";
 
 const PLACEHOLDERS = [
-  "agreement_date", "my_restaurant_name", "restaurant_cr", "restaurant_tax_number", "restaurant_national_id",
-  "investor_name", "national_id", "contact_number", "investor_type", "amount_invested",
-  "interest_percentage", "iban", "bank_name", "notes", "recipe_name", "recipe_clause",
+  "agreement_date", "hijri_date", "my_restaurant_name", "restaurant_cr", "restaurant_tax_number", "restaurant_national_id",
+  "investor_name", "national_id", "contact_number", "investor_type", "amount_invested", "amount_in_words",
+  "interest_percentage", "percentage_in_words", "iban", "bank_name", "notes", "recipe_name", "recipe_clause",
 ];
 
 type CustomPh = { key: string; label: string; value: string };
@@ -127,6 +127,21 @@ export default function InvestmentAgreementTemplatesPage() {
       if (r.ok) {
         const data = await r.json();
         setContent(data.content || '');
+        const suggested: Array<{ key: string; label?: string; labelAr?: string; value?: string }> =
+          Array.isArray(data.suggestedCustomPlaceholders) ? data.suggestedCustomPlaceholders : [];
+        if (suggested.length > 0) {
+          setCustomPlaceholders((prev) => {
+            const existing = new Set(prev.map(p => p.key));
+            const additions: CustomPh[] = suggested
+              .filter(s => s.key && !existing.has(s.key))
+              .map(s => ({
+                key: s.key,
+                label: (isRTL ? (s.labelAr || s.label) : (s.label || s.labelAr)) || s.key,
+                value: s.value || "",
+              }));
+            return [...prev, ...additions];
+          });
+        }
       }
     } catch (e: any) {
       toast({ title: t.error, description: e?.message, variant: 'destructive' });
@@ -137,6 +152,7 @@ export default function InvestmentAgreementTemplatesPage() {
   const previewHtml = useMemo(() => {
     const sample: Record<string, string> = {
       agreement_date: "01/06/2026",
+      hijri_date: isRTL ? "١٥ ذو القعدة ١٤٤٧ هـ" : "15 Dhu al-Qi'dah 1447 AH",
       my_restaurant_name: "My Restaurant",
       restaurant_cr: "1010000000",
       restaurant_tax_number: "300000000000003",
@@ -146,7 +162,9 @@ export default function InvestmentAgreementTemplatesPage() {
       contact_number: "+966500000000",
       investor_type: t.moneyInvestor,
       amount_invested: "100000.00",
+      amount_in_words: isRTL ? "مئة ألف" : "one hundred thousand",
       interest_percentage: "10.00",
+      percentage_in_words: isRTL ? "عشرة بالمئة" : "ten percent",
       iban: "SA0380000000608010167519",
       bank_name: "Al Rajhi Bank",
       notes: "—",

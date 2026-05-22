@@ -7,6 +7,7 @@ import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatRe
 import { PasswordResetMailer } from "./email";
 import { sanitizePatchBody } from "./utils";
 import { generateCompanyProfilePDF } from "./company-profile-pdf";
+import { numberToArabicWords, numberToEnglishWords, percentageToWords } from "./lib/numberToWords";
 import { insertCompanyProfileSchema } from "@shared/schema";
 import { logActivity } from "./activityLogger";
 import { requirePermission, requireAnyPermission, requireAllPermissions, requireAction } from "./middleware/requirePermission";
@@ -3062,8 +3063,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           ? `يساهم المستثمر بالوصفة: ${recipeName}.`
           : `The Investor contributes the recipe: ${recipeName}.`)
       : '';
+    const amountNum = parseFloat(investor.amountInvested || '0');
+    const pctNum = parseFloat(investor.interestPercentage || '0');
+    const lang: 'ar' | 'en' = isAr ? 'ar' : 'en';
+    let hijriDate = '';
+    try {
+      hijriDate = new Intl.DateTimeFormat(
+        isAr ? 'ar-SA-u-ca-islamic-umalqura' : 'en-u-ca-islamic-umalqura',
+        { day: 'numeric', month: 'long', year: 'numeric' }
+      ).format(new Date());
+    } catch {
+      hijriDate = fmtDate(new Date());
+    }
     return {
       agreement_date: fmtDate(new Date()),
+      hijri_date: hijriDate,
       my_restaurant_name: restaurant?.name || '',
       restaurant_cr: (restaurant?.commercialRegistration || '') as string,
       restaurant_tax_number: (restaurant?.taxNumber || '') as string,
@@ -3072,8 +3086,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       national_id: investor.nationalId || '—',
       contact_number: investor.contactNumber || '—',
       investor_type: typeLabel,
-      amount_invested: parseFloat(investor.amountInvested || '0').toFixed(2),
-      interest_percentage: parseFloat(investor.interestPercentage || '0').toFixed(2),
+      amount_invested: amountNum.toFixed(2),
+      // Pure number words — the template already supplies the currency suffix
+      // ("ريال سعودي فقط" / "Saudi Riyals only") around {{amount_in_words}}.
+      amount_in_words: isAr ? numberToArabicWords(Math.round(amountNum)) : numberToEnglishWords(Math.round(amountNum)),
+      interest_percentage: pctNum.toFixed(2),
+      percentage_in_words: percentageToWords(pctNum, lang),
       iban: investor.iban || '—',
       bank_name: investor.bankName || '—',
       notes: investor.notes || '—',
@@ -3182,10 +3200,26 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   // Investment Agreement Templates (multi-template CRUD)
   const RESERVED_INVESTOR_PH_KEYS = new Set([
-    'agreement_date', 'my_restaurant_name', 'restaurant_cr', 'restaurant_tax_number', 'restaurant_national_id',
-    'investor_name', 'national_id', 'contact_number', 'investor_type', 'amount_invested',
-    'interest_percentage', 'iban', 'bank_name', 'notes', 'recipe_name', 'recipe_clause',
+    'agreement_date', 'hijri_date', 'my_restaurant_name', 'restaurant_cr', 'restaurant_tax_number', 'restaurant_national_id',
+    'investor_name', 'national_id', 'contact_number', 'investor_type', 'amount_invested', 'amount_in_words',
+    'interest_percentage', 'percentage_in_words', 'iban', 'bank_name', 'notes', 'recipe_name', 'recipe_clause',
   ]);
+  // Template-level placeholders (not per-investor): user fills them once in the
+  // template's Custom Placeholders grid and they apply to every generated PDF.
+  const SUGGESTED_INVESTOR_CUSTOM_PLACEHOLDERS: Array<{ key: string; label: string; labelAr: string }> = [
+    { key: 'owner_name',           label: 'Owner full name',                  labelAr: 'اسم المالك الكامل' },
+    { key: 'owner_nationality',    label: 'Owner nationality',                labelAr: 'جنسية المالك' },
+    { key: 'owner_phone',          label: 'Owner phone number',               labelAr: 'رقم جوال المالك' },
+    { key: 'investor_nationality', label: 'Investor nationality',             labelAr: 'جنسية المستثمر' },
+    { key: 'cr_issue_date',        label: 'CR issue date',                    labelAr: 'تاريخ إصدار السجل التجاري' },
+    { key: 'trade_name',           label: 'Trade name',                       labelAr: 'الاسم التجاري' },
+    { key: 'business_activity',    label: 'Business activity',                labelAr: 'نوع النشاط' },
+    { key: 'city',                 label: 'Establishment city',               labelAr: 'مدينة المنشأة' },
+    { key: 'disputes_city',        label: 'Disputes jurisdiction city',       labelAr: 'مدينة الاختصاص القضائي' },
+    { key: 'pages_count',          label: 'Number of contract pages',         labelAr: 'عدد صفحات العقد' },
+    { key: 'witness_1_name',       label: 'Witness 1 name',                   labelAr: 'اسم الشاهد الأول' },
+    { key: 'witness_2_name',       label: 'Witness 2 name',                   labelAr: 'اسم الشاهد الثاني' },
+  ];
   const investorCustomPhSchema = z.array(z.object({
     key: z.string().trim().min(1).max(64).regex(/^[a-z0-9_]+$/i, 'Invalid placeholder key'),
     label: z.string().max(120).optional().default(''),
@@ -3224,6 +3258,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json({
       content: DEFAULT_INVESTOR_AGREEMENT_TEMPLATE,
       placeholders: Array.from(RESERVED_INVESTOR_PH_KEYS),
+      suggestedCustomPlaceholders: SUGGESTED_INVESTOR_CUSTOM_PLACEHOLDERS.map(p => ({
+        key: p.key, label: p.label, labelAr: p.labelAr, value: '',
+      })),
     });
   });
 
