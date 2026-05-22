@@ -162,7 +162,7 @@ export default function InvestmentAgreementTemplatesPage() {
       contact_number: "+966500000000",
       investor_type: t.moneyInvestor,
       amount_invested: "100000.00",
-      amount_in_words: isRTL ? "مئة ألف" : "one hundred thousand",
+      amount_in_words: isRTL ? "مئة ألف ريال سعودي" : "one hundred thousand riyals",
       interest_percentage: "10.00",
       percentage_in_words: isRTL ? "عشرة بالمئة" : "ten percent",
       iban: "SA0380000000608010167519",
