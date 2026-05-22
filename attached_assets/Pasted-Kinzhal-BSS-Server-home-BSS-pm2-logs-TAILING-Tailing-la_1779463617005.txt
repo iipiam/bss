@@ -1,0 +1,53 @@
+Kinzhal@BSS-Server:/home/BSS$ pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+/home/Kinzhal/.pm2/pm2.log last 15 lines:
+PM2        | 2026-05-22T15:17:31: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-05-22T15:17:31: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-05-22T15:17:31: PM2 log: pid=2769391 msg=process killed
+PM2        | 2026-05-22T15:17:31: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-05-22T15:17:31: PM2 log: App [BSS:0] online
+PM2        | 2026-05-22T15:19:41: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-05-22T15:19:41: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-05-22T15:19:42: PM2 log: pid=2769577 msg=process killed
+PM2        | 2026-05-22T15:19:42: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-05-22T15:19:42: PM2 log: App [BSS:0] online
+PM2        | 2026-05-22T15:25:50: PM2 log: Stopping app:BSS id:0
+PM2        | 2026-05-22T15:25:50: PM2 log: App [BSS:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-05-22T15:25:50: PM2 log: pid=2769717 msg=process killed
+PM2        | 2026-05-22T15:25:50: PM2 log: App [BSS:0] starting in -fork mode-
+PM2        | 2026-05-22T15:25:50: PM2 log: App [BSS:0] online
+
+/home/Kinzhal/.pm2/logs/BSS-error.log last 15 lines:
+0|BSS      |     ssl: false,
+0|BSS      |     _connectionTimeoutMillis: 0,
+0|BSS      |     _connectionCallback: null,
+0|BSS      |     saslSession: null,
+0|BSS      |     release: [Function (anonymous)],
+0|BSS      |     activeQuery: null,
+0|BSS      |     readyForQuery: true,
+0|BSS      |     hasExecuted: true,
+0|BSS      |     _poolUseCount: 2,
+0|BSS      |     [Symbol(shapeMode)]: false,
+0|BSS      |     [Symbol(kCapture)]: false
+0|BSS      |   }
+0|BSS      | }
+0|BSS      | [Migration] Error adding columns: connect ECONNREFUSED 127.0.0.1:5432
+0|BSS      | [Migration] company_profiles.partners: connect ECONNREFUSED 127.0.0.1:5432
+
+/home/Kinzhal/.pm2/logs/BSS-out.log last 15 lines:
+0|BSS      | [Migration] Table verified/created: investment_agreement_templates
+0|BSS      | [Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings
+0|BSS      | [Migration] Table verified/created: company_profiles (with font_family, header_style)
+0|BSS      | [Migration] Table verified/created: marketing_discount_codes
+0|BSS      | [Migration] Table verified/created: marketing_broadcast_templates
+0|BSS      | 3:25:52 PM [express] GET /api/service-products 500 in 34ms :: {"message":"relation \"service_product…
+0|BSS      | 3:25:54 PM [express] GET /api/auth/me 200 in 10ms :: {"user":{"id":"9aed1efb-44ec-49c0-8600-4785bb6a…
+0|BSS      | [WebSocket] Client connected: user=9aed1efb-44ec-49c0-8600-4785bb6ad80b, restaurant=bf31801a-dade-4aa9-8531-62cf6d1415fc, conversations=0
+0|BSS      | 3:25:54 PM [express] GET /api/settings 200 in 8ms :: {"id":"6b5f8b90-33a8-4b02-9546-8e9074ea6e24","r…
+0|BSS      | 3:25:55 PM [express] GET /api/chat/notification-settings 200 in 10ms :: {"notificationsEnabled":true…
+0|BSS      | 3:25:55 PM [express] GET /api/branches 200 in 14ms :: []
+0|BSS      | 3:25:55 PM [express] GET /api/service-products 500 in 11ms :: {"message":"relation \"service_product…
+0|BSS      | 3:25:55 PM [express] GET /api/service-catalog 200 in 13ms :: [{"id":"ef87c855-cd6a-4997-bcee-6948eae…
+0|BSS      | 3:26:15 PM [express] GET /api/service-products 500 in 18ms :: {"message":"relation \"service_product…
+0|BSS      | 3:26:20 PM [express] POST /api/service-products 500 in 18ms :: {"message":"relation \"service_produc…
+

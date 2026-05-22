@@ -99,6 +99,8 @@ interface ProductItemDraft {
 }
 interface ProductServiceDraft {
   serviceCatalogId: string;
+  name: string;
+  unitPrice: string;
   quantity: string;
 }
 interface ProductTaskDraft {
@@ -117,7 +119,7 @@ interface ServiceProduct {
 }
 interface ServiceProductDetail extends ServiceProduct {
   items: Array<{ id: string; name: string; cost: string; percentage: string; sortOrder: number }>;
-  services: Array<{ id: string; serviceCatalogId: string; quantity: string; sortOrder: number }>;
+  services: Array<{ id: string; serviceCatalogId: string | null; name: string | null; unitPrice: string | null; quantity: string; sortOrder: number }>;
   tasks: Array<{ id: string; name: string; description: string | null; duration: number; sortOrder: number }>;
 }
 
@@ -207,7 +209,7 @@ export default function ServiceCatalog() {
     setProductCategory(p.category || "");
     setProductStatus(p.status);
     setProductItems(p.items.map((i) => ({ name: i.name, cost: i.cost, percentage: i.percentage })));
-    setProductServices(p.services.map((s) => ({ serviceCatalogId: s.serviceCatalogId, quantity: s.quantity })));
+    setProductServices(p.services.map((s) => ({ serviceCatalogId: s.serviceCatalogId || "", name: s.name || "", unitPrice: s.unitPrice || "", quantity: s.quantity })));
     setProductTasks(p.tasks.map((tk) => ({ name: tk.name, description: tk.description || "", duration: String(tk.duration) })));
   };
 
@@ -225,7 +227,9 @@ export default function ServiceCatalog() {
           sortOrder: idx,
         })),
         services: productServices.map((s, idx) => ({
-          serviceCatalogId: s.serviceCatalogId,
+          serviceCatalogId: s.serviceCatalogId || null,
+          name: s.name || null,
+          unitPrice: s.unitPrice || null,
           quantity: s.quantity || "1",
           sortOrder: idx,
         })),
@@ -1017,22 +1021,72 @@ export default function ServiceCatalog() {
                   <Wrench className="h-4 w-4" /> {t.productServices || "Services"}
                 </Label>
                 <Button type="button" size="sm" variant="outline" data-testid="button-add-product-service"
-                  onClick={() => setProductServices([...productServices, { serviceCatalogId: "", quantity: "1" }])}>
+                  onClick={() => setProductServices([...productServices, { serviceCatalogId: "", name: "", unitPrice: "", quantity: "1" }])}>
                   <Plus className="h-3 w-3 mr-1" /> {t.addProductService || "Add Service"}
                 </Button>
               </div>
               {productServices.map((s, idx) => (
-                <div key={idx} className="grid grid-cols-12 gap-2 items-end" data-testid={`row-service-${idx}`}>
-                  <div className="col-span-8">
-                    <Select value={s.serviceCatalogId} onValueChange={(v) => { const a = [...productServices]; a[idx] = { ...a[idx], serviceCatalogId: v }; setProductServices(a); }}>
-                      <SelectTrigger data-testid={`select-catalog-service-${idx}`}><SelectValue placeholder={t.selectCatalogService || "Select service"} /></SelectTrigger>
-                      <SelectContent>
-                        {services.map((sv) => (<SelectItem key={sv.id} value={sv.id}>{sv.name} ({parseFloat(sv.unitPrice).toLocaleString()} SAR)</SelectItem>))}
-                      </SelectContent>
-                    </Select>
+                <div key={idx} className="space-y-2 border rounded-md p-2" data-testid={`row-service-${idx}`}>
+                  {services.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <Select
+                          value={s.serviceCatalogId || "__custom__"}
+                          onValueChange={(v) => {
+                            const a = [...productServices];
+                            if (v === "__custom__") {
+                              a[idx] = { ...a[idx], serviceCatalogId: "" };
+                            } else {
+                              const cat = services.find((x) => x.id === v);
+                              a[idx] = { ...a[idx], serviceCatalogId: v, name: cat?.name || a[idx].name, unitPrice: cat?.unitPrice || a[idx].unitPrice };
+                            }
+                            setProductServices(a);
+                          }}
+                        >
+                          <SelectTrigger data-testid={`select-catalog-service-${idx}`}>
+                            <SelectValue placeholder={t.selectCatalogService || "Select from catalog (optional)"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__custom__">{t.customService || "Custom service"}</SelectItem>
+                            {services.map((sv) => (<SelectItem key={sv.id} value={sv.id}>{sv.name} ({parseFloat(sv.unitPrice).toLocaleString()} SAR)</SelectItem>))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-12 gap-2 items-end">
+                    <div className="col-span-5">
+                      <Input
+                        placeholder={t.serviceName || "Service name"}
+                        value={s.name}
+                        onChange={(e) => { const a = [...productServices]; a[idx] = { ...a[idx], name: e.target.value }; setProductServices(a); }}
+                        data-testid={`input-service-name-${idx}`}
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <Input
+                        type="number"
+                        placeholder={t.unitPrice || "Unit price"}
+                        value={s.unitPrice}
+                        onChange={(e) => { const a = [...productServices]; a[idx] = { ...a[idx], unitPrice: e.target.value }; setProductServices(a); }}
+                        data-testid={`input-service-price-${idx}`}
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <Input
+                        type="number"
+                        placeholder={t.quantity || "Qty"}
+                        value={s.quantity}
+                        onChange={(e) => { const a = [...productServices]; a[idx] = { ...a[idx], quantity: e.target.value }; setProductServices(a); }}
+                        data-testid={`input-service-qty-${idx}`}
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <Button type="button" size="icon" variant="ghost" onClick={() => setProductServices(productServices.filter((_, i) => i !== idx))} data-testid={`button-remove-service-${idx}`}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="col-span-3"><Input type="number" placeholder={t.quantity || "Qty"} value={s.quantity} onChange={(e) => { const a = [...productServices]; a[idx] = { ...a[idx], quantity: e.target.value }; setProductServices(a); }} /></div>
-                  <div className="col-span-1"><Button type="button" size="icon" variant="ghost" onClick={() => setProductServices(productServices.filter((_, i) => i !== idx))} data-testid={`button-remove-service-${idx}`}><X className="h-4 w-4" /></Button></div>
                 </div>
               ))}
             </div>

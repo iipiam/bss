@@ -5697,19 +5697,34 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (pLinks.length > 0) {
-      const catalogIds = pLinks.map(l => l.serviceCatalogId);
-      const catalogRows = await db.select().from(serviceCatalog).where(and(eq(serviceCatalog.restaurantId, restaurantId), sql`${serviceCatalog.id} = ANY(${catalogIds})`));
+      const catalogIds = pLinks.map(l => l.serviceCatalogId).filter((x): x is string => !!x);
+      const catalogRows = catalogIds.length > 0
+        ? await db.select().from(serviceCatalog).where(and(eq(serviceCatalog.restaurantId, restaurantId), sql`${serviceCatalog.id} = ANY(${catalogIds})`))
+        : [];
       const byId = new Map(catalogRows.map(c => [c.id, c]));
       const rows = pLinks.map(link => {
-        const cat = byId.get(link.serviceCatalogId);
-        if (!cat) return null;
         const qty = parseFloat(link.quantity || "1") || 1;
-        const unit = parseFloat(cat.unitPrice || "0") || 0;
+        if (link.serviceCatalogId) {
+          const cat = byId.get(link.serviceCatalogId);
+          if (!cat) return null;
+          const unit = parseFloat(cat.unitPrice || "0") || 0;
+          const total = (qty * unit).toFixed(2);
+          return {
+            restaurantId, projectId, serviceCatalogId: cat.id, name: cat.name,
+            description: cat.description, pricingMethod: cat.pricingMethod,
+            unitPrice: cat.unitPrice, quantity: String(qty), unit: cat.unit,
+            totalPrice: total, status: "pending", notes: null,
+            sourceProductId: productId,
+          };
+        }
+        const name = link.name?.trim();
+        if (!name) return null;
+        const unit = parseFloat(link.unitPrice || "0") || 0;
         const total = (qty * unit).toFixed(2);
         return {
-          restaurantId, projectId, serviceCatalogId: cat.id, name: cat.name,
-          description: cat.description, pricingMethod: cat.pricingMethod,
-          unitPrice: cat.unitPrice, quantity: String(qty), unit: cat.unit,
+          restaurantId, projectId, serviceCatalogId: null, name,
+          description: null, pricingMethod: "per_piece",
+          unitPrice: String(unit), quantity: String(qty), unit: null,
           totalPrice: total, status: "pending", notes: null,
           sourceProductId: productId,
         };

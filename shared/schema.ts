@@ -1901,12 +1901,15 @@ export const insertProductItemSchema = createInsertSchema(productItems).omit({ i
 export type InsertProductItem = z.infer<typeof insertProductItemSchema>;
 export type ProductItem = typeof productItems.$inferSelect;
 
-// Product Service Links: services from catalog included in a product bundle
+// Product Service Links: services included in a product bundle. Either a catalog
+// reference (serviceCatalogId set) or a free-form service (name + unitPrice set).
 export const productServiceLinks = pgTable("product_service_links", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
   productId: varchar("product_id").references(() => serviceProducts.id, { onDelete: "cascade" }).notNull(),
-  serviceCatalogId: varchar("service_catalog_id").references(() => serviceCatalog.id).notNull(),
+  serviceCatalogId: varchar("service_catalog_id").references(() => serviceCatalog.id),
+  name: text("name"),
+  unitPrice: decimal("unit_price", { precision: 12, scale: 2 }),
   quantity: decimal("quantity", { precision: 12, scale: 2 }).notNull().default("1"),
   sortOrder: integer("sort_order").notNull().default(0),
 });

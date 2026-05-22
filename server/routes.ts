@@ -15615,10 +15615,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           sortOrder: idx,
         })).filter((it: any) => it.name),
         services: services.map((s: any, idx: number) => ({
-          serviceCatalogId: String(s.serviceCatalogId || ""),
+          serviceCatalogId: s.serviceCatalogId ? String(s.serviceCatalogId) : null,
+          name: s.name ? String(s.name) : null,
+          unitPrice: s.unitPrice != null && s.unitPrice !== "" ? String(s.unitPrice) : null,
           quantity: String(s.quantity ?? "1"),
           sortOrder: idx,
-        })).filter((s: any) => s.serviceCatalogId),
+        })).filter((s: any) => s.serviceCatalogId || s.name),
         tasks: tasks.map((tk: any, idx: number) => ({
           name: String(tk.name || ""),
           description: tk.description ? String(tk.description) : null,
@@ -15648,10 +15650,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             sortOrder: idx,
           })).filter((it: any) => it.name),
           services: (services || []).map((s: any, idx: number) => ({
-            serviceCatalogId: String(s.serviceCatalogId || ""),
+            serviceCatalogId: s.serviceCatalogId ? String(s.serviceCatalogId) : null,
+            name: s.name ? String(s.name) : null,
+            unitPrice: s.unitPrice != null && s.unitPrice !== "" ? String(s.unitPrice) : null,
             quantity: String(s.quantity ?? "1"),
             sortOrder: idx,
-          })).filter((s: any) => s.serviceCatalogId),
+          })).filter((s: any) => s.serviceCatalogId || s.name),
           tasks: (tasks || []).map((tk: any, idx: number) => ({
             name: String(tk.name || ""),
             description: tk.description ? String(tk.description) : null,
