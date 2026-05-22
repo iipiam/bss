@@ -160,6 +160,8 @@ export default function ProjectDetail() {
   const [activeTab, setActiveTab] = useState("overview");
   const [svcOpen, setSvcOpen] = useState(false);
   const [billOpen, setBillOpen] = useState(false);
+  const [applyProductOpen, setApplyProductOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [procOpen, setProcOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
@@ -225,6 +227,25 @@ export default function ProjectDetail() {
   });
   const { data: catalog = [] } = useQuery<CatalogItem[]>({
     queryKey: ["/api/service-catalog"],
+  });
+  const { data: serviceProducts = [] } = useQuery<{ id: string; name: string; category: string | null; status: string }[]>({
+    queryKey: ["/api/service-products"],
+  });
+
+  const applyProductMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      return await apiRequest("POST", `/api/service-projects/${projectId}/apply-product`, { productId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/project-services", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/project-tasks", projectId] });
+      setApplyProductOpen(false);
+      setSelectedProductId("");
+      toast({ title: t.productApplied || "Product applied", description: t.productAppliedDesc || "Items, services, and tasks were added to the project." });
+    },
+    onError: (e: any) => {
+      toast({ title: t.error, description: e.message, variant: "destructive" });
+    },
   });
 
   const svcForm = useForm<ServiceFormValues>({ resolver: zodResolver(serviceSchema), defaultValues: { serviceCatalogId: "", name: "", description: "", pricingMethod: "lump_sum", unitPrice: "0", quantity: "1", unit: "", totalPrice: "0", status: "pending", notes: "" } });
@@ -614,7 +635,10 @@ export default function ProjectDetail() {
         <TabsContent value="services" className="space-y-4">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <h2 className="text-lg font-semibold">{t.services || "Services"}</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => { setSelectedProductId(""); setApplyProductOpen(true); }} data-testid="button-apply-product"><Plus className="h-4 w-4 mr-2" />{t.applyProduct || "Apply Product"}</Button>
             <Button onClick={() => { setEditSvc(null); svcForm.reset(); setSvcOpen(true); }} data-testid="button-add-service"><Plus className="h-4 w-4 mr-2" />{t.addService || "Add Service"}</Button>
+          </div>
           </div>
           {services.length === 0 ? <p className="text-muted-foreground text-center py-8">{t.noServices || "No services added yet"}</p> : (
             <div className="space-y-3">
@@ -1158,6 +1182,31 @@ export default function ProjectDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={applyProductOpen} onOpenChange={setApplyProductOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.applyProduct || "Apply Product"}</DialogTitle>
+            <DialogDescription>{t.selectProductToApply || "Select a product to apply to this project"}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+              <SelectTrigger data-testid="select-apply-product"><SelectValue placeholder={t.selectProductToApply || "Select product"} /></SelectTrigger>
+              <SelectContent>
+                {serviceProducts.filter(p => p.status === "active").map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}{p.category ? ` (${p.category})` : ""}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setApplyProductOpen(false)} data-testid="button-cancel-apply-product">{t.cancel}</Button>
+              <Button disabled={!selectedProductId || applyProductMutation.isPending} onClick={() => applyProductMutation.mutate(selectedProductId)} data-testid="button-confirm-apply-product">
+                {t.applyProduct || "Apply"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

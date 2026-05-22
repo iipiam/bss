@@ -15535,6 +15535,130 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // ==================== SERVICE PRODUCTS (bundles) ====================
+  app.get("/api/service-products", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const products = await storage.getServiceProducts(restaurantId);
+      res.json(products);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/service-products/:id", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const product = await storage.getServiceProduct(req.params.id, restaurantId);
+      if (!product) return res.status(404).json({ message: "Product not found" });
+      const [items, services, tasks] = await Promise.all([
+        storage.getProductItems(req.params.id, restaurantId),
+        storage.getProductServiceLinks(req.params.id, restaurantId),
+        storage.getProductTasks(req.params.id, restaurantId),
+      ]);
+      res.json({ ...product, items, services, tasks });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/service-products", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { items = [], services = [], tasks = [], ...rest } = req.body || {};
+      const product = await storage.createServiceProduct({ ...rest, restaurantId });
+      await storage.replaceProductChildren(product.id, restaurantId, {
+        items: items.map((it: any, idx: number) => ({
+          name: String(it.name || ""),
+          cost: String(it.cost ?? "0"),
+          percentage: String(it.percentage ?? "0"),
+          sortOrder: idx,
+        })).filter((it: any) => it.name),
+        services: services.map((s: any, idx: number) => ({
+          serviceCatalogId: String(s.serviceCatalogId || ""),
+          quantity: String(s.quantity ?? "1"),
+          sortOrder: idx,
+        })).filter((s: any) => s.serviceCatalogId),
+        tasks: tasks.map((tk: any, idx: number) => ({
+          name: String(tk.name || ""),
+          description: tk.description ? String(tk.description) : null,
+          duration: parseInt(String(tk.duration ?? "1"), 10) || 1,
+          sortOrder: idx,
+        })).filter((tk: any) => tk.name),
+      });
+      res.status(201).json(product);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/service-products/:id", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { items, services, tasks, ...rest } = req.body || {};
+      const { restaurantId: _omit, id: _id, createdAt: _c, ...safe } = rest;
+      const product = await storage.updateServiceProduct(req.params.id, restaurantId, safe);
+      if (!product) return res.status(404).json({ message: "Product not found" });
+      if (Array.isArray(items) || Array.isArray(services) || Array.isArray(tasks)) {
+        await storage.replaceProductChildren(req.params.id, restaurantId, {
+          items: (items || []).map((it: any, idx: number) => ({
+            name: String(it.name || ""),
+            cost: String(it.cost ?? "0"),
+            percentage: String(it.percentage ?? "0"),
+            sortOrder: idx,
+          })).filter((it: any) => it.name),
+          services: (services || []).map((s: any, idx: number) => ({
+            serviceCatalogId: String(s.serviceCatalogId || ""),
+            quantity: String(s.quantity ?? "1"),
+            sortOrder: idx,
+          })).filter((s: any) => s.serviceCatalogId),
+          tasks: (tasks || []).map((tk: any, idx: number) => ({
+            name: String(tk.name || ""),
+            description: tk.description ? String(tk.description) : null,
+            duration: parseInt(String(tk.duration ?? "1"), 10) || 1,
+            sortOrder: idx,
+          })).filter((tk: any) => tk.name),
+        });
+      }
+      res.json(product);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/service-products/:id", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const deleted = await storage.deleteServiceProduct(req.params.id, restaurantId);
+      if (!deleted) return res.status(404).json({ message: "Product not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/service-projects/:id/apply-product", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { productId } = req.body || {};
+      if (!productId) return res.status(400).json({ message: "productId is required" });
+      const result = await storage.applyProductToProject(productId, req.params.id, restaurantId);
+      res.status(201).json(result);
+    } catch (error: any) {
+      res.status(error.message?.includes("not found") ? 404 : 500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/service-projects/:id/items", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const rows = await storage.getProjectItems(restaurantId, req.params.id);
+      res.json(rows);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // ==================== CONTRACTORS ====================
   app.get("/api/contractors", requireAuth, async (req, res) => {
     try {

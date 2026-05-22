@@ -1795,6 +1795,7 @@ export const projectServices = pgTable("project_services", {
   totalPrice: decimal("total_price", { precision: 12, scale: 2 }).notNull(),
   status: text("status").notNull().default("pending"),
   notes: text("notes"),
+  sourceProductId: varchar("source_product_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -1864,12 +1865,84 @@ export const projectTasks = pgTable("project_tasks", {
   lateFinish: integer("late_finish"),
   slack: integer("slack"),
   sortOrder: integer("sort_order").notNull().default(0),
+  sourceProductId: varchar("source_product_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const insertProjectTaskSchema = createInsertSchema(projectTasks).omit({ id: true, createdAt: true });
 export type InsertProjectTask = z.infer<typeof insertProjectTaskSchema>;
 export type ProjectTask = typeof projectTasks.$inferSelect;
+
+// Service Products (bundles: items + services + tasks) - MULTI-TENANT
+export const serviceProducts = pgTable("service_products", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  category: text("category"),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export const insertServiceProductSchema = createInsertSchema(serviceProducts).omit({ id: true, createdAt: true });
+export type InsertServiceProduct = z.infer<typeof insertServiceProductSchema>;
+export type ServiceProduct = typeof serviceProducts.$inferSelect;
+
+// Product Items: cost items inside a product bundle
+export const productItems = pgTable("product_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  productId: varchar("product_id").references(() => serviceProducts.id, { onDelete: "cascade" }).notNull(),
+  name: text("name").notNull(),
+  cost: decimal("cost", { precision: 12, scale: 2 }).notNull().default("0"),
+  percentage: decimal("percentage", { precision: 6, scale: 2 }).notNull().default("0"),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+export const insertProductItemSchema = createInsertSchema(productItems).omit({ id: true });
+export type InsertProductItem = z.infer<typeof insertProductItemSchema>;
+export type ProductItem = typeof productItems.$inferSelect;
+
+// Product Service Links: services from catalog included in a product bundle
+export const productServiceLinks = pgTable("product_service_links", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  productId: varchar("product_id").references(() => serviceProducts.id, { onDelete: "cascade" }).notNull(),
+  serviceCatalogId: varchar("service_catalog_id").references(() => serviceCatalog.id).notNull(),
+  quantity: decimal("quantity", { precision: 12, scale: 2 }).notNull().default("1"),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+export const insertProductServiceLinkSchema = createInsertSchema(productServiceLinks).omit({ id: true });
+export type InsertProductServiceLink = z.infer<typeof insertProductServiceLinkSchema>;
+export type ProductServiceLink = typeof productServiceLinks.$inferSelect;
+
+// Product Tasks: tasks (with duration) inside a product bundle
+export const productTasks = pgTable("product_tasks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  productId: varchar("product_id").references(() => serviceProducts.id, { onDelete: "cascade" }).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  duration: integer("duration").notNull().default(1),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+export const insertProductTaskSchema = createInsertSchema(productTasks).omit({ id: true });
+export type InsertProductTask = z.infer<typeof insertProductTaskSchema>;
+export type ProductTask = typeof productTasks.$inferSelect;
+
+// Project Items: cost-line items copied from an applied product
+export const projectItems = pgTable("project_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  projectId: varchar("project_id").references(() => serviceProjects.id, { onDelete: "cascade" }).notNull(),
+  sourceProductId: varchar("source_product_id").references(() => serviceProducts.id),
+  name: text("name").notNull(),
+  cost: decimal("cost", { precision: 12, scale: 2 }).notNull().default("0"),
+  percentage: decimal("percentage", { precision: 6, scale: 2 }).notNull().default("0"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export const insertProjectItemSchema = createInsertSchema(projectItems).omit({ id: true, createdAt: true });
+export type InsertProjectItem = z.infer<typeof insertProjectItemSchema>;
+export type ProjectItem = typeof projectItems.$inferSelect;
 
 // Quotation Decisions (approve/decline workflow)
 export const quotationDecisions = pgTable("quotation_decisions", {

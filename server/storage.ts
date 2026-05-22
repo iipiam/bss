@@ -184,6 +184,21 @@ import {
   type MarketingBroadcastTemplate,
   type InsertMarketingBroadcastTemplate,
   marketingBroadcastTemplates,
+  type ServiceProduct,
+  type InsertServiceProduct,
+  serviceProducts,
+  type ProductItem,
+  type InsertProductItem,
+  productItems,
+  type ProductServiceLink,
+  type InsertProductServiceLink,
+  productServiceLinks,
+  type ProductTask,
+  type InsertProductTask,
+  productTasks,
+  type ProjectItem,
+  type InsertProjectItem,
+  projectItems,
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, gte, lte, lt, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
@@ -630,6 +645,25 @@ export interface IStorage {
   createProjectTask(task: InsertProjectTask): Promise<ProjectTask>;
   updateProjectTask(id: string, restaurantId: string, data: Partial<InsertProjectTask>): Promise<ProjectTask | undefined>;
   deleteProjectTask(id: string, restaurantId: string): Promise<boolean>;
+
+  // Service Products (bundles)
+  getServiceProducts(restaurantId: string): Promise<ServiceProduct[]>;
+  getServiceProduct(id: string, restaurantId: string): Promise<ServiceProduct | undefined>;
+  createServiceProduct(product: InsertServiceProduct): Promise<ServiceProduct>;
+  updateServiceProduct(id: string, restaurantId: string, data: Partial<InsertServiceProduct>): Promise<ServiceProduct | undefined>;
+  deleteServiceProduct(id: string, restaurantId: string): Promise<boolean>;
+  getProductItems(productId: string, restaurantId: string): Promise<ProductItem[]>;
+  getProductServiceLinks(productId: string, restaurantId: string): Promise<ProductServiceLink[]>;
+  getProductTasks(productId: string, restaurantId: string): Promise<ProductTask[]>;
+  replaceProductChildren(productId: string, restaurantId: string, payload: {
+    items: Array<Omit<InsertProductItem, "productId" | "restaurantId">>;
+    services: Array<Omit<InsertProductServiceLink, "productId" | "restaurantId">>;
+    tasks: Array<Omit<InsertProductTask, "productId" | "restaurantId">>;
+  }): Promise<void>;
+  applyProductToProject(productId: string, projectId: string, restaurantId: string): Promise<{
+    items: ProjectItem[]; services: ProjectService[]; tasks: ProjectTask[];
+  }>;
+  getProjectItems(restaurantId: string, projectId: string): Promise<ProjectItem[]>;
 
   // Quotation Decisions
   getQuotationDecisions(restaurantId: string, quotationId: string): Promise<QuotationDecision[]>;
@@ -5581,6 +5615,119 @@ export class DatabaseStorage implements IStorage {
   async deleteProjectTask(id: string, restaurantId: string): Promise<boolean> {
     const result = await db.delete(projectTasks).where(and(eq(projectTasks.id, id), eq(projectTasks.restaurantId, restaurantId))).returning();
     return result.length > 0;
+  }
+
+  // Service Products (bundles)
+  async getServiceProducts(restaurantId: string): Promise<ServiceProduct[]> {
+    return db.select().from(serviceProducts).where(eq(serviceProducts.restaurantId, restaurantId)).orderBy(desc(serviceProducts.createdAt));
+  }
+  async getServiceProduct(id: string, restaurantId: string): Promise<ServiceProduct | undefined> {
+    const [result] = await db.select().from(serviceProducts).where(and(eq(serviceProducts.id, id), eq(serviceProducts.restaurantId, restaurantId)));
+    return result;
+  }
+  async createServiceProduct(product: InsertServiceProduct): Promise<ServiceProduct> {
+    const [result] = await db.insert(serviceProducts).values(product).returning();
+    return result;
+  }
+  async updateServiceProduct(id: string, restaurantId: string, data: Partial<InsertServiceProduct>): Promise<ServiceProduct | undefined> {
+    const [result] = await db.update(serviceProducts).set(data).where(and(eq(serviceProducts.id, id), eq(serviceProducts.restaurantId, restaurantId))).returning();
+    return result;
+  }
+  async deleteServiceProduct(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(serviceProducts).where(and(eq(serviceProducts.id, id), eq(serviceProducts.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+  async getProductItems(productId: string, restaurantId: string): Promise<ProductItem[]> {
+    return db.select().from(productItems).where(and(eq(productItems.productId, productId), eq(productItems.restaurantId, restaurantId))).orderBy(productItems.sortOrder);
+  }
+  async getProductServiceLinks(productId: string, restaurantId: string): Promise<ProductServiceLink[]> {
+    return db.select().from(productServiceLinks).where(and(eq(productServiceLinks.productId, productId), eq(productServiceLinks.restaurantId, restaurantId))).orderBy(productServiceLinks.sortOrder);
+  }
+  async getProductTasks(productId: string, restaurantId: string): Promise<ProductTask[]> {
+    return db.select().from(productTasks).where(and(eq(productTasks.productId, productId), eq(productTasks.restaurantId, restaurantId))).orderBy(productTasks.sortOrder);
+  }
+  async replaceProductChildren(
+    productId: string,
+    restaurantId: string,
+    payload: {
+      items: Array<Omit<InsertProductItem, "productId" | "restaurantId">>;
+      services: Array<Omit<InsertProductServiceLink, "productId" | "restaurantId">>;
+      tasks: Array<Omit<InsertProductTask, "productId" | "restaurantId">>;
+    },
+  ): Promise<void> {
+    const [owner] = await db.select().from(serviceProducts).where(and(eq(serviceProducts.id, productId), eq(serviceProducts.restaurantId, restaurantId)));
+    if (!owner) throw new Error("Product not found");
+    await db.delete(productItems).where(and(eq(productItems.productId, productId), eq(productItems.restaurantId, restaurantId)));
+    await db.delete(productServiceLinks).where(and(eq(productServiceLinks.productId, productId), eq(productServiceLinks.restaurantId, restaurantId)));
+    await db.delete(productTasks).where(and(eq(productTasks.productId, productId), eq(productTasks.restaurantId, restaurantId)));
+    if (payload.items.length > 0) {
+      await db.insert(productItems).values(payload.items.map((it, idx) => ({ ...it, productId, restaurantId, sortOrder: it.sortOrder ?? idx })));
+    }
+    if (payload.services.length > 0) {
+      await db.insert(productServiceLinks).values(payload.services.map((s, idx) => ({ ...s, productId, restaurantId, sortOrder: s.sortOrder ?? idx })));
+    }
+    if (payload.tasks.length > 0) {
+      await db.insert(productTasks).values(payload.tasks.map((tk, idx) => ({ ...tk, productId, restaurantId, sortOrder: tk.sortOrder ?? idx })));
+    }
+  }
+  async getProjectItems(restaurantId: string, projectId: string): Promise<ProjectItem[]> {
+    return db.select().from(projectItems).where(and(eq(projectItems.restaurantId, restaurantId), eq(projectItems.projectId, projectId))).orderBy(projectItems.sortOrder);
+  }
+  async applyProductToProject(productId: string, projectId: string, restaurantId: string): Promise<{
+    items: ProjectItem[]; services: ProjectService[]; tasks: ProjectTask[];
+  }> {
+    const [project] = await db.select().from(serviceProjects).where(and(eq(serviceProjects.id, projectId), eq(serviceProjects.restaurantId, restaurantId)));
+    if (!project) throw new Error("Project not found");
+    const [product] = await db.select().from(serviceProducts).where(and(eq(serviceProducts.id, productId), eq(serviceProducts.restaurantId, restaurantId)));
+    if (!product) throw new Error("Product not found");
+
+    const pItems = await db.select().from(productItems).where(and(eq(productItems.productId, productId), eq(productItems.restaurantId, restaurantId))).orderBy(productItems.sortOrder);
+    const pLinks = await db.select().from(productServiceLinks).where(and(eq(productServiceLinks.productId, productId), eq(productServiceLinks.restaurantId, restaurantId))).orderBy(productServiceLinks.sortOrder);
+    const pTasks = await db.select().from(productTasks).where(and(eq(productTasks.productId, productId), eq(productTasks.restaurantId, restaurantId))).orderBy(productTasks.sortOrder);
+
+    let insertedItems: ProjectItem[] = [];
+    let insertedServices: ProjectService[] = [];
+    let insertedTasks: ProjectTask[] = [];
+
+    if (pItems.length > 0) {
+      insertedItems = await db.insert(projectItems).values(pItems.map((it, idx) => ({
+        restaurantId, projectId, sourceProductId: productId,
+        name: it.name, cost: it.cost, percentage: it.percentage, sortOrder: idx,
+      }))).returning();
+    }
+
+    if (pLinks.length > 0) {
+      const catalogIds = pLinks.map(l => l.serviceCatalogId);
+      const catalogRows = await db.select().from(serviceCatalog).where(and(eq(serviceCatalog.restaurantId, restaurantId), sql`${serviceCatalog.id} = ANY(${catalogIds})`));
+      const byId = new Map(catalogRows.map(c => [c.id, c]));
+      const rows = pLinks.map(link => {
+        const cat = byId.get(link.serviceCatalogId);
+        if (!cat) return null;
+        const qty = parseFloat(link.quantity || "1") || 1;
+        const unit = parseFloat(cat.unitPrice || "0") || 0;
+        const total = (qty * unit).toFixed(2);
+        return {
+          restaurantId, projectId, serviceCatalogId: cat.id, name: cat.name,
+          description: cat.description, pricingMethod: cat.pricingMethod,
+          unitPrice: cat.unitPrice, quantity: String(qty), unit: cat.unit,
+          totalPrice: total, status: "pending", notes: null,
+          sourceProductId: productId,
+        };
+      }).filter(Boolean) as InsertProjectService[];
+      if (rows.length > 0) {
+        insertedServices = await db.insert(projectServices).values(rows).returning();
+      }
+    }
+
+    if (pTasks.length > 0) {
+      insertedTasks = await db.insert(projectTasks).values(pTasks.map((tk, idx) => ({
+        restaurantId, projectId, name: tk.name, description: tk.description,
+        duration: tk.duration, status: "pending", sortOrder: idx,
+        sourceProductId: productId,
+      }))).returning();
+    }
+
+    return { items: insertedItems, services: insertedServices, tasks: insertedTasks };
   }
 
   // Quotation Decisions

@@ -2508,6 +2508,39 @@ export interface Translations {
   partnerWebsite?: string;
   partnerLogo?: string;
   noPartners?: string;
+  serviceProducts?: string;
+  serviceProductsDescription?: string;
+  addProduct?: string;
+  editProduct?: string;
+  productName?: string;
+  productCategory?: string;
+  productItems?: string;
+  productServices?: string;
+  productTasks?: string;
+  addProductService?: string;
+  addProductTask?: string;
+  itemCost?: string;
+  itemPercentage?: string;
+  percentageOfTotal?: string;
+  totalItemsCost?: string;
+  totalPercentage?: string;
+  percentageWarning?: string;
+  selectCatalogService?: string;
+  taskDuration?: string;
+  applyProduct?: string;
+  selectProductToApply?: string;
+  productApplied?: string;
+  productAppliedDesc?: string;
+  fromProduct?: string;
+  noProducts?: string;
+  productCreated?: string;
+  productUpdated?: string;
+  productDeleted?: string;
+  failedToSaveProduct?: string;
+  confirmDeleteProduct?: string;
+  bundleContents?: string;
+  serviceCatalogTab?: string;
+  productsTab?: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -4949,6 +4982,39 @@ export const translations: Record<Language, Translations> = {
     partnerWebsite: 'Website (optional)',
     partnerLogo: 'Logo',
     noPartners: 'No partners yet. Showcase notable customers and clients here.',
+    serviceProducts: 'Products',
+    serviceProductsDescription: 'Bundle items, services, and tasks into reusable products that can be applied to projects.',
+    addProduct: 'Add Product',
+    editProduct: 'Edit Product',
+    productName: 'Product Name',
+    productCategory: 'Product Category',
+    productItems: 'Items',
+    productServices: 'Services',
+    productTasks: 'Tasks',
+    addProductService: 'Add Service',
+    addProductTask: 'Add Task',
+    itemCost: 'Cost (SAR)',
+    itemPercentage: '% of Total',
+    percentageOfTotal: 'Percentage of Total',
+    totalItemsCost: 'Total Items Cost',
+    totalPercentage: 'Total %',
+    percentageWarning: 'Item percentages should sum to 100%.',
+    selectCatalogService: 'Select a service from the catalog',
+    taskDuration: 'Duration',
+    applyProduct: 'Apply Product',
+    selectProductToApply: 'Select a product to apply to this project',
+    productApplied: 'Product applied',
+    productAppliedDesc: 'Items, services, and tasks were added to the project.',
+    fromProduct: 'From product',
+    noProducts: 'No products yet. Create your first product bundle.',
+    productCreated: 'Product created',
+    productUpdated: 'Product updated',
+    productDeleted: 'Product deleted',
+    failedToSaveProduct: 'Failed to save product',
+    confirmDeleteProduct: 'Are you sure you want to delete this product?',
+    bundleContents: 'Bundle Contents',
+    serviceCatalogTab: 'Services',
+    productsTab: 'Products',
   },
   
   Arabic: {
@@ -7388,6 +7454,39 @@ export const translations: Record<Language, Translations> = {
     partnerWebsite: 'الموقع الإلكتروني (اختياري)',
     partnerLogo: 'الشعار',
     noPartners: 'لا يوجد عملاء بعد. اعرض عملاءك المميزين هنا.',
+    serviceProducts: 'المنتجات',
+    serviceProductsDescription: 'اجمع المواد والخدمات والمهام في منتجات قابلة لإعادة الاستخدام يمكن تطبيقها على المشاريع.',
+    addProduct: 'إضافة منتج',
+    editProduct: 'تعديل المنتج',
+    productName: 'اسم المنتج',
+    productCategory: 'فئة المنتج',
+    productItems: 'المواد',
+    productServices: 'الخدمات',
+    productTasks: 'المهام',
+    addProductService: 'إضافة خدمة',
+    addProductTask: 'إضافة مهمة',
+    itemCost: 'التكلفة (ر.س)',
+    itemPercentage: '٪ من الإجمالي',
+    percentageOfTotal: 'النسبة المئوية من الإجمالي',
+    totalItemsCost: 'إجمالي تكلفة المواد',
+    totalPercentage: 'المجموع ٪',
+    percentageWarning: 'يجب أن يكون مجموع نسب المواد 100٪.',
+    selectCatalogService: 'اختر خدمة من الكتالوج',
+    taskDuration: 'المدة',
+    applyProduct: 'تطبيق منتج',
+    selectProductToApply: 'اختر منتجًا لتطبيقه على هذا المشروع',
+    productApplied: 'تم تطبيق المنتج',
+    productAppliedDesc: 'تمت إضافة المواد والخدمات والمهام إلى المشروع.',
+    fromProduct: 'من المنتج',
+    noProducts: 'لا توجد منتجات بعد. أنشئ أول حزمة منتج.',
+    productCreated: 'تم إنشاء المنتج',
+    productUpdated: 'تم تحديث المنتج',
+    productDeleted: 'تم حذف المنتج',
+    failedToSaveProduct: 'فشل في حفظ المنتج',
+    confirmDeleteProduct: 'هل أنت متأكد أنك تريد حذف هذا المنتج؟',
+    bundleContents: 'محتويات الحزمة',
+    serviceCatalogTab: 'الخدمات',
+    productsTab: 'المنتجات',
   },
   German: {
     // Navigation
