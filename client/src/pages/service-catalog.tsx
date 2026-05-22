@@ -240,6 +240,10 @@ export default function ServiceCatalog() {
           sortOrder: idx,
         })),
       };
+      const invalid = productServices.find((s) => !s.serviceCatalogId && s.name.trim() && (!s.unitPrice || isNaN(parseFloat(s.unitPrice)) || parseFloat(s.unitPrice) <= 0));
+      if (invalid) {
+        throw new Error(t.serviceNeedsPrice || `Service "${invalid.name}" needs a unit price greater than 0.`);
+      }
       if (editingProductId) {
         return await apiRequest("PATCH", `/api/service-products/${editingProductId}`, payload);
       }

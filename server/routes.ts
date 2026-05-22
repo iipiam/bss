@@ -15606,6 +15606,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const { items = [], services = [], tasks = [], ...rest } = req.body || {};
+      const badSvc = (services as any[]).find((s) => !s?.serviceCatalogId && s?.name && (s.unitPrice == null || s.unitPrice === "" || isNaN(parseFloat(String(s.unitPrice))) || parseFloat(String(s.unitPrice)) <= 0));
+      if (badSvc) return res.status(400).json({ message: `Service "${badSvc.name}" needs a unit price greater than 0.` });
       const product = await storage.createServiceProduct({ ...rest, restaurantId });
       await storage.replaceProductChildren(product.id, restaurantId, {
         items: items.map((it: any, idx: number) => ({
@@ -15639,6 +15641,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       const { items, services, tasks, ...rest } = req.body || {};
       const { restaurantId: _omit, id: _id, createdAt: _c, ...safe } = rest;
+      if (Array.isArray(services)) {
+        const badSvc = (services as any[]).find((s) => !s?.serviceCatalogId && s?.name && (s.unitPrice == null || s.unitPrice === "" || isNaN(parseFloat(String(s.unitPrice))) || parseFloat(String(s.unitPrice)) <= 0));
+        if (badSvc) return res.status(400).json({ message: `Service "${badSvc.name}" needs a unit price greater than 0.` });
+      }
       const product = await storage.updateServiceProduct(req.params.id, restaurantId, safe);
       if (!product) return res.status(404).json({ message: "Product not found" });
       if (Array.isArray(items) || Array.isArray(services) || Array.isArray(tasks)) {
