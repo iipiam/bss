@@ -54,6 +54,9 @@ import {
   MapPin,
   AlertTriangle,
   Clock,
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -165,6 +168,7 @@ export default function ServiceProjects() {
   const [open, setOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<ServiceProject | null>(null);
   const [deletingProject, setDeletingProject] = useState<ServiceProject | null>(null);
+  const [reportingProject, setReportingProject] = useState<ServiceProject | null>(null);
   const { toast } = useToast();
   const { t } = useLanguage();
   const layout = useDeviceLayout();
@@ -957,6 +961,20 @@ export default function ServiceProjects() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        aria-label={(t as any).costProfitReport || "Cost & Profit Report"}
+                        onClick={() => setReportingProject(project)}
+                        data-testid={`button-report-${project.id}`}
+                      >
+                        <BarChart3 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{(t as any).costProfitReport || "Cost & Profit Report"}</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         aria-label={t.delete}
                         onClick={() => setDeletingProject(project)}
                         data-testid={`button-delete-${project.id}`}
@@ -1080,6 +1098,224 @@ export default function ServiceProjects() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog
+        open={!!reportingProject}
+        onOpenChange={(open) => !open && setReportingProject(null)}
+      >
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              {(t as any).costProfitReport || "Cost & Profit Report"}
+            </DialogTitle>
+            <DialogDescription>
+              {reportingProject?.projectNumber} — {reportingProject?.name}
+            </DialogDescription>
+          </DialogHeader>
+          {reportingProject && (
+            <CostProfitReport
+              project={reportingProject}
+              t={t}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ============== Cost & Profit Report ==============
+interface ReportRow {
+  totalPrice?: string | null;
+  amount?: string | null;
+}
+
+function sumDecimal(rows: ReportRow[] | undefined, key: "totalPrice" | "amount"): number {
+  if (!rows) return 0;
+  const cents = rows.reduce((s, r) => {
+    const v = parseFloat((r as any)[key] ?? "0");
+    if (!Number.isFinite(v)) return s;
+    return s + Math.round(v * 100);
+  }, 0);
+  return cents / 100;
+}
+
+function fmtSar(n: number): string {
+  return (
+    n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+    " SAR"
+  );
+}
+
+function CostProfitReport({ project, t }: { project: ServiceProject; t: any }) {
+  const services = useQuery<any[]>({
+    queryKey: ["/api/project-services", { projectId: project.id }],
+    queryFn: async () => {
+      const res = await fetch(`/api/project-services?projectId=${project.id}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load services");
+      return res.json();
+    },
+  });
+  const bills = useQuery<any[]>({
+    queryKey: ["/api/project-bills", { projectId: project.id }],
+    queryFn: async () => {
+      const res = await fetch(`/api/project-bills?projectId=${project.id}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load bills");
+      return res.json();
+    },
+  });
+  const procurements = useQuery<any[]>({
+    queryKey: ["/api/project-procurements", { projectId: project.id }],
+    queryFn: async () => {
+      const res = await fetch(`/api/project-procurements?projectId=${project.id}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load procurements");
+      return res.json();
+    },
+  });
+
+  const isLoading = services.isLoading || bills.isLoading || procurements.isLoading;
+  const loadError = services.error || bills.error || procurements.error;
+
+  const servicesRevenue = sumDecimal(services.data, "totalPrice");
+  const quotedRevenue = parseFloat(project.estimatedBudget ?? "0") || 0;
+  const revenue = servicesRevenue > 0 ? servicesRevenue : quotedRevenue;
+
+  const billsCost = sumDecimal(bills.data, "amount");
+  const procurementCost = sumDecimal(procurements.data, "totalPrice");
+  const totalCost = billsCost + procurementCost;
+
+  const profit = revenue - totalCost;
+  const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+  const profitable = profit >= 0;
+
+  if (isLoading) {
+    return (
+      <div className="py-8 text-center text-sm text-muted-foreground" data-testid="report-loading">
+        {t.loading || "Loading..."}
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="py-8 text-center text-sm text-red-600 dark:text-red-400" data-testid="report-error">
+        {(t as any).failedToLoadReport || "Failed to load report data. Please try again."}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Card>
+          <CardContent className="pt-4 pb-4 space-y-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <DollarSign className="h-3.5 w-3.5" />
+              {t.revenue || "Revenue"}
+            </div>
+            <div className="text-2xl font-bold" data-testid="report-revenue">
+              {fmtSar(revenue)}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {servicesRevenue > 0
+                ? (t.fromServices || "From project services")
+                : (t.fromBudget || "From estimated budget")}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-4 pb-4 space-y-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <TrendingDown className="h-3.5 w-3.5" />
+              {t.totalCost || "Total Cost"}
+            </div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400" data-testid="report-cost">
+              {fmtSar(totalCost)}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {t.billsAndProcurement || "Bills + procurement"}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-4 pb-4 space-y-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {profitable ? (
+                <TrendingUp className="h-3.5 w-3.5" />
+              ) : (
+                <TrendingDown className="h-3.5 w-3.5" />
+              )}
+              {t.netProfit || "Net Profit"}
+            </div>
+            <div
+              className={`text-2xl font-bold ${profitable ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
+              data-testid="report-profit"
+            >
+              {fmtSar(profit)}
+            </div>
+            <div className="text-xs text-muted-foreground" data-testid="report-margin">
+              {t.margin || "Margin"}: {margin.toFixed(1)}%
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <h4 className="font-semibold text-sm">{t.breakdown || "Breakdown"}</h4>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <BreakdownRow
+            label={`${t.services || "Services"} (${services.data?.length ?? 0})`}
+            value={fmtSar(servicesRevenue)}
+            kind="revenue"
+          />
+          <BreakdownRow
+            label={`${t.bills || "Bills"} (${bills.data?.length ?? 0})`}
+            value={fmtSar(billsCost)}
+            kind="cost"
+          />
+          <BreakdownRow
+            label={`${t.procurement || "Procurement"} (${procurements.data?.length ?? 0})`}
+            value={fmtSar(procurementCost)}
+            kind="cost"
+          />
+          <div className="border-t pt-2 mt-2 flex items-center justify-between font-semibold">
+            <span>{t.netProfit || "Net Profit"}</span>
+            <span className={profitable ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
+              {fmtSar(profit)}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {quotedRevenue > 0 && servicesRevenue > 0 && Math.abs(quotedRevenue - servicesRevenue) > 0.01 && (
+        <p className="text-xs text-muted-foreground" data-testid="report-budget-note">
+          {t.estimatedBudgetLabel || "Estimated budget"}: {fmtSar(quotedRevenue)}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function BreakdownRow({
+  label,
+  value,
+  kind,
+}: {
+  label: string;
+  value: string;
+  kind: "revenue" | "cost";
+}) {
+  return (
+    <div className="flex items-center justify-between text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={kind === "cost" ? "text-red-600 dark:text-red-400" : ""}>
+        {kind === "cost" ? "−" : ""}{value}
+      </span>
     </div>
   );
 }
