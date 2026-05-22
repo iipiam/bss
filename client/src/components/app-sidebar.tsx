@@ -146,7 +146,6 @@ export function AppSidebar() {
     { title: t.licenses || "Licenses", url: "/licenses", icon: FileKey, testId: "licenses", gradient: "from-amber-500 to-yellow-500", permission: 'licenses' },
     { title: t.customers, url: "/customers", icon: UserCircle, testId: "customers", gradient: "from-cyan-500 to-blue-500", permission: 'customers' },
     { title: t.investors, url: "/investors", icon: TrendingUp, testId: "investors", gradient: "from-emerald-500 to-green-500", permission: 'reports' },
-    { title: t.investmentAgreementTemplates || "Investment Agreement Templates", url: "/investment-agreement-templates", icon: FileText, testId: "investment-agreement-templates", gradient: "from-emerald-500 to-teal-500", permission: 'investors' },
     { title: businessType === 'real_estate' ? t.offices : t.branches, url: "/branches", icon: Building2, testId: "branches", gradient: "from-indigo-500 to-purple-500", permission: 'branches' },
     { title: t.procurement, url: "/procurement", icon: ShoppingBag, testId: "procurement", gradient: "from-pink-500 to-rose-500", permission: 'procurement', businessTypes: ['restaurant', 'factory'] },
     { title: t.valuations, url: "/valuations", icon: Calculator, testId: "valuations", gradient: "from-teal-500 to-cyan-500", permission: 'reports', businessTypes: ['real_estate'] },

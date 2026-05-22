@@ -76,6 +76,7 @@ const DeliveryApps = lazy(() => import("@/pages/delivery-apps"));
 const DeliveryAppProfitability = lazy(() => import("@/pages/delivery-app-profitability"));
 const SalesComparison = lazy(() => import("@/pages/sales-comparison"));
 const Investors = lazy(() => import("@/pages/investors"));
+const InvestorsList = lazy(() => import("@/pages/investors-list"));
 const InvestmentAgreementTemplates = lazy(() => import("@/pages/investment-agreement-templates"));
 const Support = lazy(() => import("@/pages/support"));
 const SupportDetail = lazy(() => import("@/pages/support-detail"));
@@ -181,6 +182,7 @@ function Router() {
         <Route path="/delivery-app-profitability">{() => <BusinessTypeGuard allowedTypes={['restaurant']}><DeliveryAppProfitability /></BusinessTypeGuard>}</Route>
         <Route path="/sales-comparison" component={SalesComparison} />
         <Route path="/investors" component={Investors} />
+        <Route path="/investors/list" component={InvestorsList} />
         <Route path="/investment-agreement-templates" component={InvestmentAgreementTemplates} />
         <Route path="/support" component={Support} />
         <Route path="/support/:id" component={SupportDetail} />
