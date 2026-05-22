@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,10 @@ interface Investor {
   iban?: string | null;
   bankName?: string | null;
   ibanCertificateFilename?: string | null;
+  agreementFilename?: string | null;
+  agreementGeneratedAt?: string | null;
+  signedAgreementFilename?: string | null;
+  signedAgreementUploadedAt?: string | null;
   createdAt: string;
 }
 
@@ -111,6 +115,11 @@ export default function Investors() {
   const [uploadingIbanCertFor, setUploadingIbanCertFor] = useState<string | null>(null);
   const [deletingIbanCertFor, setDeletingIbanCertFor] = useState<Investor | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [templateDraft, setTemplateDraft] = useState<string>("");
+  const [generatingAgreementFor, setGeneratingAgreementFor] = useState<string | null>(null);
+  const [uploadingSignedFor, setUploadingSignedFor] = useState<string | null>(null);
+  const [deletingSignedFor, setDeletingSignedFor] = useState<Investor | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ibanCertInputRef = useRef<HTMLInputElement>(null);
   const formFileInputRef = useRef<HTMLInputElement>(null);
@@ -638,6 +647,247 @@ export default function Investors() {
     setPendingFile(null);
   };
 
+  // =========================================================================
+  // Investment Agreement: template + per-investor generated/signed PDFs
+  // =========================================================================
+  const openTemplateEditor = async () => {
+    try {
+      const resp = await fetch('/api/investor-agreement-template', { credentials: 'include' });
+      if (resp.ok) {
+        const data = await resp.json();
+        setTemplateDraft(data.template || '');
+      } else {
+        setTemplateDraft('');
+      }
+    } catch {
+      setTemplateDraft('');
+    }
+    setTemplateDialogOpen(true);
+  };
+
+  const saveTemplateMutation = useMutation({
+    mutationFn: async (template: string) => {
+      return await apiRequest('PUT', '/api/investor-agreement-template', { template });
+    },
+    onSuccess: () => {
+      setTemplateDialogOpen(false);
+      toast({
+        title: t.templateSaved || 'Template Saved',
+        description: t.agreementTemplateSavedDesc || 'Investment agreement template has been saved.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.error || 'Error',
+        description: error?.message || 'Failed to save template',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const resetTemplateToDefault = async () => {
+    try {
+      await apiRequest('PUT', '/api/investor-agreement-template', { template: '' });
+      const resp = await fetch('/api/investor-agreement-template', { credentials: 'include' });
+      if (resp.ok) {
+        const data = await resp.json();
+        setTemplateDraft(data.template || '');
+      }
+      toast({
+        title: t.templateReset || 'Template Reset',
+        description: t.templateResetDesc || 'Reverted to the default agreement template.',
+      });
+    } catch (error: any) {
+      toast({
+        title: t.error || 'Error',
+        description: error?.message || 'Failed to reset template',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleGenerateAgreement = async (investor: Investor) => {
+    setGeneratingAgreementFor(investor.id);
+    try {
+      const response = await fetch(`/api/investors/${investor.id}/agreement/pdf`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Failed to generate agreement' }));
+        throw new Error(err.error || 'Failed to generate agreement');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const filename = `Investment_Agreement_${investor.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      queryClient.invalidateQueries({ queryKey: ['/api/investors'] });
+      toast({
+        title: t.agreementGenerated || 'Agreement Generated',
+        description: t.agreementGeneratedDesc || 'Investment agreement was generated and saved to the investor file.',
+      });
+    } catch (error: any) {
+      toast({
+        title: t.error || 'Error',
+        description: error?.message || 'Failed to generate agreement',
+        variant: 'destructive',
+      });
+    } finally {
+      setGeneratingAgreementFor(null);
+    }
+  };
+
+  const handlePreviewAgreement = async (investor: Investor) => {
+    try {
+      const response = await fetch(`/api/investors/${investor.id}/agreement?mode=inline`, {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('No agreement available');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+    } catch (error: any) {
+      toast({
+        title: t.error || 'Error',
+        description: error?.message || 'Failed to preview agreement',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDownloadSavedAgreement = async (investor: Investor) => {
+    try {
+      const response = await fetch(`/api/investors/${investor.id}/agreement`, {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('No agreement available');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = investor.agreementFilename ||
+        `Investment_Agreement_${investor.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      toast({
+        title: t.error || 'Error',
+        description: error?.message || 'Failed to download agreement',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSignedAgreementUpload = async (investorId: string, file: File) => {
+    setUploadingSignedFor(investorId);
+    try {
+      const formData = new FormData();
+      formData.append('document', file);
+      const response = await fetch(`/api/investors/${investorId}/signed-agreement`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Upload failed' }));
+        throw new Error(err.error || 'Upload failed');
+      }
+      queryClient.invalidateQueries({ queryKey: ['/api/investors'] });
+      toast({
+        title: t.signedAgreementUploaded || 'Signed Agreement Uploaded',
+        description: t.signedAgreementUploadedDesc || 'The signed agreement has been saved to the investor file.',
+      });
+    } catch (error: any) {
+      toast({
+        title: t.error || 'Error',
+        description: error?.message || 'Failed to upload signed agreement',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploadingSignedFor(null);
+    }
+  };
+
+  const handlePreviewSignedAgreement = async (investor: Investor) => {
+    try {
+      const response = await fetch(`/api/investors/${investor.id}/signed-agreement?mode=inline`, {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('No signed agreement available');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+    } catch (error: any) {
+      toast({
+        title: t.error || 'Error',
+        description: error?.message || 'Failed to preview signed agreement',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDownloadSignedAgreement = async (investor: Investor) => {
+    try {
+      const response = await fetch(`/api/investors/${investor.id}/signed-agreement`, {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('No signed agreement available');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = investor.signedAgreementFilename ||
+        `Signed_Investment_Agreement_${investor.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      toast({
+        title: t.error || 'Error',
+        description: error?.message || 'Failed to download signed agreement',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const deleteSignedAgreementMutation = useMutation({
+    mutationFn: async (investorId: string) => {
+      await apiRequest('DELETE', `/api/investors/${investorId}/signed-agreement`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/investors'] });
+      setDeletingSignedFor(null);
+      toast({
+        title: t.signedAgreementDeleted || 'Signed Agreement Deleted',
+        description: t.signedAgreementDeletedDesc || 'The signed agreement has been removed.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.error || 'Error',
+        description: error?.message || 'Failed to delete signed agreement',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const INVESTOR_AGREEMENT_PLACEHOLDERS = [
+    'agreement_date', 'my_restaurant_name', 'restaurant_cr', 'restaurant_tax_number',
+    'investor_name', 'national_id', 'contact_number', 'investor_type',
+    'amount_invested', 'interest_percentage', 'iban', 'bank_name',
+    'notes', 'recipe_name', 'recipe_clause',
+  ];
+
   const handleFormFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -915,6 +1165,16 @@ export default function Investors() {
             {t.manageInvestors || "Manage investors and track their earnings"}
           </p>
         </div>
+        <div className={`flex flex-col sm:flex-row gap-2 ${layout.isMobile ? "w-full" : ""}`}>
+          <Button
+            variant="outline"
+            onClick={openTemplateEditor}
+            className={layout.isMobile ? "w-full" : ""}
+            data-testid="button-edit-agreement-template"
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            {t.editAgreementTemplate || "Edit Agreement Template"}
+          </Button>
         <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
             <Button className={layout.isMobile ? "w-full" : ""} data-testid="button-add-investor">
@@ -1242,7 +1502,72 @@ export default function Investors() {
             </Form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
+
+      {/* Investment Agreement Template Editor Dialog */}
+      <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle data-testid="text-template-dialog-title">
+              {t.investmentAgreementTemplate || "Investment Agreement Template"}
+            </DialogTitle>
+            <DialogDescription>
+              {t.agreementTemplateDesc ||
+                "Edit the template used when generating investment agreements. Use the placeholders below — they are replaced with each investor's data when the agreement is generated."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="text-xs text-muted-foreground">
+              <span className="font-medium">{t.availablePlaceholders || "Available placeholders"}:</span>
+              <div className="mt-2 flex flex-wrap gap-1">
+                {INVESTOR_AGREEMENT_PLACEHOLDERS.map((p) => (
+                  <code
+                    key={p}
+                    className="px-1.5 py-0.5 rounded bg-muted text-[11px] cursor-pointer hover-elevate"
+                    onClick={() => setTemplateDraft((prev) => prev + `{{${p}}}`)}
+                    data-testid={`placeholder-${p}`}
+                  >
+                    {`{{${p}}}`}
+                  </code>
+                ))}
+              </div>
+            </div>
+            <Textarea
+              value={templateDraft}
+              onChange={(e) => setTemplateDraft(e.target.value)}
+              className="min-h-[400px] font-mono text-xs"
+              placeholder={t.agreementTemplatePlaceholder || "Enter your investment agreement template..."}
+              data-testid="textarea-agreement-template"
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={resetTemplateToDefault}
+              data-testid="button-reset-template"
+            >
+              {t.resetToDefault || "Reset to Default"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setTemplateDialogOpen(false)}
+              data-testid="button-cancel-template"
+            >
+              {t.cancel || "Cancel"}
+            </Button>
+            <Button
+              onClick={() => saveTemplateMutation.mutate(templateDraft)}
+              disabled={saveTemplateMutation.isPending}
+              data-testid="button-save-template"
+            >
+              {saveTemplateMutation.isPending
+                ? (t.saving || "Saving...")
+                : (t.saveTemplate || "Save Template")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Net Profit Summary */}
       <Card>
@@ -1485,6 +1810,152 @@ export default function Investors() {
                                   <>
                                     <Upload className="h-3 w-3 mr-1" />
                                     {t.uploadPdf || "Upload PDF"}
+                                  </>
+                                )}
+                              </span>
+                            </Button>
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Investment Agreement Section */}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">
+                        {t.investmentAgreement || "Investment Agreement"}
+                      </span>
+                      {investor.agreementGeneratedAt && (
+                        <span className="text-xs text-muted-foreground">
+                          ({new Date(investor.agreementGeneratedAt).toLocaleDateString()})
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleGenerateAgreement(investor)}
+                        disabled={generatingAgreementFor === investor.id}
+                        className="h-8"
+                        data-testid={`button-generate-agreement-${investor.id}`}
+                        title={t.generateAgreement || "Generate Agreement"}
+                      >
+                        <FileDown className="h-3 w-3 mr-1" />
+                        {generatingAgreementFor === investor.id
+                          ? (t.generating || "Generating...")
+                          : (t.generateAgreement || "Generate Agreement")}
+                      </Button>
+                      {investor.agreementFilename && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handlePreviewAgreement(investor)}
+                            className="h-8"
+                            data-testid={`button-preview-agreement-${investor.id}`}
+                            title={t.preview || "Preview"}
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            {t.preview || "Preview"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDownloadSavedAgreement(investor)}
+                            className="h-8"
+                            data-testid={`button-download-agreement-${investor.id}`}
+                            title={t.download || "Download"}
+                          >
+                            <FileDown className="h-3 w-3 mr-1" />
+                            {t.download || "Download"}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Signed Investment Agreement Section */}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">
+                        {t.signedAgreement || "Signed Agreement"}
+                      </span>
+                      {investor.signedAgreementUploadedAt && (
+                        <span className="text-xs text-muted-foreground">
+                          ({new Date(investor.signedAgreementUploadedAt).toLocaleDateString()})
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {investor.signedAgreementFilename ? (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handlePreviewSignedAgreement(investor)}
+                            className="h-8"
+                            data-testid={`button-preview-signed-agreement-${investor.id}`}
+                            title={t.preview || "Preview"}
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            {t.preview || "Preview"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDownloadSignedAgreement(investor)}
+                            className="h-8"
+                            data-testid={`button-download-signed-agreement-${investor.id}`}
+                            title={t.download || "Download"}
+                          >
+                            <FileDown className="h-3 w-3 mr-1" />
+                            {t.download || "Download"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setDeletingSignedFor(investor)}
+                            className="h-8 text-destructive hover:text-destructive"
+                            data-testid={`button-delete-signed-agreement-${investor.id}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div>
+                          <input
+                            type="file"
+                            accept=".pdf"
+                            className="hidden"
+                            id={`signed-agreement-upload-${investor.id}`}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleSignedAgreementUpload(investor.id, file);
+                              }
+                              e.target.value = "";
+                            }}
+                            data-testid={`input-signed-agreement-${investor.id}`}
+                          />
+                          <label htmlFor={`signed-agreement-upload-${investor.id}`}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 cursor-pointer"
+                              disabled={uploadingSignedFor === investor.id}
+                              asChild
+                            >
+                              <span>
+                                {uploadingSignedFor === investor.id ? (
+                                  <>{t.uploading || "Uploading..."}</>
+                                ) : (
+                                  <>
+                                    <Upload className="h-3 w-3 mr-1" />
+                                    {t.uploadSignedAgreement || "Upload Signed"}
                                   </>
                                 )}
                               </span>
@@ -1778,6 +2249,33 @@ export default function Investors() {
               onClick={() => deletingIbanCertFor && deleteIbanCertMutation.mutate(deletingIbanCertFor.id)}
               className="h-[44px] bg-destructive text-destructive-foreground hover:bg-destructive/90"
               data-testid="button-confirm-delete-iban-cert"
+            >
+              {t.delete || "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Signed Agreement Confirmation Dialog */}
+      <AlertDialog open={!!deletingSignedFor} onOpenChange={() => setDeletingSignedFor(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t.confirmDeleteSignedAgreement || "Delete Signed Agreement"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t.confirmDeleteSignedAgreementDesc ||
+                `Are you sure you want to delete the signed agreement for ${deletingSignedFor?.name}?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-[44px]" data-testid="button-cancel-delete-signed">
+              {t.cancel || "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingSignedFor && deleteSignedAgreementMutation.mutate(deletingSignedFor.id)}
+              className="h-[44px] bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete-signed"
             >
               {t.delete || "Delete"}
             </AlertDialogAction>

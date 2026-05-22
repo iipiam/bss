@@ -736,6 +736,12 @@ export const investors = pgTable("investors", {
   bankName: text("bank_name"), // Name of the bank (Saudi banks)
   ibanCertificateContent: text("iban_certificate_content"), // Base64 encoded IBAN certificate PDF
   ibanCertificateFilename: text("iban_certificate_filename"), // Original filename of the IBAN certificate
+  agreementContent: text("agreement_content"), // Base64 encoded generated investment agreement PDF
+  agreementFilename: text("agreement_filename"), // Filename of the generated agreement
+  agreementGeneratedAt: timestamp("agreement_generated_at"), // When the unsigned agreement was last generated
+  signedAgreementContent: text("signed_agreement_content"), // Base64 encoded signed agreement PDF (uploaded after approval)
+  signedAgreementFilename: text("signed_agreement_filename"), // Filename of the signed agreement
+  signedAgreementUploadedAt: timestamp("signed_agreement_uploaded_at"), // When the signed agreement was uploaded
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -1841,6 +1847,7 @@ export const companySettings = pgTable("company_settings", {
   companyLogo: text("company_logo"),
   agreementTemplate: text("agreement_template"),
   agreementPlaceholders: jsonb("agreement_placeholders"),
+  investorAgreementTemplate: text("investor_agreement_template"), // Investment Agreement template (Mustache-style {{placeholder}})
   termsAndConditions: text("terms_and_conditions"),
   companyDocuments: jsonb("company_documents").default([]),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

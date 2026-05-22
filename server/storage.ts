@@ -5835,7 +5835,14 @@ export const storage = new DatabaseStorage();
       ALTER TABLE investors 
       ADD COLUMN IF NOT EXISTS document_filename TEXT
     `);
-    console.log('[Migration] Investors columns verified/added: national_id, contact_number, investor_type, recipe_id, document_path, document_content, document_filename');
+    await pool.query(`ALTER TABLE investors ADD COLUMN IF NOT EXISTS agreement_content TEXT`);
+    await pool.query(`ALTER TABLE investors ADD COLUMN IF NOT EXISTS agreement_filename TEXT`);
+    await pool.query(`ALTER TABLE investors ADD COLUMN IF NOT EXISTS agreement_generated_at TIMESTAMP`);
+    await pool.query(`ALTER TABLE investors ADD COLUMN IF NOT EXISTS signed_agreement_content TEXT`);
+    await pool.query(`ALTER TABLE investors ADD COLUMN IF NOT EXISTS signed_agreement_filename TEXT`);
+    await pool.query(`ALTER TABLE investors ADD COLUMN IF NOT EXISTS signed_agreement_uploaded_at TIMESTAMP`);
+    await pool.query(`ALTER TABLE company_settings ADD COLUMN IF NOT EXISTS investor_agreement_template TEXT`);
+    console.log('[Migration] Investors columns verified/added: national_id, contact_number, investor_type, recipe_id, document_path, document_content, document_filename, agreement_content, agreement_filename, agreement_generated_at, signed_agreement_content, signed_agreement_filename, signed_agreement_uploaded_at; company_settings.investor_agreement_template');
     
     // Add weekly_schedule column to settings table for per-day shift configuration
     await pool.query(`

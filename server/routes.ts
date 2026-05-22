@@ -2975,6 +2975,343 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // =========================================================================
+  // Investment Agreement: template + per-investor generated/signed PDFs
+  // =========================================================================
+  const DEFAULT_INVESTOR_AGREEMENT_TEMPLATE = `INVESTMENT AGREEMENT
+
+This Investment Agreement ("Agreement") is entered into on {{agreement_date}} between:
+
+1. {{my_restaurant_name}} (Commercial Registration: {{restaurant_cr}}, VAT: {{restaurant_tax_number}}), hereinafter referred to as "the Company".
+
+2. {{investor_name}} (National ID / Iqama: {{national_id}}, Phone: {{contact_number}}), hereinafter referred to as "the Investor".
+
+WHEREAS the Investor wishes to invest in the Company on the terms set out below, the parties agree as follows:
+
+1. INVESTMENT
+   The Investor shall contribute an investment of SAR {{amount_invested}} ({{investor_type}}).
+   {{recipe_clause}}
+
+2. PROFIT SHARE
+   The Investor shall be entitled to {{interest_percentage}}% of the net monthly profits of the Company, calculated after all operating costs, salaries, recurring bills and cost of goods sold.
+
+3. PAYMENT
+   Profit distributions shall be transferred to the Investor's bank account:
+   Bank: {{bank_name}}
+   IBAN: {{iban}}
+
+4. TERM
+   This Agreement remains in force until terminated in writing by either party with thirty (30) days' notice.
+
+5. GENERAL
+   Any dispute shall be settled in accordance with the laws of the Kingdom of Saudi Arabia.
+   Additional notes: {{notes}}
+
+Signed in two original copies, one for each party.
+
+____________________________                          ____________________________
+The Company                                            The Investor`;
+
+  function getInvestorPlaceholders(restaurant: any, investor: any, recipeName: string, isAr: boolean): Record<string, string> {
+    const fmtDate = (d: any) => d ? new Date(d).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB') : '—';
+    const typeLabel = (investor.investorType || 'money') === 'recipe'
+      ? (isAr ? 'مستثمر وصفة' : 'Recipe Investor')
+      : (isAr ? 'مستثمر نقدي' : 'Money Investor');
+    const recipeClause = (investor.investorType === 'recipe' && recipeName)
+      ? (isAr
+          ? `يساهم المستثمر بالوصفة: ${recipeName}.`
+          : `The Investor contributes the recipe: ${recipeName}.`)
+      : '';
+    return {
+      agreement_date: fmtDate(new Date()),
+      my_restaurant_name: restaurant?.name || '',
+      restaurant_cr: (restaurant?.commercialRegistration || '') as string,
+      restaurant_tax_number: (restaurant?.taxNumber || '') as string,
+      restaurant_national_id: (restaurant?.nationalId || '') as string,
+      investor_name: investor.name || '',
+      national_id: investor.nationalId || '—',
+      contact_number: investor.contactNumber || '—',
+      investor_type: typeLabel,
+      amount_invested: parseFloat(investor.amountInvested || '0').toFixed(2),
+      interest_percentage: parseFloat(investor.interestPercentage || '0').toFixed(2),
+      iban: investor.iban || '—',
+      bank_name: investor.bankName || '—',
+      notes: investor.notes || '—',
+      recipe_name: recipeName || '—',
+      recipe_clause: recipeClause,
+    };
+  }
+
+  async function buildInvestorAgreementPdfBuffer(restaurantId: string, investorId: string, lang: string = 'en'): Promise<Buffer> {
+    const investor = await storage.getInvestor(investorId);
+    if (!investor || investor.restaurantId !== restaurantId) throw new Error('Investor not found');
+    const restaurant = await storage.getRestaurant(restaurantId);
+    const settings = await storage.getCompanySettings(restaurantId);
+    const tpl = ((settings as any)?.investorAgreementTemplate || DEFAULT_INVESTOR_AGREEMENT_TEMPLATE) as string;
+    let recipeName = '';
+    if (investor.investorType === 'recipe' && (investor as any).recipeId) {
+      try {
+        const recipe = await storage.getRecipe((investor as any).recipeId, restaurantId);
+        if (recipe) recipeName = (recipe as any).name || '';
+      } catch (e) { /* ignore */ }
+    }
+
+    const isAr = lang === 'ar' || lang === 'Arabic' || lang === 'ur' || lang === 'Urdu';
+    const dir = isAr ? 'rtl' : 'ltr';
+    const align = isAr ? 'right' : 'left';
+    const L = (en: string, ar: string) => isAr ? ar : en;
+
+    const placeholders = getInvestorPlaceholders(restaurant, investor, recipeName, isAr);
+    // SECURITY: templates are always treated as plain text and escaped before
+    // injection into the rendered HTML. This prevents stored-template HTML/JS
+    // (including remote URLs that could trigger SSRF via Puppeteer) from
+    // being injected into the PDF render.
+    let body = tpl.split('\n').map((l) => escapeHtml(l)).join('<br/>');
+    for (const [k, v] of Object.entries(placeholders)) {
+      body = body.split(`{{${k}}}`).join(escapeHtml(String(v ?? '')));
+    }
+
+    const html = `<!DOCTYPE html>
+<html lang="${isAr ? 'ar' : 'en'}" dir="${dir}">
+<head>
+  <meta charset="UTF-8" />
+  <title>Investment Agreement - ${escapeHtml(investor.name)}</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm 22mm 16mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: ${isAr ? "'Noto Naskh Arabic','Amiri','Segoe UI',Arial,sans-serif" : "'Segoe UI',Arial,sans-serif"};
+      color: #222; font-size: 12px; line-height: 1.7;
+      direction: ${dir}; text-align: ${align}; margin: 0;
+    }
+    .header { text-align: center; border-bottom: 3px solid #1a365d; padding-bottom: 12px; margin-bottom: 18px; }
+    .header h1 { color: #1a365d; margin: 0; font-size: 22px; }
+    .header .subtitle { color: #666; font-size: 11px; margin-top: 4px; }
+    .meta {
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+      background: #f8fafc; padding: 10px 14px; border-radius: 6px;
+      margin-bottom: 16px; font-size: 11px;
+    }
+    .meta .item { display: flex; gap: 6px; }
+    .meta .item .lbl { color: #555; font-weight: 600; }
+    .body { font-size: 12px; line-height: 1.85; }
+    .footer {
+      position: fixed; bottom: 6mm; ${isAr ? 'right' : 'left'}: 16mm; ${isAr ? 'left' : 'right'}: 16mm;
+      text-align: center; color: #999; font-size: 9.5px;
+      border-top: 1px solid #e2e8f0; padding-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>${escapeHtml(restaurant?.name || '')}</h1>
+    <div class="subtitle">${L('Investment Agreement', 'اتفاقية استثمار')}</div>
+  </div>
+  <div class="meta">
+    <div class="item"><span class="lbl">${L('Investor:', 'المستثمر:')}</span><span>${escapeHtml(investor.name)}</span></div>
+    <div class="item"><span class="lbl">${L('Date:', 'التاريخ:')}</span><span>${escapeHtml(placeholders.agreement_date)}</span></div>
+    <div class="item"><span class="lbl">${L('Reference:', 'المرجع:')}</span><span>INV-${escapeHtml(investor.id.slice(0, 8).toUpperCase())}</span></div>
+  </div>
+  <div class="body">${body}</div>
+  <div class="footer">${L('Generated by BlindSpot System (BSS) — kinbss.org', 'تم الإنشاء بواسطة نظام بلايند سبوت (BSS) — kinbss.org')}</div>
+</body>
+</html>`;
+
+    const browser = await getBrowser();
+    const page = await browser.newPage();
+    try {
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      const pdfData = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '18mm', right: '16mm', bottom: '22mm', left: '16mm' },
+      });
+      return Buffer.from(pdfData);
+    } finally {
+      await page.close();
+    }
+  }
+
+  // GET the saved template (returns default if none configured)
+  app.get("/api/investor-agreement-template", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const settings = await storage.getCompanySettings(restaurantId);
+      const template = (settings as any)?.investorAgreementTemplate || DEFAULT_INVESTOR_AGREEMENT_TEMPLATE;
+      res.json({
+        template,
+        isDefault: !(settings as any)?.investorAgreementTemplate,
+        placeholders: [
+          'agreement_date', 'my_restaurant_name', 'restaurant_cr', 'restaurant_tax_number', 'restaurant_national_id',
+          'investor_name', 'national_id', 'contact_number', 'investor_type', 'amount_invested',
+          'interest_percentage', 'iban', 'bank_name', 'notes', 'recipe_name', 'recipe_clause',
+        ],
+      });
+    } catch (error: any) {
+      console.error('[INVESTORS] Template fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch template' });
+    }
+  });
+
+  // PUT save template (pass empty string / null to reset to default)
+  app.put("/api/investor-agreement-template", requireAuth, requireRestaurant, requireAction('investors', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const raw = req.body?.template;
+      const template = typeof raw === 'string' && raw.trim() ? raw : null;
+      await storage.upsertCompanySettings(restaurantId, { investorAgreementTemplate: template } as any);
+      res.json({ success: true, template: template ?? DEFAULT_INVESTOR_AGREEMENT_TEMPLATE, isDefault: template === null });
+    } catch (error: any) {
+      console.error('[INVESTORS] Template save error:', error);
+      res.status(500).json({ error: 'Failed to save template' });
+    }
+  });
+
+  // Generate the investment agreement PDF (and persist a copy on the investor)
+  app.get("/api/investors/:id/agreement/pdf", requireAuth, requireRestaurant, requireAction('investors', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const investorId = req.params.id;
+      const lang = String(req.query.lang || 'en');
+      const mode = String(req.query.mode || 'download');
+
+      const investor = await storage.getInvestor(investorId);
+      if (!investor || investor.restaurantId !== restaurantId) {
+        return res.status(404).json({ error: 'Investor not found' });
+      }
+
+      const pdfBuffer = await buildInvestorAgreementPdfBuffer(restaurantId, investorId, lang);
+      const filename = `Investment_Agreement_${(investor.name || 'investor').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+
+      // Persist a copy on the investor record so the agreement lives in their file.
+      try {
+        await storage.updateInvestor(investorId, {
+          agreementContent: pdfBuffer.toString('base64'),
+          agreementFilename: filename,
+          agreementGeneratedAt: new Date(),
+        } as any);
+      } catch (e) {
+        console.error('[INVESTORS] Failed to persist generated agreement:', e);
+      }
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Length', String(pdfBuffer.length));
+      res.setHeader(
+        'Content-Disposition',
+        `${mode === 'inline' ? 'inline' : 'attachment'}; filename="${filename}"`,
+      );
+      return res.end(pdfBuffer);
+    } catch (error: any) {
+      console.error('[INVESTORS] Agreement PDF error:', error);
+      res.status(500).json({ error: error.message || 'Failed to generate agreement' });
+    }
+  });
+
+  // Download a previously generated agreement (from investor.agreementContent)
+  app.get("/api/investors/:id/agreement", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const investor = await storage.getInvestor(req.params.id);
+      if (!investor || investor.restaurantId !== restaurantId) {
+        return res.status(404).json({ error: 'Investor not found' });
+      }
+      const content = (investor as any).agreementContent;
+      if (!content) return res.status(404).json({ error: 'No agreement generated yet' });
+      const mode = String(req.query.mode || 'download');
+      const filename = (investor as any).agreementFilename ||
+        `Investment_Agreement_${investor.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `${mode === 'inline' ? 'inline' : 'attachment'}; filename="${filename}"`,
+      );
+      return res.send(Buffer.from(content, 'base64'));
+    } catch (error: any) {
+      console.error('[INVESTORS] Agreement fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch agreement' });
+    }
+  });
+
+  // Upload the signed agreement (after client signature)
+  app.post(
+    "/api/investors/:id/signed-agreement",
+    requireAuth, requireRestaurant, requireAction('investors', 'edit'),
+    uploadInvestorDoc.single('document'),
+    async (req, res) => {
+      try {
+        const restaurantId = req.session.user!.restaurantId!;
+        const investorId = req.params.id;
+        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+        try {
+          const investor = await storage.getInvestor(investorId);
+          if (!investor || investor.restaurantId !== restaurantId) {
+            return res.status(404).json({ error: 'Investor not found' });
+          }
+          const buf = fs.readFileSync(req.file.path);
+          const signedAgreementContent = buf.toString('base64');
+          const signedAgreementFilename = req.file.originalname;
+          const updated = await storage.updateInvestor(investorId, {
+            signedAgreementContent,
+            signedAgreementFilename,
+            signedAgreementUploadedAt: new Date(),
+          } as any);
+          res.json({ success: true, signedAgreementFilename, investor: updated });
+        } finally {
+          // Always remove the multer temp file, even on failure.
+          try { fs.unlinkSync(req.file.path); } catch {}
+        }
+      } catch (error: any) {
+        console.error('[INVESTORS] Signed agreement upload error:', error);
+        res.status(500).json({ error: 'Failed to upload signed agreement' });
+      }
+    },
+  );
+
+  // Download the signed agreement
+  app.get("/api/investors/:id/signed-agreement", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const investor = await storage.getInvestor(req.params.id);
+      if (!investor || investor.restaurantId !== restaurantId) {
+        return res.status(404).json({ error: 'Investor not found' });
+      }
+      const content = (investor as any).signedAgreementContent;
+      if (!content) return res.status(404).json({ error: 'No signed agreement uploaded' });
+      const mode = String(req.query.mode || 'download');
+      const filename = (investor as any).signedAgreementFilename ||
+        `Signed_Investment_Agreement_${investor.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `${mode === 'inline' ? 'inline' : 'attachment'}; filename="${filename}"`,
+      );
+      return res.send(Buffer.from(content, 'base64'));
+    } catch (error: any) {
+      console.error('[INVESTORS] Signed agreement fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch signed agreement' });
+    }
+  });
+
+  // Delete the signed agreement
+  app.delete("/api/investors/:id/signed-agreement", requireAuth, requireRestaurant, requireAction('investors', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const investor = await storage.getInvestor(req.params.id);
+      if (!investor || investor.restaurantId !== restaurantId) {
+        return res.status(404).json({ error: 'Investor not found' });
+      }
+      await storage.updateInvestor(req.params.id, {
+        signedAgreementContent: null,
+        signedAgreementFilename: null,
+        signedAgreementUploadedAt: null,
+      } as any);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('[INVESTORS] Signed agreement delete error:', error);
+      res.status(500).json({ error: 'Failed to delete signed agreement' });
+    }
+  });
+
   // Investor Statement PDF Generation
   app.get("/api/investors/:id/statement", requireAuth, requireRestaurant, requirePermission('investors'), async (req, res) => {
     try {
