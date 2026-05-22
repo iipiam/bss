@@ -44,4 +44,4 @@ integrations = ["javascript_mem_db:1.0.0", "resend:1.0.0", "javascript_database:
 
 [postMerge]
 path = "scripts/post-merge.sh"
-timeoutMs = 20000
+timeoutMs = 60000
