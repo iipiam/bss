@@ -2999,7 +2999,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 يهدف هذا العقد إلى تنظيم علاقة استثمار صامت بين الطرفين، حيث يقدم المستثمر الصامت رأس مال نقدي فقط مقابل حصة في الأرباح الصافية فقط، دون أن يكون له أي دور إداري أو تشغيلي تماماً.
 
 المادة الثانية: قيمة الاستثمار وحصة المستثمر الصامت:
-يستثمر الطرف الثاني مبلغًا قدره {{amount_invested}} ريال سعودي ({{amount_in_words}} فقط)، مقابل حصة قدرها {{interest_percentage}}% ({{percentage_in_words}}) من الأرباح الصافية للمؤسسة وفروعها وامتيازاتها التجارية وعقودها إن وُجدت.
+يستثمر الطرف الثاني مبلغًا قدره {{amount_invested}} ر.س (فقط {{amount_in_words}} لا غير)، مقابل حصة قدرها {{interest_percentage}}% ({{percentage_in_words}}) من الأرباح الصافية للمؤسسة وفروعها وامتيازاتها التجارية وعقودها إن وُجدت.
 
 المادة الثالثة: التزامات الطرف الأول (الشريك النشط)
 • إدارة المؤسسة بكفاءة واحترافية وحسن نية.
@@ -3115,8 +3115,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       investor_type: typeLabel,
       amount_invested: amountNum.toFixed(2),
       // amountToWords already includes the currency word ("ريالاً" / "riyals")
-      // and halalas precision (e.g. 28.50 → "ثمانية وعشرون ريالاً وخمسون هللة").
-      // The default template wraps this with "(... فقط)" / "(... only)".
+      // and halalas precision (e.g. 28.50 → "ثمانية وعشرون ريالاً وخمسون هللة" /
+      // "twenty-eight riyals and fifty halalas"). The default template wraps this
+      // with "(فقط ... لا غير)" so it reads naturally without a duplicate currency.
       amount_in_words: amountToWords(amountNum, lang),
       interest_percentage: pctNum.toFixed(2),
       percentage_in_words: percentageToWords(pctNum, lang),
