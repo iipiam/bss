@@ -3053,7 +3053,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 2. الاسم: {{witness_2_name}}
    التوقيع: …………………….`;
 
-  function getInvestorPlaceholders(restaurant: any, investor: any, recipeName: string, isAr: boolean): Record<string, string> {
+  function getInvestorPlaceholders(restaurant: any, investor: any, recipeName: string, isAr: boolean, pdfLang: string = 'en'): Record<string, string> {
     const fmtDate = (d: any) => d ? new Date(d).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB') : '—';
     const typeLabel = (investor.investorType || 'money') === 'recipe'
       ? (isAr ? 'مستثمر وصفة' : 'Recipe Investor')
@@ -3066,14 +3066,41 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const amountNum = parseFloat(investor.amountInvested || '0');
     const pctNum = parseFloat(investor.interestPercentage || '0');
     const lang: 'ar' | 'en' = isAr ? 'ar' : 'en';
+    // Map the PDF language (code or full name) to a BCP-47 locale tag used
+    // with the Umm al-Qura calendar. Covers all 10 supported languages.
+    // Note: ICU does not ship an Umm al-Qura locale for Tagalog/Filipino,
+    // so we fall back to English forms of the month names there.
+    const hijriLocaleMap: Record<string, string> = {
+      en: 'en', english: 'en',
+      ar: 'ar-SA', arabic: 'ar-SA',
+      de: 'de', german: 'de',
+      zh: 'zh', chinese: 'zh',
+      bn: 'bn', bengali: 'bn',
+      it: 'it', italian: 'it',
+      hi: 'hi', hindi: 'hi',
+      ur: 'ur', urdu: 'ur',
+      es: 'es', spanish: 'es',
+      tl: 'en', tagalog: 'en', fil: 'en', filipino: 'en',
+    };
+    const baseLocale = hijriLocaleMap[(pdfLang || 'en').toLowerCase()] || 'en';
     let hijriDate = '';
     try {
       hijriDate = new Intl.DateTimeFormat(
-        isAr ? 'ar-SA-u-ca-islamic-umalqura' : 'en-u-ca-islamic-umalqura',
+        `${baseLocale}-u-ca-islamic-umalqura`,
         { day: 'numeric', month: 'long', year: 'numeric' }
       ).format(new Date());
     } catch {
-      hijriDate = fmtDate(new Date());
+      try {
+        // Fallback to English Umm al-Qura formatting if the requested
+        // locale isn't available in this ICU build.
+        hijriDate = new Intl.DateTimeFormat(
+          'en-u-ca-islamic-umalqura',
+          { day: 'numeric', month: 'long', year: 'numeric' }
+        ).format(new Date());
+      } catch {
+        // Final fallback: Gregorian date in the user's language.
+        hijriDate = fmtDate(new Date());
+      }
     }
     return {
       agreement_date: fmtDate(new Date()),
@@ -3122,7 +3149,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const align = isAr ? 'right' : 'left';
     const L = (en: string, ar: string) => isAr ? ar : en;
 
-    const basePlaceholders = getInvestorPlaceholders(restaurant, investor, recipeName, isAr);
+    const basePlaceholders = getInvestorPlaceholders(restaurant, investor, recipeName, isAr, lang);
     const placeholders: Record<string, string> = { ...basePlaceholders };
     for (const cp of customPlaceholders) {
       if (cp && typeof cp.key === 'string' && cp.key && !(cp.key in placeholders)) {
