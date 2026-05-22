@@ -1339,7 +1339,7 @@ export const companyProfiles = pgTable("company_profiles", {
   galleryImages: jsonb("gallery_images").$type<Array<{ caption?: string; imageDataUrl: string }>>().default([]),
   partners: jsonb("partners").$type<Array<{ name: string; logoDataUrl: string; website?: string }>>().default([]),
   businessCard: jsonb("business_card").$type<{
-    template?: "modern" | "corporate" | "creative" | "minimal" | "executive" | "elegant" | "bold" | "tech";
+    template?: string;
     fullName?: string; jobTitle?: string; companyName?: string;
     phone?: string; email?: string; website?: string;
     logoDataUrl?: string; address?: string; tagline?: string;
@@ -1347,6 +1347,10 @@ export const companyProfiles = pgTable("company_profiles", {
     photoDataUrl?: string; instagram?: string; twitter?: string;
     whatsapp?: string; calendly?: string; pronouns?: string;
     expertise?: string[];
+    // Branding (independent from main profile branding when useProfileBranding=false)
+    useProfileBranding?: boolean;
+    primaryColor?: string; secondaryColor?: string; accentColor?: string;
+    fontFamily?: string; headerStyle?: string; language?: "en" | "ar";
   }>().default({}),
   language: text("language").notNull().default("en"), // en or ar - controls PDF direction
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -1356,9 +1360,15 @@ export const companyProfiles = pgTable("company_profiles", {
 export const insertCompanyProfileSchema = createInsertSchema(companyProfiles)
   .omit({ id: true, createdAt: true, updatedAt: true })
   .extend({
-    template: z.enum(["modern", "corporate", "creative", "minimal", "executive", "bold", "elegant", "tech"]).default("modern"),
-    fontFamily: z.enum(["inter", "playfair", "montserrat", "poppins", "lora", "manrope"]).default("inter"),
-    headerStyle: z.enum(["gradient", "solid", "image", "split", "minimal"]).default("gradient"),
+    template: z.enum([
+      "modern", "corporate", "creative", "minimal", "executive", "bold", "elegant", "tech",
+      "luxury", "monochrome", "geometric", "neon", "editorial", "premium", "vintage", "gradient",
+    ]).default("modern"),
+    fontFamily: z.enum([
+      "inter", "playfair", "montserrat", "poppins", "lora", "manrope",
+      "roboto", "raleway", "oswald", "dmserif",
+    ]).default("inter"),
+    headerStyle: z.enum(["gradient", "solid", "image", "split", "minimal", "diagonal", "wave", "ribbon"]).default("gradient"),
     language: z.enum(["en", "ar"]).default("en"),
     coreValues: z.array(z.object({ title: z.string(), description: z.string() })).default([]),
     services: z.array(z.object({ title: z.string(), description: z.string(), imageDataUrl: z.string().optional() })).default([]),
@@ -1374,7 +1384,14 @@ export const insertCompanyProfileSchema = createInsertSchema(companyProfiles)
       website: z.string().optional(),
     })).default([]),
     businessCard: z.object({
-      template: z.enum(["modern", "corporate", "creative", "minimal", "executive", "elegant", "bold", "tech"]).optional(),
+      template: z.string().optional(),
+      useProfileBranding: z.boolean().optional(),
+      primaryColor: z.string().optional(),
+      secondaryColor: z.string().optional(),
+      accentColor: z.string().optional(),
+      fontFamily: z.string().optional(),
+      headerStyle: z.string().optional(),
+      language: z.enum(["en", "ar"]).optional(),
       fullName: z.string().optional(),
       jobTitle: z.string().optional(),
       companyName: z.string().optional(),

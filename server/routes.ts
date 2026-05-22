@@ -7,6 +7,7 @@ import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatRe
 import { PasswordResetMailer } from "./email";
 import { sanitizePatchBody } from "./utils";
 import { generateCompanyProfilePDF } from "./company-profile-pdf";
+import { generateBusinessCardPDF } from "./business-card-pdf";
 import { amountToWords, percentageToWords } from "./lib/numberToWords";
 import { insertCompanyProfileSchema } from "@shared/schema";
 import { logActivity } from "./activityLogger";
@@ -18286,6 +18287,20 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       res.send(pdf);
     } catch (error: any) {
       console.error("Error generating company profile PDF:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/company-profile/business-card/pdf", requireAuth, requireRestaurant, async (req: any, res) => {
+    try {
+      const profile = await storage.getCompanyProfile(req.session.user.restaurantId);
+      if (!profile) return res.status(404).json({ message: "Company profile not found. Save it first." });
+      const pdf = await generateBusinessCardPDF(profile);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="business-card.pdf"`);
+      res.send(pdf);
+    } catch (error: any) {
+      console.error("Error generating business card PDF:", error);
       res.status(500).json({ message: error.message });
     }
   });

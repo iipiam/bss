@@ -131,23 +131,35 @@ function useLabels() {
 }
 
 const TEMPLATES = [
-  { id: "modern",    en: "Modern",    ar: "عصري",       descEn: "Bold gradients, vibrant cover, card layout",      descAr: "تدرّجات لونية جريئة وغلاف نابض، تخطيط بطاقات" },
-  { id: "corporate", en: "Corporate", ar: "مؤسسي",      descEn: "Classic serif headlines, formal structure",        descAr: "عناوين كلاسيكية بخط Serif وهيكل رسمي" },
-  { id: "creative",  en: "Creative",  ar: "إبداعي",     descEn: "Playful gradients, organic shapes, vibrant",       descAr: "تدرّجات مرحة وأشكال عضوية وألوان زاهية" },
-  { id: "minimal",   en: "Minimal",   ar: "بسيط",       descEn: "Clean typography, generous whitespace",            descAr: "طباعة نظيفة ومساحات بيضاء واسعة" },
-  { id: "executive", en: "Executive", ar: "تنفيذي",     descEn: "Premium formal layout for C-level audiences",      descAr: "تخطيط رسمي فاخر للمدراء التنفيذيين" },
-  { id: "elegant",   en: "Elegant",   ar: "أنيق",       descEn: "Refined serif elegance, editorial feel",           descAr: "أناقة Serif راقية بطابع تحريري" },
-  { id: "bold",      en: "Bold",      ar: "جريء",       descEn: "Oversized type, high-impact contrast",             descAr: "خطوط كبيرة وتباين عالي التأثير" },
-  { id: "tech",      en: "Tech",      ar: "تقني",       descEn: "Modern startup style, geometric and clean",        descAr: "أسلوب الشركات الناشئة، هندسي ونظيف" },
+  { id: "modern",     en: "Modern",     ar: "عصري",       descEn: "Bold gradients, vibrant cover, card layout",      descAr: "تدرّجات لونية جريئة وغلاف نابض، تخطيط بطاقات" },
+  { id: "corporate",  en: "Corporate",  ar: "مؤسسي",      descEn: "Classic serif headlines, formal structure",        descAr: "عناوين كلاسيكية بخط Serif وهيكل رسمي" },
+  { id: "creative",   en: "Creative",   ar: "إبداعي",     descEn: "Playful gradients, organic shapes, vibrant",       descAr: "تدرّجات مرحة وأشكال عضوية وألوان زاهية" },
+  { id: "minimal",    en: "Minimal",    ar: "بسيط",       descEn: "Clean typography, generous whitespace",            descAr: "طباعة نظيفة ومساحات بيضاء واسعة" },
+  { id: "executive",  en: "Executive",  ar: "تنفيذي",     descEn: "Premium formal layout for C-level audiences",      descAr: "تخطيط رسمي فاخر للمدراء التنفيذيين" },
+  { id: "elegant",    en: "Elegant",    ar: "أنيق",       descEn: "Refined serif elegance, editorial feel",           descAr: "أناقة Serif راقية بطابع تحريري" },
+  { id: "bold",       en: "Bold",       ar: "جريء",       descEn: "Oversized type, high-impact contrast",             descAr: "خطوط كبيرة وتباين عالي التأثير" },
+  { id: "tech",       en: "Tech",       ar: "تقني",       descEn: "Modern startup style, geometric and clean",        descAr: "أسلوب الشركات الناشئة، هندسي ونظيف" },
+  { id: "luxury",     en: "Luxury",     ar: "فاخر",       descEn: "Black & gold, premium serif, ornamental",          descAr: "أسود وذهبي، خط Serif فاخر مع زخارف" },
+  { id: "monochrome", en: "Monochrome", ar: "أحادي",      descEn: "Pure black, white and grey only",                  descAr: "أبيض وأسود ورمادي فقط" },
+  { id: "geometric",  en: "Geometric",  ar: "هندسي",      descEn: "Layered shapes, structured grids",                 descAr: "أشكال متراكبة وشبكات منظمة" },
+  { id: "neon",       en: "Neon",       ar: "نيون",       descEn: "Dark background with neon glow accents",           descAr: "خلفية داكنة مع توهج نيوني" },
+  { id: "editorial",  en: "Editorial",  ar: "تحريري",     descEn: "Magazine layout, large serif headings",            descAr: "تخطيط مجلة وعناوين Serif كبيرة" },
+  { id: "premium",    en: "Premium",    ar: "بريميوم",    descEn: "Deep navy with gold trim, ultra-formal",           descAr: "كحلي عميق مع تطعيمات ذهبية، رسمي للغاية" },
+  { id: "vintage",    en: "Vintage",    ar: "كلاسيكي",    descEn: "Warm sepia tones, retro typography",               descAr: "ألوان سيبيا دافئة وخطوط كلاسيكية" },
+  { id: "gradient",   en: "Gradient Mesh", ar: "تدرّج متشعب", descEn: "Multi-color mesh background, modern",          descAr: "خلفية تدرّج متعددة الألوان عصرية" },
 ] as const;
 
 const FONTS = [
-  { id: "inter",      en: "Inter (Modern Sans)",        ar: "Inter (حديث)",         css: "Inter, system-ui" },
-  { id: "manrope",    en: "Manrope (Tech Sans)",        ar: "Manrope (تقني)",       css: "Manrope, system-ui" },
-  { id: "poppins",    en: "Poppins (Friendly Sans)",    ar: "Poppins (ودود)",       css: "Poppins, system-ui" },
-  { id: "montserrat", en: "Montserrat (Geometric)",     ar: "Montserrat (هندسي)",   css: "Montserrat, system-ui" },
-  { id: "playfair",   en: "Playfair Display (Editorial)", ar: "Playfair (تحريري)",  css: '"Playfair Display", serif' },
-  { id: "lora",       en: "Lora (Refined Serif)",       ar: "Lora (راقي)",          css: "Lora, serif" },
+  { id: "inter",      en: "Inter (Modern Sans)",          ar: "Inter (حديث)",         css: "Inter, system-ui" },
+  { id: "manrope",    en: "Manrope (Tech Sans)",          ar: "Manrope (تقني)",       css: "Manrope, system-ui" },
+  { id: "poppins",    en: "Poppins (Friendly Sans)",      ar: "Poppins (ودود)",       css: "Poppins, system-ui" },
+  { id: "montserrat", en: "Montserrat (Geometric)",       ar: "Montserrat (هندسي)",   css: "Montserrat, system-ui" },
+  { id: "playfair",   en: "Playfair Display (Editorial)", ar: "Playfair (تحريري)",    css: '"Playfair Display", serif' },
+  { id: "lora",       en: "Lora (Refined Serif)",         ar: "Lora (راقي)",          css: "Lora, serif" },
+  { id: "roboto",     en: "Roboto (Neutral Sans)",        ar: "Roboto (محايد)",       css: "Roboto, system-ui" },
+  { id: "raleway",    en: "Raleway (Elegant Sans)",       ar: "Raleway (أنيق)",       css: "Raleway, system-ui" },
+  { id: "oswald",     en: "Oswald (Condensed Display)",   ar: "Oswald (مكثّف)",       css: "Oswald, system-ui" },
+  { id: "dmserif",    en: "DM Serif Display (Luxury)",    ar: "DM Serif (فاخر)",      css: '"DM Serif Display", serif' },
 ] as const;
 
 const HEADER_STYLES = [
@@ -156,6 +168,9 @@ const HEADER_STYLES = [
   { id: "split",    en: "Two-Tone Split", ar: "مقسوم بلونين" },
   { id: "image",    en: "Cover Image",    ar: "صورة غلاف" },
   { id: "minimal",  en: "Minimal Light",  ar: "بسيط فاتح" },
+  { id: "diagonal", en: "Diagonal Sweep", ar: "قطري" },
+  { id: "wave",     en: "Wave Underline", ar: "موجة" },
+  { id: "ribbon",   en: "Side Ribbon",    ar: "شريط جانبي" },
 ] as const;
 
 const COLOR_PRESETS = [
@@ -167,6 +182,10 @@ const COLOR_PRESETS = [
   { name: "Sand",     primary: "#a16207", secondary: "#451a03", accent: "#0e7490" },
   { name: "Slate",    primary: "#475569", secondary: "#0f172a", accent: "#10b981" },
   { name: "Mono",     primary: "#111827", secondary: "#374151", accent: "#9ca3af" },
+  { name: "Gold",     primary: "#b45309", secondary: "#1c1917", accent: "#facc15" },
+  { name: "Rose",     primary: "#e11d48", secondary: "#881337", accent: "#fb7185" },
+  { name: "Teal",     primary: "#0d9488", secondary: "#134e4a", accent: "#fbbf24" },
+  { name: "Midnight", primary: "#1e3a8a", secondary: "#0c1226", accent: "#60a5fa" },
 ];
 
 const DEFAULT: ProfileForm = {
@@ -203,6 +222,13 @@ const DEFAULT: ProfileForm = {
   partners: [],
   businessCard: {
     template: "modern",
+    useProfileBranding: true,
+    primaryColor: "#2563eb",
+    secondaryColor: "#0f172a",
+    accentColor: "#f59e0b",
+    fontFamily: "inter",
+    headerStyle: "gradient",
+    language: "en",
     fullName: "", jobTitle: "", companyName: "",
     phone: "", email: "", website: "",
     logoDataUrl: "", address: "", tagline: "",
@@ -215,16 +241,7 @@ const DEFAULT: ProfileForm = {
 };
 
 type BusinessCard = NonNullable<ProfileForm["businessCard"]>;
-const BC_TEMPLATES = [
-  { id: "modern",    en: "Modern",    ar: "عصري" },
-  { id: "corporate", en: "Corporate", ar: "مؤسسي" },
-  { id: "creative",  en: "Creative",  ar: "إبداعي" },
-  { id: "minimal",   en: "Minimal",   ar: "بسيط" },
-  { id: "executive", en: "Executive", ar: "تنفيذي" },
-  { id: "elegant",   en: "Elegant",   ar: "أنيق" },
-  { id: "bold",      en: "Bold",      ar: "جريء" },
-  { id: "tech",      en: "Tech",      ar: "تقني" },
-] as const;
+const BC_TEMPLATES = TEMPLATES;
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -376,6 +393,30 @@ export default function CompanyProfilePage() {
       const a = document.createElement("a");
       a.href = url;
       a.download = `${(form.companyName || "company-profile").replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-profile.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({ title: L.pdfGenerated, description: L.pdfGeneratedDesc });
+    } catch (e: any) {
+      toast({ title: L.pdfFailed, description: e?.message || L.couldNotGenerate, variant: "destructive" });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const generateBcPdf = async () => {
+    setIsGenerating(true);
+    try {
+      await saveMutation.mutateAsync({ ...form, language: effectivePdfLang });
+      const res = await fetch("/api/company-profile/business-card/pdf", { method: "POST", credentials: "include" });
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const name = (form.businessCard?.fullName || form.businessCard?.companyName || form.companyName || "business-card").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      a.download = `${name}-business-card.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -844,12 +885,22 @@ export default function CompanyProfilePage() {
                   <CardTitle className="text-base">{isRTL ? "معاينة بطاقة العمل" : "Live Business Card Preview"}</CardTitle>
                   <CardDescription>{isRTL ? "معاينة لجهتي البطاقة الأمامية والخلفية." : "Front and back side preview of your business card."}</CardDescription>
                 </div>
-                <Badge variant="secondary">
-                  {(() => {
-                    const t = BC_TEMPLATES.find(x => x.id === (form.businessCard?.template || "modern")) || BC_TEMPLATES[0];
-                    return isRTL ? t.ar : t.en;
-                  })()}
-                </Badge>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="secondary">
+                    {(() => {
+                      const t = BC_TEMPLATES.find(x => x.id === (form.businessCard?.template || "modern")) || BC_TEMPLATES[0];
+                      return isRTL ? t.ar : t.en;
+                    })()}
+                  </Badge>
+                  <Button
+                    onClick={generateBcPdf}
+                    disabled={isGenerating}
+                    data-testid="button-generate-bc-pdf"
+                  >
+                    {isGenerating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+                    {isRTL ? "تنزيل بطاقة العمل PDF" : "Generate Business Card PDF"}
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -1060,32 +1111,135 @@ function BusinessCardEditor({ value, onChange, isRTL }: { value: BusinessCard; o
   const tr = (en: string, ar: string) => (isRTL ? ar : en);
   const set = <K extends keyof BusinessCard>(k: K, v: BusinessCard[K]) => onChange({ ...value, [k]: v });
   const expertise = value.expertise || [];
+  const tplLabel = (t: typeof TEMPLATES[number]) => isRTL ? t.ar : t.en;
+  const tplDesc = (t: typeof TEMPLATES[number]) => isRTL ? t.descAr : t.descEn;
+  const fontLabel = (f: typeof FONTS[number]) => isRTL ? f.ar : f.en;
+  const hsLabel = (h: typeof HEADER_STYLES[number]) => isRTL ? h.ar : h.en;
+  const useOwn = value.useProfileBranding === false;
+  const applyPreset = (p: typeof COLOR_PRESETS[number]) =>
+    onChange({ ...value, primaryColor: p.primary, secondaryColor: p.secondary, accentColor: p.accent });
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      {/* LEFT: TEMPLATE PICKER */}
+      {/* LEFT: TEMPLATE & BRANDING */}
       <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Layout className="h-4 w-4" /> {tr("Template & Branding", "القالب والهوية")}
           </CardTitle>
-          <CardDescription>{tr("Choose a style for your card.", "اختر تصميم البطاقة.")}</CardDescription>
+          <CardDescription>{tr("Choose a style and tune your card branding.", "اختر تصميم البطاقة واضبط الهوية.")}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            {BC_TEMPLATES.map((tpl) => (
-              <button
-                key={tpl.id}
-                type="button"
-                onClick={() => set("template", tpl.id as BusinessCard["template"])}
-                data-testid={`button-bc-template-${tpl.id}`}
-                className={`p-3 rounded-md border text-start hover-elevate transition-colors ${value.template === tpl.id ? "border-primary ring-2 ring-primary/30 bg-primary/5" : ""}`}
-              >
-                <div className="font-semibold text-sm">{isRTL ? tpl.ar : tpl.en}</div>
-              </button>
-            ))}
+        <CardContent className="space-y-5">
+          {/* Template */}
+          <div>
+            <Label className="mb-2 block">{tr("Template", "القالب")}</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {BC_TEMPLATES.map((tpl) => (
+                <button
+                  key={tpl.id}
+                  type="button"
+                  onClick={() => set("template", tpl.id)}
+                  data-testid={`button-bc-template-${tpl.id}`}
+                  className={`p-3 rounded-md border text-start hover-elevate transition-colors ${value.template === tpl.id ? "border-primary ring-2 ring-primary/30 bg-primary/5" : ""}`}
+                >
+                  <div className="font-semibold text-sm">{tplLabel(tpl)}</div>
+                  <div className="text-[11px] text-muted-foreground mt-1 leading-snug">{tplDesc(tpl)}</div>
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* Use profile branding toggle */}
+          <div className="flex items-center justify-between rounded-md border p-3 bg-muted/30">
+            <div className="text-sm">
+              <div className="font-medium">{tr("Use Company Profile Branding", "استخدام هوية ملف الشركة")}</div>
+              <div className="text-xs text-muted-foreground">{tr("Inherit colors, font, header style and PDF language.", "وراثة الألوان والخط والترويسة ولغة الـ PDF.")}</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={value.useProfileBranding !== false}
+              onChange={(e) => set("useProfileBranding", e.target.checked)}
+              className="h-4 w-4 cursor-pointer"
+              data-testid="checkbox-bc-use-profile-branding"
+            />
+          </div>
+
+          {/* Font */}
+          <div className={useOwn ? "" : "opacity-50 pointer-events-none"}>
+            <Label className="mb-2 flex items-center gap-2"><Type className="h-3.5 w-3.5" /> {tr("Font Family", "نوع الخط")}</Label>
+            <Select value={value.fontFamily || "inter"} onValueChange={(v) => set("fontFamily", v)}>
+              <SelectTrigger data-testid="select-bc-font-family"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {FONTS.map((f) => (
+                  <SelectItem key={f.id} value={f.id} data-testid={`option-bc-font-${f.id}`}>
+                    <span style={{ fontFamily: f.css }}>{fontLabel(f)}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Header Style */}
+          <div className={useOwn ? "" : "opacity-50 pointer-events-none"}>
+            <Label className="mb-2 block">{tr("Header Style", "نمط الترويسة")}</Label>
+            <Select value={value.headerStyle || "gradient"} onValueChange={(v) => set("headerStyle", v)}>
+              <SelectTrigger data-testid="select-bc-header-style"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {HEADER_STYLES.map((h) => (
+                  <SelectItem key={h.id} value={h.id} data-testid={`option-bc-header-${h.id}`}>{hsLabel(h)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* PDF Language */}
+          <div className={useOwn ? "" : "opacity-50 pointer-events-none"}>
+            <Label className="mb-2 block">{tr("PDF Language", "لغة الـ PDF")}</Label>
+            <Select value={value.language || "en"} onValueChange={(v) => set("language", v as "en" | "ar")}>
+              <SelectTrigger data-testid="select-bc-pdf-language"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English (LTR)</SelectItem>
+                <SelectItem value="ar">العربية (RTL)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <Separator />
+
+          {/* Brand Colors */}
+          <div className={useOwn ? "" : "opacity-50 pointer-events-none"}>
+            <Label className="mb-2 block font-semibold">{tr("Brand Colors", "ألوان الهوية")}</Label>
+            <div className="grid grid-cols-1 gap-3">
+              <ColorField label={tr("Primary", "الرئيسي")} value={value.primaryColor || "#2563eb"} onChange={(v) => set("primaryColor", v)} testId="bc-primary" />
+              <ColorField label={tr("Secondary (Dark)", "الثانوي (غامق)")} value={value.secondaryColor || "#0f172a"} onChange={(v) => set("secondaryColor", v)} testId="bc-secondary" />
+              <ColorField label={tr("Accent", "التمييز")} value={value.accentColor || "#f59e0b"} onChange={(v) => set("accentColor", v)} testId="bc-accent" />
+            </div>
+            <div className="mt-3">
+              <Label className="text-xs text-muted-foreground mb-2 block">{tr("Color Presets", "إعدادات لونية مسبقة")}</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {COLOR_PRESETS.map((cp) => (
+                  <button
+                    key={cp.name}
+                    type="button"
+                    onClick={() => applyPreset(cp)}
+                    className="rounded-md border p-1.5 hover-elevate active-elevate-2"
+                    data-testid={`button-bc-preset-${cp.name.toLowerCase()}`}
+                    title={cp.name}
+                  >
+                    <div className="flex h-6 rounded overflow-hidden">
+                      <div className="flex-1" style={{ background: cp.primary }} />
+                      <div className="flex-1" style={{ background: cp.secondary }} />
+                      <div className="flex-1" style={{ background: cp.accent }} />
+                    </div>
+                    <div className="text-[10px] text-center mt-1 truncate">{cp.name}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
           <ImageUploader value={value.logoDataUrl} onChange={(v) => set("logoDataUrl", v)} label={tr("Logo", "الشعار")} testId="bc-logo" />
           <ImageUploader value={value.photoDataUrl} onChange={(v) => set("photoDataUrl", v)} label={tr("Professional Photo", "صورة شخصية")} testId="bc-photo" />
         </CardContent>
@@ -1163,46 +1317,80 @@ function BusinessCardEditor({ value, onChange, isRTL }: { value: BusinessCard; o
   );
 }
 
+// Shared template recipe — used by Preview AND server PDF (kept in sync via types).
+export function bcTemplateRecipe(tpl: string, primary: string, secondary: string, accent: string, fontCss: string) {
+  switch (tpl) {
+    case "modern":     return { frontBg: `linear-gradient(135deg, ${primary}, ${accent})`, backBg: `linear-gradient(135deg, ${secondary}, ${primary})`, text: "white", accentBar: accent, font: fontCss };
+    case "corporate":  return { frontBg: secondary, backBg: secondary, text: "white", accentBar: primary, font: '"Playfair Display", serif' };
+    case "creative":   return { frontBg: `radial-gradient(circle at 20% 20%, ${accent}, ${primary} 70%)`, backBg: `radial-gradient(circle at 80% 80%, ${primary}, ${accent} 70%)`, text: "white", accentBar: "white", font: fontCss };
+    case "minimal":    return { frontBg: "#ffffff", backBg: "#ffffff", text: secondary, accentBar: primary, font: fontCss, border: true };
+    case "executive":  return { frontBg: `linear-gradient(180deg, #0b1220, ${secondary})`, backBg: `linear-gradient(180deg, ${secondary}, #0b1220)`, text: "white", accentBar: accent, font: '"Playfair Display", serif' };
+    case "elegant":    return { frontBg: "#fdfaf3", backBg: "#fdfaf3", text: "#2b1d10", accentBar: secondary, font: '"Playfair Display", serif', border: true };
+    case "bold":       return { frontBg: primary, backBg: secondary, text: "white", accentBar: accent, font: fontCss, oversized: true };
+    case "tech":       return { frontBg: `linear-gradient(135deg, #0f172a, ${primary})`, backBg: `linear-gradient(135deg, ${primary}, #0f172a)`, text: "white", accentBar: accent, font: "Manrope, system-ui" };
+    case "luxury":     return { frontBg: `linear-gradient(135deg, #0a0a0a, #1a1a1a)`, backBg: `linear-gradient(135deg, #1a1a1a, #0a0a0a)`, text: "#facc15", accentBar: "#facc15", font: '"DM Serif Display", serif', border: true };
+    case "monochrome": return { frontBg: "#ffffff", backBg: "#111111", text: "#111111", accentBar: "#111111", font: fontCss, border: true, invertedBack: true };
+    case "geometric":  return { frontBg: `conic-gradient(from 45deg, ${primary} 0deg 90deg, ${secondary} 90deg 180deg, ${accent} 180deg 270deg, ${primary} 270deg 360deg)`, backBg: `linear-gradient(45deg, ${primary} 25%, ${secondary} 25% 50%, ${accent} 50% 75%, ${primary} 75%)`, text: "white", accentBar: "white", font: fontCss };
+    case "neon":       return { frontBg: `radial-gradient(circle at 30% 70%, ${accent}55, #050816 70%)`, backBg: `radial-gradient(circle at 70% 30%, ${primary}55, #050816 70%)`, text: "#a5f3fc", accentBar: accent, font: "Manrope, system-ui", neon: true };
+    case "editorial":  return { frontBg: "#fafaf9", backBg: "#fafaf9", text: "#1c1917", accentBar: primary, font: '"Playfair Display", serif', border: true, oversized: true };
+    case "premium":    return { frontBg: "linear-gradient(135deg, #0c1a3e, #1e3a8a)", backBg: "linear-gradient(135deg, #1e3a8a, #0c1a3e)", text: "white", accentBar: "#fbbf24", font: '"DM Serif Display", serif' };
+    case "vintage":    return { frontBg: "linear-gradient(135deg, #f5e6c8, #e7c98f)", backBg: "linear-gradient(135deg, #e7c98f, #f5e6c8)", text: "#3b2f1a", accentBar: "#92400e", font: '"Playfair Display", serif', border: true };
+    case "gradient":   return { frontBg: `linear-gradient(120deg, ${primary} 0%, ${accent} 50%, ${secondary} 100%)`, backBg: `linear-gradient(300deg, ${primary} 0%, ${accent} 50%, ${secondary} 100%)`, text: "white", accentBar: "white", font: fontCss };
+    default:           return { frontBg: primary, backBg: secondary, text: "white", accentBar: accent, font: fontCss };
+  }
+}
+
 // ============== BUSINESS CARD PREVIEW ==============
 function BusinessCardPreview({ card, primary, secondary, accent, fontCss, isRTL }: { card: BusinessCard; primary: string; secondary: string; accent: string; fontCss: string; isRTL: boolean }) {
   const tr = (en: string, ar: string) => (isRTL ? ar : en);
   const tpl = card.template || "modern";
+  // When useProfileBranding is false, prefer the card's own branding values.
+  const useOwn = card.useProfileBranding === false;
+  const ePrimary   = useOwn ? (card.primaryColor   || primary)   : primary;
+  const eSecondary = useOwn ? (card.secondaryColor || secondary) : secondary;
+  const eAccent    = useOwn ? (card.accentColor    || accent)    : accent;
+  const eFont      = useOwn && card.fontFamily ? (FONTS.find(f => f.id === card.fontFamily)?.css || fontCss) : fontCss;
   const qrSrc = (card.qrData || card.website || card.linkedin)
     ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(card.qrData || card.website || card.linkedin || "")}`
     : null;
 
-  // Per-template visual recipe
-  const recipe = (() => {
-    switch (tpl) {
-      case "modern":    return { frontBg: `linear-gradient(135deg, ${primary}, ${accent})`, text: "white", accentBar: accent, font: fontCss };
-      case "corporate": return { frontBg: secondary, text: "white", accentBar: primary, font: '"Playfair Display", serif' };
-      case "creative":  return { frontBg: `radial-gradient(circle at 20% 20%, ${accent}, ${primary} 70%)`, text: "white", accentBar: "white", font: fontCss };
-      case "minimal":   return { frontBg: "#ffffff", text: secondary, accentBar: primary, font: fontCss, border: true };
-      case "executive": return { frontBg: `linear-gradient(180deg, #0b1220, ${secondary})`, text: "white", accentBar: accent, font: '"Playfair Display", serif' };
-      case "elegant":   return { frontBg: "#fdfaf3", text: "#2b1d10", accentBar: secondary, font: '"Playfair Display", serif', border: true };
-      case "bold":      return { frontBg: primary, text: "white", accentBar: accent, font: fontCss, oversized: true };
-      case "tech":      return { frontBg: `linear-gradient(135deg, #0f172a, ${primary})`, text: "white", accentBar: accent, font: "Manrope, system-ui" };
-      default:          return { frontBg: primary, text: "white", accentBar: accent, font: fontCss };
-    }
-  })();
+  const recipe = bcTemplateRecipe(tpl, ePrimary, eSecondary, eAccent, eFont);
 
-  const CardShell = ({ children, testId }: { children: React.ReactNode; testId: string }) => (
-    <div
-      data-testid={testId}
-      className="relative rounded-md shadow-lg overflow-hidden"
-      style={{
-        width: "100%",
-        maxWidth: 560,
-        aspectRatio: "1.75 / 1",
-        background: recipe.frontBg,
-        color: recipe.text,
-        fontFamily: recipe.font,
-        border: recipe.border ? `1px solid ${primary}33` : undefined,
-      }}
-    >
-      {children}
-    </div>
-  );
+  const headerStyle = (useOwn ? card.headerStyle : undefined) || card.headerStyle || "gradient";
+  const renderAccent = () => {
+    const a = recipe.accentBar;
+    switch (headerStyle) {
+      case "ribbon":   return <div className="absolute inset-y-0 start-0 w-1.5" style={{ background: a }} />;
+      case "diagonal": return <div className="absolute" style={{ top: -40, right: -40, width: 140, height: 140, background: a, transform: "rotate(20deg)", opacity: 0.35 }} />;
+      case "wave":     return <div className="absolute left-0 right-0 bottom-0 h-3" style={{ background: a, clipPath: "polygon(0 60%,8% 30%,18% 60%,28% 30%,38% 60%,48% 30%,58% 60%,68% 30%,78% 60%,88% 30%,100% 60%,100% 100%,0 100%)" }} />;
+      case "solid":    return <div className="absolute left-0 right-0 top-0 h-1.5" style={{ background: a }} />;
+      case "split":    return <div className="absolute inset-y-0 start-0 w-1/4" style={{ background: a, opacity: 0.25 }} />;
+      default:         return null;
+    }
+  };
+  const CardShell = ({ children, testId, back }: { children: React.ReactNode; testId: string; back?: boolean }) => {
+    const bg = back ? (recipe as any).backBg || recipe.frontBg : recipe.frontBg;
+    const txt = back && (recipe as any).invertedBack ? "#ffffff" : recipe.text;
+    return (
+      <div
+        data-testid={testId}
+        className="relative rounded-md shadow-lg overflow-hidden"
+        style={{
+          width: "100%",
+          maxWidth: 560,
+          aspectRatio: "1.75 / 1",
+          background: bg,
+          color: txt,
+          fontFamily: recipe.font,
+          border: recipe.border ? `1px solid ${ePrimary}33` : undefined,
+          boxShadow: (recipe as any).neon ? `0 0 24px ${eAccent}40, inset 0 0 32px ${eAccent}22` : undefined,
+        }}
+      >
+        {!back && renderAccent()}
+        {children}
+      </div>
+    );
+  };
 
   const ContactLine = ({ icon: Icon, value }: { icon: any; value?: string | null }) =>
     value ? (
@@ -1264,7 +1452,7 @@ function BusinessCardPreview({ card, primary, secondary, accent, fontCss, isRTL 
       {/* BACK */}
       <div className="w-full flex flex-col items-center gap-2">
         <div className="text-xs uppercase tracking-widest text-muted-foreground">{tr("Back", "الواجهة الخلفية")}</div>
-        <CardShell testId="bc-back">
+        <CardShell testId="bc-back" back>
           <div className="absolute inset-0 p-5 flex gap-4">
             {/* LEFT: services + tagline */}
             <div className="flex-1 min-w-0 flex flex-col justify-between">

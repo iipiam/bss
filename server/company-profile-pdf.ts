@@ -88,6 +88,10 @@ function fontStack(p: CompanyProfile): string {
     case "poppins": return "'Poppins', Arial, sans-serif";
     case "lora": return "'Lora', Georgia, serif";
     case "manrope": return "'Manrope', Arial, sans-serif";
+    case "roboto": return "'Roboto', Arial, sans-serif";
+    case "raleway": return "'Raleway', Arial, sans-serif";
+    case "oswald": return "'Oswald', Impact, sans-serif";
+    case "dmserif": return "'DM Serif Display', Georgia, serif";
     case "inter":
     default: return "'Inter', Arial, sans-serif";
   }
@@ -759,6 +763,14 @@ function renderBody(p: CompanyProfile, s: Strings): string {
     case "elegant": return renderMinimal(p, s);
     case "bold": return renderModern(p, s);
     case "tech": return renderCreative(p, s);
+    case "luxury": return renderCorporate(p, s);
+    case "monochrome": return renderMinimal(p, s);
+    case "geometric": return renderModern(p, s);
+    case "neon": return renderCreative(p, s);
+    case "editorial": return renderCorporate(p, s);
+    case "premium": return renderCorporate(p, s);
+    case "vintage": return renderMinimal(p, s);
+    case "gradient": return renderModern(p, s);
     case "modern":
     default: return renderModern(p, s);
   }
