@@ -129,18 +129,16 @@ export default function InvestmentAgreementTemplatesPage() {
         setContent(data.content || '');
         const suggested: Array<{ key: string; label?: string; labelAr?: string; value?: string }> =
           Array.isArray(data.suggestedCustomPlaceholders) ? data.suggestedCustomPlaceholders : [];
-        if (suggested.length > 0) {
-          setCustomPlaceholders((prev) => {
-            const existing = new Set(prev.map(p => p.key));
-            const additions: CustomPh[] = suggested
-              .filter(s => s.key && !existing.has(s.key))
-              .map(s => ({
-                key: s.key,
-                label: (isRTL ? (s.labelAr || s.label) : (s.label || s.labelAr)) || s.key,
-                value: s.value || "",
-              }));
-            return [...prev, ...additions];
-          });
+        // Per spec: only pre-fill when the template has no custom placeholders
+        // yet — never clobber user-entered rows on subsequent loads.
+        if (suggested.length > 0 && customPlaceholders.length === 0) {
+          setCustomPlaceholders(suggested
+            .filter(s => s.key)
+            .map(s => ({
+              key: s.key,
+              label: (isRTL ? (s.labelAr || s.label) : (s.label || s.labelAr)) || s.key,
+              value: s.value || "",
+            })));
         }
       }
     } catch (e: any) {
@@ -162,7 +160,7 @@ export default function InvestmentAgreementTemplatesPage() {
       contact_number: "+966500000000",
       investor_type: t.moneyInvestor,
       amount_invested: "100000.00",
-      amount_in_words: isRTL ? "مئة ألف ريال سعودي" : "one hundred thousand riyals",
+      amount_in_words: isRTL ? "مئة ألف" : "one hundred thousand",
       interest_percentage: "10.00",
       percentage_in_words: isRTL ? "عشرة بالمئة" : "ten percent",
       iban: "SA0380000000608010167519",

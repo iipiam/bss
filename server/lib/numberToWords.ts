@@ -98,12 +98,11 @@ export function amountToWords(amount: number, lang: "ar" | "en"): string {
   const halalas = Math.round((abs - riyals) * 100);
 
   if (lang === "ar") {
-    // Use "ريال سعودي" form to avoid awkward double-tanween when the amount
-    // already ends in ألفاً/مليوناً (e.g. "سبعة وخمسون ألفاً ريالاً").
-    const riyalsWord = riyals === 0 ? "صفر ريال سعودي" :
-      riyals === 1 ? "ريال سعودي واحد" :
-      riyals === 2 ? "ريالان سعوديان" :
-      `${numberToArabicWords(riyals)} ريال سعودي`;
+    const riyalsWord = riyals === 0 ? "صفر ريال" :
+      riyals === 1 ? "ريال واحد" :
+      riyals === 2 ? "ريالان" :
+      (riyals >= 3 && riyals <= 10) ? `${numberToArabicWords(riyals)} ريالات` :
+      `${numberToArabicWords(riyals)} ريالاً`;
     if (halalas === 0) return riyalsWord;
     const halalaWord = halalas === 1 ? "هللة واحدة" :
       halalas === 2 ? "هللتان" :
