@@ -164,8 +164,9 @@ export default function Quotations() {
   const [declineReason, setDeclineReason] = useState("");
   const [viewDecisionsQuotation, setViewDecisionsQuotation] = useState<Quotation | null>(null);
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const layout = useDeviceLayout();
+  const pdfLang = (language === 'Arabic' || language === 'Urdu') ? 'ar' : 'en';
 
   const form = useForm<QuotationFormValues>({
     resolver: zodResolver(quotationFormSchema),
@@ -1043,7 +1044,7 @@ export default function Quotations() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => window.open(`/api/quotations/${quotation.id}/download-pdf`, '_blank')}
+                    onClick={() => window.open(`/api/quotations/${quotation.id}/download-pdf?lang=${pdfLang}`, '_blank')}
                     data-testid={`button-download-pdf-${quotation.id}`}
                   >
                     <Download className="h-4 w-4" />

@@ -1,0 +1,99 @@
+in Marketing page, professional, complete **Influencer Marketing Calculator** for  Bloggers.
+
+Title: "Influencer Marketing Calculator"
+
+Make it modern, clean, with emojis and good color coding.
+
+### Main Sections / Tabs:
+
+1. **Engagement Rate Calculator**
+
+   - Inputs: Followers, Likes, Comments, Shares, Saves
+
+   - Calculate: Total Engagements, ER% = (Total Engagements / Followers) * 100
+
+   - Color code: Green ≥5%, Yellow 3-4.99%, Red <3%
+
+   - Show rating (Excellent / Good / Average / Low)
+
+2. **Sponsorship Rate Estimator**
+
+   - Input: Number of Followers + Engagement Rate
+
+   - Estimate sponsorship price per post using these formulas:
+
+        - Nano (1K-10K): $10–$100
+
+        - Micro (10K-100K): $100–$500
+
+        - Macro (100K-1M): $500–$5000
+
+   - Use Saudi Market rates (in SAR) as default:
+
+        - Price per Post = (Followers / 1000) * CPM
+
+        - Default CPM for Food niche in KSA: 25–80 SAR
+
+   - Allow user to adjust CPM
+
+3. **Cost & ROI Calculator (For Brands)**
+
+   - Inputs:
+
+        - Sponsorship Cost (SAR)
+
+        - Expected Reach / Impressions
+
+        - Expected Engagements
+
+        - Average Order Value (AOV)
+
+        - Conversion Rate (%)
+
+   - Calculations:
+
+        - CPE = Cost / Total Engagements
+
+        - CPM = (Cost / Impressions) * 1000
+
+        - Estimated Sales = Engagements * Conversion Rate
+
+        - Estimated Revenue = Estimated Sales * AOV
+
+        - ROI % = ((Revenue - Cost) / Cost) * 100
+
+        - ROAS (Return on Ad Spend)
+
+4. **Influencer Earnings Dashboard**
+
+   - Estimate monthly earnings if they do:
+
+        - 4 posts per month
+
+        - 8 stories per month
+
+        - Mix of sponsored + affiliate
+
+5. **Comparison Table**
+
+   - Allow adding multiple influencers
+
+   - Columns: Name, Followers, ER%, Est. Post Price (SAR), CPE, ROI%, Rating
+
+   - Show average values at the bottom
+
+   - Download as CSV button
+
+### Extra Features:
+
+- Sidebar with Industry Benchmarks (Food niche - Saudi Arabia & Global)
+
+- Toggle between SAR and USD
+
+- Nice charts using plotly (ER vs Followers, ROI visualization)
+
+- Responsive and professional UI
+
+- Save / Load data option (using session state)
+
+- Clear all data button

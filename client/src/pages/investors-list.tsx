@@ -123,8 +123,9 @@ export default function Investors() {
   const ibanCertInputRef = useRef<HTMLInputElement>(null);
   const formFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const layout = useDeviceLayout();
+  const pdfLang = (language === 'Arabic' || language === 'Urdu') ? 'ar' : 'en';
 
   const investorFormSchema = z.object({
     name: z.string().min(1, t.investorNameRequired),
@@ -654,7 +655,7 @@ export default function Investors() {
   const handleGenerateAgreement = async (investor: Investor) => {
     setGeneratingAgreementFor(investor.id);
     try {
-      const response = await fetch(`/api/investors/${investor.id}/agreement/pdf`, {
+      const response = await fetch(`/api/investors/${investor.id}/agreement/pdf?lang=${pdfLang}`, {
         credentials: 'include',
       });
       if (!response.ok) {

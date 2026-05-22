@@ -150,8 +150,9 @@ export default function ProjectDetail() {
   const params = useParams<{ id: string }>();
   const projectId = params.id;
   const [, setLocation] = useLocation();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const layout = useDeviceLayout();
+  const pdfLang = (language === 'Arabic' || language === 'Urdu') ? 'ar' : 'en';
   const { toast } = useToast();
   const pricingLabels = getPricingLabels(t);
 
@@ -516,7 +517,7 @@ export default function ProjectDetail() {
             variant="outline"
             onClick={async () => {
               try {
-                const res = await fetch(`/api/service-projects/${params.id}/agreement-pdf`, { credentials: "include" });
+                const res = await fetch(`/api/service-projects/${params.id}/agreement-pdf?lang=${pdfLang}`, { credentials: "include" });
                 if (!res.ok) {
                   let msg = "Failed to generate agreement";
                   try { const j = await res.json(); msg = j.message || msg; } catch {}
@@ -554,7 +555,7 @@ export default function ProjectDetail() {
           </Button>
           <Button
             variant="outline"
-            onClick={() => window.open(`/api/service-projects/${params.id}/dossier-pdf`, '_blank')}
+            onClick={() => window.open(`/api/service-projects/${params.id}/dossier-pdf?lang=${pdfLang}`, '_blank')}
             data-testid="button-download-dossier"
           >
             <Download className="h-4 w-4 mr-2" />
