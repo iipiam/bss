@@ -198,7 +198,13 @@ export default function Menu() {
         menuItemData.portionSize = null;
         // For non-recipe items, set inventoryItemId and stockNo
         menuItemData.inventoryItemId = (data.inventoryItemId && data.inventoryItemId.trim() !== "" && data.inventoryItemId !== "none") ? data.inventoryItemId : null;
-        menuItemData.stockNo = (data.stockNo && data.stockNo.trim() !== "") ? data.stockNo : null;
+        // Default stockNo to "1" when an inventory item is linked but no quantity was entered,
+        // so 1 sale = 1 unit deducted (matches user expectation for simple items like drinks).
+        if (menuItemData.inventoryItemId) {
+          menuItemData.stockNo = (data.stockNo && data.stockNo.trim() !== "") ? data.stockNo : "1";
+        } else {
+          menuItemData.stockNo = null;
+        }
       }
 
       return await apiRequest("POST", "/api/menu", menuItemData);
@@ -263,7 +269,12 @@ export default function Menu() {
         menuItemData.recipeId = null; // Clear recipe when not using it
         menuItemData.portionSize = null; // Clear portion size when not using recipe
         menuItemData.inventoryItemId = (data.inventoryItemId && data.inventoryItemId.trim() !== "" && data.inventoryItemId !== "none") ? data.inventoryItemId : null;
-        menuItemData.stockNo = (data.stockNo && data.stockNo.trim() !== "") ? data.stockNo : null;
+        // Default stockNo to "1" when an inventory item is linked but no quantity was entered.
+        if (menuItemData.inventoryItemId) {
+          menuItemData.stockNo = (data.stockNo && data.stockNo.trim() !== "") ? data.stockNo : "1";
+        } else {
+          menuItemData.stockNo = null;
+        }
       }
 
       return await apiRequest("PATCH", `/api/menu/${data.id}`, menuItemData);

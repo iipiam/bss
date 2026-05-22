@@ -143,9 +143,9 @@ export class OrderProcessingService {
         }
       }
       
-      // Collect from direct inventory links
+      // Collect from direct inventory links (stockNo defaults to 1 if not set)
       for (const item of menuItemsData) {
-        if (item.inventoryItemId && item.stockNo) {
+        if (item.inventoryItemId) {
           allInventoryIds.add(item.inventoryItemId);
         }
       }
@@ -187,7 +187,7 @@ export class OrderProcessingService {
               inventoryMap
             );
           }
-        } else if (item.stockNo && item.inventoryItemId) {
+        } else if (item.inventoryItemId) {
           this.processSimpleItemOptimized(
             item,
             orderItem.quantity,
@@ -431,7 +431,7 @@ export class OrderProcessingService {
     branchId: string,
     inventoryMap: Map<string, InventoryItem>
   ): void {
-    if (!menuItem.inventoryItemId || !menuItem.stockNo) {
+    if (!menuItem.inventoryItemId) {
       // Menu items without inventory links are allowed (infinite stock)
       console.log(`[OrderProcessing] Menu item "${menuItem.name}" has no inventory link - skipping stock validation`);
       return;
@@ -449,7 +449,9 @@ export class OrderProcessingService {
       throw new Error(`Inventory item ${invItem.id} (${invItem.name}) belongs to branch ${invItem.branchId} but order is for branch ${branchId}`);
     }
 
-    const requiredQty = parseFloat(menuItem.stockNo.toString()) * quantity;
+    // stockNo defaults to 1 if not set (e.g., 1 Cola sold = 1 Cola deducted)
+    const stockNoNum = menuItem.stockNo ? parseFloat(menuItem.stockNo.toString()) || 1 : 1;
+    const requiredQty = stockNoNum * quantity;
 
     const existing = stockRequirements.get(invItem.id);
     if (existing) {
@@ -576,7 +578,7 @@ export class OrderProcessingService {
           if (recipe) {
             this.processRecipeBasedItemOptimized(item, recipe, quantity, stockRequirements, "", inventoryMap);
           }
-        } else if (item.stockNo && item.inventoryItemId) {
+        } else if (item.inventoryItemId) {
           this.processSimpleItemOptimized(item, quantity, stockRequirements, "", inventoryMap);
         }
       }
@@ -731,8 +733,8 @@ export class OrderProcessingService {
               }
             }
           }
-        } else if (item.stockNo && item.inventoryItemId) {
-          const qty = parseFloat(item.stockNo.toString());
+        } else if (item.inventoryItemId) {
+          const qty = item.stockNo ? parseFloat(item.stockNo.toString()) || 1 : 1;
           const invItem = inventoryMap.get(item.inventoryItemId);
           const availableQty = invItem ? parseFloat(invItem.quantity) : 0;
           const totalPriceVal = invItem ? parseFloat(invItem.price || "0") : 0;

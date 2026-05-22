@@ -78,7 +78,8 @@ export default function CateringContractsPage() {
 
   const { data: contracts = [], isLoading } = useQuery<CateringContract[]>({ queryKey: ["/api/catering-contracts"] });
   const { data: templates = [] } = useQuery<CateringContractTemplate[]>({ queryKey: ["/api/catering-contract-templates"] });
-  const { data: menuItems = [] } = useQuery<Array<{ id: string; name: string; price: string; category?: string; recipeId?: string | null; portionSize?: string | null }>>({ queryKey: ["/api/menu"] });
+  const { data: menuItems = [] } = useQuery<Array<{ id: string; name: string; price: string; category?: string; recipeId?: string | null; portionSize?: string | null; inventoryItemId?: string | null; stockNo?: string | null }>>({ queryKey: ["/api/menu"] });
+  const { data: inventoryItems = [] } = useQuery<Array<{ id: string; name: string; unitPrice?: string | null; price?: string | null; quantity?: string | null; referenceQuantity?: string | null }>>({ queryKey: ["/api/inventory"] });
   const { data: recipes = [] } = useQuery<Recipe[]>({ queryKey: ["/api/recipes"] });
   const [costReport, setCostReport] = useState<CateringContract | null>(null);
   const [issueDialog, setIssueDialog] = useState<{ open: boolean; index: number; installment?: Installment }>({ open: false, index: -1 });
@@ -598,6 +599,7 @@ export default function CateringContractsPage() {
         contract={costReport}
         onClose={() => setCostReport(null)}
         menuItems={menuItems}
+        inventoryItems={inventoryItems}
         recipes={recipes}
         t={t}
       />
@@ -651,11 +653,12 @@ export default function CateringContractsPage() {
 }
 
 function CostReportDialog({
-  contract, onClose, menuItems, recipes, t,
+  contract, onClose, menuItems, inventoryItems, recipes, t,
 }: {
   contract: CateringContract | null;
   onClose: () => void;
-  menuItems: Array<{ id: string; name: string; price: string; recipeId?: string | null; portionSize?: string | null }>;
+  menuItems: Array<{ id: string; name: string; price: string; recipeId?: string | null; portionSize?: string | null; inventoryItemId?: string | null; stockNo?: string | null }>;
+  inventoryItems: Array<{ id: string; name: string; unitPrice?: string | null; price?: string | null; quantity?: string | null; referenceQuantity?: string | null }>;
   recipes: Recipe[];
   t: ReturnType<typeof useCateringT>;
 }) {
@@ -664,6 +667,7 @@ function CostReportDialog({
     const meals: Meal[] = Array.isArray(contract.mealSelections) ? (contract.mealSelections as any) : [];
     const menuById = new Map(menuItems.map(mi => [mi.id, mi]));
     const recipeById = new Map(recipes.map(r => [r.id, r]));
+    const inventoryById = new Map(inventoryItems.map(inv => [inv.id, inv]));
 
     const rows = meals.map((m) => {
       const mi = m.menuItemId ? menuById.get(m.menuItemId) : undefined;
@@ -671,9 +675,7 @@ function CostReportDialog({
       let note = "";
       if (!mi) {
         note = t.notLinkedToMenu;
-      } else if (!mi.recipeId) {
-        note = t.noRecipeLinked;
-      } else {
+      } else if (mi.recipeId) {
         const recipe = recipeById.get(mi.recipeId);
         if (recipe) {
           const portion = parseFloat(mi.portionSize || "1") || 1;
@@ -681,6 +683,24 @@ function CostReportDialog({
         } else {
           note = t.noRecipeLinked;
         }
+      } else if (mi.inventoryItemId) {
+        const inv = inventoryById.get(mi.inventoryItemId);
+        if (inv) {
+          const stockNo = mi.stockNo ? parseFloat(mi.stockNo) || 1 : 1;
+          let unitPrice = 0;
+          if (inv.unitPrice) {
+            unitPrice = parseFloat(inv.unitPrice) || 0;
+          } else if (inv.price) {
+            const invPrice = parseFloat(inv.price) || 0;
+            const refQty = parseFloat(inv.referenceQuantity || inv.quantity || "1") || 1;
+            unitPrice = refQty > 0 ? invPrice / refQty : invPrice;
+          }
+          cost = stockNo * unitPrice;
+        } else {
+          note = t.noRecipeLinked;
+        }
+      } else {
+        note = t.noRecipeLinked;
       }
       const price = Number(m.price) || 0;
       const qty = Math.max(1, Number(m.qtyPerDay) || 1);
@@ -718,7 +738,7 @@ function CostReportDialog({
     const hasUnlinked = rows.some(r => !r.costKnown);
 
     return { rows, totalDeliveries, avgPrice, avgCost, cogs, revenue, profit, margin, hasUnlinked };
-  }, [contract, menuItems, recipes, t]);
+  }, [contract, menuItems, inventoryItems, recipes, t]);
 
   if (!contract || !data) return null;
   const sar = t.sar;
