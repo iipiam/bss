@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Download, Upload, Save, Loader2, Palette, Eye, FileText, Type, Layout, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, Download, Upload, Save, Loader2, Palette, Eye, FileText, Type, Layout, ArrowUp, ArrowDown, CreditCard, ScanLine, Mail, Phone, Globe, MapPin, Linkedin, Instagram, Twitter, MessageCircle, Calendar as CalendarIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { CompanyProfile, InsertCompanyProfile } from "@shared/schema";
 
@@ -201,8 +201,30 @@ const DEFAULT: ProfileForm = {
   testimonials: [],
   galleryImages: [],
   partners: [],
+  businessCard: {
+    template: "modern",
+    fullName: "", jobTitle: "", companyName: "",
+    phone: "", email: "", website: "",
+    logoDataUrl: "", address: "", tagline: "",
+    linkedin: "", qrData: "", secondaryPhone: "", fax: "",
+    photoDataUrl: "", instagram: "", twitter: "",
+    whatsapp: "", calendly: "", pronouns: "",
+    expertise: [],
+  },
   language: "en",
 };
+
+type BusinessCard = NonNullable<ProfileForm["businessCard"]>;
+const BC_TEMPLATES = [
+  { id: "modern",    en: "Modern",    ar: "عصري" },
+  { id: "corporate", en: "Corporate", ar: "مؤسسي" },
+  { id: "creative",  en: "Creative",  ar: "إبداعي" },
+  { id: "minimal",   en: "Minimal",   ar: "بسيط" },
+  { id: "executive", en: "Executive", ar: "تنفيذي" },
+  { id: "elegant",   en: "Elegant",   ar: "أنيق" },
+  { id: "bold",      en: "Bold",      ar: "جريء" },
+  { id: "tech",      en: "Tech",      ar: "تقني" },
+] as const;
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -291,7 +313,7 @@ export default function CompanyProfilePage() {
   const L = useLabels();
   const { toast } = useToast();
   const [form, setForm] = useState<ProfileForm>(DEFAULT);
-  const [view, setView] = useState<"edit" | "preview">("edit");
+  const [view, setView] = useState<"edit" | "preview" | "business-card" | "business-card-preview">("edit");
   const [isGenerating, setIsGenerating] = useState(false);
   // "auto" means follow the global app language; otherwise force a specific one
   const [pdfLangMode, setPdfLangMode] = useState<"auto" | "en" | "ar">("auto");
@@ -313,6 +335,7 @@ export default function CompanyProfilePage() {
         testimonials: (profile.testimonials as any) || [],
         galleryImages: (profile.galleryImages as any) || [],
         partners: ((profile as any).partners as any) || [],
+        businessCard: { ...DEFAULT.businessCard, ...((profile as any).businessCard || {}) },
       } as ProfileForm);
     }
   }, [profile]);
@@ -424,6 +447,8 @@ export default function CompanyProfilePage() {
         <TabsList>
           <TabsTrigger value="edit" data-testid="tab-edit"><Palette className="h-4 w-4 mr-2" />{L.edit}</TabsTrigger>
           <TabsTrigger value="preview" data-testid="tab-preview"><Eye className="h-4 w-4 mr-2" />{L.livePreview}</TabsTrigger>
+          <TabsTrigger value="business-card" data-testid="tab-business-card"><CreditCard className="h-4 w-4 mr-2" />{isRTL ? "بطاقة العمل" : "Business Card"}</TabsTrigger>
+          <TabsTrigger value="business-card-preview" data-testid="tab-business-card-preview"><ScanLine className="h-4 w-4 mr-2" />{isRTL ? "معاينة بطاقة العمل" : "Live Business Card Preview"}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="edit" className="mt-4">
@@ -802,6 +827,43 @@ export default function CompanyProfilePage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="business-card" className="mt-4">
+          <BusinessCardEditor
+            value={form.businessCard || DEFAULT.businessCard!}
+            onChange={(v) => update("businessCard", v)}
+            isRTL={isRTL}
+          />
+        </TabsContent>
+
+        <TabsContent value="business-card-preview" className="mt-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div>
+                  <CardTitle className="text-base">{isRTL ? "معاينة بطاقة العمل" : "Live Business Card Preview"}</CardTitle>
+                  <CardDescription>{isRTL ? "معاينة لجهتي البطاقة الأمامية والخلفية." : "Front and back side preview of your business card."}</CardDescription>
+                </div>
+                <Badge variant="secondary">
+                  {(() => {
+                    const t = BC_TEMPLATES.find(x => x.id === (form.businessCard?.template || "modern")) || BC_TEMPLATES[0];
+                    return isRTL ? t.ar : t.en;
+                  })()}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <BusinessCardPreview
+                card={form.businessCard || DEFAULT.businessCard!}
+                primary={form.primaryColor || "#2563eb"}
+                secondary={form.secondaryColor || "#0f172a"}
+                accent={form.accentColor || "#f59e0b"}
+                fontCss={activeFont.css}
+                isRTL={isRTL}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -989,6 +1051,264 @@ function ProfilePreview({ form, fontCss, L }: { form: ProfileForm; fontCss: stri
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ============== BUSINESS CARD EDITOR ==============
+function BusinessCardEditor({ value, onChange, isRTL }: { value: BusinessCard; onChange: (v: BusinessCard) => void; isRTL: boolean }) {
+  const tr = (en: string, ar: string) => (isRTL ? ar : en);
+  const set = <K extends keyof BusinessCard>(k: K, v: BusinessCard[K]) => onChange({ ...value, [k]: v });
+  const expertise = value.expertise || [];
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* LEFT: TEMPLATE PICKER */}
+      <Card className="lg:col-span-1">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Layout className="h-4 w-4" /> {tr("Template & Branding", "القالب والهوية")}
+          </CardTitle>
+          <CardDescription>{tr("Choose a style for your card.", "اختر تصميم البطاقة.")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            {BC_TEMPLATES.map((tpl) => (
+              <button
+                key={tpl.id}
+                type="button"
+                onClick={() => set("template", tpl.id as BusinessCard["template"])}
+                data-testid={`button-bc-template-${tpl.id}`}
+                className={`p-3 rounded-md border text-start hover-elevate transition-colors ${value.template === tpl.id ? "border-primary ring-2 ring-primary/30 bg-primary/5" : ""}`}
+              >
+                <div className="font-semibold text-sm">{isRTL ? tpl.ar : tpl.en}</div>
+              </button>
+            ))}
+          </div>
+          <Separator />
+          <ImageUploader value={value.logoDataUrl} onChange={(v) => set("logoDataUrl", v)} label={tr("Logo", "الشعار")} testId="bc-logo" />
+          <ImageUploader value={value.photoDataUrl} onChange={(v) => set("photoDataUrl", v)} label={tr("Professional Photo", "صورة شخصية")} testId="bc-photo" />
+        </CardContent>
+      </Card>
+
+      {/* RIGHT: FIELDS */}
+      <Card className="lg:col-span-2">
+        <CardHeader>
+          <CardTitle className="text-base">{tr("Card Details", "تفاصيل البطاقة")}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Essential */}
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{tr("Essential", "أساسية")}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div><Label>{tr("Full Name", "الاسم الكامل")}</Label><Input value={value.fullName || ""} onChange={(e) => set("fullName", e.target.value)} data-testid="input-bc-fullname" /></div>
+              <div><Label>{tr("Job Title", "المسمى الوظيفي")}</Label><Input value={value.jobTitle || ""} onChange={(e) => set("jobTitle", e.target.value)} data-testid="input-bc-jobtitle" /></div>
+              <div><Label>{tr("Company Name", "اسم الشركة")}</Label><Input value={value.companyName || ""} onChange={(e) => set("companyName", e.target.value)} data-testid="input-bc-company" /></div>
+              <div><Label>{tr("Phone (Mobile)", "الجوال")}</Label><Input value={value.phone || ""} onChange={(e) => set("phone", e.target.value)} data-testid="input-bc-phone" /></div>
+              <div><Label>{tr("Email", "البريد")}</Label><Input type="email" value={value.email || ""} onChange={(e) => set("email", e.target.value)} data-testid="input-bc-email" /></div>
+              <div><Label>{tr("Website / Portfolio", "الموقع الإلكتروني")}</Label><Input value={value.website || ""} onChange={(e) => set("website", e.target.value)} data-testid="input-bc-website" /></div>
+            </div>
+          </section>
+
+          <Separator />
+
+          {/* Common */}
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{tr("Common", "شائعة")}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="md:col-span-2"><Label>{tr("Address", "العنوان")}</Label><Textarea rows={2} value={value.address || ""} onChange={(e) => set("address", e.target.value)} data-testid="input-bc-address" /></div>
+              <div className="md:col-span-2"><Label>{tr("Tagline / Slogan", "الشعار النصي")}</Label><Input value={value.tagline || ""} onChange={(e) => set("tagline", e.target.value)} data-testid="input-bc-tagline" /></div>
+              <div><Label>{tr("LinkedIn URL", "رابط لينكدإن")}</Label><Input value={value.linkedin || ""} onChange={(e) => set("linkedin", e.target.value)} data-testid="input-bc-linkedin" /></div>
+              <div><Label>{tr("QR Code Data (URL / vCard)", "بيانات رمز QR")}</Label><Input value={value.qrData || ""} onChange={(e) => set("qrData", e.target.value)} placeholder={tr("Defaults to website", "افتراضيًا الموقع")} data-testid="input-bc-qrdata" /></div>
+              <div><Label>{tr("Secondary Phone (Office)", "هاتف ثانوي")}</Label><Input value={value.secondaryPhone || ""} onChange={(e) => set("secondaryPhone", e.target.value)} data-testid="input-bc-phone2" /></div>
+              <div><Label>{tr("Fax", "فاكس")}</Label><Input value={value.fax || ""} onChange={(e) => set("fax", e.target.value)} data-testid="input-bc-fax" /></div>
+            </div>
+          </section>
+
+          <Separator />
+
+          {/* Modern / Optional */}
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{tr("Modern / Optional", "اختيارية حديثة")}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div><Label>{tr("Instagram", "إنستغرام")}</Label><Input value={value.instagram || ""} onChange={(e) => set("instagram", e.target.value)} data-testid="input-bc-instagram" /></div>
+              <div><Label>{tr("X / Twitter", "إكس / تويتر")}</Label><Input value={value.twitter || ""} onChange={(e) => set("twitter", e.target.value)} data-testid="input-bc-twitter" /></div>
+              <div><Label>{tr("WhatsApp Number", "رقم واتساب")}</Label><Input value={value.whatsapp || ""} onChange={(e) => set("whatsapp", e.target.value)} data-testid="input-bc-whatsapp" /></div>
+              <div><Label>{tr("Calendly / Booking Link", "رابط الحجز")}</Label><Input value={value.calendly || ""} onChange={(e) => set("calendly", e.target.value)} data-testid="input-bc-calendly" /></div>
+              <div><Label>{tr("Pronouns", "الضمائر")}</Label><Input value={value.pronouns || ""} onChange={(e) => set("pronouns", e.target.value)} placeholder="he/him, she/her, they/them" data-testid="input-bc-pronouns" /></div>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label>{tr("Areas of Expertise / Services", "مجالات الخبرة / الخدمات")}</Label>
+                <Button size="sm" variant="outline" onClick={() => set("expertise", [...expertise, ""])} data-testid="button-bc-add-expertise">
+                  <Plus className="h-4 w-4 mr-1" /> {tr("Add", "إضافة")}
+                </Button>
+              </div>
+              {expertise.length === 0 && <p className="text-xs text-muted-foreground">{tr("No expertise items yet.", "لا توجد عناصر بعد.")}</p>}
+              <div className="space-y-2">
+                {expertise.map((item, i) => (
+                  <div key={i} className="flex gap-2">
+                    <Input value={item} onChange={(e) => set("expertise", expertise.map((x, j) => j === i ? e.target.value : x))} data-testid={`input-bc-expertise-${i}`} />
+                    <Button size="icon" variant="ghost" onClick={() => set("expertise", expertise.filter((_, j) => j !== i))} data-testid={`button-bc-remove-expertise-${i}`}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ============== BUSINESS CARD PREVIEW ==============
+function BusinessCardPreview({ card, primary, secondary, accent, fontCss, isRTL }: { card: BusinessCard; primary: string; secondary: string; accent: string; fontCss: string; isRTL: boolean }) {
+  const tr = (en: string, ar: string) => (isRTL ? ar : en);
+  const tpl = card.template || "modern";
+  const qrSrc = (card.qrData || card.website || card.linkedin)
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(card.qrData || card.website || card.linkedin || "")}`
+    : null;
+
+  // Per-template visual recipe
+  const recipe = (() => {
+    switch (tpl) {
+      case "modern":    return { frontBg: `linear-gradient(135deg, ${primary}, ${accent})`, text: "white", accentBar: accent, font: fontCss };
+      case "corporate": return { frontBg: secondary, text: "white", accentBar: primary, font: '"Playfair Display", serif' };
+      case "creative":  return { frontBg: `radial-gradient(circle at 20% 20%, ${accent}, ${primary} 70%)`, text: "white", accentBar: "white", font: fontCss };
+      case "minimal":   return { frontBg: "#ffffff", text: secondary, accentBar: primary, font: fontCss, border: true };
+      case "executive": return { frontBg: `linear-gradient(180deg, #0b1220, ${secondary})`, text: "white", accentBar: accent, font: '"Playfair Display", serif' };
+      case "elegant":   return { frontBg: "#fdfaf3", text: "#2b1d10", accentBar: secondary, font: '"Playfair Display", serif', border: true };
+      case "bold":      return { frontBg: primary, text: "white", accentBar: accent, font: fontCss, oversized: true };
+      case "tech":      return { frontBg: `linear-gradient(135deg, #0f172a, ${primary})`, text: "white", accentBar: accent, font: "Manrope, system-ui" };
+      default:          return { frontBg: primary, text: "white", accentBar: accent, font: fontCss };
+    }
+  })();
+
+  const CardShell = ({ children, testId }: { children: React.ReactNode; testId: string }) => (
+    <div
+      data-testid={testId}
+      className="relative rounded-md shadow-lg overflow-hidden"
+      style={{
+        width: "100%",
+        maxWidth: 560,
+        aspectRatio: "1.75 / 1",
+        background: recipe.frontBg,
+        color: recipe.text,
+        fontFamily: recipe.font,
+        border: recipe.border ? `1px solid ${primary}33` : undefined,
+      }}
+    >
+      {children}
+    </div>
+  );
+
+  const ContactLine = ({ icon: Icon, value }: { icon: any; value?: string | null }) =>
+    value ? (
+      <div className="flex items-center gap-1.5 text-[11px] leading-tight">
+        <Icon className="h-3 w-3 shrink-0 opacity-80" />
+        <span className="truncate">{value}</span>
+      </div>
+    ) : null;
+
+  return (
+    <div dir={isRTL ? "rtl" : "ltr"} className="grid grid-cols-1 md:grid-cols-2 gap-8 justify-items-center">
+      {/* FRONT */}
+      <div className="w-full flex flex-col items-center gap-2">
+        <div className="text-xs uppercase tracking-widest text-muted-foreground">{tr("Front", "الواجهة الأمامية")}</div>
+        <CardShell testId="bc-front">
+          <div className="absolute inset-0 p-5 flex flex-col justify-between">
+            {/* Top: logo + company name */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                {card.logoDataUrl && (
+                  <img src={card.logoDataUrl} alt="logo" className="h-9 w-9 object-contain rounded bg-white/90 p-0.5" />
+                )}
+                {card.companyName && (
+                  <div className="font-bold text-sm truncate" style={{ letterSpacing: tpl === "tech" ? "0.05em" : undefined }}>
+                    {card.companyName}
+                  </div>
+                )}
+              </div>
+              {card.photoDataUrl && (
+                <img src={card.photoDataUrl} alt="photo" className="h-14 w-14 rounded-full object-cover border-2 border-white/70 shrink-0" />
+              )}
+            </div>
+
+            {/* Middle: name + title */}
+            <div>
+              <div
+                className="font-extrabold leading-tight"
+                style={{ fontSize: recipe.oversized ? "1.65rem" : "1.25rem" }}
+              >
+                {card.fullName || tr("Your Name", "اسمك")}
+                {card.pronouns && <span className="ms-2 text-xs font-normal opacity-80">({card.pronouns})</span>}
+              </div>
+              <div className="h-0.5 w-12 my-1.5" style={{ background: recipe.accentBar }} />
+              <div className="text-xs opacity-90">{card.jobTitle || tr("Job Title", "المسمى الوظيفي")}</div>
+              {card.tagline && <div className="text-[11px] mt-1 italic opacity-75 line-clamp-1">{card.tagline}</div>}
+            </div>
+
+            {/* Bottom: contact */}
+            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+              <ContactLine icon={Phone} value={card.phone} />
+              <ContactLine icon={Mail} value={card.email} />
+              <ContactLine icon={Globe} value={card.website} />
+              <ContactLine icon={MapPin} value={card.address} />
+            </div>
+          </div>
+        </CardShell>
+      </div>
+
+      {/* BACK */}
+      <div className="w-full flex flex-col items-center gap-2">
+        <div className="text-xs uppercase tracking-widest text-muted-foreground">{tr("Back", "الواجهة الخلفية")}</div>
+        <CardShell testId="bc-back">
+          <div className="absolute inset-0 p-5 flex gap-4">
+            {/* LEFT: services + tagline */}
+            <div className="flex-1 min-w-0 flex flex-col justify-between">
+              <div>
+                {card.tagline && (
+                  <div className="text-[11px] italic opacity-80 mb-3 leading-snug">"{card.tagline}"</div>
+                )}
+                {(card.expertise && card.expertise.length > 0) && (
+                  <>
+                    <div className="text-[10px] uppercase tracking-widest opacity-70 mb-1">{tr("Services", "الخدمات")}</div>
+                    <ul className="space-y-0.5">
+                      {card.expertise.slice(0, 6).map((s, i) => (
+                        <li key={i} className="text-[11px] leading-tight flex items-center gap-1.5">
+                          <span className="inline-block h-1 w-1 rounded-full" style={{ background: recipe.accentBar }} />
+                          <span className="truncate">{s}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+              <div className="space-y-0.5">
+                <ContactLine icon={Phone} value={card.secondaryPhone || card.phone} />
+                <ContactLine icon={MessageCircle} value={card.whatsapp} />
+                <ContactLine icon={Linkedin} value={card.linkedin} />
+                <ContactLine icon={Instagram} value={card.instagram} />
+                <ContactLine icon={Twitter} value={card.twitter} />
+                <ContactLine icon={CalendarIcon} value={card.calendly} />
+              </div>
+            </div>
+            {/* RIGHT: QR */}
+            <div className="flex flex-col items-center justify-center gap-2 shrink-0">
+              {qrSrc ? (
+                <img src={qrSrc} alt="QR" className="h-24 w-24 bg-white p-1 rounded" />
+              ) : (
+                <div className="h-24 w-24 bg-white/20 rounded flex items-center justify-center text-[10px] text-center p-2 opacity-70">
+                  {tr("Add QR data, website, or LinkedIn", "أضف بيانات QR")}
+                </div>
+              )}
+              <div className="text-[9px] uppercase tracking-widest opacity-70">{tr("Scan", "امسح")}</div>
+            </div>
+          </div>
+        </CardShell>
+      </div>
     </div>
   );
 }

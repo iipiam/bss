@@ -1338,6 +1338,16 @@ export const companyProfiles = pgTable("company_profiles", {
   testimonials: jsonb("testimonials").$type<Array<{ name: string; role: string; quote: string; imageDataUrl?: string }>>().default([]),
   galleryImages: jsonb("gallery_images").$type<Array<{ caption?: string; imageDataUrl: string }>>().default([]),
   partners: jsonb("partners").$type<Array<{ name: string; logoDataUrl: string; website?: string }>>().default([]),
+  businessCard: jsonb("business_card").$type<{
+    template?: "modern" | "corporate" | "creative" | "minimal" | "executive" | "elegant" | "bold" | "tech";
+    fullName?: string; jobTitle?: string; companyName?: string;
+    phone?: string; email?: string; website?: string;
+    logoDataUrl?: string; address?: string; tagline?: string;
+    linkedin?: string; qrData?: string; secondaryPhone?: string; fax?: string;
+    photoDataUrl?: string; instagram?: string; twitter?: string;
+    whatsapp?: string; calendly?: string; pronouns?: string;
+    expertise?: string[];
+  }>().default({}),
   language: text("language").notNull().default("en"), // en or ar - controls PDF direction
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -1363,6 +1373,29 @@ export const insertCompanyProfileSchema = createInsertSchema(companyProfiles)
       ),
       website: z.string().optional(),
     })).default([]),
+    businessCard: z.object({
+      template: z.enum(["modern", "corporate", "creative", "minimal", "executive", "elegant", "bold", "tech"]).optional(),
+      fullName: z.string().optional(),
+      jobTitle: z.string().optional(),
+      companyName: z.string().optional(),
+      phone: z.string().optional(),
+      email: z.string().optional(),
+      website: z.string().optional(),
+      logoDataUrl: z.string().optional(),
+      address: z.string().optional(),
+      tagline: z.string().optional(),
+      linkedin: z.string().optional(),
+      qrData: z.string().optional(),
+      secondaryPhone: z.string().optional(),
+      fax: z.string().optional(),
+      photoDataUrl: z.string().optional(),
+      instagram: z.string().optional(),
+      twitter: z.string().optional(),
+      whatsapp: z.string().optional(),
+      calendly: z.string().optional(),
+      pronouns: z.string().optional(),
+      expertise: z.array(z.string()).optional(),
+    }).default({}),
   });
 export type InsertCompanyProfile = z.infer<typeof insertCompanyProfileSchema>;
 export type CompanyProfile = typeof companyProfiles.$inferSelect;
