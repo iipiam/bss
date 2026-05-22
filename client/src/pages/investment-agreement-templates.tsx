@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useInvestmentAgreementTemplatesT } from "@/i18n/investmentAgreementTemplatesTranslations";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,113 +21,9 @@ const PLACEHOLDERS = [
 
 type CustomPh = { key: string; label: string; value: string };
 
-type Tr = {
-  pageTitle: string;
-  pageDesc: string;
-  tabTemplate: string;
-  newTemplate: string;
-  noTemplates: string;
-  defaultTemplate: string;
-  templateEditor: string;
-  templateEditorDesc: string;
-  templateName: string;
-  templateContent: string;
-  placeholders: string;
-  livePreview: string;
-  setAsDefault: string;
-  saveTemplate: string;
-  updateTemplate: string;
-  templateSaved: string;
-  templateDeleted: string;
-  customPlaceholders: string;
-  customPlaceholdersDesc: string;
-  placeholderKey: string;
-  placeholderLabel: string;
-  placeholderValue: string;
-  addPlaceholder: string;
-  placeholderKeyRequired: string;
-  placeholderKeyExists: string;
-  delete: string;
-  confirmDelete: string;
-  loadDefault: string;
-  loadDefaultDesc: string;
-  error: string;
-};
-
-const EN: Tr = {
-  pageTitle: "Investment Agreement Templates",
-  pageDesc: "Manage the templates used to generate investor agreement PDFs.",
-  tabTemplate: "Templates",
-  newTemplate: "New Template",
-  noTemplates: "No templates yet. Create your first template.",
-  defaultTemplate: "Default",
-  templateEditor: "Investment Agreement Template",
-  templateEditorDesc: "Write your investment agreement template. Use placeholders below — they will be replaced with each investor's data in the generated PDF.",
-  templateName: "Template Name",
-  templateContent: "Template Content",
-  placeholders: "Available Placeholders",
-  livePreview: "Live Preview",
-  setAsDefault: "Set as default",
-  saveTemplate: "Save Template",
-  updateTemplate: "Update Template",
-  templateSaved: "Template saved",
-  templateDeleted: "Template deleted",
-  customPlaceholders: "Custom Placeholders",
-  customPlaceholdersDesc: "Define your own placeholders with fixed values for this template.",
-  placeholderKey: "key (e.g. company_vat)",
-  placeholderLabel: "Label",
-  placeholderValue: "Value",
-  addPlaceholder: "Add",
-  placeholderKeyRequired: "Placeholder key is required",
-  placeholderKeyExists: "This placeholder key already exists",
-  delete: "Delete",
-  confirmDelete: "Are you sure you want to delete this template?",
-  loadDefault: "Load default content",
-  loadDefaultDesc: "Fill the editor with the built-in default agreement.",
-  error: "Error",
-};
-
-const AR: Tr = {
-  pageTitle: "قوالب اتفاقية الاستثمار",
-  pageDesc: "إدارة القوالب المستخدمة لإنشاء ملفات PDF لاتفاقيات المستثمرين.",
-  tabTemplate: "القوالب",
-  newTemplate: "قالب جديد",
-  noTemplates: "لا توجد قوالب بعد. أنشئ أول قالب لك.",
-  defaultTemplate: "افتراضي",
-  templateEditor: "قالب اتفاقية الاستثمار",
-  templateEditorDesc: "اكتب قالب اتفاقية الاستثمار الخاص بك. استخدم العناصر النائبة أدناه — سيتم استبدالها ببيانات كل مستثمر في ملف PDF.",
-  templateName: "اسم القالب",
-  templateContent: "محتوى القالب",
-  placeholders: "العناصر النائبة المتاحة",
-  livePreview: "معاينة مباشرة",
-  setAsDefault: "تعيين كافتراضي",
-  saveTemplate: "حفظ القالب",
-  updateTemplate: "تحديث القالب",
-  templateSaved: "تم حفظ القالب",
-  templateDeleted: "تم حذف القالب",
-  customPlaceholders: "عناصر نائبة مخصصة",
-  customPlaceholdersDesc: "حدد العناصر النائبة الخاصة بك بقيم ثابتة لهذا القالب.",
-  placeholderKey: "المفتاح (مثال: company_vat)",
-  placeholderLabel: "التسمية",
-  placeholderValue: "القيمة",
-  addPlaceholder: "إضافة",
-  placeholderKeyRequired: "مفتاح العنصر النائب مطلوب",
-  placeholderKeyExists: "مفتاح العنصر النائب موجود بالفعل",
-  delete: "حذف",
-  confirmDelete: "هل أنت متأكد من حذف هذا القالب؟",
-  loadDefault: "تحميل المحتوى الافتراضي",
-  loadDefaultDesc: "املأ المحرر باتفاقية المستثمر الافتراضية المضمنة.",
-  error: "خطأ",
-};
-
-function useTr(): Tr {
-  const { language } = useLanguage();
-  return language === 'ar' ? AR : EN;
-}
-
 export default function InvestmentAgreementTemplatesPage() {
-  const { isRTL } = useLanguage();
-  const t = useTr();
+  const { isRTL, language } = useLanguage();
+  const t = useInvestmentAgreementTemplatesT(language);
   const { toast } = useToast();
 
   const { data: templates = [], isLoading } = useQuery<InvestmentAgreementTemplate[]>({
@@ -247,7 +144,7 @@ export default function InvestmentAgreementTemplatesPage() {
       investor_name: "John Doe",
       national_id: "1234567890",
       contact_number: "+966500000000",
-      investor_type: isRTL ? "مستثمر نقدي" : "Money Investor",
+      investor_type: t.moneyInvestor,
       amount_invested: "100000.00",
       interest_percentage: "10.00",
       iban: "SA0380000000608010167519",
@@ -267,7 +164,7 @@ export default function InvestmentAgreementTemplatesPage() {
     }
     html = html.split("\n").map((l) => `<p style="margin:6px 0;">${l || '&nbsp;'}</p>`).join("");
     return html;
-  }, [content, customPlaceholders, isRTL]);
+  }, [content, customPlaceholders, t.moneyInvestor]);
 
   return (
     <div className="p-4 md:p-6 space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>

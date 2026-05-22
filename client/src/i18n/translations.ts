@@ -2500,6 +2500,7 @@ export interface Translations {
   contractsScheduledToday?: string;
   mealsPerDay?: string;
   cateringContracts?: string;
+  investmentAgreementTemplates?: string;
   marketing?: string;
   ourClients?: string;
   addPartner?: string;
@@ -2513,6 +2514,7 @@ export const translations: Record<Language, Translations> = {
   English: {
     // Navigation
     dashboard: 'Dashboard',
+    investmentAgreementTemplates: 'Investment Agreement Templates',
     branches: 'Branches',
     inventory: 'Inventory',
     menu: 'Menu',
@@ -4952,6 +4954,7 @@ export const translations: Record<Language, Translations> = {
   Arabic: {
     // Navigation
     dashboard: 'لوحة التحكم',
+    investmentAgreementTemplates: 'قوالب اتفاقية الاستثمار',
     branches: 'الفروع',
     inventory: 'المخزون',
     menu: 'القائمة',
@@ -7389,6 +7392,7 @@ export const translations: Record<Language, Translations> = {
   German: {
     // Navigation
     dashboard: 'Dashboard',
+    investmentAgreementTemplates: 'Investitionsvereinbarungs-Vorlagen',
     branches: 'Filialen',
     inventory: 'Inventar',
     menu: 'Menü',
@@ -9806,6 +9810,7 @@ export const translations: Record<Language, Translations> = {
   Chinese: {
     // Navigation
     dashboard: '仪表板',
+    investmentAgreementTemplates: '投资协议模板',
     branches: '分店',
     inventory: '库存',
     menu: '菜单',
@@ -12227,6 +12232,7 @@ export const translations: Record<Language, Translations> = {
   Bengali: {
     // Navigation
     dashboard: 'ড্যাশবোর্ড',
+    investmentAgreementTemplates: 'বিনিয়োগ চুক্তি টেমপ্লেট',
     branches: 'শাখা',
     inventory: 'ইনভেন্টরি',
     menu: 'মেনু',
@@ -14648,6 +14654,7 @@ export const translations: Record<Language, Translations> = {
   Italian: {
     // Navigation
     dashboard: 'Cruscotto',
+    investmentAgreementTemplates: 'Modelli di Accordo di Investimento',
     branches: 'Filiali',
     inventory: 'Inventario',
     menu: 'Menu',
@@ -17070,6 +17077,7 @@ export const translations: Record<Language, Translations> = {
   Hindi: {
     // Navigation
     dashboard: 'डैशबोर्ड',
+    investmentAgreementTemplates: 'निवेश समझौता टेम्पलेट',
     branches: 'शाखाएं',
     inventory: 'इन्वेंटरी',
     menu: 'मेनू',
@@ -19435,6 +19443,7 @@ export const translations: Record<Language, Translations> = {
   Urdu: {
     // Navigation
     dashboard: 'ڈیش بورڈ',
+    investmentAgreementTemplates: 'سرمایہ کاری معاہدہ ٹیمپلیٹس',
     branches: 'شاخیں',
     inventory: 'انوینٹری',
     menu: 'مینو',
@@ -21800,6 +21809,7 @@ export const translations: Record<Language, Translations> = {
 
   Spanish: {
     dashboard: "Panel",
+    investmentAgreementTemplates: 'Plantillas de Acuerdo de Inversión',
     branches: "Sucursales",
     inventory: "Inventario",
     menu: "Menú",
@@ -24097,6 +24107,7 @@ export const translations: Record<Language, Translations> = {
 
   Tagalog: {
     dashboard: "Dashboard",
+    investmentAgreementTemplates: 'Mga Template ng Kasunduan sa Pamumuhunan',
     branches: "Mga Sangay",
     inventory: "Imbentaryo",
     menu: "Menu",
