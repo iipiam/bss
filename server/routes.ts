@@ -4160,10 +4160,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const recipeMap = new Map(recipes.map(r => [r.id, r]));
     const inventoryMap = new Map(inventory.map(inv => [inv.id, inv]));
 
-    // Calculate COGS from completed orders (matching getBepMetrics approach)
+    // Calculate COGS from CURRENT MONTH completed orders so it pairs fairly with
+    // monthly-prorated operating bills on the dashboard's expenses card.
+    const _nowForCogs = new Date();
+    const _monthStartForCogs = new Date(_nowForCogs.getFullYear(), _nowForCogs.getMonth(), 1);
     let cogsTotal = 0;
-    const validOrderStatuses = ['Completed', 'Ready', 'Preparing', 'Paid', 'Delivered'];
-    const completedOrders = orders.filter(o => validOrderStatuses.includes(o.status));
+    const completedStatuses = new Set(['Completed', 'Paid', 'Delivered']);
+    const completedOrders = orders.filter(o =>
+      completedStatuses.has(o.status) && new Date(o.createdAt) >= _monthStartForCogs,
+    );
 
     for (const order of completedOrders) {
       if (order.items && Array.isArray(order.items)) {
@@ -4211,13 +4216,32 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const twoWeeksAgo = new Date(weekAgo);
     twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 7);
     
+    // daysInMonth(year, monthIndex) — uses JS Date day-0-of-next-month trick.
+    const daysInMonth = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
+
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-    
+    // For a fair MoM comparison, compare month-to-date against the SAME day-range
+    // in the previous month (e.g. May 1-22 vs Apr 1-22), clamping the day so
+    // e.g. May 31 -> Apr 30 instead of overflowing into the following month.
+    const lastMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+    const lastMonthIndex = (now.getMonth() + 11) % 12;
+    const lastMonthStart = new Date(lastMonthYear, lastMonthIndex, 1);
+    const lastMonthClampedDay = Math.min(now.getDate(), daysInMonth(lastMonthYear, lastMonthIndex));
+    const lastMonthSamePoint = new Date(
+      lastMonthYear, lastMonthIndex, lastMonthClampedDay,
+      now.getHours(), now.getMinutes(), now.getSeconds(),
+    );
+
     const yearStart = new Date(now.getFullYear(), 0, 1);
+    // For a fair YoY comparison, compare YTD against the SAME period last year
+    // (Jan 1 last year through today's date last year). Clamp day so Feb 29 in a
+    // leap year compares against Feb 28 of the prior (non-leap) year.
     const lastYearStart = new Date(now.getFullYear() - 1, 0, 1);
-    const lastYearEnd = new Date(now.getFullYear() - 1, 11, 31);
+    const lastYearClampedDay = Math.min(now.getDate(), daysInMonth(now.getFullYear() - 1, now.getMonth()));
+    const lastYearSamePoint = new Date(
+      now.getFullYear() - 1, now.getMonth(), lastYearClampedDay,
+      now.getHours(), now.getMinutes(), now.getSeconds(),
+    );
 
     // Calculate sales for different periods
     const todaysSales = transactions
@@ -4249,18 +4273,18 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const lastMonthSales = transactions
       .filter(t => {
         const date = new Date(t.createdAt);
-        return date >= lastMonthStart && date <= lastMonthEnd;
+        return date >= lastMonthStart && date <= lastMonthSamePoint;
       })
       .reduce((sum, t) => sum + parseFloat(t.total), 0);
-    
+
     const thisYearSales = transactions
       .filter(t => new Date(t.createdAt) >= yearStart)
       .reduce((sum, t) => sum + parseFloat(t.total), 0);
-    
+
     const lastYearSales = transactions
       .filter(t => {
         const date = new Date(t.createdAt);
-        return date >= lastYearStart && date <= lastYearEnd;
+        return date >= lastYearStart && date <= lastYearSamePoint;
       })
       .reduce((sum, t) => sum + parseFloat(t.total), 0);
 
@@ -4271,17 +4295,26 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       return ((current - previous) / previous) * 100;
     };
 
-    const activeOrders = orders.filter(o => o.status !== "Completed" && o.status !== "Cancelled").length;
-    const lowStockItems = inventory.filter(i => i.status === "Low Stock").length;
+    // Active = order is still being worked on. Exclude terminal states plus statuses
+    // that represent revenue-recognized / fulfilled work counted as completed elsewhere.
+    // Must stay aligned with `completedStatuses` above so no order falls into "neither".
+    const finishedOrderStatuses = new Set(["Cancelled", ...completedStatuses]);
+    const activeOrders = orders.filter(o => !finishedOrderStatuses.has(o.status)).length;
+    // Treat both "Low Stock" and "Out of Stock" as needing attention.
+    const lowStockItems = inventory.filter(i => i.status === "Low Stock" || i.status === "Out of Stock").length;
 
-    // Calculate peak hours analysis
+    // Calculate peak hours analysis over the last 30 days only, so the pattern
+    // reflects current operations rather than all-time historical noise.
     const salesByHour: Record<number, number> = {};
     for (let i = 0; i < 24; i++) {
       salesByHour[i] = 0;
     }
+    const peakWindowStart = new Date(today);
+    peakWindowStart.setDate(peakWindowStart.getDate() - 30);
 
     transactions.forEach(t => {
       const date = new Date(t.createdAt);
+      if (date < peakWindowStart) return;
       const hour = date.getHours();
       salesByHour[hour] += parseFloat(t.total);
     });
@@ -4384,9 +4417,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const transactions = await storage.getTransactions({ restaurantId, branchId });
     const orders = await storage.getOrders({ restaurantId, branchId });
 
+    // Match dashboard chart scope: last 30 days only, so the drilldown rows
+    // correspond to the same window used to compute the peak-hour bar.
+    const _peakNow = new Date();
+    const _peakToday = new Date(_peakNow.getFullYear(), _peakNow.getMonth(), _peakNow.getDate());
+    const _peakWindowStart = new Date(_peakToday);
+    _peakWindowStart.setDate(_peakWindowStart.getDate() - 30);
+
     const transactionsInHour = transactions.filter(t => {
       const date = new Date(t.createdAt);
-      return date.getHours() === hour;
+      return date >= _peakWindowStart && date.getHours() === hour;
     });
 
     const orderMap = new Map(orders.map(o => [o.id, o]));
