@@ -1089,6 +1089,10 @@ export default function ServiceCatalog() {
                     <span className="font-medium" data-testid="text-product-items-cost">{productTotalCost.toFixed(2)} SAR</span>
                   </div>
                   <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">{(t as any).totalSellPrice || "Total Sell Price"}</span>
+                    <span className="font-medium" data-testid="text-product-items-selling-price">{productTotalSellingPrice.toFixed(2)} SAR</span>
+                  </div>
+                  <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">{t.servicesCost || "Services cost"}</span>
                     <span className="font-medium" data-testid="text-product-services-cost">{productServicesCost.toFixed(2)} SAR</span>
                   </div>
