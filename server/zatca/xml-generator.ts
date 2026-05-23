@@ -146,14 +146,26 @@ export function generateInvoiceTypeCode(
   invoiceSubType: "01" | "02",
   documentType?: "invoice" | "credit_note" | "debit_note"
 ): string {
+  // ZATCA invoice type codes (BT-3): 388 = Tax Invoice, 381 = Credit Note,
+  // 383 = Debit Note. The code is determined solely by documentType.
+  // invoiceSubType is a separate document-level flag and must not change it.
   if (documentType === "credit_note") return "381";
   if (documentType === "debit_note") return "383";
-  if (invoiceSubType === "02") return invoiceType === "standard" ? "383" : "381";
   return "388";
 }
 
-export function generateInvoiceTypeCodeName(invoiceType: "standard" | "simplified"): string {
-  return invoiceType === "standard" ? "0100000" : "0200000";
+export function generateInvoiceTypeCodeName(
+  invoiceType: "standard" | "simplified",
+  documentType?: "invoice" | "credit_note" | "debit_note"
+): string {
+  // The InvoiceTypeCode @name attribute is a 7-character bitmask. Position 1
+  // encodes the document sub-type: 0=tax invoice, 2=credit note, 3=debit
+  // note. Position 2 distinguishes standard (1) from simplified (2).
+  const pos1 =
+    documentType === "credit_note" ? "2" :
+    documentType === "debit_note"  ? "3" : "0";
+  const pos2 = invoiceType === "standard" ? "1" : "2";
+  return `0${pos1}${pos2}0000`;
 }
 
 /**
@@ -207,15 +219,16 @@ export function canonicalizeInvoiceXml(xmlContent: string): string {
 
 /**
  * ZATCA invoice hash: SHA-256 of the canonical XML, expressed as base64 of
- * the *lowercase hex* string of the digest (NOT base64 of the raw 32-byte
- * digest). This 88-character form is what ZATCA's validator and SDK expect
- * in <ds:DigestValue> and what gets packed (as the hex ASCII bytes) into
- * QR Tag 6. Using base64-of-raw-bytes (44 chars) is the cause of the
- * "Invoice xml hash does not match with qr code invoice xml hash" error.
+ * the raw 32-byte digest (44 characters). This matches ZATCA's Java SDK
+ * convention. QR Tag 6 must therefore receive the raw 32 bytes, which is
+ * what `Buffer.from(invoiceHash, "base64")` produces in generatePhase2QrCode.
+ *
+ * History: an earlier version of this function emitted the 88-char form
+ * (base64 of the lowercase hex string). The SDK-compliant 44-char form is
+ * the canonical one; switch back if a specific ZATCA environment rejects it.
  */
 export function generateInvoiceHash(xmlContent: string): string {
-  const hex = crypto.createHash("sha256").update(canonicalizeInvoiceXml(xmlContent), "utf8").digest("hex");
-  return Buffer.from(hex, "utf8").toString("base64");
+  return crypto.createHash("sha256").update(canonicalizeInvoiceXml(xmlContent), "utf8").digest("base64");
 }
 
 export function generateInvoiceHashHex(xmlContent: string): string {
@@ -283,7 +296,7 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
   } = data;
 
   const invoiceTypeCode = generateInvoiceTypeCode(invoiceType, invoiceSubType, documentType);
-  const invoiceTypeCodeName = generateInvoiceTypeCodeName(invoiceType);
+  const invoiceTypeCodeName = generateInvoiceTypeCodeName(invoiceType, documentType);
   const isCreditOrDebitNote = documentType === "credit_note" || documentType === "debit_note";
   const formattedVat = formatVatNumber(sellerInfo.vatNumber);
 
@@ -297,16 +310,24 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     const itemVatRate = item.taxPercent ?? 15;
-    const lineExtension = item.quantity * item.unitPrice;
+    const itemDiscount = Number((item as any).discount) || 0;
+    const grossExtension = item.quantity * item.unitPrice;
+    const lineExtension = Math.max(0, grossExtension - itemDiscount);
     const lineTax = lineExtension * (itemVatRate / 100);
     const lineTotal = lineExtension + lineTax;
     calculatedSubtotal += lineExtension;
     calculatedVat += lineTax;
+    const lineDiscountXml = itemDiscount > 0 ? `
+    <cac:AllowanceCharge>
+      <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+      <cbc:AllowanceChargeReason>Discount</cbc:AllowanceChargeReason>
+      <cbc:Amount currencyID="SAR">${formatDecimal(itemDiscount)}</cbc:Amount>
+    </cac:AllowanceCharge>` : "";
     invoiceLinesXml += `
   <cac:InvoiceLine>
     <cbc:ID>${i + 1}</cbc:ID>
     <cbc:InvoicedQuantity unitCode="PCE">${item.quantity}</cbc:InvoicedQuantity>
-    <cbc:LineExtensionAmount currencyID="SAR">${formatDecimal(lineExtension)}</cbc:LineExtensionAmount>
+    <cbc:LineExtensionAmount currencyID="SAR">${formatDecimal(lineExtension)}</cbc:LineExtensionAmount>${lineDiscountXml}
     <cac:TaxTotal>
       <cbc:TaxAmount currencyID="SAR">${formatDecimal(lineTax)}</cbc:TaxAmount>
       <cbc:RoundingAmount currencyID="SAR">${formatDecimal(lineTotal)}</cbc:RoundingAmount>
@@ -436,9 +457,6 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
   <cac:PaymentMeans>
     <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>
   </cac:PaymentMeans>
-  <cac:TaxTotal>
-    <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>
-  </cac:TaxTotal>
   <cac:TaxTotal>
     <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>
     <cac:TaxSubtotal>

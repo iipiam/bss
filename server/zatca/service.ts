@@ -422,11 +422,15 @@ export async function retryPendingInvoices(restaurantId: string): Promise<{
 
     processed++;
 
-    const recomputedHash = generateInvoiceHash(invoice.signedXml);
+    // Reuse the hash that was computed and stored at original signing time.
+    // The SDK and the local canonicalizer can produce subtly different bytes,
+    // so recomputing here may not match what's embedded in the signed XML.
+    // Fall back to recomputing only for legacy rows that predate this fix.
+    const hashToSubmit = invoice.invoiceHash || generateInvoiceHash(invoice.signedXml);
     const result = await submitInvoiceToZatca(
       config,
       invoice.signedXml,
-      recomputedHash,
+      hashToSubmit,
       invoice.uuid,
       invoice.invoiceType as "standard" | "simplified"
     );
@@ -661,8 +665,23 @@ export async function runComplianceChecks(
   
   console.log(`[ZATCA Compliance] Environment: ${settings.environment}, CSID length: ${csid.length}, Secret length: ${csidSecret.length}, Has private key: ${!!settings.privateKey}, CSID age: ${csidAgeMinutes ? csidAgeMinutes.toFixed(1) + " min" : "unknown"}`);
 
-  if (csidAgeMinutes && csidAgeMinutes > 55) {
-    console.warn(`[ZATCA Compliance] WARNING: Compliance CSID is ${csidAgeMinutes.toFixed(1)} minutes old. It expires after ~60 minutes. Consider re-running Step 2.`);
+  // Compliance CSIDs expire after ~1 hour. If we know the issue time and
+  // it's close to expiry, fail fast with a clear message rather than letting
+  // ZATCA return an opaque 401 after every test invoice.
+  if (csidAgeMinutes !== null && csidAgeMinutes > 55) {
+    return {
+      success: false,
+      results: [{
+        invoiceType: "all",
+        passed: false,
+        errors: [{
+          code: "CSID_NEAR_EXPIRY",
+          message:
+            `Compliance CSID is ${Math.round(csidAgeMinutes)} minutes old and likely expired. ` +
+            `Please re-run Step 2 to obtain a fresh Compliance CSID, then retry compliance checks.`,
+        }],
+      }],
+    };
   }
 
   const config: ZatcaConfig = {

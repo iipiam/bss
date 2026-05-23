@@ -206,7 +206,10 @@ export function generateCSR(
       environment
     }, configPath);
 
-    execSync(`openssl ecparam -name secp256k1 -genkey -noout -out "${keyPath}"`, {
+    // ZATCA mandates the secp256r1 curve (a.k.a. prime256v1 / NIST P-256)
+    // for all EGS private keys. The previous `secp256k1` value is Bitcoin's
+    // curve and causes the ZATCA CA to reject every CSR generated from it.
+    execSync(`openssl ecparam -name prime256v1 -genkey -noout -out "${keyPath}"`, {
       stdio: "pipe"
     });
 
@@ -276,6 +279,12 @@ export function signWithECDSADER(
   }
 }
 
+/**
+ * @deprecated Uses the legacy regex-based `canonicalizeXML` below, which is
+ * NOT a compliant XML-C14N implementation. Do not use for any ZATCA invoice
+ * signing path. For invoices, build and sign the XAdES envelope through
+ * `xml-generator.ts` (which uses `canonicalizeInvoiceXml` + `xml-crypto`).
+ */
 export function signCanonicalXML(
   privateKeyPem: string,
   xmlContent: string
@@ -579,6 +588,12 @@ export function formatIssueTime(date: Date = new Date()): string {
   return timeStr.substring(0, 8);
 }
 
+/**
+ * @deprecated Not a compliant C14N implementation — it normalises whitespace
+ * with regex and ignores namespace inheritance, attribute ordering, and
+ * encoding edge cases required by XML Canonicalization 1.0. Use
+ * `canonicalizeInvoiceXml` from `./xml-generator` for all invoice hashing.
+ */
 export function canonicalizeXML(xmlString: string): string {
   const xmlDeclaration = xmlString.match(/<\?xml[^?]*\?>/)?.[0] || "";
   
@@ -624,6 +639,12 @@ export function computePreviousInvoiceHash(previousHash: string | null): string 
   return previousHash;
 }
 
+/**
+ * @deprecated Do NOT use for ICV (Invoice Counter Value). ICV must be a
+ * sequential integer (1, 2, 3, …) per EGS device. `Date.now()` returns a
+ * timestamp that breaks ZATCA's KSA-16 validation. Use the counter returned
+ * by `storage.incrementInvoiceCounter()` instead.
+ */
 export function generateInvoiceCounter(): number {
   return Date.now();
 }
