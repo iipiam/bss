@@ -24,7 +24,7 @@ import {
   ArrowLeft, Plus, Edit, Trash2, DollarSign, Calendar, Phone, Mail,
   User, MapPin, Clock, FileText, CheckCircle, Layers, Receipt,
   ShoppingCart, CreditCard, ListTodo, Zap, AlertTriangle, Download,
-  FileSignature, MessageCircle, ShieldCheck, ShieldX, PlayCircle, CheckSquare,
+  FileSignature, MessageCircle, ShieldCheck, ShieldX, PlayCircle, CheckSquare, PackageCheck,
   Lightbulb, Target, GitBranch, Activity,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -339,6 +339,26 @@ export default function ProjectDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/project-tasks"] });
       toast({ title: t.saved || "Saved", description: t.taskStatusUpdated || "Task status updated" });
+    },
+    onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },
+  });
+
+  const svcStatusMut = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) =>
+      apiRequest("PATCH", `/api/project-services/${id}`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/project-services", projectId] });
+      toast({ title: t.saved || "Saved", description: (t as any).serviceStatusUpdated || "Service status updated" });
+    },
+    onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },
+  });
+
+  const procStatusMut = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) =>
+      apiRequest("PATCH", `/api/project-procurements/${id}`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/project-procurements", projectId] });
+      toast({ title: t.saved || "Saved", description: (t as any).procurementStatusUpdated || "Procurement status updated" });
     },
     onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },
   });
@@ -820,6 +840,21 @@ export default function ProjectDetail() {
                       <div className="flex items-center gap-2 shrink-0">
                         <Badge variant={statusBadge(s.status)} className={statusClass(s.status)}>{s.status}</Badge>
                         <span className="font-semibold">{fmtNum(s.totalPrice)} SAR</span>
+                        {s.status === "pending" && (
+                          <Button variant="outline" size="sm" onClick={() => svcStatusMut.mutate({ id: s.id, status: "in_progress" })} disabled={svcStatusMut.isPending} data-testid={`button-start-service-${s.id}`}>
+                            <PlayCircle className="h-4 w-4 mr-1" />{(t as any).start || "Start"}
+                          </Button>
+                        )}
+                        {s.status === "in_progress" && (
+                          <Button variant="outline" size="sm" onClick={() => svcStatusMut.mutate({ id: s.id, status: "completed" })} disabled={svcStatusMut.isPending} data-testid={`button-complete-service-${s.id}`}>
+                            <CheckSquare className="h-4 w-4 mr-1" />{(t as any).complete || "Complete"}
+                          </Button>
+                        )}
+                        {s.status === "completed" && (
+                          <Button variant="ghost" size="sm" onClick={() => svcStatusMut.mutate({ id: s.id, status: "pending" })} disabled={svcStatusMut.isPending} data-testid={`button-reopen-service-${s.id}`}>
+                            {(t as any).reopen || "Reopen"}
+                          </Button>
+                        )}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" aria-label={t.edit} onClick={() => openEditSvc(s)} data-testid={`button-edit-service-${s.id}`}><Edit className="h-4 w-4" /></Button>
@@ -900,6 +935,21 @@ export default function ProjectDetail() {
                       <div className="flex items-center gap-2 shrink-0">
                         <Badge variant={statusBadge(p.status)} className={statusClass(p.status)}>{p.status}</Badge>
                         <span className="font-semibold">{fmtNum(p.totalPrice)} SAR</span>
+                        {p.status === "ordered" && (
+                          <Button variant="outline" size="sm" onClick={() => procStatusMut.mutate({ id: p.id, status: "received" })} disabled={procStatusMut.isPending} data-testid={`button-receive-procurement-${p.id}`}>
+                            <PackageCheck className="h-4 w-4 mr-1" />{(t as any).receive || "Receive"}
+                          </Button>
+                        )}
+                        {p.status === "received" && (
+                          <Button variant="outline" size="sm" onClick={() => procStatusMut.mutate({ id: p.id, status: "completed" })} disabled={procStatusMut.isPending} data-testid={`button-complete-procurement-${p.id}`}>
+                            <CheckSquare className="h-4 w-4 mr-1" />{(t as any).complete || "Complete"}
+                          </Button>
+                        )}
+                        {(p.status === "completed" || p.status === "cancelled") && (
+                          <Button variant="ghost" size="sm" onClick={() => procStatusMut.mutate({ id: p.id, status: "ordered" })} disabled={procStatusMut.isPending} data-testid={`button-reopen-procurement-${p.id}`}>
+                            {(t as any).reopen || "Reopen"}
+                          </Button>
+                        )}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" aria-label={t.edit} onClick={() => openEditProc(p)} data-testid={`button-edit-procurement-${p.id}`}><Edit className="h-4 w-4" /></Button>
