@@ -12,6 +12,7 @@ import { amountToWords, percentageToWords } from "./lib/numberToWords";
 import { insertCompanyProfileSchema } from "@shared/schema";
 import { logActivity } from "./activityLogger";
 import { requirePermission, requireAnyPermission, requireAllPermissions, requireAction } from "./middleware/requirePermission";
+import { hasAnyPermission } from "@shared/permissions";
 import {
   processInvoiceForZatca,
   onboardToZatca,
@@ -15949,9 +15950,69 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       const customer = await storage.getCustomer(req.params.id, restaurantId);
       if (!customer) return res.status(404).json({ error: "Customer not found" });
-      const docs = await storage.getCustomerDocuments(restaurantId, req.params.id);
+
+      const stored = await storage.getCustomerDocuments(restaurantId, req.params.id);
       // Don't ship the full base64 content in the list response.
-      res.json(docs.map(d => ({ id: d.id, customerId: d.customerId, projectId: d.projectId, kind: d.kind, fileName: d.fileName, mimeType: d.mimeType, createdAt: d.createdAt })));
+      const storedList = stored.map(d => ({
+        id: d.id, customerId: d.customerId, projectId: d.projectId, kind: d.kind,
+        fileName: d.fileName, mimeType: d.mimeType, createdAt: d.createdAt, source: 'stored' as const,
+      }));
+
+      // Add synthetic "live" entries for each linked project so the dossier
+      // (and quotation/agreement) always reflect the current project state
+      // — same PDFs as the project detail page. Only include entries the
+      // caller can actually download (their downstream endpoints require
+      // 'projects' / 'quotations' permissions).
+      const user = req.session.user!;
+      const canProjects = hasAnyPermission(user.permissions, user.role, 'projects' as any);
+      const canQuotations = hasAnyPermission(user.permissions, user.role, 'quotations' as any);
+      const projects = await storage.getServiceProjectsForCustomer(restaurantId, req.params.id);
+      const allQuotations = (projects.length && canQuotations) ? await storage.getQuotations(restaurantId) : [];
+      const liveList: any[] = [];
+      for (const p of projects) {
+        if (canProjects) {
+          liveList.push({
+            id: `live:dossier:${p.id}`,
+            customerId: req.params.id,
+            projectId: p.id,
+            kind: 'dossier',
+            fileName: `project-dossier-${p.projectNumber}.pdf`,
+            mimeType: 'application/pdf',
+            createdAt: p.updatedAt || p.createdAt,
+            source: 'live' as const,
+            projectName: p.name,
+            projectNumber: p.projectNumber,
+          });
+          liveList.push({
+            id: `live:agreement:${p.id}`,
+            customerId: req.params.id,
+            projectId: p.id,
+            kind: 'agreement',
+            fileName: `project-agreement-${p.projectNumber}.pdf`,
+            mimeType: 'application/pdf',
+            createdAt: p.updatedAt || p.createdAt,
+            source: 'live' as const,
+            projectName: p.name,
+            projectNumber: p.projectNumber,
+          });
+        }
+        for (const q of allQuotations.filter(q => q.projectId === p.id)) {
+          liveList.push({
+            id: `live:quotation:${q.id}`,
+            customerId: req.params.id,
+            projectId: p.id,
+            kind: 'quotation',
+            fileName: `quotation-${q.quotationNumber}.pdf`,
+            mimeType: 'application/pdf',
+            createdAt: q.createdAt,
+            source: 'live' as const,
+            projectName: p.name,
+            projectNumber: p.projectNumber,
+          });
+        }
+      }
+      // Live entries first so users see the up-to-date dossier on top
+      res.json([...liveList, ...storedList]);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -15960,7 +16021,39 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.get("/api/customer-documents/:id/download", requireAuth, requireRestaurant, requirePermission('customers'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      const doc = await storage.getCustomerDocument(req.params.id, restaurantId);
+      const id = req.params.id;
+
+      // Synthetic "live" docs proxy to the live project PDF builders so the
+      // customer-side download is always the same as the project detail page.
+      if (id.startsWith('live:')) {
+        const parts = id.split(':');
+        const kind = parts[1];
+        const refId = parts.slice(2).join(':');
+        const lang = req.query.lang === 'ar' ? 'ar' : 'en';
+        if (kind === 'dossier') {
+          const project = await storage.getServiceProject(refId, restaurantId);
+          if (!project) return res.status(404).json({ error: "Project not found" });
+          const result = await buildProjectDossierPdf(refId, restaurantId, lang);
+          if (!result) return res.status(404).json({ error: "Dossier unavailable" });
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename="project-dossier-${project.projectNumber}.pdf"`);
+          return res.send(result.buffer);
+        }
+        if (kind === 'agreement') {
+          // Reuse the agreement endpoint by issuing an internal redirect.
+          const project = await storage.getServiceProject(refId, restaurantId);
+          if (!project) return res.status(404).json({ error: "Project not found" });
+          return res.redirect(`/api/service-projects/${refId}/agreement-pdf?lang=${lang}`);
+        }
+        if (kind === 'quotation') {
+          const quotation = await storage.getQuotation(refId, restaurantId);
+          if (!quotation) return res.status(404).json({ error: "Quotation not found" });
+          return res.redirect(`/api/quotations/${refId}/download-pdf?lang=${lang}`);
+        }
+        return res.status(400).json({ error: "Unknown live document type" });
+      }
+
+      const doc = await storage.getCustomerDocument(id, restaurantId);
       if (!doc) return res.status(404).json({ error: "Document not found" });
       const buf = Buffer.from(doc.contentBase64, 'base64');
       res.setHeader('Content-Type', doc.mimeType);

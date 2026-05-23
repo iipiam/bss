@@ -99,6 +99,9 @@ interface CustomerDocumentRow {
   kind: string;
   mimeType: string;
   createdAt: string;
+  source?: 'live' | 'stored';
+  projectNumber?: string;
+  projectName?: string;
 }
 
 function CustomerExtras({ customerId }: { customerId: string }) {
@@ -122,7 +125,7 @@ function CustomerExtras({ customerId }: { customerId: string }) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = (fileName || `document-${docId}.pdf`).replace(/\s+/g, "-");
+      a.download = (fileName || `document-${docId}.pdf`).replace(/[\s:]+/g, "-");
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -209,8 +212,11 @@ function CustomerExtras({ customerId }: { customerId: string }) {
               >
                 <div className="min-w-0">
                   <div className="font-medium truncate">{d.fileName}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {d.kind} · {new Date(d.createdAt).toLocaleDateString()}
+                  <div className="text-xs text-muted-foreground flex items-center gap-1 flex-wrap">
+                    <span>{d.kind}</span>
+                    {d.projectNumber && <span>· #{d.projectNumber}{d.projectName ? ` ${d.projectName}` : ''}</span>}
+                    <span>· {new Date(d.createdAt).toLocaleDateString()}</span>
+                    {d.source === 'live' && <Badge variant="secondary" className="ml-1">live</Badge>}
                   </div>
                 </div>
                 <Button
