@@ -15859,34 +15859,51 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
       const lang = req.body?.lang === 'ar' ? 'ar' : 'en';
+      const generatePdf = req.body?.generatePdf !== false; // default true
 
       const existing = await storage.getServiceProject(req.params.id, restaurantId);
       if (!existing) return res.status(404).json({ message: "Project not found" });
-      if (existing.approvalStatus === 'approved') {
-        return res.status(400).json({ message: "Project already approved" });
+      if (existing.approvalStatus && existing.approvalStatus !== 'pending') {
+        return res.status(400).json({ message: `Project cannot be approved from status "${existing.approvalStatus}"` });
       }
 
       const approved = await storage.approveServiceProject(req.params.id, restaurantId, userId);
       if (!approved) return res.status(404).json({ message: "Project not found" });
 
-      // Best-effort: generate dossier PDF and attach to the customer. We do not
-      // fail the approval if PDF generation fails (puppeteer/chromium issues).
+      // Approval requires that a PDF dossier be attached to the linked customer
+      // when generatePdf=true (default). If generation/persistence fails, we
+      // surface a 502 so the client can retry; the project remains approved
+      // (matching the documented "approved without document — retry" behavior).
       let document = null;
-      try {
-        const pdf = await buildProjectDossierPdf(req.params.id, restaurantId, lang);
-        if (pdf) {
+      if (generatePdf) {
+        try {
+          const pdf = await buildProjectDossierPdf(req.params.id, restaurantId, lang);
+          if (!pdf) {
+            return res.status(502).json({
+              message: "Project approved, but dossier PDF could not be generated. Please retry from the project detail page.",
+              project: approved.project,
+              customer: approved.customer,
+              document: null,
+            });
+          }
           document = await storage.createCustomerDocument({
             restaurantId,
             customerId: approved.customer.id,
             projectId: req.params.id,
-            kind: 'dossier',
+            kind: 'agreement',
             fileName: `project-dossier-${approved.project.projectNumber}.pdf`,
             mimeType: 'application/pdf',
             contentBase64: pdf.buffer.toString('base64'),
           });
+        } catch (pdfErr: any) {
+          console.error("[Approve] PDF generation/persistence failed:", pdfErr?.message);
+          return res.status(502).json({
+            message: `Project approved, but dossier PDF could not be attached: ${pdfErr?.message || 'unknown error'}`,
+            project: approved.project,
+            customer: approved.customer,
+            document: null,
+          });
         }
-      } catch (pdfErr: any) {
-        console.error("[Approve] PDF generation failed:", pdfErr?.message);
       }
 
       res.json({ project: approved.project, customer: approved.customer, document });
