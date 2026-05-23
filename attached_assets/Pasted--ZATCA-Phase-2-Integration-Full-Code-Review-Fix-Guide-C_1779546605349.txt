@@ -1,0 +1,408 @@
+# ZATCA Phase 2 Integration — Full Code Review & Fix Guide
+
+> Covering: `crypto.ts` · `xml-generator.ts` · `api-client.ts` · `service.ts` · `sdk-wrapper.ts` · `index.ts`
+
+---
+
+## 1. Architecture Overview
+
+Your implementation follows the correct high-level ZATCA Phase 2 flow:
+
+```
+CSR Generation (crypto.ts)
+        ↓
+Compliance CSID Onboarding (service.ts → api-client.ts)
+        ↓
+Compliance Checks — 3–6 invoice types (service.ts → api-client.ts)
+        ↓
+Production CSID (service.ts → api-client.ts)
+        ↓
+Invoice Processing:
+  ┌─ SDK path (sdk-wrapper.ts) ──→ signInvoiceWithSDK()
+  └─ Manual path (xml-generator.ts) → generateSignedInvoiceXml()
+        ↓
+Submit to ZATCA clearance / reporting (api-client.ts)
+        ↓
+Store result + retry pending (service.ts)
+```
+
+The code is more complete and correct than most open-source ZATCA implementations. The issues below are real production bugs or risks, not stylistic nitpicks.
+
+---
+
+## 2. Confirmed Bugs & Critical Issues
+
+### 2.1 CRITICAL — `canonicalizeXML()` in `crypto.ts` is NOT C14N-compliant
+
+**File:** `crypto.ts` → `canonicalizeXML()` (lines 582–602)
+
+**Problem:** This function performs crude string regex operations (strip whitespace, collapse spaces) and is labeled "canonicalize" but it is **not** W3C XML Canonical 1.0 or 1.1. It is used by `signCanonicalXML()` and `computeInvoiceHash()` in `crypto.ts`. If any caller in your wider codebase reaches these instead of `canonicalizeInvoiceXml()` from `xml-generator.ts`, the resulting hash will differ from what ZATCA computes, causing rejection.
+
+**Evidence:** `xml-generator.ts` correctly uses `@xmldom/xmldom` + `xml-crypto`'s `C14nCanonicalization` class. `crypto.ts`'s version does not.
+
+**Fix:**
+```typescript
+// crypto.ts — replace the fake canonicalizer with a thin re-export
+// from xml-generator, or deprecate it entirely.
+
+// REMOVE canonicalizeXML() and computeInvoiceHash() from crypto.ts.
+// Any caller should import canonicalizeInvoiceXml / generateInvoiceHash
+// from xml-generator.ts instead.
+
+// If you must keep it for backward-compat, at minimum add a loud warning:
+export function canonicalizeXML(xmlString: string): string {
+  console.warn(
+    "[ZATCA] canonicalizeXML() in crypto.ts is NOT W3C C14N compliant. " +
+    "Use canonicalizeInvoiceXml() from xml-generator.ts for invoice hashing."
+  );
+  // ... existing code (still wrong, but at least warned)
+}
+```
+
+---
+
+### 2.2 CRITICAL — Duplicate `<cac:TaxTotal>` in XML output
+
+**File:** `xml-generator.ts` lines 439–455
+
+**Problem:** The generated XML contains **two** `<cac:TaxTotal>` elements at the invoice level:
+
+```xml
+<cac:TaxTotal>
+  <cbc:TaxAmount currencyID="SAR">15.00</cbc:TaxAmount>  <!-- first, no subtotal -->
+</cac:TaxTotal>
+<cac:TaxTotal>
+  <cbc:TaxAmount currencyID="SAR">15.00</cbc:TaxAmount>  <!-- second, with subtotal -->
+  <cac:TaxSubtotal>...</cac:TaxSubtotal>
+</cac:TaxTotal>
+```
+
+The ZATCA UBL 2.1 schema (KSA-2) requires exactly **one** `<cac:TaxTotal>` containing the subtotals. The first bare one will trigger schematron error `BR-KSA-EN16931-08` in strict environments.
+
+**Fix — keep only the second (complete) block:**
+```typescript
+// xml-generator.ts — buildInvoiceBodyParts(), replace the two TaxTotal blocks with:
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="SAR">${finalSubtotal}</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cbc:ID schemeAgencyID="6" schemeID="UN/ECE 5305">S</cbc:ID>
+        <cbc:Percent>15</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:ID schemeAgencyID="6" schemeID="UN/ECE 5153">VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+```
+
+> **Note:** ZATCA's own sample XMLs include two TaxTotal elements (one summarising, one with subtotals) per the EN16931 extension. If you intend to keep both, the **first** must sum to the same total and the **second** must carry the subtotals. Verify against your target ZATCA schematron version. If you see `KSA-14` or `BR-KSA-DEC-02` errors in compliance checks, this is the cause.
+
+---
+
+### 2.3 HIGH — `invoiceSubType "02"` maps to wrong `InvoiceTypeCode`
+
+**File:** `xml-generator.ts` → `generateInvoiceTypeCode()` (lines 144–153)
+
+**Problem:**
+```typescript
+if (invoiceSubType === "02") return invoiceType === "standard" ? "383" : "381";
+```
+
+This maps `invoiceSubType = "02"` unconditionally to credit/debit note codes, but `invoiceSubType` in ZATCA means something different — it is a positional bit-field in the `InvoiceTypeCode/@name` attribute, **not** a document type discriminator. Credit/debit notes are identified by `documentType`, not by `invoiceSubType`.
+
+The correct mapping is:
+| documentType    | InvoiceTypeCode |
+|-----------------|-----------------|
+| (none/invoice)  | 388             |
+| debit_note      | 383             |
+| credit_note     | 381             |
+
+`invoiceSubType` controls bits in the `@name` attribute (e.g. `"0200000"` for simplified), not the element value.
+
+**Fix:**
+```typescript
+export function generateInvoiceTypeCode(
+  invoiceType: "standard" | "simplified",
+  invoiceSubType: "01" | "02",           // not used for code value
+  documentType?: "invoice" | "credit_note" | "debit_note"
+): string {
+  if (documentType === "credit_note") return "381";
+  if (documentType === "debit_note")  return "383";
+  return "388"; // standard tax invoice (both B2B and B2C)
+}
+```
+
+---
+
+### 2.4 HIGH — `secp256k1` key curve used instead of `secp256r1` (P-256)
+
+**File:** `crypto.ts` → `generateCSR()` (line 209)
+
+```typescript
+execSync(`openssl ecparam -name secp256k1 -genkey -noout -out "${keyPath}"`, ...);
+```
+
+**Problem:** ZATCA mandates **`secp256r1` (NIST P-256 / prime256v1)** for EGS private keys. `secp256k1` is the Bitcoin curve and will be **rejected** by the ZATCA portal during compliance CSID issuance with an opaque CSR error.
+
+**Fix:**
+```typescript
+execSync(`openssl ecparam -name prime256v1 -genkey -noout -out "${keyPath}"`, {
+  stdio: "pipe"
+});
+```
+
+> This is the single most common cause of the CSR rejection message: *"ZATCA rejected the CSR… verify your VAT number, serial number…"* even when all those values are correct.
+
+---
+
+### 2.5 HIGH — `retryPendingInvoices` recomputes invoice hash from stored XML
+
+**File:** `service.ts` → `retryPendingInvoices()` (line 425)
+
+```typescript
+const recomputedHash = generateInvoiceHash(invoice.signedXml);
+```
+
+**Problem:** The stored `signedXml` is the fully-signed document (it includes the signature, QR, and extension blocks). `generateInvoiceHash()` strips those via `canonicalizeInvoiceXml()` before hashing, so for the **manual-signing path** the result should be the same hash that was embedded. However, if the stored XML was produced by the ZATCA SDK, the SDK's internal canonical form may differ slightly from your local canonicalizer, and recomputing will produce a hash ZATCA will reject with `INVOICE_HASH_MISMATCH`.
+
+**Fix:** Store and reuse the original hash instead of recomputing:
+```typescript
+// Store invoiceHash in the DB record (it already is via createInvoiceZatcaStatus).
+// On retry, use the stored hash directly:
+const storedHash = invoice.invoiceHash; // already in the DB record
+const result = await submitInvoiceToZatca(
+  config,
+  invoice.signedXml,
+  storedHash,   // ← use stored hash, not recomputed
+  invoice.uuid,
+  invoice.invoiceType as "standard" | "simplified"
+);
+```
+
+---
+
+### 2.6 MEDIUM — `generateInvoiceCounter()` uses `Date.now()` (not sequential)
+
+**File:** `crypto.ts` line 627
+
+```typescript
+export function generateInvoiceCounter(): number {
+  return Date.now(); // e.g. 1716123456789
+}
+```
+
+**Problem:** ZATCA requires `ICV` (Invoice Counter Value) to be a **sequential integer starting at 1** and incrementing by exactly 1 per invoice per EGS unit. Using a Unix timestamp violates rule `KSA-16` (`ICV must be a positive integer incremented by 1`). This will pass compliance checks (which use counter = 1) but **fail in production** once real invoices are submitted.
+
+Your `service.ts` correctly calls `storage.incrementInvoiceCounter()` and passes the result as `invoiceCounter` — so this function appears unused in the main path. Confirm it is not called anywhere else, and remove or replace it:
+
+```typescript
+// Remove generateInvoiceCounter() from crypto.ts entirely.
+// The counter MUST come from your storage layer (storage.incrementInvoiceCounter).
+// If you need a fallback, throw an error rather than silently using a timestamp:
+export function generateInvoiceCounter(): never {
+  throw new Error(
+    "generateInvoiceCounter() must not be called directly. " +
+    "Use storage.incrementInvoiceCounter() to get a ZATCA-compliant sequential ICV."
+  );
+}
+```
+
+---
+
+### 2.7 MEDIUM — Compliance CSID stored as raw `binarySecurityToken` without normalization
+
+**File:** `service.ts` → `onboardToZatca()` (line 546)
+
+```typescript
+await storage.updateZatcaSettings(restaurantId, {
+  complianceCsid: data.binarySecurityToken,  // ← stored raw
+  ...
+});
+```
+
+ZATCA returns `binarySecurityToken` as `base64(base64(DER))` (double-encoded). Your `normalizeCertificateToPem()` correctly handles this during signing. But when the stored raw token is later passed directly to the `Authorization` header via `getAuthHeader()` in `api-client.ts`, it is used as-is (correct — the API header needs the raw token). However, when the stored token is later used as a signing certificate (`settings.complianceCsid` → `signInvoiceManually()`), the double-encoding detection in `normalizeCertificateToPem` may occasionally fail for edge-case encodings.
+
+**Fix:** Normalize and store separately, or annotate clearly:
+```typescript
+// In onboardToZatca(), store both forms:
+await storage.updateZatcaSettings(restaurantId, {
+  complianceCsid: data.binarySecurityToken,          // raw token for API auth header
+  complianceCsidPem: normalizeCertificateToPem(data.binarySecurityToken), // normalized PEM for signing
+  ...
+});
+
+// In signing paths, use complianceCsidPem directly rather than
+// calling normalizeCertificateToPem() every time.
+```
+
+---
+
+### 2.8 MEDIUM — `sdk-wrapper.ts` PIH (Previous Invoice Hash) initialized to 64 zeroes
+
+**File:** `sdk-wrapper.ts` → `signInvoiceWithSDK()` (line 56)
+
+```typescript
+fs.writeFileSync(pihPath, "0".repeat(64));
+```
+
+ZATCA requires the first invoice's PIH to be the base64 of the SHA-256 hash of the string `"0"` (the default), not 64 literal zeroes. Your `xml-generator.ts` correctly uses:
+
+```typescript
+const defaultPIH = "NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==";
+```
+
+But the SDK wrapper overrides this with `"0".repeat(64)` when no `previousInvoiceHash` is given, which conflicts with the XML-level `<PIH>` element.
+
+**Fix:**
+```typescript
+const DEFAULT_PIH = "NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==";
+
+fs.writeFileSync(pihPath, previousInvoiceHash || DEFAULT_PIH);
+```
+
+---
+
+### 2.9 MEDIUM — `Clearance-Status: 0` on reporting endpoint may be wrong for some environments
+
+**File:** `api-client.ts` → `reportInvoice()` (line 191)
+
+```typescript
+{ "Clearance-Status": "0" }
+```
+
+Per ZATCA's API specification (v2), the **Reporting** endpoint (`/invoices/reporting/single`) does **not** require or use `Clearance-Status`. Sending `0` works in sandbox/simulation but may cause unexpected behavior in production. The `Clearance-Status: 1` header is only required on the **Clearance** endpoint.
+
+**Fix:** Remove the header from the reporting endpoint entirely:
+```typescript
+async reportInvoice(...): Promise<ZatcaResponse<InvoiceResponse>> {
+  return this.request<InvoiceResponse>(
+    "/invoices/reporting/single",
+    "POST",
+    { invoiceHash, uuid, invoice: invoiceBase64 }
+    // No Clearance-Status header for reporting
+  );
+}
+```
+
+---
+
+### 2.10 LOW — QR code Tag 6 encodes hash bytes incorrectly for Phase 2
+
+**File:** `xml-generator.ts` → `generatePhase2QrCode()` (lines 110–111)
+
+```typescript
+const hashBuf = Buffer.from(invoiceHash, "base64");
+```
+
+`invoiceHash` from `generateInvoiceHash()` is `base64(hex_string)` — the hex ASCII bytes encoded in base64 (88 characters). When you do `Buffer.from(invoiceHash, "base64")`, you get back the raw hex ASCII bytes (64 bytes), not the 32-byte binary digest.
+
+ZATCA's QR spec for Tag 6 says the value is the invoice hash as **binary bytes** (32 bytes). The double-indirection (`base64 of hex ASCII`) means Tag 6 carries 64 ASCII bytes instead of 32 binary bytes, making it ~twice the expected size.
+
+**Fix — pass the binary hash directly:**
+```typescript
+export function generatePhase2QrCode(
+  ...,
+  invoiceHashHex: string,   // ← pass the hex string from generateInvoiceHashHex()
+  ...
+): string {
+  const hashBuf = Buffer.from(invoiceHashHex, "hex"); // 32 binary bytes ✓
+  const sigBuf  = Buffer.from(signature, "base64");
+  const pubBuf  = Buffer.from(publicKey, "base64");
+  const certSigBuf = Buffer.from(certificateSignature, "base64");
+  ...
+}
+```
+
+And in `generateSignedInvoiceXml()`, pass `generateInvoiceHashHex(shellXml)` for the QR tag 6 argument.
+
+---
+
+## 3. Minor Issues & Recommendations
+
+### 3.1 `signWithECDSA` in `crypto.ts` doesn't specify `dsaEncoding`
+
+```typescript
+const signature = sign.sign(privateKeyPem);
+```
+
+Node.js defaults to DER encoding for ECDSA signatures, but ZATCA expects **IEEE P1363** (raw r||s, 64 bytes for P-256). Add:
+
+```typescript
+const signature = sign.sign({ key: privateKeyPem, dsaEncoding: "ieee-p1363" });
+```
+
+Note: `xml-generator.ts`'s `signEcdsaSha256()` does **not** specify `dsaEncoding` either. Both must be corrected together, since changing one without the other will break signature verification.
+
+### 3.2 No CSID expiry check before production invoice submission
+
+`settings.csidExpiresAt` is stored (correctly) in `getProductionCSID()` but never checked in `processInvoiceForZatca()`. Add a guard:
+
+```typescript
+if (settings.csidExpiresAt && new Date() > new Date(settings.csidExpiresAt)) {
+  return { success: false, errors: [{ code: "CSID_EXPIRED", message: "Production CSID has expired. Please renew via ZATCA portal." }], ... };
+}
+```
+
+### 3.3 `sdk-wrapper.ts` doesn't check Java availability before invoking
+
+`isSDKAvailable()` is called once at startup and the result is cached in `USE_SDK`. If Java is installed but the SDK JAR is corrupt, every invoice will attempt SDK signing, fail, and silently fall back to manual signing — with no alert. Add a periodic re-check or cache the failure reason explicitly.
+
+### 3.4 Race condition in `incrementInvoiceCounter`
+
+`service.ts` calls `storage.incrementInvoiceCounter()` and later (after signing) calls `createInvoiceZatcaStatus()`. If signing fails between these two calls, the counter is consumed but no invoice record is created, creating a gap in the ICV sequence. ZATCA requires strictly sequential, gap-free ICVs. Consider wrapping both operations in a database transaction.
+
+### 3.5 `adjustmentReason` not present in XML for credit/debit notes
+
+ZATCA rule `BR-KSA-CL-01` requires a `<cac:BillingReference>` and `<cac:InvoiceLine/cac:Item/cbc:Description>` (the adjustment reason) on credit/debit notes. Your `xml-generator.ts` references `adjustmentReason` in the data type but it does not appear in the rendered XML's line items. Verify the schematron check for this element.
+
+### 3.6 Consider persistent retry queue instead of polling `getInvoiceZatcaStatuses`
+
+`retryPendingInvoices()` loads all pending invoices and retries them synchronously in a loop. For high-volume use, consider a proper job queue (e.g. BullMQ) with exponential backoff to avoid hammering the ZATCA API.
+
+---
+
+## 4. Onboarding Step-by-Step Checklist
+
+Based on the code review, your onboarding flow should proceed as follows. Each step number corresponds to your existing `service.ts` functions:
+
+| Step | Function | What to verify |
+|------|----------|----------------|
+| 1 | `generateCSR()` in `crypto.ts` | Curve = `prime256v1`, not `secp256k1` |
+| 2 | `onboardToZatca()` | OTP not expired, environment matches portal |
+| 3 | `runComplianceChecks()` | Run within 60 min of Step 2; check all 6 types |
+| 4 | `getProductionCSID()` | Only after all compliance checks pass |
+| 5 | `processInvoiceForZatca()` | Use production CSID, sequential ICV |
+
+---
+
+## 5. File-by-File Fix Priority
+
+| File | Priority | Key Fix |
+|------|----------|---------|
+| `crypto.ts` | 🔴 Critical | Change `secp256k1` → `prime256v1` in CSR generation |
+| `crypto.ts` | 🔴 Critical | Remove/deprecate fake `canonicalizeXML()` |
+| `xml-generator.ts` | 🔴 Critical | Remove duplicate `<cac:TaxTotal>` |
+| `xml-generator.ts` | 🟠 High | Fix `generateInvoiceTypeCode` for `invoiceSubType` |
+| `xml-generator.ts` | 🟡 Medium | Fix QR Tag 6 hash encoding (binary vs hex-ASCII) |
+| `service.ts` | 🟠 High | Use stored hash in retry, not recomputed |
+| `sdk-wrapper.ts` | 🟡 Medium | Fix default PIH value |
+| `api-client.ts` | 🟡 Medium | Remove `Clearance-Status` from reporting endpoint |
+| `crypto.ts` | 🟡 Medium | Add `dsaEncoding: "ieee-p1363"` to ECDSA sign calls |
+| `service.ts` | 🟢 Low | Add CSID expiry guard before submission |
+
+---
+
+## 6. Environment Notes for Saudi Arabia
+
+- **Sandbox** (`developer-portal`): Use for initial development. OTPs from `developer.zatca.gov.sa`. No real data.
+- **Simulation** (`simulation`): Use for final compliance testing before go-live. OTPs from `fatoora.zatca.gov.sa`.
+- **Production** (`core`): Live system. CSIDs are valid 1–3 years. Each EGS device needs its own CSID.
+
+Your `ZATCA_URLS` in `api-client.ts` correctly maps all three environments.
+
+---
+
+*Document generated from code review of: `crypto.ts`, `xml-generator.ts`, `api-client.ts`, `service.ts`, `sdk-wrapper.ts`, `index.ts`*
