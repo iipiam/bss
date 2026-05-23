@@ -332,6 +332,17 @@ export default function ProjectDetail() {
     onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },
   });
 
+  const taskStatusMut = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      return await apiRequest("PATCH", `/api/project-tasks/${id}`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/project-tasks", projectId] });
+      toast({ title: t.saved || "Saved", description: t.taskStatusUpdated || "Task status updated" });
+    },
+    onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },
+  });
+
   const cpmMut = useMutation({
     mutationFn: async () => {
       return await apiRequest("POST", "/api/project-tasks/calculate-cpm", { projectId });
@@ -1019,6 +1030,39 @@ export default function ProjectDetail() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <Badge variant={statusBadge(tk.status)} className={statusClass(tk.status)}>{tk.status.replace("_", " ")}</Badge>
+                        {tk.status === "pending" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => taskStatusMut.mutate({ id: tk.id, status: "in_progress" })}
+                            disabled={taskStatusMut.isPending}
+                            data-testid={`button-start-task-${tk.id}`}
+                          >
+                            <PlayCircle className="h-4 w-4 mr-1" />{t.start || "Start"}
+                          </Button>
+                        )}
+                        {tk.status === "in_progress" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => taskStatusMut.mutate({ id: tk.id, status: "completed" })}
+                            disabled={taskStatusMut.isPending}
+                            data-testid={`button-complete-task-${tk.id}`}
+                          >
+                            <CheckSquare className="h-4 w-4 mr-1" />{t.complete || "Complete"}
+                          </Button>
+                        )}
+                        {tk.status === "completed" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => taskStatusMut.mutate({ id: tk.id, status: "pending" })}
+                            disabled={taskStatusMut.isPending}
+                            data-testid={`button-reopen-task-${tk.id}`}
+                          >
+                            {t.reopen || "Reopen"}
+                          </Button>
+                        )}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" aria-label={t.edit} onClick={() => openEditTask(tk)} data-testid={`button-edit-task-${tk.id}`}><Edit className="h-4 w-4" /></Button>
@@ -1201,13 +1245,22 @@ export default function ProjectDetail() {
                       <ul className="space-y-2">
                         {ready.slice(0, 5).map(tk => (
                           <li key={tk.id} className="flex items-center justify-between gap-2 text-sm" data-testid={`row-ready-${tk.id}`}>
-                            <div className="flex items-center gap-2 min-w-0">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
                               {tk.isCritical && <Badge variant="destructive" className="shrink-0">{t.critical || "Critical"}</Badge>}
                               <span className="truncate">{tk.name}</span>
                             </div>
                             <span className="text-xs text-muted-foreground shrink-0">
                               {tk.duration}{t.daysShort || "d"} · {t.slack || "Slack"}: {tk.slack ?? "—"}
                             </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => taskStatusMut.mutate({ id: tk.id, status: "in_progress" })}
+                              disabled={taskStatusMut.isPending}
+                              data-testid={`button-start-ready-${tk.id}`}
+                            >
+                              <PlayCircle className="h-4 w-4 mr-1" />{t.start || "Start"}
+                            </Button>
                           </li>
                         ))}
                       </ul>
