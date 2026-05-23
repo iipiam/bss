@@ -16564,7 +16564,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       .replace(/'/g, '&#039;');
   }
 
-  app.get("/api/quotations/:id/download-pdf", requireAuth, requireRestaurant, async (req, res) => {
+  app.get("/api/quotations/:id/download-pdf", requireAuth, requireRestaurant, requirePermission('quotations'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -16944,7 +16944,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     return { project, buffer: Buffer.from(pdfData) };
   }
 
-  app.get("/api/service-projects/:id/dossier-pdf", requireAuth, requireRestaurant, async (req, res) => {
+  app.get("/api/service-projects/:id/dossier-pdf", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -16962,7 +16962,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   // Generate Agreement PDF for a service project — fills the company's
   // agreement template with the project's data and produces a PDF.
-  app.get("/api/service-projects/:id/agreement-pdf", requireAuth, requireRestaurant, async (req, res) => {
+  app.get("/api/service-projects/:id/agreement-pdf", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });

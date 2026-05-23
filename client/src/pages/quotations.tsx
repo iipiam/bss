@@ -63,6 +63,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDeviceLayout } from "@/lib/mobileLayout";
 import { format } from "date-fns";
@@ -166,6 +167,8 @@ export default function Quotations() {
   const [viewDecisionsQuotation, setViewDecisionsQuotation] = useState<Quotation | null>(null);
   const { toast } = useToast();
   const { t, language } = useLanguage();
+  const { canView } = usePermissions();
+  const canDownloadQuotation = canView('quotations');
   const layout = useDeviceLayout();
   const pdfLang = (language === 'Arabic' || language === 'Urdu') ? 'ar' : 'en';
 
@@ -1048,20 +1051,22 @@ export default function Quotations() {
                   </h3>
                 </div>
                 <div className="flex gap-1 shrink-0">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={t.download}
-                        onClick={() => window.open(`/api/quotations/${quotation.id}/download-pdf?lang=${pdfLang}`, '_blank')}
-                        data-testid={`button-download-pdf-${quotation.id}`}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{t.download}</TooltipContent>
-                  </Tooltip>
+                  {canDownloadQuotation && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={t.download}
+                          onClick={() => window.open(`/api/quotations/${quotation.id}/download-pdf?lang=${pdfLang}`, '_blank')}
+                          data-testid={`button-download-pdf-${quotation.id}`}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t.download}</TooltipContent>
+                    </Tooltip>
+                  )}
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button

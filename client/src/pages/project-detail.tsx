@@ -183,8 +183,9 @@ export default function ProjectDetail() {
   const [delItem, setDelItem] = useState<{ type: string; id: string; name: string } | null>(null);
   const [declineOpen, setDeclineOpen] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
-  const { canEdit } = usePermissions();
+  const { canEdit, canView } = usePermissions();
   const canDecide = canEdit('projects');
+  const canDownloadProjectPdf = canView('projects');
 
   const { data: project, isLoading } = useQuery<ServiceProject>({
     queryKey: ["/api/service-projects", projectId],
@@ -597,6 +598,7 @@ export default function ProjectDetail() {
             <Plus className="h-4 w-4 mr-2" />
             {t.addProjectService || "Add Project Service"}
           </Button>
+          {canDownloadProjectPdf && (
           <Button
             variant="outline"
             onClick={async () => {
@@ -626,6 +628,7 @@ export default function ProjectDetail() {
             <FileSignature className="h-4 w-4 mr-2" />
             {t.generateAgreement || "Generate Agreement"}
           </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => generateQuotationMutation.mutate()}
@@ -637,6 +640,7 @@ export default function ProjectDetail() {
               ? (t.generating || "Generating...")
               : (t.generateQuotation || "Generate Quotation")}
           </Button>
+          {canDownloadProjectPdf && (
           <Button
             variant="outline"
             onClick={() => window.open(`/api/service-projects/${params.id}/dossier-pdf?lang=${pdfLang}`, '_blank')}
@@ -645,6 +649,7 @@ export default function ProjectDetail() {
             <Download className="h-4 w-4 mr-2" />
             {t.downloadDossier || "Download Dossier"}
           </Button>
+          )}
         </div>
       </div>
 
